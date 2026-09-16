@@ -1,8 +1,29 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
+import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { ConfirmHiding } from './ConfirmHiding';
 import type { Hiding } from '@ValenceClient/library/useHidden';
+
+const fetchProfiles = vi.hoisted(() => vi.fn<() => Promise<ViewerProfile[]>>());
+
+vi.mock('@ValenceClient/profiles/fetchProfiles', () => ({ fetchProfiles }));
+
+const aFace = (id: string): ViewerProfile => ({
+  id,
+  name: id,
+  colour: '#e8503a',
+  avatar: { kind: 'initial' },
+  askStillWatchingAfter: 4,
+  showsWhatIamWatching: false,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+});
+
+beforeEach(() => {
+  fetchProfiles.mockReset().mockResolvedValue([aFace('dan')]);
+});
 
 const hiding = (overrides: Partial<Hiding> = {}): Hiding => ({
   entries: [],
@@ -17,13 +38,13 @@ const hiding = (overrides: Partial<Hiding> = {}): Hiding => ({
 
 describe('ConfirmHiding', () => {
   it('asks nothing while nothing has been pressed', () => {
-    render(<ConfirmHiding hiding={hiding()} />);
+    renderInAnAddress(<ConfirmHiding hiding={hiding()} />);
 
     expect(screen.queryByRole('button', { name: 'Hide it' })).not.toBeInTheDocument();
   });
 
   it('names the film it is about to hide', async () => {
-    render(
+    renderInAnAddress(
       <ConfirmHiding
         hiding={hiding({ asking: { kind: 'item', subjectId: 'media-1', title: 'Arrival' } })}
       />,
@@ -33,7 +54,7 @@ describe('ConfirmHiding', () => {
   });
 
   it('names the programme, not the episode standing for it', async () => {
-    render(
+    renderInAnAddress(
       <ConfirmHiding
         hiding={hiding({
           asking: { kind: 'series', subjectId: 'series-1', title: 'Curb Your Enthusiasm' },
@@ -45,18 +66,34 @@ describe('ConfirmHiding', () => {
     expect(await screen.findByText(/Every episode of it disappears/i)).toBeInTheDocument();
   });
 
-  it('says it affects nobody else on the account', async () => {
-    render(
+  it('says it affects nobody else, where there is somebody else', async () => {
+    fetchProfiles.mockResolvedValue([aFace('dan'), aFace('kid')]);
+
+    renderInAnAddress(
       <ConfirmHiding
         hiding={hiding({ asking: { kind: 'item', subjectId: 'media-1', title: 'Arrival' } })}
       />,
     );
 
-    expect(await screen.findByText(/not for anybody else on this account/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/for you and for nobody else on this account/i),
+    ).toBeInTheDocument();
+  });
+
+  it('says no such thing on an account with one face, there being nobody to reassure about', async () => {
+    renderInAnAddress(
+      <ConfirmHiding
+        hiding={hiding({ asking: { kind: 'item', subjectId: 'media-1', title: 'Arrival' } })}
+      />,
+    );
+
+    await screen.findByText('Hide Arrival?');
+
+    expect(screen.queryByText(/nobody else on this account/i)).not.toBeInTheDocument();
   });
 
   it('says where the way back is, which is what makes it an easy yes', async () => {
-    render(
+    renderInAnAddress(
       <ConfirmHiding
         hiding={hiding({ asking: { kind: 'item', subjectId: 'media-1', title: 'Arrival' } })}
       />,
@@ -72,7 +109,7 @@ describe('ConfirmHiding', () => {
     const confirm = vi.fn();
     const onHidden = vi.fn();
 
-    render(
+    renderInAnAddress(
       <ConfirmHiding
         hiding={hiding({
           asking: { kind: 'item', subjectId: 'media-1', title: 'Arrival' },
@@ -93,7 +130,7 @@ describe('ConfirmHiding', () => {
     const confirm = vi.fn();
     const dismiss = vi.fn();
 
-    render(
+    renderInAnAddress(
       <ConfirmHiding
         hiding={hiding({
           asking: { kind: 'item', subjectId: 'media-1', title: 'Arrival' },
