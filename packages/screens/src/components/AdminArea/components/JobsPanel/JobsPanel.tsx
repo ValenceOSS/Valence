@@ -102,7 +102,12 @@ const JobsPanel = ({
             </span>
           }
         >
-          <BackgroundJobs monitor={monitor} isUnreachable={isUnreachable} pageSize={10} />
+          <BackgroundJobs
+            monitor={monitor}
+            isUnreachable={isUnreachable}
+            pageSize={10}
+            growsOnScroll={false}
+          />
         </PanelCard>
 
         <JobHistory definitions={definitions} onViewLogs={onViewLogs} />

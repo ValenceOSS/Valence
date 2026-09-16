@@ -1,6 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { MoreHorizontalIcon, RefreshIcon, Alert02Icon } from '@hugeicons/core-free-icons';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -19,7 +19,7 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { SegmentedItem } from '@ValenceUI/SegmentedRow.types';
-import type { JobRunRecord, JobRunStatus } from '@ValenceContracts/schemas/JobRun';
+import type { JobRunPage, JobRunRecord, JobRunStatus } from '@ValenceContracts/schemas/JobRun';
 import type { JobHistoryProps } from './JobHistory.types';
 
 const PAGE = 200;
@@ -36,7 +36,7 @@ const STATUS_ITEMS: SegmentedItem[] = [
   { id: 'all', label: 'All' },
   { id: 'queued', label: 'Queued' },
   { id: 'running', label: 'Running' },
-  { id: 'completed', label: 'Completed' },
+  { id: 'completed', label: 'Done' },
   { id: 'failed', label: 'Failed' },
 ];
 
@@ -55,6 +55,21 @@ const STATUS_TONES: Readonly<Record<JobRunStatus, BadgeTone>> = {
  */
 const describeMoment = (atMs: number | null): string =>
   atMs === null ? '—' : `${describeLogDay(atMs)}, ${describeLogTime(atMs)}`;
+
+/**
+ * Says where a run stands in one line, rather than in two columns that mostly repeat each other —
+ * a run that finished only ever needs the one moment, and a run still going needs neither.
+ *
+ * @param record - The run.
+ * @returns What to say it is doing, or when it did it.
+ */
+const describeWhen = (record: JobRunRecord): string => {
+  if (record.finishedAtMs !== null) {
+    return describeMoment(record.finishedAtMs);
+  }
+
+  return record.startedAtMs === null ? 'Queued' : 'Running…';
+};
 
 /**
  * Names a job run's kind in words, from what the server offers to run it by hand, falling back to
@@ -76,7 +91,7 @@ const describeRunKind = (kind: string, labels: ReadonlyMap<string, string>): str
  * @param definitions - The jobs the server offers, for naming a run's kind in words.
  * @param onViewLogs - Called with a run's id, to open the log filtered to it.
  */
-const JobHistory = ({ definitions, onViewLogs }: JobHistoryProps) => {
+const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
   const cache = useQueryClient();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
@@ -101,7 +116,7 @@ const JobHistory = ({ definitions, onViewLogs }: JobHistoryProps) => {
   useEffect(() => {
     let pending: ReturnType<typeof setTimeout> | null = null;
 
-    const unwatch = watchJobs(() => {
+    const scheduleRefresh = () => {
       if (pending !== null) {
         return;
       }
@@ -110,6 +125,34 @@ const JobHistory = ({ definitions, onViewLogs }: JobHistoryProps) => {
         pending = null;
         void cache.invalidateQueries({ queryKey: [...adminQueries.key, 'jobHistory'] });
       }, REFRESH_THROTTLE_MS);
+    };
+
+    const unwatch = watchJobs((event) => {
+      if (event.event !== 'progress') {
+        scheduleRefresh();
+
+        return;
+      }
+
+      cache.setQueriesData<JobRunPage>({ queryKey: [...adminQueries.key, 'jobHistory'] }, (page) =>
+        page === undefined
+          ? page
+          : {
+              ...page,
+              records: page.records.map((record) =>
+                record.id === event.jobId
+                  ? {
+                      ...record,
+                      progress: {
+                        phase: event.phase,
+                        processed: event.processed,
+                        total: event.total,
+                      },
+                    }
+                  : record,
+              ),
+            },
+      );
     });
 
     return () => {
@@ -128,7 +171,12 @@ const JobHistory = ({ definitions, onViewLogs }: JobHistoryProps) => {
         header: 'Job',
         accessorFn: (record) => describeRunKind(record.kind, labels),
         cell: ({ row }) => (
-          <span className="text-text-muted">{describeRunKind(row.original.kind, labels)}</span>
+          <span
+            className="block max-w-[10rem] truncate text-text-muted"
+            title={describeRunKind(row.original.kind, labels)}
+          >
+            {describeRunKind(row.original.kind, labels)}
+          </span>
         ),
       },
       {
@@ -146,13 +194,15 @@ const JobHistory = ({ definitions, onViewLogs }: JobHistoryProps) => {
         header: 'Subject',
         accessorFn: (record) => record.subject ?? '',
         cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col">
+          <span className="flex max-w-[12rem] min-w-0 flex-col">
             <span className="truncate text-text" title={row.original.subject ?? undefined}>
               {row.original.subject ?? '—'}
             </span>
 
             {row.original.errorMessage === null ? null : (
-              <span className="truncate text-xs text-danger">{row.original.errorMessage}</span>
+              <span className="truncate text-xs text-danger" title={row.original.errorMessage}>
+                {row.original.errorMessage}
+              </span>
             )}
           </span>
         ),
@@ -174,22 +224,12 @@ const JobHistory = ({ definitions, onViewLogs }: JobHistoryProps) => {
         },
       },
       {
-        id: 'started',
-        header: 'Started',
-        accessorFn: (record) => record.startedAtMs ?? 0,
+        id: 'when',
+        header: 'When',
+        accessorFn: (record) => record.finishedAtMs ?? record.startedAtMs ?? 0,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
-            {describeMoment(row.original.startedAtMs)}
-          </span>
-        ),
-      },
-      {
-        id: 'finished',
-        header: 'Finished',
-        accessorFn: (record) => record.finishedAtMs ?? 0,
-        cell: ({ row }) => (
-          <span className="whitespace-nowrap tabular-nums text-text-muted">
-            {describeMoment(row.original.finishedAtMs)}
+            {describeWhen(row.original)}
           </span>
         ),
       },
@@ -201,7 +241,8 @@ const JobHistory = ({ definitions, onViewLogs }: JobHistoryProps) => {
           <span className="flex justify-end">
             <ActionMenu
               label={`Actions for ${describeRunKind(row.original.kind, labels)}`}
-              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
+              trigger={<Icon of={MoreHorizontalIcon} size={14} />}
+              size="sm"
               groups={[
                 {
                   items: [
@@ -241,15 +282,15 @@ const JobHistory = ({ definitions, onViewLogs }: JobHistoryProps) => {
             isLabelHidden
             size="sm"
             type="search"
-            placeholder="regeneratePreviews, failed, no such path"
+            placeholder="Search"
             value={search}
             onValueChange={setSearch}
-            className="w-64 max-w-full"
+            className="w-32 max-w-full"
           />
 
           <SegmentedRow
             label="Filter job history by status"
-            size="sm"
+            size="xs"
             tone="accent"
             items={STATUS_ITEMS}
             value={status}
@@ -338,6 +379,8 @@ const JobHistory = ({ definitions, onViewLogs }: JobHistoryProps) => {
     </PanelCard>
   );
 };
+
+const JobHistory = memo(JobHistoryPanel);
 
 JobHistory.displayName = 'JobHistory';
 

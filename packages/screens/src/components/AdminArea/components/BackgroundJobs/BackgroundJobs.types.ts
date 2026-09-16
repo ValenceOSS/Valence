@@ -4,6 +4,7 @@ type BackgroundJobsProps = {
   monitor: Monitor | null;
   isUnreachable?: boolean;
   pageSize?: number;
+  growsOnScroll?: boolean;
 };
 
 export type { BackgroundJobsProps };

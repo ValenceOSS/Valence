@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { describeElapsed } from '@ValenceScreens/components/AdminArea/describeElapsed';
@@ -39,8 +39,15 @@ const JOB_TONES: Record<Job['state'], 'warning' | 'accent' | 'success' | 'danger
  * @param monitor - The latest readings, or null before any have arrived.
  * @param isUnreachable - Whether the service is not answering, which is why the table is empty.
  * @param pageSize - How many rows to show at once.
+ * @param growsOnScroll - Whether reaching the bottom loads more rather than turning a page —
+ *   fitting for a short preview, not for a table sitting beside another that pages.
  */
-const BackgroundJobs = ({ monitor, isUnreachable = false, pageSize }: BackgroundJobsProps) => {
+const BackgroundJobsTable = ({
+  monitor,
+  isUnreachable = false,
+  pageSize,
+  growsOnScroll = true,
+}: BackgroundJobsProps) => {
   const arrived = monitor?.queue.jobs ?? NOTHING_QUEUED;
   const saying = describeQueue(arrived);
   const held = useRef(arrived);
@@ -75,7 +82,12 @@ const BackgroundJobs = ({ monitor, isUnreachable = false, pageSize }: Background
         header: 'Job',
         accessorFn: (job) => describeQueueKind(job.kind),
         cell: ({ row }) => (
-          <span className="text-text-muted">{describeQueueKind(row.original.kind)}</span>
+          <span
+            className="block max-w-[10rem] truncate text-text-muted"
+            title={describeQueueKind(row.original.kind)}
+          >
+            {describeQueueKind(row.original.kind)}
+          </span>
         ),
       },
       {
@@ -83,13 +95,15 @@ const BackgroundJobs = ({ monitor, isUnreachable = false, pageSize }: Background
         header: 'Subject',
         accessorFn: (job) => job.subject,
         cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col">
+          <span className="flex max-w-[16rem] min-w-0 flex-col">
             <span className="truncate text-text" title={row.original.subject}>
               {row.original.subject}
             </span>
 
             {row.original.failure === null ? null : (
-              <span className="truncate text-xs text-danger">{row.original.failure.message}</span>
+              <span className="truncate text-xs text-danger" title={row.original.failure.message}>
+                {row.original.failure.message}
+              </span>
             )}
           </span>
         ),
@@ -134,11 +148,13 @@ const BackgroundJobs = ({ monitor, isUnreachable = false, pageSize }: Background
       columns={columns}
       rows={rows}
       emptyMessage={hasRead.current ? 'Nothing queued.' : 'Reading the queue…'}
-      growsOnScroll
+      growsOnScroll={growsOnScroll}
       {...(pageSize === undefined ? {} : { pageSize })}
     />
   );
 };
+
+const BackgroundJobs = memo(BackgroundJobsTable);
 
 BackgroundJobs.displayName = 'BackgroundJobs';
 
