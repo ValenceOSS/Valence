@@ -18,7 +18,6 @@ use crate::keyframes::{
     cut_interval, grouped_lengths, longest_segment, read_keyframes, segment_groups,
     segment_lengths, Keyframes,
 };
-use crate::monitor::{record, LogLevel};
 use crate::playlist::build_vod_playlist;
 use crate::probe::probe_media;
 use crate::transcode_plan::{SessionSpec, VideoAction, MANIFEST_NAME};
@@ -316,14 +315,12 @@ async fn compute_boundaries(ffprobe: &str, spec: &SessionSpec) -> Boundaries {
             let lengths = segment_lengths(&keyframes, cut_seconds);
 
             if unsafe_cuts > 0 {
-                record(
-                    LogLevel::Info,
-                    "transcode",
-                    &format!(
-                        "{} opens {unsafe_cuts} of its segments on a keyframe with leading \
-pictures, which is copied anyway",
-                        spec.input_path
-                    ),
+                tracing::info!(
+                    target: "transcode",
+                    session_id = %spec.session_id(),
+                    "{} opens {unsafe_cuts} of its segments on a keyframe with leading \
+                pictures, which is copied anyway",
+                    spec.input_path
                 );
             }
 
@@ -342,13 +339,11 @@ pictures, which is copied anyway",
         }
 
         Err(failure) => {
-            record(
-                LogLevel::Warn,
-                "transcode",
-                &format!(
-                    "could not read the keyframes of {}: {failure}",
-                    spec.input_path
-                ),
+            tracing::warn!(
+                target: "transcode",
+                session_id = %spec.session_id(),
+                "could not read the keyframes of {}: {failure}",
+                spec.input_path
             );
 
             equal(true)
@@ -388,7 +383,16 @@ async fn discard_segments(directory: &Path) {
         let name = name.to_string_lossy();
 
         if name.starts_with("segment") || name == crate::session::COMPLETE_MARKER {
-            let _ = tokio::fs::remove_file(entry.path()).await;
+            let path = entry.path();
+
+            if let Err(error) = tokio::fs::remove_file(&path).await {
+                tracing::warn!(
+                    target: "transcode",
+                    %error,
+                    path = %path.display(),
+                    "could not discard a stale segment"
+                );
+            }
         }
     }
 }
@@ -407,14 +411,29 @@ pub async fn ensure_boundaries(ffprobe: &str, directory: &Path, spec: &SessionSp
     discard_segments(directory).await;
 
     if let Ok(payload) = serde_json::to_string(&found) {
-        let _ = tokio::fs::write(directory.join(LENGTHS_NAME), payload).await;
+        if let Err(error) = tokio::fs::write(directory.join(LENGTHS_NAME), payload).await {
+            tracing::warn!(
+                target: "transcode",
+                session_id = %spec.session_id(),
+                %error,
+                "could not cache the segment boundaries"
+            );
+        }
     }
 
-    let _ = tokio::fs::write(
+    if let Err(error) = tokio::fs::write(
         directory.join(MANIFEST_NAME),
         build_vod_playlist(&found.offered_lengths(), spec.container),
     )
-    .await;
+    .await
+    {
+        tracing::warn!(
+            target: "transcode",
+            session_id = %spec.session_id(),
+            %error,
+            "could not write the VOD playlist"
+        );
+    }
 
     found
 }

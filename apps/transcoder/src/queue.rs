@@ -9,7 +9,7 @@
 //! a fan.
 
 use std::collections::VecDeque;
-use std::fmt::Display;
+use std::error::Error;
 use std::future::Future;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -38,12 +38,56 @@ pub enum JobState {
     Failed,
 }
 
-/// One piece of background work.
+/// What a piece of work is, for the queue's own bookkeeping.
+///
+/// Every work kind constructs one of these rather than handing the queue a
+/// bare `kind: &str, subject: &str` pair at the call site — the kind is fixed
+/// by the type, and the subject is computed once, in one place, by whoever
+/// knows what it is.
+pub trait Job {
+    /// What kind of work this is: thumbnails, preview, fingerprint.
+    fn kind(&self) -> &'static str;
+    /// What it is being done to, in a form a person recognises.
+    fn subject(&self) -> String;
+}
+
+/// Why a piece of background work failed.
+///
+/// The message a caller would read plus the chain of causes underneath it,
+/// so an operator sees "ffmpeg could not be started" and, if there is one,
+/// the "No such file or directory" that actually explains it — rather than
+/// the top message alone with everything under it thrown away.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Job {
+pub struct JobFailure {
+    pub message: String,
+    pub chain: Vec<String>,
+}
+
+impl JobFailure {
+    /// Builds a failure by walking an error's own [`Error::source`] chain.
+    fn from_error<E: Error>(error: &E) -> Self {
+        let mut chain = Vec::new();
+        let mut source = error.source();
+
+        while let Some(cause) = source {
+            chain.push(cause.to_string());
+            source = cause.source();
+        }
+
+        Self {
+            message: error.to_string(),
+            chain,
+        }
+    }
+}
+
+/// One piece of background work, as the queue remembers having run it.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JobRecord {
     pub id: u64,
-    /// What kind of work this is: thumbnails, trickplay, fingerprint.
+    /// What kind of work this is: thumbnails, preview, fingerprint.
     pub kind: String,
     /// What it is being done to, in a form a person recognises.
     pub subject: String,
@@ -52,7 +96,7 @@ pub struct Job {
     pub started_at_ms: Option<u64>,
     pub finished_at_ms: Option<u64>,
     /// Why it failed, when it did.
-    pub detail: Option<String>,
+    pub failure: Option<JobFailure>,
     /// Which of the server's jobs asked for this, where one did.
     ///
     /// The queue is otherwise flat: a job per file per artefact, with nothing
@@ -60,10 +104,10 @@ pub struct Job {
     /// rebuild that caused them meant lining timestamps up by eye. A player
     /// asking for its own thumbnails belongs to nobody, which is why this is
     /// optional rather than empty.
-    pub owner: Option<String>,
+    pub correlation_id: Option<String>,
 }
 
-impl Job {
+impl JobRecord {
     /// How long this has taken, in milliseconds.
     ///
     /// Measured to now while it is still running, so a job that has hung reads
@@ -89,7 +133,7 @@ pub struct QueueSnapshot {
     pub queued: usize,
     pub running: usize,
     /// Recent work, newest first.
-    pub jobs: Vec<Job>,
+    pub jobs: Vec<JobRecord>,
 }
 
 /// Milliseconds since the epoch.
@@ -117,7 +161,7 @@ pub fn now_ms() -> u64 {
 /// there is no runtime left to spawn onto — the process is going away — there
 /// is nobody to mislead either.
 struct Abandonment {
-    jobs: Arc<Mutex<VecDeque<Job>>>,
+    jobs: Arc<Mutex<VecDeque<JobRecord>>>,
     id: u64,
     settled: bool,
 }
@@ -139,7 +183,10 @@ impl Drop for Abandonment {
                     if job.finished_at_ms.is_none() {
                         job.finished_at_ms = Some(now_ms());
                         job.state = JobState::Failed;
-                        job.detail = Some("nobody was left waiting for it".to_owned());
+                        job.failure = Some(JobFailure {
+                            message: "nobody was left waiting for it".to_owned(),
+                            chain: Vec::new(),
+                        });
                     }
                 }
             });
@@ -155,7 +202,7 @@ impl Drop for Abandonment {
 pub struct WorkQueue {
     permits: Arc<Semaphore>,
     concurrency: usize,
-    jobs: Arc<Mutex<VecDeque<Job>>>,
+    jobs: Arc<Mutex<VecDeque<JobRecord>>>,
     next_id: Arc<AtomicU64>,
 }
 
@@ -177,14 +224,14 @@ impl WorkQueue {
         }
     }
 
-    async fn record(&self, job: Job) {
+    async fn record(&self, job: JobRecord) {
         let mut jobs = self.jobs.lock().await;
 
         jobs.push_front(job);
         jobs.truncate(HISTORY);
     }
 
-    async fn amend(&self, id: u64, change: impl FnOnce(&mut Job)) {
+    async fn amend(&self, id: u64, change: impl FnOnce(&mut JobRecord)) {
         let mut jobs = self.jobs.lock().await;
 
         if let Some(job) = jobs.iter_mut().find(|job| job.id == id) {
@@ -195,36 +242,38 @@ impl WorkQueue {
     /// Runs a piece of work when there is room for it.
     ///
     /// The caller still awaits its own result, so this changes when the work
-    /// happens rather than how it is asked for.
+    /// happens rather than how it is asked for. `job` says what kind of work
+    /// this is and what it is being done to; `correlation_id` says which of
+    /// the server's own jobs asked for it, where one did.
     ///
     /// # Errors
     ///
     /// Whatever the work itself failed with, unchanged. The failure is written
     /// into the job's history on the way past: the queue observes, it does not
     /// swallow.
-    pub async fn run<T, E, F>(
+    pub async fn run<J, T, E, F>(
         &self,
-        kind: &str,
-        subject: &str,
-        owner: Option<&str>,
+        job: J,
+        correlation_id: Option<&str>,
         work: F,
     ) -> Result<T, E>
     where
+        J: Job,
         F: Future<Output = Result<T, E>>,
-        E: Display,
+        E: Error,
     {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
 
-        self.record(Job {
+        self.record(JobRecord {
             id,
-            kind: kind.to_owned(),
-            subject: subject.to_owned(),
+            kind: job.kind().to_owned(),
+            subject: job.subject(),
             state: JobState::Queued,
             queued_at_ms: now_ms(),
             started_at_ms: None,
             finished_at_ms: None,
-            detail: None,
-            owner: owner.map(str::to_owned),
+            failure: None,
+            correlation_id: correlation_id.map(str::to_owned),
         })
         .await;
 
@@ -253,7 +302,7 @@ impl WorkQueue {
                 Ok(_) => job.state = JobState::Finished,
                 Err(failure) => {
                     job.state = JobState::Failed;
-                    job.detail = Some(failure.to_string());
+                    job.failure = Some(JobFailure::from_error(failure));
                 }
             }
         })
@@ -291,35 +340,59 @@ impl Default for WorkQueue {
 
 #[cfg(test)]
 mod tests {
-    use super::{JobState, WorkQueue};
+    use super::{Job, JobState, WorkQueue};
     use std::time::Duration;
+
+    /// A fixed piece of work, for tests that only care about the queue's own
+    /// bookkeeping and not about what a real work kind computes.
+    struct TestJob {
+        kind: &'static str,
+        subject: &'static str,
+    }
+
+    impl Job for TestJob {
+        fn kind(&self) -> &'static str {
+            self.kind
+        }
+
+        fn subject(&self) -> String {
+            self.subject.to_owned()
+        }
+    }
+
+    fn thumbnails(subject: &'static str) -> TestJob {
+        TestJob {
+            kind: "thumbnails",
+            subject,
+        }
+    }
 
     #[tokio::test]
     async fn says_which_job_asked_for_a_piece_of_work() {
         let queue = WorkQueue::new(2);
 
-        let _: Result<u8, String> = queue
-            .run("thumbnails", "film.mkv", Some("scan-42"), async { Ok(1) })
+        let _: Result<u8, std::io::Error> = queue
+            .run(thumbnails("film.mkv"), Some("scan-42"), async { Ok(1) })
             .await;
-        let _: Result<u8, String> = queue
-            .run("thumbnails", "other.mkv", None, async { Ok(1) })
+        let _: Result<u8, std::io::Error> = queue
+            .run(thumbnails("other.mkv"), None, async { Ok(1) })
             .await;
 
-        let owners: Vec<Option<String>> = queue
+        let correlations: Vec<Option<String>> = queue
             .snapshot()
             .await
             .jobs
             .iter()
-            .map(|job| job.owner.clone())
+            .map(|job| job.correlation_id.clone())
             .collect();
 
         assert!(
-            owners.contains(&Some("scan-42".to_owned())),
+            correlations.contains(&Some("scan-42".to_owned())),
             "reading a run of thumbnails back to the scan that caused them otherwise means lining \
 timestamps up by eye"
         );
         assert!(
-            owners.contains(&None),
+            correlations.contains(&None),
             "a player asking for its own thumbnails belongs to nobody"
         );
     }
@@ -328,11 +401,11 @@ timestamps up by eye"
     async fn records_work_that_succeeded() {
         let queue = WorkQueue::new(1);
 
-        let outcome: Result<u8, String> = queue
-            .run("thumbnails", "film.mkv", None, async { Ok(7) })
+        let outcome: Result<u8, std::io::Error> = queue
+            .run(thumbnails("film.mkv"), None, async { Ok(7) })
             .await;
 
-        assert_eq!(outcome, Ok(7));
+        assert_eq!(outcome.expect("the work succeeded"), 7);
 
         let snapshot = queue.snapshot().await;
 
@@ -345,9 +418,9 @@ timestamps up by eye"
     async fn keeps_the_reason_a_job_failed() {
         let queue = WorkQueue::new(1);
 
-        let outcome: Result<(), String> = queue
-            .run("thumbnails", "film.mkv", None, async {
-                Err("no such file".to_owned())
+        let outcome: Result<(), std::io::Error> = queue
+            .run(thumbnails("film.mkv"), None, async {
+                Err(std::io::Error::other("no such file"))
             })
             .await;
 
@@ -356,7 +429,60 @@ timestamps up by eye"
         let snapshot = queue.snapshot().await;
 
         assert_eq!(snapshot.jobs[0].state, JobState::Failed);
-        assert_eq!(snapshot.jobs[0].detail.as_deref(), Some("no such file"));
+        assert_eq!(
+            snapshot.jobs[0]
+                .failure
+                .as_ref()
+                .map(|failure| failure.message.as_str()),
+            Some("no such file")
+        );
+    }
+
+    /// The chain behind a failure is walked all the way down, not just the
+    /// message at the top of it.
+    #[tokio::test]
+    async fn captures_the_chain_of_causes_behind_a_failure() {
+        #[derive(Debug)]
+        struct RootCause;
+
+        impl std::fmt::Display for RootCause {
+            fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(formatter, "no such file or directory")
+            }
+        }
+
+        impl std::error::Error for RootCause {}
+
+        #[derive(Debug)]
+        struct WrappedFailure(RootCause);
+
+        impl std::fmt::Display for WrappedFailure {
+            fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(formatter, "could not start ffmpeg")
+            }
+        }
+
+        impl std::error::Error for WrappedFailure {
+            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+                Some(&self.0)
+            }
+        }
+
+        let queue = WorkQueue::new(1);
+
+        let outcome: Result<(), WrappedFailure> = queue
+            .run(thumbnails("film.mkv"), None, async {
+                Err(WrappedFailure(RootCause))
+            })
+            .await;
+
+        assert!(outcome.is_err());
+
+        let snapshot = queue.snapshot().await;
+        let failure = snapshot.jobs[0].failure.as_ref().expect("a failure");
+
+        assert_eq!(failure.message, "could not start ffmpeg");
+        assert_eq!(failure.chain, vec!["no such file or directory".to_owned()]);
     }
 
     #[tokio::test]
@@ -367,10 +493,10 @@ timestamps up by eye"
 
         let one = tokio::spawn(async move {
             first
-                .run("thumbnails", "a.mkv", None, async {
+                .run(thumbnails("a.mkv"), None, async {
                     tokio::time::sleep(Duration::from_millis(60)).await;
 
-                    Ok::<(), String>(())
+                    Ok::<(), std::io::Error>(())
                 })
                 .await
         });
@@ -379,7 +505,9 @@ timestamps up by eye"
 
         let two = tokio::spawn(async move {
             second
-                .run("thumbnails", "b.mkv", None, async { Ok::<(), String>(()) })
+                .run(thumbnails("b.mkv"), None, async {
+                    Ok::<(), std::io::Error>(())
+                })
                 .await
         });
 
@@ -402,8 +530,15 @@ timestamps up by eye"
     async fn counts_what_is_waiting_and_what_is_running() {
         let queue = WorkQueue::new(2);
 
-        let outcome: Result<(), String> = queue
-            .run("trickplay", "a.mkv", None, async { Ok(()) })
+        let outcome: Result<(), std::io::Error> = queue
+            .run(
+                TestJob {
+                    kind: "trickplay",
+                    subject: "a.mkv",
+                },
+                None,
+                async { Ok(()) },
+            )
             .await;
 
         assert!(outcome.is_ok());
@@ -428,10 +563,9 @@ timestamps up by eye"
         let handle = tokio::spawn(async move {
             let _ = running
                 .run(
-                    "thumbnails",
-                    "film.mkv",
+                    thumbnails("film.mkv"),
                     None,
-                    std::future::pending::<Result<u8, String>>(),
+                    std::future::pending::<Result<u8, std::io::Error>>(),
                 )
                 .await;
         });

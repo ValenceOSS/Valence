@@ -115,6 +115,31 @@ pub struct DownloadFile {
     pub size_bytes: Option<u64>,
 }
 
+/// A prepared download, as a piece of work on [`crate::queue::WorkQueue`].
+pub struct DownloadJob {
+    subject: String,
+}
+
+impl DownloadJob {
+    /// A download job for the given subject, in a form a person recognises.
+    #[must_use]
+    pub fn new(subject: impl Into<String>) -> Self {
+        Self {
+            subject: subject.into(),
+        }
+    }
+}
+
+impl crate::queue::Job for DownloadJob {
+    fn kind(&self) -> &'static str {
+        "downloads"
+    }
+
+    fn subject(&self) -> String {
+        self.subject.clone()
+    }
+}
+
 /// What can go wrong preparing one.
 #[derive(Debug, Error)]
 pub enum DownloadError {
@@ -410,7 +435,14 @@ pub async fn generate(
 
         while let Ok(Some(line)) = lines.next_line().await {
             if stop.load(Ordering::Relaxed) {
-                let _ = child.start_kill();
+                if let Err(error) = child.start_kill() {
+                    tracing::debug!(
+                        target: "download",
+                        %error,
+                        subject = %id,
+                        "could not stop ffmpeg, it had likely already exited"
+                    );
+                }
 
                 break;
             }
@@ -520,7 +552,14 @@ async fn join(ffmpeg: &str, directory: &Path) -> Result<(), DownloadError> {
         .is_ok_and(|found| found.len() > 0);
 
     if !joined.status.success() || !wrote {
-        let _ = tokio::fs::remove_file(&working).await;
+        if let Err(error) = tokio::fs::remove_file(&working).await {
+            tracing::warn!(
+                target: "download",
+                %error,
+                path = %working.display(),
+                "could not clear a partial download after joining its parts failed"
+            );
+        }
 
         return Err(DownloadError::NoOutput(
             String::from_utf8_lossy(&joined.stderr).trim().to_owned(),
@@ -531,8 +570,23 @@ async fn join(ffmpeg: &str, directory: &Path) -> Result<(), DownloadError> {
         .await
         .map_err(DownloadError::Directory)?;
 
-    let _ = tokio::fs::remove_dir_all(directory.join(PARTS_DIRECTORY)).await;
-    let _ = tokio::fs::remove_file(directory.join(JOIN_LIST)).await;
+    if let Err(error) = tokio::fs::remove_dir_all(directory.join(PARTS_DIRECTORY)).await {
+        tracing::warn!(
+            target: "download",
+            %error,
+            path = %directory.join(PARTS_DIRECTORY).display(),
+            "could not clear the parts left over from a finished download"
+        );
+    }
+
+    if let Err(error) = tokio::fs::remove_file(directory.join(JOIN_LIST)).await {
+        tracing::warn!(
+            target: "download",
+            %error,
+            path = %directory.join(JOIN_LIST).display(),
+            "could not clear the join list left over from a finished download"
+        );
+    }
 
     Ok(())
 }
