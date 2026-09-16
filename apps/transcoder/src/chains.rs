@@ -78,6 +78,25 @@ fn software_format(bit_depth: u8) -> &'static str {
 /// something else — which is not hypothetical: this shape said a sheet came
 /// down and was tiled by ffmpeg long after it stopped doing either, and a
 /// preview chain it never tested shipped unproven.
+///
+/// One thing is deliberately **not** mirrored: `QSV`'s mapping onto its own
+/// frames. In a real chain the decoder hands over `VAAPI` surfaces and
+/// `hwmap=derive_device=qsv` is what carries them across; here there is no
+/// decoder, and a synthetic source cannot imitate one. Both ways of trying were
+/// measured on an i5-13500 with iHD 26.2.4:
+///
+/// * uploading to the filter device, which is `QSV`, makes the mapping
+///   `QSV` onto `QSV` and **segfaults ffmpeg** — no message, no exit code worth
+///   reading, which is why this failure was a mystery for as long as it was;
+/// * uploading to `VAAPI` instead leaves `vpp_qsv` unable to configure its
+///   output pad, failing with `-38 Function not implemented`.
+///
+/// So the sheet shape asks the question it can actually answer: whether this
+/// device scales and draws. Measured the same day, that chain encodes four
+/// frames and exits clean on the machine whose sheets this said were impossible.
+/// The mapping is exercised by playback, which has the decoder it needs.
+///
+/// See VAL-199.
 fn chain_for(
     shape: ChainShape,
     pipeline: HardwarePipeline,
@@ -103,9 +122,6 @@ fn chain_for(
             )
         }
         ChainShape::Sheet => {
-            let mapping = pipeline
-                .maps_onto_device
-                .map_or_else(String::new, |filter| format!("{filter},"));
             let coming_down = if draws_on_device {
                 String::new()
             } else {
@@ -121,7 +137,7 @@ fn chain_for(
             };
 
             format!(
-                "fps=1/1,{mapping}{scaler}=w={}:h={}{narrowing}{coming_down}",
+                "fps=1/1,{scaler}=w={}:h={}{narrowing}{coming_down}",
                 half.0,
                 half.1,
                 scaler = pipeline.scaler,
@@ -212,6 +228,8 @@ enum ProbeOutcome {
     Complained(String),
     /// Exited non-zero having said nothing anybody can act on.
     SaidNothing,
+    /// Died on a signal, which says nothing and never will.
+    Crashed(String),
     WouldNotStart(String),
 }
 
@@ -245,10 +263,37 @@ async fn run_probe(ffmpeg: &str, arguments: &[String]) -> ProbeOutcome {
 
     match outcome {
         Ok(output) if output.status.success() => ProbeOutcome::Ran,
-        Ok(output) => complaint(&String::from_utf8_lossy(&output.stderr))
-            .map_or(ProbeOutcome::SaidNothing, ProbeOutcome::Complained),
+        Ok(output) => match killed_by(output.status) {
+            Some(signal) => ProbeOutcome::Crashed(format!("ffmpeg died on signal {signal}")),
+            None => complaint(&String::from_utf8_lossy(&output.stderr))
+                .map_or(ProbeOutcome::SaidNothing, ProbeOutcome::Complained),
+        },
         Err(failure) => ProbeOutcome::WouldNotStart(failure.to_string()),
     }
+}
+
+/// The signal a process died on, where one killed it.
+///
+/// A crash is worth telling apart from a failure, because the two want opposite
+/// things. A failure printed a reason and the last line of it is worth reading.
+/// A crash printed nothing — there was no reason, only an ending — and reading
+/// the last line anyway produces a diagnosis invented from whatever ffmpeg
+/// happened to be saying when it died. That is how `VAL-199` came to be reported
+/// as a colour space being unknown.
+///
+/// The number rather than a name, as elsewhere: `libc` is not a dependency here,
+/// and an operator reading "signal 11" can look it up where a wrong name would
+/// mislead.
+#[cfg(unix)]
+fn killed_by(status: std::process::ExitStatus) -> Option<i32> {
+    use std::os::unix::process::ExitStatusExt as _;
+
+    status.signal()
+}
+
+#[cfg(not(unix))]
+fn killed_by(_status: std::process::ExitStatus) -> Option<i32> {
+    None
 }
 
 /// Runs one chain and says whether this machine will have it.
@@ -274,7 +319,9 @@ async fn verify_chain(
 
     let (works, reason) = match outcome {
         ProbeOutcome::Ran => (true, None),
-        ProbeOutcome::Complained(said) | ProbeOutcome::WouldNotStart(said) => (false, Some(said)),
+        ProbeOutcome::Complained(said)
+        | ProbeOutcome::WouldNotStart(said)
+        | ProbeOutcome::Crashed(said) => (false, Some(said)),
         ProbeOutcome::SaidNothing => (
             false,
             Some("ffmpeg would not run the chain, and said nothing about why".to_owned()),
@@ -505,6 +552,52 @@ mod tests {
             .any(|pair| pair == ["-c:v", "mjpeg_qsv"]));
         assert!(!chain_of(&arguments).contains("hwdownload"), "it stays up");
         assert!(!chain_of(&arguments).contains("tile="), "no grid here");
+    }
+
+    /// The regression this file exists to stop repeating. Asking `QSV` to map
+    /// frames onto its own device, which is what happens when the probe uploads
+    /// straight to the filter device, segfaults ffmpeg — and a segfault says
+    /// nothing, so the failure reads as a mystery rather than a fault. Measured
+    /// on an i5-13500 with iHD 26.2.4. See VAL-199.
+    #[test]
+    fn never_asks_qsv_to_map_frames_it_is_already_holding() {
+        for bit_depth in [8_u8, 10_u8] {
+            let arguments = chain_probe_arguments(
+                HardwareAccel::Qsv,
+                ChainShape::Sheet,
+                bit_depth,
+                "mjpeg_qsv",
+                "/dev/dri/renderD128",
+            );
+
+            assert!(
+                !chain_of(&arguments).contains("hwmap"),
+                "{bit_depth} bits: {}",
+                chain_of(&arguments)
+            );
+        }
+    }
+
+    /// What is left is the question the probe can answer: whether this device
+    /// scales and draws. Measured on the same machine, that chain encodes four
+    /// frames and exits clean.
+    #[test]
+    fn still_proves_qsv_scales_and_draws() {
+        let arguments = chain_probe_arguments(
+            HardwareAccel::Qsv,
+            ChainShape::Sheet,
+            8,
+            "mjpeg_qsv",
+            "/dev/dri/renderD128",
+        );
+
+        let chain = chain_of(&arguments);
+
+        assert!(chain.contains("vpp_qsv=w="), "{chain}");
+        assert!(chain.contains("hwupload"), "{chain}");
+        assert!(arguments
+            .windows(2)
+            .any(|pair| pair == ["-c:v", "mjpeg_qsv"]));
     }
 
     /// NVIDIA has no JPEG encoder, so that chain really does come down.
