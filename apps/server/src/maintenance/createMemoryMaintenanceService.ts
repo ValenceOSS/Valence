@@ -5,14 +5,7 @@ import type { MaintenanceService } from './MaintenanceService';
  * the routes that ask for housekeeping, which care that a job was accepted and not what it does.
  */
 const createMemoryMaintenanceService = (): MaintenanceService => ({
-  cleanupImageCache: () => Promise.resolve({ jobId: 'job-cleanup-image-cache', state: 'queued' }),
-  cleanupArtefactCache: () =>
-    Promise.resolve({ jobId: 'job-cleanup-artefact-cache', state: 'queued' }),
-  cleanupSessions: () => Promise.resolve({ jobId: 'job-cleanup-sessions', state: 'queued' }),
-  checkCatalogueConnectivity: () =>
-    Promise.resolve({ jobId: 'job-check-catalogue-connectivity', state: 'queued' }),
-  readCertificatesAgain: () =>
-    Promise.resolve({ jobId: 'job-read-certificates-again', state: 'queued' }),
+  run: (kind) => Promise.resolve({ jobId: `job-${kind}`, state: 'queued' }),
 });
 
 export { createMemoryMaintenanceService };

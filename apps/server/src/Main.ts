@@ -1243,11 +1243,12 @@ const jobs = await createJobQueue({
   onProblem: (message) => {
     log.error('jobs', `job queue: ${message}`);
   },
-  onStarted: (entry) => {
-    void jobHistory
+  onStarted: async (entry) => {
+    realtime.publish('jobs', { event: 'started', ...entry }, { kind: 'everyone' });
+
+    await jobHistory
       .recordStarted({ id: entry.jobId, kind: entry.kind, subject: entry.subject })
       .catch(() => {});
-    realtime.publish('jobs', { event: 'started', ...entry }, { kind: 'everyone' });
   },
   onProgress: (entry) => {
     void jobHistory

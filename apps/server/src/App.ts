@@ -199,10 +199,6 @@ import {
   REGENERATE_TRICKPLAY_JOB,
   FETCH_LOGOS_JOB,
   DETECT_SEGMENTS_JOB,
-  CLEANUP_IMAGE_CACHE_JOB,
-  CLEANUP_ARTEFACT_CACHE_JOB,
-  CLEANUP_SESSIONS_JOB,
-  CHECK_CATALOGUE_CONNECTIVITY_JOB,
   READ_CERTIFICATES_AGAIN_JOB,
 } from '@ValenceServer/jobs/JobQueue';
 import { createMemoryMaintenanceService } from '@ValenceServer/maintenance/createMemoryMaintenanceService';
@@ -2009,7 +2005,7 @@ const createApp = ({
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {
-      await maintenance.readCertificatesAgain();
+      await maintenance.run(READ_CERTIFICATES_AGAIN_JOB);
     }
 
     if (updated.previewQuality !== before.previewQuality) {
@@ -2134,21 +2130,8 @@ const createApp = ({
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    const maintenanceRunners: Record<
-      string,
-      () => Promise<{ jobId: string | null; state: string }>
-    > = {
-      [CLEANUP_IMAGE_CACHE_JOB]: () => maintenance.cleanupImageCache(),
-      [CLEANUP_ARTEFACT_CACHE_JOB]: () => maintenance.cleanupArtefactCache(),
-      [CLEANUP_SESSIONS_JOB]: () => maintenance.cleanupSessions(),
-      [CHECK_CATALOGUE_CONNECTIVITY_JOB]: () => maintenance.checkCatalogueConnectivity(),
-      [READ_CERTIFICATES_AGAIN_JOB]: () => maintenance.readCertificatesAgain(),
-    };
-
-    const maintenanceRunner = maintenanceRunners[kind];
-
-    if (maintenanceRunner !== undefined) {
-      const asked = await maintenanceRunner();
+    if (definition !== undefined && !definition.needsLibrary) {
+      const asked = await maintenance.run(kind);
 
       return asked.jobId === null
         ? context.json({ error: 'Nothing is running that under any id.' }, 404)
