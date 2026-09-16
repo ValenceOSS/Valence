@@ -88,21 +88,25 @@ const JobsPanel = ({
         )}
       </DialogCompanion>
 
-      <PanelCard
-        title="Background jobs"
-        isFlush
-        actions={
-          <span className="text-xs text-text-muted">
-            {monitor === null
-              ? '—'
-              : `${monitor.queue.running.toString()} running · ${monitor.queue.queued.toString()} waiting · ${monitor.queue.concurrency.toString()} at a time${
-                  failures === 0 ? '' : ` · ${failures.toString()} failed`
-                }`}
-          </span>
-        }
-      >
-        <BackgroundJobs monitor={monitor} isUnreachable={isUnreachable} pageSize={10} />
-      </PanelCard>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <PanelCard
+          title="Background jobs"
+          isFlush
+          actions={
+            <span className="text-xs text-text-muted">
+              {monitor === null
+                ? '—'
+                : `${monitor.queue.running.toString()} running · ${monitor.queue.queued.toString()} waiting · ${monitor.queue.concurrency.toString()} at a time${
+                    failures === 0 ? '' : ` · ${failures.toString()} failed`
+                  }`}
+            </span>
+          }
+        >
+          <BackgroundJobs monitor={monitor} isUnreachable={isUnreachable} pageSize={10} />
+        </PanelCard>
+
+        <JobHistory definitions={definitions} onViewLogs={onViewLogs} />
+      </div>
 
       <PanelCard title="Run a job" isFlush>
         <JobRunner
@@ -115,8 +119,6 @@ const JobsPanel = ({
           onOpenSchedule={onOpenSchedule}
         />
       </PanelCard>
-
-      <JobHistory definitions={definitions} onViewLogs={onViewLogs} />
     </div>
   );
 };

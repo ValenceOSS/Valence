@@ -58,7 +58,7 @@ const AdminDialog = ({ panel, job, onPanel, onJob, onClose }: AdminDialogProps) 
       isOpen={panel !== null}
       onClose={onClose}
       size="stage"
-      className="sm:w-[min(78rem,94vw)]"
+      className="sm:w-[min(100rem,96vw)]"
     >
       <Tabs value={showing} onValueChange={onPanel}>
         <DialogTitle
