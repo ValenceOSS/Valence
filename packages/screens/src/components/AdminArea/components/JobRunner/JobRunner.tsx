@@ -30,6 +30,13 @@ const WORKING_SHOWN = 4;
  * far along, and a way to start or stop it by hand. Pressing into a job opens what makes it run on
  * its own, so the list stays a list rather than becoming a page of settings.
  *
+ * Work against a library waits for work against a library, and nothing else waits for anything. The
+ * rule was that one running job disabled Run now on every other, which is right for the thing it was
+ * written for — two scans of one library at once is a fight over the same files — and wrong for
+ * everything else it caught. Asking the transcoder whether it is answering is a ping down a socket,
+ * and it was refused for the whole of a preview render, which is hours: the one job you want when
+ * something looks wrong was the one the page would not let you run.
+ *
  * @param definitions - The jobs the server offers.
  * @param libraries - The libraries a job can be run against.
  * @param progress - What is running now, by library.
@@ -77,11 +84,29 @@ const JobRunner = ({
     [onRun],
   );
 
-  const isBusy = definitions.some((definition) => summaryFor(definition.kind) !== null);
+  const isBusyWithALibrary = definitions.some(
+    (definition) => definition.needsLibrary && summaryFor(definition.kind) !== null,
+  );
 
-  const live = useRef({ summaryFor, jobIdsFor, working, askOrRun, onStop, onOpenSchedule, isBusy });
+  const live = useRef({
+    summaryFor,
+    jobIdsFor,
+    working,
+    askOrRun,
+    onStop,
+    onOpenSchedule,
+    isBusyWithALibrary,
+  });
 
-  live.current = { summaryFor, jobIdsFor, working, askOrRun, onStop, onOpenSchedule, isBusy };
+  live.current = {
+    summaryFor,
+    jobIdsFor,
+    working,
+    askOrRun,
+    onStop,
+    onOpenSchedule,
+    isBusyWithALibrary,
+  };
 
   const columns = useMemo<DataTableColumn<JobDefinition>[]>(
     () => [
@@ -201,7 +226,9 @@ const JobRunner = ({
                       icon: <Icon of={PlayIcon} size={15} />,
                       isDestructive: row.original.destructive,
                       isDisabled:
-                        live.current.isBusy && live.current.summaryFor(row.original.kind) === null,
+                        row.original.needsLibrary &&
+                        live.current.isBusyWithALibrary &&
+                        live.current.summaryFor(row.original.kind) === null,
                       onChoose: () => {
                         live.current.askOrRun(row.original);
                       },

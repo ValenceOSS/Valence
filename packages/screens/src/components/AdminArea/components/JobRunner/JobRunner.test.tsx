@@ -343,6 +343,51 @@ describe('JobRunner', () => {
     );
   });
 
+  it('still runs a server-wide job while a library is busy, which is when it is wanted most', async () => {
+    const onRun = vi.fn();
+    const user = userEvent.setup();
+    const definitions: JobDefinition[] = [
+      ...DEFINITIONS,
+      {
+        kind: 'server.checkTranscoder',
+        label: 'Check the transcoder',
+        description: 'Asks the transcoder whether it is still answering.',
+        needsLibrary: false,
+        destructive: false,
+      },
+    ];
+
+    const progress = new Map<string, ScanEntry>([
+      [
+        'lib-movies',
+        {
+          libraryId: 'lib-movies',
+          kind: 'library.scan',
+          phase: 'probing',
+          processed: 1,
+          total: 4,
+          jobId: 'job-1',
+        },
+      ],
+    ]);
+
+    render(
+      <JobRunner
+        definitions={definitions}
+        libraries={[MOVIES]}
+        progress={progress}
+        working={[]}
+        onRun={onRun}
+        onStop={vi.fn()}
+        onOpenSchedule={vi.fn()}
+      />,
+    );
+
+    await choose(user, 'Check the transcoder', /Run now/);
+
+    expect(onRun).toHaveBeenCalledWith('server.checkTranscoder');
+  });
+
   it('says which jobs are server-wide rather than about the libraries', async () => {
     const onRun = vi.fn();
     const user = userEvent.setup();
