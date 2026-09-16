@@ -3,6 +3,9 @@ import { showSlug } from '@ValenceCore/functions/showSlug';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
+import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { useHidden } from '@ValenceClient/library/useHidden';
+import { ConfirmHiding } from '@ValenceScreens/components/ConfirmHiding/ConfirmHiding';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
@@ -24,48 +27,57 @@ const kindOf = (section: string): BrowseKind =>
  * A grid of everything of one sort: programmes, films, what arrived lately, or what is kept.
  */
 const BrowsePage = () => {
-  const { user, rememberItems, progress, setStartOverride } = useShell();
+  const { rememberItems, progress, setStartOverride } = useShell();
   const { place, go } = usePlace();
-  const favourites = useFavourites(user.id);
+  const watching = useWatchingProfile();
+  const favourites = useFavourites(watching);
+  const hiding = useHidden(watching);
   const { mayAdminister } = useWhatIMayDo();
 
   return (
-    <BrowseArea
-      kind={kindOf(place.section)}
-      favourites={[...favourites.kept]}
-      onPlay={(media, startSeconds) => {
-        setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
-        go({ playing: media.id });
-      }}
-      onInspect={(media) => {
-        go({ inspecting: media.id });
-      }}
-      {...(mayAdminister
-        ? {
-            onAddLibrary: () => {
-              go({ admin: 'libraries' });
-            },
+    <>
+      <ConfirmHiding hiding={hiding} />
+
+      <BrowseArea
+        kind={kindOf(place.section)}
+        favourites={[...favourites.kept]}
+        onPlay={(media, startSeconds) => {
+          setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
+          go({ playing: media.id });
+        }}
+        onInspect={(media) => {
+          go({ inspecting: media.id });
+        }}
+        {...(mayAdminister
+          ? {
+              onAddLibrary: () => {
+                go({ admin: 'libraries' });
+              },
+            }
+          : {})}
+        onOpenShow={(media) => {
+          const series = media.seriesId ?? showSlug(media.seriesTitle ?? '');
+
+          if (series !== '') {
+            go({ show: series });
           }
-        : {})}
-      onOpenShow={(media) => {
-        const series = media.seriesId ?? showSlug(media.seriesTitle ?? '');
+        }}
+        onItemsLoaded={rememberItems}
+        watchedFractionFor={(mediaId) => {
+          const found = progress.get(mediaId);
 
-        if (series !== '') {
-          go({ show: series });
-        }
-      }}
-      onItemsLoaded={rememberItems}
-      watchedFractionFor={(mediaId) => {
-        const found = progress.get(mediaId);
-
-        return found === undefined ? undefined : watchedFraction(found);
-      }}
-      resumeFor={(mediaId) => resumeFor(progress, mediaId)}
-      isKept={favourites.isKept}
-      onToggleKept={(media) => {
-        favourites.toggle(media.id);
-      }}
-    />
+          return found === undefined ? undefined : watchedFraction(found);
+        }}
+        resumeFor={(mediaId) => resumeFor(progress, mediaId)}
+        isKept={favourites.isKept}
+        onToggleKept={(media) => {
+          favourites.toggle(media.id);
+        }}
+        onHide={(media) => {
+          hiding.ask(media);
+        }}
+      />
+    </>
   );
 };
 

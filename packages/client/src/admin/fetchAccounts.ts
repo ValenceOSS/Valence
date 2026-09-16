@@ -2,6 +2,7 @@ import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readRefusal } from './readRefusal';
 import type { Refusal } from './readRefusal';
 import { z } from 'zod';
+import { ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
 
 const AccountSchema = z.object({
   id: z.string(),
@@ -12,6 +13,7 @@ const AccountSchema = z.object({
   banReason: z.string().nullable(),
   position: z.number().nullable(),
   isAdministrator: z.boolean(),
+  face: ViewerProfileSchema.nullable().default(null),
   roles: z.array(z.string()),
 });
 

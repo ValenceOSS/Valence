@@ -37,6 +37,7 @@ const AdminOverviewSchema = z.object({
     hardwareAccel: z.string().default(''),
     previewQuality: PreviewQualitySchema.default('high'),
     showsProfilesBeforeSignIn: z.boolean().default(false),
+    certificationRegion: z.string().default('GB'),
   }),
   transcoder: z.object({
     isReachable: z.boolean(),
@@ -729,6 +730,25 @@ const saveShowsProfilesBeforeSignIn = async (
   return response !== null && response.ok;
 };
 
+/**
+ * Sets the country whose certificates this server reads, so that a ceiling means what a household
+ * expects it to mean. Every certificate a catalogue held is already stored, so changing this reads
+ * them again rather than fetching or rescanning anything.
+ *
+ * @param certificationRegion - The two-letter country.
+ * @returns Whether it was written.
+ */
+const saveCertificationRegion = async (certificationRegion: string): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ certificationRegion }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 const savePreviewQuality = async (previewQuality: PreviewQuality): Promise<boolean> => {
   const response = await fetch('/api/admin/settings', {
     method: 'PATCH',
@@ -783,6 +803,7 @@ export {
   saveCatalogueKey,
   saveHardwareAccel,
   savePreviewQuality,
+  saveCertificationRegion,
   saveShowsProfilesBeforeSignIn,
   fetchActiveSessions,
   watchActiveSessions,

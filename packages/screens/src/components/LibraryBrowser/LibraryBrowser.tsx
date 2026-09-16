@@ -63,6 +63,7 @@ const WATCHABLE: ReadonlySet<LibraryKind> = new Set(['movies', 'shows']);
  * @param name - What this instance is called, for the wordmark held up while it reads.
  * @param isKept - Whether each item is kept.
  * @param onToggleKept - Told to keep something, or stop.
+ * @param onHide - Told to hide something from this viewer.
  * @param onReading - Told whether it is still reading, so that whoever is holding a screen over it
  *   can keep holding it until there is something behind it worth showing.
  */
@@ -76,6 +77,7 @@ const LibraryBrowser = ({
   onOpenShow,
   isKept,
   onToggleKept,
+  onHide,
   onAddLibrary,
   onPlay,
   onShow,
@@ -345,6 +347,7 @@ const LibraryBrowser = ({
                           {...(onOpenShow === undefined ? {} : { onOpenShow })}
                           {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}
                           {...(onToggleKept === undefined ? {} : { onToggleKept })}
+                          {...(onHide === undefined ? {} : { onHide })}
                         />
                       </RevealItem>
                     ))}

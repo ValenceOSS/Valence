@@ -279,6 +279,105 @@ const rating = pgTable(
   ],
 );
 
+const hidden = pgTable(
+  'hidden',
+  {
+    id: text('id').primaryKey(),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    mediaItemId: text('mediaItemId').references(() => mediaItem.id, { onDelete: 'cascade' }),
+    seriesId: text('seriesId').references(() => series.id, { onDelete: 'cascade' }),
+    libraryId: text('libraryId').references(() => library.id, { onDelete: 'cascade' }),
+    hiddenAt: timestamp('hiddenAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('hidden_profile_item_idx')
+      .on(table.profileId, table.mediaItemId)
+      .where(sql`${table.mediaItemId} is not null`),
+    uniqueIndex('hidden_profile_series_idx')
+      .on(table.profileId, table.seriesId)
+      .where(sql`${table.seriesId} is not null`),
+    uniqueIndex('hidden_profile_library_idx')
+      .on(table.profileId, table.libraryId)
+      .where(sql`${table.libraryId} is not null`),
+    index('hidden_item_idx').on(table.mediaItemId),
+    index('hidden_series_idx').on(table.seriesId),
+    index('hidden_library_idx').on(table.libraryId),
+    check(
+      'hidden_one_subject',
+      sql`num_nonnulls(${table.mediaItemId}, ${table.seriesId}, ${table.libraryId}) = 1`,
+    ),
+  ],
+);
+
+const libraryBlock = pgTable(
+  'library_block',
+  {
+    userId: text('userId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    blockedAt: timestamp('blockedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.libraryId] }),
+    index('library_block_library_idx').on(table.libraryId),
+  ],
+);
+
+const ageCeiling = pgTable(
+  'age_ceiling',
+  {
+    userId: text('userId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    maximumAge: integer('maximumAge').notNull(),
+    allowsUnrated: boolean('allowsUnrated').notNull().default(false),
+    setAt: timestamp('setAt').notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.libraryId] }),
+    index('age_ceiling_library_idx').on(table.libraryId),
+    check('age_ceiling_range', sql`${table.maximumAge} between 0 and 21`),
+  ],
+);
+
+const ageException = pgTable(
+  'age_exception',
+  {
+    id: text('id').primaryKey(),
+    userId: text('userId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    mediaItemId: text('mediaItemId').references(() => mediaItem.id, { onDelete: 'cascade' }),
+    seriesId: text('seriesId').references(() => series.id, { onDelete: 'cascade' }),
+    effect: text('effect').notNull(),
+    grantedBy: text('grantedBy').references(() => user.id, { onDelete: 'set null' }),
+    grantedAt: timestamp('grantedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('age_exception_item_idx')
+      .on(table.userId, table.mediaItemId)
+      .where(sql`${table.mediaItemId} is not null`),
+    uniqueIndex('age_exception_series_idx')
+      .on(table.userId, table.seriesId)
+      .where(sql`${table.seriesId} is not null`),
+    index('age_exception_subject_item_idx').on(table.mediaItemId),
+    index('age_exception_subject_series_idx').on(table.seriesId),
+    check(
+      'age_exception_one_subject',
+      sql`num_nonnulls(${table.mediaItemId}, ${table.seriesId}) = 1`,
+    ),
+    check('age_exception_effect', sql`${table.effect} in ('allow', 'deny')`),
+  ],
+);
+
 const preparedDownload = pgTable(
   'prepared_download',
   {
@@ -551,6 +650,8 @@ const mediaItem = pgTable(
     versionLabel: text('versionLabel'),
     seriesId: text('seriesId').references(() => series.id, { onDelete: 'set null' }),
     seriesTitle: text('seriesTitle'),
+    certifications: jsonb('certifications'),
+    certificationAge: integer('certificationAge'),
     seasonNumber: integer('seasonNumber'),
     episodeNumber: integer('episodeNumber'),
     overview: text('overview'),
@@ -892,6 +993,10 @@ export {
   jobRunIssue,
   resourceSample,
   rating,
+  hidden,
+  libraryBlock,
+  ageCeiling,
+  ageException,
   user,
   session,
   account,

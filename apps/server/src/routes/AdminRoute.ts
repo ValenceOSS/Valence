@@ -36,6 +36,7 @@ const AdminSettingsSchema = z
     cookieSecure: z.boolean(),
     hardwareAccel: z.string(),
     previewQuality: z.enum(PREVIEW_QUALITIES),
+    certificationRegion: z.string().length(2),
     showsProfilesBeforeSignIn: z.boolean(),
   })
   .openapi('AdminSettings');
@@ -105,6 +106,7 @@ const AdminSettingsRequestSchema = z
     catalogueApiKey: z.string().optional(),
     hardwareAccel: z.string().optional(),
     previewQuality: z.enum(PREVIEW_QUALITIES).optional(),
+    certificationRegion: z.string().length(2).optional(),
     showsProfilesBeforeSignIn: z.boolean().optional(),
   })
   .openapi('AdminSettingsRequest');

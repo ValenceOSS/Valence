@@ -14,6 +14,7 @@ type SearchAreaProps = {
   resumeFor?: (mediaId: string) => number | null;
   isKept?: (mediaId: string) => boolean;
   onToggleKept?: (media: MediaSummary) => void;
+  onHide?: (media: MediaSummary) => void;
 };
 
 export type { SearchAreaProps, SearchKind };

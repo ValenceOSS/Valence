@@ -8,6 +8,7 @@ import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import { resolveSeriesKey } from './resolveSeriesKey';
 import type { MediaStore } from './scanLibrary';
+import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
 
 /**
  * The library's tables as the scanner uses them: what is stored now, what to write, what to remove,
@@ -19,6 +20,7 @@ import type { MediaStore } from './scanLibrary';
  */
 const createMediaStore = (
   db: ValenceDatabase,
+  certificationRegion: () => Promise<string> = () => Promise.resolve('GB'),
 ): MediaStore & {
   clear: (libraryId: string) => Promise<number>;
   saveOverride: (row: {
@@ -129,6 +131,11 @@ const createMediaStore = (
       genres: row.metadata.genres ?? null,
       castMembers: row.metadata.cast ?? null,
       rating: row.metadata.rating ?? null,
+      certifications: row.metadata.certifications ?? null,
+      certificationAge: certificationAgeOf(
+        await certificationRegion(),
+        row.metadata.certifications ?? null,
+      ),
       posterUrl: row.metadata.posterUrl ?? null,
       backdropUrl: row.metadata.backdropUrl ?? null,
       externalId: row.metadata.externalId ?? null,

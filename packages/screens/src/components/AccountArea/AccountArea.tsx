@@ -5,6 +5,7 @@ import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { ACCOUNT_PANELS } from '@ValenceScreens/components/AccountArea/accountPanels';
 import { SettingList } from '@ValenceUI/SettingList';
 import { TabPanel } from '@ValenceUI/TabPanel';
+import { HiddenPanel } from '@ValenceScreens/components/AccountArea/components/HiddenPanel/HiddenPanel';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { staggerVariants } from '@ValenceUI/animations/reveal';
 import { ProfileSettings } from '@ValenceScreens/components/AccountArea/components/ProfileSettings/ProfileSettings';
@@ -58,6 +59,10 @@ const AccountArea = ({ user, panel, profile, draft, onDraft, onChanged }: Accoun
         <PanelCard title="Watch history" isFlush>
           <HistoryPanel />
         </PanelCard>
+      </TabPanel>
+
+      <TabPanel value="hidden" travel={travel}>
+        <HiddenPanel />
       </TabPanel>
 
       <TabPanel value="security" className="flex flex-col gap-4" travel={travel}>

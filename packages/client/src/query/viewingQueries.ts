@@ -1,6 +1,7 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { fetchFavourites } from '@ValenceClient/library/fetchFavourites';
+import { fetchHidden } from '@ValenceClient/library/fetchHidden';
 import { fetchRatings, fetchHouseholdRating } from '@ValenceClient/library/fetchRatings';
 import type { RatingSubject } from '@ValenceClient/library/fetchRatings';
 import { fetchHistory, A_PAGE } from '@ValenceClient/history/fetchHistory';
@@ -84,6 +85,32 @@ const history = () =>
       last.length < A_PAGE ? undefined : all.reduce((count, page) => count + page.length, 0),
   });
 
-const viewingQueries = { progress, favourites, ratings, household, history, key: VIEWING };
+/**
+ * What this viewer has hidden from themselves, which the profile page lists so they can bring it
+ * back.
+ *
+ * Keyed by who is watching, because it is the one list here that differs between two people on the
+ * same account and is drawn for them by name. Held off until the face is known rather than asked for
+ * against nobody.
+ *
+ * @param profileId - Whose list to read.
+ * @returns The query.
+ */
+const hidden = (profileId: string | null) =>
+  queryOptions({
+    queryKey: [...VIEWING, 'hidden', profileId],
+    queryFn: () => fetchHidden(),
+    enabled: profileId !== null,
+  });
+
+const viewingQueries = {
+  progress,
+  favourites,
+  ratings,
+  household,
+  history,
+  hidden,
+  key: VIEWING,
+};
 
 export { viewingQueries };

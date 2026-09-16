@@ -19,6 +19,7 @@ const emptySettings = () =>
     pushPrivateKey: '',
     mediaDigestReadTo: null,
     jobsTimezone: '',
+    certificationRegion: 'GB',
   });
 
 /**

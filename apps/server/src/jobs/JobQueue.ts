@@ -24,6 +24,8 @@ const RegeneratePreviewsJobSchema = z.object({
   defaultAudioLanguage: z.string().nullable(),
 });
 
+const READ_CERTIFICATES_AGAIN_JOB = 'library.readCertificatesAgain';
+
 const PRUNE_HISTORY_JOB = 'library.pruneHistory';
 
 const FETCH_LOGOS_JOB = 'library.fetchLogos';
@@ -138,6 +140,7 @@ export {
   REGENERATE_TRICKPLAY_JOB,
   FETCH_LOGOS_JOB,
   PRUNE_HISTORY_JOB,
+  READ_CERTIFICATES_AGAIN_JOB,
   RegenerateTrickplayJobSchema,
   FetchLogosJobSchema,
   DETECT_SEGMENTS_JOB,

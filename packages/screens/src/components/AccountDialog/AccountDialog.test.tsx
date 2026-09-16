@@ -150,3 +150,22 @@ describe('AccountDialog', () => {
     expect(AccountDialog.displayName).toBe('AccountDialog');
   });
 });
+
+describe('what can actually be saved', () => {
+  it('offers Save on the profile, which is the one panel holding a draft', async () => {
+    draw('profile');
+
+    expect(await screen.findByRole('button', { name: 'Save' })).toBeInTheDocument();
+  });
+
+  it.each(['devices', 'links', 'history', 'hidden'])(
+    'offers none on %s, where everything acts the moment it is pressed',
+    async (panel) => {
+      draw(panel);
+
+      await screen.findByText('The panels');
+
+      expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    },
+  );
+});

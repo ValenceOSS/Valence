@@ -84,6 +84,7 @@ const createMemoryAuth = (
     pushPrivateKey: '',
     mediaDigestReadTo: null,
     jobsTimezone: '',
+    certificationRegion: 'GB',
   });
 
   const auth = createAuth({

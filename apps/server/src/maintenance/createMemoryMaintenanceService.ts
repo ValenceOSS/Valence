@@ -11,6 +11,8 @@ const createMemoryMaintenanceService = (): MaintenanceService => ({
   cleanupSessions: () => Promise.resolve({ jobId: 'job-cleanup-sessions', state: 'queued' }),
   checkCatalogueConnectivity: () =>
     Promise.resolve({ jobId: 'job-check-catalogue-connectivity', state: 'queued' }),
+  readCertificatesAgain: () =>
+    Promise.resolve({ jobId: 'job-read-certificates-again', state: 'queued' }),
 });
 
 export { createMemoryMaintenanceService };

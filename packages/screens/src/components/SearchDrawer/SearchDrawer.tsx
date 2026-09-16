@@ -8,6 +8,9 @@ import { SearchArea } from '@ValenceScreens/components/SearchArea/SearchArea';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
+import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { useHidden } from '@ValenceClient/library/useHidden';
+import { ConfirmHiding } from '@ValenceScreens/components/ConfirmHiding/ConfirmHiding';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import type { SearchDrawerProps } from './SearchDrawer.types';
@@ -20,9 +23,11 @@ import type { SearchDrawerProps } from './SearchDrawer.types';
  * @param onClose - Told it was dismissed.
  */
 const SearchDrawer = ({ isOpen, onClose }: SearchDrawerProps) => {
-  const { user, rememberItems, progress, setStartOverride } = useShell();
+  const { rememberItems, progress, setStartOverride } = useShell();
   const { place, go, replace } = usePlace();
-  const favourites = useFavourites(user.id);
+  const watching = useWatchingProfile();
+  const favourites = useFavourites(watching);
+  const hiding = useHidden(watching);
 
   return (
     <Drawer label="Search" isOpen={isOpen} onClose={onClose}>
@@ -33,6 +38,8 @@ const SearchDrawer = ({ isOpen, onClose }: SearchDrawerProps) => {
       </DialogTitle>
 
       <DialogContent className="px-0 py-0">
+        <ConfirmHiding hiding={hiding} />
+
         <SearchArea
           search={place.search}
           onSearchChange={(next) => {
@@ -59,6 +66,9 @@ const SearchDrawer = ({ isOpen, onClose }: SearchDrawerProps) => {
           isKept={favourites.isKept}
           onToggleKept={(media) => {
             favourites.toggle(media.id);
+          }}
+          onHide={(media) => {
+            hiding.ask(media);
           }}
         />
       </DialogContent>

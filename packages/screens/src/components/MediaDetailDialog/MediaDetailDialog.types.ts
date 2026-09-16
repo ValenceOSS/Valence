@@ -16,6 +16,8 @@ type MediaDetailDialogProps = {
   onRate?: (media: MediaSummary, stars: number | null) => void;
   onOpenPerson?: (member: CastMember) => void;
   onShare?: (media: MediaSummary) => void;
+  onHide?: (media: MediaSummary) => void;
+  onDecideForSomebody?: (media: MediaSummary) => void;
   onStartParty?: (media: MediaSummary) => void;
 };
 

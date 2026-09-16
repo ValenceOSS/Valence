@@ -12,6 +12,7 @@ type RailCardProps = {
   onOpenShow?: (media: MediaSummary) => void;
   isKept?: boolean;
   onToggleKept?: (media: MediaSummary) => void;
+  onHide?: (media: MediaSummary) => void;
   isSeries?: boolean;
   shape?: ComponentProps<typeof MediaCard>['shape'];
 };

@@ -23,6 +23,11 @@ import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { JobRunQuery } from '@ValenceContracts/schemas/JobRun';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ResourceSampleRange } from '@ValenceContracts/schemas/ResourceSample';
+import {
+  fetchExceptions,
+  fetchExceptionsOn,
+  fetchLibraryAccess,
+} from '@ValenceClient/admin/fetchLibraryAccess';
 
 const ADMIN = ['admin'] as const;
 
@@ -188,6 +193,19 @@ const accountPermissions = (accountId: string | null) =>
  *
  * @returns The query.
  */
+/**
+ * Which libraries an account is allowed to see, for the panel that decides it.
+ *
+ * @param accountId - The account being looked at.
+ * @returns The query.
+ */
+const libraryAccess = (accountId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'libraryAccess', accountId],
+    queryFn: () => fetchLibraryAccess(accountId ?? ''),
+    enabled: accountId !== null,
+  });
+
 const webhooks = () =>
   queryOptions({
     queryKey: [...ADMIN, 'webhooks'],
@@ -259,7 +277,37 @@ const folders = (path: string | null) =>
     retry: false,
   });
 
+/**
+ * What has been allowed or denied for an account whatever its ceiling says, for the panel that
+ * grants and forgets them.
+ *
+ * @param accountId - The account being looked at.
+ * @returns The query.
+ */
+const exceptions = (accountId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'exceptions', accountId],
+    queryFn: () => fetchExceptions(accountId ?? ''),
+    enabled: accountId !== null,
+  });
+
+/**
+ * Which accounts already have one thing allowed or denied, for the dialog that decides about it.
+ *
+ * @param subject - The item or programme, or nothing while none is being decided about.
+ * @returns The query.
+ */
+const exceptionsOn = (subject: { kind: 'item' | 'series'; subjectId: string } | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'exceptionsOn', subject?.kind ?? null, subject?.subjectId ?? null],
+    queryFn: () => fetchExceptionsOn(subject ?? { kind: 'item', subjectId: '' }),
+    enabled: subject !== null,
+  });
+
 const adminQueries = {
+  exceptions,
+  exceptionsOn,
+  libraryAccess,
   folders,
   overview,
   scans,

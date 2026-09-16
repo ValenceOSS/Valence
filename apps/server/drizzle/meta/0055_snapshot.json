@@ -1,5 +1,5 @@
 {
-  "id": "1b723832-846f-49e4-8c89-90fd73e15370",
+  "id": "eb7872ed-3a84-46d7-b6e5-5d3a4ba179cc",
   "prevId": "76e58e4b-c679-4bd0-bd3c-6db1524dc8f8",
   "version": "7",
   "dialect": "postgresql",
@@ -908,8 +908,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.job_run": {
-      "name": "job_run",
+    "public.hidden": {
+      "name": "hidden",
       "schema": "",
       "columns": {
         "id": {
@@ -918,50 +918,32 @@
           "primaryKey": true,
           "notNull": true
         },
-        "kind": {
-          "name": "kind",
+        "profileId": {
+          "name": "profileId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "subject": {
-          "name": "subject",
+        "mediaItemId": {
+          "name": "mediaItemId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "startedAt": {
-          "name": "startedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "finishedAt": {
-          "name": "finishedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "progress": {
-          "name": "progress",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "errorMessage": {
-          "name": "errorMessage",
+        "seriesId": {
+          "name": "seriesId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "createdAt": {
-          "name": "createdAt",
+        "libraryId": {
+          "name": "libraryId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hiddenAt": {
+          "name": "hiddenAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -969,17 +951,77 @@
         }
       },
       "indexes": {
-        "job_run_kind_idx": {
-          "name": "job_run_kind_idx",
+        "hidden_profile_item_idx": {
+          "name": "hidden_profile_item_idx",
           "columns": [
             {
-              "expression": "kind",
+              "expression": "profileId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "createdAt",
+              "expression": "mediaItemId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"hidden\".\"mediaItemId\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "hidden_profile_series_idx": {
+          "name": "hidden_profile_series_idx",
+          "columns": [
+            {
+              "expression": "profileId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "seriesId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"hidden\".\"seriesId\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "hidden_profile_library_idx": {
+          "name": "hidden_profile_library_idx",
+          "columns": [
+            {
+              "expression": "profileId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "libraryId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"hidden\".\"libraryId\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "hidden_item_idx": {
+          "name": "hidden_item_idx",
+          "columns": [
+            {
+              "expression": "mediaItemId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -990,17 +1032,11 @@
           "method": "btree",
           "with": {}
         },
-        "job_run_status_idx": {
-          "name": "job_run_status_idx",
+        "hidden_series_idx": {
+          "name": "hidden_series_idx",
           "columns": [
             {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "createdAt",
+              "expression": "seriesId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1010,56 +1046,12 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.job_run_issue": {
-      "name": "job_run_issue",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
         },
-        "jobRunId": {
-          "name": "jobRunId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "path": {
-          "name": "path",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "reason": {
-          "name": "reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "atMs": {
-          "name": "atMs",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "job_run_issue_run_idx": {
-          "name": "job_run_issue_run_idx",
+        "hidden_library_idx": {
+          "name": "hidden_library_idx",
           "columns": [
             {
-              "expression": "jobRunId",
+              "expression": "libraryId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1072,11 +1064,38 @@
         }
       },
       "foreignKeys": {
-        "job_run_issue_jobRunId_job_run_id_fk": {
-          "name": "job_run_issue_jobRunId_job_run_id_fk",
-          "tableFrom": "job_run_issue",
-          "tableTo": "job_run",
-          "columnsFrom": ["jobRunId"],
+        "hidden_profileId_viewer_profile_id_fk": {
+          "name": "hidden_profileId_viewer_profile_id_fk",
+          "tableFrom": "hidden",
+          "tableTo": "viewer_profile",
+          "columnsFrom": ["profileId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hidden_mediaItemId_media_item_id_fk": {
+          "name": "hidden_mediaItemId_media_item_id_fk",
+          "tableFrom": "hidden",
+          "tableTo": "media_item",
+          "columnsFrom": ["mediaItemId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hidden_seriesId_series_id_fk": {
+          "name": "hidden_seriesId_series_id_fk",
+          "tableFrom": "hidden",
+          "tableTo": "series",
+          "columnsFrom": ["seriesId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hidden_libraryId_library_id_fk": {
+          "name": "hidden_libraryId_library_id_fk",
+          "tableFrom": "hidden",
+          "tableTo": "library",
+          "columnsFrom": ["libraryId"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -1085,7 +1104,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "hidden_one_subject": {
+          "name": "hidden_one_subject",
+          "value": "num_nonnulls(\"hidden\".\"mediaItemId\", \"hidden\".\"seriesId\", \"hidden\".\"libraryId\") = 1"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.job_trigger": {
@@ -1292,6 +1316,78 @@
           "columns": ["path"]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.library_block": {
+      "name": "library_block",
+      "schema": "",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "libraryId": {
+          "name": "libraryId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "blockedAt": {
+          "name": "blockedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "library_block_library_idx": {
+          "name": "library_block_library_idx",
+          "columns": [
+            {
+              "expression": "libraryId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "library_block_userId_user_id_fk": {
+          "name": "library_block_userId_user_id_fk",
+          "tableFrom": "library_block",
+          "tableTo": "user",
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "library_block_libraryId_library_id_fk": {
+          "name": "library_block_libraryId_library_id_fk",
+          "tableFrom": "library_block",
+          "tableTo": "library",
+          "columnsFrom": ["libraryId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "library_block_userId_libraryId_pk": {
+          "name": "library_block_userId_libraryId_pk",
+          "columns": ["userId", "libraryId"]
+        }
+      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -3090,77 +3186,6 @@
           "value": "\"reading_progress\".\"pageNumber\" is not null or \"reading_progress\".\"fraction\" is not null"
         }
       },
-      "isRLSEnabled": false
-    },
-    "public.resource_sample": {
-      "name": "resource_sample",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "atMs": {
-          "name": "atMs",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "systemCpuPercent": {
-          "name": "systemCpuPercent",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "loadAverage": {
-          "name": "loadAverage",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "systemMemoryUsedBytes": {
-          "name": "systemMemoryUsedBytes",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "systemMemoryTotalBytes": {
-          "name": "systemMemoryTotalBytes",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cpuCount": {
-          "name": "cpuCount",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "resource_sample_at_idx": {
-          "name": "resource_sample_at_idx",
-          "columns": [
-            {
-              "expression": "atMs",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.role": {

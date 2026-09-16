@@ -31,6 +31,7 @@ type Metadata = {
   genres?: string[];
   cast?: CastMember[];
   rating?: number;
+  certifications?: Record<string, string>;
   seriesTitle?: string;
   posterUrl?: string;
   backdropUrl?: string;

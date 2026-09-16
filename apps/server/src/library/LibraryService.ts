@@ -6,6 +6,7 @@ import type {
 } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { Person } from '@ValenceContracts/schemas/Person';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 type ListItemsOptions = {
   search?: string;
@@ -22,9 +23,25 @@ type ListItemsOptions = {
   offset: number;
 };
 
+type AgeCeiling = {
+  libraryId: string;
+  maximumAge: number;
+  allowsUnrated: boolean;
+};
+
+type AgeSubject = {
+  kind: 'item' | 'series';
+  subjectId: string;
+};
+
+type AgeExceptionEntry = AgeSubject & {
+  title: string;
+  effect: 'allow' | 'deny';
+};
+
 type ShowService = {
-  listShows: (libraryId: string) => Promise<ShowSummary[] | null>;
-  getShow: (libraryId: string, showId: string) => Promise<ShowDetail | null>;
+  listShows: (viewer: Viewer, libraryId: string) => Promise<ShowSummary[] | null>;
+  getShow: (viewer: Viewer, libraryId: string, showId: string) => Promise<ShowDetail | null>;
 };
 
 type CreateLibraryInput = {
@@ -44,18 +61,37 @@ type Correction = {
 };
 
 type LibraryService = ShowService & {
-  list: () => Promise<Library[]>;
+  list: (viewer: Viewer) => Promise<Library[]>;
   create: (input: CreateLibraryInput) => Promise<Library | null>;
   update: (libraryId: string, input: UpdateLibraryInput) => Promise<Library | null>;
   listItems: (
+    viewer: Viewer,
     libraryId: string,
     options: ListItemsOptions,
   ) => Promise<{ items: MediaSummary[]; total: number } | null>;
-  listFacets: () => Promise<LibraryFacets>;
+  listFacets: (viewer: Viewer) => Promise<LibraryFacets>;
+  isOutOfReach: (accountId: string, mediaId: string) => Promise<boolean>;
+  isSeriesOutOfReach: (accountId: string, seriesId: string) => Promise<boolean>;
+  isLibraryOutOfReach: (accountId: string, libraryId: string) => Promise<boolean>;
+  refusedLibraries: (accountId: string) => Promise<string[]>;
+  allowLibrary: (accountId: string, libraryId: string) => Promise<void>;
+  refuseLibrary: (accountId: string, libraryId: string) => Promise<void>;
+  ceilingsFor: (accountId: string) => Promise<AgeCeiling[]>;
+  setCeiling: (accountId: string, ceiling: AgeCeiling) => Promise<void>;
+  clearCeiling: (accountId: string, libraryId: string) => Promise<void>;
+  exceptionsFor: (accountId: string) => Promise<AgeExceptionEntry[]>;
+  setException: (
+    accountId: string,
+    subject: AgeSubject,
+    effect: 'allow' | 'deny',
+    grantedBy: string | null,
+  ) => Promise<boolean>;
+  clearException: (accountId: string, subject: AgeSubject) => Promise<boolean>;
+  exceptionsOn: (subject: AgeSubject) => Promise<{ accountId: string; effect: 'allow' | 'deny' }[]>;
   getMedia: (id: string) => Promise<MediaDetail | null>;
   getSeries: (seriesId: string) => Promise<{ id: string; title: string } | null>;
   seriesOf: (mediaId: string) => Promise<string | null>;
-  findByPerson: (personId: number) => Promise<MediaSummary[]>;
+  findByPerson: (viewer: Viewer, personId: number) => Promise<MediaSummary[]>;
   itemsForShare: (scope: {
     kind: 'item' | 'series';
     mediaId: string | null;
@@ -93,6 +129,9 @@ type LibraryService = ShowService & {
 const DEFAULT_LIMIT = 60;
 
 export type {
+  AgeCeiling,
+  AgeExceptionEntry,
+  AgeSubject,
   Correction,
   CreateLibraryInput,
   LibraryService,

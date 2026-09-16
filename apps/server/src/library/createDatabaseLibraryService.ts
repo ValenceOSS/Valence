@@ -17,7 +17,17 @@ import {
   or,
   sql,
 } from 'drizzle-orm';
-import { book, bookChapter, library, mediaItem, rating, series } from '@ValenceServer/db/Schema';
+import {
+  ageCeiling,
+  ageException,
+  book,
+  bookChapter,
+  library,
+  libraryBlock,
+  mediaItem,
+  rating,
+  series,
+} from '@ValenceServer/db/Schema';
 import { LibraryKindSchema, MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -55,7 +65,11 @@ import type { MediaFileSystem, ScanPhase, ScannedItem } from './scanLibrary';
 import type { MetadataProvider, SeriesShape } from './MetadataProvider';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
-import type { LibraryService, ListItemsOptions } from './LibraryService';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
+import { reachableByViewer } from '@ValenceServer/visibility/reachableByViewer';
+import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
+import type { AgeExceptionEntry, LibraryService, ListItemsOptions } from './LibraryService';
 import {
   SCAN_LIBRARY_JOB,
   READ_AGAIN_JOB,
@@ -78,6 +92,7 @@ type CreateDatabaseLibraryServiceOptions = {
   forcedAccel?: () => Promise<string>;
   jobs: JobQueue;
   previewQuality?: () => Promise<PreviewQuality>;
+  certificationRegion?: () => Promise<string>;
   providers?: MetadataProvider[];
   books?: BookStore;
   onProblem?: (path: string, reason: string) => void;
@@ -189,11 +204,12 @@ const createDatabaseLibraryService = ({
   books,
   atOnce = 1,
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
+  certificationRegion = (): Promise<string> => Promise.resolve('GB'),
   onProblem,
   onArrived,
   onDeparted,
 }: CreateDatabaseLibraryServiceOptions): DatabaseLibraryService => {
-  const store = createMediaStore(db);
+  const store = createMediaStore(db, certificationRegion);
 
   const shapes = new Map<string, SeriesShape | null>();
 
@@ -326,6 +342,27 @@ const createDatabaseLibraryService = ({
     const rows = await db.select().from(library).where(eq(library.id, id)).limit(1);
 
     return rows[0] ?? null;
+  };
+
+  /**
+   * Whether a library exists as far as this viewer is concerned.
+   *
+   * Asked before a library's contents are listed, so that one an account may not reach — or one the
+   * person watching has hidden — answers as though it were never there rather than as an empty
+   * shelf. An empty shelf still says something exists, which is the thing this is for.
+   *
+   * @param viewer - Who is asking.
+   * @param id - The library.
+   * @returns Whether to admit it exists.
+   */
+  const libraryVisible = async (viewer: Viewer, id: string): Promise<boolean> => {
+    const rows = await db
+      .select({ one: sql<number>`1` })
+      .from(library)
+      .where(and(eq(library.id, id), librariesVisibleToViewer(db, viewer)))
+      .limit(1);
+
+    return rows.length > 0;
   };
 
   /**
@@ -475,7 +512,7 @@ const createDatabaseLibraryService = ({
         };
 
   const service: DatabaseLibraryService = {
-    list: async () => {
+    list: async (viewer) => {
       const rows = await db
         .select({
           id: library.id,
@@ -495,6 +532,7 @@ const createDatabaseLibraryService = ({
         .leftJoin(mediaItem, eq(mediaItem.libraryId, library.id))
         .leftJoin(book, eq(book.libraryId, library.id))
         .leftJoin(bookChapter, eq(bookChapter.bookId, book.id))
+        .where(librariesVisibleToViewer(db, viewer))
         .groupBy(library.id)
         .orderBy(asc(library.name));
 
@@ -589,27 +627,29 @@ const createDatabaseLibraryService = ({
       };
     },
 
-    listFacets: async () => {
+    listFacets: async (viewer) => {
       const genreRows = await db
         .select({ value: sql<string>`genre` })
         .from(
           sql`${mediaItem}, jsonb_array_elements_text(coalesce(${mediaItem.genres}, '[]'::jsonb)) as genre`,
         )
-        .where(isNull(mediaItem.extraKind))
+        .where(and(isNull(mediaItem.extraKind), visibleToViewer(db, viewer)))
         .groupBy(sql`genre`)
         .orderBy(sql`genre asc`);
 
       const decadeRows = await db
         .select({ value: sql<number>`((${mediaItem.year} / 10) * 10)::int` })
         .from(mediaItem)
-        .where(and(isNotNull(mediaItem.year), isNull(mediaItem.extraKind)))
+        .where(
+          and(isNotNull(mediaItem.year), isNull(mediaItem.extraKind), visibleToViewer(db, viewer)),
+        )
         .groupBy(sql`(${mediaItem.year} / 10) * 10`)
         .orderBy(sql`(${mediaItem.year} / 10) * 10 desc`);
 
       const [best] = await db
         .select({ rating: sql<number>`coalesce(max(${mediaItem.rating}), 0)::float` })
         .from(mediaItem)
-        .where(isNull(mediaItem.extraKind));
+        .where(and(isNull(mediaItem.extraKind), visibleToViewer(db, viewer)));
 
       return {
         genres: genreRows.map((row) => row.value),
@@ -618,13 +658,14 @@ const createDatabaseLibraryService = ({
       };
     },
 
-    listItems: async (libraryId, options) => {
-      if ((await findLibrary(libraryId)) === null) {
+    listItems: async (viewer, libraryId, options) => {
+      if (!(await libraryVisible(viewer, libraryId))) {
         return null;
       }
 
       const asked = [
         eq(mediaItem.libraryId, libraryId),
+        visibleToViewer(db, viewer),
         ...(options.search === undefined || options.search.trim() === ''
           ? []
           : [matchesSearch(options.search)]),
@@ -849,7 +890,7 @@ const createDatabaseLibraryService = ({
       })) satisfies MediaSummary[];
     },
 
-    findByPerson: async (personId) => {
+    findByPerson: async (viewer, personId) => {
       const rows = await db
         .select({
           id: mediaItem.id,
@@ -878,6 +919,7 @@ const createDatabaseLibraryService = ({
           and(
             sql`${mediaItem.castMembers} @> ${JSON.stringify([{ personId }])}::jsonb`,
             isNull(mediaItem.extraKind),
+            visibleToViewer(db, viewer),
           ),
         )
         .orderBy(asc(mediaItem.title))
@@ -899,6 +941,216 @@ const createDatabaseLibraryService = ({
       const asking = (providers ?? []).find((provider) => provider.readPerson !== undefined);
 
       return (await asking?.readPerson?.(personId)) ?? null;
+    },
+
+    isOutOfReach: async (accountId, mediaId) => {
+      const asThem: Viewer = {
+        kind: 'account',
+        accountId,
+        profileId: null,
+        isAdministrator: false,
+      };
+
+      const rows = await db
+        .select({ reachable: sql<boolean>`coalesce(${reachableByViewer(db, asThem)}, true)` })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      return rows.length > 0 && rows[0]?.reachable === false;
+    },
+
+    isSeriesOutOfReach: async (accountId, seriesId) => {
+      const asThem: Viewer = {
+        kind: 'account',
+        accountId,
+        profileId: null,
+        isAdministrator: false,
+      };
+
+      const rows = await db
+        .select({ reachable: sql<boolean>`coalesce(${reachableByViewer(db, asThem)}, true)` })
+        .from(mediaItem)
+        .where(eq(mediaItem.seriesId, seriesId));
+
+      return rows.length > 0 && rows.every((row) => row.reachable === false);
+    },
+
+    refusedLibraries: async (accountId) => {
+      const rows = await db
+        .select({ libraryId: libraryBlock.libraryId })
+        .from(libraryBlock)
+        .where(eq(libraryBlock.userId, accountId));
+
+      return rows.map((row) => row.libraryId);
+    },
+
+    allowLibrary: async (accountId, libraryId) => {
+      await db
+        .delete(libraryBlock)
+        .where(and(eq(libraryBlock.userId, accountId), eq(libraryBlock.libraryId, libraryId)));
+    },
+
+    refuseLibrary: async (accountId, libraryId) => {
+      await db
+        .insert(libraryBlock)
+        .values({ userId: accountId, libraryId, blockedAt: new Date() })
+        .onConflictDoNothing();
+    },
+
+    ceilingsFor: async (accountId) => {
+      const rows = await db
+        .select({
+          libraryId: ageCeiling.libraryId,
+          maximumAge: ageCeiling.maximumAge,
+          allowsUnrated: ageCeiling.allowsUnrated,
+        })
+        .from(ageCeiling)
+        .where(eq(ageCeiling.userId, accountId));
+
+      return rows;
+    },
+
+    setCeiling: async (accountId, ceiling) => {
+      await db
+        .insert(ageCeiling)
+        .values({
+          userId: accountId,
+          libraryId: ceiling.libraryId,
+          maximumAge: ceiling.maximumAge,
+          allowsUnrated: ceiling.allowsUnrated,
+          setAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [ageCeiling.userId, ageCeiling.libraryId],
+          set: { maximumAge: ceiling.maximumAge, allowsUnrated: ceiling.allowsUnrated },
+        });
+    },
+
+    clearCeiling: async (accountId, libraryId) => {
+      await db
+        .delete(ageCeiling)
+        .where(and(eq(ageCeiling.userId, accountId), eq(ageCeiling.libraryId, libraryId)));
+    },
+
+    exceptionsFor: async (accountId) => {
+      const rows = await db
+        .select({
+          mediaItemId: ageException.mediaItemId,
+          seriesId: ageException.seriesId,
+          effect: ageException.effect,
+          itemTitle: mediaItem.title,
+          seriesTitle: series.title,
+        })
+        .from(ageException)
+        .leftJoin(mediaItem, eq(mediaItem.id, ageException.mediaItemId))
+        .leftJoin(series, eq(series.id, ageException.seriesId))
+        .where(eq(ageException.userId, accountId))
+        .orderBy(desc(ageException.grantedAt));
+
+      return rows.flatMap((row): AgeExceptionEntry[] => {
+        const effect = row.effect === 'deny' ? ('deny' as const) : ('allow' as const);
+
+        if (row.mediaItemId !== null && row.itemTitle !== null) {
+          return [
+            { kind: 'item' as const, subjectId: row.mediaItemId, title: row.itemTitle, effect },
+          ];
+        }
+
+        if (row.seriesId !== null && row.seriesTitle !== null) {
+          return [
+            { kind: 'series' as const, subjectId: row.seriesId, title: row.seriesTitle, effect },
+          ];
+        }
+
+        return [];
+      });
+    },
+
+    setException: async (accountId, subject, effect, grantedBy) => {
+      const exists =
+        subject.kind === 'item'
+          ? (
+              await db
+                .select({ id: mediaItem.id })
+                .from(mediaItem)
+                .where(eq(mediaItem.id, subject.subjectId))
+                .limit(1)
+            ).length > 0
+          : (
+              await db
+                .select({ id: series.id })
+                .from(series)
+                .where(eq(series.id, subject.subjectId))
+                .limit(1)
+            ).length > 0;
+
+      if (!exists) {
+        return false;
+      }
+
+      await db
+        .insert(ageException)
+        .values({
+          id: randomUUID(),
+          userId: accountId,
+          mediaItemId: subject.kind === 'item' ? subject.subjectId : null,
+          seriesId: subject.kind === 'series' ? subject.subjectId : null,
+          effect,
+          grantedBy,
+          grantedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target:
+            subject.kind === 'item'
+              ? [ageException.userId, ageException.mediaItemId]
+              : [ageException.userId, ageException.seriesId],
+          set: { effect, grantedBy, grantedAt: new Date() },
+        });
+
+      return true;
+    },
+
+    exceptionsOn: async (subject) => {
+      const rows = await db
+        .select({ userId: ageException.userId, effect: ageException.effect })
+        .from(ageException)
+        .where(
+          subject.kind === 'item'
+            ? eq(ageException.mediaItemId, subject.subjectId)
+            : eq(ageException.seriesId, subject.subjectId),
+        );
+
+      return rows.map((row) => ({
+        accountId: row.userId,
+        effect: row.effect === 'deny' ? ('deny' as const) : ('allow' as const),
+      }));
+    },
+
+    clearException: async (accountId, subject) => {
+      const gone = await db
+        .delete(ageException)
+        .where(
+          and(
+            eq(ageException.userId, accountId),
+            subject.kind === 'item'
+              ? eq(ageException.mediaItemId, subject.subjectId)
+              : eq(ageException.seriesId, subject.subjectId),
+          ),
+        )
+        .returning({ id: ageException.id });
+
+      return gone.length > 0;
+    },
+
+    isLibraryOutOfReach: async (accountId, libraryId) => {
+      const refused = await db
+        .select({ one: sql<number>`1` })
+        .from(libraryBlock)
+        .where(and(eq(libraryBlock.userId, accountId), eq(libraryBlock.libraryId, libraryId)))
+        .limit(1);
+
+      return refused.length > 0;
     },
 
     getMedia: async (id) => {
@@ -1261,8 +1513,8 @@ const createDatabaseLibraryService = ({
       });
     },
 
-    listShows: async (libraryId) => {
-      const page = await service.listItems(libraryId, {
+    listShows: async (viewer, libraryId) => {
+      const page = await service.listItems(viewer, libraryId, {
         kind: 'shows',
         limit: EVERY_EPISODE,
         offset: 0,
@@ -1271,8 +1523,8 @@ const createDatabaseLibraryService = ({
       return page === null ? null : groupIntoShows(page.items);
     },
 
-    getShow: async (libraryId, showId) => {
-      const page = await service.listItems(libraryId, {
+    getShow: async (viewer, libraryId, showId) => {
+      const page = await service.listItems(viewer, libraryId, {
         kind: 'shows',
         limit: EVERY_EPISODE,
         offset: 0,

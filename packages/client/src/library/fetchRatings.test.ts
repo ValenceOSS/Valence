@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchHouseholdRating, fetchRatings, setRating } from './fetchRatings';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
+import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 
 type FetchLike = (
   input: string,
@@ -18,11 +21,13 @@ const ok = (body: JsonValue) => ({ ok: true, status: 200, json: () => Promise.re
 const refused = { ok: false, status: 401, json: () => Promise.resolve({}) };
 
 beforeEach(() => {
+  installPlatform(aFakePlatform());
   fetchMock.mockReset();
   vi.stubGlobal('fetch', fetchMock);
 });
 
 afterEach(() => {
+  forgetPlatform();
   vi.unstubAllGlobals();
 });
 
@@ -138,5 +143,41 @@ describe('fetchHouseholdRating', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(fetchHouseholdRating({ mediaId: MEDIA_ID })).rejects.toThrow();
+  });
+});
+
+describe('which face is asking', () => {
+  it('says so when reading, since disagreeing about a film is the point of recording it', async () => {
+    writeCurrentProfile('kid');
+    fetchMock.mockResolvedValue(ok({ ratings: [] }));
+
+    await fetchRatings();
+
+    expect(fetchMock.mock.calls.at(-1)?.[1]?.headers).toMatchObject({
+      'x-valence-profile': 'kid',
+    });
+  });
+
+  it('says so when giving stars, and still sends the content type with them', async () => {
+    writeCurrentProfile('kid');
+    fetchMock.mockResolvedValue(ok(null));
+
+    await setRating({ mediaId: '9c858901-8a57-4791-81fe-4c455b099bc9' }, 4);
+
+    expect(fetchMock.mock.calls.at(-1)?.[1]?.headers).toMatchObject({
+      'content-type': 'application/json',
+      'x-valence-profile': 'kid',
+    });
+  });
+
+  it('says so when taking a rating back', async () => {
+    writeCurrentProfile('kid');
+    fetchMock.mockResolvedValue(ok(null));
+
+    await setRating({ mediaId: '9c858901-8a57-4791-81fe-4c455b099bc9' }, null);
+
+    expect(fetchMock.mock.calls.at(-1)?.[1]?.headers).toMatchObject({
+      'x-valence-profile': 'kid',
+    });
   });
 });

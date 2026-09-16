@@ -676,6 +676,9 @@ const AdminArea = ({
               onPreviewQualitySaved={() => {
                 void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
               }}
+              onCertificationRegionSaved={() => {
+                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+              }}
               onProfileVisibilitySaved={() => {
                 void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
               }}

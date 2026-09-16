@@ -3,6 +3,7 @@ import { groupIntoShows, buildShowDetail } from './groupIntoShows';
 import type { Library, MediaDetail, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { LibraryService, ListItemsOptions } from './LibraryService';
 import type { Person } from '@ValenceContracts/schemas/Person';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
  * Cuts everything held about an item down to what a browser needs to draw it. Written once and used
@@ -37,12 +38,202 @@ const toSummary = (item: MediaDetail): MediaSummary => ({
   genres: item.metadata.genres ?? null,
 });
 
+type HiddenRow = {
+  profileId: string;
+  mediaItemId?: string;
+  seriesId?: string;
+  libraryId?: string;
+};
+
 type MemoryState = {
   libraries: Library[];
   media: MediaDetail[];
   series?: { id: string; title: string }[];
   starsFor?: (mediaId: string) => number | null;
   people?: Record<number, Person>;
+  hidden?: HiddenRow[];
+  blocked?: { accountId: string; libraryId: string }[];
+  ceilings?: {
+    accountId: string;
+    libraryId: string;
+    maximumAge: number;
+    allowsUnrated: boolean;
+  }[];
+  exceptions?: {
+    accountId: string;
+    mediaItemId?: string;
+    seriesId?: string;
+    effect: 'allow' | 'deny';
+  }[];
+  ageOf?: (mediaId: string) => number | null;
+};
+
+/**
+ * Whether an item sits within the age an account is allowed, in the order the database version asks
+ * it: a deny beats everything, an allow beats the ceiling, and otherwise the ceiling for the library
+ * it is in decides — with something nobody certificated refused unless unrated things are allowed.
+ *
+ * Kept in step with that version for the reason the search is: a twin that decided this differently
+ * would let every test of the HTTP surface pass while describing a server that shows a child things
+ * it should not.
+ *
+ * @param state - What this service is holding.
+ * @param accountId - Whose ceiling to apply.
+ * @param item - The item, its programme and its library.
+ * @returns Whether it is within the ceiling.
+ */
+const withinCeiling = (
+  state: MemoryState,
+  accountId: string,
+  item: { id: string; seriesId: string | null; libraryId: string },
+): boolean => {
+  const named = (effect: 'allow' | 'deny') =>
+    (state.exceptions ?? []).some(
+      (one) =>
+        one.accountId === accountId &&
+        one.effect === effect &&
+        ((one.mediaItemId !== undefined && one.mediaItemId === item.id) ||
+          (one.seriesId !== undefined && item.seriesId !== null && one.seriesId === item.seriesId)),
+    );
+
+  if (named('deny')) {
+    return false;
+  }
+
+  if (named('allow')) {
+    return true;
+  }
+
+  const ceiling = (state.ceilings ?? []).find(
+    (one) => one.accountId === accountId && one.libraryId === item.libraryId,
+  );
+
+  if (ceiling === undefined) {
+    return true;
+  }
+
+  const age = state.ageOf?.(item.id) ?? null;
+
+  return age === null ? ceiling.allowsUnrated : age <= ceiling.maximumAge;
+};
+
+/**
+ * Whether this viewer's account was refused the library something sits in.
+ *
+ * Kept in step with the condition the database version builds, for the reason the search above is:
+ * a memory service that decided visibility differently would let every test of the HTTP surface pass
+ * while describing a server that does not exist.
+ *
+ * @param state - What this service is holding.
+ * @param viewer - Who is asking.
+ * @param libraryId - The library the thing is in.
+ * @returns Whether the account may reach it.
+ */
+const reaches = (state: MemoryState, viewer: Viewer, libraryId: string): boolean => {
+  if (viewer.kind !== 'account' || viewer.isAdministrator) {
+    return true;
+  }
+
+  return !blocks(state, viewer.accountId, libraryId);
+};
+
+/**
+ * Whether an account may reach one particular item: the library it is in, and the age it carries.
+ *
+ * @param state - What this service is holding.
+ * @param viewer - Who is asking.
+ * @param item - The item, its programme and its library.
+ * @returns Whether to let them have it.
+ */
+const reachesItem = (
+  state: MemoryState,
+  viewer: Viewer,
+  item: { id: string; seriesId: string | null; libraryId: string },
+): boolean => {
+  if (viewer.kind !== 'account' || viewer.isAdministrator) {
+    return true;
+  }
+
+  return (
+    !blocks(state, viewer.accountId, item.libraryId) && withinCeiling(state, viewer.accountId, item)
+  );
+};
+
+/**
+ * Whether an account was refused a library outright, before any question of who is an administrator.
+ *
+ * @param state - What this service is holding.
+ * @param accountId - Whose account.
+ * @param libraryId - The library.
+ * @returns Whether a refusal was recorded.
+ */
+const blocks = (state: MemoryState, accountId: string, libraryId: string): boolean =>
+  (state.blocked ?? []).some((row) => row.accountId === accountId && row.libraryId === libraryId);
+
+/**
+ * Whether the person watching has hidden something, by itself, by its programme, or by its library.
+ *
+ * @param state - What this service is holding.
+ * @param viewer - Who is asking.
+ * @param what - The item's own identifier, its programme's, and its library's.
+ * @returns Whether they hid it.
+ */
+const hides = (
+  state: MemoryState,
+  viewer: Viewer,
+  what: { id: string; seriesId: string | null; libraryId: string },
+): boolean => {
+  if (viewer.kind !== 'account' || viewer.profileId === null) {
+    return false;
+  }
+
+  const { profileId } = viewer;
+
+  return (state.hidden ?? []).some(
+    (row) =>
+      row.profileId === profileId &&
+      ((row.mediaItemId !== undefined && row.mediaItemId === what.id) ||
+        (row.seriesId !== undefined && what.seriesId !== null && row.seriesId === what.seriesId) ||
+        (row.libraryId !== undefined && row.libraryId === what.libraryId)),
+  );
+};
+
+/**
+ * Whether an item should be shown to a viewer at all: reachable by their account, and not hidden by
+ * them.
+ *
+ * @param state - What this service is holding.
+ * @param viewer - Who is asking.
+ * @param item - The item.
+ * @returns Whether to show it.
+ */
+const visible = (state: MemoryState, viewer: Viewer, item: MediaDetail): boolean =>
+  reachesItem(state, viewer, {
+    id: item.id,
+    seriesId: seriesIdOf(state, item),
+    libraryId: item.libraryId,
+  }) &&
+  !hides(state, viewer, {
+    id: item.id,
+    seriesId: seriesIdOf(state, item),
+    libraryId: item.libraryId,
+  });
+
+/**
+ * Which programme an item belongs to, matched by title the way the memory state records it.
+ *
+ * @param state - What this service is holding.
+ * @param item - The item.
+ * @returns The programme's identifier, or nothing where it is a film.
+ */
+const seriesIdOf = (state: MemoryState, item: MediaDetail): string | null => {
+  const title = item.metadata.seriesTitle ?? null;
+
+  if (title === null) {
+    return null;
+  }
+
+  return (state.series ?? []).find((entry) => entry.title === title)?.id ?? null;
 };
 
 /**
@@ -98,12 +289,22 @@ const createMemoryLibraryService = (
 ): LibraryService & { state: MemoryState } => ({
   state,
 
-  list: () =>
+  list: (viewer) =>
     Promise.resolve(
-      state.libraries.map((entry) => ({
-        ...entry,
-        itemCount: state.media.filter((item) => item.libraryId === entry.id).length,
-      })),
+      state.libraries
+        .filter((entry) => reaches(state, viewer, entry.id))
+        .filter(
+          (entry) =>
+            viewer.kind !== 'account' ||
+            viewer.profileId === null ||
+            !(state.hidden ?? []).some(
+              (row) => row.profileId === viewer.profileId && row.libraryId === entry.id,
+            ),
+        )
+        .map((entry) => ({
+          ...entry,
+          itemCount: state.media.filter((item) => item.libraryId === entry.id).length,
+        })),
     ),
 
   create: (input) => {
@@ -139,24 +340,200 @@ const createMemoryLibraryService = (
     return Promise.resolve(found);
   },
 
-  listFacets: () =>
-    Promise.resolve({
-      genres: [...new Set(state.media.flatMap((item) => item.metadata.genres ?? []))].sort(
-        (one, other) => one.localeCompare(other),
+  listFacets: (viewer) => {
+    const seen = state.media.filter((item) => visible(state, viewer, item));
+
+    return Promise.resolve({
+      genres: [...new Set(seen.flatMap((item) => item.metadata.genres ?? []))].sort((one, other) =>
+        one.localeCompare(other),
       ),
       decades: [
         ...new Set(
-          state.media
+          seen
             .map((item) => item.year ?? null)
             .filter((year) => year !== null)
             .map((year) => Math.floor(year / 10) * 10),
         ),
       ].sort((one, other) => other - one),
-      maxRating: state.media.reduce((best, item) => Math.max(best, item.metadata.rating ?? 0), 0),
-    }),
+      maxRating: seen.reduce((best, item) => Math.max(best, item.metadata.rating ?? 0), 0),
+    });
+  },
 
-  listItems: (libraryId, options) => {
-    if (!state.libraries.some((entry) => entry.id === libraryId)) {
+  refusedLibraries: (accountId) =>
+    Promise.resolve(
+      (state.blocked ?? [])
+        .filter((row) => row.accountId === accountId)
+        .map((row) => row.libraryId),
+    ),
+
+  allowLibrary: (accountId, libraryId) => {
+    state.blocked = (state.blocked ?? []).filter(
+      (row) => !(row.accountId === accountId && row.libraryId === libraryId),
+    );
+
+    return Promise.resolve();
+  },
+
+  refuseLibrary: (accountId, libraryId) => {
+    const held = state.blocked ?? [];
+
+    if (!held.some((row) => row.accountId === accountId && row.libraryId === libraryId)) {
+      state.blocked = [...held, { accountId, libraryId }];
+    }
+
+    return Promise.resolve();
+  },
+
+  ceilingsFor: (accountId) =>
+    Promise.resolve(
+      (state.ceilings ?? [])
+        .filter((one) => one.accountId === accountId)
+        .map(({ libraryId, maximumAge, allowsUnrated }) => ({
+          libraryId,
+          maximumAge,
+          allowsUnrated,
+        })),
+    ),
+
+  setCeiling: (accountId, ceiling) => {
+    state.ceilings = [
+      ...(state.ceilings ?? []).filter(
+        (one) => !(one.accountId === accountId && one.libraryId === ceiling.libraryId),
+      ),
+      { accountId, ...ceiling },
+    ];
+
+    return Promise.resolve();
+  },
+
+  clearCeiling: (accountId, libraryId) => {
+    state.ceilings = (state.ceilings ?? []).filter(
+      (one) => !(one.accountId === accountId && one.libraryId === libraryId),
+    );
+
+    return Promise.resolve();
+  },
+
+  exceptionsFor: (accountId) =>
+    Promise.resolve(
+      (state.exceptions ?? [])
+        .filter((one) => one.accountId === accountId)
+        .flatMap((one) => {
+          const subjectId = one.mediaItemId ?? one.seriesId;
+
+          if (subjectId === undefined) {
+            return [];
+          }
+
+          return [
+            {
+              kind: one.mediaItemId === undefined ? ('series' as const) : ('item' as const),
+              subjectId,
+              title:
+                state.media.find((item) => item.id === subjectId)?.title ??
+                (state.series ?? []).find((entry) => entry.id === subjectId)?.title ??
+                subjectId,
+              effect: one.effect,
+            },
+          ];
+        }),
+    ),
+
+  setException: (accountId, subject, effect) => {
+    const exists =
+      subject.kind === 'item'
+        ? state.media.some((item) => item.id === subject.subjectId)
+        : (state.series ?? []).some((entry) => entry.id === subject.subjectId);
+
+    if (!exists) {
+      return Promise.resolve(false);
+    }
+
+    state.exceptions = [
+      ...(state.exceptions ?? []).filter(
+        (one) =>
+          !(
+            one.accountId === accountId &&
+            (subject.kind === 'item' ? one.mediaItemId : one.seriesId) === subject.subjectId
+          ),
+      ),
+      {
+        accountId,
+        ...(subject.kind === 'item'
+          ? { mediaItemId: subject.subjectId }
+          : { seriesId: subject.subjectId }),
+        effect,
+      },
+    ];
+
+    return Promise.resolve(true);
+  },
+
+  exceptionsOn: (subject) =>
+    Promise.resolve(
+      (state.exceptions ?? [])
+        .filter(
+          (one) => (subject.kind === 'item' ? one.mediaItemId : one.seriesId) === subject.subjectId,
+        )
+        .map((one) => ({ accountId: one.accountId, effect: one.effect })),
+    ),
+
+  clearException: (accountId, subject) => {
+    const before = (state.exceptions ?? []).length;
+
+    state.exceptions = (state.exceptions ?? []).filter(
+      (one) =>
+        !(
+          one.accountId === accountId &&
+          (subject.kind === 'item' ? one.mediaItemId : one.seriesId) === subject.subjectId
+        ),
+    );
+
+    return Promise.resolve((state.exceptions ?? []).length < before);
+  },
+
+  isLibraryOutOfReach: (accountId, libraryId) =>
+    Promise.resolve(blocks(state, accountId, libraryId)),
+
+  isOutOfReach: (accountId, mediaId) => {
+    const found = state.media.find((item) => item.id === mediaId);
+
+    if (found === undefined) {
+      return Promise.resolve(false);
+    }
+
+    const where = {
+      id: found.id,
+      seriesId: seriesIdOf(state, found),
+      libraryId: found.libraryId,
+    };
+
+    return Promise.resolve(
+      blocks(state, accountId, found.libraryId) || !withinCeiling(state, accountId, where),
+    );
+  },
+
+  isSeriesOutOfReach: (accountId, seriesId) => {
+    const episodes = state.media.filter((item) => seriesIdOf(state, item) === seriesId);
+
+    return Promise.resolve(
+      episodes.length > 0 &&
+        episodes.every(
+          (item) =>
+            blocks(state, accountId, item.libraryId) ||
+            !withinCeiling(state, accountId, {
+              id: item.id,
+              seriesId,
+              libraryId: item.libraryId,
+            }),
+        ),
+    );
+  },
+
+  listItems: (viewer, libraryId, options) => {
+    const found = state.libraries.find((entry) => entry.id === libraryId);
+
+    if (found === undefined || !reaches(state, viewer, found.id)) {
       return Promise.resolve(null);
     }
 
@@ -164,6 +541,7 @@ const createMemoryLibraryService = (
 
     const matching = state.media
       .filter((item) => item.libraryId === libraryId)
+      .filter((item) => visible(state, viewer, item))
       .filter((item) => search === '' || matchesSearch(item, search))
       .filter(
         (item) =>
@@ -242,9 +620,10 @@ const createMemoryLibraryService = (
         .map(toSummary),
     ),
 
-  findByPerson: (personId) =>
+  findByPerson: (viewer, personId) =>
     Promise.resolve(
       state.media
+        .filter((item) => visible(state, viewer, item))
         .filter((item) => (item.metadata.cast ?? []).some((member) => member.personId === personId))
         .map(toSummary)
         .sort((left, right) => left.title.localeCompare(right.title)),
@@ -252,18 +631,26 @@ const createMemoryLibraryService = (
 
   readPerson: (personId) => Promise.resolve(state.people?.[personId] ?? null),
 
-  listShows: (libraryId) =>
+  listShows: (viewer, libraryId) =>
     Promise.resolve(
-      state.libraries.some((entry) => entry.id === libraryId)
-        ? groupIntoShows(state.media.filter((item) => item.libraryId === libraryId).map(toSummary))
+      state.libraries.some((entry) => entry.id === libraryId) && reaches(state, viewer, libraryId)
+        ? groupIntoShows(
+            state.media
+              .filter((item) => item.libraryId === libraryId)
+              .filter((item) => visible(state, viewer, item))
+              .map(toSummary),
+          )
         : null,
     ),
 
-  getShow: (libraryId, showId) =>
+  getShow: (viewer, libraryId, showId) =>
     Promise.resolve(
-      state.libraries.some((entry) => entry.id === libraryId)
+      state.libraries.some((entry) => entry.id === libraryId) && reaches(state, viewer, libraryId)
         ? buildShowDetail(
-            state.media.filter((item) => item.libraryId === libraryId).map(toSummary),
+            state.media
+              .filter((item) => item.libraryId === libraryId)
+              .filter((item) => visible(state, viewer, item))
+              .map(toSummary),
             showId,
           )
         : null,

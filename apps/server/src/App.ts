@@ -8,6 +8,12 @@ import type { ValenceAuth } from '@ValenceServer/auth/Auth';
 import type { SettingsStore } from '@ValenceServer/settings/ServerSettings';
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
 import { DEFAULT_LIMIT } from '@ValenceServer/library/LibraryService';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
+import { readViewer } from '@ValenceServer/visibility/readViewer';
+import { subjectOfRequest } from '@ValenceServer/visibility/subjectOfRequest';
+import type { Subject } from '@ValenceServer/visibility/subjectOfRequest';
+import type { MiddlewareHandler } from 'hono';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { splitPersonCredits } from '@ValenceServer/library/splitPersonCredits';
 import type { LibraryService } from '@ValenceServer/library/LibraryService';
 import type { SubtitleService } from '@ValenceServer/subtitles/SubtitleService';
@@ -15,6 +21,8 @@ import type { SegmentService } from '@ValenceServer/segments/SegmentService';
 import type { WatchProgressService } from '@ValenceServer/progress/WatchProgressService';
 import type { DownloadService } from '@ValenceServer/downloads/DownloadService';
 import type { FavouriteService } from '@ValenceServer/favourites/FavouriteService';
+import type { HiddenService } from '@ValenceServer/hiding/HiddenService';
+import { createMemoryHiddenService } from '@ValenceServer/hiding/createMemoryHiddenService';
 import type { RatingService } from '@ValenceServer/ratings/RatingService';
 import type { ShareService } from '@ValenceServer/sharing/ShareService';
 import type { ShareSessions } from '@ValenceServer/sharing/createShareSessions';
@@ -22,6 +30,26 @@ import type { PlaybackSessions } from '@ValenceServer/playback/createPlaybackSes
 import type { PlaybackService, PreviewRead } from '@ValenceServer/playback/PlaybackService';
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
 import type { PresenceService } from '@ValenceServer/presence/PresenceService';
+import {
+  readExceptionsOnRoute,
+  readLibraryAccessRoute,
+  allowLibraryRoute,
+  refuseLibraryRoute,
+  setCeilingRoute,
+  clearCeilingRoute,
+  readExceptionsRoute,
+  setExceptionRoute,
+  clearExceptionRoute,
+} from '@ValenceServer/routes/LibraryAccessRoute';
+import {
+  listHiddenRoute,
+  hideMediaRoute,
+  showMediaRoute,
+  hideSeriesRoute,
+  showSeriesRoute,
+  hideLibraryRoute,
+  showLibraryRoute,
+} from '@ValenceServer/routes/HiddenRoute';
 import {
   askForDownloadRoute,
   askForSeriesRoute,
@@ -175,6 +203,7 @@ import {
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
+  READ_CERTIFICATES_AGAIN_JOB,
 } from '@ValenceServer/jobs/JobQueue';
 import { createMemoryMaintenanceService } from '@ValenceServer/maintenance/createMemoryMaintenanceService';
 import type { MaintenanceService } from '@ValenceServer/maintenance/MaintenanceService';
@@ -400,6 +429,7 @@ type CreateAppOptions = {
   progress: WatchProgressService;
   downloads?: DownloadService;
   favourites: FavouriteService;
+  hiding?: HiddenService;
   ratings: RatingService;
   shares?: ShareService;
   shareSessions?: ShareSessions;
@@ -475,6 +505,7 @@ const createApp = ({
   progress,
   downloads,
   favourites,
+  hiding = createMemoryHiddenService(),
   ratings,
   shares,
   shareSessions,
@@ -602,6 +633,100 @@ const createApp = ({
     return narrowToKey(held, allowed).has(permission);
   };
 
+  /**
+   * Who a request is for, as both the account it belongs to and the person watching.
+   *
+   * Everything that decides what may be seen asks this rather than asking for one or the other: the
+   * account carries what an administrator enforced, the profile carries what the viewer chose for
+   * themselves, and keeping them together is what stops the two being confused.
+   *
+   * @param headers - The request's headers.
+   * @returns Who it is for, or nothing where nobody is signed in.
+   */
+  const viewerOf = (headers: Headers): Promise<Viewer | null> =>
+    readViewer({ auth, permissions, ...(profiles === undefined ? {} : { profiles }) }, headers);
+
+  /**
+   * Whether an account was refused the library something sits in.
+   *
+   * The cheap question is asked first and is usually the only one. Every poster and backdrop on a
+   * page arrives as a request of its own, so the common answer — nothing is refused — costs a single
+   * indexed lookup. Who is an administrator is worked out only once something has actually been
+   * refused, which is rare, rather than on each of the fifty images a library page draws.
+   *
+   * @param accountId - Whose account is asking.
+   * @param subject - The item or programme in question.
+   * @returns Whether to refuse it.
+   */
+  const isOutOfReach = async (accountId: string, subject: Subject): Promise<boolean> => {
+    if (subject.kind === 'none') {
+      return false;
+    }
+
+    const refused =
+      subject.kind === 'item'
+        ? await library.isOutOfReach(accountId, subject.mediaId)
+        : await library.isSeriesOutOfReach(accountId, subject.seriesId);
+
+    if (!refused) {
+      return false;
+    }
+
+    return !(await permissions.resolve(accountId)).has(ADMINISTRATOR);
+  };
+
+  /**
+   * Refuses anything a viewer's account may not reach, before the route that would answer it runs.
+   *
+   * This is the one gate every address naming an item passes through, which is the point: three
+   * separate features want content kept out of sight, and a check written into each handler is a
+   * check missing from the next handler somebody writes. Reading the subject from the address means
+   * a route added later is covered on the day it is written.
+   *
+   * It asks only what the account may reach, never what the viewer has hidden. Hiding is a
+   * preference and tidies a view; it was never meant to lock a door, and somebody following a link
+   * to something they hid should still arrive at it. Refusing here would quietly turn hiding into
+   * enforcement, which is the one thing both tickets behind this asked not to happen.
+   *
+   * The cheap question is asked first and is usually the only one. Every poster and backdrop on a
+   * page comes through here as a request of its own, so the common answer — nothing is refused —
+   * costs a single indexed lookup. Who is an administrator is worked out only once something has
+   * actually been refused, which is rare, rather than on each of the fifty images a library page
+   * draws.
+   *
+   * It answers as though the thing were not there, in the same words an item that never existed
+   * gets, because being told something exists is most of what was being kept back.
+   *
+   * A request with nobody signed in is left alone. The session gate has already turned away anyone
+   * who is neither signed in nor holding a live share link, so what arrives here without a session
+   * is a share guest, and what a share reaches was settled when the link was made.
+   *
+   * @param context - The request.
+   * @param next - The route that would answer it.
+   * @returns A refusal, or whatever the route answers.
+   */
+  const refuseWhatIsOutOfReach: MiddlewareHandler = async (context, next) => {
+    const subject = subjectOfRequest(context.req.path);
+
+    if (subject.kind === 'none') {
+      return next();
+    }
+
+    const session = await readSessionOnce(auth, context.req.raw.headers);
+
+    if (session === null) {
+      return next();
+    }
+
+    if (await isOutOfReach(session.user.id, subject)) {
+      return context.json({ error: 'No such item.' }, 404);
+    }
+
+    return next();
+  };
+
+  app.use('/api/*', refuseWhatIsOutOfReach);
+
   app.all('/api/auth/admin/*', createBetterAuthAdminBlock());
 
   app.on(['GET', 'POST'], '/api/auth/*', (context) => auth.handler(context.req.raw));
@@ -652,7 +777,15 @@ const createApp = ({
     );
   });
 
-  app.openapi(listLibrariesRoute, async (context) => context.json(await library.list(), 200));
+  app.openapi(listLibrariesRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    return context.json(await library.list(viewer), 200);
+  });
 
   app.openapi(createLibraryRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.create'))) {
@@ -707,11 +840,13 @@ const createApp = ({
   });
 
   app.openapi(listFacetsRoute, async (context) => {
-    if ((await readAccount(context.req.raw.headers)) === null) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    return context.json(await library.listFacets(), 200);
+    return context.json(await library.listFacets(viewer), 200);
   });
 
   app.openapi(listItemsRoute, async (context) => {
@@ -721,8 +856,13 @@ const createApp = ({
 
     const { minYourStars } = context.req.valid('query');
     const askedBy = await readProfileId(context.req.raw.headers);
+    const viewer = await viewerOf(context.req.raw.headers);
 
-    const page = await library.listItems(id, {
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const page = await library.listItems(viewer, id, {
       ...(search === undefined ? {} : { search }),
       ...(kind === undefined ? {} : { kind }),
       ...(genre === undefined ? {} : { genre }),
@@ -745,7 +885,13 @@ const createApp = ({
   });
 
   app.openapi(listShowsRoute, async (context) => {
-    const shows = await library.listShows(context.req.valid('param').id);
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const shows = await library.listShows(viewer, context.req.valid('param').id);
 
     if (shows === null) {
       return context.json({ error: 'No such library.' }, 404);
@@ -756,7 +902,13 @@ const createApp = ({
 
   app.openapi(getShowRoute, async (context) => {
     const { id, showId } = context.req.valid('param');
-    const show = await library.getShow(id, showId);
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const show = await library.getShow(viewer, id, showId);
 
     if (show === null) {
       return context.json({ error: 'No such series.' }, 404);
@@ -1125,9 +1277,6 @@ const createApp = ({
     return context.body(file.body, 200, { 'content-type': file.contentType });
   });
 
-  /**
-   * Who is asking.
-   */
   /**
    * Which person on this account is watching.
    */
@@ -1800,7 +1949,7 @@ const createApp = ({
     const [users, current, libraries, transcoderCapabilities, isReachable] = await Promise.all([
       listUsers?.() ?? Promise.resolve([]),
       settings.read(),
-      library.list(),
+      library.list(asTheServer),
       within(capabilities?.().catch(() => null) ?? Promise.resolve(null), null),
       within(isTranscoderReachable(), false),
     ]);
@@ -1812,6 +1961,7 @@ const createApp = ({
           hasCatalogueKey: current.catalogueApiKey !== '',
           hardwareAccel: current.hardwareAccel,
           previewQuality: current.previewQuality,
+          certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
@@ -1852,13 +2002,20 @@ const createApp = ({
       ...(patch.catalogueApiKey === undefined ? {} : { catalogueApiKey: patch.catalogueApiKey }),
       ...(patch.hardwareAccel === undefined ? {} : { hardwareAccel: patch.hardwareAccel }),
       ...(patch.previewQuality === undefined ? {} : { previewQuality: patch.previewQuality }),
+      ...(patch.certificationRegion === undefined
+        ? {}
+        : { certificationRegion: patch.certificationRegion.toUpperCase() }),
       ...(patch.showsProfilesBeforeSignIn === undefined
         ? {}
         : { showsProfilesBeforeSignIn: patch.showsProfilesBeforeSignIn }),
     });
 
+    if (updated.certificationRegion !== before.certificationRegion) {
+      await maintenance.readCertificatesAgain();
+    }
+
     if (updated.previewQuality !== before.previewQuality) {
-      const libraries = await library.list();
+      const libraries = await library.list(asTheServer);
 
       await Promise.all(
         libraries
@@ -1874,6 +2031,7 @@ const createApp = ({
         cookieSecure: updated.cookieSecure,
         hardwareAccel: updated.hardwareAccel,
         previewQuality: updated.previewQuality,
+        certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
       },
       200,
@@ -1986,6 +2144,7 @@ const createApp = ({
       [CLEANUP_ARTEFACT_CACHE_JOB]: () => maintenance.cleanupArtefactCache(),
       [CLEANUP_SESSIONS_JOB]: () => maintenance.cleanupSessions(),
       [CHECK_CATALOGUE_CONNECTIVITY_JOB]: () => maintenance.checkCatalogueConnectivity(),
+      [READ_CERTIFICATES_AGAIN_JOB]: () => maintenance.readCertificatesAgain(),
     };
 
     const maintenanceRunner = maintenanceRunners[kind];
@@ -2403,6 +2562,181 @@ const createApp = ({
     return context.body(null, 204);
   });
 
+  /**
+   * Whether this actor may decide what another account sees.
+   *
+   * The same two questions the rest of the accounts panel asks: holding the permission, and not
+   * acting on somebody at or above your own rank. Without the second, a manager could quietly take
+   * the library away from an administrator.
+   *
+   * @param headers - The request's headers.
+   * @param userId - Whose access is being changed.
+   * @returns Why they may not, or nothing where they may.
+   */
+  const mayDecideAccess = async (headers: Headers, userId: string): Promise<string | null> => {
+    const actor = await readActor(headers);
+
+    if (actor === null || !actor.permissions.has('account.manage')) {
+      return 'That is for administrators.';
+    }
+
+    if (outranks(actor, userId, await permissions.rolesFor(userId))) {
+      return describeAccountRefusal('outranked');
+    }
+
+    return null;
+  };
+
+  app.openapi(readLibraryAccessRoute, async (context) => {
+    const { userId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    const [shelves, refused, ceilings] = await Promise.all([
+      library.list(asTheServer),
+      library.refusedLibraries(userId),
+      library.ceilingsFor(userId),
+    ]);
+
+    return context.json(
+      {
+        libraries: shelves.map((shelf) => {
+          const ceiling = ceilings.find((one) => one.libraryId === shelf.id);
+
+          return {
+            id: shelf.id,
+            name: shelf.name,
+            mayView: !refused.includes(shelf.id),
+            maximumAge: ceiling?.maximumAge ?? null,
+            allowsUnrated: ceiling?.allowsUnrated ?? false,
+          };
+        }),
+      },
+      200,
+    );
+  });
+
+  app.openapi(allowLibraryRoute, async (context) => {
+    const { userId, libraryId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    await library.allowLibrary(userId, libraryId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(refuseLibraryRoute, async (context) => {
+    const { userId, libraryId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    await library.refuseLibrary(userId, libraryId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(setCeilingRoute, async (context) => {
+    const { userId, libraryId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    const { maximumAge, allowsUnrated } = context.req.valid('json');
+
+    await library.setCeiling(userId, { libraryId, maximumAge, allowsUnrated });
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(clearCeilingRoute, async (context) => {
+    const { userId, libraryId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    await library.clearCeiling(userId, libraryId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(readExceptionsRoute, async (context) => {
+    const { userId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    return context.json({ exceptions: await library.exceptionsFor(userId) }, 200);
+  });
+
+  app.openapi(readExceptionsOnRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { kind, subjectId } = context.req.valid('param');
+
+    return context.json({ accounts: await library.exceptionsOn({ kind, subjectId }) }, 200);
+  });
+
+  app.openapi(setExceptionRoute, async (context) => {
+    const { userId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    const { kind, subjectId, effect } = context.req.valid('json');
+    const actor = await readAccount(context.req.raw.headers);
+
+    if (!(await library.setException(userId, { kind, subjectId }, effect, actor?.id ?? null))) {
+      return context.json({ error: 'No such thing to make an exception of.' }, 404);
+    }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(clearExceptionRoute, async (context) => {
+    const { userId, kind, subjectId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    await library.clearException(userId, { kind, subjectId });
+
+    return context.body(null, 204);
+  });
+
   app.openapi(setOverrideRoute, async (context) => {
     const actor = await readActor(context.req.raw.headers);
 
@@ -2514,6 +2848,7 @@ const createApp = ({
           banReason: (await readBanReason?.(account.id)) ?? null,
           position: held.length === 0 ? null : Math.max(...held.map((role) => role.position)),
           isAdministrator: resolved.has('administrator'),
+          face: (await profiles?.list(account.id))?.[0] ?? null,
           roles: held.map((role) => role.name),
         };
       }),
@@ -2656,6 +2991,7 @@ const createApp = ({
         banReason: null,
         position: null,
         isAdministrator: false,
+        face: null,
         roles: [],
       },
       201,
@@ -2879,7 +3215,9 @@ const createApp = ({
   app.openapi(listHistoryRoute, async (context) => {
     const profileId = await readProfileId(context.req.raw.headers);
 
-    if (profileId === null || history === undefined) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (profileId === null || viewer === null || history === undefined) {
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
@@ -2887,7 +3225,7 @@ const createApp = ({
 
     return context.json(
       {
-        viewings: await history.list(profileId, {
+        viewings: await history.list(viewer, profileId, {
           ...(limit === undefined ? {} : { limit }),
           ...(offset === undefined ? {} : { offset }),
         }),
@@ -2939,7 +3277,13 @@ const createApp = ({
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    const held = await library.findByPerson(context.req.valid('param').personId);
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const held = await library.findByPerson(viewer, context.req.valid('param').personId);
 
     return context.json(splitPersonCredits(held), 200);
   });
@@ -3120,6 +3464,112 @@ const createApp = ({
     return context.json({ favourites: await favourites.list(profileId) }, 200);
   });
 
+  app.openapi(listHiddenRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    return context.json({ hidden: await hiding.list(profileId) }, 200);
+  });
+
+  app.openapi(hideMediaRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const { mediaId } = context.req.valid('param');
+
+    if (!(await hiding.hide(profileId, { kind: 'item', subjectId: mediaId }))) {
+      return context.json({ error: 'No such item.' }, 404);
+    }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(showMediaRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    await hiding.show(profileId, { kind: 'item', subjectId: context.req.valid('param').mediaId });
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(hideSeriesRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const { seriesId } = context.req.valid('param');
+
+    if (!(await hiding.hide(profileId, { kind: 'series', subjectId: seriesId }))) {
+      return context.json({ error: 'No such programme.' }, 404);
+    }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(showSeriesRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    await hiding.show(profileId, {
+      kind: 'series',
+      subjectId: context.req.valid('param').seriesId,
+    });
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(hideLibraryRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null || viewer.kind !== 'account' || viewer.profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const { libraryId } = context.req.valid('param');
+
+    const refused = await library.isLibraryOutOfReach(viewer.accountId, libraryId);
+
+    if (refused && !viewer.isAdministrator) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    if (!(await hiding.hide(viewer.profileId, { kind: 'library', subjectId: libraryId }))) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(showLibraryRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    await hiding.show(profileId, {
+      kind: 'library',
+      subjectId: context.req.valid('param').libraryId,
+    });
+
+    return context.body(null, 204);
+  });
+
   app.openapi(keepFavouriteRoute, async (context) => {
     const profileId = await readProfileId(context.req.raw.headers);
 
@@ -3161,7 +3611,22 @@ const createApp = ({
       return context.json({ error: 'This account may not share.' }, 403);
     }
 
-    const made = await shares.create(account.id, context.req.valid('json'));
+    const asked = context.req.valid('json');
+
+    const subjectId = asked.kind === 'item' ? asked.mediaId : asked.seriesId;
+
+    const wanted: Subject =
+      subjectId === undefined
+        ? { kind: 'none' }
+        : asked.kind === 'item'
+          ? { kind: 'item', mediaId: subjectId }
+          : { kind: 'series', seriesId: subjectId };
+
+    if (await isOutOfReach(account.id, wanted)) {
+      return context.json({ error: 'There is nothing here to share.' }, 404);
+    }
+
+    const made = await shares.create(account.id, asked);
 
     if (made === null) {
       return context.json({ error: 'There is nothing here to share.' }, 404);
