@@ -7,13 +7,15 @@ import type { Hidden } from '@ValenceContracts/schemas/Hidden';
 import type { HiddenSubject } from '@ValenceClient/library/fetchHidden';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { hidingSubjectOf } from '@ValenceClient/library/hidingSubjectOf';
-import type { Hiding as Asked } from '@ValenceClient/library/hidingSubjectOf';
+
+type Asked = HiddenSubject & { title: string };
 
 type Hiding = {
   entries: Hidden[];
   isHidden: (subject: HiddenSubject) => boolean;
   asking: Asked | null;
   ask: (media: MediaSummary) => void;
+  askLibrary: (libraryId: string, name: string) => void;
   dismiss: () => void;
   confirm: () => void;
   show: (subject: HiddenSubject) => void;
@@ -38,6 +40,10 @@ const keyOf = (subject: HiddenSubject): string => `${subject.kind}:${subject.sub
  * the randomiser at once, and somebody who meant to press the control beside it has no idea what
  * became of the thing — so the question names what will actually disappear, which for anything
  * belonging to a programme is the programme rather than the episode standing for it.
+ *
+ * A whole library is asked about separately, since nothing on a page stands for one — a viewer
+ * meets sections rather than libraries, so the only place to hide one is beside the list it comes
+ * back from.
  *
  * Bringing something back is not asked about. It is the undoing, and asking twice about an undoing
  * is how a list nobody wants to use gets made.
@@ -99,6 +105,12 @@ const useHidden = (watcherId: string | null): Hiding => {
       pending.current = asked;
       setAsking(asked);
     },
+    askLibrary: (libraryId, name) => {
+      const asked: Asked = { kind: 'library', subjectId: libraryId, title: name };
+
+      pending.current = asked;
+      setAsking(asked);
+    },
     dismiss: () => {
       pending.current = null;
       setAsking(null);
@@ -127,6 +139,6 @@ const useHidden = (watcherId: string | null): Hiding => {
   };
 };
 
-export type { Hiding };
+export type { Asked, Hiding };
 
 export { useHidden };

@@ -469,6 +469,15 @@ const createMemoryLibraryService = (
     return Promise.resolve(true);
   },
 
+  exceptionsOn: (subject) =>
+    Promise.resolve(
+      (state.exceptions ?? [])
+        .filter(
+          (one) => (subject.kind === 'item' ? one.mediaItemId : one.seriesId) === subject.subjectId,
+        )
+        .map((one) => ({ accountId: one.accountId, effect: one.effect })),
+    ),
+
   clearException: (accountId, subject) => {
     const before = (state.exceptions ?? []).length;
 

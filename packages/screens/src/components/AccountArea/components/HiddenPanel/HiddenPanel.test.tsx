@@ -15,6 +15,16 @@ vi.mock('@ValenceClient/library/fetchHidden', () => ({
   setHidden: (subject: HiddenSubject, isHidden: boolean) => setHidden(subject, isHidden),
 }));
 
+const fetchLibraries = vi.hoisted(() =>
+  vi.fn<() => Promise<{ id: string; name: string; kind: string }[]>>(),
+);
+
+vi.mock('@ValenceClient/library/fetchLibrary', () => ({ fetchLibraries }));
+
+const fetchProfiles = vi.hoisted(() => vi.fn(() => Promise.resolve([])));
+
+vi.mock('@ValenceClient/profiles/fetchProfiles', () => ({ fetchProfiles }));
+
 const WATCHER: ViewerProfile = {
   id: 'profile-1',
   name: 'Dan',
@@ -39,6 +49,10 @@ const draw = () => renderInAShell(<HiddenPanel />, { watcher: WATCHER });
 beforeEach(() => {
   fetchHidden.mockReset().mockResolvedValue([]);
   setHidden.mockReset().mockResolvedValue(true);
+  fetchLibraries.mockReset().mockResolvedValue([
+    { id: 'library-1', name: 'Shows', kind: 'shows' },
+    { id: 'library-2', name: 'Films', kind: 'movies' },
+  ]);
 });
 
 describe('HiddenPanel', () => {
@@ -48,10 +62,10 @@ describe('HiddenPanel', () => {
     expect(await screen.findByRole('heading', { name: 'Hidden' })).toBeInTheDocument();
   });
 
-  it('says plainly that this affects nobody else on the account', async () => {
+  it('says anything here can be brought back', async () => {
     draw();
 
-    expect(await screen.findByText(/Nobody else on this account is affected/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Anything here can be brought back/i)).toBeInTheDocument();
   });
 
   it('names each thing that has been hidden', async () => {
@@ -126,5 +140,74 @@ describe('HiddenPanel', () => {
     draw();
 
     expect(await screen.findByText(/What you have hidden/i)).toBeInTheDocument();
+  });
+});
+
+describe('hiding a whole library', () => {
+  it('offers every library, since a viewer never meets one anywhere else', async () => {
+    draw();
+
+    expect(
+      await screen.findByRole('button', { name: 'Hide the whole Shows library' }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Hide the whole Films library' }),
+    ).toBeInTheDocument();
+  });
+
+  it('says why it is the quickest of the three', async () => {
+    draw();
+
+    expect(
+      await screen.findByText(/never watches television hides one thing/i),
+    ).toBeInTheDocument();
+  });
+
+  it('asks before hiding one, naming what goes with it', async () => {
+    const user = userEvent.setup();
+
+    draw();
+
+    await user.click(await screen.findByRole('button', { name: 'Hide the whole Shows library' }));
+
+    expect(await screen.findByText('Hide Shows?')).toBeInTheDocument();
+    expect(await screen.findByText(/Everything in it disappears/i)).toBeInTheDocument();
+  });
+
+  it('hides it once somebody agrees', async () => {
+    const user = userEvent.setup();
+
+    draw();
+
+    await user.click(await screen.findByRole('button', { name: 'Hide the whole Shows library' }));
+    await user.click(await screen.findByRole('button', { name: 'Hide it' }));
+
+    await waitFor(() => {
+      expect(setHidden).toHaveBeenCalledWith({ kind: 'library', subjectId: 'library-1' }, true);
+    });
+  });
+
+  it('brings one back without asking, an undoing needing no ceremony', async () => {
+    const user = userEvent.setup();
+
+    fetchHidden.mockResolvedValue([
+      entry({ kind: 'library', subjectId: 'library-1', title: 'Shows' }),
+    ]);
+
+    draw();
+
+    await user.click(await screen.findByRole('button', { name: 'Bring the Shows library back' }));
+
+    await waitFor(() => {
+      expect(setHidden).toHaveBeenCalledWith({ kind: 'library', subjectId: 'library-1' }, false);
+    });
+  });
+
+  it('copes with a server that has no libraries yet', async () => {
+    fetchLibraries.mockResolvedValue([]);
+
+    draw();
+
+    expect(await screen.findByText(/There are no libraries yet/i)).toBeInTheDocument();
   });
 });

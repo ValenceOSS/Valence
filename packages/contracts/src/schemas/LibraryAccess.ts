@@ -17,6 +17,13 @@ const AgeExceptionSchema = z.object({
 
 const AgeExceptionListSchema = z.object({ exceptions: z.array(AgeExceptionSchema) });
 
+const ExceptionHolderSchema = z.object({
+  accountId: z.string(),
+  effect: z.enum(['allow', 'deny']),
+});
+
+const ExceptionHolderListSchema = z.object({ accounts: z.array(ExceptionHolderSchema) });
+
 const SetCeilingSchema = z.object({
   maximumAge: z.number().int().min(0).max(21),
   allowsUnrated: z.boolean().default(false),
@@ -32,6 +39,7 @@ const LibraryAccessSchema = z.object({ libraries: z.array(LibraryReachSchema) })
 
 type LibraryReach = z.infer<typeof LibraryReachSchema>;
 type AgeException = z.infer<typeof AgeExceptionSchema>;
+type ExceptionHolder = z.infer<typeof ExceptionHolderSchema>;
 
 /**
  * How a ceiling reads on the page, so that nobody has to work out what a number means.
@@ -64,13 +72,14 @@ const wouldLeaveNothing = (libraries: readonly LibraryReach[], libraryId: string
   libraries.filter((shelf) => shelf.mayView && shelf.id !== libraryId).length === 0 &&
   libraries.some((shelf) => shelf.id === libraryId && shelf.mayView);
 
-export type { AgeException, LibraryReach };
+export type { AgeException, ExceptionHolder, LibraryReach };
 
 export {
   LibraryReachSchema,
   LibraryAccessSchema,
   AgeExceptionSchema,
   AgeExceptionListSchema,
+  ExceptionHolderListSchema,
   SetCeilingSchema,
   SetExceptionSchema,
   describeCeiling,

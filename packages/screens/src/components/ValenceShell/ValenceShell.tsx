@@ -31,6 +31,7 @@ import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useHidden } from '@ValenceClient/library/useHidden';
 import { ConfirmHiding } from '@ValenceScreens/components/ConfirmHiding/ConfirmHiding';
+import { DecideForSomebody } from '@ValenceScreens/components/DecideForSomebody/DecideForSomebody';
 import { useRate } from '@ValenceClient/library/useRate';
 import { pickAnything } from '@ValenceClient/library/pickAnything';
 import { findSiblings } from '@ValenceClient/library/pickFeatured';
@@ -46,6 +47,7 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.types';
 import type { Inbox } from '@ValenceClient/notifications/fetchNotifications';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 const NOTHING_WAITING = { notifications: [], unread: 0 };
 
@@ -81,6 +83,7 @@ const ValenceShell = () => {
   const [openShow, setOpenShow] = useState<ShowSummary | null>(null);
   const [openRole, setOpenRole] = useState<string | null>(null);
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
+  const [deciding, setDeciding] = useState<MediaSummary | null>(null);
   const [pushChoice, setPushChoice] = useState<boolean | null>(null);
 
   const held = useQuery(notificationQueries.inbox());
@@ -292,6 +295,13 @@ const ValenceShell = () => {
         }}
       />
 
+      <DecideForSomebody
+        about={deciding}
+        onClose={() => {
+          setDeciding(null);
+        }}
+      />
+
       <ConfirmHiding
         hiding={hiding}
         onHidden={() => {
@@ -328,6 +338,13 @@ const ValenceShell = () => {
         onHide={(media) => {
           hiding.ask(media);
         }}
+        {...(mayAdminister
+          ? {
+              onDecideForSomebody: (media: MediaSummary) => {
+                setDeciding(media);
+              },
+            }
+          : {})}
         onRate={(media, stars) => {
           rate({ mediaId: media.id }, stars);
         }}

@@ -35,7 +35,11 @@ const ConfirmHiding = ({ hiding, onHidden }: ConfirmHidingProps) => {
         hiding.asking === null
           ? ''
           : `${
-              hiding.asking.kind === 'series' ? 'Every episode of it disappears' : 'It disappears'
+              hiding.asking.kind === 'series'
+                ? 'Every episode of it disappears'
+                : hiding.asking.kind === 'library'
+                  ? 'Everything in it disappears'
+                  : 'It disappears'
             } from your rows, your searches and the randomiser${
               shared ? ', for you and for nobody else on this account' : ''
             }. Bring it back from Hidden on your profile at any time.`

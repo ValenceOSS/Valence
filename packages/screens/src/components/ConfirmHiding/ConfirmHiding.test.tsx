@@ -30,6 +30,7 @@ const hiding = (overrides: Partial<Hiding> = {}): Hiding => ({
   isHidden: () => false,
   asking: null,
   ask: vi.fn(),
+  askLibrary: vi.fn(),
   dismiss: vi.fn(),
   confirm: vi.fn(),
   show: vi.fn(),

@@ -1111,6 +1111,22 @@ const createDatabaseLibraryService = ({
       return true;
     },
 
+    exceptionsOn: async (subject) => {
+      const rows = await db
+        .select({ userId: ageException.userId, effect: ageException.effect })
+        .from(ageException)
+        .where(
+          subject.kind === 'item'
+            ? eq(ageException.mediaItemId, subject.subjectId)
+            : eq(ageException.seriesId, subject.subjectId),
+        );
+
+      return rows.map((row) => ({
+        accountId: row.userId,
+        effect: row.effect === 'deny' ? ('deny' as const) : ('allow' as const),
+      }));
+    },
+
     clearException: async (accountId, subject) => {
       const gone = await db
         .delete(ageException)

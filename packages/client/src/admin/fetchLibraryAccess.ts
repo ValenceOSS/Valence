@@ -1,10 +1,15 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import {
   AgeExceptionListSchema,
+  ExceptionHolderListSchema,
   LibraryAccessSchema,
 } from '@ValenceContracts/schemas/LibraryAccess';
 import { readRefusal } from '@ValenceClient/admin/readRefusal';
-import type { AgeException, LibraryReach } from '@ValenceContracts/schemas/LibraryAccess';
+import type {
+  AgeException,
+  ExceptionHolder,
+  LibraryReach,
+} from '@ValenceContracts/schemas/LibraryAccess';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 
 /**
@@ -97,7 +102,10 @@ const fetchExceptions = async (userId: string): Promise<AgeException[]> => {
  * @param exception - Which one.
  * @returns Any refusal from the server.
  */
-const clearException = async (userId: string, exception: AgeException): Promise<Refusal> => {
+const clearException = async (
+  userId: string,
+  exception: { kind: 'item' | 'series'; subjectId: string },
+): Promise<Refusal> => {
   const response = await fetch(
     `/api/admin/accounts/${userId}/exceptions/${exception.kind}/${exception.subjectId}`,
     { method: 'DELETE', credentials: 'same-origin' },
@@ -108,4 +116,56 @@ const clearException = async (userId: string, exception: AgeException): Promise<
     : readRefusal(response);
 };
 
-export { fetchLibraryAccess, setLibraryAccess, setCeiling, fetchExceptions, clearException };
+/**
+ * Which accounts already have one particular thing allowed or denied, so that deciding about it
+ * again shows what was decided before rather than asking blind.
+ *
+ * @param subject - The item or programme.
+ * @returns The accounts carrying an exception on it.
+ */
+const fetchExceptionsOn = async (subject: {
+  kind: 'item' | 'series';
+  subjectId: string;
+}): Promise<ExceptionHolder[]> => {
+  return (
+    await readFromServer(
+      `/api/admin/exceptions/${subject.kind}/${subject.subjectId}`,
+      ExceptionHolderListSchema,
+    )
+  ).accounts;
+};
+
+/**
+ * Allows or denies one thing for one account, whatever that account's ceiling says.
+ *
+ * @param userId - The account.
+ * @param subject - The item or programme.
+ * @param effect - Whether to allow it or deny it.
+ * @returns Any refusal from the server.
+ */
+const setException = async (
+  userId: string,
+  subject: { kind: 'item' | 'series'; subjectId: string },
+  effect: 'allow' | 'deny',
+): Promise<Refusal> => {
+  const response = await fetch(`/api/admin/accounts/${userId}/exceptions`, {
+    method: 'PUT',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ...subject, effect }),
+  }).catch(() => null);
+
+  return response === null
+    ? { message: 'The server could not be reached.' }
+    : readRefusal(response);
+};
+
+export {
+  fetchLibraryAccess,
+  setLibraryAccess,
+  setCeiling,
+  fetchExceptions,
+  fetchExceptionsOn,
+  setException,
+  clearException,
+};

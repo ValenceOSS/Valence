@@ -1,7 +1,10 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { HiddenSubject } from '@ValenceClient/library/fetchHidden';
 
-type Hiding = HiddenSubject & { title: string };
+type Hiding = {
+  kind: 'item' | 'series';
+  subjectId: string;
+  title: string;
+};
 
 /**
  * What hiding something actually means, given the thing somebody pressed hide on.

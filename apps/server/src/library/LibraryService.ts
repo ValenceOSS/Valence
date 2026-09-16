@@ -87,6 +87,7 @@ type LibraryService = ShowService & {
     grantedBy: string | null,
   ) => Promise<boolean>;
   clearException: (accountId: string, subject: AgeSubject) => Promise<boolean>;
+  exceptionsOn: (subject: AgeSubject) => Promise<{ accountId: string; effect: 'allow' | 'deny' }[]>;
   getMedia: (id: string) => Promise<MediaDetail | null>;
   getSeries: (seriesId: string) => Promise<{ id: string; title: string } | null>;
   seriesOf: (mediaId: string) => Promise<string | null>;

@@ -523,3 +523,65 @@ describe('setting a ceiling through the admin surface', () => {
     expect(written.status).toBe(403);
   });
 });
+
+describe('deciding about one thing from the film itself', () => {
+  it('denies it for an account with no ceiling at all, which is a real thing to want', async () => {
+    const me = await signedInWith(context, ['account.manage']);
+
+    expect((await me.ask(`/api/media/${ARRIVAL}`)).status).toBe(200);
+
+    const decided = await context.app.request(
+      `${BASE}/api/admin/accounts/${me.accountId}/exceptions`,
+      {
+        method: 'PUT',
+        headers: { cookie: me.cookie, origin: BASE, 'content-type': 'application/json' },
+        body: JSON.stringify({ kind: 'item', subjectId: ARRIVAL, effect: 'deny' }),
+      },
+    );
+
+    expect(decided.status).toBe(204);
+    expect((await me.ask(`/api/media/${ARRIVAL}`)).status).toBe(404);
+  });
+
+  it('says who already has one, so deciding again is not done blind', async () => {
+    const me = await signedInWith(context, ['account.manage']);
+
+    await context.app.request(`${BASE}/api/admin/accounts/${me.accountId}/exceptions`, {
+      method: 'PUT',
+      headers: { cookie: me.cookie, origin: BASE, 'content-type': 'application/json' },
+      body: JSON.stringify({ kind: 'item', subjectId: ARRIVAL, effect: 'deny' }),
+    });
+
+    const read = z
+      .object({ accounts: z.array(z.object({ accountId: z.string(), effect: z.string() })) })
+      .parse(await (await me.ask(`/api/admin/exceptions/item/${ARRIVAL}`)).json());
+
+    expect(read.accounts).toEqual([{ accountId: me.accountId, effect: 'deny' }]);
+  });
+
+  it('is not for somebody who cannot manage accounts', async () => {
+    const me = await signedInWith(context, []);
+
+    expect((await me.ask(`/api/admin/exceptions/item/${ARRIVAL}`)).status).toBe(403);
+  });
+
+  it('forgets one, leaving the ceiling to decide again', async () => {
+    const me = await signedInWith(context, ['account.manage']);
+
+    await context.app.request(`${BASE}/api/admin/accounts/${me.accountId}/exceptions`, {
+      method: 'PUT',
+      headers: { cookie: me.cookie, origin: BASE, 'content-type': 'application/json' },
+      body: JSON.stringify({ kind: 'item', subjectId: ARRIVAL, effect: 'deny' }),
+    });
+
+    expect((await me.ask(`/api/media/${ARRIVAL}`)).status).toBe(404);
+
+    const forgotten = await me.ask(
+      `/api/admin/accounts/${me.accountId}/exceptions/item/${ARRIVAL}`,
+      'DELETE',
+    );
+
+    expect(forgotten.status).toBe(204);
+    expect((await me.ask(`/api/media/${ARRIVAL}`)).status).toBe(200);
+  });
+});

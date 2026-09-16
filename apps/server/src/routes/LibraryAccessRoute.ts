@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import {
   AgeExceptionListSchema,
+  ExceptionHolderListSchema,
   LibraryAccessSchema,
   SetCeilingSchema,
   SetExceptionSchema,
@@ -116,7 +117,27 @@ const clearExceptionRoute = createRoute({
   responses: { 204: { description: 'Forgotten' }, 403: FOR_ADMINISTRATORS },
 });
 
+const readExceptionsOnRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/exceptions/{kind}/{subjectId}',
+  tags: ['Accounts'],
+  summary: 'Read which accounts already have this allowed or denied',
+  request: {
+    params: z.object({ kind: z.enum(['item', 'series']), subjectId: z.string().uuid() }),
+  },
+  responses: {
+    200: {
+      description: 'The accounts carrying an exception on it',
+      content: {
+        'application/json': { schema: ExceptionHolderListSchema.openapi('ExceptionHolders') },
+      },
+    },
+    403: FOR_ADMINISTRATORS,
+  },
+});
+
 export {
+  readExceptionsOnRoute,
   readLibraryAccessRoute,
   allowLibraryRoute,
   refuseLibraryRoute,

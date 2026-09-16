@@ -18,7 +18,11 @@ import { fetchWebhooks, fetchWebhookDeliveries } from '@ValenceClient/admin/fetc
 import { fetchEverybodysShares } from '@ValenceClient/sharing/fetchShares';
 import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import { fetchExceptions, fetchLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
+import {
+  fetchExceptions,
+  fetchExceptionsOn,
+  fetchLibraryAccess,
+} from '@ValenceClient/admin/fetchLibraryAccess';
 
 const ADMIN = ['admin'] as const;
 
@@ -243,8 +247,22 @@ const exceptions = (accountId: string | null) =>
     enabled: accountId !== null,
   });
 
+/**
+ * Which accounts already have one thing allowed or denied, for the dialog that decides about it.
+ *
+ * @param subject - The item or programme, or nothing while none is being decided about.
+ * @returns The query.
+ */
+const exceptionsOn = (subject: { kind: 'item' | 'series'; subjectId: string } | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'exceptionsOn', subject?.kind ?? null, subject?.subjectId ?? null],
+    queryFn: () => fetchExceptionsOn(subject ?? { kind: 'item', subjectId: '' }),
+    enabled: subject !== null,
+  });
+
 const adminQueries = {
   exceptions,
+  exceptionsOn,
   libraryAccess,
   folders,
   overview,

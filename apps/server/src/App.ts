@@ -31,6 +31,7 @@ import type { PlaybackService, PreviewRead } from '@ValenceServer/playback/Playb
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
 import type { PresenceService } from '@ValenceServer/presence/PresenceService';
 import {
+  readExceptionsOnRoute,
   readLibraryAccessRoute,
   allowLibraryRoute,
   refuseLibraryRoute,
@@ -2647,6 +2648,16 @@ const createApp = ({
     }
 
     return context.json({ exceptions: await library.exceptionsFor(userId) }, 200);
+  });
+
+  app.openapi(readExceptionsOnRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { kind, subjectId } = context.req.valid('param');
+
+    return context.json({ accounts: await library.exceptionsOn({ kind, subjectId }) }, 200);
   });
 
   app.openapi(setExceptionRoute, async (context) => {
