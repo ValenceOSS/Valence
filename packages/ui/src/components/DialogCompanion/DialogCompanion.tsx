@@ -24,6 +24,14 @@ import type { DialogCompanionProps } from './DialogCompanion.types';
  * beside to stand in, a column sharing a row with a panel that wants all of it has nowhere to go.
  * Better to cover the thing for a moment than to be squeezed out of sight next to it.
  *
+ * What stands in the column is offered no column of its own, which is why the children are handed a
+ * slot of `null`. There is one column and the newest claim wins it, so a companion rendered inside
+ * another's children took the column from the panel it lives in — that panel then drew nothing, which
+ * unmounted the very thing that had just claimed it, which released the claim and put the first panel
+ * back with its state reset. Pressing Add trigger inside a job's schedule did exactly that and looked
+ * like a button doing nothing. Seeing no slot, a companion down there is an ordinary dialog laid over
+ * the top, which is what it already is on a narrow screen.
+ *
  * @param label - What the panel is, read out when it stands alone.
  * @param isOpen - Whether it is showing.
  * @param onClose - Told when it was dismissed.
@@ -65,7 +73,10 @@ const DialogCompanion = ({ label, isOpen, onClose, children }: DialogCompanionPr
     return null;
   }
 
-  return createPortal(children, slot.column);
+  return createPortal(
+    <companionContext.Provider value={null}>{children}</companionContext.Provider>,
+    slot.column,
+  );
 };
 
 DialogCompanion.displayName = 'DialogCompanion';
