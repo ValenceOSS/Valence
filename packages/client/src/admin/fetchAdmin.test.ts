@@ -61,7 +61,6 @@ const OVERVIEW = {
     ffmpegVersion: '9.0',
     ffmpegSupported: true,
     hardwareAccels: ['videotoolbox'],
-    rejectedEncoders: [],
     concurrentRenders: 2,
     toneMapping: 'unavailable' as const,
     hardwareToneMaps: [],

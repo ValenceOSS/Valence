@@ -17,6 +17,24 @@ pub enum HardwareAccel {
 }
 
 impl HardwareAccel {
+    /// What an operator calls this backend, for a line somebody has to read.
+    ///
+    /// The debug spelling is not it: `Vaapi` and `Qsv` are how Rust writes a
+    /// variant, and every one of these is an initialism its vendor writes in
+    /// capitals.
+    #[must_use]
+    pub fn word(self) -> &'static str {
+        match self {
+            Self::None => "software",
+            Self::Vaapi => "VAAPI",
+            Self::Qsv => "QSV",
+            Self::Nvenc => "NVENC",
+            Self::Amf => "AMF",
+            Self::VideoToolbox => "VideoToolbox",
+            Self::Rkmpp => "RKMPP",
+        }
+    }
+
     /// The `-hwaccel` value `FFmpeg` expects, if any.
     #[must_use]
     pub fn ffmpeg_flag(self) -> Option<&'static str> {
@@ -664,9 +682,15 @@ pub fn filter_name(expression: &str) -> &str {
 /// The tone mapper this session would use without leaving the device.
 ///
 /// Two things have to hold: the backend has one at all, and this build was
-/// compiled with it. Neither implies the other — QSV has no tone mapper of its
-/// own whatever the build, and a package without `tonemap_vaapi` leaves a card
-/// that would otherwise manage it perfectly well.
+/// compiled with it. Neither implies the other — `Amf` has none whatever the
+/// build, and a package without `tonemap_vaapi` leaves a card that would
+/// otherwise manage it perfectly well.
+///
+/// `QSV` was the example here, on the grounds that it has no tone mapper of its
+/// own. It still has none of its own and it is no longer the example, because
+/// what it has is `VAAPI`'s: the filter runs before the frames are mapped onto
+/// the `QSV` device, so the backend with no mapper has one. What is asked is
+/// what the pipeline names, not what the backend is called.
 #[must_use]
 pub fn on_device_tone_map_filter(
     spec: &SessionSpec,

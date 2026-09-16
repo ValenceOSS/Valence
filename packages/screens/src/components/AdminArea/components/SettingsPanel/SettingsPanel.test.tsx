@@ -43,7 +43,6 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     ffmpegVersion: null,
     ffmpegSupported: true,
     hardwareAccels: [],
-    rejectedEncoders: [],
     concurrentRenders: 0,
     toneMapping: 'unavailable' as const,
     hardwareToneMaps: [],

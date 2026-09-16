@@ -450,7 +450,6 @@ type CreateAppOptions = {
     ffmpegVersion: string;
     ffmpegSupported?: boolean;
     hardwareAccels: string[];
-    rejected?: { encoder: string; reason: string }[];
     concurrentRenders?: number;
     toneMapping?: 'zscale' | 'libplacebo' | 'unavailable';
     hardwareToneMaps?: string[];
@@ -1972,7 +1971,6 @@ const createApp = ({
           ffmpegVersion: transcoderCapabilities?.ffmpegVersion ?? null,
           ffmpegSupported: transcoderCapabilities?.ffmpegSupported ?? true,
           hardwareAccels: transcoderCapabilities?.hardwareAccels ?? [],
-          rejectedEncoders: transcoderCapabilities?.rejected ?? [],
           chains: transcoderCapabilities?.chains ?? [],
           concurrentRenders: transcoderCapabilities?.concurrentRenders ?? 0,
           toneMapping: transcoderCapabilities?.toneMapping ?? 'unavailable',

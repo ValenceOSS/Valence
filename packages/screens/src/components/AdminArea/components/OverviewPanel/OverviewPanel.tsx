@@ -153,6 +153,7 @@ const OverviewPanel = ({
       : describeAcceleration(overview.settings.hardwareAccel, overview.transcoder.hardwareAccels);
 
   const chains = overview === null ? null : describeChains(overview.transcoder.chains);
+  const refusals = chains?.refusals ?? [];
 
   const toneMapping =
     overview === null
@@ -241,21 +242,12 @@ const OverviewPanel = ({
               </div>
             )}
 
-            {(chains?.refusals ?? []).length +
-              (overview?.transcoder.rejectedEncoders ?? []).length >
-            0 ? (
+            {refusals.length > 0 ? (
               <div className="valence-rail flex max-h-48 flex-col gap-3 overflow-y-auto">
-                {(chains?.refusals ?? []).map((refusal) => (
+                {refusals.map((refusal) => (
                   <div key={refusal.id} className="flex flex-col gap-1">
                     <dt className="text-text-muted">{refusal.what}</dt>
                     <dd className="text-xs text-text-muted">{refusal.reason}</dd>
-                  </div>
-                ))}
-
-                {(overview?.transcoder.rejectedEncoders ?? []).map((rejected) => (
-                  <div key={rejected.encoder} className="flex flex-col gap-1">
-                    <dt className="text-text-muted">{rejected.encoder} was not used</dt>
-                    <dd className="text-xs text-text-muted">{rejected.reason}</dd>
                   </div>
                 ))}
               </div>

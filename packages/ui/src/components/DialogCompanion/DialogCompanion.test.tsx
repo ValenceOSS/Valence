@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { forgetPageCovers } from '@ValenceUI/pageCover';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -122,6 +124,46 @@ describe('DialogCompanion', () => {
     expect(document.querySelector('[data-slot="dialog-companion"]')).toBeNull();
     expect(screen.getByText('Their roles decide everything')).toBeInTheDocument();
     expect(document.querySelector('[aria-label="What Sam may do"]')).toBeInTheDocument();
+  });
+
+  it('opens one that was asked for from inside the panel standing in the column', async () => {
+    const Schedule = () => {
+      const [isOpen, setIsOpen] = useState(false);
+
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(true);
+            }}
+          >
+            Add trigger
+          </button>
+
+          <DialogCompanion label="Add trigger" isOpen={isOpen} onClose={vi.fn()}>
+            <p>Every day at</p>
+          </DialogCompanion>
+        </>
+      );
+    };
+
+    Schedule.displayName = 'Schedule';
+
+    render(
+      <Dialog label="The server" isOpen onClose={vi.fn()}>
+        <p>Background jobs</p>
+
+        <DialogCompanion label="Schedule" isOpen onClose={vi.fn()}>
+          <Schedule />
+        </DialogCompanion>
+      </Dialog>,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add trigger' }));
+
+    expect(screen.getByText('Every day at')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Add trigger' })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {
