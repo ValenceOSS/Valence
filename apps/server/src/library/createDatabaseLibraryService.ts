@@ -966,6 +966,16 @@ const createDatabaseLibraryService = ({
       return refused.length > 0;
     },
 
+    isLibraryOutOfReach: async (accountId, libraryId) => {
+      const refused = await db
+        .select({ one: sql<number>`1` })
+        .from(libraryBlock)
+        .where(and(eq(libraryBlock.userId, accountId), eq(libraryBlock.libraryId, libraryId)))
+        .limit(1);
+
+      return refused.length > 0;
+    },
+
     getMedia: async (id) => {
       const rows = await db.select().from(mediaItem).where(eq(mediaItem.id, id)).limit(1);
       const row = rows[0];

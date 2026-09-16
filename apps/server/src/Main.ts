@@ -32,6 +32,7 @@ import { createAuth } from '@ValenceServer/auth/Auth';
 import { trustedOriginsFor } from '@ValenceServer/auth/trustedOriginsFor';
 import type { RealtimeSession } from '@ValenceServer/realtime/createRealtimeHandler';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
+import { createDatabaseHiddenService } from '@ValenceServer/hiding/createDatabaseHiddenService';
 import { createDatabase } from '@ValenceServer/db/Database';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
@@ -1459,6 +1460,7 @@ const app = createApp({
   readPushPublicKey: async () => (await readPushKeys()).publicKey,
   downloads: downloadService,
   favourites: createDatabaseFavouriteService(db),
+  hiding: createDatabaseHiddenService(db),
   ratings: createDatabaseRatingService(db),
   shares: createDatabaseShareService(db),
   shareSessions: createShareSessions(),

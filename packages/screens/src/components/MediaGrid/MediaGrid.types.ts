@@ -11,6 +11,7 @@ type MediaGridProps = {
   resumeFor?: (mediaId: string) => number | null;
   isKept?: (mediaId: string) => boolean;
   onToggleKept?: (media: MediaSummary) => void;
+  onHide?: (media: MediaSummary) => void;
   size?: MediaGridSize;
   isSeries?: boolean;
   onOpenShow?: (media: MediaSummary) => void;

@@ -1,5 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
-import { ArrowTurnForwardIcon, FavouriteIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import {
+  ArrowTurnForwardIcon,
+  FavouriteIcon,
+  PlayIcon,
+  ViewOffIcon,
+} from '@hugeicons/core-free-icons';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
@@ -91,6 +96,7 @@ const RailCard = ({
   onOpenShow,
   isKept = false,
   onToggleKept,
+  onHide,
   isSeries = false,
   shape = 'wide',
 }: RailCardProps) => {
@@ -387,6 +393,21 @@ const RailCard = ({
                       ) : (
                         <Icon of={FavouriteIcon} size={17} />
                       )}
+                    </Button>
+                  )}
+
+                  {onHide === undefined ? null : (
+                    <Button
+                      isIconOnly
+                      variant="secondary"
+                      size="md"
+                      label={`Hide ${media.title}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onHide(media);
+                      }}
+                    >
+                      <Icon of={ViewOffIcon} size={17} />
                     </Button>
                   )}
                 </span>

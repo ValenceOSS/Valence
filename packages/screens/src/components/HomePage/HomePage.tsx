@@ -4,6 +4,7 @@ import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { useHidden } from '@ValenceClient/library/useHidden';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 
 /**
@@ -14,6 +15,7 @@ const HomePage = () => {
   const { place, go } = usePlace();
   const watching = useWatchingProfile();
   const favourites = useFavourites(watching);
+  const hiding = useHidden(watching);
   const { mayAdminister } = useWhatIMayDo();
 
   return (
@@ -51,6 +53,9 @@ const HomePage = () => {
       isKept={favourites.isKept}
       onToggleKept={(media) => {
         favourites.toggle(media.id);
+      }}
+      onHide={(media) => {
+        hiding.hide({ kind: 'item', subjectId: media.id }, media.title);
       }}
     />
   );
