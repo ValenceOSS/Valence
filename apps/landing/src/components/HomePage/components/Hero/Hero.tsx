@@ -15,7 +15,7 @@ const Hero = () => {
   const prefersReducedMotion = useReducedMotionConfig();
 
   return (
-    <section className="relative flex h-svh flex-col items-center overflow-hidden pt-28 sm:pt-32">
+    <section className="relative flex h-svh flex-col items-center justify-center overflow-hidden pt-16 pb-10 sm:pt-20">
       <motion.div
         variants={staggerVariants}
         initial="hidden"
