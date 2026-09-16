@@ -59,6 +59,7 @@ const asNumber = (value: string | null): number | undefined =>
  * @param resumeFor - Where they left each item.
  * @param isKept - Whether each item is kept.
  * @param onToggleKept - Told to keep something, or stop.
+ * @param onHide - Told to hide something from this viewer.
  */
 const SearchArea = ({
   search,
@@ -72,6 +73,7 @@ const SearchArea = ({
   resumeFor,
   isKept,
   onToggleKept,
+  onHide,
 }: SearchAreaProps) => {
   const [kind, setKind] = useState<SearchKind>('everything');
   const [decade, setDecade] = useState<string | null>(null);
@@ -351,6 +353,7 @@ const SearchArea = ({
                 {...(resumeFor === undefined ? {} : { resumeFor })}
                 {...(isKept === undefined ? {} : { isKept })}
                 {...(onToggleKept === undefined ? {} : { onToggleKept })}
+                {...(onHide === undefined ? {} : { onHide })}
               />
             )}
           </motion.div>

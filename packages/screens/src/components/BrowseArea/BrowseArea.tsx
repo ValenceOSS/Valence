@@ -72,6 +72,7 @@ const PAGES: Record<
  * @param favourites - What they have kept, for the page that lists them.
  * @param isKept - Whether each item is kept.
  * @param onToggleKept - Told to keep something, or stop.
+ * @param onHide - Told to hide something from this viewer.
  */
 const BrowseArea = ({
   kind,
@@ -84,6 +85,7 @@ const BrowseArea = ({
   favourites = [],
   isKept,
   onToggleKept,
+  onHide,
   onAddLibrary,
 }: BrowseAreaProps) => {
   const [size, setSize] = useState(readGridSize);
@@ -226,6 +228,7 @@ const BrowseArea = ({
             {...(resumeFor === undefined ? {} : { resumeFor })}
             {...(isKept === undefined ? {} : { isKept })}
             {...(onToggleKept === undefined ? {} : { onToggleKept })}
+            {...(onHide === undefined ? {} : { onHide })}
           />
         )}
       </motion.section>

@@ -4,6 +4,7 @@ const ACCOUNT_PANELS = [
   { id: 'devices', label: 'Devices' },
   { id: 'links', label: 'Links' },
   { id: 'history', label: 'History' },
+  { id: 'hidden', label: 'Hidden' },
 ] as const;
 
 export { ACCOUNT_PANELS };

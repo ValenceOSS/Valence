@@ -21,6 +21,8 @@ import type { SegmentService } from '@ValenceServer/segments/SegmentService';
 import type { WatchProgressService } from '@ValenceServer/progress/WatchProgressService';
 import type { DownloadService } from '@ValenceServer/downloads/DownloadService';
 import type { FavouriteService } from '@ValenceServer/favourites/FavouriteService';
+import type { HiddenService } from '@ValenceServer/hiding/HiddenService';
+import { createMemoryHiddenService } from '@ValenceServer/hiding/createMemoryHiddenService';
 import type { RatingService } from '@ValenceServer/ratings/RatingService';
 import type { ShareService } from '@ValenceServer/sharing/ShareService';
 import type { ShareSessions } from '@ValenceServer/sharing/createShareSessions';
@@ -28,6 +30,15 @@ import type { PlaybackSessions } from '@ValenceServer/playback/createPlaybackSes
 import type { PlaybackService, PreviewRead } from '@ValenceServer/playback/PlaybackService';
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
 import type { PresenceService } from '@ValenceServer/presence/PresenceService';
+import {
+  listHiddenRoute,
+  hideMediaRoute,
+  showMediaRoute,
+  hideSeriesRoute,
+  showSeriesRoute,
+  hideLibraryRoute,
+  showLibraryRoute,
+} from '@ValenceServer/routes/HiddenRoute';
 import {
   askForDownloadRoute,
   askForSeriesRoute,
@@ -401,6 +412,7 @@ type CreateAppOptions = {
   progress: WatchProgressService;
   downloads?: DownloadService;
   favourites: FavouriteService;
+  hiding?: HiddenService;
   ratings: RatingService;
   shares?: ShareService;
   shareSessions?: ShareSessions;
@@ -474,6 +486,7 @@ const createApp = ({
   progress,
   downloads,
   favourites,
+  hiding = createMemoryHiddenService(),
   ratings,
   shares,
   shareSessions,
@@ -3188,6 +3201,112 @@ const createApp = ({
     }
 
     return context.json({ favourites: await favourites.list(profileId) }, 200);
+  });
+
+  app.openapi(listHiddenRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    return context.json({ hidden: await hiding.list(profileId) }, 200);
+  });
+
+  app.openapi(hideMediaRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const { mediaId } = context.req.valid('param');
+
+    if (!(await hiding.hide(profileId, { kind: 'item', subjectId: mediaId }))) {
+      return context.json({ error: 'No such item.' }, 404);
+    }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(showMediaRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    await hiding.show(profileId, { kind: 'item', subjectId: context.req.valid('param').mediaId });
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(hideSeriesRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const { seriesId } = context.req.valid('param');
+
+    if (!(await hiding.hide(profileId, { kind: 'series', subjectId: seriesId }))) {
+      return context.json({ error: 'No such programme.' }, 404);
+    }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(showSeriesRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    await hiding.show(profileId, {
+      kind: 'series',
+      subjectId: context.req.valid('param').seriesId,
+    });
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(hideLibraryRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null || viewer.kind !== 'account' || viewer.profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const { libraryId } = context.req.valid('param');
+
+    const refused = await library.isLibraryOutOfReach(viewer.accountId, libraryId);
+
+    if (refused && !viewer.isAdministrator) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    if (!(await hiding.hide(viewer.profileId, { kind: 'library', subjectId: libraryId }))) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(showLibraryRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    await hiding.show(profileId, {
+      kind: 'library',
+      subjectId: context.req.valid('param').libraryId,
+    });
+
+    return context.body(null, 204);
   });
 
   app.openapi(keepFavouriteRoute, async (context) => {

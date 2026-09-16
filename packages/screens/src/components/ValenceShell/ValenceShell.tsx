@@ -29,6 +29,7 @@ import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { useHidden } from '@ValenceClient/library/useHidden';
 import { useRate } from '@ValenceClient/library/useRate';
 import { pickAnything } from '@ValenceClient/library/pickAnything';
 import { findSiblings } from '@ValenceClient/library/pickFeatured';
@@ -72,6 +73,7 @@ const ValenceShell = () => {
   const watching = useWatchingProfile();
   const favourites = useFavourites(watching);
   const rate = useRate(watching);
+  const hiding = useHidden(watching);
   const { mayAdminister } = useWhatIMayDo();
   const leave = useSignOut();
 
@@ -314,6 +316,9 @@ const ValenceShell = () => {
         isKept={inspecting !== null && favourites.isKept(inspecting.id)}
         onToggleKept={(media) => {
           favourites.toggle(media.id);
+        }}
+        onHide={(media) => {
+          hiding.hide({ kind: 'item', subjectId: media.id }, media.title);
         }}
         onRate={(media, stars) => {
           rate({ mediaId: media.id }, stars);

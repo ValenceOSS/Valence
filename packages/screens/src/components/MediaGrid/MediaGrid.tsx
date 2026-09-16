@@ -28,6 +28,7 @@ const COLUMNS: Record<MediaGridSize, string> = {
  * @param resumeFor - Where they left each item.
  * @param isKept - Whether each item is kept.
  * @param onToggleKept - Told to keep something, or stop.
+ * @param onHide - Told to hide something from this viewer.
  * @param size - How large the cards are.
  * @param shape - Whether each card stands upright as a poster or lies flat; posters sit more to a row.
  */
@@ -39,6 +40,7 @@ const MediaGrid = ({
   resumeFor,
   isKept,
   onToggleKept,
+  onHide,
   size = 'medium',
   isSeries = false,
   onOpenShow,
@@ -67,6 +69,7 @@ const MediaGrid = ({
           {...(onOpenShow === undefined ? {} : { onOpenShow })}
           {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}
           {...(onToggleKept === undefined ? {} : { onToggleKept })}
+          {...(onHide === undefined ? {} : { onHide })}
         />
       </RevealItem>
     ))}

@@ -9,6 +9,7 @@ import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { useHidden } from '@ValenceClient/library/useHidden';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import type { SearchDrawerProps } from './SearchDrawer.types';
@@ -25,6 +26,7 @@ const SearchDrawer = ({ isOpen, onClose }: SearchDrawerProps) => {
   const { place, go, replace } = usePlace();
   const watching = useWatchingProfile();
   const favourites = useFavourites(watching);
+  const hiding = useHidden(watching);
 
   return (
     <Drawer label="Search" isOpen={isOpen} onClose={onClose}>
@@ -61,6 +63,9 @@ const SearchDrawer = ({ isOpen, onClose }: SearchDrawerProps) => {
           isKept={favourites.isKept}
           onToggleKept={(media) => {
             favourites.toggle(media.id);
+          }}
+          onHide={(media) => {
+            hiding.hide({ kind: 'item', subjectId: media.id }, media.title);
           }}
         />
       </DialogContent>

@@ -11,6 +11,7 @@ import {
   PlayIcon,
   Share08Icon,
   UserGroupIcon,
+  ViewOffIcon,
 } from '@hugeicons/core-free-icons';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
@@ -97,6 +98,7 @@ const MediaDetailDialog = ({
   onRate,
   onOpenPerson,
   onShare,
+  onHide,
   onStartParty,
 }: MediaDetailDialogProps) => {
   const asked = useQuery(libraryQueries.detail(media?.id ?? null));
@@ -549,6 +551,18 @@ const MediaDetailDialog = ({
                     icon: <Icon of={UserGroupIcon} size={18} />,
                     onChoose: () => {
                       onStartParty(shown);
+                    },
+                  },
+                ]),
+            ...(onHide === undefined
+              ? []
+              : [
+                  {
+                    id: 'hide',
+                    label: 'Hide this',
+                    icon: <Icon of={ViewOffIcon} size={18} />,
+                    onChoose: () => {
+                      onHide(shown);
                     },
                   },
                 ]),

@@ -271,6 +271,9 @@ const createMemoryLibraryService = (
     });
   },
 
+  isLibraryOutOfReach: (accountId, libraryId) =>
+    Promise.resolve(blocks(state, accountId, libraryId)),
+
   isOutOfReach: (accountId, mediaId) => {
     const found = state.media.find((item) => item.id === mediaId);
 
