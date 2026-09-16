@@ -195,12 +195,12 @@ pub struct RejectedEncoder {
 /// saying the driver opened perfectly.
 const NOISE: [&str; 1] = ["libva info:"];
 
-/// Words a line carries when it is the thing that went wrong.
+/// Words a line carries when it is almost certainly the thing that went wrong.
 ///
 /// A heuristic, and deliberately a loose one: the cost of matching a line that
 /// is not the failure is a slightly wrong summary, and the cost of matching
-/// nothing is what this function is being fixed for.
-const COMPLAINTS: [&str; 9] = [
+/// nothing is what this function was fixed for.
+const COMPLAINTS: [&str; 8] = [
     "error",
     "invalid",
     "unsupported",
@@ -209,8 +209,20 @@ const COMPLAINTS: [&str; 9] = [
     "cannot",
     "unable",
     "no such",
-    "unknown",
 ];
+
+/// Words that mean a failure in a sentence and something ordinary in a table.
+///
+/// `unknown` was among the confident ones and should not have been. ffmpeg
+/// describes every frame it passes between filters as `csp:unknown
+/// range:unknown` when nobody has said otherwise, which is most synthetic
+/// sources — so a routine line of filter graph chatter outranked the real
+/// complaint, and a `QSV` sheet chain reported a colour space as the reason it
+/// would not run. See VAL-199.
+///
+/// Still worth having: "Unknown encoder" is exactly what somebody needs to read.
+/// It is only worth having second.
+const WEAK_COMPLAINTS: [&str; 1] = ["unknown"];
 
 /// Whether a line is a library announcing itself rather than ffmpeg complaining.
 fn is_noise(line: &str) -> bool {
@@ -222,6 +234,13 @@ fn is_complaint(line: &str) -> bool {
     let line = line.to_lowercase();
 
     COMPLAINTS.iter().any(|word| line.contains(word))
+}
+
+/// Whether a line might be the thing that failed, on a word that is not proof.
+fn is_weak_complaint(line: &str) -> bool {
+    let line = line.to_lowercase();
+
+    WEAK_COMPLAINTS.iter().any(|word| line.contains(word))
 }
 
 /// The part of ffmpeg's complaint worth reading.
@@ -265,6 +284,7 @@ pub fn complaint(stderr: &str) -> Option<String> {
     let summary = said
         .iter()
         .rfind(|line| is_complaint(line))
+        .or_else(|| said.iter().rfind(|line| is_weak_complaint(line)))
         .or(said.last())?;
 
     if summary.chars().count() <= LIMIT {
@@ -1561,6 +1581,41 @@ libva info: va_openDriver() returns 0";
         assert_eq!(
             summarise_failure(LIBVA, "it said nothing"),
             "it said nothing"
+        );
+    }
+
+    /// A line of ordinary filter graph chatter, taken verbatim from the QSV
+    /// sheet probe on an i5-13500. It describes a frame being converted, and it
+    /// says `unknown` twice about a colour space nobody had stated.
+    const FILTER_CHATTER: &str = "[auto_scale_0 @ 0x7f6f7400b3c0] w:320 h:240 fmt:yuv420p csp:unknown range:unknown sar:1/1 -> w:320 h:240 fmt:nv12 csp:unknown range:tv sar:1/1 flags:0x00000004";
+
+    #[test]
+    fn does_not_report_an_unknown_colour_space_as_the_reason_a_chain_failed() {
+        let stderr =
+            format!("Error while opening encoder - maybe incorrect parameters\n{FILTER_CHATTER}");
+
+        assert_eq!(
+            complaint(&stderr).as_deref(),
+            Some("Error while opening encoder - maybe incorrect parameters"),
+            "a real complaint outranks a later line that merely contains the word"
+        );
+    }
+
+    /// Weak is second, not never. An encoder that does not exist is exactly what
+    /// somebody needs to read, and nothing else in that line is a complaint.
+    #[test]
+    fn still_reports_an_unknown_encoder_where_that_is_all_there_is() {
+        assert_eq!(
+            complaint("Unknown encoder 'mjpeg_qsv'").as_deref(),
+            Some("Unknown encoder 'mjpeg_qsv'")
+        );
+    }
+
+    #[test]
+    fn falls_back_to_the_last_line_where_nothing_reads_like_a_complaint() {
+        assert_eq!(
+            complaint("Starting thread...\nPress [q] to stop").as_deref(),
+            Some("Press [q] to stop")
         );
     }
 
