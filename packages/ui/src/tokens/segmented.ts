@@ -2,6 +2,7 @@ const SEGMENTED = {
   track:
     'valence-rail relative flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-md',
   trackSizes: {
+    xs: 'p-[3px]',
     sm: 'p-[3px]',
     md: 'p-1.5',
   },
@@ -13,6 +14,7 @@ const SEGMENTED = {
     'focus-visible:ring-[3px] focus-visible:ring-ring',
   ].join(' '),
   itemSizes: {
+    xs: 'h-5 px-2.5 text-xs font-medium',
     sm: 'h-[26px] px-3 text-[0.8125rem] font-medium',
     md: 'h-9 px-4 text-sm',
   },

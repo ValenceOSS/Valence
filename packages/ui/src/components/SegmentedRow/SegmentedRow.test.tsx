@@ -115,6 +115,20 @@ describe('the size of a SegmentedRow', () => {
 
     expect(screen.getByRole('button', { name: 'Books' })).toHaveClass('h-[26px]');
   });
+
+  it('stands at the height of a Button size="xs", for a corner that sits beside one', () => {
+    render(
+      <SegmentedRow
+        label="Which library"
+        items={ITEMS}
+        value="books"
+        onSelect={() => {}}
+        size="xs"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Books' })).toHaveClass('h-5');
+  });
 });
 
 it('keeps the chosen label readable under a pointer, where the mark behind it is light', () => {

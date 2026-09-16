@@ -30,7 +30,7 @@ const isLoadRange = (value: string): value is LoadRange =>
 const LoadRangeToggle = ({ value, onChange }: LoadRangeToggleProps) => (
   <SegmentedRow
     label="How far back to show the load"
-    size="sm"
+    size="xs"
     tone="accent"
     items={ITEMS}
     value={value}
