@@ -194,6 +194,7 @@ import {
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
+  READ_CERTIFICATES_AGAIN_JOB,
 } from '@ValenceServer/jobs/JobQueue';
 import { createMemoryMaintenanceService } from '@ValenceServer/maintenance/createMemoryMaintenanceService';
 import type { MaintenanceService } from '@ValenceServer/maintenance/MaintenanceService';
@@ -1945,6 +1946,7 @@ const createApp = ({
           hasCatalogueKey: current.catalogueApiKey !== '',
           hardwareAccel: current.hardwareAccel,
           previewQuality: current.previewQuality,
+          certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
@@ -1985,10 +1987,17 @@ const createApp = ({
       ...(patch.catalogueApiKey === undefined ? {} : { catalogueApiKey: patch.catalogueApiKey }),
       ...(patch.hardwareAccel === undefined ? {} : { hardwareAccel: patch.hardwareAccel }),
       ...(patch.previewQuality === undefined ? {} : { previewQuality: patch.previewQuality }),
+      ...(patch.certificationRegion === undefined
+        ? {}
+        : { certificationRegion: patch.certificationRegion.toUpperCase() }),
       ...(patch.showsProfilesBeforeSignIn === undefined
         ? {}
         : { showsProfilesBeforeSignIn: patch.showsProfilesBeforeSignIn }),
     });
+
+    if (updated.certificationRegion !== before.certificationRegion) {
+      await maintenance.readCertificatesAgain();
+    }
 
     if (updated.previewQuality !== before.previewQuality) {
       const libraries = await library.list(asTheServer);
@@ -2007,6 +2016,7 @@ const createApp = ({
         cookieSecure: updated.cookieSecure,
         hardwareAccel: updated.hardwareAccel,
         previewQuality: updated.previewQuality,
+        certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
       },
       200,
@@ -2119,6 +2129,7 @@ const createApp = ({
       [CLEANUP_ARTEFACT_CACHE_JOB]: () => maintenance.cleanupArtefactCache(),
       [CLEANUP_SESSIONS_JOB]: () => maintenance.cleanupSessions(),
       [CHECK_CATALOGUE_CONNECTIVITY_JOB]: () => maintenance.checkCatalogueConnectivity(),
+      [READ_CERTIFICATES_AGAIN_JOB]: () => maintenance.readCertificatesAgain(),
     };
 
     const maintenanceRunner = maintenanceRunners[kind];

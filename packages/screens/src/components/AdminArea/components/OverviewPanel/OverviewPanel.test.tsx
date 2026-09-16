@@ -33,6 +33,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
+    certificationRegion: 'GB',
     trustedOrigins: [],
   },
   transcoder: {

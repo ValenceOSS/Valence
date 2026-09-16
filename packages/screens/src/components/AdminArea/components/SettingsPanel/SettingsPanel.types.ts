@@ -5,6 +5,7 @@ type SettingsPanelProps = {
   onCatalogueKeySaved: () => void;
   onHardwareAccelSaved: () => void;
   onPreviewQualitySaved: () => void;
+  onCertificationRegionSaved: () => void;
   onProfileVisibilitySaved: () => void;
 };
 

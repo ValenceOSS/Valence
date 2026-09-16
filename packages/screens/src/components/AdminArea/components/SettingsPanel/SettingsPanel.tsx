@@ -10,6 +10,7 @@ import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { TextField } from '@ValenceUI/TextField';
 import { Switch } from '@ValenceUI/Switch';
 import {
+  saveCertificationRegion,
   saveCatalogueKey,
   saveHardwareAccel,
   savePreviewQuality,
@@ -25,6 +26,7 @@ const PREVIEW_QUALITY_CHOICES = [
   { id: 'high', label: 'High' },
 ] as const;
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { certificationRegions } from '@ValenceScreens/components/AdminArea/certificationRegions';
 
 /**
  * What this server is configured with and who may sign into it: the metadata catalogue key, which
@@ -43,12 +45,14 @@ const SettingsPanel = ({
   onCatalogueKeySaved,
   onHardwareAccelSaved,
   onPreviewQualitySaved,
+  onCertificationRegionSaved,
   onProfileVisibilitySaved,
 }: SettingsPanelProps) => {
   const [catalogueKey, setCatalogueKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [accel, setAccel] = useState(overview?.settings.hardwareAccel ?? '');
   const [quality, setQuality] = useState(overview?.settings.previewQuality ?? 'high');
+  const [region, setRegion] = useState(overview?.settings.certificationRegion ?? 'GB');
   const [showsFaces, setShowsFaces] = useState(
     overview?.settings.showsProfilesBeforeSignIn ?? true,
   );
@@ -82,6 +86,43 @@ const SettingsPanel = ({
               <>
                 <span className="truncate">
                   {accelerationOptions.find((option) => option.id === accel)?.label ?? 'Automatic'}
+                </span>
+
+                <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+              </>
+            }
+            triggerShape="field"
+            align="end"
+            className="w-44 max-w-full"
+          />
+        </SettingRow>
+
+        <SettingRow
+          title="Age certificates"
+          description="Whose certificates to read. A 15 and an R are not the same thing, so Valence orders them within one country rather than pretending they map onto each other. Every country's certificates are already stored, so changing this reads them again rather than rescanning."
+        >
+          <OptionMenu
+            label="Age certificates"
+            groups={[
+              {
+                name: 'Country',
+                selectedId: region,
+                onSelect: (id) => {
+                  setRegion(id);
+
+                  void saveCertificationRegion(id).then((saved) => {
+                    if (saved) {
+                      onCertificationRegionSaved();
+                    }
+                  });
+                },
+                options: certificationRegions,
+              },
+            ]}
+            trigger={
+              <>
+                <span className="truncate">
+                  {certificationRegions.find((option) => option.id === region)?.label ?? region}
                 </span>
 
                 <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />

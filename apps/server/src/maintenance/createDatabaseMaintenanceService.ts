@@ -3,6 +3,7 @@ import {
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
+  READ_CERTIFICATES_AGAIN_JOB,
 } from '@ValenceServer/jobs/JobQueue';
 import type { JobQueue } from '@ValenceServer/jobs/JobQueue';
 import type { MaintenanceService, QueuedJob } from './MaintenanceService';
@@ -54,6 +55,7 @@ const createDatabaseMaintenanceService = ({
   cleanupArtefactCache: () => enqueueSingleton(jobs, CLEANUP_ARTEFACT_CACHE_JOB),
   cleanupSessions: () => enqueueSingleton(jobs, CLEANUP_SESSIONS_JOB),
   checkCatalogueConnectivity: () => enqueueSingleton(jobs, CHECK_CATALOGUE_CONNECTIVITY_JOB),
+  readCertificatesAgain: () => enqueueSingleton(jobs, READ_CERTIFICATES_AGAIN_JOB),
 });
 
 export { createDatabaseMaintenanceService };

@@ -5,6 +5,7 @@ type MaintenanceService = {
   cleanupArtefactCache: () => Promise<QueuedJob>;
   cleanupSessions: () => Promise<QueuedJob>;
   checkCatalogueConnectivity: () => Promise<QueuedJob>;
+  readCertificatesAgain: () => Promise<QueuedJob>;
 };
 
 export type { MaintenanceService, QueuedJob };

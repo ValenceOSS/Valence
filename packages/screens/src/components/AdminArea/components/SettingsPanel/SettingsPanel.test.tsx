@@ -13,11 +13,16 @@ const saveShowsProfilesBeforeSignIn = vi.hoisted(() =>
   vi.fn<(shows: boolean) => Promise<boolean>>(() => Promise.resolve(true)),
 );
 
+const saveCertificationRegion = vi.hoisted(() =>
+  vi.fn<(region: string) => Promise<boolean>>(() => Promise.resolve(true)),
+);
+
 vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveCatalogueKey,
   saveHardwareAccel,
   savePreviewQuality,
   saveShowsProfilesBeforeSignIn,
+  saveCertificationRegion,
 }));
 
 const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOverview => ({
@@ -29,6 +34,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
+    certificationRegion: 'GB',
     ...overrides,
   },
   transcoder: {
@@ -61,6 +67,7 @@ describe('SettingsPanel', () => {
         onCatalogueKeySaved={vi.fn()}
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
       />,
     );
@@ -75,6 +82,7 @@ describe('SettingsPanel', () => {
         onCatalogueKeySaved={vi.fn()}
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
       />,
     );
@@ -90,6 +98,7 @@ describe('SettingsPanel', () => {
         onCatalogueKeySaved={vi.fn()}
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
       />,
     );
@@ -105,6 +114,7 @@ describe('SettingsPanel', () => {
         onCatalogueKeySaved={vi.fn()}
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
       />,
     );
@@ -123,6 +133,7 @@ describe('SettingsPanel', () => {
         onCatalogueKeySaved={vi.fn()}
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
       />,
     );
@@ -144,6 +155,7 @@ describe('SettingsPanel', () => {
         onCatalogueKeySaved={onCatalogueKeySaved}
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
       />,
     );
@@ -167,6 +179,7 @@ describe('SettingsPanel', () => {
         onCatalogueKeySaved={onCatalogueKeySaved}
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
       />,
     );
@@ -188,6 +201,7 @@ describe('SettingsPanel', () => {
         onCatalogueKeySaved={vi.fn()}
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
       />,
     );
@@ -202,6 +216,7 @@ describe('SettingsPanel', () => {
         onCatalogueKeySaved={vi.fn()}
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
       />,
     );
@@ -224,6 +239,7 @@ describe('SettingsPanel', () => {
         onCatalogueKeySaved={vi.fn()}
         onHardwareAccelSaved={saved}
         onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
       />,
     );
@@ -243,6 +259,7 @@ describe('SettingsPanel', () => {
         onCatalogueKeySaved={vi.fn()}
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
       />,
     );
@@ -265,6 +282,7 @@ describe('SettingsPanel', () => {
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={saved}
         onProfileVisibilitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
       />,
     );
 
@@ -290,6 +308,7 @@ describe('SettingsPanel', () => {
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={saved}
         onProfileVisibilitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
       />,
     );
 
@@ -300,5 +319,78 @@ describe('SettingsPanel', () => {
     });
 
     expect(saved).not.toHaveBeenCalled();
+  });
+});
+
+describe('whose age certificates to read', () => {
+  it('says which country it is reading them in', () => {
+    render(
+      <SettingsPanel
+        overview={overview({ certificationRegion: 'GB' })}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('United Kingdom')).toBeInTheDocument();
+  });
+
+  it('explains that a 15 and an R are not the same thing', () => {
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/A 15 and an R are not the same thing/i)).toBeInTheDocument();
+  });
+
+  it('promises it will not rescan, which is the whole reason every country is kept', () => {
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/reads them again rather than rescanning/i)).toBeInTheDocument();
+  });
+
+  it('writes the country chosen, and tells whoever is listening', async () => {
+    const saved = vi.fn();
+    const actor = userEvent.setup();
+
+    render(
+      <SettingsPanel
+        overview={overview({ certificationRegion: 'GB' })}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={saved}
+        onProfileVisibilitySaved={vi.fn()}
+      />,
+    );
+
+    await actor.click(screen.getByRole('button', { name: /Age certificates/ }));
+    await actor.click(await screen.findByRole('menuitemradio', { name: /Germany/ }));
+
+    await waitFor(() => {
+      expect(saveCertificationRegion).toHaveBeenCalledWith('DE');
+    });
+    await waitFor(() => {
+      expect(saved).toHaveBeenCalled();
+    });
   });
 });

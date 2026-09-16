@@ -18,6 +18,7 @@ const OVERVIEW: AdminOverview = {
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
+    certificationRegion: 'GB',
   },
   transcoder: {
     isReachable: true,

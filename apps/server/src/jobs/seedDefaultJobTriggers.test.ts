@@ -19,6 +19,7 @@ const SETTINGS: ServerSettings = {
   pushPrivateKey: '',
   mediaDigestReadTo: null,
   jobsTimezone: '',
+  certificationRegion: 'GB',
 };
 
 const build = (seededJobTriggerKinds: string[] = []) => ({

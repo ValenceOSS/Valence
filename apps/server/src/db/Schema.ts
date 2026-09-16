@@ -553,6 +553,8 @@ const mediaItem = pgTable(
     versionLabel: text('versionLabel'),
     seriesId: text('seriesId').references(() => series.id, { onDelete: 'set null' }),
     seriesTitle: text('seriesTitle'),
+    certifications: jsonb('certifications'),
+    certificationAge: integer('certificationAge'),
     seasonNumber: integer('seasonNumber'),
     episodeNumber: integer('episodeNumber'),
     overview: text('overview'),
