@@ -25,6 +25,8 @@ const NEAR_THE_END = 200;
  * @param rows - The things to list.
  * @param emptyMessage - What to say when there are none, rather than showing an empty grid.
  * @param onChooseRow - Told which row was pressed, where rows lead somewhere.
+ * @param getRowId - Names a row by what it is about rather than where it sits, so a row a person
+ *   is mid-interaction with keeps its own identity when a live update inserts or reorders around it.
  * @param toolbar - Controls to sit above the table, such as a search box.
  * @param pageSize - How many rows to show at once.
  * @param growsOnScroll - Whether reaching the bottom loads more rather than paging.
@@ -36,6 +38,7 @@ const DataTable = <Row extends RowData>({
   rows,
   emptyMessage = 'Nothing here yet.',
   onChooseRow,
+  getRowId,
   toolbar,
   pageSize = ROWS_A_PAGE,
   growsOnScroll = false,
@@ -62,6 +65,7 @@ const DataTable = <Row extends RowData>({
     features: dataTableFeatures,
     data: rows,
     columns,
+    ...(getRowId === undefined ? {} : { getRowId }),
     state: {
       sorting,
       pagination: growsOnScroll

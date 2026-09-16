@@ -37,7 +37,7 @@ const STATUS_ITEMS: SegmentedItem[] = [
 ];
 
 const STATUS_TONES: Readonly<Record<JobRunStatus, BadgeTone>> = {
-  queued: 'quiet',
+  queued: 'warning',
   running: 'accent',
   completed: 'success',
   failed: 'danger',
@@ -269,6 +269,7 @@ const JobHistory = ({ definitions, onViewLogs }: JobHistoryProps) => {
         label="What pg-boss has run"
         columns={columns}
         rows={records}
+        getRowId={(record) => record.id}
         pageSize={ROWS_PER_PAGE}
         emptyMessage={
           askedHistory.isError
