@@ -31,6 +31,7 @@ import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import { createAuth } from '@ValenceServer/auth/Auth';
 import { trustedOriginsFor } from '@ValenceServer/auth/trustedOriginsFor';
 import type { RealtimeSession } from '@ValenceServer/realtime/createRealtimeHandler';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { createDatabase } from '@ValenceServer/db/Database';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
@@ -366,7 +367,7 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
     return null;
   }
 
-  const shelf = (await libraryService.list()).find((one) => one.id === item.libraryId);
+  const shelf = (await libraryService.list(asTheServer)).find((one) => one.id === item.libraryId);
   const named =
     viewing.accountId === null
       ? []
@@ -589,7 +590,7 @@ const runDetectSegments = async (libraryId: string, jobId: string): Promise<void
 const scheduleAcrossLibraries =
   (run: (libraryId: string) => Promise<{ jobId: string; state: string } | null>) =>
   async (): Promise<void> => {
-    const libraries = await libraryService.list();
+    const libraries = await libraryService.list(asTheServer);
 
     await Promise.all(libraries.map((library) => run(library.id)));
   };
@@ -670,7 +671,7 @@ const diskWatch = createDiskPressureWatch({
  * measured against, since a filesystem filling up only matters where something is filling it.
  */
 const pathsValenceWritesTo = async (): Promise<string[]> => [
-  ...(await libraryService.list()).map((entry) => entry.path),
+  ...(await libraryService.list(asTheServer)).map((entry) => entry.path),
   env.IMAGE_CACHE_DIR,
 ];
 
@@ -721,7 +722,7 @@ const SCHEDULE_TRIGGER_SUFFIX = '.scheduled';
 const nameOfLibrary = async (subject: string | null): Promise<string | null> =>
   subject === null
     ? null
-    : ((await libraryService.list()).find((one) => one.id === subject)?.name ?? null);
+    : ((await libraryService.list(asTheServer)).find((one) => one.id === subject)?.name ?? null);
 
 /**
  * Announces a job that has ended, to whatever is subscribed.
@@ -783,7 +784,7 @@ const jobs = await createJobQueue({
         const { libraryId, force, runId, runOf } = parsed.data;
 
         await runLibraryWork(SCAN_LIBRARY_JOB, libraryId, payload, async () => {
-          const libraries = await libraryService.list();
+          const libraries = await libraryService.list(asTheServer);
           const scanned = libraries.find((entry) => entry.id === libraryId);
 
           await runScanPhases({

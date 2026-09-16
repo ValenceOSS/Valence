@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createMemoryLibraryService } from './createMemoryLibraryService';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 
 const LIBRARY_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 
@@ -60,7 +61,9 @@ describe('what a library offers to filter by', () => {
       ],
     });
 
-    await expect(service.listFacets()).resolves.toMatchObject({ genres: ['Drama', 'Sci-Fi'] });
+    await expect(service.listFacets(asTheServer)).resolves.toMatchObject({
+      genres: ['Drama', 'Sci-Fi'],
+    });
   });
 
   it('counts an item with no year as no decade, rather than as the nineteen-seventies', async () => {
@@ -69,7 +72,7 @@ describe('what a library offers to filter by', () => {
       media: [film({ id: 'a', year: 2016 }), film({ id: 'b', year: null })],
     });
 
-    await expect(service.listFacets()).resolves.toMatchObject({ decades: [2010] });
+    await expect(service.listFacets(asTheServer)).resolves.toMatchObject({ decades: [2010] });
   });
 });
 
@@ -86,7 +89,7 @@ describe('ordering a listing', () => {
     });
 
   it('puts what this viewer rated highest first', async () => {
-    const found = await starred({ a: 3, b: 5, c: 1 }).listItems(LIBRARY_ID, {
+    const found = await starred({ a: 3, b: 5, c: 1 }).listItems(asTheServer, LIBRARY_ID, {
       ...everything,
       order: 'yourRating',
     });
@@ -95,7 +98,7 @@ describe('ordering a listing', () => {
   });
 
   it('falls back to the title where two are rated the same', async () => {
-    const found = await starred({ a: 5, b: 5, c: 5 }).listItems(LIBRARY_ID, {
+    const found = await starred({ a: 5, b: 5, c: 5 }).listItems(asTheServer, LIBRARY_ID, {
       ...everything,
       order: 'yourRating',
     });
@@ -104,7 +107,7 @@ describe('ordering a listing', () => {
   });
 
   it('treats an unrated item as nought rather than dropping it', async () => {
-    const found = await starred({ b: 4 }).listItems(LIBRARY_ID, {
+    const found = await starred({ b: 4 }).listItems(asTheServer, LIBRARY_ID, {
       ...everything,
       order: 'yourRating',
     });
@@ -121,7 +124,10 @@ describe('ordering a listing', () => {
       ],
     });
 
-    const found = await service.listItems(LIBRARY_ID, { ...everything, order: 'newest' });
+    const found = await service.listItems(asTheServer, LIBRARY_ID, {
+      ...everything,
+      order: 'newest',
+    });
 
     expect(found?.items.map((one) => one.id)).toEqual(['new', 'old']);
   });
@@ -183,7 +189,7 @@ describe('finding what somebody appeared in', () => {
   it('finds nothing in items whose cast is not known', async () => {
     const service = createMemoryLibraryService({ libraries: [], media: [film()] });
 
-    await expect(service.findByPerson(1)).resolves.toEqual([]);
+    await expect(service.findByPerson(asTheServer, 1)).resolves.toEqual([]);
   });
 
   it('answers with nothing about a person nobody holds', async () => {
@@ -217,7 +223,7 @@ describe('asking a library that is not held to do something', () => {
   });
 
   it('builds no programme from a library it does not hold', async () => {
-    await expect(empty.getShow(LIBRARY_ID, 'severance')).resolves.toBeNull();
+    await expect(empty.getShow(asTheServer, LIBRARY_ID, 'severance')).resolves.toBeNull();
   });
 
   it('points at no artwork for an item it does not hold', async () => {
@@ -241,7 +247,7 @@ describe('deleting a library', () => {
     const service = createMemoryLibraryService({ libraries: [films], media: [film()] });
 
     await expect(service.remove(LIBRARY_ID)).resolves.toBe(true);
-    await expect(service.list()).resolves.toEqual([]);
+    await expect(service.list(asTheServer)).resolves.toEqual([]);
     expect(service.state.media).toEqual([]);
   });
 

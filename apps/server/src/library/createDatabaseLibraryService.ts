@@ -17,7 +17,15 @@ import {
   or,
   sql,
 } from 'drizzle-orm';
-import { book, bookChapter, library, mediaItem, rating, series } from '@ValenceServer/db/Schema';
+import {
+  book,
+  bookChapter,
+  library,
+  libraryBlock,
+  mediaItem,
+  rating,
+  series,
+} from '@ValenceServer/db/Schema';
 import { LibraryKindSchema, MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -55,6 +63,9 @@ import type { MediaFileSystem, ScanPhase, ScannedItem } from './scanLibrary';
 import type { MetadataProvider, SeriesShape } from './MetadataProvider';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
+import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 import type { LibraryService, ListItemsOptions } from './LibraryService';
 import {
   SCAN_LIBRARY_JOB,
@@ -329,6 +340,27 @@ const createDatabaseLibraryService = ({
   };
 
   /**
+   * Whether a library exists as far as this viewer is concerned.
+   *
+   * Asked before a library's contents are listed, so that one an account may not reach — or one the
+   * person watching has hidden — answers as though it were never there rather than as an empty
+   * shelf. An empty shelf still says something exists, which is the thing this is for.
+   *
+   * @param viewer - Who is asking.
+   * @param id - The library.
+   * @returns Whether to admit it exists.
+   */
+  const libraryVisible = async (viewer: Viewer, id: string): Promise<boolean> => {
+    const rows = await db
+      .select({ one: sql<number>`1` })
+      .from(library)
+      .where(and(eq(library.id, id), librariesVisibleToViewer(db, viewer)))
+      .limit(1);
+
+    return rows.length > 0;
+  };
+
+  /**
    * Reads a library of films or programmes, by probing every file that changed.
    *
    * @param found - The library.
@@ -475,7 +507,7 @@ const createDatabaseLibraryService = ({
         };
 
   const service: DatabaseLibraryService = {
-    list: async () => {
+    list: async (viewer) => {
       const rows = await db
         .select({
           id: library.id,
@@ -495,6 +527,7 @@ const createDatabaseLibraryService = ({
         .leftJoin(mediaItem, eq(mediaItem.libraryId, library.id))
         .leftJoin(book, eq(book.libraryId, library.id))
         .leftJoin(bookChapter, eq(bookChapter.bookId, book.id))
+        .where(librariesVisibleToViewer(db, viewer))
         .groupBy(library.id)
         .orderBy(asc(library.name));
 
@@ -589,27 +622,29 @@ const createDatabaseLibraryService = ({
       };
     },
 
-    listFacets: async () => {
+    listFacets: async (viewer) => {
       const genreRows = await db
         .select({ value: sql<string>`genre` })
         .from(
           sql`${mediaItem}, jsonb_array_elements_text(coalesce(${mediaItem.genres}, '[]'::jsonb)) as genre`,
         )
-        .where(isNull(mediaItem.extraKind))
+        .where(and(isNull(mediaItem.extraKind), visibleToViewer(db, viewer)))
         .groupBy(sql`genre`)
         .orderBy(sql`genre asc`);
 
       const decadeRows = await db
         .select({ value: sql<number>`((${mediaItem.year} / 10) * 10)::int` })
         .from(mediaItem)
-        .where(and(isNotNull(mediaItem.year), isNull(mediaItem.extraKind)))
+        .where(
+          and(isNotNull(mediaItem.year), isNull(mediaItem.extraKind), visibleToViewer(db, viewer)),
+        )
         .groupBy(sql`(${mediaItem.year} / 10) * 10`)
         .orderBy(sql`(${mediaItem.year} / 10) * 10 desc`);
 
       const [best] = await db
         .select({ rating: sql<number>`coalesce(max(${mediaItem.rating}), 0)::float` })
         .from(mediaItem)
-        .where(isNull(mediaItem.extraKind));
+        .where(and(isNull(mediaItem.extraKind), visibleToViewer(db, viewer)));
 
       return {
         genres: genreRows.map((row) => row.value),
@@ -618,13 +653,14 @@ const createDatabaseLibraryService = ({
       };
     },
 
-    listItems: async (libraryId, options) => {
-      if ((await findLibrary(libraryId)) === null) {
+    listItems: async (viewer, libraryId, options) => {
+      if (!(await libraryVisible(viewer, libraryId))) {
         return null;
       }
 
       const asked = [
         eq(mediaItem.libraryId, libraryId),
+        visibleToViewer(db, viewer),
         ...(options.search === undefined || options.search.trim() === ''
           ? []
           : [matchesSearch(options.search)]),
@@ -849,7 +885,7 @@ const createDatabaseLibraryService = ({
       })) satisfies MediaSummary[];
     },
 
-    findByPerson: async (personId) => {
+    findByPerson: async (viewer, personId) => {
       const rows = await db
         .select({
           id: mediaItem.id,
@@ -878,6 +914,7 @@ const createDatabaseLibraryService = ({
           and(
             sql`${mediaItem.castMembers} @> ${JSON.stringify([{ personId }])}::jsonb`,
             isNull(mediaItem.extraKind),
+            visibleToViewer(db, viewer),
           ),
         )
         .orderBy(asc(mediaItem.title))
@@ -899,6 +936,34 @@ const createDatabaseLibraryService = ({
       const asking = (providers ?? []).find((provider) => provider.readPerson !== undefined);
 
       return (await asking?.readPerson?.(personId)) ?? null;
+    },
+
+    isOutOfReach: async (accountId, mediaId) => {
+      const refused = await db
+        .select({ one: sql<number>`1` })
+        .from(mediaItem)
+        .innerJoin(
+          libraryBlock,
+          and(eq(libraryBlock.libraryId, mediaItem.libraryId), eq(libraryBlock.userId, accountId)),
+        )
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      return refused.length > 0;
+    },
+
+    isSeriesOutOfReach: async (accountId, seriesId) => {
+      const refused = await db
+        .select({ one: sql<number>`1` })
+        .from(mediaItem)
+        .innerJoin(
+          libraryBlock,
+          and(eq(libraryBlock.libraryId, mediaItem.libraryId), eq(libraryBlock.userId, accountId)),
+        )
+        .where(eq(mediaItem.seriesId, seriesId))
+        .limit(1);
+
+      return refused.length > 0;
     },
 
     getMedia: async (id) => {
@@ -1261,8 +1326,8 @@ const createDatabaseLibraryService = ({
       });
     },
 
-    listShows: async (libraryId) => {
-      const page = await service.listItems(libraryId, {
+    listShows: async (viewer, libraryId) => {
+      const page = await service.listItems(viewer, libraryId, {
         kind: 'shows',
         limit: EVERY_EPISODE,
         offset: 0,
@@ -1271,8 +1336,8 @@ const createDatabaseLibraryService = ({
       return page === null ? null : groupIntoShows(page.items);
     },
 
-    getShow: async (libraryId, showId) => {
-      const page = await service.listItems(libraryId, {
+    getShow: async (viewer, libraryId, showId) => {
+      const page = await service.listItems(viewer, libraryId, {
         kind: 'shows',
         limit: EVERY_EPISODE,
         offset: 0,

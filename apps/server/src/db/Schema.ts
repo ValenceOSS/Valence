@@ -279,6 +279,55 @@ const rating = pgTable(
   ],
 );
 
+const hidden = pgTable(
+  'hidden',
+  {
+    id: text('id').primaryKey(),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    mediaItemId: text('mediaItemId').references(() => mediaItem.id, { onDelete: 'cascade' }),
+    seriesId: text('seriesId').references(() => series.id, { onDelete: 'cascade' }),
+    libraryId: text('libraryId').references(() => library.id, { onDelete: 'cascade' }),
+    hiddenAt: timestamp('hiddenAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('hidden_profile_item_idx')
+      .on(table.profileId, table.mediaItemId)
+      .where(sql`${table.mediaItemId} is not null`),
+    uniqueIndex('hidden_profile_series_idx')
+      .on(table.profileId, table.seriesId)
+      .where(sql`${table.seriesId} is not null`),
+    uniqueIndex('hidden_profile_library_idx')
+      .on(table.profileId, table.libraryId)
+      .where(sql`${table.libraryId} is not null`),
+    index('hidden_item_idx').on(table.mediaItemId),
+    index('hidden_series_idx').on(table.seriesId),
+    index('hidden_library_idx').on(table.libraryId),
+    check(
+      'hidden_one_subject',
+      sql`num_nonnulls(${table.mediaItemId}, ${table.seriesId}, ${table.libraryId}) = 1`,
+    ),
+  ],
+);
+
+const libraryBlock = pgTable(
+  'library_block',
+  {
+    userId: text('userId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    blockedAt: timestamp('blockedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.libraryId] }),
+    index('library_block_library_idx').on(table.libraryId),
+  ],
+);
+
 const preparedDownload = pgTable(
   'prepared_download',
   {
@@ -842,6 +891,8 @@ export {
   shareVisit,
   logRecord,
   rating,
+  hidden,
+  libraryBlock,
   user,
   session,
   account,

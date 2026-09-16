@@ -14,6 +14,7 @@ import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemor
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 
 const BASE = 'http://localhost:8420';
 const LIBRARY_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
@@ -642,7 +643,7 @@ describe('library routes', () => {
     expect(response.status).toBe(202);
     expect(await response.json()).toMatchObject({ state: 'queued' });
 
-    const items = await library.listItems(LIBRARY_ID, { limit: 60, offset: 0 });
+    const items = await library.listItems(asTheServer, LIBRARY_ID, { limit: 60, offset: 0 });
     expect(items?.items).toHaveLength(0);
   });
 

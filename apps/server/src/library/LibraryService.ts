@@ -6,6 +6,7 @@ import type {
 } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { Person } from '@ValenceContracts/schemas/Person';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 type ListItemsOptions = {
   search?: string;
@@ -23,8 +24,8 @@ type ListItemsOptions = {
 };
 
 type ShowService = {
-  listShows: (libraryId: string) => Promise<ShowSummary[] | null>;
-  getShow: (libraryId: string, showId: string) => Promise<ShowDetail | null>;
+  listShows: (viewer: Viewer, libraryId: string) => Promise<ShowSummary[] | null>;
+  getShow: (viewer: Viewer, libraryId: string, showId: string) => Promise<ShowDetail | null>;
 };
 
 type CreateLibraryInput = {
@@ -44,18 +45,21 @@ type Correction = {
 };
 
 type LibraryService = ShowService & {
-  list: () => Promise<Library[]>;
+  list: (viewer: Viewer) => Promise<Library[]>;
   create: (input: CreateLibraryInput) => Promise<Library | null>;
   update: (libraryId: string, input: UpdateLibraryInput) => Promise<Library | null>;
   listItems: (
+    viewer: Viewer,
     libraryId: string,
     options: ListItemsOptions,
   ) => Promise<{ items: MediaSummary[]; total: number } | null>;
-  listFacets: () => Promise<LibraryFacets>;
+  listFacets: (viewer: Viewer) => Promise<LibraryFacets>;
+  isOutOfReach: (accountId: string, mediaId: string) => Promise<boolean>;
+  isSeriesOutOfReach: (accountId: string, seriesId: string) => Promise<boolean>;
   getMedia: (id: string) => Promise<MediaDetail | null>;
   getSeries: (seriesId: string) => Promise<{ id: string; title: string } | null>;
   seriesOf: (mediaId: string) => Promise<string | null>;
-  findByPerson: (personId: number) => Promise<MediaSummary[]>;
+  findByPerson: (viewer: Viewer, personId: number) => Promise<MediaSummary[]>;
   itemsForShare: (scope: {
     kind: 'item' | 'series';
     mediaId: string | null;
