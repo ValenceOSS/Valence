@@ -1,7 +1,17 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { JobsPanel } from './JobsPanel';
+import type { ReactElement } from 'react';
+import type * as FetchAdmin from '@ValenceClient/admin/fetchAdmin';
 import type { Job, JobDefinition, Monitor } from '@ValenceClient/admin/fetchAdmin';
+
+vi.mock('@ValenceClient/admin/fetchAdmin', async (importOriginal) => ({
+  ...(await importOriginal<typeof FetchAdmin>()),
+  watchJobs: vi.fn(() => () => {}),
+  fetchJobHistory: vi.fn().mockResolvedValue({ records: [], total: 0 }),
+  fetchJobHistoryIssues: vi.fn().mockResolvedValue([]),
+}));
 
 const definition: JobDefinition = {
   kind: 'library.scan',
@@ -17,7 +27,8 @@ const job = (overrides: Partial<Job> = {}): Job => ({
   subject: 'Films',
   state: 'running',
   queuedAtMs: 0,
-  detail: null,
+  correlationId: null,
+  failure: null,
   startedAtMs: null,
   finishedAtMs: null,
   ...overrides,
@@ -59,55 +70,69 @@ const props = {
   onCloseSchedule: vi.fn(),
   onAddTrigger: vi.fn(),
   onRemoveTrigger: vi.fn(),
+  onViewLogs: vi.fn(),
 };
+
+/**
+ * Renders under the query client `JobHistory` needs, since it is always mounted alongside the rest
+ * of the panel.
+ */
+const renderPanel = (element: ReactElement) =>
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      {element}
+    </QueryClientProvider>,
+  );
 
 describe('JobsPanel', () => {
   it('tells failure apart from an empty queue', () => {
-    render(<JobsPanel {...props} isUnreachable />);
+    renderPanel(<JobsPanel {...props} isUnreachable />);
 
     expect(screen.getByText(/could not be read from the server/)).toBeInTheDocument();
     expect(screen.queryByText('Nothing queued.')).not.toBeInTheDocument();
   });
 
-  it('says nothing is queued before a reading arrives', () => {
-    render(<JobsPanel {...props} />);
+  it('says it is still reading before a reading arrives, rather than confirmed empty', () => {
+    renderPanel(<JobsPanel {...props} />);
 
-    expect(screen.getByText('Nothing queued.')).toBeInTheDocument();
+    expect(screen.getByText('Reading the queue…')).toBeInTheDocument();
   });
 
   it('says the same when the queue is empty', () => {
-    render(<JobsPanel {...props} monitor={reading([])} />);
+    renderPanel(<JobsPanel {...props} monitor={reading([])} />);
 
     expect(screen.getByText('Nothing queued.')).toBeInTheDocument();
   });
 
   it('shows what is in the queue', () => {
-    render(<JobsPanel {...props} monitor={reading([job()])} />);
+    renderPanel(<JobsPanel {...props} monitor={reading([job()])} />);
 
     expect(screen.getByText('Films')).toBeInTheDocument();
     expect(screen.getByText('running')).toBeInTheDocument();
   });
 
   it('summarises the queue rather than making somebody count', () => {
-    render(<JobsPanel {...props} monitor={reading([job()], { queued: 3, running: 1 })} />);
+    renderPanel(<JobsPanel {...props} monitor={reading([job()], { queued: 3, running: 1 })} />);
 
     expect(screen.getByText(/1 running · 3 waiting · 2 at a time/)).toBeInTheDocument();
   });
 
   it('mentions failures only when there are some', () => {
-    render(<JobsPanel {...props} monitor={reading([job()])} />);
+    renderPanel(<JobsPanel {...props} monitor={reading([job()])} />);
 
     expect(screen.queryByText(/failed/)).not.toBeInTheDocument();
   });
 
   it('counts failures into the summary when there are', () => {
-    render(<JobsPanel {...props} monitor={reading([job({ state: 'failed' })])} />);
+    renderPanel(<JobsPanel {...props} monitor={reading([job({ state: 'failed' })])} />);
 
     expect(screen.getByText(/1 failed/)).toBeInTheDocument();
   });
 
   it('says a job is waiting when it has not started', () => {
-    render(<JobsPanel {...props} monitor={reading([job({ state: 'queued' })])} />);
+    renderPanel(<JobsPanel {...props} monitor={reading([job({ state: 'queued' })])} />);
 
     expect(screen.getByText('waiting')).toBeInTheDocument();
   });
@@ -115,7 +140,7 @@ describe('JobsPanel', () => {
   it('reports a short run in milliseconds', () => {
     const startedAtMs = Date.now() - 250;
 
-    render(
+    renderPanel(
       <JobsPanel
         {...props}
         monitor={reading([job({ startedAtMs, finishedAtMs: startedAtMs + 250 })])}
@@ -128,7 +153,7 @@ describe('JobsPanel', () => {
   it('reports a longer run in seconds', () => {
     const startedAtMs = Date.now() - 30_000;
 
-    render(
+    renderPanel(
       <JobsPanel
         {...props}
         monitor={reading([job({ startedAtMs, finishedAtMs: startedAtMs + 30_000 })])}
@@ -139,10 +164,12 @@ describe('JobsPanel', () => {
   });
 
   it('shows why a job failed', () => {
-    render(
+    renderPanel(
       <JobsPanel
         {...props}
-        monitor={reading([job({ state: 'failed', detail: 'no such path' })])}
+        monitor={reading([
+          job({ state: 'failed', failure: { message: 'no such path', chain: [] } }),
+        ])}
       />,
     );
 
@@ -151,17 +178,17 @@ describe('JobsPanel', () => {
 
   describe('opening a schedule', () => {
     it('opens over the list rather than taking its place', () => {
-      render(<JobsPanel {...props} viewingJobKind="library.scan" />);
+      renderPanel(<JobsPanel {...props} viewingJobKind="library.scan" />);
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText('Nothing queued.')).toBeInTheDocument();
+      expect(screen.getByText('Reading the queue…')).toBeInTheDocument();
     });
 
     it('stays shut for a job kind it does not know', () => {
-      render(<JobsPanel {...props} viewingJobKind="library.summon" />);
+      renderPanel(<JobsPanel {...props} viewingJobKind="library.summon" />);
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      expect(screen.getByText('Nothing queued.')).toBeInTheDocument();
+      expect(screen.getByText('Reading the queue…')).toBeInTheDocument();
     });
   });
 

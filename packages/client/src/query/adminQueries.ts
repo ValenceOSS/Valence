@@ -5,10 +5,13 @@ import {
   fetchMonitor,
   fetchActiveSessions,
   fetchJobDefinitions,
+  fetchJobHistory,
+  fetchJobHistoryIssues,
   fetchJobSchedules,
 } from '@ValenceClient/admin/fetchAdmin';
 import { fetchAccounts } from '@ValenceClient/admin/fetchAccounts';
 import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
+import { fetchResourceHistory } from '@ValenceClient/admin/fetchResourceHistory';
 import {
   fetchRoles,
   fetchPermissionCatalogue,
@@ -17,7 +20,9 @@ import {
 import { fetchWebhooks, fetchWebhookDeliveries } from '@ValenceClient/admin/fetchWebhooks';
 import { fetchEverybodysShares } from '@ValenceClient/sharing/fetchShares';
 import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
+import type { JobRunQuery } from '@ValenceContracts/schemas/JobRun';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { ResourceSampleRange } from '@ValenceContracts/schemas/ResourceSample';
 
 const ADMIN = ['admin'] as const;
 
@@ -77,6 +82,45 @@ const jobs = () =>
   queryOptions({
     queryKey: [...ADMIN, 'jobs'],
     queryFn: () => fetchJobDefinitions(),
+  });
+
+/**
+ * The persisted history of pg-boss job runs, filtered — what actually happened, rather than only
+ * what the queue is doing this instant.
+ *
+ * @param query - What to filter the history by.
+ * @returns The query.
+ */
+const jobHistory = (query: Partial<JobRunQuery>) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'jobHistory', query],
+    queryFn: () => fetchJobHistory(query),
+  });
+
+/**
+ * The per-item issues one job run accumulated, read only once a row is opened.
+ *
+ * @param jobRunId - Which run, or null where none is open.
+ * @returns The query.
+ */
+const jobHistoryIssues = (jobRunId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'jobHistoryIssues', jobRunId],
+    queryFn: () => fetchJobHistoryIssues(jobRunId ?? ''),
+    enabled: jobRunId !== null,
+  });
+
+/**
+ * A range of the server's load history, for the overview's chart once it looks further back than
+ * the last minute.
+ *
+ * @param range - How far back to read.
+ * @returns The query.
+ */
+const resourceHistory = (range: ResourceSampleRange) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'resourceHistory', range],
+    queryFn: () => fetchResourceHistory(range),
   });
 
 /**
@@ -222,6 +266,9 @@ const adminQueries = {
   monitor,
   sessions,
   jobs,
+  jobHistory,
+  jobHistoryIssues,
+  resourceHistory,
   schedules,
   accounts,
   roles,

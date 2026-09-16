@@ -260,6 +260,17 @@ const respondWith =
       });
     }
 
+    if (input.includes('/api/admin/jobs/history/')) {
+      return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+    }
+
+    if (input.includes('/api/admin/jobs/history')) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ records: [], total: 0 }),
+      });
+    }
+
     if (input.includes('/triggers')) {
       const sent = z
         .object({ trigger: z.unknown() })
