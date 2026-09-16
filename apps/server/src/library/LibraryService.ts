@@ -23,6 +23,22 @@ type ListItemsOptions = {
   offset: number;
 };
 
+type AgeCeiling = {
+  libraryId: string;
+  maximumAge: number;
+  allowsUnrated: boolean;
+};
+
+type AgeSubject = {
+  kind: 'item' | 'series';
+  subjectId: string;
+};
+
+type AgeExceptionEntry = AgeSubject & {
+  title: string;
+  effect: 'allow' | 'deny';
+};
+
 type ShowService = {
   listShows: (viewer: Viewer, libraryId: string) => Promise<ShowSummary[] | null>;
   getShow: (viewer: Viewer, libraryId: string, showId: string) => Promise<ShowDetail | null>;
@@ -60,6 +76,18 @@ type LibraryService = ShowService & {
   refusedLibraries: (accountId: string) => Promise<string[]>;
   allowLibrary: (accountId: string, libraryId: string) => Promise<void>;
   refuseLibrary: (accountId: string, libraryId: string) => Promise<void>;
+  ceilingsFor: (accountId: string) => Promise<AgeCeiling[]>;
+  setCeiling: (accountId: string, ceiling: AgeCeiling) => Promise<void>;
+  clearCeiling: (accountId: string, libraryId: string) => Promise<void>;
+  exceptionsFor: (accountId: string) => Promise<AgeExceptionEntry[]>;
+  setException: (
+    accountId: string,
+    subject: AgeSubject,
+    effect: 'allow' | 'deny',
+    grantedBy: string | null,
+  ) => Promise<boolean>;
+  clearException: (accountId: string, subject: AgeSubject) => Promise<boolean>;
+  exceptionsOn: (subject: AgeSubject) => Promise<{ accountId: string; effect: 'allow' | 'deny' }[]>;
   getMedia: (id: string) => Promise<MediaDetail | null>;
   getSeries: (seriesId: string) => Promise<{ id: string; title: string } | null>;
   seriesOf: (mediaId: string) => Promise<string | null>;
@@ -101,6 +129,9 @@ type LibraryService = ShowService & {
 const DEFAULT_LIMIT = 60;
 
 export type {
+  AgeCeiling,
+  AgeExceptionEntry,
+  AgeSubject,
   Correction,
   CreateLibraryInput,
   LibraryService,

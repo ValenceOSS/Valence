@@ -17,6 +17,7 @@ type MediaDetailDialogProps = {
   onOpenPerson?: (member: CastMember) => void;
   onShare?: (media: MediaSummary) => void;
   onHide?: (media: MediaSummary) => void;
+  onDecideForSomebody?: (media: MediaSummary) => void;
   onStartParty?: (media: MediaSummary) => void;
 };
 

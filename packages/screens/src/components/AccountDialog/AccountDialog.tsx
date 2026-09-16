@@ -54,6 +54,11 @@ const draftOf = (profile: ViewerProfile): ProfileDraft => ({
  * Which panel is open is in the address, so a particular one can be linked to and the back button
  * moves between them.
  *
+ * Only the profile is a draft waiting to be saved. Devices, links, history and what somebody has
+ * hidden all act the moment they are pressed, so a Save button beside them says there is something
+ * outstanding when there is not — and greying it out does not help, since a control nobody can ever
+ * press is still a control to wonder about.
+ *
  * @param panel - Which panel the address names, or nothing where the dialog is shut.
  * @param onPanel - Told which panel to move to.
  * @param onClose - Told it was dismissed.
@@ -189,16 +194,18 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
             Sign out
           </Button>
 
-          <Button
-            variant="primary"
-            isLoading={isSaving}
-            disabled={!isChanged}
-            onClick={() => {
-              void save();
-            }}
-          >
-            Save
-          </Button>
+          {showing !== 'profile' ? null : (
+            <Button
+              variant="primary"
+              isLoading={isSaving}
+              disabled={!isChanged}
+              onClick={() => {
+                void save();
+              }}
+            >
+              Save
+            </Button>
+          )}
         </DialogFooter>
       </Tabs>
     </Dialog>

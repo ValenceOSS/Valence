@@ -31,9 +31,15 @@ import type { PlaybackService, PreviewRead } from '@ValenceServer/playback/Playb
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
 import type { PresenceService } from '@ValenceServer/presence/PresenceService';
 import {
+  readExceptionsOnRoute,
   readLibraryAccessRoute,
   allowLibraryRoute,
   refuseLibraryRoute,
+  setCeilingRoute,
+  clearCeilingRoute,
+  readExceptionsRoute,
+  setExceptionRoute,
+  clearExceptionRoute,
 } from '@ValenceServer/routes/LibraryAccessRoute';
 import {
   listHiddenRoute,
@@ -2543,18 +2549,25 @@ const createApp = ({
       return context.json({ error: refusal }, 403);
     }
 
-    const [shelves, refused] = await Promise.all([
+    const [shelves, refused, ceilings] = await Promise.all([
       library.list(asTheServer),
       library.refusedLibraries(userId),
+      library.ceilingsFor(userId),
     ]);
 
     return context.json(
       {
-        libraries: shelves.map((shelf) => ({
-          id: shelf.id,
-          name: shelf.name,
-          mayView: !refused.includes(shelf.id),
-        })),
+        libraries: shelves.map((shelf) => {
+          const ceiling = ceilings.find((one) => one.libraryId === shelf.id);
+
+          return {
+            id: shelf.id,
+            name: shelf.name,
+            mayView: !refused.includes(shelf.id),
+            maximumAge: ceiling?.maximumAge ?? null,
+            allowsUnrated: ceiling?.allowsUnrated ?? false,
+          };
+        }),
       },
       200,
     );
@@ -2590,6 +2603,90 @@ const createApp = ({
     }
 
     await library.refuseLibrary(userId, libraryId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(setCeilingRoute, async (context) => {
+    const { userId, libraryId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    const { maximumAge, allowsUnrated } = context.req.valid('json');
+
+    await library.setCeiling(userId, { libraryId, maximumAge, allowsUnrated });
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(clearCeilingRoute, async (context) => {
+    const { userId, libraryId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    await library.clearCeiling(userId, libraryId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(readExceptionsRoute, async (context) => {
+    const { userId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    return context.json({ exceptions: await library.exceptionsFor(userId) }, 200);
+  });
+
+  app.openapi(readExceptionsOnRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { kind, subjectId } = context.req.valid('param');
+
+    return context.json({ accounts: await library.exceptionsOn({ kind, subjectId }) }, 200);
+  });
+
+  app.openapi(setExceptionRoute, async (context) => {
+    const { userId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    const { kind, subjectId, effect } = context.req.valid('json');
+    const actor = await readAccount(context.req.raw.headers);
+
+    if (!(await library.setException(userId, { kind, subjectId }, effect, actor?.id ?? null))) {
+      return context.json({ error: 'No such thing to make an exception of.' }, 404);
+    }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(clearExceptionRoute, async (context) => {
+    const { userId, kind, subjectId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    await library.clearException(userId, { kind, subjectId });
 
     return context.body(null, 204);
   });

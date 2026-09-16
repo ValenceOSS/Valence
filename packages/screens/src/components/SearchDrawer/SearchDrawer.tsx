@@ -10,6 +10,7 @@ import { useShell } from '@ValenceClient/shell/useShell';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useHidden } from '@ValenceClient/library/useHidden';
+import { ConfirmHiding } from '@ValenceScreens/components/ConfirmHiding/ConfirmHiding';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import type { SearchDrawerProps } from './SearchDrawer.types';
@@ -37,6 +38,8 @@ const SearchDrawer = ({ isOpen, onClose }: SearchDrawerProps) => {
       </DialogTitle>
 
       <DialogContent className="px-0 py-0">
+        <ConfirmHiding hiding={hiding} />
+
         <SearchArea
           search={place.search}
           onSearchChange={(next) => {
@@ -65,7 +68,7 @@ const SearchDrawer = ({ isOpen, onClose }: SearchDrawerProps) => {
             favourites.toggle(media.id);
           }}
           onHide={(media) => {
-            hiding.hide({ kind: 'item', subjectId: media.id }, media.title);
+            hiding.ask(media);
           }}
         />
       </DialogContent>

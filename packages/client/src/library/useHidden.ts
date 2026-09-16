@@ -1,15 +1,23 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { setHidden } from '@ValenceClient/library/fetchHidden';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import type { Hidden } from '@ValenceContracts/schemas/Hidden';
 import type { HiddenSubject } from '@ValenceClient/library/fetchHidden';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { hidingSubjectOf } from '@ValenceClient/library/hidingSubjectOf';
+
+type Asked = HiddenSubject & { title: string };
 
 type Hiding = {
   entries: Hidden[];
   isHidden: (subject: HiddenSubject) => boolean;
-  hide: (subject: HiddenSubject, title: string) => void;
+  asking: Asked | null;
+  ask: (media: MediaSummary) => void;
+  askLibrary: (libraryId: string, name: string) => void;
+  dismiss: () => void;
+  confirm: () => void;
   show: (subject: HiddenSubject) => void;
 };
 
@@ -28,11 +36,32 @@ const keyOf = (subject: HiddenSubject): string => `${subject.kind}:${subject.sub
  * and the randomiser are all lists the server filtered — so a stale copy would leave the thing on
  * screen until something else happened to refetch.
  *
+ * Hiding is asked about before it happens. It takes something out of every row, every search and
+ * the randomiser at once, and somebody who meant to press the control beside it has no idea what
+ * became of the thing — so the question names what will actually disappear, which for anything
+ * belonging to a programme is the programme rather than the episode standing for it.
+ *
+ * A whole library is asked about separately, since nothing on a page stands for one — a viewer
+ * meets sections rather than libraries, so the only place to hide one is beside the list it comes
+ * back from.
+ *
+ * Bringing something back is not asked about. It is the undoing, and asking twice about an undoing
+ * is how a list nobody wants to use gets made.
+ *
+ * What is being asked about is held twice over, and deliberately: as state because the question is
+ * drawn from it, and in a ref because agreeing is read back and may happen before a redraw. Held
+ * only in state, asking and agreeing in one go would do nothing at all, silently — which is the
+ * kind of thing that works everywhere a person is involved and fails the first time something
+ * else calls it.
+ *
  * @param watcherId - Who is watching, so that their list is the one asked for.
- * @returns What they have hidden, and how to change it.
+ * @returns What they have hidden, what is being asked about, and how to change either.
  */
 const useHidden = (watcherId: string | null): Hiding => {
   const cache = useQueryClient();
+  const [asking, setAsking] = useState<Asked | null>(null);
+
+  const pending = useRef<Asked | null>(null);
   const asked = viewingQueries.hidden(watcherId);
   const held = useQuery(asked);
 
@@ -46,7 +75,7 @@ const useHidden = (watcherId: string | null): Hiding => {
   const without = (subject: HiddenSubject) => (held: readonly Hidden[]) =>
     held.filter((entry) => keyOf(entry) !== keyOf(subject));
 
-  const ask = (
+  const tell = (
     subject: HiddenSubject,
     wants: boolean,
     change: (held: readonly Hidden[]) => Hidden[],
@@ -69,21 +98,47 @@ const useHidden = (watcherId: string | null): Hiding => {
   return {
     entries,
     isHidden: (subject) => keys.has(keyOf(subject)),
-    hide: (subject, title) => {
-      const entry: Hidden = { ...subject, title, hiddenAt: new Date().toISOString() };
+    asking,
+    ask: (media) => {
+      const asked = hidingSubjectOf(media);
 
-      ask(subject, true, (held) => [entry, ...without(subject)(held)], without(subject));
+      pending.current = asked;
+      setAsking(asked);
+    },
+    askLibrary: (libraryId, name) => {
+      const asked: Asked = { kind: 'library', subjectId: libraryId, title: name };
+
+      pending.current = asked;
+      setAsking(asked);
+    },
+    dismiss: () => {
+      pending.current = null;
+      setAsking(null);
+    },
+    confirm: () => {
+      const asked = pending.current ?? asking;
+
+      if (asked === null) {
+        return;
+      }
+
+      const subject: HiddenSubject = { kind: asked.kind, subjectId: asked.subjectId };
+      const entry: Hidden = { ...subject, title: asked.title, hiddenAt: new Date().toISOString() };
+
+      pending.current = null;
+      setAsking(null);
+      tell(subject, true, (held) => [entry, ...without(subject)(held)], without(subject));
     },
     show: (subject) => {
       const going = entries.find((entry) => keyOf(entry) === keyOf(subject));
 
-      ask(subject, false, without(subject), (held) =>
+      tell(subject, false, without(subject), (held) =>
         going === undefined ? [...held] : [going, ...without(subject)(held)],
       );
     },
   };
 };
 
-export type { Hiding };
+export type { Asked, Hiding };
 
 export { useHidden };

@@ -43,7 +43,13 @@ import type { Account } from '@ValenceClient/admin/fetchAccounts';
 import type { Refusal } from '@ValenceClient/admin/fetchRoles';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
-import { setLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
+import {
+  clearException,
+  setCeiling,
+  setLibraryAccess,
+} from '@ValenceClient/admin/fetchLibraryAccess';
+import { describeCeiling } from '@ValenceContracts/schemas/LibraryAccess';
+import { AGE_CHOICES } from '@ValenceScreens/components/AdminArea/ageChoices';
 type Asked = { kind: 'ban' | 'remove'; account: Account };
 
 /**
@@ -74,12 +80,14 @@ const AccountsPanel = () => {
   const roles = askedRoles.data ?? [];
   const held = useQuery(adminQueries.accountPermissions(accountId)).data ?? null;
   const shelves = useQuery(adminQueries.libraryAccess(accountId)).data ?? [];
+  const exceptions = useQuery(adminQueries.exceptions(accountId)).data ?? [];
 
   const reload = useCallback(async () => {
     await Promise.all([
       cache.invalidateQueries({ queryKey: adminQueries.accounts().queryKey }),
       cache.invalidateQueries({ queryKey: adminQueries.accountPermissions(accountId).queryKey }),
       cache.invalidateQueries({ queryKey: adminQueries.libraryAccess(accountId).queryKey }),
+      cache.invalidateQueries({ queryKey: adminQueries.exceptions(accountId).queryKey }),
     ]);
   }, [cache, accountId]);
 
@@ -447,31 +455,91 @@ const AccountsPanel = () => {
 
               <FormField
                 label="Libraries"
-                description="What they may see. Everything, until you say otherwise."
+                description="What they may see, and how old it may be. Everything, until you say otherwise."
               >
                 {shelves.length === 0 ? (
                   <p className="text-sm text-text-muted">There are no libraries yet.</p>
                 ) : (
-                  <div className="flex flex-wrap gap-2">
+                  <ul className="flex flex-col gap-2">
                     {shelves.map((shelf) => (
-                      <Button
-                        key={shelf.id}
-                        variant={shelf.mayView ? 'glossy' : 'ghost'}
-                        size="sm"
-                        aria-pressed={shelf.mayView}
-                        label={
-                          shelf.mayView
-                            ? `Keep ${shelf.name} from ${picked.name}`
-                            : `Let ${picked.name} see ${shelf.name}`
-                        }
-                        onClick={() => {
-                          void act(() => setLibraryAccess(accountId, shelf.id, !shelf.mayView));
-                        }}
-                      >
-                        {shelf.name}
-                      </Button>
+                      <li key={shelf.id} className="flex flex-wrap items-center gap-2">
+                        <Button
+                          variant={shelf.mayView ? 'glossy' : 'ghost'}
+                          size="sm"
+                          aria-pressed={shelf.mayView}
+                          label={
+                            shelf.mayView
+                              ? `Keep ${shelf.name} from ${picked.name}`
+                              : `Let ${picked.name} see ${shelf.name}`
+                          }
+                          onClick={() => {
+                            void act(() => setLibraryAccess(accountId, shelf.id, !shelf.mayView));
+                          }}
+                        >
+                          {shelf.name}
+                        </Button>
+
+                        {!shelf.mayView ? null : (
+                          <OptionMenu
+                            label={`Age limit in ${shelf.name} for ${picked.name}`}
+                            groups={[
+                              {
+                                name: 'Nothing above',
+                                selectedId:
+                                  shelf.maximumAge === null ? 'none' : String(shelf.maximumAge),
+                                onSelect: (id) => {
+                                  void act(() =>
+                                    setCeiling(
+                                      accountId,
+                                      shelf.id,
+                                      id === 'none'
+                                        ? null
+                                        : {
+                                            maximumAge: Number.parseInt(id, 10),
+                                            allowsUnrated: shelf.allowsUnrated,
+                                          },
+                                    ),
+                                  );
+                                },
+                                options: AGE_CHOICES,
+                              },
+                            ]}
+                            trigger={
+                              <>
+                                <span className="truncate">
+                                  {describeCeiling(shelf.maximumAge)}
+                                </span>
+
+                                <Icon of={UnfoldMoreIcon} size={14} className="shrink-0" />
+                              </>
+                            }
+                            triggerShape="field"
+                            align="end"
+                            className="w-40 max-w-full"
+                          />
+                        )}
+
+                        {shelf.maximumAge === null ? null : (
+                          <Button
+                            variant={shelf.allowsUnrated ? 'glossy' : 'ghost'}
+                            size="sm"
+                            aria-pressed={shelf.allowsUnrated}
+                            label={`Allow uncertificated things in ${shelf.name} for ${picked.name}`}
+                            onClick={() => {
+                              void act(() =>
+                                setCeiling(accountId, shelf.id, {
+                                  maximumAge: shelf.maximumAge ?? 0,
+                                  allowsUnrated: !shelf.allowsUnrated,
+                                }),
+                              );
+                            }}
+                          >
+                            Allow unrated
+                          </Button>
+                        )}
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
 
                 {shelves.length === 0 || shelves.some((shelf) => shelf.mayView) ? null : (
@@ -480,7 +548,50 @@ const AccountsPanel = () => {
                     whoever signs in.
                   </p>
                 )}
+
+                {shelves.every((shelf) => shelf.maximumAge === null) ? null : (
+                  <p className="pt-2 text-xs text-text-muted">
+                    A limit applies to this account and so to every face on it. If a parent and a
+                    child share this one, give the child an account of their own and limit that
+                    instead.
+                  </p>
+                )}
               </FormField>
+
+              {exceptions.length === 0 ? null : (
+                <FormField
+                  label="Allowed and denied"
+                  description="Things decided one at a time, whatever the limit says. A denial always wins."
+                >
+                  <ul className="flex flex-col gap-1">
+                    {exceptions.map((exception) => (
+                      <li
+                        key={`${exception.kind}:${exception.subjectId}`}
+                        className="flex items-center gap-3 rounded-lg py-1"
+                      >
+                        <Badge size="sm" tone={exception.effect === 'deny' ? 'solid' : 'accent'}>
+                          {exception.effect}
+                        </Badge>
+
+                        <span className="min-w-0 flex-1 truncate text-sm text-text">
+                          {exception.title}
+                        </span>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          aria-label={`Forget the ${exception.effect} on ${exception.title}`}
+                          onClick={() => {
+                            void act(() => clearException(accountId, exception));
+                          }}
+                        >
+                          Forget
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </FormField>
+              )}
 
               <FormField
                 label="Exceptions"
