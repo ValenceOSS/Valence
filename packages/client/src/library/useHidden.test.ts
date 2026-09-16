@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useHidden } from './useHidden';
 import type { Hidden } from '@ValenceContracts/schemas/Hidden';
 import type { HiddenSubject } from '@ValenceClient/library/fetchHidden';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 const fetchHidden = vi.fn<() => Promise<Hidden[]>>();
 const setHidden = vi.fn<(subject: HiddenSubject, isHidden: boolean) => Promise<boolean>>();
@@ -14,6 +15,43 @@ vi.mock('@ValenceClient/library/fetchHidden', () => ({
 }));
 
 const FILM: HiddenSubject = { kind: 'item', subjectId: 'media-1' };
+
+const summary = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
+  id: 'media-1',
+  libraryId: 'library-1',
+  title: 'Arrival',
+  year: 2016,
+  durationSeconds: 7200,
+  width: 1920,
+  height: 1080,
+  videoCodec: 'hevc',
+  videoRange: 'SDR',
+  addedAt: '2026-08-10T00:00:00.000Z',
+  hasPoster: true,
+  hasBackdrop: true,
+  hasLogo: false,
+  seriesId: null,
+  parentId: null,
+  extraKind: null,
+  versionLabel: null,
+  rating: null,
+  seriesTitle: null,
+  seasonNumber: null,
+  episodeNumber: null,
+  genres: null,
+  ...overrides,
+});
+
+/**
+ * Presses hide and agrees to it, which is what a person does.
+ */
+const hideIt = (
+  hiding: { ask: (media: MediaSummary) => void; confirm: () => void },
+  media: MediaSummary,
+) => {
+  hiding.ask(media);
+  hiding.confirm();
+};
 
 const anEntry = (): Hidden => ({
   kind: 'item',
@@ -87,7 +125,7 @@ describe('hiding something', () => {
     });
 
     act(() => {
-      result.current.hide(FILM, 'Arrival');
+      hideIt(result.current, summary());
     });
 
     await waitFor(() => {
@@ -105,7 +143,7 @@ describe('hiding something', () => {
     });
 
     act(() => {
-      result.current.hide(FILM, 'Arrival');
+      hideIt(result.current, summary());
     });
 
     await waitFor(() => {
@@ -123,8 +161,8 @@ describe('hiding something', () => {
     });
 
     act(() => {
-      result.current.hide(FILM, 'Arrival');
-      result.current.hide({ kind: 'series', subjectId: 'series-1' }, 'Curb');
+      hideIt(result.current, summary());
+      hideIt(result.current, summary({ id: 'e1', seriesId: 'series-1', seriesTitle: 'Curb' }));
     });
 
     await waitFor(() => {
@@ -143,8 +181,8 @@ describe('hiding something', () => {
     });
 
     act(() => {
-      result.current.hide(FILM, 'Arrival');
-      result.current.hide({ kind: 'series', subjectId: 'series-1' }, 'Curb');
+      hideIt(result.current, summary());
+      hideIt(result.current, summary({ id: 'e1', seriesId: 'series-1', seriesTitle: 'Curb' }));
     });
 
     await waitFor(() => {
@@ -153,7 +191,7 @@ describe('hiding something', () => {
     expect(result.current.isHidden(FILM)).toBe(true);
   });
 
-  it('records what it was called, so a row can be drawn before the list is read again', async () => {
+  it('records the programme’s name, so a row can be drawn before the list is read again', async () => {
     const { result } = renderHookInACache(() => useHidden('watcher-1'));
 
     await waitFor(() => {
@@ -161,11 +199,11 @@ describe('hiding something', () => {
     });
 
     act(() => {
-      result.current.hide({ kind: 'library', subjectId: 'library-1' }, 'Shows');
+      hideIt(result.current, summary({ id: 'e1', seriesId: 'series-1', seriesTitle: 'Curb' }));
     });
 
     await waitFor(() => {
-      expect(result.current.entries[0]).toMatchObject({ kind: 'library', title: 'Shows' });
+      expect(result.current.entries[0]).toMatchObject({ kind: 'series', title: 'Curb' });
     });
   });
 });

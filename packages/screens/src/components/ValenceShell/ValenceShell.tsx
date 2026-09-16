@@ -30,6 +30,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useHidden } from '@ValenceClient/library/useHidden';
+import { ConfirmHiding } from '@ValenceScreens/components/ConfirmHiding/ConfirmHiding';
 import { useRate } from '@ValenceClient/library/useRate';
 import { pickAnything } from '@ValenceClient/library/pickAnything';
 import { findSiblings } from '@ValenceClient/library/pickFeatured';
@@ -291,6 +292,13 @@ const ValenceShell = () => {
         }}
       />
 
+      <ConfirmHiding
+        hiding={hiding}
+        onHidden={() => {
+          go({ inspecting: null, show: null });
+        }}
+      />
+
       <MediaDetailDialog
         media={inspecting}
         siblings={inspecting === null ? [] : findSiblings([...known.values()], inspecting)}
@@ -318,7 +326,7 @@ const ValenceShell = () => {
           favourites.toggle(media.id);
         }}
         onHide={(media) => {
-          hiding.hide({ kind: 'item', subjectId: media.id }, media.title);
+          hiding.ask(media);
         }}
         onRate={(media, stars) => {
           rate({ mediaId: media.id }, stars);
