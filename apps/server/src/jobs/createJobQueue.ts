@@ -18,6 +18,8 @@ type CreateJobQueueOptions = {
   connectionString: string;
   handlers: Record<string, JobHandler>;
   onProblem?: (message: string) => void;
+  onStarted?: (entry: { kind: string; jobId: string; subject: string | null }) => void;
+  onProgress?: (entry: { jobId: string; phase: string; processed: number; total: number }) => void;
   onFinished?: (finished: FinishedJob) => void;
 };
 
@@ -44,6 +46,8 @@ const createJobQueue = async ({
   connectionString,
   handlers,
   onProblem,
+  onStarted,
+  onProgress,
   onFinished,
 }: CreateJobQueueOptions): Promise<JobQueue> => {
   const boss = new PgBoss({ connectionString, schema: 'valence_jobs' });
@@ -109,6 +113,7 @@ const createJobQueue = async ({
           const subject = subjectOf(payload);
 
           running.set(job.id, { kind, subject });
+          onStarted?.({ kind, jobId: job.id, subject });
 
           try {
             await handler(job.id, payload);
@@ -256,6 +261,7 @@ const createJobQueue = async ({
 
     reportProgress: (jobId, phase, processed, total) => {
       progressByJobId.set(jobId, { phase, processed, total });
+      onProgress?.({ jobId, phase, processed, total });
     },
 
     setSchedule: async (queueName, key, cron, timezone) => {

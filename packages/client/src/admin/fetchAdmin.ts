@@ -5,6 +5,8 @@ import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import { ScanJobSchema } from '@ValenceClient/library/fetchLibrary';
+import { JobEventSchema } from '@ValenceContracts/schemas/JobRun';
+import type { JobEvent } from '@ValenceContracts/schemas/JobRun';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 import type { ScanJob } from '@ValenceClient/library/fetchLibrary';
@@ -347,6 +349,26 @@ const watchMonitor = (
 
     if (parsed.success) {
       onReading(parsed.data);
+    }
+  });
+
+/**
+ * Follows a job starting, progressing, and finishing, so the Jobs page reacts as work happens rather
+ * than by polling for it.
+ *
+ * @param onEvent - Told each event as it arrives.
+ * @param client - The connection to watch over, which is the shared one unless a test says otherwise.
+ * @returns The function that stops watching.
+ */
+const watchJobs = (
+  onEvent: (event: JobEvent) => void,
+  client: RealtimeClient = getRealtimeClient(),
+): (() => void) =>
+  client.subscribe('jobs', (event) => {
+    const parsed = JobEventSchema.safeParse(event.payload);
+
+    if (parsed.success) {
+      onEvent(parsed.data);
     }
   });
 
@@ -695,6 +717,7 @@ export {
   searchCatalogue,
   fetchMonitor,
   watchMonitor,
+  watchJobs,
   saveCatalogueKey,
   saveHardwareAccel,
   savePreviewQuality,

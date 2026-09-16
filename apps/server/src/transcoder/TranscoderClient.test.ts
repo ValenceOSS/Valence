@@ -49,7 +49,7 @@ const socketState = vi.hoisted(() => {
     }
 
     private fire(type: string, event: FakeSocketEvent): void {
-      for (const listener of [...(this.listeners.get(type) ?? [])]) {
+      for (const listener of this.listeners.get(type) ?? []) {
         listener(event);
       }
     }

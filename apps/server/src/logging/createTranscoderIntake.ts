@@ -1,12 +1,30 @@
 import { z } from 'zod';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import type { LogLevel } from '@ValenceContracts/schemas/Log';
 import type { Logger } from './Logger';
+
+const TRANSCODER_LEVELS = ['trace', 'debug', 'info', 'warn', 'error'] as const;
+
+const NODE_LEVEL_FOR: Readonly<Record<(typeof TRANSCODER_LEVELS)[number], LogLevel>> = {
+  trace: 'debug',
+  debug: 'debug',
+  info: 'info',
+  warn: 'warn',
+  error: 'error',
+};
+
+const TranscoderLineContextSchema = z.object({
+  jobId: z.string().nullable().default(null),
+  sessionId: z.string().nullable().default(null),
+  requestId: z.string().nullable().default(null),
+});
 
 const TranscoderLineSchema = z.object({
   atMs: z.number().int().nonnegative(),
-  level: z.enum(['info', 'warn', 'error']),
+  level: z.enum(TRANSCODER_LEVELS),
   source: z.string().min(1),
   message: z.string(),
+  context: TranscoderLineContextSchema.default({ jobId: null, sessionId: null, requestId: null }),
 });
 
 const ReportSchema = z.object({ logs: z.array(TranscoderLineSchema).default([]) });
@@ -47,7 +65,9 @@ const createTranscoderIntake = (log: Logger): TranscoderIntake => {
         .sort((one, other) => one.atMs - other.atMs);
 
       for (const line of fresh) {
-        log[line.level]('transcoder', `${line.source}: ${line.message}`);
+        log
+          .about(line.context)
+          [NODE_LEVEL_FOR[line.level]]('transcoder', `${line.source}: ${line.message}`);
       }
 
       takenUpToMs = fresh.reduce((newest, line) => Math.max(newest, line.atMs), takenUpToMs);

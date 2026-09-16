@@ -12,7 +12,7 @@ const VIEWER_TOPICS = [
   'party',
 ] as const;
 
-const ADMIN_TOPICS = ['monitor', 'sessions', 'logs'] as const;
+const ADMIN_TOPICS = ['monitor', 'sessions', 'logs', 'jobs'] as const;
 
 const REALTIME_TOPICS = [...VIEWER_TOPICS, ...ADMIN_TOPICS] as const;
 
@@ -30,6 +30,7 @@ const PERMISSION_BY_TOPIC: Readonly<Record<RealtimeTopic, Permission | null>> = 
   monitor: 'server.monitor',
   sessions: 'streaming.view',
   logs: 'server.logs',
+  jobs: 'jobs.run',
 };
 
 const TopicListSchema = z.array(RealtimeTopicSchema).min(1).max(REALTIME_TOPICS.length);

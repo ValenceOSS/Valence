@@ -146,6 +146,59 @@ describe('createJobQueue', () => {
     );
   });
 
+  it('says a job has started before the handler runs', async () => {
+    const onStarted = vi.fn();
+    const seenBeforeHandler: number[] = [];
+    const handler = vi.fn(() => {
+      seenBeforeHandler.push(onStarted.mock.calls.length);
+
+      return Promise.resolve();
+    });
+
+    await (
+      await createJobQueue({
+        connectionString: 'postgres://flux',
+        handlers: { 'library.scan': handler },
+        onStarted,
+      })
+    ).startWorking();
+
+    await deliver('library.scan', [{ id: 'job-4', data: { libraryId: 'films' } }]);
+
+    expect(onStarted).toHaveBeenCalledWith({
+      kind: 'library.scan',
+      jobId: 'job-4',
+      subject: 'films',
+    });
+    expect(seenBeforeHandler).toEqual([1]);
+  });
+
+  it('reports progress as the running job announces it', async () => {
+    const onProgress = vi.fn();
+
+    const queue = await createJobQueue({
+      connectionString: 'postgres://flux',
+      handlers: {
+        [CHECK_DISK]: (jobId) => {
+          queue.reportProgress(jobId, 'checking', 1, 2);
+
+          return Promise.resolve();
+        },
+      },
+      onProgress,
+    });
+
+    await queue.startWorking();
+    await deliver(CHECK_DISK, [{ id: 'job-5', data: null }]);
+
+    expect(onProgress).toHaveBeenCalledWith({
+      jobId: 'job-5',
+      phase: 'checking',
+      processed: 1,
+      total: 2,
+    });
+  });
+
   it('hands the failure on where the handler is what failed', async () => {
     const onFinished = vi.fn();
 
