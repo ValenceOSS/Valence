@@ -18,6 +18,7 @@ import { fetchWebhooks, fetchWebhookDeliveries } from '@ValenceClient/admin/fetc
 import { fetchEverybodysShares } from '@ValenceClient/sharing/fetchShares';
 import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { fetchLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 
 const ADMIN = ['admin'] as const;
 
@@ -144,6 +145,19 @@ const accountPermissions = (accountId: string | null) =>
  *
  * @returns The query.
  */
+/**
+ * Which libraries an account is allowed to see, for the panel that decides it.
+ *
+ * @param accountId - The account being looked at.
+ * @returns The query.
+ */
+const libraryAccess = (accountId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'libraryAccess', accountId],
+    queryFn: () => fetchLibraryAccess(accountId ?? ''),
+    enabled: accountId !== null,
+  });
+
 const webhooks = () =>
   queryOptions({
     queryKey: [...ADMIN, 'webhooks'],
@@ -216,6 +230,7 @@ const folders = (path: string | null) =>
   });
 
 const adminQueries = {
+  libraryAccess,
   folders,
   overview,
   scans,

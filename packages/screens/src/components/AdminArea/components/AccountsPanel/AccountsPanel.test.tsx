@@ -27,6 +27,16 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@ValenceClient/admin/fetchRoles', () => mocks);
 
+const accessMocks = vi.hoisted(() => ({
+  fetchLibraryAccess: vi.fn(),
+  setLibraryAccess: vi.fn(),
+}));
+
+vi.mock('@ValenceClient/admin/fetchLibraryAccess', () => accessMocks);
+
+const FILMS = '2b6f0cc9-04f0-4f26-9f1a-1d5b2ea92d9f';
+const SHOWS = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
+
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 'usr_1',
   name: 'Dan',
@@ -105,6 +115,12 @@ describe('AccountsPanel', () => {
     mocks.removeRole.mockResolvedValue(null);
     mocks.setOverride.mockResolvedValue(null);
     mocks.clearOverride.mockResolvedValue(null);
+
+    accessMocks.fetchLibraryAccess.mockReset().mockResolvedValue([
+      { id: FILMS, name: 'Films', mayView: true },
+      { id: SHOWS, name: 'Shows', mayView: true },
+    ]);
+    accessMocks.setLibraryAccess.mockReset().mockResolvedValue(null);
   });
 
   it('lists everybody with an account', async () => {
@@ -516,5 +532,119 @@ describe('allowing and denying one thing for one person', () => {
 
     expect(await screen.findByRole('button', { name: 'Allow it' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Deny it' })).toBeDisabled();
+  });
+});
+
+describe('which libraries an account may see', () => {
+  beforeEach(() => {
+    for (const mock of [...Object.values(mocks), ...Object.values(accountMocks)]) {
+      mock.mockReset();
+    }
+
+    accountMocks.fetchAccounts.mockResolvedValue(ACCOUNTS);
+
+    mocks.fetchPermissionCatalogue.mockResolvedValue([]);
+    mocks.fetchRoles.mockResolvedValue([ADMINISTRATOR, MEMBER]);
+    mocks.fetchAccountPermissions.mockResolvedValue({
+      roles: [MEMBER],
+      overrides: [],
+      effective: ['sharing.link'],
+    });
+
+    accessMocks.fetchLibraryAccess.mockReset().mockResolvedValue([
+      { id: FILMS, name: 'Films', mayView: true },
+      { id: SHOWS, name: 'Shows', mayView: true },
+    ]);
+    accessMocks.setLibraryAccess.mockReset().mockResolvedValue(null);
+  });
+
+  it('shows them beside what that account may do', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+
+    expect(await screen.findByText('Libraries')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Keep Films from Dan/ })).toBeInTheDocument();
+  });
+
+  it('says plainly that an untouched account sees everything', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+
+    expect(await screen.findByText(/Everything, until you say otherwise/i)).toBeInTheDocument();
+  });
+
+  it('takes one away when asked', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+    await user.click(await screen.findByRole('button', { name: /Keep Films from Dan/ }));
+
+    await waitFor(() => {
+      expect(accessMocks.setLibraryAccess).toHaveBeenCalledWith('usr_1', FILMS, false);
+    });
+  });
+
+  it('gives one back when asked', async () => {
+    const user = userEvent.setup();
+
+    accessMocks.fetchLibraryAccess.mockResolvedValue([
+      { id: FILMS, name: 'Films', mayView: false },
+      { id: SHOWS, name: 'Shows', mayView: true },
+    ]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+    await user.click(await screen.findByRole('button', { name: /Let Dan see Films/ }));
+
+    await waitFor(() => {
+      expect(accessMocks.setLibraryAccess).toHaveBeenCalledWith('usr_1', FILMS, true);
+    });
+  });
+
+  it('warns where an account has been left able to reach nothing', async () => {
+    const user = userEvent.setup();
+
+    accessMocks.fetchLibraryAccess.mockResolvedValue([
+      { id: FILMS, name: 'Films', mayView: false },
+      { id: SHOWS, name: 'Shows', mayView: false },
+    ]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+
+    expect(await screen.findByText(/can reach nothing at all/i)).toBeInTheDocument();
+  });
+
+  it('says nothing of the sort while they can still reach one', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+    await screen.findByText('Libraries');
+
+    expect(screen.queryByText(/can reach nothing at all/i)).not.toBeInTheDocument();
+  });
+
+  it('copes with a server that has no libraries yet', async () => {
+    const user = userEvent.setup();
+
+    accessMocks.fetchLibraryAccess.mockResolvedValue([]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+
+    expect(await screen.findByText(/There are no libraries yet/i)).toBeInTheDocument();
   });
 });

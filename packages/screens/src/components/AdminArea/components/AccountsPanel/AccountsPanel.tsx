@@ -43,6 +43,7 @@ import type { Account } from '@ValenceClient/admin/fetchAccounts';
 import type { Refusal } from '@ValenceClient/admin/fetchRoles';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { setLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 type Asked = { kind: 'ban' | 'remove'; account: Account };
 
 /**
@@ -72,11 +73,13 @@ const AccountsPanel = () => {
   const catalogue = askedCatalogue.data ?? [];
   const roles = askedRoles.data ?? [];
   const held = useQuery(adminQueries.accountPermissions(accountId)).data ?? null;
+  const shelves = useQuery(adminQueries.libraryAccess(accountId)).data ?? [];
 
   const reload = useCallback(async () => {
     await Promise.all([
       cache.invalidateQueries({ queryKey: adminQueries.accounts().queryKey }),
       cache.invalidateQueries({ queryKey: adminQueries.accountPermissions(accountId).queryKey }),
+      cache.invalidateQueries({ queryKey: adminQueries.libraryAccess(accountId).queryKey }),
     ]);
   }, [cache, accountId]);
 
@@ -440,6 +443,43 @@ const AccountsPanel = () => {
                     );
                   })}
                 </div>
+              </FormField>
+
+              <FormField
+                label="Libraries"
+                description="What they may see. Everything, until you say otherwise."
+              >
+                {shelves.length === 0 ? (
+                  <p className="text-sm text-text-muted">There are no libraries yet.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {shelves.map((shelf) => (
+                      <Button
+                        key={shelf.id}
+                        variant={shelf.mayView ? 'glossy' : 'ghost'}
+                        size="sm"
+                        aria-pressed={shelf.mayView}
+                        label={
+                          shelf.mayView
+                            ? `Keep ${shelf.name} from ${picked.name}`
+                            : `Let ${picked.name} see ${shelf.name}`
+                        }
+                        onClick={() => {
+                          void act(() => setLibraryAccess(accountId, shelf.id, !shelf.mayView));
+                        }}
+                      >
+                        {shelf.name}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+
+                {shelves.length === 0 || shelves.some((shelf) => shelf.mayView) ? null : (
+                  <p className="pt-2 text-xs text-text-muted">
+                    They can reach nothing at all, which looks broken rather than restricted to
+                    whoever signs in.
+                  </p>
+                )}
               </FormField>
 
               <FormField

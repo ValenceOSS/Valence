@@ -31,6 +31,11 @@ import type { PlaybackService, PreviewRead } from '@ValenceServer/playback/Playb
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
 import type { PresenceService } from '@ValenceServer/presence/PresenceService';
 import {
+  readLibraryAccessRoute,
+  allowLibraryRoute,
+  refuseLibraryRoute,
+} from '@ValenceServer/routes/LibraryAccessRoute';
+import {
   listHiddenRoute,
   hideMediaRoute,
   showMediaRoute,
@@ -2490,6 +2495,90 @@ const createApp = ({
     }
 
     await sayRoleChanged(userId, role?.name ?? 'a role', 'taken');
+
+    return context.body(null, 204);
+  });
+
+  /**
+   * Whether this actor may decide what another account sees.
+   *
+   * The same two questions the rest of the accounts panel asks: holding the permission, and not
+   * acting on somebody at or above your own rank. Without the second, a manager could quietly take
+   * the library away from an administrator.
+   *
+   * @param headers - The request's headers.
+   * @param userId - Whose access is being changed.
+   * @returns Why they may not, or nothing where they may.
+   */
+  const mayDecideAccess = async (headers: Headers, userId: string): Promise<string | null> => {
+    const actor = await readActor(headers);
+
+    if (actor === null || !actor.permissions.has('account.manage')) {
+      return 'That is for administrators.';
+    }
+
+    if (outranks(actor, userId, await permissions.rolesFor(userId))) {
+      return describeAccountRefusal('outranked');
+    }
+
+    return null;
+  };
+
+  app.openapi(readLibraryAccessRoute, async (context) => {
+    const { userId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    const [shelves, refused] = await Promise.all([
+      library.list(asTheServer),
+      library.refusedLibraries(userId),
+    ]);
+
+    return context.json(
+      {
+        libraries: shelves.map((shelf) => ({
+          id: shelf.id,
+          name: shelf.name,
+          mayView: !refused.includes(shelf.id),
+        })),
+      },
+      200,
+    );
+  });
+
+  app.openapi(allowLibraryRoute, async (context) => {
+    const { userId, libraryId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    await library.allowLibrary(userId, libraryId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(refuseLibraryRoute, async (context) => {
+    const { userId, libraryId } = context.req.valid('param');
+    const refusal = await mayDecideAccess(context.req.raw.headers, userId);
+
+    if (refusal !== null) {
+      return context.json({ error: refusal }, 403);
+    }
+
+    if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    await library.refuseLibrary(userId, libraryId);
 
     return context.body(null, 204);
   });
