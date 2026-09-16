@@ -28,6 +28,7 @@ import {
 import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
+import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useRate } from '@ValenceClient/library/useRate';
 import { pickAnything } from '@ValenceClient/library/pickAnything';
 import { findSiblings } from '@ValenceClient/library/pickFeatured';
@@ -56,7 +57,6 @@ const ValenceShell = () => {
   const { place, go, replace } = usePlace();
 
   const {
-    user,
     watcher,
     known,
     rememberItems,
@@ -69,8 +69,9 @@ const ValenceShell = () => {
     isHoldingTheScreen,
   } = useShell();
 
-  const favourites = useFavourites(user.id);
-  const rate = useRate(user.id);
+  const watching = useWatchingProfile();
+  const favourites = useFavourites(watching);
+  const rate = useRate(watching);
   const { mayAdminister } = useWhatIMayDo();
   const leave = useSignOut();
 
