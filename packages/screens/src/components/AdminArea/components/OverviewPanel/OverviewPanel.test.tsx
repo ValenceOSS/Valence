@@ -64,7 +64,6 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     ffmpegVersion: '7.1',
     ffmpegSupported: true,
     hardwareAccels: ['videotoolbox'],
-    rejectedEncoders: [],
     concurrentRenders: 0,
     toneMapping: 'unavailable' as const,
     hardwareToneMaps: [],
@@ -286,7 +285,6 @@ describe('OverviewPanel', () => {
               ffmpegVersion: '8.1.2-Flux',
               ffmpegSupported: true,
               hardwareAccels: ['vaapi'],
-              rejectedEncoders: [],
               concurrentRenders: 2,
               toneMapping: 'libplacebo' as const,
               hardwareToneMaps: ['tonemap_vaapi'],
@@ -313,7 +311,6 @@ describe('OverviewPanel', () => {
               ffmpegVersion: '8.1.2-Flux',
               ffmpegSupported: true,
               hardwareAccels: [],
-              rejectedEncoders: [],
               concurrentRenders: 0,
               toneMapping: 'zscale' as const,
               hardwareToneMaps: [],
@@ -337,7 +334,6 @@ describe('OverviewPanel', () => {
               ffmpegVersion: '7.1',
               ffmpegSupported: true,
               hardwareAccels: [],
-              rejectedEncoders: [],
               concurrentRenders: 0,
               toneMapping: 'unavailable' as const,
               hardwareToneMaps: [],
@@ -379,7 +375,7 @@ describe('OverviewPanel', () => {
     expect(OverviewPanel.displayName).toBe('OverviewPanel');
   });
 
-  it('says why an encoder was not used, rather than hiding it', () => {
+  it('says nothing about encoders the machine would not run', () => {
     renderPanel(
       <OverviewPanel
         {...props}
@@ -389,10 +385,7 @@ describe('OverviewPanel', () => {
             address: 'unix:/tmp/valence-transcoder.sock',
             ffmpegVersion: '8.1.2',
             ffmpegSupported: true,
-            hardwareAccels: [],
-            rejectedEncoders: [
-              { encoder: 'h264_vaapi', reason: 'No VA display found for /dev/dri/renderD128.' },
-            ],
+            hardwareAccels: ['vaapi'],
             concurrentRenders: 0,
             toneMapping: 'unavailable' as const,
             hardwareToneMaps: [],
@@ -402,8 +395,39 @@ describe('OverviewPanel', () => {
       />,
     );
 
-    expect(screen.getByText(/h264_vaapi was not used/)).toBeInTheDocument();
-    expect(screen.getByText(/No VA display found/)).toBeInTheDocument();
+    expect(screen.queryByText(/was not used/)).not.toBeInTheDocument();
+  });
+
+  it('still says which whole chains refused, which is a fault and not an absence', () => {
+    renderPanel(
+      <OverviewPanel
+        {...props}
+        overview={overview({
+          transcoder: {
+            isReachable: true,
+            address: 'unix:/tmp/valence-transcoder.sock',
+            ffmpegVersion: '8.1.2',
+            ffmpegSupported: true,
+            hardwareAccels: ['vaapi'],
+            concurrentRenders: 0,
+            toneMapping: 'unavailable' as const,
+            hardwareToneMaps: [],
+            chains: [
+              {
+                accel: 'vaapi',
+                shape: 'preview' as const,
+                bitDepth: 10,
+                works: false,
+                reason: 'Impossible to convert between the formats.',
+              },
+            ],
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/vaapi cannot draw scrub previews at 10 bits/)).toBeInTheDocument();
+    expect(screen.getByText(/Impossible to convert/)).toBeInTheDocument();
   });
 
   describe('counting the storage again', () => {
@@ -463,7 +487,6 @@ describe('OverviewPanel', () => {
             ffmpegVersion: '8.1.2',
             ffmpegSupported: true,
             hardwareAccels: ['qsv'],
-            rejectedEncoders: [],
             concurrentRenders: 2,
             toneMapping: 'unavailable' as const,
             hardwareToneMaps: [],

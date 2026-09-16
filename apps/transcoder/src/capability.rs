@@ -26,13 +26,24 @@ pub struct EncoderCandidate {
 /// there.
 ///
 /// On Intel, `VAAPI` is listed before `QSV`, and the order is the whole of what
-/// picks a backend for a machine that was left on automatic. Two reasons, and
-/// the first is in this file: `QSV` has no hardware tone mapper here, so an HDR
-/// film taken down that path comes off the device to be converted where the
-/// `VAAPI` one converts in place. The second was measured on an Intel iGPU,
-/// where `QSV` decoding returned "GPU Hang (-21)" against a library that `VAAPI`
-/// read start to finish without one — and a hang resets the whole device, so it
-/// takes down whatever else on the machine was using it.
+/// picks a backend for a machine that was left on automatic. It was put that
+/// way for two reasons, and **neither of them still holds**:
+///
+/// * `QSV` was said to have no hardware tone mapper. It had none then. It
+///   reaches `tonemap_vaapi` now, converting before the frames are mapped onto
+///   its own device, so an HDR film stays where it is either way. See
+///   [`crate::transcode_plan::HardwareAccel::pipeline`].
+/// * `QSV` decoding returned "GPU Hang (-21)" on an i5-13500 against a library
+///   `VAAPI` read start to finish. That was diagnosed afterwards as the `QSV`
+///   decoder wrappers rather than `QSV`: the path decodes on `VAAPI` and
+///   encodes on `QSV` now, which is what Jellyfin does by default and has not
+///   asked those wrappers for a frame since.
+///
+/// What is left between them on Intel is the scaler and the encoder, the rest
+/// of the chain being the same filters in the same order. So the order below is
+/// no longer a judgement that `VAAPI` is better — it is the order nothing has
+/// yet been measured against. Moving it is a change to what every Intel machine
+/// gets by default and wants a comparison behind it, not a tidy-up.
 pub const ENCODER_CANDIDATES: &[EncoderCandidate] = &[
     EncoderCandidate {
         codec: "h264",
@@ -195,12 +206,41 @@ pub struct RejectedEncoder {
 /// saying the driver opened perfectly.
 const NOISE: [&str; 1] = ["libva info:"];
 
+/// Lines ffmpeg prints while taking itself apart, after the thing that failed.
+///
+/// `Terminating thread with return code -22 (Invalid argument)` is the last
+/// line of very nearly every failed encoder open. It carries the word
+/// "invalid", so a search from the end finds it first, and it names a thread's
+/// exit code rather than anything about the encoder — an Intel machine with no
+/// NVIDIA card in it reported `-22 (Invalid argument)` three times over where
+/// ffmpeg had already said `Cannot load libcuda.so.1` two lines earlier.
+///
+/// The same mistake as the libva one above, from the other end: [`NOISE`] is a
+/// library talking over ffmpeg, and this is ffmpeg talking after itself.
+const TEARDOWN: [&str; 1] = ["Terminating thread with return code"];
+
+/// Complaints that name the step that failed and never why it did.
+///
+/// "Error while opening encoder" is true of every rejection this module
+/// records, so as a reason it says only what the operator knew from the
+/// encoder being rejected at all. Kept rather than dropped, because a probe
+/// that printed nothing else did still fail and the line beats silence — and
+/// ranked above the filter chatter of VAL-199 for the same reason. It is only
+/// ranked under a line that says what actually went wrong.
+const VAGUE: [&str; 5] = [
+    "error while opening encoder",
+    "error initializing output stream",
+    "error opening output file",
+    "conversion failed",
+    "task finished with error code",
+];
+
 /// Words a line carries when it is almost certainly the thing that went wrong.
 ///
 /// A heuristic, and deliberately a loose one: the cost of matching a line that
 /// is not the failure is a slightly wrong summary, and the cost of matching
 /// nothing is what this function was fixed for.
-const COMPLAINTS: [&str; 8] = [
+const COMPLAINTS: [&str; 10] = [
     "error",
     "invalid",
     "unsupported",
@@ -209,6 +249,8 @@ const COMPLAINTS: [&str; 8] = [
     "cannot",
     "unable",
     "no such",
+    "no usable",
+    "could not",
 ];
 
 /// Words that mean a failure in a sentence and something ordinary in a table.
@@ -227,6 +269,36 @@ const WEAK_COMPLAINTS: [&str; 1] = ["unknown"];
 /// Whether a line is a library announcing itself rather than ffmpeg complaining.
 fn is_noise(line: &str) -> bool {
     NOISE.iter().any(|prefix| line.starts_with(prefix))
+}
+
+/// Whether a line is ffmpeg reporting its own exit rather than the fault.
+fn is_teardown(line: &str) -> bool {
+    TEARDOWN.iter().any(|phrase| line.contains(phrase))
+}
+
+/// Whether a line says that something failed without saying what.
+fn is_vague(line: &str) -> bool {
+    let line = line.to_lowercase();
+
+    VAGUE.iter().any(|phrase| line.contains(phrase))
+}
+
+/// A line with ffmpeg's component tag taken off the front.
+///
+/// Every line comes stamped `[h264_nvenc @ 0x56463213fc80] `, and both halves
+/// of that are worth losing: the encoder is already the heading this reason
+/// sits under, and the address is a different number on every run, so two
+/// machines with one fault between them print two reasons that do not match.
+fn without_tag(line: &str) -> &str {
+    let Some(rest) = line.strip_prefix('[') else {
+        return line;
+    };
+
+    let Some(close) = rest.find("] ") else {
+        return line;
+    };
+
+    rest[close + 2..].trim()
 }
 
 /// Whether a line reads like the thing that failed.
@@ -271,6 +343,13 @@ pub fn summarise_failure(stderr: &str, fallback: &str) -> String {
 /// caller that can do something about it: a probe that failed silently can be
 /// asked again at a louder log level, and one that failed with a reason should
 /// not be run twice.
+///
+/// Read from the end four times rather than once, each pass accepting less
+/// than the one before: a line that says what went wrong, then one that says a
+/// step failed without saying why, then one that might be a complaint on a
+/// word that is not proof, then whatever was printed last. Searching once and
+/// taking any complaint put the least useful line of the lot at the top,
+/// because ffmpeg prints it last.
 #[must_use]
 pub fn complaint(stderr: &str) -> Option<String> {
     const LIMIT: usize = 200;
@@ -278,12 +357,14 @@ pub fn complaint(stderr: &str) -> Option<String> {
     let said: Vec<&str> = stderr
         .lines()
         .map(str::trim)
-        .filter(|line| !line.is_empty() && !is_noise(line))
+        .map(without_tag)
+        .filter(|line| !line.is_empty() && !is_noise(line) && !is_teardown(line))
         .collect();
 
     let summary = said
         .iter()
-        .rfind(|line| is_complaint(line))
+        .rfind(|line| is_complaint(line) && !is_vague(line))
+        .or_else(|| said.iter().rfind(|line| is_vague(line)))
         .or_else(|| said.iter().rfind(|line| is_weak_complaint(line)))
         .or(said.last())?;
 
@@ -660,6 +741,11 @@ async fn verify_tone_map(ffmpeg: &str, accel: HardwareAccel, filter: &str, devic
 /// nothing — the option is newer than the filter and a build can have one
 /// without the other. The run is the whole of the answer there, which is what
 /// it was always meant to be.
+///
+/// A filter already proved is not proved again. `QSV` reaches `tonemap_vaapi`
+/// on Intel, which is the filter `VAAPI` has just run, and what is reported is
+/// a list of filters rather than of backends — so asking twice bought a second
+/// probe and an admin page reading "`tonemap_vaapi`, `tonemap_vaapi`".
 async fn verified_tone_maps(ffmpeg: &str, filters: &[String], device: &str) -> Vec<String> {
     let mut verified = Vec::new();
 
@@ -676,6 +762,10 @@ async fn verified_tone_maps(ffmpeg: &str, filters: &[String], device: &str) -> V
         let name = crate::transcode_plan::filter_name(mapper);
 
         if !filters.iter().any(|filter| filter == name) {
+            continue;
+        }
+
+        if verified.iter().any(|found| found == name) {
             continue;
         }
 
@@ -870,6 +960,70 @@ pub async fn detect_capabilities(ffmpeg: &str, device: &str) -> Capabilities {
         .clone()
 }
 
+/// The backends this machine proved, once each and in the order it proved them.
+///
+/// `dedup` alone was wrong here, because it only collapses neighbours and the
+/// candidate list is not grouped by backend: the JPEG encoders sit at the end,
+/// after every other backend has had its turn, so an Intel machine proved
+/// `vaapi`, `qsv`, and then `vaapi` and `qsv` again for JPEG — and the admin
+/// page offered "vaapi, qsv, vaapi, qsv".
+fn verified_accels(encoders: &[VerifiedEncoder]) -> Vec<HardwareAccel> {
+    let mut accels: Vec<HardwareAccel> = Vec::new();
+
+    for encoder in encoders {
+        if encoder.accel != HardwareAccel::None && !accels.contains(&encoder.accel) {
+            accels.push(encoder.accel);
+        }
+    }
+
+    accels
+}
+
+/// Writes what would not run to the log, once per fault rather than once per
+/// encoder.
+///
+/// This is the whole of what is said about a rejected encoder now. It used to
+/// be listed on the admin overview as well, under the encoders that did work,
+/// and on a machine doing nothing wrong that read as a fault report: an Intel
+/// host with no NVIDIA card in it is not failing when NVENC will not open, and
+/// three lines saying so sat above the graphics card that was working
+/// perfectly. Somebody who wants to know reads the log; somebody looking at
+/// the overview wanted to know whether the machine was all right.
+///
+/// A backend that proved nothing failed for one reason and failed at it three
+/// or four times, so it gets one line. A backend that did prove itself and
+/// then refused a codec is the other case, and keeps its own line — there the
+/// machine can do the work and something specific stopped it.
+fn report_rejections(rejected: &[RejectedEncoder], verified: &[HardwareAccel]) {
+    let mut spoken: Vec<HardwareAccel> = Vec::new();
+
+    for entry in rejected {
+        if verified.contains(&entry.accel) {
+            tracing::warn!(
+                target: "capability",
+                "{} would not run — {}",
+                entry.encoder,
+                entry.reason
+            );
+
+            continue;
+        }
+
+        if spoken.contains(&entry.accel) {
+            continue;
+        }
+
+        spoken.push(entry.accel);
+
+        tracing::warn!(
+            target: "capability",
+            "{} is not available on this machine — {}",
+            entry.accel.word(),
+            entry.reason
+        );
+    }
+}
+
 #[allow(
     clippy::too_many_lines,
     reason = "one linear probe of the machine, read top to bottom"
@@ -900,26 +1054,18 @@ async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilitie
                 accel: candidate.accel,
                 verified: true,
             }),
-            Err(reason) => {
-                eprintln!("capability: {} rejected — {reason}", candidate.encoder);
-
-                rejected.push(RejectedEncoder {
-                    codec: candidate.codec.to_owned(),
-                    encoder: candidate.encoder.to_owned(),
-                    accel: candidate.accel,
-                    reason,
-                });
-            }
+            Err(reason) => rejected.push(RejectedEncoder {
+                codec: candidate.codec.to_owned(),
+                encoder: candidate.encoder.to_owned(),
+                accel: candidate.accel,
+                reason,
+            }),
         }
     }
 
-    let mut hardware_accels: Vec<HardwareAccel> = encoders
-        .iter()
-        .map(|encoder| encoder.accel)
-        .filter(|accel| *accel != HardwareAccel::None)
-        .collect();
+    let hardware_accels = verified_accels(&encoders);
 
-    hardware_accels.dedup();
+    report_rejections(&rejected, &hardware_accels);
 
     let filters = match Command::new(ffmpeg)
         .args(["-hide_banner", "-filters"])
@@ -970,8 +1116,8 @@ async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilitie
 mod tests {
     use super::{
         complaint, describe_build, parse_listed_encoders, parse_listed_filters, probe_arguments,
-        select_tone_mapping, summarise_failure, tone_map_probe_arguments, Capabilities,
-        EncoderCandidate, VerifiedEncoder, ENCODER_CANDIDATES, SMALLEST_USABLE_PROBE,
+        select_tone_mapping, summarise_failure, tone_map_probe_arguments, verified_accels,
+        Capabilities, EncoderCandidate, VerifiedEncoder, ENCODER_CANDIDATES, SMALLEST_USABLE_PROBE,
     };
     use crate::transcode_plan::HardwareAccel;
     use crate::transcode_plan::DEFAULT_DEVICE;
@@ -1003,6 +1149,89 @@ mod tests {
                 "mjpeg_videotoolbox",
                 "mjpeg_rkmpp"
             ]
+        );
+    }
+
+    /// What an Intel host with no NVIDIA card in it actually printed.
+    ///
+    /// The last line carries "Invalid argument", so a search from the end found
+    /// it and reported a thread's exit code as the reason NVENC would not run —
+    /// three times over, on a machine whose graphics were working perfectly.
+    #[test]
+    fn reads_past_ffmpegs_own_exit_to_the_thing_that_failed() {
+        let said = concat!(
+            "[h264_nvenc @ 0x56463213fc80] Cannot load libcuda.so.1\n",
+            "[h264_nvenc @ 0x56463213fc80] The minimum required Nvidia driver for nvenc is 471.41\n",
+            "[vost#0:0/h264_nvenc @ 0x56463213fc80] Error while opening encoder - maybe incorrect parameters such as bit_rate, rate, width or height\n",
+            "[vost#0:0/h264_nvenc @ 0x56463213fc80] Terminating thread with return code -22 (Invalid argument)\n",
+        );
+
+        assert_eq!(complaint(said), Some("Cannot load libcuda.so.1".to_owned()));
+    }
+
+    /// The tag names the encoder, which is already the heading, and an address
+    /// that is different on every run.
+    #[test]
+    fn drops_ffmpegs_component_tag_from_the_reason() {
+        let said =
+            "[AVHWDeviceContext @ 0x55755cf761c0] No VA display found for /dev/dri/renderD128.";
+
+        assert_eq!(
+            complaint(said),
+            Some("No VA display found for /dev/dri/renderD128.".to_owned())
+        );
+    }
+
+    /// "Error while opening encoder" is true of every rejection recorded here.
+    #[test]
+    fn prefers_a_reason_to_the_step_that_failed() {
+        let said = concat!(
+            "[av1_vaapi @ 0x55755cf761c0] No usable encoding entrypoint found for profile 32\n",
+            "[vost#0:0/av1_vaapi @ 0x55755cf761c0] Error while opening encoder\n",
+        );
+
+        assert_eq!(
+            complaint(said),
+            Some("No usable encoding entrypoint found for profile 32".to_owned())
+        );
+    }
+
+    /// Better than silence, and all there is when nothing else was said.
+    #[test]
+    fn keeps_the_vague_line_where_it_is_the_only_one() {
+        let said = concat!(
+            "[vost#0:0/h264_amf @ 0x55ca28fd2c80] Error while opening encoder\n",
+            "[vost#0:0/h264_amf @ 0x55ca28fd2c80] Terminating thread with return code -22 (Invalid argument)\n",
+        );
+
+        assert_eq!(
+            complaint(said),
+            Some("Error while opening encoder".to_owned())
+        );
+    }
+
+    /// The JPEG encoders sit at the end of the list, after every backend has
+    /// already had its turn, so `dedup` alone left a backend named twice.
+    #[test]
+    fn names_a_backend_once_however_many_codecs_it_proved() {
+        let verified = |encoder: &str, accel| VerifiedEncoder {
+            codec: "h264".to_owned(),
+            encoder: encoder.to_owned(),
+            accel,
+            verified: true,
+        };
+
+        let proved = vec![
+            verified("h264_vaapi", HardwareAccel::Vaapi),
+            verified("h264_qsv", HardwareAccel::Qsv),
+            verified("mjpeg_vaapi", HardwareAccel::Vaapi),
+            verified("mjpeg_qsv", HardwareAccel::Qsv),
+            verified("libx264", HardwareAccel::None),
+        ];
+
+        assert_eq!(
+            verified_accels(&proved),
+            vec![HardwareAccel::Vaapi, HardwareAccel::Qsv]
         );
     }
 

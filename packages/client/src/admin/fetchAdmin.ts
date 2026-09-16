@@ -45,7 +45,6 @@ const AdminOverviewSchema = z.object({
     ffmpegVersion: z.string().nullable(),
     ffmpegSupported: z.boolean().default(true),
     hardwareAccels: z.array(z.string()),
-    rejectedEncoders: z.array(z.object({ encoder: z.string(), reason: z.string() })).default([]),
     concurrentRenders: z.number().int().nonnegative().default(0),
     toneMapping: z.enum(['zscale', 'libplacebo', 'unavailable']).default('unavailable'),
     hardwareToneMaps: z.array(z.string()).default([]),

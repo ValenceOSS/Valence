@@ -26,7 +26,6 @@ const OVERVIEW: AdminOverview = {
     ffmpegVersion: '9.0.1',
     ffmpegSupported: true,
     hardwareAccels: ['videotoolbox'],
-    rejectedEncoders: [],
     concurrentRenders: 0,
     toneMapping: 'unavailable' as const,
     hardwareToneMaps: [],
