@@ -11,6 +11,7 @@ import { DEFAULT_LIMIT } from '@ValenceServer/library/LibraryService';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { readViewer } from '@ValenceServer/visibility/readViewer';
 import { subjectOfRequest } from '@ValenceServer/visibility/subjectOfRequest';
+import type { Subject } from '@ValenceServer/visibility/subjectOfRequest';
 import type { MiddlewareHandler } from 'hono';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { splitPersonCredits } from '@ValenceServer/library/splitPersonCredits';
@@ -612,6 +613,35 @@ const createApp = ({
     readViewer({ auth, permissions, ...(profiles === undefined ? {} : { profiles }) }, headers);
 
   /**
+   * Whether an account was refused the library something sits in.
+   *
+   * The cheap question is asked first and is usually the only one. Every poster and backdrop on a
+   * page arrives as a request of its own, so the common answer — nothing is refused — costs a single
+   * indexed lookup. Who is an administrator is worked out only once something has actually been
+   * refused, which is rare, rather than on each of the fifty images a library page draws.
+   *
+   * @param accountId - Whose account is asking.
+   * @param subject - The item or programme in question.
+   * @returns Whether to refuse it.
+   */
+  const isOutOfReach = async (accountId: string, subject: Subject): Promise<boolean> => {
+    if (subject.kind === 'none') {
+      return false;
+    }
+
+    const refused =
+      subject.kind === 'item'
+        ? await library.isOutOfReach(accountId, subject.mediaId)
+        : await library.isSeriesOutOfReach(accountId, subject.seriesId);
+
+    if (!refused) {
+      return false;
+    }
+
+    return !(await permissions.resolve(accountId)).has(ADMINISTRATOR);
+  };
+
+  /**
    * Refuses anything a viewer's account may not reach, before the route that would answer it runs.
    *
    * This is the one gate every address naming an item passes through, which is the point: three
@@ -624,12 +654,18 @@ const createApp = ({
    * to something they hid should still arrive at it. Refusing here would quietly turn hiding into
    * enforcement, which is the one thing both tickets behind this asked not to happen.
    *
+   * The cheap question is asked first and is usually the only one. Every poster and backdrop on a
+   * page comes through here as a request of its own, so the common answer — nothing is refused —
+   * costs a single indexed lookup. Who is an administrator is worked out only once something has
+   * actually been refused, which is rare, rather than on each of the fifty images a library page
+   * draws.
+   *
    * It answers as though the thing were not there, in the same words an item that never existed
    * gets, because being told something exists is most of what was being kept back.
    *
    * A request with nobody signed in is left alone. The session gate has already turned away anyone
-   * who is neither signed in nor holding a live share link, so what arrives here without a viewer is
-   * a share guest, and what a share reaches was settled when the link was made.
+   * who is neither signed in nor holding a live share link, so what arrives here without a session
+   * is a share guest, and what a share reaches was settled when the link was made.
    *
    * @param context - The request.
    * @param next - The route that would answer it.
@@ -642,18 +678,13 @@ const createApp = ({
       return next();
     }
 
-    const viewer = await viewerOf(context.req.raw.headers);
+    const session = await readSessionOnce(auth, context.req.raw.headers);
 
-    if (viewer === null) {
+    if (session === null) {
       return next();
     }
 
-    const mayReach =
-      subject.kind === 'item'
-        ? await library.mayReach(viewer, subject.mediaId)
-        : await library.mayReachSeries(viewer, subject.seriesId);
-
-    if (!mayReach) {
+    if (await isOutOfReach(session.user.id, subject)) {
       return context.json({ error: 'No such item.' }, 404);
     }
 
@@ -3200,7 +3231,22 @@ const createApp = ({
       return context.json({ error: 'This account may not share.' }, 403);
     }
 
-    const made = await shares.create(account.id, context.req.valid('json'));
+    const asked = context.req.valid('json');
+
+    const subjectId = asked.kind === 'item' ? asked.mediaId : asked.seriesId;
+
+    const wanted: Subject =
+      subjectId === undefined
+        ? { kind: 'none' }
+        : asked.kind === 'item'
+          ? { kind: 'item', mediaId: subjectId }
+          : { kind: 'series', seriesId: subjectId };
+
+    if (await isOutOfReach(account.id, wanted)) {
+      return context.json({ error: 'There is nothing here to share.' }, 404);
+    }
+
+    const made = await shares.create(account.id, asked);
 
     if (made === null) {
       return context.json({ error: 'There is nothing here to share.' }, 404);

@@ -10,6 +10,9 @@ import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemo
 import { createMemoryWatchProgressService } from '@ValenceServer/progress/createMemoryWatchProgressService';
 import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMemoryFavouriteService';
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
+import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
+import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
+import { createMemoryShareService } from '@ValenceServer/sharing/createMemoryShareService';
 import { subjectOfRequest } from './subjectOfRequest';
 import type { Library, MediaDetail } from '@ValenceContracts/schemas/Library';
 
@@ -66,6 +69,17 @@ const film = (id: string, libraryId: string, title: string, extra = {}): MediaDe
 const build = () => {
   const profiles = createMemoryProfileService();
   const { auth, settings, store } = createMemoryAuth();
+  const underneath = createMemoryPermissionService();
+  const asked = { permissions: 0 };
+
+  const permissions = {
+    ...underneath,
+    resolve: (userId: string) => {
+      asked.permissions += 1;
+
+      return underneath.resolve(userId);
+    },
+  };
 
   const library = createMemoryLibraryService({
     libraries: [shelf(FILMS, 'Films', 'movies'), shelf(SHOWS, 'Shows', 'shows')],
@@ -82,6 +96,7 @@ const build = () => {
   const app = createApp({
     auth,
     settings,
+    permissions,
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(),
     library,
@@ -92,9 +107,10 @@ const build = () => {
     progress: createMemoryWatchProgressService(),
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
+    shares: createMemoryShareService({ shares: [], titles: { [ARRIVAL]: 'Arrival' } }),
   });
 
-  return { app, library, profiles, store };
+  return { app, library, profiles, store, permissions: underneath, asked };
 };
 
 const CREDENTIALS = {
@@ -359,5 +375,102 @@ describe('every address naming an item is covered by the gate', () => {
       .filter((path) => /:mediaId|:seriesId/.test(path));
 
     expect(named.length).toBeGreaterThan(10);
+  });
+});
+
+describe('an administrator', () => {
+  it('reaches a library that carries a refusal, as they reach everything else', async () => {
+    const me = await watching(context);
+    const role = await context.permissions.createRole({
+      name: 'Administrator',
+      position: 100,
+      permissions: [ADMINISTRATOR],
+    });
+
+    await context.permissions.assignRole(me.accountId, role.id);
+    context.library.state.blocked = [{ accountId: me.accountId, libraryId: FILMS }];
+
+    expect((await me.ask(`/api/media/${ARRIVAL}`)).status).toBe(200);
+  });
+
+  it('still loses sight of what they hid themselves, hiding being nobody’s permission', async () => {
+    const me = await watching(context);
+    const role = await context.permissions.createRole({
+      name: 'Administrator',
+      position: 100,
+      permissions: [ADMINISTRATOR],
+    });
+
+    await context.permissions.assignRole(me.accountId, role.id);
+    context.library.state.hidden = [{ profileId: me.profileId, mediaItemId: ARRIVAL }];
+
+    expect(await idsIn(await me.ask(`/api/libraries/${FILMS}/items`))).not.toContain(ARRIVAL);
+  });
+});
+
+describe('what the gate costs on a page of posters', () => {
+  it('works out nobody’s permissions while nothing is refused', async () => {
+    const me = await watching(context);
+
+    context.asked.permissions = 0;
+
+    for (const kind of ['poster', 'backdrop', 'logo']) {
+      await me.ask(`/api/media/${ARRIVAL}/image/${kind}`);
+    }
+
+    expect(context.asked.permissions).toBe(0);
+  });
+
+  it('works them out only once something has actually been refused', async () => {
+    const me = await watching(context);
+
+    context.library.state.blocked = [{ accountId: me.accountId, libraryId: FILMS }];
+    context.asked.permissions = 0;
+
+    await me.ask(`/api/media/${ARRIVAL}/image/poster`);
+
+    expect(context.asked.permissions).toBe(1);
+  });
+});
+
+describe('handing out a link to something you were refused', () => {
+  it('is refused too, or the block is lifted by anybody who can make a share', async () => {
+    const me = await watching(context);
+    const role = await context.permissions.createRole({
+      name: 'Sharer',
+      position: 10,
+      permissions: ['sharing.link'],
+    });
+
+    await context.permissions.assignRole(me.accountId, role.id);
+    context.library.state.blocked = [{ accountId: me.accountId, libraryId: FILMS }];
+
+    const made = await context.app.request(`${BASE}/api/shares`, {
+      method: 'POST',
+      headers: { cookie: me.cookie, origin: BASE, 'content-type': 'application/json' },
+      body: JSON.stringify({ kind: 'item', mediaId: ARRIVAL }),
+    });
+
+    expect(made.status).toBe(404);
+  });
+
+  it('is still allowed for something they can reach', async () => {
+    const me = await watching(context);
+    const role = await context.permissions.createRole({
+      name: 'Sharer',
+      position: 10,
+      permissions: ['sharing.link'],
+    });
+
+    await context.permissions.assignRole(me.accountId, role.id);
+    context.library.state.blocked = [{ accountId: me.accountId, libraryId: SHOWS }];
+
+    const made = await context.app.request(`${BASE}/api/shares`, {
+      method: 'POST',
+      headers: { cookie: me.cookie, origin: BASE, 'content-type': 'application/json' },
+      body: JSON.stringify({ kind: 'item', mediaId: ARRIVAL }),
+    });
+
+    expect(made.status).toBe(201);
   });
 });

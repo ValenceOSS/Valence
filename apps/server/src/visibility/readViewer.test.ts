@@ -28,7 +28,7 @@ const SESSION = {
 };
 
 const belongsTo = vi.fn<(userId: string, profileId: string) => Promise<boolean>>();
-const ensureDefault = vi.fn<(userId: string, name: string) => Promise<{ id: string }>>();
+const list = vi.fn<(userId: string) => Promise<readonly { id: string }[]>>();
 const resolve = vi.fn<(userId: string) => Promise<ReadonlySet<Permission>>>();
 
 const reads = (signedIn: boolean, withProfiles = true): ReadsViewers => ({
@@ -38,12 +38,12 @@ const reads = (signedIn: boolean, withProfiles = true): ReadsViewers => ({
     },
   },
   permissions: { resolve },
-  ...(withProfiles ? { profiles: { belongsTo, ensureDefault } } : {}),
+  ...(withProfiles ? { profiles: { belongsTo, list } } : {}),
 });
 
 beforeEach(() => {
   belongsTo.mockReset().mockResolvedValue(false);
-  ensureDefault.mockReset().mockResolvedValue({ id: 'the-default' });
+  list.mockReset().mockResolvedValue([{ id: 'the-default' }]);
   resolve.mockReset().mockResolvedValue(new Set<Permission>());
 });
 
@@ -83,6 +83,15 @@ describe('who a request is for', () => {
     expect(viewer?.kind === 'account' && viewer.profileId).toBe('the-default');
   });
 
+  it('never makes a face, since a page of posters would race fifty requests to make the same one', async () => {
+    list.mockResolvedValue([]);
+
+    const viewer = await readViewer(reads(true), new Headers());
+
+    expect(viewer?.kind === 'account' && viewer.profileId).toBeNull();
+    expect(viewer?.kind === 'account' && viewer.accountId).toBe('account-1');
+  });
+
   it('answers with an account and no face where the server keeps no profiles', async () => {
     const viewer = await readViewer(reads(true, false), new Headers());
 
@@ -114,7 +123,7 @@ describe('who a request is for', () => {
     await readViewer(asking, headers);
 
     expect(resolve).toHaveBeenCalledTimes(1);
-    expect(ensureDefault).toHaveBeenCalledTimes(1);
+    expect(list).toHaveBeenCalledTimes(1);
   });
 
   it('works it out again for a different request', async () => {

@@ -54,8 +54,8 @@ type LibraryService = ShowService & {
     options: ListItemsOptions,
   ) => Promise<{ items: MediaSummary[]; total: number } | null>;
   listFacets: (viewer: Viewer) => Promise<LibraryFacets>;
-  mayReach: (viewer: Viewer, mediaId: string) => Promise<boolean>;
-  mayReachSeries: (viewer: Viewer, seriesId: string) => Promise<boolean>;
+  isOutOfReach: (accountId: string, mediaId: string) => Promise<boolean>;
+  isSeriesOutOfReach: (accountId: string, seriesId: string) => Promise<boolean>;
   getMedia: (id: string) => Promise<MediaDetail | null>;
   getSeries: (seriesId: string) => Promise<{ id: string; title: string } | null>;
   seriesOf: (mediaId: string) => Promise<string | null>;

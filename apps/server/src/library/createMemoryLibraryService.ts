@@ -72,12 +72,19 @@ const reaches = (state: MemoryState, viewer: Viewer, libraryId: string): boolean
     return true;
   }
 
-  const { accountId } = viewer;
-
-  return !(state.blocked ?? []).some(
-    (row) => row.accountId === accountId && row.libraryId === libraryId,
-  );
+  return !blocks(state, viewer.accountId, libraryId);
 };
+
+/**
+ * Whether an account was refused a library outright, before any question of who is an administrator.
+ *
+ * @param state - What this service is holding.
+ * @param accountId - Whose account.
+ * @param libraryId - The library.
+ * @returns Whether a refusal was recorded.
+ */
+const blocks = (state: MemoryState, accountId: string, libraryId: string): boolean =>
+  (state.blocked ?? []).some((row) => row.accountId === accountId && row.libraryId === libraryId);
 
 /**
  * Whether the person watching has hidden something, by itself, by its programme, or by its library.
@@ -264,19 +271,18 @@ const createMemoryLibraryService = (
     });
   },
 
-  mayReach: (viewer, mediaId) => {
+  isOutOfReach: (accountId, mediaId) => {
     const found = state.media.find((item) => item.id === mediaId);
 
-    return Promise.resolve(found === undefined || reaches(state, viewer, found.libraryId));
+    return Promise.resolve(found !== undefined && blocks(state, accountId, found.libraryId));
   },
 
-  mayReachSeries: (viewer, seriesId) => {
-    const episodes = state.media.filter((item) => seriesIdOf(state, item) === seriesId);
-
-    return Promise.resolve(
-      episodes.length === 0 || episodes.some((item) => reaches(state, viewer, item.libraryId)),
-    );
-  },
+  isSeriesOutOfReach: (accountId, seriesId) =>
+    Promise.resolve(
+      state.media.some(
+        (item) => seriesIdOf(state, item) === seriesId && blocks(state, accountId, item.libraryId),
+      ),
+    ),
 
   listItems: (viewer, libraryId, options) => {
     const found = state.libraries.find((entry) => entry.id === libraryId);

@@ -29,7 +29,7 @@ const hiddenFromViewer = (db: ValenceDatabase, viewer: Viewer): SQL => {
     return NOTHING;
   }
 
-  return and(reachableByViewer(db, viewer), hiding) ?? hiding;
+  return and(reachableByViewer(db, viewer), hiding) ?? NOTHING;
 };
 
 export { hiddenFromViewer };

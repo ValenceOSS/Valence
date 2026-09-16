@@ -938,46 +938,32 @@ const createDatabaseLibraryService = ({
       return (await asking?.readPerson?.(personId)) ?? null;
     },
 
-    mayReach: async (viewer, mediaId) => {
-      if (viewer.kind !== 'account' || viewer.isAdministrator) {
-        return true;
-      }
-
+    isOutOfReach: async (accountId, mediaId) => {
       const refused = await db
         .select({ one: sql<number>`1` })
         .from(mediaItem)
         .innerJoin(
           libraryBlock,
-          and(
-            eq(libraryBlock.libraryId, mediaItem.libraryId),
-            eq(libraryBlock.userId, viewer.accountId),
-          ),
+          and(eq(libraryBlock.libraryId, mediaItem.libraryId), eq(libraryBlock.userId, accountId)),
         )
         .where(eq(mediaItem.id, mediaId))
         .limit(1);
 
-      return refused.length === 0;
+      return refused.length > 0;
     },
 
-    mayReachSeries: async (viewer, seriesId) => {
-      if (viewer.kind !== 'account' || viewer.isAdministrator) {
-        return true;
-      }
-
+    isSeriesOutOfReach: async (accountId, seriesId) => {
       const refused = await db
         .select({ one: sql<number>`1` })
         .from(mediaItem)
         .innerJoin(
           libraryBlock,
-          and(
-            eq(libraryBlock.libraryId, mediaItem.libraryId),
-            eq(libraryBlock.userId, viewer.accountId),
-          ),
+          and(eq(libraryBlock.libraryId, mediaItem.libraryId), eq(libraryBlock.userId, accountId)),
         )
         .where(eq(mediaItem.seriesId, seriesId))
         .limit(1);
 
-      return refused.length === 0;
+      return refused.length > 0;
     },
 
     getMedia: async (id) => {

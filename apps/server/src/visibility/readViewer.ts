@@ -8,7 +8,7 @@ const PROFILE_HEADER = 'x-valence-profile';
 
 type NamesProfiles = {
   belongsTo: (userId: string, profileId: string) => Promise<boolean>;
-  ensureDefault: (userId: string, name: string) => Promise<{ id: string }>;
+  list: (userId: string) => Promise<readonly { id: string }[]>;
 };
 
 type ResolvesPermissions = {
@@ -66,7 +66,7 @@ const readViewer = (reads: ReadsViewers, headers: Headers): Promise<Viewer | nul
     return {
       kind: 'account',
       accountId: account.id,
-      profileId: await readProfileFor(reads, headers, account),
+      profileId: await readProfileFor(reads, headers, account.id),
       isAdministrator: held.has(ADMINISTRATOR),
     };
   })();
@@ -79,15 +79,23 @@ const readViewer = (reads: ReadsViewers, headers: Headers): Promise<Viewer | nul
 /**
  * Which face on this account the request is for, believing the header only once it has been checked.
  *
+ * Reads rather than creates. This runs on every address naming an item, posters included, so a page
+ * drawing fifty of them would otherwise have fifty requests racing to create the same default
+ * profile — `viewer_profile` carries no unique index on its account, so they would all win and the
+ * account would end up with fifty faces. Creating one is the business of the routes that write
+ * something against a person; deciding what may be seen is not.
+ *
+ * An account with no face yet simply has nothing hidden, which is true.
+ *
  * @param reads - The profile service to ask, where there is one.
  * @param headers - The request's headers.
- * @param account - Whose account it is.
- * @returns The profile watching, or nothing where the server keeps none.
+ * @param accountId - Whose account it is.
+ * @returns The profile watching, or nothing where there is none.
  */
 const readProfileFor = async (
   reads: ReadsViewers,
   headers: Headers,
-  account: { id: string; name: string },
+  accountId: string,
 ): Promise<string | null> => {
   const { profiles } = reads;
 
@@ -97,11 +105,11 @@ const readProfileFor = async (
 
   const named = headers.get(PROFILE_HEADER);
 
-  if (named !== null && (await profiles.belongsTo(account.id, named))) {
+  if (named !== null && (await profiles.belongsTo(accountId, named))) {
     return named;
   }
 
-  return (await profiles.ensureDefault(account.id, account.name)).id;
+  return (await profiles.list(accountId))[0]?.id ?? null;
 };
 
 export type { NamesProfiles, ReadsViewers, ResolvesPermissions };
