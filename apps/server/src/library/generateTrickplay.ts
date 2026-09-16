@@ -19,7 +19,7 @@ type TrickplayParams = {
 type GenerateTrickplayOptions = {
   libraryId: string;
   generation: number;
-  owner?: string;
+  correlationId?: string;
   store: TrickplayStore;
   transcoder: Transcoder;
   trickplay: TrickplayParams;
@@ -85,7 +85,7 @@ const renderSheets = async ({
 const generateTrickplay = async ({
   libraryId,
   generation,
-  owner,
+  correlationId,
   store,
   transcoder,
   trickplay,
@@ -131,7 +131,7 @@ const generateTrickplay = async ({
           ...trickplay,
           ...(hardwareAccel === undefined || hardwareAccel === '' ? {} : { hardwareAccel }),
           wait: false,
-          ...(owner === undefined ? {} : { owner }),
+          ...(correlationId === undefined ? {} : { correlationId }),
         },
         isCancelled,
       }).catch((error: Error) => {

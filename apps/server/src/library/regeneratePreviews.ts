@@ -23,7 +23,7 @@ type CutClipOptions = {
 type RegeneratePreviewsOptions = {
   libraryId: string;
   generation: number;
-  owner?: string;
+  correlationId?: string;
   store: PreviewStore;
   transcoder: Transcoder;
   defaultAudioLanguage: string | null;
@@ -77,7 +77,7 @@ const cutClip = async ({ transcoder, request, isCancelled }: CutClipOptions): Pr
 const regeneratePreviews = async ({
   libraryId,
   generation,
-  owner,
+  correlationId,
   store,
   transcoder,
   defaultAudioLanguage,
@@ -122,7 +122,7 @@ const regeneratePreviews = async ({
           ...previewRequestFor(item, generation, defaultAudioLanguage, quality),
           ...(hardwareAccel === undefined || hardwareAccel === '' ? {} : { hardwareAccel }),
           wait: false,
-          ...(owner === undefined ? {} : { owner }),
+          ...(correlationId === undefined ? {} : { correlationId }),
         },
         isCancelled,
       }).catch((error: Error) => {

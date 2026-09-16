@@ -205,8 +205,8 @@ describe('asking each provider in turn', () => {
     const seen: (string | undefined)[] = [];
     const provider = {
       name: 'fingerprint',
-      detect: (_group: SegmentCandidate[], _onItemDone?: () => void, owner?: string) => {
-        seen.push(owner);
+      detect: (_group: SegmentCandidate[], _onItemDone?: () => void, correlationId?: string) => {
+        seen.push(correlationId);
 
         return Promise.resolve(new Map<string, MediaSegment[]>());
       },

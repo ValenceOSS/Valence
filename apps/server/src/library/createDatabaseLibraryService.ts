@@ -1162,7 +1162,7 @@ const createDatabaseLibraryService = ({
       const chosenAccel = await forcedAccel?.();
 
       await regeneratePreviews({
-        ...(jobId === undefined ? {} : { owner: jobId }),
+        ...(jobId === undefined ? {} : { correlationId: jobId }),
         libraryId,
         generation: (await findLibrary(libraryId))?.generation ?? 0,
         atOnce: await filesAtOnceFor(libraryId),
@@ -1236,7 +1236,7 @@ const createDatabaseLibraryService = ({
       await generateTrickplay({
         libraryId,
         generation: (await findLibrary(libraryId))?.generation ?? 0,
-        ...(jobId === undefined ? {} : { owner: jobId }),
+        ...(jobId === undefined ? {} : { correlationId: jobId }),
         atOnce: await filesAtOnceFor(libraryId),
         store: {
           listOutstanding: (id) => listOutstandingFor(db, id, REGENERATE_TRICKPLAY_JOB),

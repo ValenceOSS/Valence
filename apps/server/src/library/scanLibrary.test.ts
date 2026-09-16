@@ -142,7 +142,7 @@ const harness = (options: {
     },
     readPreviewFile: () => Promise.resolve(null),
     readMonitor: () => Promise.resolve({}),
-    openMonitorStream: () => Promise.resolve(null),
+    openMonitorSocket: () => Promise.resolve(null),
     capabilities: () =>
       options.capabilitiesImpl === undefined
         ? Promise.resolve({
@@ -518,7 +518,7 @@ describe('scanLibrary', () => {
         requestPreview: () => Promise.resolve({ id: 'p', url: '/p', isReady: true }),
         readPreviewFile: () => Promise.resolve(null),
         readMonitor: () => Promise.resolve({}),
-        openMonitorStream: () => Promise.resolve(null),
+        openMonitorSocket: () => Promise.resolve(null),
         capabilities: () =>
           Promise.resolve({
             ffmpegVersion: 'test',

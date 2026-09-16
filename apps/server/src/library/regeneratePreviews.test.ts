@@ -36,7 +36,7 @@ const stubTranscoder = (requestPreview: Transcoder['requestPreview']): Transcode
   requestPreview,
   readPreviewFile: () => Promise.resolve(null),
   readMonitor: () => Promise.resolve({}),
-  openMonitorStream: () => Promise.resolve(null),
+  openMonitorSocket: () => Promise.resolve(null),
   capabilities: () =>
     Promise.resolve({
       ffmpegVersion: 'test',

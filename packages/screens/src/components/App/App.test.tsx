@@ -232,12 +232,6 @@ const serverState = (options: {
   });
 };
 
-class FakeEventSource {
-  onmessage: ((event: MessageEvent<string>) => void) | null = null;
-
-  close() {}
-}
-
 beforeEach(() => {
   socket.listeners.clear();
   socket.sent.length = 0;
@@ -245,7 +239,6 @@ beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   fetchMock.mockReset();
   vi.stubGlobal('fetch', fetchMock);
-  vi.stubGlobal('EventSource', FakeEventSource);
 });
 
 afterEach(() => {

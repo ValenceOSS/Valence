@@ -518,7 +518,7 @@ const transcoder = createTranscoderClient({ baseUrl: env.TRANSCODER_URL });
  */
 const runDetectSegments = async (libraryId: string, jobId: string): Promise<void> => {
   const marked = await detectLibrarySegments({
-    owner: jobId,
+    correlationId: jobId,
     libraryId,
     providers: segmentProviders,
     segments: segmentService,
@@ -1801,7 +1801,7 @@ const askSomebodyToTheParty = async (
 const transcoderIntake = createTranscoderIntake(log);
 
 void relayMonitor({
-  open: () => transcoder.openMonitorStream(),
+  open: () => transcoder.openMonitorSocket(),
   publish: (report) => {
     const reading = withApiMemory(report);
 
