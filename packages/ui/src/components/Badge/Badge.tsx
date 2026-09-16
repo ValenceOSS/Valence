@@ -4,7 +4,7 @@ import type { BadgeProps, BadgeSize, BadgeTone } from './Badge.types';
 const TONE_CLASSES: Record<BadgeTone, string> = {
   quiet: 'border border-line bg-subtle text-text-muted backdrop-blur-md',
   accent: 'border border-accent/40 bg-accent/15 text-text backdrop-blur-md',
-  success: 'border border-accent/35 bg-accent/15 text-accent backdrop-blur-md',
+  success: 'border border-success/35 bg-success/15 text-success backdrop-blur-md',
   highlight: 'border border-highlight/40 bg-highlight/15 text-highlight backdrop-blur-md',
   solid: 'bg-shade/60 text-on-scrim backdrop-blur-md',
   warning: 'border border-highlight/50 bg-highlight/15 text-highlight backdrop-blur-md',

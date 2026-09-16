@@ -24,11 +24,11 @@ const describeQueue = (jobs: Job[]): string =>
 
 const NOTHING_QUEUED: Job[] = [];
 
-const JOB_TONES: Record<Job['state'], 'quiet' | 'accent' | 'solid'> = {
-  queued: 'quiet',
+const JOB_TONES: Record<Job['state'], 'warning' | 'accent' | 'success' | 'danger'> = {
+  queued: 'warning',
   running: 'accent',
-  finished: 'quiet',
-  failed: 'solid',
+  finished: 'success',
+  failed: 'danger',
 };
 
 /**

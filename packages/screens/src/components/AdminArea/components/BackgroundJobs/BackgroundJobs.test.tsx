@@ -87,4 +87,22 @@ describe('BackgroundJobs', () => {
     expect(screen.getByText('The queue could not be read from the server.')).toBeInTheDocument();
     expect(screen.queryByText('Reading the queue…')).not.toBeInTheDocument();
   });
+
+  it('paints each state in the colour that state means, not one borrowed from another', () => {
+    render(
+      <BackgroundJobs
+        monitor={monitor([
+          job({ id: 1, state: 'queued', startedAtMs: null, finishedAtMs: null }),
+          job({ id: 2, state: 'running', startedAtMs: 0, finishedAtMs: null }),
+          job({ id: 3, state: 'finished', startedAtMs: 0, finishedAtMs: 1_000 }),
+          job({ id: 4, state: 'failed', startedAtMs: 0, finishedAtMs: 2_000 }),
+        ])}
+      />,
+    );
+
+    expect(screen.getByText('queued')).toHaveClass('border-highlight/50');
+    expect(screen.getAllByText('running')[0]).toHaveClass('border-accent/40');
+    expect(screen.getByText('finished')).toHaveClass('border-success/35');
+    expect(screen.getByText('failed')).toHaveClass('border-danger/50');
+  });
 });
