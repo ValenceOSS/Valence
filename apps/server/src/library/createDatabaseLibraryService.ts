@@ -18,6 +18,8 @@ import {
   sql,
 } from 'drizzle-orm';
 import {
+  ageCeiling,
+  ageException,
   book,
   bookChapter,
   library,
@@ -65,8 +67,9 @@ import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
+import { reachableByViewer } from '@ValenceServer/visibility/reachableByViewer';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
-import type { LibraryService, ListItemsOptions } from './LibraryService';
+import type { AgeExceptionEntry, LibraryService, ListItemsOptions } from './LibraryService';
 import {
   SCAN_LIBRARY_JOB,
   READ_AGAIN_JOB,
@@ -941,31 +944,36 @@ const createDatabaseLibraryService = ({
     },
 
     isOutOfReach: async (accountId, mediaId) => {
-      const refused = await db
-        .select({ one: sql<number>`1` })
+      const asThem: Viewer = {
+        kind: 'account',
+        accountId,
+        profileId: null,
+        isAdministrator: false,
+      };
+
+      const rows = await db
+        .select({ reachable: sql<boolean>`coalesce(${reachableByViewer(db, asThem)}, true)` })
         .from(mediaItem)
-        .innerJoin(
-          libraryBlock,
-          and(eq(libraryBlock.libraryId, mediaItem.libraryId), eq(libraryBlock.userId, accountId)),
-        )
         .where(eq(mediaItem.id, mediaId))
         .limit(1);
 
-      return refused.length > 0;
+      return rows.length > 0 && rows[0]?.reachable === false;
     },
 
     isSeriesOutOfReach: async (accountId, seriesId) => {
-      const refused = await db
-        .select({ one: sql<number>`1` })
-        .from(mediaItem)
-        .innerJoin(
-          libraryBlock,
-          and(eq(libraryBlock.libraryId, mediaItem.libraryId), eq(libraryBlock.userId, accountId)),
-        )
-        .where(eq(mediaItem.seriesId, seriesId))
-        .limit(1);
+      const asThem: Viewer = {
+        kind: 'account',
+        accountId,
+        profileId: null,
+        isAdministrator: false,
+      };
 
-      return refused.length > 0;
+      const rows = await db
+        .select({ reachable: sql<boolean>`coalesce(${reachableByViewer(db, asThem)}, true)` })
+        .from(mediaItem)
+        .where(eq(mediaItem.seriesId, seriesId));
+
+      return rows.length > 0 && rows.every((row) => row.reachable === false);
     },
 
     refusedLibraries: async (accountId) => {
@@ -988,6 +996,135 @@ const createDatabaseLibraryService = ({
         .insert(libraryBlock)
         .values({ userId: accountId, libraryId, blockedAt: new Date() })
         .onConflictDoNothing();
+    },
+
+    ceilingsFor: async (accountId) => {
+      const rows = await db
+        .select({
+          libraryId: ageCeiling.libraryId,
+          maximumAge: ageCeiling.maximumAge,
+          allowsUnrated: ageCeiling.allowsUnrated,
+        })
+        .from(ageCeiling)
+        .where(eq(ageCeiling.userId, accountId));
+
+      return rows;
+    },
+
+    setCeiling: async (accountId, ceiling) => {
+      await db
+        .insert(ageCeiling)
+        .values({
+          userId: accountId,
+          libraryId: ceiling.libraryId,
+          maximumAge: ceiling.maximumAge,
+          allowsUnrated: ceiling.allowsUnrated,
+          setAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [ageCeiling.userId, ageCeiling.libraryId],
+          set: { maximumAge: ceiling.maximumAge, allowsUnrated: ceiling.allowsUnrated },
+        });
+    },
+
+    clearCeiling: async (accountId, libraryId) => {
+      await db
+        .delete(ageCeiling)
+        .where(and(eq(ageCeiling.userId, accountId), eq(ageCeiling.libraryId, libraryId)));
+    },
+
+    exceptionsFor: async (accountId) => {
+      const rows = await db
+        .select({
+          mediaItemId: ageException.mediaItemId,
+          seriesId: ageException.seriesId,
+          effect: ageException.effect,
+          itemTitle: mediaItem.title,
+          seriesTitle: series.title,
+        })
+        .from(ageException)
+        .leftJoin(mediaItem, eq(mediaItem.id, ageException.mediaItemId))
+        .leftJoin(series, eq(series.id, ageException.seriesId))
+        .where(eq(ageException.userId, accountId))
+        .orderBy(desc(ageException.grantedAt));
+
+      return rows.flatMap((row): AgeExceptionEntry[] => {
+        const effect = row.effect === 'deny' ? ('deny' as const) : ('allow' as const);
+
+        if (row.mediaItemId !== null && row.itemTitle !== null) {
+          return [
+            { kind: 'item' as const, subjectId: row.mediaItemId, title: row.itemTitle, effect },
+          ];
+        }
+
+        if (row.seriesId !== null && row.seriesTitle !== null) {
+          return [
+            { kind: 'series' as const, subjectId: row.seriesId, title: row.seriesTitle, effect },
+          ];
+        }
+
+        return [];
+      });
+    },
+
+    setException: async (accountId, subject, effect, grantedBy) => {
+      const exists =
+        subject.kind === 'item'
+          ? (
+              await db
+                .select({ id: mediaItem.id })
+                .from(mediaItem)
+                .where(eq(mediaItem.id, subject.subjectId))
+                .limit(1)
+            ).length > 0
+          : (
+              await db
+                .select({ id: series.id })
+                .from(series)
+                .where(eq(series.id, subject.subjectId))
+                .limit(1)
+            ).length > 0;
+
+      if (!exists) {
+        return false;
+      }
+
+      await db
+        .insert(ageException)
+        .values({
+          id: randomUUID(),
+          userId: accountId,
+          mediaItemId: subject.kind === 'item' ? subject.subjectId : null,
+          seriesId: subject.kind === 'series' ? subject.subjectId : null,
+          effect,
+          grantedBy,
+          grantedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target:
+            subject.kind === 'item'
+              ? [ageException.userId, ageException.mediaItemId]
+              : [ageException.userId, ageException.seriesId],
+          set: { effect, grantedBy, grantedAt: new Date() },
+        });
+
+      return true;
+    },
+
+    clearException: async (accountId, subject) => {
+      const gone = await db
+        .delete(ageException)
+        .where(
+          and(
+            eq(ageException.userId, accountId),
+            subject.kind === 'item'
+              ? eq(ageException.mediaItemId, subject.subjectId)
+              : eq(ageException.seriesId, subject.subjectId),
+          ),
+        )
+        .returning({ id: ageException.id });
+
+      return gone.length > 0;
     },
 
     isLibraryOutOfReach: async (accountId, libraryId) => {

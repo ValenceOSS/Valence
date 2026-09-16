@@ -53,6 +53,68 @@ type MemoryState = {
   people?: Record<number, Person>;
   hidden?: HiddenRow[];
   blocked?: { accountId: string; libraryId: string }[];
+  ceilings?: {
+    accountId: string;
+    libraryId: string;
+    maximumAge: number;
+    allowsUnrated: boolean;
+  }[];
+  exceptions?: {
+    accountId: string;
+    mediaItemId?: string;
+    seriesId?: string;
+    effect: 'allow' | 'deny';
+  }[];
+  ageOf?: (mediaId: string) => number | null;
+};
+
+/**
+ * Whether an item sits within the age an account is allowed, in the order the database version asks
+ * it: a deny beats everything, an allow beats the ceiling, and otherwise the ceiling for the library
+ * it is in decides — with something nobody certificated refused unless unrated things are allowed.
+ *
+ * Kept in step with that version for the reason the search is: a twin that decided this differently
+ * would let every test of the HTTP surface pass while describing a server that shows a child things
+ * it should not.
+ *
+ * @param state - What this service is holding.
+ * @param accountId - Whose ceiling to apply.
+ * @param item - The item, its programme and its library.
+ * @returns Whether it is within the ceiling.
+ */
+const withinCeiling = (
+  state: MemoryState,
+  accountId: string,
+  item: { id: string; seriesId: string | null; libraryId: string },
+): boolean => {
+  const named = (effect: 'allow' | 'deny') =>
+    (state.exceptions ?? []).some(
+      (one) =>
+        one.accountId === accountId &&
+        one.effect === effect &&
+        ((one.mediaItemId !== undefined && one.mediaItemId === item.id) ||
+          (one.seriesId !== undefined && item.seriesId !== null && one.seriesId === item.seriesId)),
+    );
+
+  if (named('deny')) {
+    return false;
+  }
+
+  if (named('allow')) {
+    return true;
+  }
+
+  const ceiling = (state.ceilings ?? []).find(
+    (one) => one.accountId === accountId && one.libraryId === item.libraryId,
+  );
+
+  if (ceiling === undefined) {
+    return true;
+  }
+
+  const age = state.ageOf?.(item.id) ?? null;
+
+  return age === null ? ceiling.allowsUnrated : age <= ceiling.maximumAge;
 };
 
 /**
@@ -73,6 +135,28 @@ const reaches = (state: MemoryState, viewer: Viewer, libraryId: string): boolean
   }
 
   return !blocks(state, viewer.accountId, libraryId);
+};
+
+/**
+ * Whether an account may reach one particular item: the library it is in, and the age it carries.
+ *
+ * @param state - What this service is holding.
+ * @param viewer - Who is asking.
+ * @param item - The item, its programme and its library.
+ * @returns Whether to let them have it.
+ */
+const reachesItem = (
+  state: MemoryState,
+  viewer: Viewer,
+  item: { id: string; seriesId: string | null; libraryId: string },
+): boolean => {
+  if (viewer.kind !== 'account' || viewer.isAdministrator) {
+    return true;
+  }
+
+  return (
+    !blocks(state, viewer.accountId, item.libraryId) && withinCeiling(state, viewer.accountId, item)
+  );
 };
 
 /**
@@ -124,7 +208,11 @@ const hides = (
  * @returns Whether to show it.
  */
 const visible = (state: MemoryState, viewer: Viewer, item: MediaDetail): boolean =>
-  reaches(state, viewer, item.libraryId) &&
+  reachesItem(state, viewer, {
+    id: item.id,
+    seriesId: seriesIdOf(state, item),
+    libraryId: item.libraryId,
+  }) &&
   !hides(state, viewer, {
     id: item.id,
     seriesId: seriesIdOf(state, item),
@@ -296,21 +384,142 @@ const createMemoryLibraryService = (
     return Promise.resolve();
   },
 
+  ceilingsFor: (accountId) =>
+    Promise.resolve(
+      (state.ceilings ?? [])
+        .filter((one) => one.accountId === accountId)
+        .map(({ libraryId, maximumAge, allowsUnrated }) => ({
+          libraryId,
+          maximumAge,
+          allowsUnrated,
+        })),
+    ),
+
+  setCeiling: (accountId, ceiling) => {
+    state.ceilings = [
+      ...(state.ceilings ?? []).filter(
+        (one) => !(one.accountId === accountId && one.libraryId === ceiling.libraryId),
+      ),
+      { accountId, ...ceiling },
+    ];
+
+    return Promise.resolve();
+  },
+
+  clearCeiling: (accountId, libraryId) => {
+    state.ceilings = (state.ceilings ?? []).filter(
+      (one) => !(one.accountId === accountId && one.libraryId === libraryId),
+    );
+
+    return Promise.resolve();
+  },
+
+  exceptionsFor: (accountId) =>
+    Promise.resolve(
+      (state.exceptions ?? [])
+        .filter((one) => one.accountId === accountId)
+        .flatMap((one) => {
+          const subjectId = one.mediaItemId ?? one.seriesId;
+
+          if (subjectId === undefined) {
+            return [];
+          }
+
+          return [
+            {
+              kind: one.mediaItemId === undefined ? ('series' as const) : ('item' as const),
+              subjectId,
+              title:
+                state.media.find((item) => item.id === subjectId)?.title ??
+                (state.series ?? []).find((entry) => entry.id === subjectId)?.title ??
+                subjectId,
+              effect: one.effect,
+            },
+          ];
+        }),
+    ),
+
+  setException: (accountId, subject, effect) => {
+    const exists =
+      subject.kind === 'item'
+        ? state.media.some((item) => item.id === subject.subjectId)
+        : (state.series ?? []).some((entry) => entry.id === subject.subjectId);
+
+    if (!exists) {
+      return Promise.resolve(false);
+    }
+
+    state.exceptions = [
+      ...(state.exceptions ?? []).filter(
+        (one) =>
+          !(
+            one.accountId === accountId &&
+            (subject.kind === 'item' ? one.mediaItemId : one.seriesId) === subject.subjectId
+          ),
+      ),
+      {
+        accountId,
+        ...(subject.kind === 'item'
+          ? { mediaItemId: subject.subjectId }
+          : { seriesId: subject.subjectId }),
+        effect,
+      },
+    ];
+
+    return Promise.resolve(true);
+  },
+
+  clearException: (accountId, subject) => {
+    const before = (state.exceptions ?? []).length;
+
+    state.exceptions = (state.exceptions ?? []).filter(
+      (one) =>
+        !(
+          one.accountId === accountId &&
+          (subject.kind === 'item' ? one.mediaItemId : one.seriesId) === subject.subjectId
+        ),
+    );
+
+    return Promise.resolve((state.exceptions ?? []).length < before);
+  },
+
   isLibraryOutOfReach: (accountId, libraryId) =>
     Promise.resolve(blocks(state, accountId, libraryId)),
 
   isOutOfReach: (accountId, mediaId) => {
     const found = state.media.find((item) => item.id === mediaId);
 
-    return Promise.resolve(found !== undefined && blocks(state, accountId, found.libraryId));
+    if (found === undefined) {
+      return Promise.resolve(false);
+    }
+
+    const where = {
+      id: found.id,
+      seriesId: seriesIdOf(state, found),
+      libraryId: found.libraryId,
+    };
+
+    return Promise.resolve(
+      blocks(state, accountId, found.libraryId) || !withinCeiling(state, accountId, where),
+    );
   },
 
-  isSeriesOutOfReach: (accountId, seriesId) =>
-    Promise.resolve(
-      state.media.some(
-        (item) => seriesIdOf(state, item) === seriesId && blocks(state, accountId, item.libraryId),
-      ),
-    ),
+  isSeriesOutOfReach: (accountId, seriesId) => {
+    const episodes = state.media.filter((item) => seriesIdOf(state, item) === seriesId);
+
+    return Promise.resolve(
+      episodes.length > 0 &&
+        episodes.every(
+          (item) =>
+            blocks(state, accountId, item.libraryId) ||
+            !withinCeiling(state, accountId, {
+              id: item.id,
+              seriesId,
+              libraryId: item.libraryId,
+            }),
+        ),
+    );
+  },
 
   listItems: (viewer, libraryId, options) => {
     const found = state.libraries.find((entry) => entry.id === libraryId);

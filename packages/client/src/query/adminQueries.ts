@@ -18,7 +18,7 @@ import { fetchWebhooks, fetchWebhookDeliveries } from '@ValenceClient/admin/fetc
 import { fetchEverybodysShares } from '@ValenceClient/sharing/fetchShares';
 import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import { fetchLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
+import { fetchExceptions, fetchLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 
 const ADMIN = ['admin'] as const;
 
@@ -229,7 +229,22 @@ const folders = (path: string | null) =>
     retry: false,
   });
 
+/**
+ * What has been allowed or denied for an account whatever its ceiling says, for the panel that
+ * grants and forgets them.
+ *
+ * @param accountId - The account being looked at.
+ * @returns The query.
+ */
+const exceptions = (accountId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'exceptions', accountId],
+    queryFn: () => fetchExceptions(accountId ?? ''),
+    enabled: accountId !== null,
+  });
+
 const adminQueries = {
+  exceptions,
   libraryAccess,
   folders,
   overview,

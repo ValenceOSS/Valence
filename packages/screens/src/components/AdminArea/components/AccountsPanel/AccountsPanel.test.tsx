@@ -30,6 +30,9 @@ vi.mock('@ValenceClient/admin/fetchRoles', () => mocks);
 const accessMocks = vi.hoisted(() => ({
   fetchLibraryAccess: vi.fn(),
   setLibraryAccess: vi.fn(),
+  setCeiling: vi.fn(),
+  fetchExceptions: vi.fn(),
+  clearException: vi.fn(),
 }));
 
 vi.mock('@ValenceClient/admin/fetchLibraryAccess', () => accessMocks);
@@ -117,10 +120,13 @@ describe('AccountsPanel', () => {
     mocks.clearOverride.mockResolvedValue(null);
 
     accessMocks.fetchLibraryAccess.mockReset().mockResolvedValue([
-      { id: FILMS, name: 'Films', mayView: true },
-      { id: SHOWS, name: 'Shows', mayView: true },
+      { id: FILMS, name: 'Films', mayView: true, maximumAge: null, allowsUnrated: false },
+      { id: SHOWS, name: 'Shows', mayView: true, maximumAge: null, allowsUnrated: false },
     ]);
     accessMocks.setLibraryAccess.mockReset().mockResolvedValue(null);
+    accessMocks.setCeiling.mockReset().mockResolvedValue(null);
+    accessMocks.fetchExceptions.mockReset().mockResolvedValue([]);
+    accessMocks.clearException.mockReset().mockResolvedValue(null);
   });
 
   it('lists everybody with an account', async () => {
@@ -552,10 +558,13 @@ describe('which libraries an account may see', () => {
     });
 
     accessMocks.fetchLibraryAccess.mockReset().mockResolvedValue([
-      { id: FILMS, name: 'Films', mayView: true },
-      { id: SHOWS, name: 'Shows', mayView: true },
+      { id: FILMS, name: 'Films', mayView: true, maximumAge: null, allowsUnrated: false },
+      { id: SHOWS, name: 'Shows', mayView: true, maximumAge: null, allowsUnrated: false },
     ]);
     accessMocks.setLibraryAccess.mockReset().mockResolvedValue(null);
+    accessMocks.setCeiling.mockReset().mockResolvedValue(null);
+    accessMocks.fetchExceptions.mockReset().mockResolvedValue([]);
+    accessMocks.clearException.mockReset().mockResolvedValue(null);
   });
 
   it('shows them beside what that account may do', async () => {
@@ -596,8 +605,8 @@ describe('which libraries an account may see', () => {
     const user = userEvent.setup();
 
     accessMocks.fetchLibraryAccess.mockResolvedValue([
-      { id: FILMS, name: 'Films', mayView: false },
-      { id: SHOWS, name: 'Shows', mayView: true },
+      { id: FILMS, name: 'Films', mayView: false, maximumAge: null, allowsUnrated: false },
+      { id: SHOWS, name: 'Shows', mayView: true, maximumAge: null, allowsUnrated: false },
     ]);
 
     renderInAnAddress(<AccountsPanel />);
@@ -614,8 +623,8 @@ describe('which libraries an account may see', () => {
     const user = userEvent.setup();
 
     accessMocks.fetchLibraryAccess.mockResolvedValue([
-      { id: FILMS, name: 'Films', mayView: false },
-      { id: SHOWS, name: 'Shows', mayView: false },
+      { id: FILMS, name: 'Films', mayView: false, maximumAge: null, allowsUnrated: false },
+      { id: SHOWS, name: 'Shows', mayView: false, maximumAge: null, allowsUnrated: false },
     ]);
 
     renderInAnAddress(<AccountsPanel />);
@@ -646,5 +655,170 @@ describe('which libraries an account may see', () => {
     await choose(user, 'Dan', /Edit roles/);
 
     expect(await screen.findByText(/There are no libraries yet/i)).toBeInTheDocument();
+  });
+});
+
+describe('the age an account is limited to', () => {
+  beforeEach(() => {
+    for (const mock of [...Object.values(mocks), ...Object.values(accountMocks)]) {
+      mock.mockReset();
+    }
+
+    accountMocks.fetchAccounts.mockResolvedValue(ACCOUNTS);
+    mocks.fetchPermissionCatalogue.mockResolvedValue([]);
+    mocks.fetchRoles.mockResolvedValue([ADMINISTRATOR, MEMBER]);
+    mocks.fetchAccountPermissions.mockResolvedValue({
+      roles: [MEMBER],
+      overrides: [],
+      effective: [],
+    });
+
+    accessMocks.fetchLibraryAccess
+      .mockReset()
+      .mockResolvedValue([
+        { id: FILMS, name: 'Films', mayView: true, maximumAge: null, allowsUnrated: false },
+      ]);
+    accessMocks.setLibraryAccess.mockReset().mockResolvedValue(null);
+    accessMocks.setCeiling.mockReset().mockResolvedValue(null);
+    accessMocks.fetchExceptions.mockReset().mockResolvedValue([]);
+    accessMocks.clearException.mockReset().mockResolvedValue(null);
+  });
+
+  it('says there is no ceiling until somebody sets one', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+
+    expect(await screen.findByText('No ceiling')).toBeInTheDocument();
+  });
+
+  it('sets one for that library alone', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+    await user.click(await screen.findByRole('button', { name: /Age limit in Films for Dan/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /Up to 12/ }));
+
+    await waitFor(() => {
+      expect(accessMocks.setCeiling).toHaveBeenCalledWith('usr_1', FILMS, {
+        maximumAge: 12,
+        allowsUnrated: false,
+      });
+    });
+  });
+
+  it('lifts one again', async () => {
+    const user = userEvent.setup();
+
+    accessMocks.fetchLibraryAccess.mockResolvedValue([
+      { id: FILMS, name: 'Films', mayView: true, maximumAge: 12, allowsUnrated: false },
+    ]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+    await user.click(await screen.findByRole('button', { name: /Age limit in Films for Dan/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /No ceiling/ }));
+
+    await waitFor(() => {
+      expect(accessMocks.setCeiling).toHaveBeenCalledWith('usr_1', FILMS, null);
+    });
+  });
+
+  it('offers the unrated escape only once a ceiling exists', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+    await screen.findByText('No ceiling');
+
+    expect(screen.queryByRole('button', { name: /Allow uncertificated/ })).not.toBeInTheDocument();
+  });
+
+  it('turns the unrated escape on without losing the ceiling', async () => {
+    const user = userEvent.setup();
+
+    accessMocks.fetchLibraryAccess.mockResolvedValue([
+      { id: FILMS, name: 'Films', mayView: true, maximumAge: 15, allowsUnrated: false },
+    ]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+    await user.click(await screen.findByRole('button', { name: /Allow uncertificated/ }));
+
+    await waitFor(() => {
+      expect(accessMocks.setCeiling).toHaveBeenCalledWith('usr_1', FILMS, {
+        maximumAge: 15,
+        allowsUnrated: true,
+      });
+    });
+  });
+
+  it('says a limit reaches every face on the account, and how to avoid that', async () => {
+    const user = userEvent.setup();
+
+    accessMocks.fetchLibraryAccess.mockResolvedValue([
+      { id: FILMS, name: 'Films', mayView: true, maximumAge: 12, allowsUnrated: false },
+    ]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+
+    expect(await screen.findByText(/every face on it/i)).toBeInTheDocument();
+    expect(await screen.findByText(/give the child an account of their own/i)).toBeInTheDocument();
+  });
+
+  it('says nothing of the sort while no limit is set', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+    await screen.findByText('No ceiling');
+
+    expect(screen.queryByText(/every face on it/i)).not.toBeInTheDocument();
+  });
+
+  it('lists what has been allowed or denied one at a time, and forgets one', async () => {
+    const user = userEvent.setup();
+
+    accessMocks.fetchExceptions.mockResolvedValue([
+      { kind: 'item', subjectId: FILMS, title: 'Something Particular', effect: 'deny' },
+    ]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+
+    expect(await screen.findByText('Something Particular')).toBeInTheDocument();
+
+    await user.click(
+      await screen.findByRole('button', { name: /Forget the deny on Something Particular/ }),
+    );
+
+    await waitFor(() => {
+      expect(accessMocks.clearException).toHaveBeenCalled();
+    });
+  });
+
+  it('says a denial always wins, which is the rule people rely on', async () => {
+    const user = userEvent.setup();
+
+    accessMocks.fetchExceptions.mockResolvedValue([
+      { kind: 'item', subjectId: FILMS, title: 'Something Particular', effect: 'deny' },
+    ]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit roles/);
+
+    expect(await screen.findByText(/A denial always wins/i)).toBeInTheDocument();
   });
 });
