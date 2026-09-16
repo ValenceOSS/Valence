@@ -1,13 +1,16 @@
 import { Icon } from '@ValenceUI/Icon';
 import { ArrowRight01Icon, RefreshIcon } from '@hugeicons/core-free-icons';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { cn } from '@ValenceUI/cn';
+import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { BackgroundJobs } from '@ValenceScreens/components/AdminArea/components/BackgroundJobs/BackgroundJobs';
 import { CacheBreakdown } from '@ValenceScreens/components/AdminArea/components/CacheBreakdown/CacheBreakdown';
+import { LoadRangeToggle } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle';
 import { TrendChart } from '@ValenceUI/TrendChart';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
@@ -19,6 +22,7 @@ import { describeCard } from '@ValenceScreens/components/AdminArea/describeCard'
 import { memoryEnvelope } from '@ValenceScreens/components/AdminArea/memoryEnvelope';
 import { measureStorage } from '@ValenceClient/admin/fetchAdmin';
 import type { StorageCount } from '@ValenceClient/admin/fetchAdmin';
+import type { LoadRange } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle.types';
 import type { OverviewPanelProps } from './OverviewPanel.types';
 
 /**
@@ -30,6 +34,8 @@ import type { OverviewPanelProps } from './OverviewPanel.types';
  * @param onAction - Called when that control is pressed.
  * @param actionIcon - The icon on that control.
  * @param isActionBusy - Whether that control's work is in flight.
+ * @param actions - A control other than the usual single button, for a corner that needs more than
+ *   one choice.
  * @param isFlush - Whether what it shows runs to the card's edges, for a table.
  * @param children - What the region shows.
  * @param className - Anything extra the layout needs of it.
@@ -40,6 +46,7 @@ const Region = ({
   onAction,
   actionIcon,
   isActionBusy = false,
+  actions,
   isFlush = false,
   children,
   className,
@@ -49,6 +56,7 @@ const Region = ({
   onAction?: () => void;
   actionIcon?: ReactNode;
   isActionBusy?: boolean;
+  actions?: ReactNode;
   isFlush?: boolean;
   children: ReactNode;
   className?: string;
@@ -57,23 +65,25 @@ const Region = ({
     title={title}
     isFlush={isFlush}
     className={cn('h-full', className)}
-    {...(action === undefined || onAction === undefined
-      ? {}
-      : {
-          actions: (
-            <Button
-              variant="ghost"
-              size="xs"
-              className="shrink-0 text-xs text-text-muted hover:text-text"
-              onClick={onAction}
-              disabled={isActionBusy}
-              isLoading={isActionBusy}
-            >
-              {action}
-              {actionIcon ?? <Icon of={ArrowRight01Icon} size={14} />}
-            </Button>
-          ),
-        })}
+    {...(actions !== undefined
+      ? { actions }
+      : action === undefined || onAction === undefined
+        ? {}
+        : {
+            actions: (
+              <Button
+                variant="ghost"
+                size="xs"
+                className="shrink-0 text-xs text-text-muted hover:text-text"
+                onClick={onAction}
+                disabled={isActionBusy}
+                isLoading={isActionBusy}
+              >
+                {action}
+                {actionIcon ?? <Icon of={ArrowRight01Icon} size={14} />}
+              </Button>
+            ),
+          })}
   >
     <div className="mt-auto">{children}</div>
   </PanelCard>
@@ -104,6 +114,24 @@ const OverviewPanel = ({
 }: OverviewPanelProps) => {
   const [counted, setCounted] = useState<StorageCount | null>(null);
   const [isCounting, setIsCounting] = useState(false);
+  const [loadRange, setLoadRange] = useState<LoadRange>('minute');
+
+  const askedLoadHistory = useQuery({
+    ...adminQueries.resourceHistory(loadRange === 'minute' ? '24h' : loadRange),
+    enabled: loadRange !== 'minute',
+  });
+
+  const rangeSamples = useMemo(
+    () => (loadRange === 'minute' ? [] : (askedLoadHistory.data ?? [])),
+    [loadRange, askedLoadHistory.data],
+  );
+
+  const rangeValues = useMemo(
+    () => rangeSamples.map((sample) => sample.systemCpuPercent),
+    [rangeSamples],
+  );
+
+  const latestRangeSample = rangeSamples.at(-1) ?? null;
 
   const recount = async () => {
     setIsCounting(true);
@@ -141,19 +169,38 @@ const OverviewPanel = ({
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-4 lg:grid-cols-4">
-        <Region title="Load, last minute" className="lg:col-span-2">
-          <TrendChart
-            values={history}
-            ceiling={100}
-            label="Processor use over the last minute"
-            caption={
-              resources === null
-                ? 'Waiting for the first reading.'
-                : `Now ${Math.round(resources.systemCpuPercent).toString()}% · peak ${Math.round(
-                    Math.max(0, ...history),
-                  ).toString()}% · ${resources.cpuCount.toString()} processors · load ${resources.loadAverage.toFixed(2)}`
-            }
-          />
+        <Region
+          title="Load"
+          className="lg:col-span-2"
+          actions={<LoadRangeToggle value={loadRange} onChange={setLoadRange} />}
+        >
+          {loadRange === 'minute' ? (
+            <TrendChart
+              values={history}
+              ceiling={100}
+              label="Processor use over the last minute"
+              caption={
+                resources === null
+                  ? 'Waiting for the first reading.'
+                  : `Now ${Math.round(resources.systemCpuPercent).toString()}% · peak ${Math.round(
+                      Math.max(0, ...history),
+                    ).toString()}% · ${resources.cpuCount.toString()} processors · load ${resources.loadAverage.toFixed(2)}`
+              }
+            />
+          ) : (
+            <TrendChart
+              values={rangeValues}
+              ceiling={100}
+              label={`Processor use over the last ${loadRange}`}
+              {...(rangeValues.length === 0
+                ? {}
+                : {
+                    caption: `Peak ${Math.round(Math.max(0, ...rangeValues)).toString()}% · average ${Math.round(
+                      rangeValues.reduce((sum, value) => sum + value, 0) / rangeValues.length,
+                    ).toString()}% · ${latestRangeSample?.cpuCount.toString() ?? '—'} processors`,
+                  })}
+            />
+          )}
         </Region>
 
         <Region

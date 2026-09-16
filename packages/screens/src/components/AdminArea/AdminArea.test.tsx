@@ -533,13 +533,13 @@ describe('AdminArea', () => {
   it('opens on the overview when the address names no panel', async () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(await screen.findByText('Load, last minute')).toBeInTheDocument();
+    expect(await screen.findByText('Load')).toBeInTheDocument();
   });
 
   it('falls back to the overview when the address names one it does not have', async () => {
     renderInAnAddress(<TheAdmin panel="not-a-real-panel" />);
 
-    expect(await screen.findByText('Load, last minute')).toBeInTheDocument();
+    expect(await screen.findByText('Load')).toBeInTheDocument();
   });
 
   it('tells the address when the panel changes, so a reload can return to it', async () => {

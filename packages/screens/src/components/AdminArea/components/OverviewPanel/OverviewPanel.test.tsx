@@ -1,19 +1,41 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { OverviewPanel } from './OverviewPanel';
 import { measureStorage } from '@ValenceClient/admin/fetchAdmin';
+import { fetchResourceHistory } from '@ValenceClient/admin/fetchResourceHistory';
+import type { ReactElement } from 'react';
 import type * as FetchAdmin from '@ValenceClient/admin/fetchAdmin';
 import type { ActiveSession, AdminOverview, Job, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
+import type { ResourceSampleRecord } from '@ValenceContracts/schemas/ResourceSample';
 
 vi.mock('@ValenceClient/admin/fetchAdmin', async (importOriginal) => ({
   ...(await importOriginal<typeof FetchAdmin>()),
   measureStorage: vi.fn(),
 }));
 
+vi.mock('@ValenceClient/admin/fetchResourceHistory', () => ({
+  fetchResourceHistory: vi.fn(),
+}));
+
 const measured = vi.mocked(measureStorage);
+const askedResourceHistory = vi.mocked(fetchResourceHistory);
+
+/**
+ * Renders under the query client the load range toggle needs, since choosing a range beyond the
+ * last minute reads it through the cache.
+ */
+const renderPanel = (element: ReactElement) =>
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      {element}
+    </QueryClientProvider>,
+  );
 
 const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
 
@@ -153,7 +175,7 @@ const card = (title: string): HTMLElement => {
 
 describe('OverviewPanel', () => {
   it('shows every card even on a server with nothing wrong', () => {
-    render(<OverviewPanel {...props} />);
+    renderPanel(<OverviewPanel {...props} />);
 
     for (const title of ['Watching now', 'Running now', 'Libraries', 'Server', 'Recent jobs']) {
       expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
@@ -162,13 +184,13 @@ describe('OverviewPanel', () => {
 
   describe('watching now', () => {
     it('says when nobody is', () => {
-      render(<OverviewPanel {...props} />);
+      renderPanel(<OverviewPanel {...props} />);
 
       expect(screen.getByText('Nobody is watching anything.')).toBeInTheDocument();
     });
 
     it('names what is playing, and who is playing it', () => {
-      render(<OverviewPanel {...props} sessions={[watching()]} />);
+      renderPanel(<OverviewPanel {...props} sessions={[watching()]} />);
 
       const region = card('Watching now');
 
@@ -177,13 +199,13 @@ describe('OverviewPanel', () => {
     });
 
     it('says whether a stream is costing the box anything', () => {
-      render(<OverviewPanel {...props} sessions={[watching('transcode')]} />);
+      renderPanel(<OverviewPanel {...props} sessions={[watching('transcode')]} />);
 
       expect(within(card('Watching now')).getByText('Transcode')).toBeInTheDocument();
     });
 
     it('ignores a session with the app open but nothing playing', () => {
-      render(<OverviewPanel {...props} sessions={[session()]} />);
+      renderPanel(<OverviewPanel {...props} sessions={[session()]} />);
 
       expect(screen.getByText('Nobody is watching anything.')).toBeInTheDocument();
     });
@@ -191,19 +213,19 @@ describe('OverviewPanel', () => {
 
   describe('running now', () => {
     it('says when nothing is', () => {
-      render(<OverviewPanel {...props} />);
+      renderPanel(<OverviewPanel {...props} />);
 
       expect(screen.getByText('Nothing is running.')).toBeInTheDocument();
     });
 
     it('mentions a queue that has not started yet', () => {
-      render(<OverviewPanel {...props} monitor={monitor([], 3)} />);
+      renderPanel(<OverviewPanel {...props} monitor={monitor([], 3)} />);
 
       expect(screen.getByText('Nothing running, 3 waiting.')).toBeInTheDocument();
     });
 
     it('names what is running', () => {
-      render(<OverviewPanel {...props} monitor={monitor([job()])} />);
+      renderPanel(<OverviewPanel {...props} monitor={monitor([job()])} />);
 
       const region = card('Running now');
 
@@ -212,7 +234,7 @@ describe('OverviewPanel', () => {
     });
 
     it('leaves finished work to the jobs panel', () => {
-      render(<OverviewPanel {...props} monitor={monitor([job({ state: 'finished' })])} />);
+      renderPanel(<OverviewPanel {...props} monitor={monitor([job({ state: 'finished' })])} />);
 
       expect(screen.getByText('Nothing is running.')).toBeInTheDocument();
     });
@@ -220,7 +242,7 @@ describe('OverviewPanel', () => {
 
   describe('libraries', () => {
     it('counts what is in each one and when it was last read', () => {
-      render(<OverviewPanel {...props} />);
+      renderPanel(<OverviewPanel {...props} />);
 
       const region = card('Libraries');
 
@@ -229,13 +251,13 @@ describe('OverviewPanel', () => {
     });
 
     it('says when one has never been scanned', () => {
-      render(<OverviewPanel {...props} libraries={[library({ lastScannedAt: null })]} />);
+      renderPanel(<OverviewPanel {...props} libraries={[library({ lastScannedAt: null })]} />);
 
       expect(within(card('Libraries')).getByText(/Scanned never/)).toBeInTheDocument();
     });
 
     it('says when there are none', () => {
-      render(<OverviewPanel {...props} libraries={[]} />);
+      renderPanel(<OverviewPanel {...props} libraries={[]} />);
 
       expect(screen.getByText('No libraries yet.')).toBeInTheDocument();
     });
@@ -243,7 +265,7 @@ describe('OverviewPanel', () => {
 
   describe('server', () => {
     it('reports what the machine and the media service are', () => {
-      render(<OverviewPanel {...props} />);
+      renderPanel(<OverviewPanel {...props} />);
 
       const region = card('Server');
 
@@ -253,7 +275,7 @@ describe('OverviewPanel', () => {
     });
 
     it('says which filter converts HDR, and that the card is doing it', () => {
-      render(
+      renderPanel(
         <OverviewPanel
           {...props}
           overview={overview({
@@ -280,7 +302,7 @@ describe('OverviewPanel', () => {
     });
 
     it('tells a build with libplacebo apart from one without it', () => {
-      render(
+      renderPanel(
         <OverviewPanel
           {...props}
           overview={overview({
@@ -304,7 +326,7 @@ describe('OverviewPanel', () => {
     });
 
     it('says software only rather than nothing when there is no hardware encoding', () => {
-      render(
+      renderPanel(
         <OverviewPanel
           {...props}
           overview={overview({
@@ -328,7 +350,7 @@ describe('OverviewPanel', () => {
     });
 
     it('draws dashes rather than zeroes before anything has loaded', () => {
-      render(<OverviewPanel {...props} overview={null} monitor={null} libraries={[]} />);
+      renderPanel(<OverviewPanel {...props} overview={null} monitor={null} libraries={[]} />);
 
       expect(within(card('Server')).getAllByText('—').length).toBeGreaterThan(0);
     });
@@ -337,7 +359,7 @@ describe('OverviewPanel', () => {
   it('reaches every panel it points at', async () => {
     const onOpenPanel = vi.fn<(panel: string) => void>();
     const user = userEvent.setup();
-    render(<OverviewPanel {...props} onOpenPanel={onOpenPanel} />);
+    renderPanel(<OverviewPanel {...props} onOpenPanel={onOpenPanel} />);
 
     await user.click(screen.getByRole('button', { name: /All sessions/ }));
     await user.click(screen.getByRole('button', { name: /All jobs/ }));
@@ -357,7 +379,7 @@ describe('OverviewPanel', () => {
   });
 
   it('says why an encoder was not used, rather than hiding it', () => {
-    render(
+    renderPanel(
       <OverviewPanel
         {...props}
         overview={overview({
@@ -396,7 +418,7 @@ describe('OverviewPanel', () => {
     };
 
     it('offers a way to ask for the figures again', () => {
-      render(<OverviewPanel {...props} />);
+      renderPanel(<OverviewPanel {...props} />);
 
       expect(screen.getByRole('button', { name: /Refresh/ })).toBeInTheDocument();
     });
@@ -406,7 +428,7 @@ describe('OverviewPanel', () => {
 
       const actor = userEvent.setup();
 
-      render(<OverviewPanel {...props} />);
+      renderPanel(<OverviewPanel {...props} />);
       await actor.click(screen.getByRole('button', { name: /Refresh/ }));
 
       await waitFor(() => {
@@ -419,7 +441,7 @@ describe('OverviewPanel', () => {
 
       const actor = userEvent.setup();
 
-      render(<OverviewPanel {...props} />);
+      renderPanel(<OverviewPanel {...props} />);
       await actor.click(screen.getByRole('button', { name: /Refresh/ }));
 
       await waitFor(() => {
@@ -430,7 +452,7 @@ describe('OverviewPanel', () => {
     });
   });
   it('says which hardware chains were proved, and names the ones that refused', () => {
-    render(
+    renderPanel(
       <OverviewPanel
         {...props}
         overview={overview({
@@ -462,5 +484,56 @@ describe('OverviewPanel', () => {
     expect(screen.getByText('1 of 2 proved')).toBeInTheDocument();
     expect(screen.getByText(/qsv cannot draw thumbnail sheets at 10 bits/)).toBeInTheDocument();
     expect(screen.getByText(/Invalid output format nv12/)).toBeInTheDocument();
+  });
+
+  describe('load range', () => {
+    const sample = (overrides: Partial<ResourceSampleRecord> = {}): ResourceSampleRecord => ({
+      id: 'sample-1',
+      atMs: Date.now(),
+      systemCpuPercent: 50,
+      loadAverage: 1.2,
+      systemMemoryUsedBytes: 1,
+      systemMemoryTotalBytes: 10,
+      cpuCount: 8,
+      ...overrides,
+    });
+
+    it('shows the last minute by default, fed by the live buffer rather than a fetch', () => {
+      renderPanel(<OverviewPanel {...props} history={[10, 20, 30]} />);
+
+      expect(screen.getByRole('button', { name: 'Last minute' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      expect(askedResourceHistory).not.toHaveBeenCalled();
+    });
+
+    it('reads a persisted range once it is chosen, and charts it', async () => {
+      const actor = userEvent.setup();
+
+      askedResourceHistory.mockResolvedValue([
+        sample({ systemCpuPercent: 20 }),
+        sample({ systemCpuPercent: 80 }),
+      ]);
+
+      renderPanel(<OverviewPanel {...props} />);
+
+      await actor.click(screen.getByRole('button', { name: '24h' }));
+
+      expect(await screen.findByText(/Peak 80%/)).toBeInTheDocument();
+      expect(askedResourceHistory).toHaveBeenCalledWith('24h');
+    });
+
+    it('says nothing has been measured yet rather than drawing an empty chart oddly', async () => {
+      const actor = userEvent.setup();
+
+      askedResourceHistory.mockResolvedValue([]);
+
+      renderPanel(<OverviewPanel {...props} />);
+
+      await actor.click(screen.getByRole('button', { name: '7d' }));
+
+      expect(await screen.findByText('Nothing measured yet.')).toBeInTheDocument();
+    });
   });
 });
