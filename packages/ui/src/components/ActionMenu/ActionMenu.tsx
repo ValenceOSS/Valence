@@ -4,7 +4,12 @@ import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
-import type { ActionMenuProps } from './ActionMenu.types';
+import type { ActionMenuProps, ActionMenuSize } from './ActionMenu.types';
+
+const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
+  sm: 'size-7',
+  md: 'size-9',
+};
 
 /**
  * A menu of things to do — rename, rescan, delete — rather than a value to pick, which is what an
@@ -20,6 +25,8 @@ import type { ActionMenuProps } from './ActionMenu.types';
  * @param trigger - The control that opens it.
  * @param groups - The items, in groups separated by a rule.
  * @param align - Which edge of the trigger the menu lines up with.
+ * @param size - How large the trigger stands — smaller for a row's own action, standing size
+ *   elsewhere.
  * @param className - Extra classes for the caller's own layout.
  */
 const ActionMenu = ({
@@ -27,6 +34,7 @@ const ActionMenu = ({
   trigger,
   groups,
   align = 'end',
+  size = 'md',
   isDisabled = false,
   className,
 }: ActionMenuProps) => {
@@ -40,7 +48,8 @@ const ActionMenu = ({
         aria-label={label}
         disabled={isDisabled}
         className={cn(
-          'inline-flex size-9 shrink-0 items-center justify-center rounded-md outline-none',
+          'inline-flex shrink-0 items-center justify-center rounded-md outline-none',
+          TRIGGER_SIZES[size],
           'text-current transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
           'motion-reduce:transition-none focus-visible:ring-[3px] focus-visible:ring-ring',
           'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-hover)]',

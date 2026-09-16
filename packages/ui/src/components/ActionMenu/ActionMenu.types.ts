@@ -16,13 +16,16 @@ type ActionMenuGroup = {
   items: ActionMenuItem[];
 };
 
+type ActionMenuSize = 'sm' | 'md';
+
 type ActionMenuProps = {
   label: string;
   trigger: ReactNode;
   groups: ActionMenuGroup[];
   align?: 'start' | 'center' | 'end';
+  size?: ActionMenuSize;
   isDisabled?: boolean;
   className?: string;
 };
 
-export type { ActionMenuProps };
+export type { ActionMenuProps, ActionMenuSize };

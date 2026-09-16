@@ -32,6 +32,12 @@ describe('DataTable', () => {
     expect(screen.getByRole('cell', { name: 'Shows' })).toBeInTheDocument();
   });
 
+  it('keeps its heading in view while a tall list scrolls past it', () => {
+    render(<DataTable label="Library roots" columns={COLUMNS} rows={ROWS} />);
+
+    expect(screen.getByRole('columnheader', { name: /Name/ })).toHaveClass('sticky');
+  });
+
   it('says so where there is nothing to list', () => {
     render(
       <DataTable
