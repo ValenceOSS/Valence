@@ -1,4 +1,7 @@
+import { ArrowUp01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { cn } from '@ValenceUI/cn';
+import { Badge } from '@ValenceUI/Badge';
+import { Icon } from '@ValenceUI/Icon';
 import type { StatTileProps } from './StatTile.types';
 
 /**
@@ -18,9 +21,20 @@ import type { StatTileProps } from './StatTile.types';
  * @param icon - Something to draw beside it.
  * @param fraction - How full, where the figure is part of a fixed whole.
  * @param history - A chart of the same figure over time.
+ * @param trend - Which way the figure has moved, said as a small pill rather than folded into the
+ *   detail line, since a direction is a different kind of fact than a caption.
  * @param className - Extra classes for the caller's own layout.
  */
-const StatTile = ({ label, value, detail, icon, fraction, history, className }: StatTileProps) => (
+const StatTile = ({
+  label,
+  value,
+  detail,
+  icon,
+  fraction,
+  history,
+  trend,
+  className,
+}: StatTileProps) => (
   <div className={cn('valence-card-shell flex h-full flex-col', className)}>
     <dt className="flex items-center gap-2 px-2.5 pb-1.5 pt-1.5 text-[0.6875rem] uppercase tracking-[0.16em] text-text-muted">
       {icon === undefined ? null : <span className="flex shrink-0 items-center">{icon}</span>}
@@ -51,9 +65,20 @@ const StatTile = ({ label, value, detail, icon, fraction, history, className }: 
         </span>
       )}
 
-      {detail === undefined ? null : (
-        <span className="relative mt-auto block truncate font-body text-xs text-text-muted">
-          {detail}
+      {trend === undefined && detail === undefined ? null : (
+        <span className="relative mt-auto flex items-center gap-1.5 truncate font-body text-xs text-text-muted">
+          {trend === undefined ? null : (
+            <Badge
+              tone={trend.direction === 'up' ? 'success' : 'danger'}
+              size="sm"
+              className="gap-1"
+            >
+              <Icon of={trend.direction === 'up' ? ArrowUp01Icon : ArrowDown01Icon} size={12} />
+              {trend.label}
+            </Badge>
+          )}
+
+          {detail === undefined ? null : <span className="truncate">{detail}</span>}
         </span>
       )}
     </dd>
