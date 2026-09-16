@@ -271,6 +271,31 @@ const createMemoryLibraryService = (
     });
   },
 
+  refusedLibraries: (accountId) =>
+    Promise.resolve(
+      (state.blocked ?? [])
+        .filter((row) => row.accountId === accountId)
+        .map((row) => row.libraryId),
+    ),
+
+  allowLibrary: (accountId, libraryId) => {
+    state.blocked = (state.blocked ?? []).filter(
+      (row) => !(row.accountId === accountId && row.libraryId === libraryId),
+    );
+
+    return Promise.resolve();
+  },
+
+  refuseLibrary: (accountId, libraryId) => {
+    const held = state.blocked ?? [];
+
+    if (!held.some((row) => row.accountId === accountId && row.libraryId === libraryId)) {
+      state.blocked = [...held, { accountId, libraryId }];
+    }
+
+    return Promise.resolve();
+  },
+
   isLibraryOutOfReach: (accountId, libraryId) =>
     Promise.resolve(blocks(state, accountId, libraryId)),
 

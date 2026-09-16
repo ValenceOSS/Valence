@@ -966,6 +966,28 @@ const createDatabaseLibraryService = ({
       return refused.length > 0;
     },
 
+    refusedLibraries: async (accountId) => {
+      const rows = await db
+        .select({ libraryId: libraryBlock.libraryId })
+        .from(libraryBlock)
+        .where(eq(libraryBlock.userId, accountId));
+
+      return rows.map((row) => row.libraryId);
+    },
+
+    allowLibrary: async (accountId, libraryId) => {
+      await db
+        .delete(libraryBlock)
+        .where(and(eq(libraryBlock.userId, accountId), eq(libraryBlock.libraryId, libraryId)));
+    },
+
+    refuseLibrary: async (accountId, libraryId) => {
+      await db
+        .insert(libraryBlock)
+        .values({ userId: accountId, libraryId, blockedAt: new Date() })
+        .onConflictDoNothing();
+    },
+
     isLibraryOutOfReach: async (accountId, libraryId) => {
       const refused = await db
         .select({ one: sql<number>`1` })
