@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createMemoryHistoryService } from './createMemoryHistoryService';
 import { SAME_VIEWING_MILLISECONDS } from './decideViewing';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 const at = (millisecondsFromStart = 0) => new Date(1_700_000_000_000 + millisecondsFromStart);
 
@@ -14,7 +16,7 @@ describe('a profile’s viewing history', () => {
   it('has nothing in it to begin with', async () => {
     const history = createMemoryHistoryService();
 
-    expect(await history.list('profile-1')).toEqual([]);
+    expect(await history.list(asTheServer, 'profile-1')).toEqual([]);
   });
 
   it('remembers something watched', async () => {
@@ -23,14 +25,14 @@ describe('a profile’s viewing history', () => {
     const viewing = await history.record('profile-1', 'media-1', watched());
 
     expect(viewing?.secondsWatched).toBe(300);
-    expect(await history.list('profile-1')).toHaveLength(1);
+    expect(await history.list(asTheServer, 'profile-1')).toHaveLength(1);
   });
 
   it('does not remember something barely opened', async () => {
     const history = createMemoryHistoryService();
 
     expect(await history.record('profile-1', 'media-1', watched(5))).toBeNull();
-    expect(await history.list('profile-1')).toEqual([]);
+    expect(await history.list(asTheServer, 'profile-1')).toEqual([]);
   });
 
   it('keeps one sitting as one row however often the player reports', async () => {
@@ -40,7 +42,7 @@ describe('a profile’s viewing history', () => {
     await history.record('profile-1', 'media-1', watched(300, false, 30_000));
     await history.record('profile-1', 'media-1', watched(300, false, 60_000));
 
-    const listed = await history.list('profile-1');
+    const listed = await history.list(asTheServer, 'profile-1');
 
     expect(listed).toHaveLength(1);
     expect(listed[0]?.secondsWatched).toBe(900);
@@ -52,7 +54,7 @@ describe('a profile’s viewing history', () => {
     await history.record('profile-1', 'media-1', watched(7_200, true, 0));
     await history.record('profile-1', 'media-1', watched(7_200, true, SAME_VIEWING_MILLISECONDS));
 
-    expect(await history.list('profile-1')).toHaveLength(2);
+    expect(await history.list(asTheServer, 'profile-1')).toHaveLength(2);
   });
 
   it('keeps one profile’s viewing out of another’s', async () => {
@@ -61,8 +63,8 @@ describe('a profile’s viewing history', () => {
     await history.record('profile-1', 'media-1', watched());
     await history.record('profile-2', 'media-1', watched());
 
-    expect(await history.list('profile-1')).toHaveLength(1);
-    expect(await history.list('profile-2')).toHaveLength(1);
+    expect(await history.list(asTheServer, 'profile-1')).toHaveLength(1);
+    expect(await history.list(asTheServer, 'profile-2')).toHaveLength(1);
   });
 
   it('puts the most recently watched first, which is how it is read', async () => {
@@ -71,7 +73,7 @@ describe('a profile’s viewing history', () => {
     await history.record('profile-1', 'media-1', watched(300, false, 0));
     await history.record('profile-1', 'media-2', watched(300, false, 60_000));
 
-    expect((await history.list('profile-1'))[0]?.mediaItemId).toBe('media-2');
+    expect((await history.list(asTheServer, 'profile-1'))[0]?.mediaItemId).toBe('media-2');
   });
 
   it('answers a page at a time, since this grows for ever', async () => {
@@ -81,8 +83,8 @@ describe('a profile’s viewing history', () => {
       await history.record('profile-1', `media-${index.toString()}`, watched(300, false, index));
     }
 
-    expect(await history.list('profile-1', { limit: 2 })).toHaveLength(2);
-    expect(await history.list('profile-1', { limit: 2, offset: 2 })).toHaveLength(1);
+    expect(await history.list(asTheServer, 'profile-1', { limit: 2 })).toHaveLength(2);
+    expect(await history.list(asTheServer, 'profile-1', { limit: 2, offset: 2 })).toHaveLength(1);
   });
 
   it('lets a viewer forget one thing they watched', async () => {
@@ -91,7 +93,7 @@ describe('a profile’s viewing history', () => {
     const viewing = await history.record('profile-1', 'media-1', watched());
 
     expect(await history.forget('profile-1', viewing?.id ?? '')).toBe(true);
-    expect(await history.list('profile-1')).toEqual([]);
+    expect(await history.list(asTheServer, 'profile-1')).toEqual([]);
   });
 
   it('refuses to forget something belonging to somebody else', async () => {
@@ -100,7 +102,7 @@ describe('a profile’s viewing history', () => {
     const viewing = await history.record('profile-1', 'media-1', watched());
 
     expect(await history.forget('profile-2', viewing?.id ?? '')).toBe(false);
-    expect(await history.list('profile-1')).toHaveLength(1);
+    expect(await history.list(asTheServer, 'profile-1')).toHaveLength(1);
   });
 
   it('lets a viewer forget the lot, and leaves everybody else alone', async () => {
@@ -111,8 +113,8 @@ describe('a profile’s viewing history', () => {
     await history.record('profile-2', 'media-1', watched());
 
     expect(await history.forgetAll('profile-1')).toBe(2);
-    expect(await history.list('profile-1')).toEqual([]);
-    expect(await history.list('profile-2')).toHaveLength(1);
+    expect(await history.list(asTheServer, 'profile-1')).toEqual([]);
+    expect(await history.list(asTheServer, 'profile-2')).toHaveLength(1);
   });
 
   it('remembers that something was finished', async () => {
@@ -121,7 +123,7 @@ describe('a profile’s viewing history', () => {
     await history.record('profile-1', 'media-1', watched(300, false, 0));
     await history.record('profile-1', 'media-1', watched(60, true, 60_000));
 
-    expect((await history.list('profile-1'))[0]?.isFinished).toBe(true);
+    expect((await history.list(asTheServer, 'profile-1'))[0]?.isFinished).toBe(true);
   });
 
   it('names what was watched, so a listing is not a column of identifiers', async () => {
@@ -129,7 +131,7 @@ describe('a profile’s viewing history', () => {
 
     await history.record('profile-1', 'media-1', watched());
 
-    expect((await history.list('profile-1'))[0]?.title).toBe('Arrival');
+    expect((await history.list(asTheServer, 'profile-1'))[0]?.title).toBe('Arrival');
   });
 
   it('still lists a viewing whose item has left the library, unnamed', async () => {
@@ -137,7 +139,7 @@ describe('a profile’s viewing history', () => {
 
     await history.record('profile-1', 'media-1', watched());
 
-    const listed = await history.list('profile-1');
+    const listed = await history.list(asTheServer, 'profile-1');
 
     expect(listed).toHaveLength(1);
     expect(listed[0]?.title).toBeNull();
@@ -150,8 +152,8 @@ describe('a profile’s viewing history', () => {
     await history.record('profile-2', 'media-2', watched(300, false, 86_400_000));
 
     expect(await history.prune(at(43_200_000))).toBe(1);
-    expect(await history.list('profile-1')).toEqual([]);
-    expect(await history.list('profile-2')).toHaveLength(1);
+    expect(await history.list(asTheServer, 'profile-1')).toEqual([]);
+    expect(await history.list(asTheServer, 'profile-2')).toHaveLength(1);
   });
 
   it('forgets nothing when everything is recent enough to keep', async () => {
@@ -160,5 +162,52 @@ describe('a profile’s viewing history', () => {
     await history.record('profile-1', 'media-1', watched());
 
     expect(await history.prune(at(-86_400_000))).toBe(0);
+  });
+});
+
+describe('what a viewer may be told they watched', () => {
+  const WATCHER: Viewer = {
+    kind: 'account',
+    accountId: 'account-1',
+    profileId: 'profile-1',
+    isAdministrator: false,
+  };
+
+  it('leaves out what the account may no longer reach, rather than naming it', async () => {
+    const history = createMemoryHistoryService({
+      viewings: [],
+      titles: { 'media-1': 'Arrival', 'media-2': 'Heat' },
+      visibleTo: (_viewer, mediaItemId) => mediaItemId !== 'media-2',
+    });
+
+    await history.record('profile-1', 'media-1', {
+      at: new Date('2026-09-01T00:00:00.000Z'),
+      secondsWatched: 60,
+      isFinished: false,
+    });
+    await history.record('profile-1', 'media-2', {
+      at: new Date('2026-09-02T00:00:00.000Z'),
+      secondsWatched: 60,
+      isFinished: false,
+    });
+
+    const listed = await history.list(WATCHER, 'profile-1');
+
+    expect(listed.map((one) => one.title)).toEqual(['Arrival']);
+  });
+
+  it('names everything where nothing is out of reach', async () => {
+    const history = createMemoryHistoryService({
+      viewings: [],
+      titles: { 'media-1': 'Arrival' },
+    });
+
+    await history.record('profile-1', 'media-1', {
+      at: new Date('2026-09-01T00:00:00.000Z'),
+      secondsWatched: 60,
+      isFinished: false,
+    });
+
+    expect((await history.list(WATCHER, 'profile-1')).map((one) => one.title)).toEqual(['Arrival']);
   });
 });

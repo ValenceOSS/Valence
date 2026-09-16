@@ -1,3 +1,5 @@
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
+
 type Viewing = {
   id: string;
   mediaItemId: string;
@@ -16,7 +18,11 @@ type HistoryService = {
     seen: { at: Date; secondsWatched: number; isFinished: boolean },
   ) => Promise<Viewing | null>;
 
-  list: (profileId: string, options?: { limit?: number; offset?: number }) => Promise<Viewing[]>;
+  list: (
+    viewer: Viewer,
+    profileId: string,
+    options?: { limit?: number; offset?: number },
+  ) => Promise<Viewing[]>;
 
   forget: (profileId: string, viewingId: string) => Promise<boolean>;
 
