@@ -8,6 +8,7 @@ import { SearchArea } from '@ValenceScreens/components/SearchArea/SearchArea';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
+import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import type { SearchDrawerProps } from './SearchDrawer.types';
@@ -20,9 +21,10 @@ import type { SearchDrawerProps } from './SearchDrawer.types';
  * @param onClose - Told it was dismissed.
  */
 const SearchDrawer = ({ isOpen, onClose }: SearchDrawerProps) => {
-  const { user, rememberItems, progress, setStartOverride } = useShell();
+  const { rememberItems, progress, setStartOverride } = useShell();
   const { place, go, replace } = usePlace();
-  const favourites = useFavourites(user.id);
+  const watching = useWatchingProfile();
+  const favourites = useFavourites(watching);
 
   return (
     <Drawer label="Search" isOpen={isOpen} onClose={onClose}>

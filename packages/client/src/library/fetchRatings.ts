@@ -1,6 +1,7 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { HouseholdRatingSchema, RatingListSchema } from '@ValenceContracts/schemas/Rating';
 import type { HouseholdRating, Rating } from '@ValenceContracts/schemas/Rating';
+import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 
 type RatingSubject = { mediaId: string } | { seriesId: string };
 
@@ -21,7 +22,7 @@ const addressOf = (subject: RatingSubject): string =>
  * @returns What they have rated, or none where the request failed.
  */
 const fetchRatings = async (): Promise<Rating[]> => {
-  return (await readFromServer('/api/ratings', RatingListSchema)).ratings;
+  return (await readFromServer('/api/ratings', RatingListSchema, profileHeaders())).ratings;
 };
 
 /**
@@ -36,9 +37,11 @@ const setRating = async (subject: RatingSubject, stars: number | null): Promise<
   const response = await fetch(`${addressOf(subject)}/rating`, {
     method: stars === null ? 'DELETE' : 'PUT',
     credentials: 'same-origin',
-    ...(stars === null
-      ? {}
-      : { headers: { 'content-type': 'application/json' }, body: JSON.stringify({ stars }) }),
+    headers:
+      stars === null
+        ? profileHeaders()
+        : { 'content-type': 'application/json', ...profileHeaders() },
+    ...(stars === null ? {} : { body: JSON.stringify({ stars }) }),
   }).catch(() => null);
 
   return response !== null && response.ok;

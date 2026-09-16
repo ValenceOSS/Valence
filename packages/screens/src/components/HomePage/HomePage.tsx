@@ -3,15 +3,17 @@ import { showSlug } from '@ValenceCore/functions/showSlug';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
+import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 
 /**
  * The front of the server: a hero drawn from every library, and the rows of everything to watch.
  */
 const HomePage = () => {
-  const { title, user, rememberItems, setStartOverride, setMoodLights, holdTheScreen } = useShell();
+  const { title, rememberItems, setStartOverride, setMoodLights, holdTheScreen } = useShell();
   const { place, go } = usePlace();
-  const favourites = useFavourites(user.id);
+  const watching = useWatchingProfile();
+  const favourites = useFavourites(watching);
   const { mayAdminister } = useWhatIMayDo();
 
   return (
