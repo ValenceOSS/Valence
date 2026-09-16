@@ -1,9 +1,10 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
+import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { DecideForSomebody } from './DecideForSomebody';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { Account } from '@ValenceClient/admin/fetchAccounts';
 
 const accessMocks = vi.hoisted(() => ({
   fetchExceptionsOn: vi.fn(),
@@ -20,6 +21,28 @@ vi.mock('@ValenceClient/admin/fetchLibraryAccess', () => accessMocks);
 const fetchAccounts = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/admin/fetchAccounts', () => ({ fetchAccounts }));
+
+const SIGNED_IN = '00000000-0000-4000-8000-000000000001';
+
+const account = (overrides: Partial<Account> = {}): Account => ({
+  id: 'usr_1',
+  name: 'Somebody',
+  email: 'somebody@valence.local',
+  createdAt: '',
+  isBanned: false,
+  banReason: null,
+  position: null,
+  isAdministrator: false,
+  face: null,
+  roles: [],
+  ...overrides,
+});
+
+/**
+ * The three choices offered against one account.
+ */
+const choicesFor = async (name: string) =>
+  within(await screen.findByRole('group', { name: new RegExp(`: ${name}$`) }));
 
 const media = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
   id: 'media-1',
@@ -56,27 +79,30 @@ beforeEach(() => {
   accessMocks.setException.mockResolvedValue(null);
   accessMocks.clearException.mockResolvedValue(null);
 
-  fetchAccounts.mockReset().mockResolvedValue([
-    { id: 'usr_1', name: 'Dan', email: 'dan@valence.local', roles: [], isBanned: false },
-    { id: 'usr_2', name: 'Kid', email: 'kid@valence.local', roles: [], isBanned: false },
-  ]);
+  fetchAccounts
+    .mockReset()
+    .mockResolvedValue([
+      account({ id: SIGNED_IN, name: 'Me' }),
+      account({ id: 'usr_2', name: 'Kid', email: 'kid@valence.local' }),
+      account({ id: 'usr_3', name: 'Boss', isAdministrator: true }),
+    ]);
 });
 
 describe('DecideForSomebody', () => {
   it('is shut while nothing is being decided', () => {
-    renderInAnAddress(<DecideForSomebody about={null} onClose={vi.fn()} />);
+    renderInAShell(<DecideForSomebody about={null} onClose={vi.fn()} />);
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('names the film it is deciding about', async () => {
-    renderInAnAddress(<DecideForSomebody about={media()} onClose={vi.fn()} />);
+    renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
 
     expect(await screen.findByText('Who may watch Arrival')).toBeInTheDocument();
   });
 
   it('decides about the programme rather than the episode standing for it', async () => {
-    renderInAnAddress(
+    renderInAShell(
       <DecideForSomebody
         about={media({ seriesId: 'series-1', seriesTitle: 'Curb Your Enthusiasm' })}
         onClose={vi.fn()}
@@ -87,24 +113,46 @@ describe('DecideForSomebody', () => {
   });
 
   it('says a denial always wins, which is what people rely on', async () => {
-    renderInAnAddress(<DecideForSomebody about={media()} onClose={vi.fn()} />);
+    renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
 
     expect(await screen.findByText(/A denial always wins/i)).toBeInTheDocument();
   });
 
-  it('offers every account, since a denial is worth having with no limit set', async () => {
-    renderInAnAddress(<DecideForSomebody about={media()} onClose={vi.fn()} />);
+  it('leaves out whoever is deciding, hiding being what they want for themselves', async () => {
+    renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
 
-    expect(await screen.findByText('Dan')).toBeInTheDocument();
     expect(await screen.findByText('Kid')).toBeInTheDocument();
+    expect(screen.queryByText('Me')).not.toBeInTheDocument();
+  });
+
+  it('leaves out administrators, for whom both controls would do nothing', async () => {
+    renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
+
+    await screen.findByText('Kid');
+
+    expect(screen.queryByText('Boss')).not.toBeInTheDocument();
+  });
+
+  it('says so plainly when that leaves nobody', async () => {
+    fetchAccounts.mockResolvedValue([account({ id: SIGNED_IN, name: 'Me' })]);
+
+    renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
+
+    expect(await screen.findByText(/There is nobody to decide about/i)).toBeInTheDocument();
+  });
+
+  it('shows each face, and who they are', async () => {
+    renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
+
+    expect(await screen.findByText('kid@valence.local')).toBeInTheDocument();
   });
 
   it('allows it for somebody', async () => {
     const user = userEvent.setup();
 
-    renderInAnAddress(<DecideForSomebody about={media()} onClose={vi.fn()} />);
+    renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
 
-    await user.click(await screen.findByRole('button', { name: 'Allow Arrival for Kid' }));
+    await user.click((await choicesFor('Kid')).getByRole('button', { name: 'Allow' }));
 
     await waitFor(() => {
       expect(accessMocks.setException).toHaveBeenCalledWith(
@@ -118,9 +166,9 @@ describe('DecideForSomebody', () => {
   it('denies it for somebody', async () => {
     const user = userEvent.setup();
 
-    renderInAnAddress(<DecideForSomebody about={media()} onClose={vi.fn()} />);
+    renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
 
-    await user.click(await screen.findByRole('button', { name: 'Deny Arrival for Kid' }));
+    await user.click((await choicesFor('Kid')).getByRole('button', { name: 'Deny' }));
 
     await waitFor(() => {
       expect(accessMocks.setException).toHaveBeenCalledWith(
@@ -134,19 +182,22 @@ describe('DecideForSomebody', () => {
   it('shows what was already decided rather than asking blind', async () => {
     accessMocks.fetchExceptionsOn.mockResolvedValue([{ accountId: 'usr_2', effect: 'deny' }]);
 
-    renderInAnAddress(<DecideForSomebody about={media()} onClose={vi.fn()} />);
+    renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
 
-    expect(await screen.findByText('deny')).toBeInTheDocument();
+    expect((await choicesFor('Kid')).getByRole('button', { name: 'Deny' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 
-  it('takes a decision back when the same one is pressed again', async () => {
+  it('hands it back to their own limit, which is a state the control can show', async () => {
     const user = userEvent.setup();
 
     accessMocks.fetchExceptionsOn.mockResolvedValue([{ accountId: 'usr_2', effect: 'deny' }]);
 
-    renderInAnAddress(<DecideForSomebody about={media()} onClose={vi.fn()} />);
+    renderInAShell(<DecideForSomebody about={media()} onClose={vi.fn()} />);
 
-    await user.click(await screen.findByRole('button', { name: 'Deny Arrival for Kid' }));
+    await user.click((await choicesFor('Kid')).getByRole('button', { name: 'Their limit' }));
 
     await waitFor(() => {
       expect(accessMocks.clearException).toHaveBeenCalledWith('usr_2', {

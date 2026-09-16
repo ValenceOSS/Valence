@@ -49,6 +49,7 @@ const account = (overrides: Partial<Account> = {}): Account => ({
   banReason: null,
   position: 100,
   isAdministrator: false,
+  face: null,
   roles: ['Member'],
   ...overrides,
 });
