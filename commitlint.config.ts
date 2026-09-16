@@ -25,6 +25,7 @@ const config: UserConfig = {
       'always',
       [
         'web',
+        'landing',
         'server',
         'transcoder',
         'desktop',

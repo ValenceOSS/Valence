@@ -1,5 +1,6 @@
 packages:
   - 'apps/desktop'
+  - 'apps/landing'
   - 'apps/web'
   - 'apps/server'
   - 'apps/transcoder'
