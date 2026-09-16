@@ -15,18 +15,18 @@ const Hero = () => {
   const prefersReducedMotion = useReducedMotionConfig();
 
   return (
-    <section className="relative flex h-svh flex-col items-center justify-center overflow-hidden pt-16 pb-10 sm:pt-20">
+    <section className="relative flex min-h-svh flex-col items-center justify-start overflow-hidden pt-32 pb-10 sm:justify-center sm:pt-40">
       <motion.div
         variants={staggerVariants}
         initial="hidden"
         animate="shown"
-        className="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-5 text-center sm:px-10"
+        className="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-5 text-center sm:px-10 lg:max-w-5xl xl:max-w-6xl"
       >
         <motion.p
           variants={revealVariants(prefersReducedMotion)}
           transition={revealTransition(prefersReducedMotion)}
           className={cn(
-            'text-sm font-medium uppercase tracking-[0.16em] text-on-scrim/80',
+            'text-sm font-medium uppercase tracking-[0.16em] text-on-scrim/80 lg:text-base',
             LEGIBLE,
           )}
         >
@@ -36,7 +36,10 @@ const Hero = () => {
         <motion.h1
           variants={revealVariants(prefersReducedMotion)}
           transition={revealTransition(prefersReducedMotion, 'heavy')}
-          className={cn('text-4xl font-semibold tracking-tight text-on-scrim sm:text-6xl', LEGIBLE)}
+          className={cn(
+            'text-4xl font-semibold tracking-tight text-on-scrim sm:text-6xl lg:text-7xl',
+            LEGIBLE,
+          )}
         >
           Your films and programmes, on every screen in the house.
         </motion.h1>
@@ -44,7 +47,7 @@ const Hero = () => {
         <motion.p
           variants={revealVariants(prefersReducedMotion)}
           transition={revealTransition(prefersReducedMotion)}
-          className={cn('max-w-2xl text-base text-on-scrim/80', LEGIBLE)}
+          className={cn('max-w-2xl text-base text-on-scrim/80 lg:max-w-3xl lg:text-lg', LEGIBLE)}
         >
           Valence is a streaming platform you run yourself, from a server you own. Point it at your
           library and it plays what's already there. Nothing rewritten, nothing phoned home.
@@ -53,11 +56,11 @@ const Hero = () => {
         <motion.div
           variants={revealVariants(prefersReducedMotion)}
           transition={revealTransition(prefersReducedMotion)}
-          className="flex flex-wrap items-center justify-center gap-3 pt-1"
+          className="flex flex-wrap items-center justify-center gap-3 pt-1 lg:gap-4"
         >
           <Button
             variant="glossy"
-            size="lg"
+            size="xl"
             onClick={() => {
               window.open(
                 'https://github.com/MarquesCoding/Valence',
@@ -71,7 +74,7 @@ const Hero = () => {
 
           <Button
             variant="overlay"
-            size="lg"
+            size="xl"
             onClick={() => {
               window.open(
                 'https://github.com/MarquesCoding/Valence/blob/main/DEPLOYMENT.md',

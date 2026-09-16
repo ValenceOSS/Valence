@@ -10,7 +10,7 @@ const SIDE_SHOT =
  * rather than explained.
  */
 const AppPreview = () => (
-  <div className="relative mx-auto flex w-full max-w-5xl items-start justify-center">
+  <div className="relative mx-auto flex w-full max-w-5xl items-start justify-center lg:max-w-6xl xl:max-w-7xl">
     <img
       src="/hero-3.jpeg"
       alt="The Valence server overview: processor, memory, storage and streaming at a glance"
@@ -27,7 +27,7 @@ const AppPreview = () => (
 
     <GlassPanel
       elevation="floating"
-      className="relative z-10 w-full max-w-2xl overflow-hidden rounded-2xl"
+      className="relative z-10 w-full max-w-2xl overflow-hidden rounded-2xl lg:max-w-3xl xl:max-w-4xl"
     >
       <img
         src="/hero.jpeg"

@@ -21,7 +21,10 @@ const FeatureSection = ({ group }: FeatureSectionProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
 
   return (
-    <section aria-label={group.title} className="mx-auto max-w-6xl px-5 py-16 sm:px-10">
+    <section
+      aria-label={group.title}
+      className="mx-auto max-w-6xl px-5 py-16 sm:px-10 xl:max-w-7xl"
+    >
       <motion.div
         initial="hidden"
         whileInView="shown"
@@ -30,7 +33,9 @@ const FeatureSection = ({ group }: FeatureSectionProps) => {
         transition={revealTransition(prefersReducedMotion, 'heavy')}
         className="mb-10 flex flex-col gap-2"
       >
-        <h2 className="text-3xl font-semibold tracking-tight text-text">{group.title}</h2>
+        <h2 className="text-3xl font-semibold tracking-tight text-text lg:text-4xl">
+          {group.title}
+        </h2>
         <p className="text-text-muted">{group.detail}</p>
       </motion.div>
 
