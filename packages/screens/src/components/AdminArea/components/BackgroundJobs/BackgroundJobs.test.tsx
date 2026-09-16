@@ -70,11 +70,21 @@ describe('BackgroundJobs', () => {
     render(<BackgroundJobs monitor={monitor([])} />);
 
     expect(screen.queryByText('Ted S01E01.mkv')).not.toBeInTheDocument();
+    expect(screen.getByText('Nothing queued.')).toBeInTheDocument();
+  });
+
+  it('says it is still reading before the first reading arrives, not confirmed empty', () => {
+    render(<BackgroundJobs monitor={null} />);
+
+    expect(screen.getByText('Reading the queue…')).toBeInTheDocument();
+    expect(screen.queryByText('Nothing queued.')).not.toBeInTheDocument();
   });
 
   it('tells an operator when the reading could not be had at all', () => {
     render(<BackgroundJobs monitor={null} isUnreachable />);
 
     expect(screen.queryByText('Comparing episode audio')).not.toBeInTheDocument();
+    expect(screen.getByText('The queue could not be read from the server.')).toBeInTheDocument();
+    expect(screen.queryByText('Reading the queue…')).not.toBeInTheDocument();
   });
 });

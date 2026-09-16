@@ -592,6 +592,7 @@ const AdminArea = ({
 
           <TabPanel value="jobs" travel={travel}>
             <JobsPanel
+              isUnreachable={unreachable.has('monitor')}
               definitions={jobDefinitions}
               libraries={libraries}
               progress={scanProgress}

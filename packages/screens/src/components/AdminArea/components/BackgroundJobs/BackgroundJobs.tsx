@@ -45,10 +45,15 @@ const BackgroundJobs = ({ monitor, isUnreachable = false, pageSize }: Background
   const saying = describeQueue(arrived);
   const held = useRef(arrived);
   const saidRef = useRef(saying);
+  const hasRead = useRef(false);
 
   if (saidRef.current !== saying) {
     held.current = arrived;
     saidRef.current = saying;
+  }
+
+  if (monitor !== null) {
+    hasRead.current = true;
   }
 
   const rows = held.current;
@@ -128,7 +133,7 @@ const BackgroundJobs = ({ monitor, isUnreachable = false, pageSize }: Background
       label="Background jobs"
       columns={columns}
       rows={rows}
-      emptyMessage="Nothing queued."
+      emptyMessage={hasRead.current ? 'Nothing queued.' : 'Reading the queue…'}
       growsOnScroll
       {...(pageSize === undefined ? {} : { pageSize })}
     />
