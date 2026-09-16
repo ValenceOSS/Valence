@@ -108,7 +108,7 @@ fn preview_request() -> PreviewRequest {
         hardware_accel: None,
         wait: false,
         audio_stream_index: None,
-        owner: None,
+        correlation_id: None,
     }
 }
 
@@ -162,7 +162,7 @@ async fn recognises_live_sheets_from_the_request_that_drew_them() {
         rows: 10,
         hardware_accel: None,
         wait: true,
-        owner: None,
+        correlation_id: None,
     };
 
     artefact(&root, "trickplay", &live.id());
@@ -205,7 +205,7 @@ async fn a_generation_that_moved_on_no_longer_addresses_the_old_sheets() {
         rows: 10,
         hardware_accel: None,
         wait: true,
-        owner: None,
+        correlation_id: None,
     };
 
     artefact(&root, "trickplay", &before.id());

@@ -109,6 +109,7 @@ const AdminArea = ({
   } = useSyncExternalStore(subscribeToScans, getScanSnapshot);
   const [createdWebhook, setCreatedWebhook] = useState<CreatedWebhook | null>(null);
   const [openHistoryId, setOpenHistoryId] = useState<string | null>(null);
+  const [pendingLogJobId, setPendingLogJobId] = useState<string | null>(null);
 
   const [busyClientId, setBusyClientId] = useState<string | null>(null);
   const prefersReducedMotion = useReducedMotionConfig();
@@ -211,6 +212,14 @@ const AdminArea = ({
       onJobChange?.(null);
     },
     [onPanel, onJobChange],
+  );
+
+  const viewLogsForJob = useCallback(
+    (jobId: string) => {
+      setPendingLogJobId(jobId);
+      showPanel('logs');
+    },
+    [showPanel],
   );
 
   const loadAll = useCallback(async () => {
@@ -592,6 +601,7 @@ const AdminArea = ({
 
           <TabPanel value="jobs" travel={travel}>
             <JobsPanel
+              isUnreachable={unreachable.has('monitor')}
               definitions={jobDefinitions}
               libraries={libraries}
               progress={scanProgress}
@@ -609,6 +619,7 @@ const AdminArea = ({
               onRemoveTrigger={(kind, triggerId) => {
                 void removeTrigger(kind, triggerId);
               }}
+              onViewLogs={viewLogsForJob}
             />
           </TabPanel>
 
@@ -728,7 +739,12 @@ const AdminArea = ({
           </TabPanel>
 
           <TabPanel value="logs" travel={travel}>
-            <LogsPanel />
+            <LogsPanel
+              initialJobId={pendingLogJobId}
+              onInitialJobIdConsumed={() => {
+                setPendingLogJobId(null);
+              }}
+            />
           </TabPanel>
         </section>
       </motion.div>

@@ -88,7 +88,7 @@ const anything = (): Transcoder => ({
   requestPreview: () => Promise.reject(new Error('not used')),
   readPreviewFile: () => Promise.resolve(null),
   readMonitor: () => Promise.resolve({}),
-  openMonitorStream: () => Promise.resolve(null),
+  openMonitorSocket: () => Promise.resolve(null),
   capabilities: () => Promise.resolve(CAPABILITIES),
 });
 
@@ -138,7 +138,7 @@ const harness = (
     requestPreview: () => Promise.reject(new Error('not used')),
     readPreviewFile: () => Promise.resolve(null),
     readMonitor: () => Promise.resolve({}),
-    openMonitorStream: () => Promise.resolve(null),
+    openMonitorSocket: () => Promise.resolve(null),
     capabilities: () =>
       Promise.resolve({
         ffmpegVersion: 'test',

@@ -5,6 +5,17 @@ import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import { ScanJobSchema } from '@ValenceClient/library/fetchLibrary';
+import {
+  JobEventSchema,
+  JobRunIssueSchema,
+  JobRunPageSchema,
+} from '@ValenceContracts/schemas/JobRun';
+import type {
+  JobEvent,
+  JobRunIssue,
+  JobRunPage,
+  JobRunQuery,
+} from '@ValenceContracts/schemas/JobRun';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 import type { ScanJob } from '@ValenceClient/library/fetchLibrary';
@@ -76,6 +87,11 @@ const AdminOverviewSchema = z.object({
     .default({ stalled: [] }),
 });
 
+const JobFailureSchema = z.object({
+  message: z.string(),
+  chain: z.array(z.string()),
+});
+
 const JobSchema = z.object({
   id: z.number(),
   kind: z.string(),
@@ -84,7 +100,8 @@ const JobSchema = z.object({
   queuedAtMs: z.number(),
   startedAtMs: z.number().nullable(),
   finishedAtMs: z.number().nullable(),
-  detail: z.string().nullable(),
+  correlationId: z.string().nullable().default(null),
+  failure: JobFailureSchema.nullable().default(null),
 });
 
 const ProcessUseSchema = z.object({
@@ -352,6 +369,26 @@ const watchMonitor = (
   });
 
 /**
+ * Follows a job starting, progressing, and finishing, so the Jobs page reacts as work happens rather
+ * than by polling for it.
+ *
+ * @param onEvent - Told each event as it arrives.
+ * @param client - The connection to watch over, which is the shared one unless a test says otherwise.
+ * @returns The function that stops watching.
+ */
+const watchJobs = (
+  onEvent: (event: JobEvent) => void,
+  client: RealtimeClient = getRealtimeClient(),
+): (() => void) =>
+  client.subscribe('jobs', (event) => {
+    const parsed = JobEventSchema.safeParse(event.payload);
+
+    if (parsed.success) {
+      onEvent(parsed.data);
+    }
+  });
+
+/**
  * Follows who has the application open and what they are watching, as it changes, for the sessions
  * page an operator leaves open.
  *
@@ -517,6 +554,53 @@ const cancelJob = async (jobId: string): Promise<boolean> => {
 
   return response !== null && response.ok;
 };
+
+/**
+ * Reads the persisted history of pg-boss job runs, filtered, so the Jobs page can show what actually
+ * happened rather than only what the queue is doing this instant.
+ *
+ * @param query - What to filter the history by.
+ * @returns The runs that matched, newest first.
+ */
+const fetchJobHistory = async (query: Partial<JobRunQuery> = {}): Promise<JobRunPage> => {
+  const parameters = new URLSearchParams();
+
+  if (query.kind !== undefined && query.kind !== null) {
+    parameters.set('kind', query.kind);
+  }
+
+  if (query.status !== undefined && query.status !== null) {
+    parameters.set('status', query.status);
+  }
+
+  if (query.search !== undefined && query.search !== '') {
+    parameters.set('search', query.search);
+  }
+
+  if (query.sinceMs !== undefined && query.sinceMs !== null) {
+    parameters.set('sinceMs', query.sinceMs.toString());
+  }
+
+  if (query.limit !== undefined) {
+    parameters.set('limit', query.limit.toString());
+  }
+
+  const asked = parameters.toString();
+
+  return readFromServer(
+    `/api/admin/jobs/history${asked === '' ? '' : `?${asked}`}`,
+    JobRunPageSchema,
+  );
+};
+
+/**
+ * Reads the per-item issues one job run accumulated, asked for only once a row is opened rather than
+ * carried with every run in the list.
+ *
+ * @param jobRunId - The run to read issues for.
+ */
+const fetchJobHistoryIssues = async (jobRunId: string): Promise<JobRunIssue[]> =>
+  readFromServer(`/api/admin/jobs/history/${jobRunId}/issues`, z.array(JobRunIssueSchema));
 
 /**
  * Reads what makes each job run on its own — the triggers set against it, which may be several per
@@ -715,6 +799,7 @@ export {
   searchCatalogue,
   fetchMonitor,
   watchMonitor,
+  watchJobs,
   saveCatalogueKey,
   saveHardwareAccel,
   savePreviewQuality,
@@ -729,6 +814,8 @@ export {
   fetchJobDefinitions,
   runJob,
   cancelJob,
+  fetchJobHistory,
+  fetchJobHistoryIssues,
   fetchJobSchedules,
   addJobTrigger,
   removeJobTrigger,

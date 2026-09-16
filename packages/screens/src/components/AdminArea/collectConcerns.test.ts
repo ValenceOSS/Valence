@@ -71,7 +71,7 @@ const library = (overrides: Partial<Library> = {}): Library => ({
   filesAtOnce: null,
 });
 
-const failedJob = (detail: string | null = null): Job => ({
+const failedJob = (message: string | null = null): Job => ({
   id: 1,
   kind: 'library.scan',
   subject: 'Films',
@@ -79,7 +79,8 @@ const failedJob = (detail: string | null = null): Job => ({
   queuedAtMs: 0,
   startedAtMs: 0,
   finishedAtMs: 1,
-  detail,
+  correlationId: null,
+  failure: message === null ? null : { message, chain: [] },
 });
 
 const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };

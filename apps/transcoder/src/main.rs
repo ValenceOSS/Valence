@@ -2,7 +2,9 @@ use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use valence_transcoder::monitor::{record, LogLevel};
+use tracing_subscriber::layer::SubscriberExt as _;
+use tracing_subscriber::util::SubscriberInitExt as _;
+use valence_transcoder::monitor::JournalLayer;
 use valence_transcoder::router::{create_router, AppState};
 use valence_transcoder::session::{SessionConfig, SessionRegistry};
 use valence_transcoder::{capability, probe};
@@ -110,11 +112,7 @@ fn spawn_reaper(registry: SessionRegistry) {
             let collected = registry.collect_idle().await;
 
             if collected > 0 {
-                record(
-                    LogLevel::Info,
-                    "sessions",
-                    &format!("reaped {collected} idle session(s)"),
-                );
+                tracing::info!(target: "sessions", "reaped {collected} idle session(s)");
             }
         }
     });
@@ -145,13 +143,11 @@ fn spawn_sweeper(registry: SessionRegistry) {
             let report = valence_transcoder::session_sweep::evict(&root, &live, &budget).await;
 
             if report.removed > 0 {
-                record(
-                    LogLevel::Info,
-                    "cache",
-                    &format!(
-                        "reclaimed {} spent transcode(s), {} bytes",
-                        report.removed, report.freed_bytes
-                    ),
+                tracing::info!(
+                    target: "cache",
+                    "reclaimed {} spent transcode(s), {} bytes",
+                    report.removed,
+                    report.freed_bytes
                 );
             }
 
@@ -185,35 +181,39 @@ async fn report_durability(
         .await;
 
     if durability.survives_restart {
-        record(
-            LogLevel::Info,
-            "cache",
-            &format!(
-                "previews and thumbnails are kept on {} ({})",
-                durability.mount.display(),
-                durability.filesystem
-            ),
+        tracing::info!(
+            target: "cache",
+            "previews and thumbnails are kept on {} ({})",
+            durability.mount.display(),
+            durability.filesystem
         );
 
         return;
     }
 
-    record(
-        LogLevel::Warn,
-        "cache",
-        &valence_transcoder::durability::warning(&root, &durability),
+    tracing::warn!(
+        target: "cache",
+        "{}",
+        valence_transcoder::durability::warning(&root, &durability)
     );
 }
 
 async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
     let journal = valence_transcoder::monitor::Journal::new();
 
-    valence_transcoder::monitor::install_journal(journal.clone());
+    let filter = tracing_subscriber::EnvFilter::try_from_env("RUST_LOG")
+        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"));
 
-    record(
-        LogLevel::Info,
-        "service",
-        &capability::describe_build(&ffmpeg, &capability::read_version(&ffmpeg).await),
+    tracing_subscriber::registry()
+        .with(filter)
+        .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
+        .with(JournalLayer::new(journal.clone()))
+        .init();
+
+    tracing::info!(
+        target: "service",
+        "{}",
+        capability::describe_build(&ffmpeg, &capability::read_version(&ffmpeg).await)
     );
 
     let state = AppState {
@@ -229,10 +229,10 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
             .unwrap_or_default(),
     };
 
-    record(
-        LogLevel::Info,
-        "service",
-        &format!("running {} background jobs at once", background_jobs()),
+    tracing::info!(
+        target: "service",
+        "running {} background jobs at once",
+        background_jobs()
     );
 
     state.monitor.watch_graphics();
@@ -249,11 +249,7 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
 
     let result = match listen_target(&from_env) {
         ListenTarget::Address(address) => {
-            record(
-                LogLevel::Info,
-                "service",
-                &format!("listening on {address}"),
-            );
+            tracing::info!(target: "service", "listening on {address}");
 
             match tokio::net::TcpListener::bind(&address).await {
                 Ok(listener) => axum::serve(listener, router).await,
@@ -265,9 +261,13 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
             }
         }
         ListenTarget::Socket(socket) => {
-            let _ = tokio::fs::remove_file(&socket).await;
+            if let Err(error) = tokio::fs::remove_file(&socket).await {
+                if error.kind() != std::io::ErrorKind::NotFound {
+                    tracing::debug!(target: "service", %error, "could not clear a stale socket file");
+                }
+            }
 
-            record(LogLevel::Info, "service", &format!("listening on {socket}"));
+            tracing::info!(target: "service", "listening on {socket}");
 
             match tokio::net::UnixListener::bind(&socket) {
                 Ok(listener) => axum::serve(listener, router).await,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Outlet } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
@@ -59,6 +59,24 @@ const NOTHING_WAITING = { notifications: [], unread: 0 };
 const ValenceShell = () => {
   const cache = useQueryClient();
   const { place, go, replace } = usePlace();
+
+  const openAdminPanel = useCallback(
+    (next: string) => {
+      replace({ admin: next, adminJob: null });
+    },
+    [replace],
+  );
+
+  const openAdminJob = useCallback(
+    (next: string | null) => {
+      replace({ adminJob: next });
+    },
+    [replace],
+  );
+
+  const closeAdmin = useCallback(() => {
+    go({ admin: null, adminJob: null });
+  }, [go]);
 
   const {
     watcher,
@@ -395,15 +413,9 @@ const ValenceShell = () => {
       <AdminDialog
         panel={mayAdminister ? place.admin : null}
         job={place.adminJob}
-        onPanel={(next) => {
-          replace({ admin: next, adminJob: null });
-        }}
-        onJob={(next) => {
-          replace({ adminJob: next });
-        }}
-        onClose={() => {
-          go({ admin: null, adminJob: null });
-        }}
+        onPanel={openAdminPanel}
+        onJob={openAdminJob}
+        onClose={closeAdmin}
       />
 
       <ShareDialog

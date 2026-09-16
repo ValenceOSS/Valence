@@ -10,7 +10,6 @@ use tokio::process::Command;
 use tokio::sync::{oneshot, Mutex, Notify};
 
 use crate::boundaries::ensure_boundaries;
-use crate::monitor::{record, LogLevel};
 use crate::playlist::segment_at;
 use crate::transcode_plan::{
     DeviceFilters, HardwareAccel, SegmentContainer, SegmentStart, SessionSpec, TranscodePlan,
@@ -62,7 +61,14 @@ async fn record_device(directory: &Path, device: &str) {
     devices.insert(device.to_owned(), crate::queue::now_ms());
 
     if let Ok(payload) = serde_json::to_string(&devices) {
-        let _ = tokio::fs::write(&path, payload).await;
+        if let Err(error) = tokio::fs::write(&path, payload).await {
+            tracing::warn!(
+                target: "session",
+                %error,
+                device = %device,
+                "could not record that a device played this transcode"
+            );
+        }
     }
 }
 
@@ -76,7 +82,14 @@ async fn record_device(directory: &Path, device: &str) {
 /// Failing to record it costs a replay of a transcode later, so a marker that
 /// cannot be rewritten is not worth refusing to play over.
 async fn mark_used(directory: &Path) {
-    let _ = tokio::fs::write(directory.join(COMPLETE_MARKER), b"ok").await;
+    if let Err(error) = tokio::fs::write(directory.join(COMPLETE_MARKER), b"ok").await {
+        tracing::warn!(
+            target: "session",
+            %error,
+            path = %directory.display(),
+            "could not record that a finished transcode was wanted again"
+        );
+    }
 }
 
 /// Why a session could not be started.
@@ -290,7 +303,13 @@ impl Session {
         self.running_from = None;
 
         if let Some(cancel) = self.cancel.take() {
-            let _ = cancel.send(());
+            if cancel.send(()).is_err() {
+                tracing::debug!(
+                    target: "session",
+                    session_id = %self.id,
+                    "cancel signal had nobody left to receive it, the run had already ended"
+                );
+            }
         }
     }
 }
@@ -1396,7 +1415,16 @@ async fn begin_run_inner(registry: &SessionRegistry, session: &mut Session, want
         ),
     };
 
-    let _ = tokio::fs::remove_file(session.directory.join(RUN_PLAYLIST_NAME)).await;
+    let _ = tokio::fs::remove_file(session.directory.join(RUN_PLAYLIST_NAME))
+        .await
+        .inspect_err(|error| {
+            tracing::debug!(
+                target: "session",
+                session_id = %session.id,
+                %error,
+                "no previous run playlist to remove"
+            );
+        });
 
     let plan = TranscodePlan {
         start_at,
@@ -1484,15 +1512,13 @@ async fn run_attempt(
                 let class = classify_exit(output.status.code(), &stderr);
 
                 if !matches!(class, ExitClass::Completed | ExitClass::Cancelled) {
-                    record(
-                        LogLevel::Error,
-                        "transcode",
-                        &format!(
-                            "failed ({class:?}{}) for {}:\n{}",
-                            describe_signal(output.status),
-                            plan.spec.input_path,
-                            tail_of(&stderr, FFMPEG_LINES)
-                        ),
+                    tracing::error!(
+                        target: "transcode",
+                        session_id = %plan.spec.session_id(),
+                        "failed ({class:?}{}) for {}:\n{}",
+                        describe_signal(output.status),
+                        plan.spec.input_path,
+                        tail_of(&stderr, FFMPEG_LINES)
                     );
                 }
 
@@ -1691,7 +1717,14 @@ async fn supervise(
         let outcome = run_attempt(&config.ffmpeg, &attempt, &mut cancel, &reached, &woken).await;
 
         if outcome == ExitClass::Completed {
-            let _ = tokio::fs::write(directory.join(COMPLETE_MARKER), b"ok").await;
+            if let Err(error) = tokio::fs::write(directory.join(COMPLETE_MARKER), b"ok").await {
+                tracing::warn!(
+                    target: "transcode",
+                    session_id = %attempt.spec.session_id(),
+                    %error,
+                    "could not mark the transcode complete"
+                );
+            }
 
             return;
         }
@@ -1700,13 +1733,11 @@ async fn supervise(
             return;
         }
 
-        record(
-            LogLevel::Warn,
-            "transcode",
-            &format!(
-                "hardware encode of {} failed ({outcome:?}), retrying in software",
-                attempt.spec.input_path
-            ),
+        tracing::warn!(
+            target: "transcode",
+            session_id = %attempt.spec.session_id(),
+            "hardware encode of {} failed ({outcome:?}), retrying in software",
+            attempt.spec.input_path
         );
 
         attempt = TranscodePlan {
@@ -1723,15 +1754,13 @@ async fn supervise(
 fn spawn_ffmpeg(ffmpeg: &str, plan: &TranscodePlan) -> Result<tokio::process::Child, SessionError> {
     let arguments = plan.to_ffmpeg_args();
 
-    record(
-        LogLevel::Info,
-        "transcode",
-        &format!(
-            "{} -> {}\n  ffmpeg {}",
-            plan.spec.input_path,
-            plan.output_directory,
-            arguments.join(" ")
-        ),
+    tracing::info!(
+        target: "transcode",
+        session_id = %plan.spec.session_id(),
+        "{} -> {}\n  ffmpeg {}",
+        plan.spec.input_path,
+        plan.output_directory,
+        arguments.join(" ")
     );
 
     let child = Command::new(ffmpeg)

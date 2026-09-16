@@ -168,6 +168,9 @@ import {
   adminJobSchedulesRoute,
   adminAddJobTriggerRoute,
   adminRemoveJobTriggerRoute,
+  adminJobHistoryRoute,
+  adminJobHistoryIssuesRoute,
+  adminMonitorHistoryRoute,
 } from '@ValenceServer/routes/AdminRoute';
 import {
   listDevicesRoute,
@@ -289,6 +292,8 @@ import type { WebhookStore } from '@ValenceServer/webhooks/WebhookStore';
 import type { RealtimePublisher } from '@ValenceServer/realtime/RealtimePublisher';
 import type { EventBus } from '@ValenceServer/events/EventBus';
 import type { LogStore } from '@ValenceServer/logging/Logger';
+import type { JobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
+import type { ResourceHistoryStore } from '@ValenceServer/logging/createResourceHistoryStore';
 import {
   listHistoryRoute,
   forgetViewingRoute,
@@ -471,6 +476,8 @@ type CreateAppOptions = {
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   realtime?: RealtimePublisher;
   logs?: LogStore;
+  jobHistory?: JobHistoryStore;
+  resourceHistory?: ResourceHistoryStore;
   events?: EventBus;
   sayALinkWasWithdrawn?: (told: {
     accountId: string;
@@ -537,6 +544,8 @@ const createApp = ({
   editAccount,
   realtime,
   logs,
+  jobHistory,
+  resourceHistory,
   events,
   sayALinkWasWithdrawn,
 }: CreateAppOptions) => {
@@ -2188,6 +2197,43 @@ const createApp = ({
       : context.json({ error: 'Nothing is running under that id.' }, 404);
   });
 
+  app.openapi(adminJobHistoryRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    if (jobHistory === undefined) {
+      return context.json({ records: [], total: 0 }, 200);
+    }
+
+    const asked = context.req.valid('query');
+
+    return context.json(
+      await jobHistory.read({
+        kind: asked.kind ?? null,
+        status: asked.status ?? null,
+        search: asked.search ?? '',
+        sinceMs: asked.sinceMs ?? null,
+        limit: asked.limit ?? 200,
+      }),
+      200,
+    );
+  });
+
+  app.openapi(adminJobHistoryIssuesRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    if (jobHistory === undefined) {
+      return context.json([], 200);
+    }
+
+    const { jobRunId } = context.req.valid('param');
+
+    return context.json(await jobHistory.readIssues(jobRunId), 200);
+  });
+
   app.openapi(adminJobSchedulesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.schedule'))) {
       return context.json({ error: 'That is for administrators.' }, 403);
@@ -3085,6 +3131,20 @@ const createApp = ({
     return new Response(JSON.stringify(reading), {
       headers: { 'content-type': 'application/json' },
     });
+  });
+
+  app.openapi(adminMonitorHistoryRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    if (resourceHistory === undefined) {
+      return context.json({ records: [] }, 200);
+    }
+
+    const { range } = context.req.valid('query');
+
+    return context.json({ records: await resourceHistory.read(range ?? '24h') }, 200);
   });
 
   app.openapi(listProgressRoute, async (context) => {

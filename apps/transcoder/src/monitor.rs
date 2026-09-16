@@ -13,9 +13,11 @@ use std::time::{Duration, Instant};
 
 use serde::Serialize;
 use std::sync::Mutex as StdMutex;
-use std::sync::OnceLock;
 use sysinfo::{DiskRefreshKind, Disks, Pid, ProcessRefreshKind, ProcessesToUpdate, System};
 use tokio::sync::Mutex;
+use tracing::field::{Field, Visit};
+use tracing_subscriber::layer::Context;
+use tracing_subscriber::Layer;
 
 use crate::cache_usage::CacheUse;
 use crate::graphics::GraphicsUse;
@@ -58,6 +60,8 @@ const CACHE_INTERVAL: Duration = Duration::from_secs(5 * 60);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum LogLevel {
+    Trace,
+    Debug,
     Info,
     Warn,
     Error,
@@ -68,11 +72,39 @@ impl LogLevel {
     #[must_use]
     pub fn as_word(self) -> &'static str {
         match self {
+            Self::Trace => "trace",
+            Self::Debug => "debug",
             Self::Info => "info",
             Self::Warn => "warn",
             Self::Error => "error",
         }
     }
+
+    /// The level `tracing` classified an event at, translated to our own.
+    fn from_tracing(level: tracing::Level) -> Self {
+        match level {
+            tracing::Level::TRACE => Self::Trace,
+            tracing::Level::DEBUG => Self::Debug,
+            tracing::Level::INFO => Self::Info,
+            tracing::Level::WARN => Self::Warn,
+            tracing::Level::ERROR => Self::Error,
+        }
+    }
+}
+
+/// Which piece of work a line belongs to, where it belongs to one.
+///
+/// Carried on every line rather than baked into the message, so a page can
+/// filter or link on it without parsing prose. All three are independent: a
+/// line inside a background job knows its `job_id`, one inside a live
+/// transcode knows its `session_id`, and one answering a single HTTP request
+/// knows its `request_id` — most lines know none of them.
+#[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct LogContext {
+    pub job_id: Option<String>,
+    pub session_id: Option<String>,
+    pub request_id: Option<String>,
 }
 
 /// One thing that happened.
@@ -84,6 +116,75 @@ pub struct LogLine {
     /// Which part of the service is speaking.
     pub source: String,
     pub message: String,
+    pub context: LogContext,
+}
+
+/// Reads a `tracing` event into a [`LogLine`]'s message and context.
+///
+/// Only `message` and the three known context fields are kept; every other
+/// field a call site attaches is read and discarded, exactly as an event with
+/// no subscriber listening for it would be.
+#[derive(Default)]
+struct LineVisitor {
+    message: String,
+    context: LogContext,
+}
+
+impl LineVisitor {
+    fn place(&mut self, field: &Field, value: String) {
+        match field.name() {
+            "message" => self.message = value,
+            "job_id" => self.context.job_id = Some(value),
+            "session_id" => self.context.session_id = Some(value),
+            "request_id" => self.context.request_id = Some(value),
+            _ => {}
+        }
+    }
+}
+
+impl Visit for LineVisitor {
+    fn record_str(&mut self, field: &Field, value: &str) {
+        self.place(field, value.to_owned());
+    }
+
+    fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
+        self.place(field, format!("{value:?}"));
+    }
+}
+
+/// Writes every `tracing` event into a [`Journal`].
+///
+/// The journal stays a plain ring buffer that anywhere in the service can
+/// write to without being async; this is the one place that turns a
+/// `tracing::Event` into the [`LogLine`] it stores.
+pub struct JournalLayer {
+    journal: Journal,
+}
+
+impl JournalLayer {
+    #[must_use]
+    pub fn new(journal: Journal) -> Self {
+        Self { journal }
+    }
+}
+
+impl<S> Layer<S> for JournalLayer
+where
+    S: tracing::Subscriber,
+{
+    fn on_event(&self, event: &tracing::Event<'_>, _ctx: Context<'_, S>) {
+        let mut visitor = LineVisitor::default();
+
+        event.record(&mut visitor);
+
+        self.journal.push(LogLine {
+            at_ms: now_ms(),
+            level: LogLevel::from_tracing(*event.metadata().level()),
+            source: event.metadata().target().to_owned(),
+            message: visitor.message,
+            context: visitor.context,
+        });
+    }
 }
 
 /// What one ffmpeg is costing.
@@ -201,17 +302,12 @@ impl Journal {
     ///
     /// Never panics on a poisoned lock: a log that stops working because a log
     /// write panicked once is worse than a lost line.
-    pub fn write(&self, level: LogLevel, source: &str, message: &str) {
+    fn push(&self, line: LogLine) {
         let Ok(mut lines) = self.lines.lock() else {
             return;
         };
 
-        lines.push_front(LogLine {
-            at_ms: now_ms(),
-            level,
-            source: source.to_owned(),
-            message: message.to_owned(),
-        });
+        lines.push_front(line);
 
         lines.truncate(LOG_LINES);
     }
@@ -224,34 +320,6 @@ impl Journal {
             .map(|lines| lines.iter().cloned().collect())
             .unwrap_or_default()
     }
-}
-
-/// The journal this process writes to.
-///
-/// Held for the process rather than passed around because the places worth
-/// logging from — a session failing, a preview giving up, a boundary scan
-/// finding nothing — are nowhere near the router that owns the monitor, and
-/// threading a handle to all of them is what stopped anybody doing it.
-static JOURNAL: OnceLock<Journal> = OnceLock::new();
-
-/// Names the journal the rest of the service writes to.
-///
-/// Called once at startup. Calling it again leaves the first one in place.
-pub fn install_journal(journal: Journal) {
-    let _ = JOURNAL.set(journal);
-}
-
-/// Writes a line to the journal and to stderr.
-///
-/// Both, always. Stderr is what `docker logs` shows and the only thing there is
-/// before the monitor exists or after it has stopped answering; the journal is
-/// what the admin area can actually reach.
-pub fn record(level: LogLevel, source: &str, message: &str) {
-    if let Some(journal) = JOURNAL.get() {
-        journal.write(level, source, message);
-    }
-
-    eprintln!("{} {source}: {message}", level.as_word());
 }
 
 /// Reads what the machine is using.
@@ -469,14 +537,24 @@ impl Monitor {
 
 #[cfg(test)]
 mod tests {
-    use super::{install_journal, record, Journal, LogLevel, Monitor, LOG_LINES};
+    use super::{Journal, JournalLayer, LogLevel, Monitor, LOG_LINES};
+    use tracing_subscriber::layer::SubscriberExt as _;
 
-    #[tokio::test]
-    async fn keeps_the_newest_line_first() {
+    /// Runs `body` with a subscriber that writes every event into `journal`.
+    fn with_journal(journal: &Journal, body: impl FnOnce()) {
+        let subscriber = tracing_subscriber::registry().with(JournalLayer::new(journal.clone()));
+
+        tracing::subscriber::with_default(subscriber, body);
+    }
+
+    #[test]
+    fn keeps_the_newest_line_first() {
         let journal = Journal::new();
 
-        journal.write(LogLevel::Info, "scan", "started");
-        journal.write(LogLevel::Error, "scan", "stopped");
+        with_journal(&journal, || {
+            tracing::info!(target: "scan", "started");
+            tracing::error!(target: "scan", "stopped");
+        });
 
         let lines = journal.read();
 
@@ -489,9 +567,11 @@ mod tests {
     fn drops_the_oldest_once_it_is_full() {
         let journal = Journal::new();
 
-        for index in 0..LOG_LINES + 10 {
-            journal.write(LogLevel::Info, "scan", &format!("line {index}"));
-        }
+        with_journal(&journal, || {
+            for index in 0..LOG_LINES + 10 {
+                tracing::info!(target: "scan", "line {index}");
+            }
+        });
 
         assert_eq!(journal.read().len(), LOG_LINES);
     }
@@ -505,8 +585,9 @@ mod tests {
     fn writes_what_the_service_records_into_the_journal_it_was_given() {
         let journal = Journal::new();
 
-        install_journal(journal.clone());
-        record(LogLevel::Warn, "transcode", "hardware encode failed");
+        with_journal(&journal, || {
+            tracing::warn!(target: "transcode", "hardware encode failed");
+        });
 
         let found = journal
             .read()
@@ -517,6 +598,27 @@ mod tests {
             found.is_some(),
             "a recorded line should reach the journal the admin area reads"
         );
+    }
+
+    #[test]
+    fn carries_the_known_context_fields_and_drops_the_rest() {
+        let journal = Journal::new();
+
+        with_journal(&journal, || {
+            tracing::warn!(
+                target: "session",
+                job_id = "job-1",
+                session_id = "session-2",
+                ignored = "not carried",
+                "context test"
+            );
+        });
+
+        let line = journal.read().into_iter().next().expect("a line");
+
+        assert_eq!(line.context.job_id.as_deref(), Some("job-1"));
+        assert_eq!(line.context.session_id.as_deref(), Some("session-2"));
+        assert_eq!(line.context.request_id, None);
     }
 
     #[tokio::test]

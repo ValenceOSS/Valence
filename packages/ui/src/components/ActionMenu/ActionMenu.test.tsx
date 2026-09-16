@@ -117,6 +117,12 @@ describe('ActionMenu', () => {
     expect(screen.getByRole('button', { name: 'Actions' })).toBeDisabled();
   });
 
+  it("stands smaller where it is one row's own action, not a page-level one", () => {
+    render(<ActionMenu {...props} size="sm" groups={[{ items: [] }]} />);
+
+    expect(screen.getByRole('button', { name: 'Actions' })).toHaveClass('size-7');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(ActionMenu.displayName).toBe('ActionMenu');
   });

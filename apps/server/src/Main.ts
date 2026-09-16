@@ -18,6 +18,8 @@ import { relayMonitor } from '@ValenceServer/realtime/relayMonitor';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
 import { createLogger } from '@ValenceServer/logging/createLogger';
 import { createDatabaseLogStore } from '@ValenceServer/logging/createDatabaseLogStore';
+import { createJobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
+import { createResourceHistoryStore } from '@ValenceServer/logging/createResourceHistoryStore';
 import { asJsonLog } from '@ValenceServer/logging/asJsonLog';
 import { createLogScope } from '@ValenceServer/logging/createLogScope';
 import { createTranscoderIntake } from '@ValenceServer/logging/createTranscoderIntake';
@@ -57,6 +59,7 @@ import { ARRIVED_TITLES_KEPT } from '@ValenceContracts/schemas/Webhook';
 import type { ScannedItem } from '@ValenceServer/library/scanLibrary';
 import type { PresenceViewing } from '@ValenceServer/presence/PresenceService';
 import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
+import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 type ViewingData = Extract<WebhookPayload, { event: 'playback.started' }>['data'];
 import { runScanPhases } from '@ValenceServer/library/runScanPhases';
@@ -109,6 +112,8 @@ import {
   DELIVER_WEBHOOK_JOB,
   PRUNE_WEBHOOK_DELIVERIES_JOB,
   PRUNE_LOGS_JOB,
+  PRUNE_JOB_HISTORY_JOB,
+  PRUNE_RESOURCE_HISTORY_JOB,
   DeliverWebhookJobSchema,
   scheduleTriggerKind,
 } from '@ValenceServer/jobs/JobQueue';
@@ -166,6 +171,16 @@ const ChapterListSchema = z.array(
     endSeconds: z.number(),
   }),
 );
+const MonitorResourceSampleSchema = z.object({
+  resources: z.object({
+    atMs: z.number(),
+    systemCpuPercent: z.number(),
+    loadAverage: z.number(),
+    systemMemoryUsedBytes: z.number(),
+    systemMemoryTotalBytes: z.number(),
+    cpuCount: z.number(),
+  }),
+});
 const env = readEnv(process.env);
 const { db, pool, schema } = createDatabase(env.DATABASE_URL);
 
@@ -329,7 +344,20 @@ const realtime = createRealtimeRegistry({
 
 const logScope = createLogScope();
 
+/**
+ * Which job run a line belongs to, where the code writing it is running inside one. Read from the
+ * same ambient context a log line's own `jobId` comes from, so a per-item failure deep inside a scan
+ * or a render can be attributed to the run without threading a job id through every call in between.
+ *
+ * @returns The job run's id, or null where nothing running now is a job.
+ */
+const jobIdInScope = (): string | null => logScope.current().jobId ?? null;
+
 const logStore = createDatabaseLogStore(db);
+
+const jobHistory = createJobHistoryStore(db);
+
+const resourceHistory = createResourceHistoryStore(db);
 
 const log = createLogger({
   store: logStore,
@@ -523,7 +551,7 @@ const transcoder = createTranscoderClient({ baseUrl: env.TRANSCODER_URL });
  */
 const runDetectSegments = async (libraryId: string, jobId: string): Promise<void> => {
   const marked = await detectLibrarySegments({
-    owner: jobId,
+    correlationId: jobId,
     libraryId,
     providers: segmentProviders,
     segments: segmentService,
@@ -769,6 +797,14 @@ const announceFinishedJob = (finished: FinishedJob): void => {
         ? { event: 'job.completed', data: about }
         : { event: 'job.failed', data: { ...about, reason } },
     );
+
+    realtime.publish(
+      'jobs',
+      { event: reason === null ? 'completed' : 'failed', ...about },
+      {
+        kind: 'everyone',
+      },
+    );
   })();
 };
 
@@ -947,6 +983,7 @@ const jobs = await createJobQueue({
           },
           onProblem: (path, reason) => {
             log.error('server', `image cache: ${path}: ${reason}`);
+            void jobHistory.recordIssue({ jobRunId: jobId, path, reason }).catch(() => {});
           },
           onProgress: (phase, processed, total) => {
             jobs.reportProgress(jobId, phase, processed, total);
@@ -985,6 +1022,12 @@ const jobs = await createJobQueue({
           transcoder,
           onProblem: (what, reason) => {
             log.error('server', `artefact cache: ${what}: ${reason}`);
+
+            const jobRunId = jobIdInScope();
+
+            if (jobRunId !== null) {
+              void jobHistory.recordIssue({ jobRunId, path: what, reason }).catch(() => {});
+            }
           },
         });
 
@@ -1150,6 +1193,16 @@ const jobs = await createJobQueue({
 
         log.info('server', `logs: forgot ${forgotten.toString()} old records`);
       },
+      [PRUNE_JOB_HISTORY_JOB]: async () => {
+        await jobHistory.forgetExpired(Date.now());
+
+        log.info('server', 'job history: forgot runs older than 30 days');
+      },
+      [PRUNE_RESOURCE_HISTORY_JOB]: async () => {
+        await resourceHistory.forgetExpired(Date.now());
+
+        log.info('server', 'resource history: forgot samples older than 7 days');
+      },
       [DELIVER_WEBHOOK_JOB]: async (_jobId, payload) => {
         const parsed = DeliverWebhookJobSchema.safeParse(payload);
 
@@ -1190,7 +1243,31 @@ const jobs = await createJobQueue({
   onProblem: (message) => {
     log.error('jobs', `job queue: ${message}`);
   },
-  onFinished: announceFinishedJob,
+  onStarted: (entry) => {
+    void jobHistory
+      .recordStarted({ id: entry.jobId, kind: entry.kind, subject: entry.subject })
+      .catch(() => {});
+    realtime.publish('jobs', { event: 'started', ...entry }, { kind: 'everyone' });
+  },
+  onProgress: (entry) => {
+    void jobHistory
+      .recordProgress({
+        id: entry.jobId,
+        progress: { phase: entry.phase, processed: entry.processed, total: entry.total },
+      })
+      .catch(() => {});
+    realtime.publish('jobs', { event: 'progress', ...entry }, { kind: 'everyone' });
+  },
+  onFinished: (finished) => {
+    announceFinishedJob(finished);
+    void jobHistory
+      .recordFinished({
+        id: finished.jobId,
+        status: finished.reason === null ? 'completed' : 'failed',
+        errorMessage: finished.reason,
+      })
+      .catch(() => {});
+  },
 });
 
 const runLibraryWork = createLibraryWorkRunner({
@@ -1276,6 +1353,12 @@ const libraryService = createDatabaseLibraryService({
   certificationRegion: async () => (await settings.read()).certificationRegion,
   onProblem: (path, reason) => {
     log.warn('scanner', `skipped ${path}: ${reason}`);
+
+    const jobRunId = jobIdInScope();
+
+    if (jobRunId !== null) {
+      void jobHistory.recordIssue({ jobRunId, path, reason }).catch(() => {});
+    }
   },
   onArrived: (libraryId, item) => {
     remember(arrivals, libraryId, [item]);
@@ -1345,6 +1428,12 @@ const segmentProviders = [
     atOnce: env.MEDIA_JOBS,
     onProblem: (path, reason) => {
       log.warn('scanner', `segments ${path}: ${reason}`);
+
+      const jobRunId = jobIdInScope();
+
+      if (jobRunId !== null) {
+        void jobHistory.recordIssue({ jobRunId, path, reason }).catch(() => {});
+      }
     },
   }),
 ];
@@ -1353,6 +1442,12 @@ const images = createImageCache({
   directory: env.IMAGE_CACHE_DIR,
   onProblem: (url, reason) => {
     log.warn('scanner', `artwork ${url}: ${reason}`);
+
+    const jobRunId = jobIdInScope();
+
+    if (jobRunId !== null) {
+      void jobHistory.recordIssue({ jobRunId, path: url, reason }).catch(() => {});
+    }
   },
 });
 
@@ -1455,6 +1550,8 @@ const app = createApp({
   }),
   realtime,
   logs: logStore,
+  jobHistory,
+  resourceHistory,
   presence,
   countUsers,
   promoteToAdmin,
@@ -1816,13 +1913,53 @@ const askSomebodyToTheParty = async (
 
 const transcoderIntake = createTranscoderIntake(log);
 
+const RESOURCE_SAMPLE_INTERVAL_MS = 60_000;
+
+let lastSampledAtMs = 0;
+
+/**
+ * Records one resource sample for the load history, no more often than once a minute — the monitor
+ * relay reads roughly once a second, and keeping every reading for a week would be tens of millions
+ * of rows for a number nobody reads back that finely.
+ *
+ * @param reading - The monitor reading the sample is drawn from.
+ */
+const sampleResourcesThrottled = (reading: JsonValue): void => {
+  const parsed = MonitorResourceSampleSchema.safeParse(reading);
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const { resources } = parsed.data;
+
+  if (resources.atMs - lastSampledAtMs < RESOURCE_SAMPLE_INTERVAL_MS) {
+    return;
+  }
+
+  lastSampledAtMs = resources.atMs;
+
+  void resourceHistory
+    .record({
+      id: randomUUID(),
+      atMs: resources.atMs,
+      systemCpuPercent: resources.systemCpuPercent,
+      loadAverage: resources.loadAverage,
+      systemMemoryUsedBytes: resources.systemMemoryUsedBytes,
+      systemMemoryTotalBytes: resources.systemMemoryTotalBytes,
+      cpuCount: resources.cpuCount,
+    })
+    .catch(() => {});
+};
+
 void relayMonitor({
-  open: () => transcoder.openMonitorStream(),
+  open: () => transcoder.openMonitorSocket(),
   publish: (report) => {
     const reading = withApiMemory(report);
 
     realtime.publish('monitor', reading, { kind: 'everyone' });
     transcoderIntake.take(reading);
+    sampleResourcesThrottled(reading);
   },
   wait: (afterMs) => new Promise((resolve) => setTimeout(resolve, afterMs)),
   retryMs: MONITOR_RETRY_MS,

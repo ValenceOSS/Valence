@@ -5,6 +5,15 @@ import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import { JobRunRequestSchema } from '@ValenceServer/jobs/jobDefinitions';
 import { ScheduleTriggerSchema } from '@ValenceServer/jobs/scheduleTrigger';
 import { LogPageSchema, LogQuerySchema } from '@ValenceContracts/schemas/Log';
+import {
+  JobRunIssueSchema,
+  JobRunPageSchema,
+  JobRunStatusSchema,
+} from '@ValenceContracts/schemas/JobRun';
+import {
+  ResourceSampleHistorySchema,
+  ResourceSampleRangeSchema,
+} from '@ValenceContracts/schemas/ResourceSample';
 import { SessionMessageSchema } from '@ValenceContracts/schemas/SessionMessage';
 import { ScanAccepted } from './LibraryRoute';
 
@@ -541,6 +550,72 @@ const adminLogsRoute = createRoute({
   },
 });
 
+const adminJobHistoryRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/jobs/history',
+  tags: ['Admin'],
+  summary: 'Read the history of pg-boss job runs, filtered',
+  request: {
+    query: z.object({
+      kind: z.string().optional(),
+      status: JobRunStatusSchema.optional(),
+      search: z.string().optional(),
+      sinceMs: z.coerce.number().int().nonnegative().optional(),
+      limit: z.coerce.number().int().positive().max(1000).optional(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'The runs that matched, newest first',
+      content: { 'application/json': { schema: JobRunPageSchema } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
+const adminJobHistoryIssuesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/jobs/history/{jobRunId}/issues',
+  tags: ['Admin'],
+  summary: 'Read the per-item issues one job run accumulated',
+  request: {
+    params: z.object({ jobRunId: z.string().min(1) }),
+  },
+  responses: {
+    200: {
+      description: 'The issues that run recorded',
+      content: { 'application/json': { schema: z.array(JobRunIssueSchema) } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
+const adminMonitorHistoryRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/monitor/history',
+  tags: ['Admin'],
+  summary: 'Read a range of server load history',
+  request: {
+    query: z.object({ range: ResourceSampleRangeSchema.optional() }),
+  },
+  responses: {
+    200: {
+      description: 'The samples across that range, oldest first',
+      content: { 'application/json': { schema: ResourceSampleHistorySchema } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
 export {
   adminLogsRoute,
   searchCatalogueRoute,
@@ -558,4 +633,7 @@ export {
   adminJobSchedulesRoute,
   adminAddJobTriggerRoute,
   adminRemoveJobTriggerRoute,
+  adminJobHistoryRoute,
+  adminJobHistoryIssuesRoute,
+  adminMonitorHistoryRoute,
 };

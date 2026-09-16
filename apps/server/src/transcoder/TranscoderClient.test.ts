@@ -1,6 +1,68 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type * as Undici from 'undici';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { readSocketPath, createTranscoderClient } from './TranscoderClient';
+
+type FakeSocketEvent = { data?: string };
+
+type FakeSocketListener = (event: FakeSocketEvent) => void;
+
+const socketState = vi.hoisted(() => {
+  const made: {
+    url: string;
+    dispatcher: object | undefined;
+    fire: (type: string, event: FakeSocketEvent) => void;
+  }[] = [];
+
+  class FakeWebSocket {
+    private readonly listeners = new Map<string, FakeSocketListener[]>();
+
+    constructor(
+      public readonly url: string,
+      public readonly init?: { dispatcher?: object },
+    ) {
+      made.push({
+        url,
+        dispatcher: init?.dispatcher,
+        fire: (type, event) => {
+          this.fire(type, event);
+        },
+      });
+    }
+
+    addEventListener(type: string, listener: FakeSocketListener): void {
+      const list = this.listeners.get(type) ?? [];
+
+      list.push(listener);
+      this.listeners.set(type, list);
+    }
+
+    removeEventListener(type: string, listener: FakeSocketListener): void {
+      this.listeners.set(
+        type,
+        (this.listeners.get(type) ?? []).filter((one) => one !== listener),
+      );
+    }
+
+    close(): void {
+      this.fire('close', {});
+    }
+
+    private fire(type: string, event: FakeSocketEvent): void {
+      for (const listener of this.listeners.get(type) ?? []) {
+        listener(event);
+      }
+    }
+  }
+
+  return { FakeWebSocket, made };
+});
+
+vi.mock('undici', async () => {
+  const actual = await vi.importActual<typeof Undici>('undici');
+
+  return { ...actual, WebSocket: socketState.FakeWebSocket };
+});
 
 describe('readSocketPath', () => {
   it('reads a unix socket address', () => {
@@ -556,16 +618,81 @@ describe('reading a file the media service is still writing', () => {
 
     await expect(client().readFile('/media/Arrival.mkv', null)).resolves.toBeNull();
   });
+});
 
-  it('hands back the monitor stream while it is open', async () => {
-    streaming({});
-
-    await expect(client().openMonitorStream()).resolves.not.toBeNull();
+describe('the transcoder monitor socket', () => {
+  afterEach(() => {
+    socketState.made.length = 0;
   });
 
-  it('answers with nothing where the monitor stream cannot be opened', async () => {
-    streaming({ ok: false, status: 503 });
+  it('hands back the monitor socket once it opens', async () => {
+    const opening = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+    }).openMonitorSocket();
 
-    await expect(client().openMonitorStream()).resolves.toBeNull();
+    socketState.made[0]?.fire('open', {});
+
+    await expect(opening).resolves.not.toBeNull();
+  });
+
+  it('asks for the monitor socket at the ws origin, not http', () => {
+    void createTranscoderClient({ baseUrl: 'http://127.0.0.1:8477' }).openMonitorSocket();
+
+    expect(socketState.made[0]?.url).toBe('ws://127.0.0.1:8477/monitor/stream');
+  });
+
+  it('answers with nothing where the monitor socket cannot be opened', async () => {
+    const opening = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+    }).openMonitorSocket();
+
+    socketState.made[0]?.fire('error', {});
+
+    await expect(opening).resolves.toBeNull();
+  });
+
+  it('delivers each message the socket sends', async () => {
+    const opening = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+    }).openMonitorSocket();
+
+    socketState.made[0]?.fire('open', {});
+
+    const socket = await opening;
+    const received: string[] = [];
+
+    socket?.onMessage((payload) => {
+      received.push(payload);
+    });
+    socketState.made[0]?.fire('message', { data: '{"queued":1}' });
+
+    expect(received).toStrictEqual(['{"queued":1}']);
+  });
+
+  it('tells a caller once the socket closes', async () => {
+    const opening = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+    }).openMonitorSocket();
+
+    socketState.made[0]?.fire('open', {});
+
+    const socket = await opening;
+    let closed = false;
+
+    socket?.onClose(() => {
+      closed = true;
+    });
+    socketState.made[0]?.fire('close', {});
+
+    expect(closed).toBe(true);
+  });
+
+  it('opens the monitor socket over the socket dispatcher for a unix address', () => {
+    void createTranscoderClient({
+      baseUrl: 'unix:/run/valence-transcoder.sock',
+    }).openMonitorSocket();
+
+    expect(socketState.made[0]?.url).toBe('ws://transcoder.local/monitor/stream');
+    expect(socketState.made[0]?.dispatcher).toBeDefined();
   });
 });

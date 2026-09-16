@@ -83,7 +83,7 @@ pub struct TrickplayRequest {
     /// to. A player asking for its own thumbnails is nobody's, so this is
     /// absent rather than empty.
     #[serde(default)]
-    pub owner: Option<String>,
+    pub correlation_id: Option<String>,
 }
 
 /// What a caller that says nothing about waiting means.
@@ -102,7 +102,7 @@ impl Default for TrickplayRequest {
             rows: 10,
             hardware_accel: None,
             wait: true,
-            owner: None,
+            correlation_id: None,
         }
     }
 }
@@ -126,6 +126,31 @@ pub struct TrickplayIndex {
     /// False means rendering is under way and the caller should ask again
     /// later rather than fetch sheets that are not there.
     pub is_ready: bool,
+}
+
+/// A set of thumbnails, as a piece of work on [`crate::queue::WorkQueue`].
+pub struct TrickplayJob {
+    subject: String,
+}
+
+impl TrickplayJob {
+    /// A thumbnails job for the given subject, in a form a person recognises.
+    #[must_use]
+    pub fn new(subject: impl Into<String>) -> Self {
+        Self {
+            subject: subject.into(),
+        }
+    }
+}
+
+impl crate::queue::Job for TrickplayJob {
+    fn kind(&self) -> &'static str {
+        "thumbnails"
+    }
+
+    fn subject(&self) -> String {
+        self.subject.clone()
+    }
 }
 
 /// Why thumbnails could not be made.
@@ -654,7 +679,16 @@ async fn forget_thumbnails(directory: &Path) {
             .to_string_lossy()
             .starts_with(THUMBNAIL_PREFIX)
         {
-            let _ = tokio::fs::remove_file(entry.path()).await;
+            let path = entry.path();
+
+            if let Err(error) = tokio::fs::remove_file(&path).await {
+                tracing::warn!(
+                    target: "trickplay",
+                    %error,
+                    path = %path.display(),
+                    "could not clear a gathered thumbnail"
+                );
+            }
         }
     }
 }
@@ -896,7 +930,14 @@ pub async fn generate(
     let sheets = match drawn {
         Ok(sheets) => sheets,
         Err(failure) => {
-            let _ = tokio::fs::remove_dir_all(&directory).await;
+            if let Err(error) = tokio::fs::remove_dir_all(&directory).await {
+                tracing::warn!(
+                    target: "trickplay",
+                    %error,
+                    subject = %id,
+                    "could not clear a failed trickplay attempt"
+                );
+            }
 
             return Err(failure);
         }
@@ -1031,7 +1072,7 @@ otherwise start a second one"
             rows: 2,
             hardware_accel: None,
             wait: true,
-            owner: None,
+            correlation_id: None,
         }
     }
 

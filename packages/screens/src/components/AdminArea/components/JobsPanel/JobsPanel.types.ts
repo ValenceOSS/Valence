@@ -22,6 +22,7 @@ type JobsPanelProps = {
   onCloseSchedule: () => void;
   onAddTrigger: (kind: string, trigger: ScheduleTrigger) => void;
   onRemoveTrigger: (kind: string, triggerId: string) => void;
+  onViewLogs: (jobId: string) => void;
 };
 
 export type { JobsPanelProps };

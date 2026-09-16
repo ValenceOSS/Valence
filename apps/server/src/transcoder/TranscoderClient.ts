@@ -1,5 +1,5 @@
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
-import { Agent, fetch as undiciFetch } from 'undici';
+import { Agent, fetch as undiciFetch, WebSocket as UndiciWebSocket } from 'undici';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
@@ -204,7 +204,7 @@ type FingerprintRequest = {
   inputPath: string;
   startSeconds: number;
   durationSeconds: number;
-  owner?: string;
+  correlationId?: string;
 };
 type TrickplayIndex = z.infer<typeof TrickplayIndexSchema>;
 
@@ -217,7 +217,7 @@ type TrickplayRequest = {
   rows: number;
   wait?: boolean;
   hardwareAccel?: string;
-  owner?: string;
+  correlationId?: string;
 };
 type SessionResponse = z.infer<typeof SessionResponseSchema>;
 type TranscoderCapabilities = z.infer<typeof CapabilitiesSchema>;
@@ -263,7 +263,7 @@ type Transcoder = {
   fingerprint: (request: FingerprintRequest) => Promise<Fingerprint>;
   readSubtitle: (request: { inputPath: string; streamIndex: number }) => Promise<string>;
   readMonitor: () => Promise<JsonValue>;
-  openMonitorStream: () => Promise<ReadableStream<Uint8Array> | null>;
+  openMonitorSocket: () => Promise<TranscoderSocket | null>;
   readFrame: (request: {
     inputPath: string;
     atSeconds: number;
@@ -276,7 +276,7 @@ type Transcoder = {
     wait?: boolean;
     audioStreamIndex?: number;
     hardwareAccel?: string;
-    owner?: string;
+    correlationId?: string;
   }) => Promise<{ id: string; url: string; isReady: boolean }>;
   readPreviewFile: (
     id: string,
@@ -319,6 +319,12 @@ type TranscoderStreamedFile = {
   status: number;
   contentRange: string | null;
   contentLength: string | null;
+};
+
+type TranscoderSocket = {
+  onMessage: (handler: (payload: string) => void) => void;
+  onClose: (handler: () => void) => void;
+  close: () => void;
 };
 
 type StreamFetchLike = (url: string, init?: HttpRequestInit) => Promise<StreamedResponse>;
@@ -419,6 +425,8 @@ const createTranscoderClient = ({
 }: CreateTranscoderClientOptions): Transcoder => {
   const socketPath = readSocketPath(baseUrl);
   const origin = socketPath === null ? baseUrl : 'http://transcoder.local';
+  const wsOrigin = origin.replace(/^http/, 'ws');
+  const wsDispatcher = socketPath === null ? undefined : new Agent({ connect: { socketPath } });
   const call2 = fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath));
 
   const callSlowly =
@@ -434,6 +442,62 @@ const createTranscoderClient = ({
   };
 
   const streamFrom = streamFetchImpl ?? createStreamFetch(socketPath);
+
+  /**
+   * Wraps an open WebSocket so callers see only what the monitor relay needs, never the raw socket.
+   */
+  const wrapSocket = (socket: UndiciWebSocket): TranscoderSocket => ({
+    onMessage: (handler) => {
+      socket.addEventListener('message', (event) => {
+        if (typeof event.data === 'string') {
+          handler(event.data);
+        }
+      });
+    },
+    onClose: (handler) => {
+      socket.addEventListener('close', () => {
+        handler();
+      });
+    },
+    close: () => {
+      socket.close();
+    },
+  });
+
+  /**
+   * Opens the transcoder's monitor feed as a WebSocket, resolving once the connection is confirmed
+   * either way rather than leaving a caller waiting on a socket that will never open.
+   */
+  const openSocket = (): Promise<TranscoderSocket | null> =>
+    new Promise((resolve) => {
+      let socket: UndiciWebSocket;
+
+      try {
+        socket = new UndiciWebSocket(
+          `${wsOrigin}/monitor/stream`,
+          wsDispatcher === undefined ? undefined : { dispatcher: wsDispatcher },
+        );
+      } catch {
+        resolve(null);
+
+        return;
+      }
+
+      const onOpen = () => {
+        socket.removeEventListener('open', onOpen);
+        socket.removeEventListener('error', onError);
+        resolve(wrapSocket(socket));
+      };
+
+      const onError = () => {
+        socket.removeEventListener('open', onOpen);
+        socket.removeEventListener('error', onError);
+        resolve(null);
+      };
+
+      socket.addEventListener('open', onOpen);
+      socket.addEventListener('error', onError);
+    });
 
   /**
    * Opens a file on the media service and hands back the body still arriving.
@@ -576,11 +640,7 @@ const createTranscoderClient = ({
 
     readMonitor: async () => (await call('/monitor')).json(),
 
-    openMonitorStream: async () => {
-      const response = await streamFrom(`${origin}/monitor/stream`).catch(() => null);
-
-      return response === null || !response.ok ? null : response.body;
-    },
+    openMonitorSocket: () => openSocket(),
 
     readSubtitle: async (request) =>
       SubtitleTrackSchema.parse(await (await postJson('/subtitles', request)).json()).content,
@@ -660,6 +720,7 @@ export type {
   PreviewSweepSubject,
   SweepReport,
   CacheUse,
+  TranscoderSocket,
 };
 
 export { createTranscoderClient, readSocketPath, TranscoderError, MediaProbeSchema };

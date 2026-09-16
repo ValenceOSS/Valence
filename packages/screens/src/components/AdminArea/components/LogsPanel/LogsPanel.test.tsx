@@ -245,6 +245,80 @@ describe('LogsPanel', () => {
       expect(world.asked.length).toBeGreaterThan(before);
     });
   });
+
+  it('narrows to the levels chosen, rather than asking for everything always', async () => {
+    const actor = userEvent.setup();
+    const world = build();
+
+    render(<LogsPanel {...world.props} />);
+    await screen.findByText('could not read the file');
+
+    await actor.click(screen.getByRole('button', { name: 'debug' }));
+
+    await waitFor(() => {
+      expect(world.asked.at(-1)?.levels).not.toContain('debug');
+    });
+  });
+
+  it('filters to a job from the moment it opens, when told to', async () => {
+    const world = build();
+
+    render(<LogsPanel {...world.props} initialJobId="job-9" />);
+
+    await waitFor(() => {
+      expect(world.asked[0]?.jobId).toBe('job-9');
+    });
+
+    expect(screen.getByText(/Job: job-9/)).toBeInTheDocument();
+  });
+
+  it('says once the initial job filter has been picked up', async () => {
+    const onInitialJobIdConsumed = vi.fn();
+    const world = build();
+
+    render(
+      <LogsPanel
+        {...world.props}
+        initialJobId="job-9"
+        onInitialJobIdConsumed={onInitialJobIdConsumed}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(onInitialJobIdConsumed).toHaveBeenCalled();
+    });
+  });
+
+  it('clears the job filter when its chip is dismissed', async () => {
+    const actor = userEvent.setup();
+    const world = build();
+
+    render(<LogsPanel {...world.props} initialJobId="job-9" />);
+    await screen.findByText(/Job: job-9/);
+
+    await actor.click(screen.getByRole('button', { name: 'Clear the job filter' }));
+
+    expect(screen.queryByText(/Job: job-9/)).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(world.asked.at(-1)?.jobId).toBeNull();
+    });
+  });
+
+  it('filters to a job chosen from a record’s own context', async () => {
+    const actor = userEvent.setup();
+    const world = build([aRecord({ context: { ...aRecord().context, jobId: 'job-1' } })]);
+
+    render(<LogsPanel {...world.props} />);
+    await actor.click(await screen.findByText('could not read the file'));
+    await actor.click(await screen.findByRole('button', { name: 'job-1' }));
+
+    expect(screen.getByText(/Job: job-1/)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(world.asked.at(-1)?.jobId).toBe('job-1');
+    });
+  });
 });
 
 vi.mock('@ValenceClient/realtime/getRealtimeClient', () => ({

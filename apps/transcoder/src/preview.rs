@@ -22,7 +22,6 @@ use crate::capability::Capabilities;
 use crate::chains::{runs_here, ChainShape};
 use crate::integrity::decodes;
 use crate::media::VideoRange;
-use crate::monitor::{record, LogLevel};
 use crate::render_registry::RenderRegistry;
 use crate::steps_aside::steps_aside;
 use crate::transcode_plan::{
@@ -217,7 +216,7 @@ pub struct PreviewRequest {
     /// to. A player asking for its own thumbnails is nobody's, so this is
     /// absent rather than empty.
     #[serde(default)]
-    pub owner: Option<String>,
+    pub correlation_id: Option<String>,
 }
 
 const fn default_seconds() -> u32 {
@@ -232,6 +231,31 @@ pub struct PreviewClip {
     /// Path the player fetches the clip from.
     pub url: String,
     pub is_ready: bool,
+}
+
+/// A preview clip, as a piece of work on [`crate::queue::WorkQueue`].
+pub struct PreviewJob {
+    subject: String,
+}
+
+impl PreviewJob {
+    /// A preview job for the given subject, in a form a person recognises.
+    #[must_use]
+    pub fn new(subject: impl Into<String>) -> Self {
+        Self {
+            subject: subject.into(),
+        }
+    }
+}
+
+impl crate::queue::Job for PreviewJob {
+    fn kind(&self) -> &'static str {
+        "preview"
+    }
+
+    fn subject(&self) -> String {
+        self.subject.clone()
+    }
 }
 
 /// Why a preview could not be made.
@@ -697,13 +721,11 @@ pub async fn generate(
             return Err(failure);
         }
 
-        record(
-            LogLevel::Warn,
-            "preview",
-            &format!(
-                "hardware encode of {} failed, retrying in software: {failure}",
-                request.input_path
-            ),
+        tracing::warn!(
+            target: "preview",
+            job_id = request.correlation_id.as_deref(),
+            "hardware encode of {} failed, retrying in software: {failure}",
+            request.input_path
         );
 
         chosen = PreviewEncoder::Software;
@@ -824,7 +846,7 @@ mod tests {
             hardware_accel: None,
             wait: false,
             audio_stream_index: None,
-            owner: None,
+            correlation_id: None,
         }
     }
 

@@ -10,6 +10,7 @@ type DataTableProps<Row extends RowData> = {
   rows: Row[];
   emptyMessage?: string;
   onChooseRow?: (row: Row) => void;
+  getRowId?: (row: Row) => string;
   toolbar?: ReactNode;
   pageSize?: number;
   growsOnScroll?: boolean;

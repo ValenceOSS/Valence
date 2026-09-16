@@ -1,9 +1,9 @@
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
-import { readEventStream } from './readEventStream';
+import type { TranscoderSocket } from '@ValenceServer/transcoder/TranscoderClient';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 type RelayMonitorOptions = {
-  open: () => Promise<ReadableStream<Uint8Array> | null>;
+  open: () => Promise<TranscoderSocket | null>;
   publish: (report: JsonValue) => void;
   wait: (afterMs: number) => Promise<void>;
   retryMs: number;
@@ -23,9 +23,9 @@ const readReport = (payload: string): JsonValue | null => {
  *
  * One connection to the transcoder serves every administrator watching, rather than one each. A dead
  * or wedged transcoder is exactly when an operator is looking at this page, so the relay treats the
- * stream ending as ordinary and waits before trying again instead of giving up on the first failure.
+ * socket closing as ordinary and waits before trying again instead of giving up on the first failure.
  *
- * @param open - How the transcoder's stream is opened.
+ * @param open - How the transcoder's socket is opened.
  * @param publish - Where a parsed report goes.
  * @param wait - How to pause before reopening.
  * @param retryMs - How long to pause.
@@ -40,21 +40,27 @@ const relayMonitor = async ({
 }: RelayMonitorOptions): Promise<void> => {
   while (keepGoing()) {
     try {
-      const stream = await open();
+      const socket = await open();
 
-      if (stream === null) {
+      if (socket === null) {
         await wait(retryMs);
 
         continue;
       }
 
-      for await (const payload of readEventStream(stream)) {
-        const report = readReport(payload);
+      await new Promise<void>((resolve) => {
+        socket.onMessage((payload) => {
+          const report = readReport(payload);
 
-        if (report !== null) {
-          publish(report);
-        }
-      }
+          if (report !== null) {
+            publish(report);
+          }
+        });
+
+        socket.onClose(() => {
+          resolve();
+        });
+      });
     } catch {
       publish({ reachable: false });
     }

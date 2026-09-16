@@ -10,8 +10,12 @@ const admin = vi.hoisted(() => ({
   fetchMonitor: vi.fn(),
   fetchActiveSessions: vi.fn(),
   fetchJobDefinitions: vi.fn(),
+  fetchJobHistory: vi.fn(),
+  fetchJobHistoryIssues: vi.fn(),
   fetchJobSchedules: vi.fn(),
 }));
+
+const fetchResourceHistory = vi.hoisted(() => vi.fn());
 
 const roles = vi.hoisted(() => ({
   fetchRoles: vi.fn(),
@@ -26,6 +30,7 @@ const readWholeLibrary = vi.hoisted(() => vi.fn());
 const fetchEverybodysShares = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/admin/fetchAdmin', () => admin);
+vi.mock('@ValenceClient/admin/fetchResourceHistory', () => ({ fetchResourceHistory }));
 vi.mock('@ValenceClient/admin/fetchRoles', () => roles);
 vi.mock('@ValenceClient/admin/fetchWebhooks', () => webhooks);
 vi.mock('@ValenceClient/admin/fetchAccounts', () => ({ fetchAccounts }));
@@ -47,10 +52,14 @@ beforeEach(() => {
     fetchMonitor: { resources: {} },
     fetchActiveSessions: [],
     fetchJobDefinitions: [],
+    fetchJobHistory: { records: [], total: 0 },
+    fetchJobHistoryIssues: [],
     fetchJobSchedules: [],
   })) {
     Object.assign(admin, { [name]: answered(said) });
   }
+
+  fetchResourceHistory.mockResolvedValue([]);
 
   Object.assign(roles, {
     fetchRoles: answered([]),
@@ -106,6 +115,27 @@ describe('adminQueries', () => {
     expect(adminQueries.accountPermissions(null).enabled).toBe(false);
     expect(adminQueries.deliveries(null).enabled).toBe(false);
     expect(adminQueries.everything([]).enabled).toBe(false);
+    expect(adminQueries.jobHistoryIssues(null).enabled).toBe(false);
+  });
+
+  it('reads the persisted history of job runs, filtered', async () => {
+    await expect(
+      aCache().fetchQuery(adminQueries.jobHistory({ search: 'preview' })),
+    ).resolves.toEqual({ records: [], total: 0 });
+
+    expect(admin.fetchJobHistory).toHaveBeenCalledWith({ search: 'preview' });
+  });
+
+  it('reads the issues one job run accumulated, once asked for', async () => {
+    await expect(aCache().fetchQuery(adminQueries.jobHistoryIssues('run-1'))).resolves.toEqual([]);
+
+    expect(admin.fetchJobHistoryIssues).toHaveBeenCalledWith('run-1');
+  });
+
+  it('reads a range of the server load history', async () => {
+    await expect(aCache().fetchQuery(adminQueries.resourceHistory('24h'))).resolves.toEqual([]);
+
+    expect(fetchResourceHistory).toHaveBeenCalledWith('24h');
   });
 
   it('reads what one account may do, and how one webhook has been getting on', async () => {

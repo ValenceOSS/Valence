@@ -15,6 +15,8 @@ import {
   SEND_MEDIA_DIGEST_JOB,
   PRUNE_WEBHOOK_DELIVERIES_JOB,
   PRUNE_LOGS_JOB,
+  PRUNE_JOB_HISTORY_JOB,
+  PRUNE_RESOURCE_HISTORY_JOB,
   scheduleTriggerKind,
 } from './JobQueue';
 import type { ScheduleTrigger } from './scheduleTrigger';
@@ -172,6 +174,23 @@ const JOB_DEFINITIONS: JobDefinition[] = [
     destructive: false,
     announcesFinish: false,
   },
+  {
+    kind: PRUNE_JOB_HISTORY_JOB,
+    label: 'Prune old job history',
+    description:
+      'Forgets job runs older than thirty days, and the per-item issues recorded against them.',
+    needsLibrary: false,
+    destructive: false,
+    announcesFinish: false,
+  },
+  {
+    kind: PRUNE_RESOURCE_HISTORY_JOB,
+    label: 'Prune old server load history',
+    description: 'Forgets server load samples older than a week.',
+    needsLibrary: false,
+    destructive: false,
+    announcesFinish: false,
+  },
 ];
 
 const DEFAULT_JOB_TRIGGERS: Record<string, ScheduleTrigger[]> = {
@@ -183,6 +202,8 @@ const DEFAULT_JOB_TRIGGERS: Record<string, ScheduleTrigger[]> = {
   [CLEANUP_SESSIONS_JOB]: [{ kind: 'daily', hour: 5, minute: 30 }],
   [PRUNE_WEBHOOK_DELIVERIES_JOB]: [{ kind: 'daily', hour: 5, minute: 45 }],
   [PRUNE_LOGS_JOB]: [{ kind: 'daily', hour: 5, minute: 55 }],
+  [PRUNE_JOB_HISTORY_JOB]: [{ kind: 'daily', hour: 6, minute: 5 }],
+  [PRUNE_RESOURCE_HISTORY_JOB]: [{ kind: 'daily', hour: 6, minute: 10 }],
   [CLEANUP_IMAGE_CACHE_JOB]: [{ kind: 'weekly', dayOfWeek: 0, hour: 6, minute: 0 }],
   [CLEANUP_ARTEFACT_CACHE_JOB]: [{ kind: 'weekly', dayOfWeek: 0, hour: 6, minute: 30 }],
 };

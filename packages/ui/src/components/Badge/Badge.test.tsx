@@ -56,4 +56,11 @@ describe('Badge', () => {
 
     expect(badgeOf('Software only')).toHaveClass('border-highlight/50');
   });
+
+  it('paints a good outcome in its own colour rather than borrowing the one for attention', () => {
+    render(<Badge tone="success">Finished</Badge>);
+
+    expect(badgeOf('Finished')).toHaveClass('border-success/35');
+    expect(badgeOf('Finished')).not.toHaveClass('border-accent/40');
+  });
 });

@@ -20,22 +20,27 @@ vi.mock('undici', async () => {
       }
     },
     fetch: () => Promise.resolve({ ok: true, body: null }),
+    WebSocket: class {
+      addEventListener(): void {}
+      removeEventListener(): void {}
+      close(): void {}
+    },
   };
 });
 
 const { createTranscoderClient } = await import('./TranscoderClient');
 
-const AGENTS_PER_CLIENT = 3;
+const AGENTS_PER_CLIENT = 4;
 
 describe('the connection pool', () => {
-  it('is made once for a client, not once per stream opened', async () => {
+  it('is made once for a client, not once per stream opened', () => {
     agentsMade.count = 0;
 
     const client = createTranscoderClient({ baseUrl: 'unix:/tmp/valence-test.sock' });
 
-    await client.openMonitorStream();
-    await client.openMonitorStream();
-    await client.openMonitorStream();
+    void client.openMonitorSocket();
+    void client.openMonitorSocket();
+    void client.openMonitorSocket();
 
     expect(agentsMade.count).toBeLessThanOrEqual(AGENTS_PER_CLIENT);
   });

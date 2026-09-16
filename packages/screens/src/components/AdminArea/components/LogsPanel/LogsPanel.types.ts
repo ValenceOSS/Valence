@@ -6,6 +6,8 @@ type LogsPanelProps = {
   watch?: (onRecord: (record: LogRecord) => void) => () => void;
   copy?: (text: string) => Promise<void>;
   download?: (name: string, text: string) => void;
+  initialJobId?: string | null;
+  onInitialJobIdConsumed?: () => void;
 };
 
 export type { LogsPanelProps };

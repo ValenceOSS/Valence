@@ -6,6 +6,7 @@ import {
   fetchAdminOverview,
   fetchMonitor,
   watchMonitor,
+  watchJobs,
   messageSession,
   saveCatalogueKey,
   fetchActiveSessions,
@@ -613,6 +614,108 @@ describe('watchMonitor', () => {
     const fake = createFakeClient();
 
     const stop = watchMonitor(vi.fn(), fake.client);
+
+    stop();
+
+    expect(fake.watching()).toStrictEqual([]);
+  });
+});
+
+describe('watchJobs', () => {
+  const createFakeClient = () => {
+    const listeners = new Map<RealtimeTopic, (event: RealtimeEvent) => void>();
+
+    const client: RealtimeClient = {
+      start: () => {},
+      stop: () => {},
+      subscribe: (topic, listen) => {
+        listeners.set(topic, listen);
+
+        return () => {
+          listeners.delete(topic);
+        };
+      },
+      identify: () => {},
+      onResumed: () => () => {},
+      isLive: () => true,
+      connectionId: () => null,
+      sendParty: () => {},
+      askClock: () => {},
+      onClockTell: () => () => {},
+      onRefused: () => () => {},
+      onNeedsPassword: () => () => {},
+    };
+
+    return {
+      client,
+      watching: () => [...listeners.keys()],
+      arrive: (payload: JsonValue) => {
+        listeners.get('jobs')?.({ kind: 'event', topic: 'jobs', atMs: 1, folded: 0, payload });
+      },
+    };
+  };
+
+  it('listens on the one connection rather than opening a stream of its own', () => {
+    const fake = createFakeClient();
+
+    watchJobs(vi.fn(), fake.client);
+
+    expect(fake.watching()).toStrictEqual(['jobs']);
+  });
+
+  it('reports a job starting', () => {
+    const fake = createFakeClient();
+    const onEvent = vi.fn();
+
+    watchJobs(onEvent, fake.client);
+    fake.arrive({
+      event: 'started',
+      kind: 'library.regeneratePreviews',
+      jobId: 'job-1',
+      subject: 'films',
+    });
+
+    expect(onEvent).toHaveBeenCalledWith({
+      event: 'started',
+      kind: 'library.regeneratePreviews',
+      jobId: 'job-1',
+      subject: 'films',
+    });
+  });
+
+  it('reports a job finishing', () => {
+    const fake = createFakeClient();
+    const onEvent = vi.fn();
+
+    watchJobs(onEvent, fake.client);
+    fake.arrive({
+      event: 'completed',
+      kind: 'library.regeneratePreviews',
+      label: 'Generate missing previews',
+      jobId: 'job-1',
+      subject: 'films',
+      subjectName: 'Films',
+    });
+
+    expect(onEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'completed', jobId: 'job-1' }),
+    );
+  });
+
+  it('ignores an event it cannot read, rather than throwing', () => {
+    const fake = createFakeClient();
+    const onEvent = vi.fn();
+
+    watchJobs(onEvent, fake.client);
+    fake.arrive({ event: 'something-else' });
+
+    expect(onEvent).not.toHaveBeenCalled();
+  });
+
+  it('stops watching when it is told to', () => {
+    const fake = createFakeClient();
+
+    const stop = watchJobs(vi.fn(), fake.client);
 
     stop();
 

@@ -11,7 +11,8 @@ const job = (overrides: Partial<Job> = {}): Job => ({
   queuedAtMs: 0,
   startedAtMs: 0,
   finishedAtMs: null,
-  detail: null,
+  correlationId: null,
+  failure: null,
   ...overrides,
 });
 
@@ -69,11 +70,39 @@ describe('BackgroundJobs', () => {
     render(<BackgroundJobs monitor={monitor([])} />);
 
     expect(screen.queryByText('Ted S01E01.mkv')).not.toBeInTheDocument();
+    expect(screen.getByText('Nothing queued.')).toBeInTheDocument();
+  });
+
+  it('says it is still reading before the first reading arrives, not confirmed empty', () => {
+    render(<BackgroundJobs monitor={null} />);
+
+    expect(screen.getByText('Reading the queue…')).toBeInTheDocument();
+    expect(screen.queryByText('Nothing queued.')).not.toBeInTheDocument();
   });
 
   it('tells an operator when the reading could not be had at all', () => {
     render(<BackgroundJobs monitor={null} isUnreachable />);
 
     expect(screen.queryByText('Comparing episode audio')).not.toBeInTheDocument();
+    expect(screen.getByText('The queue could not be read from the server.')).toBeInTheDocument();
+    expect(screen.queryByText('Reading the queue…')).not.toBeInTheDocument();
+  });
+
+  it('paints each state in the colour that state means, not one borrowed from another', () => {
+    render(
+      <BackgroundJobs
+        monitor={monitor([
+          job({ id: 1, state: 'queued', startedAtMs: null, finishedAtMs: null }),
+          job({ id: 2, state: 'running', startedAtMs: 0, finishedAtMs: null }),
+          job({ id: 3, state: 'finished', startedAtMs: 0, finishedAtMs: 1_000 }),
+          job({ id: 4, state: 'failed', startedAtMs: 0, finishedAtMs: 2_000 }),
+        ])}
+      />,
+    );
+
+    expect(screen.getByText('queued')).toHaveClass('border-highlight/50');
+    expect(screen.getAllByText('running')[0]).toHaveClass('border-accent/40');
+    expect(screen.getByText('finished')).toHaveClass('border-success/35');
+    expect(screen.getByText('failed')).toHaveClass('border-danger/50');
   });
 });

@@ -10,7 +10,7 @@ type GroupedCandidate = SegmentCandidate & {
 
 type DetectLibrarySegmentsOptions = {
   libraryId: string;
-  owner?: string;
+  correlationId?: string;
   providers: SegmentProvider[];
   segments: SegmentService;
   listCandidates: (libraryId: string) => Promise<GroupedCandidate[]>;
@@ -54,7 +54,7 @@ const groupBySeason = (candidates: GroupedCandidate[]): Map<string, GroupedCandi
  */
 const detectLibrarySegments = async ({
   libraryId,
-  owner,
+  correlationId,
   providers,
   segments,
   listCandidates,
@@ -87,7 +87,7 @@ const detectLibrarySegments = async ({
         processed += 1;
         onProgress?.(Math.min(processed, baseline + group.length), total);
       },
-      owner,
+      correlationId,
     );
 
     for (const [mediaId, detected] of found) {

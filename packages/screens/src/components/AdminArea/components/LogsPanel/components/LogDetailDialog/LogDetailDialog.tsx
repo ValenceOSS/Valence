@@ -5,11 +5,12 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Button } from '@ValenceUI/Button';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
+import type { ReactNode } from 'react';
 import type { LogDetailDialogProps } from './LogDetailDialog.types';
 
 type RowProps = {
   name: string;
-  children: string;
+  children: ReactNode;
 };
 
 /**
@@ -38,9 +39,10 @@ Row.displayName = 'Row';
  * @param record - The record being read, or null when none is.
  * @param isOpen - Whether the dialog is showing.
  * @param onClose - Called when it is dismissed.
+ * @param onOpenJob - Called with a job's id when its context field is chosen, rather than only read.
  * @returns The dialog.
  */
-const LogDetailDialog = ({ record, isOpen, onClose }: LogDetailDialogProps) => {
+const LogDetailDialog = ({ record, isOpen, onClose, onOpenJob }: LogDetailDialogProps) => {
   const said =
     record === null
       ? []
@@ -68,7 +70,20 @@ const LogDetailDialog = ({ record, isOpen, onClose }: LogDetailDialogProps) => {
 
               {said.map(([name, value]) => (
                 <Row key={name} name={name}>
-                  {value}
+                  {name === 'jobId' && onOpenJob !== undefined ? (
+                    <Button
+                      variant="link"
+                      size="none"
+                      hasTooltip={false}
+                      onClick={() => {
+                        onOpenJob(value);
+                      }}
+                    >
+                      {value}
+                    </Button>
+                  ) : (
+                    value
+                  )}
                 </Row>
               ))}
             </dl>

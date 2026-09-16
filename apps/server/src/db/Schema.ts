@@ -490,6 +490,53 @@ const logRecord = pgTable(
   ],
 );
 
+const jobRun = pgTable(
+  'job_run',
+  {
+    id: text('id').primaryKey(),
+    kind: text('kind').notNull(),
+    status: text('status').notNull(),
+    subject: text('subject'),
+    startedAt: timestamp('startedAt'),
+    finishedAt: timestamp('finishedAt'),
+    progress: jsonb('progress'),
+    errorMessage: text('errorMessage'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  },
+  (table) => [
+    index('job_run_kind_idx').on(table.kind, table.createdAt),
+    index('job_run_status_idx').on(table.status, table.createdAt),
+  ],
+);
+
+const jobRunIssue = pgTable(
+  'job_run_issue',
+  {
+    id: text('id').primaryKey(),
+    jobRunId: text('jobRunId')
+      .notNull()
+      .references(() => jobRun.id, { onDelete: 'cascade' }),
+    path: text('path').notNull(),
+    reason: text('reason').notNull(),
+    atMs: bigint('atMs', { mode: 'number' }).notNull(),
+  },
+  (table) => [index('job_run_issue_run_idx').on(table.jobRunId)],
+);
+
+const resourceSample = pgTable(
+  'resource_sample',
+  {
+    id: text('id').primaryKey(),
+    atMs: bigint('atMs', { mode: 'number' }).notNull(),
+    systemCpuPercent: real('systemCpuPercent').notNull(),
+    loadAverage: real('loadAverage').notNull(),
+    systemMemoryUsedBytes: bigint('systemMemoryUsedBytes', { mode: 'number' }).notNull(),
+    systemMemoryTotalBytes: bigint('systemMemoryTotalBytes', { mode: 'number' }).notNull(),
+    cpuCount: integer('cpuCount').notNull(),
+  },
+  (table) => [index('resource_sample_at_idx').on(table.atMs)],
+);
+
 const shareVisit = pgTable(
   'share_visit',
   {
@@ -942,6 +989,9 @@ export {
   share,
   shareVisit,
   logRecord,
+  jobRun,
+  jobRunIssue,
+  resourceSample,
   rating,
   hidden,
   libraryBlock,

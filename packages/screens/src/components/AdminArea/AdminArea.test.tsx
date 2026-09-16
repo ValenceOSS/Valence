@@ -92,7 +92,8 @@ const MONITOR: Monitor = {
         queuedAtMs: 0,
         startedAtMs: 0,
         finishedAtMs: null,
-        detail: null,
+        correlationId: null,
+        failure: null,
       },
       {
         id: 2,
@@ -102,7 +103,8 @@ const MONITOR: Monitor = {
         queuedAtMs: 0,
         startedAtMs: 0,
         finishedAtMs: 900,
-        detail: 'no such encoder',
+        correlationId: null,
+        failure: { message: 'no such encoder', chain: [] },
       },
     ],
   },
@@ -256,6 +258,17 @@ const respondWith =
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ schedules: [] }),
+      });
+    }
+
+    if (input.includes('/api/admin/jobs/history/')) {
+      return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+    }
+
+    if (input.includes('/api/admin/jobs/history')) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ records: [], total: 0 }),
       });
     }
 
@@ -521,13 +534,13 @@ describe('AdminArea', () => {
   it('opens on the overview when the address names no panel', async () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(await screen.findByText('Load, last minute')).toBeInTheDocument();
+    expect(await screen.findByText('Load')).toBeInTheDocument();
   });
 
   it('falls back to the overview when the address names one it does not have', async () => {
     renderInAnAddress(<TheAdmin panel="not-a-real-panel" />);
 
-    expect(await screen.findByText('Load, last minute')).toBeInTheDocument();
+    expect(await screen.findByText('Load')).toBeInTheDocument();
   });
 
   it('tells the address when the panel changes, so a reload can return to it', async () => {

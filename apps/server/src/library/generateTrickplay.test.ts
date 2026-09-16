@@ -44,7 +44,7 @@ const stubTranscoder = (requestTrickplay: Transcoder['requestTrickplay']): Trans
   requestPreview: () => Promise.reject(new Error('not used')),
   readPreviewFile: () => Promise.resolve(null),
   readMonitor: () => Promise.resolve({}),
-  openMonitorStream: () => Promise.resolve(null),
+  openMonitorSocket: () => Promise.resolve(null),
   capabilities: () =>
     Promise.resolve({
       ffmpegVersion: 'test',
@@ -398,13 +398,13 @@ describe('generateTrickplay', () => {
     await generateTrickplay({
       libraryId: LIBRARY_ID,
       generation: 0,
-      owner: 'scan-42',
+      correlationId: 'scan-42',
       store,
       transcoder,
       trickplay: PARAMS,
     });
 
-    expect(trickplayRequests.every((request) => request.owner === 'scan-42')).toBe(true);
+    expect(trickplayRequests.every((request) => request.correlationId === 'scan-42')).toBe(true);
   });
 
   it('asks for nobody where no job asked, which is a player fetching its own', async () => {
@@ -418,7 +418,7 @@ describe('generateTrickplay', () => {
       trickplay: PARAMS,
     });
 
-    expect(trickplayRequests.every((request) => request.owner === undefined)).toBe(true);
+    expect(trickplayRequests.every((request) => request.correlationId === undefined)).toBe(true);
   });
   it('draws on the backend the operator chose, which the sheets used to ignore', async () => {
     const asked: { hardwareAccel?: string }[] = [];

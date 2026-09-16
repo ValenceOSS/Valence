@@ -6,6 +6,7 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { JobRunner } from '@ValenceScreens/components/AdminArea/components/JobRunner/JobRunner';
+import { JobHistory } from '@ValenceScreens/components/AdminArea/components/JobsPanel/components/JobHistory/JobHistory';
 import { JobSchedulePage } from '@ValenceScreens/components/AdminArea/components/JobSchedulePage/JobSchedulePage';
 import type { JobsPanelProps } from './JobsPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
@@ -28,6 +29,7 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
  * @param onCloseSchedule - Called on going back to the list.
  * @param onAddTrigger - Called with a job and a trigger to add to it.
  * @param onRemoveTrigger - Called with a job and the trigger to remove from it.
+ * @param onViewLogs - Called with a job run's id, to open the log filtered to it.
  */
 const JobsPanel = ({
   isUnreachable = false,
@@ -44,6 +46,7 @@ const JobsPanel = ({
   onCloseSchedule,
   onAddTrigger,
   onRemoveTrigger,
+  onViewLogs,
 }: JobsPanelProps) => {
   const working = useMemo(() => monitor?.queue.jobs ?? [], [monitor]);
   const failures = (monitor?.queue.jobs ?? []).filter((job) => job.state === 'failed').length;
@@ -85,21 +88,30 @@ const JobsPanel = ({
         )}
       </DialogCompanion>
 
-      <PanelCard
-        title="Background jobs"
-        isFlush
-        actions={
-          <span className="text-xs text-text-muted">
-            {monitor === null
-              ? '—'
-              : `${monitor.queue.running.toString()} running · ${monitor.queue.queued.toString()} waiting · ${monitor.queue.concurrency.toString()} at a time${
-                  failures === 0 ? '' : ` · ${failures.toString()} failed`
-                }`}
-          </span>
-        }
-      >
-        <BackgroundJobs monitor={monitor} isUnreachable={isUnreachable} pageSize={10} />
-      </PanelCard>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <PanelCard
+          title="Background jobs"
+          isFlush
+          actions={
+            <span className="text-xs text-text-muted">
+              {monitor === null
+                ? '—'
+                : `${monitor.queue.running.toString()} running · ${monitor.queue.queued.toString()} waiting · ${monitor.queue.concurrency.toString()} at a time${
+                    failures === 0 ? '' : ` · ${failures.toString()} failed`
+                  }`}
+            </span>
+          }
+        >
+          <BackgroundJobs
+            monitor={monitor}
+            isUnreachable={isUnreachable}
+            pageSize={10}
+            growsOnScroll={false}
+          />
+        </PanelCard>
+
+        <JobHistory definitions={definitions} onViewLogs={onViewLogs} />
+      </div>
 
       <PanelCard title="Run a job" isFlush>
         <JobRunner

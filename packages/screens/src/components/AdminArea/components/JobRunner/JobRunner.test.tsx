@@ -433,6 +433,103 @@ describe('JobRunner', () => {
     expect(screen.queryByText('Server-wide')).not.toBeInTheDocument();
   });
 
+  it('reflects a job in the transcoder queue once its correlation id matches exactly', async () => {
+    const user = userEvent.setup();
+    const progress = new Map<string, ScanEntry>([
+      [
+        'lib-movies',
+        {
+          libraryId: 'lib-movies',
+          kind: 'library.regeneratePreviews',
+          phase: 'previews',
+          processed: 1,
+          total: 4,
+          jobId: 'job-42',
+        },
+      ],
+    ]);
+
+    render(
+      <JobRunner
+        definitions={DEFINITIONS}
+        libraries={[MOVIES]}
+        progress={progress}
+        working={[
+          {
+            id: 1,
+            kind: 'preview',
+            subject: 'Movie.mkv',
+            state: 'running',
+            queuedAtMs: 0,
+            startedAtMs: 0,
+            finishedAtMs: null,
+            correlationId: 'job-42',
+            failure: null,
+          },
+        ]}
+        onRun={vi.fn()}
+        onStop={vi.fn()}
+        onOpenSchedule={vi.fn()}
+      />,
+    );
+
+    await user.hover(screen.getByText('Running'));
+
+    expect(await screen.findByText('Movie.mkv', {}, { timeout: 3000 })).toBeInTheDocument();
+  });
+
+  it('does not guess a match from the queue kind alone, only from the correlation id', async () => {
+    const user = userEvent.setup();
+    const progress = new Map<string, ScanEntry>([
+      [
+        'lib-movies',
+        {
+          libraryId: 'lib-movies',
+          kind: 'library.regeneratePreviews',
+          phase: 'previews',
+          processed: 1,
+          total: 4,
+          jobId: 'job-42',
+        },
+      ],
+    ]);
+
+    render(
+      <JobRunner
+        definitions={DEFINITIONS}
+        libraries={[MOVIES]}
+        progress={progress}
+        working={[
+          {
+            id: 1,
+            kind: 'preview',
+            subject: 'Unrelated.mkv',
+            state: 'running',
+            queuedAtMs: 0,
+            startedAtMs: 0,
+            finishedAtMs: null,
+            correlationId: 'some-other-job',
+            failure: null,
+          },
+        ]}
+        onRun={vi.fn()}
+        onStop={vi.fn()}
+        onOpenSchedule={vi.fn()}
+      />,
+    );
+
+    await user.hover(screen.getByText('Running'));
+
+    expect(
+      await screen.findByText(
+        "Nothing in the transcoder's own queue is tied to this yet.",
+        {},
+        { timeout: 3000 },
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Unrelated.mkv')).not.toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(JobRunner.displayName).toBe('JobRunner');
   });

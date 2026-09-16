@@ -12,6 +12,9 @@ import { createMemoryPermissionService } from './auth/createMemoryPermissionServ
 import { signedInApp, TEST_ORIGIN } from './auth/signUpForTest';
 import { z } from 'zod';
 import type { RunningJob } from './jobs/JobQueue';
+import type { JobHistoryStore } from './jobs/createJobHistoryStore';
+import type { ResourceHistoryStore } from './logging/createResourceHistoryStore';
+import type { JobRunQuery } from '@ValenceContracts/schemas/JobRun';
 
 const RolesSchema = z.object({
   roles: z.array(z.object({ id: z.string(), name: z.string() })),
@@ -361,6 +364,29 @@ describe('an instance built without the services a route needs', () => {
     expect(await response.json()).toMatchObject({ records: [], total: 0 });
   });
 
+  it('reports an empty job history rather than an error, where none is kept', async () => {
+    const response = await withoutExtras().request(`${TEST_ORIGIN}/api/admin/jobs/history`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toStrictEqual({ records: [], total: 0 });
+  });
+
+  it('reports no issues rather than an error, where no job history is kept', async () => {
+    const response = await withoutExtras().request(
+      `${TEST_ORIGIN}/api/admin/jobs/history/run-1/issues`,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toStrictEqual([]);
+  });
+
+  it('reports an empty load history rather than an error, where none is kept', async () => {
+    const response = await withoutExtras().request(`${TEST_ORIGIN}/api/admin/monitor/history`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toStrictEqual({ records: [] });
+  });
+
   it('says a share link does not work, where sharing is not set up', async () => {
     const response = await withoutExtras().request(`${TEST_ORIGIN}/api/share/a-token`);
 
@@ -385,6 +411,128 @@ describe('an instance built without the services a route needs', () => {
     });
 
     expect(response.status).toBe(401);
+  });
+});
+
+describe('job history and load history endpoints', () => {
+  const withHistory = () => {
+    const { auth, settings, store } = createMemoryAuth();
+    const permissions = createMemoryPermissionService();
+    const readCalls: JobRunQuery[] = [];
+
+    const jobHistory: JobHistoryStore = {
+      recordStarted: () => Promise.resolve(),
+      recordProgress: () => Promise.resolve(),
+      recordIssue: () => Promise.resolve(),
+      recordFinished: () => Promise.resolve(),
+      read: (query) => {
+        readCalls.push(query);
+
+        return Promise.resolve({
+          records: [
+            {
+              id: 'run-1',
+              kind: 'library.regeneratePreviews',
+              status: 'completed',
+              subject: 'films',
+              startedAtMs: 1,
+              finishedAtMs: 2,
+              progress: null,
+              errorMessage: null,
+              createdAtMs: 1,
+            },
+          ],
+          total: 1,
+        });
+      },
+      readIssues: (jobRunId) =>
+        Promise.resolve([
+          { id: 'issue-1', jobRunId, path: '/media/a.mkv', reason: 'ffmpeg failed', atMs: 1 },
+        ]),
+      forgetExpired: () => Promise.resolve(),
+    };
+
+    const resourceHistory: ResourceHistoryStore = {
+      record: () => Promise.resolve(),
+      read: () =>
+        Promise.resolve([
+          {
+            id: 'sample-1',
+            atMs: 1,
+            systemCpuPercent: 10,
+            loadAverage: 0.5,
+            systemMemoryUsedBytes: 100,
+            systemMemoryTotalBytes: 200,
+            cpuCount: 4,
+          },
+        ]),
+      forgetExpired: () => Promise.resolve(),
+    };
+
+    return {
+      readCalls,
+      app: signedInApp(
+        createApp({
+          auth,
+          settings,
+          permissions,
+          countUsers: () => Promise.resolve(1),
+          promoteToAdmin: () => Promise.resolve(),
+          library: createMemoryLibraryService(),
+          subtitles: createMemorySubtitleService(),
+          segments: createMemorySegmentService(),
+          progress: createMemoryWatchProgressService(),
+          favourites: createMemoryFavouriteService(),
+          ratings: createMemoryRatingService(),
+          playback: createMemoryPlaybackService(),
+          jobHistory,
+          resourceHistory,
+        }),
+        { store, permissions, isAdministrator: true },
+      ),
+    };
+  };
+
+  it('reads a page of job history filtered by what was asked', async () => {
+    const { app, readCalls } = withHistory();
+
+    const response = await app.request(
+      `${TEST_ORIGIN}/api/admin/jobs/history?kind=library.regeneratePreviews&status=completed&search=films&sinceMs=5&limit=10`,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ total: 1 });
+    expect(readCalls).toStrictEqual([
+      {
+        kind: 'library.regeneratePreviews',
+        status: 'completed',
+        search: 'films',
+        sinceMs: 5,
+        limit: 10,
+      },
+    ]);
+  });
+
+  it('reads the issues one job run accumulated', async () => {
+    const { app } = withHistory();
+
+    const response = await app.request(`${TEST_ORIGIN}/api/admin/jobs/history/run-1/issues`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toStrictEqual([
+      { id: 'issue-1', jobRunId: 'run-1', path: '/media/a.mkv', reason: 'ffmpeg failed', atMs: 1 },
+    ]);
+  });
+
+  it('reads a range of load history', async () => {
+    const { app } = withHistory();
+
+    const response = await app.request(`${TEST_ORIGIN}/api/admin/monitor/history?range=7d`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      records: [{ id: 'sample-1', systemCpuPercent: 10 }],
+    });
   });
 });
 

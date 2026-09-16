@@ -1,19 +1,26 @@
 import { describe, expect, it } from 'vitest';
 import { relayMonitor } from './relayMonitor';
+import type { TranscoderSocket } from '@ValenceServer/transcoder/TranscoderClient';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
-const streamOf = (text: string): ReadableStream<Uint8Array> => {
-  const encoder = new TextEncoder();
+const socketOf = (payloads: string[]): TranscoderSocket => {
+  let closeHandler: (() => void) | null = null;
 
-  return new ReadableStream<Uint8Array>({
-    start: (controller) => {
-      controller.enqueue(encoder.encode(text));
-      controller.close();
+  return {
+    onMessage: (handler) => {
+      for (const payload of payloads) {
+        handler(payload);
+      }
     },
-  });
+    onClose: (handler) => {
+      closeHandler = handler;
+      queueMicrotask(() => closeHandler?.());
+    },
+    close: () => {},
+  };
 };
 
-const createRun = (opens: (() => Promise<ReadableStream<Uint8Array> | null>)[]) => {
+const createRun = (opens: (() => Promise<TranscoderSocket | null>)[]) => {
   const published: JsonValue[] = [];
   const waits: number[] = [];
   let attempt = 0;
@@ -41,7 +48,7 @@ const createRun = (opens: (() => Promise<ReadableStream<Uint8Array> | null>)[]) 
 
 describe('relayMonitor', () => {
   it('publishes each report the transcoder sends', async () => {
-    const relay = createRun([() => Promise.resolve(streamOf('data: {"queued":2}\n\n'))]);
+    const relay = createRun([() => Promise.resolve(socketOf(['{"queued":2}']))]);
 
     await relay.run;
 
@@ -49,19 +56,17 @@ describe('relayMonitor', () => {
   });
 
   it('publishes every report on one connection, not just the first', async () => {
-    const relay = createRun([
-      () => Promise.resolve(streamOf('data: {"queued":1}\n\ndata: {"queued":2}\n\n')),
-    ]);
+    const relay = createRun([() => Promise.resolve(socketOf(['{"queued":1}', '{"queued":2}']))]);
 
     await relay.run;
 
     expect(relay.published).toStrictEqual([{ queued: 1 }, { queued: 2 }]);
   });
 
-  it('opens the stream again after it ends, since the page is still being watched', async () => {
+  it('opens the socket again after it closes, since the page is still being watched', async () => {
     const relay = createRun([
-      () => Promise.resolve(streamOf('data: {"queued":1}\n\n')),
-      () => Promise.resolve(streamOf('data: {"queued":2}\n\n')),
+      () => Promise.resolve(socketOf(['{"queued":1}'])),
+      () => Promise.resolve(socketOf(['{"queued":2}'])),
     ]);
 
     await relay.run;
@@ -88,7 +93,7 @@ describe('relayMonitor', () => {
   it('carries on after a failure instead of giving up', async () => {
     const relay = createRun([
       () => Promise.reject(new Error('connection refused')),
-      () => Promise.resolve(streamOf('data: {"queued":1}\n\n')),
+      () => Promise.resolve(socketOf(['{"queued":1}'])),
     ]);
 
     await relay.run;
@@ -97,7 +102,7 @@ describe('relayMonitor', () => {
   });
 
   it('ignores a frame that is not the report it expected', async () => {
-    const relay = createRun([() => Promise.resolve(streamOf('data: not json\n\n'))]);
+    const relay = createRun([() => Promise.resolve(socketOf(['not json']))]);
 
     await relay.run;
 

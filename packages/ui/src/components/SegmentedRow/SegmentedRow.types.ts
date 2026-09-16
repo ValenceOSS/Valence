@@ -4,7 +4,7 @@ type SegmentedItem = {
   isAbsent?: boolean;
 };
 
-type SegmentedSize = 'sm' | 'md';
+type SegmentedSize = 'xs' | 'sm' | 'md';
 
 type SegmentedTone = 'inverted' | 'accent';
 

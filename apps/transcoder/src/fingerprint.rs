@@ -74,7 +74,7 @@ pub struct FingerprintRequest {
     /// to. A player asking for its own thumbnails is nobody's, so this is
     /// absent rather than empty.
     #[serde(default)]
-    pub owner: Option<String>,
+    pub correlation_id: Option<String>,
 }
 
 /// A fingerprint of one stretch of audio.
@@ -86,6 +86,33 @@ pub struct Fingerprint {
     pub start_seconds: u32,
     /// One hash per frame, in order.
     pub hashes: Vec<u32>,
+}
+
+/// A window of audio to fingerprint, as a piece of work on
+/// [`crate::queue::WorkQueue`].
+pub struct FingerprintJob {
+    subject: String,
+}
+
+impl FingerprintJob {
+    /// A fingerprint job for the given subject, in a form a person
+    /// recognises.
+    #[must_use]
+    pub fn new(subject: impl Into<String>) -> Self {
+        Self {
+            subject: subject.into(),
+        }
+    }
+}
+
+impl crate::queue::Job for FingerprintJob {
+    fn kind(&self) -> &'static str {
+        "fingerprint"
+    }
+
+    fn subject(&self) -> String {
+        self.subject.clone()
+    }
 }
 
 /// Why audio could not be fingerprinted.
@@ -295,7 +322,10 @@ pub async fn fingerprint(
             .map_err(FingerprintError::Read)?;
     }
 
-    let _ = child.wait().await;
+    let _ = child
+        .wait()
+        .await
+        .inspect_err(|error| tracing::debug!(target: "fingerprint", %error, "could not reap the ffmpeg decode process"));
 
     let hashes = tokio::task::spawn_blocking(move || {
         let samples = read_samples(&decoded);
@@ -335,7 +365,7 @@ mod tests {
             input_path: "/media/episode.mkv".to_owned(),
             start_seconds: 30,
             duration_seconds: 600,
-            owner: None,
+            correlation_id: None,
         }
     }
 

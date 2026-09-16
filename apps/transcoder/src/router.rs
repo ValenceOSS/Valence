@@ -3,6 +3,7 @@ use std::path::{Component, Path, PathBuf};
 use std::time::Duration;
 
 use axum::body::Body;
+use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::extract::{Path as AxumPath, Query, State};
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -12,13 +13,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::cache_sweep;
 use crate::capability::{detect_capabilities, Capabilities};
-use crate::download::{self, DownloadFile, DownloadRegistry, DownloadRequest};
-use crate::fingerprint::{fingerprint, FingerprintRequest};
+use crate::download::{self, DownloadFile, DownloadJob, DownloadRegistry, DownloadRequest};
+use crate::fingerprint::{fingerprint, FingerprintJob, FingerprintRequest};
 use crate::frame::{take_frame, FrameRequest};
-use crate::monitor::{record, LogLevel, Monitor, Report};
+use crate::monitor::{Monitor, Report};
 use crate::preview::{
-    directory_for as preview_directory, is_complete as preview_ready, PreviewClip, PreviewRegistry,
-    PreviewRequest,
+    directory_for as preview_directory, is_complete as preview_ready, PreviewClip, PreviewJob,
+    PreviewRegistry, PreviewRequest,
 };
 use crate::probe::probe_media;
 use crate::queue::WorkQueue;
@@ -28,8 +29,8 @@ use crate::transcode_plan::HardwareAccel;
 use crate::transcode_plan::{DeviceFilters, SegmentStart, TranscodePlan};
 use crate::transcode_plan::{SessionSpec, MANIFEST_NAME};
 use crate::trickplay::{
-    directory_for, is_complete, pending_index, tile_height_for, SheetSource, TrickplayRegistry,
-    TrickplayRequest,
+    directory_for, is_complete, pending_index, tile_height_for, SheetSource, TrickplayJob,
+    TrickplayRegistry, TrickplayRequest,
 };
 
 /// How long a request for a segment waits for the transcode to reach it.
@@ -520,20 +521,21 @@ async fn start_session(
 ) -> Response {
     let StartSessionRequest { spec, device_id } = request;
 
-    record(
-        LogLevel::Info,
-        "session",
-        &format!("{} {}", spec.summary(), spec.input_path),
+    tracing::info!(
+        target: "session",
+        "{} {}",
+        spec.summary(),
+        spec.input_path
     );
 
     if !tokio::fs::try_exists(&spec.input_path)
         .await
         .unwrap_or(false)
     {
-        record(
-            LogLevel::Warn,
-            "session",
-            &format!("refused: no such input file: {}", spec.input_path),
+        tracing::warn!(
+            target: "session",
+            "refused: no such input file: {}",
+            spec.input_path
         );
 
         return error(StatusCode::NOT_FOUND, "No such input file.");
@@ -542,7 +544,7 @@ async fn start_session(
     let started = match state.registry.start(spec, device_id.as_deref()).await {
         Ok(started) => started,
         Err(failure) => {
-            record(LogLevel::Error, "session", &format!("refused: {failure}"));
+            tracing::error!(target: "session", %failure, "refused");
 
             return error(StatusCode::INTERNAL_SERVER_ERROR, &failure.to_string());
         }
@@ -560,13 +562,11 @@ async fn start_session(
     let manifest_timeout = state.registry.config().manifest_timeout;
 
     if !await_run(&directory, manifest_timeout).await {
-        record(
-            LogLevel::Error,
-            "session",
-            &format!(
-                "{id} produced no manifest within {}s; see the ffmpeg output above",
-                manifest_timeout.as_secs()
-            ),
+        tracing::error!(
+            target: "session",
+            session_id = %id,
+            "produced no manifest within {}s; see the ffmpeg output above",
+            manifest_timeout.as_secs()
         );
 
         state.registry.stop(&id, device_id.as_deref()).await;
@@ -628,13 +628,11 @@ async fn session_file(
         let waited = asked.elapsed();
 
         if waited > SLOW_SEGMENT {
-            record(
-                LogLevel::Info,
-                "session",
-                &format!(
-                    "segment {wanted}: {} after {waited:?}",
-                    if is_ready { "served" } else { "gave up" }
-                ),
+            tracing::info!(
+                target: "session",
+                session_id = %id,
+                "segment {wanted}: {} after {waited:?}",
+                if is_ready { "served" } else { "gave up" }
             );
         }
 
@@ -754,9 +752,8 @@ async fn start_preview(
     match state
         .queue
         .run(
-            "preview",
-            &name_of(&path),
-            request.owner.as_deref(),
+            PreviewJob::new(name_of(&path)),
+            request.correlation_id.as_deref(),
             state.previews.generate(
                 crate::preview::Tools {
                     ffmpeg: &config.ffmpeg,
@@ -1077,10 +1074,9 @@ fn prepare_in_the_background(state: &AppState, request: &DownloadRequest, path: 
         let noted = id.clone();
         let stop = downloads.stopper(&id).await;
 
-        let _ = queue
+        let outcome = queue
             .run(
-                "downloads",
-                &subject,
+                DownloadJob::new(subject),
                 None,
                 download::generate(
                     &ffmpeg,
@@ -1099,6 +1095,10 @@ fn prepare_in_the_background(state: &AppState, request: &DownloadRequest, path: 
                 ),
             )
             .await;
+
+        if let Err(failure) = outcome {
+            tracing::warn!(target: "download", %failure, subject = %id, "could not prepare the download");
+        }
 
         downloads.release(&id).await;
     });
@@ -1125,7 +1125,7 @@ fn cut_in_the_background(
     let device = config.device.clone();
     let artefact_root = config.artefact_root.clone();
     let queued = request.clone();
-    let owner = request.owner.clone();
+    let correlation_id = request.correlation_id.clone();
     let subject = name_of(path);
     let found = capabilities.clone();
 
@@ -1134,9 +1134,8 @@ fn cut_in_the_background(
     tokio::spawn(async move {
         let outcome = queue
             .run(
-                "preview",
-                &subject,
-                owner.as_deref(),
+                PreviewJob::new(subject),
+                correlation_id.as_deref(),
                 previews.generate(
                     crate::preview::Tools {
                         ffmpeg: &ffmpeg,
@@ -1174,7 +1173,7 @@ fn draw_in_the_background(
     let device = config.device.clone();
     let artefact_root = config.artefact_root.clone();
     let queued = request.clone();
-    let owner = request.owner.clone();
+    let correlation_id = request.correlation_id.clone();
     let subject = name_of(path);
     let (accel, found) = on_device;
 
@@ -1183,9 +1182,8 @@ fn draw_in_the_background(
     tokio::spawn(async move {
         let outcome = queue
             .run(
-                "thumbnails",
-                &subject,
-                owner.as_deref(),
+                TrickplayJob::new(subject),
+                correlation_id.as_deref(),
                 trickplay.generate(
                     crate::trickplay::Tools {
                         ffmpeg: &ffmpeg,
@@ -1303,9 +1301,8 @@ async fn start_trickplay(
     match state
         .queue
         .run(
-            "thumbnails",
-            &name_of(&path),
-            request.owner.as_deref(),
+            TrickplayJob::new(name_of(&path)),
+            request.correlation_id.as_deref(),
             state.trickplay.generate(
                 crate::trickplay::Tools {
                     ffmpeg: &config.ffmpeg,
@@ -1359,9 +1356,8 @@ async fn start_fingerprint(
     match state
         .queue
         .run(
-            "fingerprint",
-            &name_of(&PathBuf::from(&request.input_path)),
-            request.owner.as_deref(),
+            FingerprintJob::new(name_of(&PathBuf::from(&request.input_path))),
+            request.correlation_id.as_deref(),
             fingerprint(&state.registry.config().ffmpeg, &request),
         )
         .await
@@ -1431,36 +1427,44 @@ async fn monitor(State(state): State<AppState>) -> Response {
     (StatusCode::OK, Json(report)).into_response()
 }
 
-/// The same report, over and over, as an event stream.
+/// The same report, over and over, over a socket.
 ///
-/// Server-sent events rather than a socket: this is one direction only, it
-/// reconnects on its own, and it survives a proxy that knows nothing about it.
-async fn monitor_stream(State(state): State<AppState>) -> Response {
-    let stream = async_stream::stream! {
-        let mut ticker = tokio::time::interval(MONITOR_INTERVAL);
+/// A socket rather than an event stream: the project keeps one transport for
+/// everything that pushes rather than two, and a socket costs nothing an
+/// event stream does not already pay for on this connection — one direction
+/// only, in practice, since nothing meaningful arrives from the other end.
+async fn monitor_stream(State(state): State<AppState>, upgrade: WebSocketUpgrade) -> Response {
+    upgrade.on_upgrade(|socket| watch_monitor(socket, state))
+}
 
-        loop {
-            ticker.tick().await;
+/// Sends a fresh [`Report`] down the socket on every tick, until the send
+/// fails.
+///
+/// A failed send means the other end is gone — closed the tab, lost the
+/// network — and there is nobody left to notice a loop that keeps measuring
+/// for nobody.
+async fn watch_monitor(mut socket: WebSocket, state: AppState) {
+    let mut ticker = tokio::time::interval(MONITOR_INTERVAL);
 
-            let report = Report {
-                resources: state.monitor.measure().await,
-                queue: state.queue.snapshot().await,
-                sessions: state.registry.len().await,
-                logs: state.monitor.journal().read(),
-                cache: state.monitor.cache().await,
-            };
+    loop {
+        ticker.tick().await;
 
-            if let Ok(payload) = serde_json::to_string(&report) {
-                yield Ok::<_, std::convert::Infallible>(
-                    axum::response::sse::Event::default().data(payload),
-                );
-            }
+        let report = Report {
+            resources: state.monitor.measure().await,
+            queue: state.queue.snapshot().await,
+            sessions: state.registry.len().await,
+            logs: state.monitor.journal().read(),
+            cache: state.monitor.cache().await,
+        };
+
+        let Ok(payload) = serde_json::to_string(&report) else {
+            continue;
+        };
+
+        if socket.send(Message::Text(payload.into())).await.is_err() {
+            break;
         }
-    };
-
-    axum::response::Sse::new(stream)
-        .keep_alive(axum::response::sse::KeepAlive::default())
-        .into_response()
+    }
 }
 
 /// Builds the media service routes.

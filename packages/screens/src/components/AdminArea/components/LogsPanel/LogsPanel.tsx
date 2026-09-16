@@ -1,5 +1,11 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Copy01Icon, Download04Icon, RefreshIcon, Tick02Icon } from '@hugeicons/core-free-icons';
+import {
+  Cancel01Icon,
+  Copy01Icon,
+  Download04Icon,
+  RefreshIcon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -50,6 +56,10 @@ const writeToClipboard = async (text: string): Promise<void> => {
  * @param watch - How the live feed is followed, injectable for tests.
  * @param copy - How text reaches the clipboard.
  * @param download - How a file is handed over.
+ * @param initialJobId - A job to filter to as soon as the panel opens, from elsewhere in the admin
+ *   area asking to see one job's log.
+ * @param onInitialJobIdConsumed - Told once `initialJobId` has been picked up, so whatever asked for
+ *   it can forget having asked.
  * @returns The panel.
  */
 const LogsPanel = ({
@@ -57,8 +67,12 @@ const LogsPanel = ({
   watch = watchLogs,
   copy = writeToClipboard,
   download = downloadText,
+  initialJobId = null,
+  onInitialJobIdConsumed,
 }: LogsPanelProps) => {
   const [search, setSearch] = useState('');
+  const [levels, setLevels] = useState<LogLevel[]>([...LOG_LEVELS]);
+  const [jobIdFilter, setJobIdFilter] = useState(initialJobId);
   const [records, setRecords] = useState<LogRecord[]>([]);
   const [isReading, setIsReading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -66,7 +80,16 @@ const LogsPanel = ({
 
   const hasRead = useRef(false);
 
-  const query = useMemo(() => ({ levels: [...LOG_LEVELS], search, limit: PAGE }), [search]);
+  useEffect(() => {
+    if (initialJobId !== null) {
+      onInitialJobIdConsumed?.();
+    }
+  }, []);
+
+  const query = useMemo(
+    () => ({ levels, search, limit: PAGE, jobId: jobIdFilter }),
+    [levels, search, jobIdFilter],
+  );
 
   const load = useCallback(async () => {
     setIsReading(true);
@@ -165,6 +188,46 @@ const LogsPanel = ({
             className="w-64 max-w-full"
           />
 
+          <span role="group" aria-label="Filter by level" className="flex items-center gap-1">
+            {LOG_LEVELS.map((level) => (
+              <Button
+                key={level}
+                variant="soft"
+                size="xs"
+                hasTooltip={false}
+                isActive={levels.includes(level)}
+                onClick={() => {
+                  setLevels((current) =>
+                    current.includes(level)
+                      ? current.filter((one) => one !== level)
+                      : [...current, level],
+                  );
+                }}
+              >
+                {level}
+              </Button>
+            ))}
+          </span>
+
+          {jobIdFilter === null ? null : (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-subtle px-2.5 py-1 text-xs text-text-muted">
+              {`Job: ${jobIdFilter}`}
+
+              <Button
+                isIconOnly
+                variant="ghost"
+                size="xs"
+                label="Clear the job filter"
+                hasTooltip
+                onClick={() => {
+                  setJobIdFilter(null);
+                }}
+              >
+                <Icon of={Cancel01Icon} size={12} />
+              </Button>
+            </span>
+          )}
+
           <Button
             isIconOnly
             variant="ghost"
@@ -231,6 +294,10 @@ const LogsPanel = ({
         record={reading}
         isOpen={reading !== null}
         onClose={() => {
+          setReading(null);
+        }}
+        onOpenJob={(jobId) => {
+          setJobIdFilter(jobId);
           setReading(null);
         }}
       />

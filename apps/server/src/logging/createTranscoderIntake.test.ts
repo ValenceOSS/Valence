@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { createTranscoderIntake } from './createTranscoderIntake';
 import type { Logger } from './Logger';
-import type { LogLevel, LogSource } from '@ValenceContracts/schemas/Log';
+import type { LogContext, LogLevel, LogSource } from '@ValenceContracts/schemas/Log';
 
 const createSpy = () => {
-  const written: { level: LogLevel; source: LogSource; message: string }[] = [];
+  const written: {
+    level: LogLevel;
+    source: LogSource;
+    message: string;
+    context: Partial<LogContext>;
+  }[] = [];
+
+  let heldContext: Partial<LogContext> = {};
 
   const at =
     (level: LogLevel) =>
     (source: LogSource, message: string): void => {
-      written.push({ level, source, message });
+      written.push({ level, source, message, context: heldContext });
     };
 
   const logger: Logger = {
@@ -17,7 +24,11 @@ const createSpy = () => {
     info: at('info'),
     warn: at('warn'),
     error: at('error'),
-    about: () => logger,
+    about: (context) => {
+      heldContext = context;
+
+      return logger;
+    },
     flush: () => Promise.resolve(),
   };
 
@@ -133,6 +144,47 @@ describe('createTranscoderIntake', () => {
     intake.take({ logs: [{ atMs: 10, message: 'no level or source' }] });
 
     expect(spy.written).toStrictEqual([]);
+  });
+
+  it('carries the job a line was about, so it correlates with the job that caused it', () => {
+    const spy = createSpy();
+    const intake = createTranscoderIntake(spy.logger);
+
+    intake.take({
+      logs: [
+        {
+          atMs: 10,
+          level: 'error',
+          source: 'preview',
+          message: 'failed',
+          context: { jobId: 'job-1', sessionId: null, requestId: null },
+        },
+      ],
+    });
+
+    expect(spy.written[0]?.context).toMatchObject({ jobId: 'job-1' });
+  });
+
+  it('carries no context for a line the media service said nothing about', () => {
+    const spy = createSpy();
+    const intake = createTranscoderIntake(spy.logger);
+
+    intake.take(aReport([{ atMs: 10, level: 'error', source: 'transcode', message: 'failed' }]));
+
+    expect(spy.written[0]?.context).toStrictEqual({
+      jobId: null,
+      sessionId: null,
+      requestId: null,
+    });
+  });
+
+  it('writes a trace line as debug, since the server keeps no finer level than that', () => {
+    const spy = createSpy();
+    const intake = createTranscoderIntake(spy.logger);
+
+    intake.take(aReport([{ atMs: 10, level: 'trace', source: 'session', message: 'polled' }]));
+
+    expect(spy.written[0]?.level).toBe('debug');
   });
 
   it('keeps taking after a reading it could not read', () => {

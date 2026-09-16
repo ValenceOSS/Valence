@@ -71,6 +71,10 @@ const PRUNE_WEBHOOK_DELIVERIES_JOB = 'server.pruneWebhookDeliveries';
 
 const PRUNE_LOGS_JOB = 'server.pruneLogs';
 
+const PRUNE_JOB_HISTORY_JOB = 'server.pruneJobHistory';
+
+const PRUNE_RESOURCE_HISTORY_JOB = 'server.pruneResourceHistory';
+
 /**
  * Names the queue a library-scoped kind's schedule fires on, which is a queue of its own rather than
  * the job's, since one schedule has to fan out across every library.
@@ -151,6 +155,8 @@ export {
   DELIVER_WEBHOOK_JOB,
   PRUNE_WEBHOOK_DELIVERIES_JOB,
   PRUNE_LOGS_JOB,
+  PRUNE_JOB_HISTORY_JOB,
+  PRUNE_RESOURCE_HISTORY_JOB,
   DeliverWebhookJobSchema,
   scheduleTriggerKind,
 };
