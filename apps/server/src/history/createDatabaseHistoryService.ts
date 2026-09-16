@@ -4,6 +4,7 @@ import { watchHistory, mediaItem } from '@ValenceServer/db/Schema';
 import { decideViewing } from './decideViewing';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { HistoryService, Viewing } from './HistoryService';
+import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 
 type Row = {
   id: string;
@@ -103,7 +104,7 @@ const createDatabaseHistoryService = (db: ValenceDatabase): HistoryService => ({
     return made === undefined ? null : shown({ ...made, title: null, seriesTitle: null });
   },
 
-  list: async (profileId, options = {}) => {
+  list: async (viewer, profileId, options = {}) => {
     const rows = await db
       .select({
         id: watchHistory.id,
@@ -116,8 +117,8 @@ const createDatabaseHistoryService = (db: ValenceDatabase): HistoryService => ({
         isFinished: watchHistory.isFinished,
       })
       .from(watchHistory)
-      .leftJoin(mediaItem, eq(mediaItem.id, watchHistory.mediaItemId))
-      .where(eq(watchHistory.profileId, profileId))
+      .innerJoin(mediaItem, eq(mediaItem.id, watchHistory.mediaItemId))
+      .where(and(eq(watchHistory.profileId, profileId), visibleToViewer(db, viewer)))
       .orderBy(desc(watchHistory.lastWatchedAt))
       .limit(options.limit ?? 50)
       .offset(options.offset ?? 0);

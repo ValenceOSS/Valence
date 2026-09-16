@@ -2956,7 +2956,9 @@ const createApp = ({
   app.openapi(listHistoryRoute, async (context) => {
     const profileId = await readProfileId(context.req.raw.headers);
 
-    if (profileId === null || history === undefined) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (profileId === null || viewer === null || history === undefined) {
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
@@ -2964,7 +2966,7 @@ const createApp = ({
 
     return context.json(
       {
-        viewings: await history.list(profileId, {
+        viewings: await history.list(viewer, profileId, {
           ...(limit === undefined ? {} : { limit }),
           ...(offset === undefined ? {} : { offset }),
         }),

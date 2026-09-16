@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { decideViewing } from './decideViewing';
 import type { HistoryService, Viewing } from './HistoryService';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 type MemoryViewing = Viewing & { profileId: string };
 
@@ -8,12 +9,19 @@ type MemoryHistoryState = {
   viewings: MemoryViewing[];
 
   titles?: Record<string, string>;
+
+  visibleTo?: (viewer: Viewer, mediaItemId: string) => boolean;
 };
 
 /**
  * Viewing history held in memory, so the routes can be exercised without Postgres.
  *
- * @param state - Any viewings that already happened.
+ * Knows nothing of libraries and so cannot work out for itself what a viewer may see, but it does
+ * narrow by whatever `visibleTo` says. Without it a test would pass while describing a server that
+ * names, in somebody's history, a title their account has since been refused — which is the thing
+ * the database version was changed to stop.
+ *
+ * @param state - Any viewings that already happened, and what this viewer may be told about.
  * @returns The history service.
  */
 const createMemoryHistoryService = (
@@ -93,10 +101,11 @@ const createMemoryHistoryService = (
       return Promise.resolve(shown(made));
     },
 
-    list: (profileId, options = {}) =>
+    list: (viewer, profileId, options = {}) =>
       Promise.resolve(
         state.viewings
           .filter((one) => one.profileId === profileId)
+          .filter((one) => state.visibleTo?.(viewer, one.mediaItemId) ?? true)
           .sort((left, right) => Date.parse(right.lastWatchedAt) - Date.parse(left.lastWatchedAt))
           .slice(options.offset ?? 0, (options.offset ?? 0) + (options.limit ?? 50))
           .map((one) => shown(one, true)),
