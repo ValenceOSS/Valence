@@ -8,6 +8,11 @@ import type { ValenceAuth } from '@ValenceServer/auth/Auth';
 import type { SettingsStore } from '@ValenceServer/settings/ServerSettings';
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
 import { DEFAULT_LIMIT } from '@ValenceServer/library/LibraryService';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
+import { readViewer } from '@ValenceServer/visibility/readViewer';
+import { subjectOfRequest } from '@ValenceServer/visibility/subjectOfRequest';
+import type { MiddlewareHandler } from 'hono';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { splitPersonCredits } from '@ValenceServer/library/splitPersonCredits';
 import type { LibraryService } from '@ValenceServer/library/LibraryService';
 import type { SubtitleService } from '@ValenceServer/subtitles/SubtitleService';
@@ -593,6 +598,70 @@ const createApp = ({
     return narrowToKey(held, allowed).has(permission);
   };
 
+  /**
+   * Who a request is for, as both the account it belongs to and the person watching.
+   *
+   * Everything that decides what may be seen asks this rather than asking for one or the other: the
+   * account carries what an administrator enforced, the profile carries what the viewer chose for
+   * themselves, and keeping them together is what stops the two being confused.
+   *
+   * @param headers - The request's headers.
+   * @returns Who it is for, or nothing where nobody is signed in.
+   */
+  const viewerOf = (headers: Headers): Promise<Viewer | null> =>
+    readViewer({ auth, permissions, ...(profiles === undefined ? {} : { profiles }) }, headers);
+
+  /**
+   * Refuses anything a viewer's account may not reach, before the route that would answer it runs.
+   *
+   * This is the one gate every address naming an item passes through, which is the point: three
+   * separate features want content kept out of sight, and a check written into each handler is a
+   * check missing from the next handler somebody writes. Reading the subject from the address means
+   * a route added later is covered on the day it is written.
+   *
+   * It asks only what the account may reach, never what the viewer has hidden. Hiding is a
+   * preference and tidies a view; it was never meant to lock a door, and somebody following a link
+   * to something they hid should still arrive at it. Refusing here would quietly turn hiding into
+   * enforcement, which is the one thing both tickets behind this asked not to happen.
+   *
+   * It answers as though the thing were not there, in the same words an item that never existed
+   * gets, because being told something exists is most of what was being kept back.
+   *
+   * A request with nobody signed in is left alone. The session gate has already turned away anyone
+   * who is neither signed in nor holding a live share link, so what arrives here without a viewer is
+   * a share guest, and what a share reaches was settled when the link was made.
+   *
+   * @param context - The request.
+   * @param next - The route that would answer it.
+   * @returns A refusal, or whatever the route answers.
+   */
+  const refuseWhatIsOutOfReach: MiddlewareHandler = async (context, next) => {
+    const subject = subjectOfRequest(context.req.path);
+
+    if (subject.kind === 'none') {
+      return next();
+    }
+
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return next();
+    }
+
+    const mayReach =
+      subject.kind === 'item'
+        ? await library.mayReach(viewer, subject.mediaId)
+        : await library.mayReachSeries(viewer, subject.seriesId);
+
+    if (!mayReach) {
+      return context.json({ error: 'No such item.' }, 404);
+    }
+
+    return next();
+  };
+
+  app.use('/api/*', refuseWhatIsOutOfReach);
+
   app.all('/api/auth/admin/*', createBetterAuthAdminBlock());
 
   app.on(['GET', 'POST'], '/api/auth/*', (context) => auth.handler(context.req.raw));
@@ -643,7 +712,15 @@ const createApp = ({
     );
   });
 
-  app.openapi(listLibrariesRoute, async (context) => context.json(await library.list(), 200));
+  app.openapi(listLibrariesRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    return context.json(await library.list(viewer), 200);
+  });
 
   app.openapi(createLibraryRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.create'))) {
@@ -698,11 +775,13 @@ const createApp = ({
   });
 
   app.openapi(listFacetsRoute, async (context) => {
-    if ((await readAccount(context.req.raw.headers)) === null) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    return context.json(await library.listFacets(), 200);
+    return context.json(await library.listFacets(viewer), 200);
   });
 
   app.openapi(listItemsRoute, async (context) => {
@@ -712,8 +791,13 @@ const createApp = ({
 
     const { minYourStars } = context.req.valid('query');
     const askedBy = await readProfileId(context.req.raw.headers);
+    const viewer = await viewerOf(context.req.raw.headers);
 
-    const page = await library.listItems(id, {
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const page = await library.listItems(viewer, id, {
       ...(search === undefined ? {} : { search }),
       ...(kind === undefined ? {} : { kind }),
       ...(genre === undefined ? {} : { genre }),
@@ -736,7 +820,13 @@ const createApp = ({
   });
 
   app.openapi(listShowsRoute, async (context) => {
-    const shows = await library.listShows(context.req.valid('param').id);
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const shows = await library.listShows(viewer, context.req.valid('param').id);
 
     if (shows === null) {
       return context.json({ error: 'No such library.' }, 404);
@@ -747,7 +837,13 @@ const createApp = ({
 
   app.openapi(getShowRoute, async (context) => {
     const { id, showId } = context.req.valid('param');
-    const show = await library.getShow(id, showId);
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const show = await library.getShow(viewer, id, showId);
 
     if (show === null) {
       return context.json({ error: 'No such series.' }, 404);
@@ -1116,9 +1212,6 @@ const createApp = ({
     return context.body(file.body, 200, { 'content-type': file.contentType });
   });
 
-  /**
-   * Who is asking.
-   */
   /**
    * Which person on this account is watching.
    */
@@ -1791,7 +1884,7 @@ const createApp = ({
     const [users, current, libraries, transcoderCapabilities, isReachable] = await Promise.all([
       listUsers?.() ?? Promise.resolve([]),
       settings.read(),
-      library.list(),
+      library.list(asTheServer),
       within(capabilities?.().catch(() => null) ?? Promise.resolve(null), null),
       within(isTranscoderReachable(), false),
     ]);
@@ -1849,7 +1942,7 @@ const createApp = ({
     });
 
     if (updated.previewQuality !== before.previewQuality) {
-      const libraries = await library.list();
+      const libraries = await library.list(asTheServer);
 
       await Promise.all(
         libraries
@@ -2879,7 +2972,13 @@ const createApp = ({
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    const held = await library.findByPerson(context.req.valid('param').personId);
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const held = await library.findByPerson(viewer, context.req.valid('param').personId);
 
     return context.json(splitPersonCredits(held), 200);
   });

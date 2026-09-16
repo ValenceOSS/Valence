@@ -42,6 +42,10 @@ const listLibrariesRoute = createRoute({
       description: 'Every library on this server',
       content: { 'application/json': { schema: z.array(Library) } },
     },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+    },
   },
 });
 
@@ -80,6 +84,10 @@ const updateLibraryRoute = createRoute({
     200: {
       description: 'The library was updated',
       content: { 'application/json': { schema: Library } },
+    },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
     },
     404: {
       description: 'No such library',
@@ -138,6 +146,10 @@ const listItemsRoute = createRoute({
           schema: z.object({ items: z.array(MediaSummary), total: z.number().int() }),
         },
       },
+    },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
     },
     404: {
       description: 'No such library',
@@ -347,6 +359,10 @@ const listShowsRoute = createRoute({
       description: 'The series, most recent arrival first',
       content: { 'application/json': { schema: ShowListSchema } },
     },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+    },
     404: {
       description: 'No such library',
       content: { 'application/json': { schema: NotFound } },
@@ -366,6 +382,10 @@ const getShowRoute = createRoute({
     200: {
       description: 'The series, season by season',
       content: { 'application/json': { schema: ShowDetailSchema } },
+    },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
     },
     404: {
       description: 'No such library or series',
