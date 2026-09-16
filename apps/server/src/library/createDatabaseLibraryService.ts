@@ -89,6 +89,7 @@ type CreateDatabaseLibraryServiceOptions = {
   forcedAccel?: () => Promise<string>;
   jobs: JobQueue;
   previewQuality?: () => Promise<PreviewQuality>;
+  certificationRegion?: () => Promise<string>;
   providers?: MetadataProvider[];
   books?: BookStore;
   onProblem?: (path: string, reason: string) => void;
@@ -200,11 +201,12 @@ const createDatabaseLibraryService = ({
   books,
   atOnce = 1,
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
+  certificationRegion = (): Promise<string> => Promise.resolve('GB'),
   onProblem,
   onArrived,
   onDeparted,
 }: CreateDatabaseLibraryServiceOptions): DatabaseLibraryService => {
-  const store = createMediaStore(db);
+  const store = createMediaStore(db, certificationRegion);
 
   const shapes = new Map<string, SeriesShape | null>();
 

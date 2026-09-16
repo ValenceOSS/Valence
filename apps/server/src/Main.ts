@@ -85,6 +85,7 @@ import { createPlaybackService } from '@ValenceServer/playback/createPlaybackSer
 import { createJobQueue } from '@ValenceServer/jobs/createJobQueue';
 import type { FinishedJob } from '@ValenceServer/jobs/createJobQueue';
 import {
+  READ_CERTIFICATES_AGAIN_JOB,
   SCAN_LIBRARY_JOB,
   READ_AGAIN_JOB,
   ReadAgainJobSchema,
@@ -157,6 +158,7 @@ import { recordSignIn } from '@ValenceServer/accounts/recordSignIn';
 import { createDatabasePermissionService } from '@ValenceServer/auth/createDatabasePermissionService';
 import { createDownloadService } from '@ValenceServer/downloads/createDownloadService';
 import { keepingProfile } from '@ValenceServer/downloads/keepingProfile';
+import { readCertificatesAgain } from '@ValenceServer/library/readCertificatesAgain';
 const ChapterListSchema = z.array(
   z.object({
     title: z.string().nullable(),
@@ -220,6 +222,7 @@ const settings = createDatabaseSettingsStore({
     pushPrivateKey: '',
     mediaDigestReadTo: null,
     jobsTimezone: '',
+    certificationRegion: 'GB',
   },
 });
 
@@ -990,6 +993,15 @@ const jobs = await createJobQueue({
           `artefact cache cleanup: removed ${swept.removed.toString()} directory(ies), freed ${swept.freedBytes.toString()} byte(s), kept ${swept.kept.toString()}, skipped ${swept.tooNew.toString()} as too new`,
         );
       },
+      [READ_CERTIFICATES_AGAIN_JOB]: async () => {
+        const region = (await settings.read()).certificationRegion;
+        const { looked, rated } = await readCertificatesAgain(db, region);
+
+        log.info(
+          'server',
+          `certificates: read ${looked.toString()} again in ${region}, ${rated.toString()} of them certificated here`,
+        );
+      },
       [PRUNE_HISTORY_JOB]: async () => {
         const forgotten = await historyService.prune(
           new Date(Date.now() - HISTORY_KEPT_FOR_DAYS * 86_400_000),
@@ -1261,6 +1273,7 @@ const libraryService = createDatabaseLibraryService({
   books: bookService,
   atOnce: env.MEDIA_JOBS,
   previewQuality: async () => (await settings.read()).previewQuality,
+  certificationRegion: async () => (await settings.read()).certificationRegion,
   onProblem: (path, reason) => {
     log.warn('scanner', `skipped ${path}: ${reason}`);
   },

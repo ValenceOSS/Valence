@@ -7,6 +7,7 @@ import { readTitleFromPath } from './readTitleFromPath';
 import { pickLogo } from './pickLogo';
 import { createCatalogueGate } from './createCatalogueGate';
 import type { CastMember, Metadata, MetadataProvider } from './MetadataProvider';
+import { readCertifications } from '@ValenceServer/library/readCertifications';
 
 const DEFAULT_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -91,6 +92,8 @@ const SeasonResponseSchema = z.object({
     .default([]),
 });
 
+const CERTIFICATES = 'credits,release_dates,content_ratings';
+
 const DetailResponseSchema = z.object({
   id: z.number(),
   title: z.string().optional(),
@@ -111,6 +114,25 @@ const DetailResponseSchema = z.object({
       }),
     )
     .default([]),
+  release_dates: z
+    .object({
+      results: z
+        .array(
+          z.object({
+            iso_3166_1: z.string(),
+            release_dates: z.array(z.object({ certification: z.string().optional() })).default([]),
+          }),
+        )
+        .default([]),
+    })
+    .optional(),
+  content_ratings: z
+    .object({
+      results: z
+        .array(z.object({ iso_3166_1: z.string(), rating: z.string().optional() }))
+        .default([]),
+    })
+    .optional(),
   credits: z
     .object({
       cast: z
@@ -481,6 +503,8 @@ const createCatalogueMetadataProvider = ({
         const still = episode === null ? null : imageUrl(imageBaseUrl, episode.still_path, 'w780');
         const backdrop = still ?? imageUrl(imageBaseUrl, detail.backdrop_path, 'w1280');
 
+        const certificates = readCertifications(detail);
+
         const seriesName = detail.title ?? detail.name ?? searchTitle;
         const episodeName = catalogueEpisodeName ?? knownEpisodeTitle;
 
@@ -503,6 +527,7 @@ const createCatalogueMetadataProvider = ({
             : { genres: detail.genres.map((genre) => genre.name) }),
           ...(cast.length === 0 ? {} : { cast }),
           ...(detail.vote_average === undefined ? {} : { rating: detail.vote_average }),
+          ...(Object.keys(certificates).length === 0 ? {} : { certifications: certificates }),
           ...(poster === null ? {} : { posterUrl: poster }),
           ...(backdrop === null ? {} : { backdropUrl: backdrop }),
         };
@@ -516,7 +541,7 @@ const createCatalogueMetadataProvider = ({
         const detailed = await request(
           `/${facts.knownExternalKind ?? (isEpisode ? 'tv' : 'movie')}/${facts.knownExternalId}`,
           key,
-          { append_to_response: 'credits' },
+          { append_to_response: CERTIFICATES },
         );
 
         const detail = DetailResponseSchema.safeParse(detailed);
@@ -560,7 +585,7 @@ const createCatalogueMetadataProvider = ({
       const detailed = await request(
         `${isEpisode ? '/tv' : '/movie'}/${first.id.toString()}`,
         key,
-        { append_to_response: 'credits' },
+        { append_to_response: CERTIFICATES },
       );
 
       const detail = DetailResponseSchema.safeParse(detailed);

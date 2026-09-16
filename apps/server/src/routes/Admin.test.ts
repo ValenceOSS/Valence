@@ -15,6 +15,7 @@ import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMe
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
+import { createMemoryMaintenanceService } from '@ValenceServer/maintenance/createMemoryMaintenanceService';
 const BASE = 'http://localhost:8420';
 
 const CREDENTIALS = {
@@ -46,8 +47,10 @@ const build = (
   const presence = createPresenceService();
   const playback = createMemoryPlaybackService();
   const library = createMemoryLibraryService({ libraries: [LIBRARY], media: [] });
+  const maintenance = createMemoryMaintenanceService();
 
   const app = createApp({
+    maintenance,
     ...(waiting.isTranscoderReachable === undefined
       ? {}
       : { isTranscoderReachable: waiting.isTranscoderReachable }),
@@ -79,7 +82,7 @@ const build = (
     presence,
   });
 
-  return { app, settings, store, permissions, presence, playback, library };
+  return { app, settings, store, permissions, presence, playback, library, maintenance };
 };
 
 const signedIn = (app: ReturnType<typeof build>['app']): Promise<string> =>
@@ -1290,6 +1293,49 @@ describe('changing one setting without disturbing the others', () => {
     });
 
     expect(remake).not.toHaveBeenCalled();
+  });
+
+  it('reads every certificate again when the region changes, rather than rescanning', async () => {
+    const { app, store, permissions, settings, maintenance } = build();
+    const again = vi.spyOn(maintenance, 'readCertificatesAgain');
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ certificationRegion: 'de' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect((await settings.read()).certificationRegion).toBe('DE');
+    expect(again).toHaveBeenCalled();
+  });
+
+  it('reads nothing again when the region is set to what it already was', async () => {
+    const { app, store, permissions, maintenance } = build();
+    const again = vi.spyOn(maintenance, 'readCertificatesAgain');
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ certificationRegion: 'GB' }),
+    });
+
+    expect(again).not.toHaveBeenCalled();
+  });
+
+  it('refuses a region that is not a country', async () => {
+    const { app, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ certificationRegion: 'GBR' }),
+    });
+
+    expect(response.status).toBe(400);
   });
 
   it('refuses a preview preset that does not exist', async () => {
