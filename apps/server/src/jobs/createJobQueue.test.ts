@@ -378,4 +378,49 @@ describe('createJobQueue', () => {
     expect(boss.sent[0]?.options.startAfter).toBe(30);
     expect(boss.sent[0]?.options.singletonKey).toBe('films');
   });
+  it('has the run on record before the work that amends it begins', async () => {
+    const order: string[] = [];
+    let release = (): void => {};
+
+    const recorded = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    const handler = vi.fn(() => {
+      order.push('handler');
+
+      return Promise.resolve();
+    });
+
+    await (
+      await createJobQueue({
+        connectionString: 'postgres://flux',
+        handlers: { [CHECK_DISK]: handler },
+        onStarted: async () => {
+          order.push('started');
+
+          await recorded;
+
+          order.push('recorded');
+        },
+        onFinished: () => {
+          order.push('finished');
+        },
+      })
+    ).startWorking();
+
+    const working = deliver(CHECK_DISK, [{ id: 'job-1', data: null }]);
+
+    await new Promise((settle) => {
+      setTimeout(settle, 0);
+    });
+
+    expect(handler).not.toHaveBeenCalled();
+
+    release();
+
+    await working;
+
+    expect(order).toEqual(['started', 'recorded', 'handler', 'finished']);
+  });
 });

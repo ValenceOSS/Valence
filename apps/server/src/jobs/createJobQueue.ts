@@ -18,7 +18,7 @@ type CreateJobQueueOptions = {
   connectionString: string;
   handlers: Record<string, JobHandler>;
   onProblem?: (message: string) => void;
-  onStarted?: (entry: { kind: string; jobId: string; subject: string | null }) => void;
+  onStarted?: (entry: { kind: string; jobId: string; subject: string | null }) => Promise<void>;
   onProgress?: (entry: { jobId: string; phase: string; processed: number; total: number }) => void;
   onFinished?: (finished: FinishedJob) => void;
 };
@@ -38,6 +38,15 @@ const PG_BOSS_STATES: Record<string, JobState> = {
  * Starts the job queue and registers a worker for every kind of background work Valence does — scans,
  * previews, thumbnails, artwork, webhook deliveries. Work outlives the request that asked for it and
  * survives a restart, which is the whole reason a queue exists rather than a promise.
+ *
+ * `onStarted` is awaited and the other two are not, which is not an oversight. Everything said about
+ * a run afterwards — its progress, and that it finished — is said about a row that has to exist
+ * first, and these callbacks write to Postgres through a pool: two queries nobody waited for run on
+ * whichever connections are free, in whichever order those finish. A job that takes milliseconds
+ * therefore raced its own history. "Check the transcoder" is one reachability ping, and where its
+ * insert landed last the progress and the finish had already updated nothing, leaving a run that
+ * showed no progress and said RUNNING for ever. Waiting here puts the row in front of everything
+ * that amends it, and costs one insert against work that was about to touch the disk anyway.
  *
  * @param options - The database to keep the queue in, and the handlers for each kind of job.
  * @returns The queue, ready to be enqueued against.
@@ -113,7 +122,8 @@ const createJobQueue = async ({
           const subject = subjectOf(payload);
 
           running.set(job.id, { kind, subject });
-          onStarted?.({ kind, jobId: job.id, subject });
+
+          await onStarted?.({ kind, jobId: job.id, subject });
 
           try {
             await handler(job.id, payload);
