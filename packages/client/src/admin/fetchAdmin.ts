@@ -77,6 +77,11 @@ const AdminOverviewSchema = z.object({
     .default({ stalled: [] }),
 });
 
+const JobFailureSchema = z.object({
+  message: z.string(),
+  chain: z.array(z.string()),
+});
+
 const JobSchema = z.object({
   id: z.number(),
   kind: z.string(),
@@ -85,7 +90,8 @@ const JobSchema = z.object({
   queuedAtMs: z.number(),
   startedAtMs: z.number().nullable(),
   finishedAtMs: z.number().nullable(),
-  detail: z.string().nullable(),
+  correlationId: z.string().nullable().default(null),
+  failure: JobFailureSchema.nullable().default(null),
 });
 
 const ProcessUseSchema = z.object({

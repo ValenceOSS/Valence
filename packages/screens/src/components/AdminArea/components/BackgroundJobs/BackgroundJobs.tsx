@@ -18,7 +18,7 @@ const describeQueue = (jobs: Job[]): string =>
   jobs
     .map(
       (job) =>
-        `${job.id}:${job.state}:${String(job.startedAtMs)}:${String(job.finishedAtMs)}:${job.detail ?? ''}`,
+        `${job.id}:${job.state}:${String(job.startedAtMs)}:${String(job.finishedAtMs)}:${job.failure?.message ?? ''}`,
     )
     .join('|');
 
@@ -83,8 +83,8 @@ const BackgroundJobs = ({ monitor, isUnreachable = false, pageSize }: Background
               {row.original.subject}
             </span>
 
-            {row.original.detail === null ? null : (
-              <span className="truncate text-xs text-danger">{row.original.detail}</span>
+            {row.original.failure === null ? null : (
+              <span className="truncate text-xs text-danger">{row.original.failure.message}</span>
             )}
           </span>
         ),

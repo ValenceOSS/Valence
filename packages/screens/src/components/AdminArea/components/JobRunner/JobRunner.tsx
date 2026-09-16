@@ -25,12 +25,6 @@ import type { JobRunnerProps } from './JobRunner.types';
 
 const WORKING_SHOWN = 4;
 
-const QUEUED_AS: Record<string, string[]> = {
-  'library.regeneratePreviews': ['preview'],
-  'library.regenerateTrickplay': ['thumbnails'],
-  'library.detectSegments': ['fingerprint'],
-};
-
 /**
  * Every job the server knows how to do, each with what it is for, whether it is running now and how
  * far along, and a way to start or stop it by hand. Pressing into a job opens what makes it run on
@@ -60,6 +54,16 @@ const JobRunner = ({
     [progress],
   );
 
+  const jobIdsFor = useCallback(
+    (kind: string) =>
+      new Set(
+        [...progress.values()]
+          .filter((entry) => entry.kind === kind && entry.jobId !== null)
+          .map((entry) => entry.jobId ?? ''),
+      ),
+    [progress],
+  );
+
   const askOrRun = useCallback(
     (definition: JobDefinition) => {
       if (definition.destructive) {
@@ -75,9 +79,9 @@ const JobRunner = ({
 
   const isBusy = definitions.some((definition) => summaryFor(definition.kind) !== null);
 
-  const live = useRef({ summaryFor, working, askOrRun, onStop, onOpenSchedule, isBusy });
+  const live = useRef({ summaryFor, jobIdsFor, working, askOrRun, onStop, onOpenSchedule, isBusy });
 
-  live.current = { summaryFor, working, askOrRun, onStop, onOpenSchedule, isBusy };
+  live.current = { summaryFor, jobIdsFor, working, askOrRun, onStop, onOpenSchedule, isBusy };
 
   const columns = useMemo<DataTableColumn<JobDefinition>[]>(
     () => [
@@ -117,10 +121,13 @@ const JobRunner = ({
             );
           }
 
-          const causes = QUEUED_AS[row.original.kind];
+          const jobIds = live.current.jobIdsFor(row.original.kind);
 
           const onNow = live.current.working.filter(
-            (job) => job.state === 'running' && (causes === undefined || causes.includes(job.kind)),
+            (job) =>
+              job.state === 'running' &&
+              job.correlationId !== null &&
+              jobIds.has(job.correlationId),
           );
 
           return (
@@ -142,7 +149,7 @@ const JobRunner = ({
 
                   {onNow.length === 0 ? (
                     <p className="font-body text-xs text-text-muted">
-                      Nothing on the queue yet — it is still working out what there is to do.
+                      Nothing in the transcoder's own queue is tied to this yet.
                     </p>
                   ) : (
                     <ul className="flex flex-col gap-1.5">

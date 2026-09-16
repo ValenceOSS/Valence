@@ -105,7 +105,7 @@ const collectConcerns = ({
       id: 'failed-jobs',
       tone: 'broken',
       title: failed.length === 1 ? 'A job failed' : `${failed.length.toString()} jobs failed`,
-      detail: failed[0]?.detail ?? 'Look at the job list for what went wrong.',
+      detail: failed[0]?.failure?.message ?? 'Look at the job list for what went wrong.',
       panel: 'jobs',
     });
   }

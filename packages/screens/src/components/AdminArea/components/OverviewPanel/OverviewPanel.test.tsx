@@ -96,7 +96,8 @@ const job = (overrides: Partial<Job> = {}): Job => ({
   queuedAtMs: 0,
   startedAtMs: 0,
   finishedAtMs: null,
-  detail: null,
+  correlationId: null,
+  failure: null,
   ...overrides,
 });
 
