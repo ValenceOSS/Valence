@@ -9,22 +9,36 @@ const valence = {
   },
 };
 
+const PARENT_IMPORT_BAN = {
+  group: ['../*'],
+  message:
+    'Parent-relative imports are banned. Use @ValenceUI/*, @ValenceCore/*, @ValenceContracts/* or @ValenceSDK/*.',
+};
+
+const HUGEICONS_RENDERER_BAN = {
+  group: ['@hugeicons/react'],
+  message:
+    'Draw an icon with @ValenceUI/Icon rather than HugeiconsIcon, so the set stays swappable in one file.',
+};
+
 const SHARED_IMPORT_BANS = [
-  {
-    group: ['../*'],
-    message:
-      'Parent-relative imports are banned. Use @ValenceUI/*, @ValenceCore/*, @ValenceContracts/* or @ValenceSDK/*.',
-  },
+  PARENT_IMPORT_BAN,
   {
     group: ['@tabler/icons-react', '@remixicon/react', 'lucide-react', '@phosphor-icons/*'],
     message:
       'Icons come from @hugeicons/core-free-icons, drawn by @ValenceUI/Icon — see code standards section 10.',
   },
+  HUGEICONS_RENDERER_BAN,
+];
+
+const LANDING_IMPORT_BANS = [
+  PARENT_IMPORT_BAN,
   {
-    group: ['@hugeicons/react'],
+    group: ['@remixicon/react', 'lucide-react', '@phosphor-icons/*'],
     message:
-      'Draw an icon with @ValenceUI/Icon rather than HugeiconsIcon, so the set stays swappable in one file.',
+      'getvalence.app draws its icons from @tabler/icons-react — see code standards section 10 for why the product itself uses @hugeicons/core-free-icons instead.',
   },
+  HUGEICONS_RENDERER_BAN,
 ];
 
 export default tseslint.config(
@@ -83,9 +97,25 @@ export default tseslint.config(
     },
   },
   {
-    files: ['packages/ui/src/**/*.tsx', 'packages/screens/src/**/*.tsx', 'apps/web/src/**/*.tsx'],
+    files: [
+      'packages/ui/src/**/*.tsx',
+      'packages/screens/src/**/*.tsx',
+      'apps/web/src/**/*.tsx',
+      'apps/landing/src/**/*.tsx',
+    ],
     rules: {
       'valence/no-raw-colours': 'error',
+    },
+  },
+  {
+    files: ['apps/landing/src/**/*.ts', 'apps/landing/src/**/*.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [...LANDING_IMPORT_BANS],
+        },
+      ],
     },
   },
   {

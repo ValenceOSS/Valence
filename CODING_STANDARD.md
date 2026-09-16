@@ -448,6 +448,15 @@ import { Home01Icon } from '@hugeicons/core-free-icons';
 <Icon of={Home01Icon} size={18} />;
 ```
 
+**`apps/landing` is the one exception, and draws from `@tabler/icons-react`
+directly instead.** getvalence.app is a marketing page rather than the
+product, and wants the filled icons the free Hugeicons set doesn't have.
+`@ValenceUI/Icon` is built around Hugeicons' own icon shape, so it isn't used
+there either — a landing component imports a Tabler icon and renders it
+itself. `eslint.config.ts` scopes the ban accordingly: `apps/landing/src`
+keeps every other rule in this section, Tabler included, everywhere else
+still refuses it.
+
 **Say "this one is selected" with `isActive`, not with a different glyph.** The
 free set is one style, so today an active icon is the same drawing stroked
 heavier; a licensed set has filled twins, and `whenActive` is where they go.

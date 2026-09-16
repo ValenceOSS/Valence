@@ -84,6 +84,7 @@ your machine is unlikely to be the one Valence was built against.
 ```
 apps/
   web/          Vite and React, the browser client
+  landing/      Vite and React, getvalence.app
   desktop/      Electron, a window onto a server
   server/       Hono, the API contract, the plugin broker
   transcoder/   Rust, the media service
@@ -92,7 +93,7 @@ packages/
   core/         Shared logic, playback negotiation
   client/       What Valence is: readers, queries, realtime, sessions
   screens/      What Valence looks like: every screen and its route
-  ui/           ValenceUI: Base UI, Tailwind, Hugeicons, Motion
+  ui/           ValenceUI: Radix, Tailwind, Hugeicons, Motion
   plugin-sdk/   The public plugin API
 ```
 

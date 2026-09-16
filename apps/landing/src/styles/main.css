@@ -1,0 +1,13 @@
+@import '@valence/ui/src/styles/valence.css';
+
+@property --color-pink {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.66 0.21 5);
+}
+
+@property --color-discord {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #5865f2;
+}

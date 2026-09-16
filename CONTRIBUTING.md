@@ -113,9 +113,9 @@ docs(server): say how the data layer handles more than one node
 Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`,
 `ci`, `style`, `revert`.
 
-Scopes: `web`, `server`, `transcoder`, `desktop`, `ui`, `contracts`, `core`,
-`plugin-sdk`, `auth`, `docs`, `deps`, `repo`. A change spanning several layers
-takes no scope rather than an invented one.
+Scopes: `web`, `landing`, `server`, `transcoder`, `desktop`, `ui`, `contracts`,
+`core`, `plugin-sdk`, `auth`, `docs`, `deps`, `repo`. A change spanning several
+layers takes no scope rather than an invented one.
 
 Changes to the API contract or a plugin extension point **must** be marked
 breaking with `!` and a `BREAKING CHANGE:` footer when they are. Both are public
