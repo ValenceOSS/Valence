@@ -508,6 +508,23 @@ describe('administration over HTTP', () => {
     expect(cancelJob).not.toHaveBeenCalled();
   });
 
+  it('queues a server-wide job asked for by hand, which needs no library', async () => {
+    const { app, store, permissions, maintenance } = build();
+    const queued = vi.spyOn(maintenance, 'run');
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    for (const kind of ['server.checkTranscoder', 'server.checkDiskSpace']) {
+      const response = await app.request(`${BASE}/api/admin/jobs/${kind}/run`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie, origin: BASE },
+        body: JSON.stringify({}),
+      });
+
+      expect(response.status).toBe(202);
+      expect(queued).toHaveBeenCalledWith(kind);
+    }
+  });
+
   it('will not run a job kind it does not know', async () => {
     const { app, store, permissions } = build();
     const cookie = await signedInAsAdmin(app, store, permissions);
@@ -1297,7 +1314,7 @@ describe('changing one setting without disturbing the others', () => {
 
   it('reads every certificate again when the region changes, rather than rescanning', async () => {
     const { app, store, permissions, settings, maintenance } = build();
-    const again = vi.spyOn(maintenance, 'readCertificatesAgain');
+    const again = vi.spyOn(maintenance, 'run');
     const cookie = await signedInAsAdmin(app, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/settings`, {
@@ -1308,12 +1325,12 @@ describe('changing one setting without disturbing the others', () => {
 
     expect(response.status).toBe(200);
     expect((await settings.read()).certificationRegion).toBe('DE');
-    expect(again).toHaveBeenCalled();
+    expect(again).toHaveBeenCalledWith('library.readCertificatesAgain');
   });
 
   it('reads nothing again when the region is set to what it already was', async () => {
     const { app, store, permissions, maintenance } = build();
-    const again = vi.spyOn(maintenance, 'readCertificatesAgain');
+    const again = vi.spyOn(maintenance, 'run');
     const cookie = await signedInAsAdmin(app, store, permissions);
 
     await app.request(`${BASE}/api/admin/settings`, {

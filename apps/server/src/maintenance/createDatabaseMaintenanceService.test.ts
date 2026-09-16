@@ -3,13 +3,13 @@ import { createInertJobQueue } from '@ValenceServer/jobs/createInertJobQueue';
 import { createDatabaseMaintenanceService } from './createDatabaseMaintenanceService';
 
 describe('createDatabaseMaintenanceService', () => {
-  it('queues image cache cleanup under its own kind as a singleton key', async () => {
+  it('queues the job under its own kind as a singleton key', async () => {
     const enqueue = vi.fn(() => Promise.resolve('job-1'));
     const maintenance = createDatabaseMaintenanceService({
       jobs: createInertJobQueue({ enqueue }),
     });
 
-    const queued = await maintenance.cleanupImageCache();
+    const queued = await maintenance.run('server.cleanupImageCache');
 
     expect(enqueue).toHaveBeenCalledWith(
       'server.cleanupImageCache',
@@ -19,29 +19,26 @@ describe('createDatabaseMaintenanceService', () => {
     expect(queued).toEqual({ jobId: 'job-1', state: 'queued' });
   });
 
-  it('queues session cleanup under its own kind', async () => {
+  it('queues whichever kind it is handed, rather than a list it has to be taught', async () => {
     const enqueue = vi.fn(() => Promise.resolve('job-2'));
     const maintenance = createDatabaseMaintenanceService({
       jobs: createInertJobQueue({ enqueue }),
     });
 
-    await maintenance.cleanupSessions();
+    await maintenance.run('server.checkTranscoder');
+    await maintenance.run('server.pruneJobHistory');
 
-    expect(enqueue).toHaveBeenCalledWith('server.cleanupSessions', {}, 'server.cleanupSessions');
-  });
-
-  it('queues a catalogue connectivity check under its own kind', async () => {
-    const enqueue = vi.fn(() => Promise.resolve('job-3'));
-    const maintenance = createDatabaseMaintenanceService({
-      jobs: createInertJobQueue({ enqueue }),
-    });
-
-    await maintenance.checkCatalogueConnectivity();
-
-    expect(enqueue).toHaveBeenCalledWith(
-      'server.checkCatalogueConnectivity',
+    expect(enqueue).toHaveBeenNthCalledWith(
+      1,
+      'server.checkTranscoder',
       {},
-      'server.checkCatalogueConnectivity',
+      'server.checkTranscoder',
+    );
+    expect(enqueue).toHaveBeenNthCalledWith(
+      2,
+      'server.pruneJobHistory',
+      {},
+      'server.pruneJobHistory',
     );
   });
 
@@ -53,7 +50,7 @@ describe('createDatabaseMaintenanceService', () => {
       }),
     });
 
-    const queued = await maintenance.cleanupSessions();
+    const queued = await maintenance.run('server.cleanupSessions');
 
     expect(queued).toEqual({ jobId: 'job-already-going', state: 'running' });
   });
@@ -64,7 +61,7 @@ describe('createDatabaseMaintenanceService', () => {
       jobs: createInertJobQueue({ enqueue: () => Promise.resolve(null), liveJob }),
     });
 
-    await maintenance.cleanupSessions();
+    await maintenance.run('server.cleanupSessions');
 
     expect(liveJob).toHaveBeenCalledWith('server.cleanupSessions');
   });
@@ -77,6 +74,9 @@ describe('createDatabaseMaintenanceService', () => {
       }),
     });
 
-    expect(await maintenance.cleanupSessions()).toEqual({ jobId: null, state: 'unavailable' });
+    expect(await maintenance.run('server.cleanupSessions')).toEqual({
+      jobId: null,
+      state: 'unavailable',
+    });
   });
 });

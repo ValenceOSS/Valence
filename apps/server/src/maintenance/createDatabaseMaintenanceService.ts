@@ -1,10 +1,3 @@
-import {
-  CLEANUP_IMAGE_CACHE_JOB,
-  CLEANUP_ARTEFACT_CACHE_JOB,
-  CLEANUP_SESSIONS_JOB,
-  CHECK_CATALOGUE_CONNECTIVITY_JOB,
-  READ_CERTIFICATES_AGAIN_JOB,
-} from '@ValenceServer/jobs/JobQueue';
 import type { JobQueue } from '@ValenceServer/jobs/JobQueue';
 import type { MaintenanceService, QueuedJob } from './MaintenanceService';
 
@@ -41,9 +34,20 @@ const enqueueSingleton = async (jobs: JobQueue, kind: string): Promise<QueuedJob
 };
 
 /**
- * The housekeeping an operator can ask for: sweeping the caches, clearing out stale sessions, and
- * checking the metadata catalogue answers. Every one of them is queued rather than run here, since
- * each walks the whole library and none should hold a request open while it does.
+ * The housekeeping an operator can ask for: sweeping the caches, clearing out stale sessions,
+ * pruning what has aged out, and asking the transcoder and the catalogue whether they answer. Every
+ * one of them is queued rather than run here, since none should hold a request open while it works.
+ *
+ * Takes the kind rather than offering a method per job, which is the whole of the fix. There was one
+ * method for each, a matching entry in the route's own table, and a job definition — three lists
+ * that had to agree, and adding a job only ever updated the third. Eight of the twelve server-wide
+ * jobs had arrived that way by the time anybody pressed Run on one: the route found no entry, fell
+ * through to the branch for work that needs a library, and answered "That job needs a library" with
+ * a 404. The page read that as the job having finished the instant it began, and nothing was ever
+ * queued, so nothing appeared in the history either.
+ *
+ * Nothing here decides which kinds are allowed. The caller holds the job definitions and is the only
+ * place that knows what a real job is, so it checks before asking.
  *
  * @param jobs - The queue the work is put on.
  * @returns The maintenance service.
@@ -51,11 +55,7 @@ const enqueueSingleton = async (jobs: JobQueue, kind: string): Promise<QueuedJob
 const createDatabaseMaintenanceService = ({
   jobs,
 }: CreateDatabaseMaintenanceServiceOptions): MaintenanceService => ({
-  cleanupImageCache: () => enqueueSingleton(jobs, CLEANUP_IMAGE_CACHE_JOB),
-  cleanupArtefactCache: () => enqueueSingleton(jobs, CLEANUP_ARTEFACT_CACHE_JOB),
-  cleanupSessions: () => enqueueSingleton(jobs, CLEANUP_SESSIONS_JOB),
-  checkCatalogueConnectivity: () => enqueueSingleton(jobs, CHECK_CATALOGUE_CONNECTIVITY_JOB),
-  readCertificatesAgain: () => enqueueSingleton(jobs, READ_CERTIFICATES_AGAIN_JOB),
+  run: (kind) => enqueueSingleton(jobs, kind),
 });
 
 export { createDatabaseMaintenanceService };
