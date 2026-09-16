@@ -47,7 +47,7 @@ const LINK = 'text-sm text-text-muted transition-colors hover:text-text';
  */
 const LandingFooter = () => (
   <footer className="border-t border-border/60">
-    <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:grid-cols-[1.3fr_1fr_1fr_1fr] sm:px-10">
+    <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:grid-cols-[1.3fr_1fr_1fr_1fr] sm:px-10 xl:max-w-7xl">
       <div className="flex flex-col gap-3">
         <Link to="/" className="flex items-center gap-2.5">
           <Logo size={24} isSolid />
@@ -85,7 +85,7 @@ const LandingFooter = () => (
     </div>
 
     <div className="border-t border-border/60">
-      <div className="mx-auto flex max-w-6xl flex-col-reverse items-center gap-4 px-5 py-6 sm:flex-row sm:justify-between sm:px-10">
+      <div className="mx-auto flex max-w-6xl flex-col-reverse items-center gap-4 px-5 py-6 sm:flex-row sm:justify-between sm:px-10 xl:max-w-7xl">
         <p className="text-xs text-text-muted/70">&copy; {YEAR} The Valence contributors.</p>
 
         <div className="flex items-center gap-3">

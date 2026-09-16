@@ -14,7 +14,10 @@ const ComparisonTable = () => {
   const prefersReducedMotion = useReducedMotionConfig();
 
   return (
-    <section aria-label="How it compares" className="mx-auto max-w-6xl px-5 py-16 sm:px-10">
+    <section
+      aria-label="How it compares"
+      className="mx-auto max-w-6xl px-5 py-16 sm:px-10 xl:max-w-7xl"
+    >
       <motion.div
         initial="hidden"
         whileInView="shown"
@@ -23,7 +26,9 @@ const ComparisonTable = () => {
         transition={revealTransition(prefersReducedMotion, 'heavy')}
         className="flex flex-col gap-2"
       >
-        <h2 className="text-3xl font-semibold tracking-tight text-text">How it compares</h2>
+        <h2 className="text-3xl font-semibold tracking-tight text-text lg:text-4xl">
+          How it compares
+        </h2>
         <p className="max-w-2xl text-text-muted">
           As we understand Plex and Jellyfin today. Both move, so tell us if something's changed.
         </p>
