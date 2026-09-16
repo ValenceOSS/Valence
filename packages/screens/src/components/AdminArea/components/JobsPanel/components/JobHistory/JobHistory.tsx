@@ -26,6 +26,10 @@ const PAGE = 200;
 
 const ROWS_PER_PAGE = 10;
 
+const REFRESH_THROTTLE_MS = 1_000;
+
+const NOTHING_RUN: JobRunRecord[] = [];
+
 type StatusFilter = JobRunStatus | 'all';
 
 const STATUS_ITEMS: SegmentedItem[] = [
@@ -91,16 +95,31 @@ const JobHistory = ({ definitions, onViewLogs }: JobHistoryProps) => {
   const askedHistory = useQuery(adminQueries.jobHistory(query));
   const askedIssues = useQuery(adminQueries.jobHistoryIssues(openIssuesFor));
 
-  const records = askedHistory.data?.records ?? [];
+  const records = askedHistory.data?.records ?? NOTHING_RUN;
   const issues = askedIssues.data ?? [];
 
-  useEffect(
-    () =>
-      watchJobs(() => {
+  useEffect(() => {
+    let pending: ReturnType<typeof setTimeout> | null = null;
+
+    const unwatch = watchJobs(() => {
+      if (pending !== null) {
+        return;
+      }
+
+      pending = setTimeout(() => {
+        pending = null;
         void cache.invalidateQueries({ queryKey: [...adminQueries.key, 'jobHistory'] });
-      }),
-    [cache],
-  );
+      }, REFRESH_THROTTLE_MS);
+    });
+
+    return () => {
+      if (pending !== null) {
+        clearTimeout(pending);
+      }
+
+      unwatch();
+    };
+  }, [cache]);
 
   const columns = useMemo<DataTableColumn<JobRunRecord>[]>(
     () => [

@@ -3,11 +3,16 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { JobHistory } from './JobHistory';
-import { fetchJobHistory, fetchJobHistoryIssues } from '@ValenceClient/admin/fetchAdmin';
+import { fetchJobHistory, fetchJobHistoryIssues, watchJobs } from '@ValenceClient/admin/fetchAdmin';
 import type { ReactElement } from 'react';
 import type * as FetchAdmin from '@ValenceClient/admin/fetchAdmin';
 import type { JobDefinition } from '@ValenceClient/admin/fetchAdmin';
-import type { JobRunIssue, JobRunPage, JobRunRecord } from '@ValenceContracts/schemas/JobRun';
+import type {
+  JobEvent,
+  JobRunIssue,
+  JobRunPage,
+  JobRunRecord,
+} from '@ValenceContracts/schemas/JobRun';
 
 vi.mock('@ValenceClient/admin/fetchAdmin', async (importOriginal) => ({
   ...(await importOriginal<typeof FetchAdmin>()),
@@ -18,6 +23,14 @@ vi.mock('@ValenceClient/admin/fetchAdmin', async (importOriginal) => ({
 
 const askedHistory = vi.mocked(fetchJobHistory);
 const askedIssues = vi.mocked(fetchJobHistoryIssues);
+const watching = vi.mocked(watchJobs);
+
+const STARTED_EVENT: JobEvent = {
+  event: 'started',
+  kind: 'library.regeneratePreviews',
+  jobId: 'run-1',
+  subject: 'Movies',
+};
 
 const DEFINITIONS: JobDefinition[] = [
   {
@@ -141,6 +154,37 @@ describe('JobHistory', () => {
     await waitFor(() => {
       expect(askedHistory).toHaveBeenCalledWith(expect.objectContaining({ search: 'preview' }));
     });
+  });
+
+  it('coalesces a burst of job events into one refresh, not one per event', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      let onEvent: ((event: JobEvent) => void) | undefined;
+
+      watching.mockImplementation((handler) => {
+        onEvent = handler;
+
+        return () => {};
+      });
+
+      askedHistory.mockResolvedValue(page([record()]));
+
+      renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+
+      await screen.findByText('Movies');
+      askedHistory.mockClear();
+
+      onEvent?.(STARTED_EVENT);
+      onEvent?.(STARTED_EVENT);
+      onEvent?.(STARTED_EVENT);
+
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      expect(askedHistory).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('filters by status when a status is chosen', async () => {
