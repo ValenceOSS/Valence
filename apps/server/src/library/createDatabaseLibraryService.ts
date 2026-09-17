@@ -43,6 +43,7 @@ import { scanBookLibrary } from '@ValenceServer/books/scanBookLibrary';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import type { BookStore } from '@ValenceServer/books/scanBookLibrary';
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
+import { createExpiringCache } from './createExpiringCache';
 import { resolveSeriesShape } from './MetadataProvider';
 import { regeneratePreviews } from './regeneratePreviews';
 import { generateTrickplay } from './generateTrickplay';
@@ -155,6 +156,8 @@ const EVERY_EPISODE = 2000;
 
 const CREDITS_LIMIT = 200;
 
+const SERIES_SHAPE_LIVES_FOR_MS = 6 * 60 * 60 * 1000;
+
 /**
  * What one profile gave an item, as a subquery rather than a join, so that filtering or sorting by a
  * rating never changes how many rows a page comes back with. A profile that has not rated something
@@ -211,8 +214,25 @@ const createDatabaseLibraryService = ({
 }: CreateDatabaseLibraryServiceOptions): DatabaseLibraryService => {
   const store = createMediaStore(db, certificationRegion);
 
-  const shapes = new Map<string, SeriesShape | null>();
+  const shapes = createExpiringCache<SeriesShape | null>(SERIES_SHAPE_LIVES_FOR_MS);
 
+  /**
+   * What a programme is made of — its seasons and their episodes — as the catalogue has it.
+   *
+   * Remembered for six hours rather than for as long as the process runs. A show page would
+   * otherwise cost a request per season every time somebody opened it, which is why it is
+   * remembered at all; kept for ever, which is what this was, a season airing after the programme
+   * was first looked at never appeared. The page that says what a library has is the same page that
+   * says what it is missing, so it was wrong about both, and on a server that stays up for months
+   * it stayed wrong.
+   *
+   * Six hours matches what the catalogue provider keeps its own answers for, deliberately.
+   * Shortening this alone would buy nothing: the question would be asked again and served from the
+   * cache underneath. See VAL-221.
+   *
+   * @param detail - The show being drawn.
+   * @returns Its shape, or null where nothing identifies the programme.
+   */
   const shapeOf = async (detail: ShowDetail): Promise<SeriesShape | null> => {
     const [row] = await db
       .select({ externalId: mediaItem.externalId })

@@ -795,6 +795,60 @@ describe('a correction somebody made', () => {
     expect(asked).toBe('222');
   });
 
+  it('reaches a season that did not exist when it was made', async () => {
+    const asked: (string | null | undefined)[] = [];
+    const { run } = harness({
+      found: [
+        file('/media/shows/From/Season 01/from.s01e01.mkv'),
+        file('/media/shows/From/Season 02/from.s02e01.mkv'),
+      ],
+      existing: [stored('/media/shows/From/Season 01/from.s01e01.mkv', { externalId: '222' })],
+      overrides: [
+        {
+          path: '/media/shows/From/Season 01/from.s01e01.mkv',
+          externalId: '222',
+          externalKind: 'tv',
+        },
+      ],
+      providers: [
+        {
+          name: 'catalogue',
+          describe: (facts) => {
+            asked.push(facts.knownExternalId);
+
+            return Promise.resolve({ title: 'From', year: 2022, externalId: '222' });
+          },
+        },
+      ],
+    });
+
+    await run();
+
+    expect(asked).toEqual(['222']);
+  });
+
+  it('does not reach a film that merely shares a folder with a corrected one', async () => {
+    const asked: (string | null | undefined)[] = [];
+    const { run } = harness({
+      found: [file('/media/films/one.mkv'), file('/media/films/another.mkv')],
+      overrides: [{ path: '/media/films/one.mkv', externalId: '222', externalKind: 'movie' }],
+      providers: [
+        {
+          name: 'catalogue',
+          describe: (facts) => {
+            asked.push(facts.knownExternalId);
+
+            return Promise.resolve({ title: 'A film', year: 2022, externalId: '9' });
+          },
+        },
+      ],
+    });
+
+    await run();
+
+    expect(asked.filter((one) => one === '222')).toHaveLength(1);
+  });
+
   it('says which catalogue the id belongs to, since the number alone cannot', async () => {
     let asked: string | undefined;
     const { run } = harness({

@@ -122,6 +122,65 @@ const isReachable = async (transcoder: Transcoder): Promise<boolean> => {
 };
 
 /**
+ * Indexes the corrections somebody has made by the programme they were made against, so one can
+ * reach a file that did not exist when it was made.
+ *
+ * A correction is stored against each path it covered at the time, which is every file the
+ * programme had then. A season that airs afterwards is downloaded into the same folder and has no
+ * correction of its own, so it was looked up by title like anything new — and landed on exactly the
+ * programme the correction existed to move it off. Worse than wrong lettering: the catalogue
+ * identifier is what groups files into a show, so the new season arrived as a second show beside
+ * the corrected one.
+ *
+ * Keyed by the folder rather than by the title, because the folder is what does not move. A
+ * correction usually changes what the programme is called, so the title on the stored rows is the
+ * corrected one while a new file still parses to whatever the folder says.
+ *
+ * Films cannot be caught by this. A path with no episode numbering in it has no series folder at
+ * all, so nothing groups two films that happen to share a directory.
+ *
+ * @param corrections - Every correction held for the library.
+ * @returns The correction for each programme, by its folder.
+ */
+const correctionsBySeries = (corrections: MediaOverride[]): Map<string, MediaOverride> => {
+  const bySeries = new Map<string, MediaOverride>();
+
+  for (const correction of corrections) {
+    const folder = readEpisodeFromPath(correction.path).seriesFolder;
+
+    if (folder !== null && !bySeries.has(folder)) {
+      bySeries.set(folder, correction);
+    }
+  }
+
+  return bySeries;
+};
+
+/**
+ * The correction that governs a file: its own, or the one made against the programme it belongs to.
+ *
+ * @param path - The file being read.
+ * @param seriesFolder - The programme's folder, where the file is an episode of one.
+ * @param byPath - Corrections against a path.
+ * @param bySeries - Corrections against a programme.
+ * @returns The correction to honour, or null where none was made.
+ */
+const correctionFor = (
+  path: string,
+  seriesFolder: string | null,
+  byPath: Map<string, MediaOverride>,
+  bySeries: Map<string, MediaOverride>,
+): MediaOverride | null => {
+  const own = byPath.get(path);
+
+  if (own !== undefined) {
+    return own;
+  }
+
+  return (seriesFolder === null ? undefined : bySeries.get(seriesFolder)) ?? null;
+};
+
+/**
  * Decides which of a library's files actually need probing: the ones that are new, and the ones
  * whose size or modification time has moved since they were last read. Probing launches a process
  * per file, so a library of twenty thousand that has gained two should cost two probes.
@@ -228,9 +287,9 @@ const scanLibrary = async ({
   const missing = isPartial || hasVanished ? [] : seen.missing;
   const knownPaths = new Set(stored.map((item) => item.path));
   const storedByPath = new Map(stored.map((item) => [item.path, item]));
-  const overrides = new Map(
-    ((await store.listOverrides?.(libraryId)) ?? []).map((one) => [one.path, one]),
-  );
+  const corrections = (await store.listOverrides?.(libraryId)) ?? [];
+  const overrides = new Map(corrections.map((one) => [one.path, one]));
+  const overridesBySeries = correctionsBySeries(corrections);
 
   let added = 0;
   let updated = 0;
@@ -273,7 +332,12 @@ const scanLibrary = async ({
               seriesTitle: tidy(extra.seriesFolder.slice(extra.seriesFolder.lastIndexOf('/') + 1)),
               seriesFolder: extra.seriesFolder,
             };
-      const corrected = overrides.get(file.path) ?? null;
+      const corrected = correctionFor(
+        file.path,
+        episode.seriesFolder,
+        overrides,
+        overridesBySeries,
+      );
       const knownExternalId =
         corrected?.externalId ?? storedByPath.get(file.path)?.externalId ?? null;
 
