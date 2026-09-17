@@ -3,6 +3,7 @@ type LogoCandidate = {
   language: string | null;
   width: number;
   voteAverage: number;
+  voteCount: number;
 };
 
 /**
@@ -27,10 +28,28 @@ const rankLanguage = (language: string | null, wanted: string, original: string 
   return language === original ? 2 : 3;
 };
 
+/** A rating to the tenth it is compared at. */
+const round = (rating: number): number => Math.round(rating * 10) / 10;
+
 /**
  * Chooses which of a catalogue's logos to draw a title with, preferring the viewer's language, then
  * one with no lettering, then anything. A logo is the title as its designer set it, so getting the
  * language wrong is worse than showing plain text.
+ *
+ * Within a language, what people thought of it decides, and the size only breaks a tie nothing else
+ * could. It was the other way round, and the size of a file says nothing about whether it is the
+ * right picture: a catalogue usually carries both the logo as it was designed and a flat white
+ * silhouette of it, and the silhouette is often the larger upload. Kung Fu Panda 4 came out as white
+ * blobs on the home screen for exactly that reason — that logo's letters are told apart by their
+ * outlines and shading, and filled flat they run into each other.
+ *
+ * The rating is rounded to a tenth before it is compared, which is Jellyfin's rule and a good one:
+ * it stops 5.312 against 5.308 from settling anything and hands the decision to the number of people
+ * who voted instead. A logo rated 5.3 by forty people is a safer bet than one rated 5.3 by two.
+ *
+ * Size stays as the last resort rather than being dropped, which is where Jellyfin leaves it out
+ * entirely. Catalogue images are very often unvoted, and where nothing is known about any of them
+ * the biggest is a better guess than the first.
  *
  * @param candidates - The logos the catalogue offered, each with its language.
  * @param options - The language the house reads, and the one the title was made in.
@@ -52,7 +71,9 @@ const pickLogo = (
       return byLanguage;
     }
 
-    return right.width - left.width || right.voteAverage - left.voteAverage;
+    const byRating = round(right.voteAverage) - round(left.voteAverage);
+
+    return byRating || right.voteCount - left.voteCount || right.width - left.width;
   });
 
   return best ?? null;

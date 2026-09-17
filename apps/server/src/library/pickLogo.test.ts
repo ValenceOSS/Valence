@@ -7,6 +7,7 @@ const logo = (overrides: Partial<LogoCandidate> = {}): LogoCandidate => ({
   language: 'en',
   width: 1000,
   voteAverage: 0,
+  voteCount: 0,
   ...overrides,
 });
 
@@ -42,13 +43,40 @@ describe('pickLogo', () => {
     expect(chosen?.filePath).toBe('/en.png');
   });
 
-  it('takes the larger of two equally readable ones', () => {
+  it('takes the larger of two nobody has said anything about', () => {
     const chosen = pickLogo([
       logo({ filePath: '/small.png', width: 600 }),
       logo({ filePath: '/big.png', width: 1097 }),
     ]);
 
     expect(chosen?.filePath).toBe('/big.png');
+  });
+
+  it('takes the one people liked over the one that is merely bigger', () => {
+    const chosen = pickLogo([
+      logo({ filePath: '/white-silhouette.png', width: 3840, voteAverage: 0, voteCount: 0 }),
+      logo({ filePath: '/as-designed.png', width: 1000, voteAverage: 5.3, voteCount: 12 }),
+    ]);
+
+    expect(chosen?.filePath).toBe('/as-designed.png');
+  });
+
+  it('lets the number of voters settle two rated the same to a tenth', () => {
+    const chosen = pickLogo([
+      logo({ filePath: '/barely-voted.png', voteAverage: 5.308, voteCount: 2 }),
+      logo({ filePath: '/well-voted.png', voteAverage: 5.312, voteCount: 40 }),
+    ]);
+
+    expect(chosen?.filePath).toBe('/well-voted.png');
+  });
+
+  it('still lets a real difference in rating decide', () => {
+    const chosen = pickLogo([
+      logo({ filePath: '/poor.png', voteAverage: 5.2, voteCount: 90 }),
+      logo({ filePath: '/good.png', voteAverage: 8.4, voteCount: 3 }),
+    ]);
+
+    expect(chosen?.filePath).toBe('/good.png');
   });
 
   it('falls back to the programme’s own tongue rather than to nothing', () => {
@@ -63,7 +91,7 @@ describe('pickLogo', () => {
     expect(chosen?.filePath).toBe('/ja.png');
   });
 
-  it('uses the catalogue’s rating only to separate two that are otherwise equal', () => {
+  it('uses the catalogue’s rating ahead of anything about the file itself', () => {
     const chosen = pickLogo([
       logo({ filePath: '/liked.png', width: 1000, voteAverage: 8 }),
       logo({ filePath: '/unrated.png', width: 1000, voteAverage: 0 }),
