@@ -5,7 +5,7 @@ import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 const BROWSE_SECTIONS = ['home', 'shows', 'films', 'read', 'new', 'favourites'] as const;
 
 type ShellSection =
-  'home' | 'shows' | 'films' | 'new' | 'favourites' | 'read' | 'search' | 'account' | 'admin';
+  'home' | 'shows' | 'films' | 'new' | 'favourites' | 'read' | 'search' | 'account';
 
 type AppShellProps = {
   section: ShellSection;
@@ -17,7 +17,6 @@ type AppShellProps = {
   onSignOut?: () => void;
   isAccountOpen: boolean;
   onOpenAccount: () => void;
-  isAdminOpen: boolean;
   onOpenAdmin: () => void;
   isDownloadsOpen: boolean;
   onOpenDownloads: () => void;

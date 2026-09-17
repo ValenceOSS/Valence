@@ -54,7 +54,7 @@ const PartyPasswordDialog = ({ isOpen, wasWrong, onJoin, onClose }: PartyPasswor
         </Button>
 
         <Button
-          variant="primary"
+          variant="glossy"
           disabled={password.length === 0}
           onClick={() => {
             onJoin(password);

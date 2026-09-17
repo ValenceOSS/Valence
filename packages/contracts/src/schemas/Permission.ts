@@ -35,6 +35,7 @@ const PERMISSIONS = [
   'account.ban',
   'account.roles',
   'account.profiles',
+  'account.security',
 
   'server.settings',
   'server.backup',
@@ -57,6 +58,10 @@ const RoleSchema = z.object({
   name: z.string().min(1).max(60),
   position: z.number().int().nonnegative(),
   permissions: z.array(PermissionSchema),
+  color: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .nullable(),
 });
 
 const MyPermissionsSchema = z.object({

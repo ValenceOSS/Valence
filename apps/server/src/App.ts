@@ -213,7 +213,7 @@ import { shiftSubtitleCues } from '@ValenceCore/functions/shiftSubtitleCues';
 import { shiftWebVtt } from '@ValenceCore/functions/shiftWebVtt';
 import type { ProfileService } from '@ValenceServer/profiles/ProfileService';
 import type { BookService } from '@ValenceServer/books/createDatabaseBookService';
-import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { createSessionGate } from '@ValenceServer/auth/createSessionGate';
 import { createBetterAuthAdminBlock } from '@ValenceServer/auth/createBetterAuthAdminBlock';
 import { checkRoleChange } from '@ValenceServer/auth/checkRoleChange';
@@ -226,6 +226,11 @@ import {
   removeAccountRoute,
   inviteAccountRoute,
   editAccountRoute,
+  resetAccountPasswordRoute,
+  listAccountSessionsRoute,
+  endAccountSessionsRoute,
+  endAccountSessionRoute,
+  setAccountAvatarRoute,
 } from '@ValenceServer/routes/AccountRoute';
 import type { RoleChangeRefusal } from '@ValenceServer/auth/checkRoleChange';
 import { ADMINISTRATOR, PERMISSIONS } from '@ValenceContracts/schemas/Permission';
@@ -296,7 +301,7 @@ import {
   forgetHistoryRoute,
 } from '@ValenceServer/routes/HistoryRoute';
 import type { HistoryService } from '@ValenceServer/history/HistoryService';
-import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 
 const PROFILE_HEADER = 'x-valence-profile';
 
@@ -345,8 +350,6 @@ const neverKeep = (): Record<string, string> => ({ 'cache-control': 'no-store' }
 
 const SignInBodySchema = z.object({ password: z.string().min(1) });
 
-const SERVER_VERSION = '0.0.0';
-
 const OVERVIEW_PATIENCE_MILLISECONDS = 5_000;
 
 const within = async <Answer>(work: Promise<Answer>, fallback: Answer): Promise<Answer> =>
@@ -391,6 +394,7 @@ type StorageCount = {
 type CreateAppOptions = {
   auth: ValenceAuth;
   settings: SettingsStore;
+  version?: string;
   trustedOrigins?: () => Promise<readonly string[]>;
   countUsers: () => Promise<number>;
   promoteToAdmin: (email: string) => Promise<void>;
@@ -417,6 +421,26 @@ type CreateAppOptions = {
     changes: { name?: string; email?: string },
   ) => Promise<'changed' | 'missing' | 'taken'>;
   readBanReason?: (userId: string) => Promise<string | null>;
+  resetAccountPassword?: (userId: string, password: string) => Promise<boolean>;
+  listAccountSessions?: (userId: string) => Promise<
+    {
+      id: string;
+      userAgent: string | null;
+      ipAddress: string | null;
+      createdAt: string;
+      expiresAt: string;
+    }[]
+  >;
+  endAccountSessions?: (userId: string) => Promise<void>;
+  endAccountSession?: (userId: string, sessionId: string) => Promise<void>;
+  setAccountPhoto?: (
+    userId: string,
+    photo: { body: Uint8Array; contentType: string },
+  ) => Promise<boolean>;
+  setAccountAvatar?: (
+    userId: string,
+    changes: { avatar?: Avatar; colour?: ProfileColour },
+  ) => Promise<boolean>;
   maintenance?: MaintenanceService;
   schedules?: JobScheduleService;
   presence?: PresenceService;
@@ -487,6 +511,7 @@ type CreateAppOptions = {
 const createApp = ({
   auth,
   settings,
+  version: SERVER_VERSION = '0.0.0',
   trustedOrigins,
   countUsers,
   promoteToAdmin,
@@ -537,6 +562,12 @@ const createApp = ({
   readBanReason,
   inviteAccount,
   editAccount,
+  resetAccountPassword,
+  listAccountSessions,
+  endAccountSessions,
+  endAccountSession,
+  setAccountPhoto,
+  setAccountAvatar,
   realtime,
   logs,
   jobHistory,
@@ -2355,7 +2386,7 @@ const createApp = ({
       return context.json({ error: describeRefusal(refusal) }, 403);
     }
 
-    return context.json(await permissions.createRole(body), 201);
+    return context.json(await permissions.createRole({ ...body, color: body.color ?? null }), 201);
   });
 
   app.openapi(updateRoleRoute, async (context) => {
@@ -2389,15 +2420,15 @@ const createApp = ({
       ...(body.name === undefined ? {} : { name: body.name }),
       ...(body.position === undefined ? {} : { position: body.position }),
       ...(body.permissions === undefined ? {} : { permissions: body.permissions }),
+      ...(body.color === undefined ? {} : { color: body.color }),
     };
-    const updated = await permissions.updateRole(id, patch);
 
-    if (updated === null) {
-      return context.json({ error: 'No such role.' }, 404);
-    }
+    const holding: { updated: Role | null } = { updated: null };
 
     const stranded = await wouldStrandTheServer(
-      () => Promise.resolve(),
+      async () => {
+        holding.updated = await permissions.updateRole(id, patch);
+      },
       async () => {
         await permissions.updateRole(id, { permissions: before });
       },
@@ -2410,7 +2441,11 @@ const createApp = ({
       );
     }
 
-    return context.json(updated, 200);
+    if (holding.updated === null) {
+      return context.json({ error: 'No such role.' }, 404);
+    }
+
+    return context.json(holding.updated, 200);
   });
 
   app.openapi(deleteRoleRoute, async (context) => {
@@ -3020,6 +3055,206 @@ const createApp = ({
     }
 
     return context.body(null, 204);
+  });
+
+  app.openapi(resetAccountPasswordRoute, async (context) => {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.security')) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { userId } = context.req.valid('param');
+
+    if (actor.id !== userId) {
+      const target = await permissions.rolesFor(userId);
+
+      const refusal = checkAccountAction({
+        actorId: actor.id,
+        actorPermissions: actor.permissions,
+        actorHighestPosition: actor.highestPosition,
+        targetId: userId,
+        targetHighestPosition:
+          target.length === 0 ? null : Math.max(...target.map((role) => role.position)),
+      });
+
+      if (refusal !== null) {
+        return context.json({ error: describeAccountRefusal(refusal) }, 403);
+      }
+    }
+
+    const { password } = context.req.valid('json');
+    const changed = await resetAccountPassword?.(userId, password);
+
+    if (changed === undefined || !changed) {
+      return context.json({ error: 'No such account.' }, 404);
+    }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(listAccountSessionsRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'account.security'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { userId } = context.req.valid('param');
+    const held = (await listAccountSessions?.(userId)) ?? [];
+
+    return context.json(
+      {
+        sessions: held.map((one) => ({
+          id: one.id,
+          name: describeDevice(one.userAgent),
+          address: one.ipAddress,
+          signedInAt: one.createdAt,
+          expiresAt: one.expiresAt,
+        })),
+      },
+      200,
+    );
+  });
+
+  app.openapi(endAccountSessionsRoute, async (context) => {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.security')) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { userId } = context.req.valid('param');
+
+    if (actor.id !== userId) {
+      const target = await permissions.rolesFor(userId);
+
+      const refusal = checkAccountAction({
+        actorId: actor.id,
+        actorPermissions: actor.permissions,
+        actorHighestPosition: actor.highestPosition,
+        targetId: userId,
+        targetHighestPosition:
+          target.length === 0 ? null : Math.max(...target.map((role) => role.position)),
+      });
+
+      if (refusal !== null) {
+        return context.json({ error: describeAccountRefusal(refusal) }, 403);
+      }
+    }
+
+    await endAccountSessions?.(userId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(endAccountSessionRoute, async (context) => {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.security')) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { userId, sessionId } = context.req.valid('param');
+
+    if (actor.id !== userId) {
+      const target = await permissions.rolesFor(userId);
+
+      const refusal = checkAccountAction({
+        actorId: actor.id,
+        actorPermissions: actor.permissions,
+        actorHighestPosition: actor.highestPosition,
+        targetId: userId,
+        targetHighestPosition:
+          target.length === 0 ? null : Math.max(...target.map((role) => role.position)),
+      });
+
+      if (refusal !== null) {
+        return context.json({ error: describeAccountRefusal(refusal) }, 403);
+      }
+    }
+
+    await endAccountSession?.(userId, sessionId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(setAccountAvatarRoute, async (context) => {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.profiles')) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { userId } = context.req.valid('param');
+
+    if (actor.id !== userId) {
+      const target = await permissions.rolesFor(userId);
+
+      const refusal = checkAccountAction({
+        actorId: actor.id,
+        actorPermissions: actor.permissions,
+        actorHighestPosition: actor.highestPosition,
+        targetId: userId,
+        targetHighestPosition:
+          target.length === 0 ? null : Math.max(...target.map((role) => role.position)),
+      });
+
+      if (refusal !== null) {
+        return context.json({ error: describeAccountRefusal(refusal) }, 403);
+      }
+    }
+
+    const body = context.req.valid('json');
+    const changed = await setAccountAvatar?.(userId, {
+      ...(body.avatar === undefined ? {} : { avatar: body.avatar }),
+      ...(body.colour === undefined ? {} : { colour: body.colour }),
+    });
+
+    if (changed === undefined || !changed) {
+      return context.json({ error: 'No such account.' }, 404);
+    }
+
+    announceProfiles(userId);
+
+    return context.body(null, 204);
+  });
+
+  app.put('/api/admin/accounts/:userId/photo', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'account.profiles'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const actor = await readActor(context.req.raw.headers);
+    const userId = context.req.param('userId');
+
+    if (actor !== null && actor.id !== userId) {
+      const target = await permissions.rolesFor(userId);
+
+      const refusal = checkAccountAction({
+        actorId: actor.id,
+        actorPermissions: actor.permissions,
+        actorHighestPosition: actor.highestPosition,
+        targetId: userId,
+        targetHighestPosition:
+          target.length === 0 ? null : Math.max(...target.map((role) => role.position)),
+      });
+
+      if (refusal !== null) {
+        return context.json({ error: describeAccountRefusal(refusal) }, 403);
+      }
+    }
+
+    const saved = await setAccountPhoto?.(userId, {
+      body: new Uint8Array(await context.req.arrayBuffer()),
+      contentType: context.req.header('content-type') ?? '',
+    });
+
+    if (saved === true) {
+      announceProfiles(userId);
+    }
+
+    return saved === true
+      ? context.body(null, 204)
+      : context.json({ error: 'That picture could not be used.' }, 400);
   });
 
   app.openapi(listMyPermissionsRoute, async (context) => {
@@ -4115,4 +4350,4 @@ const createApp = ({
 
 export type { CreateAppOptions };
 
-export { createApp, SERVER_VERSION };
+export { createApp };

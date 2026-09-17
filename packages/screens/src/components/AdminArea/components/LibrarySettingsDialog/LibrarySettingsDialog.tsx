@@ -218,7 +218,7 @@ const LibrarySettingsDialog = ({
             </Button>
 
             <Button
-              variant="primary"
+              variant="glossy"
               isLoading={isSaving}
               onClick={() => {
                 void save();
@@ -248,7 +248,7 @@ const LibrarySettingsDialog = ({
               Not now
             </Button>
 
-            <Button variant="primary" onClick={regenerate}>
+            <Button variant="glossy" onClick={regenerate}>
               Regenerate previews
             </Button>
           </DialogFooter>

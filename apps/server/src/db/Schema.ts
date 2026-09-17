@@ -893,6 +893,7 @@ const role = pgTable(
     name: text('name').notNull(),
     description: text('description').notNull().default(''),
     position: integer('position').notNull().default(0),
+    color: text('color'),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
   },
   (table) => [uniqueIndex('role_name_idx').on(table.name)],

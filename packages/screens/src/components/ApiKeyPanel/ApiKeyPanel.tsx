@@ -190,7 +190,7 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
           className="min-w-56 flex-1"
         />
 
-        <Button type="submit" variant="primary" size="md" isLoading={isMaking}>
+        <Button type="submit" variant="glossy" size="md" isLoading={isMaking}>
           Create key
         </Button>
       </form>

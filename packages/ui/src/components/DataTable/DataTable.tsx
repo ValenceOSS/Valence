@@ -1,19 +1,31 @@
 import { Icon } from '@ValenceUI/Icon';
-import { ArrowDown01Icon, ArrowUp01Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import {
+  ArrowDown01Icon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  ArrowUp01Icon,
+  FilterIcon,
+  UnfoldMoreIcon,
+} from '@hugeicons/core-free-icons';
 import { useState } from 'react';
 import { useTable } from '@tanstack/react-table';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
-import { PageDots } from '@ValenceUI/PageDots';
+import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { dataTableFeatures } from './dataTableFeatures';
-import type { RowData, SortingState } from '@tanstack/react-table';
+import type { ColumnFiltersState, RowData, SortingState } from '@tanstack/react-table';
 import type { DataTableProps } from './DataTable.types';
 
 const ROWS_A_PAGE = 25;
 
 const NEAR_THE_END = 200;
+
+const HEIGHT_CLASSES = {
+  compact: 'max-h-[28rem]',
+  fill: 'max-h-[calc(100dvh-16rem)]',
+} as const;
 
 /**
  * A table of things that can be sorted by any column and paged through, with the single highlight
@@ -30,6 +42,8 @@ const NEAR_THE_END = 200;
  * @param toolbar - Controls to sit above the table, such as a search box.
  * @param pageSize - How many rows to show at once.
  * @param growsOnScroll - Whether reaching the bottom loads more rather than paging.
+ * @param height - Whether the table caps at a modest height or reaches for the bottom of the
+ *   viewport, for a page that is otherwise this table alone.
  * @param className - Extra classes for the caller's own layout.
  */
 const DataTable = <Row extends RowData>({
@@ -42,9 +56,11 @@ const DataTable = <Row extends RowData>({
   toolbar,
   pageSize = ROWS_A_PAGE,
   growsOnScroll = false,
+  height = 'compact',
   className,
 }: DataTableProps<Row>) => {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [page, setPage] = useState(0);
   const [shown, setShown] = useState(pageSize);
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
@@ -68,11 +84,13 @@ const DataTable = <Row extends RowData>({
     ...(getRowId === undefined ? {} : { getRowId }),
     state: {
       sorting,
+      columnFilters,
       pagination: growsOnScroll
         ? { pageIndex: 0, pageSize: holding }
         : { pageIndex: page, pageSize },
     },
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     onPaginationChange: (next) => {
       setPage(
         typeof next === 'function' ? next({ pageIndex: page, pageSize }).pageIndex : next.pageIndex,
@@ -95,7 +113,10 @@ const DataTable = <Row extends RowData>({
         onScroll={(event) => {
           reachEnd(event.currentTarget);
         }}
-        className={cn('valence-rail relative max-h-[28rem] overflow-x-auto overflow-y-auto')}
+        className={cn(
+          'valence-rail relative overflow-x-auto overflow-y-auto',
+          HEIGHT_CLASSES[height],
+        )}
       >
         <HoverHighlight rect={rect} radius="md" className="bg-[var(--surface-hover)]" />
 
@@ -106,6 +127,8 @@ const DataTable = <Row extends RowData>({
                 {group.headers.map((header) => {
                   const canSort = header.column.getCanSort();
                   const direction = header.column.getIsSorted();
+                  const filterOptions = header.column.columnDef.meta?.filterOptions;
+                  const filterValue = header.column.getFilterValue();
 
                   return (
                     <th
@@ -113,26 +136,52 @@ const DataTable = <Row extends RowData>({
                       scope="col"
                       className="sticky top-0 z-20 bg-[var(--card-face)] px-3 py-2 text-left text-xs font-medium uppercase tracking-[0.14em] text-text-muted sm:px-5"
                     >
-                      {header.isPlaceholder ? null : canSort ? (
-                        <Button
-                          variant="bare"
-                          size="none"
-                          onClick={header.column.getToggleSortingHandler()}
-                          className="inline-flex items-center gap-1.5 text-current transition-colors hover:text-text"
-                        >
-                          <table.FlexRender header={header} />
+                      <div className="flex items-center gap-1">
+                        {header.isPlaceholder ? null : canSort ? (
+                          <Button
+                            variant="bare"
+                            size="none"
+                            onClick={header.column.getToggleSortingHandler()}
+                            className="inline-flex items-center gap-1.5 text-current uppercase tracking-[0.14em] transition-colors hover:text-text"
+                          >
+                            <table.FlexRender header={header} />
 
-                          {direction === 'asc' ? (
-                            <Icon of={ArrowUp01Icon} size={13} />
-                          ) : direction === 'desc' ? (
-                            <Icon of={ArrowDown01Icon} size={13} />
-                          ) : (
-                            <Icon of={UnfoldMoreIcon} size={13} className="opacity-40" />
-                          )}
-                        </Button>
-                      ) : (
-                        <table.FlexRender header={header} />
-                      )}
+                            {direction === 'asc' ? (
+                              <Icon of={ArrowUp01Icon} size={13} />
+                            ) : direction === 'desc' ? (
+                              <Icon of={ArrowDown01Icon} size={13} />
+                            ) : (
+                              <Icon of={UnfoldMoreIcon} size={13} className="opacity-40" />
+                            )}
+                          </Button>
+                        ) : (
+                          <table.FlexRender header={header} />
+                        )}
+
+                        {filterOptions === undefined ? null : (
+                          <OptionMenu
+                            label={`Filter by ${header.column.id}`}
+                            align="start"
+                            trigger={
+                              <Icon
+                                of={FilterIcon}
+                                size={13}
+                                className={filterValue === undefined ? 'opacity-40' : 'text-accent'}
+                              />
+                            }
+                            groups={[
+                              {
+                                name: 'Filter',
+                                options: [{ id: 'all', label: 'All' }, ...filterOptions],
+                                selectedId: typeof filterValue === 'string' ? filterValue : 'all',
+                                onSelect: (id) => {
+                                  header.column.setFilterValue(id === 'all' ? undefined : id);
+                                },
+                              },
+                            ]}
+                          />
+                        )}
+                      </div>
                     </th>
                   );
                 })}
@@ -188,12 +237,33 @@ const DataTable = <Row extends RowData>({
             {`Page ${(page + 1).toString()} of ${pageCount.toString()} · ${rows.length.toString()} in total`}
           </p>
 
-          <PageDots
-            count={pageCount}
-            selectedIndex={page}
-            onSelect={setPage}
-            label={`${label}, by page`}
-          />
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="secondary"
+              size="sm"
+              isIconOnly
+              label="Previous page"
+              disabled={page === 0}
+              onClick={() => {
+                setPage(Math.max(0, page - 1));
+              }}
+            >
+              <Icon of={ArrowLeft01Icon} size={15} />
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              isIconOnly
+              label="Next page"
+              disabled={page >= pageCount - 1}
+              onClick={() => {
+                setPage(Math.min(pageCount - 1, page + 1));
+              }}
+            >
+              <Icon of={ArrowRight01Icon} size={15} />
+            </Button>
+          </div>
         </div>
       )}
     </div>

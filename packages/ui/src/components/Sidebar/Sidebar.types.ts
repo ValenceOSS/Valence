@@ -6,6 +6,8 @@ type SidebarGroupData = {
   items: readonly SidebarItem[];
 };
 
+type SidebarVariant = 'flush' | 'floating';
+
 type SidebarProps = {
   label: string;
   brand?: ReactNode;
@@ -15,7 +17,8 @@ type SidebarProps = {
   isCollapsed?: boolean;
   onCollapsedChange?: (isCollapsed: boolean) => void;
   footer?: ReactNode;
+  variant?: SidebarVariant;
   className?: string;
 };
 
-export type { SidebarProps, SidebarGroupData };
+export type { SidebarProps, SidebarGroupData, SidebarVariant };

@@ -11,7 +11,9 @@ type SidebarGroupProps = {
   items: readonly SidebarItem[];
   value: string;
   onSelect: (id: string) => void;
-  isRailCollapsed?: boolean;
+  markGroup: string;
+  pointedAt: string | null;
+  onPointAt: (id: string | null) => void;
   defaultIsOpen?: boolean;
   className?: string;
 };

@@ -10,6 +10,7 @@ const RoleSchema = z.object({
   name: z.string(),
   position: z.number(),
   permissions: z.array(PermissionSchema),
+  color: z.string().nullable(),
 });
 
 const GrantSchema = z.object({

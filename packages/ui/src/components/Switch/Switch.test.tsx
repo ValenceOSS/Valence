@@ -81,6 +81,25 @@ describe('Switch', () => {
     expect(container.querySelector('.bg-accent')).toBeInTheDocument();
   });
 
+  it('points to text elsewhere that explains it, such as a note beside a hidden label', () => {
+    render(
+      <>
+        <p id="note">Rate-limited attempts are refused before they reach this.</p>
+        <Switch
+          label="Sign-in refused"
+          isLabelHidden
+          isOn={false}
+          onToggle={vi.fn()}
+          describedBy="note"
+        />
+      </>,
+    );
+
+    expect(screen.getByRole('switch', { name: 'Sign-in refused' })).toHaveAccessibleDescription(
+      'Rate-limited attempts are refused before they reach this.',
+    );
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(Switch.displayName).toBe('Switch');
   });

@@ -60,6 +60,10 @@ FROM node:24-bookworm-slim AS runtime
 ARG VALENCE_FFMPEG_VERSION=8.1.2-5.1
 ARG TARGETARCH
 
+# The release this image was built from. Left at its default for a local build, so a version
+# nobody set reads as the development build it is rather than as a release that does not exist.
+ARG VALENCE_VERSION=0.0.0
+
 ADD https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}-bookworm_${TARGETARCH}.deb /tmp/valence-ffmpeg.deb
 
 RUN apt-get update \
@@ -93,6 +97,7 @@ RUN mkdir -p /config /cache/artefacts /transcodes /media
 
 ENV NODE_ENV=production \
     PORT=8420 \
+    VALENCE_VERSION=${VALENCE_VERSION} \
     TRANSCODER_URL=unix:/run/valence-transcoder.sock \
     VALENCE_VAAPI_DEVICE=/dev/dri/renderD128 \
     VALENCE_TRANSCODE_DIR=/transcodes \

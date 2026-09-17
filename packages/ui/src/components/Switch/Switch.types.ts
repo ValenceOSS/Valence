@@ -8,6 +8,7 @@ type SwitchProps = {
   icon?: ReactNode;
   disabled?: boolean;
   tone?: 'default' | 'overlay';
+  describedBy?: string;
   className?: string;
 };
 

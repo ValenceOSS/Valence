@@ -43,22 +43,6 @@ describe('readLocation', () => {
   it('lands on home rather than failing on an address that is not one', () => {
     expect(readLocation('not an address')).toEqual(HOME);
   });
-
-  it('reads which admin panel was open', () => {
-    expect(at('/?admin=work').admin).toBe('work');
-  });
-
-  it('has no admin panel when the address does not name one', () => {
-    expect(at('/films').admin).toBeNull();
-  });
-
-  it('reads which job schedule page was open', () => {
-    expect(at('/?admin=work&job=library.scan').adminJob).toBe('library.scan');
-  });
-
-  it('has no admin job when the address does not name one', () => {
-    expect(at('/films').adminJob).toBeNull();
-  });
 });
 
 describe('writeLocation', () => {
@@ -127,38 +111,15 @@ describe('writeLocation', () => {
       party: null,
       genre: null,
       library: null,
-      adminJob: null,
       account: null,
-      admin: null,
       downloads: false,
     } as const;
 
     expect(readLocation(`http://valence.local${writeLocation(place)}`)).toEqual(place);
   });
 
-  it('writes which admin panel is open', () => {
-    expect(writeLocation({ ...HOME, section: 'films', admin: 'work' })).toBe('/films?admin=work');
-  });
-
-  it('opens over whichever section it was opened from', () => {
-    expect(writeLocation({ ...HOME, section: 'home', admin: 'work' })).toBe('/?admin=work');
-  });
-
   it('still answers the address it used to be a page at, so held links keep working', () => {
-    const place = placeIn('/admin', {});
-
-    expect(place.section).toBe('home');
-    expect(place.admin).toBe('overview');
-  });
-
-  it('writes which job schedule page is open', () => {
-    expect(writeLocation({ ...HOME, admin: 'jobs', adminJob: 'library.scan' })).toBe(
-      '/?admin=jobs&job=library.scan',
-    );
-  });
-
-  it('leaves the job out while the server dialog is shut, since it belongs to it', () => {
-    expect(writeLocation({ ...HOME, adminJob: 'library.scan' })).toBe('/');
+    expect(placeIn('/admin', {}).section).toBe('home');
   });
 });
 

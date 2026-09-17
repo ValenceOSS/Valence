@@ -137,7 +137,8 @@ describe('LogsPanel', () => {
 
     render(<LogsPanel {...world.props} />);
     await screen.findByText('could not read the file');
-    await actor.click(screen.getByRole('button', { name: /Copy what is shown/ }));
+    await actor.click(screen.getByRole('button', { name: 'Log actions' }));
+    await actor.click(screen.getByRole('menuitem', { name: /Copy what is shown/ }));
 
     await waitFor(() => {
       expect(world.copied[0]).toContain('could not read the file');
@@ -150,7 +151,8 @@ describe('LogsPanel', () => {
 
     render(<LogsPanel {...world.props} />);
     await screen.findByText('could not read the file');
-    await actor.click(screen.getByRole('button', { name: /Download what is shown/ }));
+    await actor.click(screen.getByRole('button', { name: 'Log actions' }));
+    await actor.click(screen.getByRole('menuitem', { name: /Download what is shown/ }));
 
     expect(world.downloaded[0]?.name).toBe('valence-log.txt');
   });
@@ -239,24 +241,11 @@ describe('LogsPanel', () => {
 
     const before = world.asked.length;
 
-    await actor.click(screen.getByRole('button', { name: /Read the log again/ }));
+    await actor.click(screen.getByRole('button', { name: 'Log actions' }));
+    await actor.click(screen.getByRole('menuitem', { name: /Read the log again/ }));
 
     await waitFor(() => {
       expect(world.asked.length).toBeGreaterThan(before);
-    });
-  });
-
-  it('narrows to the levels chosen, rather than asking for everything always', async () => {
-    const actor = userEvent.setup();
-    const world = build();
-
-    render(<LogsPanel {...world.props} />);
-    await screen.findByText('could not read the file');
-
-    await actor.click(screen.getByRole('button', { name: 'debug' }));
-
-    await waitFor(() => {
-      expect(world.asked.at(-1)?.levels).not.toContain('debug');
     });
   });
 

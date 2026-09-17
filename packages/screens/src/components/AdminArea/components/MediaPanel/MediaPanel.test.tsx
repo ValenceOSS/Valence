@@ -90,7 +90,8 @@ describe('MediaPanel', () => {
 
     render(<MediaPanel {...props} media={[item()]} onCorrect={onCorrect} />);
 
-    await user.click(screen.getByRole('button', { name: /Wrong match/ }));
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Wrong match/ }));
 
     expect(onCorrect).toHaveBeenCalledWith(item());
   });
@@ -126,23 +127,31 @@ describe('MediaPanel', () => {
 
   it('offers to rebuild one item, for the case where a single preview is wrong', async () => {
     const onRebuildArtefacts = vi.fn().mockResolvedValue(true);
+    const user = userEvent.setup();
 
     render(<MediaPanel {...props} media={[item()]} onRebuildArtefacts={onRebuildArtefacts} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /Rebuild previews/ }));
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Rebuild previews/ }));
 
     expect(onRebuildArtefacts).toHaveBeenCalledWith(expect.objectContaining({ id: 'item-1' }));
   });
 
   it('says it will rebuild rather than that it has, because nothing is made yet', async () => {
+    const user = userEvent.setup();
+
     render(<MediaPanel {...props} media={[item()]} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /Rebuild previews/ }));
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Rebuild previews/ }));
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
 
-    expect(await screen.findByRole('button', { name: /Will rebuild/ })).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: /Will rebuild/ })).toBeInTheDocument();
   });
 
   it('leaves the offer standing when the server would not do it', async () => {
+    const user = userEvent.setup();
+
     render(
       <MediaPanel
         {...props}
@@ -151,9 +160,11 @@ describe('MediaPanel', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /Rebuild previews/ }));
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Rebuild previews/ }));
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
 
-    expect(await screen.findByRole('button', { name: /Rebuild previews/ })).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: /Rebuild previews/ })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

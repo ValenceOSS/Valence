@@ -36,9 +36,9 @@ const StatTile = ({
   className,
 }: StatTileProps) => (
   <div className={cn('valence-card-shell flex h-full flex-col', className)}>
-    <dt className="flex items-center gap-2 px-2.5 pb-1.5 pt-1.5 text-[0.6875rem] uppercase tracking-[0.16em] text-text-muted">
+    <dt className="flex items-center justify-between gap-2 px-2.5 pb-1.5 pt-1.5 text-[0.6875rem] uppercase tracking-[0.16em] text-text-muted">
+      <span className="truncate">{label}</span>
       {icon === undefined ? null : <span className="flex shrink-0 items-center">{icon}</span>}
-      {label}
     </dt>
 
     <dd className="valence-card-face relative flex flex-1 flex-col gap-2 overflow-hidden p-3">

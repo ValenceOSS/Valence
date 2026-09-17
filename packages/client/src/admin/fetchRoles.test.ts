@@ -67,7 +67,9 @@ describe('reading what a server allows', () => {
 
   it('reads the roles', async () => {
     answering({
-      roles: [{ id: 'role-1', name: 'Admin', position: 0, permissions: ['library.edit'] }],
+      roles: [
+        { id: 'role-1', name: 'Admin', position: 0, permissions: ['library.edit'], color: null },
+      ],
     });
 
     await expect(fetchRoles()).resolves.toMatchObject([{ name: 'Admin' }]);
@@ -81,7 +83,7 @@ describe('reading what a server allows', () => {
 
   it('reads what one account is allowed', async () => {
     answering({
-      roles: [{ id: 'role-1', name: 'Admin', position: 0, permissions: [] }],
+      roles: [{ id: 'role-1', name: 'Admin', position: 0, permissions: [], color: null }],
       overrides: [{ permission: 'library.edit', effect: 'allow' }],
       effective: ['library.edit'],
     });
@@ -109,7 +111,7 @@ describe('changing what a server allows', () => {
   const changes: [string, () => Promise<{ message: string } | null>, string, string][] = [
     [
       'creating a role',
-      () => createRole({ name: 'Staff', position: 1, permissions: [] }),
+      () => createRole({ name: 'Staff', position: 1, permissions: [], color: null }),
       '/api/admin/roles',
       'POST',
     ],

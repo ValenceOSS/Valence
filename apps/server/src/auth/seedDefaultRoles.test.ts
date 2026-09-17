@@ -82,6 +82,7 @@ describe('seedDefaultRoles', () => {
     await permissions.createRole({
       name: 'Manager',
       position: 999,
+      color: null,
       permissions: ['server.backup'],
     });
 
