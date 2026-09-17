@@ -31,7 +31,7 @@ const askedResourceHistory = vi.mocked(fetchResourceHistory);
 const renderPanel = (element: ReactElement) =>
   render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}
     >
       {element}
     </QueryClientProvider>,

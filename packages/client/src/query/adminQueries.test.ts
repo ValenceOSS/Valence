@@ -39,7 +39,7 @@ vi.mock('@ValenceClient/library/readWholeLibrary', () => ({ readWholeLibrary }))
 vi.mock('@ValenceClient/sharing/fetchShares', () => ({ fetchEverybodysShares }));
 
 const aCache = (): QueryClient =>
-  new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
 
 const aThing = (id: string, seriesTitle: string | null = null) => ({ id, seriesTitle });
 

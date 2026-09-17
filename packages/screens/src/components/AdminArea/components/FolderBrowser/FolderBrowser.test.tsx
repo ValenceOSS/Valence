@@ -60,7 +60,7 @@ const draw = (start = '') => {
 
   render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}
     >
       <FolderBrowser start={start} onChoose={onChoose} onCancel={onCancel} />
     </QueryClientProvider>,

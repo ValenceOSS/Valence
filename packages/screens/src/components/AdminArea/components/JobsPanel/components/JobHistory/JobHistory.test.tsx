@@ -69,7 +69,7 @@ const issue = (overrides: Partial<JobRunIssue> = {}): JobRunIssue => ({
 const renderHistory = (element: ReactElement) =>
   render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}
     >
       {element}
     </QueryClientProvider>,

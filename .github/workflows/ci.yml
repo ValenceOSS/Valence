@@ -7,6 +7,13 @@ name: CI
 # build and three minutes of encoding against the FFmpeg Valence ships, which is well over ten
 # minutes of waiting — too slow to put in front of every push, and it lives in media-pipeline.yml to
 # be run when it earns its keep: before a release, and after touching the transcoder.
+#
+# Tests run one package per runner rather than `pnpm test` on a single box. Turbo and vitest each
+# size their own worker pool to the machine's CPU count, and a single GitHub-hosted runner has only a
+# handful of cores — a dozen packages doing that at once oversubscribes it many times over, which is
+# slow thrashing rather than fast parallelism. A runner per package gets a full machine to itself and
+# nothing else's tests to share memory with, so the whole matrix finishes in whichever one package
+# takes longest rather than in the sum of all of them.
 
 on:
   push:
@@ -19,8 +26,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  checks:
-    name: Lint, types and tests
+  lint:
+    name: Lint, types and schema
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -42,7 +49,37 @@ jobs:
       # tables that already exist. See VAL-193.
       - run: pnpm db:check
 
-      - run: pnpm test
+  test:
+    name: Test (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - '@valence/core'
+          - '@valence/contracts'
+          - '@valence/plugin-sdk'
+          - '@valence/tools'
+          - '@valence/ui'
+          - '@valence/client'
+          - '@valence/screens'
+          - '@valence/server'
+          - '@valence/web'
+          - '@valence/desktop'
+          - '@valence/landing'
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm turbo run test --filter=${{ matrix.package }}
 
   rust:
     name: Transcoder lint and tests

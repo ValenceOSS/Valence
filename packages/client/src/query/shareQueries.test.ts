@@ -7,7 +7,7 @@ const fetchShares = vi.hoisted(() => vi.fn());
 vi.mock('@ValenceClient/sharing/fetchShares', () => ({ fetchShares }));
 
 const aCache = (): QueryClient =>
-  new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
 
 beforeEach(() => {
   vi.clearAllMocks();
