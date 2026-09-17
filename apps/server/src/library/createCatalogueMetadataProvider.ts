@@ -73,6 +73,7 @@ const LogoSchema = z.object({
   iso_639_1: z.string().nullish(),
   width: z.number().default(0),
   vote_average: z.number().default(0),
+  vote_count: z.number().default(0),
 });
 
 const ImagesResponseSchema = z.object({ logos: z.array(LogoSchema).default([]) });
@@ -660,6 +661,7 @@ const createCatalogueMetadataProvider = ({
           language: logo.iso_639_1 ?? null,
           width: logo.width,
           voteAverage: logo.vote_average,
+          voteCount: logo.vote_count,
         })),
       );
 
