@@ -159,6 +159,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
         <GlassPanel
           as="section"
           aria-label="Now playing"
+          elevation="film"
           className="pointer-events-auto mx-auto flex max-w-[120rem] flex-col overflow-hidden"
         >
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -471,7 +472,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 transition={isStill ? stillTransition : spring}
                 className="overflow-hidden"
               >
-                <div className="flex items-center justify-end gap-2 bg-text px-4 py-1 text-xs font-semibold text-surface">
+                <div className="flex items-center justify-end gap-2 bg-on-scrim px-4 py-1 text-xs font-semibold text-shade">
                   <Icon of={UserGroupIcon} size={14} />
                   {isFollowing
                     ? `Listening along with ${listening.hostName}`
@@ -488,7 +489,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 transition={isStill ? stillTransition : spring}
                 className="overflow-hidden"
               >
-                <div className="flex items-center justify-end gap-2 bg-text px-4 py-1 text-xs font-semibold text-surface">
+                <div className="flex items-center justify-end gap-2 bg-on-scrim px-4 py-1 text-xs font-semibold text-shade">
                   <Icon of={LaptopIcon} size={14} />
                   Playing on {shown.remote.label}
                 </div>
