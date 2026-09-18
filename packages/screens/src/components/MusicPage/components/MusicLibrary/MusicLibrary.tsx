@@ -4,7 +4,9 @@ import { Add01Icon, FavouriteIcon, Search01Icon } from '@hugeicons/core-free-ico
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { TextField } from '@ValenceUI/TextField';
+import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { cn } from '@ValenceUI/cn';
+import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { pictureOf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
@@ -49,6 +51,7 @@ const isSameView = (left: MusicView, right: MusicView): boolean =>
  */
 const MusicLibrary = () => {
   const { view, open } = useMusicNavigation();
+  const { containerRef, rect, follow, clear } = useSlidingHighlight();
   const [shelf, setShelf] = useState<Shelf | null>(null);
   const [filter, setFilter] = useState('');
   const [isMaking, setIsMaking] = useState(false);
@@ -187,42 +190,53 @@ const MusicLibrary = () => {
         />
       </div>
 
-      <ul className="flex min-h-0 flex-1 flex-col overflow-y-auto px-1.5 pb-3">
-        {shown.map((entry) => {
-          const isHere = isSameView(entry.view, view);
+      <div
+        ref={containerRef}
+        className="relative min-h-0 flex-1 overflow-y-auto px-1.5 pb-3"
+        onPointerMove={follow}
+        onPointerLeave={clear}
+      >
+        <HoverHighlight rect={rect} radius="md" className="bg-[var(--surface-hover)]" />
 
-          return (
-            <li key={entry.key}>
-              <Button
-                variant="bare"
-                size="none"
-                hasTooltip={false}
-                aria-current={isHere ? 'page' : undefined}
-                className={cn(
-                  'flex w-full items-center gap-3 rounded-md p-1.5 text-left transition-colors hover:bg-hover',
-                  isHere ? 'bg-hover' : '',
-                )}
-                onClick={() => {
-                  open(entry.view);
-                }}
-              >
-                {entry.artwork}
-                <span className="flex min-w-0 flex-col">
-                  <span
-                    className={cn(
-                      'truncate text-[0.9375rem] font-medium',
-                      isHere ? 'font-semibold text-text' : 'text-text',
-                    )}
-                  >
-                    {entry.name}
+        <ul className="relative flex flex-col">
+          {shown.map((entry) => {
+            const isHere = isSameView(entry.view, view);
+
+            return (
+              <li key={entry.key} data-highlight>
+                <Button
+                  variant="bare"
+                  size="none"
+                  hasTooltip={false}
+                  aria-current={isHere ? 'page' : undefined}
+                  className={cn(
+                    'flex w-full items-center gap-3 rounded-md p-1.5 text-left',
+                    isHere ? 'bg-hover' : '',
+                  )}
+                  onClick={() => {
+                    open(entry.view);
+                  }}
+                >
+                  {entry.artwork}
+                  <span className="flex min-w-0 flex-col">
+                    <span
+                      className={cn(
+                        'truncate text-[0.9375rem] font-medium',
+                        isHere ? 'font-semibold text-text' : 'text-text',
+                      )}
+                    >
+                      {entry.name}
+                    </span>
+                    <span className="truncate text-[0.8125rem] text-text-muted">
+                      {entry.detail}
+                    </span>
                   </span>
-                  <span className="truncate text-[0.8125rem] text-text-muted">{entry.detail}</span>
-                </span>
-              </Button>
-            </li>
-          );
-        })}
-      </ul>
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
 
       <PlaylistDialog
         isOpen={isMaking}
