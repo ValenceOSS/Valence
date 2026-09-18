@@ -40,7 +40,7 @@ describe('Music', () => {
   });
 
   it('reads a track', () => {
-    expect(MusicTrackSchema.parse(TRACK)).toEqual(TRACK);
+    expect(MusicTrackSchema.parse(TRACK)).toEqual({ ...TRACK, isExplicit: false });
   });
 
   it('refuses a track with no title', () => {
@@ -51,5 +51,9 @@ describe('Music', () => {
     expect(
       LyricsSchema.safeParse({ isSynced: false, lines: [{ atMs: null, text: 'x' }] }).success,
     ).toBe(true);
+  });
+
+  it('reads a song from a server that does not say whether it is explicit as clean', () => {
+    expect(MusicTrackSchema.parse(TRACK).isExplicit).toBe(false);
   });
 });

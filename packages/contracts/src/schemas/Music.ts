@@ -58,6 +58,8 @@ const MusicAlbumSchema = z.object({
   isCompilation: z.boolean(),
   trackCount: z.number().int().nonnegative(),
   durationSeconds: z.number().nonnegative(),
+  sizeBytes: z.number().nonnegative().default(0),
+  isExplicit: z.boolean().default(false),
   addedAt: z.string(),
 });
 
@@ -72,6 +74,7 @@ const MusicTrackSchema = z.object({
   durationSeconds: z.number().nonnegative(),
   codec: z.string(),
   isLossless: z.boolean(),
+  isExplicit: z.boolean().default(false),
   bitDepth: z.number().int().nullable(),
   sampleRate: z.number().int().nullable(),
   bitrateKbps: z.number().int().nullable(),

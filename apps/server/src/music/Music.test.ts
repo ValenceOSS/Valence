@@ -34,6 +34,8 @@ const ALBUM: MusicAlbum = {
   isCompilation: false,
   trackCount: 10,
   durationSeconds: 3000,
+  sizeBytes: 0,
+  isExplicit: false,
   addedAt: '2026-09-18T00:00:00.000Z',
 };
 
@@ -48,6 +50,7 @@ const TRACK: MusicTrack = {
   durationSeconds: 300,
   codec: 'flac',
   isLossless: true,
+  isExplicit: false,
   bitDepth: 24,
   sampleRate: 44_100,
   bitrateKbps: 1492,

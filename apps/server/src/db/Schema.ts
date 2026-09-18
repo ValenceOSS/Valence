@@ -840,6 +840,7 @@ const musicTrack = pgTable(
     trackNumber: integer('trackNumber'),
     codec: text('codec').notNull(),
     isLossless: boolean('isLossless').notNull().default(false),
+    isExplicit: boolean('isExplicit').notNull().default(false),
     bitDepth: integer('bitDepth'),
     sampleRate: integer('sampleRate'),
     lyrics: text('lyrics'),

@@ -1,5 +1,6 @@
 import { basename, extname } from 'node:path';
 import type { IAudioMetadata, ILyricsTag, IPicture } from 'music-metadata';
+import { isExplicitIn } from './isExplicitIn';
 import { splitArtists } from './splitArtists';
 import type { TrackPicture, TrackTags } from './TrackTags';
 
@@ -120,6 +121,7 @@ const tagsFromMetadata = (meta: IAudioMetadata, path: string): TrackTags => {
     codec: (format.codec ?? format.container ?? extname(path).slice(1)).toLowerCase(),
     container: (format.container ?? extname(path).slice(1)).toLowerCase(),
     isLossless: format.lossless === true,
+    isExplicit: isExplicitIn(meta),
     bitDepth: format.bitsPerSample ?? null,
     sampleRate: format.sampleRate ?? null,
     bitrateKbps: format.bitrate === undefined ? null : Math.round(format.bitrate / 1000),

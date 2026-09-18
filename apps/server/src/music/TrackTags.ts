@@ -17,6 +17,7 @@ type TrackTags = {
   codec: string;
   container: string;
   isLossless: boolean;
+  isExplicit: boolean;
   bitDepth: number | null;
   sampleRate: number | null;
   bitrateKbps: number | null;

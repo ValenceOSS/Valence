@@ -27,6 +27,7 @@ const tagsFor = (overrides: Partial<TrackTags> = {}): TrackTags => ({
   codec: 'flac',
   container: 'flac',
   isLossless: true,
+  isExplicit: false,
   bitDepth: 24,
   sampleRate: 44_100,
   bitrateKbps: 1492,

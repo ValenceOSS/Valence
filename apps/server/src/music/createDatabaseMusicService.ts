@@ -73,6 +73,7 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
     trackNumber: musicTrack.trackNumber,
     codec: musicTrack.codec,
     isLossless: musicTrack.isLossless,
+    isExplicit: musicTrack.isExplicit,
     bitDepth: musicTrack.bitDepth,
     sampleRate: musicTrack.sampleRate,
     hasLyrics: sql<boolean>`${musicTrack.lyrics} is not null`,
@@ -91,6 +92,7 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
     trackNumber: number | null;
     codec: string;
     isLossless: boolean;
+    isExplicit: boolean;
     bitDepth: number | null;
     sampleRate: number | null;
     hasLyrics: boolean;
@@ -147,6 +149,7 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
       durationSeconds: row.durationSeconds,
       codec: row.codec,
       isLossless: row.isLossless,
+      isExplicit: row.isExplicit,
       bitDepth: row.bitDepth,
       sampleRate: row.sampleRate,
       bitrateKbps: row.bitrateKbps,
@@ -193,6 +196,8 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
     artistName: musicArtist.name,
     trackCount: sql<number>`(select count(*)::int from ${musicTrack} where ${musicTrack.albumId} = ${musicAlbum.id})`,
     durationSeconds: sql<number>`(select coalesce(sum(m."durationSeconds"), 0)::float from ${musicTrack} t join ${mediaItem} m on m.id = t."mediaItemId" where t."albumId" = ${musicAlbum.id})`,
+    sizeBytes: sql<number>`(select coalesce(sum(m."sizeBytes"), 0)::float from ${musicTrack} t join ${mediaItem} m on m.id = t."mediaItemId" where t."albumId" = ${musicAlbum.id})`,
+    isExplicit: sql<boolean>`exists (select 1 from ${musicTrack} t where t."albumId" = ${musicAlbum.id} and t."isExplicit")`,
   };
 
   const albumsWhere = async (
@@ -228,6 +233,8 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
       isCompilation: row.isCompilation,
       trackCount: row.trackCount,
       durationSeconds: row.durationSeconds,
+      sizeBytes: row.sizeBytes,
+      isExplicit: row.isExplicit,
       addedAt: row.addedAt.toISOString(),
     }));
   };

@@ -52,6 +52,7 @@ type TrackRow = {
   container: string;
   codec: string;
   isLossless: boolean;
+  isExplicit: boolean;
   bitDepth: number | null;
   sampleRate: number | null;
   bitrateKbps: number | null;
@@ -244,6 +245,7 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
       container: tags.container,
       codec: tags.codec,
       isLossless: tags.isLossless,
+      isExplicit: tags.isExplicit,
       bitDepth: tags.bitDepth,
       sampleRate: tags.sampleRate,
       bitrateKbps: tags.bitrateKbps,

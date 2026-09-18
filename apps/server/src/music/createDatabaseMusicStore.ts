@@ -214,6 +214,7 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore => ({
       trackNumber: row.trackNumber,
       codec: row.codec,
       isLossless: row.isLossless,
+      isExplicit: row.isExplicit,
       bitDepth: row.bitDepth,
       sampleRate: row.sampleRate,
       lyrics: row.lyrics,

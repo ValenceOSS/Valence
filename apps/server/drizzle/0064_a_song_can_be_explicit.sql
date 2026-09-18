@@ -1,0 +1,1 @@
+ALTER TABLE "music_track" ADD COLUMN "isExplicit" boolean DEFAULT false NOT NULL;
