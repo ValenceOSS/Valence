@@ -67,12 +67,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
           className="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-8"
         >
           <div className="w-48 shrink-0 shadow-[var(--shadow-overlay)] sm:w-60 lg:w-72">
-            <MusicArtwork
-              src={cover}
-              label={album.title}
-              travelsAs={`album-${album.id}`}
-              className="w-full"
-            />
+            <MusicArtwork src={cover} label={album.title} className="w-full" />
           </div>
 
           <motion.div

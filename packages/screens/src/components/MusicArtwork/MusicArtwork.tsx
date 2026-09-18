@@ -13,7 +13,8 @@ import type { MusicArtworkProps } from './MusicArtwork.types';
  * A picture given a name to travel as is one thing wherever it appears under that name: opening an
  * album from its tile carries the cover from the tile up into the album's header, rather than one
  * cover vanishing as another appears somewhere else. Somebody who has asked for less movement sees
- * it simply arrive.
+ * it simply arrive. Only one picture on screen may travel under a name at a time: given two, Motion
+ * treats one as having left and hides it.
  *
  * @param src - Where the picture is, or nothing where there is none.
  * @param label - What it is a picture of, for anybody not looking at it.
