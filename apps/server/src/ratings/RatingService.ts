@@ -1,6 +1,6 @@
 import type { HouseholdRating, Rating } from '@ValenceContracts/schemas/Rating';
 
-type RatingSubject = { mediaId: string } | { seriesId: string };
+type RatingSubject = { mediaId: string } | { seriesId: string } | { bookId: string };
 
 type RatingService = {
   list: (profileId: string) => Promise<Rating[]>;

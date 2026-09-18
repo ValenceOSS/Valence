@@ -31,6 +31,7 @@ const MADE = {
   kind: 'item' as const,
   mediaId: '9c858901-8a57-4791-81fe-4c455b099bc9',
   seriesId: null,
+  bookId: null,
   title: 'Arrival',
   createdAt: '2026-08-16T00:00:00.000Z',
   expiresAt: null,
@@ -146,6 +147,38 @@ describe('openShare', () => {
     const outcome = await openShare('a-token');
 
     expect(outcome.kind).toBe('opened');
+  });
+
+  it('opens a shared book, with the book itself', async () => {
+    fetchMock.mockResolvedValue(
+      ok({
+        kind: 'book',
+        title: 'Pride and Prejudice',
+        items: [],
+        book: {
+          id: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001',
+          libraryId: '2b6f0cc9-04f0-4f26-9f1a-1d5b2ea92d9f',
+          title: 'Pride and Prejudice',
+          layout: 'reflow',
+          direction: 'leftToRight',
+          year: 1813,
+          overview: null,
+          genres: null,
+          authors: ['Jane Austen'],
+          rating: null,
+          hasCover: true,
+          chapterCount: 1,
+          addedAt: '2026-09-18T00:00:00.000Z',
+          updatedAt: '2026-09-18T00:00:00.000Z',
+        },
+      }),
+    );
+
+    const outcome = await openShare('a-token');
+
+    expect(outcome.kind === 'opened' ? outcome.share.book?.title : null).toBe(
+      'Pride and Prejudice',
+    );
   });
 
   it('falls back to withdrawn where the server names no ending it recognises', async () => {

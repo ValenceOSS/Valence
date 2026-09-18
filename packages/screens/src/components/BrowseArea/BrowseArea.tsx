@@ -20,6 +20,8 @@ import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/Grid
 import { readGridSize, saveGridSize } from '@ValenceScreens/library/gridSizePreference';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 import type { BrowseAreaProps, BrowseKind } from './BrowseArea.types';
+import { bookQueries } from '@ValenceClient/query/bookQueries';
+import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 
 const PAGE_SIZE = 120;
 
@@ -73,6 +75,8 @@ const PAGES: Record<
  * @param isKept - Whether each item is kept.
  * @param onToggleKept - Told to keep something, or stop.
  * @param onHide - Told to hide something from this viewer.
+ * @param keptBooks - The books this viewer has kept, for the favourites page.
+ * @param onOpenBook - Told which kept book was chosen.
  */
 const BrowseArea = ({
   kind,
@@ -83,6 +87,8 @@ const BrowseArea = ({
   watchedFractionFor,
   resumeFor,
   favourites = [],
+  keptBooks = [],
+  onOpenBook,
   isKept,
   onToggleKept,
   onHide,
@@ -118,7 +124,14 @@ const BrowseArea = ({
 
   const items = useMemo(() => collapseToShows(found.data ?? []), [found.data]);
 
-  const isReading = libraries.isPending || (libraryIds.length > 0 && found.isPending);
+  const bookIds = kind === 'favourites' ? keptBooks : [];
+  const foundBooks = useQuery(bookQueries.find({ ids: bookIds }));
+  const books = bookIds.length === 0 ? [] : (foundBooks.data ?? []);
+
+  const isReading =
+    libraries.isPending ||
+    (libraryIds.length > 0 && found.isPending) ||
+    (bookIds.length > 0 && foundBooks.isPending);
 
   useEffect(() => {
     if (!isReading) {
@@ -169,7 +182,7 @@ const BrowseArea = ({
           />
         ) : isReading ? (
           <Spinner label={`Reading ${page.title.toLowerCase()}`} size="sm" />
-        ) : items.length === 0 ? (
+        ) : items.length === 0 && books.length === 0 ? (
           hasNoLibraries ? (
             <NothingHere
               of={FolderOpenIcon}
@@ -216,20 +229,28 @@ const BrowseArea = ({
             />
           )
         ) : (
-          <MediaGrid
-            items={items}
-            size={size}
-            isSeries={kind === 'shows'}
-            shape={kind === 'films' ? 'poster' : 'wide'}
-            {...(onOpenShow === undefined ? {} : { onOpenShow })}
-            onPlay={onPlay}
-            onInspect={onInspect}
-            {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
-            {...(resumeFor === undefined ? {} : { resumeFor })}
-            {...(isKept === undefined ? {} : { isKept })}
-            {...(onToggleKept === undefined ? {} : { onToggleKept })}
-            {...(onHide === undefined ? {} : { onHide })}
-          />
+          <>
+            {items.length === 0 ? null : (
+              <MediaGrid
+                items={items}
+                size={size}
+                isSeries={kind === 'shows'}
+                shape={kind === 'films' ? 'poster' : 'wide'}
+                {...(onOpenShow === undefined ? {} : { onOpenShow })}
+                onPlay={onPlay}
+                onInspect={onInspect}
+                {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
+                {...(resumeFor === undefined ? {} : { resumeFor })}
+                {...(isKept === undefined ? {} : { isKept })}
+                {...(onToggleKept === undefined ? {} : { onToggleKept })}
+                {...(onHide === undefined ? {} : { onHide })}
+              />
+            )}
+
+            {books.length === 0 || onOpenBook === undefined ? null : (
+              <BookRow title="Books" books={books} onOpen={onOpenBook} />
+            )}
+          </>
         )}
       </motion.section>
     </motion.div>

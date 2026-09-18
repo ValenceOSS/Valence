@@ -33,6 +33,7 @@ const BrowsePage = () => {
   const navigate = useNavigate();
   const watching = useWatchingProfile();
   const favourites = useFavourites(watching);
+  const keptBooks = useFavourites(watching, 'books');
   const hiding = useHidden(watching);
   const { mayAdminister } = useWhatIMayDo();
 
@@ -43,6 +44,10 @@ const BrowsePage = () => {
       <BrowseArea
         kind={kindOf(place.section)}
         favourites={[...favourites.kept]}
+        keptBooks={[...keptBooks.kept]}
+        onOpenBook={(book) => {
+          go({ book: book.id });
+        }}
         onPlay={(media, startSeconds) => {
           setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
           go({ playing: media.id });

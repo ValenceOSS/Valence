@@ -86,6 +86,10 @@ const createShareGate = ({ shares, sessions, itemOf }: ShareGateOptions) =>
       return;
     }
 
+    if (reach.kind === 'needsBook' && (found.kind !== 'book' || found.bookId !== reach.bookId)) {
+      return context.json({ error: 'That is not part of what was shared.' }, 403);
+    }
+
     if (reach.kind === 'needsItem') {
       const item = await itemOf(reach.mediaId);
 

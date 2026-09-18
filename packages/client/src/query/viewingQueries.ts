@@ -1,6 +1,6 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
-import { fetchFavourites } from '@ValenceClient/library/fetchFavourites';
+import { fetchFavourites, fetchKeptBooks } from '@ValenceClient/library/fetchFavourites';
 import { fetchHidden } from '@ValenceClient/library/fetchHidden';
 import { fetchRatings, fetchHouseholdRating } from '@ValenceClient/library/fetchRatings';
 import type { RatingSubject } from '@ValenceClient/library/fetchRatings';
@@ -103,9 +103,24 @@ const hidden = (profileId: string | null) =>
     enabled: profileId !== null,
   });
 
+/**
+ * Which books this viewer has kept. Asked of the same list as everything else they kept, under a
+ * key of its own so keeping a book redraws only what shows books.
+ *
+ * @param profileId - Whose list.
+ * @returns The query.
+ */
+const keptBooks = (profileId: string | null) =>
+  queryOptions({
+    queryKey: [...VIEWING, 'keptBooks', profileId],
+    queryFn: () => fetchKeptBooks(),
+    enabled: profileId !== null,
+  });
+
 const viewingQueries = {
   progress,
   favourites,
+  keptBooks,
   ratings,
   household,
   history,

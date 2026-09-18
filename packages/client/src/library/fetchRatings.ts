@@ -3,17 +3,21 @@ import { HouseholdRatingSchema, RatingListSchema } from '@ValenceContracts/schem
 import type { HouseholdRating, Rating } from '@ValenceContracts/schemas/Rating';
 import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 
-type RatingSubject = { mediaId: string } | { seriesId: string };
+type RatingSubject = { mediaId: string } | { seriesId: string } | { bookId: string };
 
 /**
- * Builds the address a subject's rating is reached at, so an item and a programme are asked about in
- * the same way at two different paths rather than through two near-identical functions.
+ * Builds the address a subject's rating is reached at, so an item, a programme and a book are asked
+ * about in the same way at different paths rather than through near-identical functions.
  *
- * @param subject - The item or programme.
+ * @param subject - The item, programme or book.
  * @returns Where its rating lives.
  */
 const addressOf = (subject: RatingSubject): string =>
-  'mediaId' in subject ? `/api/media/${subject.mediaId}` : `/api/series/${subject.seriesId}`;
+  'mediaId' in subject
+    ? `/api/media/${subject.mediaId}`
+    : 'seriesId' in subject
+      ? `/api/series/${subject.seriesId}`
+      : `/api/books/${subject.bookId}`;
 
 /**
  * Everything this viewer has rated, items and programmes alike. Per profile rather than per account,

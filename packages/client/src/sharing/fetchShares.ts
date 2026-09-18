@@ -7,6 +7,7 @@ import {
   ShareListSchema,
 } from '@ValenceContracts/schemas/Share';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
+import { BookSchema } from '@ValenceContracts/schemas/Book';
 import type {
   AdminShare,
   CreatedShare,
@@ -17,9 +18,10 @@ import type {
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 const OpenedShareSchema = z.object({
-  kind: z.enum(['item', 'series']),
+  kind: z.enum(['item', 'series', 'book']),
   title: z.string(),
   items: z.array(MediaSummarySchema),
+  book: BookSchema.nullable().default(null),
 });
 
 type OpenedShare = z.infer<typeof OpenedShareSchema>;

@@ -206,6 +206,13 @@
   --color-on-scrim: oklch(0.99 0 0);
   --color-shade: oklch(0 0 0);
 
+  --color-paper-light: oklch(0.979 0.006 85);
+  --color-ink-light: oklch(0.225 0.008 70);
+  --color-paper-sepia: oklch(0.94 0.035 85);
+  --color-ink-sepia: oklch(0.38 0.045 65);
+  --color-paper-dark: oklch(0.2 0.006 285);
+  --color-ink-dark: oklch(0.87 0.012 85);
+
   --glass-brightness: 1.05;
 
   --color-background: var(--color-surface);

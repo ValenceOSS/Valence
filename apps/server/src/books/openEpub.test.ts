@@ -29,6 +29,21 @@ let where = '';
 
 let path = '';
 
+let withContents = '';
+
+const NAV_PACKAGE = say(`<package>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="one" href="text/one.xhtml" media-type="application/xhtml+xml"/>
+    <item id="two" href="text/two.xhtml" media-type="application/xhtml+xml"/>
+    <item id="art" href="images/art.png" media-type="image/png"/>
+    <item id="cover" href="images/cover.png" media-type="image/png" properties="cover-image"/>
+  </manifest>
+  <spine><itemref idref="one"/><itemref idref="two"/></spine>
+</package>`);
+
+const COVER = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 42]);
+
 const aBook = async (name: string, files: Record<string, Uint8Array>): Promise<string> => {
   const at = join(where, name);
 
@@ -49,6 +64,19 @@ beforeAll(async () => {
       '<html><body><p>Some years ago.</p><img src="../images/whale.png"/></body></html>',
     ),
     'OEBPS/images/whale.png': A_PNG,
+  });
+  withContents = await aBook('contents.epub', {
+    'META-INF/container.xml': CONTAINER,
+    'OEBPS/content.opf': NAV_PACKAGE,
+    'OEBPS/nav.xhtml': say(
+      '<nav epub:type="toc"><ol><li><a href="text/one.xhtml">Loomings</a></li><li><a href="text/two.xhtml#pequod">The Pequod</a></li><li><a href="text/gone.xhtml">Lost</a></li></ol></nav>',
+    ),
+    'OEBPS/text/one.xhtml': say(
+      '<p><a href="two.xhtml#pequod">On</a> <a href="#here">Here</a> <a href="gone.xhtml">Gone</a> <a href="https://example.com/">Out</a></p>',
+    ),
+    'OEBPS/text/two.xhtml': say('<p id="pequod">The Pequod.</p>'),
+    'OEBPS/images/art.png': A_PNG,
+    'OEBPS/images/cover.png': COVER,
   });
 });
 
@@ -75,14 +103,14 @@ describe('openEpub', () => {
   });
 
   it('reads a part, and cleans it on the way out', async () => {
-    const document = await (await openEpub(path, address))?.readDocument('OEBPS/text/one.xhtml');
+    const document = await (await openEpub(path, address))?.readDocument(0);
 
     expect(document).toContain('Call me Ishmael.');
     expect(document).not.toContain('script');
   });
 
   it('points a picture at Valence, resolved from where the part sits and not the book', async () => {
-    const document = await (await openEpub(path, address))?.readDocument('OEBPS/text/two.xhtml');
+    const document = await (await openEpub(path, address))?.readDocument(1);
 
     expect(document).toContain('/served/OEBPS/images/whale.png');
   });
@@ -101,7 +129,7 @@ describe('openEpub', () => {
   });
 
   it('says nothing of a part it does not hold', async () => {
-    expect(await (await openEpub(path, address))?.readDocument('OEBPS/text/nine.xhtml')).toBeNull();
+    expect(await (await openEpub(path, address))?.readDocument(9)).toBeNull();
   });
 
   it('will not open an archive that is not a book', async () => {
@@ -128,5 +156,73 @@ describe('what a book says about itself', () => {
     const book = await openEpub(path, address);
 
     expect(book?.about).toMatchObject({ title: 'Moby-Dick', authors: ['Herman Melville'] });
+  });
+
+  it('says how much each part holds, so progress can be told across the whole book', async () => {
+    const book = await openEpub(path, address);
+
+    expect(book?.spine[0]?.size).toBeGreaterThan(0);
+    expect(book?.spine[1]?.size).toBeGreaterThan(book?.spine[0]?.size ?? 0);
+  });
+
+  it('reads the table of contents, and which part each entry is in', async () => {
+    const contents = await (await openEpub(withContents, address))?.readContents();
+
+    expect(contents).toEqual([
+      { title: 'Loomings', part: 0, anchor: null, depth: 0 },
+      { title: 'The Pequod', part: 1, anchor: 'pequod', depth: 0 },
+    ]);
+  });
+
+  it('lists the parts themselves where the book has no table of contents', async () => {
+    const contents = await (await openEpub(path, address))?.readContents();
+
+    expect(contents).toEqual([
+      { title: 'Part 1', part: 0, anchor: null, depth: 0 },
+      { title: 'Part 2', part: 1, anchor: null, depth: 0 },
+    ]);
+  });
+
+  it('points a link to another part at that part, and one within a part at itself', async () => {
+    const document = await (await openEpub(withContents, address))?.readDocument(0);
+
+    expect(document).toContain('href="#valence-part-1:pequod"');
+    expect(document).toContain('href="#valence-part-0:here"');
+  });
+
+  it('keeps the words of a link to nowhere in the book, and loses its address', async () => {
+    const document = await (await openEpub(withContents, address))?.readDocument(0);
+
+    expect(document).toContain('<a>Gone</a>');
+  });
+
+  it('leaves a link out to the web as it was', async () => {
+    const document = await (await openEpub(withContents, address))?.readDocument(0);
+
+    expect(document).toContain('href="https://example.com/"');
+  });
+
+  it('reads the cover the book declares', async () => {
+    const cover = await (await openEpub(withContents, address))?.readCover();
+
+    expect(cover?.bytes).toEqual(COVER);
+  });
+
+  it('uses the first picture as a cover where the book declares none', async () => {
+    const cover = await (await openEpub(path, address))?.readCover();
+
+    expect(cover?.bytes).toEqual(A_PNG);
+  });
+
+  it('has no cover where the book holds no picture at all', async () => {
+    const bare = await aBook('bare.epub', {
+      'META-INF/container.xml': CONTAINER,
+      'OEBPS/content.opf': say(
+        '<package><manifest><item id="one" href="one.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="one"/></spine></package>',
+      ),
+      'OEBPS/one.xhtml': say('<p>Words only.</p>'),
+    });
+
+    expect(await (await openEpub(bare, address))?.readCover()).toBeNull();
   });
 });

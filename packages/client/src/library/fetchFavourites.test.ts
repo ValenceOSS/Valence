@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchFavourites, setFavourite } from './fetchFavourites';
+import { fetchFavourites, fetchKeptBooks, setBookFavourite, setFavourite } from './fetchFavourites';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
@@ -121,5 +121,38 @@ describe('which face is asking', () => {
     await fetchFavourites();
 
     expect(fetchMock.mock.calls.at(-1)?.[1]?.headers).not.toHaveProperty('x-valence-profile');
+  });
+});
+
+describe('fetchKeptBooks', () => {
+  it('answers with the books this viewer has kept', async () => {
+    fetchMock.mockResolvedValue(
+      ok({
+        ...kept,
+        books: [
+          { bookId: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001', keptAt: '2026-08-10T00:00:00.000Z' },
+        ],
+      }),
+    );
+
+    await expect(fetchKeptBooks()).resolves.toEqual(['6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001']);
+  });
+
+  it('answers with none from a server that keeps no books', async () => {
+    fetchMock.mockResolvedValue(ok(kept));
+
+    await expect(fetchKeptBooks()).resolves.toEqual([]);
+  });
+});
+
+describe('setBookFavourite', () => {
+  it('keeps a book at the book’s own address', async () => {
+    fetchMock.mockResolvedValue(ok(null));
+
+    await expect(setBookFavourite('book-1', true)).resolves.toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/books/book-1/favourite',
+      expect.objectContaining({ method: 'PUT' }),
+    );
   });
 });

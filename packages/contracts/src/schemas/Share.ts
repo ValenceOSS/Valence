@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const SHARE_KINDS = ['item', 'series'] as const;
+const SHARE_KINDS = ['item', 'series', 'book'] as const;
 
 const ShareKindSchema = z.enum(SHARE_KINDS);
 
@@ -9,6 +9,7 @@ const ShareSchema = z.object({
   kind: ShareKindSchema,
   mediaId: z.string().uuid().nullable(),
   seriesId: z.string().uuid().nullable(),
+  bookId: z.string().uuid().nullable().default(null),
   title: z.string(),
   createdAt: z.string().datetime(),
   expiresAt: z.string().datetime().nullable(),
@@ -32,12 +33,18 @@ const NewShareSchema = z
     kind: ShareKindSchema,
     mediaId: z.string().uuid().optional(),
     seriesId: z.string().uuid().optional(),
+    bookId: z.string().uuid().optional(),
     expiresAt: z.string().datetime().nullish(),
     viewCap: z.number().int().positive().nullish(),
   })
   .refine(
-    (asked) => (asked.kind === 'item' ? asked.mediaId !== undefined : asked.seriesId !== undefined),
-    { message: 'A share names either an item or a series, matching its kind.' },
+    (asked) =>
+      asked.kind === 'item'
+        ? asked.mediaId !== undefined
+        : asked.kind === 'series'
+          ? asked.seriesId !== undefined
+          : asked.bookId !== undefined,
+    { message: 'A share names an item, a series or a book, matching its kind.' },
   );
 
 const CreatedShareSchema = ShareSchema.extend({ token: z.string().min(1) });

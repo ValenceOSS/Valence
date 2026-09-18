@@ -244,14 +244,17 @@ const favourite = pgTable(
     profileId: text('profileId')
       .notNull()
       .references(() => viewerProfile.id, { onDelete: 'cascade' }),
-    mediaItemId: text('mediaItemId')
-      .notNull()
-      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    mediaItemId: text('mediaItemId').references(() => mediaItem.id, { onDelete: 'cascade' }),
+    bookId: text('bookId').references(() => book.id, { onDelete: 'cascade' }),
     keptAt: timestamp('keptAt').notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex('favourite_profile_idx').on(table.profileId, table.mediaItemId),
+    uniqueIndex('favourite_profile_book_idx')
+      .on(table.profileId, table.bookId)
+      .where(sql`${table.bookId} is not null`),
     index('favourite_recent_idx').on(table.profileId, table.keptAt),
+    check('favourite_one_subject', sql`num_nonnulls(${table.mediaItemId}, ${table.bookId}) = 1`),
   ],
 );
 
@@ -264,6 +267,7 @@ const rating = pgTable(
       .references(() => viewerProfile.id, { onDelete: 'cascade' }),
     mediaItemId: text('mediaItemId').references(() => mediaItem.id, { onDelete: 'cascade' }),
     seriesId: text('seriesId').references(() => series.id, { onDelete: 'cascade' }),
+    bookId: text('bookId').references(() => book.id, { onDelete: 'cascade' }),
     stars: integer('stars').notNull(),
     ratedAt: timestamp('ratedAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
@@ -275,9 +279,16 @@ const rating = pgTable(
     uniqueIndex('rating_profile_series_idx')
       .on(table.profileId, table.seriesId)
       .where(sql`${table.seriesId} is not null`),
+    uniqueIndex('rating_profile_book_idx')
+      .on(table.profileId, table.bookId)
+      .where(sql`${table.bookId} is not null`),
     index('rating_item_idx').on(table.mediaItemId),
     index('rating_series_idx').on(table.seriesId),
-    check('rating_one_subject', sql`(${table.mediaItemId} is null) <> (${table.seriesId} is null)`),
+    index('rating_book_idx').on(table.bookId),
+    check(
+      'rating_one_subject',
+      sql`num_nonnulls(${table.mediaItemId}, ${table.seriesId}, ${table.bookId}) = 1`,
+    ),
     check('rating_stars_range', sql`${table.stars} between 1 and 5`),
   ],
 );
@@ -446,6 +457,7 @@ const share = pgTable(
     kind: text('kind').notNull(),
     mediaItemId: text('mediaItemId').references(() => mediaItem.id, { onDelete: 'cascade' }),
     seriesId: text('seriesId').references(() => series.id, { onDelete: 'cascade' }),
+    bookId: text('bookId').references(() => book.id, { onDelete: 'cascade' }),
     createdBy: text('createdBy')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
@@ -457,8 +469,11 @@ const share = pgTable(
   (table) => [
     uniqueIndex('share_token_idx').on(table.tokenHash),
     index('share_creator_idx').on(table.createdBy),
-    check('share_one_subject', sql`(${table.mediaItemId} is null) <> (${table.seriesId} is null)`),
-    check('share_kind', sql`${table.kind} in ('item', 'series')`),
+    check(
+      'share_one_subject',
+      sql`num_nonnulls(${table.mediaItemId}, ${table.seriesId}, ${table.bookId}) = 1`,
+    ),
+    check('share_kind', sql`${table.kind} in ('item', 'series', 'book')`),
     check('share_view_cap', sql`${table.viewCap} is null or ${table.viewCap} > 0`),
   ],
 );

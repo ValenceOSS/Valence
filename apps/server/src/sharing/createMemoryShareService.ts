@@ -10,6 +10,7 @@ type MemoryShare = {
   kind: ShareKind;
   mediaId: string | null;
   seriesId: string | null;
+  bookId: string | null;
   title: string;
   createdBy: string;
   createdAt: Date;
@@ -41,6 +42,7 @@ const createMemoryShareService = (
     kind: held.kind,
     mediaId: held.mediaId,
     seriesId: held.seriesId,
+    bookId: held.bookId,
     title: held.title,
     createdAt: held.createdAt.toISOString(),
     expiresAt: held.expiresAt === null ? null : held.expiresAt.toISOString(),
@@ -62,7 +64,12 @@ const createMemoryShareService = (
     state,
 
     create: (createdBy, asked) => {
-      const subjectId = asked.kind === 'item' ? asked.mediaId : asked.seriesId;
+      const subjectId =
+        asked.kind === 'item'
+          ? asked.mediaId
+          : asked.kind === 'series'
+            ? asked.seriesId
+            : asked.bookId;
 
       if (subjectId === undefined) {
         return Promise.resolve(null);
@@ -82,6 +89,7 @@ const createMemoryShareService = (
         kind: asked.kind,
         mediaId: asked.kind === 'item' ? subjectId : null,
         seriesId: asked.kind === 'series' ? subjectId : null,
+        bookId: asked.kind === 'book' ? subjectId : null,
         title,
         createdBy,
         createdAt: new Date(0),
@@ -152,6 +160,7 @@ const createMemoryShareService = (
         kind: held.kind,
         mediaId: held.mediaId,
         seriesId: held.seriesId,
+        bookId: held.bookId,
         title: held.title,
         expiresAt: held.expiresAt,
         viewCap: held.viewCap,

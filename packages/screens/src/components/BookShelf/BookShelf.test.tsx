@@ -96,7 +96,8 @@ describe('BookShelf', () => {
 
     renderInAnAddress(<BookShelf onOpen={vi.fn()} />);
 
-    expect(await screen.findByText('Manga')).toBeInTheDocument();
+    expect(await screen.findByText('Berserk')).toBeInTheDocument();
+    expect(screen.getByText('Manga')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Nothing to read yet' })).not.toBeInTheDocument();
   });
 });

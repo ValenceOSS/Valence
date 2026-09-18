@@ -1,7 +1,9 @@
 import type { FavouriteService } from './FavouriteService';
-import type { Favourite } from '@ValenceContracts/schemas/Favourite';
+import type { Favourite, FavouriteBook } from '@ValenceContracts/schemas/Favourite';
 
 type MemoryState = Record<string, Favourite[]>;
+
+type MemoryBooks = Record<string, FavouriteBook[]>;
 
 /**
  * Favourites held in memory, so the routes can be exercised without Postgres.
@@ -11,8 +13,10 @@ type MemoryState = Record<string, Favourite[]>;
  */
 const createMemoryFavouriteService = (
   state: MemoryState = {},
-): FavouriteService & { state: MemoryState } => ({
+  books: MemoryBooks = {},
+): FavouriteService & { state: MemoryState; books: MemoryBooks } => ({
   state,
+  books,
 
   list: (profileId) => Promise.resolve(state[profileId] ?? []),
 
@@ -28,6 +32,24 @@ const createMemoryFavouriteService = (
 
   drop: (profileId, mediaId) => {
     state[profileId] = (state[profileId] ?? []).filter((entry) => entry.mediaId !== mediaId);
+
+    return Promise.resolve();
+  },
+
+  listBooks: (profileId) => Promise.resolve(books[profileId] ?? []),
+
+  keepBook: (profileId, bookId) => {
+    const kept = books[profileId] ?? [];
+
+    if (!kept.some((entry) => entry.bookId === bookId)) {
+      books[profileId] = [{ bookId, keptAt: new Date(0).toISOString() }, ...kept];
+    }
+
+    return Promise.resolve();
+  },
+
+  dropBook: (profileId, bookId) => {
+    books[profileId] = (books[profileId] ?? []).filter((entry) => entry.bookId !== bookId);
 
     return Promise.resolve();
   },

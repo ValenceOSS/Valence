@@ -50,6 +50,7 @@ import { useMusicLights } from '@ValenceScreens/music/musicLights';
 import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.types';
 import type { Inbox } from '@ValenceClient/notifications/fetchNotifications';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { BookDialog } from '@ValenceScreens/components/BookDialog/BookDialog';
 
 const NOTHING_WAITING = { notifications: [], unread: 0 };
 
@@ -79,6 +80,7 @@ const ValenceShell = () => {
 
   const watching = useWatchingProfile();
   const favourites = useFavourites(watching);
+  const keptBooks = useFavourites(watching, 'books');
   const rate = useRate(watching);
   const hiding = useHidden(watching);
   const { mayAdminister } = useWhatIMayDo();
@@ -380,6 +382,26 @@ const ValenceShell = () => {
         onPlay={(media, startSeconds) => {
           setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
           go({ inspecting: null, playing: media.id });
+        }}
+      />
+
+      <BookDialog
+        bookId={place.book}
+        isKept={place.book !== null && keptBooks.isKept(place.book)}
+        onClose={() => {
+          go({ book: null });
+        }}
+        onRead={(book) => {
+          void navigate({ to: '/read/$bookId', params: { bookId: book.id } });
+        }}
+        onToggleKept={(book) => {
+          keptBooks.toggle(book.id);
+        }}
+        onRate={(book, stars) => {
+          rate({ bookId: book.id }, stars);
+        }}
+        onShare={(book) => {
+          setSharing({ kind: 'book', book });
         }}
       />
 

@@ -8,6 +8,7 @@ const A_SHARE: ResolvedShare = {
   kind: 'item',
   mediaId: 'film-1',
   seriesId: null,
+  bookId: null,
   title: 'Arrival',
   expiresAt: null,
   viewCap: null,
@@ -145,6 +146,32 @@ describe('createShareGate', () => {
 
   it('refuses an item nobody holds', async () => {
     const response = await gatedApp({ item: null }).request('/api/media/other', holding('abc'));
+
+    expect(response.status).toBe(403);
+  });
+
+  it('lets a guest read the book that was shared', async () => {
+    const book = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001';
+    const response = await gatedApp({
+      share: { ...A_SHARE, kind: 'book', mediaId: null, bookId: book },
+    }).request(`/api/books/${book}/cover`, holding('token'));
+
+    expect(response.status).toBe(200);
+  });
+
+  it('refuses a guest a book other than the one shared', async () => {
+    const response = await gatedApp({
+      share: { ...A_SHARE, kind: 'book', mediaId: null, bookId: 'some-other-book' },
+    }).request('/api/books/6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001', holding('token'));
+
+    expect(response.status).toBe(403);
+  });
+
+  it('refuses a guest holding a film link any book at all', async () => {
+    const response = await gatedApp({}).request(
+      '/api/books/6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001',
+      holding('token'),
+    );
 
     expect(response.status).toBe(403);
   });

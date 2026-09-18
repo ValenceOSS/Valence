@@ -4,11 +4,21 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HistoryPanel } from './HistoryPanel';
 import type { Viewing } from '@ValenceContracts/schemas/Viewing';
+import type { BookReading } from '@ValenceContracts/schemas/Book';
 
-const { fetchMock, forgetOneMock, forgetAllMock } = vi.hoisted(() => ({
-  fetchMock: vi.fn(),
-  forgetOneMock: vi.fn(),
-  forgetAllMock: vi.fn(),
+const { fetchMock, forgetOneMock, forgetAllMock, readingMock, forgetReadingMock } = vi.hoisted(
+  () => ({
+    fetchMock: vi.fn(),
+    forgetOneMock: vi.fn(),
+    forgetAllMock: vi.fn(),
+    readingMock: vi.fn(),
+    forgetReadingMock: vi.fn(),
+  }),
+);
+
+vi.mock('@ValenceClient/books/fetchBooks', () => ({
+  fetchReading: readingMock,
+  forgetReading: forgetReadingMock,
 }));
 
 vi.mock('@ValenceClient/history/fetchHistory', () => ({
@@ -36,7 +46,36 @@ const aFullPage = [...Array.from({ length: 30 }).keys()].map((index) =>
   viewing({ id: `viewing-${index.toString()}`, title: `Film ${index.toString()}` }),
 );
 
+const aBook = (overrides: Partial<BookReading> = {}): BookReading => ({
+  book: {
+    id: 'book-1',
+    libraryId: 'library-1',
+    title: 'Pride and Prejudice',
+    layout: 'reflow',
+    direction: 'leftToRight',
+    year: 1813,
+    overview: null,
+    genres: null,
+    authors: ['Jane Austen'],
+    rating: null,
+    hasCover: true,
+    chapterCount: 1,
+    addedAt: '2026-08-01T00:00:00.000Z',
+    updatedAt: '2026-08-01T00:00:00.000Z',
+  },
+  chapterId: 'chapter-1',
+  chapterTitle: 'Pride and Prejudice',
+  pageNumber: null,
+  pageCount: null,
+  fraction: 0.34,
+  isFinished: false,
+  updatedAt: '2026-08-14T11:30:00.000Z',
+  ...overrides,
+});
+
 beforeEach(() => {
+  readingMock.mockReset().mockResolvedValue([]);
+  forgetReadingMock.mockReset().mockResolvedValue(true);
   fetchMock.mockReset().mockResolvedValue([viewing()]);
   forgetOneMock.mockReset().mockResolvedValue(true);
   forgetAllMock.mockReset().mockResolvedValue(1);
@@ -166,5 +205,61 @@ describe('a viewer’s history', () => {
     renderInAnAddress(<HistoryPanel now={NOW} />);
 
     expect(await screen.findByText(/forgotten automatically after a year/)).toBeInTheDocument();
+  });
+
+  it('lists what was read beside what was watched, most recent first', async () => {
+    readingMock.mockResolvedValue([aBook()]);
+
+    renderInAnAddress(<HistoryPanel now={NOW} />);
+
+    const book = await screen.findByText('Pride and Prejudice');
+    const film = screen.getByText('Arrival');
+
+    expect(book.compareDocumentPosition(film) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('says how far into an ebook somebody got', async () => {
+    readingMock.mockResolvedValue([aBook()]);
+
+    renderInAnAddress(<HistoryPanel now={NOW} />);
+
+    expect(await screen.findByText(/34% read/)).toBeInTheDocument();
+  });
+
+  it('says which page of which chapter somebody got to in a comic', async () => {
+    readingMock.mockResolvedValue([
+      aBook({ fraction: null, pageNumber: 11, pageCount: 40, chapterTitle: 'Chapter 12' }),
+    ]);
+
+    renderInAnAddress(<HistoryPanel now={NOW} />);
+
+    expect(await screen.findByText(/Chapter 12 · page 12 of 40/)).toBeInTheDocument();
+  });
+
+  it('forgets a book somebody no longer wants in their history', async () => {
+    readingMock.mockResolvedValue([aBook()]);
+
+    renderInAnAddress(<HistoryPanel now={NOW} />);
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Forget Pride and Prejudice' }),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Pride and Prejudice')).not.toBeInTheDocument();
+    });
+    expect(forgetReadingMock).toHaveBeenCalledWith('book-1');
+  });
+
+  it('forgets what was read along with everything else', async () => {
+    readingMock.mockResolvedValue([aBook()]);
+
+    renderInAnAddress(<HistoryPanel now={NOW} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /Forget everything/ }));
+
+    await waitFor(() => {
+      expect(forgetReadingMock).toHaveBeenCalledWith();
+    });
   });
 });

@@ -47,7 +47,13 @@ describe('fetchRatings', () => {
     );
 
     await expect(fetchRatings()).resolves.toEqual([
-      { mediaId: MEDIA_ID, seriesId: null, stars: 4, ratedAt: '2026-08-10T00:00:00.000Z' },
+      {
+        mediaId: MEDIA_ID,
+        seriesId: null,
+        bookId: null,
+        stars: 4,
+        ratedAt: '2026-08-10T00:00:00.000Z',
+      },
     ]);
   });
 

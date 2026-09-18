@@ -108,4 +108,53 @@ describe('a package that describes the book', () => {
   it('reports nothing for a package that describes nothing', () => {
     expect(readEpubPackage('content.opf', A_PACKAGE).description).toBeNull();
   });
+
+  it('finds the cover a newer book marks with a property', () => {
+    const read = readEpubPackage(
+      'OEBPS/content.opf',
+      '<package><manifest><item id="c" href="images/cover.jpg" media-type="image/jpeg" properties="cover-image"/></manifest><spine/></package>',
+    );
+
+    expect(read.coverHref).toBe('OEBPS/images/cover.jpg');
+  });
+
+  it('finds the cover an older book names in a meta', () => {
+    const read = readEpubPackage(
+      'OEBPS/content.opf',
+      '<package><metadata><meta name="cover" content="the-cover"/></metadata><manifest><item id="the-cover" href="cover.jpg" media-type="image/jpeg"/></manifest><spine/></package>',
+    );
+
+    expect(read.coverHref).toBe('OEBPS/cover.jpg');
+  });
+
+  it('says there is no cover where the book names none', () => {
+    expect(readEpubPackage('OEBPS/content.opf', A_PACKAGE).coverHref).toBeNull();
+  });
+
+  it('finds the contents page a newer book marks as its navigation', () => {
+    const read = readEpubPackage(
+      'content.opf',
+      '<package><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/></manifest><spine/></package>',
+    );
+
+    expect(read.navHref).toBe('nav.xhtml');
+  });
+
+  it('finds the contents an older book names on its spine', () => {
+    const read = readEpubPackage(
+      'OEBPS/content.opf',
+      '<package><manifest><item id="old" href="old.ncx" media-type="application/x-dtbncx+xml"/><item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/></manifest><spine toc="toc"/></package>',
+    );
+
+    expect(read.ncxHref).toBe('OEBPS/toc.ncx');
+  });
+
+  it('finds the older contents by its type where the spine names none', () => {
+    const read = readEpubPackage(
+      'content.opf',
+      '<package><manifest><item id="x" href="toc.ncx" media-type="application/x-dtbncx+xml"/></manifest><spine/></package>',
+    );
+
+    expect(read.ncxHref).toBe('toc.ncx');
+  });
 });

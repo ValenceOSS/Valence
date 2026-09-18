@@ -1,23 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { Rail } from '@ValenceUI/Rail';
-import { MediaCard } from '@ValenceUI/MediaCard';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
+import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import type { BookRailProps } from './BookRail.types';
 
 const WAITING = 6;
 
 /**
- * One shelf of books, drawn the way the rest of the library is drawn.
- *
- * The cards are the poster shape rather than the wide one, because a book is taller than it is
- * across: the covers in this library measure 3311 by 4717, which is a shade taller than two by three
- * and nothing like the shape a film is shown in.
- *
- * The cover is the first page of the first chapter, which is what a comic archive actually holds —
- * there is no separate artwork in one, and asking a catalogue for it is a different feature.
+ * One library's shelf of books, drawn as a row of them once they have been read off the server, with
+ * a row of empty cards while they are on their way.
  *
  * @param libraryId - Which shelf.
  * @param title - What to call it.
@@ -54,26 +47,7 @@ const BookRail = ({ libraryId, title, onOpen }: BookRailProps) => {
     return null;
   }
 
-  return (
-    <Rail title={title}>
-      {asked.data.map((book) => (
-        <MediaCard
-          key={book.id}
-          title={book.title}
-          shape="poster"
-          imageUrl={bookCoverUrl(book.id)}
-          subtitle={
-            book.chapterCount === 1 ? '1 chapter' : `${book.chapterCount.toString()} chapters`
-          }
-          {...(book.year === null ? {} : { eyebrow: book.year.toString() })}
-          onSelect={() => {
-            onOpen(book);
-          }}
-          className="w-40 shrink-0"
-        />
-      ))}
-    </Rail>
-  );
+  return <BookRow title={title} books={asked.data} onOpen={onOpen} />;
 };
 
 BookRail.displayName = 'BookRail';

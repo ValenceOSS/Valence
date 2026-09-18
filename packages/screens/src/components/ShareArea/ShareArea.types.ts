@@ -1,9 +1,11 @@
 import type { ShareEnding } from '@ValenceContracts/schemas/Share';
+import type { Book } from '@ValenceContracts/schemas/Book';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 type ShareAreaProps = {
   token: string;
   onPlay: (media: MediaSummary, startSeconds: number) => void;
+  onRead?: (book: Book) => void;
   resumeFor?: (mediaId: string) => number | null;
   ended?: ShareEnding | null;
   name?: string;

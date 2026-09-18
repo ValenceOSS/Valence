@@ -4,6 +4,7 @@ type ShareScope = {
   kind: ShareKind;
   mediaId: string | null;
   seriesId: string | null;
+  bookId?: string | null;
 };
 
 type ShareRequest = {
@@ -14,6 +15,7 @@ type ShareRequest = {
 type ShareReach =
   | { kind: 'allowed' }
   | { kind: 'needsItem'; mediaId: string }
+  | { kind: 'needsBook'; bookId: string }
   | { kind: 'needsSession'; sessionId: string }
   | { kind: 'refused' };
 
@@ -32,6 +34,13 @@ const ITEM_ROUTES: readonly RegExp[] = [
   new RegExp(`^/api/playback/(${ID})/file$`),
   new RegExp(`^/api/playback/(${ID})/trickplay$`),
   new RegExp(`^/api/playback/(${ID})/frame$`),
+];
+
+const BOOK_ROUTES: readonly RegExp[] = [
+  new RegExp(`^/api/books/(${ID})$`),
+  new RegExp(`^/api/books/(${ID})/cover$`),
+  new RegExp(`^/api/books/(${ID})/chapters/${ID}/(?:contents|document|resource)$`),
+  new RegExp(`^/api/books/(${ID})/chapters/${ID}/pages/\\d+$`),
 ];
 
 const SESSION_ROUTES: readonly RegExp[] = [
@@ -75,6 +84,14 @@ const reachOf = (request: ShareRequest): ShareReach => {
     }
   }
 
+  for (const route of BOOK_ROUTES) {
+    const found = route.exec(request.path);
+
+    if (request.method === 'GET' && found?.[1] !== undefined) {
+      return { kind: 'needsBook', bookId: found[1] };
+    }
+  }
+
   for (const route of SESSION_ROUTES) {
     const found = route.exec(request.path);
 
@@ -98,7 +115,9 @@ const reachOf = (request: ShareRequest): ShareReach => {
 const covers = (scope: ShareScope, item: { id: string; seriesId: string | null }): boolean =>
   scope.kind === 'item'
     ? scope.mediaId !== null && scope.mediaId === item.id
-    : scope.seriesId !== null && scope.seriesId === item.seriesId;
+    : scope.kind === 'series'
+      ? scope.seriesId !== null && scope.seriesId === item.seriesId
+      : false;
 
 export type { ShareScope, ShareReach, ShareRequest };
 

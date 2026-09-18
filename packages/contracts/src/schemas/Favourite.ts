@@ -5,10 +5,20 @@ const FavouriteSchema = z.object({
   keptAt: z.string().datetime(),
 });
 
-const FavouriteListSchema = z.object({ favourites: z.array(FavouriteSchema) });
+const FavouriteBookSchema = z.object({
+  bookId: z.string().uuid(),
+  keptAt: z.string().datetime(),
+});
+
+const FavouriteListSchema = z.object({
+  favourites: z.array(FavouriteSchema),
+  books: z.array(FavouriteBookSchema).default([]),
+});
 
 type Favourite = z.infer<typeof FavouriteSchema>;
 
-export type { Favourite };
+type FavouriteBook = z.infer<typeof FavouriteBookSchema>;
 
-export { FavouriteSchema, FavouriteListSchema };
+export type { Favourite, FavouriteBook };
+
+export { FavouriteBookSchema, FavouriteSchema, FavouriteListSchema };

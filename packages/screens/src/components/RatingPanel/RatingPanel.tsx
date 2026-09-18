@@ -32,7 +32,7 @@ const describeCount = (count: number): string =>
  * order to find one, and redrawing the page behind the dialog each time a star was pressed. Asked
  * for here, and narrowed to this subject, the only thing a press redraws is this panel.
  *
- * @param subject - The item or programme being rated.
+ * @param subject - The item, programme or book being rated.
  * @param title - What is being rated, for anybody not looking at the screen.
  * @param onRate - Called with what they gave it, or null to take it back.
  * @param className - Extra classes for the caller's own layout.
@@ -41,12 +41,7 @@ const RatingPanel = ({ subject, title, onRate, className }: RatingPanelProps) =>
   const { user } = useShell();
   const stars = useStars(user.id, subject);
 
-  const mediaId = 'mediaId' in subject ? subject.mediaId : null;
-  const seriesId = 'seriesId' in subject ? subject.seriesId : null;
-
-  const asked = useQuery(
-    viewingQueries.household(mediaId === null ? { seriesId: seriesId ?? '' } : { mediaId }),
-  );
+  const asked = useQuery(viewingQueries.household(subject));
 
   const household = asked.data ?? NOTHING;
 

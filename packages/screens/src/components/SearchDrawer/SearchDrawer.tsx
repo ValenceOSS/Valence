@@ -70,6 +70,9 @@ const SearchDrawer = ({ isOpen, onClose }: SearchDrawerProps) => {
           onHide={(media) => {
             hiding.ask(media);
           }}
+          onOpenBook={(book) => {
+            go({ book: book.id });
+          }}
         />
       </DialogContent>
     </Drawer>

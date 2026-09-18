@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { and, count, desc, eq, isNull } from 'drizzle-orm';
-import { mediaItem, series, share, shareVisit, user } from '@ValenceServer/db/Schema';
+import { book, mediaItem, series, share, shareVisit, user } from '@ValenceServer/db/Schema';
 import { isShareLive } from '@ValenceContracts/schemas/Share';
 import { hashShareToken, makeShareToken } from './shareToken';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
@@ -19,7 +19,7 @@ const GONE = 'Something no longer here';
  * @returns The kind, or null where it is not one.
  */
 const readKind = (stored: string): ShareKind | null =>
-  stored === 'item' || stored === 'series' ? stored : null;
+  stored === 'item' || stored === 'series' || stored === 'book' ? stored : null;
 
 /**
  * The columns every listing reads: the link, how far it has been used, and what it points at.
@@ -43,6 +43,7 @@ const columnsFor = (db: ValenceDatabase) => ({
   kind: share.kind,
   mediaItemId: share.mediaItemId,
   seriesId: share.seriesId,
+  bookId: share.bookId,
   createdAt: share.createdAt,
   expiresAt: share.expiresAt,
   viewCap: share.viewCap,
@@ -51,6 +52,7 @@ const columnsFor = (db: ValenceDatabase) => ({
   itemTitle: mediaItem.title,
   itemSeriesTitle: mediaItem.seriesTitle,
   seriesTitle: series.title,
+  bookTitle: book.title,
 });
 
 type ShareRow = {
@@ -58,6 +60,7 @@ type ShareRow = {
   kind: string;
   mediaItemId: string | null;
   seriesId: string | null;
+  bookId: string | null;
   createdAt: Date;
   expiresAt: Date | null;
   viewCap: number | null;
@@ -66,6 +69,7 @@ type ShareRow = {
   itemTitle: string | null;
   itemSeriesTitle: string | null;
   seriesTitle: string | null;
+  bookTitle: string | null;
 };
 
 /**
@@ -99,6 +103,16 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
       return rows[0]?.title ?? null;
     }
 
+    if (kind === 'book') {
+      const rows = await db
+        .select({ title: book.title })
+        .from(book)
+        .where(eq(book.id, subjectId))
+        .limit(1);
+
+      return rows[0]?.title ?? null;
+    }
+
     const rows = await db
       .select({ title: mediaItem.title, seriesTitle: mediaItem.seriesTitle })
       .from(mediaItem)
@@ -112,19 +126,25 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
 
   const describe = (row: ShareRow, now: Date): Share | null => {
     const kind = readKind(row.kind);
-    const subjectId = row.mediaItemId ?? row.seriesId;
+    const subjectId = row.mediaItemId ?? row.seriesId ?? row.bookId;
 
     if (kind === null || subjectId === null) {
       return null;
     }
 
-    const title = kind === 'series' ? row.seriesTitle : (row.itemSeriesTitle ?? row.itemTitle);
+    const title =
+      kind === 'series'
+        ? row.seriesTitle
+        : kind === 'book'
+          ? row.bookTitle
+          : (row.itemSeriesTitle ?? row.itemTitle);
 
     return {
       id: row.id,
       kind,
       mediaId: row.mediaItemId,
       seriesId: row.seriesId,
+      bookId: row.bookId,
       title: title ?? GONE,
       createdAt: row.createdAt.toISOString(),
       expiresAt: row.expiresAt === null ? null : row.expiresAt.toISOString(),
@@ -145,7 +165,12 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
 
   return {
     create: async (createdBy, asked) => {
-      const subjectId = asked.kind === 'item' ? asked.mediaId : asked.seriesId;
+      const subjectId =
+        asked.kind === 'item'
+          ? asked.mediaId
+          : asked.kind === 'series'
+            ? asked.seriesId
+            : asked.bookId;
 
       if (subjectId === undefined) {
         return null;
@@ -171,6 +196,7 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
         kind: asked.kind,
         mediaItemId: asked.kind === 'item' ? subjectId : null,
         seriesId: asked.kind === 'series' ? subjectId : null,
+        bookId: asked.kind === 'book' ? subjectId : null,
         createdBy,
         createdAt,
         expiresAt,
@@ -184,6 +210,7 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
         kind: asked.kind,
         mediaId: asked.kind === 'item' ? subjectId : null,
         seriesId: asked.kind === 'series' ? subjectId : null,
+        bookId: asked.kind === 'book' ? subjectId : null,
         title,
         createdAt: createdAt.toISOString(),
         expiresAt: expiresAt === null ? null : expiresAt.toISOString(),
@@ -200,6 +227,7 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
         .from(share)
         .leftJoin(mediaItem, eq(mediaItem.id, share.mediaItemId))
         .leftJoin(series, eq(series.id, share.seriesId))
+        .leftJoin(book, eq(book.id, share.bookId))
         .where(eq(share.createdBy, createdBy))
         .orderBy(desc(share.createdAt))
         .limit(LIMIT);
@@ -216,6 +244,7 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
         .innerJoin(user, eq(user.id, share.createdBy))
         .leftJoin(mediaItem, eq(mediaItem.id, share.mediaItemId))
         .leftJoin(series, eq(series.id, share.seriesId))
+        .leftJoin(book, eq(book.id, share.bookId))
         .orderBy(desc(share.createdAt))
         .limit(LIMIT);
 
@@ -256,6 +285,7 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
           kind: share.kind,
           mediaItemId: share.mediaItemId,
           seriesId: share.seriesId,
+          bookId: share.bookId,
         });
 
       const row = changed[0];
@@ -265,7 +295,7 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
       }
 
       const kind = readKind(row.kind);
-      const subjectId = row.mediaItemId ?? row.seriesId;
+      const subjectId = row.mediaItemId ?? row.seriesId ?? row.bookId;
 
       const title = kind === null || subjectId === null ? null : await titleOf(kind, subjectId);
 
@@ -286,7 +316,7 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
       }
 
       const kind = readKind(row.kind);
-      const subjectId = row.mediaItemId ?? row.seriesId;
+      const subjectId = row.mediaItemId ?? row.seriesId ?? row.bookId;
 
       if (kind === null || subjectId === null) {
         return null;
@@ -297,6 +327,7 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
         kind,
         mediaId: row.mediaItemId,
         seriesId: row.seriesId,
+        bookId: row.bookId,
         title: (await titleOf(kind, subjectId)) ?? GONE,
         expiresAt: row.expiresAt,
         viewCap: row.viewCap,

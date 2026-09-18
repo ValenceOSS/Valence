@@ -47,6 +47,7 @@ const useRate = (
             {
               mediaId: 'mediaId' in subject ? subject.mediaId : null,
               seriesId: 'seriesId' in subject ? subject.seriesId : null,
+              bookId: 'bookId' in subject ? subject.bookId : null,
               stars: given,
               ratedAt: new Date().toISOString(),
             },
