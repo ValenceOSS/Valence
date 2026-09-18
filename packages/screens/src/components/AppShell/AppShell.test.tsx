@@ -76,6 +76,19 @@ describe('AppShell', () => {
     expect(screen.getByText('The library')).toBeInTheDocument();
   });
 
+  it('keeps what is docked along the foot the same thing from one section to the next', () => {
+    const { props, view } = draw({ dock: <p>Now playing</p> });
+    const docked = screen.getByText('Now playing');
+
+    view.rerender(
+      <AppShell {...props} section="films">
+        <p>The films</p>
+      </AppShell>,
+    );
+
+    expect(screen.getByText('Now playing')).toBe(docked);
+  });
+
   it('offers the few places worth going', () => {
     draw();
 

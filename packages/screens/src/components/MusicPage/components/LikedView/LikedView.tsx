@@ -58,7 +58,6 @@ const LikedView = () => {
               variant="primary"
               size="lg"
               isIconOnly
-              isPill
               label="Play Liked Songs"
               className="size-14"
               disabled={tracks.length === 0}

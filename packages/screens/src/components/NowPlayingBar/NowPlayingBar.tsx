@@ -14,13 +14,20 @@ import {
   VolumeLowIcon,
   VolumeMute01Icon,
 } from '@hugeicons/core-free-icons';
+import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { GlassPanel } from '@ValenceUI/GlassPanel';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { Slider } from '@ValenceUI/Slider';
 import { Spinner } from '@ValenceUI/Spinner';
-import { cn } from '@ValenceUI/cn';
+import {
+  fadeVariants,
+  revealItemVariants,
+  revealTransition,
+  spring,
+  stillTransition,
+} from '@ValenceUI/animations/reveal';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import {
   AUDIO_QUALITIES,
@@ -40,7 +47,27 @@ import { useMusicSession } from '@ValenceScreens/music/useMusicSession';
 import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { MusicPanel } from '@ValenceScreens/music/musicPanel';
+import type { Variants } from 'motion/react';
 import type { NowPlayingBarProps } from './NowPlayingBar.types';
+import { BarButton } from './components/BarButton/BarButton';
+
+const ARRIVING: Variants = {
+  hidden: { opacity: 0, y: '120%' },
+  shown: { opacity: 1, y: 0 },
+  gone: { opacity: 0, y: '120%' },
+};
+
+const ROOM: Variants = {
+  hidden: { height: 0 },
+  shown: { height: '5rem' },
+  gone: { height: 0 },
+};
+
+const POPPING: Variants = {
+  hidden: { opacity: 0, scale: 0.5 },
+  shown: { opacity: 1, scale: 1 },
+  gone: { opacity: 0, scale: 0.5 },
+};
 
 const REPEAT_LABELS = {
   off: 'Repeat everything',
@@ -53,7 +80,9 @@ const REPEAT_LABELS = {
  * drive it, how far through it is, and the way to its lyrics, the queue and the other devices it
  * could be playing on.
  *
- * It stays put across every section, because the music does. While this device is controlling
+ * It stays put across every section, because the music does. It rises into place when the music
+ * starts and sinks away when it stops, a new song rises in where the last one was, and its controls
+ * move the way the dock's do. While this device is controlling
  * another, everything here drives that one instead, and a band along the foot says which — the
  * one thing it would be alarming not to know when pressing pause does nothing to the speakers in
  * front of you. Shuffle and repeat are there but switched off for a queue whose order means
@@ -68,11 +97,14 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
   const { place, go } = usePlace();
   const panel = useMusicPanel();
   const favourites = useFavourites(useWatchingProfile());
+  const prefersReducedMotion = useReducedMotionConfig();
+  const isStill = prefersReducedMotion === true;
+  const arriving = revealTransition(prefersReducedMotion, 'heavy');
 
   useMusicSession(state, player);
 
   if (shown === null) {
-    return null;
+    return <AnimatePresence>{null}</AnimatePresence>;
   }
 
   const { queue } = state;
@@ -92,119 +124,136 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
   };
 
   return (
-    <>
-      <div aria-hidden className="h-20 shrink-0" />
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:px-3">
+    <AnimatePresence>
+      <motion.div
+        key="room"
+        aria-hidden
+        variants={ROOM}
+        initial="hidden"
+        animate="shown"
+        exit="gone"
+        transition={arriving}
+        className="shrink-0"
+      />
+      <motion.div
+        key="bar"
+        variants={isStill ? fadeVariants : ARRIVING}
+        initial="hidden"
+        animate="shown"
+        exit="gone"
+        transition={arriving}
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:px-3"
+      >
         <GlassPanel
           as="section"
           aria-label="Now playing"
-          className="pointer-events-auto mx-auto flex max-w-[120rem] flex-col overflow-hidden rounded-2xl"
+          className="pointer-events-auto mx-auto flex max-w-[120rem] flex-col overflow-hidden"
         >
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_minmax(0,1fr)]">
             <div className="flex min-w-0 items-center gap-3">
-              <Button
-                variant="bare"
-                size="none"
-                label={`Go to ${shown.albumTitle ?? 'the album'}`}
-                hasTooltip={false}
-                className="shrink-0"
-                onClick={() => {
-                  open({ kind: 'album', id: shown.albumId });
-                }}
-              >
-                <MusicArtwork
-                  src={shown.hasArtwork ? albumArtworkUrl(shown.albumId) : null}
-                  label={shown.albumTitle ?? shown.title}
-                  className="size-12 sm:size-14"
-                />
-              </Button>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={shown.trackId}
+                  variants={revealItemVariants(prefersReducedMotion)}
+                  custom={0}
+                  initial="hidden"
+                  animate="shown"
+                  exit="gone"
+                  className="flex min-w-0 items-center gap-3"
+                >
+                  <Button
+                    variant="bare"
+                    size="none"
+                    label={`Go to ${shown.albumTitle ?? 'the album'}`}
+                    hasTooltip={false}
+                    className="shrink-0"
+                    onClick={() => {
+                      open({ kind: 'album', id: shown.albumId });
+                    }}
+                  >
+                    <MusicArtwork
+                      src={shown.hasArtwork ? albumArtworkUrl(shown.albumId) : null}
+                      label={shown.albumTitle ?? shown.title}
+                      className="size-12 sm:size-14"
+                    />
+                  </Button>
 
-              <div className="flex min-w-0 flex-col">
-                <span className="truncate text-[0.9375rem] font-semibold text-text">
-                  {shown.title}
-                </span>
-                <span className="flex min-w-0 gap-1 truncate text-[0.8125rem] text-text-muted">
-                  {shown.artists.map((artist, at) => {
-                    const { id } = artist;
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-[0.9375rem] font-semibold text-text">
+                      {shown.title}
+                    </span>
+                    <span className="flex min-w-0 gap-1 truncate text-[0.8125rem] text-text-muted">
+                      {shown.artists.map((artist, at) => {
+                        const { id } = artist;
 
-                    return (
-                      <span key={`${artist.name}-${at.toString()}`} className="truncate">
-                        {id === null ? (
-                          artist.name
-                        ) : (
-                          <Button
-                            variant="link"
-                            size="none"
-                            hasTooltip={false}
-                            className="text-text-muted hover:text-text"
-                            onClick={() => {
-                              open({ kind: 'artist', id });
-                            }}
-                          >
-                            {artist.name}
-                          </Button>
-                        )}
-                        {at < shown.artists.length - 1 ? ',' : ''}
-                      </span>
-                    );
-                  })}
-                </span>
-              </div>
+                        return (
+                          <span key={`${artist.name}-${at.toString()}`} className="truncate">
+                            {id === null ? (
+                              artist.name
+                            ) : (
+                              <Button
+                                variant="link"
+                                size="none"
+                                hasTooltip={false}
+                                className="text-text-muted hover:text-text"
+                                onClick={() => {
+                                  open({ kind: 'artist', id });
+                                }}
+                              >
+                                {artist.name}
+                              </Button>
+                            )}
+                            {at < shown.artists.length - 1 ? ',' : ''}
+                          </span>
+                        );
+                      })}
+                    </span>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                isIconOnly
-                isActive={isLiked}
+              <BarButton
                 label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
-                className={cn('hidden shrink-0 sm:inline-flex', isLiked ? 'text-accent' : '')}
+                glyph={FavouriteIcon}
+                gesture="fill"
+                isLit={isLiked}
+                className="hidden shrink-0 sm:inline-flex"
                 onClick={() => {
                   favourites.toggle(shown.trackId);
                 }}
-              >
-                <Icon of={FavouriteIcon} size={18} isActive={isLiked} />
-              </Button>
+              />
             </div>
 
             <div className="flex min-w-0 flex-col items-center gap-1">
               <div className="flex items-center gap-1 sm:gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  isIconOnly
-                  isActive={queue?.isShuffled === true}
-                  disabled={isOrdered || shown.remote !== null}
+                <BarButton
                   label={queue?.isShuffled === true ? 'Stop shuffling' : 'Shuffle'}
-                  className={cn(
-                    'hidden md:inline-flex',
-                    queue?.isShuffled === true ? 'text-accent' : '',
-                  )}
+                  glyph={ShuffleIcon}
+                  gesture="tumble"
+                  isLit={queue?.isShuffled === true}
+                  isDisabled={isOrdered || shown.remote !== null}
+                  className="hidden md:inline-flex"
                   onClick={() => {
                     player.toggleShuffle();
                   }}
-                >
-                  <Icon of={ShuffleIcon} size={18} />
-                </Button>
+                />
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  isIconOnly
+                <BarButton
                   label="Previous"
+                  glyph={PreviousIcon}
+                  iconSize={20}
+                  isSolid
                   onClick={() => {
                     player.previous();
                   }}
-                >
-                  <Icon of={PreviousIcon} size={20} isActive />
-                </Button>
+                />
 
                 <Button
                   variant="primary"
                   size="md"
                   isIconOnly
-                  isPill
                   label={shown.isPlaying ? 'Pause' : 'Play'}
-                  className="size-10"
+                  className="relative size-10"
                   onClick={() => {
                     if (shown.isPlaying) {
                       player.pause();
@@ -213,39 +262,52 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                     }
                   }}
                 >
-                  {shown.isLoading && shown.isPlaying ? (
-                    <Spinner size="sm" label="Loading" />
-                  ) : (
-                    <Icon of={shown.isPlaying ? PauseIcon : PlayIcon} size={20} isActive />
-                  )}
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.span
+                      key={
+                        shown.isLoading && shown.isPlaying
+                          ? 'loading'
+                          : shown.isPlaying
+                            ? 'pause'
+                            : 'play'
+                      }
+                      variants={isStill ? fadeVariants : POPPING}
+                      initial="hidden"
+                      animate="shown"
+                      exit="gone"
+                      transition={isStill ? stillTransition : spring}
+                      className="flex"
+                    >
+                      {shown.isLoading && shown.isPlaying ? (
+                        <Spinner size="sm" label="Loading" />
+                      ) : (
+                        <Icon of={shown.isPlaying ? PauseIcon : PlayIcon} size={20} isActive />
+                      )}
+                    </motion.span>
+                  </AnimatePresence>
                 </Button>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  isIconOnly
+                <BarButton
                   label="Next"
+                  glyph={NextIcon}
+                  iconSize={20}
+                  isSolid
                   onClick={() => {
                     player.next();
                   }}
-                >
-                  <Icon of={NextIcon} size={20} isActive />
-                </Button>
+                />
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  isIconOnly
-                  isActive={repeat !== 'off'}
-                  disabled={isOrdered || shown.remote !== null}
+                <BarButton
                   label={REPEAT_LABELS[repeat]}
-                  className={cn('hidden md:inline-flex', repeat === 'off' ? '' : 'text-accent')}
+                  glyph={repeat === 'one' ? RepeatOne01Icon : RepeatIcon}
+                  gesture="spin"
+                  isLit={repeat !== 'off'}
+                  isDisabled={isOrdered || shown.remote !== null}
+                  className="hidden md:inline-flex"
                   onClick={() => {
                     player.cycleRepeat();
                   }}
-                >
-                  <Icon of={repeat === 'one' ? RepeatOne01Icon : RepeatIcon} size={18} />
-                </Button>
+                />
               </div>
 
               <div className="hidden w-full items-center gap-2 md:flex">
@@ -271,13 +333,11 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
             </div>
 
             <div className="hidden min-w-0 items-center justify-end gap-1 md:flex">
-              <Button
-                variant="ghost"
-                size="sm"
-                isIconOnly
-                isActive={view.kind === 'lyrics' && place.section === 'music'}
+              <BarButton
                 label="Lyrics"
-                className={view.kind === 'lyrics' && place.section === 'music' ? 'text-accent' : ''}
+                glyph={Mic01Icon}
+                gesture="ring"
+                isLit={view.kind === 'lyrics' && place.section === 'music'}
                 onClick={() => {
                   open(
                     view.kind === 'lyrics' && place.section === 'music'
@@ -285,37 +345,25 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       : { kind: 'lyrics' },
                   );
                 }}
-              >
-                <Icon of={Mic01Icon} size={18} />
-              </Button>
+              />
 
-              <Button
-                variant="ghost"
-                size="sm"
-                isIconOnly
-                isActive={panel === 'queue'}
+              <BarButton
                 label="Queue"
-                className={panel === 'queue' ? 'text-accent' : ''}
+                glyph={LeftToRightListNumberIcon}
+                isLit={panel === 'queue'}
                 onClick={() => {
                   togglePanel('queue');
                 }}
-              >
-                <Icon of={LeftToRightListNumberIcon} size={18} />
-              </Button>
+              />
 
-              <Button
-                variant="ghost"
-                size="sm"
-                isIconOnly
-                isActive={panel === 'devices' || shown.remote !== null}
+              <BarButton
                 label="Play on another device"
-                className={panel === 'devices' || shown.remote !== null ? 'text-accent' : ''}
+                glyph={LaptopIcon}
+                isLit={panel === 'devices' || shown.remote !== null}
                 onClick={() => {
                   togglePanel('devices');
                 }}
-              >
-                <Icon of={LaptopIcon} size={18} />
-              </Button>
+              />
 
               <OptionMenu
                 label="Streaming quality"
@@ -347,22 +395,16 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 ]}
               />
 
-              <Button
-                variant="ghost"
-                size="sm"
-                isIconOnly
+              <BarButton
                 label={state.isMuted ? 'Unmute' : 'Mute'}
+                glyph={
+                  volume === 0 ? VolumeMute01Icon : volume < 0.5 ? VolumeLowIcon : VolumeHighIcon
+                }
+                gesture="ring"
                 onClick={() => {
                   player.toggleMute();
                 }}
-              >
-                <Icon
-                  of={
-                    volume === 0 ? VolumeMute01Icon : volume < 0.5 ? VolumeLowIcon : VolumeHighIcon
-                  }
-                  size={18}
-                />
-              </Button>
+              />
 
               <Slider
                 label="Volume"
@@ -379,15 +421,26 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
             </div>
           </div>
 
-          {shown.remote === null ? null : (
-            <div className="flex items-center justify-end gap-2 bg-accent px-4 py-1 text-xs font-semibold text-accent-contrast">
-              <Icon of={LaptopIcon} size={14} />
-              Playing on {shown.remote.label}
-            </div>
-          )}
+          <AnimatePresence initial={false}>
+            {shown.remote === null ? null : (
+              <motion.div
+                key="remote"
+                initial={{ height: 0 }}
+                animate={{ height: 'auto' }}
+                exit={{ height: 0 }}
+                transition={isStill ? stillTransition : spring}
+                className="overflow-hidden"
+              >
+                <div className="flex items-center justify-end gap-2 bg-accent px-4 py-1 text-xs font-semibold text-accent-contrast">
+                  <Icon of={LaptopIcon} size={14} />
+                  Playing on {shown.remote.label}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </GlassPanel>
-      </div>
-    </>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

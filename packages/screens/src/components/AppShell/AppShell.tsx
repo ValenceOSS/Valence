@@ -170,6 +170,9 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  * @param section - Which section is showing.
  * @param onSectionChange - Told which section was chosen.
  * @param children - The page itself.
+ * @param dock - What stays along the foot of every section, such as the music playing. It is kept
+ *   apart from the page, which arrives afresh with each section, so it is there throughout rather
+ *   than arriving again with every page.
  * @param moodLights - The colours to light the page with.
  * @param isAdministrator - Whether to offer the admin section at all.
  * @param isDownloadsOpen - Whether the downloads dialog is raised.
@@ -197,6 +200,7 @@ const AppShell = ({
   section,
   onSectionChange,
   children,
+  dock,
   hasMark = true,
   moodLights = [],
   isAdministrator = false,
@@ -556,6 +560,8 @@ const AppShell = ({
             {children}
           </motion.div>
         </motion.main>
+
+        {dock}
       </motion.div>
     </div>
   );

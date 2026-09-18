@@ -147,7 +147,6 @@ const MusicLibrary = () => {
           <Button
             variant="soft"
             size="sm"
-            isPill
             onClick={() => {
               setIsMaking(true);
             }}
@@ -164,7 +163,6 @@ const MusicLibrary = () => {
             key={chip.id}
             variant={shelf === chip.id ? 'primary' : 'soft'}
             size="xs"
-            isPill
             isActive={shelf === chip.id}
             aria-pressed={shelf === chip.id}
             onClick={() => {
@@ -182,7 +180,6 @@ const MusicLibrary = () => {
           isLabelHidden
           type="search"
           size="sm"
-          isPill
           icon={<Icon of={Search01Icon} size={14} />}
           placeholder="Find in your library"
           value={filter}

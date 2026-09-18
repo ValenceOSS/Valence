@@ -74,7 +74,6 @@ const DevicesPanel = () => {
           <Button
             variant="secondary"
             size="xs"
-            isPill
             onClick={() => {
               player.playHere(shown?.positionSeconds ?? 0, shown?.isPlaying ?? true);
             }}

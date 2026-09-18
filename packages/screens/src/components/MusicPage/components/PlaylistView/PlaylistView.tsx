@@ -132,7 +132,6 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
               variant="primary"
               size="lg"
               isIconOnly
-              isPill
               label={`Play ${playlist.name}`}
               className="size-14"
               disabled={tracks.length === 0}

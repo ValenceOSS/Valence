@@ -171,6 +171,7 @@ const ValenceShell = () => {
   return (
     <AppShell
       section={place.section}
+      dock={<NowPlayingBar />}
       onSectionChange={(next) => {
         go({ section: next });
       }}
@@ -458,8 +459,6 @@ const ValenceShell = () => {
           <Outlet />
         </motion.div>
       </AnimatePresence>
-
-      <NowPlayingBar />
     </AppShell>
   );
 };

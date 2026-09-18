@@ -93,7 +93,6 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
               variant="primary"
               size="lg"
               isIconOnly
-              isPill
               label={`Play ${album.title}`}
               className="size-14"
               disabled={tracks.length === 0}

@@ -78,7 +78,6 @@ const MusicHome = () => {
           <Button
             variant="soft"
             size="md"
-            isPill
             onClick={() => {
               open({ kind: 'search', query: '' });
             }}

@@ -60,7 +60,6 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
           isLabelHidden
           type="search"
           size="lg"
-          isPill
           hasFocusOnMount
           placeholder="What do you want to listen to?"
           icon={<Icon of={Search01Icon} size={18} />}

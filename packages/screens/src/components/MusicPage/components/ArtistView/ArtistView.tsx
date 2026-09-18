@@ -89,7 +89,6 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
               variant="primary"
               size="lg"
               isIconOnly
-              isPill
               label={`Play ${artist.name}`}
               className="size-14"
               disabled={popular.length === 0}
@@ -102,7 +101,6 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
             <Button
               variant={isFollowed ? 'secondary' : 'ghost'}
               size="md"
-              isPill
               isActive={isFollowed}
               onClick={() => {
                 const next = !isFollowed;

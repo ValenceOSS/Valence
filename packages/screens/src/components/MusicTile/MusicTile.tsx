@@ -26,7 +26,6 @@ const MusicTile = ({ title, detail, artwork, onOpen, onPlay }: MusicTileProps) =
           variant="primary"
           size="none"
           isIconOnly
-          isPill
           label={`Play ${title}`}
           hasTooltip={false}
           className="absolute right-2 bottom-2 z-10 flex size-11 translate-y-2 items-center justify-center opacity-0 shadow-lg transition-[opacity,transform] group-hover:translate-y-0 group-hover:opacity-100 focus-visible:translate-y-0 focus-visible:opacity-100"
