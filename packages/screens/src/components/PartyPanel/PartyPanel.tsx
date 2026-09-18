@@ -1,5 +1,11 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Clock01Icon, PauseCircleIcon, UserAdd01Icon, ViewIcon } from '@hugeicons/core-free-icons';
+import {
+  Clock01Icon,
+  HeadphonesIcon,
+  PauseCircleIcon,
+  UserAdd01Icon,
+  ViewIcon,
+} from '@hugeicons/core-free-icons';
 import { useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -10,6 +16,23 @@ import type { PartyMember } from '@ValenceContracts/schemas/WatchParty';
 import type { PartyPanelProps } from './PartyPanel.types';
 
 const ROLE_LABELS = { host: 'Host', coHost: 'Co-host', guest: 'Guest' } as const;
+
+const WORDS = {
+  watch: {
+    doing: 'watching',
+    isDoing: 'Watching',
+    notDoing: 'Not watching',
+    what: 'watching this',
+    icon: ViewIcon,
+  },
+  listen: {
+    doing: 'listening',
+    isDoing: 'Listening',
+    notDoing: 'Not listening',
+    what: 'listening along',
+    icon: HeadphonesIcon,
+  },
+} as const;
 
 const WORTH_SAYING_SECONDS = 1;
 
@@ -78,6 +101,7 @@ const PartyPanel = ({
   const me = party.members.find((member) => member.connectionId === meConnectionId);
   const timekeeper = party.members.find((member) => member.connectionId === party.timekeeperId);
   const watching = party.members.filter((member) => member.isWatching).length;
+  const words = WORDS[party.kind];
   const mayAsk = me?.role === 'host' || me?.role === 'coHost';
 
   const elsewhere = people.filter(
@@ -91,7 +115,7 @@ const PartyPanel = ({
     <section className="flex w-80 max-w-full flex-col text-text">
       <div className="flex items-center justify-between gap-2 px-1 pb-2">
         <p className="text-xs uppercase tracking-wide text-text-muted">
-          {watching.toString()} watching
+          {watching.toString()} {words.doing}
         </p>
 
         {onLeave === undefined ? null : (
@@ -113,7 +137,7 @@ const PartyPanel = ({
       {invitation === undefined ? null : (
         <div className="flex flex-col gap-2 rounded-lg bg-subtle p-3">
           <p className="text-xs leading-relaxed text-text-muted">
-            Send this to anybody with an account here. It puts them in this party, watching this.
+            Send this to anybody with an account here. It puts them in this party, {words.what}.
           </p>
 
           <div className="flex items-center gap-2">
@@ -192,13 +216,13 @@ const PartyPanel = ({
 
               {member.isWatching ? (
                 <span className="flex items-center gap-1 text-xs text-text-muted">
-                  <Icon of={ViewIcon} size={13} />
-                  Watching
+                  <Icon of={words.icon} size={13} />
+                  {words.isDoing}
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-xs text-text-muted">
                   <Icon of={PauseCircleIcon} size={13} />
-                  Not watching
+                  {words.notDoing}
                 </span>
               )}
 

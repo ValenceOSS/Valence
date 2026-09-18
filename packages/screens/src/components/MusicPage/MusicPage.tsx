@@ -12,6 +12,7 @@ import { AlbumView } from './components/AlbumView/AlbumView';
 import { ArtistView } from './components/ArtistView/ArtistView';
 import { DevicesPanel } from './components/DevicesPanel/DevicesPanel';
 import { LikedView } from './components/LikedView/LikedView';
+import { ListeningPartyPanel } from './components/ListeningPartyPanel/ListeningPartyPanel';
 import { LyricsView } from './components/LyricsView/LyricsView';
 import { MusicHome } from './components/MusicHome/MusicHome';
 import { MusicLibrary } from './components/MusicLibrary/MusicLibrary';
@@ -20,7 +21,11 @@ import { PlaylistView } from './components/PlaylistView/PlaylistView';
 import { QueuePanel } from './components/QueuePanel/QueuePanel';
 import type { MusicView } from '@ValenceScreens/music/musicView';
 
-const PANEL_TITLES = { queue: 'Queue', devices: 'Play on another device' } as const;
+const PANEL_TITLES = {
+  queue: 'Queue',
+  devices: 'Play on another device',
+  party: 'Listening party',
+} as const;
 
 const PANEL_WIDTH = '20.5rem';
 
@@ -150,7 +155,13 @@ const MusicPage = () => {
                       </Button>
                     </div>
                     <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
-                      {panel === 'queue' ? <QueuePanel /> : <DevicesPanel />}
+                      {panel === 'queue' ? (
+                        <QueuePanel />
+                      ) : panel === 'devices' ? (
+                        <DevicesPanel />
+                      ) : (
+                        <ListeningPartyPanel />
+                      )}
                     </div>
                   </motion.div>
                 </AnimatePresence>

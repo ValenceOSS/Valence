@@ -50,6 +50,7 @@ const aPartyAt = (positionSeconds: number): RealtimeEvent => ({
   payload: {
     party: {
       id: 'party-1',
+      kind: 'watch',
       mediaId: arrivalId,
       createdAtMs: 1,
       everyoneMaySeek: true,

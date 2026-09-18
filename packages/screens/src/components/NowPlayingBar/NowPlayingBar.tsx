@@ -10,6 +10,7 @@ import {
   RepeatIcon,
   RepeatOne01Icon,
   ShuffleIcon,
+  UserGroupIcon,
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeMute01Icon,
@@ -40,6 +41,7 @@ import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { setMusicPanel, useMusicPanel } from '@ValenceScreens/music/musicPanel';
+import { useListeningParty } from '@ValenceScreens/music/listeningParty';
 import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
@@ -88,6 +90,11 @@ const REPEAT_LABELS = {
  * front of you. Shuffle and repeat are there but switched off for a queue whose order means
  * something.
  *
+ * In somebody else's listening party the song and where it has got to are the host's, so skipping,
+ * pausing and moving through the song are handed to them — unless they have let everybody — while
+ * the volume stays with whoever is listening. A listener whose browser would not start the music
+ * on its own can still press play to join in.
+ *
  * @param player - The player to drive, which is the window's own unless a test says otherwise.
  */
 const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
@@ -97,6 +104,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
   const { place, go } = usePlace();
   const panel = useMusicPanel();
   const favourites = useFavourites(useWatchingProfile());
+  const listening = useListeningParty();
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
   const arriving = revealTransition(prefersReducedMotion, 'heavy');
@@ -108,6 +116,10 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
   }
 
   const { queue } = state;
+  const isFollowing = listening !== null && !listening.mayChoose;
+  const mayJoinIn = isFollowing && !shown.isPlaying && listening.party.isPlaying;
+  const mayPlayPause = !isFollowing || listening.mayPlayPause || mayJoinIn;
+  const maySeek = !isFollowing || listening.maySeek;
   const isOrdered = queue?.isOrdered === true;
   const repeat = queue?.repeat ?? 'off';
   const isLiked = favourites.isKept(shown.trackId);
@@ -231,7 +243,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   glyph={ShuffleIcon}
                   gesture="tumble"
                   isLit={queue?.isShuffled === true}
-                  isDisabled={isOrdered || shown.remote !== null}
+                  isDisabled={isOrdered || shown.remote !== null || isFollowing}
                   className="hidden md:inline-flex"
                   onClick={() => {
                     player.toggleShuffle();
@@ -243,6 +255,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   glyph={PreviousIcon}
                   iconSize={20}
                   isSolid
+                  isDisabled={isFollowing}
                   onClick={() => {
                     player.previous();
                   }}
@@ -254,7 +267,17 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   isIconOnly
                   label={shown.isPlaying ? 'Pause' : 'Play'}
                   className="relative size-10"
+                  disabled={!mayPlayPause}
                   onClick={() => {
+                    if (isFollowing && !mayJoinIn) {
+                      listening.send({
+                        kind: shown.isPlaying ? 'pause' : 'play',
+                        atSeconds: shown.positionSeconds,
+                      });
+
+                      return;
+                    }
+
                     if (shown.isPlaying) {
                       player.pause();
                     } else {
@@ -292,6 +315,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   glyph={NextIcon}
                   iconSize={20}
                   isSolid
+                  isDisabled={isFollowing}
                   onClick={() => {
                     player.next();
                   }}
@@ -302,7 +326,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   glyph={repeat === 'one' ? RepeatOne01Icon : RepeatIcon}
                   gesture="spin"
                   isLit={repeat !== 'off'}
-                  isDisabled={isOrdered || shown.remote !== null}
+                  isDisabled={isOrdered || shown.remote !== null || isFollowing}
                   className="hidden md:inline-flex"
                   onClick={() => {
                     player.cycleRepeat();
@@ -321,8 +345,15 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   max={Math.max(shown.durationSeconds, 1)}
                   step={1}
                   valueLabel={(value) => formatDuration(value)}
+                  isDisabled={!maySeek}
                   className="min-w-0 flex-1"
                   onValueChange={(value) => {
+                    if (isFollowing) {
+                      listening.send({ kind: 'seek', atSeconds: value });
+
+                      return;
+                    }
+
                     player.seek(value);
                   }}
                 />
@@ -353,6 +384,15 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 isLit={panel === 'queue'}
                 onClick={() => {
                   togglePanel('queue');
+                }}
+              />
+
+              <BarButton
+                label="Listening party"
+                glyph={UserGroupIcon}
+                isLit={panel === 'party' || listening !== null}
+                onClick={() => {
+                  togglePanel('party');
                 }}
               />
 
@@ -422,6 +462,23 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
           </div>
 
           <AnimatePresence initial={false}>
+            {listening === null ? null : (
+              <motion.div
+                key="party"
+                initial={{ height: 0 }}
+                animate={{ height: 'auto' }}
+                exit={{ height: 0 }}
+                transition={isStill ? stillTransition : spring}
+                className="overflow-hidden"
+              >
+                <div className="flex items-center justify-end gap-2 bg-text px-4 py-1 text-xs font-semibold text-surface">
+                  <Icon of={UserGroupIcon} size={14} />
+                  {isFollowing
+                    ? `Listening along with ${listening.hostName}`
+                    : `Hosting a listening party · ${listening.party.members.length.toString()} here`}
+                </div>
+              </motion.div>
+            )}
             {shown.remote === null ? null : (
               <motion.div
                 key="remote"

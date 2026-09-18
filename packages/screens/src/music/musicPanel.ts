@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-type MusicPanel = 'queue' | 'devices' | null;
+type MusicPanel = 'queue' | 'devices' | 'party' | null;
 
 let open: MusicPanel = null;
 

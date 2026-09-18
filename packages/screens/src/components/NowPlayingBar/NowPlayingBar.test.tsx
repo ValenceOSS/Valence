@@ -6,6 +6,8 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceScreens/testing/aTrack';
 import { setMusicPanel } from '@ValenceScreens/music/musicPanel';
+import { setListeningParty } from '@ValenceScreens/music/listeningParty';
+import type { ListeningParty } from '@ValenceScreens/music/listeningParty';
 import { NowPlayingBar } from './NowPlayingBar';
 
 const favourites = vi.hoisted(() => ({ fetchFavourites: vi.fn(), setFavourite: vi.fn() }));
@@ -33,6 +35,29 @@ beforeEach(() => {
   favourites.setFavourite.mockResolvedValue(true);
   devices.fetchMusicDevices.mockResolvedValue([]);
   setMusicPanel(null);
+  setListeningParty(null);
+});
+
+const inAParty = (overrides: Partial<ListeningParty> = {}): ListeningParty => ({
+  party: {
+    id: 'p1',
+    kind: 'listen',
+    mediaId: TRACK.id,
+    createdAtMs: 0,
+    everyoneMaySeek: false,
+    everyoneMayPlayPause: false,
+    hasPassword: false,
+    isPlaying: true,
+    isHeld: false,
+    members: [],
+    timekeeperId: null,
+  },
+  hostName: 'Dan',
+  mayChoose: false,
+  mayPlayPause: false,
+  maySeek: false,
+  send: vi.fn(),
+  ...overrides,
 });
 
 describe('NowPlayingBar', () => {
@@ -156,5 +181,79 @@ describe('NowPlayingBar', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(NowPlayingBar.displayName).toBe('NowPlayingBar');
+  });
+
+  describe("in somebody else's listening party", () => {
+    it('says whose music it is and leaves the song to them', () => {
+      setListeningParty(inAParty());
+
+      renderInAnAddress(<NowPlayingBar player={playing().player} />);
+
+      expect(screen.getByText('Listening along with Dan')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Pause' })).toBeDisabled();
+      expect(screen.getByRole('slider', { name: 'Where the song is' })).toHaveAttribute(
+        'data-disabled',
+      );
+    });
+
+    it('keeps the volume with whoever is listening', async () => {
+      setListeningParty(inAParty());
+
+      const { player } = playing();
+
+      renderInAnAddress(<NowPlayingBar player={player} />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Mute' }));
+
+      expect(player.toggleMute).toHaveBeenCalled();
+    });
+
+    it('asks the party to pause where the host has let everybody', async () => {
+      const party = inAParty({ mayPlayPause: true });
+
+      setListeningParty(party);
+
+      const { player } = playing();
+
+      renderInAnAddress(<NowPlayingBar player={player} />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
+
+      expect(party.send).toHaveBeenCalledWith({ kind: 'pause', atSeconds: 65 });
+      expect(player.pause).not.toHaveBeenCalled();
+    });
+
+    it('lets a listener press play to join in when the music did not start on its own', async () => {
+      setListeningParty(inAParty());
+
+      const { player } = playing({ isPlaying: false });
+
+      renderInAnAddress(<NowPlayingBar player={player} />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Play' }));
+
+      expect(player.resume).toHaveBeenCalled();
+    });
+  });
+
+  it('says so while hosting a listening party', () => {
+    setListeningParty(inAParty({ mayChoose: true, mayPlayPause: true, maySeek: true }));
+
+    renderInAnAddress(<NowPlayingBar player={playing().player} />);
+
+    expect(screen.getByText(/Hosting a listening party/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled();
+  });
+
+  it('opens the listening party beside the music', async () => {
+    renderInAnAddress(<NowPlayingBar player={playing().player} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Listening party' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Listening party' })).toHaveClass('text-text');
+    });
   });
 });
