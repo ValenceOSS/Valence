@@ -85,6 +85,7 @@ const createMemoryAuth = (
     mediaDigestReadTo: null,
     jobsTimezone: '',
     certificationRegion: 'GB',
+    fetchesCatalogueTrailers: false,
   });
 
   const auth = createAuth({

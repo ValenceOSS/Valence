@@ -83,7 +83,12 @@ const respondWith = (bodies: Record<string, JsonValue>, status = 200) => {
 
 const provider = (
   bodies: Record<string, JsonValue>,
-  options: { key?: string | null; status?: number; onProblem?: (reason: string) => void } = {},
+  options: {
+    key?: string | null;
+    status?: number;
+    onProblem?: (reason: string) => void;
+    wantsTrailers?: boolean;
+  } = {},
 ) => {
   const { fetchImpl, calls } = respondWith(bodies, options.status ?? 200);
 
@@ -91,10 +96,23 @@ const provider = (
     calls,
     instance: createCatalogueMetadataProvider({
       readApiKey: () => Promise.resolve(options.key === undefined ? 'a-key' : options.key),
+      readWantsTrailers: () => Promise.resolve(options.wantsTrailers ?? false),
       fetchImpl,
       ...(options.onProblem === undefined ? {} : { onProblem: options.onProblem }),
     }),
   };
+};
+
+const WITH_VIDEOS = {
+  ...DETAIL,
+  videos: {
+    results: [
+      { key: 'a-clip', site: 'YouTube', type: 'Clip', official: true },
+      { key: 'a-fan-cut', site: 'YouTube', type: 'Trailer', official: false },
+      { key: 'the-trailer', site: 'YouTube', type: 'Trailer', official: true },
+      { key: 'elsewhere', site: 'Vimeo', type: 'Trailer', official: true },
+    ],
+  },
 };
 
 describe('readYear', () => {
@@ -141,6 +159,66 @@ describe('createCatalogueMetadataProvider', () => {
       rating: 7.6,
       externalId: '329',
     });
+  });
+
+  it('asks for no videos at all unless somebody turned trailers on', async () => {
+    const { instance, calls } = provider({ '/search/movie': SEARCH, '/movie/329': WITH_VIDEOS });
+
+    const found = await instance.describe(facts('/media/Arrival (2016).mkv'));
+
+    expect(calls.some((url) => url.includes('videos'))).toBe(false);
+    expect(found?.trailerKey).toBeUndefined();
+  });
+
+  it('asks for them alongside everything else it was already asking for', async () => {
+    const { instance, calls } = provider(
+      { '/search/movie': SEARCH, '/movie/329': WITH_VIDEOS },
+      { wantsTrailers: true },
+    );
+
+    await instance.describe(facts('/media/Arrival (2016).mkv'));
+
+    expect(calls.filter((url) => url.includes('/movie/329'))).toHaveLength(1);
+    expect(calls.some((url) => url.includes('videos'))).toBe(true);
+  });
+
+  it('keeps the official trailer, and only one the picture can be played from', async () => {
+    const { instance } = provider(
+      { '/search/movie': SEARCH, '/movie/329': WITH_VIDEOS },
+      { wantsTrailers: true },
+    );
+
+    const found = await instance.describe(facts('/media/Arrival (2016).mkv'));
+
+    expect(found?.trailerKey).toBe('the-trailer');
+  });
+
+  it('falls back to an unofficial one rather than to nothing', async () => {
+    const { instance } = provider(
+      {
+        '/search/movie': SEARCH,
+        '/movie/329': {
+          ...DETAIL,
+          videos: { results: [{ key: 'a-fan-cut', site: 'YouTube', type: 'Trailer' }] },
+        },
+      },
+      { wantsTrailers: true },
+    );
+
+    const found = await instance.describe(facts('/media/Arrival (2016).mkv'));
+
+    expect(found?.trailerKey).toBe('a-fan-cut');
+  });
+
+  it('remembers nothing for a title the catalogue filmed nothing about', async () => {
+    const { instance } = provider(
+      { '/search/movie': SEARCH, '/movie/329': DETAIL },
+      { wantsTrailers: true },
+    );
+
+    const found = await instance.describe(facts('/media/Arrival (2016).mkv'));
+
+    expect(found?.trailerKey).toBeUndefined();
   });
 
   it('names the cast, with their roles', async () => {

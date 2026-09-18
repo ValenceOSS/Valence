@@ -20,6 +20,7 @@ const SETTINGS: ServerSettings = {
   mediaDigestReadTo: null,
   jobsTimezone: '',
   certificationRegion: 'GB',
+  fetchesCatalogueTrailers: false,
 };
 
 const build = (seededJobTriggerKinds: string[] = []) => ({

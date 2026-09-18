@@ -238,6 +238,7 @@ const settings = createDatabaseSettingsStore({
     mediaDigestReadTo: null,
     jobsTimezone: '',
     certificationRegion: 'GB',
+    fetchesCatalogueTrailers: false,
   },
 });
 
@@ -1310,6 +1311,7 @@ const schedules = createJobScheduleService({
 
 const catalogueProvider = createCatalogueMetadataProvider({
   readApiKey: async () => (await settings.read()).catalogueApiKey,
+  readWantsTrailers: async () => (await settings.read()).fetchesCatalogueTrailers,
   onProblem: (reason) => {
     log.error('catalogue', `catalogue: ${reason}`);
   },

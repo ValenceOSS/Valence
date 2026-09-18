@@ -70,6 +70,10 @@
       "@ValenceUI/DotField.types": ["./packages/ui/src/components/DotField/DotField.types.ts"],
       "@ValenceUI/Drawer": ["./packages/ui/src/components/Drawer/Drawer.tsx"],
       "@ValenceUI/Drawer.types": ["./packages/ui/src/components/Drawer/Drawer.types.ts"],
+      "@ValenceUI/EmbeddedVideo": ["./packages/ui/src/components/EmbeddedVideo/EmbeddedVideo.tsx"],
+      "@ValenceUI/EmbeddedVideo.types": [
+        "./packages/ui/src/components/EmbeddedVideo/EmbeddedVideo.types.ts"
+      ],
       "@ValenceUI/FilePicker": ["./packages/ui/src/components/FilePicker/FilePicker.tsx"],
       "@ValenceUI/GlassPanel": ["./packages/ui/src/components/GlassPanel/GlassPanel.tsx"],
       "@ValenceUI/HoverCard": ["./packages/ui/src/components/HoverCard/HoverCard.tsx"],

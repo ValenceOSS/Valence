@@ -648,6 +648,7 @@ const mediaItem = pgTable(
     }),
     extraKind: text('extraKind'),
     versionLabel: text('versionLabel'),
+    trailerKey: text('trailerKey'),
     seriesId: text('seriesId').references(() => series.id, { onDelete: 'set null' }),
     seriesTitle: text('seriesTitle'),
     certifications: jsonb('certifications'),

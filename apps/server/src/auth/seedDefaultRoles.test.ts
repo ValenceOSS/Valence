@@ -20,6 +20,7 @@ const emptySettings = () =>
     mediaDigestReadTo: null,
     jobsTimezone: '',
     certificationRegion: 'GB',
+    fetchesCatalogueTrailers: false,
   });
 
 /**

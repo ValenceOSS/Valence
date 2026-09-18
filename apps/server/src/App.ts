@@ -1958,6 +1958,7 @@ const createApp = ({
           previewQuality: current.previewQuality,
           certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
+          fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
         },
@@ -2002,6 +2003,9 @@ const createApp = ({
       ...(patch.showsProfilesBeforeSignIn === undefined
         ? {}
         : { showsProfilesBeforeSignIn: patch.showsProfilesBeforeSignIn }),
+      ...(patch.fetchesCatalogueTrailers === undefined
+        ? {}
+        : { fetchesCatalogueTrailers: patch.fetchesCatalogueTrailers }),
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {
@@ -2027,6 +2031,7 @@ const createApp = ({
         previewQuality: updated.previewQuality,
         certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
+        fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
       },
       200,
     );

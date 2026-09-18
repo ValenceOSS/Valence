@@ -114,6 +114,7 @@ const MediaDetailSchema = MediaItemSchema.extend({
   parentId: z.string().nullish(),
   extraKind: ExtraKindSchema.nullish(),
   versionLabel: z.string().nullish(),
+  trailerKey: z.string().nullish(),
   extras: z.array(MediaSummarySchema).optional(),
   versions: z.array(MediaSummarySchema).optional(),
 });

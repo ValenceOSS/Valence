@@ -1254,6 +1254,7 @@ const createDatabaseLibraryService = ({
         parentId: row.parentId,
         extraKind: row.extraKind,
         versionLabel: row.versionLabel,
+        trailerKey: row.trailerKey,
         extras: held
           .filter((one) => one.extraKind !== null)
           .map(({ posterUrl, ...extra }) => ({
@@ -1604,7 +1605,14 @@ const createDatabaseLibraryService = ({
 
       const shape = await shapeOf(detail);
       const extras = await extrasOfShow(viewer, libraryId, detail);
-      const whole = { ...detail, extras };
+
+      const [cover] = await db
+        .select({ trailerKey: mediaItem.trailerKey })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, detail.coverMediaId))
+        .limit(1);
+
+      const whole = { ...detail, extras, trailerKey: cover?.trailerKey ?? null };
 
       return shape === null ? whole : { ...whole, shape: shape.seasons };
     },

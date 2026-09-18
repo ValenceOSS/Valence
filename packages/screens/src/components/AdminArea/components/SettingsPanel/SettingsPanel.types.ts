@@ -7,6 +7,7 @@ type SettingsPanelProps = {
   onPreviewQualitySaved: () => void;
   onCertificationRegionSaved: () => void;
   onProfileVisibilitySaved: () => void;
+  onCatalogueTrailersSaved: () => void;
 };
 
 export type { SettingsPanelProps };

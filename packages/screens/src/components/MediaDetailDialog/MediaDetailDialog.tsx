@@ -44,6 +44,8 @@ import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPrevi
 import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
 import { scrollToTopOf } from '@ValenceScreens/navigation/scrollToTopOf';
 import { RatingPanel } from '@ValenceScreens/components/RatingPanel/RatingPanel';
+import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
+import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
 import { CastGrid } from './components/CastGrid/CastGrid';
 import { EXTRA_KIND_LABELS } from '@ValenceContracts/schemas/Library';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -119,6 +121,7 @@ const MediaDetailDialog = ({
   const topRef = useRef<HTMLDivElement>(null);
   const { mark: pastTheArtwork, hasPassed: hasScrolledPast } = useHasScrolledPast();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
 
   const prepared = useQuery({ ...downloadQueries.all(), enabled: canKeepFiles() });
 
@@ -158,6 +161,8 @@ const MediaDetailDialog = ({
   const shownSiblings = media === null ? heldRef.current.siblings : siblings;
   const extras = detail?.extras ?? [];
   const trailer = extras.find((one) => one.extraKind === 'trailer') ?? null;
+  const trailerKey = trailer === null ? (detail?.trailerKey ?? null) : null;
+  const hasTrailer = trailer !== null || trailerKey !== null;
   const versions = detail?.versions ?? [];
   const chosenVersion = versions.find((one) => one.id === version) ?? null;
 
@@ -505,7 +510,7 @@ const MediaDetailDialog = ({
             </div>
           }
           actions={[
-            ...(trailer === null
+            ...(!hasTrailer
               ? []
               : [
                   {
@@ -513,6 +518,12 @@ const MediaDetailDialog = ({
                     label: 'Watch the trailer',
                     icon: <Icon of={FilmRoll01Icon} size={18} />,
                     onChoose: () => {
+                      if (trailer === null) {
+                        setIsWatchingTrailer(true);
+
+                        return;
+                      }
+
                       onPlay(trailer, 0);
                     },
                   },
@@ -604,6 +615,23 @@ const MediaDetailDialog = ({
           setIsDownloading(false);
         }}
       />
+
+      <Dialog
+        label={`${shown.title}, the trailer`}
+        isOpen={isWatchingTrailer && trailerKey !== null}
+        onClose={() => {
+          setIsWatchingTrailer(false);
+        }}
+      >
+        <DialogContent className="p-0">
+          {trailerKey === null ? null : (
+            <EmbeddedVideo
+              label={`${shown.title}, the trailer`}
+              src={catalogueTrailerUrl(trailerKey)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
