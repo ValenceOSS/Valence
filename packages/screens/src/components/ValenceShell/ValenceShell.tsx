@@ -44,6 +44,7 @@ import { useSignOut } from '@ValenceScreens/session/useSignOut';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
+import { ImmersiveMusic } from '@ValenceScreens/components/ImmersiveMusic/ImmersiveMusic';
 import { NowPlayingBar } from '@ValenceScreens/components/NowPlayingBar/NowPlayingBar';
 import { useMusicLights } from '@ValenceScreens/music/musicLights';
 import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.types';
@@ -173,7 +174,12 @@ const ValenceShell = () => {
   return (
     <AppShell
       section={place.section}
-      dock={<NowPlayingBar />}
+      dock={
+        <>
+          <ImmersiveMusic />
+          <NowPlayingBar />
+        </>
+      }
       isFitted={place.section === 'music'}
       onSectionChange={(next) => {
         go({ section: next });

@@ -81,12 +81,12 @@ describe('LyricsView', () => {
     expect(screen.queryByRole('button', { name: 'Just words' })).not.toBeInTheDocument();
   });
 
-  it('says where lyrics come from when a song has none', async () => {
+  it('says plainly when no lyrics were found', async () => {
     serve(null);
 
     renderInAnAddress(<LyricsView />);
 
-    expect(await screen.findByText('No lyrics for Track 1')).toBeInTheDocument();
+    expect(await screen.findByText('No lyrics found')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

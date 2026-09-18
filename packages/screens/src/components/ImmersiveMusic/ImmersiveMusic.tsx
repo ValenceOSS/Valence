@@ -1,0 +1,204 @@
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
+import {
+  Cancel01Icon,
+  FavouriteIcon,
+  VolumeHighIcon,
+  VolumeLowIcon,
+} from '@hugeicons/core-free-icons';
+import { Button } from '@ValenceUI/Button';
+import { Icon } from '@ValenceUI/Icon';
+import { Slider } from '@ValenceUI/Slider';
+import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
+import { lyricLineAt } from '@ValenceClient/music/lyricLineAt';
+import { useFavourites } from '@ValenceClient/library/useFavourites';
+import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
+import { LyricLines } from '@ValenceScreens/components/LyricLines/LyricLines';
+import { MusicTransport } from '@ValenceScreens/components/MusicTransport/MusicTransport';
+import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
+import { setMusicImmersive, useMusicImmersive } from '@ValenceScreens/music/musicImmersive';
+import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
+import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import type { ImmersiveMusicProps } from './ImmersiveMusic.types';
+
+const OPENING = { duration: 0.28, ease: [0.23, 1, 0.32, 1] } as const;
+
+const CLOSING = { duration: 0.18, ease: [0.23, 1, 0.32, 1] } as const;
+
+/**
+ * The song playing, filling the screen: its cover, blown up and blurred into light behind
+ * everything; the cover itself with what the song is, a like, the time and the few controls it
+ * needs beneath it and nothing else; and its words following along with every line but the one
+ * being sung drifting out of focus.
+ *
+ * It opens from the cover on the player bar, and the bar steps aside while it is open — the view
+ * carries its own quiet controls, so nothing but the music is on the screen. Escape, the close button or the cover again
+ * put it away. It closes itself when nothing is playing.
+ *
+ * @param player - The player to show, which is the window's own unless a test says otherwise.
+ */
+const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
+  const isOpen = useMusicImmersive();
+  const { state, player } = useMusicPlayer(given ?? theMusicPlayer(), { followsPosition: true });
+  const shown = useWhatIsPlaying(state);
+  const favourites = useFavourites(useWatchingProfile());
+  const prefersReducedMotion = useReducedMotionConfig();
+  const trackId = shown?.trackId ?? null;
+  const asked = useQuery({
+    ...musicQueries.lyrics(trackId ?? ''),
+    enabled: isOpen && trackId !== null,
+  });
+  const lyrics = asked.data ?? null;
+  const at =
+    lyrics === null || !lyrics.isSynced
+      ? -1
+      : lyricLineAt(lyrics.lines, (shown?.positionSeconds ?? 0) * 1000);
+  const cover = shown !== null && shown.hasArtwork ? albumArtworkUrl(shown.albumId) : null;
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMusicImmersive(false);
+      }
+    };
+
+    window.addEventListener('keydown', onKey);
+
+    return () => {
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (shown === null && isOpen) {
+      setMusicImmersive(false);
+    }
+  }, [shown, isOpen]);
+
+  const isStill = prefersReducedMotion === true;
+  const isLiked = shown !== null && favourites.isKept(shown.trackId);
+
+  return (
+    <AnimatePresence>
+      {!isOpen || shown === null ? null : (
+        <motion.section
+          key="immersive"
+          aria-label={`${shown.title}, immersive`}
+          initial={isStill ? { opacity: 0 } : { opacity: 0, scale: 1.02 }}
+          animate={isStill ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+          exit={
+            isStill
+              ? { opacity: 0, transition: CLOSING }
+              : { opacity: 0, scale: 1.02, transition: CLOSING }
+          }
+          transition={OPENING}
+          className="fixed inset-0 z-[35] overflow-hidden bg-shade text-on-scrim"
+        >
+          {cover === null ? null : (
+            <img
+              src={cover}
+              alt=""
+              aria-hidden
+              draggable={false}
+              className="pointer-events-none absolute inset-0 size-full scale-125 object-cover opacity-70 blur-3xl saturate-150"
+            />
+          )}
+          <span aria-hidden className="absolute inset-0 bg-shade/45" />
+
+          <Button
+            variant="overlay"
+            isIconOnly
+            label="Close"
+            className="absolute top-[calc(1rem+env(safe-area-inset-top,0px))] right-4 z-10"
+            onClick={() => {
+              setMusicImmersive(false);
+            }}
+          >
+            <Icon of={Cancel01Icon} size={20} />
+          </Button>
+
+          <div className="relative grid h-full grid-cols-1 gap-10 px-6 pt-16 pb-32 sm:px-12 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:gap-16 lg:px-20">
+            <div className="mx-auto flex w-full max-w-md flex-col justify-center gap-6">
+              <MusicArtwork
+                src={cover}
+                label={shown.title}
+                className="w-full shadow-[var(--shadow-overlay)]"
+              />
+
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex min-w-0 flex-col">
+                  <h2 className="truncate text-lg font-semibold tracking-[-0.01em]">
+                    {shown.title}
+                  </h2>
+                  <p className="truncate text-on-scrim/65">
+                    {[shown.artists.map((artist) => artist.name).join(', '), shown.albumTitle]
+                      .filter((part) => part !== null && part !== '')
+                      .join(' — ')}
+                  </p>
+                </div>
+
+                <BarButton
+                  label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
+                  glyph={FavouriteIcon}
+                  gesture="fill"
+                  isLit={isLiked}
+                  onClick={() => {
+                    favourites.toggle(shown.trackId);
+                  }}
+                />
+              </div>
+
+              <MusicTransport state={state} shown={shown} player={player} look="immersive" />
+
+              <div className="flex items-center gap-3 text-on-scrim/60">
+                <Icon of={VolumeLowIcon} size={16} />
+                <Slider
+                  label="Volume"
+                  tone="overlay"
+                  value={Math.round((state.isMuted ? 0 : shown.volume) * 100)}
+                  max={100}
+                  step={1}
+                  valueLabel={(value) => `${value.toString()}%`}
+                  className="min-w-0 flex-1"
+                  onValueChange={(value) => {
+                    player.setVolume(value / 100);
+                  }}
+                />
+                <Icon of={VolumeHighIcon} size={16} />
+              </div>
+            </div>
+
+            <div className="min-h-0 overflow-y-auto overscroll-contain py-[30vh] [mask-image:linear-gradient(to_bottom,transparent,black_18%,black_82%,transparent)]">
+              {lyrics === null || lyrics.lines.length === 0 ? (
+                <p className="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-on-scrim/60">
+                  {asked.isPending ? '' : 'No lyrics found'}
+                </p>
+              ) : (
+                <LyricLines
+                  lyrics={lyrics}
+                  at={at}
+                  look="immersive"
+                  onSeek={(seconds) => {
+                    player.seek(seconds);
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        </motion.section>
+      )}
+    </AnimatePresence>
+  );
+};
+
+ImmersiveMusic.displayName = 'ImmersiveMusic';
+
+export { ImmersiveMusic };

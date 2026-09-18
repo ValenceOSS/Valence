@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { startQueue } from '@ValenceClient/music/playQueue';
@@ -6,6 +6,7 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceScreens/testing/aTrack';
 import { setMusicPanel } from '@ValenceScreens/music/musicPanel';
+import { setMusicImmersive } from '@ValenceScreens/music/musicImmersive';
 import { setListeningParty } from '@ValenceScreens/music/listeningParty';
 import type { ListeningParty } from '@ValenceScreens/music/listeningParty';
 import { NowPlayingBar } from './NowPlayingBar';
@@ -255,5 +256,21 @@ describe('NowPlayingBar', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Listening party' })).toHaveClass('text-text');
     });
+  });
+
+  it('opens the immersive view from the cover, and steps aside while it is open', async () => {
+    renderInAnAddress(<NowPlayingBar player={playing().player} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Open the immersive view' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: 'Now playing' })).not.toBeInTheDocument();
+    });
+
+    act(() => {
+      setMusicImmersive(false);
+    });
+
+    expect(await screen.findByRole('region', { name: 'Now playing' })).toBeInTheDocument();
   });
 });

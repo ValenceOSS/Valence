@@ -62,10 +62,15 @@ const useListenAlong = (
   );
   const settlingRef = useRef(false);
   const referenceRef = useRef(referenceSeconds);
+  const clockRef = useRef(now);
 
   useEffect(() => {
     referenceRef.current = referenceSeconds;
   }, [referenceSeconds]);
+
+  useEffect(() => {
+    clockRef.current = now;
+  }, [now]);
 
   useEffect(() => {
     setListeningParty(listening);
@@ -149,44 +154,47 @@ const useListenAlong = (
   }, [isChoosing, partySong, isPartyPlaying, state.isPlaying, player, send]);
 
   useEffect(() => {
+    heardRef.current = null;
+
     if (!isChoosing || partyId === null) {
-      heardRef.current = null;
-
       return;
     }
 
-    const heard = heardRef.current;
-    const atMs = now();
+    const first = player.read();
 
-    heardRef.current = { positionSeconds: state.positionSeconds, atMs, trackId: current };
+    heardRef.current = {
+      positionSeconds: first.positionSeconds,
+      atMs: clockRef.current(),
+      trackId: first.current?.id ?? null,
+    };
 
-    if (heard === null || heard.trackId !== current || state.isLoading) {
-      return;
-    }
+    return player.subscribe(() => {
+      const now = player.read();
+      const heard = heardRef.current;
+      const atMs = clockRef.current();
+      const trackId = now.current?.id ?? null;
 
-    const expected = heard.positionSeconds + (state.isPlaying ? (atMs - heard.atMs) / 1000 : 0);
+      heardRef.current = { positionSeconds: now.positionSeconds, atMs, trackId };
 
-    if (Math.abs(state.positionSeconds - expected) <= JUMP_SECONDS) {
-      return;
-    }
+      if (heard === null || heard.trackId !== trackId || now.isLoading) {
+        return;
+      }
 
-    if (settlingRef.current) {
-      settlingRef.current = false;
+      const expected = heard.positionSeconds + (now.isPlaying ? (atMs - heard.atMs) / 1000 : 0);
 
-      return;
-    }
+      if (Math.abs(now.positionSeconds - expected) <= JUMP_SECONDS) {
+        return;
+      }
 
-    send({ kind: 'seek', atSeconds: state.positionSeconds });
-  }, [
-    state.positionSeconds,
-    state.isPlaying,
-    state.isLoading,
-    current,
-    isChoosing,
-    partyId,
-    now,
-    send,
-  ]);
+      if (settlingRef.current) {
+        settlingRef.current = false;
+
+        return;
+      }
+
+      send({ kind: 'seek', atSeconds: now.positionSeconds });
+    });
+  }, [isChoosing, partyId, player, send]);
 
   useEffect(() => {
     if (isChoosing || partySong === null) {
