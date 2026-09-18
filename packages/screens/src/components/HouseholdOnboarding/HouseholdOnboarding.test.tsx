@@ -143,7 +143,9 @@ describe('setting a household up', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: /Start watching/ }));
 
-    expect(onDone).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onDone).toHaveBeenCalled();
+    });
   });
 
   it('says why a passkey cannot be offered rather than leaving the step empty', async () => {

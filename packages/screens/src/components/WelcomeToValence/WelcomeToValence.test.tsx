@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { WelcomeToValence } from './WelcomeToValence';
@@ -32,7 +32,23 @@ describe('WelcomeToValence', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Start watching/ }));
 
-    expect(onFinished).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onFinished).toHaveBeenCalled();
+    });
+  });
+
+  it('clears the words before handing over, rather than cutting on the press', async () => {
+    const onFinished = vi.fn();
+
+    render(<WelcomeToValence name="Valence" household="The Morgans" onFinished={onFinished} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /Start watching/ }));
+
+    expect(onFinished).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(onFinished).toHaveBeenCalled();
+    });
   });
 
   it('is announced, since it replaces the screen somebody was working on', () => {
