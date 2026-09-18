@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
 import { toast } from 'sonner';
 import { MotionGlobalConfig } from 'motion/react';
@@ -112,6 +112,24 @@ const answerPointerCapture = (): void => {
 answerPointerCapture();
 
 MotionGlobalConfig.skipAnimations = true;
+
+/**
+ * Gives a screen longer to arrive than a second.
+ *
+ * `findBy` waits on its own clock rather than the test's, and that clock defaults to one second —
+ * so a screen is failed for not having rendered within a second even where the test itself is
+ * allowed twenty. Everything these tests wait for is answered from a mock that resolves
+ * immediately, so nothing is ever genuinely pending; what runs out is the time to do the rendering,
+ * on a machine running four shards at once.
+ *
+ * It buys tolerance and not silence: an element that never arrives still fails, a few seconds later
+ * than it used to.
+ */
+const waitLongEnoughForAScreen = (): void => {
+  configure({ asyncUtilTimeout: 5_000 });
+};
+
+waitLongEnoughForAScreen();
 
 if (!('PointerEvent' in globalThis)) {
   Object.defineProperty(globalThis, 'PointerEvent', {
