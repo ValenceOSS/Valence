@@ -1,5 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { StarIcon } from '@hugeicons/core-free-icons';
+import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { ReactNode } from 'react';
 import type { MediaFactsProps } from './MediaFacts.types';
@@ -12,6 +13,7 @@ import type { MediaFactsProps } from './MediaFacts.types';
  * @param media - The item being described.
  * @param hasRuntime - Whether to say how long it is.
  * @param hasEpisode - Whether to say which episode it is.
+ * @param hasSize - Whether to say how much room the file takes, where it is known.
  * @param className - Extra classes for the caller's own layout.
  */
 const MediaFacts = ({
@@ -19,6 +21,7 @@ const MediaFacts = ({
   className,
   hasRuntime = false,
   hasEpisode = true,
+  hasSize = false,
 }: MediaFactsProps) => {
   const rating = media.rating ?? null;
 
@@ -50,6 +53,14 @@ const MediaFacts = ({
           {
             key: 'runtime',
             said: <span className="tabular-nums">{formatDuration(media.durationSeconds)}</span>,
+          },
+        ]
+      : []),
+    ...(hasSize && typeof media.sizeBytes === 'number' && media.sizeBytes > 0
+      ? [
+          {
+            key: 'size',
+            said: <span className="tabular-nums">{formatBytes(media.sizeBytes)}</span>,
           },
         ]
       : []),

@@ -304,8 +304,9 @@ const MediaDetailDialog = ({
                 transition={revealTransition(prefersReducedMotion)}
               >
                 <MediaFacts
-                  media={shown}
+                  media={detail === null ? shown : { ...shown, sizeBytes: detail.sizeBytes }}
                   hasRuntime
+                  hasSize
                   className="flex flex-wrap items-center gap-2 text-sm font-medium tracking-[0.14em] text-on-scrim/75"
                 />
               </motion.div>
@@ -451,6 +452,7 @@ const MediaDetailDialog = ({
                         <MediaFacts
                           media={sibling}
                           hasRuntime
+                          hasSize
                           className="flex flex-wrap items-center gap-2"
                         />
                       }

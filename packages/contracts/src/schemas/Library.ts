@@ -83,6 +83,7 @@ const MediaSummarySchema = z.object({
   episodeNumber: z.number().int().nullish(),
   genres: z.array(z.string()).nullish(),
   externalId: z.string().nullish(),
+  sizeBytes: z.number().nonnegative().nullish(),
 });
 
 const CastMemberSchema = z.object({

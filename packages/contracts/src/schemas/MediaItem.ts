@@ -110,6 +110,7 @@ const MediaItemSchema = z.object({
   width: z.number().int().positive(),
   height: z.number().int().positive(),
   bitrateKbps: z.number().int().positive(),
+  sizeBytes: z.number().nonnegative().nullish(),
   videoLevel: z
     .number()
     .int()

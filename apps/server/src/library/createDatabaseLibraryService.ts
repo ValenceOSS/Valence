@@ -1461,6 +1461,7 @@ const createDatabaseLibraryService = ({
           extraKind: mediaItem.extraKind,
           versionLabel: mediaItem.versionLabel,
           parentId: mediaItem.parentId,
+          sizeBytes: mediaItem.sizeBytes,
         })
         .from(mediaItem)
         .where(eq(mediaItem.parentId, id))
@@ -1512,6 +1513,7 @@ const createDatabaseLibraryService = ({
         width: row.width,
         height: row.height,
         bitrateKbps: row.bitrateKbps ?? 1,
+        sizeBytes: row.sizeBytes,
         audioStreams: row.audioStreams,
         subtitleStreams: row.subtitleStreams,
         addedAt: row.addedAt.toISOString(),
