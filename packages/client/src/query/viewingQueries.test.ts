@@ -14,7 +14,7 @@ vi.mock('@ValenceClient/library/fetchRatings', () => ({ fetchRatings, fetchHouse
 vi.mock('@ValenceClient/history/fetchHistory', () => ({ fetchHistory, A_PAGE: 2 }));
 
 const aCache = (): QueryClient =>
-  new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
 
 const aViewing = (id: string) => ({ id });
 

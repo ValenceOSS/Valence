@@ -11,7 +11,7 @@ vi.mock('@ValenceClient/notifications/fetchNotifications', () => ({
 }));
 
 const aCache = (): QueryClient =>
-  new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
 
 beforeEach(() => {
   vi.clearAllMocks();
