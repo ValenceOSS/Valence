@@ -36,4 +36,10 @@ describe('musicView', () => {
     expect(readMusicView('podcast:1')).toEqual({ kind: 'home' });
     expect(readMusicView('album:')).toEqual({ kind: 'home' });
   });
+
+  it('reads and writes the pages of the library', () => {
+    for (const kind of ['albums', 'artists', 'playlists'] as const) {
+      expect(readMusicView(writeMusicView({ kind }))).toEqual({ kind });
+    }
+  });
 });

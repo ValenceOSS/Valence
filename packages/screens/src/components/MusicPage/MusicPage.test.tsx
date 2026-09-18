@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -32,14 +32,27 @@ describe('MusicPage', () => {
 
     expect(await screen.findByText('No music yet')).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Your library' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Music pages' })).toBeInTheDocument();
   });
 
-  it('opens a page from the library', async () => {
+  it('opens a page from the bar across the top', async () => {
     renderInAnAddress(<MusicPage />);
 
-    await userEvent.click(await screen.findByRole('button', { name: /Liked Songs/ }));
+    const pages = await screen.findByRole('navigation', { name: 'Music pages' });
+
+    await userEvent.click(within(pages).getByRole('button', { name: 'Liked' }));
 
     expect(await screen.findByRole('heading', { name: 'Liked Songs' })).toBeInTheDocument();
+  });
+
+  it('opens every album as a page of its own', async () => {
+    renderInAnAddress(<MusicPage />);
+
+    const pages = await screen.findByRole('navigation', { name: 'Music pages' });
+
+    await userEvent.click(within(pages).getByRole('button', { name: 'Albums' }));
+
+    expect(await screen.findByText('No albums yet')).toBeInTheDocument();
   });
 
   it('shows the queue beside the page when asked, and closes it', async () => {

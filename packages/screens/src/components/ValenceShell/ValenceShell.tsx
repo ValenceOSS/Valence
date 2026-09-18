@@ -45,6 +45,7 @@ import { useShell } from '@ValenceClient/shell/useShell';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import { NowPlayingBar } from '@ValenceScreens/components/NowPlayingBar/NowPlayingBar';
+import { useMusicLights } from '@ValenceScreens/music/musicLights';
 import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.types';
 import type { Inbox } from '@ValenceClient/notifications/fetchNotifications';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -59,6 +60,7 @@ const NOTHING_WAITING = { notifications: [], unread: 0 };
 const ValenceShell = () => {
   const cache = useQueryClient();
   const { place, go } = usePlace();
+  const musicLights = useMusicLights();
   const navigate = useNavigate();
 
   const {
@@ -190,7 +192,9 @@ const ValenceShell = () => {
       onOpenSearch={() => {
         go({ isSearchOpen: true });
       }}
-      moodLights={place.section === 'home' ? moodLights : []}
+      moodLights={
+        place.section === 'home' ? moodLights : place.section === 'music' ? [...musicLights] : []
+      }
       isAdministrator={mayAdminister}
       hasMark={!isHoldingTheScreen}
       {...(libraries.data === undefined ? {} : { libraryKinds })}

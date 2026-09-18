@@ -31,7 +31,8 @@ import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader'
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
 import { PlaylistDialog } from '@ValenceScreens/components/PlaylistDialog/PlaylistDialog';
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
-import { useArtworkTint } from '@ValenceScreens/music/useArtworkTint';
+import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
+import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
@@ -66,7 +67,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
   const [isRemoving, setIsRemoving] = useState(false);
   const detail = asked.data;
   const firstCover = detail?.playlist.artworkAlbumIds[0];
-  const tint = useArtworkTint(firstCover === undefined ? null : albumArtworkUrl(firstCover));
+  useLightTheMusic(firstCover === undefined ? null : albumArtworkUrl(firstCover));
 
   const refresh = () => {
     void cache.invalidateQueries({ queryKey: musicQueries.playlistsKey });
@@ -86,7 +87,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
 
   if (detail === undefined) {
     return (
-      <div className="flex flex-col gap-4 p-8">
+      <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
         <Skeleton label="Reading the playlist" className="size-48 rounded-md" />
         <Skeleton className="h-12 w-2/3" />
       </div>
@@ -107,7 +108,6 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
       <MusicHeader
         eyebrow={playlist.isShared ? 'Shared playlist' : 'Playlist'}
         title={playlist.name}
-        tint={tint}
         artwork={
           <PlaylistCover
             name={playlist.name}
@@ -211,7 +211,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
         }
       />
 
-      <div className="flex flex-col gap-8 px-3 pb-10 sm:px-5">
+      <div className={`flex flex-col gap-8 pb-10 ${MUSIC_LANES.tracks}`}>
         {entries.length === 0 ? (
           <NothingHere
             of={PlayListIcon}

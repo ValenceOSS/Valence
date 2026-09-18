@@ -3,21 +3,26 @@ import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
-import { fadeVariants, revealItemVariants, stillTransition } from '@ValenceUI/animations/reveal';
+import { SectionBar } from '@ValenceUI/SectionBar';
+import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
 import { VALENCE_TOKENS } from '@ValenceUI/tokens';
 import { setMusicPanel, useMusicPanel } from '@ValenceScreens/music/musicPanel';
 import { writeMusicView } from '@ValenceScreens/music/musicView';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { AlbumView } from './components/AlbumView/AlbumView';
+import { AlbumsView } from './components/AlbumsView/AlbumsView';
 import { ArtistView } from './components/ArtistView/ArtistView';
+import { ArtistsView } from './components/ArtistsView/ArtistsView';
 import { DevicesPanel } from './components/DevicesPanel/DevicesPanel';
 import { LikedView } from './components/LikedView/LikedView';
 import { ListeningPartyPanel } from './components/ListeningPartyPanel/ListeningPartyPanel';
 import { LyricsView } from './components/LyricsView/LyricsView';
 import { MusicHome } from './components/MusicHome/MusicHome';
 import { MusicLibrary } from './components/MusicLibrary/MusicLibrary';
+import { MusicWash } from './components/MusicWash/MusicWash';
 import { MusicSearchView } from './components/MusicSearchView/MusicSearchView';
 import { PlaylistView } from './components/PlaylistView/PlaylistView';
+import { PlaylistsView } from './components/PlaylistsView/PlaylistsView';
 import { QueuePanel } from './components/QueuePanel/QueuePanel';
 import type { MusicView } from '@ValenceScreens/music/musicView';
 
@@ -27,7 +32,36 @@ const PANEL_TITLES = {
   party: 'Listening party',
 } as const;
 
-const PANEL_WIDTH = '20.5rem';
+const PANEL_WIDTH = '21rem';
+
+const TABS = [
+  { id: 'home', label: 'Listen now' },
+  { id: 'search', label: 'Search' },
+  { id: 'albums', label: 'Albums' },
+  { id: 'artists', label: 'Artists' },
+  { id: 'playlists', label: 'Playlists' },
+  { id: 'liked', label: 'Liked' },
+] as const;
+
+/**
+ * The page a tab in the bar across the top of the section opens.
+ *
+ * @param id - The tab.
+ * @returns The page, or nothing for a tab that is not one.
+ */
+const viewForTab = (id: string): MusicView | null => {
+  if (
+    id === 'home' ||
+    id === 'albums' ||
+    id === 'artists' ||
+    id === 'playlists' ||
+    id === 'liked'
+  ) {
+    return { kind: id };
+  }
+
+  return id === 'search' ? { kind: 'search', query: '' } : null;
+};
 
 const OPENING = { duration: VALENCE_TOKENS.duration.slow, ease: VALENCE_TOKENS.ease.soft };
 
@@ -55,6 +89,18 @@ const MusicViewShown = ({ view }: { view: MusicView }) => {
     return <LikedView />;
   }
 
+  if (view.kind === 'albums') {
+    return <AlbumsView />;
+  }
+
+  if (view.kind === 'artists') {
+    return <ArtistsView />;
+  }
+
+  if (view.kind === 'playlists') {
+    return <PlaylistsView />;
+  }
+
   if (view.kind === 'search') {
     return <MusicSearchView query={view.query} />;
   }
@@ -65,19 +111,18 @@ const MusicViewShown = ({ view }: { view: MusicView }) => {
 MusicViewShown.displayName = 'MusicViewShown';
 
 /**
- * The music section: the library down one side, the page being looked at in the middle, and the
- * queue or the devices down the other side when the player bar asks for them.
+ * The music section: the library down the left, the page being looked at in the middle, and the
+ * queue, the devices or the listening party down the right when the player bar asks for them.
  *
- * Three columns that each scroll on their own, so the library stays where it was while an album
- * scrolls, and the player bar along the bottom — which lives in the shell, so music carries on
- * leaving this page — is never covered. On a narrow screen the side columns give way to the page.
- *
- * The queue and the devices open by widening from nothing, so the page beside them eases over to
+ * Three cards that each scroll on their own, so the library stays where it was while an album
+ * scrolls. The middle one carries a bar of the section's pages across its top and glows in the
+ * colours of whatever it shows. The right-hand card widens from nothing so the page eases over to
  * make room rather than jumping, and the library folds away the same way where there is not room
- * for all three. Each page of the section rises in as it is opened.
+ * for all three. The player bar along the bottom lives in the shell, so music carries on as
+ * somebody leaves.
  */
 const MusicPage = () => {
-  const { view } = useMusicNavigation();
+  const { view, open } = useMusicNavigation();
   const panel = useMusicPanel();
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
@@ -104,16 +149,37 @@ const MusicPage = () => {
         </div>
 
         <section aria-label="Music" className="valence-card-shell flex min-h-0 min-w-0 flex-1">
-          <motion.div
-            key={writeMusicView(view) ?? 'home'}
-            variants={revealItemVariants(prefersReducedMotion)}
-            custom={0}
-            initial="hidden"
-            animate="shown"
-            className="valence-card-face min-h-0 flex-1 overflow-y-auto overscroll-contain"
-          >
-            <MusicViewShown view={view} />
-          </motion.div>
+          <div className="valence-card-face relative min-h-0 flex-1 overflow-y-auto overscroll-contain [--music-lane:1.25rem] sm:[--music-lane:2rem]">
+            <MusicWash />
+
+            <div className="relative flex flex-col gap-2 pt-4">
+              <div className="px-[var(--music-lane)]">
+                <SectionBar
+                  label="Music pages"
+                  groups={[{ items: [...TABS] }]}
+                  value={view.kind}
+                  onValueChange={(id) => {
+                    const chosen = viewForTab(id);
+
+                    if (chosen !== null) {
+                      open(chosen);
+                    }
+                  }}
+                />
+              </div>
+
+              <motion.div
+                key={writeMusicView(view) ?? 'home'}
+                variants={fadeVariants}
+                initial="hidden"
+                animate="shown"
+                transition={stillTransition}
+                className="min-w-0"
+              >
+                <MusicViewShown view={view} />
+              </motion.div>
+            </div>
+          </div>
         </section>
 
         <AnimatePresence initial={false}>
@@ -141,7 +207,9 @@ const MusicPage = () => {
                     className="valence-card-face flex min-h-0 flex-1 flex-col"
                   >
                     <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
-                      <h2 className="text-base font-bold text-text">{PANEL_TITLES[panel]}</h2>
+                      <h2 className="text-base font-semibold tracking-tight text-text">
+                        {PANEL_TITLES[panel]}
+                      </h2>
                       <Button
                         variant="ghost"
                         size="xs"

@@ -3,6 +3,8 @@ import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { RevealItem } from '@ValenceUI/RevealItem';
+import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { PlaylistShelfProps } from './PlaylistShelf.types';
 
@@ -21,27 +23,39 @@ const describePlaylist = (playlist: PlaylistSummary): string =>
     .join(' · ');
 
 /**
- * A heading and a grid of playlists under it, each opening its page or playing straight away — or
+ * A shelf of playlists under it, each opening its page or playing straight away — or
  * nothing at all where there are none.
  *
  * @param heading - What the playlists are.
  * @param playlists - The playlists.
+ * @param layout - A rail to page through, or a grid that wraps, for a page that is only this.
+ * @param action - Anything to do with the whole shelf, beside its heading.
+ * @param leading - A tile to put before the playlists, such as somebody's liked songs.
  */
-const PlaylistShelf = ({ heading, playlists }: PlaylistShelfProps) => {
+const PlaylistShelf = ({
+  heading,
+  playlists,
+  layout = 'rail',
+  leading,
+  action,
+}: PlaylistShelfProps) => {
   const { open } = useMusicNavigation();
   const { player } = useMusicPlayer();
 
-  if (playlists.length === 0) {
+  if (playlists.length === 0 && leading === undefined) {
     return null;
   }
 
   return (
-    <section aria-label={heading} className="flex flex-col gap-3">
-      <h2 className="px-2 text-xl font-bold tracking-tight text-text">{heading}</h2>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-1">
-        {playlists.map((playlist) => (
+    <MusicShelf heading={heading} layout={layout} action={action}>
+      {leading === undefined ? null : (
+        <RevealItem index={0}>
+          <MusicTile {...leading} />
+        </RevealItem>
+      )}
+      {playlists.map((playlist, at) => (
+        <RevealItem key={playlist.id} index={at + (leading === undefined ? 0 : 1)}>
           <MusicTile
-            key={playlist.id}
             title={playlist.name}
             detail={describePlaylist(playlist)}
             artwork={
@@ -67,9 +81,9 @@ const PlaylistShelf = ({ heading, playlists }: PlaylistShelfProps) => {
               });
             }}
           />
-        ))}
-      </div>
-    </section>
+        </RevealItem>
+      ))}
+    </MusicShelf>
   );
 };
 

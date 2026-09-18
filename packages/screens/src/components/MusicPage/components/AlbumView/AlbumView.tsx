@@ -11,7 +11,8 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
-import { useArtworkTint } from '@ValenceScreens/music/useArtworkTint';
+import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
+import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import type { AlbumViewProps } from './AlbumView.types';
@@ -36,7 +37,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
   const { player } = useMusicPlayer();
   const detail = asked.data;
   const cover = detail?.album.hasArtwork === true ? albumArtworkUrl(albumId) : null;
-  const tint = useArtworkTint(cover);
+  useLightTheMusic(cover);
 
   if (asked.isError) {
     return (
@@ -52,7 +53,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
 
   if (detail === undefined) {
     return (
-      <div className="flex flex-col gap-4 p-8">
+      <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
         <Skeleton label="Reading the album" className="size-48 rounded-md" />
         <Skeleton className="h-12 w-2/3" />
       </div>
@@ -67,8 +68,14 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
       <MusicHeader
         eyebrow={album.isCompilation ? 'Compilation' : 'Album'}
         title={album.title}
-        tint={tint}
-        artwork={<MusicArtwork src={cover} label={album.title} className="w-full" />}
+        artwork={
+          <MusicArtwork
+            src={cover}
+            label={album.title}
+            travelsAs={`album-${album.id}`}
+            className="w-full"
+          />
+        }
         details={
           <>
             <Button
@@ -121,7 +128,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
         }
       />
 
-      <div className="px-3 pb-8 sm:px-5">
+      <div className={`pb-8 ${MUSIC_LANES.tracks}`}>
         {tracks.length === 0 ? (
           <NothingHere of={Album02Icon} title="Nothing on this album you can hear" />
         ) : (

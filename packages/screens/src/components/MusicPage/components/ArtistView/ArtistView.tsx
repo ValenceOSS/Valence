@@ -16,7 +16,8 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
 import { AlbumShelf } from '@ValenceScreens/components/AlbumShelf/AlbumShelf';
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
-import { useArtworkTint } from '@ValenceScreens/music/useArtworkTint';
+import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
+import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import type { ArtistViewProps } from './ArtistView.types';
 
@@ -41,7 +42,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
         : detail.artist.imageAlbumId === null
           ? null
           : albumArtworkUrl(detail.artist.imageAlbumId);
-  const tint = useArtworkTint(picture);
+  useLightTheMusic(picture);
 
   if (asked.isError) {
     return (
@@ -57,7 +58,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
 
   if (detail === undefined) {
     return (
-      <div className="flex flex-col gap-4 p-8">
+      <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
         <Skeleton label="Reading the artist" className="size-48 rounded-full" />
         <Skeleton className="h-12 w-1/2" />
       </div>
@@ -73,9 +74,14 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
       <MusicHeader
         eyebrow="Artist"
         title={artist.name}
-        tint={tint}
         artwork={
-          <MusicArtwork src={picture} label={artist.name} shape="round" className="w-full" />
+          <MusicArtwork
+            src={picture}
+            label={artist.name}
+            shape="round"
+            travelsAs={`artist-${artist.id}`}
+            className="w-full"
+          />
         }
         details={
           <span>
@@ -122,12 +128,12 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
         }
       />
 
-      <div className="flex flex-col gap-10 px-3 pb-10 sm:px-5">
+      <div className="flex flex-col gap-12 pb-10">
         {popular.length === 0 ? (
           <NothingHere of={User03Icon} title="Nothing of theirs you can hear" />
         ) : (
-          <section aria-label="Songs" className="flex flex-col gap-3">
-            <h2 className="px-2 text-xl font-bold tracking-tight text-text">Songs</h2>
+          <section aria-label="Songs" className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}>
+            <h2 className="px-3 text-lg font-semibold tracking-tight text-text">Songs</h2>
             <TrackList
               label={`Songs by ${artist.name}`}
               tracks={popular}

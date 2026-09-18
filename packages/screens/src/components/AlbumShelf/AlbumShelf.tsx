@@ -3,6 +3,8 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { RevealItem } from '@ValenceUI/RevealItem';
+import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { AlbumShelfProps } from './AlbumShelf.types';
 
@@ -16,14 +18,22 @@ const byAndWhen = (album: MusicAlbum): string =>
   [album.year?.toString(), album.artist.name].filter((part) => part !== undefined).join(' · ');
 
 /**
- * A heading and a grid of albums under it, each opening its page or playing straight away — or
+ * A shelf of albums under it, each opening its page or playing straight away — or
  * nothing at all where there are no albums, so a page never shows an empty heading.
  *
  * @param heading - What the albums are.
  * @param albums - The albums.
  * @param detailOf - The line under each album's name.
+ * @param layout - A rail to page through, or a grid that wraps, for a page that is only this.
+ * @param action - Anything to do with the whole shelf, beside its heading.
  */
-const AlbumShelf = ({ heading, albums, detailOf = byAndWhen }: AlbumShelfProps) => {
+const AlbumShelf = ({
+  heading,
+  albums,
+  detailOf = byAndWhen,
+  layout = 'rail',
+  action,
+}: AlbumShelfProps) => {
   const { open } = useMusicNavigation();
   const { player } = useMusicPlayer();
 
@@ -32,18 +42,17 @@ const AlbumShelf = ({ heading, albums, detailOf = byAndWhen }: AlbumShelfProps) 
   }
 
   return (
-    <section aria-label={heading} className="flex flex-col gap-3">
-      <h2 className="px-2 text-xl font-bold tracking-tight text-text">{heading}</h2>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-1">
-        {albums.map((album) => (
+    <MusicShelf heading={heading} layout={layout} action={action}>
+      {albums.map((album, at) => (
+        <RevealItem key={album.id} index={at}>
           <MusicTile
-            key={album.id}
             title={album.title}
             detail={detailOf(album)}
             artwork={
               <MusicArtwork
                 src={album.hasArtwork ? albumArtworkUrl(album.id) : null}
                 label={album.title}
+                travelsAs={`album-${album.id}`}
                 className="w-full"
               />
             }
@@ -58,9 +67,9 @@ const AlbumShelf = ({ heading, albums, detailOf = byAndWhen }: AlbumShelfProps) 
               });
             }}
           />
-        ))}
-      </div>
-    </section>
+        </RevealItem>
+      ))}
+    </MusicShelf>
   );
 };
 

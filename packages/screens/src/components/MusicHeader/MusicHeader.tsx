@@ -1,51 +1,76 @@
+import { motion, useReducedMotionConfig } from 'motion/react';
+import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
 import type { MusicHeaderProps } from './MusicHeader.types';
 
 /**
- * The top of an album's, an artist's or a playlist's page: its picture, what kind of thing it is,
- * its name set large, a line about it, and the buttons that play it — all on a wash of the colour
- * of its picture, fading into the page, so each record's page feels like that record.
+ * The top of an album, an artist or a playlist: its picture large, what it is and what it is
+ * called, a line of details, and the buttons that play it.
  *
- * @param eyebrow - What kind of thing it is.
- * @param title - Its name.
+ * There is no panel behind it. The room itself is lit in the colours of the picture, the way the
+ * home page is lit by its film, so the header is type and artwork standing on the page rather than
+ * a coloured box laid across the top of it. The words arrive one after another beside the picture,
+ * which has usually just travelled up from the tile that opened it.
+ *
+ * @param eyebrow - What kind of thing this is.
+ * @param title - What it is called.
  * @param artwork - Its picture.
- * @param tint - The colour to wash the top of the page in, or nothing for the page's own.
- * @param details - A line about it.
- * @param actions - The buttons that play it and do things with it.
+ * @param details - The line beneath the title.
+ * @param actions - The buttons that play it.
  */
-const MusicHeader = ({ eyebrow, title, artwork, tint, details, actions }: MusicHeaderProps) => (
-  <header
-    className="relative flex flex-col gap-5 px-5 pt-8 pb-5 transition-[background] duration-700 sm:px-8"
-    style={
-      tint === null
-        ? undefined
-        : {
-            backgroundImage: `linear-gradient(180deg, color-mix(in oklab, ${tint} 72%, transparent) 0%, color-mix(in oklab, ${tint} 28%, transparent) 62%, transparent 100%)`,
-          }
-    }
-  >
-    <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-end">
-      <div className="w-40 shrink-0 shadow-2xl sm:w-48 lg:w-56">{artwork}</div>
+const MusicHeader = ({ eyebrow, title, artwork, details, actions }: MusicHeaderProps) => {
+  const prefersReducedMotion = useReducedMotionConfig();
+  const rises = revealVariants(prefersReducedMotion);
+  const moves = revealTransition(prefersReducedMotion);
 
-      <div className="flex min-w-0 flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-text">
+  return (
+    <header className="flex flex-col gap-6 px-[var(--music-lane)] pt-6 pb-8 sm:flex-row sm:items-end sm:gap-8">
+      <div className="w-44 shrink-0 shadow-[var(--shadow-overlay)] sm:w-56 lg:w-64">{artwork}</div>
+
+      <motion.div
+        variants={staggerVariants}
+        initial="hidden"
+        animate="shown"
+        className="flex min-w-0 flex-col gap-3"
+      >
+        <motion.span
+          variants={rises}
+          transition={moves}
+          className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted"
+        >
           {eyebrow}
-        </span>
-        <h1 className="break-words text-[clamp(2rem,5.5vw,4.75rem)] font-bold leading-[0.95] tracking-[-0.04em] text-text">
-          {title}
-        </h1>
-        {details === undefined ? null : (
-          <div className="flex flex-wrap items-center gap-x-1.5 text-sm text-text-muted">
-            {details}
-          </div>
-        )}
-      </div>
-    </div>
+        </motion.span>
 
-    {actions === undefined ? null : (
-      <div className="flex flex-wrap items-center gap-3">{actions}</div>
-    )}
-  </header>
-);
+        <motion.h1
+          variants={rises}
+          transition={moves}
+          className="break-words text-[clamp(2.25rem,5.5vw,5rem)] font-bold leading-[0.95] tracking-[-0.035em] text-balance text-text"
+        >
+          {title}
+        </motion.h1>
+
+        {details === undefined ? null : (
+          <motion.div
+            variants={rises}
+            transition={moves}
+            className="flex flex-wrap items-center gap-x-1.5 text-sm text-text-muted"
+          >
+            {details}
+          </motion.div>
+        )}
+
+        {actions === undefined ? null : (
+          <motion.div
+            variants={rises}
+            transition={moves}
+            className="mt-3 flex flex-wrap items-center gap-3"
+          >
+            {actions}
+          </motion.div>
+        )}
+      </motion.div>
+    </header>
+  );
+};
 
 MusicHeader.displayName = 'MusicHeader';
 

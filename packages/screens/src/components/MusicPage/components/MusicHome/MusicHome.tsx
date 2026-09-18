@@ -1,63 +1,67 @@
 import { useQuery } from '@tanstack/react-query';
-import { FavouriteIcon, MusicNote01Icon, Search01Icon } from '@hugeicons/core-free-icons';
+import { MusicNote01Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
-import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AlbumShelf } from '@ValenceScreens/components/AlbumShelf/AlbumShelf';
 import { ArtistShelf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
-import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
 import { PlaylistShelf } from '@ValenceScreens/components/PlaylistShelf/PlaylistShelf';
+import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
+import { useLikedSongsTile } from '@ValenceScreens/music/useLikedSongsTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
-
-const QUICK_PICKS = 5;
+import { MusicFeature } from './components/MusicFeature/MusicFeature';
+import type { MusicView } from '@ValenceScreens/music/musicView';
 
 const RECENT = 18;
 
-const ARTISTS = 12;
+const ARTISTS = 18;
 
 /**
- * What to say at the top of the page, by the hour.
- *
- * @param hour - The hour of the day.
- * @returns The greeting.
- */
-const greetingFor = (hour: number): string => {
-  if (hour < 5) {
-    return 'Up late';
-  }
-
-  if (hour < 12) {
-    return 'Good morning';
-  }
-
-  return hour < 18 ? 'Good afternoon' : 'Good evening';
-};
-
-/**
- * The front page of the music section: the things somebody goes back to most — liked songs and
- * their own playlists — as a row of quick picks at the top, then what was added lately, the
- * artists in the library, and what the rest of the household has shared.
+ * The front of the music section: whatever is playing, large, then rails of what somebody goes back
+ * to — their playlists with their liked songs at the front, what was added lately, the artists in
+ * the library, and what the rest of the household has shared — each paging sideways the way the
+ * film rows do, and each with a way through to the whole of it.
  */
 const MusicHome = () => {
   const { open } = useMusicNavigation();
+  const liked = useLikedSongsTile();
   const albums = useQuery(musicQueries.albums('recent'));
   const artists = useQuery(musicQueries.artists());
   const playlists = useQuery(musicQueries.playlists());
   const mine = (playlists.data ?? []).filter((playlist) => playlist.isMine);
   const shared = (playlists.data ?? []).filter((playlist) => !playlist.isMine);
 
+  const seeAll = (view: MusicView, what: string) => (
+    <Button
+      variant="link"
+      size="none"
+      label={`See all ${what}`}
+      hasTooltip={false}
+      className="text-sm text-text-muted hover:text-text"
+      onClick={() => {
+        open(view);
+      }}
+    >
+      See all
+    </Button>
+  );
+
   if (albums.isPending) {
     return (
-      <div className="flex flex-col gap-6 p-8">
-        <Skeleton label="Reading your music" className="h-10 w-64" />
-        <Skeleton className="h-48 w-full" />
+      <div className={`flex flex-col gap-6 py-8 sm:flex-row sm:items-end ${MUSIC_LANES.page}`}>
+        <Skeleton label="Reading your music" className="size-60" />
+        <div className="flex flex-1 flex-col gap-3">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-14 w-2/3" />
+        </div>
       </div>
     );
   }
 
-  if ((albums.data ?? []).length === 0 && mine.length === 0 && shared.length === 0) {
+  const recent = albums.data ?? [];
+
+  if (recent.length === 0 && mine.length === 0 && shared.length === 0) {
     return (
       <NothingHere
         of={MusicNote01Icon}
@@ -69,67 +73,27 @@ const MusicHome = () => {
   }
 
   return (
-    <div className="flex flex-col gap-10 px-3 pt-8 pb-12 sm:px-5">
-      <section aria-label="Quick picks" className="flex flex-col gap-4 px-2">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-[clamp(1.75rem,3vw,2.5rem)] font-bold tracking-[-0.03em] text-text">
-            {greetingFor(new Date().getHours())}
-          </h1>
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={() => {
-              open({ kind: 'search', query: '' });
-            }}
-          >
-            <Icon of={Search01Icon} size={16} />
-            What do you want to listen to?
-          </Button>
-        </div>
+    <div className="flex flex-col gap-12 pb-12">
+      <MusicFeature newest={recent[0] ?? null} />
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          <Button
-            variant="bare"
-            size="none"
-            hasTooltip={false}
-            className="flex items-center gap-3 overflow-hidden rounded-md bg-hover pr-3 text-left font-semibold text-text transition-colors hover:bg-active"
-            onClick={() => {
-              open({ kind: 'liked' });
-            }}
-          >
-            <span className="flex size-14 shrink-0 items-center justify-center bg-text text-surface">
-              <Icon of={FavouriteIcon} size={22} isActive />
-            </span>
-            Liked Songs
-          </Button>
+      <PlaylistShelf
+        heading="Your playlists"
+        playlists={mine}
+        leading={liked}
+        action={seeAll({ kind: 'playlists' }, 'playlists')}
+      />
 
-          {mine.slice(0, QUICK_PICKS).map((playlist) => (
-            <Button
-              key={playlist.id}
-              variant="bare"
-              size="none"
-              hasTooltip={false}
-              className="flex items-center gap-3 overflow-hidden rounded-md bg-hover pr-3 text-left font-semibold text-text transition-colors hover:bg-active"
-              onClick={() => {
-                open({ kind: 'playlist', id: playlist.id });
-              }}
-            >
-              <PlaylistCover
-                name={playlist.name}
-                albumIds={playlist.artworkAlbumIds}
-                className="size-14 rounded-none"
-              />
-              <span className="truncate">{playlist.name}</span>
-            </Button>
-          ))}
-        </div>
-      </section>
+      <AlbumShelf
+        heading="Recently added"
+        albums={recent.slice(0, RECENT)}
+        action={seeAll({ kind: 'albums' }, 'albums')}
+      />
 
-      <AlbumShelf heading="Recently added" albums={(albums.data ?? []).slice(0, RECENT)} />
-
-      <ArtistShelf heading="Artists" artists={(artists.data ?? []).slice(0, ARTISTS)} />
-
-      <PlaylistShelf heading="Your playlists" playlists={mine} />
+      <ArtistShelf
+        heading="Artists"
+        artists={(artists.data ?? []).slice(0, ARTISTS)}
+        action={seeAll({ kind: 'artists' }, 'artists')}
+      />
 
       <PlaylistShelf heading="Shared with you" playlists={shared} />
     </div>
@@ -138,4 +102,4 @@ const MusicHome = () => {
 
 MusicHome.displayName = 'MusicHome';
 
-export { MusicHome, greetingFor };
+export { MusicHome };

@@ -2,6 +2,8 @@ import { albumArtworkUrl, artistImageUrl } from '@ValenceClient/music/fetchMusic
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
+import { RevealItem } from '@ValenceUI/RevealItem';
+import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { MusicArtist } from '@ValenceContracts/schemas/Music';
 import type { ArtistShelfProps } from './ArtistShelf.types';
 
@@ -21,13 +23,15 @@ const pictureOf = (artist: MusicArtist): string | null => {
 };
 
 /**
- * A heading and a grid of artists under it, drawn round the way people are — or nothing at all
+ * A shelf of artists under it, drawn round the way people are — or nothing at all
  * where there are none.
  *
  * @param heading - What the artists are.
  * @param artists - The artists.
+ * @param layout - A rail to page through, or a grid that wraps, for a page that is only this.
+ * @param action - Anything to do with the whole shelf, beside its heading.
  */
-const ArtistShelf = ({ heading, artists }: ArtistShelfProps) => {
+const ArtistShelf = ({ heading, artists, layout = 'rail', action }: ArtistShelfProps) => {
   const { open } = useMusicNavigation();
 
   if (artists.length === 0) {
@@ -35,12 +39,10 @@ const ArtistShelf = ({ heading, artists }: ArtistShelfProps) => {
   }
 
   return (
-    <section aria-label={heading} className="flex flex-col gap-3">
-      <h2 className="px-2 text-xl font-bold tracking-tight text-text">{heading}</h2>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-1">
-        {artists.map((artist) => (
+    <MusicShelf heading={heading} layout={layout} action={action}>
+      {artists.map((artist, at) => (
+        <RevealItem key={artist.id} index={at}>
           <MusicTile
-            key={artist.id}
             title={artist.name}
             detail="Artist"
             artwork={
@@ -48,6 +50,7 @@ const ArtistShelf = ({ heading, artists }: ArtistShelfProps) => {
                 src={pictureOf(artist)}
                 label={artist.name}
                 shape="round"
+                travelsAs={`artist-${artist.id}`}
                 className="w-full"
               />
             }
@@ -55,9 +58,9 @@ const ArtistShelf = ({ heading, artists }: ArtistShelfProps) => {
               open({ kind: 'artist', id: artist.id });
             }}
           />
-        ))}
-      </div>
-    </section>
+        </RevealItem>
+      ))}
+    </MusicShelf>
   );
 };
 

@@ -4,6 +4,9 @@ type MusicView =
   | { kind: 'artist'; id: string }
   | { kind: 'playlist'; id: string }
   | { kind: 'liked' }
+  | { kind: 'albums' }
+  | { kind: 'artists' }
+  | { kind: 'playlists' }
   | { kind: 'search'; query: string }
   | { kind: 'lyrics' };
 
@@ -28,7 +31,13 @@ const readMusicView = (listen: string | null): MusicView => {
   const kind = split === -1 ? listen : listen.slice(0, split);
   const rest = split === -1 ? '' : listen.slice(split + 1);
 
-  if (kind === 'liked' || kind === 'lyrics') {
+  if (
+    kind === 'liked' ||
+    kind === 'lyrics' ||
+    kind === 'albums' ||
+    kind === 'artists' ||
+    kind === 'playlists'
+  ) {
     return { kind };
   }
 
@@ -54,7 +63,13 @@ const writeMusicView = (view: MusicView): string | null => {
     return null;
   }
 
-  if (view.kind === 'liked' || view.kind === 'lyrics') {
+  if (
+    view.kind === 'liked' ||
+    view.kind === 'lyrics' ||
+    view.kind === 'albums' ||
+    view.kind === 'artists' ||
+    view.kind === 'playlists'
+  ) {
     return view.kind;
   }
 

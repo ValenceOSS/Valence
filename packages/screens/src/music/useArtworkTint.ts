@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { readLights } from '@ValenceScreens/library/readLights';
+import { useMemo } from 'react';
+import { useArtworkLights } from './useArtworkLights';
 
 /**
  * Picks the colour to wash a page in out of the lights read from a picture: the most colourful one,
@@ -34,37 +34,18 @@ const mostColourful = (colours: readonly string[]): string | null => {
 };
 
 /**
- * The colour a page about an album, an artist or a song is washed in, read from its picture — the
- * way the lyrics of a song sit on the colour of its sleeve.
+ * The most colourful light a picture casts, for tinting what sits around it.
  *
- * @param src - The picture, or nothing where there is none.
- * @returns The colour, or nothing until it has been read or where it could not be.
+ * @param src - The picture, or nothing.
+ * @returns The colour, or nothing until the picture has been read.
  */
 const useArtworkTint = (src: string | null): string | null => {
-  const [tint, setTint] = useState<{ src: string; colour: string | null } | null>(null);
+  const lights = useArtworkLights(src);
 
-  useEffect(() => {
-    if (src === null) {
-      return;
-    }
-
-    const picture = new Image();
-    let isCurrent = true;
-
-    picture.onload = () => {
-      if (isCurrent) {
-        setTint({ src, colour: mostColourful(readLights(picture).map((light) => light.color)) });
-      }
-    };
-
-    picture.src = src;
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [src]);
-
-  return src !== null && tint?.src === src ? tint.colour : null;
+  return useMemo(
+    () => (lights.length === 0 ? null : mostColourful(lights.map((light) => light.color))),
+    [lights],
+  );
 };
 
 export { mostColourful, useArtworkTint };

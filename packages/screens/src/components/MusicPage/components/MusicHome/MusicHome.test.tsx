@@ -1,9 +1,9 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
 import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests';
-import { MusicHome, greetingFor } from './MusicHome';
+import { MusicHome } from './MusicHome';
 
 vi.mock('@ValenceScreens/music/theMusicPlayer', () => ({
   theMusicPlayer: () => aFakeMusicPlayer().player,
@@ -62,10 +62,10 @@ describe('MusicHome', () => {
   it('puts liked songs and your playlists at the top', async () => {
     renderInAnAddress(<MusicHome />);
 
-    expect(await screen.findByRole('button', { name: 'Liked Songs' })).toBeInTheDocument();
-    expect(
-      (await screen.findAllByRole('button', { name: /Sunday morning/ })).length,
-    ).toBeGreaterThan(0);
+    const yours = await screen.findByRole('region', { name: 'Your playlists' });
+
+    expect(within(yours).getByRole('button', { name: /Liked Songs/ })).toBeInTheDocument();
+    expect(within(yours).getByRole('button', { name: /^Sunday morning/ })).toBeInTheDocument();
   });
 
   it('shows what was added lately', async () => {
@@ -94,11 +94,20 @@ describe('MusicHome', () => {
     expect(await screen.findByText('No music yet')).toBeInTheDocument();
   });
 
-  it('greets by the hour', () => {
-    expect(greetingFor(3)).toBe('Up late');
-    expect(greetingFor(9)).toBe('Good morning');
-    expect(greetingFor(14)).toBe('Good afternoon');
-    expect(greetingFor(21)).toBe('Good evening');
+  it('puts the newest record at the front while nothing is playing', async () => {
+    renderInAnAddress(<MusicHome />);
+
+    expect(
+      await screen.findByRole('region', { name: 'Newest in your library' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Even In Arcadia' })).toBeInTheDocument();
+  });
+
+  it('leads to the whole of each rail', async () => {
+    renderInAnAddress(<MusicHome />);
+
+    expect(await screen.findByRole('button', { name: 'See all albums' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'See all playlists' })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

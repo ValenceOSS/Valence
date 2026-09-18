@@ -4,7 +4,6 @@ type MusicHeaderProps = {
   eyebrow: string;
   title: string;
   artwork: ReactNode;
-  tint: string | null;
   details?: ReactNode;
   actions?: ReactNode;
 };

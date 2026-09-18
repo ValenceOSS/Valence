@@ -13,6 +13,8 @@ import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { writeMusicView } from '@ValenceScreens/music/musicView';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
+import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
+import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import type { MusicSearchViewProps } from './MusicSearchView.types';
 
 const SETTLE_MS = 250;
@@ -32,6 +34,8 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
   const [typed, setTyped] = useState(query);
   const asked = useQuery(musicQueries.search(query));
   const everything = useQuery({ ...musicQueries.albums('title'), enabled: query.trim() === '' });
+
+  useLightTheMusic(null);
 
   useEffect(() => {
     if (typed === query) {
@@ -53,8 +57,8 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
     found.tracks.length + found.albums.length + found.artists.length + found.playlists.length === 0;
 
   return (
-    <div className="flex flex-col gap-8 px-3 pt-6 pb-12 sm:px-5">
-      <div className="px-2">
+    <div className="flex flex-col gap-12 pt-2 pb-12">
+      <div className={MUSIC_LANES.page}>
         <TextField
           label="Search music"
           isLabelHidden
@@ -71,12 +75,16 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
 
       {query.trim() === '' ? (
         everything.isPending ? (
-          <Skeleton label="Reading every album" className="h-48 w-full" />
+          <div className={MUSIC_LANES.page}>
+            <Skeleton label="Reading every album" className="h-48 w-full" />
+          </div>
         ) : (
-          <AlbumShelf heading="Every album" albums={everything.data ?? []} />
+          <AlbumShelf heading="Every album" layout="grid" albums={everything.data ?? []} />
         )
       ) : asked.isPending ? (
-        <Skeleton label="Searching" className="h-48 w-full" />
+        <div className={MUSIC_LANES.page}>
+          <Skeleton label="Searching" className="h-48 w-full" />
+        </div>
       ) : isEmpty ? (
         <NothingHere
           of={Search01Icon}
@@ -86,8 +94,8 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
       ) : (
         <>
           {(found?.tracks ?? []).length === 0 ? null : (
-            <section aria-label="Songs" className="flex flex-col gap-3">
-              <h2 className="px-2 text-xl font-bold tracking-tight text-text">Songs</h2>
+            <section aria-label="Songs" className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}>
+              <h2 className="px-3 text-lg font-semibold tracking-tight text-text">Songs</h2>
               <TrackList
                 label={`Songs matching ${query}`}
                 tracks={found?.tracks ?? []}
