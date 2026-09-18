@@ -570,24 +570,6 @@ pub fn parse_listed_encoders(output: &str) -> Vec<String> {
 /// in 7.0, and some builds ship `scale_npp` in place of `scale_cuda`.
 pub const HARDWARE_SCALERS: [&str; 4] = ["scale_vt", "scale_cuda", "vpp_qsv", "scale_vaapi"];
 
-/// Every hardware compositor Valence might ask for.
-///
-/// Verified against the shipped arm64 package, which has `overlay_vaapi`,
-/// `overlay_cuda`, `overlay_opencl`, `overlay_vulkan` and `overlay_rkrga`.
-/// `overlay_qsv` is absent there because QSV is not built for arm, and it is
-/// listed so a build that does have it is not left on the software path.
-///
-/// `overlay_videotoolbox` was absent for the same reason until VAL-110, which
-/// was that no macOS package existed. The Apple silicon build has it, and it
-/// was measured compositing rather than merely listed.
-pub const HARDWARE_OVERLAYS: [&str; 5] = [
-    "overlay_videotoolbox",
-    "overlay_cuda",
-    "overlay_qsv",
-    "overlay_vaapi",
-    "overlay_rkrga",
-];
-
 /// The smallest picture the encoders Valence drives are known to accept.
 ///
 ///
@@ -770,6 +752,125 @@ async fn verified_tone_maps(ffmpeg: &str, filters: &[String], device: &str) -> V
         }
 
         if verify_tone_map(ffmpeg, accel, mapper, device).await {
+            verified.push(name.to_owned());
+        }
+    }
+
+    verified
+}
+
+/// The arguments that ask a compositor to prove itself.
+///
+/// Built to look like the chain a burned-in subtitle actually runs: a base
+/// frame on the device, an overlay uploaded beside it in the format that
+/// backend composites, and the two drawn together. Anything less proves the
+/// filter opens rather than that it draws, and opening was never the part that
+/// failed.
+#[must_use]
+pub fn overlay_probe_arguments(
+    accel: HardwareAccel,
+    pipeline: &crate::transcode_plan::HardwarePipeline,
+    device: &str,
+) -> Vec<String> {
+    let (width, height) = PROBE_SIZE;
+    let mut arguments = vec![
+        "-hide_banner".to_owned(),
+        "-loglevel".to_owned(),
+        "error".to_owned(),
+    ];
+
+    arguments.extend(accel.filter_device_arguments(device));
+    arguments.extend([
+        "-f".to_owned(),
+        "lavfi".to_owned(),
+        "-i".to_owned(),
+        format!("testsrc2=size={width}x{height}:rate=1"),
+        "-f".to_owned(),
+        "lavfi".to_owned(),
+        "-i".to_owned(),
+        format!("color=c=white@0.5:size={width}x{height}:rate=1"),
+        "-frames:v".to_owned(),
+        "1".to_owned(),
+        "-filter_complex".to_owned(),
+        format!(
+            "[0:v]format={base},{upload}[base];[1:v]format={overlay_format},{overlay_upload}[sub];\
+             [base][sub]{overlay}=eof_action=pass:repeatlast=0[v]",
+            base = pipeline.download_format,
+            upload = pipeline.upload,
+            overlay_format = pipeline.overlay_format,
+            overlay_upload = pipeline.overlay_upload,
+            overlay = pipeline.overlay,
+        ),
+        "-map".to_owned(),
+        "[v]".to_owned(),
+        "-f".to_owned(),
+        "null".to_owned(),
+        "-".to_owned(),
+    ]);
+
+    arguments
+}
+
+/// Runs a one frame composite to prove a compositor works.
+///
+/// The same mistake as VAL-111, one filter along. `overlay_vaapi` is VPP
+/// blending, and a driver can carry the filter and refuse the operation: an
+/// Intel box running Mesa listed it and answered every burned-in subtitle with
+/// "Failed to start picture processing: 1", which reached the viewer as a film
+/// that would not start. Presence was what this asked until then.
+///
+/// Being refused is not a failure to burn anything in. A machine without a
+/// compositor draws the subtitle in software instead, which
+/// [`crate::transcode_plan::frame_route`] already routes for — slower, and it
+/// plays.
+async fn verify_overlay(
+    ffmpeg: &str,
+    accel: HardwareAccel,
+    pipeline: &crate::transcode_plan::HardwarePipeline,
+    device: &str,
+) -> bool {
+    let Ok(outcome) = Command::new(ffmpeg)
+        .args(overlay_probe_arguments(accel, pipeline, device))
+        .kill_on_drop(true)
+        .output()
+        .await
+    else {
+        return false;
+    };
+
+    outcome.status.success()
+}
+
+/// Every compositor this build has *and* this machine will run.
+///
+/// Two gates, the second being the one that matters, exactly as
+/// [`verified_tone_maps`] has them. A filter already proved is not proved
+/// again, since two backends can name the same one.
+async fn verified_overlays(ffmpeg: &str, filters: &[String], device: &str) -> Vec<String> {
+    let mut verified = Vec::new();
+
+    for accel in [
+        HardwareAccel::Vaapi,
+        HardwareAccel::Qsv,
+        HardwareAccel::Nvenc,
+        HardwareAccel::VideoToolbox,
+        HardwareAccel::Rkmpp,
+    ] {
+        let Some(pipeline) = accel.pipeline() else {
+            continue;
+        };
+
+        let name = pipeline.overlay;
+
+        if !filters.iter().any(|filter| filter == name) {
+            continue;
+        }
+
+        if verified.iter().any(|found| found == name) {
+            continue;
+        }
+
+        if verify_overlay(ffmpeg, accel, &pipeline, device).await {
             verified.push(name.to_owned());
         }
     }
@@ -1093,11 +1194,7 @@ async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilitie
             .filter(|scaler| filters.iter().any(|filter| filter == *scaler))
             .map(|scaler| (*scaler).to_owned())
             .collect(),
-        hardware_overlays: HARDWARE_OVERLAYS
-            .iter()
-            .filter(|overlay| filters.iter().any(|filter| filter == *overlay))
-            .map(|overlay| (*overlay).to_owned())
-            .collect(),
+        hardware_overlays: verified_overlays(ffmpeg, &filters, device).await,
         hardware_tone_maps: verified_tone_maps(ffmpeg, &filters, device).await,
         rejected,
         can_burn_text_subtitles: filters.iter().any(|filter| filter == "subtitles"),
@@ -1115,9 +1212,10 @@ async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilitie
 #[cfg(test)]
 mod tests {
     use super::{
-        complaint, describe_build, parse_listed_encoders, parse_listed_filters, probe_arguments,
-        select_tone_mapping, summarise_failure, tone_map_probe_arguments, verified_accels,
-        Capabilities, EncoderCandidate, VerifiedEncoder, ENCODER_CANDIDATES, SMALLEST_USABLE_PROBE,
+        complaint, describe_build, overlay_probe_arguments, parse_listed_encoders,
+        parse_listed_filters, probe_arguments, select_tone_mapping, summarise_failure,
+        tone_map_probe_arguments, verified_accels, Capabilities, EncoderCandidate, VerifiedEncoder,
+        ENCODER_CANDIDATES, SMALLEST_USABLE_PROBE,
     };
     use crate::transcode_plan::HardwareAccel;
     use crate::transcode_plan::DEFAULT_DEVICE;
@@ -1272,6 +1370,82 @@ mod tests {
         assert!(chain.starts_with("format=p010,"), "{chain}");
         assert!(chain.contains(",hwupload,"), "{chain}");
         assert!(chain.contains("tonemap_vaapi"), "{chain}");
+    }
+
+    /// The chain a probe runs has to be the chain a subtitle runs.
+    ///
+    /// `overlay_vaapi` opens on a machine that cannot composite with it. What
+    /// it refuses is the blend, so a probe that stops short of drawing one
+    /// surface onto another reports a working compositor and every burned-in
+    /// subtitle then fails. See the Intel box in VAL-65's session.
+    #[test]
+    fn asks_a_compositor_to_draw_one_surface_onto_another() {
+        let pipeline = HardwareAccel::Vaapi
+            .pipeline()
+            .expect("vaapi has a hardware pipeline");
+
+        let arguments = overlay_probe_arguments(HardwareAccel::Vaapi, &pipeline, DEFAULT_DEVICE);
+
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-filter_complex")
+            .map(|pair| pair[1].clone())
+            .expect("the probe names a filter chain");
+
+        assert!(chain.contains("[base][sub]overlay_vaapi"), "{chain}");
+        assert!(chain.contains("eof_action=pass"), "{chain}");
+    }
+
+    /// A probe that uploads the overlay differently proves the wrong thing.
+    #[test]
+    fn hands_a_compositor_the_overlay_its_own_backend_composites() {
+        for accel in [HardwareAccel::Vaapi, HardwareAccel::Nvenc] {
+            let pipeline = accel.pipeline().expect("the backend has a pipeline");
+
+            let arguments = overlay_probe_arguments(accel, &pipeline, DEFAULT_DEVICE);
+
+            let chain = arguments
+                .windows(2)
+                .find(|pair| pair[0] == "-filter_complex")
+                .map(|pair| pair[1].clone())
+                .expect("the probe names a filter chain");
+
+            assert!(
+                chain.contains(&format!("format={},", pipeline.overlay_format)),
+                "{chain}"
+            );
+            assert!(chain.contains(pipeline.overlay_upload), "{chain}");
+        }
+    }
+
+    /// CUDA composites in `yuva420p` where the rest take `bgra`.
+    #[test]
+    fn does_not_assume_every_backend_composites_the_same_pixels() {
+        let cuda = HardwareAccel::Nvenc
+            .pipeline()
+            .expect("cuda has a pipeline");
+        let vaapi = HardwareAccel::Vaapi
+            .pipeline()
+            .expect("vaapi has a pipeline");
+
+        assert_eq!(cuda.overlay_format, "yuva420p");
+        assert_eq!(vaapi.overlay_format, "bgra");
+    }
+
+    /// A probe needs two pictures, because a composite needs two pictures.
+    #[test]
+    fn gives_a_compositor_a_second_input_to_draw() {
+        let pipeline = HardwareAccel::Vaapi
+            .pipeline()
+            .expect("vaapi has a hardware pipeline");
+
+        let arguments = overlay_probe_arguments(HardwareAccel::Vaapi, &pipeline, DEFAULT_DEVICE);
+
+        assert_eq!(
+            arguments.iter().filter(|one| *one == "-i").count(),
+            2,
+            "{arguments:?}"
+        );
     }
 
     /// An untagged frame is not HDR, and a tone mapper is entitled to say so.
