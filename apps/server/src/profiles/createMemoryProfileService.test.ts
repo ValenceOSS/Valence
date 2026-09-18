@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import sharp from 'sharp';
 import { createMemoryProfileService } from './createMemoryProfileService';
 
 const REQUEST = { name: 'Sam', colour: '#3ac47d' } as const;
+
+const aPicture = async (width = 8, height = 8): Promise<Uint8Array> =>
+  new Uint8Array(
+    await sharp({
+      create: { width, height, channels: 3, background: { r: 0, g: 0, b: 0 } },
+    })
+      .png()
+      .toBuffer(),
+  );
 
 describe('createMemoryProfileService', () => {
   it('has nobody on an account nobody has used', async () => {
@@ -134,8 +144,8 @@ describe('createMemoryProfileService', () => {
     const made = await profiles.create('marques', REQUEST);
 
     await profiles.savePhoto('marques', made.id, {
-      body: new TextEncoder().encode('a picture'),
-      contentType: 'image/webp',
+      body: await aPicture(),
+      contentType: 'image/png',
     });
 
     const [changed] = await profiles.list('marques');
@@ -143,18 +153,40 @@ describe('createMemoryProfileService', () => {
     expect(changed?.avatar).toEqual({ kind: 'photo', isVideo: false });
   });
 
-  it('knows a photograph that moves needs an element that can play it', async () => {
+  it('turns away a clip, since a face is a still picture', async () => {
     const profiles = createMemoryProfileService();
     const made = await profiles.create('marques', REQUEST);
 
-    await profiles.savePhoto('marques', made.id, {
-      body: new TextEncoder().encode('a clip'),
-      contentType: 'video/webm',
-    });
+    await expect(
+      profiles.savePhoto('marques', made.id, {
+        body: await aPicture(),
+        contentType: 'video/webm',
+      }),
+    ).resolves.toBe('notAPicture');
+  });
 
-    const [changed] = await profiles.list('marques');
+  it('turns away a picture with more detail in it than anything will draw', async () => {
+    const profiles = createMemoryProfileService();
+    const made = await profiles.create('marques', REQUEST);
 
-    expect(changed?.avatar).toEqual({ kind: 'photo', isVideo: true });
+    await expect(
+      profiles.savePhoto('marques', made.id, {
+        body: await aPicture(5000, 10),
+        contentType: 'image/png',
+      }),
+    ).resolves.toBe('tooDetailed');
+  });
+
+  it('turns away something that says it is a picture and is not', async () => {
+    const profiles = createMemoryProfileService();
+    const made = await profiles.create('marques', REQUEST);
+
+    await expect(
+      profiles.savePhoto('marques', made.id, {
+        body: new TextEncoder().encode('not a picture'),
+        contentType: 'image/png',
+      }),
+    ).resolves.toBe('unreadable');
   });
 
   it('will not let one account put a photograph on a profile held by another', async () => {
@@ -163,10 +195,10 @@ describe('createMemoryProfileService', () => {
 
     await expect(
       profiles.savePhoto('somebody-else', made.id, {
-        body: new TextEncoder().encode('a picture'),
-        contentType: 'image/webp',
+        body: await aPicture(),
+        contentType: 'image/png',
       }),
-    ).resolves.toBe(false);
+    ).resolves.toBe('notYours');
   });
 
   it('says everybody who could sign in, across accounts', async () => {
@@ -208,9 +240,9 @@ describe('createMemoryProfileService', () => {
     await expect(
       profiles.savePhoto('marques', '3f2504e0-4f89-41d3-9a0c-0305e82c3301', {
         body: new Uint8Array([1]),
-        contentType: 'image/webp',
+        contentType: 'image/png',
       }),
-    ).resolves.toBe(false);
+    ).resolves.toBe('notYours');
   });
 
   it('has no owner to change for a profile that is not there', async () => {

@@ -131,10 +131,29 @@ import {
 import { SHARE_COOKIE, createShareGate } from '@ValenceServer/sharing/createShareGate';
 import { howShareEnded, isShareLive, whyShareEnded } from '@ValenceContracts/schemas/Share';
 import { rememberGuestFor } from '@ValenceServer/sharing/rememberGuestFor';
+import { bodyLimit } from 'hono/body-limit';
+import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
+import { MOST_BYTES } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import type { PictureFault } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import { getCookie, setCookie } from 'hono/cookie';
 import { randomUUID } from 'node:crypto';
 
 const SHARE_JOINER = 'valence_share_joiner';
+
+/**
+ * Builds the guard that turns away a picture too big to keep before it has been read rather than
+ * after.
+ *
+ * The size is checked again where the picture is judged, which is what makes the rule true; this is
+ * only so that somebody uploading a film by mistake does not have it held in memory in full first.
+ *
+ * @returns The middleware to put in front of a route that takes a picture.
+ */
+const tooBigToRead = () =>
+  bodyLimit({
+    maxSize: MOST_BYTES,
+    onError: (context) => context.json({ error: describePictureFault('tooLarge').error }, 413),
+  });
 
 const GUEST_REMEMBERED_FOR_SECONDS = 30 * 86_400;
 import {
@@ -436,7 +455,7 @@ type CreateAppOptions = {
   setAccountPhoto?: (
     userId: string,
     photo: { body: Uint8Array; contentType: string },
-  ) => Promise<boolean>;
+  ) => Promise<PictureFault | null>;
   setAccountAvatar?: (
     userId: string,
     changes: { avatar?: Avatar; colour?: ProfileColour },
@@ -1928,31 +1947,27 @@ const createApp = ({
     });
   });
 
-  app.put('/api/profiles/:profileId/photo', async (context) => {
+  app.put('/api/profiles/:profileId/photo', tooBigToRead(), async (context) => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || profiles === undefined) {
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    const profileId = context.req.param('profileId');
-
-    if (!(await profiles.belongsTo(account.id, profileId))) {
-      return context.json({ error: 'No such profile on this account.' }, 404);
-    }
-
-    const saved = await profiles.savePhoto(account.id, profileId, {
+    const wrong = await profiles.savePhoto(account.id, context.req.param('profileId'), {
       body: new Uint8Array(await context.req.arrayBuffer()),
       contentType: context.req.header('content-type') ?? '',
     });
 
-    if (saved) {
-      await announceProfiles(account.id);
+    if (wrong !== null) {
+      const said = describePictureFault(wrong);
+
+      return context.json({ error: said.error }, said.status);
     }
 
-    return saved
-      ? context.body(null, 204)
-      : context.json({ error: 'That picture could not be used.' }, 400);
+    await announceProfiles(account.id);
+
+    return context.body(null, 204);
   });
 
   app.openapi(adminLogsRoute, async (context) => {
@@ -3240,7 +3255,7 @@ const createApp = ({
     return context.body(null, 204);
   });
 
-  app.put('/api/admin/accounts/:userId/photo', async (context) => {
+  app.put('/api/admin/accounts/:userId/photo', tooBigToRead(), async (context) => {
     if (!(await requires(context.req.raw.headers, 'account.profiles'))) {
       return context.json({ error: 'That is for administrators.' }, 403);
     }
@@ -3265,18 +3280,20 @@ const createApp = ({
       }
     }
 
-    const saved = await setAccountPhoto?.(userId, {
+    const wrong = await setAccountPhoto?.(userId, {
       body: new Uint8Array(await context.req.arrayBuffer()),
       contentType: context.req.header('content-type') ?? '',
     });
 
-    if (saved === true) {
-      await announceProfiles(userId);
+    if (wrong !== undefined && wrong !== null) {
+      const said = describePictureFault(wrong);
+
+      return context.json({ error: said.error }, said.status);
     }
 
-    return saved === true
-      ? context.body(null, 204)
-      : context.json({ error: 'That picture could not be used.' }, 400);
+    await announceProfiles(userId);
+
+    return context.body(null, 204);
   });
 
   app.openapi(listMyPermissionsRoute, async (context) => {

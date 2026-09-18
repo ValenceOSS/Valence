@@ -1842,7 +1842,7 @@ const app = createApp({
       .limit(1);
 
     if (found === undefined) {
-      return false;
+      return 'notYours';
     }
 
     const profile = await profileService.ensureDefault(userId, found.name);
