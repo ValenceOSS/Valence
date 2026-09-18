@@ -21,6 +21,8 @@ const SETTINGS: ServerSettings = {
   jobsTimezone: '',
   certificationRegion: 'GB',
   fetchesCatalogueTrailers: false,
+  fetchesMusicDetails: false,
+  audioDbKey: '',
   splashscreenFile: null,
 };
 

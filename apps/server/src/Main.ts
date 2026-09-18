@@ -161,6 +161,8 @@ import { createDatabaseMusicService } from '@ValenceServer/music/createDatabaseM
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
 import { createMusicArtwork } from '@ValenceServer/music/createMusicArtwork';
 import { createMusicDevices } from '@ValenceServer/music/createMusicDevices';
+import { createMusicWeb } from '@ValenceServer/music/web/createMusicWeb';
+import { enrichMusicLibrary } from '@ValenceServer/music/web/enrichMusicLibrary';
 import { createMusicFileSystem } from '@ValenceServer/music/createMusicFileSystem';
 import { createDatabasePlaylistService } from '@ValenceServer/playlists/createDatabasePlaylistService';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
@@ -267,6 +269,8 @@ const settings = createDatabaseSettingsStore({
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    fetchesMusicDetails: false,
+    audioDbKey: '',
     splashscreenFile: null,
   },
 });
@@ -609,6 +613,61 @@ const musicArtworkDir = join(env.IMAGE_CACHE_DIR, 'music');
 
 const musicLibrary = createDatabaseMusicService(db);
 
+const musicStore = createDatabaseMusicStore(db);
+
+const musicArtwork = createMusicArtwork(musicArtworkDir);
+
+const AUDIO_DB_FREE_KEY = '123';
+
+const musicWeb = createMusicWeb({
+  userAgent: `Valence/${env.VALENCE_VERSION} ( https://github.com/ValenceOSS/Valence )`,
+  spacingMs: {
+    'musicbrainz.org': 1100,
+    'coverartarchive.org': 250,
+    'www.theaudiodb.com': 2100,
+    'lrclib.net': 250,
+  },
+});
+
+/**
+ * Looks for what a music library's files left out on the web, where the server has been told it
+ * may: covers, artists' photographs, music videos and song words.
+ *
+ * @param libraryId - The library.
+ * @param jobId - The scan it is part of, for progress and cancellation.
+ * @param isAgain - Whether to ask again about what was not found before, as a forced scan does.
+ */
+const lookUpMusic = async (libraryId: string, jobId: string, isAgain: boolean): Promise<void> => {
+  const current = await settings.read();
+
+  if (!current.fetchesMusicDetails) {
+    return;
+  }
+
+  const found = await enrichMusicLibrary({
+    libraryId,
+    store: musicStore,
+    web: musicWeb,
+    artwork: musicArtwork,
+    audioDbKey: current.audioDbKey === '' ? AUDIO_DB_FREE_KEY : current.audioDbKey,
+    isAgain,
+    onProgress: (done, total) => {
+      jobs.reportProgress(
+        jobId,
+        `${done.toString()} of ${total.toString()} looked up`,
+        done,
+        total,
+      );
+    },
+    isCancelled: () => jobs.isCancelled(jobId),
+  });
+
+  log.info(
+    'scanner',
+    `music looked up on the web: ${found.covers.toString()} covers, ${found.pictures.toString()} photographs, ${found.videos.toString()} videos, ${found.lyrics.toString()} lyrics`,
+  );
+};
+
 const musicServices: MusicServices = {
   library: musicLibrary,
   playlists: createDatabasePlaylistService(db, musicLibrary),
@@ -926,7 +985,9 @@ const jobs = await createJobQueue({
             work: {
               scan: () => libraryService.runScan(libraryId, force, jobId),
               fetchLogos: () =>
-                isMusic ? Promise.resolve() : libraryService.runFetchLogos(libraryId, jobId),
+                isMusic
+                  ? lookUpMusic(libraryId, jobId, force === true)
+                  : libraryService.runFetchLogos(libraryId, jobId),
               detectSegments: () =>
                 isMusic ? Promise.resolve() : runDetectSegments(libraryId, jobId),
             },
@@ -1518,8 +1579,8 @@ const libraryService = createDatabaseLibraryService({
   providers: [catalogueProvider, createFilenameMetadataProvider()],
   books: bookService,
   music: {
-    store: createDatabaseMusicStore(db),
-    artwork: createMusicArtwork(musicArtworkDir),
+    store: musicStore,
+    artwork: musicArtwork,
     files: createMusicFileSystem(),
   },
   atOnce: env.MEDIA_JOBS,

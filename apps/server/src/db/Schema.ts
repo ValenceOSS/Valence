@@ -793,6 +793,7 @@ const musicArtist = pgTable(
     sortName: text('sortName').notNull(),
     musicbrainzId: text('musicbrainzId'),
     imagePath: text('imagePath'),
+    lookedUpAt: timestamp('lookedUpAt'),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
   },
   (table) => [
@@ -818,6 +819,7 @@ const musicAlbum = pgTable(
     isCompilation: boolean('isCompilation').notNull().default(false),
     artworkPath: text('artworkPath'),
     musicbrainzId: text('musicbrainzId'),
+    lookedUpAt: timestamp('lookedUpAt'),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
   },
   (table) => [
@@ -846,6 +848,8 @@ const musicTrack = pgTable(
     lyrics: text('lyrics'),
     lyricsAreSynced: boolean('lyricsAreSynced').notNull().default(false),
     lyricsModifiedAtMs: bigint('lyricsModifiedAtMs', { mode: 'number' }),
+    lyricsLookedUpAt: timestamp('lyricsLookedUpAt'),
+    videoKey: text('videoKey'),
   },
   (table) => [
     index('music_track_album_idx').on(table.albumId, table.discNumber, table.trackNumber),

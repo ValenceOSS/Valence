@@ -55,6 +55,7 @@ const TRACK: MusicTrack = {
   sampleRate: 44_100,
   bitrateKbps: 1492,
   hasLyrics: true,
+  videoKey: null,
   isFavourite: false,
 };
 

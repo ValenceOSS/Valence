@@ -50,12 +50,14 @@ const OVERVIEW = {
   ],
   settings: {
     hasCatalogueKey: true,
+    hasAudioDbKey: false,
     trustedOrigins: ['http://localhost:5173'],
     cookieSecure: false,
     hardwareAccel: '',
     previewQuality: 'high',
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    fetchesMusicDetails: false,
     certificationRegion: 'GB',
   },
   transcoder: {

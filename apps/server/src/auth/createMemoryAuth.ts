@@ -86,6 +86,8 @@ const createMemoryAuth = (
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    fetchesMusicDetails: false,
+    audioDbKey: '',
     splashscreenFile: null,
   });
 

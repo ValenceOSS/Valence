@@ -14,7 +14,7 @@ type StoredTrack = ScannedFile & {
   lyricsModifiedAtMs: number | null;
 };
 
-type ArtworkSource = { picture: TrackPicture } | { path: string };
+type ArtworkSource = { picture: TrackPicture } | { path: string } | { bytes: Uint8Array };
 
 type MusicFileSystem = {
   listFiles: (root: string) => Promise<ScannedFile[]>;

@@ -33,6 +33,7 @@ const AdminUserSchema = z
 const AdminSettingsSchema = z
   .object({
     hasCatalogueKey: z.boolean(),
+    hasAudioDbKey: z.boolean(),
     trustedOrigins: z.array(z.string()),
     cookieSecure: z.boolean(),
     hardwareAccel: z.string(),
@@ -40,6 +41,7 @@ const AdminSettingsSchema = z
     certificationRegion: z.string().length(2),
     showsProfilesBeforeSignIn: z.boolean(),
     fetchesCatalogueTrailers: z.boolean(),
+    fetchesMusicDetails: z.boolean(),
     splashscreen: z.string().nullable(),
   })
   .openapi('AdminSettings');
@@ -114,11 +116,13 @@ const ArtefactUseSchema = z.object({
 const AdminSettingsRequestSchema = z
   .object({
     catalogueApiKey: z.string().optional(),
+    audioDbKey: z.string().optional(),
     hardwareAccel: z.string().optional(),
     previewQuality: z.enum(PREVIEW_QUALITIES).optional(),
     certificationRegion: z.string().length(2).optional(),
     showsProfilesBeforeSignIn: z.boolean().optional(),
     fetchesCatalogueTrailers: z.boolean().optional(),
+    fetchesMusicDetails: z.boolean().optional(),
   })
   .openapi('AdminSettingsRequest');
 

@@ -21,7 +21,11 @@ const WEBP_QUALITY = 86;
 const createMusicArtwork = (directory: string): MusicArtwork => ({
   keep: async (kind, id, source) => {
     const bytes =
-      'picture' in source ? source.picture.bytes : await readFile(source.path).catch(() => null);
+      'picture' in source
+        ? source.picture.bytes
+        : 'bytes' in source
+          ? source.bytes
+          : await readFile(source.path).catch(() => null);
 
     if (bytes === null) {
       return null;

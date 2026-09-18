@@ -79,6 +79,7 @@ const MusicTrackSchema = z.object({
   sampleRate: z.number().int().nullable(),
   bitrateKbps: z.number().int().nullable(),
   hasLyrics: z.boolean(),
+  videoKey: z.string().nullable().default(null),
   isFavourite: z.boolean(),
 });
 

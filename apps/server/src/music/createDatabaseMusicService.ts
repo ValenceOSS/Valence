@@ -77,6 +77,7 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
     bitDepth: musicTrack.bitDepth,
     sampleRate: musicTrack.sampleRate,
     hasLyrics: sql<boolean>`${musicTrack.lyrics} is not null`,
+    videoKey: musicTrack.videoKey,
     albumId: musicAlbum.id,
     albumTitle: musicAlbum.title,
     albumHasArtwork: sql<boolean>`${musicAlbum.artworkPath} is not null`,
@@ -96,6 +97,7 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
     bitDepth: number | null;
     sampleRate: number | null;
     hasLyrics: boolean;
+    videoKey: string | null;
     albumId: string;
     albumTitle: string;
     albumHasArtwork: boolean;
@@ -154,6 +156,7 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
       sampleRate: row.sampleRate,
       bitrateKbps: row.bitrateKbps,
       hasLyrics: row.hasLyrics,
+      videoKey: row.videoKey,
       isFavourite: liked.has(row.id),
     }));
   };

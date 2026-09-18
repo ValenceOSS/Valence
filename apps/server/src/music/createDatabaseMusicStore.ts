@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, inArray, notExists, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, notExists, sql } from 'drizzle-orm';
 import {
   library,
   mediaItem,
@@ -12,6 +12,7 @@ import { nameKey } from './nameKey';
 import { sortNameFor } from './sortNameFor';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { MusicStore } from './scanMusicLibrary';
+import type { EnrichingStore } from './web/EnrichingStore';
 
 /**
  * Deletes the albums a scan left with no tracks and the artists left with neither an album nor a
@@ -61,10 +62,14 @@ const pruneEmpty = async (db: ValenceDatabase, libraryId: string): Promise<void>
  * on anything else, rather than music growing a copy of each. The video columns a media item needs
  * are written as what they are for a track — no video, no size.
  *
+ * It also keeps what was found on the web for what the files left out, and remembers what has been
+ * looked up so it is not asked about again. Words found on the web are kept through a rescan that
+ * finds none in the file, rather than being wiped and fetched again.
+ *
  * @param db - The database.
  * @returns The store.
  */
-const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore => ({
+const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingStore => ({
   listStored: (libraryId) =>
     db
       .select({
@@ -217,15 +222,28 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore => ({
       isExplicit: row.isExplicit,
       bitDepth: row.bitDepth,
       sampleRate: row.sampleRate,
-      lyrics: row.lyrics,
       lyricsModifiedAtMs: row.lyricsModifiedAtMs,
+    };
+
+    const ownLyrics = {
+      lyrics: row.lyrics,
       lyricsAreSynced: row.lyrics !== null && /\[\d{1,3}:\d{1,2}/.test(row.lyrics),
     };
 
+    const keptLyrics =
+      row.lyrics === null
+        ? {
+            lyrics: sql<
+              string | null
+            >`case when ${musicTrack.lyricsLookedUpAt} is not null then ${musicTrack.lyrics} else null end`,
+            lyricsAreSynced: sql<boolean>`case when ${musicTrack.lyricsLookedUpAt} is not null then ${musicTrack.lyricsAreSynced} else false end`,
+          }
+        : ownLyrics;
+
     await db
       .insert(musicTrack)
-      .values({ mediaItemId: saved.id, ...music })
-      .onConflictDoUpdate({ target: musicTrack.mediaItemId, set: music });
+      .values({ mediaItemId: saved.id, ...music, ...ownLyrics })
+      .onConflictDoUpdate({ target: musicTrack.mediaItemId, set: { ...music, ...keptLyrics } });
 
     await db.delete(musicTrackArtist).where(eq(musicTrackArtist.mediaItemId, saved.id));
 
@@ -262,6 +280,91 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore => ({
 
   markScanned: async (libraryId) => {
     await db.update(library).set({ lastScannedAt: new Date() }).where(eq(library.id, libraryId));
+  },
+
+  albumsToLookUp: async (libraryId, isAgain) =>
+    db
+      .select({
+        id: musicAlbum.id,
+        title: musicAlbum.title,
+        artistName: musicArtist.name,
+        musicbrainzId: musicAlbum.musicbrainzId,
+      })
+      .from(musicAlbum)
+      .innerJoin(musicArtist, eq(musicArtist.id, musicAlbum.artistId))
+      .where(
+        and(
+          eq(musicAlbum.libraryId, libraryId),
+          isNull(musicAlbum.artworkPath),
+          isAgain ? undefined : isNull(musicAlbum.lookedUpAt),
+        ),
+      ),
+
+  markAlbumLookedUp: async (albumId) => {
+    await db.update(musicAlbum).set({ lookedUpAt: new Date() }).where(eq(musicAlbum.id, albumId));
+  },
+
+  artistsToLookUp: async (libraryId, isAgain) =>
+    db
+      .select({
+        id: musicArtist.id,
+        name: musicArtist.name,
+        hasImage: sql<boolean>`${musicArtist.imagePath} is not null`,
+      })
+      .from(musicArtist)
+      .where(
+        and(
+          eq(musicArtist.libraryId, libraryId),
+          isAgain ? undefined : isNull(musicArtist.lookedUpAt),
+        ),
+      ),
+
+  markArtistLookedUp: async (artistId) => {
+    await db
+      .update(musicArtist)
+      .set({ lookedUpAt: new Date() })
+      .where(eq(musicArtist.id, artistId));
+  },
+
+  songsBy: async (artistId) =>
+    db
+      .select({ id: mediaItem.id, title: mediaItem.title })
+      .from(musicTrackArtist)
+      .innerJoin(mediaItem, eq(mediaItem.id, musicTrackArtist.mediaItemId))
+      .where(eq(musicTrackArtist.artistId, artistId)),
+
+  setVideo: async (trackId, videoKey) => {
+    await db.update(musicTrack).set({ videoKey }).where(eq(musicTrack.mediaItemId, trackId));
+  },
+
+  songsWithoutLyrics: async (libraryId, isAgain) =>
+    db
+      .select({
+        id: mediaItem.id,
+        title: mediaItem.title,
+        durationSeconds: mediaItem.durationSeconds,
+        albumTitle: musicAlbum.title,
+        artistName: sql<string>`coalesce((select a.name from ${musicTrackArtist} ta join ${musicArtist} a on a.id = ta."artistId" where ta."mediaItemId" = ${mediaItem.id} order by ta.position limit 1), '')`,
+      })
+      .from(musicTrack)
+      .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId))
+      .innerJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
+      .where(
+        and(
+          eq(mediaItem.libraryId, libraryId),
+          isNull(musicTrack.lyrics),
+          isAgain ? undefined : isNull(musicTrack.lyricsLookedUpAt),
+        ),
+      ),
+
+  keepFoundLyrics: async (trackId, lyrics) => {
+    await db
+      .update(musicTrack)
+      .set({
+        lyricsLookedUpAt: new Date(),
+        ...(lyrics === null ? {} : { lyrics, lyricsAreSynced: /\[\d{1,3}:\d{1,2}/.test(lyrics) }),
+      })
+      .where(eq(musicTrack.mediaItemId, trackId));
   },
 });
 

@@ -30,6 +30,7 @@ const track = (n: number): MusicTrack => ({
   sampleRate: 44_100,
   bitrateKbps: 900,
   hasLyrics: false,
+  videoKey: null,
   isFavourite: false,
 });
 

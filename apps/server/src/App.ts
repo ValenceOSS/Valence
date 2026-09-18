@@ -2124,11 +2124,13 @@ const createApp = ({
         users,
         settings: {
           hasCatalogueKey: current.catalogueApiKey !== '',
+          hasAudioDbKey: current.audioDbKey !== '',
           hardwareAccel: current.hardwareAccel,
           previewQuality: current.previewQuality,
           certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
           fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
+          fetchesMusicDetails: current.fetchesMusicDetails,
           splashscreen: await splashscreen.address(),
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
@@ -2167,6 +2169,7 @@ const createApp = ({
 
     const updated = await settings.write({
       ...(patch.catalogueApiKey === undefined ? {} : { catalogueApiKey: patch.catalogueApiKey }),
+      ...(patch.audioDbKey === undefined ? {} : { audioDbKey: patch.audioDbKey }),
       ...(patch.hardwareAccel === undefined ? {} : { hardwareAccel: patch.hardwareAccel }),
       ...(patch.previewQuality === undefined ? {} : { previewQuality: patch.previewQuality }),
       ...(patch.certificationRegion === undefined
@@ -2178,6 +2181,9 @@ const createApp = ({
       ...(patch.fetchesCatalogueTrailers === undefined
         ? {}
         : { fetchesCatalogueTrailers: patch.fetchesCatalogueTrailers }),
+      ...(patch.fetchesMusicDetails === undefined
+        ? {}
+        : { fetchesMusicDetails: patch.fetchesMusicDetails }),
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {
@@ -2197,6 +2203,7 @@ const createApp = ({
     return context.json(
       {
         hasCatalogueKey: updated.catalogueApiKey !== '',
+        hasAudioDbKey: updated.audioDbKey !== '',
         trustedOrigins: updated.trustedOrigins,
         cookieSecure: updated.cookieSecure,
         hardwareAccel: updated.hardwareAccel,
@@ -2204,6 +2211,7 @@ const createApp = ({
         certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
         fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
+        fetchesMusicDetails: updated.fetchesMusicDetails,
         splashscreen: await splashscreen.address(),
       },
       200,
