@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileFace } from './ProfileFace';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
@@ -15,6 +15,16 @@ const PROFILE: ViewerProfile = {
 };
 
 const pictureOf = (container: HTMLElement) => container.querySelector('img, video');
+
+const theirPicture = (container: HTMLElement): Element => {
+  const picture = pictureOf(container);
+
+  if (picture === null) {
+    throw new Error('Nothing is drawing a picture.');
+  }
+
+  return picture;
+};
 
 const createObjectURL = vi.fn().mockReturnValue('blob:chosen');
 const revokeObjectURL = vi.fn();
@@ -64,6 +74,40 @@ describe('ProfileFace', () => {
     );
 
     expect(pictureOf(container)?.tagName).toBe('VIDEO');
+  });
+
+  it('falls back to the letter when the picture is not there to be drawn', () => {
+    const { container } = render(
+      <ProfileFace profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: false } }} />,
+    );
+
+    fireEvent.error(theirPicture(container));
+
+    expect(pictureOf(container)).toBeNull();
+    expect(screen.getByText('M')).toBeInTheDocument();
+  });
+
+  it('falls back to the letter when a moving picture is not there either', () => {
+    const { container } = render(
+      <ProfileFace profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: true } }} />,
+    );
+
+    fireEvent.error(theirPicture(container));
+
+    expect(screen.getByText('M')).toBeInTheDocument();
+  });
+
+  it('tries again once the picture has been changed', () => {
+    const photo = { ...PROFILE, avatar: { kind: 'photo', isVideo: false } as const };
+    const { container, rerender } = render(<ProfileFace profile={photo} />);
+
+    fireEvent.error(theirPicture(container));
+
+    expect(pictureOf(container)).toBeNull();
+
+    rerender(<ProfileFace profile={{ ...photo, updatedAt: '2026-02-02T00:00:00.000Z' }} />);
+
+    expect(pictureOf(container)).not.toBeNull();
   });
 
   it('shows a picture somebody has chosen before they have kept it', () => {

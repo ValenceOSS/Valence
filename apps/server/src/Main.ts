@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { readdir, readFile, unlink } from 'node:fs/promises';
+import { copyFile, mkdir, readdir, readFile, rename, stat, unlink } from 'node:fs/promises';
 import { z } from 'zod';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
@@ -39,6 +39,7 @@ import { createDatabase } from '@ValenceServer/db/Database';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
 import { migrateToLatest } from '@ValenceServer/db/migrateToLatest';
+import { movePhotographsOnce } from '@ValenceServer/profiles/movePhotographsOnce';
 import {
   user,
   library,
@@ -535,7 +536,40 @@ const promoteToAdmin = async (email: string): Promise<void> => {
     await permissions.assignRole(account.id, administrator.id);
   }
 };
-const profileService = createDatabaseProfileService(db, join(env.IMAGE_CACHE_DIR, 'profiles'));
+await movePhotographsOnce({
+  from: join(env.IMAGE_CACHE_DIR, 'profiles'),
+  to: env.PROFILE_IMAGE_DIR,
+  files: {
+    list: async (directory) => {
+      const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
+
+      return entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
+    },
+    ensure: async (directory) => {
+      await mkdir(directory, { recursive: true });
+    },
+    has: (path) =>
+      stat(path).then(
+        () => true,
+        () => false,
+      ),
+    move: async (fromPath, toPath) => {
+      await rename(fromPath, toPath).catch(async (error: NodeJS.ErrnoException) => {
+        if (error.code !== 'EXDEV') {
+          throw error;
+        }
+
+        await copyFile(fromPath, toPath);
+        await unlink(fromPath);
+      });
+    },
+  },
+  onProblem: (name, reason) => {
+    log.error('server', `profiles: ${name} could not be moved — ${reason}`);
+  },
+});
+
+const profileService = createDatabaseProfileService(db, env.PROFILE_IMAGE_DIR);
 
 const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR);
 
@@ -961,7 +995,7 @@ const jobs = await createJobQueue({
       [CLEANUP_IMAGE_CACHE_JOB]: async (jobId) => {
         const removed = await cleanupImageCache({
           imageCacheDir: env.IMAGE_CACHE_DIR,
-          profilesDir: join(env.IMAGE_CACHE_DIR, 'profiles'),
+          profilesDir: env.PROFILE_IMAGE_DIR,
           files: {
             list: async (directory) => {
               const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);

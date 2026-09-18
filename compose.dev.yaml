@@ -47,6 +47,10 @@ services:
       # letting a library quietly re-render itself every week.
       VALENCE_ARTEFACT_DIR: ${VALENCE_ARTEFACT_DIR:-/cache/artefacts}
 
+      # Where the household's profile pictures are kept. Under /config rather than /cache on
+      # purpose: a preview can always be rendered again, and a picture somebody uploaded cannot.
+      PROFILE_IMAGE_DIR: ${PROFILE_IMAGE_DIR:-/config/profiles}
+
       # The clock scheduled jobs keep. A container has no other way to know where it is, and
       # defaults to UTC — so without this, "daily at 03:00" is 03:00 UTC rather than 3am here.
       TZ: ${TZ:-UTC}

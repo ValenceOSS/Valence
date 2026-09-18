@@ -368,7 +368,7 @@ const createDatabaseProfileService = (
       }
 
       if (choice.kind === 'photo' && found.photoPath !== null) {
-        const body = await readFile(found.photoPath).catch(() => null);
+        const body = await readFile(join(photoDirectory, found.photoPath)).catch(() => null);
 
         if (body !== null) {
           return {
@@ -400,13 +400,13 @@ const createDatabaseProfileService = (
 
       await mkdir(photoDirectory, { recursive: true });
 
-      const path = join(photoDirectory, `${profileId}${extension}`);
+      const name = `${profileId}${extension}`;
 
-      await writeFile(path, photo.body);
+      await writeFile(join(photoDirectory, name), photo.body);
 
       await db
         .update(viewerProfile)
-        .set({ photoPath: path, avatarStyle: null, avatarSeed: null, updatedAt: new Date() })
+        .set({ photoPath: name, avatarStyle: null, avatarSeed: null, updatedAt: new Date() })
         .where(eq(viewerProfile.id, profileId));
 
       return true;
