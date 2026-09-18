@@ -71,6 +71,10 @@ const AdminOverviewSchema = z.object({
     .object({ count: z.number(), bytes: z.number(), atMs: z.number() })
     .nullable()
     .default(null),
+  bookPages: z
+    .object({ count: z.number(), bytes: z.number(), atMs: z.number() })
+    .nullable()
+    .default(null),
   jobs: z
     .object({
       stalled: z
@@ -663,6 +667,10 @@ const StorageCountSchema = z.object({
     })
     .nullable(),
   artwork: z.object({ count: z.number(), bytes: z.number(), atMs: z.number() }).nullable(),
+  bookPages: z
+    .object({ count: z.number(), bytes: z.number(), atMs: z.number() })
+    .nullable()
+    .default(null),
   libraryBytes: z.number(),
 });
 

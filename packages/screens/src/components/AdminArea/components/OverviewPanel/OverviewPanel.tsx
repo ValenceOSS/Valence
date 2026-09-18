@@ -294,6 +294,7 @@ const OverviewPanel = ({
           <CacheBreakdown
             cache={counted?.cache ?? monitor?.cache ?? null}
             artwork={counted?.artwork ?? overview?.artwork ?? null}
+            bookPages={counted?.bookPages ?? overview?.bookPages ?? null}
             liveSessions={monitor?.sessions ?? 0}
             library={
               overview === null
