@@ -592,6 +592,25 @@ const mediaOverride = pgTable(
   ],
 );
 
+const mediaPreviewOverride = pgTable(
+  'media_preview_override',
+  {
+    id: text('id').primaryKey(),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: text('path').notNull(),
+    atSeconds: integer('atSeconds').notNull(),
+    durationSeconds: integer('durationSeconds'),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+    updatedBy: text('updatedBy'),
+  },
+  (table) => [
+    uniqueIndex('media_preview_override_path_idx').on(table.libraryId, table.path),
+    index('media_preview_override_library_idx').on(table.libraryId),
+  ],
+);
+
 const series = pgTable(
   'series',
   {
@@ -975,6 +994,7 @@ export {
   valenceSchema,
   library,
   mediaOverride,
+  mediaPreviewOverride,
   mediaItem,
   mediaSegment,
   mediaItemJob,

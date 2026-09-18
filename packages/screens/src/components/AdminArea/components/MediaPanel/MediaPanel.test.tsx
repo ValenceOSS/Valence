@@ -28,6 +28,7 @@ const item = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
 const props = {
   media: [],
   onCorrect: vi.fn(),
+  onChooseMoment: vi.fn(),
   onRebuildArtefacts: vi.fn().mockResolvedValue(true),
 };
 
@@ -94,6 +95,18 @@ describe('MediaPanel', () => {
     await user.click(screen.getByRole('menuitem', { name: /Wrong match/ }));
 
     expect(onCorrect).toHaveBeenCalledWith(item());
+  });
+
+  it('asks for the item whose preview moment is to be chosen', async () => {
+    const onChooseMoment = vi.fn();
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item()]} onChooseMoment={onChooseMoment} />);
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'Choose the preview moment' }));
+
+    expect(onChooseMoment).toHaveBeenCalledWith(item());
   });
 
   it('can be sorted by name, so a long list can be read down', async () => {

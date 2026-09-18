@@ -4,12 +4,14 @@ import {
   LibrarySchema,
   MediaPageSchema,
   MediaDetailSchema,
+  PreviewMomentSchema,
 } from '@ValenceContracts/schemas/Library';
 import type {
   Library,
   LibraryKind,
   MediaDetail,
   MediaPage,
+  PreviewMoment,
 } from '@ValenceContracts/schemas/Library';
 
 const LibraryListSchema = z.array(LibrarySchema);
@@ -304,6 +306,69 @@ const rebuildArtefacts = async (mediaId: string): Promise<RebuiltArtefacts | nul
   return body.success ? body.data : null;
 };
 
+const PreviewMomentAnswerSchema = z.union([PreviewMomentSchema, ProblemSchema]);
+
+const ClearedSchema = z.object({ cleared: z.boolean() });
+
+/**
+ * Chooses where an item's hover preview clip is cut from, instead of the automatic position, and
+ * how long it runs where that is chosen too. The server cuts the new clip straight away.
+ *
+ * @param mediaId - The item whose preview is being chosen.
+ * @param moment - Where to start, in seconds, and how long the clip runs where that is chosen.
+ * @returns The moment the server kept, or why it was refused.
+ */
+const setPreviewMoment = async (
+  mediaId: string,
+  moment: { atSeconds: number; durationSeconds?: number | null },
+): Promise<PreviewMoment | { problem: string }> => {
+  const response = await fetch(`/api/media/${mediaId}/preview-moment`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify(moment),
+  }).catch(() => null);
+
+  if (response === null) {
+    return { problem: 'The server could not be reached.' };
+  }
+
+  const answer = PreviewMomentAnswerSchema.safeParse(await response.json().catch(() => null));
+
+  if (response.ok && answer.success && 'atSeconds' in answer.data) {
+    return answer.data;
+  }
+
+  return {
+    problem:
+      answer.success && 'error' in answer.data
+        ? answer.data.error
+        : `The server answered ${response.status.toString()}.`,
+  };
+};
+
+/**
+ * Puts an item's hover preview back to the automatic position, forgetting the moment somebody
+ * chose for it.
+ *
+ * @param mediaId - The item whose preview is going back to automatic.
+ * @returns Whether there was a chosen moment to forget, or null where the server refused.
+ */
+const clearPreviewMoment = async (mediaId: string): Promise<boolean | null> => {
+  const response = await fetch(`/api/media/${mediaId}/preview-moment`, {
+    method: 'DELETE',
+    credentials: 'same-origin',
+  }).catch(() => null);
+
+  if (response === null || !response.ok) {
+    return null;
+  }
+
+  const body = ClearedSchema.safeParse(await response.json().catch(() => null));
+
+  return body.success ? body.data.cleared : null;
+};
+
 /**
  * Asks for a library to be scanned, answering with the job so the page can follow it. Scans by
  * default only what has changed since last time; forcing re-probes every file, which is what to do
@@ -440,4 +505,6 @@ export {
   correctMatch,
   forgetCorrection,
   rebuildArtefacts,
+  setPreviewMoment,
+  clearPreviewMoment,
 };

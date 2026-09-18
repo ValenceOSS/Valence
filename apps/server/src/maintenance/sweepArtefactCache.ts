@@ -1,4 +1,5 @@
 import { previewRequestFor } from '@ValenceServer/library/previewRequestFor';
+import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import type {
@@ -12,6 +13,7 @@ type LiveItem = {
   audioStreams: AudioStream[];
   generation: number;
   defaultAudioLanguage: string | null;
+  previewMoment?: PreviewMoment | null;
 };
 
 type TrickplayGeometry = {

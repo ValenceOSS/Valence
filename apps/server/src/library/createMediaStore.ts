@@ -1,10 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
-import { mediaItem, mediaItemJob, mediaOverride, library, series } from '@ValenceServer/db/Schema';
+import {
+  mediaItem,
+  mediaItemJob,
+  mediaOverride,
+  mediaPreviewOverride,
+  library,
+  series,
+} from '@ValenceServer/db/Schema';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import { describeQuality } from './describeQuality';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import { resolveSeriesKey } from './resolveSeriesKey';
 import type { MediaStore } from './scanLibrary';
@@ -31,6 +39,15 @@ const createMediaStore = (
     updatedBy: string | null;
   }) => Promise<void>;
   removeOverrides: (libraryId: string, paths: string[]) => Promise<number>;
+  savePreviewMoment: (row: {
+    libraryId: string;
+    path: string;
+    atSeconds: number;
+    durationSeconds: number | null;
+    updatedBy: string | null;
+  }) => Promise<void>;
+  readPreviewMoment: (libraryId: string, path: string) => Promise<PreviewMoment | null>;
+  removePreviewMoment: (libraryId: string, path: string) => Promise<boolean>;
 } => ({
   listStored: async (libraryId) => {
     const rows = await db
@@ -266,6 +283,51 @@ const createMediaStore = (
     return removed.length;
   },
 
+  savePreviewMoment: async (row) => {
+    const changeable = {
+      libraryId: row.libraryId,
+      path: row.path,
+      atSeconds: row.atSeconds,
+      durationSeconds: row.durationSeconds,
+      updatedAt: new Date(),
+      updatedBy: row.updatedBy,
+    };
+
+    await db
+      .insert(mediaPreviewOverride)
+      .values({ id: randomUUID(), ...changeable })
+      .onConflictDoUpdate({
+        target: [mediaPreviewOverride.libraryId, mediaPreviewOverride.path],
+        set: changeable,
+      });
+  },
+
+  readPreviewMoment: async (libraryId, path) => {
+    const rows = await db
+      .select({
+        atSeconds: mediaPreviewOverride.atSeconds,
+        durationSeconds: mediaPreviewOverride.durationSeconds,
+      })
+      .from(mediaPreviewOverride)
+      .where(
+        and(eq(mediaPreviewOverride.libraryId, libraryId), eq(mediaPreviewOverride.path, path)),
+      )
+      .limit(1);
+
+    return rows[0] ?? null;
+  },
+
+  removePreviewMoment: async (libraryId, path) => {
+    const removed = await db
+      .delete(mediaPreviewOverride)
+      .where(
+        and(eq(mediaPreviewOverride.libraryId, libraryId), eq(mediaPreviewOverride.path, path)),
+      )
+      .returning({ id: mediaPreviewOverride.id });
+
+    return removed.length > 0;
+  },
+
   clear: async (libraryId) => {
     const removed = await db
       .delete(mediaItem)
@@ -292,11 +354,24 @@ const createMediaStore = (
  */
 const outstandingFor = (db: ValenceDatabase, libraryId: string, kind: string) =>
   db
-    .select({ id: mediaItem.id, path: mediaItem.path, audioStreams: mediaItem.audioStreams })
+    .select({
+      id: mediaItem.id,
+      path: mediaItem.path,
+      audioStreams: mediaItem.audioStreams,
+      atSeconds: mediaPreviewOverride.atSeconds,
+      clipSeconds: mediaPreviewOverride.durationSeconds,
+    })
     .from(mediaItem)
     .leftJoin(
       mediaItemJob,
       and(eq(mediaItemJob.mediaItemId, mediaItem.id), eq(mediaItemJob.kind, kind)),
+    )
+    .leftJoin(
+      mediaPreviewOverride,
+      and(
+        eq(mediaPreviewOverride.libraryId, mediaItem.libraryId),
+        eq(mediaPreviewOverride.path, mediaItem.path),
+      ),
     )
     .where(
       and(
@@ -319,13 +394,19 @@ const listOutstandingFor = async (
   db: ValenceDatabase,
   libraryId: string,
   kind: string,
-): Promise<{ id: string; path: string; audioStreams: AudioStream[] }[]> => {
+): Promise<
+  { id: string; path: string; audioStreams: AudioStream[]; previewMoment: PreviewMoment | null }[]
+> => {
   const rows = await outstandingFor(db, libraryId, kind);
 
   return rows.map((row) => ({
     id: row.id,
     path: row.path,
     audioStreams: z.array(AudioStreamSchema).parse(row.audioStreams),
+    previewMoment:
+      row.atSeconds === null
+        ? null
+        : { atSeconds: row.atSeconds, durationSeconds: row.clipSeconds },
   }));
 };
 
@@ -378,10 +459,29 @@ const clearJobCompletions = async (
   );
 };
 
+/**
+ * Forgets one job's completion for one item alone, putting that item back in front of it while the
+ * rest of the library stays done — what choosing a different preview moment for one film means.
+ *
+ * @param db - The database to write to.
+ * @param mediaItemId - The item to put back in front of the job.
+ * @param kind - The job whose completion to forget.
+ */
+const clearJobCompletion = async (
+  db: ValenceDatabase,
+  mediaItemId: string,
+  kind: string,
+): Promise<void> => {
+  await db
+    .delete(mediaItemJob)
+    .where(and(eq(mediaItemJob.mediaItemId, mediaItemId), eq(mediaItemJob.kind, kind)));
+};
+
 export {
   createMediaStore,
   outstandingFor,
   listOutstandingFor,
   markJobComplete,
   clearJobCompletions,
+  clearJobCompletion,
 };

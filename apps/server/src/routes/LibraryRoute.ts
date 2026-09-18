@@ -5,6 +5,7 @@ import {
   MediaSummarySchema,
   MediaDetailSchema,
   LibraryFacetsSchema,
+  PreviewMomentSchema,
   LIBRARY_KINDS,
 } from '@ValenceContracts/schemas/Library';
 import {
@@ -296,6 +297,60 @@ const forgetCorrectionRoute = createRoute({
   },
 });
 
+const PreviewMoment = PreviewMomentSchema.openapi('PreviewMoment');
+
+const PreviewMomentRequest = z
+  .object({
+    atSeconds: z.number().int().nonnegative(),
+    durationSeconds: z.number().int().positive().nullish(),
+  })
+  .openapi('PreviewMomentRequest');
+
+const PreviewMomentCleared = z.object({ cleared: z.boolean() }).openapi('PreviewMomentCleared');
+
+const setPreviewMomentRoute = createRoute({
+  method: 'put',
+  path: '/api/media/{id}/preview-moment',
+  tags: ['Library'],
+  summary: 'Choose where an item’s hover preview is cut from, and cut it again',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: PreviewMomentRequest } } },
+  },
+  responses: {
+    200: {
+      description: 'The moment now in force',
+      content: { 'application/json': { schema: PreviewMoment } },
+    },
+    400: {
+      description: 'The moment lies past the end of the file',
+      content: { 'application/json': { schema: NotFound } },
+    },
+    404: {
+      description: 'No such item',
+      content: { 'application/json': { schema: NotFound } },
+    },
+  },
+});
+
+const clearPreviewMomentRoute = createRoute({
+  method: 'delete',
+  path: '/api/media/{id}/preview-moment',
+  tags: ['Library'],
+  summary: 'Go back to the automatic preview moment, and cut the clip again',
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'Whether there was a chosen moment to forget',
+      content: { 'application/json': { schema: PreviewMomentCleared } },
+    },
+    404: {
+      description: 'No such item',
+      content: { 'application/json': { schema: NotFound } },
+    },
+  },
+});
+
 const runningScansRoute = createRoute({
   method: 'get',
   path: '/api/libraries/scans',
@@ -476,5 +531,7 @@ export {
   correctMatchRoute,
   forgetCorrectionRoute,
   rebuildArtefactsRoute,
+  setPreviewMomentRoute,
+  clearPreviewMomentRoute,
   regeneratePreviewsRoute,
 };

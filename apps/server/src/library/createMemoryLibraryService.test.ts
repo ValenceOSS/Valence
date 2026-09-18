@@ -280,6 +280,47 @@ describe('asking a library that is not held to do something', () => {
   it('points at no artwork for an item it does not hold', async () => {
     await expect(empty.readArtworkUrl('nothing', 'poster')).resolves.toBeNull();
   });
+
+  it('has nowhere to cut a preview from for an item it does not hold', async () => {
+    await expect(
+      empty.setPreviewMoment('nothing', { atSeconds: 90, durationSeconds: null }, null),
+    ).resolves.toEqual({ kind: 'absent' });
+    await expect(empty.clearPreviewMoment('nothing')).resolves.toBeNull();
+  });
+});
+
+describe('choosing where a preview is cut from', () => {
+  it('refuses a moment past the end of the file, saying how long it runs', async () => {
+    const service = createMemoryLibraryService({
+      libraries: [theLibrary],
+      media: [film({ durationSeconds: 7200 })],
+    });
+
+    await expect(
+      service.setPreviewMoment('film-1', { atSeconds: 7200, durationSeconds: null }, null),
+    ).resolves.toEqual({ kind: 'beyondTheEnd', durationSeconds: 7200 });
+  });
+
+  it('keeps the moment and shows it on the item', async () => {
+    const service = createMemoryLibraryService({ libraries: [theLibrary], media: [film()] });
+
+    await expect(
+      service.setPreviewMoment('film-1', { atSeconds: 90, durationSeconds: 12 }, null),
+    ).resolves.toEqual({ kind: 'set', moment: { atSeconds: 90, durationSeconds: 12 } });
+    await expect(service.getMedia('film-1')).resolves.toMatchObject({
+      previewMoment: { atSeconds: 90, durationSeconds: 12 },
+    });
+  });
+
+  it('forgets the moment once, and says so only the first time', async () => {
+    const service = createMemoryLibraryService({ libraries: [theLibrary], media: [film()] });
+
+    await service.setPreviewMoment('film-1', { atSeconds: 90, durationSeconds: null }, null);
+
+    await expect(service.clearPreviewMoment('film-1')).resolves.toEqual({ cleared: true });
+    await expect(service.clearPreviewMoment('film-1')).resolves.toEqual({ cleared: false });
+    await expect(service.getMedia('film-1')).resolves.toMatchObject({ previewMoment: null });
+  });
 });
 
 describe('deleting a library', () => {

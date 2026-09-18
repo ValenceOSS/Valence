@@ -1,5 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
-import { MoreHorizontalIcon, RefreshIcon, Search01Icon } from '@hugeicons/core-free-icons';
+import {
+  ClapperboardIcon,
+  MoreHorizontalIcon,
+  RefreshIcon,
+  Search01Icon,
+} from '@hugeicons/core-free-icons';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -30,13 +35,14 @@ const isSeries = (item: MediaSummary): boolean =>
   item.seriesTitle !== null && item.seriesTitle !== undefined;
 
 /**
- * Everything the libraries hold, searchable, with the two corrections an administrator can make to
- * any of it: saying what a mismatched file really is, and rebuilding the previews and thumbnails
- * made from it.
+ * Everything the libraries hold, searchable, with the corrections an administrator can make to any
+ * of it: saying what a mismatched file really is, choosing the moment its hover preview is cut
+ * from, and rebuilding the previews and thumbnails made from it.
  *
  * @param isUnreachable - Whether the service is not answering.
  * @param media - Everything the libraries hold.
  * @param onCorrect - Called with the item whose match is to be corrected.
+ * @param onChooseMoment - Called with the item whose preview moment is to be chosen.
  * @param onRebuildArtefacts - Called with the item whose previews and thumbnails are to be remade,
  *   answering whether the request was accepted.
  */
@@ -44,6 +50,7 @@ const MediaPanel = ({
   isUnreachable = false,
   media,
   onCorrect,
+  onChooseMoment,
   onRebuildArtefacts,
 }: MediaPanelProps) => {
   const [search, setSearch] = useState('');
@@ -70,9 +77,9 @@ const MediaPanel = ({
     [media, search],
   );
 
-  const live = useRef({ rebuilding, rebuilt, onCorrect, rebuild });
+  const live = useRef({ rebuilding, rebuilt, onCorrect, onChooseMoment, rebuild });
 
-  live.current = { rebuilding, rebuilt, onCorrect, rebuild };
+  live.current = { rebuilding, rebuilt, onCorrect, onChooseMoment, rebuild };
 
   const columns = useMemo<DataTableColumn<MediaSummary>[]>(
     () => [
@@ -153,6 +160,14 @@ const MediaPanel = ({
                       icon: <Icon of={Search01Icon} size={15} />,
                       onChoose: () => {
                         live.current.onCorrect(row.original);
+                      },
+                    },
+                    {
+                      id: 'preview-moment',
+                      label: 'Choose the preview moment',
+                      icon: <Icon of={ClapperboardIcon} size={15} />,
+                      onChoose: () => {
+                        live.current.onChooseMoment(row.original);
                       },
                     },
                   ],

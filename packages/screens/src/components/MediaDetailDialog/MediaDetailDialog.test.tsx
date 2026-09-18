@@ -8,6 +8,7 @@ import type { MediaDetail, MediaSummary } from '@ValenceContracts/schemas/Librar
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import type * as MotionReact from 'motion/react';
+import type * as FetchTrickplay from '@ValenceScreens/playback/fetchTrickplay';
 
 const motion = vi.hoisted(() => ({ isReduced: false }));
 
@@ -28,6 +29,20 @@ const downloadsMock = vi.hoisted(() => vi.fn());
 vi.mock('@ValenceClient/downloads/fetchDownloads', () => ({
   fetchDownloads: downloadsMock,
   fetchHoldings: vi.fn(() => Promise.resolve([])),
+}));
+
+const permissions = vi.hoisted(() => ({ mayOverride: false }));
+
+vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
+  useWhatIMayDo: () => ({
+    may: (permission: string) => permission === 'media.override' && permissions.mayOverride,
+    mayAdminister: false,
+  }),
+}));
+
+vi.mock('@ValenceScreens/playback/fetchTrickplay', async (importOriginal) => ({
+  ...(await importOriginal<typeof FetchTrickplay>()),
+  fetchTrickplay: vi.fn(() => Promise.resolve(null)),
 }));
 
 const preview = vi.hoisted(() => ({
@@ -104,6 +119,41 @@ beforeEach(() => {
 
 afterEach(() => {
   motion.isReduced = false;
+  permissions.mayOverride = false;
+});
+
+describe('choosing where the preview is cut from', () => {
+  it('offers it to somebody allowed to correct media', async () => {
+    permissions.mayOverride = true;
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    expect(
+      await screen.findByRole('button', { name: 'Choose the preview moment' }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps it from every other viewer', async () => {
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await screen.findByRole('heading', { name: 'Arrival' });
+
+    expect(
+      screen.queryByRole('button', { name: 'Choose the preview moment' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('opens the picker for this item', async () => {
+    permissions.mayOverride = true;
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: 'Choose the preview moment' }));
+
+    expect(await screen.findByRole('dialog', { name: 'Choose the preview moment' })).toBeVisible();
+  });
 });
 
 describe('MediaDetailDialog', () => {

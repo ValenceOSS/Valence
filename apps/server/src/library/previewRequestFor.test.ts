@@ -64,4 +64,36 @@ describe('the request that addresses a preview clip', () => {
       previewRequestFor(subject, 0, null, 'high'),
     );
   });
+
+  it('carries a chosen moment, and how long the clip runs from it', () => {
+    const chosen = { ...subject, previewMoment: { atSeconds: 90, durationSeconds: 12 } };
+
+    expect(previewRequestFor(chosen, 0, null, 'high')).toMatchObject({
+      atSeconds: 90,
+      durationSeconds: 12,
+    });
+  });
+
+  it('leaves the clip length to the media service where only the moment was chosen', () => {
+    const chosen = { ...subject, previewMoment: { atSeconds: 90, durationSeconds: null } };
+
+    expect(previewRequestFor(chosen, 0, null, 'high')).toMatchObject({ atSeconds: 90 });
+    expect(previewRequestFor(chosen, 0, null, 'high')).not.toHaveProperty('durationSeconds');
+  });
+
+  it('says nothing about a moment where none was chosen', () => {
+    const automatic = { ...subject, previewMoment: null };
+
+    expect(previewRequestFor(automatic, 0, null, 'high')).not.toHaveProperty('atSeconds');
+    expect(previewRequestFor(subject, 0, null, 'high')).not.toHaveProperty('atSeconds');
+  });
+
+  it('addresses a different clip for a different moment', () => {
+    const early = { ...subject, previewMoment: { atSeconds: 30, durationSeconds: null } };
+    const late = { ...subject, previewMoment: { atSeconds: 300, durationSeconds: null } };
+
+    expect(previewRequestFor(early, 0, null, 'high')).not.toEqual(
+      previewRequestFor(late, 0, null, 'high'),
+    );
+  });
 });

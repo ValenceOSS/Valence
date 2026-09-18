@@ -107,6 +107,11 @@ const MediaMetadataSchema = z.object({
   externalId: z.string().nullish(),
 });
 
+const PreviewMomentSchema = z.object({
+  atSeconds: z.number().int().nonnegative(),
+  durationSeconds: z.number().int().positive().nullable(),
+});
+
 const MediaDetailSchema = MediaItemSchema.extend({
   libraryId: z.string().uuid(),
   addedAt: z.string().datetime(),
@@ -117,6 +122,7 @@ const MediaDetailSchema = MediaItemSchema.extend({
   trailerKey: z.string().nullish(),
   extras: z.array(MediaSummarySchema).optional(),
   versions: z.array(MediaSummarySchema).optional(),
+  previewMoment: PreviewMomentSchema.nullish(),
 });
 
 const MediaPageSchema = z.object({
@@ -141,6 +147,7 @@ export type MediaDetail = z.infer<typeof MediaDetailSchema>;
 export type MediaMetadata = z.infer<typeof MediaMetadataSchema>;
 export type CastMember = z.infer<typeof CastMemberSchema>;
 export type ScanResult = z.infer<typeof ScanResultSchema>;
+export type PreviewMoment = z.infer<typeof PreviewMomentSchema>;
 
 export {
   LIBRARY_KINDS,
@@ -155,6 +162,7 @@ export {
   MediaSummarySchema,
   MediaPageSchema,
   MediaDetailSchema,
+  PreviewMomentSchema,
   MediaMetadataSchema,
   CastMemberSchema,
   ScanResultSchema,

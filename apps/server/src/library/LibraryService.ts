@@ -3,6 +3,7 @@ import type {
   LibraryFacets,
   MediaDetail,
   MediaSummary,
+  PreviewMoment,
 } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { Person } from '@ValenceContracts/schemas/Person';
@@ -60,6 +61,11 @@ type Correction = {
   jobId: string | null;
 };
 
+type PreviewMomentOutcome =
+  | { kind: 'set'; moment: PreviewMoment }
+  | { kind: 'absent' }
+  | { kind: 'beyondTheEnd'; durationSeconds: number };
+
 type LibraryService = ShowService & {
   list: (viewer: Viewer) => Promise<Library[]>;
   create: (input: CreateLibraryInput) => Promise<Library | null>;
@@ -112,6 +118,12 @@ type LibraryService = ShowService & {
   ) => Promise<Correction | null>;
   forgetCorrection: (mediaId: string) => Promise<Correction | null>;
   rebuildArtefacts: (mediaId: string) => Promise<{ preview: boolean; trickplay: boolean } | null>;
+  setPreviewMoment: (
+    mediaId: string,
+    moment: PreviewMoment,
+    by: string | null,
+  ) => Promise<PreviewMomentOutcome>;
+  clearPreviewMoment: (mediaId: string) => Promise<{ cleared: boolean } | null>;
   regeneratePreviews: (libraryId: string) => Promise<{ jobId: string; state: string } | null>;
   remakePreviews: (libraryId: string) => Promise<{ jobId: string; state: string } | null>;
   regenerateTrickplay: (libraryId: string) => Promise<{ jobId: string; state: string } | null>;
@@ -136,6 +148,7 @@ export type {
   CreateLibraryInput,
   LibraryService,
   ListItemsOptions,
+  PreviewMomentOutcome,
   UpdateLibraryInput,
 };
 

@@ -1,4 +1,5 @@
 import { previewRequestFor } from './previewRequestFor';
+import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import type {
@@ -11,6 +12,7 @@ type RebuildSubject = {
   audioStreams: AudioStream[];
   generation: number;
   defaultAudioLanguage: string | null;
+  previewMoment?: PreviewMoment | null;
 };
 
 type TrickplayGeometry = {

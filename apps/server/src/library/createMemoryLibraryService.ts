@@ -1,7 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
-import type { Library, MediaDetail, MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { LibraryService, ListItemsOptions } from './LibraryService';
+import type {
+  Library,
+  MediaDetail,
+  MediaSummary,
+  PreviewMoment,
+} from '@ValenceContracts/schemas/Library';
+import type { LibraryService, ListItemsOptions, PreviewMomentOutcome } from './LibraryService';
 import type { Person } from '@ValenceContracts/schemas/Person';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
@@ -66,6 +71,7 @@ type MemoryState = {
     effect: 'allow' | 'deny';
   }[];
   ageOf?: (mediaId: string) => number | null;
+  previewMoments?: Map<string, PreviewMoment>;
 };
 
 /**
@@ -590,6 +596,7 @@ const createMemoryLibraryService = (
         ? null
         : {
             ...found,
+            previewMoment: state.previewMoments?.get(id) ?? null,
             extras: state.media
               .filter((item) => item.parentId === id && (item.extraKind ?? null) !== null)
               .map(toSummary),
@@ -710,6 +717,33 @@ const createMemoryLibraryService = (
   rebuildArtefacts: (mediaId) =>
     Promise.resolve(
       state.media.some((one) => one.id === mediaId) ? { preview: true, trickplay: true } : null,
+    ),
+
+  setPreviewMoment: (mediaId, moment) => {
+    const item = state.media.find((one) => one.id === mediaId);
+
+    if (item === undefined) {
+      return Promise.resolve({ kind: 'absent' } satisfies PreviewMomentOutcome);
+    }
+
+    if (moment.atSeconds >= item.durationSeconds) {
+      return Promise.resolve({
+        kind: 'beyondTheEnd',
+        durationSeconds: item.durationSeconds,
+      } satisfies PreviewMomentOutcome);
+    }
+
+    state.previewMoments = state.previewMoments ?? new Map<string, PreviewMoment>();
+    state.previewMoments.set(mediaId, moment);
+
+    return Promise.resolve({ kind: 'set', moment } satisfies PreviewMomentOutcome);
+  },
+
+  clearPreviewMoment: (mediaId) =>
+    Promise.resolve(
+      state.media.some((one) => one.id === mediaId)
+        ? { cleared: state.previewMoments?.delete(mediaId) ?? false }
+        : null,
     ),
 
   reset: (libraryId) => {

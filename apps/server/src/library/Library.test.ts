@@ -65,7 +65,7 @@ const episodeOf = ({
     },
   });
 
-const build = (media: MediaDetail[] = []) => {
+const build = (media: MediaDetail[] = [], isAdministrator = true) => {
   const { auth, settings, store } = createMemoryAuth();
   const library = createMemoryLibraryService({
     libraries: [
@@ -100,7 +100,7 @@ const build = (media: MediaDetail[] = []) => {
     playback: createMemoryPlaybackService(),
   });
 
-  return { app: signedInApp(app, { store, permissions, isAdministrator: true }), library };
+  return { app: signedInApp(app, { store, permissions, isAdministrator }), library };
 };
 
 describe('library routes', () => {
@@ -943,6 +943,103 @@ describe('saying what something actually is', () => {
       `${BASE}/api/media/11111111-1111-4111-8111-111111111111/match`,
       { method: 'DELETE' },
     );
+
+    expect(response.status).toBe(404);
+  });
+});
+
+describe('choosing where the hover preview is cut from', () => {
+  const chooseMoment = (
+    app: ReturnType<typeof build>['app'],
+    body: { atSeconds: number; durationSeconds?: number | null },
+    mediaId = MEDIA_ID,
+  ) =>
+    app.request(`${BASE}/api/media/${mediaId}/preview-moment`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+  it('takes a moment and a clip length, and answers with what is now in force', async () => {
+    const { app } = build([detail()]);
+
+    const response = await chooseMoment(app, { atSeconds: 90, durationSeconds: 12 });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ atSeconds: 90, durationSeconds: 12 });
+  });
+
+  it('leaves the clip length to the media service where only the moment was given', async () => {
+    const { app } = build([detail()]);
+
+    const response = await chooseMoment(app, { atSeconds: 90 });
+
+    expect(await response.json()).toEqual({ atSeconds: 90, durationSeconds: null });
+  });
+
+  it('shows the chosen moment on the item from then on', async () => {
+    const { app } = build([detail()]);
+
+    await chooseMoment(app, { atSeconds: 90, durationSeconds: 12 });
+
+    const response = await app.request(`${BASE}/api/media/${MEDIA_ID}`);
+
+    expect(await response.json()).toMatchObject({
+      previewMoment: { atSeconds: 90, durationSeconds: 12 },
+    });
+  });
+
+  it('refuses a moment past the end of the file', async () => {
+    const { app } = build([detail({ durationSeconds: 7200 })]);
+
+    const response = await chooseMoment(app, { atSeconds: 7200 });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('has nowhere to cut from for an item that is not there', async () => {
+    const { app } = build([]);
+
+    const response = await chooseMoment(
+      app,
+      { atSeconds: 90 },
+      '11111111-1111-4111-8111-111111111111',
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('goes back to the automatic moment, and says whether there was one to forget', async () => {
+    const { app } = build([detail()]);
+
+    await chooseMoment(app, { atSeconds: 90 });
+
+    const first = await app.request(`${BASE}/api/media/${MEDIA_ID}/preview-moment`, {
+      method: 'DELETE',
+    });
+    const second = await app.request(`${BASE}/api/media/${MEDIA_ID}/preview-moment`, {
+      method: 'DELETE',
+    });
+
+    expect(await first.json()).toEqual({ cleared: true });
+    expect(await second.json()).toEqual({ cleared: false });
+  });
+
+  it('has nothing to go back to for an item that is not there', async () => {
+    const { app } = build([]);
+
+    const response = await app.request(
+      `${BASE}/api/media/11111111-1111-4111-8111-111111111111/preview-moment`,
+      { method: 'DELETE' },
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('is for somebody allowed to correct media, not for every viewer', async () => {
+    const { app } = build([detail()], false);
+
+    const response = await chooseMoment(app, { atSeconds: 90 });
 
     expect(response.status).toBe(404);
   });

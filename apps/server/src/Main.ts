@@ -46,6 +46,7 @@ import {
   library,
   mediaItem,
   mediaItemJob,
+  mediaPreviewOverride,
   userProfile,
   viewerProfile,
   session,
@@ -1038,15 +1039,28 @@ const jobs = await createJobQueue({
                 audioStreams: mediaItem.audioStreams,
                 generation: library.generation,
                 defaultAudioLanguage: library.defaultAudioLanguage,
+                atSeconds: mediaPreviewOverride.atSeconds,
+                clipSeconds: mediaPreviewOverride.durationSeconds,
               })
               .from(mediaItem)
-              .innerJoin(library, eq(library.id, mediaItem.libraryId));
+              .innerJoin(library, eq(library.id, mediaItem.libraryId))
+              .leftJoin(
+                mediaPreviewOverride,
+                and(
+                  eq(mediaPreviewOverride.libraryId, mediaItem.libraryId),
+                  eq(mediaPreviewOverride.path, mediaItem.path),
+                ),
+              );
 
             return rows.map((row) => ({
               path: row.path,
               audioStreams: z.array(AudioStreamSchema).parse(row.audioStreams),
               generation: row.generation,
               defaultAudioLanguage: row.defaultAudioLanguage,
+              previewMoment:
+                row.atSeconds === null
+                  ? null
+                  : { atSeconds: row.atSeconds, durationSeconds: row.clipSeconds },
             }));
           },
           trickplay: {
@@ -1508,9 +1522,18 @@ const playbackService = createPlaybackService({
           path: mediaItem.path,
           defaultAudioLanguage: library.defaultAudioLanguage,
           generation: library.generation,
+          atSeconds: mediaPreviewOverride.atSeconds,
+          clipSeconds: mediaPreviewOverride.durationSeconds,
         })
         .from(mediaItem)
         .innerJoin(library, eq(library.id, mediaItem.libraryId))
+        .leftJoin(
+          mediaPreviewOverride,
+          and(
+            eq(mediaPreviewOverride.libraryId, mediaItem.libraryId),
+            eq(mediaPreviewOverride.path, mediaItem.path),
+          ),
+        )
         .where(eq(mediaItem.id, mediaId))
         .limit(1);
 
@@ -1523,6 +1546,10 @@ const playbackService = createPlaybackService({
             path: row.path,
             defaultAudioLanguage: row.defaultAudioLanguage,
             generation: row.generation,
+            previewMoment:
+              row.atSeconds === null
+                ? null
+                : { atSeconds: row.atSeconds, durationSeconds: row.clipSeconds },
           };
     },
   },

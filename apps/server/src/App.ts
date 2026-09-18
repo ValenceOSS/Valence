@@ -79,6 +79,8 @@ import {
   correctMatchRoute,
   forgetCorrectionRoute,
   rebuildArtefactsRoute,
+  setPreviewMomentRoute,
+  clearPreviewMomentRoute,
   resetLibraryRoute,
   deleteLibraryRoute,
   regeneratePreviewsRoute,
@@ -1058,6 +1060,46 @@ const createApp = ({
     return rebuilt === null
       ? context.json({ error: 'No such item.' }, 404)
       : context.json(rebuilt, 200);
+  });
+
+  app.openapi(setPreviewMomentRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json({ error: 'That is for administrators.' }, 404);
+    }
+
+    const { atSeconds, durationSeconds } = context.req.valid('json');
+    const outcome = await library.setPreviewMoment(
+      context.req.valid('param').id,
+      { atSeconds, durationSeconds: durationSeconds ?? null },
+      (await readAccount(context.req.raw.headers))?.id ?? null,
+    );
+
+    if (outcome.kind === 'absent') {
+      return context.json({ error: 'No such item.' }, 404);
+    }
+
+    if (outcome.kind === 'beyondTheEnd') {
+      return context.json(
+        {
+          error: `That is past the end — the file runs ${outcome.durationSeconds.toString()} seconds.`,
+        },
+        400,
+      );
+    }
+
+    return context.json(outcome.moment, 200);
+  });
+
+  app.openapi(clearPreviewMomentRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json({ error: 'That is for administrators.' }, 404);
+    }
+
+    const cleared = await library.clearPreviewMoment(context.req.valid('param').id);
+
+    return cleared === null
+      ? context.json({ error: 'No such item.' }, 404)
+      : context.json(cleared, 200);
   });
 
   app.openapi(runningScansRoute, async (context) => {
