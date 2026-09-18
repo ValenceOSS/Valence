@@ -2,10 +2,10 @@ import type { MoodLight } from '@ValenceUI/MoodBackground.types';
 import type { ReactNode } from 'react';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 
-const BROWSE_SECTIONS = ['home', 'shows', 'films', 'read', 'new', 'favourites'] as const;
+const BROWSE_SECTIONS = ['home', 'shows', 'films', 'music', 'read', 'new', 'favourites'] as const;
 
 type ShellSection =
-  'home' | 'shows' | 'films' | 'new' | 'favourites' | 'read' | 'search' | 'account';
+  'home' | 'shows' | 'films' | 'new' | 'favourites' | 'read' | 'music' | 'search' | 'account';
 
 type AppShellProps = {
   section: ShellSection;

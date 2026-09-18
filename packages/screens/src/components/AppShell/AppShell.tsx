@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
   BookOpen01Icon,
+  MusicNote01Icon,
   Cancel01Icon,
   ComputerIcon,
   DiceFaces05Icon,
@@ -103,7 +104,7 @@ const MOTION_ICONS: Record<Motion, ReactNode> = {
   reduced: <Icon of={FlashOffIcon} size={16} />,
 };
 
-const STOCKED_ONLY: ReadonlySet<ShellSection> = new Set(['shows', 'films', 'read']);
+const STOCKED_ONLY: ReadonlySet<ShellSection> = new Set(['shows', 'films', 'read', 'music']);
 
 const SURPRISE_LABELS: Record<LibraryKind, string> = {
   movies: 'A film',
@@ -119,6 +120,7 @@ const SECTION_ICONS: Record<ShellSection, ReactNode> = {
   new: <Icon of={FireIcon} size={18} />,
   favourites: <Icon of={FavouriteIcon} size={18} />,
   read: <Icon of={BookOpen01Icon} size={18} />,
+  music: <Icon of={MusicNote01Icon} size={18} />,
   search: <Icon of={Search01Icon} size={18} />,
   account: <Icon of={UserCircleIcon} size={18} />,
 };
@@ -130,6 +132,7 @@ const ACTIVE_SECTION_ICONS: Record<ShellSection, ReactNode> = {
   new: <Icon of={FireIcon} size={18} isActive />,
   favourites: <Icon of={FavouriteIcon} size={18} isActive />,
   read: <Icon of={BookOpen01Icon} size={18} isActive />,
+  music: <Icon of={MusicNote01Icon} size={18} isActive />,
   search: <Icon of={Search01Icon} size={18} isActive />,
   account: <Icon of={UserCircleIcon} size={18} isActive />,
 };
@@ -141,6 +144,7 @@ const SECTION_GESTURES: Record<ShellSection, IconGesture> = {
   new: 'fill',
   favourites: 'fill',
   read: 'settle',
+  music: 'settle',
   search: 'settle',
   account: 'settle',
 };
@@ -152,6 +156,7 @@ const SECTION_LABELS: Record<ShellSection, string> = {
   new: 'New & Popular',
   favourites: 'Favourites',
   read: 'Books',
+  music: 'Music',
   search: 'Search',
   account: 'Account',
 };

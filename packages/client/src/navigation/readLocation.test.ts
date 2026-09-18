@@ -113,9 +113,22 @@ describe('writeLocation', () => {
       library: null,
       account: null,
       downloads: false,
+      listen: null,
     } as const;
 
     expect(readLocation(`http://valence.local${writeLocation(place)}`)).toEqual(place);
+  });
+
+  it('carries which page of the music section is open', () => {
+    const place = { ...HOME, section: 'music', listen: 'album:abc' } as const;
+
+    expect(writeLocation(place)).toBe('/music?listen=album%3Aabc');
+    expect(readLocation(`http://valence.local${writeLocation(place)}`)).toEqual(place);
+  });
+
+  it('forgets the music page anywhere but the music section', () => {
+    expect(placeIn('/films', { listen: 'album:abc' }).listen).toBeNull();
+    expect(writeLocation({ ...HOME, section: 'films', listen: 'album:abc' })).toBe('/films');
   });
 
   it('still answers the address it used to be a page at, so held links keep working', () => {

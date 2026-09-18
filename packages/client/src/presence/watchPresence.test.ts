@@ -95,6 +95,27 @@ describe('watchPresence', () => {
     expect(listener).toHaveBeenCalledWith({ kind: 'resumed' });
   });
 
+  it('passes on a command sent from another of the same person’s devices', () => {
+    const fake = createFakeClient();
+    const listener = vi.fn();
+
+    onPresenceEvent(listener);
+    watchPresence(fake.client);
+    fake.arrive({
+      kind: 'music',
+      command: { kind: 'pause' },
+      fromClientId: 'phone',
+      fromLabel: 'iPhone',
+    });
+
+    expect(listener).toHaveBeenCalledWith({
+      kind: 'music',
+      command: { kind: 'pause' },
+      fromClientId: 'phone',
+      fromLabel: 'iPhone',
+    });
+  });
+
   it('ignores an event it cannot read, rather than throwing on the connection', () => {
     const fake = createFakeClient();
     const listener = vi.fn();

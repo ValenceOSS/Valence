@@ -44,6 +44,7 @@ import { useSignOut } from '@ValenceScreens/session/useSignOut';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
+import { NowPlayingBar } from '@ValenceScreens/components/NowPlayingBar/NowPlayingBar';
 import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.types';
 import type { Inbox } from '@ValenceClient/notifications/fetchNotifications';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -120,6 +121,9 @@ const ValenceShell = () => {
       : []),
     ...((libraries.data ?? []).some((one) => one.kind === 'books' && one.itemCount > 0)
       ? (['read'] as const)
+      : []),
+    ...((libraries.data ?? []).some((one) => one.kind === 'music' && one.itemCount > 0)
+      ? (['music'] as const)
       : []),
   ];
 
@@ -454,6 +458,8 @@ const ValenceShell = () => {
           <Outlet />
         </motion.div>
       </AnimatePresence>
+
+      <NowPlayingBar />
     </AppShell>
   );
 };

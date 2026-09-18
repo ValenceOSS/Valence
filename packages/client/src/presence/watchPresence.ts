@@ -4,12 +4,19 @@ import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import { readCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 import { emitPresenceEvent } from './presenceEvents';
+import { MusicCommandSchema } from '@ValenceContracts/schemas/MusicRemote';
 
 const PresenceEventSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('stopped'), reason: z.string() }),
   z.object({ kind: z.literal('paused'), reason: z.string() }),
   z.object({ kind: z.literal('resumed') }),
   z.object({ kind: z.literal('message'), text: z.string().min(1) }),
+  z.object({
+    kind: z.literal('music'),
+    command: MusicCommandSchema,
+    fromClientId: z.string(),
+    fromLabel: z.string(),
+  }),
 ]);
 
 /**

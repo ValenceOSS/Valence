@@ -10,6 +10,7 @@ const SECTIONS = [
   'new',
   'favourites',
   'read',
+  'music',
   'search',
   'account',
 ] as const;
@@ -30,6 +31,7 @@ type Place = {
   library: string | null;
   account: string | null;
   downloads: boolean;
+  listen: string | null;
 };
 
 const HOME: Place = {
@@ -46,6 +48,7 @@ const HOME: Place = {
   library: null,
   account: null,
   downloads: false,
+  listen: null,
 };
 
 /**
@@ -85,6 +88,7 @@ const placeIn = (pathname: string, query: Record<string, string>): Place => {
     library: said.library ?? null,
     account: said.account ?? (first === 'account' ? ACCOUNT_OPENS_ON : null),
     downloads: said.downloads === 'open' || first === 'downloads',
+    listen: first === 'music' ? (said.listen ?? null) : null,
   };
 };
 
@@ -163,6 +167,10 @@ const writeLocation = (place: Place): string => {
 
   if (place.downloads) {
     query.set('downloads', 'open');
+  }
+
+  if (place.listen !== null && place.section === 'music') {
+    query.set('listen', place.listen);
   }
 
   const rest = query.toString();

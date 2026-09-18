@@ -20,6 +20,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MoodLight } from '@ValenceUI/MoodBackground.types';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import type { StartOverride } from '@ValenceClient/shell/shell.types';
+import { useMusicRemote } from '@ValenceScreens/music/useMusicRemote';
 import type { SignedInProps } from './SignedIn.types';
 
 const PARTY_NOTICE_LINGERS_MS = 6000;
@@ -162,6 +163,8 @@ const SignedIn = ({ title }: SignedInProps) => {
 
     return watchPresence();
   }, [user]);
+
+  useMusicRemote();
 
   useEffect(() => {
     if (place.playing === null) {

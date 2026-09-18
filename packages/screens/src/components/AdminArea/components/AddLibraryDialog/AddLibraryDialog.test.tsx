@@ -89,10 +89,13 @@ describe('AddLibraryDialog', () => {
     expect(screen.getByRole('button', { name: 'Movies' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('does not offer music, which would scan to nothing for ever', () => {
+  it('offers music, now that a music library is read from its tags', async () => {
+    const actor = userEvent.setup();
     render(<AddLibraryDialog isOpen onClose={vi.fn()} onCreated={vi.fn()} />);
 
-    expect(screen.queryByRole('button', { name: 'Music' })).not.toBeInTheDocument();
+    await actor.click(screen.getByRole('button', { name: 'Music' }));
+
+    expect(screen.getByRole('button', { name: 'Music' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('switches kind on request', async () => {

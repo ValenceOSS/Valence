@@ -13,6 +13,7 @@ import { watchedFraction, FINISHED_WITHIN_SECONDS } from '@ValenceContracts/sche
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
+import { useQuietMusic } from '@ValenceScreens/music/useQuietMusic';
 
 const PROGRESS_EVERY_SECONDS = 5;
 
@@ -20,6 +21,8 @@ const PROGRESS_EVERY_SECONDS = 5;
  * The player, filling the screen, and the watch party that may be watching along with it.
  */
 const WatchPage = () => {
+  useQuietMusic();
+
   const {
     title,
     known,

@@ -1,0 +1,307 @@
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Delete02Icon,
+  Edit02Icon,
+  MoreHorizontalIcon,
+  PlayIcon,
+  PlayListIcon,
+  Share08Icon,
+  ShuffleIcon,
+} from '@hugeicons/core-free-icons';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { Button } from '@ValenceUI/Button';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
+import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+import { Icon } from '@ValenceUI/Icon';
+import { NothingHere } from '@ValenceUI/NothingHere';
+import { Skeleton } from '@ValenceUI/Skeleton';
+import { notify } from '@ValenceUI/notify';
+import { formatDuration } from '@ValenceCore/functions/formatDuration';
+import { MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
+import {
+  dropFromPlaylist,
+  moveInPlaylist,
+  removePlaylist,
+  updatePlaylist,
+} from '@ValenceClient/music/fetchPlaylists';
+import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
+import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
+import { PlaylistDialog } from '@ValenceScreens/components/PlaylistDialog/PlaylistDialog';
+import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
+import { useArtworkTint } from '@ValenceScreens/music/useArtworkTint';
+import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
+import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import type { MusicTrack } from '@ValenceContracts/schemas/Music';
+import type { PlaylistViewProps } from './PlaylistView.types';
+
+/**
+ * A playlist's page: its cover made of what is in it, whose it is, and everything in it in order.
+ *
+ * Somebody else's shared playlist can be played and shuffled but not changed. One's own can be
+ * renamed, shared with the household or made private again, told its order matters, reordered a
+ * song at a time and emptied a song at a time. Anything in it that is not music — a film for a film
+ * night — is listed below the songs, since this player only plays songs.
+ *
+ * @param playlistId - The playlist.
+ */
+const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
+  const cache = useQueryClient();
+  const asked = useQuery(musicQueries.playlist(playlistId));
+  const { open } = useMusicNavigation();
+  const { player } = useMusicPlayer();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const detail = asked.data;
+  const firstCover = detail?.playlist.artworkAlbumIds[0];
+  const tint = useArtworkTint(firstCover === undefined ? null : albumArtworkUrl(firstCover));
+
+  const refresh = () => {
+    void cache.invalidateQueries({ queryKey: musicQueries.playlistsKey });
+  };
+
+  if (asked.isError) {
+    return (
+      <CouldNotRead
+        what="this playlist"
+        isTryingAgain={asked.isFetching}
+        onTryAgain={() => {
+          void asked.refetch();
+        }}
+      />
+    );
+  }
+
+  if (detail === undefined) {
+    return (
+      <div className="flex flex-col gap-4 p-8">
+        <Skeleton label="Reading the playlist" className="size-48 rounded-md" />
+        <Skeleton className="h-12 w-2/3" />
+      </div>
+    );
+  }
+
+  const { playlist, entries } = detail;
+  const songs = entries.flatMap((entry) =>
+    entry.item.track === null ? [] : [{ entry, track: entry.item.track }],
+  );
+  const tracks: MusicTrack[] = songs.map((song) => song.track);
+  const others = entries.filter((entry) => entry.item.track === null);
+  const source = { kind: 'playlist' as const, id: playlist.id, name: playlist.name };
+  const options = { source, isOrdered: playlist.isOrdered };
+
+  return (
+    <article className="flex flex-col">
+      <MusicHeader
+        eyebrow={playlist.isShared ? 'Shared playlist' : 'Playlist'}
+        title={playlist.name}
+        tint={tint}
+        artwork={
+          <PlaylistCover
+            name={playlist.name}
+            albumIds={playlist.artworkAlbumIds}
+            className="w-full"
+          />
+        }
+        details={
+          <>
+            {playlist.description === null ? null : (
+              <span className="w-full pb-1 text-text">{playlist.description}</span>
+            )}
+            <span className="font-semibold text-text">{playlist.owner.name}</span>
+            <span>
+              · {playlist.entryCount === 1 ? '1 thing' : `${playlist.entryCount.toString()} things`}
+            </span>
+            <span>· {formatDuration(playlist.durationSeconds)}</span>
+            {playlist.isOrdered ? <span>· In order</span> : null}
+          </>
+        }
+        actions={
+          <>
+            <Button
+              variant="primary"
+              size="lg"
+              isIconOnly
+              isPill
+              label={`Play ${playlist.name}`}
+              className="size-14"
+              disabled={tracks.length === 0}
+              onClick={() => {
+                player.play(tracks, 0, options);
+              }}
+            >
+              <Icon of={PlayIcon} size={24} isActive />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="md"
+              isIconOnly
+              label={`Shuffle ${playlist.name}`}
+              disabled={tracks.length === 0 || playlist.isOrdered}
+              onClick={() => {
+                player.play(tracks, Math.floor(Math.random() * tracks.length), {
+                  ...options,
+                  isShuffled: true,
+                });
+              }}
+            >
+              <Icon of={ShuffleIcon} size={22} />
+            </Button>
+
+            {playlist.isMine ? (
+              <ActionMenu
+                label={`More for ${playlist.name}`}
+                trigger={<Icon of={MoreHorizontalIcon} size={22} />}
+                groups={[
+                  {
+                    items: [
+                      {
+                        id: 'share',
+                        label: playlist.isShared ? 'Stop sharing' : 'Share with the household',
+                        icon: <Icon of={Share08Icon} size={16} />,
+                        onChoose: () => {
+                          void updatePlaylist(playlist.id, { isShared: !playlist.isShared }).then(
+                            (agreed) => {
+                              refresh();
+
+                              if (agreed) {
+                                notify.worked(
+                                  playlist.isShared
+                                    ? `${playlist.name} is yours alone again`
+                                    : `${playlist.name} is shared with the household`,
+                                );
+                              }
+                            },
+                          );
+                        },
+                      },
+                      {
+                        id: 'edit',
+                        label: 'Edit details',
+                        icon: <Icon of={Edit02Icon} size={16} />,
+                        onChoose: () => {
+                          setIsEditing(true);
+                        },
+                      },
+                      {
+                        id: 'delete',
+                        label: 'Delete playlist',
+                        icon: <Icon of={Delete02Icon} size={16} />,
+                        isDestructive: true,
+                        onChoose: () => {
+                          setIsRemoving(true);
+                        },
+                      },
+                    ],
+                  },
+                ]}
+              />
+            ) : null}
+          </>
+        }
+      />
+
+      <div className="flex flex-col gap-8 px-3 pb-10 sm:px-5">
+        {entries.length === 0 ? (
+          <NothingHere
+            of={PlayListIcon}
+            title="Nothing in this playlist yet"
+            detail="Add songs to it from the menu beside any song."
+          />
+        ) : (
+          <TrackList
+            label={playlist.name}
+            tracks={tracks}
+            showsArtwork
+            onPlay={(index) => {
+              player.play(tracks, index, options);
+            }}
+            {...(playlist.isMine
+              ? {
+                  onRemove: (index: number) => {
+                    const entry = songs[index]?.entry;
+
+                    if (entry !== undefined) {
+                      void dropFromPlaylist(playlist.id, entry.id).then(refresh);
+                    }
+                  },
+                  onMove: (index: number, direction: 'up' | 'down') => {
+                    const entry = songs[index]?.entry;
+                    const after =
+                      direction === 'up'
+                        ? (songs[index - 2]?.entry.id ?? null)
+                        : (songs[index + 1]?.entry.id ?? null);
+
+                    if (entry !== undefined) {
+                      void moveInPlaylist(playlist.id, entry.id, after).then(refresh);
+                    }
+                  },
+                }
+              : {})}
+          />
+        )}
+
+        {others.length === 0 ? null : (
+          <section aria-label="Also in this playlist" className="flex flex-col gap-2">
+            <h2 className="px-2 text-sm font-semibold uppercase tracking-[0.12em] text-text-muted">
+              Also in this playlist
+            </h2>
+            <ul className="flex flex-col">
+              {others.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm"
+                >
+                  <span className="truncate text-text">{entry.item.title}</span>
+                  <span className="shrink-0 text-text-muted">
+                    {MEDIA_KIND_LABELS[entry.item.kind]}
+                    {entry.item.subtitle === null ? '' : ` · ${entry.item.subtitle}`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+
+      {playlist.isMine ? (
+        <>
+          <PlaylistDialog
+            isOpen={isEditing}
+            playlist={playlist}
+            onClose={() => {
+              setIsEditing(false);
+            }}
+          />
+          <ConfirmDialog
+            isOpen={isRemoving}
+            title={`Delete ${playlist.name}?`}
+            detail="The songs stay in the library. Only the playlist goes, for everybody it was shared with."
+            confirmLabel="Delete"
+            isDestructive
+            onClose={() => {
+              setIsRemoving(false);
+            }}
+            onConfirm={() => {
+              void removePlaylist(playlist.id).then((removed) => {
+                setIsRemoving(false);
+                refresh();
+
+                if (removed) {
+                  open({ kind: 'home' });
+                }
+              });
+            }}
+          />
+        </>
+      ) : null}
+    </article>
+  );
+};
+
+PlaylistView.displayName = 'PlaylistView';
+
+export { PlaylistView };
