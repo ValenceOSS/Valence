@@ -256,6 +256,20 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'isDerived',
   },
   {
+    table: 'favourite_artist',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
+  {
+    table: 'playlist',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'isShared',
+  },
+  {
     table: 'media_item',
     column: 'libraryId',
     owner: 'library',
@@ -264,6 +278,20 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
   },
   {
     table: 'series',
+    column: 'libraryId',
+    owner: 'library',
+    fate: 'goesWithIt',
+    rule: 'meansNothingWithoutIt',
+  },
+  {
+    table: 'music_artist',
+    column: 'libraryId',
+    owner: 'library',
+    fate: 'goesWithIt',
+    rule: 'meansNothingWithoutIt',
+  },
+  {
+    table: 'music_album',
     column: 'libraryId',
     owner: 'library',
     fate: 'goesWithIt',
