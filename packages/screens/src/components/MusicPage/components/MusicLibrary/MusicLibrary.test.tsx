@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -82,6 +82,15 @@ describe('MusicLibrary', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Albums' }));
 
     expect(screen.getByRole('button', { name: /Sunday morning/ })).toBeInTheDocument();
+  });
+
+  it('opens what can be done to an entry where it is right-clicked', async () => {
+    renderInAnAddress(<MusicLibrary />);
+
+    fireEvent.contextMenu(await screen.findByRole('button', { name: /Liked Songs/ }));
+
+    expect(await screen.findByRole('menuitem', { name: 'Play' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Add to queue' })).toBeInTheDocument();
   });
 
   it('narrows the list by name', async () => {

@@ -3,6 +3,7 @@ import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
@@ -68,6 +69,7 @@ const PlaylistShelf = ({
             onOpen={() => {
               open({ kind: 'playlist', id: playlist.id });
             }}
+            menu={musicMenuFor({ kind: 'playlist', id: playlist.id }, playlist.name, player, open)}
             onPlay={() => {
               void fetchPlaylist(playlist.id).then((read) => {
                 const tracks = read.entries.flatMap((entry) =>

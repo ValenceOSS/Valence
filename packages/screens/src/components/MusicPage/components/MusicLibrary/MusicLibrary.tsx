@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Add01Icon, FavouriteIcon, Search01Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
+import { ContextMenu } from '@ValenceUI/ContextMenu';
 import { Icon } from '@ValenceUI/Icon';
 import { TextField } from '@ValenceUI/TextField';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
@@ -13,7 +14,9 @@ import { pictureOf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
 import { PlaylistDialog } from '@ValenceScreens/components/PlaylistDialog/PlaylistDialog';
+import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
+import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import type { ReactNode } from 'react';
 import type { MusicView } from '@ValenceScreens/music/musicView';
 
@@ -51,6 +54,7 @@ const isSameView = (left: MusicView, right: MusicView): boolean =>
  */
 const MusicLibrary = () => {
   const { view, open } = useMusicNavigation();
+  const { player } = useMusicPlayer();
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
   const [shelf, setShelf] = useState<Shelf | null>(null);
   const [filter, setFilter] = useState('');
@@ -204,34 +208,39 @@ const MusicLibrary = () => {
 
             return (
               <li key={entry.key} data-highlight>
-                <Button
-                  variant="bare"
-                  size="none"
-                  hasTooltip={false}
-                  aria-current={isHere ? 'page' : undefined}
-                  className={cn(
-                    'flex w-full items-center gap-3 rounded-md p-1.5 text-left',
-                    isHere ? 'bg-hover' : '',
-                  )}
-                  onClick={() => {
-                    open(entry.view);
-                  }}
+                <ContextMenu
+                  label={entry.name}
+                  groups={musicMenuFor(entry.view, entry.name, player, open)}
                 >
-                  {entry.artwork}
-                  <span className="flex min-w-0 flex-col">
-                    <span
-                      className={cn(
-                        'truncate text-[0.9375rem] font-medium',
-                        isHere ? 'font-semibold text-text' : 'text-text',
-                      )}
-                    >
-                      {entry.name}
+                  <Button
+                    variant="bare"
+                    size="none"
+                    hasTooltip={false}
+                    aria-current={isHere ? 'page' : undefined}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-md p-1.5 text-left',
+                      isHere ? 'bg-hover' : '',
+                    )}
+                    onClick={() => {
+                      open(entry.view);
+                    }}
+                  >
+                    {entry.artwork}
+                    <span className="flex min-w-0 flex-col">
+                      <span
+                        className={cn(
+                          'truncate text-[0.9375rem] font-medium',
+                          isHere ? 'font-semibold text-text' : 'text-text',
+                        )}
+                      >
+                        {entry.name}
+                      </span>
+                      <span className="truncate text-[0.8125rem] text-text-muted">
+                        {entry.detail}
+                      </span>
                     </span>
-                    <span className="truncate text-[0.8125rem] text-text-muted">
-                      {entry.detail}
-                    </span>
-                  </span>
-                </Button>
+                  </Button>
+                </ContextMenu>
               </li>
             );
           })}

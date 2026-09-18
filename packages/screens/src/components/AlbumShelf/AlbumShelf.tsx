@@ -3,6 +3,7 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
@@ -59,6 +60,7 @@ const AlbumShelf = ({
             onOpen={() => {
               open({ kind: 'album', id: album.id });
             }}
+            menu={musicMenuFor({ kind: 'album', id: album.id }, album.title, player, open)}
             onPlay={() => {
               void fetchAlbum(album.id).then((read) => {
                 player.play(read.tracks, 0, {
