@@ -275,6 +275,36 @@ fn seeks_forward(container: crate::media::Container) -> bool {
     )
 }
 
+/// How long a viewer is made to wait while a source's keyframes are read.
+///
+/// Reading them demuxes every video packet in the file, which is seconds for an
+/// ordinary film and minutes for a large one — a 2160p AV1 remux of two and
+/// three quarter hours is sixteen gigabytes of sequential read. Nothing bounded
+/// it, so a viewer waited on a scan that had no reason to finish before they
+/// gave up, and giving up cancelled the request and killed the scan: the next
+/// attempt started from nothing and the film never played at all. It was silent
+/// too, because a cancelled scan never fails and so never says anything.
+///
+/// Comfortably longer than an ordinary source takes and comfortably shorter
+/// than a person will wait.
+const KEYFRAME_DEADLINE: std::time::Duration = std::time::Duration::from_secs(10);
+
+/// Whether a source whose keyframes are not known may still be copied.
+///
+/// It may not. Copying cuts where the source already has a keyframe, so a
+/// segment laid down anywhere else opens on a frame no decoder can start from.
+/// Encoding puts a keyframe on every boundary and needs no scan to do it, which
+/// is slower and plays.
+///
+/// A source whose scan merely *failed* is treated differently and copied on
+/// equal lengths, because that answer predates this and the sources it covers
+/// are the ones ffprobe cannot read at all rather than the ones it cannot read
+/// quickly.
+#[must_use]
+const fn may_copy_without_keyframes() -> bool {
+    false
+}
+
 /// Works out where every segment of a plan begins and ends.
 ///
 /// Encoded video cuts where Valence tells it to. Copied video cuts where the
@@ -308,7 +338,25 @@ async fn compute_boundaries(ffprobe: &str, spec: &SessionSpec) -> Boundaries {
         return equal(true);
     }
 
-    match read_keyframes(ffprobe, path, probe.duration_seconds).await {
+    let answered = tokio::time::timeout(
+        KEYFRAME_DEADLINE,
+        read_keyframes(ffprobe, path, probe.duration_seconds),
+    )
+    .await;
+
+    let Ok(read) = answered else {
+        tracing::warn!(
+            target: "transcode",
+            session_id = %spec.session_id(),
+            "gave up reading the keyframes of {} after {}s, so it is encoded rather than copied",
+            spec.input_path,
+            KEYFRAME_DEADLINE.as_secs(),
+        );
+
+        return equal(may_copy_without_keyframes());
+    };
+
+    match read {
         Ok(keyframes) => {
             let cut_seconds = cut_interval(&keyframes, wanted);
             let unsafe_cuts = keyframes.cuts.iter().filter(|cut| !cut.is_safe()).count();
@@ -441,8 +489,8 @@ pub async fn ensure_boundaries(ffprobe: &str, directory: &Path, spec: &SessionSp
 #[cfg(test)]
 mod tests {
     use super::{
-        can_copy_segments, equal_lengths, offered_ceiling, Boundaries, LAYOUT,
-        OFFERED_SEGMENT_BYTES,
+        can_copy_segments, equal_lengths, may_copy_without_keyframes, offered_ceiling, Boundaries,
+        KEYFRAME_DEADLINE, LAYOUT, OFFERED_SEGMENT_BYTES,
     };
     use crate::keyframes::{Cut, Keyframes};
 
@@ -607,5 +655,21 @@ mod tests {
         let total: f64 = equal_lengths(296.045_996, 4).iter().sum();
 
         assert!((total - 296.045_996).abs() < 1e-9, "total was {total}");
+    }
+
+    /// A scan that never answers used to be indistinguishable from one still
+    /// working, and a viewer waited on it until they gave up. Giving up killed
+    /// it, so the film never played at all and nothing was ever logged.
+    #[test]
+    fn waits_less_for_keyframes_than_a_person_will() {
+        assert!(KEYFRAME_DEADLINE <= std::time::Duration::from_secs(15));
+        assert!(KEYFRAME_DEADLINE >= std::time::Duration::from_secs(5));
+    }
+
+    /// Copying cuts where the source already has a keyframe. Not knowing where
+    /// those are is not a licence to guess.
+    #[test]
+    fn refuses_to_copy_a_source_whose_keyframes_it_never_learned() {
+        assert!(!may_copy_without_keyframes());
     }
 }
