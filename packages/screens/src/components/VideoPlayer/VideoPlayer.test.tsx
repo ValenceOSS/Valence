@@ -1471,6 +1471,64 @@ describe('VideoPlayer', () => {
     expect(element).toHaveProperty('currentTime', 0);
   });
 
+  it('keeps the controls up after the leave a finger always fires on its way off', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+
+      const element = await screen.findByLabelText('Arrival');
+
+      fireEvent.play(element);
+
+      act(() => {
+        vi.advanceTimersByTime(4000);
+      });
+
+      const stage = element.parentElement;
+
+      expect(stage?.className).toContain('cursor-none');
+
+      if (stage !== null) {
+        stage.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 500);
+
+        fireEvent.pointerUp(stage, { clientX: 500, clientY: 250, pointerType: 'touch' });
+
+        fireEvent.pointerLeave(stage.parentElement ?? stage, { pointerType: 'touch' });
+      }
+
+      expect(stage?.className).toContain('cursor-default');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('still lets the controls go when a mouse genuinely leaves the picture', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+
+      const element = await screen.findByLabelText('Arrival');
+
+      fireEvent.play(element);
+
+      const stage = element.parentElement;
+
+      if (stage !== null) {
+        fireEvent.pointerMove(stage.parentElement ?? stage, { clientX: 10, clientY: 10 });
+
+        expect(stage.className).toContain('cursor-default');
+
+        fireEvent.pointerLeave(stage.parentElement ?? stage, { pointerType: 'mouse' });
+      }
+
+      expect(stage?.className).toContain('cursor-none');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('brings the controls back on a tap, which no pointer movement ever reports', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 

@@ -51,10 +51,10 @@ const MediaCard = ({
     <motion.button
       type="button"
       onClick={onSelect}
-      {...(prefersReducedMotion === true || isStill || !canHover
+      {...(prefersReducedMotion === true || isStill
         ? {}
         : {
-            whileHover: { y: -6 },
+            ...(canHover ? { whileHover: { y: -6 } } : {}),
             whileTap: { scale: 0.985 },
           })}
       transition={revealTransition(prefersReducedMotion)}
