@@ -12,6 +12,7 @@ type SliderProps = {
   valueLabel?: (value: number) => string;
   tone?: SliderTone;
   isDisabled?: boolean;
+  revealsThumb?: boolean;
   className?: string;
 };
 

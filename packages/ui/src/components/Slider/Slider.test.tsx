@@ -338,4 +338,21 @@ describe('the preview that follows the pointer', () => {
       'data-disabled',
     );
   });
+
+  it('keeps its handle out of sight until the track is pointed at, where asked', () => {
+    render(
+      <Slider
+        label="Where the song is"
+        value={10}
+        max={100}
+        revealsThumb
+        onValueChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('slider', { name: 'Where the song is' })).toHaveClass(
+      'hover-hover:opacity-0',
+      'hover-hover:group-hover/slider:opacity-100',
+    );
+  });
 });

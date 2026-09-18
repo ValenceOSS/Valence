@@ -41,6 +41,9 @@ const FILL_CLASSES: Record<SliderTone, string> = {
  * @param tone - Whether it sits on the page, over video, or on a pane of glass whose colour is the
  *   page's own, where the page's raised surface would not show.
  * @param isDisabled - Whether it can be moved at all, for a value somebody else is in charge of.
+ * @param revealsThumb - Whether the handle stays out of sight until a pointer is over the track, for a
+ *   bar that should read as a line of progress until somebody reaches for it. It stays while being
+ *   dragged or focused, and is always there on a touch screen, where nothing hovers.
  * @param className - Extra classes for the caller's own layout.
  */
 const Slider = ({
@@ -53,6 +56,7 @@ const Slider = ({
   valueLabel,
   tone = 'default',
   isDisabled = false,
+  revealsThumb = false,
   className,
 }: SliderProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -116,8 +120,11 @@ const Slider = ({
       }}
       className={cn(
         'block size-3.5 w-8 rounded-full shadow outline-none select-none',
-        'transition-transform duration-[var(--duration-instant)] ease-[var(--ease-out)]',
+        'transition-[transform,opacity] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
         'motion-reduce:transition-none hover-hover:hover:scale-110 focus-visible:ring-[3px] focus-visible:ring-ring',
+        revealsThumb && !isDragging
+          ? 'hover-hover:scale-75 hover-hover:opacity-0 hover-hover:group-hover/slider:scale-100 hover-hover:group-hover/slider:opacity-100 focus-visible:scale-100 focus-visible:opacity-100'
+          : '',
         FILL_CLASSES[tone],
       )}
     />
@@ -156,7 +163,7 @@ const Slider = ({
         step={step}
         disabled={isDisabled || max <= 0}
         data-slot="slider"
-        className="flex w-full touch-none items-center py-2 select-none data-[disabled]:opacity-50"
+        className="group/slider flex w-full touch-none items-center py-2 select-none data-[disabled]:opacity-50"
         onValueChange={(next) => {
           onValueChange(next[0] ?? 0);
         }}
