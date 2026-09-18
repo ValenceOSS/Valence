@@ -11,6 +11,7 @@ type SliderProps = {
   renderPreview?: (value: number) => ReactNode;
   valueLabel?: (value: number) => string;
   tone?: SliderTone;
+  isDisabled?: boolean;
   className?: string;
 };
 

@@ -40,6 +40,7 @@ const FILL_CLASSES: Record<SliderTone, string> = {
  *   half a second after the handle has moved is describing the past.
  * @param tone - Whether it sits on the page, over video, or on a pane of glass whose colour is the
  *   page's own, where the page's raised surface would not show.
+ * @param isDisabled - Whether it can be moved at all, for a value somebody else is in charge of.
  * @param className - Extra classes for the caller's own layout.
  */
 const Slider = ({
@@ -51,6 +52,7 @@ const Slider = ({
   renderPreview,
   valueLabel,
   tone = 'default',
+  isDisabled = false,
   className,
 }: SliderProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -152,9 +154,9 @@ const Slider = ({
         min={0}
         max={max <= 0 ? 1 : max}
         step={step}
-        disabled={max <= 0}
+        disabled={isDisabled || max <= 0}
         data-slot="slider"
-        className="flex w-full touch-none items-center py-2 select-none"
+        className="flex w-full touch-none items-center py-2 select-none data-[disabled]:opacity-50"
         onValueChange={(next) => {
           onValueChange(next[0] ?? 0);
         }}

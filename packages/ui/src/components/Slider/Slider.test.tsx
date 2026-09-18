@@ -328,4 +328,14 @@ describe('the preview that follows the pointer', () => {
 
     expect(slider()).toBeInTheDocument();
   });
+
+  it('cannot be moved while somebody else is in charge of its value', () => {
+    render(
+      <Slider label="Where the song is" value={10} max={100} isDisabled onValueChange={vi.fn()} />,
+    );
+
+    expect(screen.getByRole('slider', { name: 'Where the song is' })).toHaveAttribute(
+      'data-disabled',
+    );
+  });
 });
