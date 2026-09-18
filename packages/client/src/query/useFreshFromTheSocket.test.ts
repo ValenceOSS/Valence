@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createElement } from 'react';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { useFreshFromTheSocket } from './useFreshFromTheSocket';
 import type { RealtimeEvent, RealtimeTopic } from '@ValenceContracts/schemas/Realtime';
 import type { ReactNode } from 'react';
@@ -81,6 +82,17 @@ describe('useFreshFromTheSocket', () => {
     socket.say('media', ANYTHING);
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['library'] });
+  });
+
+  it('throws away the music and the playlists too, so a scan of a music library shows up', () => {
+    const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
+    const socket = aSocket();
+
+    listening(socket);
+    socket.say('media', ANYTHING);
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: musicQueries.key });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: musicQueries.playlistsKey });
   });
 
   it('throws away the inbox, the session and the admin page for their own news', () => {

@@ -976,6 +976,10 @@ const jobs = await createJobQueue({
               for (const item of departed) {
                 await events.publish({ event: 'media.removed', data: named(item) });
               }
+
+              if (result.added + result.updated + result.removed > 0) {
+                realtime.publish('media', { added: result.added }, { kind: 'everyone' });
+              }
             },
           });
         });
