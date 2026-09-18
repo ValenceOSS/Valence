@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LayoutGroup } from 'motion/react';
 import { Outlet } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { FinishOnAnotherDevice } from '@ValenceScreens/components/FinishOnAnotherDevice/FinishOnAnotherDevice';
 import { HouseholdOnboarding } from '@ValenceScreens/components/HouseholdOnboarding/HouseholdOnboarding';
 import { ProfileGate } from '@ValenceScreens/components/ProfileGate/ProfileGate';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
@@ -12,6 +13,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { useWatchParty } from '@ValenceClient/party/useWatchParty';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { householdQueries } from '@ValenceClient/query/householdQueries';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
@@ -29,6 +31,8 @@ const PARTY_NOTICE_LINGERS_MS = 6000;
 const MARK_FLIES_MS = 300;
 
 const MARKS_PLACE = 'valence-mark';
+
+const ASKS_AGAIN_MS = 4000;
 
 /**
  * Everything behind the way in: who is watching, what they have seen, how far through it they are,
@@ -58,7 +62,14 @@ const SignedIn = ({ title }: SignedInProps) => {
     setIsPageReading(isHolding);
   }, []);
 
-  const settingUp = useQuery({ ...householdQueries.onboarding(), enabled: user !== null });
+  const isTelevision = platformInUse().thisClientKind() === 'tv';
+
+  const settingUp = useQuery({
+    ...householdQueries.onboarding(),
+    enabled: user !== null,
+    refetchInterval: (query) =>
+      isTelevision && query.state.data?.isOnboarded === false ? ASKS_AGAIN_MS : false,
+  });
 
   const setUp = settingUp.data ?? null;
 
@@ -309,6 +320,8 @@ const SignedIn = ({ title }: SignedInProps) => {
         <shellContext.Provider value={shell}>
           {unfinished === null ? (
             <Outlet />
+          ) : isTelevision ? (
+            <FinishOnAnotherDevice name={title} address={window.location.origin} />
           ) : (
             <HouseholdOnboarding
               household={unfinished}
@@ -321,8 +334,12 @@ const SignedIn = ({ title }: SignedInProps) => {
       ) : phase !== 'gone' ? null : (
         <ProfileGate
           name={title}
+          isTelevision={isTelevision}
           onSignedIn={() => {
-            go({ section: 'home', search: '', inspecting: null, playing: null });
+            if (!window.location.pathname.startsWith('/device')) {
+              go({ section: 'home', search: '', inspecting: null, playing: null });
+            }
+
             void refresh();
           }}
         />
