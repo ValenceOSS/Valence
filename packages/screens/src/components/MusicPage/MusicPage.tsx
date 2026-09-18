@@ -18,6 +18,7 @@ import { ListeningPartyPanel } from './components/ListeningPartyPanel/ListeningP
 import { LyricsView } from './components/LyricsView/LyricsView';
 import { MusicHome } from './components/MusicHome/MusicHome';
 import { MusicLibrary } from './components/MusicLibrary/MusicLibrary';
+import { MusicVideoDialog } from './components/MusicVideoDialog/MusicVideoDialog';
 import { MusicWash } from './components/MusicWash/MusicWash';
 import { MusicSearchView } from './components/MusicSearchView/MusicSearchView';
 import { PlaylistView } from './components/PlaylistView/PlaylistView';
@@ -192,6 +193,8 @@ const MusicPage = () => {
           )}
         </AnimatePresence>
       </div>
+
+      <MusicVideoDialog />
     </main>
   );
 };

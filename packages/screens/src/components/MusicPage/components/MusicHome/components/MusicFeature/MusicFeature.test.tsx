@@ -1,10 +1,11 @@
-import { screen } from '@testing-library/react';
+import { renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { startQueue } from '@ValenceClient/music/playQueue';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceScreens/testing/aTrack';
+import { setMusicVideo, useMusicVideo } from '@ValenceScreens/music/musicVideo';
 import { MusicFeature } from './MusicFeature';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 
@@ -72,6 +73,24 @@ describe('MusicFeature', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Play Track 2 now' }));
 
     expect(player.jumpTo).toHaveBeenCalledWith(1);
+  });
+
+  it('plays the video of the song playing, pausing the music for it', async () => {
+    const { player } = aFakeMusicPlayer({
+      current: aTrack(1, { videoKey: 'abcdefghijk' }),
+      isPlaying: true,
+    });
+
+    renderInAnAddress(<MusicFeature newest={NEWEST} player={player} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Watch the video' }));
+
+    expect(player.pause).toHaveBeenCalled();
+    expect(renderHook(() => useMusicVideo()).result.current).toEqual({
+      title: 'Track 1',
+      videoKey: 'abcdefghijk',
+    });
+    setMusicVideo(null);
   });
 
   it('draws nothing with nothing to show', () => {

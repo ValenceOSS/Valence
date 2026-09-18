@@ -30,12 +30,14 @@ const OVERVIEW: AdminOverview = {
   ],
   settings: {
     hasCatalogueKey: false,
+    hasAudioDbKey: false,
     trustedOrigins: ['http://localhost:5173'],
     cookieSecure: false,
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    fetchesMusicDetails: false,
     certificationRegion: 'GB',
   },
   transcoder: {
@@ -758,7 +760,7 @@ describe('AdminArea', () => {
 
     await goTo(actor, 'Settings');
     await actor.type(screen.getByLabelText('Catalogue key'), 'a-key');
-    await actor.click(screen.getByRole('button', { name: /Save/ }));
+    await actor.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith('/api/admin/settings', expect.anything());

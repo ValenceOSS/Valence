@@ -10,12 +10,14 @@ import {
   NextIcon,
   PlayListIcon,
   User03Icon,
+  Video01Icon,
 } from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Icon } from '@ValenceUI/Icon';
 import { notify } from '@ValenceUI/notify';
 import { addToPlaylist, createPlaylist } from '@ValenceClient/music/fetchPlaylists';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { setMusicVideo } from '@ValenceScreens/music/musicVideo';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import type { TrackMenuProps } from './TrackMenu.types';
@@ -118,6 +120,21 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
         },
         {
           items: [
+            ...(track.videoKey === null
+              ? []
+              : [
+                  {
+                    id: 'video',
+                    label: 'Watch the video',
+                    icon: <Icon of={Video01Icon} size={16} />,
+                    onChoose: () => {
+                      if (track.videoKey !== null) {
+                        player.pause();
+                        setMusicVideo({ title: track.title, videoKey: track.videoKey });
+                      }
+                    },
+                  },
+                ]),
             {
               id: 'album',
               label: 'Go to album',

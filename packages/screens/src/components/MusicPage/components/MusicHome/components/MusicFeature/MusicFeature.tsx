@@ -1,5 +1,11 @@
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { Album02Icon, Mic01Icon, PauseIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import {
+  Album02Icon,
+  Mic01Icon,
+  PauseIcon,
+  PlayIcon,
+  Video01Icon,
+} from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
@@ -7,6 +13,7 @@ import { albumArtworkUrl, fetchAlbum } from '@ValenceClient/music/fetchMusic';
 import { upcomingIn } from '@ValenceClient/music/playQueue';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
+import { setMusicVideo } from '@ValenceScreens/music/musicVideo';
 import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
@@ -142,6 +149,22 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
                 <Icon of={Album02Icon} size={18} />
                 Open album
               </Button>
+
+              {song === null || song.videoKey === null ? null : (
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => {
+                    if (song.videoKey !== null) {
+                      player.pause();
+                      setMusicVideo({ title: song.title, videoKey: song.videoKey });
+                    }
+                  }}
+                >
+                  <Icon of={Video01Icon} size={18} />
+                  Watch the video
+                </Button>
+              )}
 
               {song?.hasLyrics === true ? (
                 <Button

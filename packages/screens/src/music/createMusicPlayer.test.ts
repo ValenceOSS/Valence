@@ -21,6 +21,7 @@ const track = (n: number, codec = 'flac'): MusicTrack => ({
   sampleRate: 44_100,
   bitrateKbps: 900,
   hasLyrics: false,
+  videoKey: null,
   isFavourite: false,
 });
 

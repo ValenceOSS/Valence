@@ -21,6 +21,14 @@ const saveFetchesCatalogueTrailers = vi.hoisted(() =>
   vi.fn<(fetches: boolean) => Promise<boolean>>(() => Promise.resolve(true)),
 );
 
+const saveFetchesMusicDetails = vi.hoisted(() =>
+  vi.fn<(fetches: boolean) => Promise<boolean>>(() => Promise.resolve(true)),
+);
+
+const saveAudioDbKey = vi.hoisted(() =>
+  vi.fn<(key: string) => Promise<boolean>>(() => Promise.resolve(true)),
+);
+
 const saveSplashscreen = vi.hoisted(() =>
   vi.fn<(file: File) => Promise<{ splashscreen: string } | { problem: string }>>(),
 );
@@ -34,6 +42,8 @@ vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveShowsProfilesBeforeSignIn,
   saveCertificationRegion,
   saveFetchesCatalogueTrailers,
+  saveFetchesMusicDetails,
+  saveAudioDbKey,
   saveSplashscreen,
   removeSplashscreen,
 }));
@@ -42,12 +52,14 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
   users: [{ id: 'usr_1', name: 'Dan', email: 'dan@valence.local', role: 'admin', createdAt: '' }],
   settings: {
     hasCatalogueKey: false,
+    hasAudioDbKey: false,
     cookieSecure: false,
     trustedOrigins: ['http://localhost:8420'],
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    fetchesMusicDetails: false,
     certificationRegion: 'GB',
     splashscreen: null,
     ...overrides,
@@ -616,5 +628,56 @@ describe('whose age certificates to read', () => {
       expect(await screen.findByRole('alert')).toHaveTextContent('could not be removed');
       expect(screen.getByAltText('The picture behind the way in')).toBeInTheDocument();
     });
+  });
+
+  it('looks for music details on the web only once it is turned on', async () => {
+    const onMusicDetailsSaved = vi.fn();
+
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
+        onMusicDetailsSaved={onMusicDetailsSaved}
+        onSplashscreenSaved={vi.fn()}
+      />,
+    );
+
+    const toggle = screen.getByRole('switch', { name: 'Fetch music details from the web' });
+
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+
+    await userEvent.click(toggle);
+
+    expect(saveFetchesMusicDetails).toHaveBeenCalledWith(true);
+    await waitFor(() => {
+      expect(onMusicDetailsSaved).toHaveBeenCalled();
+    });
+  });
+
+  it('saves a TheAudioDB key, and says the free one is used without one', async () => {
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/looked up with the free key/)).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText('TheAudioDB key'), 'my-key');
+    await userEvent.click(screen.getByRole('button', { name: 'Save the TheAudioDB key' }));
+
+    expect(saveAudioDbKey).toHaveBeenCalledWith('my-key');
   });
 });

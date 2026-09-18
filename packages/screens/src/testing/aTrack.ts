@@ -23,6 +23,7 @@ const aTrack = (n: number, overrides: Partial<MusicTrack> = {}): MusicTrack => (
   sampleRate: 44_100,
   bitrateKbps: 1400,
   hasLyrics: false,
+  videoKey: null,
   isFavourite: false,
   ...overrides,
 });

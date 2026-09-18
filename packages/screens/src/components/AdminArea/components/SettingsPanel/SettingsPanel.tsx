@@ -17,6 +17,8 @@ import {
   savePreviewQuality,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
+  saveFetchesMusicDetails,
+  saveAudioDbKey,
   saveSplashscreen,
   removeSplashscreen,
 } from '@ValenceClient/admin/fetchAdmin';
@@ -46,6 +48,7 @@ import { certificationRegions } from '@ValenceScreens/components/AdminArea/certi
  * @param onPreviewQualitySaved - Called once the preview preset has been written.
  * @param onProfileVisibilitySaved - Called once the choice about showing the faces has been written.
  * @param onSplashscreenSaved - Called once the picture behind the way in has been chosen or removed.
+ * @param onMusicDetailsSaved - Called once looking for music details on the web is turned on or off.
  */
 const SettingsPanel = ({
   overview,
@@ -55,6 +58,7 @@ const SettingsPanel = ({
   onCertificationRegionSaved,
   onProfileVisibilitySaved,
   onCatalogueTrailersSaved,
+  onMusicDetailsSaved,
   onSplashscreenSaved,
 }: SettingsPanelProps) => {
   const [catalogueKey, setCatalogueKey] = useState('');
@@ -68,6 +72,9 @@ const SettingsPanel = ({
   const [fetchesTrailers, setFetchesTrailers] = useState(
     overview?.settings.fetchesCatalogueTrailers ?? false,
   );
+  const [audioDbKey, setAudioDbKey] = useState('');
+  const [isSavingAudioDbKey, setIsSavingAudioDbKey] = useState(false);
+  const [fetchesMusic, setFetchesMusic] = useState(overview?.settings.fetchesMusicDetails ?? false);
   const [splashscreen, setSplashscreen] = useState(overview?.settings.splashscreen ?? null);
   const [isChangingSplashscreen, setIsChangingSplashscreen] = useState(false);
   const [splashscreenProblem, setSplashscreenProblem] = useState<string | null>(null);
@@ -307,6 +314,75 @@ const SettingsPanel = ({
               });
             }}
           />
+        </SettingRow>
+
+        <SettingRow
+          title="Fetch music details from the web"
+          description="Looks for what a music library's files left out: album covers on the Cover Art Archive, artists' photographs and music videos on TheAudioDB, and song words on LRCLIB. Each album, artist and song is asked about once, on the next scan, and nothing a file already carries is replaced. Like trailers, it reaches outside this server, so it is off until you say otherwise."
+        >
+          <Switch
+            label="Fetch music details from the web"
+            isLabelHidden
+            isOn={fetchesMusic}
+            onToggle={() => {
+              const next = !fetchesMusic;
+
+              setFetchesMusic(next);
+
+              void saveFetchesMusicDetails(next).then((saved) => {
+                if (saved) {
+                  onMusicDetailsSaved?.();
+
+                  return;
+                }
+
+                setFetchesMusic(!next);
+              });
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title="TheAudioDB key"
+          description={
+            overview?.settings.hasAudioDbKey === true
+              ? 'A key is set. Entering a new one replaces it.'
+              : 'Without one, artists are looked up with the free key, which finds only one music video for each artist.'
+          }
+        >
+          <TextField
+            label="TheAudioDB key"
+            isLabelHidden
+            type="password"
+            value={audioDbKey}
+            onValueChange={setAudioDbKey}
+            placeholder="Paste a key"
+            size="sm"
+            className="w-48 max-w-full"
+          />
+
+          <Button
+            variant="soft"
+            size="sm"
+            label="Save the TheAudioDB key"
+            hasTooltip={false}
+            isLoading={isSavingAudioDbKey}
+            disabled={audioDbKey === ''}
+            onClick={() => {
+              setIsSavingAudioDbKey(true);
+
+              void saveAudioDbKey(audioDbKey).then((saved) => {
+                setIsSavingAudioDbKey(false);
+
+                if (saved) {
+                  setAudioDbKey('');
+                  onMusicDetailsSaved?.();
+                }
+              });
+            }}
+          >
+            Save
+          </Button>
         </SettingRow>
 
         <SettingRow

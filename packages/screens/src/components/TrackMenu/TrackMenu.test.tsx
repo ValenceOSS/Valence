@@ -1,10 +1,18 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceScreens/testing/aTrack';
+import { setMusicVideo, useMusicVideo } from '@ValenceScreens/music/musicVideo';
 import { TrackMenu } from './TrackMenu';
+
+/**
+ * The music video asked for, as the section's one player would read it.
+ *
+ * @returns The video, or nothing.
+ */
+const readVideo = () => renderHook(() => useMusicVideo()).result.current;
 
 const playlists = vi.hoisted(() => ({
   fetchPlaylists: vi.fn(),
@@ -35,6 +43,7 @@ const MINE = {
 };
 
 beforeEach(() => {
+  setMusicVideo(null);
   fake = aFakeMusicPlayer();
   playlists.fetchPlaylists.mockResolvedValue([
     MINE,
@@ -141,5 +150,23 @@ describe('TrackMenu', () => {
 
     expect(onMoveUp).toHaveBeenCalled();
     expect(onMoveDown).toHaveBeenCalled();
+  });
+
+  it('plays a song’s music video, pausing the music for it', async () => {
+    renderInAnAddress(<TrackMenu track={aTrack(1, { videoKey: 'abcdefghijk' })} />);
+
+    await openMenu();
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Watch the video' }));
+
+    expect(fake.player.pause).toHaveBeenCalled();
+    expect(readVideo()).toEqual({ title: 'Track 1', videoKey: 'abcdefghijk' });
+  });
+
+  it('offers no video for a song without one', async () => {
+    renderInAnAddress(<TrackMenu track={aTrack(1)} />);
+
+    await openMenu();
+
+    expect(screen.queryByRole('menuitem', { name: 'Watch the video' })).not.toBeInTheDocument();
   });
 });

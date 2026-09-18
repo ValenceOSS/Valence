@@ -51,11 +51,13 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
   users: [{ id: 'usr_1', name: 'Dan', email: 'dan@valence.local', role: 'admin', createdAt: '' }],
   settings: {
     hasCatalogueKey: true,
+    hasAudioDbKey: false,
     cookieSecure: true,
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    fetchesMusicDetails: false,
     certificationRegion: 'GB',
     trustedOrigins: [],
   },
