@@ -80,6 +80,7 @@ describe('AppShell', () => {
     const { view } = draw({ isFitted: true, dock: <p>Now playing</p> });
 
     expect(view.container.querySelector('main')).toHaveClass('overflow-hidden');
+    expect(view.container.querySelector('.valence-shell')).toHaveClass('overflow-hidden');
     expect(screen.getByText('Now playing').parentElement).toHaveClass('h-0');
   });
 

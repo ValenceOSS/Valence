@@ -33,8 +33,17 @@ const PLAY = [
  * @param onOpen - Opens it.
  * @param onPlay - Plays it, where it can be played from here.
  * @param menu - What can be done to it, from a menu that opens where it is right-clicked.
+ * @param shape - Square for a record, round for a person, which the shadow under it follows.
  */
-const MusicTile = ({ title, detail, artwork, onOpen, onPlay, menu }: MusicTileProps) => {
+const MusicTile = ({
+  title,
+  detail,
+  artwork,
+  onOpen,
+  onPlay,
+  menu,
+  shape = 'square',
+}: MusicTileProps) => {
   const tile = (
     <div className="group/tile relative min-w-0">
       <Button
@@ -44,7 +53,11 @@ const MusicTile = ({ title, detail, artwork, onOpen, onPlay, menu }: MusicTilePr
         className="flex w-full min-w-0 flex-col items-stretch gap-3 rounded-md text-left"
         onClick={onOpen}
       >
-        <span className={`block rounded-md shadow-[var(--shadow-lifted)] ${LIFTS}`}>{artwork}</span>
+        <span
+          className={`block shadow-[var(--shadow-lifted)] ${shape === 'round' ? 'rounded-full' : 'rounded-md'} ${LIFTS}`}
+        >
+          {artwork}
+        </span>
 
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="truncate text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">

@@ -32,6 +32,7 @@ import {
 } from 'motion/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
+import { cn } from '@ValenceUI/cn';
 import { NavBar } from '@ValenceUI/NavBar';
 import { Logo } from '@ValenceUI/Logo';
 import { MoodBackground } from '@ValenceUI/MoodBackground';
@@ -478,7 +479,10 @@ const AppShell = ({
   return (
     <div
       ref={shellRef}
-      className="valence-shell relative min-h-[calc(100vh-var(--valence-window-bar))] text-text"
+      className={cn(
+        'valence-shell relative min-h-[calc(100vh-var(--valence-window-bar))] text-text',
+        isFitted ? 'h-[calc(100vh-var(--valence-window-bar))] overflow-hidden' : '',
+      )}
     >
       <MoodBackground lights={moodLights} film={film} />
 

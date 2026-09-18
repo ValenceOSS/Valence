@@ -49,4 +49,18 @@ describe('MusicTile', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(MusicTile.displayName).toBe('MusicTile');
   });
+
+  it('casts a round shadow under a round picture', () => {
+    const { container } = render(
+      <MusicTile
+        title="Sleep Token"
+        detail="Artist"
+        artwork={<span />}
+        onOpen={vi.fn()}
+        shape="round"
+      />,
+    );
+
+    expect(container.querySelector('.rounded-full')).toBeInTheDocument();
+  });
 });

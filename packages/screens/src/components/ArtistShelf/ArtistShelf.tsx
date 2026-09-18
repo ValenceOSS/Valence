@@ -61,6 +61,7 @@ const ArtistShelf = ({ heading, artists, layout = 'rail', action }: ArtistShelfP
               open({ kind: 'artist', id: artist.id });
             }}
             menu={musicMenuFor({ kind: 'artist', id: artist.id }, artist.name, player, open)}
+            shape="round"
           />
         </RevealItem>
       ))}

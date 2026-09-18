@@ -8,6 +8,7 @@ type MusicTileProps = {
   onOpen: () => void;
   onPlay?: () => void;
   menu?: ActionMenuGroup[];
+  shape?: 'square' | 'round';
 };
 
 export type { MusicTileProps };

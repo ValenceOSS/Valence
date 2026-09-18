@@ -129,10 +129,10 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
 
       <Button
         variant={isImmersive ? 'ghost' : 'glossy'}
-        size="md"
+        size={isImmersive ? 'md' : 'sm'}
         isIconOnly
         label={shown.isPlaying ? 'Pause' : 'Play'}
-        className={cn('relative', isImmersive ? 'size-14' : 'size-10')}
+        className={cn('relative', isImmersive ? 'size-14' : 'size-8')}
         disabled={!mayPlayPause}
         onClick={() => {
           if (isFollowing && !mayJoinIn) {
@@ -168,7 +168,7 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
             ) : (
               <Icon
                 of={shown.isPlaying ? PauseIcon : PlayIcon}
-                size={isImmersive ? 36 : 20}
+                size={isImmersive ? 36 : 18}
                 isActive
               />
             )}
