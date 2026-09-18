@@ -11,6 +11,16 @@ vi.mock('@ValenceScreens/music/theMusicPlayer', () => ({
   theMusicPlayer: () => fake.player,
 }));
 
+const held = vi.hoisted(() => ({ profiles: false }));
+
+vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
+  useWhatIMayDo: () => ({
+    may: (permission: string) => permission === 'account.profiles' && held.profiles,
+    mayAdminister: held.profiles,
+    isLoading: false,
+  }),
+}));
+
 let fake = aFakeMusicPlayer();
 
 const PLAYLIST_ID = '00000000-0000-4000-8000-00000000d0d0';
@@ -72,6 +82,7 @@ const serve = (
 
 beforeEach(() => {
   fake = aFakeMusicPlayer();
+  held.profiles = false;
   serve();
 });
 
@@ -202,6 +213,44 @@ describe('PlaylistView', () => {
     expect(await screen.findByText('No longer in the library')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Remove what is gone from Sunday morning' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('lets whoever manages profiles clear a playlist nobody owns any more', async () => {
+    held.profiles = true;
+    serve(summary({ isMine: false, isShared: true, owner: null }));
+
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'More for Sunday morning' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Delete playlist' }));
+
+    expect(
+      await screen.findByText(/belonged to a profile that has been removed/),
+    ).toBeInTheDocument();
+  });
+
+  it('offers nothing to change on a playlist nobody owns, only to clear it', async () => {
+    held.profiles = true;
+    serve(summary({ isMine: false, isShared: true, owner: null }));
+
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'More for Sunday morning' }));
+
+    expect(await screen.findByRole('menuitem', { name: 'Delete playlist' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Edit details' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Stop sharing' })).not.toBeInTheDocument();
+  });
+
+  it('offers nothing at all on a playlist nobody owns to somebody who does not manage profiles', async () => {
+    serve(summary({ isMine: false, isShared: true, owner: null }));
+
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    expect(await screen.findByText('a removed profile')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'More for Sunday morning' }),
     ).not.toBeInTheDocument();
   });
 

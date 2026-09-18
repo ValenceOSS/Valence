@@ -102,7 +102,7 @@ describe('ProfilePicker', () => {
     expect(screen.getByLabelText('Name')).toHaveValue('');
   });
 
-  it('removes somebody, and says so', async () => {
+  it('removes somebody once it has been agreed to, and says so', async () => {
     const onChanged = vi.fn();
     const actor = userEvent.setup();
 
@@ -111,10 +111,38 @@ describe('ProfilePicker', () => {
     );
 
     await actor.click(screen.getByRole('button', { name: 'Remove Sam' }));
+    await actor.click(await screen.findByRole('button', { name: 'Remove profile' }));
 
     await waitFor(() => {
       expect(onChanged).toHaveBeenCalledOnce();
     });
+  });
+
+  it('says what goes with a profile before anybody agrees to it', async () => {
+    const actor = userEvent.setup();
+
+    renderInAnAddress(
+      <ProfilePicker profiles={HOUSEHOLD} onChoose={vi.fn()} onChanged={vi.fn()} isEditable />,
+    );
+
+    await actor.click(screen.getByRole('button', { name: 'Remove Sam' }));
+
+    expect(await screen.findByText('Remove Sam?')).toBeInTheDocument();
+    expect(screen.getByText(/history, where they had got to, what they liked/)).toBeInTheDocument();
+  });
+
+  it('removes nobody where the asking was thought better of', async () => {
+    const onChanged = vi.fn();
+    const actor = userEvent.setup();
+
+    renderInAnAddress(
+      <ProfilePicker profiles={HOUSEHOLD} onChoose={vi.fn()} onChanged={onChanged} isEditable />,
+    );
+
+    await actor.click(screen.getByRole('button', { name: 'Remove Sam' }));
+    await actor.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    expect(onChanged).not.toHaveBeenCalled();
   });
 
   it('will not remove the last profile, which would leave nowhere to record viewing', () => {

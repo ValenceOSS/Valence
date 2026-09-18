@@ -315,7 +315,7 @@ const LibrariesPanel = ({
 
       <ConfirmDialog
         title={deleting === null ? 'Delete this library?' : `Delete ${deleting.name}?`}
-        detail="Valence forgets this library and everything it knows about what is in it — watch progress, ratings, favourites, previews and thumbnails. The files on disk are not touched. Anything running for it now is stopped."
+        detail="Valence forgets this library and everything it knows about what is in it — watch progress, ratings, favourites, previews and thumbnails. Playlists holding anything from it keep their place and say what they lost. The files on disk are not touched. Anything running for it now is stopped."
         confirmLabel="Delete library"
         isDestructive
         isBusy={isDeleting}

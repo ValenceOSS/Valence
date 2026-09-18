@@ -34,6 +34,7 @@ import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
@@ -66,6 +67,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
   const { player } = useMusicPlayer();
   const [isEditing, setIsEditing] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const { may } = useWhatIMayDo();
   const detail = asked.data;
   const firstCover = detail?.playlist.artworkAlbumIds[0];
   useLightTheMusic(firstCover === undefined ? null : albumArtworkUrl(firstCover));
@@ -104,6 +106,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
     entry.item === null || entry.item.track !== null ? [] : [{ id: entry.id, item: entry.item }],
   );
   const lost = entries.filter((entry) => entry.item === null);
+  const mayClearAbandoned = playlist.owner === null && may('account.profiles');
   const source = { kind: 'playlist' as const, id: playlist.id, name: playlist.name };
   const options = { source, isOrdered: playlist.isOrdered };
 
@@ -167,41 +170,47 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
               <Icon of={ShuffleIcon} size={22} />
             </Button>
 
-            {playlist.isMine ? (
+            {playlist.isMine || mayClearAbandoned ? (
               <ActionMenu
                 label={`More for ${playlist.name}`}
                 trigger={<Icon of={MoreHorizontalIcon} size={22} />}
                 groups={[
                   {
                     items: [
-                      {
-                        id: 'share',
-                        label: playlist.isShared ? 'Stop sharing' : 'Share with the household',
-                        icon: <Icon of={Share08Icon} size={16} />,
-                        onChoose: () => {
-                          void updatePlaylist(playlist.id, { isShared: !playlist.isShared }).then(
-                            (agreed) => {
-                              refresh();
+                      ...(playlist.isMine
+                        ? [
+                            {
+                              id: 'share',
+                              label: playlist.isShared
+                                ? 'Stop sharing'
+                                : 'Share with the household',
+                              icon: <Icon of={Share08Icon} size={16} />,
+                              onChoose: () => {
+                                void updatePlaylist(playlist.id, {
+                                  isShared: !playlist.isShared,
+                                }).then((agreed) => {
+                                  refresh();
 
-                              if (agreed) {
-                                notify.worked(
-                                  playlist.isShared
-                                    ? `${playlist.name} is yours alone again`
-                                    : `${playlist.name} is shared with the household`,
-                                );
-                              }
+                                  if (agreed) {
+                                    notify.worked(
+                                      playlist.isShared
+                                        ? `${playlist.name} is yours alone again`
+                                        : `${playlist.name} is shared with the household`,
+                                    );
+                                  }
+                                });
+                              },
                             },
-                          );
-                        },
-                      },
-                      {
-                        id: 'edit',
-                        label: 'Edit details',
-                        icon: <Icon of={Edit02Icon} size={16} />,
-                        onChoose: () => {
-                          setIsEditing(true);
-                        },
-                      },
+                            {
+                              id: 'edit',
+                              label: 'Edit details',
+                              icon: <Icon of={Edit02Icon} size={16} />,
+                              onChoose: () => {
+                                setIsEditing(true);
+                              },
+                            },
+                          ]
+                        : []),
                       {
                         id: 'delete',
                         label: 'Delete playlist',
@@ -311,35 +320,40 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
       </div>
 
       {playlist.isMine ? (
-        <>
-          <PlaylistDialog
-            isOpen={isEditing}
-            playlist={playlist}
-            onClose={() => {
-              setIsEditing(false);
-            }}
-          />
-          <ConfirmDialog
-            isOpen={isRemoving}
-            title={`Delete ${playlist.name}?`}
-            detail="The songs stay in the library. Only the playlist goes, for everybody it was shared with."
-            confirmLabel="Delete"
-            isDestructive
-            onClose={() => {
-              setIsRemoving(false);
-            }}
-            onConfirm={() => {
-              void removePlaylist(playlist.id).then((removed) => {
-                setIsRemoving(false);
-                refresh();
+        <PlaylistDialog
+          isOpen={isEditing}
+          playlist={playlist}
+          onClose={() => {
+            setIsEditing(false);
+          }}
+        />
+      ) : null}
 
-                if (removed) {
-                  open({ kind: 'home' });
-                }
-              });
-            }}
-          />
-        </>
+      {playlist.isMine || mayClearAbandoned ? (
+        <ConfirmDialog
+          isOpen={isRemoving}
+          title={`Delete ${playlist.name}?`}
+          detail={
+            playlist.owner === null
+              ? 'This belonged to a profile that has been removed. The songs stay in the library. Only the playlist goes, for everybody it was shared with.'
+              : 'The songs stay in the library. Only the playlist goes, for everybody it was shared with.'
+          }
+          confirmLabel="Delete"
+          isDestructive
+          onClose={() => {
+            setIsRemoving(false);
+          }}
+          onConfirm={() => {
+            void removePlaylist(playlist.id).then((removed) => {
+              setIsRemoving(false);
+              refresh();
+
+              if (removed) {
+                open({ kind: 'home' });
+              }
+            });
+          }}
+        />
       ) : null}
     </article>
   );
