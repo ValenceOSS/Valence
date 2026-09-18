@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import sharp from 'sharp';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -15,6 +16,15 @@ import { makeAdministrator } from '@ValenceServer/auth/signUpForTest';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
 const BASE = 'http://localhost:8420';
+
+const aPicture = async (width = 8, height = 8): Promise<Uint8Array> =>
+  new Uint8Array(
+    await sharp({
+      create: { width, height, channels: 3, background: { r: 0, g: 0, b: 0 } },
+    })
+      .png()
+      .toBuffer(),
+  );
 
 const ShowsWhatIamWatchingSchema = z.object({
   profiles: z.array(z.object({ showsWhatIamWatching: z.boolean() })),
@@ -697,8 +707,8 @@ describe('giving a profile a picture of its own', () => {
 
     const response = await context.app.request(`${BASE}/api/profiles/${profileId}/photo`, {
       method: 'PUT',
-      headers: { cookie, origin: BASE, 'content-type': 'image/webp' },
-      body: new Uint8Array([1, 2, 3]),
+      headers: { cookie, origin: BASE, 'content-type': 'image/png' },
+      body: await aPicture(),
     });
 
     expect(response.status).toBe(204);
@@ -709,8 +719,8 @@ describe('giving a profile a picture of its own', () => {
 
     await context.app.request(`${BASE}/api/profiles/${profileId}/photo`, {
       method: 'PUT',
-      headers: { cookie, origin: BASE, 'content-type': 'image/webp' },
-      body: new Uint8Array([1, 2, 3]),
+      headers: { cookie, origin: BASE, 'content-type': 'image/png' },
+      body: await aPicture(),
     });
 
     const response = await context.app.request(`${BASE}/api/profiles/${profileId}/avatar?v=2`, {
@@ -735,6 +745,74 @@ describe('giving a profile a picture of its own', () => {
 
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ error: 'No such profile on this account.' });
+  });
+
+  it('says a file that is not a picture at all is not one', async () => {
+    const { context, cookie, profileId } = await signedInWithAProfile();
+
+    const response = await context.app.request(`${BASE}/api/profiles/${profileId}/photo`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE, 'content-type': 'application/pdf' },
+      body: await aPicture(),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      error: 'A picture has to be a JPEG, PNG, WebP, AVIF or GIF.',
+    });
+  });
+
+  it('says a clip is not a face, rather than that something went wrong', async () => {
+    const { context, cookie, profileId } = await signedInWithAProfile();
+
+    const response = await context.app.request(`${BASE}/api/profiles/${profileId}/photo`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE, 'content-type': 'video/mp4' },
+      body: await aPicture(),
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('says how big a picture may be, when one is bigger', async () => {
+    const { context, cookie, profileId } = await signedInWithAProfile();
+
+    const response = await context.app.request(`${BASE}/api/profiles/${profileId}/photo`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE, 'content-type': 'image/png' },
+      body: new Uint8Array(7 * 1024 * 1024),
+    });
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ error: 'A picture has to be 6 MB or smaller.' });
+  });
+
+  it('says how much detail a picture may hold, when one holds more', async () => {
+    const { context, cookie, profileId } = await signedInWithAProfile();
+
+    const response = await context.app.request(`${BASE}/api/profiles/${profileId}/photo`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE, 'content-type': 'image/png' },
+      body: await aPicture(5000, 10),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      error: 'A picture has to be 4096 by 4096 or smaller.',
+    });
+  });
+
+  it('says a file only claiming to be a picture could not be read as one', async () => {
+    const { context, cookie, profileId } = await signedInWithAProfile();
+
+    const response = await context.app.request(`${BASE}/api/profiles/${profileId}/photo`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE, 'content-type': 'image/png' },
+      body: new TextEncoder().encode('not a picture'),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'That file could not be read as a picture.' });
   });
 
   it('turns away nobody trying to upload a picture', async () => {
