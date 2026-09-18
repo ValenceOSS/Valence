@@ -5,7 +5,7 @@ import { planFfmpegDownload, SUITE } from './planFfmpegDownload';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 
-const VERSION = '8.1.2-5.1';
+const VERSION = '8.1.2-5.2';
 
 describe('planFfmpegDownload', () => {
   it('takes the portable tarball on Apple silicon', () => {
@@ -34,8 +34,18 @@ describe('planFfmpegDownload', () => {
     expect(plan).toMatchObject({ fileName: `valence-ffmpeg_${VERSION}-${SUITE}_arm64.deb` });
   });
 
-  it('says why an Intel Mac has nothing to fetch', () => {
+  it('takes the portable tarball on an Intel Mac too', () => {
     const plan = planFfmpegDownload({ platform: 'darwin', arch: 'x64', version: VERSION });
+
+    expect(plan).toMatchObject({
+      kind: 'tarball',
+      fileName: `valence-ffmpeg_${VERSION}_portable_mac64-gpl.tar.xz`,
+      url: `https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VERSION}/valence-ffmpeg_${VERSION}_portable_mac64-gpl.tar.xz`,
+    });
+  });
+
+  it('says why a Mac that is neither has nothing to fetch', () => {
+    const plan = planFfmpegDownload({ platform: 'darwin', arch: 'ppc', version: VERSION });
 
     expect(plan).toMatchObject({ kind: 'unsupported' });
   });

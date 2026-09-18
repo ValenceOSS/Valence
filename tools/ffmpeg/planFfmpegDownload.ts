@@ -7,6 +7,11 @@ const DEBIAN_ARCHITECTURES: Record<string, string> = {
   arm64: 'arm64',
 };
 
+const MAC_TARGETS: Record<string, string> = {
+  arm64: 'macarm64',
+  x64: 'mac64',
+};
+
 type FfmpegDownload =
   | { kind: 'tarball'; url: string; fileName: string }
   | { kind: 'deb'; url: string; fileName: string }
@@ -25,6 +30,11 @@ type PlanFfmpegDownloadOptions = {
  * The asymmetry is not an oversight: a Mac cannot use a deb at all, and it is the platform that
  * most needs its own build, since VideoToolbox cannot be reached from inside a container.
  *
+ * Both Mac architectures are published. The Intel one is cross-compiled on an Apple silicon runner
+ * and was measured on a 2015 MacBook Pro before being offered — the patched VideoToolbox filters
+ * run on Iris Pro, which is a generation before Intel had HEVC at all and the oldest thing anybody
+ * would reasonably retire into a media server.
+ *
  * @param options - What this machine is, and which version is pinned.
  * @returns Where to fetch the artefact, or the reason there is none to fetch.
  */
@@ -34,18 +44,16 @@ const planFfmpegDownload = ({
   version,
 }: PlanFfmpegDownloadOptions): FfmpegDownload => {
   if (platform === 'darwin') {
-    if (arch !== 'arm64') {
+    const target = MAC_TARGETS[arch];
+
+    if (target === undefined) {
       return {
         kind: 'unsupported',
-        message: [
-          `This is an Intel Mac, and valence-ffmpeg builds Apple silicon only.`,
-          'Every VideoToolbox measurement so far is on Apple silicon and there is no Intel Mac to',
-          'verify against, so no Intel artefact is published rather than one nobody has run.',
-        ].join('\n'),
+        message: `valence-ffmpeg publishes Apple silicon and Intel for macOS, and this machine is ${arch}.`,
       };
     }
 
-    const fileName = `valence-ffmpeg_${version}_portable_macarm64-gpl.tar.xz`;
+    const fileName = `valence-ffmpeg_${version}_portable_${target}-gpl.tar.xz`;
 
     return { kind: 'tarball', url: `${RELEASES}/v${version}/${fileName}`, fileName };
   }

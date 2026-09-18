@@ -210,7 +210,7 @@ jobs:
     container:
       image: debian:bookworm-slim
     env:
-      VALENCE_FFMPEG_VERSION: 8.1.2-5.1
+      VALENCE_FFMPEG_VERSION: 8.1.2-5.2
       VALENCE_FFMPEG_SUITE: bookworm
       VALENCE_FFMPEG: /usr/lib/valence-ffmpeg/ffmpeg
       VALENCE_FFPROBE: /usr/lib/valence-ffmpeg/ffprobe
