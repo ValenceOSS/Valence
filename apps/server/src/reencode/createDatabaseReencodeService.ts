@@ -675,6 +675,25 @@ const createDatabaseReencodeService = ({
       return true;
     },
 
+    frame: async (id, side, seconds, width) => {
+      const rows = await db.select().from(reencodeRequest).where(eq(reencodeRequest.id, id));
+      const row = rows[0];
+
+      if (row === undefined) {
+        return null;
+      }
+
+      const path = side === 'original' ? row.asidePath : row.originalPath;
+
+      if (path === null) {
+        return null;
+      }
+
+      return transcoder
+        .readFrame({ inputPath: path, atSeconds: seconds, width })
+        .catch(() => null);
+    },
+
     renditionsFor: async (mediaId) => {
       const rows = await db
         .select()

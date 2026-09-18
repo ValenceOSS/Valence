@@ -3,6 +3,7 @@ import type {
   ReencodeEstimate,
   ReencodeSettings,
   ReencodeStarted,
+  ReviewSide,
 } from '@ValenceContracts/schemas/Reencode';
 import type { Rendition } from '@ValenceContracts/schemas/Rendition';
 
@@ -18,6 +19,12 @@ type ReencodeService = {
   confirm: (id: string) => Promise<boolean>;
   reject: (id: string) => Promise<boolean>;
   sample: (id: string) => Promise<boolean>;
+  frame: (
+    id: string,
+    side: ReviewSide,
+    seconds: number,
+    width: number,
+  ) => Promise<ArrayBuffer | null>;
   renditionsFor: (mediaId: string) => Promise<Rendition[]>;
   removeRendition: (id: string) => Promise<boolean>;
   work: (

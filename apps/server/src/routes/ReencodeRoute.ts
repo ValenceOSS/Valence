@@ -5,6 +5,7 @@ import {
   ReencodeRequestSchema,
   ReencodeSettingsSchema,
   ReencodeStartedSchema,
+  ReviewSideSchema,
 } from '@ValenceContracts/schemas/Reencode';
 import { RenditionListSchema } from '@ValenceContracts/schemas/Rendition';
 
@@ -148,6 +149,29 @@ const sampleReencodeRoute = createRoute({
   },
 });
 
+const reviewFrameRoute = createRoute({
+  method: 'get',
+  path: '/api/reencodes/{id}/frame',
+  tags: ['Re-encoding'],
+  summary: 'Read one frame of either file, so the two can be compared at the same moment',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    query: z.object({
+      side: ReviewSideSchema.default('encode'),
+      seconds: z.coerce.number().int().nonnegative().default(0),
+      width: z.coerce.number().int().positive().max(3840).default(1280),
+    }),
+  },
+  responses: {
+    200: { description: 'The frame' },
+    ...refused,
+    404: {
+      description: 'No such re-encode, or no frame there',
+      content: { 'application/json': { schema: ReencodeError } },
+    },
+  },
+});
+
 const listRenditionsRoute = createRoute({
   method: 'get',
   path: '/api/media/{mediaId}/renditions',
@@ -190,6 +214,7 @@ export {
   listRenditionsRoute,
   rejectReencodeRoute,
   removeRenditionRoute,
+  reviewFrameRoute,
   sampleReencodeRoute,
   startReencodeRoute,
 };

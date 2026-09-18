@@ -6,6 +6,7 @@ import {
   listRenditionsRoute,
   rejectReencodeRoute,
   removeRenditionRoute,
+  reviewFrameRoute,
   sampleReencodeRoute,
   startReencodeRoute,
 } from '@ValenceServer/routes/ReencodeRoute';
@@ -126,6 +127,25 @@ const registerReencodeRoutes = (
     const done = await reencodes.sample(context.req.valid('param').id);
 
     return done ? context.json({ done }, 202) : context.json(NO_SUCH, 404);
+  });
+
+  app.openapi(reviewFrameRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.reencode'))) {
+      return context.json(MAY_NOT, 403);
+    }
+
+    const { id } = context.req.valid('param');
+    const { side, seconds, width } = context.req.valid('query');
+    const frame = await reencodes.frame(id, side, seconds, width);
+
+    if (frame === null) {
+      return context.json({ error: 'No frame there.' }, 404);
+    }
+
+    return context.body(frame, 200, {
+      'content-type': 'image/jpeg',
+      'cache-control': 'private, max-age=60',
+    });
   });
 
   app.openapi(listRenditionsRoute, async (context) => {

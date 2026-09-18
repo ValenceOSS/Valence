@@ -192,6 +192,11 @@ const createMemoryReencodeService = ({
       return Promise.resolve(true);
     },
 
+    frame: (id) =>
+      Promise.resolve(
+        requests.some((one) => one.id === id) ? new ArrayBuffer(8) : null,
+      ),
+
     renditionsFor: (mediaId) =>
       Promise.resolve(kept.filter((one) => one.mediaItemId === mediaId)),
 
