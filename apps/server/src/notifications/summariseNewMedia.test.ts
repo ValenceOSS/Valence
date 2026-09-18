@@ -7,6 +7,8 @@ const film = (id: string, title: string): AddedItem => ({
   title,
   seriesId: null,
   seriesTitle: null,
+  albumId: null,
+  albumTitle: null,
 });
 
 const episode = (id: string, seriesId: string, seriesTitle: string): AddedItem => ({
@@ -14,6 +16,17 @@ const episode = (id: string, seriesId: string, seriesTitle: string): AddedItem =
   title: `${seriesTitle} episode`,
   seriesId,
   seriesTitle,
+  albumId: null,
+  albumTitle: null,
+});
+
+const song = (id: string, albumId: string, albumTitle: string): AddedItem => ({
+  id,
+  title: `${albumTitle} song`,
+  seriesId: null,
+  seriesTitle: null,
+  albumId,
+  albumTitle,
 });
 
 describe('summariseNewMedia', () => {
@@ -105,8 +118,30 @@ describe('summariseNewMedia', () => {
       title: 'Unnamed episode',
       seriesId: 's1',
       seriesTitle: null,
+      albumId: null,
+      albumTitle: null,
     };
 
     expect(summariseNewMedia([orphan])?.body).toContain('Unnamed episode');
+  });
+
+  it('counts songs as songs and names the album they came on', () => {
+    const summary = summariseNewMedia(
+      Array.from({ length: 15 }, (_, at) => song(`s${at.toString()}`, 'a1', 'Even In Arcadia')),
+    );
+
+    expect(summary).toEqual({
+      title: 'Something new to listen to',
+      body: '15 songs — Even In Arcadia',
+      link: '/music?listen=album:a1',
+    });
+  });
+
+  it('says only that something is new when songs arrive with films', () => {
+    const summary = summariseNewMedia([film('f1', 'Arrival'), song('s1', 'a1', 'Even In Arcadia')]);
+
+    expect(summary?.title).toBe('Something new');
+    expect(summary?.body).toBe('1 film and 1 song — Even In Arcadia and Arrival');
+    expect(summary?.link).toBeNull();
   });
 });

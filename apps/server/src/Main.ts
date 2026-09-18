@@ -64,6 +64,7 @@ import {
   bookChapter,
   musicAlbum,
   musicArtist,
+  musicTrack,
 } from '@ValenceServer/db/Schema';
 import { readEnv } from '@ValenceServer/env/Env';
 import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatabaseSettingsStore';
@@ -1302,8 +1303,12 @@ const jobs = await createJobQueue({
             title: mediaItem.title,
             seriesId: mediaItem.seriesId,
             seriesTitle: mediaItem.seriesTitle,
+            albumId: musicTrack.albumId,
+            albumTitle: musicAlbum.title,
           })
           .from(mediaItem)
+          .leftJoin(musicTrack, eq(musicTrack.mediaItemId, mediaItem.id))
+          .leftJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
           .where(
             and(
               gt(mediaItem.addedAt, since),
