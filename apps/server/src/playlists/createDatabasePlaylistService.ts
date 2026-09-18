@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, asc, desc, eq, gt, inArray, max, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNull, max, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import {
   library,
@@ -96,7 +96,7 @@ const createDatabasePlaylistService = (
         updatedAt: playlist.updatedAt,
       })
       .from(playlist)
-      .innerJoin(viewerProfile, eq(viewerProfile.id, playlist.profileId))
+      .leftJoin(viewerProfile, eq(viewerProfile.id, playlist.profileId))
       .where(and(readable(viewer), condition))
       .orderBy(desc(playlist.updatedAt));
 
@@ -145,6 +145,22 @@ const createDatabasePlaylistService = (
     const tallied = new Map(tallies.map((row) => [row.playlistId, row]));
     const tiled = new Map<string, string[]>();
 
+    const losses = await db
+      .select({ playlistId: playlistEntry.playlistId, lostCount: sql<number>`count(*)::int` })
+      .from(playlistEntry)
+      .where(
+        and(
+          inArray(
+            playlistEntry.playlistId,
+            rows.map((row) => row.id),
+          ),
+          isNull(playlistEntry.mediaItemId),
+        ),
+      )
+      .groupBy(playlistEntry.playlistId);
+
+    const lost = new Map(losses.map((row) => [row.playlistId, row.lostCount]));
+
     for (const tile of tiles) {
       const held = tiled.get(tile.playlistId) ?? [];
 
@@ -159,9 +175,13 @@ const createDatabasePlaylistService = (
       description: row.description,
       isShared: row.isShared,
       isOrdered: row.isOrdered,
-      isMine: row.profileId === profileId,
-      owner: { profileId: row.profileId, name: row.ownerName, colour: row.ownerColour },
+      isMine: row.profileId !== null && row.profileId === profileId,
+      owner:
+        row.profileId === null || row.ownerName === null || row.ownerColour === null
+          ? null
+          : { profileId: row.profileId, name: row.ownerName, colour: row.ownerColour },
       entryCount: tallied.get(row.id)?.entryCount ?? 0,
+      lostCount: lost.get(row.id) ?? 0,
       durationSeconds: tallied.get(row.id)?.durationSeconds ?? 0,
       artworkAlbumIds: tiled.get(row.id) ?? [],
       updatedAt: row.updatedAt.toISOString(),
@@ -179,6 +199,16 @@ const createDatabasePlaylistService = (
       .select({ id: playlist.id })
       .from(playlist)
       .where(and(eq(playlist.id, playlistId), eq(playlist.profileId, profileId)))
+      .limit(1);
+
+    return row !== undefined;
+  };
+
+  const abandoned = async (playlistId: string): Promise<boolean> => {
+    const [row] = await db
+      .select({ id: playlist.id })
+      .from(playlist)
+      .where(and(eq(playlist.id, playlistId), isNull(playlist.profileId)))
       .limit(1);
 
     return row !== undefined;
@@ -271,18 +301,39 @@ const createDatabasePlaylistService = (
           libraryKind: library.kind,
         })
         .from(playlistEntry)
-        .innerJoin(mediaItem, eq(mediaItem.id, playlistEntry.mediaItemId))
-        .innerJoin(library, eq(library.id, mediaItem.libraryId))
-        .where(and(eq(playlistEntry.playlistId, playlistId), entryVisible(viewer)))
+        .leftJoin(mediaItem, eq(mediaItem.id, playlistEntry.mediaItemId))
+        .leftJoin(library, eq(library.id, mediaItem.libraryId))
+        .where(
+          and(
+            eq(playlistEntry.playlistId, playlistId),
+            or(isNull(playlistEntry.mediaItemId), entryVisible(viewer)),
+          ),
+        )
         .orderBy(asc(playlistEntry.position));
 
       const songs = await music.listTracks(
         viewer,
-        rows.filter((row) => row.libraryKind === 'music').map((row) => row.mediaItemId),
+        rows.flatMap((row) =>
+          row.libraryKind === 'music' && row.mediaItemId !== null ? [row.mediaItemId] : [],
+        ),
       );
       const trackOf = new Map(songs.map((track) => [track.id, track]));
 
       const entries: PlaylistEntry[] = rows.map((row) => {
+        if (
+          row.mediaItemId === null ||
+          row.title === null ||
+          row.durationSeconds === null ||
+          row.libraryKind === null
+        ) {
+          return {
+            id: row.id,
+            position: row.position,
+            addedAt: row.addedAt.toISOString(),
+            item: null,
+          };
+        }
+
         const kind = kindOf(row.libraryKind, row.seriesTitle);
         const track = trackOf.get(row.mediaItemId) ?? null;
 
@@ -356,8 +407,11 @@ const createDatabasePlaylistService = (
       return changed ?? null;
     },
 
-    remove: async (viewer, playlistId) => {
-      if (!(await owned(viewer, playlistId))) {
+    remove: async (viewer, playlistId, mayClearAbandoned) => {
+      if (
+        !(await owned(viewer, playlistId)) &&
+        !(mayClearAbandoned && (await abandoned(playlistId)))
+      ) {
         return false;
       }
 

@@ -15,7 +15,7 @@ type PlaylistService = {
     playlistId: string,
     patch: UpdatePlaylist,
   ) => Promise<PlaylistSummary | null>;
-  remove: (viewer: Viewer, playlistId: string) => Promise<boolean>;
+  remove: (viewer: Viewer, playlistId: string, mayClearAbandoned: boolean) => Promise<boolean>;
   add: (
     viewer: Viewer,
     playlistId: string,

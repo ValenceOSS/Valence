@@ -5,6 +5,7 @@ import { and, asc, eq } from 'drizzle-orm';
 import { drawAvatar, isAvatarStyle } from './drawAvatar';
 import { extensionFor, whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
 import { viewerProfile, user } from '@ValenceServer/db/Schema';
+import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlaylistsOf';
 import {
   STILL_WATCHING_DEFAULT,
   StillWatchingSchema,
@@ -253,9 +254,11 @@ const createDatabaseProfileService = (
     remove: async (userId, profileId) => {
       const existing = await listFor(userId);
 
-      if (existing.length <= 1) {
+      if (existing.length <= 1 || !existing.some((one) => one.id === profileId)) {
         return false;
       }
+
+      await dropPrivatePlaylistsOf(db, [profileId]);
 
       const removed = await db
         .delete(viewerProfile)

@@ -4546,7 +4546,7 @@ const createApp = ({
   });
 
   if (music !== undefined) {
-    registerMusicRoutes(app, { viewerOf, music });
+    registerMusicRoutes(app, { viewerOf, music, requires });
   }
 
   app.openapi(findBooksRoute, async (context) => {

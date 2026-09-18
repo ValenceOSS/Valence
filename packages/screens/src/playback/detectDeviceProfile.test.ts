@@ -361,3 +361,37 @@ describe('a build that claims Dolby it cannot decode', () => {
     expect(profile.directPlayProfiles[0]?.videoCodecs).toContain('h264');
   });
 });
+
+describe('what this client will be handed whole', () => {
+  const chromium = (mimeType: string) =>
+    /matroska|webm/.test(mimeType) && /av01|vp09|vp8|opus|vorbis/.test(mimeType);
+
+  it('offers Matroska where the element says it plays what is in it', () => {
+    const profile = build(() => true, { canPlayFile: chromium });
+
+    const matroska = profile.directPlayProfiles.find((one) => one.container === 'mkv');
+
+    expect(matroska?.videoCodecs).toContain('av1');
+    expect(matroska?.audioCodecs).toContain('opus');
+  });
+
+  it('keeps offering mp4, which is what a fragmented stream is delivered in', () => {
+    const profile = build(() => true, { canPlayFile: chromium });
+
+    expect(profile.directPlayProfiles.some((one) => one.container === 'mp4')).toBe(true);
+  });
+
+  it('offers no container to a client that claims none, rather than guessing one', () => {
+    const profile = build(() => true, { canPlayFile: () => false });
+
+    expect(profile.directPlayProfiles.map((one) => one.container)).toEqual(['mp4']);
+  });
+
+  it('leaves out a container whose video plays but whose audio does not', () => {
+    const profile = build(() => true, {
+      canPlayFile: (mimeType) => mimeType.includes('matroska') && mimeType.includes('av01'),
+    });
+
+    expect(profile.directPlayProfiles.map((one) => one.container)).toEqual(['mp4']);
+  });
+});

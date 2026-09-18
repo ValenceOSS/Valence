@@ -503,7 +503,7 @@ const AccountsPanel = () => {
           asking === null
             ? ''
             : asking.kind === 'remove'
-              ? `${asking.account.name} will be removed, along with everything they were watching. This cannot be undone.`
+              ? `${asking.account.name} goes, and so does every profile on the account and everything those profiles were watching. Their API keys and share links are revoked at once, so anything using one stops working. Shared playlists stay, marked as a removed profile's. Nothing leaves the library, and this cannot be undone.`
               : `${asking.account.name} will be signed out and refused entry until you let them back in.`
         }
         confirmLabel={asking?.kind === 'remove' ? 'Delete account' : 'Ban'}

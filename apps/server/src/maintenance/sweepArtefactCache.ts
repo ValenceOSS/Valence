@@ -1,4 +1,5 @@
 import { previewRequestFor } from '@ValenceServer/library/previewRequestFor';
+import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
@@ -89,7 +90,7 @@ const sweepArtefactCache = async ({
       })),
     )
     .catch((error: Error) => {
-      onProblem?.('trickplay', error.message);
+      onProblem?.('trickplay', describeFailure(error));
 
       return nothing;
     });

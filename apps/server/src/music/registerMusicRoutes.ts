@@ -27,12 +27,14 @@ import {
 } from '@ValenceServer/routes/MusicRoute';
 import { renditionFor } from './renditionFor';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { MusicServices } from './MusicServices';
 import type { Listener } from './createMusicDevices';
 
 type MusicRouteOptions = {
   viewerOf: (headers: Headers) => Promise<Viewer | null>;
   music: MusicServices;
+  requires: (headers: Headers, permission: Permission) => Promise<boolean>;
 };
 
 const NOBODY = { error: 'Nobody is signed in.' } as const;
@@ -69,7 +71,10 @@ const listenerOf = (viewer: Viewer | null): Listener | null =>
  * @param app - The application to add the routes to.
  * @param options - How to tell who is asking, and the services music is read through.
  */
-const registerMusicRoutes = (app: OpenAPIHono, { viewerOf, music }: MusicRouteOptions): void => {
+const registerMusicRoutes = (
+  app: OpenAPIHono,
+  { viewerOf, music, requires }: MusicRouteOptions,
+): void => {
   app.openapi(listAlbumsRoute, async (context) => {
     const viewer = await viewerOf(context.req.raw.headers);
 
@@ -408,7 +413,11 @@ const registerMusicRoutes = (app: OpenAPIHono, { viewerOf, music }: MusicRouteOp
       return context.json(NOBODY, 401);
     }
 
-    const removed = await music.playlists.remove(viewer, context.req.valid('param').playlistId);
+    const removed = await music.playlists.remove(
+      viewer,
+      context.req.valid('param').playlistId,
+      await requires(context.req.raw.headers, 'account.profiles'),
+    );
 
     return removed
       ? context.json({ removed: true }, 200)

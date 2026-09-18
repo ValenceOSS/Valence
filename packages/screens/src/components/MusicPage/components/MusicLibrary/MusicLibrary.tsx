@@ -17,6 +17,7 @@ import { PlaylistDialog } from '@ValenceScreens/components/PlaylistDialog/Playli
 import { Equaliser } from '@ValenceScreens/components/Equaliser/Equaliser';
 import { isPlayingFrom } from '@ValenceScreens/music/isPlayingFrom';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
+import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import type { ReactNode } from 'react';
@@ -85,7 +86,7 @@ const MusicLibrary = () => {
         key: `playlist-${playlist.id}`,
         shelf: 'playlists',
         name: playlist.name,
-        detail: `Playlist · ${playlist.owner.name}`,
+        detail: `Playlist · ${nameOfOwner(playlist.owner)}`,
         artwork: (
           <PlaylistCover
             name={playlist.name}

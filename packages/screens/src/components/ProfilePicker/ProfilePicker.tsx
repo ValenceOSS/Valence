@@ -6,6 +6,7 @@ import { Button } from '@ValenceUI/Button';
 import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
 import { removeProfile } from '@ValenceClient/profiles/fetchProfiles';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { ProfileEditor } from './components/ProfileEditor/ProfileEditor';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfilePickerProps } from './ProfilePicker.types';
@@ -28,6 +29,7 @@ const ProfilePicker = ({
   isEditable = false,
 }: ProfilePickerProps) => {
   const [editing, setEditing] = useState<ViewerProfile | 'new' | null>(null);
+  const [removing, setRemoving] = useState<ViewerProfile | null>(null);
   const prefersReducedMotion = useReducedMotionConfig();
 
   return (
@@ -96,7 +98,7 @@ const ProfilePicker = ({
                     variant="ghost"
                     label={`Remove ${profile.name}`}
                     onClick={() => {
-                      void removeProfile(profile.id).then(onChanged);
+                      setRemoving(profile);
                     }}
                     className="bg-surface-raised"
                   >
@@ -127,6 +129,30 @@ const ProfilePicker = ({
           </li>
         )}
       </motion.ul>
+
+      <ConfirmDialog
+        isOpen={removing !== null}
+        title={removing === null ? 'Remove this profile?' : `Remove ${removing.name}?`}
+        detail={
+          removing === null
+            ? ''
+            : `Everything ${removing.name} has watched goes with them — their history, where they had got to, what they liked, how they rated things and what they had hidden. Playlists they shared with the household stay, and their own go. Nothing leaves the library, and this cannot be undone.`
+        }
+        confirmLabel="Remove profile"
+        isDestructive
+        onClose={() => {
+          setRemoving(null);
+        }}
+        onConfirm={() => {
+          const going = removing;
+
+          setRemoving(null);
+
+          if (going !== null) {
+            void removeProfile(going.id).then(onChanged);
+          }
+        }}
+      />
 
       {editing === null ? null : (
         <motion.div

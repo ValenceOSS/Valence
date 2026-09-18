@@ -1,4 +1,5 @@
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
+import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import type { Person } from '@ValenceContracts/schemas/Person';
 
 type MediaFacts = {
@@ -99,7 +100,10 @@ const resolveSeriesShape = async (
         return found;
       }
     } catch (error) {
-      onProblem?.(provider.name, error instanceof Error ? error.message : 'Provider failed.');
+      onProblem?.(
+        provider.name,
+        error instanceof Error ? describeFailure(error) : 'Provider failed.',
+      );
     }
   }
 
@@ -130,7 +134,10 @@ const resolveMetadata = async (
         return found;
       }
     } catch (error) {
-      onProblem?.(provider.name, error instanceof Error ? error.message : 'Provider failed.');
+      onProblem?.(
+        provider.name,
+        error instanceof Error ? describeFailure(error) : 'Provider failed.',
+      );
     }
   }
 

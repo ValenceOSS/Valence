@@ -1,6 +1,6 @@
 {
-  "id": "2696e92d-cb92-4dff-b99f-93d45cf8b2b0",
-  "prevId": "5f6fb258-e656-43f3-9420-e45545e81e9f",
+  "id": "effd88c3-e7ca-4756-b5e0-0ed618ab112a",
+  "prevId": "2696e92d-cb92-4dff-b99f-93d45cf8b2b0",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3779,7 +3779,7 @@
           "name": "profileId",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "name": {
           "name": "name",
@@ -3867,7 +3867,7 @@
           "tableTo": "viewer_profile",
           "columnsFrom": ["profileId"],
           "columnsTo": ["id"],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -3897,7 +3897,7 @@
           "name": "mediaItemId",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "position": {
           "name": "position",
@@ -3952,7 +3952,7 @@
           "tableTo": "media_item",
           "columnsFrom": ["mediaItemId"],
           "columnsTo": ["id"],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },

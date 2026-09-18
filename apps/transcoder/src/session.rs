@@ -971,7 +971,13 @@ impl SessionRegistry {
             record_device(&directory, device).await;
         }
 
-        let boundaries = ensure_boundaries(&self.config.ffprobe, &directory, &spec).await;
+        let boundaries = ensure_boundaries(
+            &self.config.ffprobe,
+            &self.config.artefact_root,
+            &directory,
+            &spec,
+        )
+        .await;
 
         if boundaries.is_empty() {
             return Err(SessionError::Boundaries(spec.input_path.clone()));

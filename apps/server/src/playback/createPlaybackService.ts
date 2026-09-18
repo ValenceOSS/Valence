@@ -1,4 +1,5 @@
 import { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
+import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { isImageSubtitle } from '@ValenceCore/functions/isImageSubtitle';
 import { resolveQualityStep } from '@ValenceCore/functions/resolveQualityStep';
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
@@ -287,7 +288,7 @@ const createPlaybackService = ({
       } catch (error) {
         return {
           kind: 'failed',
-          reason: error instanceof Error ? error.message : 'The media service failed.',
+          reason: error instanceof Error ? describeFailure(error) : 'The media service failed.',
         };
       }
     },

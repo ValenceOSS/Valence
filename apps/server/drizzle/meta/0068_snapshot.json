@@ -1,6 +1,6 @@
 {
-  "id": "2696e92d-cb92-4dff-b99f-93d45cf8b2b0",
-  "prevId": "5f6fb258-e656-43f3-9420-e45545e81e9f",
+  "id": "90d89160-d46c-408b-90ba-f842e677a41a",
+  "prevId": "effd88c3-e7ca-4756-b5e0-0ed618ab112a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1115,7 +1115,13 @@
           "name": "mediaItemId",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "bookId": {
+          "name": "bookId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "keptAt": {
           "name": "keptAt",
@@ -1143,6 +1149,28 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "favourite_profile_book_idx": {
+          "name": "favourite_profile_book_idx",
+          "columns": [
+            {
+              "expression": "profileId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "bookId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"favourite\".\"bookId\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1187,12 +1215,26 @@
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "favourite_bookId_book_id_fk": {
+          "name": "favourite_bookId_book_id_fk",
+          "tableFrom": "favourite",
+          "tableTo": "book",
+          "columnsFrom": ["bookId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "favourite_one_subject": {
+          "name": "favourite_one_subject",
+          "value": "num_nonnulls(\"favourite\".\"mediaItemId\", \"favourite\".\"bookId\") = 1"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.favourite_artist": {
@@ -3779,7 +3821,7 @@
           "name": "profileId",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "name": {
           "name": "name",
@@ -3867,7 +3909,7 @@
           "tableTo": "viewer_profile",
           "columnsFrom": ["profileId"],
           "columnsTo": ["id"],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -3897,7 +3939,7 @@
           "name": "mediaItemId",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "position": {
           "name": "position",
@@ -3952,7 +3994,7 @@
           "tableTo": "media_item",
           "columnsFrom": ["mediaItemId"],
           "columnsTo": ["id"],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -4259,6 +4301,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "bookId": {
+          "name": "bookId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "stars": {
           "name": "stars",
           "type": "integer",
@@ -4325,6 +4373,28 @@
           "method": "btree",
           "with": {}
         },
+        "rating_profile_book_idx": {
+          "name": "rating_profile_book_idx",
+          "columns": [
+            {
+              "expression": "profileId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "bookId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"rating\".\"bookId\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "rating_item_idx": {
           "name": "rating_item_idx",
           "columns": [
@@ -4345,6 +4415,21 @@
           "columns": [
             {
               "expression": "seriesId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "rating_book_idx": {
+          "name": "rating_book_idx",
+          "columns": [
+            {
+              "expression": "bookId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -4383,6 +4468,15 @@
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "rating_bookId_book_id_fk": {
+          "name": "rating_bookId_book_id_fk",
+          "tableFrom": "rating",
+          "tableTo": "book",
+          "columnsFrom": ["bookId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4391,7 +4485,7 @@
       "checkConstraints": {
         "rating_one_subject": {
           "name": "rating_one_subject",
-          "value": "(\"rating\".\"mediaItemId\" is null) <> (\"rating\".\"seriesId\" is null)"
+          "value": "num_nonnulls(\"rating\".\"mediaItemId\", \"rating\".\"seriesId\", \"rating\".\"bookId\") = 1"
         },
         "rating_stars_range": {
           "name": "rating_stars_range",
@@ -4993,6 +5087,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "bookId": {
+          "name": "bookId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "createdBy": {
           "name": "createdBy",
           "type": "text",
@@ -5076,6 +5176,15 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
+        "share_bookId_book_id_fk": {
+          "name": "share_bookId_book_id_fk",
+          "tableFrom": "share",
+          "tableTo": "book",
+          "columnsFrom": ["bookId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "share_createdBy_user_id_fk": {
           "name": "share_createdBy_user_id_fk",
           "tableFrom": "share",
@@ -5092,11 +5201,11 @@
       "checkConstraints": {
         "share_one_subject": {
           "name": "share_one_subject",
-          "value": "(\"share\".\"mediaItemId\" is null) <> (\"share\".\"seriesId\" is null)"
+          "value": "num_nonnulls(\"share\".\"mediaItemId\", \"share\".\"seriesId\", \"share\".\"bookId\") = 1"
         },
         "share_kind": {
           "name": "share_kind",
-          "value": "\"share\".\"kind\" in ('item', 'series')"
+          "value": "\"share\".\"kind\" in ('item', 'series', 'book')"
         },
         "share_view_cap": {
           "name": "share_view_cap",

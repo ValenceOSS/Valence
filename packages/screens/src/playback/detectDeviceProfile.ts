@@ -5,6 +5,7 @@ type CodecProbe = (mimeType: string) => boolean;
 
 type DetectDeviceProfileOptions = {
   isTypeSupported: CodecProbe;
+  canPlayFile?: CodecProbe;
   platform: string;
   supportsHdr: boolean;
   screenWidth: number;
@@ -38,6 +39,67 @@ const AUDIO_PROBES = [
 ] as const;
 
 const DOLBY_CODECS = ['ac3', 'eac3'] as const;
+
+const MATROSKA_PROBES = [
+  { codec: 'av1', mimeType: 'video/x-matroska; codecs="av01.0.05M.08"' },
+  { codec: 'vp9', mimeType: 'video/x-matroska; codecs="vp09.00.10.08"' },
+  { codec: 'vp8', mimeType: 'video/x-matroska; codecs="vp8"' },
+  { codec: 'h264', mimeType: 'video/x-matroska; codecs="avc1.640028"' },
+] as const;
+
+const MATROSKA_AUDIO_PROBES = [
+  { codec: 'opus', mimeType: 'video/x-matroska; codecs="opus"' },
+  { codec: 'vorbis', mimeType: 'video/x-matroska; codecs="vorbis"' },
+  { codec: 'aac', mimeType: 'video/x-matroska; codecs="mp4a.40.2"' },
+  { codec: 'flac', mimeType: 'video/x-matroska; codecs="flac"' },
+] as const;
+
+const WEBM_PROBES = [
+  { codec: 'av1', mimeType: 'video/webm; codecs="av01.0.05M.08"' },
+  { codec: 'vp9', mimeType: 'video/webm; codecs="vp09.00.10.08"' },
+  { codec: 'vp8', mimeType: 'video/webm; codecs="vp8"' },
+] as const;
+
+const WEBM_AUDIO_PROBES = [
+  { codec: 'opus', mimeType: 'video/webm; codecs="opus"' },
+  { codec: 'vorbis', mimeType: 'video/webm; codecs="vorbis"' },
+] as const;
+
+/**
+ * The containers this client will be handed whole, and what it plays inside each.
+ *
+ * Asked of the media element rather than of `MediaSource`, because these are the containers a file
+ * is played from directly and a `<video>` element is what plays it. The two disagree: Chromium
+ * streams fragmented MP4 through `MediaSource` and plays Matroska holding AV1 and Opus from a plain
+ * source, which is the same bytes WebM carries under another name. Asking the streaming question
+ * about a file answers "mp4 only" everywhere, which is how a film a browser plays unaided came to be
+ * remuxed instead.
+ *
+ * A container nothing claims is left out rather than guessed at. Safari says no to Matroska and gets
+ * no entry, which is the answer it should have.
+ *
+ * @param canPlayFile - What the media element says it can play from a file.
+ * @returns A direct play profile per container the client actually claims.
+ */
+const containersPlayedWhole = (
+  canPlayFile: CodecProbe,
+): { container: string; videoCodecs: string[]; audioCodecs: string[] }[] =>
+  [
+    { container: 'mkv', video: MATROSKA_PROBES, audio: MATROSKA_AUDIO_PROBES },
+    { container: 'webm', video: WEBM_PROBES, audio: WEBM_AUDIO_PROBES },
+  ].flatMap(({ container, video, audio }) => {
+    const videoCodecs = video
+      .filter((probe) => canPlayFile(probe.mimeType))
+      .map((probe) => probe.codec);
+
+    const audioCodecs = audio
+      .filter((probe) => canPlayFile(probe.mimeType))
+      .map((probe) => probe.codec);
+
+    return videoCodecs.length === 0 || audioCodecs.length === 0
+      ? []
+      : [{ container, videoCodecs: [...videoCodecs], audioCodecs: [...audioCodecs] }];
+  });
 
 /**
  * Whether what this client says about Dolby can be believed.
@@ -161,6 +223,7 @@ const atLeastStereo = (claimed: number): number =>
  */
 const detectDeviceProfile = ({
   isTypeSupported,
+  canPlayFile = () => false,
   platform,
   supportsHdr,
   screenWidth,
@@ -213,6 +276,7 @@ const detectDeviceProfile = ({
         videoCodecs: video,
         audioCodecs: audio,
       },
+      ...containersPlayedWhole(canPlayFile),
     ],
     transcodingProfiles: [
       { container: 'mp4', videoCodec: 'h264', audioCodec: 'aac', protocol: 'hls' },
@@ -273,10 +337,15 @@ const detectFromBrowser = (name = 'Browser'): DeviceProfile => {
       ? (mimeType) => window.MediaSource.isTypeSupported(mimeType)
       : () => false;
 
+  const probe = document.createElement('video');
+
+  const canPlayFile: CodecProbe = (mimeType) => probe.canPlayType(mimeType) !== '';
+
   const queries: MediaQuerySource = window;
 
   return detectDeviceProfile({
     isTypeSupported,
+    canPlayFile,
     platform: window.navigator.platform,
     supportsHdr: queries.matchMedia?.('(dynamic-range: high)').matches ?? false,
     screenWidth: Math.round(window.screen.width * window.devicePixelRatio),

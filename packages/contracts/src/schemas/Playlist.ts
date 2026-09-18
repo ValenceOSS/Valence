@@ -15,8 +15,9 @@ const PlaylistSummarySchema = z.object({
   isShared: z.boolean(),
   isOrdered: z.boolean(),
   isMine: z.boolean(),
-  owner: PlaylistOwnerSchema,
+  owner: PlaylistOwnerSchema.nullable(),
   entryCount: z.number().int().nonnegative(),
+  lostCount: z.number().int().nonnegative(),
   durationSeconds: z.number().nonnegative(),
   artworkAlbumIds: z.array(z.string().uuid()).max(4),
   updatedAt: z.string(),
@@ -35,7 +36,7 @@ const PlaylistEntrySchema = z.object({
   id: z.string().uuid(),
   position: z.number(),
   addedAt: z.string(),
-  item: PlaylistItemSchema,
+  item: PlaylistItemSchema.nullable(),
 });
 
 const PlaylistDetailSchema = z.object({

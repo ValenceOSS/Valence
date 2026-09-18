@@ -33,6 +33,8 @@ import { PlaylistDialog } from '@ValenceScreens/components/PlaylistDialog/Playli
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
+import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
@@ -65,6 +67,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
   const { player } = useMusicPlayer();
   const [isEditing, setIsEditing] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const { may } = useWhatIMayDo();
   const detail = asked.data;
   const firstCover = detail?.playlist.artworkAlbumIds[0];
   useLightTheMusic(firstCover === undefined ? null : albumArtworkUrl(firstCover));
@@ -96,10 +99,14 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
 
   const { playlist, entries } = detail;
   const songs = entries.flatMap((entry) =>
-    entry.item.track === null ? [] : [{ entry, track: entry.item.track }],
+    entry.item === null || entry.item.track === null ? [] : [{ entry, track: entry.item.track }],
   );
   const tracks: MusicTrack[] = songs.map((song) => song.track);
-  const others = entries.filter((entry) => entry.item.track === null);
+  const others = entries.flatMap((entry) =>
+    entry.item === null || entry.item.track !== null ? [] : [{ id: entry.id, item: entry.item }],
+  );
+  const lost = entries.filter((entry) => entry.item === null);
+  const mayClearAbandoned = playlist.owner === null && may('account.profiles');
   const source = { kind: 'playlist' as const, id: playlist.id, name: playlist.name };
   const options = { source, isOrdered: playlist.isOrdered };
 
@@ -120,10 +127,15 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
             {playlist.description === null ? null : (
               <span className="w-full pb-1 text-text">{playlist.description}</span>
             )}
-            <span className="font-semibold text-text">{playlist.owner.name}</span>
-            <span>· {countOf(entries.length, others.length === 0 ? 'song' : 'item')}</span>
+            <span className="font-semibold text-text">{nameOfOwner(playlist.owner)}</span>
+            <span>
+              · {countOf(entries.length - lost.length, others.length === 0 ? 'song' : 'item')}
+            </span>
             <span>· {formatDuration(playlist.durationSeconds)}</span>
             {playlist.isOrdered ? <span>· In order</span> : null}
+            {lost.length === 0 ? null : (
+              <span>· {countOf(lost.length, 'thing')} no longer in the library</span>
+            )}
           </>
         }
         actions={
@@ -158,41 +170,47 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
               <Icon of={ShuffleIcon} size={22} />
             </Button>
 
-            {playlist.isMine ? (
+            {playlist.isMine || mayClearAbandoned ? (
               <ActionMenu
                 label={`More for ${playlist.name}`}
                 trigger={<Icon of={MoreHorizontalIcon} size={22} />}
                 groups={[
                   {
                     items: [
-                      {
-                        id: 'share',
-                        label: playlist.isShared ? 'Stop sharing' : 'Share with the household',
-                        icon: <Icon of={Share08Icon} size={16} />,
-                        onChoose: () => {
-                          void updatePlaylist(playlist.id, { isShared: !playlist.isShared }).then(
-                            (agreed) => {
-                              refresh();
+                      ...(playlist.isMine
+                        ? [
+                            {
+                              id: 'share',
+                              label: playlist.isShared
+                                ? 'Stop sharing'
+                                : 'Share with the household',
+                              icon: <Icon of={Share08Icon} size={16} />,
+                              onChoose: () => {
+                                void updatePlaylist(playlist.id, {
+                                  isShared: !playlist.isShared,
+                                }).then((agreed) => {
+                                  refresh();
 
-                              if (agreed) {
-                                notify.worked(
-                                  playlist.isShared
-                                    ? `${playlist.name} is yours alone again`
-                                    : `${playlist.name} is shared with the household`,
-                                );
-                              }
+                                  if (agreed) {
+                                    notify.worked(
+                                      playlist.isShared
+                                        ? `${playlist.name} is yours alone again`
+                                        : `${playlist.name} is shared with the household`,
+                                    );
+                                  }
+                                });
+                              },
                             },
-                          );
-                        },
-                      },
-                      {
-                        id: 'edit',
-                        label: 'Edit details',
-                        icon: <Icon of={Edit02Icon} size={16} />,
-                        onChoose: () => {
-                          setIsEditing(true);
-                        },
-                      },
+                            {
+                              id: 'edit',
+                              label: 'Edit details',
+                              icon: <Icon of={Edit02Icon} size={16} />,
+                              onChoose: () => {
+                                setIsEditing(true);
+                              },
+                            },
+                          ]
+                        : []),
                       {
                         id: 'delete',
                         label: 'Delete playlist',
@@ -257,53 +275,85 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
               Also in this playlist
             </h2>
             <ul className="flex flex-col">
-              {others.map((entry) => (
+              {others.map((other) => (
                 <li
-                  key={entry.id}
+                  key={other.id}
                   className="flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm"
                 >
-                  <span className="truncate text-text">{entry.item.title}</span>
+                  <span className="truncate text-text">{other.item.title}</span>
                   <span className="shrink-0 text-text-muted">
-                    {MEDIA_KIND_LABELS[entry.item.kind]}
-                    {entry.item.subtitle === null ? '' : ` · ${entry.item.subtitle}`}
+                    {MEDIA_KIND_LABELS[other.item.kind]}
+                    {other.item.subtitle === null ? '' : ` · ${other.item.subtitle}`}
                   </span>
                 </li>
               ))}
             </ul>
           </section>
         )}
+
+        {lost.length === 0 ? null : (
+          <section aria-label="No longer in the library" className="flex flex-col gap-2 px-2">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-text-muted">
+              No longer in the library
+            </h2>
+            <p className="text-sm text-text-muted">
+              {countOf(lost.length, 'thing')} that {lost.length === 1 ? 'was' : 'were'} in this
+              playlist went with the library {lost.length === 1 ? 'it' : 'they'} came from.
+            </p>
+            {playlist.isMine ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="self-start"
+                label={`Remove what is gone from ${playlist.name}`}
+                onClick={() => {
+                  void Promise.all(
+                    lost.map((entry) => dropFromPlaylist(playlist.id, entry.id)),
+                  ).then(refresh);
+                }}
+              >
+                Remove {lost.length === 1 ? 'it' : 'them'}
+              </Button>
+            ) : null}
+          </section>
+        )}
       </div>
 
       {playlist.isMine ? (
-        <>
-          <PlaylistDialog
-            isOpen={isEditing}
-            playlist={playlist}
-            onClose={() => {
-              setIsEditing(false);
-            }}
-          />
-          <ConfirmDialog
-            isOpen={isRemoving}
-            title={`Delete ${playlist.name}?`}
-            detail="The songs stay in the library. Only the playlist goes, for everybody it was shared with."
-            confirmLabel="Delete"
-            isDestructive
-            onClose={() => {
-              setIsRemoving(false);
-            }}
-            onConfirm={() => {
-              void removePlaylist(playlist.id).then((removed) => {
-                setIsRemoving(false);
-                refresh();
+        <PlaylistDialog
+          isOpen={isEditing}
+          playlist={playlist}
+          onClose={() => {
+            setIsEditing(false);
+          }}
+        />
+      ) : null}
 
-                if (removed) {
-                  open({ kind: 'home' });
-                }
-              });
-            }}
-          />
-        </>
+      {playlist.isMine || mayClearAbandoned ? (
+        <ConfirmDialog
+          isOpen={isRemoving}
+          title={`Delete ${playlist.name}?`}
+          detail={
+            playlist.owner === null
+              ? 'This belonged to a profile that has been removed. The songs stay in the library. Only the playlist goes, for everybody it was shared with.'
+              : 'The songs stay in the library. Only the playlist goes, for everybody it was shared with.'
+          }
+          confirmLabel="Delete"
+          isDestructive
+          onClose={() => {
+            setIsRemoving(false);
+          }}
+          onConfirm={() => {
+            void removePlaylist(playlist.id).then((removed) => {
+              setIsRemoving(false);
+              refresh();
+
+              if (removed) {
+                open({ kind: 'home' });
+              }
+            });
+          }}
+        />
       ) : null}
     </article>
   );
