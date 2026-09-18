@@ -14,6 +14,15 @@ name: CI
 # slow thrashing rather than fast parallelism. A runner per package gets a full machine to itself and
 # nothing else's tests to share memory with, so the whole matrix finishes in whichever one package
 # takes longest rather than in the sum of all of them.
+#
+# The build that every package's test task depends on happens exactly once, in its own job, rather
+# than once per matrix leg. With no remote cache configured, each leg cold-building core, contracts,
+# ui and client from scratch was the difference between "one build" and "up to eleven of them" for the
+# same unchanged output — and asked to do that concurrently across eleven fresh runners, at least one
+# of them reliably sat at `tsc --build` for ten minutes and further without producing a single line of
+# output, on more than one fresh attempt. Building once and handing every test job the same `dist/**`
+# through actions/cache, keyed on this run's commit, sidesteps the redundant work entirely rather than
+# explaining exactly what those concurrent cold builds were doing to each other.
 
 on:
   push:
@@ -49,8 +58,44 @@ jobs:
       # tables that already exist. See VAL-193.
       - run: pnpm db:check
 
+  build:
+    name: Build every package once
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Only the packages something else's `test` task actually needs as a `^build` dependency —
+      # never a leaf app or `@valence/screens`, since nothing depends on either of those and building
+      # them here would be pure waste (and, for `apps/web` today, surfaces a real but unrelated
+      # strictness gap between its own build and its typecheck script, worth its own fix).
+      - run: >-
+          pnpm turbo run build
+          --filter=@valence/core
+          --filter=@valence/contracts
+          --filter=@valence/ui
+          --filter=@valence/client
+          --filter=@valence/plugin-sdk
+
+      # Keyed on the commit rather than on source hashes, because this cache only has to outlive the
+      # jobs in this one run — every test job below wants exactly what this build produced for this
+      # commit, not the closest match for a similar one.
+      - uses: actions/cache/save@v4
+        with:
+          path: .turbo/cache
+          key: turbo-build-${{ github.sha }}
+
   test:
     name: Test (${{ matrix.package }})
+    needs: build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -78,6 +123,11 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: .turbo/cache
+          key: turbo-build-${{ github.sha }}
 
       - run: pnpm turbo run test --filter=${{ matrix.package }}
 
