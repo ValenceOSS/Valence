@@ -1,14 +1,20 @@
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { wait } from '@ValenceCore/functions/wait';
 import { previewRequestFor } from './previewRequestFor';
+import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 
 type PreviewStore = {
-  listOutstanding: (
-    libraryId: string,
-  ) => Promise<{ id: string; path: string; audioStreams: AudioStream[] }[]>;
+  listOutstanding: (libraryId: string) => Promise<
+    {
+      id: string;
+      path: string;
+      audioStreams: AudioStream[];
+      previewMoment?: PreviewMoment | null;
+    }[]
+  >;
   markComplete: (mediaItemId: string) => Promise<void>;
 };
 

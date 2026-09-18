@@ -5,6 +5,7 @@ import { describePlaybackMode } from '@ValenceContracts/functions/describePlayba
 import { planToSessionSpec } from '@ValenceCore/functions/planToSessionSpec';
 import { segmentContainerFor } from '@ValenceCore/functions/segmentContainerFor';
 import { previewRequestFor } from '@ValenceServer/library/previewRequestFor';
+import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import {
   SEGMENT_SECONDS,
@@ -132,6 +133,7 @@ type MediaLookup = {
     path: string;
     defaultAudioLanguage: string | null;
     generation: number;
+    previewMoment?: PreviewMoment | null;
   } | null>;
 };
 
@@ -353,7 +355,11 @@ const createPlaybackService = ({
       const clip = await transcoder
         .requestPreview({
           ...previewRequestFor(
-            { path: found.path, audioStreams: found.item.audioStreams },
+            {
+              path: found.path,
+              audioStreams: found.item.audioStreams,
+              previewMoment: found.previewMoment ?? null,
+            },
             found.generation,
             found.defaultAudioLanguage,
             await previewQuality(),

@@ -25,6 +25,7 @@ import {
   library,
   libraryBlock,
   mediaItem,
+  mediaPreviewOverride,
   rating,
   series,
 } from '@ValenceServer/db/Schema';
@@ -39,8 +40,10 @@ import {
   createMediaStore,
   listOutstandingFor,
   markJobComplete,
+  clearJobCompletion,
   clearJobCompletions,
 } from './createMediaStore';
+import { previewRequestFor } from './previewRequestFor';
 import { fetchLogos } from './fetchLogos';
 import { scanLibrary } from './scanLibrary';
 import { scanBookLibrary } from '@ValenceServer/books/scanBookLibrary';
@@ -64,8 +67,10 @@ import type {
   Library,
   MediaDetail,
   MediaSummary,
+  PreviewMoment,
   ScanResult,
 } from '@ValenceContracts/schemas/Library';
+import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { MediaFileSystem, ScanPhase, ScannedItem } from './scanLibrary';
 import type { MetadataProvider, SeriesShape } from './MetadataProvider';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
@@ -89,6 +94,18 @@ import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { filesAtOnce } from '@ValenceServer/library/filesAtOnce';
 
 const GenresSchema = z.array(z.string());
+
+type PreviewSubject = {
+  id: string;
+  libraryId: string;
+  path: string;
+  durationSeconds: number;
+  audioStreams: AudioStream[];
+  generation: number;
+  defaultAudioLanguage: string | null;
+  previewMoment: PreviewMoment | null;
+};
+
 type CreateDatabaseLibraryServiceOptions = {
   atOnce?: number;
   db: ValenceDatabase;
@@ -325,6 +342,103 @@ const createDatabaseLibraryService = ({
         hasLogo: false,
       })),
     );
+  };
+
+  /**
+   * Reads what one item's preview request is built from, with the moment somebody chose for it
+   * where there is one.
+   *
+   * @param mediaId - The item.
+   * @returns The subject, or null where there is no such item.
+   */
+  const previewSubjectOf = async (mediaId: string): Promise<PreviewSubject | null> => {
+    const rows = await db
+      .select({
+        id: mediaItem.id,
+        libraryId: mediaItem.libraryId,
+        path: mediaItem.path,
+        durationSeconds: mediaItem.durationSeconds,
+        audioStreams: mediaItem.audioStreams,
+        generation: library.generation,
+        defaultAudioLanguage: library.defaultAudioLanguage,
+        atSeconds: mediaPreviewOverride.atSeconds,
+        clipSeconds: mediaPreviewOverride.durationSeconds,
+      })
+      .from(mediaItem)
+      .innerJoin(library, eq(library.id, mediaItem.libraryId))
+      .leftJoin(
+        mediaPreviewOverride,
+        and(
+          eq(mediaPreviewOverride.libraryId, mediaItem.libraryId),
+          eq(mediaPreviewOverride.path, mediaItem.path),
+        ),
+      )
+      .where(eq(mediaItem.id, mediaId))
+      .limit(1);
+
+    const row = rows[0];
+
+    if (row === undefined) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      libraryId: row.libraryId,
+      path: row.path,
+      durationSeconds: row.durationSeconds,
+      audioStreams: z.array(AudioStreamSchema).parse(row.audioStreams),
+      generation: row.generation,
+      defaultAudioLanguage: row.defaultAudioLanguage,
+      previewMoment:
+        row.atSeconds === null
+          ? null
+          : { atSeconds: row.atSeconds, durationSeconds: row.clipSeconds },
+    };
+  };
+
+  /**
+   * Throws away the clip an item was previewed with and asks for the one it should be previewed
+   * with now, without waiting for the render — the next hover, or the regenerate job, collects it.
+   *
+   * @param subject - The item, as a preview request is built from it.
+   * @param from - The moment the old clip was cut from.
+   * @param to - The moment the new clip is to be cut from.
+   */
+  const recutPreview = async (
+    subject: PreviewSubject,
+    from: PreviewMoment | null,
+    to: PreviewMoment | null,
+  ): Promise<void> => {
+    const quality = await previewQuality();
+    const chosenAccel = (await forcedAccel?.()) ?? '';
+    const requestWith = (moment: PreviewMoment | null) =>
+      previewRequestFor(
+        { ...subject, previewMoment: moment },
+        subject.generation,
+        subject.defaultAudioLanguage,
+        quality,
+      );
+
+    await transcoder.forgetPreview(requestWith(from)).catch((error: Error) => {
+      onProblem?.(subject.path, error.message);
+
+      return false;
+    });
+
+    await clearJobCompletion(db, subject.id, REGENERATE_PREVIEWS_JOB);
+
+    await transcoder
+      .requestPreview({
+        ...requestWith(to),
+        ...(chosenAccel === '' ? {} : { hardwareAccel: chosenAccel }),
+        wait: false,
+      })
+      .catch((error: Error) => {
+        onProblem?.(subject.path, error.message);
+
+        return null;
+      });
   };
 
   /**
@@ -865,32 +979,15 @@ const createDatabaseLibraryService = ({
     },
 
     rebuildArtefacts: async (mediaId) => {
-      const rows = await db
-        .select({
-          path: mediaItem.path,
-          audioStreams: mediaItem.audioStreams,
-          generation: library.generation,
-          defaultAudioLanguage: library.defaultAudioLanguage,
-        })
-        .from(mediaItem)
-        .innerJoin(library, eq(library.id, mediaItem.libraryId))
-        .where(eq(mediaItem.id, mediaId))
-        .limit(1);
+      const subject = await previewSubjectOf(mediaId);
 
-      const row = rows[0];
-
-      if (row === undefined) {
+      if (subject === null) {
         return null;
       }
 
       return rebuildItemArtefacts({
         quality: await previewQuality(),
-        item: {
-          path: row.path,
-          audioStreams: z.array(AudioStreamSchema).parse(row.audioStreams),
-          generation: row.generation,
-          defaultAudioLanguage: row.defaultAudioLanguage,
-        },
+        item: subject,
         trickplay: {
           intervalSeconds: TRICKPLAY_INTERVAL_SECONDS,
           tileWidth: TRICKPLAY_TILE_WIDTH,
@@ -900,6 +997,45 @@ const createDatabaseLibraryService = ({
         transcoder,
         ...(onProblem === undefined ? {} : { onProblem }),
       });
+    },
+
+    setPreviewMoment: async (mediaId, moment, by) => {
+      const subject = await previewSubjectOf(mediaId);
+
+      if (subject === null) {
+        return { kind: 'absent' };
+      }
+
+      if (moment.atSeconds >= subject.durationSeconds) {
+        return { kind: 'beyondTheEnd', durationSeconds: subject.durationSeconds };
+      }
+
+      await store.savePreviewMoment({
+        libraryId: subject.libraryId,
+        path: subject.path,
+        atSeconds: moment.atSeconds,
+        durationSeconds: moment.durationSeconds,
+        updatedBy: by,
+      });
+      await recutPreview(subject, subject.previewMoment, moment);
+
+      return { kind: 'set', moment };
+    },
+
+    clearPreviewMoment: async (mediaId) => {
+      const subject = await previewSubjectOf(mediaId);
+
+      if (subject === null) {
+        return null;
+      }
+
+      const cleared = await store.removePreviewMoment(subject.libraryId, subject.path);
+
+      if (cleared) {
+        await recutPreview(subject, subject.previewMoment, null);
+      }
+
+      return { cleared };
     },
 
     getSeries: async (seriesId) => {
@@ -1275,6 +1411,7 @@ const createDatabaseLibraryService = ({
         extraKind: row.extraKind,
         versionLabel: row.versionLabel,
         trailerKey: row.trailerKey,
+        previewMoment: await store.readPreviewMoment(row.libraryId, row.path),
         extras: held
           .filter((one) => one.extraKind !== null)
           .map(({ posterUrl, ...extra }) => ({

@@ -198,6 +198,8 @@ type PreviewSweepSubject = {
   generation: number;
   quality: PreviewQuality;
   audioStreamIndex?: number;
+  atSeconds?: number;
+  durationSeconds?: number;
 };
 
 type FingerprintRequest = {
@@ -275,6 +277,8 @@ type Transcoder = {
     quality: PreviewQuality;
     wait?: boolean;
     audioStreamIndex?: number;
+    atSeconds?: number;
+    durationSeconds?: number;
     hardwareAccel?: string;
     correlationId?: string;
   }) => Promise<{ id: string; url: string; isReady: boolean }>;
