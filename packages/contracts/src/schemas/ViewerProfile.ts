@@ -48,6 +48,8 @@ const ViewerProfileRequestSchema = z.object({
 
 const ViewerProfileListSchema = z.object({ profiles: z.array(ViewerProfileSchema) });
 
+const WayInSchema = ViewerProfileListSchema.extend({ splashscreen: z.string().nullish() });
+
 /**
  * Picks the letter a profile is drawn with while it has no picture of its own — the first character
  * of the name, upper-cased. A name that is empty or only spaces falls back to a question mark
@@ -82,6 +84,7 @@ export {
   ViewerProfileSchema,
   ViewerProfileRequestSchema,
   ViewerProfileListSchema,
+  WayInSchema,
   ProfileColourSchema,
   PROFILE_COLOURS,
   AvatarSchema,

@@ -135,8 +135,14 @@ import { howShareEnded, isShareLive, whyShareEnded } from '@ValenceContracts/sch
 import { rememberGuestFor } from '@ValenceServer/sharing/rememberGuestFor';
 import { bodyLimit } from 'hono/body-limit';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
-import { MOST_BYTES } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
-import type { PictureFault } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import { FACE_LIMITS } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import type {
+  PictureFault,
+  PictureLimits,
+} from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import { createMemorySplashscreenStore } from '@ValenceServer/splashscreen/createMemorySplashscreenStore';
+import { SPLASHSCREEN_LIMITS } from '@ValenceServer/splashscreen/SplashscreenStore';
+import type { SplashscreenStore } from '@ValenceServer/splashscreen/SplashscreenStore';
 import { getCookie, setCookie } from 'hono/cookie';
 import { randomUUID } from 'node:crypto';
 
@@ -149,12 +155,14 @@ const SHARE_JOINER = 'valence_share_joiner';
  * The size is checked again where the picture is judged, which is what makes the rule true; this is
  * only so that somebody uploading a film by mistake does not have it held in memory in full first.
  *
+ * @param limits - The limits the picture is held to, a face's unless it is something drawn larger.
  * @returns The middleware to put in front of a route that takes a picture.
  */
-const tooBigToRead = () =>
+const tooBigToRead = (limits: PictureLimits = FACE_LIMITS) =>
   bodyLimit({
-    maxSize: MOST_BYTES,
-    onError: (context) => context.json({ error: describePictureFault('tooLarge').error }, 413),
+    maxSize: limits.mostBytes,
+    onError: (context) =>
+      context.json({ error: describePictureFault('tooLarge', limits).error }, 413),
   });
 
 const GUEST_REMEMBERED_FOR_SECONDS = 30 * 86_400;
@@ -476,6 +484,7 @@ type CreateAppOptions = {
   shareSessions?: ShareSessions;
   playbackSessions?: PlaybackSessions;
   profiles?: ProfileService;
+  splashscreen?: SplashscreenStore;
   books?: BookService;
   promoteProfile?: (request: {
     profileId: string;
@@ -552,6 +561,7 @@ const createApp = ({
   shareSessions,
   playbackSessions,
   profiles,
+  splashscreen = createMemorySplashscreenStore(),
   books,
   promoteProfile,
   listUsers,
@@ -1940,7 +1950,52 @@ const createApp = ({
   app.get('/api/profiles/everyone', async (context) => {
     const everyone = await profiles?.listEveryone();
 
-    return context.json({ profiles: everyone ?? [] }, 200);
+    return context.json(
+      { profiles: everyone ?? [], splashscreen: await splashscreen.address() },
+      200,
+    );
+  });
+
+  app.get('/api/splashscreen', async (context) => {
+    const picture = await splashscreen.read();
+
+    if (picture === null) {
+      return context.json({ error: 'This server has no picture behind the way in.' }, 404);
+    }
+
+    const isVersioned = context.req.query('v') !== undefined;
+
+    return context.body(picture.body.slice().buffer, 200, {
+      'content-type': picture.contentType,
+      'cache-control': isVersioned ? 'private, max-age=31536000, immutable' : 'private, max-age=60',
+    });
+  });
+
+  app.put('/api/admin/splashscreen', tooBigToRead(SPLASHSCREEN_LIMITS), async (context) => {
+    if (!(await requires(context.req.raw.headers, 'server.settings'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const wrong = await splashscreen.save({
+      body: new Uint8Array(await context.req.arrayBuffer()),
+      contentType: context.req.header('content-type') ?? '',
+    });
+
+    if (wrong !== null) {
+      const said = describePictureFault(wrong, SPLASHSCREEN_LIMITS);
+
+      return context.json({ error: said.error }, said.status);
+    }
+
+    return context.json({ splashscreen: await splashscreen.address() }, 200);
+  });
+
+  app.delete('/api/admin/splashscreen', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'server.settings'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    return context.json({ removed: await splashscreen.remove() }, 200);
   });
 
   app.post('/api/profiles/:profileId/sign-in', async (context) => {
@@ -2064,6 +2119,7 @@ const createApp = ({
           certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
           fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
+          splashscreen: await splashscreen.address(),
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
         },
@@ -2137,6 +2193,7 @@ const createApp = ({
         certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
         fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
+        splashscreen: await splashscreen.address(),
       },
       200,
     );

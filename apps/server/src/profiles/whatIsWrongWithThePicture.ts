@@ -14,6 +14,13 @@ const MOST_PIXELS_AN_EDGE = 4096;
 
 type PictureFault = 'notAPicture' | 'tooLarge' | 'tooDetailed' | 'unreadable' | 'notYours';
 
+type PictureLimits = {
+  mostBytes: number;
+  mostPixelsAnEdge: number;
+};
+
+const FACE_LIMITS: PictureLimits = { mostBytes: MOST_BYTES, mostPixelsAnEdge: MOST_PIXELS_AN_EDGE };
+
 /**
  * The file extension a picture of a given kind is kept under.
  *
@@ -21,6 +28,16 @@ type PictureFault = 'notAPicture' | 'tooLarge' | 'tooDetailed' | 'unreadable' | 
  * @returns The extension, or nothing for a kind that is not taken.
  */
 const extensionFor = (contentType: string): string | undefined => ACCEPTED[contentType];
+
+/**
+ * The kind of picture a file kept under a given extension is, read back from the same table the
+ * extension was chosen from.
+ *
+ * @param extension - The extension, dot and all.
+ * @returns The content type, or nothing for an extension no picture is kept under.
+ */
+const contentTypeFor = (extension: string): string | undefined =>
+  Object.entries(ACCEPTED).find(([, kept]) => kept === extension)?.[0];
 
 /**
  * Says why a picture cannot be somebody's face, so that being turned away says which thing was
@@ -35,17 +52,22 @@ const extensionFor = (contentType: string): string | undefined => ACCEPTED[conte
  * stored, served, and drawn as a broken image — which is the fault this is here to stop, not cause.
  *
  * @param photo - What arrived, and what it claims to be.
+ * @param limits - How large it may be, which is a face's by default; a picture drawn full-bleed
+ *   earns more detail than one drawn at a hundred pixels.
  * @returns What is wrong with it, or nothing where it is fine.
  */
-const whatIsWrongWithThePicture = async (photo: {
-  body: Uint8Array;
-  contentType: string;
-}): Promise<PictureFault | null> => {
+const whatIsWrongWithThePicture = async (
+  photo: {
+    body: Uint8Array;
+    contentType: string;
+  },
+  limits: PictureLimits = FACE_LIMITS,
+): Promise<PictureFault | null> => {
   if (extensionFor(photo.contentType) === undefined) {
     return 'notAPicture';
   }
 
-  if (photo.body.byteLength > MOST_BYTES) {
+  if (photo.body.byteLength > limits.mostBytes) {
     return 'tooLarge';
   }
 
@@ -59,9 +81,17 @@ const whatIsWrongWithThePicture = async (photo: {
 
   const { width, height } = measured;
 
-  return width > MOST_PIXELS_AN_EDGE || height > MOST_PIXELS_AN_EDGE ? 'tooDetailed' : null;
+  return width > limits.mostPixelsAnEdge || height > limits.mostPixelsAnEdge ? 'tooDetailed' : null;
 };
 
-export type { PictureFault };
+export type { PictureFault, PictureLimits };
 
-export { ACCEPTED, MOST_BYTES, MOST_PIXELS_AN_EDGE, extensionFor, whatIsWrongWithThePicture };
+export {
+  ACCEPTED,
+  MOST_BYTES,
+  MOST_PIXELS_AN_EDGE,
+  FACE_LIMITS,
+  extensionFor,
+  contentTypeFor,
+  whatIsWrongWithThePicture,
+};

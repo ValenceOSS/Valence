@@ -8,6 +8,7 @@ type SettingsPanelProps = {
   onCertificationRegionSaved: () => void;
   onProfileVisibilitySaved: () => void;
   onCatalogueTrailersSaved: () => void;
+  onSplashscreenSaved: () => void;
 };
 
 export type { SettingsPanelProps };

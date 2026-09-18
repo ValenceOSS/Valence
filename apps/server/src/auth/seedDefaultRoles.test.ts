@@ -21,6 +21,7 @@ const emptySettings = () =>
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    splashscreenFile: null,
   });
 
 /**

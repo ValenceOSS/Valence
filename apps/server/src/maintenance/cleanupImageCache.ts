@@ -16,7 +16,7 @@ type CleanupImageCacheOptions = {
   files: CacheFileSystem;
   nameFor: (url: string) => string;
   listMediaImageUrls: () => Promise<MediaImageUrls[]>;
-  listProfilePhotoPaths: () => Promise<(string | null)[]>;
+  listKeptPictures: () => Promise<(string | null)[]>;
   onProblem?: (path: string, reason: string) => void;
   onProgress?: (phase: 'cache' | 'profiles', processed: number, total: number) => void;
 };
@@ -79,6 +79,9 @@ const sweep = async (
  * removed films, the faces of removed profiles. Artwork is fetched once and kept, so without this a
  * cache only ever grows.
  *
+ * The profile directory is swept by what is still wanted there, not by what is a face: the picture
+ * behind the way in lives beside the faces, and anything the sweep is not told to keep it removes.
+ *
  * @param options - Where the cache is, and the database saying what is still referenced.
  * @returns What was removed, counted and measured.
  */
@@ -88,7 +91,7 @@ const cleanupImageCache = async ({
   files,
   nameFor,
   listMediaImageUrls,
-  listProfilePhotoPaths,
+  listKeptPictures,
   onProblem,
   onProgress,
 }: CleanupImageCacheOptions): Promise<number> => {
@@ -114,7 +117,7 @@ const cleanupImageCache = async ({
     onProblem,
   );
 
-  const photoPaths = await listProfilePhotoPaths();
+  const photoPaths = await listKeptPictures();
   const validPhotoNames = new Set(
     photoPaths.filter((path): path is string => path !== null).map(baseName),
   );

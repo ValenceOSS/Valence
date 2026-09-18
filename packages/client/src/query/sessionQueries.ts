@@ -3,6 +3,7 @@ import { fetchSession } from '@ValenceClient/session/auth';
 import { readVersion } from '@ValenceClient/session/readVersion';
 import { fetchProfiles } from '@ValenceClient/profiles/fetchProfiles';
 import { fetchEveryone } from '@ValenceClient/profiles/fetchEveryone';
+import { fetchWayIn } from '@ValenceClient/profiles/fetchWayIn';
 import { fetchSetupStatus } from '@ValenceClient/setup/fetchSetupStatus';
 import { fetchMyPermissions } from '@ValenceClient/session/fetchMyPermissions';
 
@@ -69,6 +70,18 @@ const everyone = () =>
   });
 
 /**
+ * Everything the way in is drawn from — the faces, and the picture behind them. Kept under the
+ * faces' own key, so that whatever tells the faces to be read again tells this too.
+ *
+ * @returns The query.
+ */
+const wayIn = () =>
+  queryOptions({
+    queryKey: [...SESSION, 'everyone', 'wayIn'],
+    queryFn: () => fetchWayIn(),
+  });
+
+/**
  * What the account signed in may do, which is what every screen with something privileged on it
  * gates itself on.
  *
@@ -84,6 +97,15 @@ const permissions = () =>
     queryFn: () => fetchMyPermissions(),
   });
 
-const sessionQueries = { setup, who, version, profiles, everyone, permissions, key: SESSION };
+const sessionQueries = {
+  setup,
+  who,
+  version,
+  profiles,
+  everyone,
+  wayIn,
+  permissions,
+  key: SESSION,
+};
 
 export { sessionQueries };

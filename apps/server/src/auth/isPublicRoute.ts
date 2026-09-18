@@ -19,6 +19,7 @@ const PUBLIC_ROUTES: readonly PublicRoute[] = [
 const FACE_ROUTES: readonly PublicRoute[] = [
   { method: 'GET', path: /^\/api\/profiles\/everyone$/ },
   { method: 'GET', path: /^\/api\/profiles\/[^/]+\/avatar$/ },
+  { method: 'GET', path: /^\/api\/splashscreen$/ },
 ];
 
 /**
@@ -31,6 +32,10 @@ const FACE_ROUTES: readonly PublicRoute[] = [
  * with. It is a setting rather than a rule, because the same wall tells anybody who asks every
  * profile's name, picture and identifier, which is a list of who to try passwords against and who to
  * address a party invitation to; a server facing the open internet can shut it.
+ *
+ * The picture behind the way in follows the faces rather than standing apart from them. It is
+ * whatever the household chose to greet itself with, which is as often a family photograph as a
+ * poster, so closing the wall closes it too.
  *
  * The generated avatars stay open: they are drawn from a style and a seed in the address and say
  * nothing about anybody. So does signing in as a face, which needs the identifier already and is a

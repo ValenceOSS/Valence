@@ -39,6 +39,7 @@ const AdminOverviewSchema = z.object({
     showsProfilesBeforeSignIn: z.boolean().default(false),
     fetchesCatalogueTrailers: z.boolean().default(false),
     certificationRegion: z.string().default('GB'),
+    splashscreen: z.string().nullish(),
   }),
   transcoder: z.object({
     isReachable: z.boolean(),
@@ -740,6 +741,59 @@ const saveFetchesCatalogueTrailers = async (
   return response !== null && response.ok;
 };
 
+const SplashscreenAnswerSchema = z.union([
+  z.object({ splashscreen: z.string() }),
+  z.object({ error: z.string() }),
+]);
+
+/**
+ * Puts a picture behind the way in, in place of whatever was there.
+ *
+ * @param file - The picture.
+ * @returns Where the picture is now read from, or why the server would not take it.
+ */
+const saveSplashscreen = async (
+  file: File,
+): Promise<{ splashscreen: string } | { problem: string }> => {
+  const response = await fetch('/api/admin/splashscreen', {
+    method: 'PUT',
+    credentials: 'same-origin',
+    headers: { 'content-type': file.type },
+    body: file,
+  }).catch(() => null);
+
+  if (response === null) {
+    return { problem: 'The server could not be reached.' };
+  }
+
+  const answer = SplashscreenAnswerSchema.safeParse(await response.json().catch(() => null));
+
+  if (response.ok && answer.success && 'splashscreen' in answer.data) {
+    return { splashscreen: answer.data.splashscreen };
+  }
+
+  return {
+    problem:
+      answer.success && 'error' in answer.data
+        ? answer.data.error
+        : `The server answered ${response.status.toString()}.`,
+  };
+};
+
+/**
+ * Takes the picture away from behind the way in, putting the generated background back.
+ *
+ * @returns Whether the server agreed.
+ */
+const removeSplashscreen = async (): Promise<boolean> => {
+  const response = await fetch('/api/admin/splashscreen', {
+    method: 'DELETE',
+    credentials: 'same-origin',
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 const saveShowsProfilesBeforeSignIn = async (
   showsProfilesBeforeSignIn: boolean,
 ): Promise<boolean> => {
@@ -829,6 +883,8 @@ export {
   saveCertificationRegion,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
+  saveSplashscreen,
+  removeSplashscreen,
   fetchActiveSessions,
   watchActiveSessions,
   stopSession,

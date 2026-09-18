@@ -1,17 +1,5 @@
-import { MOST_BYTES, MOST_PIXELS_AN_EDGE } from './whatIsWrongWithThePicture';
-import type { PictureFault } from './whatIsWrongWithThePicture';
-
-const MEGABYTES = MOST_BYTES / (1024 * 1024);
-
-const EDGE = MOST_PIXELS_AN_EDGE.toString();
-
-const SAID: Record<PictureFault, string> = {
-  notAPicture: 'A picture has to be a JPEG, PNG, WebP, AVIF or GIF.',
-  tooLarge: `A picture has to be ${MEGABYTES.toString()} MB or smaller.`,
-  tooDetailed: `A picture has to be ${EDGE} by ${EDGE} or smaller.`,
-  unreadable: 'That file could not be read as a picture.',
-  notYours: 'No such profile on this account.',
-};
+import { FACE_LIMITS } from './whatIsWrongWithThePicture';
+import type { PictureFault, PictureLimits } from './whatIsWrongWithThePicture';
 
 const STATUS: Record<PictureFault, 400 | 404 | 413> = {
   notAPicture: 400,
@@ -29,11 +17,26 @@ const STATUS: Record<PictureFault, 400 | 404 | 413> = {
  * away from them.
  *
  * @param fault - What was wrong with the picture.
+ * @param limits - The limits it was judged against, so that the sentence names the ones that
+ *   applied; a face's by default.
  * @returns What to say, and what to answer with.
  */
-const describePictureFault = (fault: PictureFault): { error: string; status: 400 | 404 | 413 } => ({
-  error: SAID[fault],
-  status: STATUS[fault],
-});
+const describePictureFault = (
+  fault: PictureFault,
+  limits: PictureLimits = FACE_LIMITS,
+): { error: string; status: 400 | 404 | 413 } => {
+  const megabytes = (limits.mostBytes / (1024 * 1024)).toString();
+  const edge = limits.mostPixelsAnEdge.toString();
+
+  const said: Record<PictureFault, string> = {
+    notAPicture: 'A picture has to be a JPEG, PNG, WebP, AVIF or GIF.',
+    tooLarge: `A picture has to be ${megabytes} MB or smaller.`,
+    tooDetailed: `A picture has to be ${edge} by ${edge} or smaller.`,
+    unreadable: 'That file could not be read as a picture.',
+    notYours: 'No such profile on this account.',
+  };
+
+  return { error: said[fault], status: STATUS[fault] };
+};
 
 export { describePictureFault };

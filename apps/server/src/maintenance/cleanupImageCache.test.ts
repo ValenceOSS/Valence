@@ -33,7 +33,7 @@ describe('cleanupImageCache', () => {
       files: fs,
       nameFor,
       listMediaImageUrls: () => Promise.resolve(media),
-      listProfilePhotoPaths: () => Promise.resolve([]),
+      listKeptPictures: () => Promise.resolve([]),
     });
 
     expect(removed).toEqual(['/cache/hash-orphan']);
@@ -51,7 +51,7 @@ describe('cleanupImageCache', () => {
       files: fs,
       nameFor,
       listMediaImageUrls: () => Promise.resolve([]),
-      listProfilePhotoPaths: () => Promise.resolve([]),
+      listKeptPictures: () => Promise.resolve([]),
     });
 
     expect(removed.sort()).toEqual(['/cache/hash-gone', '/cache/hash-gone.type']);
@@ -69,7 +69,7 @@ describe('cleanupImageCache', () => {
       files: fs,
       nameFor,
       listMediaImageUrls: () => Promise.resolve([]),
-      listProfilePhotoPaths: () => Promise.resolve(['/cache/profiles/abc.jpg']),
+      listKeptPictures: () => Promise.resolve(['/cache/profiles/abc.jpg']),
     });
 
     expect(removed).toEqual(['/cache/profiles/orphan.jpg']);
@@ -87,7 +87,7 @@ describe('cleanupImageCache', () => {
       files: fs,
       nameFor,
       listMediaImageUrls: () => Promise.resolve([]),
-      listProfilePhotoPaths: () => Promise.resolve([]),
+      listKeptPictures: () => Promise.resolve([]),
     });
 
     expect(total).toBe(2);
@@ -106,7 +106,7 @@ describe('cleanupImageCache', () => {
       files: fs,
       nameFor,
       listMediaImageUrls: () => Promise.resolve([{ posterUrl: 'a', backdropUrl: 'b' }]),
-      listProfilePhotoPaths: () => Promise.resolve(['/cache/profiles/only.jpg']),
+      listKeptPictures: () => Promise.resolve(['/cache/profiles/only.jpg']),
       onProgress: (phase, processed, total) => progress.push([phase, processed, total]),
     });
 
@@ -135,7 +135,7 @@ describe('cleanupImageCache', () => {
       files: fs,
       nameFor,
       listMediaImageUrls: () => Promise.resolve([]),
-      listProfilePhotoPaths: () => Promise.resolve([]),
+      listKeptPictures: () => Promise.resolve([]),
       onProblem: (path, reason) => problems.push(`${path}: ${reason}`),
     });
 

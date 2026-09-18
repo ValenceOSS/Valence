@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import {
   MOST_BYTES,
   MOST_PIXELS_AN_EDGE,
+  contentTypeFor,
   extensionFor,
   whatIsWrongWithThePicture,
 } from './whatIsWrongWithThePicture';
@@ -21,6 +22,12 @@ describe('the kinds of picture a face may be', () => {
     expect(extensionFor('image/webp')).toBe('.webp');
     expect(extensionFor('image/avif')).toBe('.avif');
     expect(extensionFor('image/gif')).toBe('.gif');
+  });
+
+  it('reads the kind back from the extension it was kept under', () => {
+    expect(contentTypeFor('.jpg')).toBe('image/jpeg');
+    expect(contentTypeFor('.avif')).toBe('image/avif');
+    expect(contentTypeFor('.exe')).toBeUndefined();
   });
 
   it('takes no clip, since a face is a still picture', () => {
@@ -67,6 +74,23 @@ describe('what is wrong with a picture', () => {
         contentType: 'image/png',
       }),
     ).resolves.toBeNull();
+  });
+
+  it('takes more detail where the picture is allowed it, and still refuses beyond that', async () => {
+    const wider = { mostBytes: MOST_BYTES, mostPixelsAnEdge: MOST_PIXELS_AN_EDGE * 2 };
+
+    await expect(
+      whatIsWrongWithThePicture(
+        { body: await aPicture(MOST_PIXELS_AN_EDGE + 1, 4), contentType: 'image/png' },
+        wider,
+      ),
+    ).resolves.toBeNull();
+    await expect(
+      whatIsWrongWithThePicture(
+        { body: await aPicture(MOST_PIXELS_AN_EDGE * 2 + 1, 4), contentType: 'image/png' },
+        wider,
+      ),
+    ).resolves.toBe('tooDetailed');
   });
 
   it('reads the bytes rather than trusting what they claim to be', async () => {

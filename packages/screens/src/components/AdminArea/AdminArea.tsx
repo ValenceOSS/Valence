@@ -39,6 +39,7 @@ import {
 import { rebuildArtefacts } from '@ValenceClient/library/fetchLibrary';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { StatStrip } from './components/StatStrip/StatStrip';
@@ -707,6 +708,10 @@ const AdminArea = ({
               }}
               onCatalogueTrailersSaved={() => {
                 void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+              }}
+              onSplashscreenSaved={() => {
+                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                void cache.invalidateQueries({ queryKey: sessionQueries.wayIn().queryKey });
               }}
             />
           </TabPanel>
