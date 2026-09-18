@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import { Logo } from '@ValenceUI/Logo';
 import { TelevisionHandoff } from '@ValenceScreens/components/TelevisionHandoff/TelevisionHandoff';
+import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
 import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
@@ -13,7 +14,6 @@ import type { Variants } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { TextField } from '@ValenceUI/TextField';
-import { MoodBackground } from '@ValenceUI/MoodBackground';
 import { PageDots } from '@ValenceUI/PageDots';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -120,17 +120,6 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
   const facesRef = useRef(new Map<string, HTMLButtonElement>());
   const prefersReducedMotion = useReducedMotionConfig();
   const { theme, choose } = useTheme();
-  const [hasGround, setHasGround] = useState(false);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      setHasGround(true);
-    });
-
-    return () => {
-      cancelAnimationFrame(frame);
-    };
-  }, []);
 
   const move = prefersReducedMotion === true ? stillTransition : liquidSpring;
   const faceArrival = revealTransition(prefersReducedMotion);
@@ -282,28 +271,10 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
 
   return (
     <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-hidden px-6 py-16">
-      <div
-        aria-hidden
-        className={cn(
-          'pointer-events-none absolute inset-0 -z-10',
-          'transition-opacity duration-[1200ms] ease-out motion-reduce:transition-none',
-          hasGround ? 'opacity-100' : 'opacity-0',
-        )}
-      >
-        {splashscreen === null ? null : (
-          <>
-            <img src={splashscreen} alt="" className="absolute inset-0 size-full object-cover" />
-            <div className="absolute inset-0 bg-surface/55" />
-          </>
-        )}
-        <div className={cn('absolute inset-0 isolate', splashscreen === null ? '' : 'opacity-50')}>
-          <MoodBackground
-            lights={chosen === null ? [] : [{ color: chosen.colour }]}
-            hasGrid
-            isDrifting
-          />
-        </div>
-      </div>
+      <WayInBackground
+        splashscreen={splashscreen}
+        lights={chosen === null ? [] : [{ color: chosen.colour }]}
+      />
 
       <motion.div
         initial={{ opacity: 0 }}
