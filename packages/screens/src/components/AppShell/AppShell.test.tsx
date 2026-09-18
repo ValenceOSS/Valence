@@ -76,6 +76,13 @@ describe('AppShell', () => {
     expect(screen.getByText('The library')).toBeInTheDocument();
   });
 
+  it('leaves nothing to scroll around a section that fills the window', () => {
+    const { view } = draw({ isFitted: true, dock: <p>Now playing</p> });
+
+    expect(view.container.querySelector('main')).toHaveClass('overflow-hidden');
+    expect(screen.getByText('Now playing').parentElement).toHaveClass('h-0');
+  });
+
   it('keeps what is docked along the foot the same thing from one section to the next', () => {
     const { props, view } = draw({ dock: <p>Now playing</p> });
     const docked = screen.getByText('Now playing');

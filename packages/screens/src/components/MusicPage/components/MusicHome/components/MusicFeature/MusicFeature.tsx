@@ -74,7 +74,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
             variants={staggerVariants}
             initial="hidden"
             animate="shown"
-            className="flex min-w-0 flex-col gap-3"
+            className="@container flex min-w-0 flex-1 flex-col gap-3"
           >
             <motion.span
               variants={rises}
@@ -91,7 +91,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
             <motion.h2
               variants={rises}
               transition={moves}
-              className="break-words text-[clamp(2rem,4.5vw,4.25rem)] font-bold leading-[0.95] tracking-[-0.035em] text-balance text-text"
+              className="text-[clamp(1.5rem,11cqi,4.25rem)] font-bold leading-[0.95] tracking-[-0.035em] text-balance text-text"
             >
               {song?.title ?? album.title}
             </motion.h2>

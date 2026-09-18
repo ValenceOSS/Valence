@@ -12,6 +12,7 @@ type AppShellProps = {
   onSectionChange: (section: ShellSection) => void;
   children: ReactNode;
   dock?: ReactNode;
+  isFitted?: boolean;
   moodLights?: MoodLight[];
   isAdministrator?: boolean;
   avatar?: ReactNode;

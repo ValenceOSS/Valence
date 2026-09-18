@@ -23,4 +23,20 @@ describe('useLightTheMusic', () => {
 
     expect(result.current).toBe(cast.lights);
   });
+
+  it('keeps the room lit while a new picture is still being read', () => {
+    const before = [{ color: 'rgb(1 1 1)' }];
+
+    setMusicLights(before);
+    cast.lights = [];
+
+    const { result } = renderHook(() => {
+      useLightTheMusic('/next.webp');
+
+      return useMusicLights();
+    });
+
+    expect(result.current).toBe(before);
+    cast.lights = [{ color: 'rgb(9 9 9)' }];
+  });
 });

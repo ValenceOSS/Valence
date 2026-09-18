@@ -174,6 +174,7 @@ const ValenceShell = () => {
     <AppShell
       section={place.section}
       dock={<NowPlayingBar />}
+      isFitted={place.section === 'music'}
       onSectionChange={(next) => {
         go({ section: next });
       }}

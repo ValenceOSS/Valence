@@ -170,6 +170,8 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  * @param section - Which section is showing.
  * @param onSectionChange - Told which section was chosen.
  * @param children - The page itself.
+ * @param isFitted - Whether the section fills the window exactly and scrolls inside itself, as the
+ *   music section's cards do, so the page around it has nothing to scroll.
  * @param dock - What stays along the foot of every section, such as the music playing. It is kept
  *   apart from the page, which arrives afresh with each section, so it is there throughout rather
  *   than arriving again with every page.
@@ -201,6 +203,7 @@ const AppShell = ({
   onSectionChange,
   children,
   dock,
+  isFitted = false,
   hasMark = true,
   moodLights = [],
   isAdministrator = false,
@@ -551,7 +554,11 @@ const AppShell = ({
           variants={staggerVariants}
           initial="hidden"
           animate="shown"
-          className="min-h-[calc(100vh-var(--valence-window-bar))] pb-16 pt-[var(--nav-clearance)]"
+          className={
+            isFitted
+              ? 'h-[calc(100vh-var(--valence-window-bar))] overflow-hidden pt-[var(--nav-clearance)]'
+              : 'min-h-[calc(100vh-var(--valence-window-bar))] pb-16 pt-[var(--nav-clearance)]'
+          }
         >
           <motion.div
             variants={revealVariants(prefersReducedMotion)}
@@ -561,7 +568,7 @@ const AppShell = ({
           </motion.div>
         </motion.main>
 
-        {dock}
+        {isFitted ? <div className="h-0 overflow-hidden">{dock}</div> : dock}
       </motion.div>
     </div>
   );

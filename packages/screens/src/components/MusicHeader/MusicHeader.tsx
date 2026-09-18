@@ -8,7 +8,8 @@ import type { MusicHeaderProps } from './MusicHeader.types';
  *
  * There is no panel behind it. The room itself is lit in the colours of the picture, the way the
  * home page is lit by its film, so the header is type and artwork standing on the page rather than
- * a coloured box laid across the top of it. The words arrive one after another beside the picture,
+ * a coloured box laid across the top of it. The title is sized to the room its column has, so a
+ * long one is set smaller rather than broken in the middle of a word. The words arrive one after another beside the picture,
  * which has usually just travelled up from the tile that opened it.
  *
  * @param eyebrow - What kind of thing this is.
@@ -30,7 +31,7 @@ const MusicHeader = ({ eyebrow, title, artwork, details, actions }: MusicHeaderP
         variants={staggerVariants}
         initial="hidden"
         animate="shown"
-        className="flex min-w-0 flex-col gap-3"
+        className="@container flex min-w-0 flex-1 flex-col gap-3"
       >
         <motion.span
           variants={rises}
@@ -43,7 +44,7 @@ const MusicHeader = ({ eyebrow, title, artwork, details, actions }: MusicHeaderP
         <motion.h1
           variants={rises}
           transition={moves}
-          className="break-words text-[clamp(2.25rem,5.5vw,5rem)] font-bold leading-[0.95] tracking-[-0.035em] text-balance text-text"
+          className="text-[clamp(1.5rem,10cqi,5rem)] font-bold leading-[0.95] tracking-[-0.035em] text-balance text-text"
         >
           {title}
         </motion.h1>

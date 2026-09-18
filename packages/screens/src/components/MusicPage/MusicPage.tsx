@@ -3,7 +3,6 @@ import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
-import { SectionBar } from '@ValenceUI/SectionBar';
 import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
 import { VALENCE_TOKENS } from '@ValenceUI/tokens';
 import { setMusicPanel, useMusicPanel } from '@ValenceScreens/music/musicPanel';
@@ -33,35 +32,6 @@ const PANEL_TITLES = {
 } as const;
 
 const PANEL_WIDTH = '21rem';
-
-const TABS = [
-  { id: 'home', label: 'Listen now' },
-  { id: 'search', label: 'Search' },
-  { id: 'albums', label: 'Albums' },
-  { id: 'artists', label: 'Artists' },
-  { id: 'playlists', label: 'Playlists' },
-  { id: 'liked', label: 'Liked' },
-] as const;
-
-/**
- * The page a tab in the bar across the top of the section opens.
- *
- * @param id - The tab.
- * @returns The page, or nothing for a tab that is not one.
- */
-const viewForTab = (id: string): MusicView | null => {
-  if (
-    id === 'home' ||
-    id === 'albums' ||
-    id === 'artists' ||
-    id === 'playlists' ||
-    id === 'liked'
-  ) {
-    return { kind: id };
-  }
-
-  return id === 'search' ? { kind: 'search', query: '' } : null;
-};
 
 const OPENING = { duration: VALENCE_TOKENS.duration.slow, ease: VALENCE_TOKENS.ease.soft };
 
@@ -115,14 +85,13 @@ MusicViewShown.displayName = 'MusicViewShown';
  * queue, the devices or the listening party down the right when the player bar asks for them.
  *
  * Three cards that each scroll on their own, so the library stays where it was while an album
- * scrolls. The middle one carries a bar of the section's pages across its top and glows in the
- * colours of whatever it shows. The right-hand card widens from nothing so the page eases over to
+ * scrolls. The middle one glows in the colours of whatever it shows. The right-hand card widens from nothing so the page eases over to
  * make room rather than jumping, and the library folds away the same way where there is not room
  * for all three. The player bar along the bottom lives in the shell, so music carries on as
  * somebody leaves.
  */
 const MusicPage = () => {
-  const { view, open } = useMusicNavigation();
+  const { view } = useMusicNavigation();
   const panel = useMusicPanel();
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
@@ -152,22 +121,7 @@ const MusicPage = () => {
           <div className="valence-card-face relative min-h-0 flex-1 overflow-y-auto overscroll-contain [--music-lane:1.25rem] sm:[--music-lane:2rem]">
             <MusicWash />
 
-            <div className="relative flex flex-col gap-2 pt-4">
-              <div className="px-[var(--music-lane)]">
-                <SectionBar
-                  label="Music pages"
-                  groups={[{ items: [...TABS] }]}
-                  value={view.kind}
-                  onValueChange={(id) => {
-                    const chosen = viewForTab(id);
-
-                    if (chosen !== null) {
-                      open(chosen);
-                    }
-                  }}
-                />
-              </div>
-
+            <div className="relative flex flex-col pt-2">
               <motion.div
                 key={writeMusicView(view) ?? 'home'}
                 variants={fadeVariants}
