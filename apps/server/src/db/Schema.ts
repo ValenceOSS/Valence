@@ -968,6 +968,11 @@ const userProfile = pgTable('user_profile', {
   preferredAudioLanguage: text('preferredAudioLanguage'),
   preferredSubtitleLanguage: text('preferredSubtitleLanguage'),
   requestQuotaPerWeek: integer('requestQuotaPerWeek').notNull().default(0),
+  colour: text('colour'),
+  avatarStyle: text('avatarStyle'),
+  avatarSeed: text('avatarSeed'),
+  photoPath: text('photoPath'),
+  onboardedAt: timestamp('onboardedAt'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 });
