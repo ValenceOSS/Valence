@@ -49,6 +49,23 @@ describe('AlbumView', () => {
     expect(screen.getByText('· 2 songs')).toBeInTheDocument();
   });
 
+  it('says how much room the album takes, and marks it explicit where its songs are', async () => {
+    vi.stubGlobal(
+      'fetch',
+      answerMusicRequests({
+        [`/api/music/albums/${ALBUM_ID}`]: {
+          album: { ...ALBUM, sizeBytes: 1_500_000_000, isExplicit: true },
+          tracks: [aTrack(1, { isExplicit: true })],
+        },
+      }),
+    );
+
+    renderInAnAddress(<AlbumView albumId={ALBUM_ID} />);
+
+    expect(await screen.findByText('· 1.4 GB')).toBeInTheDocument();
+    expect(screen.getAllByRole('img', { name: 'Explicit' })).toHaveLength(2);
+  });
+
   it('plays the album from the top', async () => {
     renderInAnAddress(<AlbumView albumId={ALBUM_ID} />);
 

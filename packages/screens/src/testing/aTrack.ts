@@ -18,6 +18,7 @@ const aTrack = (n: number, overrides: Partial<MusicTrack> = {}): MusicTrack => (
   durationSeconds: 200 + n,
   codec: 'flac',
   isLossless: true,
+  isExplicit: false,
   bitDepth: 24,
   sampleRate: 44_100,
   bitrateKbps: 1400,

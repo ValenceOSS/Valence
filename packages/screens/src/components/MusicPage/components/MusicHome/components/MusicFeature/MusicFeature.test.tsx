@@ -19,6 +19,8 @@ const NEWEST: MusicAlbum = {
   isCompilation: false,
   trackCount: 10,
   durationSeconds: 3000,
+  sizeBytes: 0,
+  isExplicit: false,
   addedAt: '2026-09-18T00:00:00.000Z',
 };
 

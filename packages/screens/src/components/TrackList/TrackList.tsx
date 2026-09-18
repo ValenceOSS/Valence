@@ -1,4 +1,4 @@
-import { FavouriteIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import { FavouriteIcon, PauseIcon, PlayIcon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { Icon } from '@ValenceUI/Icon';
@@ -8,6 +8,7 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { ExplicitMark } from '@ValenceScreens/components/ExplicitMark/ExplicitMark';
 import { Equaliser } from '@ValenceScreens/components/Equaliser/Equaliser';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { TrackMenu } from '@ValenceScreens/components/TrackMenu/TrackMenu';
@@ -20,7 +21,8 @@ import type { TrackListProps } from './TrackList.types';
  * whether you like it, how long it is, and everything else to do with it behind a menu.
  *
  * One background follows the pointer from row to row, as it does down a table. The song playing is
- * drawn in bold, with a wave where its number was, so it can be found in a long list at a glance.
+ * drawn in bold, with moving bars where its number was, so it can be found in a long list at a
+ * glance, and pointing at it offers to pause it rather than to start it again.
  * Pressing a song's title plays the list from that song, which is what anybody pressing it in the
  * middle of an album means. Every artist named links to their page.
  *
@@ -43,7 +45,7 @@ const TrackList = ({
   onRemove,
   onMove,
 }: TrackListProps) => {
-  const { state } = useMusicPlayer();
+  const { state, player } = useMusicPlayer();
   const { open } = useMusicNavigation();
   const favourites = useFavourites(useWatchingProfile());
   const playingId = state.current?.id ?? null;
@@ -76,7 +78,7 @@ const TrackList = ({
               <span className="relative flex size-8 items-center justify-center text-sm tabular-nums text-text-muted">
                 <span
                   className={cn(
-                    'group-hover:opacity-0 group-focus-within:opacity-0',
+                    'group-hover:opacity-0 group-has-[:focus-visible]:opacity-0',
                     isCurrent ? 'text-text' : '',
                   )}
                 >
@@ -87,14 +89,22 @@ const TrackList = ({
                   variant="bare"
                   size="none"
                   isIconOnly
-                  label={`Play ${track.title}`}
+                  label={
+                    isCurrent && state.isPlaying ? `Pause ${track.title}` : `Play ${track.title}`
+                  }
                   hasTooltip={false}
                   className="absolute inset-0 flex items-center justify-center text-text opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                   onClick={() => {
+                    if (isCurrent && state.isPlaying) {
+                      player.pause();
+
+                      return;
+                    }
+
                     onPlay(index);
                   }}
                 >
-                  <Icon of={PlayIcon} size={16} />
+                  <Icon of={isCurrent && state.isPlaying ? PauseIcon : PlayIcon} size={16} />
                 </Button>
               </span>
 
@@ -124,6 +134,8 @@ const TrackList = ({
                   </Button>
 
                   <span className="flex min-w-0 flex-wrap items-center gap-x-1 text-[0.8125rem] text-text-muted">
+                    {track.isExplicit ? <ExplicitMark className="mr-0.5" /> : null}
+
                     {track.isLossless ? (
                       <span className="mr-1 rounded-xs bg-hover px-1 text-[0.625rem] font-semibold uppercase tracking-wide">
                         Lossless

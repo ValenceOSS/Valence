@@ -5,10 +5,12 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { Skeleton } from '@ValenceUI/Skeleton';
+import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
+import { ExplicitMark } from '@ValenceScreens/components/ExplicitMark/ExplicitMark';
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
@@ -92,6 +94,8 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
             {album.year === null ? null : <span>· {album.year.toString()}</span>}
             <span>· {songs(album.trackCount)}</span>
             <span>· {formatDuration(album.durationSeconds)}</span>
+            {album.sizeBytes <= 0 ? null : <span>· {formatBytes(album.sizeBytes)}</span>}
+            {album.isExplicit ? <ExplicitMark className="ml-1" /> : null}
           </>
         }
         actions={

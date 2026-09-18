@@ -24,6 +24,8 @@ const ALBUM = {
   isCompilation: false,
   trackCount: 1,
   durationSeconds: 201,
+  sizeBytes: 0,
+  isExplicit: false,
   addedAt: '2026-09-18T00:00:00.000Z',
 };
 

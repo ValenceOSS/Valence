@@ -16,6 +16,7 @@ const track = (n: number, codec = 'flac'): MusicTrack => ({
   durationSeconds: 200,
   codec,
   isLossless: true,
+  isExplicit: false,
   bitDepth: 16,
   sampleRate: 44_100,
   bitrateKbps: 900,

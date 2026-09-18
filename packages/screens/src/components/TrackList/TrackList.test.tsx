@@ -151,6 +151,31 @@ describe('TrackList', () => {
     expect(screen.getByRole('button', { name: 'Track 2' })).toHaveClass('font-bold');
   });
 
+  it('offers to pause the song playing rather than to start it again', async () => {
+    fake = aFakeMusicPlayer({ current: TRACKS[1] ?? null, isPlaying: true });
+
+    const onPlay = vi.fn();
+
+    renderInAnAddress(<TrackList label="Album" tracks={TRACKS} onPlay={onPlay} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pause Track 2' }));
+
+    expect(fake.player.pause).toHaveBeenCalled();
+    expect(onPlay).not.toHaveBeenCalled();
+  });
+
+  it('keeps the bars beside the song playing once it has been pressed', async () => {
+    fake = aFakeMusicPlayer({ current: TRACKS[1] ?? null, isPlaying: true });
+
+    renderInAnAddress(<TrackList label="Album" tracks={TRACKS} onPlay={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Track 2' }));
+
+    expect(screen.getByRole('img', { name: 'Playing' }).parentElement).not.toHaveClass(
+      'group-focus-within:opacity-0',
+    );
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(TrackList.displayName).toBe('TrackList');
   });

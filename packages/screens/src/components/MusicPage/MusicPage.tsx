@@ -111,7 +111,7 @@ const MusicPage = () => {
           )}
         >
           <aside className="valence-card-shell mr-2 flex min-h-0 w-[17rem] shrink-0 xl:w-[19rem]">
-            <div className="valence-card-face flex min-h-0 flex-1 flex-col">
+            <div className="valence-card-face flex min-h-0 min-w-0 flex-1 flex-col">
               <MusicLibrary />
             </div>
           </aside>
@@ -158,7 +158,7 @@ const MusicPage = () => {
                     animate="shown"
                     exit="gone"
                     transition={stillTransition}
-                    className="valence-card-face flex min-h-0 flex-1 flex-col"
+                    className="valence-card-face flex min-h-0 min-w-0 flex-1 flex-col"
                   >
                     <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
                       <h2 className="text-base font-semibold tracking-tight text-text">
