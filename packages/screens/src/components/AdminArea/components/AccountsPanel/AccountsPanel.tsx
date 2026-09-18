@@ -49,6 +49,7 @@ import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Account } from '@ValenceClient/admin/fetchAccounts';
 import type { Refusal } from '@ValenceClient/admin/fetchRoles';
+import type { Role } from '@ValenceContracts/schemas/Permission';
 import type { LibraryReach } from '@ValenceContracts/schemas/LibraryAccess';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 import type { AccountAvatarDraft } from './components/AccountAvatarPicker/AccountAvatarPicker.types';
@@ -58,6 +59,12 @@ import { describeCeiling } from '@ValenceContracts/schemas/LibraryAccess';
 import { AGE_CHOICES } from '@ValenceScreens/components/AdminArea/ageChoices';
 
 type Asked = { kind: 'ban' | 'remove'; account: Account };
+
+const NO_ACCOUNTS: Account[] = [];
+
+const NO_ROLES: Role[] = [];
+
+const NO_SHELVES: LibraryReach[] = [];
 
 const EDIT_TABS = ['display', 'security', 'devices', 'roles', 'libraries'] as const;
 
@@ -133,10 +140,10 @@ const AccountsPanel = () => {
   const askedAccounts = useQuery(adminQueries.accounts());
   const askedRoles = useQuery(adminQueries.roles());
 
-  const accounts = askedAccounts.data ?? [];
-  const roles = askedRoles.data ?? [];
+  const accounts = askedAccounts.data ?? NO_ACCOUNTS;
+  const roles = askedRoles.data ?? NO_ROLES;
   const held = useQuery(adminQueries.accountPermissions(accountId)).data ?? null;
-  const shelves = useQuery(adminQueries.libraryAccess(accountId)).data ?? [];
+  const shelves = useQuery(adminQueries.libraryAccess(accountId)).data ?? NO_SHELVES;
 
   const picked = accounts.find((account) => account.id === accountId) ?? null;
 

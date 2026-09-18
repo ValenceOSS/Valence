@@ -36,11 +36,18 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import type { Account } from '@ValenceClient/admin/fetchAccounts';
 import type { Refusal } from '@ValenceClient/admin/fetchRoles';
 import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 
 const NEW_ROLE_POSITION = 50;
+
+const NO_ROLES: Role[] = [];
+
+const NO_PERMISSIONS: Permission[] = [];
+
+const NO_ACCOUNTS: Account[] = [];
 
 const EDIT_TABS = ['display', 'permissions', 'members'] as const;
 
@@ -81,9 +88,9 @@ const RolesPanel = () => {
   const askedCatalogue = useQuery(adminQueries.permissions());
   const askedAccounts = useQuery(adminQueries.accounts());
 
-  const roles = askedRoles.data ?? [];
-  const catalogue = askedCatalogue.data ?? [];
-  const accounts = askedAccounts.data ?? [];
+  const roles = askedRoles.data ?? NO_ROLES;
+  const catalogue = askedCatalogue.data ?? NO_PERMISSIONS;
+  const accounts = askedAccounts.data ?? NO_ACCOUNTS;
   const couldNotRead = askedRoles.isError || askedCatalogue.isError;
 
   const reload = useCallback(
