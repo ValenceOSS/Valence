@@ -1,6 +1,7 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import { cn } from '@ValenceUI/cn';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
+import { MENU } from '@ValenceUI/tokens/menu';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
@@ -66,11 +67,7 @@ const ActionMenu = ({
           sideOffset={8}
           align={align}
           data-slot="menu-content"
-          className={cn(
-            'z-50 valence-float min-w-56 overflow-hidden rounded-lg p-1.5 text-sm text-text outline-none',
-            'coarse:min-w-72 coarse:p-2 coarse:text-base',
-            POPUP_MOTION,
-          )}
+          className={cn(MENU.content, POPUP_MOTION)}
         >
           <div
             ref={containerRef}
@@ -85,15 +82,10 @@ const ActionMenu = ({
             {groups.map((group, index) => (
               <RadixMenu.Group
                 key={group.name ?? `group-${index.toString()}`}
-                className={cn(
-                  'relative z-10 flex flex-col',
-                  index === 0 ? '' : 'mt-1.5 border-t border-[var(--surface-line)] pt-1.5',
-                )}
+                className={cn(MENU.group, index === 0 ? '' : MENU.groupAfterFirst)}
               >
                 {group.name === undefined ? null : (
-                  <RadixMenu.Label className="px-3 py-1.5 text-xs uppercase tracking-[0.14em] text-text-muted">
-                    {group.name}
-                  </RadixMenu.Label>
+                  <RadixMenu.Label className={MENU.label}>{group.name}</RadixMenu.Label>
                 )}
 
                 {group.items.map((item) => (
@@ -109,22 +101,18 @@ const ActionMenu = ({
                       item.onChoose();
                     }}
                     className={cn(
-                      'flex cursor-default items-center gap-3 rounded-sm px-3 py-2.5 outline-none',
-                      'coarse:gap-4 coarse:px-4 coarse:py-3.5',
-                      'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40',
+                      MENU.item,
                       item.isDestructive === true ? 'text-danger' : 'text-text',
                     )}
                   >
                     {item.icon === undefined ? null : (
-                      <span className="flex size-4 shrink-0 items-center justify-center coarse:size-5">
-                        {item.icon}
-                      </span>
+                      <span className={MENU.icon}>{item.icon}</span>
                     )}
 
-                    <span className="flex-1 truncate text-left">{item.label}</span>
+                    <span className={MENU.itemLabel}>{item.label}</span>
 
                     {item.detail === undefined ? null : (
-                      <span className="shrink-0 text-xs text-text-muted">{item.detail}</span>
+                      <span className={MENU.detail}>{item.detail}</span>
                     )}
                   </RadixMenu.Item>
                 ))}
