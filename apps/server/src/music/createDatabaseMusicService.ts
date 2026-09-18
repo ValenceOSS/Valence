@@ -13,6 +13,7 @@ import {
 } from '@ValenceServer/db/Schema';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
+import { hasRealWords } from './hasRealWords';
 import { parseLyrics } from './parseLyrics';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { MusicAlbum, MusicArtist, MusicTrack } from '@ValenceContracts/schemas/Music';
@@ -485,7 +486,9 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
     readLyrics: async (viewer, trackId) => {
       const found = await visibleTrackFile(viewer, trackId);
 
-      return found?.lyrics === null || found === null ? null : parseLyrics(found.lyrics);
+      return found === null || found.lyrics === null || !hasRealWords(found.lyrics)
+        ? null
+        : parseLyrics(found.lyrics);
     },
 
     readTrackFile: async (viewer, trackId) => {

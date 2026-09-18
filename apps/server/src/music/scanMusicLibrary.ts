@@ -1,5 +1,6 @@
 import { basename, dirname } from 'node:path';
 import { isAudioFile } from './isAudioFile';
+import { hasRealWords } from './hasRealWords';
 import { nameKey } from './nameKey';
 import type { ScanResult } from '@ValenceContracts/schemas/Library';
 import type { TrackPicture, TrackTags } from './TrackTags';
@@ -229,7 +230,11 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
       artistIds.push((await artistNamed(name, null)).id);
     }
 
-    const lyrics = tags.lyrics ?? (await files.readSidecarLyrics(file.path).catch(() => null));
+    const worthKeeping = (words: string | null): string | null =>
+      words !== null && hasRealWords(words) ? words : null;
+    const lyrics =
+      worthKeeping(tags.lyrics) ??
+      worthKeeping(await files.readSidecarLyrics(file.path).catch(() => null));
 
     await store.keepTrack({
       libraryId,
