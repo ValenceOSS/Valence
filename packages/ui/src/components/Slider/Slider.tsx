@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as RadixSlider from '@radix-ui/react-slider';
-import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useReducedMotionConfig,
+  useSpring,
+} from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import type { SliderProps, SliderTone } from './Slider.types';
@@ -10,6 +16,14 @@ const TRACK_CLASSES: Record<SliderTone, string> = {
   overlay: 'bg-on-scrim/30',
   glass: 'bg-text/15',
 };
+
+const STRETCH_SPRING = { stiffness: 520, damping: 32, mass: 0.6 };
+
+const STRETCH_PER_SPEED = 0.35;
+
+const STRETCH_MOST = 0.6;
+
+const SETTLES_AFTER_MS = 70;
 
 const FILL_CLASSES: Record<SliderTone, string> = {
   default: 'bg-primary',
@@ -68,6 +82,36 @@ const Slider = ({
   const [hover, setHover] = useState<{ value: number; ratio: number; left: number } | null>(null);
   const [isOnHandle, setIsOnHandle] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const stretch = useSpring(1, STRETCH_SPRING);
+  const anchor = useMotionValue(0.5);
+  const lastMoveRef = useRef<{ x: number; atMs: number } | null>(null);
+  const settleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const drag = (clientX: number, atMs: number): void => {
+    const last = lastMoveRef.current;
+
+    lastMoveRef.current = { x: clientX, atMs };
+
+    if (last === null || prefersReducedMotion === true) {
+      return;
+    }
+
+    const moved = clientX - last.x;
+    const speed = Math.abs(moved) / Math.max(atMs - last.atMs, 1);
+
+    if (moved !== 0) {
+      anchor.set(moved > 0 ? 1 : 0);
+      stretch.set(1 + Math.min(speed * STRETCH_PER_SPEED, STRETCH_MOST));
+    }
+
+    if (settleRef.current !== null) {
+      clearTimeout(settleRef.current);
+    }
+
+    settleRef.current = setTimeout(() => {
+      stretch.set(1);
+    }, SETTLES_AFTER_MS);
+  };
 
   useEffect(() => {
     if (!isDragging) {
@@ -76,6 +120,8 @@ const Slider = ({
 
     const letGo = (): void => {
       setIsDragging(false);
+      lastMoveRef.current = null;
+      stretch.set(1);
     };
 
     window.addEventListener('pointerup', letGo);
@@ -85,7 +131,7 @@ const Slider = ({
       window.removeEventListener('pointerup', letGo);
       window.removeEventListener('pointercancel', letGo);
     };
-  }, [isDragging]);
+  }, [isDragging, stretch]);
 
   const track = useCallback(
     (clientX: number) => {
@@ -113,6 +159,7 @@ const Slider = ({
 
   const handle = (
     <RadixSlider.Thumb
+      asChild
       aria-label={label}
       aria-disabled={max <= 0}
       onPointerEnter={() => {
@@ -123,14 +170,16 @@ const Slider = ({
       }}
       className={cn(
         'block size-3.5 w-8 rounded-full shadow outline-none select-none',
-        'transition-[transform,opacity] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
+        'transition-[scale,opacity] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
         'motion-reduce:transition-none hover-hover:hover:scale-110 focus-visible:ring-[3px] focus-visible:ring-ring',
         revealsThumb && !isDragging
           ? 'hover-hover:scale-75 hover-hover:opacity-0 hover-hover:group-hover/slider:scale-100 hover-hover:group-hover/slider:opacity-100 focus-visible:scale-100 focus-visible:opacity-100'
           : '',
         FILL_CLASSES[tone],
       )}
-    />
+    >
+      <motion.span style={{ scaleX: stretch, originX: anchor }} />
+    </RadixSlider.Thumb>
   );
 
   return (
@@ -181,6 +230,10 @@ const Slider = ({
         }}
         onPointerMove={(event) => {
           track(event.clientX);
+
+          if (isDragging) {
+            drag(event.clientX, event.timeStamp);
+          }
         }}
         onPointerLeave={() => {
           setHover(null);

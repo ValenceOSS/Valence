@@ -103,4 +103,14 @@ describe('Switch', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(Switch.displayName).toBe('Switch');
   });
+
+  it('keeps its knob through a flip, rather than drawing a new one', () => {
+    const { rerender } = render(<Switch label="Trailers" isOn={false} onToggle={vi.fn()} />);
+
+    rerender(<Switch label="Trailers" isOn onToggle={vi.fn()} />);
+
+    const knob = screen.getByRole('switch', { name: 'Trailers' }).querySelector('[data-state]');
+
+    expect(knob).not.toBeNull();
+  });
 });

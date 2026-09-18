@@ -1,11 +1,18 @@
+import { useEffect, useRef } from 'react';
 import * as RadixSwitch from '@radix-ui/react-switch';
+import { useAnimate, useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import type { SwitchProps } from './Switch.types';
+
+const STRETCH = 1.3;
+
+const STRETCHING = { duration: 0.32, ease: [0.23, 1, 0.32, 1] } as const;
 
 /**
  * One setting that is either on or off, and takes effect the moment it is pressed rather than
  * waiting for a form to be submitted. The label is part of the control rather than beside it, so
- * the words are a press target too.
+ * the words are a press target too. The knob stretches as it goes, its trailing side a moment
+ * behind, and settles once it arrives — the same give the slider's handle has when dragged.
  *
  * @param label - What the setting is.
  * @param isLabelHidden - Whether to draw only the switch, for a row that already says what it is.
@@ -30,6 +37,24 @@ const Switch = ({
   className,
 }: SwitchProps) => {
   const isOverlay = tone === 'overlay';
+  const [knob, animate] = useAnimate<HTMLSpanElement>();
+  const prefersReducedMotion = useReducedMotionConfig();
+  const wasOnRef = useRef(isOn);
+
+  useEffect(() => {
+    if (wasOnRef.current === isOn) {
+      return;
+    }
+
+    wasOnRef.current = isOn;
+
+    if (prefersReducedMotion === true) {
+      return;
+    }
+
+    knob.current.style.transformOrigin = isOn ? 'right center' : 'left center';
+    void animate(knob.current, { scaleX: [1, STRETCH, 1] }, STRETCHING);
+  }, [isOn, prefersReducedMotion, animate, knob]);
 
   return (
     <RadixSwitch.Root
@@ -71,9 +96,10 @@ const Switch = ({
         )}
       >
         <RadixSwitch.Thumb
+          ref={knob}
           className={cn(
             'h-5 w-8 shrink-0 rounded-pill shadow-sm',
-            'transition-transform duration-[var(--duration-fast)] ease-[var(--ease-out)]',
+            'transition-[translate] duration-[var(--duration-fast)] ease-[var(--ease-out)]',
             'motion-reduce:transition-none',
             isOn ? 'translate-x-[18px]' : 'translate-x-0',
             isOn && isOverlay ? 'bg-shade' : 'bg-on-scrim',
