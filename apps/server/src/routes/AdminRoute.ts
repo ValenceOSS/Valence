@@ -81,6 +81,14 @@ const AdminOverviewSchema = z
       })
       .nullable()
       .default(null),
+    bookPages: z
+      .object({
+        count: z.number().int().nonnegative(),
+        bytes: z.number().int().nonnegative(),
+        atMs: z.number().int().nonnegative(),
+      })
+      .nullable()
+      .default(null),
     jobs: z
       .object({
         stalled: z.array(
@@ -503,6 +511,13 @@ const AdminStorageSchema = z
       })
       .nullable(),
     artwork: z
+      .object({
+        count: z.number().int().nonnegative(),
+        bytes: z.number().int().nonnegative(),
+        atMs: z.number().int().nonnegative(),
+      })
+      .nullable(),
+    bookPages: z
       .object({
         count: z.number().int().nonnegative(),
         bytes: z.number().int().nonnegative(),
