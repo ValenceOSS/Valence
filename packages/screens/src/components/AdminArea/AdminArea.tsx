@@ -9,7 +9,17 @@ import { JobsPanel } from './components/JobsPanel/JobsPanel';
 import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
 import { LogsPanel } from './components/LogsPanel/LogsPanel';
 import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
+import { EncodingPanel } from './components/EncodingPanel/EncodingPanel';
 import { MediaPanel } from './components/MediaPanel/MediaPanel';
+import { ReencodeDialog } from '@ValenceScreens/components/ReencodeDialog/ReencodeDialog';
+import { ReencodeReview } from '@ValenceScreens/components/ReencodeReview/ReencodeReview';
+import {
+  cancelReencode,
+  confirmReencode,
+  fetchReencodeEstimate,
+  rejectReencode,
+  startReencodes,
+} from '@ValenceClient/admin/fetchReencodes';
 import { MatchPicker } from './components/MatchPicker/MatchPicker';
 import { PreviewMomentPicker } from '@ValenceScreens/components/PreviewMomentPicker/PreviewMomentPicker';
 import { OverviewPanel } from './components/OverviewPanel/OverviewPanel';
@@ -71,6 +81,11 @@ import {
 } from './scanCoordinator';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
+import type {
+  Reencode,
+  ReencodeEstimate,
+  ReencodeSettings,
+} from '@ValenceContracts/schemas/Reencode';
 import type { JobSchedules, ScheduleTrigger } from '@ValenceClient/admin/fetchAdmin';
 import type { CreatedWebhook } from '@ValenceClient/admin/fetchWebhooks';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
@@ -121,6 +136,10 @@ const AdminArea = ({
   const [pendingLogJobId, setPendingLogJobId] = useState<string | null>(null);
 
   const [busyClientId, setBusyClientId] = useState<string | null>(null);
+  const [isChoosingReencode, setIsChoosingReencode] = useState(false);
+  const [reviewing, setReviewing] = useState<Reencode | null>(null);
+  const [reencodeEstimate, setReencodeEstimate] = useState<ReencodeEstimate | null>(null);
+  const [isWeighingReencode, setIsWeighingReencode] = useState(false);
   const prefersReducedMotion = useReducedMotionConfig();
   const travel = useTravelDirection(PANEL_ORDER, panel);
 
@@ -137,8 +156,10 @@ const AdminArea = ({
   const libraries = useMemo(() => askedLibraries.data ?? [], [askedLibraries.data]);
 
   const askedMedia = useQuery(adminQueries.everything(libraries.map((library) => library.id)));
+  const askedReencodes = useQuery(adminQueries.reencodes());
 
   const media = askedMedia.data ?? [];
+  const reencodes = askedReencodes.data ?? [];
   const sessions = askedSessions.data ?? [];
   const jobDefinitions = useMemo(() => askedJobs.data ?? [], [askedJobs.data]);
 
@@ -246,6 +267,23 @@ const AdminArea = ({
     async () => cache.invalidateQueries({ queryKey: adminQueries.sessions().queryKey }),
     [cache],
   );
+
+  const reloadReencodes = useCallback(
+    async () => cache.invalidateQueries({ queryKey: adminQueries.reencodes().queryKey }),
+    [cache],
+  );
+
+  const weighReencode = useCallback(async (mediaIds: string[], settings: ReencodeSettings) => {
+    if (mediaIds.length === 0) {
+      setReencodeEstimate(null);
+
+      return;
+    }
+
+    setIsWeighingReencode(true);
+    setReencodeEstimate(await fetchReencodeEstimate(mediaIds, settings));
+    setIsWeighingReencode(false);
+  }, []);
 
   const onLibraryUpdated = (updated: Library) => {
     cache.setQueryData(libraryQueries.all().queryKey, (current: Library[] = []) =>
@@ -685,6 +723,33 @@ const AdminArea = ({
               onCorrect={setCorrecting}
               onChooseMoment={setChoosingMoment}
               onRebuildArtefacts={async (item) => (await rebuildArtefacts(item.id)) !== null}
+              onReencode={(item) => {
+                setIsChoosingReencode(true);
+                void weighReencode([item.id], {
+                  mode: 'replace',
+                  quality: '1080p',
+                  videoCodec: 'hevc',
+                  audio: 'keep',
+                });
+              }}
+            />
+          </TabPanel>
+
+          <TabPanel value="encoding" travel={travel}>
+            <EncodingPanel
+              isUnreachable={askedReencodes.isError}
+              reencodes={reencodes}
+              onReview={setReviewing}
+              onStop={async (one) => {
+                const stopped = await cancelReencode(one.id);
+
+                await reloadReencodes();
+
+                return stopped;
+              }}
+              onChoose={() => {
+                setIsChoosingReencode(true);
+              }}
             />
           </TabPanel>
 
@@ -826,6 +891,48 @@ const AdminArea = ({
               queryKey: libraryQueries.detail(choosingMoment.id).queryKey,
             });
           }
+        }}
+      />
+
+      <ReencodeDialog
+        isOpen={isChoosingReencode}
+        media={media}
+        estimate={reencodeEstimate}
+        isWeighing={isWeighingReencode}
+        onWeigh={(mediaIds, settings) => {
+          void weighReencode(mediaIds, settings);
+        }}
+        onStart={async (mediaIds, settings) => {
+          const started = await startReencodes(mediaIds, settings);
+
+          await reloadReencodes();
+
+          return started !== null && started.started.length > 0;
+        }}
+        onClose={() => {
+          setIsChoosingReencode(false);
+          setReencodeEstimate(null);
+        }}
+      />
+
+      <ReencodeReview
+        reencode={reviewing}
+        onConfirm={async (id) => {
+          const done = await confirmReencode(id);
+
+          await Promise.all([reloadReencodes(), loadAll()]);
+
+          return done;
+        }}
+        onReject={async (id) => {
+          const done = await rejectReencode(id);
+
+          await Promise.all([reloadReencodes(), loadAll()]);
+
+          return done;
+        }}
+        onClose={() => {
+          setReviewing(null);
         }}
       />
     </motion.div>
