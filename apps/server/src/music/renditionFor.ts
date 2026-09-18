@@ -1,10 +1,9 @@
 import { AUDIO_QUALITY_KBPS } from '@ValenceContracts/schemas/Music';
+import { isAlreadyAsSmall } from '@ValenceCore/functions/isAlreadyAsSmall';
 import type { AudioQuality } from '@ValenceContracts/schemas/Music';
 import type { TrackFile } from './MusicService';
 
 type Rendition = { kind: 'original' } | { kind: 'encoded'; kbps: 96 | 160 | 320 };
-
-const ROOM = 1.1;
 
 /**
  * Decides what to send for a track at a quality somebody chose.
@@ -23,10 +22,7 @@ const renditionFor = (file: TrackFile, quality: AudioQuality): Rendition => {
   }
 
   const kbps = AUDIO_QUALITY_KBPS[quality];
-  const isSmallEnough =
-    !file.isLossless && file.bitrateKbps !== null && file.bitrateKbps <= kbps * ROOM;
-
-  return isSmallEnough ? { kind: 'original' } : { kind: 'encoded', kbps };
+  return isAlreadyAsSmall(file, kbps) ? { kind: 'original' } : { kind: 'encoded', kbps };
 };
 
 export type { Rendition };

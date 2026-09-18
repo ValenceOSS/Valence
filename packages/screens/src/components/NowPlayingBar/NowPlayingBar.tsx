@@ -30,11 +30,7 @@ import {
   stillTransition,
 } from '@ValenceUI/animations/reveal';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
-import {
-  AUDIO_QUALITIES,
-  AUDIO_QUALITY_LABELS,
-  AudioQualitySchema,
-} from '@ValenceContracts/schemas/Music';
+import { AUDIO_QUALITIES, AudioQualitySchema } from '@ValenceContracts/schemas/Music';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
@@ -413,7 +409,10 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 className="w-auto shrink-0"
                 trigger={
                   <span className="rounded-xs px-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide">
-                    {AUDIO_QUALITY_LABELS[state.playingQuality ?? state.quality]}
+                    {
+                      describeAudioQuality(state.playingQuality ?? state.quality, state.current)
+                        .label
+                    }
                   </span>
                 }
                 groups={[
@@ -429,8 +428,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                     },
                     options: AUDIO_QUALITIES.map((quality) => ({
                       id: quality,
-                      label: AUDIO_QUALITY_LABELS[quality],
-                      detail: describeAudioQuality(quality, state.current?.bitrateKbps ?? null),
+                      ...describeAudioQuality(quality, state.current),
                     })),
                   },
                 ]}
