@@ -4,6 +4,7 @@ import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
   Cancel01Icon,
   Download04Icon,
+  FilmRoll01Icon,
   InformationCircleIcon,
   Link01Icon,
   PlayIcon,
@@ -86,6 +87,7 @@ const ShowDialog = ({
   const asked = useQuery(libraryQueries.show(show?.libraryId ?? null, show?.id ?? null));
   const detail = useHeldWhileLeaving(asked.data ?? null, show !== null);
   const isLoading = show !== null && asked.isPending;
+  const trailer = (detail?.extras ?? []).find((one) => one.extraKind === 'trailer') ?? null;
 
   const carryOnRef = useRef({ resumeFor, isFinished });
 
@@ -360,6 +362,18 @@ const ShowDialog = ({
             )
           }
           actions={[
+            ...(trailer === null
+              ? []
+              : [
+                  {
+                    id: 'trailer',
+                    label: 'Watch the trailer',
+                    icon: <Icon of={FilmRoll01Icon} size={18} />,
+                    onChoose: () => {
+                      onPlay(trailer, 0);
+                    },
+                  },
+                ]),
             ...(carryingOn === null || onInspect === undefined
               ? []
               : [

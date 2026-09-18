@@ -601,6 +601,36 @@ describe('the extras a film carries', () => {
     });
   });
 
+  it('offers no trailer of its own where a film carries none', async () => {
+    detailMock.mockResolvedValue({ ...detail(), extras: [anExtra()] });
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Extras')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Watch the trailer')).not.toBeInTheDocument();
+  });
+
+  it('offers the trailer beside playing the film, rather than only down among the extras', async () => {
+    const onPlay = vi.fn();
+    detailMock.mockResolvedValue({
+      ...detail(),
+      extras: [anExtra({ id: 'extra-trailer', title: 'A trailer', extraKind: 'trailer' })],
+    });
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={onPlay} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Watch the trailer')).toBeInTheDocument();
+    });
+
+    await userEvent.setup().click(screen.getByText('Watch the trailer'));
+
+    expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'extra-trailer' }), 0);
+  });
+
   it('plays one when it is chosen, from the beginning', async () => {
     const onPlay = vi.fn();
     detailMock.mockResolvedValue({ ...detail(), extras: [anExtra()] });

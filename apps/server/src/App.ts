@@ -3147,8 +3147,14 @@ const createApp = ({
 
     const { mediaId } = context.req.valid('param');
 
-    if ((await library.getMedia(mediaId)) === null) {
+    const item = await library.getMedia(mediaId);
+
+    if (item === null) {
       return context.json({ error: 'No such media item.' }, 404);
+    }
+
+    if ((item.extraKind ?? null) !== null) {
+      return context.body(null, 204);
     }
 
     const report = context.req.valid('json');

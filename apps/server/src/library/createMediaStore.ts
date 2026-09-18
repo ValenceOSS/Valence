@@ -276,6 +276,36 @@ const createMediaStore = (
 });
 
 /**
+ * Asks which items in a library a given job has not finished with.
+ *
+ * Extras are left out of all of it. A preview is a taste of something you have not decided to watch
+ * and a sheet of thumbnails is for scrubbing a film, and neither means anything on a trailer that is
+ * ninety seconds long and is itself the taste. Rendering them costs what rendering a feature costs.
+ *
+ * Built apart from the reading of it so that what it leaves out can be read without a database.
+ *
+ * @param db - The database to ask.
+ * @param libraryId - The library being worked through.
+ * @param kind - The job being asked about.
+ * @returns The query, unrun.
+ */
+const outstandingFor = (db: ValenceDatabase, libraryId: string, kind: string) =>
+  db
+    .select({ id: mediaItem.id, path: mediaItem.path, audioStreams: mediaItem.audioStreams })
+    .from(mediaItem)
+    .leftJoin(
+      mediaItemJob,
+      and(eq(mediaItemJob.mediaItemId, mediaItem.id), eq(mediaItemJob.kind, kind)),
+    )
+    .where(
+      and(
+        eq(mediaItem.libraryId, libraryId),
+        isNull(mediaItem.extraKind),
+        isNull(mediaItemJob.mediaItemId),
+      ),
+    );
+
+/**
  * Finds the items in a library that a given job has not yet finished with, which is what lets
  * previews, thumbnails and segment detection resume after a restart rather than beginning again.
  *
@@ -289,14 +319,7 @@ const listOutstandingFor = async (
   libraryId: string,
   kind: string,
 ): Promise<{ id: string; path: string; audioStreams: AudioStream[] }[]> => {
-  const rows = await db
-    .select({ id: mediaItem.id, path: mediaItem.path, audioStreams: mediaItem.audioStreams })
-    .from(mediaItem)
-    .leftJoin(
-      mediaItemJob,
-      and(eq(mediaItemJob.mediaItemId, mediaItem.id), eq(mediaItemJob.kind, kind)),
-    )
-    .where(and(eq(mediaItem.libraryId, libraryId), isNull(mediaItemJob.mediaItemId)));
+  const rows = await outstandingFor(db, libraryId, kind);
 
   return rows.map((row) => ({
     id: row.id,
@@ -354,4 +377,10 @@ const clearJobCompletions = async (
   );
 };
 
-export { createMediaStore, listOutstandingFor, markJobComplete, clearJobCompletions };
+export {
+  createMediaStore,
+  outstandingFor,
+  listOutstandingFor,
+  markJobComplete,
+  clearJobCompletions,
+};

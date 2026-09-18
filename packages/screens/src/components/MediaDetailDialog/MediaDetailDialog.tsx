@@ -7,6 +7,7 @@ import {
   Cancel01Icon,
   Download04Icon,
   FavouriteIcon,
+  FilmRoll01Icon,
   InformationCircleIcon,
   PlayIcon,
   Share08Icon,
@@ -156,6 +157,7 @@ const MediaDetailDialog = ({
   const shownResume = media === null ? heldRef.current.resume : resumeSeconds;
   const shownSiblings = media === null ? heldRef.current.siblings : siblings;
   const extras = detail?.extras ?? [];
+  const trailer = extras.find((one) => one.extraKind === 'trailer') ?? null;
   const versions = detail?.versions ?? [];
   const chosenVersion = versions.find((one) => one.id === version) ?? null;
 
@@ -503,6 +505,18 @@ const MediaDetailDialog = ({
             </div>
           }
           actions={[
+            ...(trailer === null
+              ? []
+              : [
+                  {
+                    id: 'trailer',
+                    label: 'Watch the trailer',
+                    icon: <Icon of={FilmRoll01Icon} size={18} />,
+                    onChoose: () => {
+                      onPlay(trailer, 0);
+                    },
+                  },
+                ]),
             ...(shownResume === undefined
               ? []
               : [
