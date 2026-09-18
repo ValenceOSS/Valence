@@ -97,6 +97,7 @@ import { createDatabaseSegmentService } from '@ValenceServer/segments/createData
 import { createFingerprintSegmentProvider } from '@ValenceServer/segments/createFingerprintSegmentProvider';
 import { createSidecarSubtitleService } from '@ValenceServer/subtitles/createSidecarSubtitleService';
 import { createDatabaseProfileService } from '@ValenceServer/profiles/createDatabaseProfileService';
+import { createDatabaseHouseholdService } from '@ValenceServer/household/createDatabaseHouseholdService';
 import { createFileSplashscreenStore } from '@ValenceServer/splashscreen/createFileSplashscreenStore';
 import { createDatabaseBookService } from '@ValenceServer/books/createDatabaseBookService';
 import { ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
@@ -613,6 +614,8 @@ await movePhotographsOnce({
 });
 
 const profileService = createDatabaseProfileService(db, env.PROFILE_IMAGE_DIR);
+
+const householdService = createDatabaseHouseholdService(db, env.PROFILE_IMAGE_DIR);
 
 const splashscreen = createFileSplashscreenStore(env.PROFILE_IMAGE_DIR, settings);
 
@@ -1750,6 +1753,7 @@ const app = createApp({
     });
   },
   profiles: profileService,
+  households: householdService,
   splashscreen,
   books: bookService,
   promoteProfile: async ({ profileId, email, password }) => {
