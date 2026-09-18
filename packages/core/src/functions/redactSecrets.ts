@@ -1,12 +1,22 @@
 const HIDDEN = '[redacted]';
 
 const SECRET_NAMES =
-  'api_key|apikey|access_token|refresh_token|id_token|token|secret|password|passwd|authorization|auth|signature|sig|client_secret|private_key|session';
+  'api_key|apikey|access_token|refresh_token|id_token|token|secret|password|passwd|authorization|signature|client_secret|private_key|session_token';
 
-const QUERY_SECRET = new RegExp(`([?&](?:${SECRET_NAMES})=)([^&\\s"']*)`, 'gi');
+const LOOSE_SECRET_NAMES = 'auth|sig|session';
+
+const QUERY_SECRET = new RegExp(
+  `([?&](?:${SECRET_NAMES}|${LOOSE_SECRET_NAMES})=)([^&\\s"']*)`,
+  'gi',
+);
 
 const ASSIGNED_SECRET = new RegExp(
   `\\b([A-Za-z0-9_]*(?:${SECRET_NAMES}))("?\\s*[:=]\\s*"?)(?!\\[redacted\\]|Bearer\\b|Basic\\b|Token\\b)([^\\s,;&}"']+)`,
+  'gi',
+);
+
+const LOOSELY_ASSIGNED_SECRET = new RegExp(
+  `\\b([A-Za-z0-9_]*(?:${LOOSE_SECRET_NAMES}))("=")?(=)(?!\\[redacted\\])([^\\s,;&}"']+)`,
   'gi',
 );
 
@@ -36,6 +46,14 @@ const EMAIL = /\b[A-Za-z0-9._%+-]+(@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
  * An email keeps its domain and loses the part that names somebody, since the domain helps explain a
  * delivery failure and does not identify who watched what.
  *
+ * `auth`, `sig` and `session` are words before they are secrets, and a log line is written as
+ * `session: what happened`. Reading that as an assignment took the next word out of every session
+ * the media service logged, which is where a transcode says what it decided to do. So those three
+ * are redacted where something is assigned to them with `=`, which is how a query string and an
+ * environment carry them, and left alone after a colon. The forms that are only ever a credential —
+ * `session_token`, `authorization`, `signature` — are redacted either way, and a bare `Bearer` or a
+ * cookie is caught before any of this by a rule of its own.
+ *
  * @param text - The line about to be written.
  * @returns The line with credentials and names removed.
  */
@@ -47,6 +65,7 @@ const redactSecrets = (text: string): string =>
     .replace(COOKIE, `$1=${HIDDEN}`)
     .replace(QUERY_SECRET, `$1${HIDDEN}`)
     .replace(SHARE_LINK, `$1${HIDDEN}`)
-    .replace(ASSIGNED_SECRET, `$1$2${HIDDEN}`);
+    .replace(ASSIGNED_SECRET, `$1$2${HIDDEN}`)
+    .replace(LOOSELY_ASSIGNED_SECRET, `$1$3${HIDDEN}`);
 
 export { redactSecrets, HIDDEN };
