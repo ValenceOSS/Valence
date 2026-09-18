@@ -2,6 +2,7 @@ import { partyAllows, powersOf, whoKeepsTime } from '@ValenceContracts/schemas/W
 import { whoIsHoldingUp } from '@ValenceCore/functions/whoIsHoldingUp';
 import type {
   PartyCommand,
+  PartyKind,
   PartyMember,
   PartyRole,
   SequencedCommand,
@@ -28,7 +29,11 @@ type Issued =
   | { kind: 'refused'; why: string };
 
 type PartyRegistry = {
-  open: (options: { mediaId: string; host: Omit<Joining, 'partyId'> }) => WatchParty;
+  open: (options: {
+    mediaId: string;
+    host: Omit<Joining, 'partyId'>;
+    kind?: PartyKind;
+  }) => WatchParty;
   join: (joining: Joining) => Joined;
   leave: (connectionId: string) => WatchParty | null;
   issue: (partyId: string, connectionId: string, command: PartyCommand, atMs: number) => Issued;
@@ -97,6 +102,10 @@ const REFUSED_ONESELF = 'You cannot remove yourself from a party you can simply 
  *
  * What a party permits is decided here and nowhere else. A client hiding a button is presentation;
  * this refusing the command is the permission.
+ *
+ * A party for listening together starts with only its host driving it — what plays and where it
+ * has got to are theirs to choose, while everybody keeps their own volume, since that never
+ * travels. The host can loosen that like any other party.
  *
  * A party's password is held here and never put in the party that goes out over the socket — what
  * everybody is told is only that there is one. Somebody the host has removed is remembered by
@@ -167,15 +176,17 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
   };
 
   return {
-    open: ({ mediaId, host }) => {
+    open: ({ mediaId, host, kind = 'watch' }) => {
       const atMs = Date.now();
+      const isShared = kind === 'watch';
 
       const party: WatchParty = {
         id: newId(),
+        kind,
         mediaId,
         createdAtMs: atMs,
-        everyoneMaySeek: true,
-        everyoneMayPlayPause: true,
+        everyoneMaySeek: isShared,
+        everyoneMayPlayPause: isShared,
         hasPassword: false,
         isPlaying: true,
         isHeld: false,

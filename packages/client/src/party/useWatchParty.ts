@@ -4,7 +4,12 @@ import { whereTheRoomIs } from '@ValenceCore/functions/whereTheRoomIs';
 import { whoIsHoldingUp } from '@ValenceCore/functions/whoIsHoldingUp';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import type { PartyClient } from './createPartyClient';
-import type { PartyRole, SequencedCommand, WatchParty } from '@ValenceContracts/schemas/WatchParty';
+import type {
+  PartyKind,
+  PartyRole,
+  SequencedCommand,
+  WatchParty,
+} from '@ValenceContracts/schemas/WatchParty';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 
 const ASK_THE_CLOCK_EVERY_MS = 5000;
@@ -24,7 +29,7 @@ type WatchPartyState = {
   referenceSeconds: number | null;
   waitingFor: readonly string[];
   jitterMs: number;
-  open: (mediaId: string) => void;
+  open: (mediaId: string, kind?: PartyKind) => void;
   join: (partyId: string, password?: string) => void;
   leave: () => void;
   send: PartyClient['send'];
@@ -161,8 +166,8 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
     [party, command],
   );
 
-  const open = useCallback((mediaId: string) => {
-    partyRef.current?.open(mediaId);
+  const open = useCallback((mediaId: string, kind?: PartyKind) => {
+    partyRef.current?.open(mediaId, kind);
   }, []);
 
   const join = useCallback((partyId: string, password?: string) => {

@@ -28,6 +28,7 @@ const member = (over?: Partial<PartyMember>): PartyMember => ({
 
 const party = (over?: Partial<WatchParty>): WatchParty => ({
   id: 'party-1',
+  kind: 'watch',
   mediaId: 'a-film',
   createdAtMs: NOW_MS,
   everyoneMaySeek: true,

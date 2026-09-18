@@ -141,3 +141,18 @@ describe('FromServerSchema', () => {
     expect(read.success).toBe(false);
   });
 });
+
+describe('FromClientSchema', () => {
+  it('reads a party opened for listening together', () => {
+    expect(
+      FromClientSchema.parse({ kind: 'partyOpen', mediaId: 'm1', partyKind: 'listen' }),
+    ).toEqual({ kind: 'partyOpen', mediaId: 'm1', partyKind: 'listen' });
+  });
+
+  it('reads a party opened as ever, without saying what kind', () => {
+    expect(FromClientSchema.parse({ kind: 'partyOpen', mediaId: 'm1' })).toEqual({
+      kind: 'partyOpen',
+      mediaId: 'm1',
+    });
+  });
+});

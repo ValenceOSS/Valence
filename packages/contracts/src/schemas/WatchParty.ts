@@ -2,14 +2,19 @@ import { z } from 'zod';
 
 const PARTY_ROLES = ['host', 'coHost', 'guest'] as const;
 
+const PARTY_KINDS = ['watch', 'listen'] as const;
+
 const PARTY_POWERS = ['playPause', 'seek', 'changeWhatIsPlaying', 'invite', 'manageParty'] as const;
 
 const PartyRoleSchema = z.enum(PARTY_ROLES);
 
 const PartyPowerSchema = z.enum(PARTY_POWERS);
 
+const PartyKindSchema = z.enum(PARTY_KINDS);
+
 type PartyRole = (typeof PARTY_ROLES)[number];
 type PartyPower = (typeof PARTY_POWERS)[number];
+type PartyKind = (typeof PARTY_KINDS)[number];
 
 const POWERS_BY_ROLE: Readonly<Record<PartyRole, readonly PartyPower[]>> = {
   host: ['playPause', 'seek', 'changeWhatIsPlaying', 'invite', 'manageParty'],
@@ -33,6 +38,7 @@ const PartyMemberSchema = z.object({
 
 const WatchPartySchema = z.object({
   id: z.string().min(1),
+  kind: PartyKindSchema.default('watch'),
   mediaId: z.string().min(1),
   createdAtMs: z.number().int().nonnegative(),
   everyoneMaySeek: z.boolean(),
@@ -147,6 +153,7 @@ const whoKeepsTime = (members: readonly PartyMember[]): string | null =>
   )[0]?.connectionId ?? null;
 
 export type {
+  PartyKind,
   PartyRole,
   PartyPower,
   PartyMember,
@@ -157,6 +164,8 @@ export type {
 };
 
 export {
+  PARTY_KINDS,
+  PartyKindSchema,
   PARTY_ROLES,
   PARTY_POWERS,
   PartyRoleSchema,

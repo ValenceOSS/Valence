@@ -8,6 +8,7 @@ const NOW_MS = 1_700_000_000_000;
 
 const party: WatchParty = {
   id: 'party-1',
+  kind: 'watch',
   mediaId: 'a-film',
   createdAtMs: NOW_MS,
   everyoneMaySeek: true,
@@ -154,6 +155,14 @@ describe('createPartyClient', () => {
     world.tell({ party: { id: 'party-1' } });
 
     expect(world.watcher.onParty).not.toHaveBeenCalled();
+  });
+
+  it('asks for a party to listen together in', () => {
+    const world = createWorld();
+
+    world.held.open('a-song', 'listen');
+
+    expect(world.sent).toEqual([{ kind: 'partyOpen', mediaId: 'a-song', partyKind: 'listen' }]);
   });
 
   it('asks the server for a party rather than deciding it has one', () => {

@@ -2133,7 +2133,7 @@ const realtimeHandler = createRealtimeHandler({
 });
 
 /**
- * Asks somebody to a watch party, in whatever way they asked to be told things.
+ * Asks somebody to a watch or listening party, in whatever way they asked to be told things.
  *
  * The notification carries the same address the party's own invitation does, which holds no
  * credential of its own: being asked is not being let in, and whoever opens it still has to be
@@ -2144,7 +2144,7 @@ const realtimeHandler = createRealtimeHandler({
  * @param profileId - Which face they picked, since that is what a viewer chooses between.
  */
 const askSomebodyToTheParty = async (
-  party: { id: string; mediaId: string },
+  party: { id: string; kind: 'watch' | 'listen'; mediaId: string },
   byName: string,
   profileId: string,
 ): Promise<void> => {
@@ -2160,15 +2160,17 @@ const askSomebodyToTheParty = async (
     .where(eq(mediaItem.id, party.mediaId))
     .limit(1);
 
+  const isListening = party.kind === 'listen';
+
   await notifyHousehold({
     store: notifications,
     event: 'party.invited',
-    title: `${byName} wants to watch with you`,
+    title: `${byName} wants to ${isListening ? 'listen' : 'watch'} with you`,
     body:
       found === undefined
-        ? 'They have a watch party running.'
-        : `They are watching ${found.title}.`,
-    link: `/watch/${party.mediaId}?party=${party.id}`,
+        ? `They have a ${isListening ? 'listening' : 'watch'} party running.`
+        : `They are ${isListening ? 'listening to' : 'watching'} ${found.title}.`,
+    link: isListening ? `/music?party=${party.id}` : `/watch/${party.mediaId}?party=${party.id}`,
     vapid: await readPushKeys(),
     only: [accountId],
     onProblem: (reason) => {

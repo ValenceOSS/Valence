@@ -173,6 +173,10 @@ const writeLocation = (place: Place): string => {
     query.set('listen', place.listen);
   }
 
+  if (place.party !== null && place.section === 'music') {
+    query.set('party', place.party);
+  }
+
   const rest = query.toString();
 
   return `/${place.section === 'home' ? '' : place.section}${rest === '' ? '' : `?${rest}`}`;

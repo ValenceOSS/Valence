@@ -126,6 +126,13 @@ describe('writeLocation', () => {
     expect(readLocation(`http://valence.local${writeLocation(place)}`)).toEqual(place);
   });
 
+  it('carries a listening party in the music section', () => {
+    const place = { ...HOME, section: 'music', party: 'p1' } as const;
+
+    expect(writeLocation(place)).toBe('/music?party=p1');
+    expect(readLocation(`http://valence.local${writeLocation(place)}`)).toEqual(place);
+  });
+
   it('forgets the music page anywhere but the music section', () => {
     expect(placeIn('/films', { listen: 'album:abc' }).listen).toBeNull();
     expect(writeLocation({ ...HOME, section: 'films', listen: 'album:abc' })).toBe('/films');

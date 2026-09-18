@@ -8,6 +8,7 @@ import { z } from 'zod';
 import type { Reading } from '@ValenceCore/functions/estimateClockOffset';
 import type {
   PartyCommand,
+  PartyKind,
   PartyNotice,
   SequencedCommand,
   WatchParty,
@@ -27,7 +28,7 @@ type PartyWatcher = {
 };
 
 type PartyClient = {
-  open: (mediaId: string) => void;
+  open: (mediaId: string, kind?: PartyKind) => void;
   join: (partyId: string, password?: string) => void;
   leave: () => void;
   send: (command: PartyCommand) => void;
@@ -116,8 +117,12 @@ const createPartyClient = ({
   };
 
   return {
-    open: (mediaId) => {
-      client.sendParty({ kind: 'partyOpen', mediaId });
+    open: (mediaId, kind) => {
+      client.sendParty({
+        kind: 'partyOpen',
+        mediaId,
+        ...(kind === undefined ? {} : { partyKind: kind }),
+      });
     },
 
     join: (partyId, password) => {
