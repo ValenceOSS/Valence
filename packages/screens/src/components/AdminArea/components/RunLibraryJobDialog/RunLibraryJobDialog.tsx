@@ -63,7 +63,7 @@ const RunLibraryJobDialog = ({
             </Button>
 
             <Button
-              variant={definition.destructive ? 'danger' : 'primary'}
+              variant="primary"
               disabled={picked.length === 0}
               onClick={() => {
                 onRun(definition.kind, picked);

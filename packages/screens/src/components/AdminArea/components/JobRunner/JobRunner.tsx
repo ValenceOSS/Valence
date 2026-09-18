@@ -347,7 +347,7 @@ const JobRunner = ({
               </Button>
 
               <Button
-                variant="danger"
+                variant="primary"
                 onClick={() => {
                   onRun(confirming.kind);
                   setConfirming(null);

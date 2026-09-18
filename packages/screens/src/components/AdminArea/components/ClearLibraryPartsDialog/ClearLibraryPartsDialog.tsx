@@ -131,7 +131,7 @@ const ClearLibraryPartsDialog = ({
             </Button>
 
             <Button
-              variant="danger"
+              variant="primary"
               disabled={picked.length === 0 || parts.length === 0}
               onClick={() => {
                 onClear(
