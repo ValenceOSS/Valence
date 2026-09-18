@@ -23,6 +23,7 @@ const SETTINGS: ServerSettings = {
   fetchesCatalogueTrailers: false,
   fetchesMusicDetails: false,
   audioDbKey: '',
+  ownerAccountId: '',
   splashscreenFile: null,
 };
 

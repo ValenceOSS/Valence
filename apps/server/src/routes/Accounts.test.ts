@@ -71,7 +71,7 @@ const build = () => {
     inviteAccount,
     editAccount,
     countUsers: () => Promise.resolve(1),
-    promoteToAdmin: () => Promise.resolve(),
+    promoteToAdmin: () => Promise.resolve(null),
     listUsers: () =>
       Promise.resolve([
         {
@@ -578,7 +578,7 @@ describe('a server with no way to act on accounts', () => {
       settings,
       permissions,
       countUsers: () => Promise.resolve(1),
-      promoteToAdmin: () => Promise.resolve(),
+      promoteToAdmin: () => Promise.resolve(null),
       library: createMemoryLibraryService(),
       playback: createMemoryPlaybackService(),
       segments: createMemorySegmentService(),

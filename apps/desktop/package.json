@@ -50,6 +50,10 @@
       "buildResources": "build",
       "output": "release"
     },
+    "electronDownload": {
+      "mirror": "https://github.com/castlabs/electron-releases/releases/download/",
+      "customDir": "v44.1.0+wvcus"
+    },
     "files": [
       "dist/**",
       "dist-main/**",

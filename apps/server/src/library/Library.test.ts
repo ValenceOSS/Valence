@@ -90,7 +90,7 @@ const build = (media: MediaDetail[] = [], isAdministrator = true) => {
     settings,
     permissions,
     countUsers: () => Promise.resolve(1),
-    promoteToAdmin: () => Promise.resolve(),
+    promoteToAdmin: () => Promise.resolve(null),
     library,
     subtitles: createMemorySubtitleService(),
     segments: createMemorySegmentService(),
@@ -700,7 +700,7 @@ describe('library routes', () => {
         auth,
         settings,
         countUsers: () => Promise.resolve(1),
-        promoteToAdmin: () => Promise.resolve(),
+        promoteToAdmin: () => Promise.resolve(null),
         library: createMemoryLibraryService({
           libraries: [
             {
@@ -741,7 +741,7 @@ describe('library routes', () => {
         auth,
         settings,
         countUsers: () => Promise.resolve(1),
-        promoteToAdmin: () => Promise.resolve(),
+        promoteToAdmin: () => Promise.resolve(null),
         library: createMemoryLibraryService({
           libraries: [
             {
@@ -1104,7 +1104,7 @@ describe('adding a library', () => {
         settings,
         permissions,
         countUsers: () => Promise.resolve(1),
-        promoteToAdmin: () => Promise.resolve(),
+        promoteToAdmin: () => Promise.resolve(null),
         library: { ...library, create: () => Promise.resolve(null) },
         subtitles: createMemorySubtitleService(),
         segments: createMemorySegmentService(),

@@ -73,7 +73,7 @@ describe('aDiscordActivity', () => {
 
   it('draws the Valence logo where the catalogue has no picture to draw', () => {
     expect(aDiscordActivity(A_FILM, '0.0.0')?.assets).toMatchObject({
-      large_image: 'logo',
+      large_image: 'valence',
       large_text: 'Valence v0.0.0',
     });
   });
@@ -127,7 +127,7 @@ describe('aDiscordActivity', () => {
 
   it('draws the logo while browsing, so the status looks like the one beside it', () => {
     expect(aDiscordActivity({ kind: 'browsing' }, '0.0.0')?.assets).toMatchObject({
-      large_image: 'logo',
+      large_image: 'valence',
       large_text: 'Valence v0.0.0',
       small_image: 'valencesearch',
     });
@@ -153,7 +153,7 @@ describe('aDiscordActivity', () => {
     const mine = 'https://valence.mine.local/api/media/1/poster';
 
     expect(aDiscordActivity({ ...AN_EPISODE, artwork: mine }, '0.0.0')?.assets).toMatchObject({
-      large_image: 'logo',
+      large_image: 'valence',
     });
   });
 
@@ -161,7 +161,7 @@ describe('aDiscordActivity', () => {
     const plain = 'http://image.tmdb.org/t/p/w500/abc.jpg';
 
     expect(aDiscordActivity({ ...AN_EPISODE, artwork: plain }, '0.0.0')?.assets).toMatchObject({
-      large_image: 'logo',
+      large_image: 'valence',
     });
   });
 

@@ -1,13 +1,19 @@
 import { Icon } from '@ValenceUI/Icon';
 import { Logo } from '@ValenceUI/Logo';
-import { ArrowLeft01Icon, ArrowRight01Icon, Key01Icon } from '@hugeicons/core-free-icons';
+import { TelevisionHandoff } from '@ValenceScreens/components/TelevisionHandoff/TelevisionHandoff';
+import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
+import {
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Key01Icon,
+  SmartPhone01Icon,
+} from '@hugeicons/core-free-icons';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import type { Variants } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { TextField } from '@ValenceUI/TextField';
-import { MoodBackground } from '@ValenceUI/MoodBackground';
 import { PageDots } from '@ValenceUI/PageDots';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -81,10 +87,17 @@ Portrait.displayName = 'Portrait';
  * apart from the sign-in form proper because choosing a profile is a household gesture rather than
  * an authentication one, and most of the time it is the only step anybody takes.
  *
+ * A television is offered a way out of typing. Picking a face with a remote is fine and stays as it
+ * is; spelling an address and a password out with one is not, so a television may hand the whole
+ * thing to a phone instead. Offered rather than forced, because a household that shows its faces
+ * has a perfectly good way in already and taking it away would be the worse screen.
+ *
  * @param onSignedIn - Called once somebody is through.
  * @param name - What this server calls itself, shown above the faces.
+ * @param isTelevision - Whether this is a screen nobody can comfortably type on.
  */
-const ProfileGate = ({ onSignedIn, name = 'Valence' }: ProfileGateProps) => {
+const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: ProfileGateProps) => {
+  const [isHandingOver, setIsHandingOver] = useState(false);
   const asking = useQuery(sessionQueries.wayIn());
   const everyone = asking.data?.profiles ?? null;
   const splashscreen = asking.data?.splashscreen ?? null;
@@ -107,17 +120,6 @@ const ProfileGate = ({ onSignedIn, name = 'Valence' }: ProfileGateProps) => {
   const facesRef = useRef(new Map<string, HTMLButtonElement>());
   const prefersReducedMotion = useReducedMotionConfig();
   const { theme, choose } = useTheme();
-  const [hasGround, setHasGround] = useState(false);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      setHasGround(true);
-    });
-
-    return () => {
-      cancelAnimationFrame(frame);
-    };
-  }, []);
 
   const move = prefersReducedMotion === true ? stillTransition : liquidSpring;
   const faceArrival = revealTransition(prefersReducedMotion);
@@ -263,30 +265,16 @@ const ProfileGate = ({ onSignedIn, name = 'Valence' }: ProfileGateProps) => {
     }
   };
 
+  if (isHandingOver) {
+    return <TelevisionHandoff name={name} onSignedIn={onSignedIn} />;
+  }
+
   return (
     <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-hidden px-6 py-16">
-      <div
-        aria-hidden
-        className={cn(
-          'pointer-events-none absolute inset-0 -z-10',
-          'transition-opacity duration-[1200ms] ease-out motion-reduce:transition-none',
-          hasGround ? 'opacity-100' : 'opacity-0',
-        )}
-      >
-        {splashscreen === null ? null : (
-          <>
-            <img src={splashscreen} alt="" className="absolute inset-0 size-full object-cover" />
-            <div className="absolute inset-0 bg-surface/55" />
-          </>
-        )}
-        <div className={cn('absolute inset-0 isolate', splashscreen === null ? '' : 'opacity-50')}>
-          <MoodBackground
-            lights={chosen === null ? [] : [{ color: chosen.colour }]}
-            hasGrid
-            isDrifting
-          />
-        </div>
-      </div>
+      <WayInBackground
+        splashscreen={splashscreen}
+        lights={chosen === null ? [] : [{ color: chosen.colour }]}
+      />
 
       <motion.div
         initial={{ opacity: 0 }}
@@ -638,18 +626,33 @@ const ProfileGate = ({ onSignedIn, name = 'Valence' }: ProfileGateProps) => {
         </div>
       )}
 
-      {isTitleOver && isTheDesktopClient() ? (
+      {!isTitleOver || !(isTheDesktopClient() || isTelevision) ? null : (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="absolute bottom-16"
+          className="absolute bottom-16 flex items-center gap-2"
         >
-          <Button variant="ghost" size="sm" onClick={askForADifferentServer}>
-            Use a different server
-          </Button>
+          {!isTelevision ? null : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setIsHandingOver(true);
+              }}
+            >
+              <Icon of={SmartPhone01Icon} size={16} />
+              Sign in with your phone
+            </Button>
+          )}
+
+          {!isTheDesktopClient() ? null : (
+            <Button variant="ghost" size="sm" onClick={askForADifferentServer}>
+              Use a different server
+            </Button>
+          )}
         </motion.div>
-      ) : null}
+      )}
 
       <motion.p
         initial={{ opacity: 0 }}

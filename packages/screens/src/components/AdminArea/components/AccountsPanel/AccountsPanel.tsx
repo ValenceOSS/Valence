@@ -17,7 +17,7 @@ import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { FormField } from '@ValenceUI/FormField';
 import { DialogContent } from '@ValenceUI/DialogContent';
-import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
+import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
@@ -365,7 +365,11 @@ const AccountsPanel = () => {
                 {(row.original.name.trim()[0] ?? '?').toUpperCase()}
               </span>
             ) : (
-              <ProfileFace profile={row.original.face} className="size-8 shrink-0 rounded-full" />
+              <HouseholdFace
+                household={row.original.face}
+                accountId={row.original.id}
+                className="size-8 shrink-0 rounded-full"
+              />
             )}
 
             <span className="flex min-w-0 flex-col">

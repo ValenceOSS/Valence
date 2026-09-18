@@ -19,6 +19,12 @@ const A_SECOND = 1000;
  * The countdown is shown rather than hidden, because a prompt that closes a film without warning is
  * worse than one that says it is about to.
  *
+ * It stops at nought rather than running past it. Left to keep counting, every further second was a
+ * new value for the effect below to react to, so giving up was called once a second for as long as
+ * the question stayed up rather than once when the time ran out. What is left is reset while
+ * rendering rather than in an effect, so that asking again after a run that expired does not give
+ * up on the spot against the nought the last one finished on.
+ *
  * @param isOpen - Whether the question is being asked.
  * @param title - The episode waiting to be played, so the answer is an informed one.
  * @param secondsToAnswer - How long before it gives up on its own.
@@ -34,22 +40,26 @@ const StillWatchingDialog = ({
   onGiveUp,
 }: StillWatchingDialogProps) => {
   const [left, setLeft] = useState(secondsToAnswer);
+  const [wasAsked, setWasAsked] = useState(isOpen);
+
+  if (isOpen !== wasAsked) {
+    setWasAsked(isOpen);
+    setLeft(secondsToAnswer);
+  }
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
-    setLeft(secondsToAnswer);
-
     const timer = setInterval(() => {
-      setLeft((held) => held - 1);
+      setLeft((held) => Math.max(0, held - 1));
     }, A_SECOND);
 
     return () => {
       clearInterval(timer);
     };
-  }, [isOpen, secondsToAnswer]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && left <= 0) {

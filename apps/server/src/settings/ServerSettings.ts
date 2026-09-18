@@ -19,6 +19,7 @@ const ServerSettingsSchema = z.object({
   fetchesCatalogueTrailers: z.boolean().default(false),
   fetchesMusicDetails: z.boolean().default(false),
   audioDbKey: z.string().default(''),
+  ownerAccountId: z.string().default(''),
   splashscreenFile: z.string().nullable().default(null),
 });
 

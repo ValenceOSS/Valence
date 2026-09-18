@@ -16,6 +16,7 @@ CREATE TABLE "music_album" (
 	"isCompilation" boolean DEFAULT false NOT NULL,
 	"artworkPath" text,
 	"musicbrainzId" text,
+	"lookedUpAt" timestamp,
 	"addedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -27,6 +28,7 @@ CREATE TABLE "music_artist" (
 	"sortName" text NOT NULL,
 	"musicbrainzId" text,
 	"imagePath" text,
+	"lookedUpAt" timestamp,
 	"addedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -37,11 +39,14 @@ CREATE TABLE "music_track" (
 	"trackNumber" integer,
 	"codec" text NOT NULL,
 	"isLossless" boolean DEFAULT false NOT NULL,
+	"isExplicit" boolean DEFAULT false NOT NULL,
 	"bitDepth" integer,
 	"sampleRate" integer,
 	"lyrics" text,
 	"lyricsAreSynced" boolean DEFAULT false NOT NULL,
-	"lyricsModifiedAtMs" bigint
+	"lyricsModifiedAtMs" bigint,
+	"lyricsLookedUpAt" timestamp,
+	"videoKey" text
 );
 --> statement-breakpoint
 CREATE TABLE "music_track_artist" (

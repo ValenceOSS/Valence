@@ -76,6 +76,7 @@ beforeEach(() => {
       },
     },
     describeThisClient: () => 'Valence',
+    thisClientKind: () => 'browser',
     canKeepFiles: () => true,
     held: noFilesAreKept(),
     reachability: alwaysReachable(),

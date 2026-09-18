@@ -1,6 +1,6 @@
 {
-  "id": "ca24364d-9f63-4cd1-ae0e-76f71b5179a3",
-  "prevId": "f103a392-a3eb-4d17-9f91-30529cda77df",
+  "id": "5f6fb258-e656-43f3-9420-e45545e81e9f",
+  "prevId": "c166336b-e930-4c3c-9ab0-74e7529c573b",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -5409,24 +5409,35 @@
           "primaryKey": false,
           "notNull": false
         },
-        "preferredAudioLanguage": {
-          "name": "preferredAudioLanguage",
+        "colour": {
+          "name": "colour",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "preferredSubtitleLanguage": {
-          "name": "preferredSubtitleLanguage",
+        "avatarStyle": {
+          "name": "avatarStyle",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "requestQuotaPerWeek": {
-          "name": "requestQuotaPerWeek",
-          "type": "integer",
+        "avatarSeed": {
+          "name": "avatarSeed",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": false
+        },
+        "photoPath": {
+          "name": "photoPath",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "onboardedAt": {
+          "name": "onboardedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         },
         "createdAt": {
           "name": "createdAt",

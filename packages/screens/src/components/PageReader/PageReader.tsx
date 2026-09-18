@@ -319,6 +319,8 @@ const PageReader = ({
         startedAt.current = null;
 
         if (from === null || to === null || Math.abs(to - from) < A_SWIPE) {
+          wake();
+
           return;
         }
 

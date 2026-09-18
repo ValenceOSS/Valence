@@ -45,7 +45,7 @@ const signedIn = async () => {
     notifications,
     readPushPublicKey: () => Promise.resolve('a-public-key'),
     countUsers: () => Promise.resolve(1),
-    promoteToAdmin: () => Promise.resolve(),
+    promoteToAdmin: () => Promise.resolve(null),
     library: createMemoryLibraryService(),
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),

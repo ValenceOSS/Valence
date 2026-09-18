@@ -44,6 +44,7 @@ import { handOverToDevice } from '@ValenceScreens/playback/handOverToDevice';
 import { loadCastSender, castStateOf, castStream } from '@ValenceScreens/playback/castSender';
 import { applyVolumeBoost } from '@ValenceScreens/playback/volumeBoost';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
+import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
 import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
 import { popOutWithCaptions } from '@ValenceScreens/playback/popOutWithCaptions';
@@ -105,6 +106,11 @@ type FullscreenTarget = {
 };
 type FullscreenOwner = {
   exitFullscreen?: () => Promise<void>;
+};
+type FullscreenVideo = {
+  requestFullscreen?: () => Promise<void>;
+  webkitEnterFullscreen?: () => void;
+  webkitExitFullscreen?: () => void;
 };
 
 const IDLE_MILLISECONDS = 2500;
@@ -1465,6 +1471,19 @@ const VideoPlayer = ({
     [setIsIdle, setActivity],
   );
 
+  const onLeaveStage = useCallback(
+    (event: ReactPointerEvent<HTMLElement>) => {
+      pointRef.current = null;
+
+      if (!aLeaveWorthHiding(event.pointerType)) {
+        return;
+      }
+
+      setIsIdle(isPlaying);
+    },
+    [isPlaying],
+  );
+
   const toggleFullscreen = useCallback(() => {
     const stage = stageRef.current;
 
@@ -1474,14 +1493,27 @@ const VideoPlayer = ({
 
     const owner: FullscreenOwner = document;
     const target: FullscreenTarget = stage;
+    const picture: FullscreenVideo | null = videoRef.current;
 
     if (isFullscreen) {
-      void owner.exitFullscreen?.();
+      if (owner.exitFullscreen === undefined) {
+        picture?.webkitExitFullscreen?.();
+
+        return;
+      }
+
+      void owner.exitFullscreen();
 
       return;
     }
 
-    void target.requestFullscreen?.();
+    if (target.requestFullscreen === undefined) {
+      picture?.webkitEnterFullscreen?.();
+
+      return;
+    }
+
+    void target.requestFullscreen();
   }, [isFullscreen]);
 
   useEffect(() => {
@@ -1661,16 +1693,13 @@ const VideoPlayer = ({
         setIsIdle(false);
         setActivity((count) => count + 1);
       }}
-      onPointerLeave={() => {
-        pointRef.current = null;
-        setIsIdle(isPlaying);
-      }}
+      onPointerLeave={onLeaveStage}
     >
       <header
         className={
           isImmersive
-            ? `absolute inset-x-0 top-0 z-10 flex items-center gap-4 bg-gradient-to-b from-shade/70 to-transparent p-4 text-on-scrim transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
-                isBarUp ? 'translate-y-0' : '-translate-y-full'
+            ? `absolute inset-x-0 top-0 z-10 flex items-center gap-4 bg-gradient-to-b from-shade/70 to-transparent p-4 pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))] text-on-scrim transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
+                isBarUp ? 'translate-y-0' : 'pointer-events-none -translate-y-full'
               }`
             : 'flex items-center gap-4'
         }
@@ -1874,8 +1903,8 @@ const VideoPlayer = ({
 
         <div
           ref={controlsRef}
-          className={`absolute inset-x-3 bottom-3 transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
-            isBarUp ? 'translate-y-0' : 'translate-y-[calc(100%_+_1.5rem)]'
+          className={`absolute bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] left-[calc(0.75rem+env(safe-area-inset-left,0px))] right-[calc(0.75rem+env(safe-area-inset-right,0px))] transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
+            isBarUp ? 'translate-y-0' : 'pointer-events-none translate-y-[calc(100%_+_1.5rem)]'
           }`}
         >
           <PlayerControls

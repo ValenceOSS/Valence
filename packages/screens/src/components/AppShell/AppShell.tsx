@@ -480,8 +480,8 @@ const AppShell = ({
     <div
       ref={shellRef}
       className={cn(
-        'valence-shell relative min-h-[calc(100vh-var(--valence-window-bar))] text-text',
-        isFitted ? 'h-[calc(100vh-var(--valence-window-bar))] overflow-clip' : '',
+        'valence-shell relative min-h-[calc(100svh-var(--valence-window-bar))] text-text',
+        isFitted ? 'h-[calc(100svh-var(--valence-window-bar))] overflow-clip' : '',
       )}
     >
       <MoodBackground lights={moodLights} film={film} />
@@ -521,7 +521,7 @@ const AppShell = ({
               onClick={() => {
                 onSectionChange('home');
               }}
-              className="flex items-center rounded-md"
+              className="flex items-center rounded-md coarse:min-h-11"
             >
               {hasMark ? (
                 <motion.span
@@ -560,8 +560,8 @@ const AppShell = ({
           animate="shown"
           className={
             isFitted
-              ? 'h-[calc(100vh-var(--valence-window-bar))] overflow-clip pt-[var(--nav-clearance)]'
-              : 'min-h-[calc(100vh-var(--valence-window-bar))] pb-16 pt-[var(--nav-clearance)]'
+              ? 'h-[calc(100svh-var(--valence-window-bar))] overflow-clip pt-[var(--nav-clearance)]'
+              : 'min-h-[calc(100svh-var(--valence-window-bar))] pb-[calc(4rem+var(--floor-clearance,0px))] pt-[var(--nav-clearance)]'
           }
         >
           <motion.div

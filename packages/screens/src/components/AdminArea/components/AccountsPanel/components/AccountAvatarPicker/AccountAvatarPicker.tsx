@@ -4,7 +4,7 @@ import { Button } from '@ValenceUI/Button';
 import { FilePicker } from '@ValenceUI/FilePicker';
 import { FormField } from '@ValenceUI/FormField';
 import { AVATAR_STYLES, PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
-import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
+import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import type { AccountAvatarPickerProps } from './AccountAvatarPicker.types';
 
 const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif,video/webm,video/mp4';
@@ -13,12 +13,13 @@ const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif,video/
  * An account's picture, drawn face and colour, changed on its behalf. Held as a draft like the rest
  * of the Display tab — nothing here reaches the server until the dialog is saved.
  *
- * @param face - Its first profile, or null where it has none yet.
+ * @param accountId - Whose account it is, which is what the picture is addressed by.
+ * @param face - Its household, or null where it has none yet.
  * @param draft - How it would look if saved.
  * @param onDraft - Told what changed.
  */
 const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarPickerProps) => {
-  const seed = face?.id ?? accountId;
+  const seed = accountId;
 
   return (
     <div className="flex flex-col gap-4">
@@ -31,17 +32,14 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
         }
       >
         <div className="flex items-center gap-3">
-          <ProfileFace
-            profile={{
-              id: face?.id ?? accountId,
+          <HouseholdFace
+            household={{
               name: face?.name ?? '',
               colour: draft.colour,
               avatar: draft.avatar,
-              askStillWatchingAfter: face?.askStillWatchingAfter ?? 0,
-              showsWhatIamWatching: face?.showsWhatIamWatching ?? false,
-              createdAt: face?.createdAt ?? '',
               updatedAt: face?.updatedAt ?? '',
             }}
+            accountId={accountId}
             pending={draft.photo}
             className="size-9 shrink-0 rounded-lg text-xs"
           />

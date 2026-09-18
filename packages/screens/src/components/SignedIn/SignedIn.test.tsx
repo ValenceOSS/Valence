@@ -42,12 +42,23 @@ const ok = (body: object | null) =>
     headers: { 'content-type': 'application/json' },
   });
 
-const serverWith = (session: object | null) => {
+const HOUSEHOLD = {
+  name: 'Operator',
+  colour: '#3ac47d',
+  avatar: { kind: 'initial' },
+  updatedAt: '2026-09-18T00:00:00.000Z',
+};
+
+const serverWith = (session: object | null, isOnboarded = true) => {
   fetchMock.mockImplementation((asked: string) => {
     const input = new URL(asked, 'http://localhost:3000').pathname;
 
     if (input === '/api/setup/status') {
       return Promise.resolve(ok(SETUP));
+    }
+
+    if (input === '/api/account/onboarding') {
+      return Promise.resolve(ok({ isOnboarded, household: HOUSEHOLD }));
     }
 
     if (input.startsWith('/api/libraries')) {
@@ -104,6 +115,60 @@ describe('SignedIn', () => {
 
   it('draws the pages beneath it once somebody is signed in', async () => {
     serverWith({ user: OPERATOR });
+
+    renderTheApp();
+
+    expect(await screen.findByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+  });
+
+  it('sets the household up before anything else when nobody has', async () => {
+    serverWith({ user: OPERATOR }, false);
+
+    renderTheApp();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Set up your household' }),
+    ).toBeInTheDocument();
+
+    expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
+  });
+
+  it('asks again after a reload, because finishing is what the server was told', async () => {
+    serverWith({ user: OPERATOR }, false);
+
+    const first = renderTheApp();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Set up your household' }),
+    ).toBeInTheDocument();
+
+    first.unmount();
+
+    renderTheApp();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Set up your household' }),
+    ).toBeInTheDocument();
+  });
+
+  it('lets somebody through rather than stranding them when the answer cannot be had', async () => {
+    fetchMock.mockImplementation((asked: string) => {
+      const input = new URL(asked, 'http://localhost:3000').pathname;
+
+      if (input === '/api/setup/status') {
+        return Promise.resolve(ok(SETUP));
+      }
+
+      if (input === '/api/account/onboarding') {
+        return Promise.reject(new Error('offline'));
+      }
+
+      if (input.startsWith('/api/libraries')) {
+        return Promise.resolve(ok([]));
+      }
+
+      return Promise.resolve(ok({ user: OPERATOR }));
+    });
 
     renderTheApp();
 

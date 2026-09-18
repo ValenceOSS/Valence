@@ -88,6 +88,7 @@ const createMemoryAuth = (
     fetchesCatalogueTrailers: false,
     fetchesMusicDetails: false,
     audioDbKey: '',
+    ownerAccountId: '',
     splashscreenFile: null,
   });
 

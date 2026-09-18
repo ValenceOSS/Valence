@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { createAuthClient } from 'better-auth/client';
 import { AUTH_BASE, askTheServer } from '@ValenceClient/session/askTheServer';
-import { adminClient, twoFactorClient } from 'better-auth/client/plugins';
+import {
+  adminClient,
+  deviceAuthorizationClient,
+  twoFactorClient,
+} from 'better-auth/client/plugins';
 import { passkeyClient } from '@better-auth/passkey/client';
 import { writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
@@ -14,6 +18,25 @@ type AuthenticateOutcome =
   { kind: 'signedIn' } | { kind: 'cancelled' } | { kind: 'failed'; reason: string };
 
 type Enrollment = { totpURI: string; backupCodes: string[] };
+
+type DeviceGrant = {
+  deviceCode: string;
+  userCode: string;
+  verificationUri: string;
+  verificationUriComplete: string;
+  intervalSeconds: number;
+  expiresInSeconds: number;
+};
+
+type DeviceGrantOutcome =
+  | { kind: 'waiting' }
+  | { kind: 'slowDown' }
+  | { kind: 'signedIn' }
+  | { kind: 'refused' }
+  | { kind: 'expired' }
+  | { kind: 'failed'; reason: string };
+
+type DeviceRequest = { userCode: string; status: 'pending' | 'approved' | 'denied' };
 
 const CANCELLED = new Set(['AUTH_CANCELLED', 'ERROR_CEREMONY_ABORTED']);
 
@@ -32,7 +55,7 @@ const CANCELLED = new Set(['AUTH_CANCELLED', 'ERROR_CEREMONY_ABORTED']);
  * should ask for what it wants rather than reach for a client.
  *
  * The plugins are the ones the server mounts and this application calls: `admin` for the role on a
- * user, `twoFactor`, and `passkey`.
+ * user, `twoFactor`, `passkey`, and `deviceAuthorization` for signing a television in from a phone.
  *
  * Its `fetch` is handed over rather than left to be found, for two reasons and no others: the
  * library reads the global once when the client is built, which is before a test has had a chance
@@ -50,7 +73,7 @@ const buildClient = () =>
     baseURL: AUTH_BASE,
     basePath: '/api/auth',
     fetchOptions: { customFetchImpl: askTheServer },
-    plugins: [adminClient(), twoFactorClient(), passkeyClient()],
+    plugins: [adminClient(), twoFactorClient(), passkeyClient(), deviceAuthorizationClient()],
   });
 
 const client = buildClient();
@@ -325,7 +348,146 @@ const disableTwoFactor = async (password: string): Promise<boolean> => {
   return error === null;
 };
 
-export type { RegisterOutcome, AuthenticateOutcome, Enrollment };
+const THIS_TELEVISION = 'valence-tv';
+
+const DEVICE_GRANT = 'urn:ietf:params:oauth:grant-type:device_code';
+
+const RefusedSchema = z.object({ error: z.string() });
+
+const DeviceRequestSchema = z.object({
+  user_code: z.string(),
+  status: z.enum(['pending', 'approved', 'denied']),
+});
+
+/**
+ * Reads what a device grant was refused with, which is an OAuth error name rather than a message.
+ *
+ * The name is what the whole flow turns on — waiting, slowing down, refused, or over — and the
+ * library types its errors loosely enough that reading the field directly would be a guess.
+ *
+ * @param error - What the client refused with.
+ * @returns The error name, or null where there was not one.
+ */
+const whyItWasRefused = (error: object): string | null => {
+  const read = RefusedSchema.safeParse(error);
+
+  return read.success ? read.data.error : null;
+};
+
+/**
+ * Asks the server for a code somebody can type on their phone, which is how a television signs in
+ * without anybody spelling an address out with a remote.
+ *
+ * @returns The grant to show and poll against, or null where the server would not start one.
+ */
+const startDeviceGrant = async (): Promise<DeviceGrant | null> => {
+  const answer = await client.device.code({ client_id: THIS_TELEVISION }).catch(() => null);
+
+  if (answer === null || answer.error !== null) {
+    return null;
+  }
+
+  const { data } = answer;
+
+  return {
+    deviceCode: data.device_code,
+    userCode: data.user_code,
+    verificationUri: data.verification_uri,
+    verificationUriComplete: data.verification_uri_complete,
+    intervalSeconds: data.interval,
+    expiresInSeconds: data.expires_in,
+  };
+};
+
+/**
+ * Asks whether the grant has been approved yet, which is the one call a television makes over and
+ * over while somebody deals with their phone.
+ *
+ * Polled rather than pushed. A television that has not signed in has no account for a realtime
+ * message to be addressed to, and the grant already names a rate to ask at.
+ *
+ * @param deviceCode - The code the grant was started with, which is not the one on screen.
+ * @returns Where the grant has got to.
+ */
+const askWhetherTheDeviceMayIn = async (deviceCode: string): Promise<DeviceGrantOutcome> => {
+  const answer = await client.device
+    .token({ grant_type: DEVICE_GRANT, device_code: deviceCode, client_id: THIS_TELEVISION })
+    .catch(() => null);
+
+  if (answer === null) {
+    return { kind: 'failed', reason: 'Valence could not be reached.' };
+  }
+
+  if (answer.error === null) {
+    return { kind: 'signedIn' };
+  }
+
+  const why = whyItWasRefused(answer.error);
+
+  if (why === 'authorization_pending') {
+    return { kind: 'waiting' };
+  }
+
+  if (why === 'slow_down') {
+    return { kind: 'slowDown' };
+  }
+
+  if (why === 'access_denied') {
+    return { kind: 'refused' };
+  }
+
+  if (why === 'expired_token' || why === 'invalid_grant') {
+    return { kind: 'expired' };
+  }
+
+  return { kind: 'failed', reason: 'That code was not accepted.' };
+};
+
+/**
+ * Reads what a typed code is asking for, so the person holding the phone sees what they are about
+ * to let in rather than approving a string of letters.
+ *
+ * @param userCode - The code somebody read off the television.
+ * @returns What is being asked, or null where the code means nothing or has run out.
+ */
+const readDeviceRequest = async (userCode: string): Promise<DeviceRequest | null> => {
+  const answer = await client.device({ query: { user_code: userCode } }).catch(() => null);
+
+  if (answer === null || answer.error !== null) {
+    return null;
+  }
+
+  const read = DeviceRequestSchema.safeParse(answer.data);
+
+  return read.success ? { userCode: read.data.user_code, status: read.data.status } : null;
+};
+
+/**
+ * Lets a television in, or turns it away.
+ *
+ * Turning it away is offered as plainly as letting it in, because somebody typing a code they did
+ * not expect to be asked for is the case this exists to catch.
+ *
+ * @param userCode - The code shown on the television.
+ * @param isAllowed - Whether it may in.
+ * @returns Whether the answer was recorded.
+ */
+const answerDeviceRequest = async (userCode: string, isAllowed: boolean): Promise<boolean> => {
+  const answer = await (
+    isAllowed ? client.device.approve({ userCode }) : client.device.deny({ userCode })
+  ).catch(() => null);
+
+  return answer !== null && answer.error === null;
+};
+
+export type {
+  RegisterOutcome,
+  AuthenticateOutcome,
+  Enrollment,
+  DeviceGrant,
+  DeviceGrantOutcome,
+  DeviceRequest,
+};
 
 export {
   fetchSession,
@@ -340,4 +502,9 @@ export {
   verifyTotp,
   verifyBackupCode,
   disableTwoFactor,
+  startDeviceGrant,
+  askWhetherTheDeviceMayIn,
+  readDeviceRequest,
+  answerDeviceRequest,
+  THIS_TELEVISION,
 };

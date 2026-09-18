@@ -84,6 +84,12 @@ describe('installDesktopPlatform', () => {
     expect(platformInUse().thisClientId()).toBe(platformInUse().thisClientId());
   });
 
+  it('is the desktop client whatever Electron says its user agent is', () => {
+    installDesktopPlatform();
+
+    expect(platformInUse().thisClientKind()).toBe('desktop');
+  });
+
   it('can be trusted with a file somebody means to keep, unlike a browser', () => {
     installDesktopPlatform();
 

@@ -26,7 +26,7 @@ env:
   # The build Valence ships, rather than whatever the runner happens to carry. The version is pinned
   # so a transcode behaves the same everywhere, and a fixture generated against a different FFmpeg is
   # a different fixture.
-  VALENCE_FFMPEG_VERSION: 8.1.2-5.1
+  VALENCE_FFMPEG_VERSION: 8.1.2-5.2
   VALENCE_FFMPEG_SUITE: bookworm
   VALENCE_FFMPEG: /usr/lib/valence-ffmpeg/ffmpeg
   VALENCE_FFPROBE: /usr/lib/valence-ffmpeg/ffprobe

@@ -32,7 +32,7 @@ const build = () => {
     settings,
     permissions,
     countUsers: () => Promise.resolve(1),
-    promoteToAdmin: () => Promise.resolve(),
+    promoteToAdmin: () => Promise.resolve(null),
     library: createMemoryLibraryService(),
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),
@@ -42,7 +42,7 @@ const build = () => {
     ratings: createMemoryRatingService(),
   });
 
-  return { app, store, permissions };
+  return { app, store, permissions, settings };
 };
 
 /**
@@ -55,6 +55,7 @@ const signedInWith = async (granted: readonly Permission[], position = 200) => {
 
   if (granted.includes('administrator')) {
     await makeAdministrator(context.permissions, account?.id ?? '');
+    await context.settings.write({ ownerAccountId: account?.id ?? '' });
   } else {
     const role = await context.permissions.createRole({
       name: 'Purpose-made',
@@ -466,6 +467,25 @@ describe('managing roles over HTTP', () => {
 
       expect(response.status).toBe(204);
       expect(await context.permissions.countAdministrators()).toBe(1);
+    });
+  });
+
+  describe('an administrator who does not own the server', () => {
+    it('cannot rewrite the role that made them one', async () => {
+      const context = await signedInWith(['administrator']);
+
+      await context.settings.write({ ownerAccountId: 'somebody-else' });
+
+      const administrator = await idOf(context, 'Administrator');
+
+      const response = await context.request(`/api/admin/roles/${administrator}`, 'PATCH', {
+        name: 'Administrator',
+        position: 300,
+        color: null,
+        permissions: ['administrator'],
+      });
+
+      expect(response.status).toBe(403);
     });
   });
 });
