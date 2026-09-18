@@ -3,6 +3,7 @@ import type { DotFieldFrame } from '@ValenceUI/DotField.types';
 type MoodLight = {
   color: string;
   at?: string;
+  weight?: number;
 };
 
 type MoodBackgroundProps = {

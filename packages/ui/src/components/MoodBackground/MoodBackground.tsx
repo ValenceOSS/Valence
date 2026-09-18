@@ -45,16 +45,37 @@ const EASE = 0.03;
 const PARALLAX = 0.34;
 
 /**
+ * Gives every bloom a light, so the room always has the same lights in it and changing what is
+ * featured only ever moves them. The lights given take the first blooms, each where it came from in
+ * the picture; every bloom past them holds the nearest colour, in its own place, at no strength, so
+ * a picture with more lights than the last fades the extra ones in rather than switching them on.
+ *
+ * @param lights - The lights given, at least one.
+ * @returns A light for each bloom.
+ */
+const everyBloom = (lights: readonly MoodLight[]): MoodLight[] =>
+  BLOOMS.map((bloom, at) => {
+    const given = lights[at];
+    const nearest = lights[at % lights.length] ?? lights[0];
+
+    return given === undefined
+      ? { color: nearest?.color ?? '', at: bloom.at, weight: 0 }
+      : { color: given.color, at: given.at ?? bloom.at, weight: given.weight ?? 1 };
+  });
+
+/**
  * Writes one light as the CSS gradient that paints it, at the position and colour it was given.
  *
- * @param light - The colour and where it sits.
+ * @param light - The colour, where it sits and how strongly it shines.
  * @param at - Which of the lights this is, which decides how large and strong its bloom is.
  * @returns The gradient, as CSS.
  */
 const paint = (light: MoodLight, at: number): string => {
   const bloom = BLOOMS[at] ?? FALLBACK_BLOOM;
 
-  return `radial-gradient(${bloom.size} at ${light.at ?? bloom.at}, color-mix(in oklab, ${light.color} ${bloom.strength.toString()}%, transparent), transparent 70%)`;
+  const strength = Math.round(bloom.strength * (light.weight ?? 1) * 100) / 100;
+
+  return `radial-gradient(${bloom.size} at ${light.at ?? bloom.at}, color-mix(in oklab, ${light.color} ${strength.toString()}%, transparent), transparent 70%)`;
 };
 
 /**
@@ -79,7 +100,7 @@ const MoodBackground = ({
 }: MoodBackgroundProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const given = lights.filter((light) => light.color !== '');
-  const lit = given.length === 0 ? DEFAULT_LIGHTS : given;
+  const lit = everyBloom(given.length === 0 ? DEFAULT_LIGHTS : given);
   const bloomsRef = useRef<(HTMLSpanElement | null)[]>([]);
   const heldRef = useRef<MoodLight[]>([]);
   const wantedRef = useRef<MoodLight[]>(lit);
@@ -106,9 +127,7 @@ const MoodBackground = ({
       const wanted = wantedRef.current;
 
       heldRef.current =
-        prefersReducedMotion === true || heldRef.current.length !== wanted.length
-          ? wanted
-          : blendLights(heldRef.current, wanted, EASE);
+        prefersReducedMotion === true ? wanted : blendLights(heldRef.current, wanted, EASE);
 
       const shift = filmRef.current ? 0 : Math.round(window.scrollY * PARALLAX);
       const drifting = driftingRef.current;
@@ -147,7 +166,7 @@ const MoodBackground = ({
       )}
     >
       <div ref={driftingRef} className="absolute inset-0 will-change-transform">
-        {lit.slice(0, BLOOMS.length).map((light, at) => (
+        {lit.map((light, at) => (
           <span
             key={`bloom-${at.toString()}`}
             ref={(element) => {
