@@ -4,11 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
 import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests';
+import { aTrack } from '@ValenceScreens/testing/aTrack';
 import { MusicLibrary, isSameView } from './MusicLibrary';
 
 vi.mock('@ValenceScreens/music/theMusicPlayer', () => ({
-  theMusicPlayer: () => aFakeMusicPlayer().player,
+  theMusicPlayer: () => playing.player,
 }));
+
+let playing = aFakeMusicPlayer();
 
 const PLAYLIST = {
   id: '00000000-0000-4000-8000-00000000d0d0',
@@ -50,6 +53,7 @@ const ARTIST = {
 };
 
 beforeEach(() => {
+  playing = aFakeMusicPlayer();
   vi.stubGlobal(
     'fetch',
     answerMusicRequests({
@@ -91,6 +95,42 @@ describe('MusicLibrary', () => {
 
     expect(await screen.findByRole('menuitem', { name: 'Play' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Add to queue' })).toBeInTheDocument();
+  });
+
+  it('marks the album that is playing', async () => {
+    const song = aTrack(1);
+
+    playing = aFakeMusicPlayer({ current: song, isPlaying: true });
+
+    vi.stubGlobal(
+      'fetch',
+      answerMusicRequests({
+        '/api/music/albums': {
+          albums: [
+            {
+              id: song.album.id,
+              libraryId: song.libraryId,
+              title: song.album.title,
+              artist: { id: '00000000-0000-4000-8000-00000000a7a7', name: 'Sleep Token' },
+              year: 2025,
+              genres: [],
+              hasArtwork: false,
+              isCompilation: false,
+              trackCount: 1,
+              durationSeconds: 200,
+              sizeBytes: 0,
+              isExplicit: false,
+              addedAt: '2026-09-18T00:00:00.000Z',
+            },
+          ],
+        },
+        '/api/music/artists': { artists: [] },
+      }),
+    );
+
+    renderInAnAddress(<MusicLibrary />);
+
+    expect(await screen.findByRole('img', { name: 'Playing' })).toBeInTheDocument();
   });
 
   it('narrows the list by name', async () => {

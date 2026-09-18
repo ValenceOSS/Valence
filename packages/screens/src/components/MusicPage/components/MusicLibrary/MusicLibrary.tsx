@@ -14,6 +14,8 @@ import { pictureOf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
 import { PlaylistDialog } from '@ValenceScreens/components/PlaylistDialog/PlaylistDialog';
+import { Equaliser } from '@ValenceScreens/components/Equaliser/Equaliser';
+import { isPlayingFrom } from '@ValenceScreens/music/isPlayingFrom';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
@@ -54,7 +56,7 @@ const isSameView = (left: MusicView, right: MusicView): boolean =>
  */
 const MusicLibrary = () => {
   const { view, open } = useMusicNavigation();
-  const { player } = useMusicPlayer();
+  const { state, player } = useMusicPlayer();
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
   const [shelf, setShelf] = useState<Shelf | null>(null);
   const [filter, setFilter] = useState('');
@@ -226,7 +228,7 @@ const MusicLibrary = () => {
                     }}
                   >
                     {entry.artwork}
-                    <span className="flex min-w-0 flex-col">
+                    <span className="flex min-w-0 flex-1 flex-col">
                       <span
                         className={cn(
                           'truncate text-[0.9375rem] font-medium',
@@ -239,6 +241,13 @@ const MusicLibrary = () => {
                         {entry.detail}
                       </span>
                     </span>
+                    {isPlayingFrom(entry.view, state) ? (
+                      <Equaliser
+                        label="Playing"
+                        isMoving={state.isPlaying}
+                        className="mr-2 shrink-0 text-text"
+                      />
+                    ) : null}
                   </Button>
                 </ContextMenu>
               </li>
