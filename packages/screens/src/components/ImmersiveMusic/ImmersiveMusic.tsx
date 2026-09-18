@@ -125,7 +125,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
             <Icon of={Cancel01Icon} size={20} />
           </Button>
 
-          <div className="relative grid h-full grid-cols-1 gap-10 px-6 pt-16 pb-32 sm:px-12 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:gap-16 lg:px-20">
+          <div className="relative mx-auto grid h-full max-w-[88rem] grid-cols-1 items-center gap-10 px-6 py-16 sm:px-12 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:gap-20 lg:px-20">
             <div className="mx-auto flex w-full max-w-md flex-col justify-center gap-6">
               <div className="relative aspect-square w-full">
                 <AnimatePresence initial={false}>
@@ -204,7 +204,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
               </div>
             </div>
 
-            <div className="min-h-0 overflow-y-auto overscroll-contain py-[30vh] [mask-image:linear-gradient(to_bottom,transparent,black_18%,black_82%,transparent)]">
+            <div className="valence-rail h-full min-h-0 overflow-y-auto overscroll-contain py-[30vh] [mask-image:linear-gradient(to_bottom,transparent,black_18%,black_82%,transparent)]">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={`${shown.trackId}-${lyrics === null ? 'none' : 'some'}`}
