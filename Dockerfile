@@ -57,7 +57,7 @@ FROM node:24-bookworm-slim AS runtime
 # The build itself is published from a repository of its own and is still named for what it was
 # called when it was set up. The name in these URLs and paths is that artefact's, not ours, and
 # renaming it here would ask this image to fetch something that does not exist.
-ARG VALENCE_FFMPEG_VERSION=8.1.2-5.1
+ARG VALENCE_FFMPEG_VERSION=8.1.2-5.2
 ARG TARGETARCH
 
 # The release this image was built from. Left at its default for a local build, so a version

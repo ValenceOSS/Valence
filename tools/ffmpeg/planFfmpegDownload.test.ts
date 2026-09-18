@@ -5,7 +5,7 @@ import { planFfmpegDownload, SUITE } from './planFfmpegDownload';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 
-const VERSION = '8.1.2-5.1';
+const VERSION = '8.1.2-5.2';
 
 describe('planFfmpegDownload', () => {
   it('takes the portable tarball on Apple silicon', () => {
