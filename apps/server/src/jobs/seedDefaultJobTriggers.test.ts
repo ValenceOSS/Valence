@@ -21,6 +21,7 @@ const SETTINGS: ServerSettings = {
   jobsTimezone: '',
   certificationRegion: 'GB',
   fetchesCatalogueTrailers: false,
+  ownerAccountId: '',
   splashscreenFile: null,
 };
 

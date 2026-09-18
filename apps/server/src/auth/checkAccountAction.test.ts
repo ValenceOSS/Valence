@@ -1,23 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { checkAccountAction } from './checkAccountAction';
-import type { Permission } from '@ValenceContracts/schemas/Permission';
-
-const holding = (...permissions: Permission[]) => new Set<Permission>(permissions);
 
 const check = (options: {
-  actorPermissions?: ReadonlySet<Permission>;
+  actorId?: string;
   actorHighestPosition?: number | null;
   targetHighestPosition?: number | null;
   targetId?: string;
+  ownerId?: string | null;
 }) =>
   checkAccountAction({
-    actorId: 'usr_actor',
-    actorPermissions: options.actorPermissions ?? holding('account.ban'),
+    actorId: options.actorId ?? 'usr_actor',
     actorHighestPosition:
       options.actorHighestPosition === undefined ? 200 : options.actorHighestPosition,
     targetId: options.targetId ?? 'usr_target',
     targetHighestPosition:
       options.targetHighestPosition === undefined ? 100 : options.targetHighestPosition,
+    ownerId: options.ownerId === undefined ? 'usr_owner' : options.ownerId,
   });
 
 describe('checkAccountAction', () => {
@@ -52,10 +50,8 @@ describe('checkAccountAction', () => {
       expect(check({ targetId: 'usr_actor' })).toBe('self');
     });
 
-    it('refuses an administrator too, since that is the worst accident', () => {
-      expect(check({ targetId: 'usr_actor', actorPermissions: holding('administrator') })).toBe(
-        'self',
-      );
+    it('refuses the owner too, since that is the worst accident', () => {
+      expect(check({ actorId: 'usr_owner', targetId: 'usr_owner' })).toBe('self');
     });
 
     it('is checked before rank, so the message names the real reason', () => {
@@ -63,17 +59,32 @@ describe('checkAccountAction', () => {
     });
   });
 
-  describe('administrator', () => {
-    it('may act on anybody, however senior', () => {
+  describe('the owner', () => {
+    it('cannot be acted on by anybody, however senior they are', () => {
+      expect(check({ targetId: 'usr_owner', actorHighestPosition: 999 })).toBe('owner');
+    });
+
+    it('may act on anybody, including an equal', () => {
       expect(
-        check({ actorPermissions: holding('administrator'), targetHighestPosition: 999 }),
+        check({ actorId: 'usr_owner', targetHighestPosition: 999, actorHighestPosition: 300 }),
       ).toBeNull();
     });
 
-    it('may act without holding a rank of its own', () => {
-      expect(
-        check({ actorPermissions: holding('administrator'), actorHighestPosition: null }),
-      ).toBeNull();
+    it('is protected before rank is even read', () => {
+      expect(check({ targetId: 'usr_owner', targetHighestPosition: null })).toBe('owner');
+    });
+  });
+
+  describe('a server that has recorded no owner', () => {
+    it('protects nobody in particular, and falls back to rank alone', () => {
+      expect(check({ ownerId: null })).toBeNull();
+      expect(check({ ownerId: null, targetHighestPosition: 200 })).toBe('outranked');
+    });
+  });
+
+  describe('two administrators', () => {
+    it('cannot act on each other, which is the escalation this closes', () => {
+      expect(check({ actorHighestPosition: 300, targetHighestPosition: 300 })).toBe('outranked');
     });
   });
 });

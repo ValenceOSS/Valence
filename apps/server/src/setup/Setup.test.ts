@@ -18,7 +18,7 @@ const adminPayload = {
 const buildApp = (initialUserCount = 0) => {
   const { auth, settings } = createMemoryAuth();
   const state = { users: initialUserCount };
-  const promoteToAdmin = vi.fn(() => Promise.resolve());
+  const promoteToAdmin = vi.fn(() => Promise.resolve<string | null>(null));
 
   const app = createApp({
     auth,

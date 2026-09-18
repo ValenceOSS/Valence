@@ -52,6 +52,9 @@ const signedInApp = (
     store?: MemoryUserStore;
     permissions?: RoleGranting;
     isAdministrator?: boolean;
+    settings?: {
+      write: (patch: { ownerAccountId: string }) => Promise<{ ownerAccountId: string }>;
+    };
   } = {},
 ): RequestableApp => {
   let cookie: string | null = null;
@@ -67,6 +70,7 @@ const signedInApp = (
           account.role = 'admin';
 
           await makeAdministrator(options.permissions, account.id);
+          await options.settings?.write({ ownerAccountId: account.id });
         }
       }
 

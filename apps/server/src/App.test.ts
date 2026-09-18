@@ -25,7 +25,7 @@ const app = createApp({
   auth,
   settings,
   countUsers: () => Promise.resolve(1),
-  promoteToAdmin: () => Promise.resolve(),
+  promoteToAdmin: () => Promise.resolve(null),
   library: createMemoryLibraryService(),
   subtitles: createMemorySubtitleService(),
   segments: createMemorySegmentService(),
@@ -52,7 +52,7 @@ describe('createApp', () => {
       auth,
       settings,
       countUsers: () => Promise.resolve(1),
-      promoteToAdmin: () => Promise.resolve(),
+      promoteToAdmin: () => Promise.resolve(null),
       library: createMemoryLibraryService(),
       subtitles: createMemorySubtitleService(),
       segments: createMemorySegmentService(),
@@ -102,7 +102,7 @@ describe('what the server says it is working on', () => {
         settings,
         permissions,
         countUsers: () => Promise.resolve(1),
-        promoteToAdmin: () => Promise.resolve(),
+        promoteToAdmin: () => Promise.resolve(null),
         library: createMemoryLibraryService(),
         subtitles: createMemorySubtitleService(),
         segments: createMemorySegmentService(),
@@ -112,7 +112,7 @@ describe('what the server says it is working on', () => {
         playback: createMemoryPlaybackService(),
         listRunningJobs: () => running,
       }),
-      { store, permissions, isAdministrator: true },
+      { store, permissions, settings, isAdministrator: true },
     );
   };
 
@@ -162,7 +162,7 @@ describe('the session gate standing in front of every private route', () => {
       auth,
       settings,
       countUsers: () => Promise.resolve(1),
-      promoteToAdmin: () => Promise.resolve(),
+      promoteToAdmin: () => Promise.resolve(null),
       library: createMemoryLibraryService(),
       subtitles: createMemorySubtitleService(),
       segments: createMemorySegmentService(),
@@ -218,7 +218,7 @@ describe('the routes that need a profile chosen, not merely an account signed in
         settings,
         permissions,
         countUsers: () => Promise.resolve(1),
-        promoteToAdmin: () => Promise.resolve(),
+        promoteToAdmin: () => Promise.resolve(null),
         library: createMemoryLibraryService(),
         subtitles: createMemorySubtitleService(),
         segments: createMemorySegmentService(),
@@ -227,7 +227,7 @@ describe('the routes that need a profile chosen, not merely an account signed in
         ratings: createMemoryRatingService(),
         playback: createMemoryPlaybackService(),
       }),
-      { store, permissions, isAdministrator: true },
+      { store, permissions, settings, isAdministrator: true },
     );
   };
 
@@ -278,7 +278,7 @@ describe('what an ordinary account may not do to roles or webhooks', () => {
         settings,
         permissions,
         countUsers: () => Promise.resolve(1),
-        promoteToAdmin: () => Promise.resolve(),
+        promoteToAdmin: () => Promise.resolve(null),
         library: createMemoryLibraryService(),
         subtitles: createMemorySubtitleService(),
         segments: createMemorySegmentService(),
@@ -327,7 +327,7 @@ describe('an instance built without the services a route needs', () => {
         settings,
         permissions,
         countUsers: () => Promise.resolve(1),
-        promoteToAdmin: () => Promise.resolve(),
+        promoteToAdmin: () => Promise.resolve(null),
         library: createMemoryLibraryService(),
         subtitles: createMemorySubtitleService(),
         segments: createMemorySegmentService(),
@@ -336,7 +336,7 @@ describe('an instance built without the services a route needs', () => {
         ratings: createMemoryRatingService(),
         playback: createMemoryPlaybackService(),
       }),
-      { store, permissions, isAdministrator: true },
+      { store, permissions, settings, isAdministrator: true },
     );
   };
 
@@ -477,7 +477,7 @@ describe('job history and load history endpoints', () => {
           settings,
           permissions,
           countUsers: () => Promise.resolve(1),
-          promoteToAdmin: () => Promise.resolve(),
+          promoteToAdmin: () => Promise.resolve(null),
           library: createMemoryLibraryService(),
           subtitles: createMemorySubtitleService(),
           segments: createMemorySegmentService(),
@@ -488,7 +488,7 @@ describe('job history and load history endpoints', () => {
           jobHistory,
           resourceHistory,
         }),
-        { store, permissions, isAdministrator: true },
+        { store, permissions, settings, isAdministrator: true },
       ),
     };
   };
@@ -547,7 +547,7 @@ describe('managing roles as an administrator', () => {
         settings,
         permissions,
         countUsers: () => Promise.resolve(1),
-        promoteToAdmin: () => Promise.resolve(),
+        promoteToAdmin: () => Promise.resolve(null),
         library: createMemoryLibraryService(),
         subtitles: createMemorySubtitleService(),
         segments: createMemorySegmentService(),
@@ -556,7 +556,7 @@ describe('managing roles as an administrator', () => {
         ratings: createMemoryRatingService(),
         playback: createMemoryPlaybackService(),
       }),
-      { store, permissions, isAdministrator: true },
+      { store, permissions, settings, isAdministrator: true },
     );
   };
 
@@ -634,7 +634,7 @@ describe('deleting a library', () => {
         settings,
         permissions,
         countUsers: () => Promise.resolve(1),
-        promoteToAdmin: () => Promise.resolve(),
+        promoteToAdmin: () => Promise.resolve(null),
         library: createMemoryLibraryService({
           libraries: [
             {
@@ -657,7 +657,7 @@ describe('deleting a library', () => {
         ratings: createMemoryRatingService(),
         playback: createMemoryPlaybackService(),
       }),
-      { store, permissions, isAdministrator: true },
+      { store, permissions, settings, isAdministrator: true },
     );
   };
 

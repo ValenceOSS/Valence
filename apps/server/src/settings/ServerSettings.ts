@@ -17,6 +17,7 @@ const ServerSettingsSchema = z.object({
   jobsTimezone: z.string().default(''),
   certificationRegion: z.string().length(2).toUpperCase().default('GB'),
   fetchesCatalogueTrailers: z.boolean().default(false),
+  ownerAccountId: z.string().default(''),
   splashscreenFile: z.string().nullable().default(null),
 });
 
