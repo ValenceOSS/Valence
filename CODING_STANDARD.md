@@ -340,19 +340,20 @@ try {
 
 **Raw HTML form and interactive elements are banned outside the one ValenceUI
 component that owns each of them.** No `<button>`, `<input>`, `<select>`,
-`<textarea>`, `<a>` used as a control, or `<dialog>` — not in application code,
-and not in other ValenceUI components either.
+`<textarea>`, `<a>` used as a control, `<dialog>` or `<iframe>` — not in
+application code, and not in other ValenceUI components either.
 
 Structural elements — `<div>`, `<span>`, `<section>`, `<ul>` — are fine.
 
 ### One component owns each primitive
 
-| Primitive                                           | Owned by     | Everything else       |
-| --------------------------------------------------- | ------------ | --------------------- |
-| `<button>`                                          | `Button`     | composes `Button`     |
-| `<input type="text\|email\|password\|url\|search">` | `TextField`  | composes `TextField`  |
-| `<input type="file">`                               | `FilePicker` | composes `FilePicker` |
-| `<dialog>`, focus trapping                          | `Dialog`     | composes `Dialog`     |
+| Primitive                                           | Owned by        | Everything else          |
+| --------------------------------------------------- | --------------- | ------------------------ |
+| `<button>`                                          | `Button`        | composes `Button`        |
+| `<input type="text\|email\|password\|url\|search">` | `TextField`     | composes `TextField`     |
+| `<input type="file">`                               | `FilePicker`    | composes `FilePicker`    |
+| `<dialog>`, focus trapping                          | `Dialog`        | composes `Dialog`        |
+| `<iframe>`                                          | `EmbeddedVideo` | composes `EmbeddedVideo` |
 
 **A control that is not one of those is a shape of one of those.** An icon
 button is `Button` with an icon and a label. A search box is `TextField` wearing
@@ -423,10 +424,10 @@ to it, and every one of those is a place a future theme will be wrong.
 
 ### How this is enforced
 
-ESLint fails the build on `<button>`, `<input>`, `<select>`, `<textarea>` and
-`<dialog>` anywhere in the repo. The exceptions are listed by filename in
-`eslint.config.ts`: the three components that own those elements, and test files,
-where a raw element stands in for an arbitrary caller-supplied child.
+ESLint fails the build on `<button>`, `<input>`, `<select>`, `<textarea>`,
+`<dialog>` and `<iframe>` anywhere in the repo. The exceptions are listed by
+filename in `eslint.config.ts`: the components that own those elements, and test
+files, where a raw element stands in for an arbitrary caller-supplied child.
 
 Adding a filename to that list is not how you satisfy the rule. The list grows
 only when a new primitive gets an owner.

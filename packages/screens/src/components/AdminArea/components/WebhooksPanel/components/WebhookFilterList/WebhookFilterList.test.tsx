@@ -43,7 +43,7 @@ describe('WebhookFilterList', () => {
   it('asks for no names at all while it is on everybody', () => {
     draw({ chosen: [] });
 
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 
   it('starts on the names where a subscription has already been narrowed', () => {
@@ -54,7 +54,7 @@ describe('WebhookFilterList', () => {
         name: 'Only these',
       }),
     ).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('checkbox', { name: 'Ada' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Ada' })).toBeChecked();
   });
 
   it('shows the names once there are some to pick', async () => {
@@ -68,7 +68,7 @@ describe('WebhookFilterList', () => {
       }),
     );
 
-    expect(screen.getByRole('checkbox', { name: 'Ada' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Ada' })).toBeInTheDocument();
   });
 
   it('goes back to everybody in one press, and forgets the names', async () => {
@@ -82,7 +82,7 @@ describe('WebhookFilterList', () => {
     );
 
     expect(onChange).toHaveBeenCalledWith([]);
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 
   it('presses the same side twice without anything odd happening', async () => {
@@ -106,14 +106,14 @@ describe('WebhookFilterList', () => {
         name: 'Everybody',
       }),
     ).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 
   it('adds somebody to the list', async () => {
     const user = userEvent.setup();
     const { onChange } = draw({ chosen: ['account-1'] });
 
-    await user.click(screen.getByRole('checkbox', { name: 'Grace' }));
+    await user.click(screen.getByRole('switch', { name: 'Grace' }));
 
     expect(onChange).toHaveBeenCalledWith(['account-1', 'account-2']);
   });
@@ -122,7 +122,7 @@ describe('WebhookFilterList', () => {
     const user = userEvent.setup();
     const { onChange } = draw({ chosen: ['account-1', 'account-2'] });
 
-    await user.click(screen.getByRole('checkbox', { name: 'Ada' }));
+    await user.click(screen.getByRole('switch', { name: 'Ada' }));
 
     expect(onChange).toHaveBeenCalledWith(['account-2']);
   });
@@ -131,6 +131,6 @@ describe('WebhookFilterList', () => {
     draw({ choices: [] });
 
     expect(screen.getByText('This server has no other accounts yet.')).toBeInTheDocument();
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 });

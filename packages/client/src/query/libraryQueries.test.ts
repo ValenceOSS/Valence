@@ -22,7 +22,7 @@ vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets }));
 vi.mock('@ValenceClient/library/fetchPerson', () => ({ fetchPerson, fetchPersonCredits }));
 
 const aCache = (): QueryClient =>
-  new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
 
 beforeEach(() => {
   vi.clearAllMocks();

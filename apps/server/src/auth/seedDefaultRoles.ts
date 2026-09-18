@@ -50,6 +50,7 @@ const seedDefaultRoles = async ({
     await permissions.createRole({
       name: seed.name,
       position: seed.position,
+      color: seed.color,
       permissions: [...seed.permissions],
     });
 

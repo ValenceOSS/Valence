@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { STILL_WATCHING_DEFAULT } from '@ValenceContracts/schemas/StillWatching';
 import { drawAvatar, isAvatarStyle } from './drawAvatar';
+import { whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
 import type { ProfileService } from './ProfileService';
 import type { Avatar, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
@@ -158,21 +159,27 @@ const createMemoryProfileService = (
 
     accountOf: (profileId) => Promise.resolve(find(profileId)?.userId ?? null),
 
-    savePhoto: (userId, profileId, photo) => {
+    savePhoto: async (userId, profileId, photo) => {
       const held = find(profileId);
 
       if (held === undefined || held.userId !== userId) {
-        return Promise.resolve(false);
+        return 'notYours';
+      }
+
+      const wrong = await whatIsWrongWithThePicture(photo);
+
+      if (wrong !== null) {
+        return wrong;
       }
 
       held.photo = photo.body;
       held.profile = {
         ...held.profile,
-        avatar: { kind: 'photo', isVideo: photo.contentType.startsWith('video/') },
+        avatar: { kind: 'photo', isVideo: false },
         updatedAt: stamp(),
       };
 
-      return Promise.resolve(true);
+      return null;
     },
   };
 };

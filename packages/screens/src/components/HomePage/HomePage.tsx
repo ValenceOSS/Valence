@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import { LibraryBrowser } from '@ValenceScreens/components/LibraryBrowser/LibraryBrowser';
 import { showSlug } from '@ValenceCore/functions/showSlug';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
@@ -14,6 +15,7 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 const HomePage = () => {
   const { title, rememberItems, setStartOverride, setMoodLights, holdTheScreen } = useShell();
   const { place, go } = usePlace();
+  const navigate = useNavigate();
   const watching = useWatchingProfile();
   const favourites = useFavourites(watching);
   const hiding = useHidden(watching);
@@ -29,7 +31,7 @@ const HomePage = () => {
         {...(mayAdminister
           ? {
               onAddLibrary: () => {
-                go({ admin: 'libraries' });
+                void navigate({ to: '/admin/$panel', params: { panel: 'libraries' } });
               },
             }
           : {})}

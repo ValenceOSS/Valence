@@ -15,6 +15,7 @@ import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 const BASE = 'http://localhost:8420';
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
 const LIBRARY_ID = '2b6f0cc9-04f0-4f26-9f1a-1d5b2ea92d9f';
+const TRAILER_ID = 'b1f4b0a2-3d2e-42a7-9a2c-5f0f6a1c7d31';
 
 const FILM: MediaDetail = {
   id: MEDIA_ID,
@@ -35,6 +36,15 @@ const FILM: MediaDetail = {
   subtitleStreams: [],
   addedAt: '2026-08-10T00:00:00.000Z',
   metadata: { hasPoster: false, hasBackdrop: false, hasLogo: false },
+};
+
+const TRAILER: MediaDetail = {
+  ...FILM,
+  id: TRAILER_ID,
+  title: 'Arrival (Trailer)',
+  durationSeconds: 90,
+  parentId: MEDIA_ID,
+  extraKind: 'trailer',
 };
 
 const CREDENTIALS = {
@@ -72,7 +82,7 @@ const build = () => {
           filesAtOnce: null,
         },
       ],
-      media: [FILM],
+      media: [FILM, TRAILER],
     }),
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),
@@ -144,6 +154,24 @@ describe('watch progress over HTTP', () => {
     });
 
     expect(recorded.status).toBe(204);
+  });
+
+  it('does not count a trailer as something watched', async () => {
+    const { app } = build();
+    const cookie = await signedIn(app);
+
+    const recorded = await app.request(`${BASE}/api/media/${TRAILER_ID}/progress`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ positionSeconds: 45, durationSeconds: 90 }),
+    });
+
+    const listed = await app.request(`${BASE}/api/progress`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(recorded.status).toBe(204);
+    expect(ProgressListSchema.parse(await listed.json()).progress).toEqual([]);
   });
 
   it('reads back what it recorded', async () => {

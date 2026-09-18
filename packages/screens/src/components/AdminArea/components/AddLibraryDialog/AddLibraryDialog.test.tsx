@@ -60,7 +60,9 @@ describe('AddLibraryDialog', () => {
 
     render(
       <QueryClientProvider
-        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        client={
+          new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })
+        }
       >
         <AddLibraryDialog isOpen onClose={vi.fn()} onCreated={vi.fn()} />
       </QueryClientProvider>,

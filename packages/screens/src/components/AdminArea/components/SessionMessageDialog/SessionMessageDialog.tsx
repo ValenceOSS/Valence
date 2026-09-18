@@ -76,7 +76,7 @@ const SessionMessageDialog = ({ watcher, isOpen, onSend, onClose }: SessionMessa
         </Button>
 
         <Button
-          variant="primary"
+          variant="glossy"
           size="sm"
           disabled={!canSend}
           isLoading={isSending}

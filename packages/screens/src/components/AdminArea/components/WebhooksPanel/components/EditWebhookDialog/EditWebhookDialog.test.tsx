@@ -83,7 +83,7 @@ describe('EditWebhookDialog', () => {
     draw();
     await openPane(user, 'Events');
 
-    expect(screen.getByRole('checkbox', { name: 'Job failed' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Job failed' })).toBeChecked();
   });
 
   it('changes which events it asks for without making a second subscription', async () => {
@@ -91,7 +91,7 @@ describe('EditWebhookDialog', () => {
     const { onSave } = draw();
 
     await openPane(user, 'Events');
-    await user.click(screen.getByRole('checkbox', { name: 'Started watching' }));
+    await user.click(screen.getByRole('switch', { name: 'Started watching' }));
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     expect(changeSent(onSave).events).toStrictEqual(['job.failed', 'playback.started']);
@@ -136,7 +136,7 @@ describe('EditWebhookDialog', () => {
 
     const profiles = within(screen.getByRole('group', { name: 'Profiles' }));
 
-    await user.click(profiles.getByRole('checkbox', { name: 'Ada' }));
+    await user.click(profiles.getByRole('switch', { name: 'Ada' }));
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     expect(changeSent(onSave).filters).toMatchObject({ profiles: ['profile-1'], accounts: [] });
@@ -148,7 +148,7 @@ describe('EditWebhookDialog', () => {
     draw();
 
     await openPane(user, 'Events');
-    await user.click(screen.getByRole('checkbox', { name: 'Job failed' }));
+    await user.click(screen.getByRole('switch', { name: 'Job failed' }));
 
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
   });

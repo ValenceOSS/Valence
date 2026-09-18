@@ -29,7 +29,11 @@ const BY_SUFFIX = new Map<string, ExtraKind>([
   ['other', 'other'],
 ]);
 
-const SUFFIX = new RegExp(`[-._ ](${[...BY_SUFFIX.keys()].join('|')})$`, 'i');
+const WORDS = [...BY_SUFFIX.keys()].join('|');
+
+const SUFFIX = new RegExp(`[-._ ](${WORDS})\\d*$`, 'i');
+
+const BARE = new RegExp(`^(${WORDS})\\d*$`, 'i');
 
 type FoundExtra = {
   kind: ExtraKind;
@@ -65,6 +69,30 @@ const partsOf = (path: string): { folder: string; name: string } => {
 };
 
 /**
+ * Reads which of a folder's videos are films and programmes in their own right rather than extras
+ * marked as such by their own names, so that a file called nothing but the word can tell whether it
+ * sits beside exactly one thing.
+ *
+ * @param inFolder - Every video in the one folder.
+ * @returns Those of them that claim to be nobody's extra.
+ */
+const plainOnes = (inFolder: readonly string[]): string[] =>
+  inFolder.filter((candidate) => {
+    const stem = stripExtension(partsOf(candidate).name);
+
+    if (BARE.test(stem)) {
+      return false;
+    }
+
+    const marked = SUFFIX.exec(stem);
+
+    return (
+      marked === null ||
+      !inFolder.some((other) => stripExtension(partsOf(other).name) === stem.slice(0, marked.index))
+    );
+  });
+
+/**
  * Finds what a file in an extras folder belongs to.
  *
  * A film keeps its extras beside itself, so the folder above holds the film and the extra hangs off
@@ -74,13 +102,16 @@ const partsOf = (path: string): { folder: string; name: string } => {
  *
  * @param folder - The folder holding the film, or the programme.
  * @param videos - Every video in the library, by the folder holding it.
+ * @param itself - The extra being placed, so that a file sitting in the same folder as the film is
+ *   never offered itself as its own parent.
  * @returns The film to hang off, or the folder of the programme to belong to.
  */
 const whatItBelongsTo = (
   folder: string,
   videos: Map<string, string[]>,
+  itself: string,
 ): { parentPath: string | null; seriesFolder: string | null } => {
-  const beside = videos.get(folder) ?? [];
+  const beside = (videos.get(folder) ?? []).filter((candidate) => candidate !== itself);
   const largest = [...beside].sort((left, right) => right.length - left.length)[0] ?? null;
 
   return beside.length === 0
@@ -91,12 +122,17 @@ const whatItBelongsTo = (
 /**
  * Reads which files are extras rather than things in their own right, and what each belongs to.
  *
- * Both of the ways people mark one are accepted, because both are what the tools filling these
- * folders already write: a folder named for what is in it, and a suffix on the filename itself.
+ * All three of the ways people mark one are accepted, because all three are what the tools filling
+ * these folders already write: a folder named for what is in it, a suffix on the filename itself,
+ * and a file called nothing but the word.
  *
  * A suffix counts only where something beside it carries the same name without it. A suffix says
  * which film this belongs to, so with no such film there is nothing being claimed — and a film
  * called `The Short` is a film rather than somebody's short.
+ *
+ * A bare `Trailer.mkv` names no film at all, so it is read as belonging to the one video it sits
+ * beside. Exactly one: a folder holding a film and its trailer is the layout this form comes from,
+ * where a folder holding several is a library, and a film in it called `Short` is a film.
  *
  * Done across the whole library at once rather than per file, since a file is read before its
  * neighbours are known and an extra is only an extra by reference to something else.
@@ -124,7 +160,20 @@ const groupExtras = (paths: readonly string[]): Map<string, FoundExtra> => {
     if (byFolder !== undefined) {
       const above = folder.slice(0, Math.max(0, folder.lastIndexOf('/')));
 
-      found.set(path, { kind: byFolder, ...whatItBelongsTo(above, videos) });
+      found.set(path, { kind: byFolder, ...whatItBelongsTo(above, videos, path) });
+
+      continue;
+    }
+
+    const alone = BARE.exec(stem);
+    const byBare = alone?.[1] === undefined ? undefined : BY_SUFFIX.get(alone[1].toLowerCase());
+
+    if (byBare !== undefined) {
+      const plain = plainOnes(videos.get(folder) ?? []);
+
+      if (plain.length === 1) {
+        found.set(path, { kind: byBare, parentPath: plain[0] ?? null, seriesFolder: null });
+      }
 
       continue;
     }

@@ -131,10 +131,29 @@ import {
 import { SHARE_COOKIE, createShareGate } from '@ValenceServer/sharing/createShareGate';
 import { howShareEnded, isShareLive, whyShareEnded } from '@ValenceContracts/schemas/Share';
 import { rememberGuestFor } from '@ValenceServer/sharing/rememberGuestFor';
+import { bodyLimit } from 'hono/body-limit';
+import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
+import { MOST_BYTES } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import type { PictureFault } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import { getCookie, setCookie } from 'hono/cookie';
 import { randomUUID } from 'node:crypto';
 
 const SHARE_JOINER = 'valence_share_joiner';
+
+/**
+ * Builds the guard that turns away a picture too big to keep before it has been read rather than
+ * after.
+ *
+ * The size is checked again where the picture is judged, which is what makes the rule true; this is
+ * only so that somebody uploading a film by mistake does not have it held in memory in full first.
+ *
+ * @returns The middleware to put in front of a route that takes a picture.
+ */
+const tooBigToRead = () =>
+  bodyLimit({
+    maxSize: MOST_BYTES,
+    onError: (context) => context.json({ error: describePictureFault('tooLarge').error }, 413),
+  });
 
 const GUEST_REMEMBERED_FOR_SECONDS = 30 * 86_400;
 import {
@@ -213,7 +232,7 @@ import { shiftSubtitleCues } from '@ValenceCore/functions/shiftSubtitleCues';
 import { shiftWebVtt } from '@ValenceCore/functions/shiftWebVtt';
 import type { ProfileService } from '@ValenceServer/profiles/ProfileService';
 import type { BookService } from '@ValenceServer/books/createDatabaseBookService';
-import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { createSessionGate } from '@ValenceServer/auth/createSessionGate';
 import { createBetterAuthAdminBlock } from '@ValenceServer/auth/createBetterAuthAdminBlock';
 import { checkRoleChange } from '@ValenceServer/auth/checkRoleChange';
@@ -226,6 +245,11 @@ import {
   removeAccountRoute,
   inviteAccountRoute,
   editAccountRoute,
+  resetAccountPasswordRoute,
+  listAccountSessionsRoute,
+  endAccountSessionsRoute,
+  endAccountSessionRoute,
+  setAccountAvatarRoute,
 } from '@ValenceServer/routes/AccountRoute';
 import type { RoleChangeRefusal } from '@ValenceServer/auth/checkRoleChange';
 import { ADMINISTRATOR, PERMISSIONS } from '@ValenceContracts/schemas/Permission';
@@ -296,7 +320,7 @@ import {
   forgetHistoryRoute,
 } from '@ValenceServer/routes/HistoryRoute';
 import type { HistoryService } from '@ValenceServer/history/HistoryService';
-import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 
 const PROFILE_HEADER = 'x-valence-profile';
 
@@ -345,8 +369,6 @@ const neverKeep = (): Record<string, string> => ({ 'cache-control': 'no-store' }
 
 const SignInBodySchema = z.object({ password: z.string().min(1) });
 
-const SERVER_VERSION = '0.0.0';
-
 const OVERVIEW_PATIENCE_MILLISECONDS = 5_000;
 
 const within = async <Answer>(work: Promise<Answer>, fallback: Answer): Promise<Answer> =>
@@ -391,6 +413,7 @@ type StorageCount = {
 type CreateAppOptions = {
   auth: ValenceAuth;
   settings: SettingsStore;
+  version?: string;
   trustedOrigins?: () => Promise<readonly string[]>;
   countUsers: () => Promise<number>;
   promoteToAdmin: (email: string) => Promise<void>;
@@ -417,6 +440,26 @@ type CreateAppOptions = {
     changes: { name?: string; email?: string },
   ) => Promise<'changed' | 'missing' | 'taken'>;
   readBanReason?: (userId: string) => Promise<string | null>;
+  resetAccountPassword?: (userId: string, password: string) => Promise<boolean>;
+  listAccountSessions?: (userId: string) => Promise<
+    {
+      id: string;
+      userAgent: string | null;
+      ipAddress: string | null;
+      createdAt: string;
+      expiresAt: string;
+    }[]
+  >;
+  endAccountSessions?: (userId: string) => Promise<void>;
+  endAccountSession?: (userId: string, sessionId: string) => Promise<void>;
+  setAccountPhoto?: (
+    userId: string,
+    photo: { body: Uint8Array; contentType: string },
+  ) => Promise<PictureFault | null>;
+  setAccountAvatar?: (
+    userId: string,
+    changes: { avatar?: Avatar; colour?: ProfileColour },
+  ) => Promise<boolean>;
   maintenance?: MaintenanceService;
   schedules?: JobScheduleService;
   presence?: PresenceService;
@@ -487,6 +530,7 @@ type CreateAppOptions = {
 const createApp = ({
   auth,
   settings,
+  version: SERVER_VERSION = '0.0.0',
   trustedOrigins,
   countUsers,
   promoteToAdmin,
@@ -537,6 +581,12 @@ const createApp = ({
   readBanReason,
   inviteAccount,
   editAccount,
+  resetAccountPassword,
+  listAccountSessions,
+  endAccountSessions,
+  endAccountSession,
+  setAccountPhoto,
+  setAccountAvatar,
   realtime,
   logs,
   jobHistory,
@@ -1296,10 +1346,21 @@ const createApp = ({
    * Tells every tab on an account that its profiles have changed, so a rename or a new picture shows
    * on the other devices that person is signed in on rather than waiting for a reload.
    *
+   * Told to everybody rather than to one account where the way in draws the household's faces,
+   * because then a face is not private to the account that owns it: every other household holds it
+   * in a cache keyed by when it last changed, and telling nobody leaves them all showing a face its
+   * owner replaced until something else happens to make them ask again.
+   *
    * @param accountId - Whose profiles changed.
    */
-  const announceProfiles = (accountId: string): void => {
-    realtime?.publish('profile', { changed: true }, { kind: 'accounts', accountIds: [accountId] });
+  const announceProfiles = async (accountId: string): Promise<void> => {
+    realtime?.publish(
+      'profile',
+      { changed: true },
+      (await settings.read()).showsProfilesBeforeSignIn
+        ? { kind: 'everyone' }
+        : { kind: 'accounts', accountIds: [accountId] },
+    );
   };
 
   /**
@@ -1738,7 +1799,7 @@ const createApp = ({
         ...(avatar === undefined ? {} : { avatar }),
       });
 
-      announceProfiles(account.id);
+      await announceProfiles(account.id);
 
       return context.json(created, 201);
     } catch (error) {
@@ -1768,7 +1829,7 @@ const createApp = ({
     });
 
     if (changed) {
-      announceProfiles(account.id);
+      await announceProfiles(account.id);
     }
 
     return changed
@@ -1786,7 +1847,7 @@ const createApp = ({
     const removed = await profiles.remove(account.id, context.req.valid('param').profileId);
 
     if (removed) {
-      announceProfiles(account.id);
+      await announceProfiles(account.id);
     }
 
     return removed
@@ -1886,25 +1947,27 @@ const createApp = ({
     });
   });
 
-  app.put('/api/profiles/:profileId/photo', async (context) => {
+  app.put('/api/profiles/:profileId/photo', tooBigToRead(), async (context) => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || profiles === undefined) {
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    const saved = await profiles.savePhoto(account.id, context.req.param('profileId'), {
+    const wrong = await profiles.savePhoto(account.id, context.req.param('profileId'), {
       body: new Uint8Array(await context.req.arrayBuffer()),
       contentType: context.req.header('content-type') ?? '',
     });
 
-    if (saved) {
-      announceProfiles(account.id);
+    if (wrong !== null) {
+      const said = describePictureFault(wrong);
+
+      return context.json({ error: said.error }, said.status);
     }
 
-    return saved
-      ? context.body(null, 204)
-      : context.json({ error: 'That picture could not be used.' }, 400);
+    await announceProfiles(account.id);
+
+    return context.body(null, 204);
   });
 
   app.openapi(adminLogsRoute, async (context) => {
@@ -1958,6 +2021,7 @@ const createApp = ({
           previewQuality: current.previewQuality,
           certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
+          fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
         },
@@ -2002,6 +2066,9 @@ const createApp = ({
       ...(patch.showsProfilesBeforeSignIn === undefined
         ? {}
         : { showsProfilesBeforeSignIn: patch.showsProfilesBeforeSignIn }),
+      ...(patch.fetchesCatalogueTrailers === undefined
+        ? {}
+        : { fetchesCatalogueTrailers: patch.fetchesCatalogueTrailers }),
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {
@@ -2027,6 +2094,7 @@ const createApp = ({
         previewQuality: updated.previewQuality,
         certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
+        fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
       },
       200,
     );
@@ -2355,7 +2423,7 @@ const createApp = ({
       return context.json({ error: describeRefusal(refusal) }, 403);
     }
 
-    return context.json(await permissions.createRole(body), 201);
+    return context.json(await permissions.createRole({ ...body, color: body.color ?? null }), 201);
   });
 
   app.openapi(updateRoleRoute, async (context) => {
@@ -2389,15 +2457,15 @@ const createApp = ({
       ...(body.name === undefined ? {} : { name: body.name }),
       ...(body.position === undefined ? {} : { position: body.position }),
       ...(body.permissions === undefined ? {} : { permissions: body.permissions }),
+      ...(body.color === undefined ? {} : { color: body.color }),
     };
-    const updated = await permissions.updateRole(id, patch);
 
-    if (updated === null) {
-      return context.json({ error: 'No such role.' }, 404);
-    }
+    const holding: { updated: Role | null } = { updated: null };
 
     const stranded = await wouldStrandTheServer(
-      () => Promise.resolve(),
+      async () => {
+        holding.updated = await permissions.updateRole(id, patch);
+      },
       async () => {
         await permissions.updateRole(id, { permissions: before });
       },
@@ -2410,7 +2478,11 @@ const createApp = ({
       );
     }
 
-    return context.json(updated, 200);
+    if (holding.updated === null) {
+      return context.json({ error: 'No such role.' }, 404);
+    }
+
+    return context.json(holding.updated, 200);
   });
 
   app.openapi(deleteRoleRoute, async (context) => {
@@ -3022,6 +3094,208 @@ const createApp = ({
     return context.body(null, 204);
   });
 
+  app.openapi(resetAccountPasswordRoute, async (context) => {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.security')) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { userId } = context.req.valid('param');
+
+    if (actor.id !== userId) {
+      const target = await permissions.rolesFor(userId);
+
+      const refusal = checkAccountAction({
+        actorId: actor.id,
+        actorPermissions: actor.permissions,
+        actorHighestPosition: actor.highestPosition,
+        targetId: userId,
+        targetHighestPosition:
+          target.length === 0 ? null : Math.max(...target.map((role) => role.position)),
+      });
+
+      if (refusal !== null) {
+        return context.json({ error: describeAccountRefusal(refusal) }, 403);
+      }
+    }
+
+    const { password } = context.req.valid('json');
+    const changed = await resetAccountPassword?.(userId, password);
+
+    if (changed === undefined || !changed) {
+      return context.json({ error: 'No such account.' }, 404);
+    }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(listAccountSessionsRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'account.security'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { userId } = context.req.valid('param');
+    const held = (await listAccountSessions?.(userId)) ?? [];
+
+    return context.json(
+      {
+        sessions: held.map((one) => ({
+          id: one.id,
+          name: describeDevice(one.userAgent),
+          address: one.ipAddress,
+          signedInAt: one.createdAt,
+          expiresAt: one.expiresAt,
+        })),
+      },
+      200,
+    );
+  });
+
+  app.openapi(endAccountSessionsRoute, async (context) => {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.security')) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { userId } = context.req.valid('param');
+
+    if (actor.id !== userId) {
+      const target = await permissions.rolesFor(userId);
+
+      const refusal = checkAccountAction({
+        actorId: actor.id,
+        actorPermissions: actor.permissions,
+        actorHighestPosition: actor.highestPosition,
+        targetId: userId,
+        targetHighestPosition:
+          target.length === 0 ? null : Math.max(...target.map((role) => role.position)),
+      });
+
+      if (refusal !== null) {
+        return context.json({ error: describeAccountRefusal(refusal) }, 403);
+      }
+    }
+
+    await endAccountSessions?.(userId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(endAccountSessionRoute, async (context) => {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.security')) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { userId, sessionId } = context.req.valid('param');
+
+    if (actor.id !== userId) {
+      const target = await permissions.rolesFor(userId);
+
+      const refusal = checkAccountAction({
+        actorId: actor.id,
+        actorPermissions: actor.permissions,
+        actorHighestPosition: actor.highestPosition,
+        targetId: userId,
+        targetHighestPosition:
+          target.length === 0 ? null : Math.max(...target.map((role) => role.position)),
+      });
+
+      if (refusal !== null) {
+        return context.json({ error: describeAccountRefusal(refusal) }, 403);
+      }
+    }
+
+    await endAccountSession?.(userId, sessionId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(setAccountAvatarRoute, async (context) => {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.profiles')) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { userId } = context.req.valid('param');
+
+    if (actor.id !== userId) {
+      const target = await permissions.rolesFor(userId);
+
+      const refusal = checkAccountAction({
+        actorId: actor.id,
+        actorPermissions: actor.permissions,
+        actorHighestPosition: actor.highestPosition,
+        targetId: userId,
+        targetHighestPosition:
+          target.length === 0 ? null : Math.max(...target.map((role) => role.position)),
+      });
+
+      if (refusal !== null) {
+        return context.json({ error: describeAccountRefusal(refusal) }, 403);
+      }
+    }
+
+    const body = context.req.valid('json');
+    const changed = await setAccountAvatar?.(userId, {
+      ...(body.avatar === undefined ? {} : { avatar: body.avatar }),
+      ...(body.colour === undefined ? {} : { colour: body.colour }),
+    });
+
+    if (changed === undefined || !changed) {
+      return context.json({ error: 'No such account.' }, 404);
+    }
+
+    await announceProfiles(userId);
+
+    return context.body(null, 204);
+  });
+
+  app.put('/api/admin/accounts/:userId/photo', tooBigToRead(), async (context) => {
+    if (!(await requires(context.req.raw.headers, 'account.profiles'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const actor = await readActor(context.req.raw.headers);
+    const userId = context.req.param('userId');
+
+    if (actor !== null && actor.id !== userId) {
+      const target = await permissions.rolesFor(userId);
+
+      const refusal = checkAccountAction({
+        actorId: actor.id,
+        actorPermissions: actor.permissions,
+        actorHighestPosition: actor.highestPosition,
+        targetId: userId,
+        targetHighestPosition:
+          target.length === 0 ? null : Math.max(...target.map((role) => role.position)),
+      });
+
+      if (refusal !== null) {
+        return context.json({ error: describeAccountRefusal(refusal) }, 403);
+      }
+    }
+
+    const wrong = await setAccountPhoto?.(userId, {
+      body: new Uint8Array(await context.req.arrayBuffer()),
+      contentType: context.req.header('content-type') ?? '',
+    });
+
+    if (wrong !== undefined && wrong !== null) {
+      const said = describePictureFault(wrong);
+
+      return context.json({ error: said.error }, said.status);
+    }
+
+    await announceProfiles(userId);
+
+    return context.body(null, 204);
+  });
+
   app.openapi(listMyPermissionsRoute, async (context) => {
     const headers = context.req.raw.headers;
     const session = await readSessionOnce(auth, headers);
@@ -3147,8 +3421,14 @@ const createApp = ({
 
     const { mediaId } = context.req.valid('param');
 
-    if ((await library.getMedia(mediaId)) === null) {
+    const item = await library.getMedia(mediaId);
+
+    if (item === null) {
       return context.json({ error: 'No such media item.' }, 404);
+    }
+
+    if ((item.extraKind ?? null) !== null) {
+      return context.body(null, 204);
     }
 
     const report = context.req.valid('json');
@@ -4115,4 +4395,4 @@ const createApp = ({
 
 export type { CreateAppOptions };
 
-export { createApp, SERVER_VERSION };
+export { createApp };

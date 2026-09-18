@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { readdir, readFile, unlink } from 'node:fs/promises';
+import { copyFile, mkdir, readdir, readFile, rename, stat, unlink } from 'node:fs/promises';
 import { z } from 'zod';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
@@ -39,8 +39,10 @@ import { createDatabase } from '@ValenceServer/db/Database';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
 import { migrateToLatest } from '@ValenceServer/db/migrateToLatest';
+import { movePhotographsOnce } from '@ValenceServer/profiles/movePhotographsOnce';
 import {
   user,
+  account,
   library,
   mediaItem,
   mediaItemJob,
@@ -238,6 +240,7 @@ const settings = createDatabaseSettingsStore({
     mediaDigestReadTo: null,
     jobsTimezone: '',
     certificationRegion: 'GB',
+    fetchesCatalogueTrailers: false,
   },
 });
 
@@ -534,7 +537,40 @@ const promoteToAdmin = async (email: string): Promise<void> => {
     await permissions.assignRole(account.id, administrator.id);
   }
 };
-const profileService = createDatabaseProfileService(db, join(env.IMAGE_CACHE_DIR, 'profiles'));
+await movePhotographsOnce({
+  from: join(env.IMAGE_CACHE_DIR, 'profiles'),
+  to: env.PROFILE_IMAGE_DIR,
+  files: {
+    list: async (directory) => {
+      const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
+
+      return entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
+    },
+    ensure: async (directory) => {
+      await mkdir(directory, { recursive: true });
+    },
+    has: (path) =>
+      stat(path).then(
+        () => true,
+        () => false,
+      ),
+    move: async (fromPath, toPath) => {
+      await rename(fromPath, toPath).catch(async (error: NodeJS.ErrnoException) => {
+        if (error.code !== 'EXDEV') {
+          throw error;
+        }
+
+        await copyFile(fromPath, toPath);
+        await unlink(fromPath);
+      });
+    },
+  },
+  onProblem: (name, reason) => {
+    log.error('server', `profiles: ${name} could not be moved — ${reason}`);
+  },
+});
+
+const profileService = createDatabaseProfileService(db, env.PROFILE_IMAGE_DIR);
 
 const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR);
 
@@ -960,7 +996,7 @@ const jobs = await createJobQueue({
       [CLEANUP_IMAGE_CACHE_JOB]: async (jobId) => {
         const removed = await cleanupImageCache({
           imageCacheDir: env.IMAGE_CACHE_DIR,
-          profilesDir: join(env.IMAGE_CACHE_DIR, 'profiles'),
+          profilesDir: env.PROFILE_IMAGE_DIR,
           files: {
             list: async (directory) => {
               const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
@@ -1310,6 +1346,7 @@ const schedules = createJobScheduleService({
 
 const catalogueProvider = createCatalogueMetadataProvider({
   readApiKey: async () => (await settings.read()).catalogueApiKey,
+  readWantsTrailers: async () => (await settings.read()).fetchesCatalogueTrailers,
   onProblem: (reason) => {
     log.error('catalogue', `catalogue: ${reason}`);
   },
@@ -1544,6 +1581,7 @@ const downloadService = createDownloadService({
 const app = createApp({
   auth,
   settings,
+  version: env.VALENCE_VERSION,
   trustedOrigins: trustedOriginsFor({
     configured: env.TRUSTED_ORIGINS,
     port: env.PORT,
@@ -1754,6 +1792,81 @@ const app = createApp({
     await db.update(user).set(changes).where(eq(user.id, userId));
 
     return 'changed';
+  },
+  resetAccountPassword: async (userId, password) => {
+    const [found] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId)).limit(1);
+
+    if (found === undefined) {
+      return false;
+    }
+
+    const hashed = await (await auth.$context).password.hash(password);
+
+    await db
+      .update(account)
+      .set({ password: hashed })
+      .where(and(eq(account.userId, userId), eq(account.providerId, 'credential')));
+    await db.delete(session).where(eq(session.userId, userId));
+
+    return true;
+  },
+  listAccountSessions: async (userId) => {
+    const rows = await db
+      .select({
+        id: session.id,
+        userAgent: session.userAgent,
+        ipAddress: session.ipAddress,
+        createdAt: session.createdAt,
+        expiresAt: session.expiresAt,
+      })
+      .from(session)
+      .where(eq(session.userId, userId));
+
+    return rows.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+      expiresAt: row.expiresAt.toISOString(),
+    }));
+  },
+  endAccountSessions: async (userId) => {
+    await db.delete(session).where(eq(session.userId, userId));
+  },
+  endAccountSession: async (userId, sessionId) => {
+    await db.delete(session).where(and(eq(session.id, sessionId), eq(session.userId, userId)));
+  },
+  setAccountPhoto: async (userId, photo) => {
+    const [found] = await db
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (found === undefined) {
+      return 'notYours';
+    }
+
+    const profile = await profileService.ensureDefault(userId, found.name);
+
+    return profileService.savePhoto(userId, profile.id, photo);
+  },
+  setAccountAvatar: async (userId, changes) => {
+    const [found] = await db
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (found === undefined) {
+      return false;
+    }
+
+    const profile = await profileService.ensureDefault(userId, found.name);
+
+    return profileService.rename(userId, profile.id, {
+      name: profile.name,
+      colour: changes.colour ?? profile.colour,
+      ...(changes.avatar === undefined ? {} : { avatar: changes.avatar }),
+    });
   },
   capabilities: () => transcoder.capabilities(),
   artworkUsage: () => artworkUsage.read(),

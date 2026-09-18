@@ -25,6 +25,7 @@ const createMemoryPermissionService = (
       id: randomUUID(),
       name: seed.name,
       position: seed.position,
+      color: seed.color,
       permissions: [...seed.permissions],
     })),
     assignments: {},

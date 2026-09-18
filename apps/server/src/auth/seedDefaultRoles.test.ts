@@ -20,6 +20,7 @@ const emptySettings = () =>
     mediaDigestReadTo: null,
     jobsTimezone: '',
     certificationRegion: 'GB',
+    fetchesCatalogueTrailers: false,
   });
 
 /**
@@ -82,6 +83,7 @@ describe('seedDefaultRoles', () => {
     await permissions.createRole({
       name: 'Manager',
       position: 999,
+      color: null,
       permissions: ['server.backup'],
     });
 

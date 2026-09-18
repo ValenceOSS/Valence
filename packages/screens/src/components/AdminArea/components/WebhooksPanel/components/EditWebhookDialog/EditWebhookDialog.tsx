@@ -4,8 +4,16 @@ import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
+import { TabRow } from '@ValenceUI/TabRow';
+import { Tabs } from '@ValenceUI/Tabs';
+import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { isSubscribableEvent } from '@ValenceContracts/schemas/Webhook';
 import { WebhookFields } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields';
+import {
+  WEBHOOK_PANES,
+  WEBHOOK_PANE_ITEMS,
+  isWebhookPane,
+} from '@ValenceScreens/components/AdminArea/components/WebhookFields/webhookPanes';
 import type { WebhookDraft } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields.types';
 import type { EditWebhookDialogProps } from './EditWebhookDialog.types';
 
@@ -33,6 +41,7 @@ const EditWebhookDialog = ({
   const [draft, setDraft] = useState<WebhookDraft | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [pane, setPane] = useState<(typeof WEBHOOK_PANES)[number]>('where');
 
   useEffect(() => {
     setDraft(
@@ -47,7 +56,10 @@ const EditWebhookDialog = ({
           },
     );
     setRefusal(null);
+    setPane('where');
   }, [webhook]);
+
+  const travel = useTravelDirection([...WEBHOOK_PANES], pane);
 
   if (webhook === null || draft === null) {
     return null;
@@ -76,31 +88,55 @@ const EditWebhookDialog = ({
 
   return (
     <DialogCompanion label={`Edit ${webhook.name}`} isOpen onClose={onClose}>
-      <DialogTitle
-        size="compact"
-        title={`Edit ${webhook.name}`}
-        detail="Its signing secret stays as it is, so anything already checking deliveries keeps working."
-      />
+      <Tabs
+        value={pane}
+        onValueChange={(next) => {
+          if (isWebhookPane(next)) {
+            setPane(next);
+          }
+        }}
+      >
+        <DialogTitle
+          size="compact"
+          title={`Edit ${webhook.name}`}
+          detail="Its signing secret stays as it is, so anything already checking deliveries keeps working."
+          below={
+            <TabRow
+              label="What to change"
+              tone="underlined"
+              size="sm"
+              value={pane}
+              groups={[{ items: WEBHOOK_PANE_ITEMS }]}
+            />
+          }
+        />
 
-      <DialogContent>
-        <WebhookFields draft={draft} onChange={setDraft} accounts={accounts} profiles={profiles} />
-      </DialogContent>
+        <DialogContent className="flex flex-col gap-5">
+          <WebhookFields
+            draft={draft}
+            onChange={setDraft}
+            accounts={accounts}
+            profiles={profiles}
+            travel={travel}
+          />
+        </DialogContent>
 
-      <DialogFooter>
-        {refusal === null ? null : (
-          <span role="alert" className="mr-auto text-sm text-danger">
-            {refusal}
-          </span>
-        )}
+        <DialogFooter>
+          {refusal === null ? null : (
+            <span role="alert" className="mr-auto text-sm text-danger">
+              {refusal}
+            </span>
+          )}
 
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
 
-        <Button variant="primary" disabled={!isReady || isSaving} onClick={save}>
-          {isSaving ? 'Saving…' : 'Save changes'}
-        </Button>
-      </DialogFooter>
+          <Button variant="glossy" disabled={!isReady || isSaving} onClick={save}>
+            {isSaving ? 'Saving…' : 'Save changes'}
+          </Button>
+        </DialogFooter>
+      </Tabs>
     </DialogCompanion>
   );
 };

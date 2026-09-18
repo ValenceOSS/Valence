@@ -69,7 +69,7 @@ const issue = (overrides: Partial<JobRunIssue> = {}): JobRunIssue => ({
 const renderHistory = (element: ReactElement) =>
   render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}
     >
       {element}
     </QueryClientProvider>,
@@ -99,7 +99,7 @@ describe('JobHistory', () => {
     renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
 
     expect(await screen.findByText('Movies')).toBeInTheDocument();
-    expect(screen.getByText('completed')).toBeInTheDocument();
+    expect(screen.getByText('Completed')).toBeInTheDocument();
     expect(screen.getByText('previews 4/10')).toBeInTheDocument();
   });
 
@@ -139,23 +139,6 @@ describe('JobHistory', () => {
     ).toBeInTheDocument();
   });
 
-  it('searches the server rather than only what has already arrived', async () => {
-    const actor = userEvent.setup();
-
-    askedHistory.mockResolvedValue(page([record()]));
-
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
-
-    await screen.findByText('Movies');
-    askedHistory.mockClear();
-
-    await actor.type(screen.getByLabelText('Search job history'), 'preview');
-
-    await waitFor(() => {
-      expect(askedHistory).toHaveBeenCalledWith(expect.objectContaining({ search: 'preview' }));
-    });
-  });
-
   it('coalesces a burst of job events into one refresh, not one per event', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
@@ -190,18 +173,23 @@ describe('JobHistory', () => {
   it('filters by status when a status is chosen', async () => {
     const actor = userEvent.setup();
 
-    askedHistory.mockResolvedValue(page([record()]));
+    askedHistory.mockResolvedValue(
+      page([record(), record({ id: 'run-2', status: 'failed', subject: 'Shows' })]),
+    );
 
     renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
 
     await screen.findByText('Movies');
-    askedHistory.mockClear();
+    await screen.findByText('Shows');
 
-    await actor.click(screen.getByRole('button', { name: 'Failed' }));
+    await actor.click(screen.getByRole('button', { name: 'Filter by status' }));
+    await actor.click(await screen.findByRole('menuitemradio', { name: 'Failed' }));
 
     await waitFor(() => {
-      expect(askedHistory).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed' }));
+      expect(screen.queryByText('Movies')).not.toBeInTheDocument();
     });
+
+    expect(screen.getByText('Shows')).toBeInTheDocument();
   });
 
   it('opens the log filtered to a run when View logs is chosen', async () => {

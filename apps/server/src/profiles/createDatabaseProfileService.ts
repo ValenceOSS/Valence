@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { and, asc, eq } from 'drizzle-orm';
 import { drawAvatar, isAvatarStyle } from './drawAvatar';
+import { extensionFor, whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
 import { viewerProfile, user } from '@ValenceServer/db/Schema';
 import {
   STILL_WATCHING_DEFAULT,
@@ -13,23 +14,17 @@ import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { ProfileService } from './ProfileService';
 import type { ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
-const PHOTO_TYPES: Record<string, string> = {
-  'image/jpeg': '.jpg',
-  'image/png': '.png',
-  'image/webp': '.webp',
-  'image/avif': '.avif',
-  'image/gif': '.gif',
-  'video/webm': '.webm',
-  'video/mp4': '.mp4',
-};
-
 const MOVING_FORMATS = new Set(['.webm', '.mp4']);
 
-const PHOTO_MAX_BYTES = 6 * 1024 * 1024;
-
-const PHOTO_CONTENT_TYPES: Record<string, string> = Object.fromEntries(
-  Object.entries(PHOTO_TYPES).map(([contentType, extension]) => [extension, contentType]),
-);
+const PHOTO_CONTENT_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
+  '.gif': 'image/gif',
+  '.webm': 'video/webm',
+  '.mp4': 'video/mp4',
+};
 
 const [DEFAULT_COLOUR] = PROFILE_COLOURS;
 
@@ -368,7 +363,7 @@ const createDatabaseProfileService = (
       }
 
       if (choice.kind === 'photo' && found.photoPath !== null) {
-        const body = await readFile(found.photoPath).catch(() => null);
+        const body = await readFile(join(photoDirectory, found.photoPath)).catch(() => null);
 
         if (body !== null) {
           return {
@@ -382,12 +377,6 @@ const createDatabaseProfileService = (
     },
 
     savePhoto: async (userId, profileId, photo) => {
-      const extension = PHOTO_TYPES[photo.contentType];
-
-      if (extension === undefined || photo.body.byteLength > PHOTO_MAX_BYTES) {
-        return false;
-      }
-
       const owned = await db
         .select({ id: viewerProfile.id })
         .from(viewerProfile)
@@ -395,21 +384,29 @@ const createDatabaseProfileService = (
         .limit(1);
 
       if (owned.length === 0) {
-        return false;
+        return 'notYours';
       }
+
+      const wrong = await whatIsWrongWithThePicture(photo);
+
+      if (wrong !== null) {
+        return wrong;
+      }
+
+      const extension = extensionFor(photo.contentType) ?? '.png';
 
       await mkdir(photoDirectory, { recursive: true });
 
-      const path = join(photoDirectory, `${profileId}${extension}`);
+      const name = `${profileId}${extension}`;
 
-      await writeFile(path, photo.body);
+      await writeFile(join(photoDirectory, name), photo.body);
 
       await db
         .update(viewerProfile)
-        .set({ photoPath: path, avatarStyle: null, avatarSeed: null, updatedAt: new Date() })
+        .set({ photoPath: name, avatarStyle: null, avatarSeed: null, updatedAt: new Date() })
         .where(eq(viewerProfile.id, profileId));
 
-      return true;
+      return null;
     },
 
     moveTo: async (profileId, newOwnerId) => {

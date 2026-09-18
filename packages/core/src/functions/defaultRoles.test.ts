@@ -123,6 +123,7 @@ describe('DEFAULT_ROLES', () => {
       'account.ban',
       'account.roles',
       'account.profiles',
+      'account.security',
       'server.settings',
       'server.backup',
       'server.webhooks',

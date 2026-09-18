@@ -121,7 +121,6 @@ const SECTION_ICONS: Record<ShellSection, ReactNode> = {
   read: <Icon of={BookOpen01Icon} size={18} />,
   search: <Icon of={Search01Icon} size={18} />,
   account: <Icon of={UserCircleIcon} size={18} />,
-  admin: <Icon of={Settings02Icon} size={18} />,
 };
 
 const ACTIVE_SECTION_ICONS: Record<ShellSection, ReactNode> = {
@@ -133,7 +132,6 @@ const ACTIVE_SECTION_ICONS: Record<ShellSection, ReactNode> = {
   read: <Icon of={BookOpen01Icon} size={18} isActive />,
   search: <Icon of={Search01Icon} size={18} isActive />,
   account: <Icon of={UserCircleIcon} size={18} isActive />,
-  admin: <Icon of={Settings02Icon} size={18} isActive />,
 };
 
 const SECTION_GESTURES: Record<ShellSection, IconGesture> = {
@@ -145,7 +143,6 @@ const SECTION_GESTURES: Record<ShellSection, IconGesture> = {
   read: 'settle',
   search: 'settle',
   account: 'settle',
-  admin: 'spin',
 };
 
 const SECTION_LABELS: Record<ShellSection, string> = {
@@ -157,7 +154,6 @@ const SECTION_LABELS: Record<ShellSection, string> = {
   read: 'Books',
   search: 'Search',
   account: 'Account',
-  admin: 'Admin',
 };
 
 /**
@@ -175,9 +171,7 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  * @param onOpenDownloads - Told to raise the downloads dialog.
  * @param isSearchOpen - Whether the search drawer is raised.
  * @param onOpenSearch - Told to raise the search drawer.
- * @param isAdminOpen - Whether the server dialog is raised, which lights the bar's face, since the
- *   account menu is where it is opened from.
- * @param onOpenAdmin - Told to raise the server dialog, from the account menu.
+ * @param onOpenAdmin - Told to leave for the server page, from the account menu.
  * @param isAccountOpen - Whether the account dialog is raised, which lights the bar's face.
  * @param onOpenAccount - Told to raise the account dialog.
  * @param avatar - The face to draw on the account control.
@@ -203,7 +197,6 @@ const AppShell = ({
   isAdministrator = false,
   isAccountOpen,
   onOpenAccount,
-  isAdminOpen,
   onOpenAdmin,
   isDownloadsOpen,
   onOpenDownloads,
@@ -396,7 +389,7 @@ const AppShell = ({
       label: 'Account',
       icon: face,
       gesture: avatar === undefined ? ('settle' as const) : ('none' as const),
-      isCurrent: isAccountOpen || isAdminOpen,
+      isCurrent: isAccountOpen,
       control: (
         <ActionMenu
           label="Account"

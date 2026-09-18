@@ -141,14 +141,24 @@ describe('LibrariesPanel', () => {
   });
 
   describe('acting on everything at once', () => {
-    it('is refused when there are no libraries to act on', () => {
+    it('is refused when there are no libraries to act on', async () => {
+      const user = userEvent.setup();
       render(<LibrariesPanel {...props} />);
 
-      expect(screen.getByRole('button', { name: /Scan all libraries/ })).toBeDisabled();
-      expect(screen.getByRole('button', { name: /Reset and rebuild/ })).toBeDisabled();
+      await user.click(screen.getByRole('button', { name: 'Library actions' }));
+
+      expect(screen.getByRole('menuitem', { name: /Scan all libraries/ })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+      expect(screen.getByRole('menuitem', { name: /Reset and rebuild/ })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
     });
 
-    it('is refused while any one library is already scanning', () => {
+    it('is refused while any one library is already scanning', async () => {
+      const user = userEvent.setup();
       render(
         <LibrariesPanel
           {...props}
@@ -157,8 +167,16 @@ describe('LibrariesPanel', () => {
         />,
       );
 
-      expect(screen.getByRole('button', { name: /Scan all libraries/ })).toBeDisabled();
-      expect(screen.getByRole('button', { name: /Reset and rebuild/ })).toBeDisabled();
+      await user.click(screen.getByRole('button', { name: 'Library actions' }));
+
+      expect(screen.getByRole('menuitem', { name: /Scan all libraries/ })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+      expect(screen.getByRole('menuitem', { name: /Reset and rebuild/ })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
     });
 
     it('scans everything when nothing is in the way', async () => {
@@ -166,7 +184,8 @@ describe('LibrariesPanel', () => {
       const user = userEvent.setup();
       render(<LibrariesPanel {...props} libraries={[library()]} onScanAll={onScanAll} />);
 
-      await user.click(screen.getByRole('button', { name: /Scan all libraries/ }));
+      await user.click(screen.getByRole('button', { name: 'Library actions' }));
+      await user.click(screen.getByRole('menuitem', { name: /Scan all libraries/ }));
 
       expect(onScanAll).toHaveBeenCalled();
     });
@@ -176,7 +195,8 @@ describe('LibrariesPanel', () => {
       const user = userEvent.setup();
       render(<LibrariesPanel {...props} libraries={[library()]} onResetAll={onResetAll} />);
 
-      await user.click(screen.getByRole('button', { name: /Reset and rebuild/ }));
+      await user.click(screen.getByRole('button', { name: 'Library actions' }));
+      await user.click(screen.getByRole('menuitem', { name: /Reset and rebuild/ }));
 
       expect(onResetAll).not.toHaveBeenCalled();
       expect(screen.getByRole('dialog')).toBeInTheDocument();

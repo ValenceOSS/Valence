@@ -11,26 +11,55 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
-import { FormField } from '@ValenceUI/FormField';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Button } from '@ValenceUI/Button';
-import { Checkbox } from '@ValenceUI/Checkbox';
+import { FormField } from '@ValenceUI/FormField';
+import { TabPanel } from '@ValenceUI/TabPanel';
+import { TabRow } from '@ValenceUI/TabRow';
+import { Tabs } from '@ValenceUI/Tabs';
 import { TextField } from '@ValenceUI/TextField';
-import { describePermission } from '@ValenceClient/admin/describePermission';
-import { groupPermissions } from '@ValenceClient/admin/groupPermissions';
-import { createRole, deleteRole, updateRole } from '@ValenceClient/admin/fetchRoles';
+import { useTravelDirection } from '@ValenceUI/useTravelDirection';
+import { PermissionEditor } from './components/PermissionEditor/PermissionEditor';
+import { ColorSwatchPicker } from './components/ColorSwatchPicker/ColorSwatchPicker';
+import { RoleMembers } from './components/RoleMembers/RoleMembers';
+import {
+  assignRole,
+  createRole,
+  deleteRole,
+  removeRole,
+  updateRole,
+} from '@ValenceClient/admin/fetchRoles';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import type { Account } from '@ValenceClient/admin/fetchAccounts';
 import type { Refusal } from '@ValenceClient/admin/fetchRoles';
 import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 
 const NEW_ROLE_POSITION = 50;
+
+const NO_ROLES: Role[] = [];
+
+const NO_PERMISSIONS: Permission[] = [];
+
+const NO_ACCOUNTS: Account[] = [];
+
+const EDIT_TABS = ['display', 'permissions', 'members'] as const;
+
+type EditTab = (typeof EDIT_TABS)[number];
+
+/**
+ * Whether a string the tab row handed back actually names one of the edit dialog's tabs.
+ *
+ * @param value - What was chosen.
+ * @returns Whether it names a tab.
+ */
+const isEditTab = (value: string): value is EditTab => EDIT_TABS.some((tab) => tab === value);
 
 /**
  * The roles on this server, what each grants and who holds them, with the making and changing of
@@ -39,26 +68,37 @@ const NEW_ROLE_POSITION = 50;
  */
 const RolesPanel = () => {
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+  const [editTab, setEditTab] = useState<EditTab>('display');
   const [deleting, setDeleting] = useState<Role | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [newRolePosition, setNewRolePosition] = useState(NEW_ROLE_POSITION.toString());
   const [newRolePermissions, setNewRolePermissions] = useState<Permission[]>([]);
   const [newRoleName, setNewRoleName] = useState('');
+  const [newRoleColor, setNewRoleColor] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<Refusal>(null);
   const [draftName, setDraftName] = useState('');
   const [draftPosition, setDraftPosition] = useState('');
+  const [draftColor, setDraftColor] = useState<string | null>(null);
+  const [draftPermissions, setDraftPermissions] = useState<Permission[]>([]);
+  const [draftMemberIds, setDraftMemberIds] = useState<ReadonlySet<string>>(new Set());
 
   const cache = useQueryClient();
 
   const askedRoles = useQuery(adminQueries.roles());
   const askedCatalogue = useQuery(adminQueries.permissions());
+  const askedAccounts = useQuery(adminQueries.accounts());
 
-  const roles = askedRoles.data ?? [];
-  const catalogue = askedCatalogue.data ?? [];
+  const roles = askedRoles.data ?? NO_ROLES;
+  const catalogue = askedCatalogue.data ?? NO_PERMISSIONS;
+  const accounts = askedAccounts.data ?? NO_ACCOUNTS;
   const couldNotRead = askedRoles.isError || askedCatalogue.isError;
 
   const reload = useCallback(
-    async () => cache.invalidateQueries({ queryKey: adminQueries.roles().queryKey }),
+    async () =>
+      Promise.all([
+        cache.invalidateQueries({ queryKey: adminQueries.roles().queryKey }),
+        cache.invalidateQueries({ queryKey: adminQueries.accounts().queryKey }),
+      ]),
     [cache],
   );
 
@@ -67,7 +107,18 @@ const RolesPanel = () => {
 
     setDraftName(picked?.name ?? '');
     setDraftPosition(picked === null ? '' : picked.position.toString());
-  }, [selectedRoleId, roles]);
+    setDraftColor(picked?.color ?? null);
+    setDraftPermissions(picked?.permissions ?? []);
+    setDraftMemberIds(
+      new Set(
+        picked === null
+          ? []
+          : accounts
+              .filter((account) => account.roles.includes(picked.name))
+              .map((account) => account.id),
+      ),
+    );
+  }, [selectedRoleId, roles, accounts]);
 
   const act = useCallback(
     async (run: () => Promise<Refusal>) => {
@@ -78,23 +129,114 @@ const RolesPanel = () => {
       if (outcome === null) {
         await reload();
       }
+
+      return outcome;
     },
     [reload],
   );
 
   const selected = roles.find((role) => role.id === selectedRoleId) ?? null;
+  const travel = useTravelDirection([...EDIT_TABS], editTab);
+  const memberCount = draftMemberIds.size;
 
-  const togglePermission = async (role: Role, permission: Permission) => {
-    const next = role.permissions.includes(permission)
-      ? role.permissions.filter((held_) => held_ !== permission)
-      : [...role.permissions, permission];
+  const hasUnsavedChanges =
+    selected !== null &&
+    (draftName !== selected.name ||
+      draftPosition !== selected.position.toString() ||
+      draftColor !== selected.color ||
+      draftPermissions.length !== selected.permissions.length ||
+      draftPermissions.some((permission) => !selected.permissions.includes(permission)) ||
+      draftMemberIds.size !==
+        accounts.filter((account) => account.roles.includes(selected.name)).length ||
+      accounts.some(
+        (account) => account.roles.includes(selected.name) !== draftMemberIds.has(account.id),
+      ));
 
-    await act(() => updateRole(role.id, { permissions: next }));
-  };
+  const saveChanges = useCallback(async () => {
+    if (selected === null) {
+      return;
+    }
+
+    const position = Number.parseInt(draftPosition, 10);
+    const patch: Partial<Omit<Role, 'id'>> = {};
+
+    if (draftName !== selected.name) {
+      patch.name = draftName;
+    }
+
+    if (!Number.isNaN(position) && position !== selected.position) {
+      patch.position = position;
+    }
+
+    if (draftColor !== selected.color) {
+      patch.color = draftColor;
+    }
+
+    if (
+      draftPermissions.length !== selected.permissions.length ||
+      draftPermissions.some((permission) => !selected.permissions.includes(permission))
+    ) {
+      patch.permissions = draftPermissions;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      const outcome = await updateRole(selected.id, patch);
+
+      if (outcome !== null) {
+        setRefusal(outcome);
+        return;
+      }
+    }
+
+    const heldIds = new Set(
+      accounts
+        .filter((account) => account.roles.includes(selected.name))
+        .map((account) => account.id),
+    );
+
+    for (const accountId of draftMemberIds) {
+      if (heldIds.has(accountId)) {
+        continue;
+      }
+
+      const outcome = await assignRole(accountId, selected.id);
+
+      if (outcome !== null) {
+        setRefusal(outcome);
+        return;
+      }
+    }
+
+    for (const accountId of heldIds) {
+      if (draftMemberIds.has(accountId)) {
+        continue;
+      }
+
+      const outcome = await removeRole(accountId, selected.id);
+
+      if (outcome !== null) {
+        setRefusal(outcome);
+        return;
+      }
+    }
+
+    setRefusal(null);
+    await reload();
+  }, [
+    selected,
+    draftName,
+    draftPosition,
+    draftColor,
+    draftPermissions,
+    draftMemberIds,
+    accounts,
+    reload,
+  ]);
 
   const live = useRef({
     onEdit: (id: string) => {
       setSelectedRoleId(id);
+      setEditTab('display');
       setRefusal(null);
     },
     onAskDelete: (role: Role) => {
@@ -109,14 +251,22 @@ const RolesPanel = () => {
         header: 'Role',
         accessorFn: (role) => role.name,
         cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col">
-            <span className="truncate font-medium text-text">{row.original.name}</span>
-            <span className="truncate text-xs text-text-muted">
-              {row.original.permissions.includes('administrator')
-                ? 'Everything'
-                : row.original.permissions.length === 1
-                  ? '1 permission'
-                  : `${row.original.permissions.length.toString()} permissions`}
+          <span className="flex min-w-0 items-center gap-2.5">
+            <span
+              aria-hidden
+              className="size-2.5 shrink-0 rounded-full bg-subtle"
+              style={row.original.color === null ? {} : { backgroundColor: row.original.color }}
+            />
+
+            <span className="flex min-w-0 flex-col">
+              <span className="truncate font-medium text-text">{row.original.name}</span>
+              <span className="truncate text-xs text-text-muted">
+                {row.original.permissions.includes('administrator')
+                  ? 'Everything'
+                  : row.original.permissions.length === 1
+                    ? '1 permission'
+                    : `${row.original.permissions.length.toString()} permissions`}
+              </span>
             </span>
           </span>
         ),
@@ -210,7 +360,13 @@ const RolesPanel = () => {
             }}
           />
         ) : (
-          <DataTable label="Roles" columns={columns} rows={roles} emptyMessage="No roles yet." />
+          <DataTable
+            label="Roles"
+            columns={columns}
+            rows={roles}
+            height="fill"
+            emptyMessage="No roles yet."
+          />
         )}
       </PanelCard>
 
@@ -247,32 +403,21 @@ const RolesPanel = () => {
             />
           </div>
 
-          {groupPermissions(catalogue).map((group) => (
-            <FormField key={group.id} label={group.label}>
-              <ul className="flex flex-col">
-                {group.permissions.map((permission) => (
-                  <li key={permission} className="flex items-center gap-3 rounded-md py-1.5">
-                    <Checkbox
-                      label={describePermission(permission)}
-                      checked={newRolePermissions.includes(permission)}
-                      onCheckedChange={() => {
-                        setNewRolePermissions((held) =>
-                          held.includes(permission)
-                            ? held.filter((candidate) => candidate !== permission)
-                            : [...held, permission],
-                        );
-                      }}
-                      className="min-w-0"
-                    />
+          <FormField label="Colour" description="Shown wherever somebody holding this role is.">
+            <ColorSwatchPicker value={newRoleColor} onChange={setNewRoleColor} />
+          </FormField>
 
-                    <span className="min-w-0 truncate font-mono text-xs text-text-muted/70">
-                      {permission}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </FormField>
-          ))}
+          <PermissionEditor
+            catalogue={catalogue}
+            selected={newRolePermissions}
+            onToggle={(permission) => {
+              setNewRolePermissions((held) =>
+                held.includes(permission)
+                  ? held.filter((candidate) => candidate !== permission)
+                  : [...held, permission],
+              );
+            }}
+          />
         </DialogContent>
 
         <DialogFooter>
@@ -286,7 +431,7 @@ const RolesPanel = () => {
           </Button>
 
           <Button
-            variant="primary"
+            variant="glossy"
             disabled={newRoleName === ''}
             onClick={() => {
               const position = Number.parseInt(newRolePosition, 10);
@@ -295,12 +440,14 @@ const RolesPanel = () => {
                 createRole({
                   name: newRoleName,
                   position: Number.isNaN(position) ? NEW_ROLE_POSITION : position,
+                  color: newRoleColor,
                   permissions: newRolePermissions,
                 }),
               ).then(() => {
                 setNewRoleName('');
                 setNewRolePosition(NEW_ROLE_POSITION.toString());
                 setNewRolePermissions([]);
+                setNewRoleColor(null);
                 setIsCreating(false);
               });
             }}
@@ -342,14 +489,38 @@ const RolesPanel = () => {
         }}
       >
         {selected === null ? null : (
-          <>
+          <Tabs
+            value={editTab}
+            onValueChange={(next) => {
+              if (isEditTab(next)) {
+                setEditTab(next);
+              }
+            }}
+          >
             <DialogTitle
               size="compact"
               title={`Edit ${selected.name}`}
               detail="A higher rank manages a lower one. Nobody may touch a role at or above their own."
+              below={
+                <TabRow
+                  label="What to change about this role"
+                  tone="underlined"
+                  size="sm"
+                  value={editTab}
+                  groups={[
+                    {
+                      items: [
+                        { id: 'display', label: 'Display' },
+                        { id: 'permissions', label: 'Permissions' },
+                        { id: 'members', label: `Manage members (${memberCount.toString()})` },
+                      ],
+                    },
+                  ]}
+                />
+              }
             />
 
-            <DialogContent className="flex flex-col gap-5">
+            <DialogContent className="flex min-h-[28rem] max-h-[32rem] flex-col gap-5">
               {refusal === null ? null : (
                 <p
                   role="alert"
@@ -360,46 +531,68 @@ const RolesPanel = () => {
                 </p>
               )}
 
-              <div className="flex flex-wrap items-end gap-3">
-                <TextField
-                  label="Name"
-                  value={draftName}
-                  onValueChange={setDraftName}
-                  className="min-w-48 flex-1"
+              <TabPanel value="display" travel={travel}>
+                <div className="flex flex-col gap-5">
+                  <div className="flex flex-wrap items-end gap-3">
+                    <TextField
+                      label="Name"
+                      value={draftName}
+                      onValueChange={setDraftName}
+                      className="min-w-48 flex-1"
+                    />
+
+                    <TextField
+                      label="Rank"
+                      type="number"
+                      min={0}
+                      value={draftPosition}
+                      onValueChange={setDraftPosition}
+                      className="w-24 shrink-0"
+                    />
+                  </div>
+
+                  <FormField
+                    label="Colour"
+                    description="Shown wherever somebody holding this role is."
+                  >
+                    <ColorSwatchPicker value={draftColor} onChange={setDraftColor} />
+                  </FormField>
+                </div>
+              </TabPanel>
+
+              <TabPanel value="permissions" travel={travel}>
+                <PermissionEditor
+                  catalogue={catalogue}
+                  selected={draftPermissions}
+                  onToggle={(permission) => {
+                    setDraftPermissions((held) =>
+                      held.includes(permission)
+                        ? held.filter((candidate) => candidate !== permission)
+                        : [...held, permission],
+                    );
+                  }}
                 />
+              </TabPanel>
 
-                <TextField
-                  label="Rank"
-                  type="number"
-                  min={0}
-                  value={draftPosition}
-                  onValueChange={setDraftPosition}
-                  className="w-24 shrink-0"
+              <TabPanel value="members" travel={travel}>
+                <RoleMembers
+                  accounts={accounts}
+                  heldIds={draftMemberIds}
+                  onToggle={(accountId) => {
+                    setDraftMemberIds((held) => {
+                      const next = new Set(held);
+
+                      if (next.has(accountId)) {
+                        next.delete(accountId);
+                      } else {
+                        next.add(accountId);
+                      }
+
+                      return next;
+                    });
+                  }}
                 />
-              </div>
-
-              {groupPermissions(catalogue).map((group) => (
-                <FormField key={group.id} label={group.label}>
-                  <ul className="flex flex-col">
-                    {group.permissions.map((permission) => (
-                      <li key={permission} className="flex items-center gap-3 rounded-md py-1.5">
-                        <Checkbox
-                          label={describePermission(permission)}
-                          checked={selected.permissions.includes(permission)}
-                          onCheckedChange={() => {
-                            void togglePermission(selected, permission);
-                          }}
-                          className="min-w-0"
-                        />
-
-                        <span className="min-w-0 truncate font-mono text-xs text-text-muted/70">
-                          {permission}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </FormField>
-              ))}
+              </TabPanel>
             </DialogContent>
 
             <DialogFooter>
@@ -413,26 +606,16 @@ const RolesPanel = () => {
               </Button>
 
               <Button
-                variant="primary"
-                disabled={
-                  draftName === '' ||
-                  (draftName === selected.name && draftPosition === selected.position.toString())
-                }
+                variant="glossy"
+                disabled={draftName === '' || !hasUnsavedChanges}
                 onClick={() => {
-                  const position = Number.parseInt(draftPosition, 10);
-
-                  void act(() =>
-                    updateRole(selected.id, {
-                      name: draftName,
-                      ...(Number.isNaN(position) ? {} : { position }),
-                    }),
-                  );
+                  void saveChanges();
                 }}
               >
                 Save changes
               </Button>
             </DialogFooter>
-          </>
+          </Tabs>
         )}
       </DialogCompanion>
     </div>

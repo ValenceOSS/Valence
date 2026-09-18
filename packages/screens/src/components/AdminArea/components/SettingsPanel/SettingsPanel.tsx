@@ -15,6 +15,7 @@ import {
   saveHardwareAccel,
   savePreviewQuality,
   saveShowsProfilesBeforeSignIn,
+  saveFetchesCatalogueTrailers,
 } from '@ValenceClient/admin/fetchAdmin';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import { accelerationOptions } from '@ValenceScreens/components/AdminArea/accelerationOptions';
@@ -47,6 +48,7 @@ const SettingsPanel = ({
   onPreviewQualitySaved,
   onCertificationRegionSaved,
   onProfileVisibilitySaved,
+  onCatalogueTrailersSaved,
 }: SettingsPanelProps) => {
   const [catalogueKey, setCatalogueKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -55,6 +57,9 @@ const SettingsPanel = ({
   const [region, setRegion] = useState(overview?.settings.certificationRegion ?? 'GB');
   const [showsFaces, setShowsFaces] = useState(
     overview?.settings.showsProfilesBeforeSignIn ?? true,
+  );
+  const [fetchesTrailers, setFetchesTrailers] = useState(
+    overview?.settings.fetchesCatalogueTrailers ?? false,
   );
 
   return (
@@ -183,6 +188,32 @@ const SettingsPanel = ({
                 }
 
                 setShowsFaces(!next);
+              });
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title="Fetch trailers from the catalogue"
+          description="Offers a trailer for titles that have none on disk, played in a frame from the video host the catalogue points at. That is the one thing Valence does that reaches outside this server, which is why it is off until you say otherwise. A trailer already beside the file is always used instead."
+        >
+          <Switch
+            label="Fetch trailers from the catalogue"
+            isLabelHidden
+            isOn={fetchesTrailers}
+            onToggle={() => {
+              const next = !fetchesTrailers;
+
+              setFetchesTrailers(next);
+
+              void saveFetchesCatalogueTrailers(next).then((saved) => {
+                if (saved) {
+                  onCatalogueTrailersSaved();
+
+                  return;
+                }
+
+                setFetchesTrailers(!next);
               });
             }}
           />

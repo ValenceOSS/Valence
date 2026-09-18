@@ -17,7 +17,6 @@ import { deleteLibrary } from '@ValenceClient/library/fetchLibrary';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { HoverCard } from '@ValenceUI/HoverCard';
-import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { describeScanResult } from '@ValenceClient/admin/describeScanResult';
 import { AddLibraryDialog } from '@ValenceScreens/components/AdminArea/components/AddLibraryDialog/AddLibraryDialog';
@@ -260,45 +259,45 @@ const LibrariesPanel = ({
       title="Libraries"
       isFlush
       actions={
-        <>
-          <Button
-            variant="ghost"
-            size="xs"
-            className="shrink-0 text-xs text-text-muted hover:text-text"
-            isLoading={isScanningAll}
-            disabled={isBusy}
-            onClick={onScanAll}
-          >
-            <Icon of={ReloadIcon} size={14} />
-            Scan all libraries
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="xs"
-            className="shrink-0 text-xs text-danger hover:text-danger hover:brightness-125"
-            isLoading={isResettingAll}
-            disabled={isBusy}
-            onClick={() => {
-              setIsConfirmingReset(true);
-            }}
-          >
-            <Icon of={Delete02Icon} size={14} />
-            Reset and rebuild
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="xs"
-            className="shrink-0 text-xs text-text-muted hover:text-text"
-            onClick={() => {
-              setIsAdding(true);
-            }}
-          >
-            <Icon of={Add01Icon} size={14} />
-            Add library
-          </Button>
-        </>
+        <ActionMenu
+          label="Library actions"
+          trigger={<Icon of={MoreHorizontalIcon} size={18} />}
+          groups={[
+            {
+              items: [
+                {
+                  id: 'scanAll',
+                  label: isScanningAll ? 'Scanning all libraries…' : 'Scan all libraries',
+                  icon: <Icon of={ReloadIcon} size={15} />,
+                  isDisabled: isBusy || isScanningAll,
+                  onChoose: onScanAll,
+                },
+                {
+                  id: 'resetAll',
+                  label: isResettingAll ? 'Resetting and rebuilding…' : 'Reset and rebuild',
+                  icon: <Icon of={Delete02Icon} size={15} />,
+                  isDestructive: true,
+                  isDisabled: isBusy || isResettingAll,
+                  onChoose: () => {
+                    setIsConfirmingReset(true);
+                  },
+                },
+              ],
+            },
+            {
+              items: [
+                {
+                  id: 'add',
+                  label: 'Add library',
+                  icon: <Icon of={Add01Icon} size={15} />,
+                  onChoose: () => {
+                    setIsAdding(true);
+                  },
+                },
+              ],
+            },
+          ]}
+        />
       }
     >
       {isUnreachable ? (

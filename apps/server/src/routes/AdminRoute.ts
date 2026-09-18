@@ -38,6 +38,7 @@ const AdminSettingsSchema = z
     previewQuality: z.enum(PREVIEW_QUALITIES),
     certificationRegion: z.string().length(2),
     showsProfilesBeforeSignIn: z.boolean(),
+    fetchesCatalogueTrailers: z.boolean(),
   })
   .openapi('AdminSettings');
 
@@ -107,6 +108,7 @@ const AdminSettingsRequestSchema = z
     previewQuality: z.enum(PREVIEW_QUALITIES).optional(),
     certificationRegion: z.string().length(2).optional(),
     showsProfilesBeforeSignIn: z.boolean().optional(),
+    fetchesCatalogueTrailers: z.boolean().optional(),
   })
   .openapi('AdminSettingsRequest');
 

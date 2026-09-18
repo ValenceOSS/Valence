@@ -50,6 +50,9 @@ import { libraryDisk } from './libraryDisk';
 import { describeGraphics } from './describeGraphics';
 import { describeCpuShare } from './describeCpuShare';
 import { describeValenceMemory } from './describeValenceMemory';
+import { describeAcceleration } from './describeAcceleration';
+import { describeChains } from './describeChains';
+import { describeToneMapping } from './describeToneMapping';
 import {
   resumeRunning,
   watchJob,
@@ -209,9 +212,8 @@ const AdminArea = ({
 
       onPanel(found.id);
       setViewingJobKind(null);
-      onJobChange?.(null);
     },
-    [onPanel, onJobChange],
+    [onPanel],
   );
 
   const viewLogsForJob = useCallback(
@@ -450,11 +452,43 @@ const AdminArea = ({
   const memoryFraction = memory === null ? 0 : memory.usedBytes / memory.totalBytes;
   const valenceMemory = valenceMemoryUse(resources);
 
-  const conversions = resources?.children ?? [];
   const cpuShare = valenceCpuShare(resources);
   const mediaDisk = libraryDisk(
     resources?.disks ?? [],
     libraries.map((library) => library.path),
+  );
+
+  const acceleration =
+    overview === null
+      ? null
+      : describeAcceleration(overview.settings.hardwareAccel, overview.transcoder.hardwareAccels);
+  const chains = overview === null ? null : describeChains(overview.transcoder.chains);
+  const toneMapping =
+    overview === null
+      ? null
+      : describeToneMapping(overview.transcoder.toneMapping, overview.transcoder.hardwareToneMaps);
+
+  const graphicsInfo = (
+    <dl className="flex flex-col gap-2 text-xs">
+      <div className="flex items-baseline justify-between gap-3">
+        <dt className="shrink-0 text-text-muted">Hardware encoding</dt>
+        <dd className="min-w-0 truncate text-text">{acceleration?.label ?? '—'}</dd>
+      </div>
+
+      <div className="flex items-baseline justify-between gap-3">
+        <dt className="shrink-0 text-text-muted">Hardware chains</dt>
+        <dd className="min-w-0 truncate text-text">{chains?.label ?? '—'}</dd>
+      </div>
+
+      <div className="flex items-baseline justify-between gap-3">
+        <dt className="shrink-0 text-text-muted">HDR conversion</dt>
+        <dd className="min-w-0 truncate text-text">{toneMapping?.label ?? '—'}</dd>
+      </div>
+
+      {toneMapping?.detail === null || toneMapping?.detail === undefined ? null : (
+        <dd className="text-text-muted">{toneMapping.detail}</dd>
+      )}
+    </dl>
   );
 
   return (
@@ -509,6 +543,7 @@ const AdminArea = ({
             {
               label: 'Graphics',
               ...describeGraphics(resources?.graphics ?? null),
+              info: graphicsInfo,
             },
             {
               label: 'Storage',
@@ -523,21 +558,6 @@ const AdminArea = ({
                 mediaDisk === null
                   ? 'Not measured'
                   : `of ${formatBytes(mediaDisk.totalBytes)} · ${mediaDisk.mountPoint}`,
-            },
-            {
-              label: 'Streaming',
-              value: (monitor?.sessions ?? 0).toString(),
-              detail: `${conversions.length.toString()} conversions running`,
-            },
-            {
-              label: 'Library',
-              value: (overview?.library.itemCount ?? 0).toString(),
-              detail:
-                overview === null
-                  ? '—'
-                  : `${overview.library.libraryCount.toString()} ${
-                      overview.library.libraryCount === 1 ? 'library' : 'libraries'
-                    } · ${overview.users.length.toString()} accounts`,
             },
           ]}
         />
@@ -601,7 +621,6 @@ const AdminArea = ({
 
           <TabPanel value="jobs" travel={travel}>
             <JobsPanel
-              isUnreachable={unreachable.has('monitor')}
               definitions={jobDefinitions}
               libraries={libraries}
               progress={scanProgress}
@@ -680,6 +699,9 @@ const AdminArea = ({
                 void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
               }}
               onProfileVisibilitySaved={() => {
+                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+              }}
+              onCatalogueTrailersSaved={() => {
                 void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
               }}
             />

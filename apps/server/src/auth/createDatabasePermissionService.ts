@@ -78,6 +78,7 @@ const createDatabasePermissionService = (db: ValenceDatabase): PermissionService
         id: row.id,
         name: row.name,
         position: row.position,
+        color: row.color,
         permissions: byRole.get(row.id) ?? [],
       }))
       .sort((a, b) => b.position - a.position);
@@ -116,6 +117,7 @@ const createDatabasePermissionService = (db: ValenceDatabase): PermissionService
         id: row.id,
         name: row.name,
         position: row.position,
+        color: row.color,
         permissions: byRole.get(row.id) ?? [],
       }));
     },
@@ -123,7 +125,9 @@ const createDatabasePermissionService = (db: ValenceDatabase): PermissionService
     createRole: async (next) => {
       const id = randomUUID();
 
-      await db.insert(role).values({ id, name: next.name, position: next.position });
+      await db
+        .insert(role)
+        .values({ id, name: next.name, position: next.position, color: next.color });
       await writePermissions(id, next.permissions);
 
       return { ...next, id, permissions: [...next.permissions] };
@@ -138,8 +142,9 @@ const createDatabasePermissionService = (db: ValenceDatabase): PermissionService
 
       const name = changes.name ?? existing.name;
       const position = changes.position ?? existing.position;
+      const color = changes.color === undefined ? existing.color : changes.color;
 
-      await db.update(role).set({ name, position }).where(eq(role.id, id));
+      await db.update(role).set({ name, position, color }).where(eq(role.id, id));
 
       if (changes.permissions !== undefined) {
         await writePermissions(id, changes.permissions);
@@ -147,7 +152,7 @@ const createDatabasePermissionService = (db: ValenceDatabase): PermissionService
 
       const byRole = await permissionsByRole([id]);
 
-      return { id, name, position, permissions: byRole.get(id) ?? [] };
+      return { id, name, position, color, permissions: byRole.get(id) ?? [] };
     },
 
     deleteRole: async (id) => {

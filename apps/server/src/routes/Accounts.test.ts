@@ -124,6 +124,7 @@ const signedInWith = async (granted: readonly Permission[], position = 200) => {
     const role = await context.permissions.createRole({
       name: 'Purpose-made',
       position,
+      color: null,
       permissions: [...granted],
     });
 
@@ -283,6 +284,7 @@ describe('account administration', () => {
       const senior = await context.permissions.createRole({
         name: 'Senior',
         position: 500,
+        color: null,
         permissions: [],
       });
 
@@ -348,6 +350,7 @@ describe('account administration', () => {
       const senior = await context.permissions.createRole({
         name: 'Senior',
         position: 500,
+        color: null,
         permissions: [],
       });
 
@@ -485,6 +488,7 @@ describe('account administration', () => {
       const senior = await context.permissions.createRole({
         name: 'Senior',
         position: 500,
+        color: null,
         permissions: [],
       });
 

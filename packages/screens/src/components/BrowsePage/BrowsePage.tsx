@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import { BrowseArea } from '@ValenceScreens/components/BrowseArea/BrowseArea';
 import { showSlug } from '@ValenceCore/functions/showSlug';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
@@ -29,6 +30,7 @@ const kindOf = (section: string): BrowseKind =>
 const BrowsePage = () => {
   const { rememberItems, progress, setStartOverride } = useShell();
   const { place, go } = usePlace();
+  const navigate = useNavigate();
   const watching = useWatchingProfile();
   const favourites = useFavourites(watching);
   const hiding = useHidden(watching);
@@ -51,7 +53,7 @@ const BrowsePage = () => {
         {...(mayAdminister
           ? {
               onAddLibrary: () => {
-                go({ admin: 'libraries' });
+                void navigate({ to: '/admin/$panel', params: { panel: 'libraries' } });
               },
             }
           : {})}

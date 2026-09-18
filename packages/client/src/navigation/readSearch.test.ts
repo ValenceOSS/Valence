@@ -14,7 +14,6 @@ describe('readSearch', () => {
         genre: 'drama',
         library: 'films',
         panel: 'jobs',
-        job: 'library.scan',
       }),
     ).toEqual({
       q: 'blade',
@@ -26,7 +25,6 @@ describe('readSearch', () => {
       genre: 'drama',
       library: 'films',
       panel: 'jobs',
-      job: 'library.scan',
     });
   });
 

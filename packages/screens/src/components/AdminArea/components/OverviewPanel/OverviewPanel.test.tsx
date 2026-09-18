@@ -31,7 +31,7 @@ const askedResourceHistory = vi.mocked(fetchResourceHistory);
 const renderPanel = (element: ReactElement) =>
   render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}
     >
       {element}
     </QueryClientProvider>,
@@ -55,6 +55,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
+    fetchesCatalogueTrailers: false,
     certificationRegion: 'GB',
     trustedOrigins: [],
   },
@@ -177,7 +178,13 @@ describe('OverviewPanel', () => {
   it('shows every card even on a server with nothing wrong', () => {
     renderPanel(<OverviewPanel {...props} />);
 
-    for (const title of ['Watching now', 'Running now', 'Libraries', 'Server', 'Recent jobs']) {
+    for (const title of [
+      'Watching now',
+      'Running now',
+      'Libraries',
+      'Server load',
+      'Recent jobs',
+    ]) {
       expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
     }
   });
@@ -263,96 +270,6 @@ describe('OverviewPanel', () => {
     });
   });
 
-  describe('server', () => {
-    it('reports what the machine and the media service are', () => {
-      renderPanel(<OverviewPanel {...props} />);
-
-      const region = card('Server');
-
-      expect(within(region).getByText('Up')).toBeInTheDocument();
-      expect(within(region).getByText('videotoolbox · automatic')).toBeInTheDocument();
-      expect(within(region).getByText('8')).toBeInTheDocument();
-    });
-
-    it('says which filter converts HDR, and that the card is doing it', () => {
-      renderPanel(
-        <OverviewPanel
-          {...props}
-          overview={overview({
-            transcoder: {
-              isReachable: true,
-              address: 'unix:/tmp/valence-transcoder.sock',
-              ffmpegVersion: '8.1.2-Flux',
-              ffmpegSupported: true,
-              hardwareAccels: ['vaapi'],
-              concurrentRenders: 2,
-              toneMapping: 'libplacebo' as const,
-              hardwareToneMaps: ['tonemap_vaapi'],
-              chains: [],
-            },
-          })}
-        />,
-      );
-
-      const region = card('Server');
-
-      expect(within(region).getByText('HDR conversion')).toBeInTheDocument();
-      expect(within(region).getByText('tonemap_vaapi on the device')).toBeInTheDocument();
-    });
-
-    it('tells a build with libplacebo apart from one without it', () => {
-      renderPanel(
-        <OverviewPanel
-          {...props}
-          overview={overview({
-            transcoder: {
-              isReachable: true,
-              address: 'unix:/tmp/valence-transcoder.sock',
-              ffmpegVersion: '8.1.2-Flux',
-              ffmpegSupported: true,
-              hardwareAccels: [],
-              concurrentRenders: 0,
-              toneMapping: 'zscale' as const,
-              hardwareToneMaps: [],
-              chains: [],
-            },
-          })}
-        />,
-      );
-
-      expect(within(card('Server')).getByText('zscale, in software')).toBeInTheDocument();
-    });
-
-    it('says software only rather than nothing when there is no hardware encoding', () => {
-      renderPanel(
-        <OverviewPanel
-          {...props}
-          overview={overview({
-            transcoder: {
-              isReachable: true,
-              address: 'unix:/tmp/valence-transcoder.sock',
-              ffmpegVersion: '7.1',
-              ffmpegSupported: true,
-              hardwareAccels: [],
-              concurrentRenders: 0,
-              toneMapping: 'unavailable' as const,
-              hardwareToneMaps: [],
-              chains: [],
-            },
-          })}
-        />,
-      );
-
-      expect(within(card('Server')).getByText('Software only')).toBeInTheDocument();
-    });
-
-    it('draws dashes rather than zeroes before anything has loaded', () => {
-      renderPanel(<OverviewPanel {...props} overview={null} monitor={null} libraries={[]} />);
-
-      expect(within(card('Server')).getAllByText('—').length).toBeGreaterThan(0);
-    });
-  });
-
   it('reaches every panel it points at', async () => {
     const onOpenPanel = vi.fn<(panel: string) => void>();
     const user = userEvent.setup();
@@ -361,73 +278,16 @@ describe('OverviewPanel', () => {
     await user.click(screen.getByRole('button', { name: /All sessions/ }));
     await user.click(screen.getByRole('button', { name: /All jobs/ }));
     await user.click(screen.getByRole('button', { name: /Manage/ }));
-    await user.click(screen.getByRole('button', { name: /Settings/ }));
 
     expect(onOpenPanel.mock.calls.map(([panel]) => panel)).toEqual([
       'activity',
       'jobs',
       'libraries',
-      'settings',
     ]);
   });
 
   it('sets a display name so devtools can identify it', () => {
     expect(OverviewPanel.displayName).toBe('OverviewPanel');
-  });
-
-  it('says nothing about encoders the machine would not run', () => {
-    renderPanel(
-      <OverviewPanel
-        {...props}
-        overview={overview({
-          transcoder: {
-            isReachable: true,
-            address: 'unix:/tmp/valence-transcoder.sock',
-            ffmpegVersion: '8.1.2',
-            ffmpegSupported: true,
-            hardwareAccels: ['vaapi'],
-            concurrentRenders: 0,
-            toneMapping: 'unavailable' as const,
-            hardwareToneMaps: [],
-            chains: [],
-          },
-        })}
-      />,
-    );
-
-    expect(screen.queryByText(/was not used/)).not.toBeInTheDocument();
-  });
-
-  it('still says which whole chains refused, which is a fault and not an absence', () => {
-    renderPanel(
-      <OverviewPanel
-        {...props}
-        overview={overview({
-          transcoder: {
-            isReachable: true,
-            address: 'unix:/tmp/valence-transcoder.sock',
-            ffmpegVersion: '8.1.2',
-            ffmpegSupported: true,
-            hardwareAccels: ['vaapi'],
-            concurrentRenders: 0,
-            toneMapping: 'unavailable' as const,
-            hardwareToneMaps: [],
-            chains: [
-              {
-                accel: 'vaapi',
-                shape: 'preview' as const,
-                bitDepth: 10,
-                works: false,
-                reason: 'Impossible to convert between the formats.',
-              },
-            ],
-          },
-        })}
-      />,
-    );
-
-    expect(screen.getByText(/vaapi cannot draw scrub previews at 10 bits/)).toBeInTheDocument();
-    expect(screen.getByText(/Impossible to convert/)).toBeInTheDocument();
   });
 
   describe('counting the storage again', () => {
@@ -475,39 +335,6 @@ describe('OverviewPanel', () => {
 
       expect(screen.getAllByText('Still counting').length).toBeGreaterThan(0);
     });
-  });
-  it('says which hardware chains were proved, and names the ones that refused', () => {
-    renderPanel(
-      <OverviewPanel
-        {...props}
-        overview={overview({
-          transcoder: {
-            isReachable: true,
-            address: 'unix:/tmp/valence-transcoder.sock',
-            ffmpegVersion: '8.1.2',
-            ffmpegSupported: true,
-            hardwareAccels: ['qsv'],
-            concurrentRenders: 2,
-            toneMapping: 'unavailable' as const,
-            hardwareToneMaps: [],
-            chains: [
-              { accel: 'qsv', shape: 'preview', bitDepth: 8, works: true, reason: null },
-              {
-                accel: 'qsv',
-                shape: 'sheet',
-                bitDepth: 10,
-                works: false,
-                reason: 'Invalid output format nv12 for hwframe download.',
-              },
-            ],
-          },
-        })}
-      />,
-    );
-
-    expect(screen.getByText('1 of 2 proved')).toBeInTheDocument();
-    expect(screen.getByText(/qsv cannot draw thumbnail sheets at 10 bits/)).toBeInTheDocument();
-    expect(screen.getByText(/Invalid output format nv12/)).toBeInTheDocument();
   });
 
   describe('load range', () => {

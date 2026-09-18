@@ -1,4 +1,5 @@
 import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { PictureFault } from './whatIsWrongWithThePicture';
 
 type ProfileRequest = {
   name: string;
@@ -24,7 +25,7 @@ type ProfileService = {
     userId: string,
     profileId: string,
     photo: { body: Uint8Array; contentType: string },
-  ) => Promise<boolean>;
+  ) => Promise<PictureFault | null>;
 };
 
 export type { ProfileService };

@@ -163,7 +163,7 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
         </Button>
 
         <Button
-          variant="primary"
+          variant="glossy"
           isLoading={isSubmitting}
           onClick={() => {
             void submit();
