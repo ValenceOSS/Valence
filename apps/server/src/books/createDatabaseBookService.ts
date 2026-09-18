@@ -10,6 +10,7 @@ import {
   ReadingDirectionSchema,
 } from '@ValenceContracts/schemas/Book';
 import { createBookPageCache } from './createBookPageCache';
+import { drawBookCover } from './drawBookCover';
 import { imageTypeFor } from './imageTypeFor';
 import { openBookFile } from './openBookFile';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
@@ -17,6 +18,7 @@ import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type {
   Book,
   BookDetail,
+  BookContents,
   ReadingProgress,
   SaveReadingProgress,
 } from '@ValenceContracts/schemas/Book';
@@ -29,7 +31,12 @@ type BookService = BookStore & {
   list: (libraryId: string) => Promise<Book[]>;
   read: (bookId: string) => Promise<BookDetail | null>;
   readPage: (chapterId: string, page: number, width?: number) => Promise<BookPageBytes | null>;
-  readDocument: (chapterId: string, addressFor: (href: string) => string) => Promise<string | null>;
+  readContents: (chapterId: string) => Promise<BookContents | null>;
+  readDocument: (
+    chapterId: string,
+    part: number,
+    addressFor: (href: string) => string,
+  ) => Promise<string | null>;
   readResource: (chapterId: string, href: string) => Promise<BookPageBytes | null>;
   readCover: (bookId: string) => Promise<BookPageBytes | null>;
   saveProgress: (
@@ -282,14 +289,24 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
 
     readPage: pageOf,
 
-    readDocument: async (chapterId, addressFor) => {
+    readContents: async (chapterId) => {
+      const chapter = await chapterFor(chapterId);
+      const opened = chapter === null ? null : await openBookFile(chapter.path).catch(() => null);
+
+      return opened === null || opened.layout !== 'reflow'
+        ? null
+        : {
+            parts: opened.spine.map((part) => ({ size: part.size })),
+            contents: await opened.readContents(),
+          };
+    },
+
+    readDocument: async (chapterId, part, addressFor) => {
       const chapter = await chapterFor(chapterId);
       const opened =
         chapter === null ? null : await openBookFile(chapter.path, addressFor).catch(() => null);
 
-      return opened === null || opened.layout !== 'reflow'
-        ? null
-        : opened.readDocument(chapter?.path ?? '');
+      return opened === null || opened.layout !== 'reflow' ? null : opened.readDocument(part);
     },
 
     readResource: async (chapterId, href) => {
@@ -301,13 +318,24 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
 
     readCover: async (bookId) => {
       const [first] = await db
-        .select({ id: bookChapter.id })
+        .select({ id: bookChapter.id, path: bookChapter.path, format: bookChapter.format })
         .from(bookChapter)
         .where(eq(bookChapter.bookId, bookId))
         .orderBy(asc(bookChapter.number))
         .limit(1);
 
-      return first === undefined ? null : pageOf(first.id, 0, COVER_WIDTH);
+      if (first === undefined) {
+        return null;
+      }
+
+      if (first.format !== 'epub') {
+        return pageOf(first.id, 0, COVER_WIDTH);
+      }
+
+      const opened = await openBookFile(first.path).catch(() => null);
+      const cover = opened?.layout === 'reflow' ? await opened.readCover() : null;
+
+      return cover === null ? null : drawBookCover(cover, COVER_WIDTH);
     },
 
     saveProgress: async (profileId, chapterId, where) => {

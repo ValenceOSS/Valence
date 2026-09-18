@@ -1,5 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import {
+  BookContentsSchema,
   BookDetailSchema,
   BookSchema,
   ReadingProgressSchema,
@@ -71,6 +72,26 @@ const readBookPageRoute = createRoute({
   },
 });
 
+const readBookContentsRoute = createRoute({
+  method: 'get',
+  path: '/api/books/{bookId}/chapters/{chapterId}/contents',
+  tags: ['Books'],
+  summary: 'Read how a book that reflows is divided: its parts, and its table of contents',
+  request: {
+    params: z.object({ bookId: z.string().uuid(), chapterId: z.string().uuid() }),
+  },
+  responses: {
+    200: {
+      description: 'How much each part holds, and where each entry of the contents starts',
+      content: { 'application/json': { schema: BookContentsSchema } },
+    },
+    404: {
+      description: 'No such book, or not one that reflows',
+      content: { 'application/json': { schema: BookError } },
+    },
+  },
+});
+
 const readBookDocumentRoute = createRoute({
   method: 'get',
   path: '/api/books/{bookId}/chapters/{chapterId}/document',
@@ -78,6 +99,7 @@ const readBookDocumentRoute = createRoute({
   summary: 'Read one part of a book that reflows, cleaned of anything that could run',
   request: {
     params: z.object({ bookId: z.string().uuid(), chapterId: z.string().uuid() }),
+    query: z.object({ part: z.coerce.number().int().nonnegative() }),
   },
   responses: {
     200: { description: 'The part' },
@@ -135,6 +157,7 @@ const readReadingProgressRoute = createRoute({
 
 export {
   listBooksRoute,
+  readBookContentsRoute,
   readBookCoverRoute,
   readBookDocumentRoute,
   readBookPageRoute,

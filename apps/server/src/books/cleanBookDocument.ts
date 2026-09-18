@@ -74,11 +74,20 @@ const ALLOWED = [
  * Pictures are kept, and their addresses are rewritten to point back at Valence, because a book's
  * pictures live inside the book and no browser can reach in there.
  *
+ * Links are kept only where they lead somewhere a reader can follow: out to the web, or to another
+ * place in the same book, which `linkFor` rewrites into an address the reader understands. A link to
+ * a file the book does not hold keeps its words and loses its address.
+ *
  * @param html - The chapter as the book wrote it.
  * @param addressFor - Turns a path inside the book into one this server serves.
+ * @param linkFor - Turns a link to somewhere in the book into one the reader follows.
  * @returns The chapter, safe to render.
  */
-const cleanBookDocument = (html: string, addressFor: (href: string) => string | null): string =>
+const cleanBookDocument = (
+  html: string,
+  addressFor: (href: string) => string | null,
+  linkFor: (href: string) => string | null = () => null,
+): string =>
   sanitizeHtml(html, {
     allowedTags: ALLOWED,
     allowedAttributes: {
@@ -89,6 +98,20 @@ const cleanBookDocument = (html: string, addressFor: (href: string) => string | 
     allowedSchemes: ['http', 'https', 'mailto'],
     allowedSchemesAppliedToAttributes: ['href'],
     transformTags: {
+      a: (_name, attribs) => {
+        const href = attribs['href'];
+
+        if (href === undefined || /^(https?|mailto):/i.test(href)) {
+          return { tagName: 'a', attribs };
+        }
+
+        const link = linkFor(href);
+        const rest = Object.fromEntries(
+          Object.entries(attribs).filter(([name]) => name !== 'href'),
+        );
+
+        return { tagName: 'a', attribs: link === null ? rest : { ...rest, href: link } };
+      },
       img: (_name, attribs) => {
         const src = attribs['src'];
         const address = src === undefined ? null : addressFor(src);

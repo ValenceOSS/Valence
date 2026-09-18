@@ -107,6 +107,7 @@ import {
 import { mediaImageRoute } from '@ValenceServer/routes/ImageRoute';
 import {
   listBooksRoute,
+  readBookContentsRoute,
   readBookCoverRoute,
   readBookDocumentRoute,
   readBookPageRoute,
@@ -4463,6 +4464,15 @@ const createApp = ({
     });
   });
 
+  app.openapi(readBookContentsRoute, async (context) => {
+    const { chapterId } = context.req.valid('param');
+    const contents = books === undefined ? null : await books.readContents(chapterId);
+
+    return contents === null
+      ? context.json({ error: 'That is not a book that reflows.' }, 404)
+      : context.json(contents, 200);
+  });
+
   app.openapi(readBookDocumentRoute, async (context) => {
     const { bookId, chapterId } = context.req.valid('param');
     const document =
@@ -4470,6 +4480,7 @@ const createApp = ({
         ? null
         : await books.readDocument(
             chapterId,
+            context.req.valid('query').part,
             (href) =>
               `/api/books/${bookId}/chapters/${chapterId}/resource?href=${encodeURIComponent(href)}`,
           );
