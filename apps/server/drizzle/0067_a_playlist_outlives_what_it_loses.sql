@@ -1,6 +1,6 @@
-ALTER TABLE "playlist" DROP CONSTRAINT "playlist_profileId_viewer_profile_id_fk";
+ALTER TABLE "playlist" DROP CONSTRAINT IF EXISTS "playlist_profileId_viewer_profile_id_fk";
 --> statement-breakpoint
-ALTER TABLE "playlist_entry" DROP CONSTRAINT "playlist_entry_mediaItemId_media_item_id_fk";
+ALTER TABLE "playlist_entry" DROP CONSTRAINT IF EXISTS "playlist_entry_mediaItemId_media_item_id_fk";
 --> statement-breakpoint
 ALTER TABLE "playlist" ALTER COLUMN "profileId" DROP NOT NULL;--> statement-breakpoint
 ALTER TABLE "playlist_entry" ALTER COLUMN "mediaItemId" DROP NOT NULL;--> statement-breakpoint
