@@ -11,6 +11,7 @@ type ResolvedShare = {
   kind: ShareKind;
   mediaId: string | null;
   seriesId: string | null;
+  bookId: string | null;
   title: string;
   expiresAt: Date | null;
   viewCap: number | null;

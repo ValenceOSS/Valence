@@ -9,6 +9,7 @@ const StarsSchema = z.number().int().min(LOWEST_STARS).max(HIGHEST_STARS);
 const RatingSchema = z.object({
   mediaId: z.string().uuid().nullable(),
   seriesId: z.string().uuid().nullable(),
+  bookId: z.string().uuid().nullable().default(null),
   stars: StarsSchema,
   ratedAt: z.string().datetime(),
 });

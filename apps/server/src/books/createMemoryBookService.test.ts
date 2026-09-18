@@ -29,6 +29,8 @@ const CHAPTER: BookChapter = {
   addedAt: '2026-09-18T00:00:00.000Z',
 };
 
+const SERVER = { kind: 'server' as const };
+
 const shelf = () =>
   createMemoryBookService({
     books: [BOOK],
@@ -37,9 +39,49 @@ const shelf = () =>
   });
 
 describe('createMemoryBookService', () => {
-  it('lists the books in a library', async () => {
-    expect(await shelf().list('l1')).toEqual([BOOK]);
-    expect(await shelf().list('elsewhere')).toEqual([]);
+  it('finds the books in a library', async () => {
+    expect(await shelf().find(SERVER, { libraryId: 'l1' })).toEqual([BOOK]);
+    expect(await shelf().find(SERVER, { libraryId: 'elsewhere' })).toEqual([]);
+  });
+
+  it('finds a book by what it is called', async () => {
+    expect(await shelf().find(SERVER, { search: 'emm' })).toEqual([BOOK]);
+    expect(await shelf().find(SERVER, { search: 'dune' })).toEqual([]);
+  });
+
+  it('keeps a book from whoever it refuses', async () => {
+    const refusing = createMemoryBookService({
+      books: [BOOK],
+      chapters: [CHAPTER],
+      refuses: (viewer) => viewer.kind === 'account',
+    });
+    const somebody = {
+      kind: 'account' as const,
+      accountId: 'a',
+      profileId: null,
+      isAdministrator: false,
+    };
+
+    expect(await refusing.find(somebody, {})).toEqual([]);
+    expect(await refusing.canReach(somebody, 'b1')).toBe(false);
+    expect(await refusing.canReach(null, 'b1')).toBe(true);
+  });
+
+  it('will not reach a chapter through a book it is not in', async () => {
+    expect(await shelf().canReach(SERVER, 'b1', 'c1')).toBe(true);
+    expect(await shelf().canReach(SERVER, 'b2', 'c1')).toBe(false);
+  });
+
+  it('lists what somebody is reading, and forgets it on request', async () => {
+    const books = shelf();
+
+    await books.saveProgress('p1', 'c1', { pageNumber: null, fraction: 0.3, isFinished: false });
+
+    expect((await books.listReading(SERVER, 'p1', 10)).map((one) => one.fraction)).toEqual([0.3]);
+
+    await books.forgetReading('p1');
+
+    expect(await books.listReading(SERVER, 'p1', 10)).toEqual([]);
   });
 
   it('reads a book with its chapters', async () => {

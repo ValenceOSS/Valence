@@ -18,6 +18,7 @@ const share = (overrides: Partial<Share> = {}): Share => ({
   kind: 'item',
   mediaId: 'media-1',
   seriesId: null,
+  bookId: null,
   title: 'The Thing',
   createdAt: '2026-08-10T09:00:00.000Z',
   expiresAt: null,

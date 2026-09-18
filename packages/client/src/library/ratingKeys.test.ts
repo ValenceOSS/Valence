@@ -15,18 +15,31 @@ describe('keyFor', () => {
   it('keeps an item and a programme apart where they share an identifier', () => {
     expect(keyFor({ mediaId: AN_ID })).not.toBe(keyFor({ seriesId: AN_ID }));
   });
+
+  it('keeps a book apart from both', () => {
+    expect(keyFor({ bookId: AN_ID })).not.toBe(keyFor({ mediaId: AN_ID }));
+    expect(keyFor({ bookId: AN_ID })).not.toBe(keyFor({ seriesId: AN_ID }));
+  });
 });
 
 describe('keyOf', () => {
   it('reads a rating the server sent about an item back to the same key', () => {
-    expect(keyOf({ mediaId: AN_ID, seriesId: null })).toBe(keyFor({ mediaId: AN_ID }));
+    expect(keyOf({ mediaId: AN_ID, seriesId: null, bookId: null })).toBe(
+      keyFor({ mediaId: AN_ID }),
+    );
   });
 
   it('reads a rating about a programme back to the same key', () => {
-    expect(keyOf({ mediaId: null, seriesId: AN_ID })).toBe(keyFor({ seriesId: AN_ID }));
+    expect(keyOf({ mediaId: null, seriesId: AN_ID, bookId: null })).toBe(
+      keyFor({ seriesId: AN_ID }),
+    );
   });
 
-  it('reads a rating about nothing as a programme with no name rather than failing', () => {
-    expect(keyOf({ mediaId: null, seriesId: null })).toBe('series:');
+  it('reads a rating about a book back to the same key', () => {
+    expect(keyOf({ mediaId: null, seriesId: null, bookId: AN_ID })).toBe(keyFor({ bookId: AN_ID }));
+  });
+
+  it('reads a rating about nothing as a book with no name rather than failing', () => {
+    expect(keyOf({ mediaId: null, seriesId: null, bookId: null })).toBe('book:');
   });
 });

@@ -2,6 +2,7 @@ import { createRoute, z } from '@hono/zod-openapi';
 import {
   BookContentsSchema,
   BookDetailSchema,
+  BookReadingListSchema,
   BookSchema,
   ReadingProgressSchema,
   SaveReadingProgressSchema,
@@ -16,6 +17,70 @@ const BookRead = BookDetailSchema.openapi('BookDetail');
 const ProgressListSchema = z
   .object({ progress: z.array(ReadingProgressSchema) })
   .openapi('ReadingProgressList');
+
+const Readings = BookReadingListSchema.openapi('BookReadingList');
+
+const findBooksRoute = createRoute({
+  method: 'get',
+  path: '/api/books',
+  tags: ['Books'],
+  summary: 'Find books across every library this viewer can see, by name or by id',
+  request: {
+    query: z.object({
+      search: z.string().max(200).optional(),
+      ids: z
+        .string()
+        .max(20_000)
+        .optional()
+        .transform((ids) => (ids === undefined || ids === '' ? undefined : ids.split(','))),
+      limit: z.coerce.number().int().positive().max(500).default(100),
+    }),
+  },
+  responses: {
+    200: { description: 'The books', content: { 'application/json': { schema: BookListSchema } } },
+    401: { description: 'Not signed in', content: { 'application/json': { schema: BookError } } },
+  },
+});
+
+const listReadingRoute = createRoute({
+  method: 'get',
+  path: '/api/reading',
+  tags: ['Books'],
+  summary: 'Read where this profile is up to in every book it has opened, most recent first',
+  request: {
+    query: z.object({ limit: z.coerce.number().int().positive().max(200).default(100) }),
+  },
+  responses: {
+    200: {
+      description: 'Each book and where in it',
+      content: { 'application/json': { schema: Readings } },
+    },
+    401: { description: 'Not signed in', content: { 'application/json': { schema: BookError } } },
+  },
+});
+
+const forgetReadingRoute = createRoute({
+  method: 'delete',
+  path: '/api/reading',
+  tags: ['Books'],
+  summary: 'Forget where this profile is up to in every book',
+  responses: {
+    204: { description: 'Forgotten' },
+    401: { description: 'Not signed in', content: { 'application/json': { schema: BookError } } },
+  },
+});
+
+const forgetBookReadingRoute = createRoute({
+  method: 'delete',
+  path: '/api/books/{bookId}/progress',
+  tags: ['Books'],
+  summary: 'Forget where this profile is up to in one book',
+  request: { params: z.object({ bookId: z.string().uuid() }) },
+  responses: {
+    204: { description: 'Forgotten' },
+    401: { description: 'Not signed in', content: { 'application/json': { schema: BookError } } },
+  },
+});
 
 const listBooksRoute = createRoute({
   method: 'get',
@@ -156,6 +221,10 @@ const readReadingProgressRoute = createRoute({
 });
 
 export {
+  findBooksRoute,
+  forgetBookReadingRoute,
+  forgetReadingRoute,
+  listReadingRoute,
   listBooksRoute,
   readBookContentsRoute,
   readBookCoverRoute,

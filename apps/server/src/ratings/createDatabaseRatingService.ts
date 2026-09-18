@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, avg, count, desc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, avg, count, desc, eq, inArray } from 'drizzle-orm';
 import { rating } from '@ValenceServer/db/Schema';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { HouseholdRating } from '@ValenceContracts/schemas/Rating';
@@ -18,8 +18,10 @@ const ROUNDING = 10;
  */
 const matching = (subject: RatingSubject) =>
   'mediaId' in subject
-    ? and(eq(rating.mediaItemId, subject.mediaId), isNull(rating.seriesId))
-    : and(eq(rating.seriesId, subject.seriesId), isNull(rating.mediaItemId));
+    ? eq(rating.mediaItemId, subject.mediaId)
+    : 'seriesId' in subject
+      ? eq(rating.seriesId, subject.seriesId)
+      : eq(rating.bookId, subject.bookId);
 
 /**
  * Reads an average back out of the database, which returns it as a string because the exact value of
@@ -58,6 +60,7 @@ const createDatabaseRatingService = (db: ValenceDatabase): RatingService => ({
     return rows.map((row) => ({
       mediaId: row.mediaItemId,
       seriesId: row.seriesId,
+      bookId: row.bookId,
       stars: row.stars,
       ratedAt: row.ratedAt.toISOString(),
     }));
@@ -79,6 +82,7 @@ const createDatabaseRatingService = (db: ValenceDatabase): RatingService => ({
       profileId,
       mediaItemId: 'mediaId' in subject ? subject.mediaId : null,
       seriesId: 'seriesId' in subject ? subject.seriesId : null,
+      bookId: 'bookId' in subject ? subject.bookId : null,
       stars,
       ratedAt: new Date(),
       updatedAt: new Date(),

@@ -31,6 +31,7 @@ const MADE = {
   kind: 'item' as const,
   mediaId: '9c858901-8a57-4791-81fe-4c455b099bc9',
   seriesId: null,
+  bookId: null,
   title: 'Arrival',
   createdAt: '2026-08-16T00:00:00.000Z',
   expiresAt: null,

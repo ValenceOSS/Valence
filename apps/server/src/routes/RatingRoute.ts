@@ -6,6 +6,7 @@ const RatingSchema = z
   .object({
     mediaId: z.string().uuid().nullable(),
     seriesId: z.string().uuid().nullable(),
+    bookId: z.string().uuid().nullable(),
     stars: z.number().int().min(1).max(5),
     ratedAt: z.string().datetime(),
   })
@@ -154,7 +155,69 @@ const readSeriesHouseholdRatingRoute = createRoute({
   },
 });
 
+const rateBookRoute = createRoute({
+  method: 'put',
+  path: '/api/books/{bookId}/rating',
+  tags: ['Ratings'],
+  summary: 'Rate this book',
+  request: {
+    params: z.object({ bookId: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: SetRatingSchema } } },
+  },
+  responses: {
+    204: { description: 'Rated' },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: RatingError } },
+    },
+    404: {
+      description: 'No such book, or not one this viewer can see',
+      content: { 'application/json': { schema: RatingError } },
+    },
+  },
+});
+
+const clearBookRatingRoute = createRoute({
+  method: 'delete',
+  path: '/api/books/{bookId}/rating',
+  tags: ['Ratings'],
+  summary: 'Take back this book’s rating',
+  request: { params: z.object({ bookId: z.string().uuid() }) },
+  responses: {
+    204: { description: 'Cleared' },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: RatingError } },
+    },
+  },
+});
+
+const readBookHouseholdRatingRoute = createRoute({
+  method: 'get',
+  path: '/api/books/{bookId}/rating/household',
+  tags: ['Ratings'],
+  summary: 'Read what the household gave this book',
+  request: { params: z.object({ bookId: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'What the household gave it',
+      content: { 'application/json': { schema: HouseholdRatingSchema } },
+    },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: RatingError } },
+    },
+    404: {
+      description: 'No such book, or not one this viewer can see',
+      content: { 'application/json': { schema: RatingError } },
+    },
+  },
+});
+
 export {
+  rateBookRoute,
+  clearBookRatingRoute,
+  readBookHouseholdRatingRoute,
   listRatingsRoute,
   rateMediaRoute,
   clearMediaRatingRoute,

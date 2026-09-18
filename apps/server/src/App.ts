@@ -107,6 +107,10 @@ import {
 import { mediaImageRoute } from '@ValenceServer/routes/ImageRoute';
 import {
   listBooksRoute,
+  findBooksRoute,
+  forgetBookReadingRoute,
+  forgetReadingRoute,
+  listReadingRoute,
   readBookContentsRoute,
   readBookCoverRoute,
   readBookDocumentRoute,
@@ -178,6 +182,8 @@ import {
   listFavouritesRoute,
   keepFavouriteRoute,
   dropFavouriteRoute,
+  keepBookFavouriteRoute,
+  dropBookFavouriteRoute,
 } from '@ValenceServer/routes/FavouriteRoute';
 import {
   listRatingsRoute,
@@ -187,6 +193,9 @@ import {
   rateSeriesRoute,
   clearSeriesRatingRoute,
   readSeriesHouseholdRatingRoute,
+  rateBookRoute,
+  clearBookRatingRoute,
+  readBookHouseholdRatingRoute,
 } from '@ValenceServer/routes/RatingRoute';
 import {
   adminOverviewRoute,
@@ -722,6 +731,24 @@ const createApp = ({
    */
   const viewerOf = (headers: Headers): Promise<Viewer | null> =>
     readViewer({ auth, permissions, ...(profiles === undefined ? {} : { profiles }) }, headers);
+
+  /**
+   * Whether the person asking may open a book, and — where a chapter is named — whether that chapter
+   * is in it. A book's library being refused or hidden puts the book out of reach, and asking for a
+   * chapter through a book it does not belong to is refused rather than served. A guest has already
+   * been held to what was shared with them by the time this is asked.
+   *
+   * @param headers - The request's headers.
+   * @param bookId - The book.
+   * @param chapterId - A chapter in it, where the request names one.
+   * @returns Whether to serve it.
+   */
+  const bookInReach = async (
+    headers: Headers,
+    bookId: string,
+    chapterId?: string,
+  ): Promise<boolean> =>
+    books !== undefined && books.canReach(await viewerOf(headers), bookId, chapterId);
 
   /**
    * Whether an account was refused the library something sits in.
@@ -4015,7 +4042,13 @@ const createApp = ({
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    return context.json({ favourites: await favourites.list(profileId) }, 200);
+    return context.json(
+      {
+        favourites: await favourites.list(profileId),
+        books: await favourites.listBooks(profileId),
+      },
+      200,
+    );
   });
 
   app.openapi(listHiddenRoute, async (context) => {
@@ -4156,6 +4189,36 @@ const createApp = ({
     return context.body(null, 204);
   });
 
+  app.openapi(keepBookFavouriteRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const { bookId } = context.req.valid('param');
+
+    if (!(await bookInReach(context.req.raw.headers, bookId))) {
+      return context.json({ error: 'No such book.' }, 404);
+    }
+
+    await favourites.keepBook(profileId, bookId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(dropBookFavouriteRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    await favourites.dropBook(profileId, context.req.valid('param').bookId);
+
+    return context.body(null, 204);
+  });
+
   app.openapi(createShareRoute, async (context) => {
     const account = await readAccount(context.req.raw.headers);
 
@@ -4168,6 +4231,17 @@ const createApp = ({
     }
 
     const asked = context.req.valid('json');
+
+    if (asked.kind === 'book') {
+      const made =
+        asked.bookId === undefined || !(await bookInReach(context.req.raw.headers, asked.bookId))
+          ? null
+          : await shares.create(account.id, asked);
+
+      return made === null
+        ? context.json({ error: 'There is nothing here to share.' }, 404)
+        : context.json(made, 201);
+    }
 
     const subjectId = asked.kind === 'item' ? asked.mediaId : asked.seriesId;
 
@@ -4300,9 +4374,23 @@ const createApp = ({
     setCookie(context, SHARE_JOINER, joiner, kept);
     setCookie(context, SHARE_COOKIE, token, kept);
 
-    const items = await library.itemsForShare(found);
+    if (found.kind === 'book') {
+      const shared =
+        books === undefined || found.bookId === null ? null : await books.read(found.bookId);
 
-    return context.json({ kind: found.kind, title: found.title, items }, 200);
+      return context.json(
+        { kind: found.kind, title: found.title, items: [], book: shared?.book ?? null },
+        200,
+      );
+    }
+
+    const items = await library.itemsForShare({
+      kind: found.kind === 'series' ? 'series' : 'item',
+      mediaId: found.mediaId,
+      seriesId: found.seriesId,
+    });
+
+    return context.json({ kind: found.kind, title: found.title, items, book: null }, 200);
   });
 
   app.openapi(listRatingsRoute, async (context) => {
@@ -4403,6 +4491,50 @@ const createApp = ({
     return context.json(await ratings.household({ seriesId }), 200);
   });
 
+  app.openapi(rateBookRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const { bookId } = context.req.valid('param');
+
+    if (!(await bookInReach(context.req.raw.headers, bookId))) {
+      return context.json({ error: 'No such book.' }, 404);
+    }
+
+    await ratings.set(profileId, { bookId }, context.req.valid('json').stars);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(clearBookRatingRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    await ratings.clear(profileId, { bookId: context.req.valid('param').bookId });
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(readBookHouseholdRatingRoute, async (context) => {
+    if ((await readProfileId(context.req.raw.headers)) === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const { bookId } = context.req.valid('param');
+
+    if (!(await bookInReach(context.req.raw.headers, bookId))) {
+      return context.json({ error: 'No such book.' }, 404);
+    }
+
+    return context.json(await ratings.household({ bookId }), 200);
+  });
+
   app.openapi(listSegmentsRoute, async (context) => {
     const { mediaId } = context.req.valid('param');
 
@@ -4417,18 +4549,84 @@ const createApp = ({
     registerMusicRoutes(app, { viewerOf, music });
   }
 
-  app.openapi(listBooksRoute, async (context) => {
-    const account = await readAccount(context.req.raw.headers);
+  app.openapi(findBooksRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
 
-    if (account === null || books === undefined) {
+    if (viewer === null || books === undefined) {
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    return context.json({ books: await books.list(context.req.valid('param').libraryId) }, 200);
+    const { search, ids, limit } = context.req.valid('query');
+
+    return context.json(
+      {
+        books: await books.find(viewer, {
+          limit,
+          ...(search === undefined ? {} : { search }),
+          ...(ids === undefined ? {} : { ids }),
+        }),
+      },
+      200,
+    );
+  });
+
+  app.openapi(listReadingRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (viewer === null || profileId === null || books === undefined) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    return context.json(
+      { readings: await books.listReading(viewer, profileId, context.req.valid('query').limit) },
+      200,
+    );
+  });
+
+  app.openapi(forgetReadingRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null || books === undefined) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    await books.forgetReading(profileId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(forgetBookReadingRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null || books === undefined) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    await books.forgetReading(profileId, context.req.valid('param').bookId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(listBooksRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null || books === undefined) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    return context.json(
+      { books: await books.find(viewer, { libraryId: context.req.valid('param').libraryId }) },
+      200,
+    );
   });
 
   app.openapi(readBookRoute, async (context) => {
-    const found = books === undefined ? null : await books.read(context.req.valid('param').bookId);
+    const { bookId } = context.req.valid('param');
+    const found =
+      books === undefined || !(await bookInReach(context.req.raw.headers, bookId))
+        ? null
+        : await books.read(bookId);
 
     return found === null
       ? context.json({ error: 'No such book.' }, 404)
@@ -4436,8 +4634,11 @@ const createApp = ({
   });
 
   app.openapi(readBookCoverRoute, async (context) => {
+    const { bookId } = context.req.valid('param');
     const cover =
-      books === undefined ? null : await books.readCover(context.req.valid('param').bookId);
+      books === undefined || !(await bookInReach(context.req.raw.headers, bookId))
+        ? null
+        : await books.readCover(bookId);
 
     if (cover === null) {
       return context.json({ error: 'No cover for that book.' }, 404);
@@ -4450,9 +4651,12 @@ const createApp = ({
   });
 
   app.openapi(readBookPageRoute, async (context) => {
-    const { chapterId, page } = context.req.valid('param');
+    const { bookId, chapterId, page } = context.req.valid('param');
     const { width } = context.req.valid('query');
-    const read = books === undefined ? null : await books.readPage(chapterId, page, width);
+    const read =
+      books === undefined || !(await bookInReach(context.req.raw.headers, bookId, chapterId))
+        ? null
+        : await books.readPage(chapterId, page, width);
 
     if (read === null) {
       return context.json({ error: 'No such page.' }, 404);
@@ -4465,8 +4669,11 @@ const createApp = ({
   });
 
   app.openapi(readBookContentsRoute, async (context) => {
-    const { chapterId } = context.req.valid('param');
-    const contents = books === undefined ? null : await books.readContents(chapterId);
+    const { bookId, chapterId } = context.req.valid('param');
+    const contents =
+      books === undefined || !(await bookInReach(context.req.raw.headers, bookId, chapterId))
+        ? null
+        : await books.readContents(chapterId);
 
     return contents === null
       ? context.json({ error: 'That is not a book that reflows.' }, 404)
@@ -4476,7 +4683,7 @@ const createApp = ({
   app.openapi(readBookDocumentRoute, async (context) => {
     const { bookId, chapterId } = context.req.valid('param');
     const document =
-      books === undefined
+      books === undefined || !(await bookInReach(context.req.raw.headers, bookId, chapterId))
         ? null
         : await books.readDocument(
             chapterId,
@@ -4496,9 +4703,9 @@ const createApp = ({
   });
 
   app.openapi(readBookResourceRoute, async (context) => {
-    const { chapterId } = context.req.valid('param');
+    const { bookId, chapterId } = context.req.valid('param');
     const read =
-      books === undefined
+      books === undefined || !(await bookInReach(context.req.raw.headers, bookId, chapterId))
         ? null
         : await books.readResource(chapterId, context.req.valid('query').href);
 
@@ -4514,10 +4721,14 @@ const createApp = ({
 
   app.openapi(saveReadingProgressRoute, async (context) => {
     const profileId = await readProfileId(context.req.raw.headers);
-    const { chapterId } = context.req.valid('param');
+    const { bookId, chapterId } = context.req.valid('param');
 
     if (profileId === null || books === undefined) {
       return context.json({ error: 'Nobody is signed in.' }, 404);
+    }
+
+    if (!(await bookInReach(context.req.raw.headers, bookId, chapterId))) {
+      return context.json({ error: 'No such chapter.' }, 404);
     }
 
     const saved = await books.saveProgress(profileId, chapterId, context.req.valid('json'));
@@ -4532,8 +4743,14 @@ const createApp = ({
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
+    const { bookId } = context.req.valid('param');
+
     return context.json(
-      { progress: await books.readProgress(profileId, context.req.valid('param').bookId) },
+      {
+        progress: (await bookInReach(context.req.raw.headers, bookId))
+          ? await books.readProgress(profileId, bookId)
+          : [],
+      },
       200,
     );
   });

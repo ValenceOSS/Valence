@@ -21,6 +21,7 @@ const TED = '11111111-1111-4111-8111-111111111111';
 const rated = (mediaId: string | null, seriesId: string | null, stars: number): Rating => ({
   mediaId,
   seriesId,
+  bookId: null,
   stars,
   ratedAt: '2026-01-01T00:00:00.000Z',
 });

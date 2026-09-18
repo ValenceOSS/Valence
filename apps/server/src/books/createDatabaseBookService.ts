@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, max, or, sql } from 'drizzle-orm';
 import { book, bookChapter, library, readingProgress } from '@ValenceServer/db/Schema';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -19,16 +19,29 @@ import type {
   Book,
   BookDetail,
   BookContents,
+  BookReading,
   ReadingProgress,
   SaveReadingProgress,
 } from '@ValenceContracts/schemas/Book';
 import type { BookPageBytes } from './BookFile';
 import type { BookStore } from './scanBookLibrary';
+import { booksVisibleToViewer } from '@ValenceServer/visibility/booksVisibleToViewer';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
+
+const FIND_LIMIT = 500;
 
 const COVER_WIDTH = 640;
 
+type BookQuery = {
+  libraryId?: string;
+  ids?: readonly string[];
+  search?: string;
+  limit?: number;
+};
+
 type BookService = BookStore & {
-  list: (libraryId: string) => Promise<Book[]>;
+  find: (viewer: Viewer, query: BookQuery) => Promise<Book[]>;
+  canReach: (viewer: Viewer | null, bookId: string, chapterId?: string) => Promise<boolean>;
   read: (bookId: string) => Promise<BookDetail | null>;
   readPage: (chapterId: string, page: number, width?: number) => Promise<BookPageBytes | null>;
   readContents: (chapterId: string) => Promise<BookContents | null>;
@@ -45,6 +58,8 @@ type BookService = BookStore & {
     where: SaveReadingProgress,
   ) => Promise<boolean>;
   readProgress: (profileId: string, bookId: string) => Promise<ReadingProgress[]>;
+  listReading: (viewer: Viewer, profileId: string, limit: number) => Promise<BookReading[]>;
+  forgetReading: (profileId: string, bookId?: string) => Promise<void>;
 };
 
 const NamesSchema = z.array(z.string()).nullable().catch(null);
@@ -59,6 +74,31 @@ const NamesSchema = z.array(z.string()).nullable().catch(null);
  * @returns The names, or nothing where what was stored was not a list of them.
  */
 const namesIn = (held: JsonValue): string[] | null => NamesSchema.parse(held);
+
+/**
+ * A book as a shelf shows it, from its row and how many chapters it has.
+ *
+ * @param row - The book as stored.
+ * @param chapterCount - How many chapters are in it.
+ * @returns The book.
+ */
+const toBook = (row: typeof book.$inferSelect, chapterCount: number): Book => ({
+  id: row.id,
+  libraryId: row.libraryId,
+  title: row.title,
+  layout: BookLayoutSchema.catch('fixed').parse(row.layout),
+  direction: ReadingDirectionSchema.catch('leftToRight').parse(row.direction),
+  year: row.year,
+  overview: row.overview,
+  genres: namesIn(JsonValueSchema.catch(null).parse(row.genres ?? null)),
+  authors: namesIn(JsonValueSchema.catch(null).parse(row.authors ?? null)),
+  rating: row.rating,
+  posterUrl: row.posterUrl,
+  hasCover: chapterCount > 0,
+  chapterCount,
+  addedAt: row.addedAt.toISOString(),
+  updatedAt: row.updatedAt.toISOString(),
+});
 
 /**
  * The shelf: what is on it, what is inside each thing on it, and where everybody is up to.
@@ -97,7 +137,7 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
     },
   });
 
-  return {
+  const service: BookService = {
     listStored: async (libraryId) => {
       const rows = await db
         .select({
@@ -208,40 +248,71 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
       await db.update(library).set({ lastScannedAt: new Date() }).where(eq(library.id, libraryId));
     },
 
-    list: async (libraryId) => {
+    find: async (viewer, { libraryId, ids, search, limit = FIND_LIMIT }) => {
+      if (ids?.length === 0) {
+        return [];
+      }
+
+      const like = search === undefined || search.trim() === '' ? null : `%${search.trim()}%`;
       const rows = await db
         .select()
         .from(book)
-        .where(eq(book.libraryId, libraryId))
-        .orderBy(asc(book.title));
+        .where(
+          and(
+            libraryId === undefined ? undefined : eq(book.libraryId, libraryId),
+            ids === undefined ? undefined : inArray(book.id, [...ids]),
+            like === null
+              ? undefined
+              : or(
+                  ilike(book.title, like),
+                  ilike(book.overview, like),
+                  sql`${book.authors}::text ilike ${like}`,
+                ),
+            booksVisibleToViewer(db, viewer),
+          ),
+        )
+        .orderBy(asc(book.title))
+        .limit(limit);
 
-      const counted = await db
-        .select({ bookId: bookChapter.bookId, id: bookChapter.id })
-        .from(bookChapter);
+      const counted =
+        rows.length === 0
+          ? []
+          : await db
+              .select({ bookId: bookChapter.bookId, count: count() })
+              .from(bookChapter)
+              .where(
+                inArray(
+                  bookChapter.bookId,
+                  rows.map((row) => row.id),
+                ),
+              )
+              .groupBy(bookChapter.bookId);
 
-      const howMany = new Map<string, number>();
+      const howMany = new Map(counted.map((row) => [row.bookId, row.count]));
 
-      for (const row of counted) {
-        howMany.set(row.bookId, (howMany.get(row.bookId) ?? 0) + 1);
+      return rows.map((row) => toBook(row, howMany.get(row.id) ?? 0));
+    },
+
+    canReach: async (viewer, bookId, chapterId) => {
+      if (chapterId !== undefined) {
+        const chapter = await chapterFor(chapterId);
+
+        if (chapter === null || chapter.bookId !== bookId) {
+          return false;
+        }
       }
 
-      return rows.map((row) => ({
-        id: row.id,
-        libraryId: row.libraryId,
-        title: row.title,
-        layout: BookLayoutSchema.catch('fixed').parse(row.layout),
-        direction: ReadingDirectionSchema.catch('leftToRight').parse(row.direction),
-        year: row.year,
-        overview: row.overview,
-        genres: namesIn(JsonValueSchema.catch(null).parse(row.genres ?? null)),
-        authors: namesIn(JsonValueSchema.catch(null).parse(row.authors ?? null)),
-        rating: row.rating,
-        posterUrl: row.posterUrl,
-        hasCover: true,
-        chapterCount: howMany.get(row.id) ?? 0,
-        addedAt: row.addedAt.toISOString(),
-        updatedAt: row.updatedAt.toISOString(),
-      }));
+      if (viewer === null) {
+        return true;
+      }
+
+      const [found] = await db
+        .select({ id: book.id })
+        .from(book)
+        .where(and(eq(book.id, bookId), booksVisibleToViewer(db, viewer)))
+        .limit(1);
+
+      return found !== undefined;
     },
 
     read: async (bookId) => {
@@ -258,23 +329,7 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
         .orderBy(asc(bookChapter.number));
 
       return {
-        book: {
-          id: row.id,
-          libraryId: row.libraryId,
-          title: row.title,
-          layout: BookLayoutSchema.catch('fixed').parse(row.layout),
-          direction: ReadingDirectionSchema.catch('leftToRight').parse(row.direction),
-          year: row.year,
-          overview: row.overview,
-          genres: namesIn(JsonValueSchema.catch(null).parse(row.genres ?? null)),
-          authors: namesIn(JsonValueSchema.catch(null).parse(row.authors ?? null)),
-          rating: row.rating,
-          posterUrl: row.posterUrl,
-          hasCover: chapters.length > 0,
-          chapterCount: chapters.length,
-          addedAt: row.addedAt.toISOString(),
-          updatedAt: row.updatedAt.toISOString(),
-        },
+        book: toBook(row, chapters.length),
         chapters: chapters.map((chapter) => ({
           id: chapter.id,
           bookId: chapter.bookId,
@@ -384,9 +439,82 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
         updatedAt: row.updatedAt.toISOString(),
       }));
     },
+
+    listReading: async (viewer, profileId, limit) => {
+      const latest = await db
+        .selectDistinctOn([readingProgress.bookId], {
+          bookId: readingProgress.bookId,
+          chapterId: readingProgress.chapterId,
+          chapterTitle: bookChapter.title,
+          chapterNumber: bookChapter.number,
+          pageCount: bookChapter.pageCount,
+          pageNumber: readingProgress.pageNumber,
+          fraction: readingProgress.fraction,
+          isFinished: readingProgress.isFinished,
+          updatedAt: readingProgress.updatedAt,
+        })
+        .from(readingProgress)
+        .innerJoin(bookChapter, eq(bookChapter.id, readingProgress.chapterId))
+        .where(eq(readingProgress.profileId, profileId))
+        .orderBy(readingProgress.bookId, desc(readingProgress.updatedAt));
+
+      const recent = [...latest]
+        .sort((one, other) => other.updatedAt.getTime() - one.updatedAt.getTime())
+        .slice(0, limit);
+
+      if (recent.length === 0) {
+        return [];
+      }
+
+      const books = await service.find(viewer, { ids: recent.map((row) => row.bookId) });
+      const lastChapters = await db
+        .select({ bookId: bookChapter.bookId, last: max(bookChapter.number) })
+        .from(bookChapter)
+        .where(
+          inArray(
+            bookChapter.bookId,
+            recent.map((row) => row.bookId),
+          ),
+        )
+        .groupBy(bookChapter.bookId);
+      const lastOf = new Map(lastChapters.map((row) => [row.bookId, row.last]));
+      const byId = new Map(books.map((one) => [one.id, one]));
+
+      return recent.flatMap((row) => {
+        const found = byId.get(row.bookId);
+
+        return found === undefined
+          ? []
+          : [
+              {
+                book: found,
+                chapterId: row.chapterId,
+                chapterTitle: row.chapterTitle,
+                pageNumber: row.pageNumber,
+                pageCount: row.pageCount,
+                fraction: row.fraction,
+                isFinished: row.isFinished && lastOf.get(row.bookId) === row.chapterNumber,
+                updatedAt: row.updatedAt.toISOString(),
+              },
+            ];
+      });
+    },
+
+    forgetReading: async (profileId, bookId) => {
+      await db
+        .delete(readingProgress)
+        .where(
+          and(
+            eq(readingProgress.profileId, profileId),
+            bookId === undefined ? undefined : eq(readingProgress.bookId, bookId),
+          ),
+        );
+    },
   };
+
+  return service;
 };
 
-export type { BookService };
+export type { BookQuery, BookService };
 
 export { createDatabaseBookService, imageTypeFor };

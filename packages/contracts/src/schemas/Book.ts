@@ -129,6 +129,19 @@ const ReadingProgressSchema = z.object({
   updatedAt: z.string(),
 });
 
+const BookReadingSchema = z.object({
+  book: BookSchema,
+  chapterId: z.string().uuid(),
+  chapterTitle: z.string(),
+  pageNumber: z.number().int().nonnegative().nullable(),
+  pageCount: z.number().int().positive().nullable(),
+  fraction: z.number().min(0).max(1).nullable(),
+  isFinished: z.boolean(),
+  updatedAt: z.string(),
+});
+
+const BookReadingListSchema = z.object({ readings: z.array(BookReadingSchema) });
+
 const SaveReadingProgressSchema = z.object({
   pageNumber: z.number().int().nonnegative().nullable(),
   fraction: z.number().min(0).max(1).nullable(),
@@ -158,6 +171,7 @@ export type BookDetail = z.infer<typeof BookDetailSchema>;
 export type BookContents = z.infer<typeof BookContentsSchema>;
 export type BookPage = z.infer<typeof BookPageSchema>;
 export type ReadingProgress = z.infer<typeof ReadingProgressSchema>;
+export type BookReading = z.infer<typeof BookReadingSchema>;
 export type SaveReadingProgress = z.infer<typeof SaveReadingProgressSchema>;
 
 const PLACE_LINK = /^#valence-part-(\d+)(?::(.+))?$/;
@@ -196,6 +210,8 @@ export {
   BookFormatSchema,
   BookLayoutSchema,
   BookPageSchema,
+  BookReadingListSchema,
+  BookReadingSchema,
   BookSchema,
   ReadingDirectionSchema,
   ReadingProgressSchema,

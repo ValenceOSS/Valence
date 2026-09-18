@@ -9,8 +9,15 @@ const FavouriteSchema = z
   })
   .openapi('Favourite');
 
+const FavouriteBookSchema = z
+  .object({
+    bookId: z.string().uuid(),
+    keptAt: z.string().datetime(),
+  })
+  .openapi('FavouriteBook');
+
 const FavouriteListSchema = z
-  .object({ favourites: z.array(FavouriteSchema) })
+  .object({ favourites: z.array(FavouriteSchema), books: z.array(FavouriteBookSchema) })
   .openapi('FavouriteList');
 
 const listFavouritesRoute = createRoute({
@@ -64,4 +71,44 @@ const dropFavouriteRoute = createRoute({
   },
 });
 
-export { listFavouritesRoute, keepFavouriteRoute, dropFavouriteRoute };
+const keepBookFavouriteRoute = createRoute({
+  method: 'put',
+  path: '/api/books/{bookId}/favourite',
+  tags: ['Favourites'],
+  summary: 'Keep this book',
+  request: { params: z.object({ bookId: z.string().uuid() }) },
+  responses: {
+    204: { description: 'Kept' },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: FavouriteError } },
+    },
+    404: {
+      description: 'No such book, or not one this viewer can see',
+      content: { 'application/json': { schema: FavouriteError } },
+    },
+  },
+});
+
+const dropBookFavouriteRoute = createRoute({
+  method: 'delete',
+  path: '/api/books/{bookId}/favourite',
+  tags: ['Favourites'],
+  summary: 'Stop keeping this book',
+  request: { params: z.object({ bookId: z.string().uuid() }) },
+  responses: {
+    204: { description: 'Dropped' },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: FavouriteError } },
+    },
+  },
+});
+
+export {
+  listFavouritesRoute,
+  keepFavouriteRoute,
+  dropFavouriteRoute,
+  keepBookFavouriteRoute,
+  dropBookFavouriteRoute,
+};

@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { createDatabase } from '@ValenceServer/db/Database';
-import { mediaItem, series, share, user } from '@ValenceServer/db/Schema';
+import { book, mediaItem, series, share, user } from '@ValenceServer/db/Schema';
 import { columnsFor } from './createDatabaseShareService';
 
 const NOWHERE = 'postgres://nobody@localhost:1/none';
@@ -19,6 +19,7 @@ const asked = () => {
     .from(share)
     .leftJoin(mediaItem, eq(mediaItem.id, share.mediaItemId))
     .leftJoin(series, eq(series.id, share.seriesId))
+    .leftJoin(book, eq(book.id, share.bookId))
     .where(eq(share.createdBy, 'ada'))
     .toSQL().sql;
 
@@ -28,6 +29,7 @@ const asked = () => {
     .innerJoin(user, eq(user.id, share.createdBy))
     .leftJoin(mediaItem, eq(mediaItem.id, share.mediaItemId))
     .leftJoin(series, eq(series.id, share.seriesId))
+    .leftJoin(book, eq(book.id, share.bookId))
     .toSQL().sql;
 
   return { mine, everybody };
@@ -62,11 +64,12 @@ describe('reading what a link points at', () => {
     expect(mine).toContain('"series"."title"');
   });
 
-  it('reaches both kinds of subject from one query, since a listing holds either', () => {
+  it('reaches every kind of subject from one query, since a listing holds any of them', () => {
     const { mine } = asked();
 
     expect(mine).toContain('left join "media_item"');
     expect(mine).toContain('left join "series"');
+    expect(mine).toContain('left join "book"');
   });
 
   it('joins them for everybody’s links too, which is the longer list of the two', () => {
