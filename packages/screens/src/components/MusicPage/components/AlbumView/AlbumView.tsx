@@ -90,7 +90,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
         actions={
           <>
             <Button
-              variant="primary"
+              variant="glossy"
               size="lg"
               isIconOnly
               label={`Play ${album.title}`}

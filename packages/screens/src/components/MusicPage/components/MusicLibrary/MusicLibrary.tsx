@@ -63,7 +63,7 @@ const MusicLibrary = () => {
       name: 'Liked Songs',
       detail: 'Playlist',
       artwork: (
-        <span className="flex size-12 items-center justify-center rounded-md bg-accent text-accent-contrast">
+        <span className="flex size-12 items-center justify-center rounded-md bg-text text-surface">
           <Icon of={FavouriteIcon} size={20} isActive />
         </span>
       ),
@@ -145,7 +145,7 @@ const MusicLibrary = () => {
             <Icon of={Search01Icon} size={16} />
           </Button>
           <Button
-            variant="soft"
+            variant="secondary"
             size="sm"
             onClick={() => {
               setIsMaking(true);
@@ -161,7 +161,7 @@ const MusicLibrary = () => {
         {SHELVES.map((chip) => (
           <Button
             key={chip.id}
-            variant={shelf === chip.id ? 'primary' : 'soft'}
+            variant={shelf === chip.id ? 'glossy' : 'secondary'}
             size="xs"
             isActive={shelf === chip.id}
             aria-pressed={shelf === chip.id}
@@ -211,7 +211,7 @@ const MusicLibrary = () => {
                   <span
                     className={cn(
                       'truncate text-[0.9375rem] font-medium',
-                      isHere ? 'text-accent' : 'text-text',
+                      isHere ? 'font-semibold text-text' : 'text-text',
                     )}
                   >
                     {entry.name}

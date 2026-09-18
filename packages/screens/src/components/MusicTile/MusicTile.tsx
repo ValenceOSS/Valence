@@ -23,7 +23,7 @@ const MusicTile = ({ title, detail, artwork, onOpen, onPlay }: MusicTileProps) =
 
       {onPlay === undefined ? null : (
         <Button
-          variant="primary"
+          variant="glossy"
           size="none"
           isIconOnly
           label={`Play ${title}`}

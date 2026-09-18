@@ -86,7 +86,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
         actions={
           <>
             <Button
-              variant="primary"
+              variant="glossy"
               size="lg"
               isIconOnly
               label={`Play ${artist.name}`}

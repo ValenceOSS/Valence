@@ -76,7 +76,7 @@ const MusicHome = () => {
             {greetingFor(new Date().getHours())}
           </h1>
           <Button
-            variant="soft"
+            variant="secondary"
             size="md"
             onClick={() => {
               open({ kind: 'search', query: '' });
@@ -97,7 +97,7 @@ const MusicHome = () => {
               open({ kind: 'liked' });
             }}
           >
-            <span className="flex size-14 shrink-0 items-center justify-center bg-accent text-accent-contrast">
+            <span className="flex size-14 shrink-0 items-center justify-center bg-text text-surface">
               <Icon of={FavouriteIcon} size={22} isActive />
             </span>
             Liked Songs

@@ -24,7 +24,9 @@ const QueuedSong = ({ track, isCurrent }: { track: MusicTrack; isCurrent: boolea
       className="size-10"
     />
     <span className="flex min-w-0 flex-col text-left">
-      <span className={`truncate text-sm font-medium ${isCurrent ? 'text-accent' : 'text-text'}`}>
+      <span
+        className={`truncate text-sm ${isCurrent ? 'font-semibold text-text' : 'font-medium text-text'}`}
+      >
         {track.title}
       </span>
       <span className="truncate text-xs text-text-muted">

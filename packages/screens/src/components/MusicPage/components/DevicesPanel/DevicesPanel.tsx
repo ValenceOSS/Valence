@@ -56,7 +56,7 @@ const DevicesPanel = () => {
       <div
         className={cn(
           'flex items-center gap-3 rounded-lg p-3',
-          isHere ? 'bg-hover text-accent' : 'text-text',
+          isHere ? 'bg-hover font-semibold text-text' : 'text-text',
         )}
       >
         <Icon of={iconFor(platformInUse().describeThisClient())} size={22} />
@@ -107,7 +107,7 @@ const DevicesPanel = () => {
                     disabled={state.current === null && device.nowPlaying === null}
                     className={cn(
                       'flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors hover:bg-hover',
-                      isChosen ? 'text-accent' : 'text-text',
+                      isChosen ? 'bg-hover font-semibold text-text' : 'text-text',
                     )}
                     onClick={() => {
                       if (!isChosen) {

@@ -40,9 +40,9 @@ const LikedView = () => {
       <MusicHeader
         eyebrow="Playlist"
         title="Liked Songs"
-        tint="var(--color-accent)"
+        tint="var(--color-text-muted)"
         artwork={
-          <span className="flex aspect-square w-full items-center justify-center rounded-md bg-accent text-accent-contrast">
+          <span className="flex aspect-square w-full items-center justify-center rounded-md bg-text text-surface">
             <Icon of={FavouriteIcon} size={72} isActive />
           </span>
         }
@@ -55,7 +55,7 @@ const LikedView = () => {
         actions={
           <>
             <Button
-              variant="primary"
+              variant="glossy"
               size="lg"
               isIconOnly
               label="Play Liked Songs"

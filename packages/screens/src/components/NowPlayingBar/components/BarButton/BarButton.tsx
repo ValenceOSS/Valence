@@ -47,7 +47,7 @@ const BarButton = ({
       isActive={isLit}
       label={label}
       disabled={isDisabled}
-      className={cn(isLit ? 'text-accent' : '', className)}
+      className={cn(isLit ? 'text-text' : 'text-text-muted hover:text-text', className)}
       onPointerEnter={() => {
         setPointedAt(true);
       }}

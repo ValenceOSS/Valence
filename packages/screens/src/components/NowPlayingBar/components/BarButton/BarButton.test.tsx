@@ -18,7 +18,7 @@ describe('BarButton', () => {
   it('says when the thing it stands for is on', () => {
     render(<BarButton label="Stop shuffling" glyph={ShuffleIcon} isLit onClick={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Stop shuffling' })).toHaveClass('text-accent');
+    expect(screen.getByRole('button', { name: 'Stop shuffling' })).toHaveClass('text-text');
   });
 
   it('cannot be pressed while it does not apply', async () => {

@@ -132,7 +132,7 @@ describe('TrackList', () => {
 
     renderInAnAddress(<TrackList label="Album" tracks={TRACKS} onPlay={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Track 2' })).toHaveClass('text-accent');
+    expect(screen.getByRole('button', { name: 'Track 2' })).toHaveClass('font-bold');
   });
 
   it('sets a display name so devtools can identify it', () => {

@@ -249,7 +249,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 />
 
                 <Button
-                  variant="primary"
+                  variant="glossy"
                   size="md"
                   isIconOnly
                   label={shown.isPlaying ? 'Pause' : 'Play'}
@@ -431,7 +431,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 transition={isStill ? stillTransition : spring}
                 className="overflow-hidden"
               >
-                <div className="flex items-center justify-end gap-2 bg-accent px-4 py-1 text-xs font-semibold text-accent-contrast">
+                <div className="flex items-center justify-end gap-2 bg-text px-4 py-1 text-xs font-semibold text-surface">
                   <Icon of={LaptopIcon} size={14} />
                   Playing on {shown.remote.label}
                 </div>

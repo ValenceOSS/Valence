@@ -16,7 +16,7 @@ import type { TrackListProps } from './TrackList.types';
  * Songs in a list, one to a row: where it sits, what it is and who it is by, the album it is from,
  * whether you like it, how long it is, and everything else to do with it behind a menu.
  *
- * The song playing is drawn in the accent colour with a wave where its number was, so it can be
+ * The song playing is drawn in bold, with a wave where its number was, so it can be
  * found in a long list at a glance. Pressing a song's title plays the list from that song, which is
  * what anybody pressing it in the middle of an album means. Every artist named links to their page.
  *
@@ -68,7 +68,7 @@ const TrackList = ({
               <span
                 className={cn(
                   'group-hover:opacity-0 group-focus-within:opacity-0',
-                  isCurrent ? 'text-accent' : '',
+                  isCurrent ? 'text-text' : '',
                 )}
               >
                 {isCurrent && state.isPlaying ? (
@@ -108,8 +108,8 @@ const TrackList = ({
                   size="none"
                   hasTooltip={false}
                   className={cn(
-                    'truncate text-left text-[0.9375rem] font-medium',
-                    isCurrent ? 'text-accent' : 'text-text',
+                    'truncate text-left text-[0.9375rem]',
+                    isCurrent ? 'font-bold text-text' : 'font-medium text-text',
                   )}
                   onClick={() => {
                     onPlay(index);
@@ -171,7 +171,7 @@ const TrackList = ({
               className={cn(
                 'transition-opacity',
                 isLiked
-                  ? 'text-accent'
+                  ? 'text-text'
                   : 'text-text-muted opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
               )}
               onClick={() => {
