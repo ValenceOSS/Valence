@@ -34,10 +34,32 @@ const OnboardingSchema = z.object({
 const householdAvatarUrl = (household: { updatedAt: string }): string =>
   `/api/account/avatar?v=${encodeURIComponent(household.updatedAt)}`;
 
+/**
+ * Builds the address another account's household picture is served from, for an administrator
+ * looking at somebody else's.
+ *
+ * A separate address rather than an identifier on the one above, because a household is reached
+ * through whoever is signed in and there is nothing on the row to address it by. Reading somebody
+ * else's is an administrator's act and goes through an administrator's route.
+ *
+ * @param accountId - The account whose picture to draw.
+ * @param household - Its household, with the time it was last changed.
+ * @returns The address to load the picture from.
+ */
+const accountAvatarUrl = (accountId: string, household: { updatedAt: string }): string =>
+  `/api/admin/accounts/${encodeURIComponent(accountId)}/avatar?v=${encodeURIComponent(household.updatedAt)}`;
+
 type Household = z.infer<typeof HouseholdSchema>;
 type HouseholdRequest = z.infer<typeof HouseholdRequestSchema>;
 type Onboarding = z.infer<typeof OnboardingSchema>;
 
 export type { Household, HouseholdRequest, Onboarding };
 
-export { HouseholdSchema, HouseholdRequestSchema, OnboardingSchema, NAME_MAX, householdAvatarUrl };
+export {
+  HouseholdSchema,
+  HouseholdRequestSchema,
+  OnboardingSchema,
+  NAME_MAX,
+  householdAvatarUrl,
+  accountAvatarUrl,
+};

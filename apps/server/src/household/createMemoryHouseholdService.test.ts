@@ -85,11 +85,28 @@ describe('setting a household up', () => {
     ).resolves.toBe('unreadable');
   });
 
-  it('has nowhere to put a picture for an account it does not hold', async () => {
+  it('holds a household for an account it has not seen, the way the database already does', async () => {
     const households = createMemoryHouseholdService();
 
     await expect(
-      households.savePhoto('nobody', { body: await aPicture(), contentType: 'image/png' }),
-    ).resolves.toBe('notYours');
+      households.savePhoto('unseen', { body: await aPicture(), contentType: 'image/png' }),
+    ).resolves.toBeNull();
+
+    await expect(households.read('unseen', 'Dan')).resolves.toMatchObject({
+      name: 'Dan',
+      avatar: { kind: 'photo' },
+    });
+  });
+
+  it('stands the account’s own name in until somebody chooses one', async () => {
+    const households = createMemoryHouseholdService();
+
+    await expect(households.read('unseen', 'Dan')).resolves.toMatchObject({ name: 'Dan' });
+
+    await households.change('unseen', { name: 'The Morgans' });
+
+    await expect(households.read('unseen', 'Dan')).resolves.toMatchObject({
+      name: 'The Morgans',
+    });
   });
 });

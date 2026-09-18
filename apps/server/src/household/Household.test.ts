@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import sharp from 'sharp';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -9,6 +10,9 @@ import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemo
 import { createMemoryWatchProgressService } from '@ValenceServer/progress/createMemoryWatchProgressService';
 import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMemoryFavouriteService';
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
+import { createMemoryProfileService } from '@ValenceServer/profiles/createMemoryProfileService';
+import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
+import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
 import { createMemoryHouseholdService } from './createMemoryHouseholdService';
 
 const BASE = 'http://localhost:8420';
@@ -29,6 +33,9 @@ const aPicture = async (width = 8, height = 8): Promise<Uint8Array> =>
 const build = () => {
   const { auth, settings } = createMemoryAuth();
   const households = createMemoryHouseholdService();
+  const profiles = createMemoryProfileService();
+  const permissions = createMemoryPermissionService();
+  const accounts: { id: string; name: string; email: string; role: null; createdAt: string }[] = [];
 
   const app = createApp({
     auth,
@@ -42,10 +49,25 @@ const build = () => {
     progress: createMemoryWatchProgressService(),
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
+    profiles,
+    permissions,
     households,
+    listUsers: () => Promise.resolve(accounts),
+    setAccountPhoto: (userId, photo) => households.savePhoto(userId, photo),
+    setAccountAvatar: (userId, changes) => households.change(userId, changes),
   });
 
-  return { app, households };
+  const makeAdministrator = (userId: string): void => {
+    const [top] = permissions.state.roles.filter((role) =>
+      role.permissions.includes(ADMINISTRATOR),
+    );
+
+    if (top !== undefined) {
+      permissions.state.assignments[userId] = [top.id];
+    }
+  };
+
+  return { app, households, profiles, accounts, makeAdministrator };
 };
 
 const signedIn = async (app: ReturnType<typeof build>['app']): Promise<string> => {
@@ -56,6 +78,19 @@ const signedIn = async (app: ReturnType<typeof build>['app']): Promise<string> =
   });
 
   return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+};
+
+const whoTheyAre = async (
+  app: ReturnType<typeof build>['app'],
+  cookie: string,
+): Promise<string> => {
+  const response = await app.request(`${BASE}/api/auth/get-session`, {
+    headers: { cookie, origin: BASE },
+  });
+
+  const said = z.object({ user: z.object({ id: z.string() }) }).parse(await response.json());
+
+  return said.user.id;
 };
 
 describe('setting a household up over HTTP', () => {
@@ -136,6 +171,79 @@ describe('setting a household up over HTTP', () => {
     expect(kept.status).toBe(204);
     expect(served.status).toBe(200);
     expect(served.headers.get('cache-control')).toContain('immutable');
+  });
+
+  it('puts an administrator’s picture on the household and not on somebody’s face', async () => {
+    const { app, profiles, makeAdministrator } = build();
+    const cookie = await signedIn(app);
+    const userId = await whoTheyAre(app, cookie);
+
+    makeAdministrator(userId);
+
+    const kept = await app.request(`${BASE}/api/admin/accounts/${userId}/photo`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE, 'content-type': 'image/png' },
+      body: await aPicture(),
+    });
+
+    expect(kept.status).toBe(204);
+    expect(await profiles.list(userId)).toEqual([]);
+  });
+
+  it('serves another account’s picture to an administrator, and to nobody else', async () => {
+    const { app, makeAdministrator } = build();
+    const cookie = await signedIn(app);
+    const userId = await whoTheyAre(app, cookie);
+
+    const refused = await app.request(`${BASE}/api/admin/accounts/${userId}/avatar`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    makeAdministrator(userId);
+
+    await app.request(`${BASE}/api/account/photo`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE, 'content-type': 'image/png' },
+      body: await aPicture(),
+    });
+
+    const served = await app.request(`${BASE}/api/admin/accounts/${userId}/avatar?v=1`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(refused.status).toBe(403);
+    expect(served.status).toBe(200);
+    expect(served.headers.get('content-type')).toBe('image/png');
+  });
+
+  it('shows the household as an account’s face in the list administrators read', async () => {
+    const { app, accounts, makeAdministrator } = build();
+    const cookie = await signedIn(app);
+    const userId = await whoTheyAre(app, cookie);
+
+    makeAdministrator(userId);
+    accounts.push({
+      id: userId,
+      name: 'Dan',
+      email: CREDENTIALS.email,
+      role: null,
+      createdAt: '2026-09-18T00:00:00.000Z',
+    });
+
+    await app.request(`${BASE}/api/account`, {
+      method: 'PATCH',
+      headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'The Morgans' }),
+    });
+
+    const listed = await app.request(`${BASE}/api/admin/accounts`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(listed.status).toBe(200);
+    expect(await listed.json()).toMatchObject({
+      accounts: [{ name: 'Dan', face: { name: 'The Morgans' } }],
+    });
   });
 
   it('says which thing was wrong with a picture it will not take', async () => {

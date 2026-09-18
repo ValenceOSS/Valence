@@ -1058,11 +1058,19 @@ const jobs = await createJobQueue({
               .select({ posterUrl: mediaItem.posterUrl, backdropUrl: mediaItem.backdropUrl })
               .from(mediaItem),
           listKeptPictures: async () => {
-            const rows = await db
+            const faces = await db
               .select({ photoPath: viewerProfile.photoPath })
               .from(viewerProfile);
 
-            return [...rows.map((row) => row.photoPath), (await settings.read()).splashscreenFile];
+            const households = await db
+              .select({ photoPath: userProfile.photoPath })
+              .from(userProfile);
+
+            return [
+              ...faces.map((row) => row.photoPath),
+              ...households.map((row) => row.photoPath),
+              (await settings.read()).splashscreenFile,
+            ];
           },
           onProblem: (path, reason) => {
             log.error('server', `image cache: ${path}: ${reason}`);
@@ -1953,40 +1961,12 @@ const app = createApp({
   endAccountSession: async (userId, sessionId) => {
     await db.delete(session).where(and(eq(session.id, sessionId), eq(session.userId, userId)));
   },
-  setAccountPhoto: async (userId, photo) => {
-    const [found] = await db
-      .select({ name: user.name })
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-
-    if (found === undefined) {
-      return 'notYours';
-    }
-
-    const profile = await profileService.ensureDefault(userId, found.name);
-
-    return profileService.savePhoto(userId, profile.id, photo);
-  },
-  setAccountAvatar: async (userId, changes) => {
-    const [found] = await db
-      .select({ name: user.name })
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-
-    if (found === undefined) {
-      return false;
-    }
-
-    const profile = await profileService.ensureDefault(userId, found.name);
-
-    return profileService.rename(userId, profile.id, {
-      name: profile.name,
-      colour: changes.colour ?? profile.colour,
+  setAccountPhoto: (userId, photo) => householdService.savePhoto(userId, photo),
+  setAccountAvatar: (userId, changes) =>
+    householdService.change(userId, {
       ...(changes.avatar === undefined ? {} : { avatar: changes.avatar }),
-    });
-  },
+      ...(changes.colour === undefined ? {} : { colour: changes.colour }),
+    }),
   capabilities: () => transcoder.capabilities(),
   artworkUsage: () => artworkUsage.read(),
   bookPageUsage: () => bookPageUsage.read(),

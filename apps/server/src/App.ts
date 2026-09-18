@@ -2020,6 +2020,26 @@ const createApp = ({
     });
   });
 
+  app.get('/api/admin/accounts/:userId/avatar', async (context) => {
+    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const picture = await households?.readAvatar(context.req.param('userId'));
+
+    if (picture === undefined || picture === null) {
+      return context.json({ error: 'That household has no picture.' }, 404);
+    }
+
+    return context.body(picture.body.slice().buffer, 200, {
+      'content-type': picture.contentType,
+      'cache-control':
+        context.req.query('v') === undefined
+          ? 'private, max-age=60'
+          : 'private, max-age=31536000, immutable',
+    });
+  });
+
   app.put('/api/account/photo', tooBigToRead(HOUSEHOLD_LIMITS), async (context) => {
     const account = await readAccount(context.req.raw.headers);
 
@@ -3122,7 +3142,7 @@ const createApp = ({
           banReason: (await readBanReason?.(account.id)) ?? null,
           position: held.length === 0 ? null : Math.max(...held.map((role) => role.position)),
           isAdministrator: resolved.has('administrator'),
-          face: (await profiles?.list(account.id))?.[0] ?? null,
+          face: (await households?.read(account.id, account.name)) ?? null,
           roles: held.map((role) => role.name),
         };
       }),

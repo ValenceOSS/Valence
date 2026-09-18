@@ -1,9 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
-import {
-  AvatarSchema,
-  ProfileColourSchema,
-  ViewerProfileSchema,
-} from '@ValenceContracts/schemas/ViewerProfile';
+import { AvatarSchema, ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
+import { HouseholdSchema } from '@ValenceContracts/schemas/Household';
 
 const Account = z
   .object({
@@ -15,7 +12,7 @@ const Account = z
     banReason: z.string().nullable(),
     position: z.number().nullable(),
     isAdministrator: z.boolean(),
-    face: ViewerProfileSchema.nullable(),
+    face: HouseholdSchema.nullable(),
     roles: z.array(z.string()),
   })
   .openapi('Account');

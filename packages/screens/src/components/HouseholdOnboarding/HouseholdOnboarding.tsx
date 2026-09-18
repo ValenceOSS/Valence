@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { FilePicker } from '@ValenceUI/FilePicker';
 import { PageDots } from '@ValenceUI/PageDots';
+import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import { PasskeySetup } from '@ValenceScreens/components/PasskeySetup/PasskeySetup';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { Tabs } from '@ValenceUI/Tabs';
@@ -12,7 +13,6 @@ import {
   saveHousehold,
   uploadHouseholdPhoto,
 } from '@ValenceClient/household/fetchHousehold';
-import { householdAvatarUrl } from '@ValenceContracts/schemas/Household';
 import { whatIsWrongWithTheName } from './whatIsWrongWithTheName';
 import type { HouseholdOnboardingProps } from './HouseholdOnboarding.types';
 
@@ -135,10 +135,10 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
               : 'That is the one. Carry on, or pick another.'}
           </p>
 
-          <img
-            src={picture === null ? householdAvatarUrl(household) : URL.createObjectURL(picture)}
-            alt=""
-            className="size-32 self-center rounded-full bg-subtle object-cover"
+          <HouseholdFace
+            household={household}
+            pending={picture}
+            className="size-32 self-center rounded-full text-4xl"
           />
 
           {wrong === null ? null : <p className="text-sm text-danger">{wrong}</p>}

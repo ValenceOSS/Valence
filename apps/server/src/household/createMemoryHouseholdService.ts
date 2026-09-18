@@ -1,11 +1,14 @@
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import { HOUSEHOLD_LIMITS } from './HouseholdPicture';
-import type { Household } from '@ValenceContracts/schemas/Household';
+import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 import type { HouseholdService } from './HouseholdService';
 
 type Held = {
-  household: Household;
+  name: string | null;
+  colour: ProfileColour;
+  avatar: Avatar;
+  updatedAt: string;
   onboardedAt: string | null;
   picture: Uint8Array | null;
 };
@@ -17,13 +20,19 @@ const [DEFAULT_COLOUR] = PROFILE_COLOURS;
 /**
  * The household store held in memory, for tests that need one without a database.
  *
+ * A row exists for every account from the moment it is created, which is what the database does,
+ * so this makes one on first sight rather than refusing anything that arrives before a read. A name
+ * is held as absent until somebody chooses one, and the account's own name stands in — again what
+ * the database does, since a test passing against stricter rules would describe a server that does
+ * not exist.
+ *
  * @param state - What it starts out holding, by account.
  * @returns The store, plus the state so a test can read what it wrote.
  */
 const createMemoryHouseholdService = (
   state: MemoryState = {},
 ): HouseholdService & { state: MemoryState } => {
-  const held = (userId: string, fallbackName: string): Held => {
+  const held = (userId: string): Held => {
     const already = state[userId];
 
     if (already !== undefined) {
@@ -31,12 +40,10 @@ const createMemoryHouseholdService = (
     }
 
     const made: Held = {
-      household: {
-        name: fallbackName,
-        colour: DEFAULT_COLOUR,
-        avatar: { kind: 'initial' },
-        updatedAt: new Date().toISOString(),
-      },
+      name: null,
+      colour: DEFAULT_COLOUR,
+      avatar: { kind: 'initial' },
+      updatedAt: new Date().toISOString(),
       onboardedAt: null,
       picture: null,
     };
@@ -49,65 +56,63 @@ const createMemoryHouseholdService = (
   return {
     state,
 
-    read: (userId, fallbackName) => Promise.resolve(held(userId, fallbackName).household),
+    read: (userId, fallbackName) => {
+      const one = held(userId);
 
-    isOnboarded: (userId) => Promise.resolve(state[userId]?.onboardedAt !== null),
+      return Promise.resolve({
+        name: one.name ?? fallbackName,
+        colour: one.colour,
+        avatar: one.avatar,
+        updatedAt: one.updatedAt,
+      });
+    },
+
+    isOnboarded: (userId) => Promise.resolve(held(userId).onboardedAt !== null),
 
     change: (userId, request) => {
-      const one = state[userId];
+      const one = held(userId);
 
-      if (one === undefined) {
-        return Promise.resolve(false);
+      if (request.name !== undefined) {
+        one.name = request.name;
       }
 
-      one.household = {
-        ...one.household,
-        ...(request.name === undefined ? {} : { name: request.name }),
-        ...(request.colour === undefined ? {} : { colour: request.colour }),
-        ...(request.avatar === undefined ? {} : { avatar: request.avatar }),
-        updatedAt: new Date().toISOString(),
-      };
+      if (request.colour !== undefined) {
+        one.colour = request.colour;
+      }
+
+      if (request.avatar !== undefined) {
+        one.avatar = request.avatar;
+      }
+
+      one.updatedAt = new Date().toISOString();
 
       return Promise.resolve(true);
     },
 
     finishOnboarding: (userId) => {
-      const one = state[userId];
-
-      if (one === undefined) {
-        return Promise.resolve(false);
-      }
-
-      one.onboardedAt = new Date().toISOString();
+      held(userId).onboardedAt = new Date().toISOString();
 
       return Promise.resolve(true);
     },
 
     readAvatar: (userId) => {
-      const picture = state[userId]?.picture ?? null;
+      const picture = held(userId).picture;
 
       return Promise.resolve(picture === null ? null : { body: picture, contentType: 'image/png' });
     },
 
     savePhoto: async (userId, photo) => {
-      const one = state[userId];
-
-      if (one === undefined) {
-        return 'notYours';
-      }
-
       const wrong = await whatIsWrongWithThePicture(photo, HOUSEHOLD_LIMITS);
 
       if (wrong !== null) {
         return wrong;
       }
 
+      const one = held(userId);
+
       one.picture = photo.body;
-      one.household = {
-        ...one.household,
-        avatar: { kind: 'photo', isVideo: false },
-        updatedAt: new Date().toISOString(),
-      };
+      one.avatar = { kind: 'photo', isVideo: false };
+      one.updatedAt = new Date().toISOString();
 
       return null;
     },
