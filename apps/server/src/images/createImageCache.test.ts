@@ -174,4 +174,25 @@ describe('what the cache does with an answer it cannot use', () => {
     await expect(instance.read(POSTER)).resolves.toBeNull();
     expect(onProblem).toHaveBeenCalledWith(POSTER, 'the network went away');
   });
+
+  it('forgets one image, so the next read fetches it afresh', async () => {
+    const fetchImpl = respondWith({});
+    const { directory, instance } = await cache(fetchImpl);
+
+    await instance.read(POSTER);
+    await instance.read('https://images.test/w500/other.jpg');
+    await instance.forget(POSTER);
+
+    expect(await readdir(directory)).toHaveLength(2);
+
+    await instance.read(POSTER);
+
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+  });
+
+  it('forgets an image it never held without complaint', async () => {
+    const { instance } = await cache(respondWith({}));
+
+    await expect(instance.forget(POSTER)).resolves.toBeUndefined();
+  });
 });

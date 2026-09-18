@@ -20,6 +20,10 @@ describe('describeScanKind', () => {
     );
   });
 
+  it('names the clearing of parts of a library', () => {
+    expect(describeScanKind('library.clearParts', 'Films')).toBe('Clearing parts of Films');
+  });
+
   it('says work is happening rather than guessing at a kind it does not know', () => {
     expect(describeScanKind('plugin.somethingNew', 'Shows')).toBe('Working on Shows');
   });

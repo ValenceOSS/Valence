@@ -8,6 +8,7 @@ import type {
 import type { ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { Person } from '@ValenceContracts/schemas/Person';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 
 type ListItemsOptions = {
   search?: string;
@@ -126,6 +127,10 @@ type LibraryService = ShowService & {
   clearPreviewMoment: (mediaId: string) => Promise<{ cleared: boolean } | null>;
   regeneratePreviews: (libraryId: string) => Promise<{ jobId: string; state: string } | null>;
   remakePreviews: (libraryId: string) => Promise<{ jobId: string; state: string } | null>;
+  clearParts: (
+    libraryId: string,
+    parts: LibraryPart[],
+  ) => Promise<{ jobId: string; state: string } | null>;
   regenerateTrickplay: (libraryId: string) => Promise<{ jobId: string; state: string } | null>;
   fetchLogos: (libraryId: string) => Promise<{ jobId: string; state: string } | null>;
   detectSegments: (libraryId: string) => Promise<{ jobId: string; state: string } | null>;

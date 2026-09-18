@@ -39,6 +39,7 @@ const DEFINITIONS: JobDefinition[] = [
     description: 'Renders preview clips for items that have none.',
     needsLibrary: true,
     destructive: false,
+    takesParts: false,
   },
 ];
 

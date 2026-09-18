@@ -339,6 +339,7 @@ const AdminJobDefinitionSchema = z
     description: z.string(),
     needsLibrary: z.boolean(),
     destructive: z.boolean(),
+    takesParts: z.boolean(),
   })
   .openapi('AdminJobDefinition');
 
@@ -379,12 +380,16 @@ const adminRunJobRoute = createRoute({
       description: 'The job was queued',
       content: { 'application/json': { schema: ScanAccepted } },
     },
+    400: {
+      description: 'A job that clears parts of a library was not told which',
+      content: { 'application/json': { schema: AdminError } },
+    },
     403: {
       description: 'Not an administrator',
       content: { 'application/json': { schema: AdminError } },
     },
     404: {
-      description: 'No such job kind or library',
+      description: 'No such job kind or library, or nothing of those parts in the library',
       content: { 'application/json': { schema: AdminError } },
     },
   },

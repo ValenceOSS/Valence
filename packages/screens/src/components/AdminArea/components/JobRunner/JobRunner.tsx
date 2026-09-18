@@ -16,6 +16,8 @@ import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
+import { ClearLibraryPartsDialog } from '@ValenceScreens/components/AdminArea/components/ClearLibraryPartsDialog/ClearLibraryPartsDialog';
+import { RunLibraryJobDialog } from '@ValenceScreens/components/AdminArea/components/RunLibraryJobDialog/RunLibraryJobDialog';
 import { ScanProgressBar } from '@ValenceScreens/components/AdminArea/components/ScanProgressBar/ScanProgressBar';
 import { describeQueueKind } from '@ValenceScreens/components/AdminArea/describeQueueKind';
 import { summariseProgress } from './summariseProgress';
@@ -37,16 +39,22 @@ const WORKING_SHOWN = 4;
  * and it was refused for the whole of a preview render, which is hours: the one job you want when
  * something looks wrong was the one the page would not let you run.
  *
+ * A job that works on libraries asks which ones first, all of them ticked to begin with. The one that
+ * clears parts of a library also asks which parts, and has no schedule, since a schedule would not
+ * know what to clear.
+ *
  * @param definitions - The jobs the server offers.
  * @param libraries - The libraries a job can be run against.
  * @param progress - What is running now, by library.
  * @param working - What the queue is working on.
- * @param onRun - Called with the job to start.
+ * @param onRun - Called with the job to start, the libraries to start it on for one that takes
+ *   them, and the parts to clear for the one that clears them.
  * @param onStop - Called with the job to stop.
  * @param onOpenSchedule - Called with the job whose schedule is to be opened.
  */
 const JobRunner = ({
   definitions,
+  libraries,
   progress,
   working,
   onRun,
@@ -54,6 +62,8 @@ const JobRunner = ({
   onOpenSchedule,
 }: JobRunnerProps) => {
   const [confirming, setConfirming] = useState<JobDefinition | null>(null);
+  const [choosing, setChoosing] = useState<JobDefinition | null>(null);
+  const [clearing, setClearing] = useState<JobDefinition | null>(null);
 
   const summaryFor = useCallback(
     (kind: string) =>
@@ -73,6 +83,18 @@ const JobRunner = ({
 
   const askOrRun = useCallback(
     (definition: JobDefinition) => {
+      if (definition.takesParts) {
+        setClearing(definition);
+
+        return;
+      }
+
+      if (definition.needsLibrary) {
+        setChoosing(definition);
+
+        return;
+      }
+
       if (definition.destructive) {
         setConfirming(definition);
 
@@ -246,14 +268,18 @@ const JobRunner = ({
                             },
                           },
                         ]),
-                    {
-                      id: 'schedule',
-                      label: 'Edit schedule',
-                      icon: <Icon of={Calendar01Icon} size={15} />,
-                      onChoose: () => {
-                        live.current.onOpenSchedule(row.original.kind);
-                      },
-                    },
+                    ...(row.original.takesParts
+                      ? []
+                      : [
+                          {
+                            id: 'schedule',
+                            label: 'Edit schedule',
+                            icon: <Icon of={Calendar01Icon} size={15} />,
+                            onChoose: () => {
+                              live.current.onOpenSchedule(row.original.kind);
+                            },
+                          },
+                        ]),
                   ],
                 },
               ]}
@@ -268,6 +294,30 @@ const JobRunner = ({
   return (
     <>
       <DataTable label="Server jobs" columns={columns} rows={definitions} />
+
+      <ClearLibraryPartsDialog
+        definition={clearing}
+        libraries={libraries}
+        onClose={() => {
+          setClearing(null);
+        }}
+        onClear={(kind, libraryIds, parts) => {
+          onRun(kind, libraryIds, parts);
+          setClearing(null);
+        }}
+      />
+
+      <RunLibraryJobDialog
+        definition={choosing}
+        libraries={libraries}
+        onClose={() => {
+          setChoosing(null);
+        }}
+        onRun={(kind, libraryIds) => {
+          onRun(kind, libraryIds);
+          setChoosing(null);
+        }}
+      />
 
       <Dialog
         label={confirming === null ? 'Run this job?' : `Run ${confirming.label}?`}
@@ -297,7 +347,7 @@ const JobRunner = ({
               </Button>
 
               <Button
-                variant="danger"
+                variant="primary"
                 onClick={() => {
                   onRun(confirming.kind);
                   setConfirming(null);

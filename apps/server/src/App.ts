@@ -234,6 +234,7 @@ import {
   REGENERATE_PREVIEWS_JOB,
   REGENERATE_TRICKPLAY_JOB,
   FETCH_LOGOS_JOB,
+  CLEAR_LIBRARY_PARTS_JOB,
   DETECT_SEGMENTS_JOB,
   READ_CERTIFICATES_AGAIN_JOB,
 } from '@ValenceServer/jobs/JobQueue';
@@ -2462,7 +2463,7 @@ const createApp = ({
     }
 
     const { kind } = context.req.valid('param');
-    const { libraryId, force } = context.req.valid('json');
+    const { libraryId, force, parts } = context.req.valid('json');
 
     const definition = JOB_DEFINITIONS.find((job) => job.kind === kind);
 
@@ -2485,6 +2486,10 @@ const createApp = ({
       return context.json({ error: 'That job needs a library.' }, 404);
     }
 
+    if (definition?.takesParts === true && parts === undefined) {
+      return context.json({ error: 'Say which parts of the library to clear.' }, 400);
+    }
+
     const libraryRunners: Record<string, () => Promise<{ jobId: string; state: string } | null>> = {
       [SCAN_LIBRARY_JOB]: () => library.scan(libraryId, force ?? false),
       [REGENERATE_PREVIEWS_JOB]: () => library.regeneratePreviews(libraryId),
@@ -2492,6 +2497,7 @@ const createApp = ({
       [FETCH_LOGOS_JOB]: () => library.fetchLogos(libraryId),
       [DETECT_SEGMENTS_JOB]: () => library.detectSegments(libraryId),
       [RESET_LIBRARY_JOB]: () => library.reset(libraryId),
+      [CLEAR_LIBRARY_PARTS_JOB]: () => library.clearParts(libraryId, parts ?? []),
     };
 
     const runner = libraryRunners[kind];

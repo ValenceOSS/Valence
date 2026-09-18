@@ -1,6 +1,7 @@
 type ExpiringCache<T> = {
   get: (key: string) => T | undefined;
   set: (key: string, value: T) => void;
+  clear: () => void;
 };
 
 type ExpiringCacheOptions = {
@@ -27,6 +28,10 @@ type ExpiringCacheOptions = {
  * `holds` bounds it by count as well, evicting whichever was written first. Replacing a value
  * leaves its place in that order alone, so a key written once and read often still ages out — this
  * bounds memory, and the time is what keeps answers honest.
+ *
+ * It can also be emptied on purpose, for the one time somebody says what it holds is wrong: an
+ * operator clearing a library's descriptions wants the catalogue asked again, not its answer from
+ * an hour ago handed back.
  *
  * The clock is injectable so that a test can age an entry without waiting for one.
  *
@@ -70,6 +75,10 @@ const createExpiringCache = <T>(
       if (oldest.done !== true) {
         held.delete(oldest.value);
       }
+    },
+
+    clear: () => {
+      held.clear();
     },
   };
 };

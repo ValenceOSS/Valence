@@ -209,6 +209,7 @@ const JOB_DEFINITIONS = [
     description: 'Finds new, changed and removed files.',
     needsLibrary: true,
     destructive: false,
+    takesParts: false,
   },
   {
     kind: 'library.regeneratePreviews',
@@ -216,6 +217,7 @@ const JOB_DEFINITIONS = [
     description: "Rebuilds preview clips using the library's forced audio language.",
     needsLibrary: true,
     destructive: false,
+    takesParts: false,
   },
   {
     kind: 'library.regenerateTrickplay',
@@ -223,6 +225,7 @@ const JOB_DEFINITIONS = [
     description: 'Rebuilds scrubbing thumbnail sheets for every item.',
     needsLibrary: true,
     destructive: false,
+    takesParts: false,
   },
   {
     kind: 'library.detectSegments',
@@ -230,6 +233,7 @@ const JOB_DEFINITIONS = [
     description: 'Finds skippable segments using chapters and audio fingerprints.',
     needsLibrary: true,
     destructive: false,
+    takesParts: false,
   },
   {
     kind: 'library.reset',
@@ -237,6 +241,7 @@ const JOB_DEFINITIONS = [
     description: 'Deletes everything in the library, then scans it from nothing.',
     needsLibrary: true,
     destructive: true,
+    takesParts: false,
   },
 ];
 
@@ -618,6 +623,7 @@ describe('AdminArea', () => {
     expect(screen.getByText('Reset and rebuild')).toBeInTheDocument();
 
     await chooseJob(actor, 'Scan for changes', /Run now/);
+    await actor.click(await screen.findByRole('button', { name: 'Run on every library' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -641,6 +647,7 @@ describe('AdminArea', () => {
     await goTo(actor, 'Jobs');
     await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Run now/);
+    await actor.click(await screen.findByRole('button', { name: 'Run on every library' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(

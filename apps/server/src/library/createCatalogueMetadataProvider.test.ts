@@ -221,6 +221,23 @@ describe('createCatalogueMetadataProvider', () => {
     expect(found?.trailerKey).toBeUndefined();
   });
 
+  it('keeps what the catalogue said, and asks again once told to forget it', async () => {
+    const { instance, calls } = provider({ '/search/movie': SEARCH, '/movie/329': DETAIL });
+
+    await instance.describe(facts('/media/Arrival (2016).mkv'));
+
+    const asked = calls.length;
+
+    await instance.describe(facts('/media/Arrival (2016).mkv'));
+
+    expect(calls).toHaveLength(asked);
+
+    instance.forgetAnswers?.();
+    await instance.describe(facts('/media/Arrival (2016).mkv'));
+
+    expect(calls).toHaveLength(asked * 2);
+  });
+
   it('names the cast, with their roles', async () => {
     const { instance } = provider({ '/search/movie': SEARCH, '/movie/329': DETAIL });
 

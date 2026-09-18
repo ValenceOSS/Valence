@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 type CachedImage = {
@@ -90,6 +90,13 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
 
         return null;
       }
+    },
+
+    forget: async (url: string): Promise<void> => {
+      const path = join(directory, nameFor(url));
+
+      await rm(path, { force: true });
+      await rm(`${path}.type`, { force: true });
     },
 
     nameFor,

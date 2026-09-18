@@ -8,6 +8,7 @@ const WORDS: Record<string, string> = {
   'library.regenerateTrickplay': 'Regenerating thumbnails for',
   'library.detectSegments': 'Detecting intros in',
   'library.reset': 'Rebuilding',
+  'library.clearParts': 'Clearing parts of',
 };
 
 /**

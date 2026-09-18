@@ -1,7 +1,7 @@
 import { askForLibraryWork } from '@ValenceServer/library/askForLibraryWork';
 import { jobBehindTheKey } from '@ValenceServer/library/jobBehindTheKey';
 import { randomUUID } from 'node:crypto';
-import { stat } from 'node:fs/promises';
+import { rm, stat } from 'node:fs/promises';
 import { z } from 'zod';
 import {
   and,
@@ -62,6 +62,11 @@ import { resolveSeriesShape } from './MetadataProvider';
 import { regeneratePreviews } from './regeneratePreviews';
 import { generateTrickplay } from './generateTrickplay';
 import { rebuildItemArtefacts } from './rebuildItemArtefacts';
+import { clearLibraryParts } from './clearLibraryParts';
+import { createClearableLibrary } from './createClearableLibrary';
+import { readsAgainAfterClearing } from '@ValenceCore/functions/readsAgainAfterClearing';
+import { LIBRARY_PARTS_BY_KIND } from '@ValenceContracts/schemas/LibraryPart';
+import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import { toIso } from '@ValenceCore/functions/toIso';
 import {
   TRICKPLAY_INTERVAL_SECONDS,
@@ -94,6 +99,7 @@ import {
   REGENERATE_TRICKPLAY_JOB,
   FETCH_LOGOS_JOB,
   DETECT_SEGMENTS_JOB,
+  CLEAR_LIBRARY_PARTS_JOB,
   CLEANUP_ARTEFACT_CACHE_JOB,
 } from '@ValenceServer/jobs/JobQueue';
 import type { JobQueue } from '@ValenceServer/jobs/JobQueue';
@@ -124,6 +130,7 @@ type CreateDatabaseLibraryServiceOptions = {
   certificationRegion?: () => Promise<string>;
   providers?: MetadataProvider[];
   books?: BookStore;
+  images?: { forget: (url: string) => Promise<void> };
   music?: {
     store: MusicStore;
     artwork: MusicArtwork;
@@ -183,6 +190,7 @@ type DatabaseLibraryService = LibraryService & {
   ) => Promise<void>;
   runRegenerateTrickplay: (libraryId: string, jobId?: string) => Promise<void>;
   runFetchLogos: (libraryId: string, jobId?: string) => Promise<void>;
+  runClearParts: (libraryId: string, parts: LibraryPart[], jobId?: string) => Promise<void>;
 };
 
 const EVERY_EPISODE = 2000;
@@ -238,6 +246,7 @@ const createDatabaseLibraryService = ({
   jobs,
   providers,
   books,
+  images,
   music,
   atOnce = 1,
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
@@ -1634,6 +1643,70 @@ const createDatabaseLibraryService = ({
       await clearJobCompletions(db, libraryId, REGENERATE_PREVIEWS_JOB);
 
       return service.regeneratePreviews(libraryId);
+    },
+
+    clearParts: async (libraryId, parts) => {
+      const found = await findLibrary(libraryId);
+
+      if (found === null) {
+        return null;
+      }
+
+      const offered = LIBRARY_PARTS_BY_KIND[LibraryKindSchema.parse(found.kind)];
+      const clearing = parts.filter((part) => offered.includes(part));
+
+      if (clearing.length === 0) {
+        return null;
+      }
+
+      const jobId = await jobs.enqueue(
+        CLEAR_LIBRARY_PARTS_JOB,
+        { libraryId, parts: clearing },
+        libraryId,
+      );
+
+      return jobBehindTheKey(jobId, CLEAR_LIBRARY_PARTS_JOB, libraryId, jobs);
+    },
+
+    runClearParts: async (libraryId, parts, jobId) => {
+      const isFinished = await clearLibraryParts({
+        libraryId,
+        parts,
+        store: createClearableLibrary(db),
+        images: images ?? { forget: () => Promise.resolve() },
+        files: { remove: (path) => rm(path, { force: true }) },
+        transcoder,
+        quality: await previewQuality(),
+        trickplay: {
+          intervalSeconds: TRICKPLAY_INTERVAL_SECONDS,
+          tileWidth: TRICKPLAY_TILE_WIDTH,
+          columns: TRICKPLAY_COLUMNS,
+          rows: TRICKPLAY_ROWS,
+        },
+        ...(onProblem === undefined ? {} : { onProblem }),
+        ...(jobId === undefined
+          ? {}
+          : {
+              onProgress: (done, total) => jobs.reportProgress(jobId, 'clearing', done, total),
+              isCancelled: () => jobs.isCancelled(jobId),
+            }),
+      });
+
+      if (!isFinished) {
+        return;
+      }
+
+      const readsAgain = readsAgainAfterClearing(parts);
+
+      if (readsAgain) {
+        shapes.clear();
+
+        for (const provider of providers ?? []) {
+          provider.forgetAnswers?.();
+        }
+      }
+
+      await jobs.enqueue(SCAN_LIBRARY_JOB, { libraryId, force: readsAgain }, libraryId);
     },
 
     regenerateTrickplay: async (libraryId) => {
