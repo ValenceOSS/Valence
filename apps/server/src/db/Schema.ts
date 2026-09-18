@@ -113,7 +113,7 @@ const deviceCode = pgTable('deviceCode', {
   id: text('id').primaryKey(),
   deviceCode: text('deviceCode').notNull(),
   userCode: text('userCode').notNull(),
-  userId: text('userId'),
+  userId: text('userId').references(() => user.id, { onDelete: 'cascade' }),
   expiresAt: timestamp('expiresAt').notNull(),
   status: text('status').notNull(),
   lastPolledAt: timestamp('lastPolledAt'),
@@ -137,7 +137,9 @@ const apikey = pgTable('apikey', {
   configId: text('configId').notNull(),
   name: text('name'),
   start: text('start'),
-  referenceId: text('referenceId').notNull(),
+  referenceId: text('referenceId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   prefix: text('prefix'),
   key: text('key').notNull(),
   refillInterval: integer('refillInterval'),

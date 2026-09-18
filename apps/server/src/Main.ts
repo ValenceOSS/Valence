@@ -66,6 +66,7 @@ import {
   musicAlbum,
   musicArtist,
   musicTrack,
+  apikey,
 } from '@ValenceServer/db/Schema';
 import { readEnv } from '@ValenceServer/env/Env';
 import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatabaseSettingsStore';
@@ -1969,6 +1970,7 @@ const app = createApp({
 
     await db.update(user).set({ banned: true, banReason: reason }).where(eq(user.id, userId));
     await db.delete(session).where(eq(session.userId, userId));
+    await db.update(apikey).set({ enabled: false }).where(eq(apikey.referenceId, userId));
 
     return true;
   },
