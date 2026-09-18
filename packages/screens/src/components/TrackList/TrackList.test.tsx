@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -59,6 +59,22 @@ beforeEach(() => {
 });
 
 describe('TrackList', () => {
+  it('lays one background under whichever row the pointer is over', () => {
+    renderInAnAddress(<TrackList label="Even In Arcadia" tracks={TRACKS} onPlay={vi.fn()} />);
+
+    const row = within(screen.getByRole('list', { name: 'Even In Arcadia' })).getAllByRole(
+      'listitem',
+    )[1];
+
+    expect(row).toHaveAttribute('data-highlight');
+
+    if (row !== undefined) {
+      fireEvent.pointerMove(row);
+    }
+
+    expect(document.querySelector('.bg-\\[var\\(--surface-hover\\)\\]')).toBeInTheDocument();
+  });
+
   it('lists every song, named for anybody not looking at it', () => {
     renderInAnAddress(<TrackList label="Even In Arcadia" tracks={TRACKS} onPlay={vi.fn()} />);
 
