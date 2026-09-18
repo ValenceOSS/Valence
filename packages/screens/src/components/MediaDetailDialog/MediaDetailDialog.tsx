@@ -5,6 +5,7 @@ import {
   ArrowLeft01Icon,
   ArrowTurnForwardIcon,
   Cancel01Icon,
+  ClapperboardIcon,
   Download04Icon,
   FavouriteIcon,
   FilmRoll01Icon,
@@ -37,9 +38,11 @@ import { Rail } from '@ValenceUI/Rail';
 import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useHeldWhileLeaving } from '@ValenceClient/shell/useHeldWhileLeaving';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { PreviewMomentPicker } from '@ValenceScreens/components/PreviewMomentPicker/PreviewMomentPicker';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
 import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
 import { scrollToTopOf } from '@ValenceScreens/navigation/scrollToTopOf';
@@ -122,6 +125,9 @@ const MediaDetailDialog = ({
   const { mark: pastTheArtwork, hasPassed: hasScrolledPast } = useHasScrolledPast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
+  const [isChoosingMoment, setIsChoosingMoment] = useState(false);
+  const { may } = useWhatIMayDo();
+  const cache = useQueryClient();
 
   const prepared = useQuery({ ...downloadQueries.all(), enabled: canKeepFiles() });
 
@@ -605,6 +611,18 @@ const MediaDetailDialog = ({
                     },
                   },
                 ]),
+            ...(may('media.override')
+              ? [
+                  {
+                    id: 'preview-moment',
+                    label: 'Choose the preview moment',
+                    icon: <Icon of={ClapperboardIcon} size={18} />,
+                    onChoose: () => {
+                      setIsChoosingMoment(true);
+                    },
+                  },
+                ]
+              : []),
           ]}
         />
       </DialogFooter>
@@ -633,6 +651,20 @@ const MediaDetailDialog = ({
           )}
         </DialogContent>
       </Dialog>
+
+      <PreviewMomentPicker
+        mediaId={shown.id}
+        title={shown.title}
+        durationSeconds={detail?.durationSeconds ?? shown.durationSeconds}
+        current={detail?.previewMoment ?? null}
+        isOpen={isChoosingMoment}
+        onClose={() => {
+          setIsChoosingMoment(false);
+        }}
+        onChanged={() => {
+          void cache.invalidateQueries({ queryKey: libraryQueries.detail(shown.id).queryKey });
+        }}
+      />
     </Dialog>
   );
 };

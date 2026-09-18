@@ -11,6 +11,7 @@ import { LogsPanel } from './components/LogsPanel/LogsPanel';
 import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
 import { MediaPanel } from './components/MediaPanel/MediaPanel';
 import { MatchPicker } from './components/MatchPicker/MatchPicker';
+import { PreviewMomentPicker } from '@ValenceScreens/components/PreviewMomentPicker/PreviewMomentPicker';
 import { OverviewPanel } from './components/OverviewPanel/OverviewPanel';
 import { RolesPanel } from './components/RolesPanel/RolesPanel';
 import { WebhooksPanel } from './components/WebhooksPanel/WebhooksPanel';
@@ -105,6 +106,8 @@ const AdminArea = ({
   const [encoderHistory, setEncoderHistory] = useState<number[]>([]);
   const [viewingJobKind, setViewingJobKind] = useState<string | null>(initialJob ?? null);
   const [correcting, setCorrecting] = useState<MediaSummary | null>(null);
+  const [choosingMoment, setChoosingMoment] = useState<MediaSummary | null>(null);
+  const chosenDetail = useQuery(libraryQueries.detail(choosingMoment?.id ?? null));
   const {
     progress: scanProgress,
     isScanningAll,
@@ -671,6 +674,7 @@ const AdminArea = ({
               isUnreachable={unreachable.has('media')}
               media={media}
               onCorrect={setCorrecting}
+              onChooseMoment={setChoosingMoment}
               onRebuildArtefacts={async (item) => (await rebuildArtefacts(item.id)) !== null}
             />
           </TabPanel>
@@ -788,6 +792,24 @@ const AdminArea = ({
               queryKey: adminQueries.everything(libraries.map((library) => library.id)).queryKey,
             });
           });
+        }}
+      />
+
+      <PreviewMomentPicker
+        mediaId={choosingMoment?.id ?? ''}
+        title={choosingMoment?.title ?? ''}
+        durationSeconds={choosingMoment?.durationSeconds ?? 0}
+        current={chosenDetail.data?.previewMoment ?? null}
+        isOpen={choosingMoment !== null}
+        onClose={() => {
+          setChoosingMoment(null);
+        }}
+        onChanged={() => {
+          if (choosingMoment !== null) {
+            void cache.invalidateQueries({
+              queryKey: libraryQueries.detail(choosingMoment.id).queryKey,
+            });
+          }
         }}
       />
     </motion.div>

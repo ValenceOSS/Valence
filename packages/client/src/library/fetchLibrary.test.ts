@@ -13,6 +13,8 @@ import {
   forgetCorrection,
   fetchMediaDetail,
   rebuildArtefacts,
+  setPreviewMoment,
+  clearPreviewMoment,
 } from './fetchLibrary';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
@@ -488,6 +490,97 @@ describe('forgetting a correction', () => {
     });
 
     await expect(forgetCorrection('media-1')).resolves.toBeNull();
+  });
+});
+
+describe('choosing where a preview clip comes from', () => {
+  const MOMENT = { atSeconds: 754, durationSeconds: null };
+
+  it('sends the moment and reports what the server kept', async () => {
+    fetchMock.mockResolvedValue(ok(MOMENT));
+
+    await expect(setPreviewMoment('media-1', { atSeconds: 754 })).resolves.toEqual(MOMENT);
+
+    const [url, init] = fetchMock.mock.calls.at(-1) ?? [];
+
+    expect(url).toBe('/api/media/media-1/preview-moment');
+    expect(init?.method).toBe('PUT');
+    expect(init?.body).toBe('{"atSeconds":754}');
+  });
+
+  it('sends how long the clip runs where that was chosen too', async () => {
+    fetchMock.mockResolvedValue(ok({ atSeconds: 754, durationSeconds: 12 }));
+
+    await setPreviewMoment('media-1', { atSeconds: 754, durationSeconds: 12 });
+
+    const [, init] = fetchMock.mock.calls.at(-1) ?? [];
+
+    expect(init?.body).toContain('"durationSeconds":12');
+  });
+
+  it('passes on the reason the server refused', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: () => Promise.resolve({ error: 'That is past the end of the film.' }),
+    });
+
+    await expect(setPreviewMoment('media-1', { atSeconds: 99_999 })).resolves.toEqual({
+      problem: 'That is past the end of the film.',
+    });
+  });
+
+  it('says what the server answered when it did not explain itself', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 500, json: () => Promise.resolve(null) });
+
+    await expect(setPreviewMoment('media-1', { atSeconds: 754 })).resolves.toEqual({
+      problem: 'The server answered 500.',
+    });
+  });
+
+  it('says the server could not be reached rather than blaming the request', async () => {
+    fetchMock.mockRejectedValue(new Error('offline'));
+
+    await expect(setPreviewMoment('media-1', { atSeconds: 754 })).resolves.toEqual({
+      problem: 'The server could not be reached.',
+    });
+  });
+});
+
+describe('putting a preview clip back to automatic', () => {
+  it('reports whether there was a chosen moment to forget', async () => {
+    fetchMock.mockResolvedValue(ok({ cleared: true }));
+
+    await expect(clearPreviewMoment('media-1')).resolves.toBe(true);
+
+    const [url, init] = fetchMock.mock.calls.at(-1) ?? [];
+
+    expect(url).toBe('/api/media/media-1/preview-moment');
+    expect(init?.method).toBe('DELETE');
+  });
+
+  it('says so when there was nothing to forget', async () => {
+    fetchMock.mockResolvedValue(ok({ cleared: false }));
+
+    await expect(clearPreviewMoment('media-1')).resolves.toBe(false);
+  });
+
+  it('has nothing to report when the server refused', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 404, json: () => Promise.resolve(null) });
+
+    await expect(clearPreviewMoment('media-1')).resolves.toBeNull();
+  });
+
+  it('has nothing to report when the server could not be reached', async () => {
+    fetchMock.mockRejectedValue(new Error('offline'));
+
+    await expect(clearPreviewMoment('media-1')).resolves.toBeNull();
+  });
+
+  it('has nothing to report when the answer was not one it recognises', async () => {
+    fetchMock.mockResolvedValue(ok({ nope: true }));
+
+    await expect(clearPreviewMoment('media-1')).resolves.toBeNull();
   });
 });
 
