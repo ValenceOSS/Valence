@@ -8,11 +8,13 @@ import type { SliderProps, SliderTone } from './Slider.types';
 const TRACK_CLASSES: Record<SliderTone, string> = {
   default: 'bg-surface-raised',
   overlay: 'bg-on-scrim/30',
+  glass: 'bg-text/15',
 };
 
 const FILL_CLASSES: Record<SliderTone, string> = {
   default: 'bg-primary',
   overlay: 'bg-on-scrim',
+  glass: 'bg-primary',
 };
 
 /**
@@ -36,7 +38,8 @@ const FILL_CLASSES: Record<SliderTone, string> = {
  *   difference between this and a preview: a preview answers "what is there", and this answers
  *   "what have I set". Shown without the pause a tooltip usually takes, since a figure that arrives
  *   half a second after the handle has moved is describing the past.
- * @param tone - Whether it sits on the page or over video.
+ * @param tone - Whether it sits on the page, over video, or on a pane of glass whose colour is the
+ *   page's own, where the page's raised surface would not show.
  * @param className - Extra classes for the caller's own layout.
  */
 const Slider = ({

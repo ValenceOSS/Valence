@@ -176,6 +176,15 @@ describe('Slider', () => {
 
     expect(container.querySelector('[data-tone="overlay"]')).toBeInTheDocument();
   });
+
+  it('can be drawn on glass, with a track that shows whatever the theme', () => {
+    const { container } = render(
+      <Slider label="Seek" value={30} max={120} tone="glass" onValueChange={vi.fn()} />,
+    );
+
+    expect(container.querySelector('[data-tone="glass"]')).toBeInTheDocument();
+    expect(container.querySelector('.bg-text\\/15')).toBeInTheDocument();
+  });
 });
 
 describe('the preview that follows the pointer', () => {
