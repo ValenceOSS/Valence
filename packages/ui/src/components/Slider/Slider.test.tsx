@@ -355,4 +355,23 @@ describe('the preview that follows the pointer', () => {
       'hover-hover:group-hover/slider:opacity-100',
     );
   });
+
+  it('says the value settled on once the keys are done with it', async () => {
+    const onValueCommit = vi.fn();
+
+    render(
+      <Slider
+        label="Where the song is"
+        value={10}
+        max={100}
+        onValueChange={vi.fn()}
+        onValueCommit={onValueCommit}
+      />,
+    );
+
+    screen.getByRole('slider', { name: 'Where the song is' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+
+    expect(onValueCommit).toHaveBeenCalledWith(11);
+  });
 });

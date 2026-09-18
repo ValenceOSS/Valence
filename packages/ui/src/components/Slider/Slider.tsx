@@ -32,6 +32,8 @@ const FILL_CLASSES: Record<SliderTone, string> = {
  * @param max - The largest value the track reaches.
  * @param step - How far each press of an arrow key moves it.
  * @param onValueChange - Told the new value as the handle moves.
+ * @param onValueCommit - Told the value somebody settled on, once they let go of the handle or
+ *   finish with the keys — for a value that is costly to change, such as where a song is.
  * @param renderPreview - Draws something above the handle for the value being pointed at.
  * @param valueLabel - Names the value the handle is at, shown while the handle is under the pointer
  *   or holding focus. Says where the handle is rather than where the pointer is, which is the
@@ -52,6 +54,7 @@ const Slider = ({
   max,
   step = 1,
   onValueChange,
+  onValueCommit,
   renderPreview,
   valueLabel,
   tone = 'default',
@@ -166,6 +169,9 @@ const Slider = ({
         className="group/slider flex w-full touch-none items-center py-2 select-none data-[disabled]:opacity-50"
         onValueChange={(next) => {
           onValueChange(next[0] ?? 0);
+        }}
+        onValueCommit={(next) => {
+          onValueCommit?.(next[0] ?? 0);
         }}
         onPointerDown={() => {
           setIsDragging(true);
