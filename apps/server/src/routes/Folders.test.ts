@@ -48,7 +48,7 @@ const build = () => {
     settings,
     permissions,
     countUsers: () => Promise.resolve(1),
-    promoteToAdmin: () => Promise.resolve(),
+    promoteToAdmin: () => Promise.resolve(null),
     library: createMemoryLibraryService({ libraries: [], media: [] }),
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),

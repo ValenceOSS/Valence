@@ -8,6 +8,8 @@ describe('checkRoleChange', () => {
   it('allows a change to a role below the actor, granting what they hold', () => {
     expect(
       checkRoleChange({
+        actorId: 'usr_actor',
+        ownerId: 'usr_owner',
         actorHighestPosition: 200,
         actorPermissions: holding('account.roles', 'jobs.run'),
         targetPosition: 100,
@@ -20,6 +22,8 @@ describe('checkRoleChange', () => {
     it('refuses a role above the actor', () => {
       expect(
         checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
           actorHighestPosition: 100,
           actorPermissions: holding('account.roles'),
           targetPosition: 200,
@@ -30,6 +34,8 @@ describe('checkRoleChange', () => {
     it('refuses a role at the actor’s own rank', () => {
       expect(
         checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
           actorHighestPosition: 200,
           actorPermissions: holding('account.roles'),
           targetPosition: 200,
@@ -40,6 +46,8 @@ describe('checkRoleChange', () => {
     it('refuses everything to somebody holding no role at all', () => {
       expect(
         checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
           actorHighestPosition: null,
           actorPermissions: holding('account.roles'),
           targetPosition: 0,
@@ -52,6 +60,8 @@ describe('checkRoleChange', () => {
     it('refuses a permission the actor lacks', () => {
       expect(
         checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
           actorHighestPosition: 200,
           actorPermissions: holding('account.roles', 'jobs.run'),
           targetPosition: 100,
@@ -63,6 +73,8 @@ describe('checkRoleChange', () => {
     it('refuses when only one of several is missing', () => {
       expect(
         checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
           actorHighestPosition: 200,
           actorPermissions: holding('account.roles', 'jobs.run'),
           targetPosition: 100,
@@ -74,6 +86,8 @@ describe('checkRoleChange', () => {
     it('refuses somebody handing out administrator', () => {
       expect(
         checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
           actorHighestPosition: 200,
           actorPermissions: holding('account.roles'),
           targetPosition: 100,
@@ -85,6 +99,8 @@ describe('checkRoleChange', () => {
     it('allows granting nothing new, such as a rename', () => {
       expect(
         checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
           actorHighestPosition: 200,
           actorPermissions: holding('account.roles'),
           targetPosition: 100,
@@ -97,6 +113,8 @@ describe('checkRoleChange', () => {
     it('reports being outranked rather than the escalation underneath it', () => {
       expect(
         checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
           actorHighestPosition: 100,
           actorPermissions: holding('account.roles'),
           targetPosition: 300,
@@ -107,9 +125,64 @@ describe('checkRoleChange', () => {
   });
 
   describe('administrator', () => {
-    it('may edit a role at its own rank, including Administrator itself', () => {
+    it('may no longer edit a role at its own rank, which is how it rewrote its way up', () => {
       expect(
         checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
+          actorHighestPosition: 300,
+          actorPermissions: holding('administrator'),
+          targetPosition: 300,
+          granting: ['administrator'],
+        }),
+      ).toBe('outranked');
+    });
+
+    it('still holds every permission, so granting one below it is not an escalation', () => {
+      expect(
+        checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
+          actorHighestPosition: 300,
+          actorPermissions: holding('administrator'),
+          targetPosition: 100,
+          granting: ['server.settings', 'account.ban'],
+        }),
+      ).toBeNull();
+    });
+
+    it('is outranked by a role above it, the same as anybody else', () => {
+      expect(
+        checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
+          actorHighestPosition: 300,
+          actorPermissions: holding('administrator'),
+          targetPosition: 999,
+          granting: ['server.settings', 'account.ban'],
+        }),
+      ).toBe('outranked');
+    });
+
+    it('is refused where it holds no position at all, since rank now applies to it', () => {
+      expect(
+        checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: 'usr_owner',
+          actorHighestPosition: null,
+          actorPermissions: holding('administrator'),
+          targetPosition: 0,
+        }),
+      ).toBe('outranked');
+    });
+  });
+
+  describe('the owner', () => {
+    it('may change any role, which is what keeps somebody able to', () => {
+      expect(
+        checkRoleChange({
+          actorId: 'usr_owner',
+          ownerId: 'usr_owner',
           actorHighestPosition: 300,
           actorPermissions: holding('administrator'),
           targetPosition: 300,
@@ -117,26 +190,19 @@ describe('checkRoleChange', () => {
         }),
       ).toBeNull();
     });
+  });
 
-    it('may grant anything, holding everything by implication', () => {
+  describe('a server that has recorded no owner', () => {
+    it('gives nobody the exemption, and falls back to rank alone', () => {
       expect(
         checkRoleChange({
+          actorId: 'usr_actor',
+          ownerId: null,
           actorHighestPosition: 300,
           actorPermissions: holding('administrator'),
-          targetPosition: 999,
-          granting: ['server.settings', 'account.ban'],
+          targetPosition: 300,
         }),
-      ).toBeNull();
-    });
-
-    it('is not fooled by holding no position, since rank does not apply', () => {
-      expect(
-        checkRoleChange({
-          actorHighestPosition: null,
-          actorPermissions: holding('administrator'),
-          targetPosition: 0,
-        }),
-      ).toBeNull();
+      ).toBe('outranked');
     });
   });
 });

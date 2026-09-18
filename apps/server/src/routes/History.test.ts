@@ -58,7 +58,7 @@ const build = async () => {
     settings,
     permissions: createMemoryPermissionService(),
     countUsers: () => Promise.resolve(1),
-    promoteToAdmin: () => Promise.resolve(),
+    promoteToAdmin: () => Promise.resolve(null),
     library: createMemoryLibraryService({ libraries: [], media: [inTheLibrary] }),
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),

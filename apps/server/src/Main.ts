@@ -49,6 +49,7 @@ import { createDatabase } from '@ValenceServer/db/Database';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
 import { migrateToLatest } from '@ValenceServer/db/migrateToLatest';
+import { settleTheOwner } from '@ValenceServer/auth/settleTheOwner';
 import { movePhotographsOnce } from '@ValenceServer/profiles/movePhotographsOnce';
 import {
   user,
@@ -257,9 +258,31 @@ const settings = createDatabaseSettingsStore({
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    ownerAccountId: '',
     splashscreenFile: null,
   },
 });
+
+const settleOwnershipOnce = async (): Promise<void> => {
+  const { ownerAccountId } = await settings.read();
+
+  const administrators = await db
+    .select({ id: user.id, createdAt: user.createdAt })
+    .from(user)
+    .where(eq(user.role, 'admin'));
+
+  const owner = settleTheOwner(ownerAccountId, administrators);
+
+  if (owner === null) {
+    return;
+  }
+
+  await settings.write({ ownerAccountId: owner });
+
+  log.info('auth', `this server is owned by ${owner}`);
+};
+
+await settleOwnershipOnce();
 
 const REALTIME_WINDOW_MS = 200;
 
@@ -527,7 +550,7 @@ const giveDefaultRole = async (userId: string): Promise<void> => {
  *
  * @param email - The account to promote.
  */
-const promoteToAdmin = async (email: string): Promise<void> => {
+const promoteToAdmin = async (email: string): Promise<string | null> => {
   const promoted = await db
     .update(user)
     .set({ role: 'admin' })
@@ -537,7 +560,7 @@ const promoteToAdmin = async (email: string): Promise<void> => {
   if (promoted.length === 0) {
     log.warn('auth', `no account at ${email} to make an administrator`);
 
-    return;
+    return null;
   }
 
   const administrator = (await permissions.listRoles()).find(
@@ -547,12 +570,14 @@ const promoteToAdmin = async (email: string): Promise<void> => {
   if (administrator === undefined) {
     log.warn('auth', 'there is no Administrator role to give');
 
-    return;
+    return promoted[0]?.id ?? null;
   }
 
   for (const account of promoted) {
     await permissions.assignRole(account.id, administrator.id);
   }
+
+  return promoted[0]?.id ?? null;
 };
 await movePhotographsOnce({
   from: join(env.IMAGE_CACHE_DIR, 'profiles'),

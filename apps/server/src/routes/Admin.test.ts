@@ -60,7 +60,7 @@ const build = (
     settings,
     permissions,
     countUsers: () => Promise.resolve(1),
-    promoteToAdmin: () => Promise.resolve(),
+    promoteToAdmin: () => Promise.resolve(null),
     listUsers: () =>
       Promise.resolve([
         {
@@ -1094,7 +1094,7 @@ describe('what the media service says about itself', () => {
       settings,
       permissions,
       countUsers: () => Promise.resolve(1),
-      promoteToAdmin: () => Promise.resolve(),
+      promoteToAdmin: () => Promise.resolve(null),
       library: createMemoryLibraryService({ libraries: [LIBRARY], media: [] }),
       playback: createMemoryPlaybackService(),
       segments: createMemorySegmentService(),
@@ -1153,7 +1153,7 @@ describe('searching the catalogue from the admin page', () => {
       settings,
       permissions,
       countUsers: () => Promise.resolve(1),
-      promoteToAdmin: () => Promise.resolve(),
+      promoteToAdmin: () => Promise.resolve(null),
       library: createMemoryLibraryService({ libraries: [LIBRARY], media: [] }),
       playback: createMemoryPlaybackService(),
       segments: createMemorySegmentService(),
@@ -1222,7 +1222,7 @@ describe('what the caches are holding', () => {
       settings,
       permissions,
       countUsers: () => Promise.resolve(1),
-      promoteToAdmin: () => Promise.resolve(),
+      promoteToAdmin: () => Promise.resolve(null),
       library: createMemoryLibraryService({ libraries: [LIBRARY], media: [] }),
       playback: createMemoryPlaybackService(),
       segments: createMemorySegmentService(),

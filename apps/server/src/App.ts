@@ -427,7 +427,7 @@ type CreateAppOptions = {
   version?: string;
   trustedOrigins?: () => Promise<readonly string[]>;
   countUsers: () => Promise<number>;
-  promoteToAdmin: (email: string) => Promise<void>;
+  promoteToAdmin: (email: string) => Promise<string | null>;
   library: LibraryService;
   playback: PlaybackService;
   permissions?: PermissionService;
@@ -821,7 +821,7 @@ const createApp = ({
       return context.json({ error: 'The administrator account could not be created.' }, 400);
     }
 
-    await promoteToAdmin(admin.email);
+    const ownerAccountId = await promoteToAdmin(admin.email);
 
     const previous = await settings.read();
 
@@ -829,6 +829,7 @@ const createApp = ({
       trustedOrigins,
       cookieSecure,
       setupCompletedAt: new Date().toISOString(),
+      ...(ownerAccountId === null ? {} : { ownerAccountId }),
     });
 
     return context.json(
@@ -1416,6 +1417,20 @@ const createApp = ({
         ? { kind: 'everyone' }
         : { kind: 'accounts', accountIds: [accountId] },
     );
+  };
+
+  /**
+   * Who owns this server, or nothing where no owner has been recorded.
+   *
+   * An install from before ownership existed has none until it is settled at startup, and the rules
+   * fall back to rank alone rather than to trusting anybody in particular.
+   *
+   * @returns The owning account's identifier, or null.
+   */
+  const theOwner = async (): Promise<string | null> => {
+    const { ownerAccountId } = await settings.read();
+
+    return ownerAccountId === '' ? null : ownerAccountId;
   };
 
   /**
@@ -2465,10 +2480,11 @@ const createApp = ({
     actor: NonNullable<Awaited<ReturnType<typeof readActor>>>,
     targetId: string,
     targetRoles: readonly { position: number }[],
+    ownerId: string | null,
   ): boolean =>
     checkAccountAction({
       actorId: actor.id,
-      actorPermissions: actor.permissions,
+      ownerId,
       actorHighestPosition: actor.highestPosition,
       targetId,
       targetHighestPosition:
@@ -2517,6 +2533,8 @@ const createApp = ({
 
     const body = context.req.valid('json');
     const refusal = checkRoleChange({
+      actorId: actor.id,
+      ownerId: await theOwner(),
       actorHighestPosition: actor.highestPosition,
       actorPermissions: actor.permissions,
       targetPosition: body.position,
@@ -2546,6 +2564,8 @@ const createApp = ({
     }
 
     const refusal = checkRoleChange({
+      actorId: actor.id,
+      ownerId: await theOwner(),
       actorHighestPosition: actor.highestPosition,
       actorPermissions: actor.permissions,
       targetPosition: Math.max(existing.position, body.position ?? existing.position),
@@ -2604,6 +2624,8 @@ const createApp = ({
     }
 
     const refusal = checkRoleChange({
+      actorId: actor.id,
+      ownerId: await theOwner(),
       actorHighestPosition: actor.highestPosition,
       actorPermissions: actor.permissions,
       targetPosition: existing.position,
@@ -2660,6 +2682,8 @@ const createApp = ({
     }
 
     const refusal = checkRoleChange({
+      actorId: actor.id,
+      ownerId: await theOwner(),
       actorHighestPosition: actor.highestPosition,
       actorPermissions: actor.permissions,
       targetPosition: role.position,
@@ -2688,6 +2712,8 @@ const createApp = ({
 
     if (role !== undefined) {
       const refusal = checkRoleChange({
+        actorId: actor.id,
+        ownerId: await theOwner(),
         actorHighestPosition: actor.highestPosition,
         actorPermissions: actor.permissions,
         targetPosition: role.position,
@@ -2737,7 +2763,7 @@ const createApp = ({
       return 'That is for administrators.';
     }
 
-    if (outranks(actor, userId, await permissions.rolesFor(userId))) {
+    if (outranks(actor, userId, await permissions.rolesFor(userId), await theOwner())) {
       return describeAccountRefusal('outranked');
     }
 
@@ -2904,7 +2930,7 @@ const createApp = ({
     const { userId } = context.req.valid('param');
     const grant = context.req.valid('json');
 
-    if (outranks(actor, userId, await permissions.rolesFor(userId))) {
+    if (outranks(actor, userId, await permissions.rolesFor(userId), await theOwner())) {
       return context.json({ error: describeAccountRefusal('outranked') }, 403);
     }
 
@@ -2951,7 +2977,7 @@ const createApp = ({
     const { userId, permission } = context.req.valid('param');
     const target = await permissions.rolesFor(userId);
 
-    if (outranks(actor, userId, target)) {
+    if (outranks(actor, userId, target, await theOwner())) {
       return context.json({ error: describeAccountRefusal('outranked') }, 403);
     }
 
@@ -3027,7 +3053,7 @@ const createApp = ({
 
     const refusal = checkAccountAction({
       actorId: actor.id,
-      actorPermissions: actor.permissions,
+      ownerId: await theOwner(),
       actorHighestPosition: actor.highestPosition,
       targetId: userId,
       targetHighestPosition:
@@ -3068,7 +3094,7 @@ const createApp = ({
 
     const refusal = checkAccountAction({
       actorId: actor.id,
-      actorPermissions: actor.permissions,
+      ownerId: await theOwner(),
       actorHighestPosition: actor.highestPosition,
       targetId: userId,
       targetHighestPosition:
@@ -3098,7 +3124,7 @@ const createApp = ({
 
     const refusal = checkAccountAction({
       actorId: actor.id,
-      actorPermissions: actor.permissions,
+      ownerId: await theOwner(),
       actorHighestPosition: actor.highestPosition,
       targetId: userId,
       targetHighestPosition:
@@ -3169,7 +3195,7 @@ const createApp = ({
 
       const refusal = checkAccountAction({
         actorId: actor.id,
-        actorPermissions: actor.permissions,
+        ownerId: await theOwner(),
         actorHighestPosition: actor.highestPosition,
         targetId: userId,
         targetHighestPosition:
@@ -3212,7 +3238,7 @@ const createApp = ({
 
       const refusal = checkAccountAction({
         actorId: actor.id,
-        actorPermissions: actor.permissions,
+        ownerId: await theOwner(),
         actorHighestPosition: actor.highestPosition,
         targetId: userId,
         targetHighestPosition:
@@ -3270,7 +3296,7 @@ const createApp = ({
 
       const refusal = checkAccountAction({
         actorId: actor.id,
-        actorPermissions: actor.permissions,
+        ownerId: await theOwner(),
         actorHighestPosition: actor.highestPosition,
         targetId: userId,
         targetHighestPosition:
@@ -3301,7 +3327,7 @@ const createApp = ({
 
       const refusal = checkAccountAction({
         actorId: actor.id,
-        actorPermissions: actor.permissions,
+        ownerId: await theOwner(),
         actorHighestPosition: actor.highestPosition,
         targetId: userId,
         targetHighestPosition:
@@ -3332,7 +3358,7 @@ const createApp = ({
 
       const refusal = checkAccountAction({
         actorId: actor.id,
-        actorPermissions: actor.permissions,
+        ownerId: await theOwner(),
         actorHighestPosition: actor.highestPosition,
         targetId: userId,
         targetHighestPosition:
@@ -3372,7 +3398,7 @@ const createApp = ({
 
       const refusal = checkAccountAction({
         actorId: actor.id,
-        actorPermissions: actor.permissions,
+        ownerId: await theOwner(),
         actorHighestPosition: actor.highestPosition,
         targetId: userId,
         targetHighestPosition:
