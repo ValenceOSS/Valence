@@ -23,6 +23,7 @@ import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { useHomeRows } from '@ValenceScreens/components/LibraryBrowser/useHomeRows';
+import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { LibraryBrowserProps } from './LibraryBrowser.types';
 
@@ -84,6 +85,7 @@ const LibraryBrowser = ({
   onWatch,
   onReading,
 }: LibraryBrowserProps) => {
+  const { go } = usePlace();
   const [appliedSearch, setAppliedSearch] = useState('');
 
   const askedFor = useQuery(libraryQueries.all());
@@ -231,6 +233,33 @@ const LibraryBrowser = ({
                 </Button>
               ),
             })}
+      />
+    );
+  }
+
+  if (watchable.length === 0) {
+    const hasMusic = libraries.some((entry) => entry.kind === 'music');
+
+    return (
+      <NothingHere
+        of={FolderOpenIcon}
+        title="Nothing to watch yet"
+        detail="This server has no films or programmes yet."
+        fills
+        {...(hasMusic
+          ? {
+              action: (
+                <Button
+                  variant="glossy"
+                  onClick={() => {
+                    go({ section: 'music' });
+                  }}
+                >
+                  Go to Music
+                </Button>
+              ),
+            }
+          : {})}
       />
     );
   }

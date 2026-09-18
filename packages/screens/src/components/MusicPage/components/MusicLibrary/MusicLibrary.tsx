@@ -131,17 +131,31 @@ const MusicLibrary = () => {
     <nav aria-label="Your library" className="flex h-full min-h-0 flex-col gap-3">
       <div className="flex items-center justify-between gap-2 px-3 pt-3">
         <h2 className="text-base font-bold text-text">Your Library</h2>
-        <Button
-          variant="soft"
-          size="sm"
-          isPill
-          onClick={() => {
-            setIsMaking(true);
-          }}
-        >
-          <Icon of={Add01Icon} size={16} />
-          Create
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            isIconOnly
+            isActive={view.kind === 'search'}
+            label="Search music"
+            onClick={() => {
+              open({ kind: 'search', query: '' });
+            }}
+          >
+            <Icon of={Search01Icon} size={16} />
+          </Button>
+          <Button
+            variant="soft"
+            size="sm"
+            isPill
+            onClick={() => {
+              setIsMaking(true);
+            }}
+          >
+            <Icon of={Add01Icon} size={16} />
+            Create
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 px-3" role="group" aria-label="Show only">

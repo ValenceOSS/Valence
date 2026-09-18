@@ -38,6 +38,16 @@ import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { PlaylistViewProps } from './PlaylistView.types';
 
 /**
+ * Counts what is in a playlist in words that read properly at one as well as at many.
+ *
+ * @param count - How many.
+ * @param noun - What one is called.
+ * @returns The count and its noun.
+ */
+const countOf = (count: number, noun: string): string =>
+  count === 1 ? `1 ${noun}` : `${count.toString()} ${noun}s`;
+
+/**
  * A playlist's page: its cover made of what is in it, whose it is, and everything in it in order.
  *
  * Somebody else's shared playlist can be played and shuffled but not changed. One's own can be
@@ -111,9 +121,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
               <span className="w-full pb-1 text-text">{playlist.description}</span>
             )}
             <span className="font-semibold text-text">{playlist.owner.name}</span>
-            <span>
-              · {playlist.entryCount === 1 ? '1 thing' : `${playlist.entryCount.toString()} things`}
-            </span>
+            <span>· {countOf(entries.length, others.length === 0 ? 'song' : 'item')}</span>
             <span>· {formatDuration(playlist.durationSeconds)}</span>
             {playlist.isOrdered ? <span>· In order</span> : null}
           </>

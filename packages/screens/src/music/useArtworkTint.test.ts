@@ -13,6 +13,10 @@ describe('mostColourful', () => {
     expect(mostColourful([])).toBeNull();
   });
 
+  it('reads colours written with spaces, the way the lights are read', () => {
+    expect(mostColourful(['rgb(20 20 20)', 'rgb(180 30 30)'])).toBe('rgb(180 30 30)');
+  });
+
   it('skips a colour it cannot read', () => {
     expect(mostColourful(['nonsense', 'rgb(10, 90, 10)'])).toBe('rgb(10, 90, 10)');
   });

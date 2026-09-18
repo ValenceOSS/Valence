@@ -61,7 +61,7 @@ describe('NowPlayingBar', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     await userEvent.click(screen.getByRole('button', { name: 'Previous' }));
 
-    expect(player.toggle).toHaveBeenCalled();
+    expect(player.pause).toHaveBeenCalled();
     expect(player.next).toHaveBeenCalled();
     expect(player.previous).toHaveBeenCalled();
   });
@@ -111,6 +111,39 @@ describe('NowPlayingBar', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Mute' }));
 
     expect(player.toggleMute).toHaveBeenCalled();
+  });
+
+  it('pauses the other device by what that device says it is doing, not this one', async () => {
+    devices.fetchMusicDevices.mockResolvedValue([
+      {
+        clientId: 'phone',
+        label: 'iPhone',
+        nowPlaying: {
+          trackId: TRACK.id,
+          title: 'Track 1',
+          artists: ['Sleep Token'],
+          albumId: TRACK.album.id,
+          hasArtwork: true,
+          positionSeconds: 10,
+          durationSeconds: 201,
+          isPlaying: true,
+          volume: 0.8,
+          reportedAtMs: Date.now(),
+        },
+      },
+    ]);
+
+    const { player } = playing({
+      isPlaying: false,
+      remote: { clientId: 'phone', label: 'iPhone' },
+    });
+
+    renderInAnAddress(<NowPlayingBar player={player} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Pause' }));
+
+    expect(player.pause).toHaveBeenCalled();
+    expect(player.resume).not.toHaveBeenCalled();
   });
 
   it('says which device it is playing on while controlling another', () => {

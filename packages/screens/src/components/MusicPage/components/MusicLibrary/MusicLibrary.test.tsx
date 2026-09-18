@@ -97,6 +97,14 @@ describe('MusicLibrary', () => {
     expect(screen.getByRole('button', { name: /Even In Arcadia/ })).toBeInTheDocument();
   });
 
+  it('opens the search', async () => {
+    renderInAnAddress(<MusicLibrary />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Search music' }));
+
+    expect(window.location.search).toContain('listen=search');
+  });
+
   it('opens a new playlist', async () => {
     renderInAnAddress(<MusicLibrary />);
 

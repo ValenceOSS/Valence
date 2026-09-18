@@ -398,6 +398,25 @@ describe('LibraryBrowser', () => {
     expect(screen.queryByText('Add one to get started.')).not.toBeInTheDocument();
   });
 
+  it('points a server with only music at the music, rather than saying nothing was scanned', async () => {
+    fetchLibrariesMock.mockResolvedValue([
+      { ...films, id: '33333333-3333-4333-8333-333333333333', name: 'Music', kind: 'music' },
+    ]);
+    draw(<LibraryBrowser onPlay={vi.fn()} />);
+
+    expect(await screen.findByText('Nothing to watch yet')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go to Music' })).toBeInTheDocument();
+    expect(screen.queryByText('Nothing has been scanned yet')).not.toBeInTheDocument();
+  });
+
+  it('offers no way to music on a server whose only library is books', async () => {
+    fetchLibrariesMock.mockResolvedValue([manga]);
+    draw(<LibraryBrowser onPlay={vi.fn()} />);
+
+    expect(await screen.findByText('Nothing to watch yet')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Go to Music' })).not.toBeInTheDocument();
+  });
+
   it('says a server with nothing anywhere has not been scanned yet', async () => {
     fetchItemsMock.mockResolvedValue({ items: [], total: 0 });
     draw(<LibraryBrowser onPlay={vi.fn()} />);

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { FavouriteIcon, MusicNote01Icon } from '@hugeicons/core-free-icons';
+import { FavouriteIcon, MusicNote01Icon, Search01Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
@@ -71,9 +71,22 @@ const MusicHome = () => {
   return (
     <div className="flex flex-col gap-10 px-3 pt-8 pb-12 sm:px-5">
       <section aria-label="Quick picks" className="flex flex-col gap-4 px-2">
-        <h1 className="text-[clamp(1.75rem,3vw,2.5rem)] font-bold tracking-[-0.03em] text-text">
-          {greetingFor(new Date().getHours())}
-        </h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-[clamp(1.75rem,3vw,2.5rem)] font-bold tracking-[-0.03em] text-text">
+            {greetingFor(new Date().getHours())}
+          </h1>
+          <Button
+            variant="soft"
+            size="md"
+            isPill
+            onClick={() => {
+              open({ kind: 'search', query: '' });
+            }}
+          >
+            <Icon of={Search01Icon} size={16} />
+            What do you want to listen to?
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
           <Button

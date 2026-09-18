@@ -13,7 +13,7 @@ const mostColourful = (colours: readonly string[]): string | null => {
   let best = -1;
 
   for (const colour of colours) {
-    const channels = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(colour);
+    const channels = /rgb\((\d+)[,\s]+(\d+)[,\s]+(\d+)\)/.exec(colour);
 
     if (channels === null) {
       continue;

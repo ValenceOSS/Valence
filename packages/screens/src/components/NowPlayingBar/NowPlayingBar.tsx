@@ -206,7 +206,11 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   label={shown.isPlaying ? 'Pause' : 'Play'}
                   className="size-10"
                   onClick={() => {
-                    player.toggle();
+                    if (shown.isPlaying) {
+                      player.pause();
+                    } else {
+                      player.resume();
+                    }
                   }}
                 >
                   {shown.isLoading && shown.isPlaying ? (
@@ -250,11 +254,12 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 </span>
                 <Slider
                   label="Where the song is"
+                  tone="glass"
                   value={Math.min(shown.positionSeconds, shown.durationSeconds)}
                   max={Math.max(shown.durationSeconds, 1)}
                   step={1}
                   valueLabel={(value) => formatDuration(value)}
-                  className="flex-1"
+                  className="min-w-0 flex-1"
                   onValueChange={(value) => {
                     player.seek(value);
                   }}
@@ -316,6 +321,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 label="Streaming quality"
                 align="end"
                 triggerShape="field"
+                className="w-auto shrink-0"
                 trigger={
                   <span className="rounded-xs px-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide">
                     {AUDIO_QUALITY_LABELS[state.playingQuality ?? state.quality]}
@@ -360,11 +366,12 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
               <Slider
                 label="Volume"
+                tone="glass"
                 value={Math.round(volume * 100)}
                 max={100}
                 step={1}
                 valueLabel={(value) => `${value.toString()}%`}
-                className="w-24 lg:w-28"
+                className="w-24 shrink-0 lg:w-28"
                 onValueChange={(value) => {
                   player.setVolume(value / 100);
                 }}
