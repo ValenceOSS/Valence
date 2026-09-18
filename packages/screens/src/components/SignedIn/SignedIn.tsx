@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LayoutGroup } from 'motion/react';
 import { Outlet } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { HouseholdOnboarding } from '@ValenceScreens/components/HouseholdOnboarding/HouseholdOnboarding';
 import { ProfileGate } from '@ValenceScreens/components/ProfileGate/ProfileGate';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { shellContext } from '@ValenceClient/shell/shellContext';
@@ -10,6 +11,7 @@ import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { useWatchParty } from '@ValenceClient/party/useWatchParty';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
+import { householdQueries } from '@ValenceClient/query/householdQueries';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
@@ -56,7 +58,13 @@ const SignedIn = ({ title }: SignedInProps) => {
     setIsPageReading(isHolding);
   }, []);
 
-  const isWaiting = session.isPending || isPageReading;
+  const settingUp = useQuery({ ...householdQueries.onboarding(), enabled: user !== null });
+
+  const setUp = settingUp.data ?? null;
+
+  const unfinished = setUp === null || setUp.isOnboarded ? null : setUp.household;
+
+  const isWaiting = session.isPending || isPageReading || (user !== null && settingUp.isPending);
 
   const [phase, setPhase] = useState<'holding' | 'fading' | 'gone'>('holding');
 
@@ -299,7 +307,16 @@ const SignedIn = ({ title }: SignedInProps) => {
     <LayoutGroup>
       {shell !== null ? (
         <shellContext.Provider value={shell}>
-          <Outlet />
+          {unfinished === null ? (
+            <Outlet />
+          ) : (
+            <HouseholdOnboarding
+              household={unfinished}
+              onDone={() => {
+                void cache.invalidateQueries({ queryKey: householdQueries.key });
+              }}
+            />
+          )}
         </shellContext.Provider>
       ) : phase !== 'gone' ? null : (
         <ProfileGate
