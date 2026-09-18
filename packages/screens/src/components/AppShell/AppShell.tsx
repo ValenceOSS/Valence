@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
   BookOpen01Icon,
+  MusicNote01Icon,
   Cancel01Icon,
   ComputerIcon,
   DiceFaces05Icon,
@@ -31,6 +32,7 @@ import {
 } from 'motion/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
+import { cn } from '@ValenceUI/cn';
 import { NavBar } from '@ValenceUI/NavBar';
 import { Logo } from '@ValenceUI/Logo';
 import { MoodBackground } from '@ValenceUI/MoodBackground';
@@ -103,7 +105,7 @@ const MOTION_ICONS: Record<Motion, ReactNode> = {
   reduced: <Icon of={FlashOffIcon} size={16} />,
 };
 
-const STOCKED_ONLY: ReadonlySet<ShellSection> = new Set(['shows', 'films', 'read']);
+const STOCKED_ONLY: ReadonlySet<ShellSection> = new Set(['shows', 'films', 'read', 'music']);
 
 const SURPRISE_LABELS: Record<LibraryKind, string> = {
   movies: 'A film',
@@ -119,6 +121,7 @@ const SECTION_ICONS: Record<ShellSection, ReactNode> = {
   new: <Icon of={FireIcon} size={18} />,
   favourites: <Icon of={FavouriteIcon} size={18} />,
   read: <Icon of={BookOpen01Icon} size={18} />,
+  music: <Icon of={MusicNote01Icon} size={18} />,
   search: <Icon of={Search01Icon} size={18} />,
   account: <Icon of={UserCircleIcon} size={18} />,
 };
@@ -130,6 +133,7 @@ const ACTIVE_SECTION_ICONS: Record<ShellSection, ReactNode> = {
   new: <Icon of={FireIcon} size={18} isActive />,
   favourites: <Icon of={FavouriteIcon} size={18} isActive />,
   read: <Icon of={BookOpen01Icon} size={18} isActive />,
+  music: <Icon of={MusicNote01Icon} size={18} isActive />,
   search: <Icon of={Search01Icon} size={18} isActive />,
   account: <Icon of={UserCircleIcon} size={18} isActive />,
 };
@@ -141,6 +145,7 @@ const SECTION_GESTURES: Record<ShellSection, IconGesture> = {
   new: 'fill',
   favourites: 'fill',
   read: 'settle',
+  music: 'settle',
   search: 'settle',
   account: 'settle',
 };
@@ -152,6 +157,7 @@ const SECTION_LABELS: Record<ShellSection, string> = {
   new: 'New & Popular',
   favourites: 'Favourites',
   read: 'Books',
+  music: 'Music',
   search: 'Search',
   account: 'Account',
 };
@@ -165,6 +171,11 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  * @param section - Which section is showing.
  * @param onSectionChange - Told which section was chosen.
  * @param children - The page itself.
+ * @param isFitted - Whether the section fills the window exactly and scrolls inside itself, as the
+ *   music section's cards do, so the page around it has nothing to scroll.
+ * @param dock - What stays along the foot of every section, such as the music playing. It is kept
+ *   apart from the page, which arrives afresh with each section, so it is there throughout rather
+ *   than arriving again with every page.
  * @param moodLights - The colours to light the page with.
  * @param isAdministrator - Whether to offer the admin section at all.
  * @param isDownloadsOpen - Whether the downloads dialog is raised.
@@ -192,6 +203,8 @@ const AppShell = ({
   section,
   onSectionChange,
   children,
+  dock,
+  isFitted = false,
   hasMark = true,
   moodLights = [],
   isAdministrator = false,
@@ -257,7 +270,7 @@ const AppShell = ({
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !event.defaultPrevented) {
         onSectionChange('home');
       }
     };
@@ -466,7 +479,10 @@ const AppShell = ({
   return (
     <div
       ref={shellRef}
-      className="valence-shell relative min-h-[calc(100svh-var(--valence-window-bar))] text-text"
+      className={cn(
+        'valence-shell relative min-h-[calc(100svh-var(--valence-window-bar))] text-text',
+        isFitted ? 'h-[calc(100svh-var(--valence-window-bar))] overflow-clip' : '',
+      )}
     >
       <MoodBackground lights={moodLights} film={film} />
 
@@ -542,7 +558,11 @@ const AppShell = ({
           variants={staggerVariants}
           initial="hidden"
           animate="shown"
-          className="min-h-[calc(100svh-var(--valence-window-bar))] pb-[calc(4rem+var(--floor-clearance,0px))] pt-[var(--nav-clearance)]"
+          className={
+            isFitted
+              ? 'h-[calc(100svh-var(--valence-window-bar))] overflow-clip pt-[var(--nav-clearance)]'
+              : 'min-h-[calc(100svh-var(--valence-window-bar))] pb-[calc(4rem+var(--floor-clearance,0px))] pt-[var(--nav-clearance)]'
+          }
         >
           <motion.div
             variants={revealVariants(prefersReducedMotion)}
@@ -551,6 +571,8 @@ const AppShell = ({
             {children}
           </motion.div>
         </motion.main>
+
+        {isFitted ? <div className="h-0 overflow-hidden">{dock}</div> : dock}
       </motion.div>
     </div>
   );

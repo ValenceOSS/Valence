@@ -117,6 +117,7 @@ const harness = (options: {
       Promise.resolve({ id: 'x', manifest: '/x', encodesVideo: false, reuse: 'none' as const }),
     readSessionFile: () => Promise.resolve(null),
     readFile: () => Promise.resolve(null),
+    readAudioRendition: () => Promise.resolve(null),
     fingerprint: () => Promise.resolve({ framesPerSecond: 15.625, startSeconds: 0, hashes: [] }),
     requestTrickplay: () =>
       Promise.resolve({
@@ -496,6 +497,7 @@ describe('scanLibrary', () => {
           Promise.resolve({ id: 'x', manifest: '/x', encodesVideo: false, reuse: 'none' as const }),
         readSessionFile: () => Promise.resolve(null),
         readFile: () => Promise.resolve(null),
+        readAudioRendition: () => Promise.resolve(null),
         fingerprint: () =>
           Promise.resolve({ framesPerSecond: 15.625, startSeconds: 0, hashes: [] }),
         requestTrickplay: () =>

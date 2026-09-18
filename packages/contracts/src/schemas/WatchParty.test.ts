@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   PARTY_ROLES,
   PartyCommandSchema,
+  WatchPartySchema,
   partyAllows,
   powerForCommand,
   powersOf,
@@ -169,5 +170,28 @@ describe('the subtractive rule', () => {
     expect(
       partyAllows(openest, guestPowers, { kind: 'changeWhatIsPlaying', mediaId: 'other' }),
     ).toBe(false);
+  });
+});
+
+describe('WatchPartySchema', () => {
+  const party = {
+    id: 'p1',
+    mediaId: 'm1',
+    createdAtMs: 0,
+    everyoneMaySeek: false,
+    everyoneMayPlayPause: false,
+    hasPassword: false,
+    isPlaying: true,
+    isHeld: false,
+    members: [member()],
+    timekeeperId: 'one',
+  };
+
+  it('reads a party from a server that does not say what kind as one for watching', () => {
+    expect(WatchPartySchema.parse(party).kind).toBe('watch');
+  });
+
+  it('reads a party for listening together', () => {
+    expect(WatchPartySchema.parse({ ...party, kind: 'listen' }).kind).toBe('listen');
   });
 });

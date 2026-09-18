@@ -1,5 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { motion, useDragControls } from 'motion/react';
+import { gainFor } from '@ValenceCore/functions/gainFor';
 import {
   Cancel01Icon,
   MirroringScreenIcon,
@@ -1132,7 +1133,7 @@ const VideoPlayer = ({
     const element = videoRef.current;
 
     if (element !== null) {
-      element.volume = volume;
+      element.volume = gainFor(volume);
       element.muted = isMuted;
       applyVolumeBoost(element, boost);
     }

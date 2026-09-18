@@ -1,4 +1,5 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
+import { ListeningSessionSchema } from '@ValenceContracts/schemas/MusicRemote';
 import { z } from 'zod';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
@@ -32,12 +33,14 @@ const AdminOverviewSchema = z.object({
   users: z.array(AdminUserSchema),
   settings: z.object({
     hasCatalogueKey: z.boolean(),
+    hasAudioDbKey: z.boolean().default(false),
     trustedOrigins: z.array(z.string()),
     cookieSecure: z.boolean(),
     hardwareAccel: z.string().default(''),
     previewQuality: PreviewQualitySchema.default('high'),
     showsProfilesBeforeSignIn: z.boolean().default(false),
     fetchesCatalogueTrailers: z.boolean().default(false),
+    fetchesMusicDetails: z.boolean().default(false),
     certificationRegion: z.string().default('GB'),
     splashscreen: z.string().nullish(),
   }),
@@ -215,6 +218,7 @@ const ActiveSessionSchema = z.object({
         .nullable(),
     })
     .nullable(),
+  listening: ListeningSessionSchema.nullable().default(null),
 });
 
 const JobDefinitionSchema = z.object({
@@ -749,6 +753,24 @@ const saveFetchesCatalogueTrailers = async (
   return response !== null && response.ok;
 };
 
+/**
+ * Sets whether a music library's missing covers, artist photographs, music videos and song words
+ * are looked for on the web, which reaches outside the server just as a fetched trailer does.
+ *
+ * @param fetchesMusicDetails - Whether to look for them.
+ * @returns Whether the setting was written.
+ */
+const saveFetchesMusicDetails = async (fetchesMusicDetails: boolean): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ fetchesMusicDetails }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 const SplashscreenAnswerSchema = z.union([
   z.object({ splashscreen: z.string() }),
   z.object({ error: z.string() }),
@@ -863,6 +885,24 @@ const saveCatalogueKey = async (catalogueApiKey: string): Promise<boolean> => {
   return response !== null && response.ok;
 };
 
+/**
+ * Saves the TheAudioDB key music is looked up with, in place of the free one, which answers with
+ * only a single music video for each artist.
+ *
+ * @param audioDbKey - The key.
+ * @returns Whether it was written.
+ */
+const saveAudioDbKey = async (audioDbKey: string): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ audioDbKey }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 export type {
   CatalogueMatch,
   ActiveSession,
@@ -891,6 +931,8 @@ export {
   saveCertificationRegion,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
+  saveFetchesMusicDetails,
+  saveAudioDbKey,
   saveSplashscreen,
   removeSplashscreen,
   fetchActiveSessions,

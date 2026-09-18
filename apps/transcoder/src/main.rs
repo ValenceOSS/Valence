@@ -223,6 +223,7 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
         trickplay: valence_transcoder::trickplay::TrickplayRegistry::new(),
         previews: valence_transcoder::preview::PreviewRegistry::new(),
         monitor: valence_transcoder::monitor::Monitor::new(journal),
+        audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: valence_transcoder::queue::WorkQueue::new(background_jobs()),
         media_roots: env::var("VALENCE_MEDIA_ROOTS")
             .map(|value| value.split(':').map(PathBuf::from).collect())

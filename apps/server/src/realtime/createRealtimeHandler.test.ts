@@ -341,6 +341,30 @@ describe('createRealtimeHandler', () => {
     });
   });
 
+  it('carries a command from another of the same person’s devices, saying which', async () => {
+    const world = createWorld();
+    const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
+
+    await session.receive(
+      JSON.stringify({ kind: 'identify', profileId: null, clientId: 'tab-one' }),
+    );
+    world.announce({
+      kind: 'music',
+      command: { kind: 'seek', positionSeconds: 42 },
+      fromClientId: 'phone',
+      fromLabel: 'iPhone',
+    });
+
+    const event = world.read().find((message) => message.kind === 'event');
+
+    expect(event?.kind === 'event' ? event.payload : null).toStrictEqual({
+      kind: 'music',
+      command: { kind: 'seek', positionSeconds: 42 },
+      fromClientId: 'phone',
+      fromLabel: 'iPhone',
+    });
+  });
+
   it('carries a resume, which has no reason to give', async () => {
     const world = createWorld();
     const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);

@@ -34,6 +34,7 @@ const stubTranscoder = (requestTrickplay: Transcoder['requestTrickplay']): Trans
   startSession: () => Promise.reject(new Error('not used')),
   readSessionFile: () => Promise.resolve(null),
   readFile: () => Promise.resolve(null),
+  readAudioRendition: () => Promise.resolve(null),
   fingerprint: () => Promise.reject(new Error('not used')),
   requestTrickplay,
   readTrickplayFile: () => Promise.resolve(null),

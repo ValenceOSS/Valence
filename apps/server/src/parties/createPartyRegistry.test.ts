@@ -40,6 +40,29 @@ describe('opening a party', () => {
 
     expect(party.timekeeperId).toBe('host');
   });
+
+  it('opens a party for listening with only its host choosing what plays and where', () => {
+    const registry = createWorld();
+    const party = registry.open({
+      mediaId: 'a-song',
+      host: someone('host', 'Dan'),
+      kind: 'listen',
+    });
+
+    registry.join({ partyId: party.id, ...someone('sam', 'Sam') });
+
+    expect(party.kind).toBe('listen');
+    expect(party.everyoneMaySeek).toBe(false);
+    expect(party.everyoneMayPlayPause).toBe(false);
+    expect(registry.issue(party.id, 'sam', { kind: 'pause', atSeconds: 3 }, 0).kind).toBe(
+      'refused',
+    );
+    expect(registry.issue(party.id, 'host', { kind: 'seek', atSeconds: 30 }, 0).kind).toBe('sent');
+  });
+
+  it('opens a party for watching when it is not told what kind', () => {
+    expect(openWith(createWorld()).kind).toBe('watch');
+  });
 });
 
 describe('joining', () => {

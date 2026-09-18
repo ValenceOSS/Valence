@@ -339,6 +339,10 @@ import {
 import type { HistoryService } from '@ValenceServer/history/HistoryService';
 import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 
+import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
+import { listeningFor } from '@ValenceServer/music/listeningFor';
+import type { MusicServices } from '@ValenceServer/music/MusicServices';
+
 const PROFILE_HEADER = 'x-valence-profile';
 
 /**
@@ -495,6 +499,7 @@ type CreateAppOptions = {
   households?: HouseholdService;
   splashscreen?: SplashscreenStore;
   books?: BookService;
+  music?: MusicServices;
   promoteProfile?: (request: {
     profileId: string;
     email: string;
@@ -574,6 +579,7 @@ const createApp = ({
   households,
   splashscreen = createMemorySplashscreenStore(),
   books,
+  music,
   promoteProfile,
   listUsers,
   capabilities,
@@ -2244,11 +2250,13 @@ const createApp = ({
         users,
         settings: {
           hasCatalogueKey: current.catalogueApiKey !== '',
+          hasAudioDbKey: current.audioDbKey !== '',
           hardwareAccel: current.hardwareAccel,
           previewQuality: current.previewQuality,
           certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
           fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
+          fetchesMusicDetails: current.fetchesMusicDetails,
           splashscreen: await splashscreen.address(),
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
@@ -2287,6 +2295,7 @@ const createApp = ({
 
     const updated = await settings.write({
       ...(patch.catalogueApiKey === undefined ? {} : { catalogueApiKey: patch.catalogueApiKey }),
+      ...(patch.audioDbKey === undefined ? {} : { audioDbKey: patch.audioDbKey }),
       ...(patch.hardwareAccel === undefined ? {} : { hardwareAccel: patch.hardwareAccel }),
       ...(patch.previewQuality === undefined ? {} : { previewQuality: patch.previewQuality }),
       ...(patch.certificationRegion === undefined
@@ -2298,6 +2307,9 @@ const createApp = ({
       ...(patch.fetchesCatalogueTrailers === undefined
         ? {}
         : { fetchesCatalogueTrailers: patch.fetchesCatalogueTrailers }),
+      ...(patch.fetchesMusicDetails === undefined
+        ? {}
+        : { fetchesMusicDetails: patch.fetchesMusicDetails }),
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {
@@ -2317,6 +2329,7 @@ const createApp = ({
     return context.json(
       {
         hasCatalogueKey: updated.catalogueApiKey !== '',
+        hasAudioDbKey: updated.audioDbKey !== '',
         trustedOrigins: updated.trustedOrigins,
         cookieSecure: updated.cookieSecure,
         hardwareAccel: updated.hardwareAccel,
@@ -2324,6 +2337,7 @@ const createApp = ({
         certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
         fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
+        fetchesMusicDetails: updated.fetchesMusicDetails,
         splashscreen: await splashscreen.address(),
       },
       200,
@@ -2335,7 +2349,27 @@ const createApp = ({
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    return context.json(presence.list(), 200);
+    const listeningOn = async (clientId: string) => {
+      const nowPlaying = music?.devices.playingOn(clientId) ?? null;
+
+      if (music === undefined || nowPlaying === null) {
+        return null;
+      }
+
+      return listeningFor(
+        nowPlaying,
+        await music.library.readTrackFile(asTheServer, nowPlaying.trackId),
+      );
+    };
+
+    return context.json(
+      await Promise.all(
+        presence
+          .list()
+          .map(async (entry) => ({ ...entry, listening: await listeningOn(entry.clientId) })),
+      ),
+      200,
+    );
   });
 
   app.openapi(adminStopSessionRoute, async (context) => {
@@ -2344,6 +2378,11 @@ const createApp = ({
     }
 
     const { clientId } = context.req.valid('param');
+
+    if (music?.devices.order(clientId, { kind: 'stop' }) === true) {
+      return context.body(null, 204);
+    }
+
     const transcoderSessionId = presence.list().find((entry) => entry.clientId === clientId)
       ?.playback?.transcoderSessionId;
 
@@ -2370,7 +2409,10 @@ const createApp = ({
       return context.json({ error: 'That tab is not open.' }, 404);
     }
 
-    if (!presence.pause(clientId, 'This stream was paused by an admin.')) {
+    if (
+      !presence.pause(clientId, 'This stream was paused by an admin.') &&
+      music?.devices.order(clientId, { kind: 'pause' }) !== true
+    ) {
       return context.json({ error: 'That tab is not watching anything.' }, 409);
     }
 
@@ -2396,7 +2438,10 @@ const createApp = ({
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    if (!presence.resume(context.req.valid('param').clientId)) {
+    const { clientId } = context.req.valid('param');
+    const isListening = music?.devices.order(clientId, { kind: 'resume' }) === true;
+
+    if (!presence.resume(clientId) && !isListening) {
       return context.json({ error: 'That tab is not open.' }, 404);
     }
 
@@ -4080,8 +4125,10 @@ const createApp = ({
     }
 
     const { mediaId } = context.req.valid('param');
+    const isTrack =
+      music !== undefined && (await music.library.listTracks(asTheServer, [mediaId])).length > 0;
 
-    if ((await library.getMedia(mediaId)) === null) {
+    if (!isTrack && (await library.getMedia(mediaId)) === null) {
       return context.json({ error: 'No such media item.' }, 404);
     }
 
@@ -4358,6 +4405,10 @@ const createApp = ({
 
     return context.json({ segments: await segments.list(mediaId) }, 200);
   });
+
+  if (music !== undefined) {
+    registerMusicRoutes(app, { viewerOf, music });
+  }
 
   app.openapi(listBooksRoute, async (context) => {
     const account = await readAccount(context.req.raw.headers);

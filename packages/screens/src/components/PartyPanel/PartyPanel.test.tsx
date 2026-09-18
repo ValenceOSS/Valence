@@ -21,6 +21,7 @@ const member = (over?: Partial<PartyMember>): PartyMember => ({
 
 const party = (over?: Partial<WatchParty>): WatchParty => ({
   id: 'party-1',
+  kind: 'watch',
   mediaId: 'a-film',
   createdAtMs: 1000,
   everyoneMaySeek: true,
@@ -60,6 +61,20 @@ describe('PartyPanel', () => {
 
     expect(screen.getByText('Watching')).toBeInTheDocument();
     expect(screen.getByText('Not watching')).toBeInTheDocument();
+  });
+
+  it('speaks of listening in a party for listening together', () => {
+    const mixed = party({
+      kind: 'listen',
+      members: [member(), member({ connectionId: 'sam', name: 'Sam', isWatching: false })],
+    });
+
+    render(<PartyPanel party={mixed} meConnectionId="dan" invitation="https://v/music?party=p" />);
+
+    expect(screen.getByText(/1 listening/)).toBeInTheDocument();
+    expect(screen.getByText('Listening')).toBeInTheDocument();
+    expect(screen.getByText('Not listening')).toBeInTheDocument();
+    expect(screen.getByText(/listening along/)).toBeInTheDocument();
   });
 
   it('marks which one is you', () => {

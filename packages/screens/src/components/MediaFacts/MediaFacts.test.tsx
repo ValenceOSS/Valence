@@ -97,4 +97,16 @@ describe('MediaFacts', () => {
 
     expect(screen.getByText('2024')).toBeInTheDocument();
   });
+
+  it('says how much room the file takes where asked', () => {
+    render(<MediaFacts media={{ ...media, sizeBytes: 4_294_967_296 }} hasSize />);
+
+    expect(screen.getByText('4.0 GB')).toBeInTheDocument();
+  });
+
+  it('says nothing of the size where it is not known', () => {
+    render(<MediaFacts media={{ ...media, sizeBytes: null }} hasSize />);
+
+    expect(screen.queryByText(/GB|MB/)).not.toBeInTheDocument();
+  });
 });

@@ -10,6 +10,7 @@ import {
   series,
 } from '@ValenceServer/db/Schema';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
+import { isNotATrack } from '@ValenceServer/music/isNotATrack';
 import { describeQuality } from './describeQuality';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
@@ -344,6 +345,7 @@ const createMediaStore = (
  * Extras are left out of all of it. A preview is a taste of something you have not decided to watch
  * and a sheet of thumbnails is for scrubbing a film, and neither means anything on a trailer that is
  * ninety seconds long and is itself the taste. Rendering them costs what rendering a feature costs.
+ * Tracks are left out for the same reason and a plainer one: there is no picture to preview.
  *
  * Built apart from the reading of it so that what it leaves out can be read without a database.
  *
@@ -378,6 +380,7 @@ const outstandingFor = (db: ValenceDatabase, libraryId: string, kind: string) =>
         eq(mediaItem.libraryId, libraryId),
         isNull(mediaItem.extraKind),
         isNull(mediaItemJob.mediaItemId),
+        isNotATrack(db),
       ),
     );
 

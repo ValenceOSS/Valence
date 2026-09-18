@@ -17,9 +17,13 @@ type CleanupImageCacheOptions = {
   nameFor: (url: string) => string;
   listMediaImageUrls: () => Promise<MediaImageUrls[]>;
   listKeptPictures: () => Promise<(string | null)[]>;
+  musicDir?: string;
+  listMusicArtwork?: () => Promise<(string | null)[]>;
   onProblem?: (path: string, reason: string) => void;
-  onProgress?: (phase: 'cache' | 'profiles', processed: number, total: number) => void;
+  onProgress?: (phase: SweepPhase, processed: number, total: number) => void;
 };
+
+type SweepPhase = 'cache' | 'profiles' | 'music';
 
 /**
  * Takes the filename off a path, since what the database points at is a name and what the sweep
@@ -47,7 +51,7 @@ const sweep = async (
   directory: string,
   isValid: (fileName: string) => boolean,
   files: CacheFileSystem,
-  phase: 'cache' | 'profiles',
+  phase: SweepPhase,
   onProgress?: CleanupImageCacheOptions['onProgress'],
   onProblem?: CleanupImageCacheOptions['onProblem'],
 ): Promise<number> => {
@@ -81,6 +85,7 @@ const sweep = async (
  *
  * The profile directory is swept by what is still wanted there, not by what is a face: the picture
  * behind the way in lives beside the faces, and anything the sweep is not told to keep it removes.
+ * Album covers and artist pictures are swept the same way, by the albums and artists still there.
  *
  * @param options - Where the cache is, and the database saying what is still referenced.
  * @returns What was removed, counted and measured.
@@ -92,6 +97,8 @@ const cleanupImageCache = async ({
   nameFor,
   listMediaImageUrls,
   listKeptPictures,
+  musicDir,
+  listMusicArtwork,
   onProblem,
   onProgress,
 }: CleanupImageCacheOptions): Promise<number> => {
@@ -131,7 +138,24 @@ const cleanupImageCache = async ({
     onProblem,
   );
 
-  return cacheRemoved + profilesRemoved;
+  if (musicDir === undefined || listMusicArtwork === undefined) {
+    return cacheRemoved + profilesRemoved;
+  }
+
+  const artwork = new Set(
+    (await listMusicArtwork()).filter((path): path is string => path !== null).map(baseName),
+  );
+
+  const musicRemoved = await sweep(
+    musicDir,
+    (name) => artwork.has(name),
+    files,
+    'music',
+    onProgress,
+    onProblem,
+  );
+
+  return cacheRemoved + profilesRemoved + musicRemoved;
 };
 
 export type { CacheFileSystem, MediaImageUrls };

@@ -170,6 +170,7 @@ async fn asking_twice_at_once_renders_one_clip_rather_than_two() {
         trickplay: TrickplayRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
+        audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: WorkQueue::new(2),
         ffprobe: ffprobe(),
         media_roots: vec![source.parent().expect("a parent").to_path_buf()],

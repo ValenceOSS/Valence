@@ -63,6 +63,9 @@ import {
   session,
   deviceCode,
   bookChapter,
+  musicAlbum,
+  musicArtist,
+  musicTrack,
 } from '@ValenceServer/db/Schema';
 import { readEnv } from '@ValenceServer/env/Env';
 import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatabaseSettingsStore';
@@ -156,6 +159,15 @@ import {
 import { createDatabaseMaintenanceService } from '@ValenceServer/maintenance/createDatabaseMaintenanceService';
 import { cleanupImageCache } from '@ValenceServer/maintenance/cleanupImageCache';
 import { sweepBookPages } from '@ValenceServer/maintenance/sweepBookPages';
+import { createDatabaseMusicService } from '@ValenceServer/music/createDatabaseMusicService';
+import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
+import { createMusicArtwork } from '@ValenceServer/music/createMusicArtwork';
+import { createMusicDevices } from '@ValenceServer/music/createMusicDevices';
+import { createMusicWeb } from '@ValenceServer/music/web/createMusicWeb';
+import { enrichMusicLibrary } from '@ValenceServer/music/web/enrichMusicLibrary';
+import { createMusicFileSystem } from '@ValenceServer/music/createMusicFileSystem';
+import { createDatabasePlaylistService } from '@ValenceServer/playlists/createDatabasePlaylistService';
+import type { MusicServices } from '@ValenceServer/music/MusicServices';
 import { sweepArtefactCache } from '@ValenceServer/maintenance/sweepArtefactCache';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import {
@@ -259,6 +271,8 @@ const settings = createDatabaseSettingsStore({
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    fetchesMusicDetails: false,
+    audioDbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
   },
@@ -623,6 +637,90 @@ const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR);
 
 const transcoder = createTranscoderClient({ baseUrl: env.TRANSCODER_URL });
 
+const musicArtworkDir = join(env.IMAGE_CACHE_DIR, 'music');
+
+const musicLibrary = createDatabaseMusicService(db);
+
+const musicStore = createDatabaseMusicStore(db);
+
+const musicArtwork = createMusicArtwork(musicArtworkDir);
+
+const AUDIO_DB_FREE_KEY = '123';
+
+const musicWeb = createMusicWeb({
+  userAgent: `Valence/${env.VALENCE_VERSION} ( https://github.com/ValenceOSS/Valence )`,
+  spacingMs: {
+    'musicbrainz.org': 1100,
+    'coverartarchive.org': 250,
+    'www.theaudiodb.com': 2100,
+    'lrclib.net': 250,
+  },
+});
+
+/**
+ * Looks for what a music library's files left out on the web, where the server has been told it
+ * may: covers, artists' photographs, music videos and song words.
+ *
+ * @param libraryId - The library.
+ * @param jobId - The scan it is part of, for progress and cancellation.
+ * @param isAgain - Whether to ask again about what was not found before, as a forced scan does.
+ */
+const lookUpMusic = async (libraryId: string, jobId: string, isAgain: boolean): Promise<void> => {
+  const current = await settings.read();
+
+  if (!current.fetchesMusicDetails) {
+    return;
+  }
+
+  const found = await enrichMusicLibrary({
+    libraryId,
+    store: musicStore,
+    web: musicWeb,
+    artwork: musicArtwork,
+    audioDbKey: current.audioDbKey === '' ? AUDIO_DB_FREE_KEY : current.audioDbKey,
+    isAgain,
+    onProgress: (done, total) => {
+      jobs.reportProgress(
+        jobId,
+        `${done.toString()} of ${total.toString()} looked up`,
+        done,
+        total,
+      );
+    },
+    isCancelled: () => jobs.isCancelled(jobId),
+  });
+
+  log.info(
+    'scanner',
+    `music looked up on the web: ${found.covers.toString()} covers, ${found.pictures.toString()} photographs, ${found.videos.toString()} videos, ${found.lyrics.toString()} lyrics`,
+  );
+};
+
+const musicServices: MusicServices = {
+  library: musicLibrary,
+  playlists: createDatabasePlaylistService(db, musicLibrary),
+  devices: createMusicDevices({
+    presence,
+    onChanged: (accountId) => {
+      realtime.publish(
+        'playback',
+        { kind: 'musicDevicesChanged' },
+        { kind: 'accounts', accountIds: [accountId] },
+      );
+      realtime.publish('sessions', { changed: true }, { kind: 'everyone' });
+    },
+  }),
+  stream: (file, rendition, range) =>
+    rendition.kind === 'original'
+      ? transcoder.readFile(file.path, range)
+      : transcoder.readAudioRendition(file.path, rendition.kbps, range),
+  readImage: async (path) => {
+    const bytes = await readFile(path).catch(() => null);
+
+    return bytes === null ? null : new Uint8Array(bytes);
+  },
+};
+
 /**
  * Finds intros, outros and recaps across a library's already-scanned files by fingerprinting their
  * audio and looking for stretches every episode of a season shares. Runs against what has been
@@ -909,15 +1007,24 @@ const jobs = await createJobQueue({
         await runLibraryWork(SCAN_LIBRARY_JOB, libraryId, payload, async () => {
           const libraries = await libraryService.list(asTheServer);
           const scanned = libraries.find((entry) => entry.id === libraryId);
+          const isMusic = scanned?.kind === 'music';
 
           await runScanPhases({
             work: {
               scan: () => libraryService.runScan(libraryId, force, jobId),
-              fetchLogos: () => libraryService.runFetchLogos(libraryId, jobId),
-              detectSegments: () => runDetectSegments(libraryId, jobId),
+              fetchLogos: () =>
+                isMusic
+                  ? lookUpMusic(libraryId, jobId, force === true)
+                  : libraryService.runFetchLogos(libraryId, jobId),
+              detectSegments: () =>
+                isMusic ? Promise.resolve() : runDetectSegments(libraryId, jobId),
             },
             isCancelled: () => jobs.isCancelled(jobId),
             onRead: async () => {
+              if (isMusic) {
+                return;
+              }
+
               await libraryService.regeneratePreviews(libraryId);
               await libraryService.regenerateTrickplay(libraryId);
             },
@@ -958,6 +1065,10 @@ const jobs = await createJobQueue({
 
               for (const item of departed) {
                 await events.publish({ event: 'media.removed', data: named(item) });
+              }
+
+              if (result.added + result.updated + result.removed > 0) {
+                realtime.publish('media', { added: result.added }, { kind: 'everyone' });
               }
             },
           });
@@ -1071,6 +1182,13 @@ const jobs = await createJobQueue({
               ...households.map((row) => row.photoPath),
               (await settings.read()).splashscreenFile,
             ];
+          },
+          musicDir: musicArtworkDir,
+          listMusicArtwork: async () => {
+            const albums = await db.select({ path: musicAlbum.artworkPath }).from(musicAlbum);
+            const artists = await db.select({ path: musicArtist.imagePath }).from(musicArtist);
+
+            return [...albums, ...artists].map((row) => row.path);
           },
           onProblem: (path, reason) => {
             log.error('server', `image cache: ${path}: ${reason}`);
@@ -1282,8 +1400,12 @@ const jobs = await createJobQueue({
             title: mediaItem.title,
             seriesId: mediaItem.seriesId,
             seriesTitle: mediaItem.seriesTitle,
+            albumId: musicTrack.albumId,
+            albumTitle: musicAlbum.title,
           })
           .from(mediaItem)
+          .leftJoin(musicTrack, eq(musicTrack.mediaItemId, mediaItem.id))
+          .leftJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
           .where(
             and(
               gt(mediaItem.addedAt, since),
@@ -1492,6 +1614,11 @@ const libraryService = createDatabaseLibraryService({
   jobs,
   providers: [catalogueProvider, createFilenameMetadataProvider()],
   books: bookService,
+  music: {
+    store: musicStore,
+    artwork: musicArtwork,
+    files: createMusicFileSystem(),
+  },
   atOnce: env.MEDIA_JOBS,
   previewQuality: async () => (await settings.read()).previewQuality,
   certificationRegion: async () => (await settings.read()).certificationRegion,
@@ -1764,6 +1891,7 @@ const app = createApp({
   households: householdService,
   splashscreen,
   books: bookService,
+  music: musicServices,
   promoteProfile: async ({ profileId, email, password }) => {
     const rows = await db
       .select({
@@ -2075,7 +2203,7 @@ const realtimeHandler = createRealtimeHandler({
 });
 
 /**
- * Asks somebody to a watch party, in whatever way they asked to be told things.
+ * Asks somebody to a watch or listening party, in whatever way they asked to be told things.
  *
  * The notification carries the same address the party's own invitation does, which holds no
  * credential of its own: being asked is not being let in, and whoever opens it still has to be
@@ -2086,7 +2214,7 @@ const realtimeHandler = createRealtimeHandler({
  * @param profileId - Which face they picked, since that is what a viewer chooses between.
  */
 const askSomebodyToTheParty = async (
-  party: { id: string; mediaId: string },
+  party: { id: string; kind: 'watch' | 'listen'; mediaId: string },
   byName: string,
   profileId: string,
 ): Promise<void> => {
@@ -2102,15 +2230,17 @@ const askSomebodyToTheParty = async (
     .where(eq(mediaItem.id, party.mediaId))
     .limit(1);
 
+  const isListening = party.kind === 'listen';
+
   await notifyHousehold({
     store: notifications,
     event: 'party.invited',
-    title: `${byName} wants to watch with you`,
+    title: `${byName} wants to ${isListening ? 'listen' : 'watch'} with you`,
     body:
       found === undefined
-        ? 'They have a watch party running.'
-        : `They are watching ${found.title}.`,
-    link: `/watch/${party.mediaId}?party=${party.id}`,
+        ? `They have a ${isListening ? 'listening' : 'watch'} party running.`
+        : `They are ${isListening ? 'listening to' : 'watching'} ${found.title}.`,
+    link: isListening ? `/music?party=${party.id}` : `/watch/${party.mediaId}?party=${party.id}`,
     vapid: await readPushKeys(),
     only: [accountId],
     onProblem: (reason) => {

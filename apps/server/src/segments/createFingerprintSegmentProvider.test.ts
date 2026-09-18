@@ -83,6 +83,7 @@ const transcoderThat = (
     Promise.resolve({ id: 'x', manifest: '/x', encodesVideo: false, reuse: 'none' as const }),
   readSessionFile: () => Promise.resolve(null),
   readFile: () => Promise.resolve(null),
+  readAudioRendition: () => Promise.resolve(null),
   fingerprint: (request) => Promise.resolve(fingerprint(request.inputPath)),
   requestTrickplay: () =>
     Promise.resolve({

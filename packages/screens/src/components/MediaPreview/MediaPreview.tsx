@@ -10,6 +10,7 @@ import { readSoundPreference, saveSoundPreference } from '@ValenceClient/playbac
 import { fadeAudioOut } from '@ValenceScreens/playback/fadeAudioOut';
 import { rampVolume } from '@ValenceScreens/playback/rampVolume';
 import { claimSound } from '@ValenceScreens/playback/soundOwner';
+import { useIsMusicOn } from '@ValenceScreens/music/useIsMusicOn';
 import type { MediaPreviewProps, PreviewAbsence } from './MediaPreview.types';
 
 const SETTLE_MILLISECONDS = 2600;
@@ -85,6 +86,7 @@ const MediaPreview = ({
   const [isMuted, setIsMuted] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [mayBeHeard, setMayBeHeard] = useState(false);
+  const isMusicOn = useIsMusicOn();
   const [hasStarted, setHasStarted] = useState(false);
   const [absence, setAbsence] = useState<PreviewAbsence>(null);
 
@@ -227,8 +229,8 @@ const MediaPreview = ({
       return;
     }
 
-    element.muted = isMuted || !mayBeHeard;
-  }, [isMuted, mayBeHeard]);
+    element.muted = isMuted || !mayBeHeard || isMusicOn;
+  }, [isMuted, mayBeHeard, isMusicOn]);
 
   useEffect(() => {
     if (onPalette === undefined) {

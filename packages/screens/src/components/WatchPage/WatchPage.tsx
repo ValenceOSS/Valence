@@ -13,6 +13,7 @@ import { watchedFraction, FINISHED_WITHIN_SECONDS } from '@ValenceContracts/sche
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
+import { useQuietMusic } from '@ValenceScreens/music/useQuietMusic';
 
 const PROGRESS_EVERY_SECONDS = 5;
 
@@ -20,6 +21,8 @@ const PROGRESS_EVERY_SECONDS = 5;
  * The player, filling the screen, and the watch party that may be watching along with it.
  */
 const WatchPage = () => {
+  useQuietMusic();
+
   const {
     title,
     known,
@@ -34,6 +37,7 @@ const WatchPage = () => {
   } = useShell();
 
   const { place, go } = usePlace();
+  const filmParty = watchParty.party?.kind === 'watch' ? watchParty.party : null;
   const prefersReducedMotion = useReducedMotionConfig();
 
   const [hasWaitedForTheRoom, setHasWaitedForTheRoom] = useState(false);
@@ -86,23 +90,23 @@ const WatchPage = () => {
 
   const partyPlayback = useMemo(
     () =>
-      watchParty.party === null
+      filmParty === null
         ? null
         : {
             command: watchParty.command,
             meConnectionId: watchParty.meConnectionId,
             referenceSeconds: watchParty.referenceSeconds,
             jitterMs: watchParty.jitterMs,
-            isPlaying: watchParty.party.isPlaying,
-            isHeld: watchParty.party.isHeld,
+            isPlaying: filmParty.isPlaying,
+            isHeld: filmParty.isHeld,
             waitingFor: watchParty.waitingFor,
-            id: watchParty.party.id,
-            members: watchParty.party.members.length,
+            id: filmParty.id,
+            members: filmParty.members.length,
             onReport: watchParty.report,
             onCommand: watchParty.send,
           },
     [
-      watchParty.party,
+      filmParty,
       watchParty.command,
       watchParty.meConnectionId,
       watchParty.referenceSeconds,
@@ -133,7 +137,7 @@ const WatchPage = () => {
       ? { kind: 'begin' as const, atSeconds: begun.atSeconds }
       : whereToBegin({
           invitedTo: place.party,
-          joined: watchParty.party?.id ?? null,
+          joined: filmParty?.id ?? null,
           roomSeconds: watchParty.referenceSeconds,
           resumeSeconds: startAt,
           isBeingAsked: watchParty.passwordWanted !== null,
@@ -160,7 +164,7 @@ const WatchPage = () => {
         isImmersive
         renderPartyMenu={({ isHidden, onOpenChange }) => (
           <PartyMenu
-            party={watchParty.party}
+            party={filmParty}
             meConnectionId={watchParty.meConnectionId}
             waitingFor={watchParty.waitingFor}
             isHidden={isHidden}
@@ -178,9 +182,9 @@ const WatchPage = () => {
               watchParty.leave();
               go({ party: null });
             }}
-            {...(watchParty.party === null
+            {...(filmParty === null
               ? {}
-              : { invitation: invitationTo(watchParty.party.id, watchParty.party.mediaId) })}
+              : { invitation: invitationTo(filmParty.id, filmParty.mediaId) })}
             onCopyInvitation={async (invitation) => {
               await navigator.clipboard.writeText(invitation);
             }}
@@ -243,7 +247,7 @@ const WatchPage = () => {
           go({ playing: decided.episode.id, inspecting: null });
         }}
         onClose={() => {
-          if (watchParty.party !== null) {
+          if (filmParty !== null) {
             watchParty.leave();
           }
 

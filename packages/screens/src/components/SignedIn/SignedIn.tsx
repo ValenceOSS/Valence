@@ -24,6 +24,8 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MoodLight } from '@ValenceUI/MoodBackground.types';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import type { StartOverride } from '@ValenceClient/shell/shell.types';
+import { useMusicRemote } from '@ValenceScreens/music/useMusicRemote';
+import { useListenAlong } from '@ValenceScreens/music/useListenAlong';
 import type { SignedInProps } from './SignedIn.types';
 
 const PARTY_NOTICE_LINGERS_MS = 6000;
@@ -182,6 +184,9 @@ const SignedIn = ({ title }: SignedInProps) => {
     return watchPresence();
   }, [user]);
 
+  useMusicRemote();
+  useListenAlong(watchParty);
+
   useEffect(() => {
     if (place.playing === null) {
       setStartOverride(null);
@@ -235,7 +240,11 @@ const SignedIn = ({ title }: SignedInProps) => {
   }, [place.playing, place.inspecting, known, rememberItems, replace, cache]);
 
   useEffect(() => {
-    if (watchParty.party !== null && place.party !== watchParty.party.id) {
+    if (
+      watchParty.party !== null &&
+      watchParty.party.kind === 'watch' &&
+      place.party !== watchParty.party.id
+    ) {
       replace({ playing: watchParty.party.mediaId, party: watchParty.party.id });
     }
   }, [watchParty.party, place.party, replace]);

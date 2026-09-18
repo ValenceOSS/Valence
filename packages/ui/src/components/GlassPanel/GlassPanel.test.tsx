@@ -21,6 +21,12 @@ describe('GlassPanel', () => {
     expect(container.firstElementChild).not.toHaveClass('valence-float');
   });
 
+  it('is the see-through glass of the video player when asked to be', () => {
+    const { container } = render(<GlassPanel elevation="film">Contents</GlassPanel>);
+
+    expect(container.firstElementChild).toHaveClass('valence-glass', 'valence-glass--film');
+  });
+
   it('renders as whatever the content actually is', () => {
     render(
       <GlassPanel as="section" aria-label="Details">

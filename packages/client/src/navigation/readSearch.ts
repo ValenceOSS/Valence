@@ -12,6 +12,7 @@ type PlaceSearch = {
   panel?: string;
   account?: string;
   downloads?: string;
+  listen?: string;
 };
 
 const NOTHING: PlaceSearch = {};
@@ -30,6 +31,7 @@ const SearchSchema = z.object({
   panel: said,
   account: said,
   downloads: said,
+  listen: said,
 });
 
 /**

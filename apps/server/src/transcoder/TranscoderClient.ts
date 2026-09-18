@@ -256,12 +256,19 @@ type SessionSpec = {
   container?: 'fmp4' | 'mpegts';
 };
 
+type AudioRenditionKbps = 96 | 160 | 320;
+
 type Transcoder = {
   isReachable: () => Promise<boolean>;
   probe: (path: string) => Promise<MediaProbe>;
   startSession: (spec: SessionSpec, deviceId?: string) => Promise<SessionResponse>;
   readSessionFile: (sessionId: string, name: string) => Promise<TranscoderStreamedFile | null>;
   readFile: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
+  readAudioRendition: (
+    path: string,
+    kbps: AudioRenditionKbps,
+    range?: string | null,
+  ) => Promise<TranscoderStreamedFile | null>;
   fingerprint: (request: FingerprintRequest) => Promise<Fingerprint>;
   readSubtitle: (request: { inputPath: string; streamIndex: number }) => Promise<string>;
   readMonitor: () => Promise<JsonValue>;
@@ -601,6 +608,13 @@ const createTranscoderClient = ({
         'application/octet-stream',
       ),
 
+    readAudioRendition: async (path, kbps, range = null) =>
+      openStream(
+        `${origin}/audio?path=${encodeURIComponent(path)}&kbps=${kbps}`,
+        range,
+        'audio/mp4',
+      ),
+
     fingerprint: async (request) =>
       FingerprintSchema.parse(await (await postJson('/fingerprint', request)).json()),
 
@@ -706,6 +720,7 @@ const createTranscoderClient = ({
 };
 
 export type {
+  AudioRenditionKbps,
   FetchLike,
   HttpResponse,
   MediaProbe,
@@ -721,6 +736,7 @@ export type {
   FingerprintRequest,
   TranscoderFile,
   TranscoderRangedFile,
+  TranscoderStreamedFile,
   PreviewSweepSubject,
   SweepReport,
   CacheUse,

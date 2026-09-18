@@ -3,6 +3,7 @@ import {
   bigint,
   boolean,
   check,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -780,6 +781,151 @@ const readingProgress = pgTable(
   ],
 );
 
+const musicArtist = pgTable(
+  'music_artist',
+  {
+    id: text('id').primaryKey(),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    nameKey: text('nameKey').notNull(),
+    sortName: text('sortName').notNull(),
+    musicbrainzId: text('musicbrainzId'),
+    imagePath: text('imagePath'),
+    lookedUpAt: timestamp('lookedUpAt'),
+    addedAt: timestamp('addedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('music_artist_key_idx').on(table.libraryId, table.nameKey),
+    index('music_artist_sort_idx').on(table.libraryId, table.sortName),
+  ],
+);
+
+const musicAlbum = pgTable(
+  'music_album',
+  {
+    id: text('id').primaryKey(),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    artistId: text('artistId')
+      .notNull()
+      .references(() => musicArtist.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    titleKey: text('titleKey').notNull(),
+    year: integer('year'),
+    genres: jsonb('genres'),
+    isCompilation: boolean('isCompilation').notNull().default(false),
+    artworkPath: text('artworkPath'),
+    musicbrainzId: text('musicbrainzId'),
+    lookedUpAt: timestamp('lookedUpAt'),
+    addedAt: timestamp('addedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('music_album_key_idx').on(table.libraryId, table.artistId, table.titleKey),
+    index('music_album_recent_idx').on(table.libraryId, table.addedAt),
+    index('music_album_artist_idx').on(table.artistId),
+  ],
+);
+
+const musicTrack = pgTable(
+  'music_track',
+  {
+    mediaItemId: text('mediaItemId')
+      .primaryKey()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    albumId: text('albumId')
+      .notNull()
+      .references(() => musicAlbum.id, { onDelete: 'cascade' }),
+    discNumber: integer('discNumber'),
+    trackNumber: integer('trackNumber'),
+    codec: text('codec').notNull(),
+    isLossless: boolean('isLossless').notNull().default(false),
+    isExplicit: boolean('isExplicit').notNull().default(false),
+    bitDepth: integer('bitDepth'),
+    sampleRate: integer('sampleRate'),
+    lyrics: text('lyrics'),
+    lyricsAreSynced: boolean('lyricsAreSynced').notNull().default(false),
+    lyricsModifiedAtMs: bigint('lyricsModifiedAtMs', { mode: 'number' }),
+    lyricsLookedUpAt: timestamp('lyricsLookedUpAt'),
+    videoKey: text('videoKey'),
+  },
+  (table) => [
+    index('music_track_album_idx').on(table.albumId, table.discNumber, table.trackNumber),
+  ],
+);
+
+const musicTrackArtist = pgTable(
+  'music_track_artist',
+  {
+    mediaItemId: text('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    artistId: text('artistId')
+      .notNull()
+      .references(() => musicArtist.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.mediaItemId, table.artistId] }),
+    index('music_track_artist_artist_idx').on(table.artistId),
+  ],
+);
+
+const favouriteArtist = pgTable(
+  'favourite_artist',
+  {
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    artistId: text('artistId')
+      .notNull()
+      .references(() => musicArtist.id, { onDelete: 'cascade' }),
+    keptAt: timestamp('keptAt').notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.profileId, table.artistId] }),
+    index('favourite_artist_recent_idx').on(table.profileId, table.keptAt),
+  ],
+);
+
+const playlist = pgTable(
+  'playlist',
+  {
+    id: text('id').primaryKey(),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    description: text('description'),
+    isShared: boolean('isShared').notNull().default(false),
+    isOrdered: boolean('isOrdered').notNull().default(false),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    index('playlist_owner_idx').on(table.profileId, table.updatedAt),
+    index('playlist_shared_idx').on(table.isShared),
+  ],
+);
+
+const playlistEntry = pgTable(
+  'playlist_entry',
+  {
+    id: text('id').primaryKey(),
+    playlistId: text('playlistId')
+      .notNull()
+      .references(() => playlist.id, { onDelete: 'cascade' }),
+    mediaItemId: text('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    position: doublePrecision('position').notNull(),
+    addedAt: timestamp('addedAt').notNull().defaultNow(),
+  },
+  (table) => [index('playlist_entry_order_idx').on(table.playlistId, table.position)],
+);
+
 const serverSetting = pgTable('server_setting', {
   key: text('key').primaryKey(),
   value: jsonb('value').notNull(),
@@ -1040,4 +1186,11 @@ export {
   book,
   bookChapter,
   readingProgress,
+  musicArtist,
+  musicAlbum,
+  musicTrack,
+  musicTrackArtist,
+  favouriteArtist,
+  playlist,
+  playlistEntry,
 };

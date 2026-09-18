@@ -2,6 +2,7 @@ import { Icon } from '@ValenceUI/Icon';
 import {
   InformationCircleIcon,
   Message01Icon,
+  MusicNote01Icon,
   PauseIcon,
   PlayIcon,
   StopIcon,
@@ -13,6 +14,7 @@ import { Button } from '@ValenceUI/Button';
 import { Card } from '@ValenceUI/Card';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { deviceIconFor } from './deviceIcon';
+import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { SessionStatsDialog } from '@ValenceScreens/components/AdminArea/components/SessionStatsDialog/SessionStatsDialog';
 import type { SessionCardProps } from './SessionCard.types';
 
@@ -36,12 +38,22 @@ const SessionCard = ({
   onResume,
   onMessage,
 }: SessionCardProps) => {
-  const { playback } = session;
+  const { playback, listening } = session;
   const deviceGlyph = deviceIconFor(session.deviceLabel);
   const [isShowingStats, setIsShowingStats] = useState(false);
 
-  const health = playback?.health ?? null;
+  const health =
+    playback?.health ??
+    (listening === null
+      ? null
+      : {
+          positionSeconds: listening.positionSeconds,
+          durationSeconds: listening.durationSeconds,
+          bufferedAheadSeconds: 0,
+        });
   const hasProgress = health !== null && health.durationSeconds > 0;
+  const isActive = playback !== null || listening !== null;
+  const isPlaying = playback?.isPlaying ?? listening?.isPlaying ?? false;
 
   return (
     <Card as="article" padding="sm" radius="md" className="flex w-full min-w-0 items-center gap-3">
@@ -52,16 +64,35 @@ const SessionCard = ({
             alt=""
             className="h-full w-full object-cover"
           />
+        ) : listening !== null && listening.hasArtwork ? (
+          <img
+            src={albumArtworkUrl(listening.albumId)}
+            alt=""
+            className="h-full w-full object-cover"
+          />
         ) : (
-          <Icon of={Tv01Icon} size={20} className="text-text-muted" />
+          <Icon
+            of={listening === null ? Tv01Icon : MusicNote01Icon}
+            size={20}
+            className="text-text-muted"
+          />
         )}
       </span>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-sm font-medium text-text">
-            {playback?.mediaTitle ?? 'Not watching anything'}
+            {playback?.mediaTitle ??
+              (listening === null
+                ? 'Not watching anything'
+                : `${listening.title} · ${listening.artists.join(', ')}`)}
           </span>
+
+          {listening === null || playback !== null ? null : (
+            <Badge size="sm" tone={listening.delivery === 'encoded' ? 'accent' : 'quiet'}>
+              {listening.delivery === 'encoded' ? 'Encoding' : 'Direct'}
+            </Badge>
+          )}
 
           {playback === null ? null : (
             <Badge size="sm" tone={playback.mode === 'transcode' ? 'accent' : 'quiet'}>
@@ -83,8 +114,20 @@ const SessionCard = ({
             {session.deviceLabel}
           </span>
 
-          {playback === null ? null : (
-            <span className="shrink-0">· {playback.isPlaying ? 'Playing' : 'Paused'}</span>
+          {!isActive ? null : (
+            <span className="shrink-0">· {isPlaying ? 'Playing' : 'Paused'}</span>
+          )}
+
+          {listening === null || playback !== null ? null : (
+            <span className="shrink-0 uppercase">
+              ·{' '}
+              {[
+                listening.codec,
+                listening.kbps === null ? null : `${listening.kbps.toString()} kbps`,
+              ]
+                .filter((part) => part !== null)
+                .join(' ')}
+            </span>
           )}
         </span>
 
@@ -123,9 +166,9 @@ const SessionCard = ({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        {playback === null ? null : (
+        {!isActive ? null : (
           <>
-            {playback.isPlaying ? (
+            {isPlaying ? (
               <Button
                 isIconOnly
                 variant="ghost"
@@ -173,17 +216,19 @@ const SessionCard = ({
           </>
         )}
 
-        <Button
-          isIconOnly
-          variant="ghost"
-          label="Stream stats"
-          size="sm"
-          onClick={() => {
-            setIsShowingStats(true);
-          }}
-        >
-          <Icon of={InformationCircleIcon} size={15} />
-        </Button>
+        {playback === null ? null : (
+          <Button
+            isIconOnly
+            variant="ghost"
+            label="Stream stats"
+            size="sm"
+            onClick={() => {
+              setIsShowingStats(true);
+            }}
+          >
+            <Icon of={InformationCircleIcon} size={15} />
+          </Button>
+        )}
       </div>
 
       <SessionStatsDialog

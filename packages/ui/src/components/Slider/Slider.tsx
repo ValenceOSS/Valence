@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as RadixSlider from '@radix-ui/react-slider';
-import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useReducedMotionConfig,
+  useSpring,
+} from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import type { SliderProps, SliderTone } from './Slider.types';
@@ -8,11 +14,21 @@ import type { SliderProps, SliderTone } from './Slider.types';
 const TRACK_CLASSES: Record<SliderTone, string> = {
   default: 'bg-surface-raised',
   overlay: 'bg-on-scrim/30',
+  glass: 'bg-text/15',
 };
+
+const STRETCH_SPRING = { stiffness: 360, damping: 24, mass: 0.6 };
+
+const STRETCH_PER_SPEED = 1.1;
+
+const STRETCH_MOST = 1;
+
+const SETTLES_AFTER_MS = 120;
 
 const FILL_CLASSES: Record<SliderTone, string> = {
   default: 'bg-primary',
   overlay: 'bg-on-scrim',
+  glass: 'bg-text',
 };
 
 /**
@@ -30,13 +46,20 @@ const FILL_CLASSES: Record<SliderTone, string> = {
  * @param max - The largest value the track reaches.
  * @param step - How far each press of an arrow key moves it.
  * @param onValueChange - Told the new value as the handle moves.
+ * @param onValueCommit - Told the value somebody settled on, once they let go of the handle or
+ *   finish with the keys — for a value that is costly to change, such as where a song is.
  * @param renderPreview - Draws something above the handle for the value being pointed at.
  * @param valueLabel - Names the value the handle is at, shown while the handle is under the pointer
  *   or holding focus. Says where the handle is rather than where the pointer is, which is the
  *   difference between this and a preview: a preview answers "what is there", and this answers
  *   "what have I set". Shown without the pause a tooltip usually takes, since a figure that arrives
  *   half a second after the handle has moved is describing the past.
- * @param tone - Whether it sits on the page or over video.
+ * @param tone - Whether it sits on the page, over video, or on a pane of glass whose colour is the
+ *   page's own, where the page's raised surface would not show.
+ * @param isDisabled - Whether it can be moved at all, for a value somebody else is in charge of.
+ * @param revealsThumb - Whether the handle stays out of sight until a pointer is over the track, for a
+ *   bar that should read as a line of progress until somebody reaches for it. It stays while being
+ *   dragged or focused, and is always there on a touch screen, where nothing hovers.
  * @param className - Extra classes for the caller's own layout.
  */
 const Slider = ({
@@ -45,9 +68,12 @@ const Slider = ({
   max,
   step = 1,
   onValueChange,
+  onValueCommit,
   renderPreview,
   valueLabel,
   tone = 'default',
+  isDisabled = false,
+  revealsThumb = false,
   className,
 }: SliderProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -56,6 +82,36 @@ const Slider = ({
   const [hover, setHover] = useState<{ value: number; ratio: number; left: number } | null>(null);
   const [isOnHandle, setIsOnHandle] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const stretch = useSpring(1, STRETCH_SPRING);
+  const anchor = useMotionValue(0.5);
+  const lastMoveRef = useRef<{ x: number; atMs: number } | null>(null);
+  const settleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const drag = (clientX: number, atMs: number): void => {
+    const last = lastMoveRef.current;
+
+    lastMoveRef.current = { x: clientX, atMs };
+
+    if (last === null || prefersReducedMotion === true) {
+      return;
+    }
+
+    const moved = clientX - last.x;
+    const speed = Math.abs(moved) / Math.max(atMs - last.atMs, 1);
+
+    if (moved !== 0) {
+      anchor.set(moved > 0 ? 1 : 0);
+      stretch.set(1 + Math.min(speed * STRETCH_PER_SPEED, STRETCH_MOST));
+    }
+
+    if (settleRef.current !== null) {
+      clearTimeout(settleRef.current);
+    }
+
+    settleRef.current = setTimeout(() => {
+      stretch.set(1);
+    }, SETTLES_AFTER_MS);
+  };
 
   useEffect(() => {
     if (!isDragging) {
@@ -64,6 +120,8 @@ const Slider = ({
 
     const letGo = (): void => {
       setIsDragging(false);
+      lastMoveRef.current = null;
+      stretch.set(1);
     };
 
     window.addEventListener('pointerup', letGo);
@@ -73,7 +131,7 @@ const Slider = ({
       window.removeEventListener('pointerup', letGo);
       window.removeEventListener('pointercancel', letGo);
     };
-  }, [isDragging]);
+  }, [isDragging, stretch]);
 
   const track = useCallback(
     (clientX: number) => {
@@ -101,6 +159,7 @@ const Slider = ({
 
   const handle = (
     <RadixSlider.Thumb
+      asChild
       aria-label={label}
       aria-disabled={max <= 0}
       onPointerEnter={() => {
@@ -111,11 +170,16 @@ const Slider = ({
       }}
       className={cn(
         'block size-3.5 w-8 rounded-full shadow outline-none select-none',
-        'transition-transform duration-[var(--duration-instant)] ease-[var(--ease-out)]',
+        'transition-[scale,opacity] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
         'motion-reduce:transition-none hover-hover:hover:scale-110 focus-visible:ring-[3px] focus-visible:ring-ring',
+        revealsThumb && !isDragging
+          ? 'hover-hover:scale-75 hover-hover:opacity-0 hover-hover:group-hover/slider:scale-100 hover-hover:group-hover/slider:opacity-100 focus-visible:scale-100 focus-visible:opacity-100'
+          : '',
         FILL_CLASSES[tone],
       )}
-    />
+    >
+      <motion.span style={{ scaleX: stretch, originX: anchor }} />
+    </RadixSlider.Thumb>
   );
 
   return (
@@ -149,11 +213,14 @@ const Slider = ({
         min={0}
         max={max <= 0 ? 1 : max}
         step={step}
-        disabled={max <= 0}
+        disabled={isDisabled || max <= 0}
         data-slot="slider"
-        className="flex w-full touch-none items-center py-2 select-none"
+        className="group/slider flex w-full touch-none items-center py-2 select-none data-[disabled]:opacity-50"
         onValueChange={(next) => {
           onValueChange(next[0] ?? 0);
+        }}
+        onValueCommit={(next) => {
+          onValueCommit?.(next[0] ?? 0);
         }}
         onPointerDown={() => {
           setIsDragging(true);
@@ -163,6 +230,10 @@ const Slider = ({
         }}
         onPointerMove={(event) => {
           track(event.clientX);
+
+          if (isDragging) {
+            drag(event.clientX, event.timeStamp);
+          }
         }}
         onPointerLeave={() => {
           setHover(null);

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-type SliderTone = 'default' | 'overlay';
+type SliderTone = 'default' | 'overlay' | 'glass';
 
 type SliderProps = {
   label: string;
@@ -8,9 +8,12 @@ type SliderProps = {
   max: number;
   step?: number;
   onValueChange: (value: number) => void;
+  onValueCommit?: (value: number) => void;
   renderPreview?: (value: number) => ReactNode;
   valueLabel?: (value: number) => string;
   tone?: SliderTone;
+  isDisabled?: boolean;
+  revealsThumb?: boolean;
   className?: string;
 };
 

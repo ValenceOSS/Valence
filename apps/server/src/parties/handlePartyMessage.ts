@@ -49,6 +49,7 @@ const asPartyJson = (
 ): JsonValue => ({
   party: {
     id: party.id,
+    kind: party.kind,
     mediaId: party.mediaId,
     createdAtMs: party.createdAtMs,
     everyoneMaySeek: party.everyoneMaySeek,
@@ -114,7 +115,14 @@ const handlePartyMessage = (
   const { registry } = binding;
 
   if (message.kind === 'partyOpen') {
-    tellEveryone(binding, registry.open({ mediaId: message.mediaId, host: who }));
+    tellEveryone(
+      binding,
+      registry.open({
+        mediaId: message.mediaId,
+        host: who,
+        ...(message.partyKind === undefined ? {} : { kind: message.partyKind }),
+      }),
+    );
 
     return;
   }

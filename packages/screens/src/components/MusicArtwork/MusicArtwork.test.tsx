@@ -1,0 +1,39 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { MusicArtwork } from './MusicArtwork';
+
+describe('MusicArtwork', () => {
+  it('draws the picture, named for anybody not looking at it', () => {
+    render(<MusicArtwork src="/cover.webp" label="Even In Arcadia" />);
+
+    expect(screen.getByRole('img', { name: 'Even In Arcadia' })).toHaveAttribute(
+      'src',
+      '/cover.webp',
+    );
+  });
+
+  it('stands a note in where there is no picture, still saying what it is', () => {
+    render(<MusicArtwork src={null} label="Untitled" />);
+
+    expect(screen.queryByRole('img', { name: 'Untitled' })).not.toBeInTheDocument();
+    expect(screen.getByText('Untitled')).toBeInTheDocument();
+  });
+
+  it('stands the note in where the picture will not load', () => {
+    render(<MusicArtwork src="/broken.webp" label="Broken" />);
+
+    fireEvent.error(screen.getByRole('img', { name: 'Broken' }));
+
+    expect(screen.queryByRole('img', { name: 'Broken' })).not.toBeInTheDocument();
+  });
+
+  it('draws a person round', () => {
+    const { container } = render(<MusicArtwork src={null} label="Artist" shape="round" />);
+
+    expect(container.firstElementChild).toHaveClass('rounded-full');
+  });
+
+  it('sets a display name so devtools can identify it', () => {
+    expect(MusicArtwork.displayName).toBe('MusicArtwork');
+  });
+});

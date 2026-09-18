@@ -12,7 +12,7 @@ vi.mock('motion/react', async () => ({
 }));
 
 /**
- * The lights themselves, one per colour the page was given.
+ * The lights themselves, one for each place a light can sit.
  */
 const blooms = (container: HTMLElement): HTMLElement[] =>
   Array.from(container.querySelectorAll('.valence-bloom')).filter(
@@ -37,8 +37,8 @@ describe('MoodBackground', () => {
       <MoodBackground lights={[{ color: 'rgb(120, 40, 200)' }, { color: 'rgb(20, 160, 120)' }]} />,
     );
 
-    expect(blooms(container)).toHaveLength(2);
     expect(blooms(container)[0]?.style.background).toContain('rgb(120, 40, 200)');
+    expect(blooms(container)[1]?.style.background).toContain('rgb(20, 160, 120)');
   });
 
   it('falls back to the house colour when nothing on screen has any light to give', () => {
@@ -53,7 +53,14 @@ describe('MoodBackground', () => {
       <MoodBackground lights={[{ color: '' }, { color: 'rgb(20, 160, 120)' }]} />,
     );
 
-    expect(blooms(container)).toHaveLength(1);
+    expect(blooms(container)[0]?.style.background).toContain('rgb(20, 160, 120)');
+  });
+
+  it('keeps a bloom for every place, dark past the lights it was given', () => {
+    const { container } = render(<MoodBackground lights={[{ color: 'rgb(20, 160, 120)' }]} />);
+
+    expect(blooms(container)).toHaveLength(12);
+    expect(blooms(container)[5]?.style.background).toContain('0%, transparent');
   });
 
   it('draws no more lights than it has places to put them', () => {

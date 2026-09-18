@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { JsonValueSchema } from './JsonValue';
-import { PartyCommandSchema, PartyRoleSchema } from './WatchParty';
+import { PartyCommandSchema, PartyKindSchema, PartyRoleSchema } from './WatchParty';
 import type { Permission } from './Permission';
 
 const VIEWER_TOPICS = [
@@ -50,7 +50,11 @@ const PongSchema = z.object({ kind: z.literal('pong') });
 
 const ClockAskSchema = z.object({ kind: z.literal('clockAsk'), sentAtMs: z.number().int() });
 
-const PartyOpenSchema = z.object({ kind: z.literal('partyOpen'), mediaId: z.string().min(1) });
+const PartyOpenSchema = z.object({
+  kind: z.literal('partyOpen'),
+  mediaId: z.string().min(1),
+  partyKind: PartyKindSchema.optional(),
+});
 
 const PartyJoinSchema = z.object({
   kind: z.literal('partyJoin'),

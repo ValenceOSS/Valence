@@ -26,6 +26,7 @@ const stubTranscoder = (requestPreview: Transcoder['requestPreview']): Transcode
   startSession: () => Promise.reject(new Error('not used')),
   readSessionFile: () => Promise.resolve(null),
   readFile: () => Promise.resolve(null),
+  readAudioRendition: () => Promise.resolve(null),
   fingerprint: () => Promise.reject(new Error('not used')),
   requestTrickplay: () => Promise.reject(new Error('not used')),
   readTrickplayFile: () => Promise.resolve(null),

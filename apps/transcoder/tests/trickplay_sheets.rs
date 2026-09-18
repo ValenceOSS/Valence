@@ -82,6 +82,7 @@ fn app(name: &str) -> axum::Router {
         trickplay: TrickplayRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
+        audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: WorkQueue::new(1),
         media_roots: Vec::new(),
     })
@@ -229,6 +230,7 @@ async fn refuses_a_file_outside_the_media_roots() {
         trickplay: TrickplayRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
+        audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: WorkQueue::new(1),
         media_roots: vec![PathBuf::from("/nowhere")],
     });
@@ -305,6 +307,7 @@ async fn asking_twice_at_once_renders_one_set_rather_than_two() {
         trickplay: TrickplayRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
+        audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: WorkQueue::new(1),
         ffprobe: ffprobe(),
         media_roots: Vec::new(),

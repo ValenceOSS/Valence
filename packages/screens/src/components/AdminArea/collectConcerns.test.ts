@@ -8,11 +8,13 @@ const healthyOverview = (overrides: Partial<AdminOverview> = {}): AdminOverview 
   users: [],
   settings: {
     hasCatalogueKey: true,
+    hasAudioDbKey: false,
     cookieSecure: true,
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    fetchesMusicDetails: false,
     certificationRegion: 'GB',
     trustedOrigins: [],
   },
@@ -119,6 +121,7 @@ const streaming = (bufferedAheadSeconds: number, isPlaying = true): ActiveSessio
       presentedHeight: 1080,
     },
   },
+  listening: null,
 });
 
 const healthy = {
@@ -485,11 +488,13 @@ describe('collectConcerns', () => {
         overview: healthyOverview({
           settings: {
             hasCatalogueKey: false,
+            hasAudioDbKey: false,
             cookieSecure: true,
             hardwareAccel: '',
             previewQuality: 'high' as const,
             showsProfilesBeforeSignIn: false,
             fetchesCatalogueTrailers: false,
+            fetchesMusicDetails: false,
             certificationRegion: 'GB',
             trustedOrigins: [],
           },
@@ -675,11 +680,13 @@ describe('collectConcerns', () => {
       overview: healthyOverview({
         settings: {
           hasCatalogueKey: false,
+          hasAudioDbKey: false,
           cookieSecure: true,
           hardwareAccel: '',
           previewQuality: 'high' as const,
           showsProfilesBeforeSignIn: false,
           fetchesCatalogueTrailers: false,
+          fetchesMusicDetails: false,
           certificationRegion: 'GB',
           trustedOrigins: [],
         },

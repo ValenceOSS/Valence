@@ -3,6 +3,8 @@ type AddedItem = {
   title: string;
   seriesId: string | null;
   seriesTitle: string | null;
+  albumId: string | null;
+  albumTitle: string | null;
 };
 
 type NewMediaSummary = {
@@ -32,9 +34,47 @@ const inWords = (names: string[]): string => {
 };
 
 /**
+ * Gathers the items that belong to something larger — the episodes of a programme, the songs of an
+ * album — under that larger thing, counting how many of each arrived.
+ *
+ * @param items - The items that belong to something.
+ * @param idOf - Which larger thing an item belongs to.
+ * @param titleOf - What that larger thing is called.
+ * @returns Each larger thing, by its identifier.
+ */
+const gather = (
+  items: AddedItem[],
+  idOf: (item: AddedItem) => string,
+  titleOf: (item: AddedItem) => string,
+): Map<string, { title: string; count: number }> => {
+  const gathered = new Map<string, { title: string; count: number }>();
+
+  for (const item of items) {
+    const id = idOf(item);
+    const held = gathered.get(id);
+
+    gathered.set(id, { title: held?.title ?? titleOf(item), count: (held?.count ?? 0) + 1 });
+  }
+
+  return gathered;
+};
+
+/**
+ * Says how many of something there were, in the singular or the plural as the count needs.
+ *
+ * @param count - How many.
+ * @param one - The word for one.
+ * @param many - The word for several.
+ * @returns The count in words, or nothing where there were none.
+ */
+const counted = (count: number, one: string, many: string): string[] =>
+  count === 0 ? [] : [`${count.toString()} ${count === 1 ? one : many}`];
+
+/**
  * Turns everything imported in a window into the one thing worth saying about it — a film by name, or
  * a count and what most of it was. Somebody who has just scanned a drive should be told their
- * library grew, not told two hundred times that it did.
+ * library grew, not told two hundred times that it did. Songs are counted as songs and named by
+ * their albums, since an album is what somebody adds, not fifteen separate films.
  *
  * @param items Everything imported since the last digest.
  */
@@ -43,46 +83,59 @@ const summariseNewMedia = (items: AddedItem[]): NewMediaSummary | null => {
     return null;
   }
 
-  const films = items.filter((item) => item.seriesId === null);
-  const episodes = items.filter((item) => item.seriesId !== null);
-  const series = new Map<string, { title: string; count: number }>();
+  const songs = items.filter((item) => item.albumId !== null);
+  const films = items.filter((item) => item.seriesId === null && item.albumId === null);
+  const episodes = items.filter((item) => item.seriesId !== null && item.albumId === null);
 
-  for (const episode of episodes) {
-    const id = episode.seriesId ?? '';
-    const held = series.get(id);
+  const series = gather(
+    episodes,
+    (episode) => episode.seriesId ?? '',
+    (episode) => episode.seriesTitle ?? episode.title,
+  );
 
-    series.set(id, {
-      title: held?.title ?? episode.seriesTitle ?? episode.title,
-      count: (held?.count ?? 0) + 1,
-    });
-  }
+  const albums = gather(
+    songs,
+    (song) => song.albumId ?? '',
+    (song) => song.albumTitle ?? song.title,
+  );
 
   const programmes = [...series.values()];
-  const names = [...programmes.map((one) => one.title), ...films.map((film) => film.title)];
+  const records = [...albums.values()];
 
-  const only = films.length === 1 && programmes.length === 0 ? films[0] : null;
+  const names = [
+    ...programmes.map((one) => one.title),
+    ...records.map((one) => one.title),
+    ...films.map((film) => film.title),
+  ];
+
+  const isAlone = (count: number) => count === items.length;
+  const only = films.length === 1 && isAlone(1) ? films[0] : undefined;
   const onlySeries =
-    programmes.length === 1 && films.length === 0 ? [...series.keys()][0] : undefined;
+    programmes.length === 1 && isAlone(episodes.length) ? [...series.keys()][0] : undefined;
+  const onlyAlbum =
+    records.length === 1 && isAlone(songs.length) ? [...albums.keys()][0] : undefined;
 
-  const episodeWords =
-    episodes.length === 0
-      ? []
-      : [`${episodes.length.toString()} ${episodes.length === 1 ? 'episode' : 'episodes'}`];
-
-  const filmWords =
-    films.length === 0
-      ? []
-      : [`${films.length.toString()} ${films.length === 1 ? 'film' : 'films'}`];
+  const words = [
+    ...counted(episodes.length, 'episode', 'episodes'),
+    ...counted(films.length, 'film', 'films'),
+    ...counted(songs.length, 'song', 'songs'),
+  ];
 
   return {
-    title: 'Something new to watch',
-    body: `${[...episodeWords, ...filmWords].join(' and ')} — ${inWords(names)}`,
+    title: isAlone(songs.length)
+      ? 'Something new to listen to'
+      : songs.length === 0
+        ? 'Something new to watch'
+        : 'Something new',
+    body: `${words.join(' and ')} — ${inWords(names)}`,
     link:
-      only !== undefined && only !== null
+      only !== undefined
         ? `/?inspecting=${only.id}`
-        : onlySeries === undefined
-          ? null
-          : `/?show=${onlySeries}`,
+        : onlySeries !== undefined
+          ? `/?show=${onlySeries}`
+          : onlyAlbum === undefined
+            ? null
+            : `/music?listen=album:${onlyAlbum}`,
   };
 };
 

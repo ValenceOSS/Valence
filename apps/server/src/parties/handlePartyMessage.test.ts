@@ -76,6 +76,16 @@ describe('handlePartyMessage', () => {
     expect(world.lastTold()?.to).toEqual(['dan']);
   });
 
+  it('opens a party for listening together when asked for one', () => {
+    const world = createWorld();
+
+    world.say({ kind: 'partyOpen', mediaId: 'a-song', partyKind: 'listen' }, someone('dan', 'Dan'));
+
+    expect(world.lastTold()?.payload).toMatchObject({
+      party: { kind: 'listen', everyoneMaySeek: false, everyoneMayPlayPause: false },
+    });
+  });
+
   it('tells everybody already there when somebody joins', () => {
     const world = createWorld();
 

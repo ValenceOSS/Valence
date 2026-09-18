@@ -5,6 +5,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 
 type SaysWhatChanged = Pick<RealtimeClient, 'subscribe' | 'onResumed'>;
@@ -29,6 +30,8 @@ const useFreshFromTheSocket = (client: SaysWhatChanged = getRealtimeClient()): v
     const stopWatching = [
       client.subscribe('media', () => {
         void cache.invalidateQueries({ queryKey: libraryQueries.key });
+        void cache.invalidateQueries({ queryKey: musicQueries.key });
+        void cache.invalidateQueries({ queryKey: musicQueries.playlistsKey });
       }),
 
       client.subscribe('notifications', () => {

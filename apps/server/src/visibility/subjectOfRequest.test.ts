@@ -9,6 +9,17 @@ describe('what a request is about', () => {
     expect(subjectOfRequest(`/api/media/${ITEM}`)).toEqual({ kind: 'item', mediaId: ITEM });
   });
 
+  it('names the track behind a stream or its lyrics, so a blocked song cannot be heard or read', () => {
+    expect(subjectOfRequest(`/api/music/tracks/${ITEM}/stream`)).toEqual({
+      kind: 'item',
+      mediaId: ITEM,
+    });
+    expect(subjectOfRequest(`/api/music/tracks/${ITEM}/lyrics`)).toEqual({
+      kind: 'item',
+      mediaId: ITEM,
+    });
+  });
+
   it.each([
     ['artwork', `/api/media/${ITEM}/image/backdrop`],
     ['a preview clip', `/api/media/${ITEM}/preview`],

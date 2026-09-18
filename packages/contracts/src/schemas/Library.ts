@@ -30,7 +30,7 @@ const EXTRA_KIND_LABELS: Record<z.infer<typeof ExtraKindSchema>, string> = {
   other: 'Extra',
 };
 
-const SELECTABLE_LIBRARY_KINDS = ['movies', 'shows', 'books'] as const;
+const SELECTABLE_LIBRARY_KINDS = ['movies', 'shows', 'music', 'books'] as const;
 
 const LibraryKindSchema = z.enum(LIBRARY_KINDS);
 
@@ -83,6 +83,7 @@ const MediaSummarySchema = z.object({
   episodeNumber: z.number().int().nullish(),
   genres: z.array(z.string()).nullish(),
   externalId: z.string().nullish(),
+  sizeBytes: z.number().nonnegative().nullish(),
 });
 
 const CastMemberSchema = z.object({

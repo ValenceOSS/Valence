@@ -28,4 +28,4 @@ type ActionMenuProps = {
   className?: string;
 };
 
-export type { ActionMenuProps, ActionMenuSize };
+export type { ActionMenuGroup, ActionMenuItem, ActionMenuProps, ActionMenuSize };

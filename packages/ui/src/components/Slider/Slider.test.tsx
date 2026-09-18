@@ -176,6 +176,15 @@ describe('Slider', () => {
 
     expect(container.querySelector('[data-tone="overlay"]')).toBeInTheDocument();
   });
+
+  it('can be drawn on glass, with a track that shows whatever the theme', () => {
+    const { container } = render(
+      <Slider label="Seek" value={30} max={120} tone="glass" onValueChange={vi.fn()} />,
+    );
+
+    expect(container.querySelector('[data-tone="glass"]')).toBeInTheDocument();
+    expect(container.querySelector('.bg-text\\/15')).toBeInTheDocument();
+  });
 });
 
 describe('the preview that follows the pointer', () => {
@@ -318,5 +327,51 @@ describe('the preview that follows the pointer', () => {
     render(<Slider label="Seek" value={30} max={120} onValueChange={vi.fn()} />);
 
     expect(slider()).toBeInTheDocument();
+  });
+
+  it('cannot be moved while somebody else is in charge of its value', () => {
+    render(
+      <Slider label="Where the song is" value={10} max={100} isDisabled onValueChange={vi.fn()} />,
+    );
+
+    expect(screen.getByRole('slider', { name: 'Where the song is' })).toHaveAttribute(
+      'data-disabled',
+    );
+  });
+
+  it('keeps its handle out of sight until the track is pointed at, where asked', () => {
+    render(
+      <Slider
+        label="Where the song is"
+        value={10}
+        max={100}
+        revealsThumb
+        onValueChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('slider', { name: 'Where the song is' })).toHaveClass(
+      'hover-hover:opacity-0',
+      'hover-hover:group-hover/slider:opacity-100',
+    );
+  });
+
+  it('says the value settled on once the keys are done with it', async () => {
+    const onValueCommit = vi.fn();
+
+    render(
+      <Slider
+        label="Where the song is"
+        value={10}
+        max={100}
+        onValueChange={vi.fn()}
+        onValueCommit={onValueCommit}
+      />,
+    );
+
+    screen.getByRole('slider', { name: 'Where the song is' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+
+    expect(onValueCommit).toHaveBeenCalledWith(11);
   });
 });
