@@ -3,6 +3,7 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { gainFor } from '@ValenceCore/functions/gainFor';
 import { VideoPlayer } from './VideoPlayer';
 import { fakeMediaElement } from '@ValenceScreens/testing/fakeMediaElement';
 import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
@@ -991,7 +992,7 @@ describe('VideoPlayer', () => {
     screen.getByRole('slider', { name: 'Volume' }).focus();
     await actor.keyboard('{ArrowLeft}');
 
-    expect(screen.getByLabelText('Arrival')).toHaveProperty('volume', 0.99);
+    expect(screen.getByLabelText('Arrival')).toHaveProperty('volume', gainFor(0.99));
   });
 
   it('asks for full screen on the whole stage, not just the video', async () => {

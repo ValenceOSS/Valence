@@ -12,6 +12,7 @@ import {
   upcomingIn,
 } from '@ValenceClient/music/playQueue';
 import { playableQuality } from '@ValenceClient/music/playableQuality';
+import { gainFor } from '@ValenceCore/functions/gainFor';
 import type { PlayQueue, QueueSource } from '@ValenceClient/music/playQueue';
 import type { MusicPreferences } from '@ValenceClient/music/musicPreferences';
 import type { AudioQuality, MusicTrack } from '@ValenceContracts/schemas/Music';
@@ -151,7 +152,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
   let mirroredQueue = '';
   let volumeTimer: ReturnType<typeof setTimeout> | null = null;
 
-  audio.volume = kept.volume;
+  audio.volume = gainFor(kept.volume);
   audio.muted = kept.isMuted;
 
   const change = (next: Partial<MusicPlayerState>): void => {
@@ -465,7 +466,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
         return;
       }
 
-      audio.volume = level;
+      audio.volume = gainFor(level);
       audio.muted = false;
       preferences.save({ volume: level, isMuted: false });
 
@@ -698,7 +699,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       }
 
       if (sent.kind === 'volume') {
-        audio.volume = sent.volume;
+        audio.volume = gainFor(sent.volume);
         audio.muted = false;
         change({ volume: sent.volume, isMuted: false });
         tell(true);

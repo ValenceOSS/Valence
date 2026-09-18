@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { gainFor } from '@ValenceCore/functions/gainFor';
 import { createMusicPlayer } from './createMusicPlayer';
 import type { AudioLike, MusicPlayerDeps } from './createMusicPlayer';
 import type { MusicPreferences } from '@ValenceClient/music/musicPreferences';
@@ -180,14 +181,14 @@ describe('createMusicPlayer', () => {
 
     player.setVolume(0.4);
 
-    expect(audio.volume).toBe(0.4);
+    expect(audio.volume).toBeCloseTo(gainFor(0.4));
     expect(saved).toContainEqual({ volume: 0.4, isMuted: false });
   });
 
   it('starts at the volume this device last used', () => {
     const { audio } = build({}, { volume: 0.25, isMuted: true });
 
-    expect(audio.volume).toBe(0.25);
+    expect(audio.volume).toBeCloseTo(gainFor(0.25));
     expect(audio.muted).toBe(true);
   });
 
@@ -496,7 +497,7 @@ describe('createMusicPlayer', () => {
 
       player.obey({ kind: 'volume', volume: 0.3 });
 
-      expect(audio.volume).toBe(0.3);
+      expect(audio.volume).toBeCloseTo(gainFor(0.3));
       expect(deps.report).toHaveBeenLastCalledWith(
         expect.objectContaining({ volume: 0.3, isMuted: false }),
       );
