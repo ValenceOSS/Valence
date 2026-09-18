@@ -27,6 +27,7 @@ import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { setMusicImmersive, useMusicImmersive } from '@ValenceScreens/music/musicImmersive';
+import { keepBarRoom } from '@ValenceScreens/music/keepBarRoom';
 import { setMusicPanel, useMusicPanel } from '@ValenceScreens/music/musicPanel';
 import { useListeningParty } from '@ValenceScreens/music/listeningParty';
 import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
@@ -122,6 +123,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
       />
       <motion.div
         key="bar"
+        ref={(bar: HTMLDivElement | null) => (bar === null ? undefined : keepBarRoom(bar))}
         variants={isStill ? fadeVariants : ARRIVING}
         initial="hidden"
         animate="shown"

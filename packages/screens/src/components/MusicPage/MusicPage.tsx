@@ -98,10 +98,10 @@ const MusicPage = () => {
   const isStill = prefersReducedMotion === true;
 
   return (
-    <main className="px-2 pt-2 sm:px-3">
+    <main className="px-2 pt-2 sm:px-3 sm:pt-3">
       <h1 className="sr-only">Music</h1>
 
-      <div className="flex h-[calc(100svh-var(--nav-clearance)-var(--valence-window-bar,0px)-7.5rem)] min-h-[28rem]">
+      <div className="flex h-[calc(100svh-var(--nav-clearance)-var(--valence-window-bar,0px)-var(--music-bar-room,0px)-1rem)] min-h-[28rem] sm:h-[calc(100svh-var(--nav-clearance)-var(--valence-window-bar,0px)-var(--music-bar-room,0px)-1.5rem)]">
         <div
           className={cn(
             'hidden min-h-0 shrink-0 overflow-hidden lg:flex',
@@ -119,7 +119,7 @@ const MusicPage = () => {
         </div>
 
         <section aria-label="Music" className="valence-card-shell flex min-h-0 min-w-0 flex-1">
-          <div className="valence-card-face relative min-h-0 flex-1 overflow-y-auto overscroll-contain [--music-lane:1.25rem] sm:[--music-lane:2rem]">
+          <div className="valence-card-face relative min-h-0 flex-1 overflow-y-auto overscroll-contain [container-type:size] [--music-lane:1.25rem] sm:[--music-lane:2rem]">
             <MusicWash />
 
             <div className="relative flex flex-col pt-2">

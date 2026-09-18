@@ -7,6 +7,7 @@ import {
   RepeatOne01Icon,
   ShuffleIcon,
 } from '@hugeicons/core-free-icons';
+import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -44,6 +45,10 @@ const REPEAT_LABELS = {
  * music on its own can still press play to join in. Shuffle and repeat are switched off for a
  * queue whose order means something, and for another device being controlled.
  *
+ * Dragging along the track moves the handle and the time with the finger, and the song only goes
+ * there when it is let go: each move to a new place in a song asks the server for it afresh, and a
+ * drag that did that at every step never let the song settle anywhere.
+ *
  * @param state - What the player is doing.
  * @param shown - What the bar shows as playing, which is another device's song while controlling it.
  * @param player - The player to drive.
@@ -62,27 +67,34 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
   const mayPlayPause = !isFollowing || listening.mayPlayPause || mayJoinIn;
   const maySeek = !isFollowing || listening.maySeek;
   const iconSize = isImmersive ? 24 : 20;
+  const [scrubbedTo, setScrubbedTo] = useState<number | null>(null);
+  const position = scrubbedTo ?? shown.positionSeconds;
+
+  const seek = (value: number) => {
+    setScrubbedTo(null);
+
+    if (isFollowing) {
+      listening.send({ kind: 'seek', atSeconds: value });
+
+      return;
+    }
+
+    player.seek(value);
+  };
 
   const scrubber = (
     <Slider
       label="Where the song is"
       tone={isImmersive ? 'overlay' : 'glass'}
-      value={Math.min(shown.positionSeconds, shown.durationSeconds)}
+      value={Math.min(position, shown.durationSeconds)}
       max={Math.max(shown.durationSeconds, 1)}
       step={1}
       valueLabel={(value) => formatDuration(value)}
       isDisabled={!maySeek}
       revealsThumb
       className="min-w-0 flex-1"
-      onValueChange={(value) => {
-        if (isFollowing) {
-          listening.send({ kind: 'seek', atSeconds: value });
-
-          return;
-        }
-
-        player.seek(value);
-      }}
+      onValueChange={setScrubbedTo}
+      onValueCommit={seek}
     />
   );
 
@@ -195,10 +207,8 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
         <div className="flex flex-col gap-1">
           {scrubber}
           <div className="flex justify-between text-xs tabular-nums text-on-scrim/60">
-            <span>{formatDuration(shown.positionSeconds)}</span>
-            <span>
-              -{formatDuration(Math.max(shown.durationSeconds - shown.positionSeconds, 0))}
-            </span>
+            <span>{formatDuration(position)}</span>
+            <span>-{formatDuration(Math.max(shown.durationSeconds - position, 0))}</span>
           </div>
         </div>
 
@@ -221,7 +231,7 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
 
       <div className="hidden w-full items-center gap-2 md:flex">
         <span className="w-10 text-right text-xs tabular-nums text-text-muted">
-          {formatDuration(shown.positionSeconds)}
+          {formatDuration(position)}
         </span>
         {scrubber}
         <span className="w-10 text-xs tabular-nums text-text-muted">

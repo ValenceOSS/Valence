@@ -59,6 +59,18 @@ describe('MusicTransport', () => {
     expect(screen.getByRole('button', { name: 'Shuffle' })).toBeInTheDocument();
   });
 
+  it('goes to a new place in the song once, when the scrubber is settled on', async () => {
+    const { player } = playing();
+
+    render(<MusicTransport state={player.read()} shown={SHOWN} player={player} />);
+
+    screen.getByRole('slider', { name: 'Where the song is' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+
+    expect(player.seek).toHaveBeenCalledTimes(1);
+    expect(player.seek).toHaveBeenCalledWith(66);
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MusicTransport.displayName).toBe('MusicTransport');
   });

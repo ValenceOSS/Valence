@@ -270,7 +270,7 @@ const AppShell = ({
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !event.defaultPrevented) {
         onSectionChange('home');
       }
     };
@@ -481,7 +481,7 @@ const AppShell = ({
       ref={shellRef}
       className={cn(
         'valence-shell relative min-h-[calc(100vh-var(--valence-window-bar))] text-text',
-        isFitted ? 'h-[calc(100vh-var(--valence-window-bar))] overflow-hidden' : '',
+        isFitted ? 'h-[calc(100vh-var(--valence-window-bar))] overflow-clip' : '',
       )}
     >
       <MoodBackground lights={moodLights} film={film} />
@@ -560,7 +560,7 @@ const AppShell = ({
           animate="shown"
           className={
             isFitted
-              ? 'h-[calc(100vh-var(--valence-window-bar))] overflow-hidden pt-[var(--nav-clearance)]'
+              ? 'h-[calc(100vh-var(--valence-window-bar))] overflow-clip pt-[var(--nav-clearance)]'
               : 'min-h-[calc(100vh-var(--valence-window-bar))] pb-16 pt-[var(--nav-clearance)]'
           }
         >

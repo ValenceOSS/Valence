@@ -102,6 +102,24 @@ describe('ImmersiveMusic', () => {
     });
   });
 
+  it('keeps Escape to itself, so it closes the view without leaving the section', async () => {
+    const heard = vi.fn();
+
+    window.addEventListener('keydown', heard);
+
+    renderInAnAddress(<ImmersiveMusic player={playing().player} />);
+
+    act(() => {
+      setMusicImmersive(true);
+    });
+
+    await screen.findByRole('region', { name: 'Track 1, immersive' });
+    await userEvent.keyboard('{Escape}');
+
+    expect(heard).not.toHaveBeenCalled();
+    window.removeEventListener('keydown', heard);
+  });
+
   it('closes itself when nothing is playing', async () => {
     const { player, set } = playing();
 

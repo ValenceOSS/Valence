@@ -79,9 +79,19 @@ describe('AppShell', () => {
   it('leaves nothing to scroll around a section that fills the window', () => {
     const { view } = draw({ isFitted: true, dock: <p>Now playing</p> });
 
-    expect(view.container.querySelector('main')).toHaveClass('overflow-hidden');
-    expect(view.container.querySelector('.valence-shell')).toHaveClass('overflow-hidden');
+    expect(view.container.querySelector('main')).toHaveClass('overflow-clip');
+    expect(view.container.querySelector('.valence-shell')).toHaveClass('overflow-clip');
     expect(screen.getByText('Now playing').parentElement).toHaveClass('h-0');
+  });
+
+  it('leaves an Escape something else has already answered alone', () => {
+    const { props } = draw({ section: 'music' });
+    const escape = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+
+    escape.preventDefault();
+    window.dispatchEvent(escape);
+
+    expect(props.onSectionChange).not.toHaveBeenCalled();
   });
 
   it('keeps what is docked along the foot the same thing from one section to the next', () => {

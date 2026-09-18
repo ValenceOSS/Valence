@@ -16,6 +16,7 @@ import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
+import { CoverGlow } from '@ValenceScreens/components/CoverGlow/CoverGlow';
 import { LyricLines } from '@ValenceScreens/components/LyricLines/LyricLines';
 import { MusicTransport } from '@ValenceScreens/components/MusicTransport/MusicTransport';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
@@ -30,8 +31,6 @@ const OPENING = { duration: 0.28, ease: [0.23, 1, 0.32, 1] } as const;
 const CLOSING = { duration: 0.18, ease: [0.23, 1, 0.32, 1] } as const;
 
 const CHANGING = { duration: 0.35, ease: [0.23, 1, 0.32, 1] } as const;
-
-const DISSOLVING = { duration: 0.9, ease: 'easeInOut' } as const;
 
 /**
  * The song playing, filling the screen: its cover, blown up and blurred into light behind
@@ -74,14 +73,16 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
         setMusicImmersive(false);
       }
     };
 
-    window.addEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, { capture: true });
 
     return () => {
-      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKey, { capture: true });
     };
   }, [isOpen]);
 
@@ -108,25 +109,9 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
               : { opacity: 0, scale: 1.02, transition: CLOSING }
           }
           transition={OPENING}
-          className="fixed inset-0 z-[35] overflow-hidden bg-shade text-on-scrim"
+          className="fixed inset-0 z-[35] overflow-hidden text-on-scrim"
         >
-          <AnimatePresence initial={false}>
-            {cover === null ? null : (
-              <motion.img
-                key={cover}
-                src={cover}
-                alt=""
-                aria-hidden
-                draggable={false}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.7 }}
-                exit={{ opacity: 0 }}
-                transition={isStill ? CLOSING : DISSOLVING}
-                className="pointer-events-none absolute inset-0 size-full scale-125 object-cover blur-3xl saturate-150"
-              />
-            )}
-          </AnimatePresence>
-          <span aria-hidden className="absolute inset-0 bg-shade/45" />
+          <CoverGlow src={cover} className="absolute inset-0" />
 
           <Button
             variant="overlay"

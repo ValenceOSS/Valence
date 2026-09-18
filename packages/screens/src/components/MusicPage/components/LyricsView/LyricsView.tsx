@@ -5,6 +5,7 @@ import { Skeleton } from '@ValenceUI/Skeleton';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { lyricLineAt } from '@ValenceClient/music/lyricLineAt';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { CoverGlow } from '@ValenceScreens/components/CoverGlow/CoverGlow';
 import { LyricLines } from '@ValenceScreens/components/LyricLines/LyricLines';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
@@ -14,9 +15,10 @@ import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
 /**
  * The words of the song playing, following along with it.
  *
- * The page has no colour of its own: the room is lit by the song's cover, and the words stand on
- * that. Timed words keep the line being sung in the middle of the page; words that are not timed
- * are simply shown. A song with none says so, plainly.
+ * The words stand on the song's cover, blown up and blurred into light and held still behind them
+ * as they scroll, the way the immersive view is — and, as there, every line but the one being sung
+ * drifts out of focus. Timed words keep the line being sung in the middle of the page; words that
+ * are not timed are simply shown. A song with none says so, plainly.
  */
 const LyricsView = () => {
   const { state, player } = useMusicPlayer(undefined, { followsPosition: true });
@@ -29,7 +31,9 @@ const LyricsView = () => {
       ? -1
       : lyricLineAt(lyrics.lines, (shown?.positionSeconds ?? 0) * 1000);
 
-  useLightTheMusic(shown !== null && shown.hasArtwork ? albumArtworkUrl(shown.albumId) : null);
+  const cover = shown !== null && shown.hasArtwork ? albumArtworkUrl(shown.albumId) : null;
+
+  useLightTheMusic(cover);
 
   if (shown === null) {
     return (
@@ -57,14 +61,21 @@ const LyricsView = () => {
   }
 
   return (
-    <section aria-label={`Lyrics for ${shown.title}`} className={`py-12 ${MUSIC_LANES.page}`}>
-      <LyricLines
-        lyrics={lyrics}
-        at={at}
-        onSeek={(seconds) => {
-          player.seek(seconds);
-        }}
-      />
+    <section aria-label={`Lyrics for ${shown.title}`} className="relative text-on-scrim">
+      <div aria-hidden className="sticky top-0 -mb-[100cqh] h-[100cqh]">
+        <CoverGlow src={cover} className="absolute inset-0" />
+      </div>
+
+      <div className={`relative py-[30cqh] ${MUSIC_LANES.page}`}>
+        <LyricLines
+          lyrics={lyrics}
+          at={at}
+          look="immersive"
+          onSeek={(seconds) => {
+            player.seek(seconds);
+          }}
+        />
+      </div>
     </section>
   );
 };

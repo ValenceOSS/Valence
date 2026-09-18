@@ -10,6 +10,28 @@ const BLUR_PER_LINE = 1.4;
 const BLUR_MOST = 6;
 
 /**
+ * The box a line scrolls within: the nearest thing around it that scrolls up and down.
+ *
+ * Only that box is moved to keep the sung line in sight. Asking the browser to bring a line into
+ * view moves every box around it that can move, the page itself included, which on a page built not
+ * to scroll shifts everything under the bar at the top.
+ *
+ * @param line - The line.
+ * @returns The box, or nothing where nothing around it scrolls.
+ */
+const scrollerOf = (line: HTMLElement): HTMLElement | null => {
+  for (let at = line.parentElement; at !== null; at = at.parentElement) {
+    const { overflowY } = getComputedStyle(at);
+
+    if (overflowY === 'auto' || overflowY === 'scroll') {
+      return at;
+    }
+  }
+
+  return null;
+};
+
+/**
  * How a line stands, given where it is against the line being sung.
  *
  * @param index - The line.
@@ -46,7 +68,8 @@ const standingOf = (
  *
  * The line being sung comes up to full size and brightness and the page glides to keep it in the
  * middle; the lines around it ease back — sung ones dimmer than those to come — so the eye is
- * always led to the right place without anything jumping. In the immersive look the lines further
+ * always led to the right place without anything jumping. Only the box the words scroll in moves to
+ * keep the sung line in sight — never the page around it. In the immersive look the lines further
  * from the one sung also go out of focus, which keeps a screen full of words from reading as a
  * wall of text. Pressing a timed line goes to it. Somebody who has asked for less movement sees
  * lines brighten and dim with nothing growing, blurring or gliding.
@@ -62,8 +85,18 @@ const LyricLines = ({ lyrics, at, onSeek, look = 'page' }: LyricLinesProps) => {
   const lineRefs = useRef(new Map<number, HTMLElement>());
 
   useEffect(() => {
-    lineRefs.current.get(at)?.scrollIntoView({
-      block: 'center',
+    const line = lineRefs.current.get(at);
+    const scroller = line === undefined ? null : scrollerOf(line);
+
+    if (line === undefined || scroller === null) {
+      return;
+    }
+
+    const shown = scroller.getBoundingClientRect();
+    const sung = line.getBoundingClientRect();
+
+    scroller.scrollBy({
+      top: sung.top + sung.height / 2 - (shown.top + shown.height / 2),
       behavior: isStill ? 'auto' : 'smooth',
     });
   }, [at, isStill]);
