@@ -466,7 +466,7 @@ const AppShell = ({
   return (
     <div
       ref={shellRef}
-      className="valence-shell relative min-h-[calc(100vh-var(--valence-window-bar))] text-text"
+      className="valence-shell relative min-h-[calc(100svh-var(--valence-window-bar))] text-text"
     >
       <MoodBackground lights={moodLights} film={film} />
 
@@ -505,7 +505,7 @@ const AppShell = ({
               onClick={() => {
                 onSectionChange('home');
               }}
-              className="flex items-center rounded-md"
+              className="flex items-center rounded-md coarse:min-h-11"
             >
               {hasMark ? (
                 <motion.span
@@ -542,7 +542,7 @@ const AppShell = ({
           variants={staggerVariants}
           initial="hidden"
           animate="shown"
-          className="min-h-[calc(100vh-var(--valence-window-bar))] pb-16 pt-[var(--nav-clearance)]"
+          className="min-h-[calc(100svh-var(--valence-window-bar))] pb-[calc(4rem+var(--floor-clearance,0px))] pt-[var(--nav-clearance)]"
         >
           <motion.div
             variants={revealVariants(prefersReducedMotion)}

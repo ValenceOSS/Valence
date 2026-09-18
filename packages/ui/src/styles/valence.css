@@ -535,8 +535,13 @@ body {
   animation: none;
 }
 
+.valence-navbar {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 .valence-shell {
-  --nav-clearance: 4rem;
+  --nav-clearance: calc(4rem + env(safe-area-inset-top, 0px));
+  --floor-clearance: env(safe-area-inset-bottom, 0px);
 }
 
 [data-valence-desktop='true'] .valence-shell {

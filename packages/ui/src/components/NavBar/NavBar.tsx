@@ -157,7 +157,8 @@ const NavBar = ({
                     onSelect(item.id);
                   }}
                   className={cn(
-                    'relative flex h-9 items-center gap-2 rounded-md px-3.5 text-sm',
+                    'relative flex h-9 shrink-0 items-center gap-2 rounded-md px-3.5 text-sm',
+                    'coarse:h-11',
                     MOVES,
                     isCurrent
                       ? 'font-medium text-text'
@@ -198,7 +199,10 @@ const NavBar = ({
           })}
         </ul>
 
-        <div ref={actionsRef} className="ml-auto flex shrink-0 items-center gap-0.5">
+        <div
+          ref={actionsRef}
+          className="valence-rail ml-auto flex min-w-0 items-center gap-0.5 overflow-x-auto"
+        >
           {actions.map((action) =>
             action.control === undefined ? (
               <Button
@@ -219,7 +223,8 @@ const NavBar = ({
                 }}
                 onClick={action.onSelect}
                 className={cn(
-                  'relative flex size-9 items-center justify-center rounded-md text-sm',
+                  'relative flex size-9 shrink-0 items-center justify-center rounded-md text-sm',
+                  'coarse:size-11',
                   MOVES,
                   lit === action.id || action.isCurrent === true
                     ? 'font-medium text-text'
