@@ -1,4 +1,4 @@
-import { AudioWave01Icon, FavouriteIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import { FavouriteIcon, PlayIcon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { Icon } from '@ValenceUI/Icon';
@@ -8,6 +8,7 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { Equaliser } from '@ValenceScreens/components/Equaliser/Equaliser';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { TrackMenu } from '@ValenceScreens/components/TrackMenu/TrackMenu';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
@@ -79,11 +80,7 @@ const TrackList = ({
                     isCurrent ? 'text-text' : '',
                   )}
                 >
-                  {isCurrent && state.isPlaying ? (
-                    <Icon of={AudioWave01Icon} size={16} />
-                  ) : (
-                    number.toString()
-                  )}
+                  {isCurrent && state.isPlaying ? <Equaliser label="Playing" /> : number.toString()}
                 </span>
 
                 <Button
