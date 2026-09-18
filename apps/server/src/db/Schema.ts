@@ -965,9 +965,6 @@ const userProfile = pgTable('user_profile', {
     .primaryKey()
     .references(() => user.id, { onDelete: 'cascade' }),
   displayName: text('displayName'),
-  preferredAudioLanguage: text('preferredAudioLanguage'),
-  preferredSubtitleLanguage: text('preferredSubtitleLanguage'),
-  requestQuotaPerWeek: integer('requestQuotaPerWeek').notNull().default(0),
   colour: text('colour'),
   avatarStyle: text('avatarStyle'),
   avatarSeed: text('avatarSeed'),
