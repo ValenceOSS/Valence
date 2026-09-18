@@ -94,7 +94,7 @@ const useWhatIsPlaying = (
       durationSeconds: reported.durationSeconds,
       isPlaying: reported.isPlaying,
       isLoading: false,
-      volume: reported.volume,
+      volume: state.volume,
       remote,
     };
   }

@@ -57,6 +57,7 @@ const aFakeMusicPlayer = (
     playOn: vi.fn(),
     playHere: vi.fn(),
     obey: vi.fn(),
+    mirror: vi.fn(),
   } satisfies MusicPlayer;
 
   return {

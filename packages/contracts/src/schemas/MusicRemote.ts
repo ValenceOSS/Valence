@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AudioQualitySchema } from './Music';
 
 const MusicNowPlayingSchema = z.object({
   trackId: z.string().uuid(),
@@ -10,7 +11,26 @@ const MusicNowPlayingSchema = z.object({
   durationSeconds: z.number().nonnegative(),
   isPlaying: z.boolean(),
   volume: z.number().min(0).max(1),
+  isMuted: z.boolean().default(false),
+  quality: AudioQualitySchema.default('lossless'),
+  upNext: z.array(z.string().uuid()).max(500).default([]),
   reportedAtMs: z.number().int().nonnegative(),
+});
+
+const ListeningSessionSchema = z.object({
+  trackId: z.string().uuid(),
+  title: z.string(),
+  artists: z.array(z.string()),
+  albumId: z.string().uuid(),
+  hasArtwork: z.boolean(),
+  isPlaying: z.boolean(),
+  positionSeconds: z.number().nonnegative(),
+  durationSeconds: z.number().nonnegative(),
+  reportedAtMs: z.number().int().nonnegative(),
+  quality: AudioQualitySchema,
+  delivery: z.enum(['direct', 'encoded']),
+  codec: z.string().nullable(),
+  kbps: z.number().int().nullable(),
 });
 
 const MusicDeviceSchema = z.object({
@@ -36,6 +56,14 @@ const MusicCommandSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('stop') }),
   z.object({ kind: z.literal('seek'), positionSeconds: z.number().nonnegative() }),
   z.object({ kind: z.literal('volume'), volume: z.number().min(0).max(1) }),
+  z.object({ kind: z.literal('mute'), isMuted: z.boolean() }),
+  z.object({
+    kind: z.literal('enqueue'),
+    trackIds: z.array(z.string().uuid()).min(1).max(500),
+    where: z.enum(['next', 'last']),
+  }),
+  z.object({ kind: z.literal('skipTo'), ahead: z.number().int().positive() }),
+  z.object({ kind: z.literal('unqueue'), ahead: z.number().int().positive() }),
 ]);
 
 const ReportNowPlayingSchema = z.object({
@@ -59,13 +87,15 @@ const PlaybackEventSchema = z.discriminatedUnion('kind', [
 ]);
 
 type MusicNowPlaying = z.infer<typeof MusicNowPlayingSchema>;
+type ListeningSession = z.infer<typeof ListeningSessionSchema>;
 type MusicDevice = z.infer<typeof MusicDeviceSchema>;
 type MusicCommand = z.infer<typeof MusicCommandSchema>;
 type PlaybackEvent = z.infer<typeof PlaybackEventSchema>;
 
-export type { MusicCommand, MusicDevice, MusicNowPlaying, PlaybackEvent };
+export type { ListeningSession, MusicCommand, MusicDevice, MusicNowPlaying, PlaybackEvent };
 
 export {
+  ListeningSessionSchema,
   MusicCommandSchema,
   MusicDeviceListSchema,
   MusicDeviceSchema,

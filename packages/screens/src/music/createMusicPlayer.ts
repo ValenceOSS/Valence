@@ -9,6 +9,7 @@ import {
   removeFromQueue,
   startQueue,
   toggleShuffle,
+  upcomingIn,
 } from '@ValenceClient/music/playQueue';
 import { playableQuality } from '@ValenceClient/music/playableQuality';
 import type { PlayQueue, QueueSource } from '@ValenceClient/music/playQueue';
@@ -92,6 +93,7 @@ type MusicPlayer = {
   playOn: (device: RemoteDevice) => void;
   playHere: (positionSeconds: number, isPlaying: boolean) => void;
   obey: (command: MusicCommand) => void;
+  mirror: (nowPlaying: MusicNowPlaying) => void;
 };
 
 const RESTART_AFTER_SECONDS = 3;
@@ -99,6 +101,10 @@ const RESTART_AFTER_SECONDS = 3;
 const REPORT_EVERY_MS = 15_000;
 
 const COULD_NOT_PLAY = 'That track would not play.';
+
+const UP_NEXT_REPORTED = 500;
+
+const VOLUME_SETTLES_MS = 200;
 
 /**
  * The one music player a window has: a queue, an audio element, and the device it may be
@@ -141,6 +147,9 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
 
   let lastReportMs = Number.NEGATIVE_INFINITY;
   let resumeAt: number | null = null;
+  let mirrored: MusicNowPlaying | null = null;
+  let mirroredQueue = '';
+  let volumeTimer: ReturnType<typeof setTimeout> | null = null;
 
   audio.volume = kept.volume;
   audio.muted = kept.isMuted;
@@ -177,10 +186,35 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
             durationSeconds: Math.max(0, state.durationSeconds || current.durationSeconds),
             isPlaying: state.isPlaying,
             volume: state.volume,
+            isMuted: state.isMuted,
+            quality: state.playingQuality ?? state.quality,
+            upNext:
+              state.queue === null
+                ? []
+                : upcomingIn(state.queue)
+                    .slice(0, UP_NEXT_REPORTED)
+                    .map((entry) => entry.track.id),
             reportedAtMs: Math.max(0, Math.round(at)),
           },
     );
   };
+
+  const whereTheOtherIs = (): number => {
+    if (mirrored === null) {
+      return 0;
+    }
+
+    const moved = mirrored.isPlaying ? (now() - mirrored.reportedAtMs) / 1000 : 0;
+
+    return Math.min(mirrored.durationSeconds, mirrored.positionSeconds + Math.max(0, moved));
+  };
+
+  const idsOf = (queue: PlayQueue, from: number): string[] =>
+    queue.order.slice(from).flatMap((index) => {
+      const track = queue.tracks[index];
+
+      return track === undefined ? [] : [track.id];
+    });
 
   const load = (queue: PlayQueue, positionSeconds: number, shouldPlay: boolean): void => {
     const track = currentOf(queue);
@@ -325,15 +359,9 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       });
 
       if (state.remote !== null) {
-        const played = queue.order.flatMap((index) => {
-          const track = queue.tracks[index];
-
-          return track === undefined ? [] : [track.id];
-        });
-
         void command(state.remote.clientId, {
           kind: 'play',
-          trackIds: played,
+          trackIds: idsOf(queue, queue.at),
           index: 0,
           positionSeconds: options.positionSeconds ?? 0,
           isPlaying: options.isPlaying ?? true,
@@ -420,23 +448,49 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
 
     setVolume: (volume) => {
       const level = Math.min(1, Math.max(0, volume));
+      const { remote } = state;
 
-      if (remotely({ kind: 'volume', volume: level })) {
+      change({ volume: level, isMuted: false });
+
+      if (remote !== null) {
+        if (volumeTimer !== null) {
+          clearTimeout(volumeTimer);
+        }
+
+        volumeTimer = setTimeout(() => {
+          volumeTimer = null;
+          void command(remote.clientId, { kind: 'volume', volume: level });
+        }, VOLUME_SETTLES_MS);
+
         return;
       }
 
       audio.volume = level;
       audio.muted = false;
       preferences.save({ volume: level, isMuted: false });
-      change({ volume: level, isMuted: false });
+
+      if (volumeTimer !== null) {
+        clearTimeout(volumeTimer);
+      }
+
+      volumeTimer = setTimeout(() => {
+        volumeTimer = null;
+        tell(true);
+      }, VOLUME_SETTLES_MS);
     },
 
     toggleMute: () => {
       const isMuted = !state.isMuted;
 
+      change({ isMuted });
+
+      if (remotely({ kind: 'mute', isMuted })) {
+        return;
+      }
+
       audio.muted = isMuted;
       preferences.save({ isMuted });
-      change({ isMuted });
+      tell(true);
     },
 
     toggleShuffle: () => {
@@ -452,6 +506,13 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     },
 
     playNext: (tracks) => {
+      if (
+        tracks.length > 0 &&
+        remotely({ kind: 'enqueue', trackIds: tracks.map((track) => track.id), where: 'next' })
+      ) {
+        return;
+      }
+
       if (state.queue === null) {
         player.play(tracks, 0);
 
@@ -459,9 +520,17 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       }
 
       change({ queue: playNext(state.queue, tracks) });
+      tell(true);
     },
 
     addToQueue: (tracks) => {
+      if (
+        tracks.length > 0 &&
+        remotely({ kind: 'enqueue', trackIds: tracks.map((track) => track.id), where: 'last' })
+      ) {
+        return;
+      }
+
       if (state.queue === null) {
         player.play(tracks, 0);
 
@@ -469,18 +538,38 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       }
 
       change({ queue: addToQueue(state.queue, tracks) });
+      tell(true);
     },
 
     jumpTo: (at) => {
-      if (state.queue !== null) {
-        load(jumpTo(state.queue, at), 0, true);
+      const { queue } = state;
+
+      if (queue === null) {
+        return;
       }
+
+      if (at > queue.at && remotely({ kind: 'skipTo', ahead: at - queue.at })) {
+        return;
+      }
+
+      load(jumpTo(queue, at), 0, true);
     },
 
     removeFromQueue: (at) => {
-      if (state.queue !== null) {
-        change({ queue: removeFromQueue(state.queue, at) });
+      const { queue } = state;
+
+      if (queue === null) {
+        return;
       }
+
+      if (at > queue.at && remotely({ kind: 'unqueue', ahead: at - queue.at })) {
+        change({ queue: removeFromQueue(queue, at) });
+
+        return;
+      }
+
+      change({ queue: removeFromQueue(queue, at) });
+      tell(true);
     },
 
     setQuality: (quality) => {
@@ -503,27 +592,27 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     },
 
     playOn: (device) => {
-      const { queue } = state;
-      const position = audio.currentTime;
+      const { queue, remote } = state;
+      const position = remote === null ? audio.currentTime : whereTheOtherIs();
 
-      if (queue !== null) {
-        const played = queue.order.slice(queue.at).flatMap((index) => {
-          const track = queue.tracks[index];
-
-          return track === undefined ? [] : [track.id];
-        });
-
+      if (queue !== null && currentOf(queue) !== null) {
         void command(device.clientId, {
           kind: 'play',
-          trackIds: played,
+          trackIds: idsOf(queue, queue.at),
           index: 0,
           positionSeconds: position,
           isPlaying: true,
         });
       }
 
+      if (remote !== null && remote.clientId !== device.clientId) {
+        void command(remote.clientId, { kind: 'stop' });
+      }
+
       audio.pause();
       report(null);
+      mirrored = null;
+      mirroredQueue = '';
       change({ remote: device, isPlaying: false });
     },
 
@@ -534,11 +623,51 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
         void command(remote.clientId, { kind: 'stop' });
       }
 
+      mirrored = null;
+      mirroredQueue = '';
       change({ remote: null });
 
       if (queue !== null) {
         load(queue, positionSeconds, isPlaying);
       }
+    },
+
+    mirror: (nowPlaying) => {
+      if (state.remote === null) {
+        return;
+      }
+
+      mirrored = nowPlaying;
+      change({
+        volume: nowPlaying.volume,
+        isMuted: nowPlaying.isMuted,
+        isPlaying: false,
+        positionSeconds: nowPlaying.positionSeconds,
+        durationSeconds: nowPlaying.durationSeconds,
+      });
+
+      const ids = [nowPlaying.trackId, ...nowPlaying.upNext];
+      const key = ids.join(',');
+
+      if (key === mirroredQueue) {
+        return;
+      }
+
+      mirroredQueue = key;
+
+      void fetchTracks(ids).then((tracks) => {
+        if (state.remote === null || mirroredQueue !== key || tracks.length === 0) {
+          return;
+        }
+
+        const queue = startQueue(tracks, 0, {
+          repeat: state.queue?.repeat ?? 'off',
+          source: state.queue?.source ?? null,
+          random,
+        });
+
+        change({ queue, current: currentOf(queue) });
+      });
     },
 
     obey: (sent) => {
@@ -570,8 +699,57 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
 
       if (sent.kind === 'volume') {
         audio.volume = sent.volume;
-        change({ volume: sent.volume });
+        audio.muted = false;
+        change({ volume: sent.volume, isMuted: false });
         tell(true);
+
+        return;
+      }
+
+      if (sent.kind === 'mute') {
+        audio.muted = sent.isMuted;
+        change({ isMuted: sent.isMuted });
+        tell(true);
+
+        return;
+      }
+
+      if (sent.kind === 'enqueue') {
+        void fetchTracks(sent.trackIds).then((tracks) => {
+          const { queue } = state;
+
+          if (tracks.length === 0) {
+            return;
+          }
+
+          if (queue === null) {
+            load(startQueue(tracks, 0, { random }), 0, true);
+
+            return;
+          }
+
+          change({
+            queue: sent.where === 'next' ? playNext(queue, tracks) : addToQueue(queue, tracks),
+          });
+          tell(true);
+        });
+
+        return;
+      }
+
+      if (sent.kind === 'skipTo' || sent.kind === 'unqueue') {
+        const { queue } = state;
+
+        if (queue === null) {
+          return;
+        }
+
+        if (sent.kind === 'skipTo') {
+          load(jumpTo(queue, queue.at + sent.ahead), 0, true);
+        } else {
+          change({ queue: removeFromQueue(queue, queue.at + sent.ahead) });
+          tell(true);
+        }
 
         return;
       }
