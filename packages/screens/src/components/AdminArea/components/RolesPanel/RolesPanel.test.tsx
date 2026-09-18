@@ -18,10 +18,17 @@ const ADMINISTRATOR = {
   id: 'role_1',
   name: 'Administrator',
   position: 300,
+  color: null,
   permissions: ['administrator'],
 };
 
-const MEMBER = { id: 'role_2', name: 'Member', position: 100, permissions: ['sharing.link'] };
+const MEMBER = {
+  id: 'role_2',
+  name: 'Member',
+  position: 100,
+  color: null,
+  permissions: ['sharing.link'],
+};
 
 /**
  * Opens a role's editor the way a person does: through its actions menu.
@@ -29,6 +36,14 @@ const MEMBER = { id: 'role_2', name: 'Member', position: 100, permissions: ['sha
 const edit = async (user: ReturnType<typeof userEvent.setup>, name: string) => {
   await user.click(await screen.findByRole('button', { name: `Actions for ${name}` }));
   await user.click(await screen.findByRole('menuitem', { name: /Edit role/ }));
+};
+
+/**
+ * Moves the open editor to one of its tabs, since it opens on Display and permissions live behind
+ * their own.
+ */
+const openTab = async (user: ReturnType<typeof userEvent.setup>, name: string) => {
+  await user.click(await screen.findByRole('tab', { name }));
 };
 
 /**
@@ -101,6 +116,7 @@ describe('RolesPanel', () => {
     expect(mocks.createRole).toHaveBeenCalledWith({
       name: 'Housemate',
       position: 50,
+      color: null,
       permissions: [],
     });
   });
@@ -136,6 +152,7 @@ describe('RolesPanel', () => {
       renderInAnAddress(<RolesPanel />);
 
       await edit(user, 'Member');
+      await openTab(user, 'Permissions');
 
       expect(screen.getByRole('heading', { name: 'Jobs' })).toBeInTheDocument();
       expect(screen.getByLabelText('Run reset and rebuild')).toBeInTheDocument();
@@ -146,17 +163,23 @@ describe('RolesPanel', () => {
       renderInAnAddress(<RolesPanel />);
 
       await edit(user, 'Administrator');
+      await openTab(user, 'Permissions');
 
       expect(screen.getByLabelText(/Everything, including anything added later/)).toBeChecked();
       expect(screen.getByLabelText('Run a job')).not.toBeChecked();
     });
 
-    it('adds a permission the role did not have', async () => {
+    it('adds a permission the role did not have, once the change is saved', async () => {
       const user = userEvent.setup();
       renderInAnAddress(<RolesPanel />);
 
       await edit(user, 'Member');
+      await openTab(user, 'Permissions');
       await user.click(screen.getByLabelText('Run a job'));
+
+      expect(mocks.updateRole).not.toHaveBeenCalled();
+
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
       expect(mocks.updateRole).toHaveBeenCalledWith('role_2', {
         permissions: ['sharing.link', 'jobs.run'],
@@ -203,10 +226,7 @@ describe('RolesPanel', () => {
       await user.type(screen.getByLabelText('Name'), 'Housemate');
       await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-      expect(mocks.updateRole).toHaveBeenCalledWith('role_2', {
-        name: 'Housemate',
-        position: 100,
-      });
+      expect(mocks.updateRole).toHaveBeenCalledWith('role_2', { name: 'Housemate' });
     });
 
     it('re-ranks a role, which is what makes the hierarchy usable at all', async () => {
@@ -218,10 +238,7 @@ describe('RolesPanel', () => {
       await user.type(screen.getByLabelText('Rank'), '250');
       await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-      expect(mocks.updateRole).toHaveBeenCalledWith('role_2', {
-        name: 'Member',
-        position: 250,
-      });
+      expect(mocks.updateRole).toHaveBeenCalledWith('role_2', { position: 250 });
     });
 
     it('leaves the rank alone rather than sending nonsense when the field is empty', async () => {
@@ -260,7 +277,9 @@ describe('RolesPanel', () => {
       renderInAnAddress(<RolesPanel />);
 
       await edit(user, 'Member');
+      await openTab(user, 'Permissions');
       await user.click(screen.getByLabelText('Run a job'));
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
       expect(await screen.findByRole('alert')).toHaveTextContent('at or above your own');
     });
