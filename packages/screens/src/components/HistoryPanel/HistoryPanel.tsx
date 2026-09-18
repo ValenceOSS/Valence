@@ -7,9 +7,14 @@ import { Badge } from '@ValenceUI/Badge';
 import { Spinner } from '@ValenceUI/Spinner';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { forgetViewing, forgetHistory } from '@ValenceClient/history/fetchHistory';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { bookQueries } from '@ValenceClient/query/bookQueries';
+import { forgetReading } from '@ValenceClient/books/fetchBooks';
 import { describeWhen } from '@ValenceClient/history/describeWhen';
+import { interleaveHistory } from '@ValenceClient/history/interleaveHistory';
+import { describeReadingPlace } from '@ValenceScreens/reading/describeReadingPlace';
+import type { BookReading } from '@ValenceContracts/schemas/Book';
 import type { Viewing } from '@ValenceContracts/schemas/Viewing';
 import type { HistoryPanelProps } from './HistoryPanel.types';
 import type { InfiniteData } from '@tanstack/react-query';
@@ -24,8 +29,9 @@ import type { InfiniteData } from '@tanstack/react-query';
 const nameOf = (viewing: Viewing): string => viewing.title ?? 'No longer in the library';
 
 /**
- * What this profile has watched, grouped by when — today, yesterday, the days of this week — with
- * each viewing removable, since a history somebody cannot edit is a history they will not want.
+ * What this profile has watched and read, most recent first, with each entry removable, since a
+ * history somebody cannot edit is a history they will not want. A book appears once, at the last
+ * time it was opened, with how far into it somebody got.
  *
  * @param now - What to treat as now, so the grouping can be tested.
  */
@@ -35,10 +41,15 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
   const cache = useQueryClient();
 
   const asked = useInfiniteQuery(viewingQueries.history());
+  const reading = useQuery(bookQueries.reading());
 
   const viewings = useMemo(() => (asked.data?.pages ?? []).flat(), [asked.data]);
-  const isReading = asked.isPending;
+  const isReading = asked.isPending || reading.isPending;
   const hasMore = asked.hasNextPage;
+  const entries = useMemo(
+    () => interleaveHistory(viewings, reading.data ?? [], hasMore),
+    [hasMore, reading.data, viewings],
+  );
 
   const readMore = async () => {
     await asked.fetchNextPage();
@@ -61,10 +72,21 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
     }
   };
 
+  const forgetABook = async (bookId: string) => {
+    cache.setQueryData(bookQueries.reading().queryKey, (held: BookReading[] | undefined) =>
+      held?.filter((one) => one.book.id !== bookId),
+    );
+
+    if (!(await forgetReading(bookId))) {
+      await cache.invalidateQueries({ queryKey: bookQueries.reading().queryKey });
+    }
+  };
+
   const forgetTheLot = async () => {
     setIsClearing(true);
-    await forgetHistory();
+    await Promise.all([forgetHistory(), forgetReading()]);
     await cache.invalidateQueries({ queryKey: viewingQueries.history().queryKey });
+    await cache.invalidateQueries({ queryKey: bookQueries.reading().queryKey });
     setIsClearing(false);
   };
 
@@ -76,10 +98,10 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
     );
   }
 
-  if (viewings.length === 0) {
+  if (entries.length === 0) {
     return (
       <p className="p-4 text-sm text-text-muted">
-        Nothing yet. What you watch shows up here, and only you can see it.
+        Nothing yet. What you watch and read shows up here, and only you can see it.
       </p>
     );
   }
@@ -88,44 +110,64 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
     <div className="flex flex-col">
       <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
         <AnimatePresence initial={false} mode="popLayout">
-          {viewings.map((viewing) => (
-            <motion.li
-              key={viewing.id}
-              layout={!(prefersReducedMotion ?? false)}
-              exit={{ opacity: 0, x: -12 }}
-              transition={{ duration: prefersReducedMotion === true ? 0 : 0.18 }}
-              className="flex items-center gap-3 px-4 py-3"
-            >
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="truncate text-sm text-text-strong">{nameOf(viewing)}</span>
+          {entries.map((entry) => {
+            const name =
+              entry.kind === 'viewing' ? nameOf(entry.viewing) : entry.reading.book.title;
+            const isFinished =
+              entry.kind === 'viewing' ? entry.viewing.isFinished : entry.reading.isFinished;
 
-                <span className="text-xs text-text-muted">
-                  {viewing.seriesTitle === null ? '' : `${viewing.seriesTitle} · `}
-                  {describeWhen(new Date(viewing.lastWatchedAt), now ?? new Date())} ·{' '}
-                  {formatDuration(viewing.secondsWatched)} watched
-                </span>
-              </div>
-
-              {viewing.isFinished ? (
-                <Badge tone="accent">
-                  <Icon of={Tick02Icon} size={12} />
-                  Finished
-                </Badge>
-              ) : null}
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-auto shrink-0"
-                aria-label={`Forget ${nameOf(viewing)}`}
-                onClick={() => {
-                  void forgetOne(viewing.id);
-                }}
+            return (
+              <motion.li
+                key={entry.kind === 'viewing' ? entry.viewing.id : `book-${entry.reading.book.id}`}
+                layout={!(prefersReducedMotion ?? false)}
+                exit={{ opacity: 0, x: -12 }}
+                transition={{ duration: prefersReducedMotion === true ? 0 : 0.18 }}
+                className="flex items-center gap-3 px-4 py-3"
               >
-                <Icon of={Delete02Icon} size={16} />
-              </Button>
-            </motion.li>
-          ))}
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="truncate text-sm text-text-strong">{name}</span>
+
+                  <span className="text-xs text-text-muted">
+                    {entry.kind === 'viewing' ? (
+                      <>
+                        {entry.viewing.seriesTitle === null
+                          ? ''
+                          : `${entry.viewing.seriesTitle} · `}
+                        {describeWhen(entry.at, now ?? new Date())} ·{' '}
+                        {formatDuration(entry.viewing.secondsWatched)} watched
+                      </>
+                    ) : (
+                      <>
+                        {describeWhen(entry.at, now ?? new Date())} ·{' '}
+                        {describeReadingPlace(entry.reading)}
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                {isFinished ? (
+                  <Badge tone="accent">
+                    <Icon of={Tick02Icon} size={12} />
+                    Finished
+                  </Badge>
+                ) : null}
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto shrink-0"
+                  aria-label={`Forget ${name}`}
+                  onClick={() => {
+                    void (entry.kind === 'viewing'
+                      ? forgetOne(entry.viewing.id)
+                      : forgetABook(entry.reading.book.id));
+                  }}
+                >
+                  <Icon of={Delete02Icon} size={16} />
+                </Button>
+              </motion.li>
+            );
+          })}
         </AnimatePresence>
       </ul>
 
@@ -142,7 +184,8 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
           </Button>
         ) : (
           <p className="text-xs text-text-muted">
-            Viewings are forgotten automatically after a year.
+            Viewings are forgotten automatically after a year; where you are in a book is kept until
+            you forget it.
           </p>
         )}
 

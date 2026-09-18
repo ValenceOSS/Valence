@@ -6,6 +6,8 @@ import { shareEndingFor } from '@ValenceClient/sharing/shareEndingFor';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShareEnding } from '@ValenceContracts/schemas/Share';
 import type { SharePageProps } from './SharePage.types';
+import { GuestReader } from '@ValenceScreens/components/GuestReader/GuestReader';
+import type { Book } from '@ValenceContracts/schemas/Book';
 
 const ASK_EVERY_MILLISECONDS = 5000;
 
@@ -20,6 +22,9 @@ const ASK_EVERY_MILLISECONDS = 5000;
  * than letting a guest watch out whatever the buffer holds and then reporting it as a fault in the
  * stream, which is a decision somebody made described as a failure.
  *
+ * A shared book is read the same way, in the reader a household uses, and the link is asked about
+ * while it is open just as it is while something plays.
+ *
  * Asking only while playing is the point: a guest reading the page has nothing to interrupt, and the
  * screen they are on asks for itself when it opens.
  *
@@ -29,12 +34,15 @@ const ASK_EVERY_MILLISECONDS = 5000;
 const SharePage = ({ name, askEveryMilliseconds = ASK_EVERY_MILLISECONDS }: SharePageProps) => {
   const { place } = usePlace();
   const [playing, setPlaying] = useState<MediaSummary | null>(null);
+  const [reading, setReading] = useState<Book | null>(null);
   const [reached, setReached] = useState<Map<string, number>>(new Map());
   const [ended, setEnded] = useState<ShareEnding | null>(null);
   const token = place.shareToken ?? '';
 
+  const isInUse = playing !== null || reading !== null;
+
   useEffect(() => {
-    if (playing === null) {
+    if (!isInUse) {
       return;
     }
 
@@ -46,6 +54,7 @@ const SharePage = ({ name, askEveryMilliseconds = ASK_EVERY_MILLISECONDS }: Shar
       if (!abandoned && ending !== null) {
         setEnded(ending);
         setPlaying(null);
+        setReading(null);
       }
     };
 
@@ -57,7 +66,7 @@ const SharePage = ({ name, askEveryMilliseconds = ASK_EVERY_MILLISECONDS }: Shar
       abandoned = true;
       clearInterval(timer);
     };
-  }, [playing, token, askEveryMilliseconds]);
+  }, [isInUse, token, askEveryMilliseconds]);
 
   if (playing !== null) {
     return (
@@ -77,6 +86,17 @@ const SharePage = ({ name, askEveryMilliseconds = ASK_EVERY_MILLISECONDS }: Shar
     );
   }
 
+  if (reading !== null) {
+    return (
+      <GuestReader
+        book={reading}
+        onClose={() => {
+          setReading(null);
+        }}
+      />
+    );
+  }
+
   return (
     <ShareArea
       token={token}
@@ -84,6 +104,7 @@ const SharePage = ({ name, askEveryMilliseconds = ASK_EVERY_MILLISECONDS }: Shar
       ended={ended}
       resumeFor={(mediaId) => reached.get(mediaId) ?? null}
       onPlay={setPlaying}
+      onRead={setReading}
     />
   );
 };

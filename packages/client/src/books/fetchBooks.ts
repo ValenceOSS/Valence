@@ -6,6 +6,7 @@ import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import {
   BookContentsSchema,
   BookDetailSchema,
+  BookReadingListSchema,
   BookSchema,
   ReadingProgressSchema,
 } from '@ValenceContracts/schemas/Book';
@@ -13,6 +14,7 @@ import type {
   Book,
   BookContents,
   BookDetail,
+  BookReading,
   ReadingProgress,
 } from '@ValenceContracts/schemas/Book';
 
@@ -21,13 +23,69 @@ const BookListSchema = z.object({ books: z.array(BookSchema) });
 const ProgressListSchema = z.object({ progress: z.array(ReadingProgressSchema) });
 
 /**
+ * Books across every library this viewer can see, by what somebody typed or by id.
+ *
+ * @param query - What to look for: some words, or the ids of the books wanted.
+ * @returns The books found.
+ */
+const findBooks = async (query: {
+  search?: string;
+  ids?: readonly string[];
+  limit?: number;
+}): Promise<Book[]> => {
+  const asked = new URLSearchParams();
+
+  if (query.search !== undefined) {
+    asked.set('search', query.search);
+  }
+
+  if (query.ids !== undefined) {
+    asked.set('ids', query.ids.join(','));
+  }
+
+  if (query.limit !== undefined) {
+    asked.set('limit', query.limit.toString());
+  }
+
+  return (await readFromServer(`/api/books?${asked.toString()}`, BookListSchema, profileHeaders()))
+    .books;
+};
+
+/**
+ * What this profile has been reading, a book at a time, most recent first.
+ *
+ * @returns Each book and where in it they are.
+ */
+const fetchReading = async (): Promise<BookReading[]> =>
+  (await readFromServer('/api/reading', BookReadingListSchema, profileHeaders())).readings;
+
+/**
+ * Forgets where this profile is up to — in one book, or in all of them.
+ *
+ * @param bookId - The book, or nothing for every book.
+ * @returns Whether the server forgot it.
+ */
+const forgetReading = async (bookId?: string): Promise<boolean> => {
+  const response = await fetch(
+    bookId === undefined ? '/api/reading' : `/api/books/${bookId}/progress`,
+    {
+      method: 'DELETE',
+      headers: profileHeaders(),
+    },
+  ).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * The books on a shelf.
  *
  * @param libraryId - Which shelf.
  * @returns What is on it.
  */
 const fetchBooks = async (libraryId: string): Promise<Book[]> =>
-  (await readFromServer(`/api/libraries/${libraryId}/books`, BookListSchema)).books;
+  (await readFromServer(`/api/libraries/${libraryId}/books`, BookListSchema, profileHeaders()))
+    .books;
 
 /**
  * One book and the chapters in it.
@@ -153,6 +211,9 @@ export {
   fetchBookContents,
   fetchBookDocument,
   fetchBooks,
+  fetchReading,
   fetchReadingProgress,
+  findBooks,
+  forgetReading,
   saveReadingProgress,
 };

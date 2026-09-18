@@ -4,7 +4,9 @@ import {
   fetchBookContents,
   fetchBookDocument,
   fetchBooks,
+  fetchReading,
   fetchReadingProgress,
+  findBooks,
 } from '@ValenceClient/books/fetchBooks';
 
 const BOOKS = ['books'] as const;
@@ -75,6 +77,45 @@ const document = (bookId: string, chapterId: string, part: number) =>
     staleTime: Infinity,
   });
 
-const bookQueries = { inLibrary, one, progress, contents, document, key: BOOKS };
+/**
+ * Books found across every library, by some words or by id. Ids are sorted into the key so the same
+ * set asked for in another order is the same question.
+ *
+ * @param query - What to look for.
+ * @returns The query.
+ */
+const find = (query: { search?: string; ids?: readonly string[] }) =>
+  queryOptions({
+    queryKey: [
+      ...BOOKS,
+      'find',
+      query.search ?? null,
+      query.ids === undefined ? null : [...query.ids].sort().join(','),
+    ],
+    queryFn: () => findBooks(query),
+    enabled: query.ids === undefined || query.ids.length > 0,
+  });
+
+/**
+ * What this profile has been reading, a book at a time.
+ *
+ * @returns The query.
+ */
+const reading = () =>
+  queryOptions({
+    queryKey: [...BOOKS, 'reading'],
+    queryFn: () => fetchReading(),
+  });
+
+const bookQueries = {
+  inLibrary,
+  one,
+  progress,
+  contents,
+  document,
+  find,
+  reading,
+  key: BOOKS,
+};
 
 export { bookQueries };

@@ -17,6 +17,8 @@ import { buildFilterOptions } from './buildFilterOptions';
 import { FilterChips } from './components/FilterChips/FilterChips';
 import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
 import type { SearchAreaProps, SearchKind } from './SearchArea.types';
+import { bookQueries } from '@ValenceClient/query/bookQueries';
+import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 
 const SETTLE_MILLISECONDS = 250;
 
@@ -26,6 +28,7 @@ const KINDS: { id: SearchKind; label: string }[] = [
   { id: 'everything', label: 'Everything' },
   { id: 'films', label: 'Films' },
   { id: 'shows', label: 'Shows' },
+  { id: 'books', label: 'Books' },
 ];
 
 const NO_FACETS: LibraryFacets = { genres: [], decades: [], maxRating: 0 };
@@ -59,6 +62,7 @@ const asNumber = (value: string | null): number | undefined =>
  * @param resumeFor - Where they left each item.
  * @param isKept - Whether each item is kept.
  * @param onToggleKept - Told to keep something, or stop.
+ * @param onOpenBook - Told which book was chosen, where books are searched too.
  * @param onHide - Told to hide something from this viewer.
  */
 const SearchArea = ({
@@ -74,6 +78,7 @@ const SearchArea = ({
   isKept,
   onToggleKept,
   onHide,
+  onOpenBook,
 }: SearchAreaProps) => {
   const [kind, setKind] = useState<SearchKind>('everything');
   const [decade, setDecade] = useState<string | null>(null);
@@ -127,7 +132,7 @@ const SearchArea = ({
 
     return {
       ...(liveSearch.trim() === '' ? {} : { search: liveSearch }),
-      ...(kind === 'everything' ? {} : { kind }),
+      ...(kind === 'everything' || kind === 'books' ? {} : { kind }),
       ...(genre === null ? {} : { genre }),
       ...(startsAt === undefined ? {} : { yearFrom: startsAt, yearTo: startsAt + DECADE - 1 }),
       ...(minRating === null ? {} : { minRating: Number(minRating) }),
@@ -148,12 +153,38 @@ const SearchArea = ({
     };
   }, [asked]);
 
-  const found = useQuery(libraryQueries.across(libraryIds, settled));
+  const found = useQuery({
+    ...libraryQueries.across(libraryIds, settled),
+    enabled: kind !== 'books',
+  });
 
-  const items = useMemo(() => collapseToShows(found.data ?? []), [found.data]);
+  const items = useMemo(
+    () => (kind === 'books' ? [] : collapseToShows(found.data ?? [])),
+    [found.data, kind],
+  );
+
+  const wantsBooks =
+    (kind === 'everything' || kind === 'books') &&
+    settled.search !== undefined &&
+    genre === null &&
+    settled.yearFrom === undefined &&
+    settled.minRating === undefined &&
+    settled.minYourStars === undefined;
+
+  const foundBooks = useQuery({
+    ...bookQueries.find({ search: settled.search ?? '' }),
+    enabled: wantsBooks,
+  });
+
+  const books = wantsBooks ? (foundBooks.data ?? []) : [];
+  const howMany = items.length + books.length;
 
   const isReading =
-    libraries.isPending || (libraryIds.length > 0 && (found.isPending || asked !== settled));
+    libraries.isPending ||
+    (libraryIds.length > 0 &&
+      ((kind !== 'books' && found.isPending) ||
+        (wantsBooks && foundBooks.isPending) ||
+        asked !== settled));
 
   useEffect(() => {
     if (!isReading) {
@@ -301,11 +332,11 @@ const SearchArea = ({
             <Spinner label="Searching" size="sm" />
           ) : (
             <span>
-              {items.length === 0
+              {howMany === 0
                 ? 'Nothing here'
-                : items.length === 1
+                : howMany === 1
                   ? '1 result'
-                  : `${items.length.toString()} results`}
+                  : `${howMany.toString()} results`}
             </span>
           )}
 
@@ -337,24 +368,34 @@ const SearchArea = ({
                   void found.refetch();
                 }}
               />
-            ) : items.length === 0 && !isReading ? (
+            ) : howMany === 0 && !isReading ? (
               <p className="max-w-prose text-text-muted">
-                {isNarrowed
-                  ? 'Nothing matches all of that. Taking one of the filters off is usually the fastest way back.'
-                  : 'This library has nothing in it yet. Scanning one from the home page is where things come from.'}
+                {kind === 'books' && settled.search === undefined
+                  ? 'Type the name of a book, or who wrote it.'
+                  : isNarrowed
+                    ? 'Nothing matches all of that. Taking one of the filters off is usually the fastest way back.'
+                    : 'This library has nothing in it yet. Scanning one from the home page is where things come from.'}
               </p>
             ) : (
-              <MediaGrid
-                items={items}
-                size={size}
-                onPlay={onPlay}
-                onInspect={onInspect}
-                {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
-                {...(resumeFor === undefined ? {} : { resumeFor })}
-                {...(isKept === undefined ? {} : { isKept })}
-                {...(onToggleKept === undefined ? {} : { onToggleKept })}
-                {...(onHide === undefined ? {} : { onHide })}
-              />
+              <div className="flex flex-col gap-8">
+                {items.length === 0 ? null : (
+                  <MediaGrid
+                    items={items}
+                    size={size}
+                    onPlay={onPlay}
+                    onInspect={onInspect}
+                    {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
+                    {...(resumeFor === undefined ? {} : { resumeFor })}
+                    {...(isKept === undefined ? {} : { isKept })}
+                    {...(onToggleKept === undefined ? {} : { onToggleKept })}
+                    {...(onHide === undefined ? {} : { onHide })}
+                  />
+                )}
+
+                {books.length === 0 || onOpenBook === undefined ? null : (
+                  <BookRow title="Books" books={books} onOpen={onOpenBook} />
+                )}
+              </div>
             )}
           </motion.div>
         </AnimatePresence>

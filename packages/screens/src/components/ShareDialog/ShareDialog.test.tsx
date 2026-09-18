@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShareDialog } from './ShareDialog';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { NewShare } from '@ValenceContracts/schemas/Share';
+import type { Book } from '@ValenceContracts/schemas/Book';
 
 const createMock = vi.hoisted(() =>
   vi.fn<(asked: NewShare) => Promise<{ token: string } | null>>(),
@@ -234,5 +235,46 @@ describe('sharing an episode', () => {
     });
 
     vi.unstubAllGlobals();
+  });
+
+  it('shares a whole book, and says what somebody holding the link may do with it', async () => {
+    const book: Book = {
+      id: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001',
+      libraryId: '2b6f0cc9-04f0-4f26-9f1a-1d5b2ea92d9f',
+      title: 'Pride and Prejudice',
+      layout: 'reflow',
+      direction: 'leftToRight',
+      year: 1813,
+      overview: null,
+      genres: null,
+      authors: ['Jane Austen'],
+      rating: null,
+      hasCover: true,
+      chapterCount: 1,
+      addedAt: '2026-09-18T00:00:00.000Z',
+      updatedAt: '2026-09-18T00:00:00.000Z',
+    };
+
+    createMock.mockResolvedValue({ token: 'a-token' });
+
+    render(
+      <ShareDialog
+        subject={{ kind: 'book', book }}
+        isOpen
+        onClose={vi.fn()}
+        origin="https://valence.example"
+      />,
+    );
+
+    expect(screen.getByText('The whole book')).toBeInTheDocument();
+    expect(screen.getByText(/can read this book/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /Make a link/ }));
+
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'book', bookId: book.id }),
+      );
+    });
   });
 });

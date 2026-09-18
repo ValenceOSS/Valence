@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { setFavourite } from '@ValenceClient/library/fetchFavourites';
+import { setBookFavourite, setFavourite } from '@ValenceClient/library/fetchFavourites';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 
 type Favourites = {
@@ -20,12 +20,18 @@ type Favourites = {
  * by the second being refused. Any read still in flight is called off first, so a list that arrives
  * a moment later does not report the heart as empty again.
  *
+ * Books are kept the same way, in a list of their own, so a book's heart and a film's are one
+ * gesture with one behaviour.
+ *
  * @param watcherId - Who is watching, so that their list is the one asked for.
+ * @param what - Whether the list is of things to watch and listen to, or of books.
  * @returns What they have kept, and how to change it.
  */
-const useFavourites = (watcherId: string | null): Favourites => {
+const useFavourites = (watcherId: string | null, what: 'media' | 'books' = 'media'): Favourites => {
   const cache = useQueryClient();
-  const asked = viewingQueries.favourites(watcherId);
+  const asked =
+    what === 'books' ? viewingQueries.keptBooks(watcherId) : viewingQueries.favourites(watcherId);
+  const keep = what === 'books' ? setBookFavourite : setFavourite;
   const held = useQuery(asked);
 
   const kept = useMemo(() => new Set(held.data ?? []), [held.data]);
@@ -43,7 +49,7 @@ const useFavourites = (watcherId: string | null): Favourites => {
 
     void cache.cancelQueries({ queryKey: asked.queryKey }, { revert: false });
 
-    void setFavourite(mediaId, wants).then((agreed) => {
+    void keep(mediaId, wants).then((agreed) => {
       if (!agreed) {
         write(mediaId, !wants);
       }

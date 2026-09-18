@@ -4,6 +4,9 @@ import {
   bookPageUrl,
   fetchBookContents,
   fetchBookDocument,
+  fetchReading,
+  findBooks,
+  forgetReading,
   saveReadingProgress,
 } from './fetchBooks';
 
@@ -130,5 +133,46 @@ describe('fetchBookDocument', () => {
     fetchMock.mockResolvedValue(new Response('', { status: 500 }));
 
     await expect(fetchBookDocument('a-book', 'a-chapter', 0)).rejects.toThrow();
+  });
+});
+
+describe('findBooks', () => {
+  it('looks for books by what was typed, across every library', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ books: [] }), { status: 200 }));
+
+    await findBooks({ search: 'austen', limit: 20 });
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/books?search=austen&limit=20');
+  });
+
+  it('asks for books by id', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ books: [] }), { status: 200 }));
+
+    await findBooks({ ids: ['a', 'b'] });
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/books?ids=a%2Cb');
+  });
+});
+
+describe('fetchReading', () => {
+  it('reads what somebody has been reading', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ readings: [] }), { status: 200 }));
+
+    await expect(fetchReading()).resolves.toEqual([]);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/reading');
+  });
+});
+
+describe('forgetReading', () => {
+  it('forgets one book', async () => {
+    await expect(forgetReading('a-book')).resolves.toBe(true);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/books/a-book/progress');
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('DELETE');
+  });
+
+  it('forgets every book', async () => {
+    await forgetReading();
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/reading');
   });
 });

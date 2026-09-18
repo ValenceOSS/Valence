@@ -6,6 +6,7 @@ type PlaceSearch = {
   show?: string;
   person?: number;
   item?: string;
+  book?: string;
   party?: string;
   genre?: string;
   library?: string;
@@ -25,6 +26,7 @@ const SearchSchema = z.object({
   show: said,
   person: z.coerce.number().int().positive().nullish().catch(null),
   item: said,
+  book: said,
   party: said,
   genre: said,
   library: said,

@@ -24,6 +24,10 @@ describe('readLocation', () => {
     expect(at('/search?q=blade&item=abc').inspecting).toBe('abc');
   });
 
+  it('reads a book opened over a section', () => {
+    expect(at('/read?book=def').book).toBe('def');
+  });
+
   it('reads an item addressed on its own', () => {
     expect(at('/media/abc').inspecting).toBe('abc');
   });
@@ -104,6 +108,7 @@ describe('writeLocation', () => {
       search: 'blade',
       isSearchOpen: true,
       inspecting: 'abc',
+      book: 'def',
       show: null,
       person: null,
       shareToken: null,
