@@ -179,7 +179,13 @@ jobs:
           key: turbo-build-${{ github.sha }}
           fail-on-cache-miss: true
 
-      - run: pnpm turbo run test --filter=@valence/screens -- --shard=${{ matrix.shard }}/4
+      # In two steps rather than `turbo run test -- --shard=…`. Turbo folds pass-through arguments
+      # into its hash, so a test run carrying a shard argument never matches what the build job
+      # cached and rebuilt every dependency itself. Restoring the builds through turbo with no extra
+      # arguments answers every one of them from the cache; vitest then takes the shard directly.
+      - run: pnpm turbo run build --filter=@valence/screens
+
+      - run: pnpm --filter @valence/screens exec vitest run --shard=${{ matrix.shard }}/4
 
   rust:
     name: Transcoder lint and tests
