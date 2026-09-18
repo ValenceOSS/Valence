@@ -13,7 +13,11 @@ type MemoryState = Record<string, Rating[]>;
  * @returns Whether the rating is about it.
  */
 const isAbout = (entry: Rating, subject: RatingSubject): boolean =>
-  'mediaId' in subject ? entry.mediaId === subject.mediaId : entry.seriesId === subject.seriesId;
+  'mediaId' in subject
+    ? entry.mediaId === subject.mediaId
+    : 'seriesId' in subject
+      ? entry.seriesId === subject.seriesId
+      : entry.bookId === subject.bookId;
 
 /**
  * Ratings held in memory, so the routes can be exercised without Postgres. Answers the household
@@ -43,6 +47,7 @@ const createMemoryRatingService = (
             {
               mediaId: 'mediaId' in subject ? subject.mediaId : null,
               seriesId: 'seriesId' in subject ? subject.seriesId : null,
+              bookId: 'bookId' in subject ? subject.bookId : null,
               stars,
               ratedAt: new Date(0).toISOString(),
             },

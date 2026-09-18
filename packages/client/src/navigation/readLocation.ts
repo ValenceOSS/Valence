@@ -22,6 +22,7 @@ type Place = {
   search: string;
   isSearchOpen: boolean;
   inspecting: string | null;
+  book: string | null;
   show: string | null;
   person: number | null;
   shareToken: string | null;
@@ -39,6 +40,7 @@ const HOME: Place = {
   search: '',
   isSearchOpen: false,
   inspecting: null,
+  book: null,
   show: null,
   person: null,
   shareToken: null,
@@ -79,6 +81,7 @@ const placeIn = (pathname: string, query: Record<string, string>): Place => {
     search: said.q ?? '',
     isSearchOpen: said.search === 'open' || first === 'search',
     inspecting: first === 'media' && second !== '' ? second : (said.item ?? null),
+    book: said.book ?? null,
     show: said.show ?? null,
     person: said.person ?? null,
     shareToken: first === 'share' && second !== '' ? decodeURIComponent(second) : null,
@@ -151,6 +154,10 @@ const writeLocation = (place: Place): string => {
 
   if (place.inspecting !== null) {
     query.set('item', place.inspecting);
+  }
+
+  if (place.book !== null) {
+    query.set('book', place.book);
   }
 
   if (place.genre !== null) {

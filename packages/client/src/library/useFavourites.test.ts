@@ -5,15 +5,21 @@ import { useFavourites } from './useFavourites';
 
 const fetchFavourites = vi.fn<() => Promise<string[]>>();
 const setFavourite = vi.fn<(mediaId: string, isKept: boolean) => Promise<boolean>>();
+const fetchKeptBooks = vi.fn<() => Promise<string[]>>();
+const setBookFavourite = vi.fn<(bookId: string, isKept: boolean) => Promise<boolean>>();
 
 vi.mock('@ValenceClient/library/fetchFavourites', () => ({
   fetchFavourites: () => fetchFavourites(),
   setFavourite: (mediaId: string, isKept: boolean) => setFavourite(mediaId, isKept),
+  fetchKeptBooks: () => fetchKeptBooks(),
+  setBookFavourite: (bookId: string, isKept: boolean) => setBookFavourite(bookId, isKept),
 }));
 
 beforeEach(() => {
   fetchFavourites.mockReset().mockResolvedValue([]);
   setFavourite.mockReset().mockResolvedValue(true);
+  fetchKeptBooks.mockReset().mockResolvedValue([]);
+  setBookFavourite.mockReset().mockResolvedValue(true);
 });
 
 describe('useFavourites', () => {
@@ -116,5 +122,25 @@ describe('useFavourites', () => {
     });
 
     expect(setFavourite).toHaveBeenCalledWith('media-1', false);
+  });
+
+  it('keeps books in a list of their own, through the book’s own address', async () => {
+    fetchKeptBooks.mockResolvedValue(['book-1']);
+
+    const { result } = renderHookInACache(() => useFavourites('watcher-1', 'books'));
+
+    await waitFor(() => {
+      expect(result.current.isKept('book-1')).toBe(true);
+    });
+
+    act(() => {
+      result.current.toggle('book-2');
+    });
+
+    await waitFor(() => {
+      expect(setBookFavourite).toHaveBeenCalledWith('book-2', true);
+    });
+    expect(setFavourite).not.toHaveBeenCalled();
+    expect(fetchFavourites).not.toHaveBeenCalled();
   });
 });

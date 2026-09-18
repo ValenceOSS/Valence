@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SearchArea } from './SearchArea';
 import type { LibraryFacets, MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { Book } from '@ValenceContracts/schemas/Book';
 
 type Page = { items: MediaSummary[]; total: number };
 type Options = {
@@ -25,6 +26,13 @@ vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   fetchLibraries: () => fetchLibraries(),
   fetchLibraryItems: (libraryId: string, options?: Options) =>
     fetchLibraryItems(libraryId, options),
+}));
+
+const findBooks = vi.fn<(query: { search?: string }) => Promise<Book[]>>();
+
+vi.mock('@ValenceClient/books/fetchBooks', () => ({
+  findBooks: (query: { search?: string }) => findBooks(query),
+  bookCoverUrl: (bookId: string) => `/api/books/${bookId}/cover`,
 }));
 
 vi.mock('@ValenceClient/library/fetchFacets', () => ({
@@ -61,7 +69,44 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue({ items: [item('a', 'Arrival', ['Science fiction'])], total: 1 });
   fetchFacets.mockReset().mockResolvedValue(facets);
+  findBooks.mockReset().mockResolvedValue([A_BOOK]);
 });
+
+const A_BOOK: Book = {
+  id: 'book-1',
+  libraryId: 'library-2',
+  title: 'Pride and Prejudice',
+  layout: 'reflow',
+  direction: 'leftToRight',
+  year: 1813,
+  overview: null,
+  genres: null,
+  authors: ['Jane Austen'],
+  rating: null,
+  hasCover: true,
+  chapterCount: 1,
+  addedAt: '2026-09-18T00:00:00.000Z',
+  updatedAt: '2026-09-18T00:00:00.000Z',
+};
+
+/**
+ * Searches for something, with a way to open a book.
+ */
+const searchFor = (search: string, onOpenBook = vi.fn()) => {
+  renderInAnAddress(
+    <SearchArea
+      search={search}
+      onSearchChange={vi.fn()}
+      genre={null}
+      onGenreChange={vi.fn()}
+      onPlay={vi.fn()}
+      onInspect={vi.fn()}
+      onOpenBook={onOpenBook}
+    />,
+  );
+
+  return onOpenBook;
+};
 
 describe('SearchArea', () => {
   it('offers somewhere to type', async () => {
@@ -364,5 +409,40 @@ describe('SearchArea', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(SearchArea.displayName).toBe('SearchArea');
+  });
+
+  it('finds books by what was typed, beside films and shows', async () => {
+    searchFor('austen');
+
+    expect(await screen.findByText('Pride and Prejudice')).toBeInTheDocument();
+    expect(findBooks).toHaveBeenCalledWith({ search: 'austen' });
+    expect(screen.getByText('2 results')).toBeInTheDocument();
+  });
+
+  it('opens a book chosen from the results', async () => {
+    const onOpenBook = searchFor('austen');
+
+    await userEvent.click(await screen.findByText('Pride and Prejudice'));
+
+    expect(onOpenBook).toHaveBeenCalledWith(A_BOOK);
+  });
+
+  it('looks for no books until something has been typed', async () => {
+    searchFor('');
+
+    await screen.findByText('Arrival');
+
+    expect(findBooks).not.toHaveBeenCalled();
+  });
+
+  it('searches only books when only books are wanted', async () => {
+    searchFor('austen');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Books' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Arrival')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Pride and Prejudice')).toBeInTheDocument();
   });
 });

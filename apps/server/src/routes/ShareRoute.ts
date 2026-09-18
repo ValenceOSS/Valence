@@ -8,6 +8,7 @@ import {
   ShareSchema,
 } from '@ValenceContracts/schemas/Share';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
+import { BookSchema } from '@ValenceContracts/schemas/Book';
 
 const Share = ShareSchema.openapi('Share');
 const ShareList = ShareListSchema.openapi('ShareList');
@@ -20,9 +21,10 @@ const ShareEnded = z.object({ error: z.string(), ended: ShareEndingSchema }).ope
 
 const OpenedShare = z
   .object({
-    kind: z.enum(['item', 'series']),
+    kind: z.enum(['item', 'series', 'book']),
     title: z.string(),
     items: z.array(MediaSummarySchema),
+    book: BookSchema.nullable(),
   })
   .openapi('OpenedShare');
 

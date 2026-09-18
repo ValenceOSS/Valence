@@ -3,12 +3,21 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BrowseArea } from './BrowseArea';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { Book } from '@ValenceContracts/schemas/Book';
+import userEvent from '@testing-library/user-event';
 
 type Page = { items: MediaSummary[]; total: number };
 type Options = { kind?: string; order?: string; ids?: string[]; limit?: number };
 
 const fetchLibraries = vi.fn<() => Promise<{ id: string }[]>>();
 const fetchLibraryItems = vi.fn<(libraryId: string, options?: Options) => Promise<Page>>();
+
+const findBooks = vi.fn<(query: { ids?: readonly string[] }) => Promise<Book[]>>();
+
+vi.mock('@ValenceClient/books/fetchBooks', () => ({
+  findBooks: (query: { ids?: readonly string[] }) => findBooks(query),
+  bookCoverUrl: (bookId: string) => `/api/books/${bookId}/cover`,
+}));
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   fetchLibraries: () => fetchLibraries(),
@@ -33,7 +42,25 @@ const item = (id: string, title: string): MediaSummary => ({
   seriesId: null,
 });
 
+const A_BOOK: Book = {
+  id: 'book-1',
+  libraryId: 'library-2',
+  title: 'Pride and Prejudice',
+  layout: 'reflow',
+  direction: 'leftToRight',
+  year: 1813,
+  overview: null,
+  genres: null,
+  authors: ['Jane Austen'],
+  rating: null,
+  hasCover: true,
+  chapterCount: 1,
+  addedAt: '2026-09-18T00:00:00.000Z',
+  updatedAt: '2026-09-18T00:00:00.000Z',
+};
+
 beforeEach(() => {
+  findBooks.mockReset().mockResolvedValue([A_BOOK]);
   fetchLibraries.mockReset().mockResolvedValue([{ id: 'library-1' }]);
   fetchLibraryItems.mockReset().mockResolvedValue({ items: [item('a', 'Arrival')], total: 1 });
 });
@@ -217,5 +244,55 @@ describe('how a page of the library is laid out', () => {
     expect(
       await screen.findByRole('group', { name: 'How large the cards are' }),
     ).toBeInTheDocument();
+  });
+
+  it('shows the books this viewer kept beside everything else they kept', async () => {
+    const onOpenBook = vi.fn();
+
+    renderInAnAddress(
+      <BrowseArea
+        kind="favourites"
+        favourites={['a']}
+        keptBooks={['book-1']}
+        onOpenBook={onOpenBook}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Pride and Prejudice')).toBeInTheDocument();
+    expect(findBooks).toHaveBeenCalledWith({ ids: ['book-1'] });
+
+    await userEvent.click(screen.getByText('Pride and Prejudice'));
+
+    expect(onOpenBook).toHaveBeenCalledWith(A_BOOK);
+  });
+
+  it('is not empty when only a book was kept', async () => {
+    fetchLibraryItems.mockResolvedValue({ items: [], total: 0 });
+
+    renderInAnAddress(
+      <BrowseArea
+        kind="favourites"
+        favourites={[]}
+        keptBooks={['book-1']}
+        onOpenBook={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Pride and Prejudice')).toBeInTheDocument();
+    expect(screen.queryByText('Nothing has been favourited yet')).not.toBeInTheDocument();
+  });
+
+  it('asks for no books on a page that is not about favourites', async () => {
+    renderInAnAddress(
+      <BrowseArea kind="films" keptBooks={['book-1']} onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    await screen.findByText('Arrival');
+
+    expect(findBooks).not.toHaveBeenCalled();
   });
 });

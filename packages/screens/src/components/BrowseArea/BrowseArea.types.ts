@@ -1,3 +1,4 @@
+import type { Book } from '@ValenceContracts/schemas/Book';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 type BrowseKind = 'shows' | 'films' | 'new' | 'favourites';
@@ -11,6 +12,8 @@ type BrowseAreaProps = {
   watchedFractionFor?: (mediaId: string) => number | undefined;
   resumeFor?: (mediaId: string) => number | null;
   favourites?: string[];
+  keptBooks?: string[];
+  onOpenBook?: (book: Book) => void;
   isKept?: (mediaId: string) => boolean;
   onToggleKept?: (media: MediaSummary) => void;
   onHide?: (media: MediaSummary) => void;

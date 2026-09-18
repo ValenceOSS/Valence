@@ -3,13 +3,17 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { BookShelf } from '@ValenceScreens/components/BookShelf/BookShelf';
+import { ContinueReading } from '@ValenceScreens/components/ContinueReading/ContinueReading';
+import { usePlace } from '@ValenceScreens/navigation/usePlace';
+import type { Book } from '@ValenceContracts/schemas/Book';
 
 /**
  * Everything there is to read.
  *
- * Choosing a book opens it rather than showing a page about it. What somebody wants from a shelf is
- * to be reading, and the chapters are in the reader's own menu — a screen in between would be a
- * screen everybody passes through on the way to the same place.
+ * Choosing a book opens the dialog a film opens: what it is, how far through somebody is, what the
+ * household made of it, and the ways to read it, keep it and share it — the button to read being the
+ * largest thing in it. What somebody is partway through leads the page, the way a film half watched
+ * leads the home page.
  *
  * Laid out as the other sections are: its heading is there for anybody reading the page rather than
  * looking at it, since the bar along the top already says where you are, and a banner saying it
@@ -17,7 +21,11 @@ import { BookShelf } from '@ValenceScreens/components/BookShelf/BookShelf';
  */
 const BooksPage = () => {
   const go = useNavigate();
+  const { go: goTo } = usePlace();
   const { mayAdminister } = useWhatIMayDo();
+  const open = (book: Book) => {
+    goTo({ book: book.id });
+  };
   const prefersReducedMotion = useReducedMotionConfig();
 
   return (
@@ -36,10 +44,10 @@ const BooksPage = () => {
         aria-label="Books"
         className="flex flex-col gap-5"
       >
+        <ContinueReading onOpen={open} />
+
         <BookShelf
-          onOpen={(book) => {
-            void go({ to: '/read/$bookId', params: { bookId: book.id } });
-          }}
+          onOpen={open}
           {...(mayAdminister
             ? {
                 onAddLibrary: () => {

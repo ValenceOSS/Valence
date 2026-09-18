@@ -10,6 +10,7 @@ import { titleLogoUrl } from '@ValenceScreens/library/titleLogoUrl';
 import { TextField } from '@ValenceUI/TextField';
 import { Choice } from './components/Choice/Choice';
 import { createShare, shareAddress } from '@ValenceClient/sharing/fetchShares';
+import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import type { NewShare } from '@ValenceContracts/schemas/Share';
 import type { ShareDialogProps } from './ShareDialog.types';
 
@@ -91,16 +92,24 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
   const isEpisode = media !== null && media.seriesId !== null;
 
   const named =
-    subject?.kind === 'series' ? subject.title : (media?.seriesTitle ?? media?.title ?? 'this');
+    subject?.kind === 'series'
+      ? subject.title
+      : subject?.kind === 'book'
+        ? subject.book.title
+        : (media?.seriesTitle ?? media?.title ?? 'this');
 
   const backdrop =
-    media === null
-      ? null
-      : media.hasBackdrop
-        ? `/api/media/${media.id}/image/backdrop`
-        : media.hasPoster
-          ? `/api/media/${media.id}/image/poster`
-          : null;
+    subject?.kind === 'book'
+      ? subject.book.hasCover
+        ? bookCoverUrl(subject.book.id)
+        : null
+      : media === null
+        ? null
+        : media.hasBackdrop
+          ? `/api/media/${media.id}/image/backdrop`
+          : media.hasPoster
+            ? `/api/media/${media.id}/image/poster`
+            : null;
 
   const isLettered = media !== null && media.hasLogo && !isUnlettered;
 
@@ -113,11 +122,13 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
     setRefusal(null);
 
     const asked: NewShare =
-      subject.kind === 'series'
-        ? { kind: 'series', seriesId: subject.seriesId }
-        : kind === 'series' && subject.media.seriesId !== null
-          ? { kind: 'series', seriesId: subject.media.seriesId }
-          : { kind: 'item', mediaId: subject.media.id };
+      subject.kind === 'book'
+        ? { kind: 'book', bookId: subject.book.id }
+        : subject.kind === 'series'
+          ? { kind: 'series', seriesId: subject.seriesId }
+          : kind === 'series' && subject.media.seriesId !== null
+            ? { kind: 'series', seriesId: subject.media.seriesId }
+            : { kind: 'item', mediaId: subject.media.id };
 
     const made = await createShare({
       ...asked,
@@ -180,12 +191,12 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
 
         {link === null ? (
           <div className="flex flex-col gap-5 px-2 pb-2 pt-6 sm:px-3">
-            {subject?.kind === 'series' ? (
+            {subject?.kind === 'series' || subject?.kind === 'book' ? (
               <span className="flex items-center justify-between gap-4">
                 <span className="shrink-0 text-sm text-text-muted">What to share</span>
 
                 <span className="flex h-9 min-w-0 items-center truncate text-sm font-medium text-text">
-                  The whole programme
+                  {subject.kind === 'book' ? 'The whole book' : 'The whole programme'}
                 </span>
               </span>
             ) : null}
@@ -206,11 +217,17 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
 
             <Choice label="Lasts" value={lasts} options={LASTS} onSelect={setLasts} />
 
-            <Choice label="Who can watch" value={cap} options={CAPS} onSelect={setCap} />
+            <Choice
+              label={subject?.kind === 'book' ? 'Who can read' : 'Who can watch'}
+              value={cap}
+              options={CAPS}
+              onSelect={setCap}
+            />
 
             <p className="font-body text-xs text-text-muted">
-              Anybody holding the link can watch what you shared, and nothing else. You can withdraw
-              it at any time, including while somebody is watching.
+              {subject?.kind === 'book'
+                ? 'Anybody holding the link can read this book, and nothing else. Where they are up to stays on their own device. You can withdraw it at any time.'
+                : 'Anybody holding the link can watch what you shared, and nothing else. You can withdraw it at any time, including while somebody is watching.'}
             </p>
 
             {refusal === null ? null : <p className="text-sm text-danger">{refusal}</p>}

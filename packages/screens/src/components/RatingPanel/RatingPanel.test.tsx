@@ -20,7 +20,7 @@ const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
 const TED_ID = '22222222-2222-4222-8222-222222222222';
 
 const givenStars = (stars: number): Rating[] => [
-  { mediaId: MEDIA_ID, seriesId: null, stars, ratedAt: '2026-01-01T00:00:00.000Z' },
+  { mediaId: MEDIA_ID, seriesId: null, bookId: null, stars, ratedAt: '2026-01-01T00:00:00.000Z' },
 ];
 
 beforeEach(() => {
@@ -56,6 +56,7 @@ describe('RatingPanel', () => {
       {
         mediaId: '11111111-1111-4111-8111-111111111111',
         seriesId: null,
+        bookId: null,
         stars: 5,
         ratedAt: '2026-01-01T00:00:00.000Z',
       },

@@ -159,3 +159,48 @@ describe('covers', () => {
     expect(covers({ kind: 'series', mediaId: null, seriesId: null }, episode)).toBe(false);
   });
 });
+
+describe('what a guest holding a book may reach', () => {
+  const BOOK = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001';
+  const CHAPTER = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0002';
+
+  it('reaches a book, its cover and what its chapters hold', () => {
+    for (const path of [
+      `/api/books/${BOOK}`,
+      `/api/books/${BOOK}/cover`,
+      `/api/books/${BOOK}/chapters/${CHAPTER}/contents`,
+      `/api/books/${BOOK}/chapters/${CHAPTER}/document`,
+      `/api/books/${BOOK}/chapters/${CHAPTER}/resource`,
+      `/api/books/${BOOK}/chapters/${CHAPTER}/pages/12`,
+    ]) {
+      expect(reachOf({ method: 'GET', path })).toEqual({ kind: 'needsBook', bookId: BOOK });
+    }
+  });
+
+  it('keeps no place in a book, since a guest has no profile to keep it against', () => {
+    expect(
+      reachOf({ method: 'PUT', path: `/api/books/${BOOK}/chapters/${CHAPTER}/progress` }),
+    ).toEqual({ kind: 'refused' });
+  });
+
+  it('may not keep, rate or change a book', () => {
+    expect(reachOf({ method: 'PUT', path: `/api/books/${BOOK}/favourite` })).toEqual({
+      kind: 'refused',
+    });
+    expect(reachOf({ method: 'PUT', path: `/api/books/${BOOK}/rating` })).toEqual({
+      kind: 'refused',
+    });
+    expect(reachOf({ method: 'DELETE', path: `/api/books/${BOOK}` })).toEqual({
+      kind: 'refused',
+    });
+  });
+
+  it('never counts a film link as covering a book', () => {
+    expect(
+      covers(
+        { kind: 'book', mediaId: null, seriesId: null, bookId: BOOK },
+        { id: BOOK, seriesId: null },
+      ),
+    ).toBe(false);
+  });
+});

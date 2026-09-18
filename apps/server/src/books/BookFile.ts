@@ -6,6 +6,14 @@ type BookPageBytes = {
 type SpineEntry = {
   href: string;
   title: string;
+  size: number;
+};
+
+type ContentsPlace = {
+  title: string;
+  part: number;
+  anchor: string | null;
+  depth: number;
 };
 
 type BookAbout = {
@@ -26,10 +34,20 @@ type ReflowBook = {
   layout: 'reflow';
   spine: SpineEntry[];
   about?: BookAbout;
-  readDocument: (href: string) => Promise<string | null>;
+  readContents: () => Promise<ContentsPlace[]>;
+  readDocument: (part: number) => Promise<string | null>;
   readResource: (href: string) => Promise<BookPageBytes | null>;
+  readCover: () => Promise<BookPageBytes | null>;
 };
 
 type OpenedBook = FixedBook | ReflowBook;
 
-export type { BookAbout, BookPageBytes, FixedBook, OpenedBook, ReflowBook, SpineEntry };
+export type {
+  BookAbout,
+  BookPageBytes,
+  ContentsPlace,
+  FixedBook,
+  OpenedBook,
+  ReflowBook,
+  SpineEntry,
+};

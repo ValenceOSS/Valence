@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BOOK_DOCUMENT_TAGS,
   BookChapterSchema,
+  BookContentsSchema,
+  bookPlaceIn,
   BookSchema,
+  directionFor,
+  linkToBookPlace,
   ReadingProgressSchema,
   SaveReadingProgressSchema,
-  directionFor,
 } from './Book';
 
 const A_BOOK = {
@@ -125,5 +129,48 @@ describe('directionFor', () => {
 
   it('reads flowing text left to right, which is what a novel is', () => {
     expect(directionFor('reflow')).toBe('leftToRight');
+  });
+});
+
+describe('linkToBookPlace and bookPlaceIn', () => {
+  it('writes a place in a book as a link, and reads it back', () => {
+    expect(bookPlaceIn(linkToBookPlace(3, 'chapter-two'))).toEqual({
+      part: 3,
+      anchor: 'chapter-two',
+    });
+  });
+
+  it('writes the start of a part with no anchor', () => {
+    expect(linkToBookPlace(0, null)).toBe('#valence-part-0');
+    expect(bookPlaceIn('#valence-part-0')).toEqual({ part: 0, anchor: null });
+  });
+
+  it('reads no place from a link that leads out of the book', () => {
+    expect(bookPlaceIn('https://example.com/#valence-part-1')).toBeNull();
+    expect(bookPlaceIn('#somewhere')).toBeNull();
+  });
+});
+
+describe('BookContentsSchema', () => {
+  it('reads how a book is divided', () => {
+    const contents = {
+      parts: [{ size: 10 }],
+      contents: [{ title: 'Chapter I.', part: 0, anchor: null, depth: 0 }],
+    };
+
+    expect(BookContentsSchema.parse(contents)).toEqual(contents);
+  });
+});
+
+describe('BOOK_DOCUMENT_TAGS', () => {
+  it('lets through what text is made of', () => {
+    expect(BOOK_DOCUMENT_TAGS).toContain('p');
+    expect(BOOK_DOCUMENT_TAGS).toContain('img');
+  });
+
+  it('lets through nothing that runs or embeds', () => {
+    for (const tag of ['script', 'iframe', 'object', 'embed', 'style', 'form', 'input']) {
+      expect(BOOK_DOCUMENT_TAGS).not.toContain(tag);
+    }
   });
 });

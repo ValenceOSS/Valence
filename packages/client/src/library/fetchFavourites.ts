@@ -13,14 +13,24 @@ const fetchFavourites = async (): Promise<string[]> => {
 };
 
 /**
- * Keeps something for this profile, or stops keeping it. One call for both directions, since the
- * gesture in the interface is one control that already knows which way it is going.
+ * Every book this viewer has kept, from the same list as everything else they kept.
  *
- * @param mediaId - The item.
- * @param isKept - Whether it should be kept.
+ * @returns The ids of the books, most recently kept first.
  */
-const setFavourite = async (mediaId: string, isKept: boolean): Promise<boolean> => {
-  const response = await fetch(`/api/media/${mediaId}/favourite`, {
+const fetchKeptBooks = async (): Promise<string[]> =>
+  (await readFromServer('/api/favourites', FavouriteListSchema, profileHeaders())).books.map(
+    (entry) => entry.bookId,
+  );
+
+/**
+ * Asks the server to keep something, or stop, at the address it is kept at.
+ *
+ * @param address - Where the thing's favourite lives.
+ * @param isKept - Whether it should be kept.
+ * @returns Whether the server agreed.
+ */
+const setKept = async (address: string, isKept: boolean): Promise<boolean> => {
+  const response = await fetch(address, {
     method: isKept ? 'PUT' : 'DELETE',
     credentials: 'same-origin',
     headers: profileHeaders(),
@@ -29,4 +39,24 @@ const setFavourite = async (mediaId: string, isKept: boolean): Promise<boolean> 
   return response !== null && response.ok;
 };
 
-export { fetchFavourites, setFavourite };
+/**
+ * Keeps something for this profile, or stops keeping it. One call for both directions, since the
+ * gesture in the interface is one control that already knows which way it is going.
+ *
+ * @param mediaId - The item.
+ * @param isKept - Whether it should be kept.
+ */
+const setFavourite = async (mediaId: string, isKept: boolean): Promise<boolean> =>
+  setKept(`/api/media/${mediaId}/favourite`, isKept);
+
+/**
+ * Keeps a book for this profile, or stops keeping it.
+ *
+ * @param bookId - The book.
+ * @param isKept - Whether it should be kept.
+ * @returns Whether the server agreed.
+ */
+const setBookFavourite = (bookId: string, isKept: boolean): Promise<boolean> =>
+  setKept(`/api/books/${bookId}/favourite`, isKept);
+
+export { fetchFavourites, fetchKeptBooks, setBookFavourite, setFavourite };

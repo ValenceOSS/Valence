@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShareArea } from './ShareArea';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShareOutcome } from '@ValenceClient/sharing/fetchShares';
+import type { Book } from '@ValenceContracts/schemas/Book';
 
 const openMock = vi.hoisted(() => vi.fn());
 
@@ -42,7 +43,10 @@ const answers = (outcome: ShareOutcome) => {
 
 beforeEach(() => {
   openMock.mockReset();
-  answers({ kind: 'opened', share: { kind: 'item', title: 'Arrival', items: [item()] } });
+  answers({
+    kind: 'opened',
+    share: { kind: 'item', book: null, title: 'Arrival', items: [item()] },
+  });
 });
 
 describe('what a guest is shown', () => {
@@ -111,6 +115,7 @@ describe('a series that was shared', () => {
       kind: 'opened',
       share: {
         kind: 'series',
+        book: null,
         title: 'The Bear',
         items: [
           item({
@@ -145,6 +150,7 @@ describe('a series that was shared', () => {
       kind: 'opened',
       share: {
         kind: 'series',
+        book: null,
         title: 'The Bear',
         items: [
           item({ id: 'a', title: 'System', seasonNumber: 1, episodeNumber: 1 }),
@@ -241,5 +247,40 @@ describe('a link that no longer works', () => {
     await screen.findByRole('heading', { name: 'This link has expired.' });
 
     expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument();
+  });
+
+  it('offers a shared book to read, saying its place stays on this device', async () => {
+    const book: Book = {
+      id: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001',
+      libraryId: '2b6f0cc9-04f0-4f26-9f1a-1d5b2ea92d9f',
+      title: 'Pride and Prejudice',
+      layout: 'reflow',
+      direction: 'leftToRight',
+      year: 1813,
+      overview: null,
+      genres: null,
+      authors: ['Jane Austen'],
+      rating: null,
+      hasCover: true,
+      chapterCount: 1,
+      addedAt: '2026-09-18T00:00:00.000Z',
+      updatedAt: '2026-09-18T00:00:00.000Z',
+    };
+    const onRead = vi.fn();
+
+    answers({
+      kind: 'opened',
+      share: { kind: 'book', title: book.title, items: [], book },
+    });
+
+    opened({ onRead });
+
+    expect(await screen.findByRole('heading', { name: 'Pride and Prejudice' })).toBeInTheDocument();
+    expect(screen.getByText('Jane Austen')).toBeInTheDocument();
+    expect(screen.getByText(/kept on this device only/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Read' }));
+
+    expect(onRead).toHaveBeenCalledWith(book);
   });
 });

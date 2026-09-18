@@ -10,12 +10,21 @@ const CREATOR = /<dc:creator\b[^>]*>([^<]*)<\/dc:creator>/gi;
 
 const DESCRIPTION = /<dc:description\b[^>]*>([^<]*)<\/dc:description>/i;
 
+const META = /<meta\b[^>]*>/gi;
+
+const SPINE = /<spine\b[^>]*>/i;
+
+const NCX_TYPE = 'application/x-dtbncx+xml';
+
 type EpubPackage = {
   title: string | null;
   authors: string[];
   description: string | null;
   spine: { href: string; mediaType: string }[];
   manifest: Map<string, string>;
+  coverHref: string | null;
+  navHref: string | null;
+  ncxHref: string | null;
 };
 
 /**
@@ -80,6 +89,10 @@ const insideTheBook = (base: string, href: string): string | null => {
  * The spine is the order, and it is the only order: the manifest lists the pictures and stylesheets
  * too, and a reader that walked it would open on a font.
  *
+ * It also says where the cover and the table of contents are, each of which a book can declare two
+ * ways: a newer book marks them with a property on the manifest, and an older one names its cover in
+ * a `meta` and its contents on the spine.
+ *
  * @param container - The `META-INF/container.xml` document.
  * @param packageAt - Where the package document sits inside the archive.
  * @param packageXml - The package document.
@@ -89,6 +102,9 @@ const readEpubPackage = (packageAt: string, packageXml: string): EpubPackage => 
   const base = packageAt.includes('/') ? packageAt.slice(0, packageAt.lastIndexOf('/')) : '';
   const manifest = new Map<string, string>();
   const byId = new Map<string, { href: string; mediaType: string }>();
+  let coverHref: string | null = null;
+  let navHref: string | null = null;
+  let ncxHref: string | null = null;
 
   for (const [tag] of packageXml.matchAll(MANIFEST_ITEM)) {
     const id = attribute(tag, 'id');
@@ -107,6 +123,35 @@ const readEpubPackage = (packageAt: string, packageXml: string): EpubPackage => 
 
     manifest.set(inside, mediaType);
     byId.set(id, { href: inside, mediaType });
+
+    const properties = (attribute(tag, 'properties') ?? '').split(/\s+/);
+
+    if (properties.includes('cover-image')) {
+      coverHref = inside;
+    }
+
+    if (properties.includes('nav')) {
+      navHref = inside;
+    }
+
+    if (mediaType === NCX_TYPE) {
+      ncxHref ??= inside;
+    }
+  }
+
+  for (const [tag] of packageXml.matchAll(META)) {
+    const content = attribute(tag, 'content');
+
+    if (coverHref === null && attribute(tag, 'name') === 'cover' && content !== null) {
+      coverHref = byId.get(content)?.href ?? null;
+    }
+  }
+
+  const tocId = attribute(SPINE.exec(packageXml)?.[0] ?? '', 'toc');
+  const namedToc = tocId === null ? undefined : byId.get(tocId);
+
+  if (namedToc !== undefined) {
+    ncxHref = namedToc.href;
   }
 
   const spine: { href: string; mediaType: string }[] = [];
@@ -137,6 +182,9 @@ const readEpubPackage = (packageAt: string, packageXml: string): EpubPackage => 
     description: description === undefined || description === '' ? null : description,
     spine,
     manifest,
+    coverHref,
+    navHref,
+    ncxHref,
   };
 };
 

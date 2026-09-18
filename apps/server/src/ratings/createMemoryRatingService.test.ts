@@ -18,7 +18,7 @@ describe('createMemoryRatingService', () => {
     await ratings.set('ada', { mediaId: FILM }, 4);
 
     await expect(ratings.list('ada')).resolves.toEqual([
-      { mediaId: FILM, seriesId: null, stars: 4, ratedAt: new Date(0).toISOString() },
+      { mediaId: FILM, seriesId: null, bookId: null, stars: 4, ratedAt: new Date(0).toISOString() },
     ]);
   });
 
@@ -132,9 +132,37 @@ describe('createMemoryRatingService', () => {
 
   it('starts from whatever state it was given', async () => {
     const ratings = createMemoryRatingService({
-      ada: [{ mediaId: FILM, seriesId: null, stars: 3, ratedAt: new Date(0).toISOString() }],
+      ada: [
+        {
+          mediaId: FILM,
+          seriesId: null,
+          bookId: null,
+          stars: 3,
+          ratedAt: new Date(0).toISOString(),
+        },
+      ],
     });
 
     await expect(ratings.household({ mediaId: FILM })).resolves.toEqual({ average: 3, count: 1 });
+  });
+
+  it('rates a book apart from any film or programme', async () => {
+    const ratings = createMemoryRatingService();
+
+    await ratings.set('ada', { bookId: 'a-book' }, 4);
+    await ratings.set('ada', { mediaId: FILM }, 2);
+
+    await expect(ratings.household({ bookId: 'a-book' })).resolves.toEqual({
+      average: 4,
+      count: 1,
+    });
+
+    await ratings.clear('ada', { bookId: 'a-book' });
+
+    await expect(ratings.household({ bookId: 'a-book' })).resolves.toEqual({
+      average: null,
+      count: 0,
+    });
+    await expect(ratings.household({ mediaId: FILM })).resolves.toEqual({ average: 2, count: 1 });
   });
 });

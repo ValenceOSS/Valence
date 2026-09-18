@@ -6,6 +6,64 @@ const BOOK_FORMATS = ['cbz', 'cbr', 'pdf', 'epub'] as const;
 
 const READING_DIRECTIONS = ['rightToLeft', 'leftToRight'] as const;
 
+const BOOK_DOCUMENT_TAGS = [
+  'p',
+  'div',
+  'span',
+  'br',
+  'hr',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'em',
+  'i',
+  'strong',
+  'b',
+  'u',
+  's',
+  'small',
+  'sub',
+  'sup',
+  'mark',
+  'blockquote',
+  'q',
+  'cite',
+  'pre',
+  'code',
+  'ul',
+  'ol',
+  'li',
+  'dl',
+  'dt',
+  'dd',
+  'table',
+  'thead',
+  'tbody',
+  'tfoot',
+  'tr',
+  'th',
+  'td',
+  'caption',
+  'img',
+  'figure',
+  'figcaption',
+  'a',
+  'ruby',
+  'rt',
+  'rp',
+  'section',
+  'article',
+  'aside',
+  'header',
+  'footer',
+  'nav',
+  'abbr',
+  'time',
+] as const;
+
 const BookLayoutSchema = z.enum(BOOK_LAYOUTS);
 
 const BookFormatSchema = z.enum(BOOK_FORMATS);
@@ -50,6 +108,18 @@ const BookPageSchema = z.object({
   total: z.number().int().nonnegative(),
 });
 
+const BookContentsSchema = z.object({
+  parts: z.array(z.object({ size: z.number().int().nonnegative() })),
+  contents: z.array(
+    z.object({
+      title: z.string(),
+      part: z.number().int().nonnegative(),
+      anchor: z.string().nullable(),
+      depth: z.number().int().nonnegative(),
+    }),
+  ),
+});
+
 const ReadingProgressSchema = z.object({
   bookId: z.string().uuid(),
   chapterId: z.string().uuid(),
@@ -58,6 +128,19 @@ const ReadingProgressSchema = z.object({
   isFinished: z.boolean(),
   updatedAt: z.string(),
 });
+
+const BookReadingSchema = z.object({
+  book: BookSchema,
+  chapterId: z.string().uuid(),
+  chapterTitle: z.string(),
+  pageNumber: z.number().int().nonnegative().nullable(),
+  pageCount: z.number().int().positive().nullable(),
+  fraction: z.number().min(0).max(1).nullable(),
+  isFinished: z.boolean(),
+  updatedAt: z.string(),
+});
+
+const BookReadingListSchema = z.object({ readings: z.array(BookReadingSchema) });
 
 const SaveReadingProgressSchema = z.object({
   pageNumber: z.number().int().nonnegative().nullable(),
@@ -85,22 +168,55 @@ export type ReadingDirection = z.infer<typeof ReadingDirectionSchema>;
 export type Book = z.infer<typeof BookSchema>;
 export type BookChapter = z.infer<typeof BookChapterSchema>;
 export type BookDetail = z.infer<typeof BookDetailSchema>;
+export type BookContents = z.infer<typeof BookContentsSchema>;
 export type BookPage = z.infer<typeof BookPageSchema>;
 export type ReadingProgress = z.infer<typeof ReadingProgressSchema>;
+export type BookReading = z.infer<typeof BookReadingSchema>;
 export type SaveReadingProgress = z.infer<typeof SaveReadingProgressSchema>;
 
+const PLACE_LINK = /^#valence-part-(\d+)(?::(.+))?$/;
+
+/**
+ * Writes a place in a book as a link inside one of its parts, so that following it moves the reader
+ * rather than the browser.
+ *
+ * @param part - Which part of the book.
+ * @param anchor - Where in it, if anywhere.
+ * @returns The link.
+ */
+const linkToBookPlace = (part: number, anchor: string | null): string =>
+  `#valence-part-${part.toString()}${anchor === null ? '' : `:${anchor}`}`;
+
+/**
+ * Reads the place a link inside a book points at, where it points at one.
+ *
+ * @param href - The link.
+ * @returns The part and where in it, or nothing where the link leads out of the book.
+ */
+const bookPlaceIn = (href: string): { part: number; anchor: string | null } | null => {
+  const found = PLACE_LINK.exec(href);
+
+  return found === null ? null : { part: Number(found[1]), anchor: found[2] ?? null };
+};
+
 export {
+  BOOK_DOCUMENT_TAGS,
   BOOK_FORMATS,
   BOOK_LAYOUTS,
   READING_DIRECTIONS,
   BookChapterSchema,
+  BookContentsSchema,
   BookDetailSchema,
   BookFormatSchema,
   BookLayoutSchema,
   BookPageSchema,
+  BookReadingListSchema,
+  BookReadingSchema,
   BookSchema,
   ReadingDirectionSchema,
   ReadingProgressSchema,
   SaveReadingProgressSchema,
+  bookPlaceIn,
   directionFor,
+  linkToBookPlace,
 };

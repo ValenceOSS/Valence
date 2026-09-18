@@ -1,4 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
+import { Button } from '@ValenceUI/Button';
+import { BookOpen01Icon } from '@hugeicons/core-free-icons';
 import { useEffect, useState } from 'react';
 import { Spinner } from '@ValenceUI/Spinner';
 import { openShare } from '@ValenceClient/sharing/fetchShares';
@@ -11,6 +13,7 @@ import { describeShareEnding } from '@ValenceScreens/sharing/describeShareEnding
 import type { OpenedShare } from '@ValenceClient/sharing/fetchShares';
 import type { ShareEnding } from '@ValenceContracts/schemas/Share';
 import type { ShareAreaProps } from './ShareArea.types';
+import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 
 type Standing =
   | { kind: 'reading' }
@@ -39,7 +42,14 @@ type Standing =
  *   immediately instead of watching a spinner while the server repeats what is already known.
  * @param name - What this server calls itself.
  */
-const ShareArea = ({ token, onPlay, resumeFor, ended, name = 'Valence' }: ShareAreaProps) => {
+const ShareArea = ({
+  token,
+  onPlay,
+  resumeFor,
+  ended,
+  name = 'Valence',
+  onRead,
+}: ShareAreaProps) => {
   const [standing, setStanding] = useState<Standing>({ kind: 'reading' });
 
   useEffect(() => {
@@ -95,6 +105,54 @@ const ShareArea = ({ token, onPlay, resumeFor, ended, name = 'Valence' }: ShareA
   }
 
   const { share } = standing;
+
+  if (share.kind === 'book' && share.book !== null) {
+    const { book } = share;
+
+    return (
+      <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-6 py-12 text-center">
+        <span className="text-xs uppercase tracking-[0.2em] text-text-muted">
+          Shared with you on {name}
+        </span>
+
+        {book.hasCover ? (
+          <img
+            src={bookCoverUrl(book.id)}
+            alt=""
+            className="aspect-[2/3] w-44 rounded-lg object-cover shadow-2xl sm:w-52"
+          />
+        ) : null}
+
+        <div className="flex flex-col gap-2">
+          <h1 className="text-[clamp(1.75rem,5vw,2.75rem)] font-semibold leading-tight tracking-[-0.02em] text-text">
+            {book.title}
+          </h1>
+
+          {book.authors === null || book.authors.length === 0 ? null : (
+            <p className="text-sm text-text-muted">{book.authors.join(', ')}</p>
+          )}
+        </div>
+
+        {onRead === undefined ? null : (
+          <Button
+            variant="glossy"
+            size="lg"
+            onClick={() => {
+              onRead(book);
+            }}
+          >
+            <Icon of={BookOpen01Icon} size={18} />
+            Read
+          </Button>
+        )}
+
+        <p className="max-w-[40ch] font-body text-xs text-text-muted">
+          Where you are up to is kept on this device only.
+        </p>
+      </main>
+    );
+  }
+
   const [first] = [...share.items].sort(inBroadcastOrder);
   const hasEpisodes = share.kind === 'series' && share.items.length > 1;
 
