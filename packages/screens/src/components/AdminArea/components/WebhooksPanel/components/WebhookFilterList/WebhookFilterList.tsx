@@ -1,6 +1,9 @@
-import { useState } from 'react';
-import { Checkbox } from '@ValenceUI/Checkbox';
+import { useMemo, useState } from 'react';
+import { Search01Icon } from '@hugeicons/core-free-icons';
+import { Icon } from '@ValenceUI/Icon';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { Switch } from '@ValenceUI/Switch';
+import { TextField } from '@ValenceUI/TextField';
 import type { WebhookFilterListProps } from './WebhookFilterList.types';
 
 const EVERYONE = 'everyone';
@@ -37,6 +40,17 @@ const WebhookFilterList = ({
   onChange,
 }: WebhookFilterListProps) => {
   const [isPicking, setIsPicking] = useState(chosen.length > 0);
+  const [search, setSearch] = useState('');
+
+  const shown = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (query === '') {
+      return choices;
+    }
+
+    return choices.filter((choice) => choice.label.toLowerCase().includes(query));
+  }, [choices, search]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -67,24 +81,49 @@ const WebhookFilterList = ({
             }}
           />
 
-          {isPicking ? (
-            <div role="group" aria-label={title} className="flex flex-col gap-1.5 pt-1">
-              {choices.map((choice) => (
-                <Checkbox
-                  key={choice.id}
-                  label={choice.label}
-                  checked={chosen.includes(choice.id)}
-                  onCheckedChange={(checked) => {
-                    onChange(
-                      checked
-                        ? [...chosen, choice.id]
-                        : chosen.filter((held) => held !== choice.id),
-                    );
-                  }}
-                />
-              ))}
+          {!isPicking ? null : (
+            <div className="flex flex-col gap-2 pt-1">
+              <TextField
+                label={`Find in ${title.toLowerCase()}`}
+                isLabelHidden
+                type="search"
+                value={search}
+                onValueChange={setSearch}
+                placeholder={`Find in ${title.toLowerCase()}`}
+                icon={<Icon of={Search01Icon} size={15} />}
+              />
+
+              {shown.length === 0 ? (
+                <p className="text-sm text-text-muted">Nothing here matches that.</p>
+              ) : (
+                <ul
+                  role="group"
+                  aria-label={title}
+                  className="flex flex-col divide-y divide-[var(--surface-line)]"
+                >
+                  {shown.map((choice) => (
+                    <li key={choice.id} className="flex items-center justify-between gap-4 py-2">
+                      <span className="min-w-0 truncate text-sm text-text">{choice.label}</span>
+
+                      <Switch
+                        label={choice.label}
+                        isLabelHidden
+                        isOn={chosen.includes(choice.id)}
+                        onToggle={() => {
+                          onChange(
+                            chosen.includes(choice.id)
+                              ? chosen.filter((held) => held !== choice.id)
+                              : [...chosen, choice.id],
+                          );
+                        }}
+                        className="shrink-0"
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          ) : null}
+          )}
         </>
       )}
     </div>

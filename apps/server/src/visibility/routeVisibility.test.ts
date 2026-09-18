@@ -384,6 +384,7 @@ describe('an administrator', () => {
     const role = await context.permissions.createRole({
       name: 'Administrator',
       position: 100,
+      color: null,
       permissions: [ADMINISTRATOR],
     });
 
@@ -398,6 +399,7 @@ describe('an administrator', () => {
     const role = await context.permissions.createRole({
       name: 'Administrator',
       position: 100,
+      color: null,
       permissions: [ADMINISTRATOR],
     });
 
@@ -439,6 +441,7 @@ describe('handing out a link to something you were refused', () => {
     const role = await context.permissions.createRole({
       name: 'Sharer',
       position: 10,
+      color: null,
       permissions: ['sharing.link'],
     });
 
@@ -459,6 +462,7 @@ describe('handing out a link to something you were refused', () => {
     const role = await context.permissions.createRole({
       name: 'Sharer',
       position: 10,
+      color: null,
       permissions: ['sharing.link'],
     });
 

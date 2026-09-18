@@ -28,6 +28,7 @@ const EnvSchema = z.object({
   MEDIA_JOBS: z.coerce.number().int().positive().default(defaultMediaJobs()),
   CATALOGUE_API_KEY: z.string().default(''),
   IMAGE_CACHE_DIR: z.string().default('/cache/images'),
+  VALENCE_VERSION: z.string().default('0.0.0'),
   AUTH_RATE_LIMIT_ENABLED: z
     .enum(['true', 'false'])
     .default('true')

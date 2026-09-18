@@ -14,6 +14,7 @@ type DataTableProps<Row extends RowData> = {
   toolbar?: ReactNode;
   pageSize?: number;
   growsOnScroll?: boolean;
+  height?: 'compact' | 'fill';
   className?: string;
 };
 

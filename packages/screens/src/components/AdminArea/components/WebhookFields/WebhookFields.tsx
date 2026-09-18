@@ -1,10 +1,8 @@
-import { useState } from 'react';
+import { useId } from 'react';
 import { Button } from '@ValenceUI/Button';
-import { Checkbox } from '@ValenceUI/Checkbox';
 import { FormField } from '@ValenceUI/FormField';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
-import { Tabs } from '@ValenceUI/Tabs';
-import { TabRow } from '@ValenceUI/TabRow';
+import { Switch } from '@ValenceUI/Switch';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { TextField } from '@ValenceUI/TextField';
 import {
@@ -35,12 +33,6 @@ const ITEM_TYPE_CHOICES = MEDIA_KINDS.map((kind) => ({
   label: MEDIA_KIND_LABELS[kind],
 }));
 
-const PANES = [
-  { id: 'where', label: 'Where' },
-  { id: 'events', label: 'Events' },
-  { id: 'who', label: 'Who' },
-] as const;
-
 /**
  * Narrows a chosen id back to a kind, since a filter list hands back plain strings.
  *
@@ -66,20 +58,19 @@ const isMediaKind = (candidate: string): candidate is MediaKind =>
  * @param onChange - Told the whole draft again whenever any part of it changes.
  * @param accounts - The accounts this subscription can be narrowed to.
  * @param profiles - The profiles this subscription can be narrowed to.
+ * @param travel - Which way the pane should slide in from.
  */
-const WebhookFields = ({ draft, onChange, accounts, profiles }: WebhookFieldsProps) => {
-  const [pane, setPane] = useState<string>(PANES[0].id);
+const WebhookFields = ({ draft, onChange, accounts, profiles, travel }: WebhookFieldsProps) => {
+  const noteIdPrefix = useId();
 
   const setEvents = (events: WebhookSubscribableEvent[]) => {
     onChange({ ...draft, events });
   };
 
   return (
-    <Tabs value={pane} onValueChange={setPane}>
-      <TabRow label="What to change" tone="underlined" size="sm" groups={[{ items: PANES }]} />
-
-      <TabPanel value="where">
-        <div className="flex flex-col gap-4 pt-4">
+    <>
+      <TabPanel value="where" travel={travel}>
+        <div className="flex flex-col gap-4">
           <TextField
             label="Name"
             value={draft.name}
@@ -128,8 +119,8 @@ const WebhookFields = ({ draft, onChange, accounts, profiles }: WebhookFieldsPro
         </div>
       </TabPanel>
 
-      <TabPanel value="events">
-        <div className="flex flex-col gap-5 pt-4">
+      <TabPanel value="events" travel={travel}>
+        <div className="flex flex-col gap-5">
           {WEBHOOK_EVENT_GROUPS.map((group) => {
             const chosenHere = group.events.filter((event) => draft.events.includes(event));
             const isEveryOne = chosenHere.length === group.events.length;
@@ -157,33 +148,58 @@ const WebhookFields = ({ draft, onChange, accounts, profiles }: WebhookFieldsPro
                   </Button>
                 </div>
 
-                <div role="group" aria-label={group.label} className="flex flex-col gap-1.5">
+                <ul
+                  role="group"
+                  aria-label={group.label}
+                  className="flex flex-col divide-y divide-[var(--surface-line)]"
+                >
                   {group.events.map((event) => (
-                    <Checkbox
+                    <li
                       key={event}
-                      label={WEBHOOK_EVENT_LABELS[event]}
-                      {...(WEBHOOK_EVENT_NOTES[event] === undefined
-                        ? {}
-                        : { description: WEBHOOK_EVENT_NOTES[event] })}
-                      checked={draft.events.includes(event)}
-                      onCheckedChange={(checked) => {
-                        setEvents(
-                          checked
-                            ? [...draft.events, event]
-                            : draft.events.filter((one) => one !== event),
-                        );
-                      }}
-                    />
+                      className="flex items-start justify-between gap-4 py-2.5 first:pt-0"
+                    >
+                      <div className="flex min-w-0 flex-col gap-0.5">
+                        <span className="text-sm font-medium text-text">
+                          {WEBHOOK_EVENT_LABELS[event]}
+                        </span>
+
+                        {WEBHOOK_EVENT_NOTES[event] === undefined ? null : (
+                          <span
+                            id={`${noteIdPrefix}-${event}`}
+                            className="text-xs leading-relaxed text-text-muted"
+                          >
+                            {WEBHOOK_EVENT_NOTES[event]}
+                          </span>
+                        )}
+                      </div>
+
+                      <Switch
+                        label={WEBHOOK_EVENT_LABELS[event]}
+                        isLabelHidden
+                        isOn={draft.events.includes(event)}
+                        onToggle={() => {
+                          setEvents(
+                            draft.events.includes(event)
+                              ? draft.events.filter((one) => one !== event)
+                              : [...draft.events, event],
+                          );
+                        }}
+                        {...(WEBHOOK_EVENT_NOTES[event] === undefined
+                          ? {}
+                          : { describedBy: `${noteIdPrefix}-${event}` })}
+                        className="mt-0.5 shrink-0"
+                      />
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             );
           })}
         </div>
       </TabPanel>
 
-      <TabPanel value="who">
-        <div className="flex flex-col gap-5 pt-4">
+      <TabPanel value="who" travel={travel}>
+        <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-0.5">
               <span className="text-sm font-medium text-text">When things arrive</span>
@@ -248,7 +264,7 @@ const WebhookFields = ({ draft, onChange, accounts, profiles }: WebhookFieldsPro
           />
         </div>
       </TabPanel>
-    </Tabs>
+    </>
   );
 };
 

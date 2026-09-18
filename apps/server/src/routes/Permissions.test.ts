@@ -68,6 +68,7 @@ const askWhatIMayDo = async (
     const role = await context.permissions.createRole({
       name: 'Purpose-made',
       position: 200,
+      color: null,
       permissions: [...granted],
     });
 

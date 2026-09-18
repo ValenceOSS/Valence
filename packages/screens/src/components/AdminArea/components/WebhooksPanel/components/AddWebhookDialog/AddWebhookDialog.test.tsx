@@ -64,8 +64,8 @@ describe('AddWebhookDialog', () => {
     draw();
     await openPane(user, 'Events');
 
-    expect(screen.getByRole('checkbox', { name: 'Job failed' })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: 'Job finished' })).not.toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Job failed' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Job finished' })).not.toBeChecked();
   });
 
   it('adds one', async () => {
@@ -110,7 +110,7 @@ describe('AddWebhookDialog', () => {
 
     const accounts = within(screen.getByRole('group', { name: 'Accounts' }));
 
-    await user.click(accounts.getByRole('checkbox', { name: 'Ada' }));
+    await user.click(accounts.getByRole('switch', { name: 'Ada' }));
     await user.click(screen.getByRole('button', { name: 'Add webhook' }));
 
     expect(filtersSent(onCreate)).toMatchObject({ accounts: ['account-1'], profiles: [] });
@@ -146,7 +146,7 @@ describe('AddWebhookDialog', () => {
 
     await fillIn(user);
     await openPane(user, 'Events');
-    await user.click(screen.getByRole('checkbox', { name: 'Job failed' }));
+    await user.click(screen.getByRole('switch', { name: 'Job failed' }));
 
     expect(screen.getByRole('button', { name: 'Add webhook' })).toBeDisabled();
   });

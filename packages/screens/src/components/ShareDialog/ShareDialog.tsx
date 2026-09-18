@@ -216,7 +216,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
             {refusal === null ? null : <p className="text-sm text-danger">{refusal}</p>}
 
             <Button
-              variant="primary"
+              variant="glossy"
               isLoading={isWorking}
               onClick={() => {
                 void hand();
@@ -234,7 +234,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
             <TextField label="The link" value={link} onValueChange={() => undefined} />
 
             <Button
-              variant="primary"
+              variant="glossy"
               onClick={() => {
                 void navigator.clipboard.writeText(link).then(() => {
                   setIsCopied(true);

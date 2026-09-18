@@ -4,8 +4,6 @@ const KEPT_IN_PLACE = [
   'person',
   'party',
   'account',
-  'admin',
-  'job',
   'downloads',
   'library',
   'search',
@@ -23,7 +21,7 @@ const KEPT_IN_PLACE = [
  *
  * Removing those parts leaves the page either side of a dialog sharing one key, so there is nothing
  * to restore and the page does not move. Everything that genuinely replaces what is on the page —
- * the search text, the genre, the admin panel — still counts as somewhere else.
+ * the search text, the genre — still counts as somewhere else.
  *
  * The library is in the list for a different reason. It does change what is on the page, but it is
  * chosen from a control part-way down it, and being thrown to the top on every press makes picking

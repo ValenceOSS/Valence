@@ -414,6 +414,13 @@
       "when": 1789588860527,
       "tag": "0058_nifty_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1789635049132,
+      "tag": "0059_free_omega_sentinel",
+      "breakpoints": true
     }
   ]
 }

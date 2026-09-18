@@ -33,6 +33,7 @@ const LABELS: Record<Permission, string> = {
   'account.ban': 'Ban an account',
   'account.roles': 'Manage roles',
   'account.profiles': 'Manage other people’s profiles',
+  'account.security': 'Reset passwords and sign accounts out',
 
   'server.settings': 'Change server settings',
   'server.backup': 'Back the server up',

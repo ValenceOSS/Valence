@@ -41,6 +41,7 @@ import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
 import { migrateToLatest } from '@ValenceServer/db/migrateToLatest';
 import {
   user,
+  account,
   library,
   mediaItem,
   mediaItemJob,
@@ -1544,6 +1545,7 @@ const downloadService = createDownloadService({
 const app = createApp({
   auth,
   settings,
+  version: env.VALENCE_VERSION,
   trustedOrigins: trustedOriginsFor({
     configured: env.TRUSTED_ORIGINS,
     port: env.PORT,
@@ -1754,6 +1756,81 @@ const app = createApp({
     await db.update(user).set(changes).where(eq(user.id, userId));
 
     return 'changed';
+  },
+  resetAccountPassword: async (userId, password) => {
+    const [found] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId)).limit(1);
+
+    if (found === undefined) {
+      return false;
+    }
+
+    const hashed = await (await auth.$context).password.hash(password);
+
+    await db
+      .update(account)
+      .set({ password: hashed })
+      .where(and(eq(account.userId, userId), eq(account.providerId, 'credential')));
+    await db.delete(session).where(eq(session.userId, userId));
+
+    return true;
+  },
+  listAccountSessions: async (userId) => {
+    const rows = await db
+      .select({
+        id: session.id,
+        userAgent: session.userAgent,
+        ipAddress: session.ipAddress,
+        createdAt: session.createdAt,
+        expiresAt: session.expiresAt,
+      })
+      .from(session)
+      .where(eq(session.userId, userId));
+
+    return rows.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+      expiresAt: row.expiresAt.toISOString(),
+    }));
+  },
+  endAccountSessions: async (userId) => {
+    await db.delete(session).where(eq(session.userId, userId));
+  },
+  endAccountSession: async (userId, sessionId) => {
+    await db.delete(session).where(and(eq(session.id, sessionId), eq(session.userId, userId)));
+  },
+  setAccountPhoto: async (userId, photo) => {
+    const [found] = await db
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (found === undefined) {
+      return false;
+    }
+
+    const profile = await profileService.ensureDefault(userId, found.name);
+
+    return profileService.savePhoto(userId, profile.id, photo);
+  },
+  setAccountAvatar: async (userId, changes) => {
+    const [found] = await db
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (found === undefined) {
+      return false;
+    }
+
+    const profile = await profileService.ensureDefault(userId, found.name);
+
+    return profileService.rename(userId, profile.id, {
+      name: profile.name,
+      colour: changes.colour ?? profile.colour,
+      ...(changes.avatar === undefined ? {} : { avatar: changes.avatar }),
+    });
   },
   capabilities: () => transcoder.capabilities(),
   artworkUsage: () => artworkUsage.read(),

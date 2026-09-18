@@ -13,13 +13,7 @@ import { CacheBreakdown } from '@ValenceScreens/components/AdminArea/components/
 import { LoadRangeToggle } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle';
 import { TrendChart } from '@ValenceUI/TrendChart';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
-import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeQueueKind } from '@ValenceScreens/components/AdminArea/describeQueueKind';
-import { describeAcceleration } from '@ValenceScreens/components/AdminArea/describeAcceleration';
-import { describeChains } from '@ValenceScreens/components/AdminArea/describeChains';
-import { describeToneMapping } from '@ValenceScreens/components/AdminArea/describeToneMapping';
-import { describeCard } from '@ValenceScreens/components/AdminArea/describeCard';
-import { memoryEnvelope } from '@ValenceScreens/components/AdminArea/memoryEnvelope';
 import { measureStorage } from '@ValenceClient/admin/fetchAdmin';
 import type { StorageCount } from '@ValenceClient/admin/fetchAdmin';
 import type { LoadRange } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle.types';
@@ -64,7 +58,7 @@ const Region = ({
   <PanelCard
     title={title}
     isFlush={isFlush}
-    className={cn('h-full', className)}
+    className={cn('h-full min-w-0', className)}
     {...(actions !== undefined
       ? { actions }
       : action === undefined || onAction === undefined
@@ -147,32 +141,18 @@ const OverviewPanel = ({
     }
   };
 
-  const acceleration =
-    overview === null
-      ? null
-      : describeAcceleration(overview.settings.hardwareAccel, overview.transcoder.hardwareAccels);
-
-  const chains = overview === null ? null : describeChains(overview.transcoder.chains);
-  const refusals = chains?.refusals ?? [];
-
-  const toneMapping =
-    overview === null
-      ? null
-      : describeToneMapping(overview.transcoder.toneMapping, overview.transcoder.hardwareToneMaps);
-
   const now = Date.now();
   const watching = sessions.filter((session) => session.playback !== null);
   const running = (monitor?.queue.jobs ?? []).filter((job) => job.state === 'running');
   const waiting = monitor?.queue.queued ?? 0;
   const resources = monitor?.resources ?? null;
-  const memory = memoryEnvelope(resources);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Region
-          title="Load"
-          className="lg:col-span-2"
+          title="Server load"
+          className="sm:col-span-2 xl:col-span-4"
           actions={<LoadRangeToggle value={loadRange} onChange={setLoadRange} />}
         >
           {loadRange === 'minute' ? (
@@ -202,89 +182,6 @@ const OverviewPanel = ({
                   })}
             />
           )}
-        </Region>
-
-        <Region
-          title="Server"
-          className="lg:col-span-2"
-          action="Settings"
-          onAction={() => {
-            onOpenPanel('settings');
-          }}
-        >
-          <dl className="flex flex-col gap-3 text-sm">
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-text-muted">Media service</dt>
-              <dd className="text-text">
-                {overview === null ? '—' : overview.transcoder.isReachable ? 'Up' : 'Unreachable'}
-              </dd>
-            </div>
-
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="shrink-0 text-text-muted">Hardware encoding</dt>
-              <dd className="min-w-0 truncate text-text">{acceleration?.label ?? '—'}</dd>
-            </div>
-
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="shrink-0 text-text-muted">Hardware chains</dt>
-              <dd className="min-w-0 truncate text-text">{chains?.label ?? '—'}</dd>
-            </div>
-
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="shrink-0 text-text-muted">HDR conversion</dt>
-              <dd className="min-w-0 truncate text-text">{toneMapping?.label ?? '—'}</dd>
-            </div>
-
-            {toneMapping !== null && toneMapping.detail !== null && (
-              <div className="flex flex-col gap-1">
-                <dt className="text-text-muted">HDR conversion</dt>
-                <dd className="text-xs text-text-muted">{toneMapping.detail}</dd>
-              </div>
-            )}
-
-            {refusals.length > 0 ? (
-              <div className="valence-rail flex max-h-48 flex-col gap-3 overflow-y-auto">
-                {refusals.map((refusal) => (
-                  <div key={refusal.id} className="flex flex-col gap-1">
-                    <dt className="text-text-muted">{refusal.what}</dt>
-                    <dd className="text-xs text-text-muted">{refusal.reason}</dd>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="shrink-0 text-text-muted">Graphics</dt>
-              <dd className="min-w-0 truncate text-text">
-                {describeCard(resources?.graphics ?? null)}
-              </dd>
-            </div>
-
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-text-muted">Processors</dt>
-              <dd className="tabular-nums text-text">
-                {resources === null ? '—' : resources.cpuCount.toString()}
-              </dd>
-            </div>
-
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-text-muted">Memory</dt>
-              <dd className="tabular-nums text-text">
-                {memory === null
-                  ? '—'
-                  : `${formatBytes(memory.usedBytes)} of ${formatBytes(memory.totalBytes)}${
-                      memory.isLimited ? ' allowed' : ''
-                    }`}
-              </dd>
-            </div>
-
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-text-muted">Accounts</dt>
-              <dd className="tabular-nums text-text">
-                {(overview?.users ?? []).length.toString()}
-              </dd>
-            </div>
-          </dl>
         </Region>
 
         <Region
@@ -353,7 +250,7 @@ const OverviewPanel = ({
 
         <Region
           title="Libraries"
-          className="lg:col-span-2"
+          className="sm:col-span-2 xl:col-span-2"
           action="Manage"
           onAction={() => {
             onOpenPanel('libraries');
@@ -386,7 +283,7 @@ const OverviewPanel = ({
 
         <Region
           title="Storage Valence is using"
-          className="lg:col-span-4"
+          className="sm:col-span-2 xl:col-span-4"
           action="Refresh"
           actionIcon={<Icon of={RefreshIcon} size={14} />}
           isActionBusy={isCounting}
@@ -416,7 +313,7 @@ const OverviewPanel = ({
             onOpenPanel('jobs');
           }}
           isFlush
-          className="lg:col-span-4"
+          className="sm:col-span-2 xl:col-span-4"
         >
           <BackgroundJobs monitor={monitor} pageSize={5} />
         </Region>

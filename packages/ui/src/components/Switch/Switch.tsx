@@ -14,6 +14,8 @@ import type { SwitchProps } from './Switch.types';
  * @param icon - Something to draw beside the label.
  * @param disabled - Whether it can be changed at all.
  * @param tone - Whether it sits on the page or over artwork, where the page's colours say nothing.
+ * @param describedBy - The id of text elsewhere that explains this setting, such as a note a caller
+ *   draws beside a hidden label.
  * @param className - Extra classes for the caller's own layout.
  */
 const Switch = ({
@@ -24,6 +26,7 @@ const Switch = ({
   icon,
   disabled = false,
   tone = 'default',
+  describedBy,
   className,
 }: SwitchProps) => {
   const isOverlay = tone === 'overlay';
@@ -35,6 +38,7 @@ const Switch = ({
       onCheckedChange={onToggle}
       data-slot="switch"
       {...(isLabelHidden ? { 'aria-label': label } : {})}
+      {...(describedBy === undefined ? {} : { 'aria-describedby': describedBy })}
       className={cn(
         isLabelHidden
           ? 'flex items-center outline-none'

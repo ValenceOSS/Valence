@@ -3,10 +3,12 @@ import {
   Cancel01Icon,
   Copy01Icon,
   Download04Icon,
+  MoreHorizontalIcon,
   RefreshIcon,
   Tick02Icon,
 } from '@hugeicons/core-free-icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -71,7 +73,6 @@ const LogsPanel = ({
   onInitialJobIdConsumed,
 }: LogsPanelProps) => {
   const [search, setSearch] = useState('');
-  const [levels, setLevels] = useState<LogLevel[]>([...LOG_LEVELS]);
   const [jobIdFilter, setJobIdFilter] = useState(initialJobId);
   const [records, setRecords] = useState<LogRecord[]>([]);
   const [isReading, setIsReading] = useState(false);
@@ -87,8 +88,8 @@ const LogsPanel = ({
   }, []);
 
   const query = useMemo(
-    () => ({ levels, search, limit: PAGE, jobId: jobIdFilter }),
-    [levels, search, jobIdFilter],
+    () => ({ levels: [...LOG_LEVELS], search, limit: PAGE, jobId: jobIdFilter }),
+    [search, jobIdFilter],
   );
 
   const load = useCallback(async () => {
@@ -188,27 +189,6 @@ const LogsPanel = ({
             className="w-64 max-w-full"
           />
 
-          <span role="group" aria-label="Filter by level" className="flex items-center gap-1">
-            {LOG_LEVELS.map((level) => (
-              <Button
-                key={level}
-                variant="soft"
-                size="xs"
-                hasTooltip={false}
-                isActive={levels.includes(level)}
-                onClick={() => {
-                  setLevels((current) =>
-                    current.includes(level)
-                      ? current.filter((one) => one !== level)
-                      : [...current, level],
-                  );
-                }}
-              >
-                {level}
-              </Button>
-            ))}
-          </span>
-
           {jobIdFilter === null ? null : (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-subtle px-2.5 py-1 text-xs text-text-muted">
               {`Job: ${jobIdFilter}`}
@@ -228,47 +208,53 @@ const LogsPanel = ({
             </span>
           )}
 
-          <Button
-            isIconOnly
-            variant="ghost"
-            size="xs"
-            label="Read the log again"
-            hasTooltip
-            isLoading={isReading && hasRead.current}
-            onClick={() => {
-              void load();
-            }}
-          >
-            <Icon of={RefreshIcon} size={15} />
-          </Button>
-
-          <Button
-            isIconOnly
-            variant="ghost"
-            size="xs"
-            label={copied ? 'Copied' : 'Copy what is shown'}
-            hasTooltip
-            onClick={() => {
-              void copy(asText()).then(() => {
-                setCopied(true);
-              });
-            }}
-          >
-            {copied ? <Icon of={Tick02Icon} size={15} /> : <Icon of={Copy01Icon} size={15} />}
-          </Button>
-
-          <Button
-            isIconOnly
-            variant="ghost"
-            size="xs"
-            label="Download what is shown"
-            hasTooltip
-            onClick={() => {
-              download('valence-log.txt', asText());
-            }}
-          >
-            <Icon of={Download04Icon} size={15} />
-          </Button>
+          <ActionMenu
+            label="Log actions"
+            trigger={<Icon of={MoreHorizontalIcon} size={16} />}
+            size="sm"
+            groups={[
+              {
+                items: [
+                  {
+                    id: 'reload',
+                    label: 'Read the log again',
+                    icon: <Icon of={RefreshIcon} size={15} />,
+                    isDisabled: isReading && hasRead.current,
+                    onChoose: () => {
+                      void load();
+                    },
+                  },
+                ],
+              },
+              {
+                items: [
+                  {
+                    id: 'copy',
+                    label: copied ? 'Copied' : 'Copy what is shown',
+                    icon: copied ? (
+                      <Icon of={Tick02Icon} size={15} />
+                    ) : (
+                      <Icon of={Copy01Icon} size={15} />
+                    ),
+                    keepsOpen: true,
+                    onChoose: () => {
+                      void copy(asText()).then(() => {
+                        setCopied(true);
+                      });
+                    },
+                  },
+                  {
+                    id: 'download',
+                    label: 'Download what is shown',
+                    icon: <Icon of={Download04Icon} size={15} />,
+                    onChoose: () => {
+                      download('valence-log.txt', asText());
+                    },
+                  },
+                ],
+              },
+            ]}
+          />
         </>
       }
     >

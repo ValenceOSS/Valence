@@ -136,6 +136,7 @@ const signedInWith = async (
   const role = await context.permissions.createRole({
     name: `Purpose-made ${String(position)}`,
     position,
+    color: null,
     permissions: [...held],
   });
 
@@ -270,6 +271,7 @@ describe('who may decide', () => {
     const senior = await context.permissions.createRole({
       name: 'Senior',
       position: 90,
+      color: null,
       permissions: [],
     });
 
@@ -289,6 +291,7 @@ describe('who may decide', () => {
     const junior = await context.permissions.createRole({
       name: 'Junior',
       position: 10,
+      color: null,
       permissions: [],
     });
 

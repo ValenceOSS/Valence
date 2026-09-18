@@ -55,9 +55,15 @@ const STANDING: Record<DialogSize, string> = {
   ),
 };
 
+const SHELL =
+  'border border-[var(--surface-line)] bg-[var(--card-shell)] p-1 shadow-[var(--shadow-overlay)]';
+
+const FACE =
+  'flex min-h-0 flex-1 flex-col overflow-hidden rounded-none bg-[var(--card-face)] sm:rounded-xl';
+
 const PANEL = [
   'flex flex-col overflow-hidden rounded-none',
-  'valence-float',
+  SHELL,
   'sm:w-[min(42rem,92vw)] sm:rounded-2xl',
 ].join(' ');
 
@@ -67,7 +73,7 @@ const ROW = ['flex flex-col gap-3 overflow-y-auto', 'sm:flex-row sm:gap-0 sm:ove
 
 const BESIDE = [
   'flex min-h-0 shrink-0 flex-col overflow-hidden rounded-none',
-  'valence-float',
+  SHELL,
   'sm:rounded-2xl',
 ].join(' ');
 
@@ -229,14 +235,17 @@ const Dialog = ({ label, isOpen, onClose, children, size = 'default', className 
                 size === 'drawer' ? 'sm:rounded-b-none sm:rounded-t-2xl' : '',
               )}
             >
-              {children}
+              <div
+                className={cn(FACE, size === 'drawer' ? 'sm:rounded-b-none sm:rounded-t-xl' : '')}
+              >
+                {children}
+              </div>
             </div>
 
             <AnimatePresence initial={false} mode="wait">
               {current === null ? null : (
                 <motion.div
                   key={current}
-                  ref={holdColumn}
                   data-slot="dialog-companion"
                   initial={{ width: hasRoomBeside ? 0 : '100%', marginLeft: 0, opacity: 0 }}
                   animate={{
@@ -251,7 +260,9 @@ const Dialog = ({ label, isOpen, onClose, children, size = 'default', className 
                       : { type: 'spring', stiffness: 420, damping: 40 }
                   }
                   className={BESIDE}
-                />
+                >
+                  <div ref={holdColumn} className={FACE} />
+                </motion.div>
               )}
             </AnimatePresence>
           </companionContext.Provider>

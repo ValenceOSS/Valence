@@ -197,6 +197,7 @@ const signedInToManage = async (built: ReturnType<typeof build>): Promise<string
   const role = await built.permissions.createRole({
     name: 'Looks after links',
     position: 50,
+    color: null,
     permissions: ['sharing.link', 'sharing.manage'],
   });
 

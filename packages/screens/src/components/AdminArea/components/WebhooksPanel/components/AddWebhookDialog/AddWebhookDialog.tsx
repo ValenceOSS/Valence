@@ -4,8 +4,16 @@ import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
+import { TabRow } from '@ValenceUI/TabRow';
+import { Tabs } from '@ValenceUI/Tabs';
+import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { DEFAULT_WEBHOOK_FILTERS } from '@ValenceContracts/schemas/Webhook';
 import { WebhookFields } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields';
+import {
+  WEBHOOK_PANES,
+  WEBHOOK_PANE_ITEMS,
+  isWebhookPane,
+} from '@ValenceScreens/components/AdminArea/components/WebhookFields/webhookPanes';
 import type { WebhookDraft } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields.types';
 import type { AddWebhookDialogProps } from './AddWebhookDialog.types';
 
@@ -38,12 +46,16 @@ const AddWebhookDialog = ({
   const [draft, setDraft] = useState<WebhookDraft>(A_NEW_WEBHOOK);
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [pane, setPane] = useState<(typeof WEBHOOK_PANES)[number]>('where');
+
+  const travel = useTravelDirection([...WEBHOOK_PANES], pane);
 
   const isReady = draft.name.trim() !== '' && draft.url.trim() !== '' && draft.events.length > 0;
 
   const reset = () => {
     setDraft(A_NEW_WEBHOOK);
     setRefusal(null);
+    setPane('where');
   };
 
   const close = () => {
@@ -73,31 +85,55 @@ const AddWebhookDialog = ({
 
   return (
     <DialogCompanion label="Add a webhook" isOpen={isOpen} onClose={close}>
-      <DialogTitle
-        size="compact"
-        title="Add a webhook"
-        detail="Valence will post to this address when something you have chosen happens."
-      />
+      <Tabs
+        value={pane}
+        onValueChange={(next) => {
+          if (isWebhookPane(next)) {
+            setPane(next);
+          }
+        }}
+      >
+        <DialogTitle
+          size="compact"
+          title="Add a webhook"
+          detail="Valence will post to this address when something you have chosen happens."
+          below={
+            <TabRow
+              label="What to change"
+              tone="underlined"
+              size="sm"
+              value={pane}
+              groups={[{ items: WEBHOOK_PANE_ITEMS }]}
+            />
+          }
+        />
 
-      <DialogContent>
-        <WebhookFields draft={draft} onChange={setDraft} accounts={accounts} profiles={profiles} />
-      </DialogContent>
+        <DialogContent className="flex flex-col gap-5">
+          <WebhookFields
+            draft={draft}
+            onChange={setDraft}
+            accounts={accounts}
+            profiles={profiles}
+            travel={travel}
+          />
+        </DialogContent>
 
-      <DialogFooter>
-        {refusal === null ? null : (
-          <span role="alert" className="mr-auto text-sm text-danger">
-            {refusal}
-          </span>
-        )}
+        <DialogFooter>
+          {refusal === null ? null : (
+            <span role="alert" className="mr-auto text-sm text-danger">
+              {refusal}
+            </span>
+          )}
 
-        <Button variant="secondary" onClick={close}>
-          Cancel
-        </Button>
+          <Button variant="secondary" onClick={close}>
+            Cancel
+          </Button>
 
-        <Button variant="primary" disabled={!isReady || isSaving} onClick={save}>
-          {isSaving ? 'Adding…' : 'Add webhook'}
-        </Button>
-      </DialogFooter>
+          <Button variant="glossy" disabled={!isReady || isSaving} onClick={save}>
+            {isSaving ? 'Adding…' : 'Add webhook'}
+          </Button>
+        </DialogFooter>
+      </Tabs>
     </DialogCompanion>
   );
 };

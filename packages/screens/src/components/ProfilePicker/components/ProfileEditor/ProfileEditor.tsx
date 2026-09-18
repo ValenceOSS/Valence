@@ -270,7 +270,7 @@ const ProfileEditor = ({ profile, onSaved, onCancel }: ProfileEditorProps) => {
 
       <div className="flex items-center gap-2">
         <Button
-          variant="primary"
+          variant="glossy"
           size="sm"
           isLoading={isSaving}
           disabled={trimmed === ''}

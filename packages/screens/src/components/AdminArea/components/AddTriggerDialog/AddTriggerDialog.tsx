@@ -192,7 +192,7 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
         </Button>
 
         <Button
-          variant="primary"
+          variant="glossy"
           isLoading={isSaving}
           disabled={built === null || isSaving}
           onClick={() => {

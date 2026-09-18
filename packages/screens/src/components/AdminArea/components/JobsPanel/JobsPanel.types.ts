@@ -8,7 +8,6 @@ import type { Library } from '@ValenceContracts/schemas/Library';
 import type { ScanEntry } from '@ValenceScreens/components/AdminArea/scanCoordinator';
 
 type JobsPanelProps = {
-  isUnreachable?: boolean;
   definitions: JobDefinition[];
   libraries: Library[];
   progress: ReadonlyMap<string, ScanEntry>;

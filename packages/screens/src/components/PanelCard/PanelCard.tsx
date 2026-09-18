@@ -13,19 +13,31 @@ import type { PanelCardProps } from './PanelCard.types';
  *   does — the shell's heading is what makes the block read as one piece rather than a loose panel.
  * @param actions - Controls for the whole block, set at the right of the shell. Draw buttons here
  *   at the extra-small size: they sit in a strip of heading, not on the page.
+ * @param below - A row beneath the heading, such as the block's own tabs.
  * @param children - The block itself.
  * @param isFlush - Whether the content runs to the panel's edges, for a table or a list that
  *   brings its own inner spacing.
  * @param className - Extra classes for the caller's own layout.
  */
-const PanelCard = ({ title, actions, children, isFlush = false, className }: PanelCardProps) => (
+const PanelCard = ({
+  title,
+  actions,
+  below,
+  children,
+  isFlush = false,
+  className,
+}: PanelCardProps) => (
   <section className={cn('valence-card-shell flex flex-col', className)}>
-    <header className="flex min-h-10 flex-wrap items-center justify-between gap-2 px-3 py-1">
-      <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">{title}</h3>
+    <header className="flex flex-col gap-2 px-3 py-1">
+      <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
+        <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">{title}</h3>
 
-      {actions === undefined ? null : (
-        <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
-      )}
+        {actions === undefined ? null : (
+          <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+        )}
+      </div>
+
+      {below === undefined ? null : below}
     </header>
 
     <div

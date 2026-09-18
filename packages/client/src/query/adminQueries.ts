@@ -10,6 +10,7 @@ import {
   fetchJobSchedules,
 } from '@ValenceClient/admin/fetchAdmin';
 import { fetchAccounts } from '@ValenceClient/admin/fetchAccounts';
+import { fetchAccountSessions } from '@ValenceClient/admin/fetchAccountSessions';
 import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
 import { fetchResourceHistory } from '@ValenceClient/admin/fetchResourceHistory';
 import {
@@ -23,11 +24,7 @@ import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { JobRunQuery } from '@ValenceContracts/schemas/JobRun';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ResourceSampleRange } from '@ValenceContracts/schemas/ResourceSample';
-import {
-  fetchExceptions,
-  fetchExceptionsOn,
-  fetchLibraryAccess,
-} from '@ValenceClient/admin/fetchLibraryAccess';
+import { fetchExceptionsOn, fetchLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 
 const ADMIN = ['admin'] as const;
 
@@ -278,16 +275,15 @@ const folders = (path: string | null) =>
   });
 
 /**
- * What has been allowed or denied for an account whatever its ceiling says, for the panel that
- * grants and forgets them.
+ * Everywhere one account is signed in, for the admin dialog's Devices tab.
  *
- * @param accountId - The account being looked at.
+ * @param accountId - The account being looked at, or null where none is open.
  * @returns The query.
  */
-const exceptions = (accountId: string | null) =>
+const accountSessions = (accountId: string | null) =>
   queryOptions({
-    queryKey: [...ADMIN, 'exceptions', accountId],
-    queryFn: () => fetchExceptions(accountId ?? ''),
+    queryKey: [...ADMIN, 'accountSessions', accountId],
+    queryFn: () => fetchAccountSessions(accountId ?? ''),
     enabled: accountId !== null,
   });
 
@@ -305,7 +301,6 @@ const exceptionsOn = (subject: { kind: 'item' | 'series'; subjectId: string } | 
   });
 
 const adminQueries = {
-  exceptions,
   exceptionsOn,
   libraryAccess,
   folders,
@@ -322,6 +317,7 @@ const adminQueries = {
   roles,
   permissions,
   accountPermissions,
+  accountSessions,
   webhooks,
   deliveries,
   everything,

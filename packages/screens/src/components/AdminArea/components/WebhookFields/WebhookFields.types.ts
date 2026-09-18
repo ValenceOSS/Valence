@@ -18,6 +18,7 @@ type WebhookFieldsProps = {
   onChange: (draft: WebhookDraft) => void;
   accounts: WebhookFilterChoice[];
   profiles: WebhookFilterChoice[];
+  travel: 1 | -1;
 };
 
 export type { WebhookDraft, WebhookFieldsProps };
