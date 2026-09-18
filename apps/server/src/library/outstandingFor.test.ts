@@ -25,4 +25,9 @@ describe('what a render job is still owed', () => {
     expect(asked('previews').sql).toContain('"media_item"."extraKind" is null');
     expect(asked('trickplay').sql).toContain('"media_item"."extraKind" is null');
   });
+
+  it('leaves out tracks, which have no picture to preview or scrub', () => {
+    expect(asked('previews').sql).toContain('from "music_track"');
+    expect(asked('trickplay').sql).toContain('not exists');
+  });
 });

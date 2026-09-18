@@ -332,6 +332,9 @@ import {
 import type { HistoryService } from '@ValenceServer/history/HistoryService';
 import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 
+import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
+import type { MusicServices } from '@ValenceServer/music/MusicServices';
+
 const PROFILE_HEADER = 'x-valence-profile';
 
 /**
@@ -487,6 +490,7 @@ type CreateAppOptions = {
   profiles?: ProfileService;
   splashscreen?: SplashscreenStore;
   books?: BookService;
+  music?: MusicServices;
   promoteProfile?: (request: {
     profileId: string;
     email: string;
@@ -565,6 +569,7 @@ const createApp = ({
   profiles,
   splashscreen = createMemorySplashscreenStore(),
   books,
+  music,
   promoteProfile,
   listUsers,
   capabilities,
@@ -4221,6 +4226,10 @@ const createApp = ({
 
     return context.json({ segments: await segments.list(mediaId) }, 200);
   });
+
+  if (music !== undefined) {
+    registerMusicRoutes(app, { viewerOf, music });
+  }
 
   app.openapi(listBooksRoute, async (context) => {
     const account = await readAccount(context.req.raw.headers);

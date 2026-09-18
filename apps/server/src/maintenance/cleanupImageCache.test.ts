@@ -142,4 +142,46 @@ describe('cleanupImageCache', () => {
     expect(problems).toEqual(['hash-a: permission denied']);
     expect(total).toBe(1);
   });
+
+  it('keeps the covers and pictures of albums and artists still there, and removes the rest', async () => {
+    const { fs, removed } = harness({
+      '/cache': [],
+      '/cache/profiles': [],
+      '/cache/music': ['album-a.webp', 'album-gone.webp', 'artist-b.webp'],
+    });
+
+    const count = await cleanupImageCache({
+      imageCacheDir: '/cache',
+      profilesDir: '/cache/profiles',
+      musicDir: '/cache/music',
+      files: fs,
+      nameFor,
+      listMediaImageUrls: () => Promise.resolve([]),
+      listKeptPictures: () => Promise.resolve([]),
+      listMusicArtwork: () =>
+        Promise.resolve(['/cache/music/album-a.webp', '/cache/music/artist-b.webp', null]),
+    });
+
+    expect(removed).toEqual(['/cache/music/album-gone.webp']);
+    expect(count).toBe(1);
+  });
+
+  it('leaves music artwork alone where it is not told what is kept', async () => {
+    const { fs, removed } = harness({
+      '/cache': [],
+      '/cache/profiles': [],
+      '/cache/music': ['album-a.webp'],
+    });
+
+    await cleanupImageCache({
+      imageCacheDir: '/cache',
+      profilesDir: '/cache/profiles',
+      files: fs,
+      nameFor,
+      listMediaImageUrls: () => Promise.resolve([]),
+      listKeptPictures: () => Promise.resolve([]),
+    });
+
+    expect(removed).toEqual([]);
+  });
 });

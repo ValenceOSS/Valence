@@ -6,6 +6,7 @@ const ID = '[0-9a-fA-F-]{36}';
 const ITEM_ROUTES: readonly RegExp[] = [
   new RegExp(`^/api/media/(${ID})(/.*)?$`),
   new RegExp(`^/api/playback/(${ID})(/.*)?$`),
+  new RegExp(`^/api/music/tracks/(${ID})(/.*)?$`),
 ];
 
 const SERIES_ROUTES: readonly RegExp[] = [new RegExp(`^/api/series/(${ID})(/.*)?$`)];

@@ -2,6 +2,7 @@ import { describePlaybackMode } from '@ValenceContracts/functions/describePlayba
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
+import type { MusicCommand } from '@ValenceContracts/schemas/MusicRemote';
 
 type PresencePlayback = {
   mediaId: string;
@@ -51,7 +52,8 @@ type PresenceControlEvent =
   | { kind: 'stopped'; reason: string }
   | { kind: 'paused'; reason: string }
   | { kind: 'resumed' }
-  | { kind: 'message'; text: string };
+  | { kind: 'message'; text: string }
+  | { kind: 'music'; command: MusicCommand; fromClientId: string; fromLabel: string };
 
 type PresenceStartPlaybackInput = Omit<
   PresencePlayback,
@@ -89,6 +91,7 @@ type PresenceService = {
   message: (clientId: string, text: string) => boolean;
   resume: (clientId: string) => boolean;
   stop: (clientId: string, reason: string) => boolean;
+  tell: (clientId: string, event: PresenceControlEvent) => boolean;
 };
 
 type Connection = {
@@ -258,6 +261,18 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
       };
     },
 
+    tell: (clientId, event) => {
+      const connection = connections.get(clientId);
+
+      if (connection === undefined) {
+        return false;
+      }
+
+      connection.send(event);
+
+      return true;
+    },
+
     message: (clientId, text) => {
       const connection = connections.get(clientId);
 
@@ -319,6 +334,13 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
   };
 };
 
-export type { PresenceArrival, PresenceService, PresenceViewing, PresenceWatchers };
+export type {
+  PresenceArrival,
+  PresenceControlEvent,
+  PresenceEntry,
+  PresenceService,
+  PresenceViewing,
+  PresenceWatchers,
+};
 
 export { createPresenceService };

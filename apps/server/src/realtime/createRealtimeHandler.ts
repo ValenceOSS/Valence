@@ -5,6 +5,7 @@ import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { handlePartyMessage, tellEveryone } from '@ValenceServer/parties/handlePartyMessage';
 import type { RealtimeRegistry } from './createRealtimeRegistry';
 import type { PartyBinding } from '@ValenceServer/parties/handlePartyMessage';
+import type { PresenceControlEvent } from '@ValenceServer/presence/PresenceService';
 
 type RealtimeSocket = {
   send: (raw: string) => void;
@@ -21,12 +22,6 @@ type RealtimeSession = {
   ping: () => void;
   close: () => void;
 };
-
-type PresenceControl =
-  | { kind: 'stopped'; reason: string }
-  | { kind: 'paused'; reason: string }
-  | { kind: 'resumed' }
-  | { kind: 'message'; text: string };
 
 type PresenceBinding = {
   connect: (arrival: {
@@ -50,6 +45,8 @@ type HandlerOptions = {
   party?: PartyBinding;
 };
 
+type PresenceControl = PresenceControlEvent;
+
 type RealtimeHandler = {
   open: (who: Who, socket: RealtimeSocket) => RealtimeSession;
 };
@@ -61,6 +58,15 @@ const asPayload = (event: PresenceControl): JsonValue => {
 
   if (event.kind === 'message') {
     return { kind: 'message', text: event.text };
+  }
+
+  if (event.kind === 'music') {
+    return {
+      kind: 'music',
+      command: event.command,
+      fromClientId: event.fromClientId,
+      fromLabel: event.fromLabel,
+    };
   }
 
   return { kind: event.kind, reason: event.reason };

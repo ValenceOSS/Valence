@@ -49,6 +49,13 @@ import { scanLibrary } from './scanLibrary';
 import { scanBookLibrary } from '@ValenceServer/books/scanBookLibrary';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import type { BookStore } from '@ValenceServer/books/scanBookLibrary';
+import { scanMusicLibrary } from '@ValenceServer/music/scanMusicLibrary';
+import { isNotATrack } from '@ValenceServer/music/isNotATrack';
+import type {
+  MusicArtwork,
+  MusicFileSystem,
+  MusicStore,
+} from '@ValenceServer/music/scanMusicLibrary';
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
 import { createExpiringCache } from './createExpiringCache';
 import { resolveSeriesShape } from './MetadataProvider';
@@ -117,6 +124,11 @@ type CreateDatabaseLibraryServiceOptions = {
   certificationRegion?: () => Promise<string>;
   providers?: MetadataProvider[];
   books?: BookStore;
+  music?: {
+    store: MusicStore;
+    artwork: MusicArtwork;
+    files: Omit<MusicFileSystem, 'listFiles'>;
+  };
   onProblem?: (path: string, reason: string) => void;
   onArrived?: (libraryId: string, item: ScannedItem) => void;
   onDeparted?: (libraryId: string, items: ScannedItem[]) => void;
@@ -226,6 +238,7 @@ const createDatabaseLibraryService = ({
   jobs,
   providers,
   books,
+  music,
   atOnce = 1,
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
   certificationRegion = (): Promise<string> => Promise.resolve('GB'),
@@ -656,6 +669,45 @@ const createDatabaseLibraryService = ({
     });
   };
 
+  /**
+   * Reads a library of music, by reading each changed track's tags rather than probing it.
+   *
+   * Like books, music is written somewhere this service is given rather than builds, and a server
+   * assembled without it has no music rather than a scan that throws every track away for having
+   * no picture.
+   *
+   * @param found - The library.
+   * @param force - Whether to read everything again regardless of what has changed.
+   * @param jobId - The job to report against, where this is one.
+   * @returns What the scan changed, or nothing changed where this server keeps no music.
+   */
+  const scanMusic = async (
+    found: { id: string; path: string },
+    force: boolean,
+    jobId: string | undefined,
+  ): Promise<ScanResult> => {
+    if (music === undefined) {
+      return { added: 0, updated: 0, removed: 0, failed: 0 };
+    }
+
+    return scanMusicLibrary({
+      libraryId: found.id,
+      root: found.path,
+      files: { ...music.files, listFiles: files.listFiles },
+      store: music.store,
+      artwork: music.artwork,
+      force,
+      ...(onProblem === undefined ? {} : { onProblem }),
+      ...(jobId === undefined
+        ? {}
+        : {
+            onProgress: (processed, total) =>
+              jobs.reportProgress(jobId, 'probing', processed, total),
+            isCancelled: () => jobs.isCancelled(jobId),
+          }),
+    });
+  };
+
   let measured: Promise<number> | null = null;
 
   /**
@@ -833,7 +885,7 @@ const createDatabaseLibraryService = ({
         .from(
           sql`${mediaItem}, jsonb_array_elements_text(coalesce(${mediaItem.genres}, '[]'::jsonb)) as genre`,
         )
-        .where(and(isNull(mediaItem.extraKind), visibleToViewer(db, viewer)))
+        .where(and(isNull(mediaItem.extraKind), isNotATrack(db), visibleToViewer(db, viewer)))
         .groupBy(sql`genre`)
         .orderBy(sql`genre asc`);
 
@@ -841,7 +893,12 @@ const createDatabaseLibraryService = ({
         .select({ value: sql<number>`((${mediaItem.year} / 10) * 10)::int` })
         .from(mediaItem)
         .where(
-          and(isNotNull(mediaItem.year), isNull(mediaItem.extraKind), visibleToViewer(db, viewer)),
+          and(
+            isNotNull(mediaItem.year),
+            isNull(mediaItem.extraKind),
+            isNotATrack(db),
+            visibleToViewer(db, viewer),
+          ),
         )
         .groupBy(sql`(${mediaItem.year} / 10) * 10`)
         .orderBy(sql`(${mediaItem.year} / 10) * 10 desc`);
@@ -849,7 +906,7 @@ const createDatabaseLibraryService = ({
       const [best] = await db
         .select({ rating: sql<number>`coalesce(max(${mediaItem.rating}), 0)::float` })
         .from(mediaItem)
-        .where(and(isNull(mediaItem.extraKind), visibleToViewer(db, viewer)));
+        .where(and(isNull(mediaItem.extraKind), isNotATrack(db), visibleToViewer(db, viewer)));
 
       return {
         genres: genreRows.map((row) => row.value),
@@ -865,6 +922,7 @@ const createDatabaseLibraryService = ({
 
       const asked = [
         eq(mediaItem.libraryId, libraryId),
+        isNotATrack(db),
         visibleToViewer(db, viewer),
         ...(options.search === undefined || options.search.trim() === ''
           ? []
@@ -1619,7 +1677,9 @@ const createDatabaseLibraryService = ({
 
       const result = await (found.kind === 'books'
         ? scanBooks(found, force, jobId)
-        : scanFilms(found, force, jobId));
+        : found.kind === 'music'
+          ? scanMusic(found, force, jobId)
+          : scanFilms(found, force, jobId));
 
       await db
         .update(library)

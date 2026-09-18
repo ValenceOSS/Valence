@@ -30,7 +30,7 @@ const EXTRA_KIND_LABELS: Record<z.infer<typeof ExtraKindSchema>, string> = {
   other: 'Extra',
 };
 
-const SELECTABLE_LIBRARY_KINDS = ['movies', 'shows', 'books'] as const;
+const SELECTABLE_LIBRARY_KINDS = ['movies', 'shows', 'music', 'books'] as const;
 
 const LibraryKindSchema = z.enum(LIBRARY_KINDS);
 

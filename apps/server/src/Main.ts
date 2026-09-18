@@ -62,6 +62,8 @@ import {
   session,
   deviceCode,
   bookChapter,
+  musicAlbum,
+  musicArtist,
 } from '@ValenceServer/db/Schema';
 import { readEnv } from '@ValenceServer/env/Env';
 import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatabaseSettingsStore';
@@ -154,6 +156,13 @@ import {
 import { createDatabaseMaintenanceService } from '@ValenceServer/maintenance/createDatabaseMaintenanceService';
 import { cleanupImageCache } from '@ValenceServer/maintenance/cleanupImageCache';
 import { sweepBookPages } from '@ValenceServer/maintenance/sweepBookPages';
+import { createDatabaseMusicService } from '@ValenceServer/music/createDatabaseMusicService';
+import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
+import { createMusicArtwork } from '@ValenceServer/music/createMusicArtwork';
+import { createMusicDevices } from '@ValenceServer/music/createMusicDevices';
+import { createMusicFileSystem } from '@ValenceServer/music/createMusicFileSystem';
+import { createDatabasePlaylistService } from '@ValenceServer/playlists/createDatabasePlaylistService';
+import type { MusicServices } from '@ValenceServer/music/MusicServices';
 import { sweepArtefactCache } from '@ValenceServer/maintenance/sweepArtefactCache';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import {
@@ -595,6 +604,37 @@ const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR);
 
 const transcoder = createTranscoderClient({ baseUrl: env.TRANSCODER_URL });
 
+const musicArtworkDir = join(env.IMAGE_CACHE_DIR, 'music');
+
+const musicLibrary = createDatabaseMusicService(db);
+
+const musicServices: MusicServices = {
+  library: musicLibrary,
+  playlists: createDatabasePlaylistService(db, musicLibrary),
+  devices: createMusicDevices({
+    presence,
+    onChanged: (profileId) => {
+      realtime.publish(
+        'playback',
+        { kind: 'musicDevicesChanged' },
+        {
+          kind: 'profiles',
+          profileIds: [profileId],
+        },
+      );
+    },
+  }),
+  stream: (file, rendition, range) =>
+    rendition.kind === 'original'
+      ? transcoder.readFile(file.path, range)
+      : transcoder.readAudioRendition(file.path, rendition.kbps, range),
+  readImage: async (path) => {
+    const bytes = await readFile(path).catch(() => null);
+
+    return bytes === null ? null : new Uint8Array(bytes);
+  },
+};
+
 /**
  * Finds intros, outros and recaps across a library's already-scanned files by fingerprinting their
  * audio and looking for stretches every episode of a season shares. Runs against what has been
@@ -881,15 +921,22 @@ const jobs = await createJobQueue({
         await runLibraryWork(SCAN_LIBRARY_JOB, libraryId, payload, async () => {
           const libraries = await libraryService.list(asTheServer);
           const scanned = libraries.find((entry) => entry.id === libraryId);
+          const isMusic = scanned?.kind === 'music';
 
           await runScanPhases({
             work: {
               scan: () => libraryService.runScan(libraryId, force, jobId),
-              fetchLogos: () => libraryService.runFetchLogos(libraryId, jobId),
-              detectSegments: () => runDetectSegments(libraryId, jobId),
+              fetchLogos: () =>
+                isMusic ? Promise.resolve() : libraryService.runFetchLogos(libraryId, jobId),
+              detectSegments: () =>
+                isMusic ? Promise.resolve() : runDetectSegments(libraryId, jobId),
             },
             isCancelled: () => jobs.isCancelled(jobId),
             onRead: async () => {
+              if (isMusic) {
+                return;
+              }
+
               await libraryService.regeneratePreviews(libraryId);
               await libraryService.regenerateTrickplay(libraryId);
             },
@@ -1035,6 +1082,13 @@ const jobs = await createJobQueue({
               .from(viewerProfile);
 
             return [...rows.map((row) => row.photoPath), (await settings.read()).splashscreenFile];
+          },
+          musicDir: musicArtworkDir,
+          listMusicArtwork: async () => {
+            const albums = await db.select({ path: musicAlbum.artworkPath }).from(musicAlbum);
+            const artists = await db.select({ path: musicArtist.imagePath }).from(musicArtist);
+
+            return [...albums, ...artists].map((row) => row.path);
           },
           onProblem: (path, reason) => {
             log.error('server', `image cache: ${path}: ${reason}`);
@@ -1456,6 +1510,11 @@ const libraryService = createDatabaseLibraryService({
   jobs,
   providers: [catalogueProvider, createFilenameMetadataProvider()],
   books: bookService,
+  music: {
+    store: createDatabaseMusicStore(db),
+    artwork: createMusicArtwork(musicArtworkDir),
+    files: createMusicFileSystem(),
+  },
   atOnce: env.MEDIA_JOBS,
   previewQuality: async () => (await settings.read()).previewQuality,
   certificationRegion: async () => (await settings.read()).certificationRegion,
@@ -1727,6 +1786,7 @@ const app = createApp({
   profiles: profileService,
   splashscreen,
   books: bookService,
+  music: musicServices,
   promoteProfile: async ({ profileId, email, password }) => {
     const rows = await db
       .select({

@@ -2,6 +2,7 @@ import { and, eq, exists, gt, isNull, notExists, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { ageCeiling, ageException, mediaItem } from '@ValenceServer/db/Schema';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { isNotATrack } from '@ValenceServer/music/isNotATrack';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 const ALLOW = 'allow';
@@ -29,6 +30,8 @@ const DENY = 'deny';
  * one place this fails closed rather than open, and deliberately: an unrated item shown to a child
  * because a catalogue was missing a field is precisely the failure the whole feature exists to
  * prevent. The escape is a switch, per account, for a household whose library is mostly unmatched.
+ * A song is never read as unrated: nothing certificates music, so every track would otherwise be
+ * refused to every account with a ceiling, which protects nobody from anything.
  *
  * Asks nothing of an administrator, of a share guest, or of the server itself, and nothing at all of
  * an account no ceiling was ever set for — which is every account until somebody says otherwise.
@@ -69,7 +72,11 @@ const withinTheCeiling = (db: ValenceDatabase, viewer: Viewer): SQL | undefined 
           eq(ageCeiling.libraryId, mediaItem.libraryId),
           or(
             gt(mediaItem.certificationAge, ageCeiling.maximumAge),
-            and(isNull(mediaItem.certificationAge), eq(ageCeiling.allowsUnrated, false)),
+            and(
+              isNull(mediaItem.certificationAge),
+              eq(ageCeiling.allowsUnrated, false),
+              isNotATrack(db),
+            ),
           ),
         ),
       ),
