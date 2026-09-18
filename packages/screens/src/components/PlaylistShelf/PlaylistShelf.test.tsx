@@ -22,6 +22,7 @@ const PLAYLIST = {
   isMine: false,
   owner: { profileId: '00000000-0000-4000-8000-000000000002', name: 'Sam', colour: '#fff' },
   entryCount: 1,
+  lostCount: 0,
   durationSeconds: 201,
   artworkAlbumIds: [],
   updatedAt: '',
@@ -64,6 +65,10 @@ describe('PlaylistShelf', () => {
   it('says whose somebody else’s playlist is', () => {
     expect(describePlaylist(PLAYLIST)).toBe('By Sam · 1 thing');
     expect(describePlaylist({ ...PLAYLIST, isMine: true, entryCount: 4 })).toBe('4 things');
+  });
+
+  it('says a shared playlist belongs to a removed profile once its owner is gone', () => {
+    expect(describePlaylist({ ...PLAYLIST, owner: null })).toBe('By a removed profile · 1 thing');
   });
 
   it('plays a playlist straight from the shelf, keeping its order where it matters', async () => {

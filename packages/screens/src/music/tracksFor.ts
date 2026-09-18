@@ -40,7 +40,7 @@ const tracksFor = async (view: MusicView, name: string): Promise<Playable | null
 
     return {
       tracks: read.entries.flatMap((entry) =>
-        entry.item.track === null ? [] : [entry.item.track],
+        entry.item === null || entry.item.track === null ? [] : [entry.item.track],
       ),
       source: { kind: 'playlist', id: view.id, name },
       isOrdered: read.playlist.isOrdered,

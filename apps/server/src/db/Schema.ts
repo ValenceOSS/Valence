@@ -113,7 +113,7 @@ const deviceCode = pgTable('deviceCode', {
   id: text('id').primaryKey(),
   deviceCode: text('deviceCode').notNull(),
   userCode: text('userCode').notNull(),
-  userId: text('userId'),
+  userId: text('userId').references(() => user.id, { onDelete: 'cascade' }),
   expiresAt: timestamp('expiresAt').notNull(),
   status: text('status').notNull(),
   lastPolledAt: timestamp('lastPolledAt'),
@@ -137,7 +137,9 @@ const apikey = pgTable('apikey', {
   configId: text('configId').notNull(),
   name: text('name'),
   start: text('start'),
-  referenceId: text('referenceId').notNull(),
+  referenceId: text('referenceId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   prefix: text('prefix'),
   key: text('key').notNull(),
   refillInterval: integer('refillInterval'),
@@ -894,9 +896,7 @@ const playlist = pgTable(
   'playlist',
   {
     id: text('id').primaryKey(),
-    profileId: text('profileId')
-      .notNull()
-      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    profileId: text('profileId').references(() => viewerProfile.id, { onDelete: 'set null' }),
     name: text('name').notNull(),
     description: text('description'),
     isShared: boolean('isShared').notNull().default(false),
@@ -917,9 +917,7 @@ const playlistEntry = pgTable(
     playlistId: text('playlistId')
       .notNull()
       .references(() => playlist.id, { onDelete: 'cascade' }),
-    mediaItemId: text('mediaItemId')
-      .notNull()
-      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    mediaItemId: text('mediaItemId').references(() => mediaItem.id, { onDelete: 'set null' }),
     position: doublePrecision('position').notNull(),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
   },
