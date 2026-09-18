@@ -194,12 +194,8 @@ describe('TextReader', () => {
     open();
 
     await screen.findByText('It is a truth universally acknowledged.');
-    await userEvent.click(screen.getByRole('button', { name: 'Contents' }));
-    await userEvent.click(
-      await screen.findByText('Chapter II.', {
-        selector: '[role="menuitemradio"] *, [role="menuitemradio"]',
-      }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Next chapter' }));
 
     expect(await screen.findByText('Mr. Bennet was among the earliest.')).toBeInTheDocument();
   });
@@ -216,8 +212,8 @@ describe('TextReader', () => {
     open();
 
     await screen.findByText('It is a truth universally acknowledged.');
-    await userEvent.click(screen.getByRole('button', { name: 'How the text is set' }));
-    await userEvent.click(await screen.findByText('Sepia'));
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sepia' }));
 
     expect(held.get('valence.reader.text')).toContain('"page":"sepia"');
   });

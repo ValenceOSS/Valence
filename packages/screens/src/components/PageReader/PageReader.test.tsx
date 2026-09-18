@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { PageReader } from './PageReader';
@@ -200,9 +200,53 @@ describe('PageReader', () => {
   it('remembers how somebody likes to read, on the device', async () => {
     draw();
 
-    await userEvent.click(screen.getByRole('button', { name: 'How to read' }));
-    await userEvent.click(screen.getByText('Two pages'));
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Two' }));
 
     expect(held.get('valence.reader')).toContain('"isDouble":true');
+  });
+
+  it('says in the panel which book, which chapter and which page', async () => {
+    draw();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+
+    const panel = screen.getByRole('complementary', { name: 'Reading' });
+
+    expect(within(panel).getByText('Rent-A-Girlfriend')).toBeInTheDocument();
+    expect(within(panel).getAllByText('Volume 1').length).toBeGreaterThan(0);
+    expect(within(panel).getByRole('button', { name: 'Page' })).toHaveTextContent('1');
+  });
+
+  it('steps to the next chapter from the panel', async () => {
+    const onChapterChange = vi.fn();
+
+    draw({ onChapterChange });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Next chapter' }));
+
+    expect(onChapterChange).toHaveBeenCalledWith('two');
+  });
+
+  it('offers the cover on its own only when pages are shown two at a time', async () => {
+    draw();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+
+    expect(screen.queryByRole('switch', { name: 'Cover on its own' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Two' }));
+
+    expect(screen.getByRole('switch', { name: 'Cover on its own' })).toBeInTheDocument();
+  });
+
+  it('keeps the panel open next time where somebody pinned it', async () => {
+    draw();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Keep the panel beside the page' }));
+
+    expect(held.get('valence.reader.panel')).toBe('pinned');
   });
 });

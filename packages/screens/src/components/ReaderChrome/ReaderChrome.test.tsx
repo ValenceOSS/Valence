@@ -7,14 +7,21 @@ import { ReaderChrome } from './ReaderChrome';
  * Draws the chrome around a page, with the given overrides.
  */
 const draw = (overrides: Partial<Parameters<typeof ReaderChrome>[0]> = {}) => {
-  const handlers = { onForward: vi.fn(), onBack: vi.fn(), onClose: vi.fn() };
+  const handlers = {
+    onForward: vi.fn(),
+    onBack: vi.fn(),
+    onClose: vi.fn(),
+    onPanelOpenChange: vi.fn(),
+  };
 
   render(
     <ReaderChrome
       title="Emma — Chapter I."
       isShown
       isRightToLeft={false}
-      menus={<span>The menus</span>}
+      panel={<span>The panel</span>}
+      isPanelOpen={false}
+      isPanelPinned={false}
       footer={<span>The footer</span>}
       {...handlers}
       {...overrides}
@@ -27,11 +34,11 @@ const draw = (overrides: Partial<Parameters<typeof ReaderChrome>[0]> = {}) => {
 };
 
 describe('ReaderChrome', () => {
-  it('shows the title, the menus, the page and the footer', () => {
+  it('shows the title, the page and the footer, and keeps the panel away until asked', () => {
     draw();
 
     expect(screen.getByText('Emma — Chapter I.')).toBeInTheDocument();
-    expect(screen.getByText('The menus')).toBeInTheDocument();
+    expect(screen.queryByText('The panel')).not.toBeInTheDocument();
     expect(screen.getByText('The page')).toBeInTheDocument();
     expect(screen.getByText('The footer')).toBeInTheDocument();
   });
@@ -75,5 +82,38 @@ describe('ReaderChrome', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(ReaderChrome.displayName).toBe('ReaderChrome');
+  });
+
+  it('brings out the panel when asked', async () => {
+    const { onPanelOpenChange } = draw();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+
+    expect(onPanelOpenChange).toHaveBeenCalledWith(true);
+  });
+
+  it('shows a pinned panel beside the page, with nothing over the page to put it away', () => {
+    draw({ isPanelOpen: true, isPanelPinned: true });
+
+    expect(screen.getByText('The panel')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Put the panel away' })).toHaveLength(1);
+  });
+
+  it('puts a loose panel away when the page is touched', async () => {
+    const { onPanelOpenChange } = draw({ isPanelOpen: true, isPanelPinned: false });
+
+    const [, overThePage] = screen.getAllByRole('button', { name: 'Put the panel away' });
+
+    if (overThePage !== undefined) {
+      await userEvent.click(overThePage);
+    }
+
+    expect(onPanelOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('keeps the bars showing while the panel is out', () => {
+    draw({ isShown: false, isPanelOpen: true, isPanelPinned: true });
+
+    expect(screen.getByRole('banner', { hidden: true })).not.toHaveClass('pointer-events-none');
   });
 });

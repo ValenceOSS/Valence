@@ -4,7 +4,10 @@ type ReaderChromeProps = {
   title: string;
   isShown: boolean;
   isRightToLeft: boolean;
-  menus: ReactNode;
+  panel: ReactNode;
+  isPanelOpen: boolean;
+  isPanelPinned: boolean;
+  onPanelOpenChange: (isOpen: boolean) => void;
   footer: ReactNode;
   children: ReactNode;
   onForward: () => void;

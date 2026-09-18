@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { LeftToRightListNumberIcon, TextFontIcon } from '@hugeicons/core-free-icons';
-import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { Icon } from '@ValenceUI/Icon';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { SettingList } from '@ValenceUI/SettingList';
+import { SettingRow } from '@ValenceUI/SettingRow';
 import { Slider } from '@ValenceUI/Slider';
 import { Spinner } from '@ValenceUI/Spinner';
 import { cn } from '@ValenceUI/cn';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookText } from '@ValenceScreens/components/BookText/BookText';
 import { ReaderChrome } from '@ValenceScreens/components/ReaderChrome/ReaderChrome';
+import { ReaderPanel } from '@ValenceScreens/components/ReaderPanel/ReaderPanel';
+import { ReaderPicker } from '@ValenceScreens/components/ReaderPicker/ReaderPicker';
+import { readPanelPinned, writePanelPinned } from '@ValenceScreens/reading/panelPreference';
 import { contentsEntryAt } from '@ValenceScreens/reading/contentsEntryAt';
 import { fractionOfBook } from '@ValenceScreens/reading/fractionOfBook';
 import { placeInBook } from '@ValenceScreens/reading/placeInBook';
@@ -115,6 +117,8 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
   );
   const [settings, setSettings] = useState<TextPreferences>(readTextPreferences);
   const { isShown, wake } = useChromeThatHides();
+  const [isPanelPinned, setIsPanelPinned] = useState(readPanelPinned);
+  const [isPanelOpen, setIsPanelOpen] = useState(isPanelPinned);
   const [part, setPart] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const [pages, setPages] = useState(1);
@@ -367,95 +371,132 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         onForward={forward}
         onBack={back}
         onClose={onClose}
-        menus={
-          <>
-            <OptionMenu
-              label="Contents"
-              align="end"
-              trigger={
-                <Button variant="ghost" size="sm">
-                  <Icon of={LeftToRightListNumberIcon} size={18} />
-                </Button>
-              }
-              groups={[
-                {
-                  name: 'Contents',
-                  selectedId: current === null ? '' : current.toString(),
-                  onSelect: (id) => {
+        isPanelOpen={isPanelOpen}
+        isPanelPinned={isPanelPinned}
+        onPanelOpenChange={setIsPanelOpen}
+        panel={
+          <ReaderPanel
+            bookTitle={book.title}
+            placeTitle={heading}
+            isPinned={isPanelPinned}
+            onPinnedChange={(isPinned) => {
+              setIsPanelPinned(isPinned);
+              writePanelPinned(isPinned);
+            }}
+            onClose={() => {
+              setIsPanelOpen(false);
+            }}
+            pickers={
+              entries.length === 0 ? null : (
+                <ReaderPicker
+                  label="Contents"
+                  value={heading ?? 'The beginning'}
+                  selectedId={current === null ? '' : current.toString()}
+                  options={entries.map((entry, at) => ({
+                    id: at.toString(),
+                    label: `${'\u2003'.repeat(entry.depth)}${entry.title}`,
+                  }))}
+                  onSelect={(id) => {
                     const entry = entries[Number(id)];
 
                     if (entry !== undefined) {
                       follow({ part: entry.part, anchor: entry.anchor });
                     }
-                  },
-                  options: entries.map((entry, at) => ({
-                    id: at.toString(),
-                    label: `${' '.repeat(entry.depth)}${entry.title}`,
-                  })),
-                },
-              ]}
-            />
+                  }}
+                  previousLabel="Previous chapter"
+                  nextLabel="Next chapter"
+                  {...(current !== null && current > 0
+                    ? {
+                        onPrevious: () => {
+                          const entry = entries[current - 1];
 
-            <OptionMenu
-              label="How the text is set"
-              align="end"
-              trigger={
-                <Button variant="ghost" size="sm">
-                  <Icon of={TextFontIcon} size={18} />
-                </Button>
-              }
-              groups={[
-                {
-                  name: 'Size',
-                  selectedId: settings.size,
-                  onSelect: (id) => {
+                          if (entry !== undefined) {
+                            follow({ part: entry.part, anchor: entry.anchor });
+                          }
+                        },
+                      }
+                    : {})}
+                  {...((current ?? -1) < entries.length - 1
+                    ? {
+                        onNext: () => {
+                          const entry = entries[(current ?? -1) + 1];
+
+                          if (entry !== undefined) {
+                            follow({ part: entry.part, anchor: entry.anchor });
+                          }
+                        },
+                      }
+                    : {})}
+                />
+              )
+            }
+          >
+            <SettingList>
+              <SettingRow title="Size">
+                <SegmentedRow
+                  label="Size"
+                  size="sm"
+                  items={TEXT_SIZES.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
+                  value={settings.size}
+                  onSelect={(id) => {
                     const size = TEXT_SIZES.find((one) => one === id);
 
                     if (size !== undefined) {
                       change({ size });
                     }
-                  },
-                  options: TEXT_SIZES.map((one) => ({ id: one, label: NAMES[one] ?? one })),
-                },
-                {
-                  name: 'Spacing',
-                  selectedId: settings.spacing,
-                  onSelect: (id) => {
+                  }}
+                />
+              </SettingRow>
+
+              <SettingRow title="Spacing">
+                <SegmentedRow
+                  label="Spacing"
+                  size="sm"
+                  items={TEXT_SPACINGS.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
+                  value={settings.spacing}
+                  onSelect={(id) => {
                     const spacing = TEXT_SPACINGS.find((one) => one === id);
 
                     if (spacing !== undefined) {
                       change({ spacing });
                     }
-                  },
-                  options: TEXT_SPACINGS.map((one) => ({ id: one, label: NAMES[one] ?? one })),
-                },
-                {
-                  name: 'Margins',
-                  selectedId: settings.margins,
-                  onSelect: (id) => {
+                  }}
+                />
+              </SettingRow>
+
+              <SettingRow title="Margins">
+                <SegmentedRow
+                  label="Margins"
+                  size="sm"
+                  items={TEXT_MARGINS.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
+                  value={settings.margins}
+                  onSelect={(id) => {
                     const margins = TEXT_MARGINS.find((one) => one === id);
 
                     if (margins !== undefined) {
                       change({ margins });
                     }
-                  },
-                  options: TEXT_MARGINS.map((one) => ({ id: one, label: NAMES[one] ?? one })),
-                },
-                {
-                  name: 'Page',
-                  selectedId: settings.page,
-                  onSelect: (id) => {
+                  }}
+                />
+              </SettingRow>
+
+              <SettingRow title="Page">
+                <SegmentedRow
+                  label="Page"
+                  size="sm"
+                  items={TEXT_PAGES.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
+                  value={settings.page}
+                  onSelect={(id) => {
                     const chosen = TEXT_PAGES.find((one) => one === id);
 
                     if (chosen !== undefined) {
                       change({ page: chosen });
                     }
-                  },
-                  options: TEXT_PAGES.map((one) => ({ id: one, label: NAMES[one] ?? one })),
-                },
-              ]}
-            />
-          </>
+                  }}
+                />
+              </SettingRow>
+            </SettingList>
+          </ReaderPanel>
         }
         footer={
           <>
