@@ -71,4 +71,19 @@ describe('CacheBreakdown', () => {
 
     expect(screen.queryByRole('button', { name: 'What artwork means' })).not.toBeInTheDocument();
   });
+
+  it('counts the pages of books into what Valence is keeping', () => {
+    render(
+      <CacheBreakdown
+        cache={null}
+        artwork={{ count: 1, bytes: 1024 ** 2, atMs: Date.now() }}
+        bookPages={{ count: 10, bytes: 1024 ** 2, atMs: Date.now() }}
+        liveSessions={0}
+        library={null}
+      />,
+    );
+
+    expect(screen.getByText('Book pages')).toBeInTheDocument();
+    expect(screen.getByText(/2\.0 MB of Valence's own files/)).toBeInTheDocument();
+  });
 });

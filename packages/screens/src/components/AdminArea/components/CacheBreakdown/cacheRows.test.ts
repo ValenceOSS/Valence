@@ -115,4 +115,30 @@ describe('cacheRows', () => {
     expect(labelled('Preview clips', rows)?.value).toBe('0 B');
     expect(labelled('Preview clips', rows)?.detail).toBe('0 clips');
   });
+
+  describe('the pages of books', () => {
+    it('leaves them out on a server that has kept none, which is most of them', () => {
+      expect(labelled('Book pages', cacheRows(null, null, 0, null))).toBeUndefined();
+      expect(
+        labelled('Book pages', cacheRows(null, null, 0, null, { count: 0, bytes: 0, atMs: 1 })),
+      ).toBeUndefined();
+    });
+
+    it('reports what they cost and how many there are, beside the artwork', () => {
+      const rows = cacheRows(null, null, 0, null, { count: 300, bytes: 5 * 1024 ** 2, atMs: 1 });
+
+      expect(labelled('Book pages', rows)?.value).toBe('5.0 MB');
+      expect(labelled('Book pages', rows)?.detail).toBe('300 pages');
+      expect(rows.map((row) => row.label).indexOf('Book pages')).toBe(
+        rows.map((row) => row.label).indexOf('Artwork') + 1,
+      );
+    });
+
+    it('says when they are let go', () => {
+      const rows = cacheRows(null, null, 0, null, { count: 1, bytes: 1, atMs: 1 });
+
+      expect(labelled('Book pages', rows)?.hint).toMatch(/30 days/);
+      expect(labelled('Book pages', rows)?.detail).toBe('1 page');
+    });
+  });
 });

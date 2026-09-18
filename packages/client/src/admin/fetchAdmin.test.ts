@@ -80,6 +80,7 @@ const OVERVIEW = {
   },
   library: { itemCount: 15, libraryCount: 2, bytes: 0 },
   artwork: null,
+  bookPages: null,
   jobs: { stalled: [] },
 };
 
@@ -1038,7 +1039,21 @@ describe('measureStorage', () => {
     await expect(measureStorage()).resolves.toEqual({
       cache: null,
       artwork: null,
+      bookPages: null,
       libraryBytes: 8,
+    });
+  });
+
+  it('reads how much the kept pages of books hold', async () => {
+    answerWith({
+      cache: null,
+      artwork: null,
+      bookPages: { count: 300, bytes: 90_000, atMs: 1 },
+      libraryBytes: 8,
+    });
+
+    await expect(measureStorage()).resolves.toMatchObject({
+      bookPages: { count: 300, bytes: 90_000 },
     });
   });
 

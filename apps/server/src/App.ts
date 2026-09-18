@@ -417,6 +417,7 @@ type StorageCount = {
     atMs: number;
   } | null;
   artwork: { count: number; bytes: number; atMs: number } | null;
+  bookPages?: { count: number; bytes: number; atMs: number } | null;
   libraryBytes: number;
 };
 
@@ -514,6 +515,7 @@ type CreateAppOptions = {
   monitor?: () => Promise<JsonValue>;
   stalledJobs?: () => (JobStall & { label: string })[];
   artworkUsage?: () => { count: number; bytes: number; atMs: number } | null;
+  bookPageUsage?: () => { count: number; bytes: number; atMs: number } | null;
   libraryBytes?: () => Promise<number>;
   measureStorage?: () => Promise<StorageCount>;
   readImage?: (url: string) => Promise<{ body: ArrayBuffer; contentType: string } | null>;
@@ -567,6 +569,7 @@ const createApp = ({
   listUsers,
   capabilities,
   artworkUsage,
+  bookPageUsage,
   libraryBytes,
   measureStorage,
   monitor,
@@ -2090,6 +2093,7 @@ const createApp = ({
       {
         cache: measured?.cache ?? null,
         artwork: measured?.artwork ?? null,
+        bookPages: measured?.bookPages ?? null,
         libraryBytes: measured?.libraryBytes ?? 0,
       },
       200,
@@ -2140,6 +2144,7 @@ const createApp = ({
           bytes: await (libraryBytes?.() ?? Promise.resolve(0)),
         },
         artwork: artworkUsage?.() ?? null,
+        bookPages: bookPageUsage?.() ?? null,
         jobs: { stalled: stalledJobs?.() ?? [] },
       },
       200,

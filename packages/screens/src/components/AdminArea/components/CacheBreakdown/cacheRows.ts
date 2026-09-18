@@ -29,6 +29,8 @@ const counted = (count: number, one: string, many: string): string =>
  * @param artwork - How much artwork has been fetched and kept.
  * @param liveSessions - How many sessions are writing at the moment.
  * @param library - How much the library itself holds, where that has been worked out.
+ * @param bookPages - How much the kept pages of books hold, shown only once there are some — most
+ *   servers have no books, and a row of nothing on every one of them says nothing.
  * @returns The rows to show.
  */
 const cacheRows = (
@@ -36,6 +38,7 @@ const cacheRows = (
   artwork: AdminOverview['artwork'],
   liveSessions: number,
   library: { bytes: number; itemCount: number } | null,
+  bookPages: AdminOverview['bookPages'] = null,
 ): CacheRow[] => {
   const pending = { value: '—', detail: 'Still counting' };
 
@@ -80,6 +83,16 @@ const cacheRows = (
             detail: counted(artwork.count, 'image', 'images'),
           }),
     },
+    ...(bookPages === null || bookPages.count === 0
+      ? []
+      : [
+          {
+            label: 'Book pages',
+            hint: 'Pages of books and comics are kept once they have been drawn for a screen, so turning back is instant. A chapter nobody has opened for 30 days is let go, and comes back the next time somebody reads it.',
+            value: formatBytes(bookPages.bytes),
+            detail: counted(bookPages.count, 'page', 'pages'),
+          },
+        ]),
     {
       label: 'Media library',
       ...(library === null

@@ -1,9 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { book, bookChapter, library, readingProgress } from '@ValenceServer/db/Schema';
-import sharp from 'sharp';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import {
@@ -11,6 +9,7 @@ import {
   BookLayoutSchema,
   ReadingDirectionSchema,
 } from '@ValenceContracts/schemas/Book';
+import { createBookPageCache } from './createBookPageCache';
 import { imageTypeFor } from './imageTypeFor';
 import { openBookFile } from './openBookFile';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
@@ -24,18 +23,7 @@ import type {
 import type { BookPageBytes } from './BookFile';
 import type { BookStore } from './scanBookLibrary';
 
-const WEBP_QUALITY = 82;
-
-const WIDEST = 3840;
-
-const EXTENSIONS = new Map([
-  ['image/webp', 'webp'],
-  ['image/jpeg', 'jpg'],
-  ['image/png', 'png'],
-  ['image/gif', 'gif'],
-  ['image/avif', 'avif'],
-  ['image/bmp', 'bmp'],
-]);
+const COVER_WIDTH = 640;
 
 type BookService = BookStore & {
   list: (libraryId: string) => Promise<Book[]>;
@@ -68,11 +56,9 @@ const namesIn = (held: JsonValue): string[] | null => NamesSchema.parse(held);
 /**
  * The shelf: what is on it, what is inside each thing on it, and where everybody is up to.
  *
- * A page is cached the first time it is asked for. Getting one means finding it inside an archive
- * and inflating it, or in the case of a document drawing it, and neither is work worth doing twice —
- * somebody reading turns the same pages back and forth, and everybody in a household reads the same
- * volume eventually. Cached pages sit beside the artwork, so the job that tidies that away one day
- * tidies these too.
+ * Pages are kept once they have been drawn, under `books/` beside the artwork, and the job that
+ * tidies the artwork away tidies these too. A cover is drawn at the width a rail shows it, rather
+ * than as the megabytes of first page it is.
  *
  * @param db - The database.
  * @param cacheDir - Where pages are kept once they have been read.
@@ -94,99 +80,16 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
     return found ?? null;
   };
 
-  const cachedAt = (
-    chapterId: string,
-    page: number,
-    width: number | null,
-    contentType: string,
-  ): string => {
-    const named = `${page.toString()}${width === null ? '' : `@${width.toString()}`}`;
+  const pageOf = createBookPageCache({
+    directory: join(cacheDir, 'books'),
+    openPage: async (chapterId, page) => {
+      const chapter = await chapterFor(chapterId);
+      const opened = chapter === null ? null : await openBookFile(chapter.path).catch(() => null);
 
-    return join(cacheDir, 'books', chapterId, `${named}.${EXTENSIONS.get(contentType) ?? 'bin'}`);
-  };
+      return opened === null || opened.layout !== 'fixed' ? null : opened.readPage(page);
+    },
+  });
 
-  const readCached = async (
-    chapterId: string,
-    page: number,
-    width: number | null,
-  ): Promise<BookPageBytes | null> => {
-    for (const [contentType] of EXTENSIONS) {
-      const bytes = await readFile(cachedAt(chapterId, page, width, contentType)).catch(() => null);
-
-      if (bytes !== null) {
-        return { bytes: new Uint8Array(bytes), contentType };
-      }
-    }
-
-    return null;
-  };
-
-  const keep = async (
-    chapterId: string,
-    page: number,
-    width: number | null,
-    held: BookPageBytes,
-  ): Promise<void> => {
-    const at = cachedAt(chapterId, page, width, held.contentType);
-
-    await mkdir(dirname(at), { recursive: true }).catch(() => null);
-    await writeFile(at, held.bytes).catch(() => null);
-  };
-
-  /**
-   * Draws a page down to the width somebody asked for.
-   *
-   * A page out of a volume is a megabyte and a half of picture and sometimes three, which is a lot to
-   * send a phone for something it will draw a thousand pixels wide. Narrowed pages go out as WebP,
-   * which is a great deal smaller for line art and screentone than what these archives hold.
-   *
-   * A page that will not draw is sent as it came rather than not at all.
-   *
-   * @param held - The page as it was found.
-   * @param width - How wide it is wanted.
-   * @returns The page, narrowed where that worked.
-   */
-  const narrowed = async (held: BookPageBytes, width: number): Promise<BookPageBytes> => {
-    const drawn = await sharp(held.bytes)
-      .resize({ width, withoutEnlargement: true })
-      .webp({ quality: WEBP_QUALITY })
-      .toBuffer()
-      .catch(() => null);
-
-    return drawn === null ? held : { bytes: new Uint8Array(drawn), contentType: 'image/webp' };
-  };
-
-  const pageOf = async (
-    chapterId: string,
-    page: number,
-    width?: number,
-  ): Promise<BookPageBytes | null> => {
-    const wanted = width === undefined || width <= 0 ? null : Math.min(width, WIDEST);
-    const already = await readCached(chapterId, page, wanted);
-
-    if (already !== null) {
-      return already;
-    }
-
-    const chapter = await chapterFor(chapterId);
-    const opened = chapter === null ? null : await openBookFile(chapter.path).catch(() => null);
-
-    if (opened === null || opened.layout !== 'fixed') {
-      return null;
-    }
-
-    const read = await opened.readPage(page);
-
-    if (read === null) {
-      return null;
-    }
-
-    const held = wanted === null ? read : await narrowed(read, wanted);
-
-    await keep(chapterId, page, wanted, held);
-
-    return held;
-  };
   return {
     listStored: async (libraryId) => {
       const rows = await db
@@ -404,7 +307,7 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
         .orderBy(asc(bookChapter.number))
         .limit(1);
 
-      return first === undefined ? null : pageOf(first.id, 0);
+      return first === undefined ? null : pageOf(first.id, 0, COVER_WIDTH);
     },
 
     saveProgress: async (profileId, chapterId, where) => {

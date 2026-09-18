@@ -9,21 +9,29 @@ import type { CacheBreakdownProps } from './CacheBreakdown.types';
 
 /**
  * What Valence itself is keeping on the disk, a kind at a time: preview clips, scrub thumbnails,
- * artwork, and what is being written for sessions running now. The library's own files are shown
+ * artwork, the pages of books, and what is being written for sessions running now. The library's own files are shown
  * beside them for scale, since the useful question is usually how much Valence has added to what was
  * already there.
  *
  * @param cache - What the monitor found on disk, or null while it is still counting.
  * @param artwork - How much artwork has been fetched and kept.
+ * @param bookPages - How much the kept pages of books hold.
  * @param liveSessions - How many sessions are writing at the moment.
  * @param library - How much the library itself holds, where that has been worked out.
  */
-const CacheBreakdown = ({ cache, artwork, liveSessions, library }: CacheBreakdownProps) => {
-  const rows = cacheRows(cache, artwork, liveSessions, library);
+const CacheBreakdown = ({
+  cache,
+  artwork,
+  bookPages = null,
+  liveSessions,
+  library,
+}: CacheBreakdownProps) => {
+  const rows = cacheRows(cache, artwork, liveSessions, library, bookPages);
   const total =
     (cache === null ? 0 : cache.previews.bytes + cache.trickplay.bytes) +
     (cache?.sessions.bytes ?? 0) +
-    (artwork?.bytes ?? 0);
+    (artwork?.bytes ?? 0) +
+    (bookPages?.bytes ?? 0);
 
   return (
     <div className="flex flex-col gap-4">

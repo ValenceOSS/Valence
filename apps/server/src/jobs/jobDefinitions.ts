@@ -90,7 +90,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   {
     kind: CLEANUP_IMAGE_CACHE_JOB,
     label: 'Clean up cached images',
-    description: 'Removes cached artwork and profile photos nothing references any more.',
+    description:
+      'Removes cached artwork and profile photos nothing references any more, and the kept pages of books nobody has opened for 30 days.',
     needsLibrary: false,
     destructive: false,
     announcesFinish: false,

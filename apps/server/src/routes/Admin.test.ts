@@ -1210,6 +1210,7 @@ describe('what the caches are holding', () => {
         atMs: number;
       } | null;
       artwork: { count: number; bytes: number; atMs: number } | null;
+      bookPages?: { count: number; bytes: number; atMs: number } | null;
       libraryBytes: number;
     }>,
   ) => {
@@ -1264,7 +1265,31 @@ describe('what the caches are holding', () => {
     });
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ cache: null, artwork: null, libraryBytes: 0 });
+    expect(await response.json()).toEqual({
+      cache: null,
+      artwork: null,
+      bookPages: null,
+      libraryBytes: 0,
+    });
+  });
+
+  it('counts the pages of books kept beside the artwork on their own', async () => {
+    const context = withStorage(() =>
+      Promise.resolve({
+        cache: null,
+        artwork: { count: 10, bytes: 2048, atMs: 1 },
+        bookPages: { count: 300, bytes: 90_000, atMs: 1 },
+        libraryBytes: 1024,
+      }),
+    );
+    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+
+    const response = await context.app.request(`${BASE}/api/admin/storage/measure`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(await response.json()).toMatchObject({ bookPages: { count: 300, bytes: 90_000 } });
   });
 
   it('will not let an ordinary account ask', async () => {

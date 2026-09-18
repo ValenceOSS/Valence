@@ -72,6 +72,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
   },
   library: { itemCount: 10, libraryCount: 1, bytes: 0 },
   artwork: null,
+  bookPages: null,
   jobs: { stalled: [] },
   ...overrides,
 });
@@ -299,6 +300,7 @@ describe('OverviewPanel', () => {
         atMs: Date.now(),
       },
       artwork: { count: 2, bytes: 2048, atMs: Date.now() },
+      bookPages: null,
       libraryBytes: 3 * 1024 ** 4,
     };
 

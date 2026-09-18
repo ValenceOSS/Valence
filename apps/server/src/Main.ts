@@ -1,6 +1,16 @@
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { copyFile, mkdir, readdir, readFile, rename, stat, unlink } from 'node:fs/promises';
+import {
+  copyFile,
+  mkdir,
+  readdir,
+  readFile,
+  rename,
+  rm,
+  stat,
+  unlink,
+  utimes,
+} from 'node:fs/promises';
 import { z } from 'zod';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
@@ -51,6 +61,7 @@ import {
   viewerProfile,
   session,
   deviceCode,
+  bookChapter,
 } from '@ValenceServer/db/Schema';
 import { readEnv } from '@ValenceServer/env/Env';
 import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatabaseSettingsStore';
@@ -71,7 +82,9 @@ import { createFilenameMetadataProvider } from '@ValenceServer/library/createFil
 import { createMediaFileSystem } from '@ValenceServer/library/createMediaFileSystem';
 import { createTranscoderClient } from '@ValenceServer/transcoder/TranscoderClient';
 import { createImageCache } from '@ValenceServer/images/createImageCache';
-import { createArtworkUsage } from '@ValenceServer/images/createArtworkUsage';
+import { createDiskUsage } from '@ValenceServer/maintenance/createDiskUsage';
+import { measureArtwork } from '@ValenceServer/images/measureArtwork';
+import { measureBookPages } from '@ValenceServer/books/measureBookPages';
 import { detectLibrarySegments } from '@ValenceServer/segments/detectLibrarySegments';
 import { createDatabaseWatchProgressService } from '@ValenceServer/progress/createDatabaseWatchProgressService';
 import { createDatabaseFavouriteService } from '@ValenceServer/favourites/createDatabaseFavouriteService';
@@ -140,6 +153,7 @@ import {
 } from '@ValenceServer/maintenance/findDisksUnderPressure';
 import { createDatabaseMaintenanceService } from '@ValenceServer/maintenance/createDatabaseMaintenanceService';
 import { cleanupImageCache } from '@ValenceServer/maintenance/cleanupImageCache';
+import { sweepBookPages } from '@ValenceServer/maintenance/sweepBookPages';
 import { sweepArtefactCache } from '@ValenceServer/maintenance/sweepArtefactCache';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import {
@@ -1031,7 +1045,45 @@ const jobs = await createJobQueue({
           },
         });
 
-        log.info('server', `image cache cleanup: removed ${removed.toString()} file(s)`);
+        const pagesRemoved = await sweepBookPages({
+          directory: bookPagesDir,
+          nowMs: Date.now(),
+          files: {
+            listChapters: async (directory) => {
+              const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
+              const folders = entries.filter((entry) => entry.isDirectory());
+              const read = await Promise.all(
+                folders.map(async (entry) => ({
+                  name: entry.name,
+                  lastReadMs:
+                    (await stat(join(directory, entry.name)).catch(() => null))?.mtimeMs ??
+                    Date.now(),
+                })),
+              );
+
+              return read;
+            },
+            listPages: (directory) => readdir(directory).catch(() => []),
+            removeChapter: (path) => rm(path, { recursive: true, force: true }),
+            removePage: (path) => unlink(path),
+            setLastRead: (path, atMs) => utimes(path, new Date(atMs), new Date(atMs)),
+          },
+          listChapterIds: async () =>
+            (await db.select({ id: bookChapter.id }).from(bookChapter)).map((row) => row.id),
+          onProblem: (path, reason) => {
+            log.error('server', `book pages: ${path}: ${reason}`);
+            void jobHistory.recordIssue({ jobRunId: jobId, path, reason }).catch(() => {});
+          },
+          onProgress: (processed, total) => {
+            jobs.reportProgress(jobId, 'books', processed, total);
+          },
+        });
+
+        log.info(
+          'server',
+          `image cache cleanup: removed ${removed.toString()} file(s) and ${pagesRemoved.toString()} book chapter(s) or page(s)`,
+        );
+        void bookPageUsage.refresh();
       },
       [CLEANUP_ARTEFACT_CACHE_JOB]: async () => {
         const swept = await sweepArtefactCache({
@@ -1507,10 +1559,16 @@ const images = createImageCache({
   },
 });
 
-const artworkUsage = createArtworkUsage({ directory: env.IMAGE_CACHE_DIR });
+const bookPagesDir = join(env.IMAGE_CACHE_DIR, 'books');
+
+const artworkUsage = createDiskUsage({ measure: () => measureArtwork(env.IMAGE_CACHE_DIR) });
+
+const bookPageUsage = createDiskUsage({ measure: () => measureBookPages(bookPagesDir) });
 
 artworkUsage.watch();
 void artworkUsage.refresh();
+bookPageUsage.watch();
+void bookPageUsage.refresh();
 
 const playbackService = createPlaybackService({
   media: {
@@ -1902,15 +1960,17 @@ const app = createApp({
   },
   capabilities: () => transcoder.capabilities(),
   artworkUsage: () => artworkUsage.read(),
+  bookPageUsage: () => bookPageUsage.read(),
   libraryBytes: () => readLibraryBytes(),
   measureStorage: async () => {
-    const [cache, artwork, bytes] = await Promise.all([
+    const [cache, artwork, bookPages, bytes] = await Promise.all([
       transcoder.measureCache(),
       artworkUsage.refresh(),
+      bookPageUsage.refresh(),
       readLibraryBytes(),
     ]);
 
-    return { cache, artwork, libraryBytes: bytes };
+    return { cache, artwork, bookPages, libraryBytes: bytes };
   },
   monitor: async () => withApiMemory(await transcoder.readMonitor()),
   stalledJobs: () =>
