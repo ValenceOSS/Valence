@@ -21,6 +21,7 @@ pub mod fingerprint;
 pub mod frame;
 pub mod graphics;
 pub mod integrity;
+pub mod keyframe_index;
 pub mod keyframes;
 pub mod media;
 pub mod monitor;

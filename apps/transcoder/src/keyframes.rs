@@ -27,7 +27,8 @@ use crate::probe::ProbeError;
 /// frames shown *before* the keyframe but decoded after it. They travel with
 /// the segment the keyframe opens, and they carry its earliest presentation
 /// time with them.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Cut {
     /// The keyframe's own presentation time.
     ///
@@ -60,7 +61,8 @@ impl Cut {
 }
 
 /// Where a source can be cut, and how long it runs.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Keyframes {
     /// Every keyframe, ascending, with the boundary it really produces.
     pub cuts: Vec<Cut>,

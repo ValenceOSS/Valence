@@ -10,7 +10,7 @@
 //! people watching the same film share the answer, and a service that restarts
 //! does not go looking for it again.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -305,13 +305,66 @@ const fn may_copy_without_keyframes() -> bool {
     false
 }
 
+/// The boundaries a source's own keyframes produce.
+///
+/// Split out because a keyframe read now and a keyframe read a week ago and
+/// kept say the same thing, and a session answered from the index has to cut
+/// the film exactly where a session that read it itself would.
+fn from_keyframes(
+    keyframes: &crate::keyframes::Keyframes,
+    wanted: f64,
+    seeks_forward: bool,
+    bitrate_kbps: Option<u32>,
+) -> Boundaries {
+    let cut_seconds = cut_interval(keyframes, wanted);
+    let lengths = segment_lengths(keyframes, cut_seconds);
+
+    Boundaries {
+        layout: LAYOUT,
+        groups: segment_groups(
+            &lengths,
+            OFFERED_SEGMENT_SECONDS,
+            offered_ceiling(bitrate_kbps),
+        ),
+        lengths,
+        cut_seconds,
+        seeks_forward,
+        can_copy: true,
+    }
+}
+
+/// Reads a source's keyframes after the viewer has stopped waiting for them.
+///
+/// The viewer is served an encode instead, which needs no scan. What the scan
+/// is still for is the next viewer: it finishes in its own time, is kept, and
+/// the next session copies the film as it was always meant to.
+///
+/// Detached deliberately. The scan that used to run here died with the request
+/// that asked for it, so every attempt began again from nothing and a large
+/// source was never read at all.
+fn fill_index_later(ffprobe: String, artefact_root: PathBuf, path: PathBuf, duration: f64) {
+    tokio::spawn(async move {
+        let Ok(keyframes) = read_keyframes(&ffprobe, &path, duration).await else {
+            return;
+        };
+
+        crate::keyframe_index::write(&artefact_root, &path, &keyframes).await;
+
+        tracing::info!(
+            target: "transcode",
+            "read and kept the keyframes of {}, which the next viewer will not wait for",
+            path.display()
+        );
+    });
+}
+
 /// Works out where every segment of a plan begins and ends.
 ///
 /// Encoded video cuts where Valence tells it to. Copied video cuts where the
 /// source allows, which is what the keyframes say — and if they cannot be read,
 /// equal lengths are a worse answer than the truth but a better one than
 /// refusing to play the film.
-async fn compute_boundaries(ffprobe: &str, spec: &SessionSpec) -> Boundaries {
+async fn compute_boundaries(ffprobe: &str, artefact_root: &Path, spec: &SessionSpec) -> Boundaries {
     let path = Path::new(&spec.input_path);
     let wanted = f64::from(spec.segment_seconds.max(1));
 
@@ -338,6 +391,10 @@ async fn compute_boundaries(ffprobe: &str, spec: &SessionSpec) -> Boundaries {
         return equal(true);
     }
 
+    if let Some(kept) = crate::keyframe_index::read(artefact_root, path).await {
+        return from_keyframes(&kept, wanted, seeks_forward, probe.bitrate_kbps);
+    }
+
     let answered = tokio::time::timeout(
         KEYFRAME_DEADLINE,
         read_keyframes(ffprobe, path, probe.duration_seconds),
@@ -353,37 +410,31 @@ async fn compute_boundaries(ffprobe: &str, spec: &SessionSpec) -> Boundaries {
             KEYFRAME_DEADLINE.as_secs(),
         );
 
+        fill_index_later(
+            ffprobe.to_owned(),
+            artefact_root.to_path_buf(),
+            path.to_path_buf(),
+            probe.duration_seconds,
+        );
+
         return equal(may_copy_without_keyframes());
     };
 
     match read {
         Ok(keyframes) => {
-            let cut_seconds = cut_interval(&keyframes, wanted);
-            let unsafe_cuts = keyframes.cuts.iter().filter(|cut| !cut.is_safe()).count();
-            let lengths = segment_lengths(&keyframes, cut_seconds);
+            crate::keyframe_index::write(artefact_root, path, &keyframes).await;
 
-            if unsafe_cuts > 0 {
+            if keyframes.cuts.iter().any(|cut| !cut.is_safe()) {
                 tracing::info!(
                     target: "transcode",
                     session_id = %spec.session_id(),
-                    "{} opens {unsafe_cuts} of its segments on a keyframe with leading \
-                pictures, which is copied anyway",
+                    "{} opens some of its segments on a keyframe with leading pictures, which is \
+                     copied anyway",
                     spec.input_path
                 );
             }
 
-            Boundaries {
-                layout: LAYOUT,
-                groups: segment_groups(
-                    &lengths,
-                    OFFERED_SEGMENT_SECONDS,
-                    offered_ceiling(probe.bitrate_kbps),
-                ),
-                lengths,
-                cut_seconds,
-                seeks_forward,
-                can_copy: true,
-            }
+            from_keyframes(&keyframes, wanted, seeks_forward, probe.bitrate_kbps)
         }
 
         Err(failure) => {
@@ -445,12 +496,17 @@ async fn discard_segments(directory: &Path) {
     }
 }
 
-pub async fn ensure_boundaries(ffprobe: &str, directory: &Path, spec: &SessionSpec) -> Boundaries {
+pub async fn ensure_boundaries(
+    ffprobe: &str,
+    artefact_root: &Path,
+    directory: &Path,
+    spec: &SessionSpec,
+) -> Boundaries {
     if let Some(found) = cached_boundaries(directory).await {
         return found;
     }
 
-    let found = compute_boundaries(ffprobe, spec).await;
+    let found = compute_boundaries(ffprobe, artefact_root, spec).await;
 
     if found.is_empty() {
         return found;
@@ -489,8 +545,8 @@ pub async fn ensure_boundaries(ffprobe: &str, directory: &Path, spec: &SessionSp
 #[cfg(test)]
 mod tests {
     use super::{
-        can_copy_segments, equal_lengths, may_copy_without_keyframes, offered_ceiling, Boundaries,
-        KEYFRAME_DEADLINE, LAYOUT, OFFERED_SEGMENT_BYTES,
+        can_copy_segments, equal_lengths, from_keyframes, may_copy_without_keyframes,
+        offered_ceiling, Boundaries, KEYFRAME_DEADLINE, LAYOUT, OFFERED_SEGMENT_BYTES,
     };
     use crate::keyframes::{Cut, Keyframes};
 
@@ -671,5 +727,31 @@ mod tests {
     #[test]
     fn refuses_to_copy_a_source_whose_keyframes_it_never_learned() {
         assert!(!may_copy_without_keyframes());
+    }
+
+    /// An index read a week ago has to cut the film where reading it now would.
+    #[test]
+    fn cuts_from_a_kept_index_exactly_where_reading_it_again_would() {
+        let keyframes = every(4.0, 15, 60.0);
+
+        let fresh = from_keyframes(&keyframes, 4.0, false, Some(8_000));
+        let kept: crate::keyframes::Keyframes =
+            serde_json::from_str(&serde_json::to_string(&keyframes).expect("it serialises"))
+                .expect("it reads back");
+
+        assert_eq!(from_keyframes(&kept, 4.0, false, Some(8_000)), fresh);
+    }
+
+    /// The index is the source's, not the session's, so it survives the round
+    /// trip to disk without losing where a segment may open.
+    #[test]
+    fn keeps_whether_a_cut_was_safe_across_being_written_down() {
+        let keyframes = every(4.0, 15, 60.0);
+
+        let kept: crate::keyframes::Keyframes =
+            serde_json::from_str(&serde_json::to_string(&keyframes).expect("it serialises"))
+                .expect("it reads back");
+
+        assert_eq!(kept, keyframes);
     }
 }
