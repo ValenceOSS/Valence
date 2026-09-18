@@ -844,6 +844,7 @@ const musicTrack = pgTable(
     sampleRate: integer('sampleRate'),
     lyrics: text('lyrics'),
     lyricsAreSynced: boolean('lyricsAreSynced').notNull().default(false),
+    lyricsModifiedAtMs: bigint('lyricsModifiedAtMs', { mode: 'number' }),
   },
   (table) => [
     index('music_track_album_idx').on(table.albumId, table.discNumber, table.trackNumber),

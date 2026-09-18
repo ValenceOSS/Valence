@@ -10,6 +10,10 @@ type ScannedFile = {
   modifiedAtMs: number;
 };
 
+type StoredTrack = ScannedFile & {
+  lyricsModifiedAtMs: number | null;
+};
+
 type ArtworkSource = { picture: TrackPicture } | { path: string };
 
 type MusicFileSystem = {
@@ -54,10 +58,11 @@ type TrackRow = {
   discNumber: number | null;
   trackNumber: number | null;
   lyrics: string | null;
+  lyricsModifiedAtMs: number | null;
 };
 
 type MusicStore = {
-  listStored: (libraryId: string) => Promise<ScannedFile[]>;
+  listStored: (libraryId: string) => Promise<StoredTrack[]>;
   keepArtist: (
     libraryId: string,
     name: string,
@@ -90,7 +95,17 @@ type ScanMusicLibraryOptions = {
 
 const VARIOUS_ARTISTS = 'Various Artists';
 
+const LYRIC_FILE = /\.(lrc|txt)$/i;
+
 const UNKNOWN_ARTIST = 'Unknown Artist';
+
+/**
+ * A file's path without its extension, which is what a track and the lyrics beside it share.
+ *
+ * @param path - The file.
+ * @returns The path it is named from.
+ */
+const stemOf = (path: string): string => path.replace(/\.[^./]+$/, '');
 
 /**
  * Reads a library of music into artists, albums and tracks.
@@ -107,7 +122,8 @@ const UNKNOWN_ARTIST = 'Unknown Artist';
  * An album's artwork is read once a scan: the front cover inside the first track that has one, then
  * a cover image in the album's folder. An artist's picture comes from an image beside their albums,
  * which is where every library manager puts one. Lyrics come from the tags, or from an `.lrc` or
- * `.txt` beside the track.
+ * `.txt` beside the track — and a lyrics file dropped in, changed or taken away later is noticed on
+ * the next scan by its own time, since that is how lyrics usually arrive: after the music.
  *
  * @param options - The library, where it is, what to read it with, and where to put it.
  * @returns What the scan changed.
@@ -125,8 +141,14 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
     isCancelled,
   } = options;
 
-  const found = (await files.listFiles(root)).filter((file) => isAudioFile(file.path));
+  const everything = await files.listFiles(root);
+  const found = everything.filter((file) => isAudioFile(file.path));
   const stored = new Map((await store.listStored(libraryId)).map((row) => [row.path, row]));
+  const lyricFiles = new Map(
+    everything
+      .filter((file) => LYRIC_FILE.test(file.path))
+      .map((file) => [stemOf(file.path), file.modifiedAtMs]),
+  );
 
   const changed = found.filter((file) => {
     const already = stored.get(file.path);
@@ -135,7 +157,8 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
       force ||
       already === undefined ||
       already.sizeBytes !== file.sizeBytes ||
-      already.modifiedAtMs !== file.modifiedAtMs
+      already.modifiedAtMs !== file.modifiedAtMs ||
+      already.lyricsModifiedAtMs !== (lyricFiles.get(stemOf(file.path)) ?? null)
     );
   });
 
@@ -227,6 +250,7 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
       discNumber: tags.discNumber,
       trackNumber: tags.trackNumber,
       lyrics,
+      lyricsModifiedAtMs: lyricFiles.get(stemOf(file.path)) ?? null,
     });
 
     if (!pictured.has(album.id) && (force || !album.hasArtwork)) {
@@ -285,6 +309,7 @@ export type {
   MusicStore,
   ScannedFile,
   ScanMusicLibraryOptions,
+  StoredTrack,
   TrackRow,
 };
 

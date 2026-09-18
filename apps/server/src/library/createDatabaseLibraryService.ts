@@ -1434,7 +1434,11 @@ const createDatabaseLibraryService = ({
     },
 
     getMedia: async (id) => {
-      const rows = await db.select().from(mediaItem).where(eq(mediaItem.id, id)).limit(1);
+      const rows = await db
+        .select()
+        .from(mediaItem)
+        .where(and(eq(mediaItem.id, id), isNotATrack(db)))
+        .limit(1);
       const row = rows[0];
 
       if (row === undefined) {

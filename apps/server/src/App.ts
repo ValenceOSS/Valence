@@ -3948,8 +3948,10 @@ const createApp = ({
     }
 
     const { mediaId } = context.req.valid('param');
+    const isTrack =
+      music !== undefined && (await music.library.listTracks(asTheServer, [mediaId])).length > 0;
 
-    if ((await library.getMedia(mediaId)) === null) {
+    if (!isTrack && (await library.getMedia(mediaId)) === null) {
       return context.json({ error: 'No such media item.' }, 404);
     }
 

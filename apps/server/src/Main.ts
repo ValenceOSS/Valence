@@ -613,14 +613,11 @@ const musicServices: MusicServices = {
   playlists: createDatabasePlaylistService(db, musicLibrary),
   devices: createMusicDevices({
     presence,
-    onChanged: (profileId) => {
+    onChanged: (accountId) => {
       realtime.publish(
         'playback',
         { kind: 'musicDevicesChanged' },
-        {
-          kind: 'profiles',
-          profileIds: [profileId],
-        },
+        { kind: 'accounts', accountIds: [accountId] },
       );
     },
   }),

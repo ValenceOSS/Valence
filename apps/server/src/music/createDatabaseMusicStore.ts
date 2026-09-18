@@ -71,6 +71,7 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore => ({
         path: mediaItem.path,
         sizeBytes: mediaItem.sizeBytes,
         modifiedAtMs: mediaItem.modifiedAtMs,
+        lyricsModifiedAtMs: musicTrack.lyricsModifiedAtMs,
       })
       .from(mediaItem)
       .innerJoin(musicTrack, eq(musicTrack.mediaItemId, mediaItem.id))
@@ -216,6 +217,7 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore => ({
       bitDepth: row.bitDepth,
       sampleRate: row.sampleRate,
       lyrics: row.lyrics,
+      lyricsModifiedAtMs: row.lyricsModifiedAtMs,
       lyricsAreSynced: row.lyrics !== null && /\[\d{1,3}:\d{1,2}/.test(row.lyrics),
     };
 

@@ -1,5 +1,5 @@
 {
-  "id": "f0fb46fb-a0f1-4209-b53c-c27822695145",
+  "id": "51176478-ddd9-4760-a017-67b14d1997f6",
   "prevId": "f3882f25-e28c-45b7-bc87-d14e4bf4c6fb",
   "version": "7",
   "dialect": "postgresql",
@@ -3322,6 +3322,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "lyricsModifiedAtMs": {
+          "name": "lyricsModifiedAtMs",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {

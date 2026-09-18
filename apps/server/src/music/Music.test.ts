@@ -299,6 +299,14 @@ describe('the music routes', () => {
     expect(await response.json()).toEqual({ isFavourite: true });
   });
 
+  it('let a song be liked like anything else', async () => {
+    const me = await listening(context);
+
+    const response = await me.ask(`/api/media/${TRACK_ID}/favourite`, { method: 'PUT' });
+
+    expect(response.status).toBe(204);
+  });
+
   it('make a playlist', async () => {
     const me = await listening(context);
 

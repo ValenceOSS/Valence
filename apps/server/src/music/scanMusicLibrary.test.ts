@@ -6,6 +6,7 @@ import type {
   MusicFileSystem,
   MusicStore,
   ScannedFile,
+  StoredTrack,
   TrackRow,
 } from './scanMusicLibrary';
 import type { TrackTags } from './TrackTags';
@@ -45,7 +46,12 @@ const fileAt = (path: string, sizeBytes = 100, modifiedAtMs = 1): ScannedFile =>
 /**
  * A store that keeps what it is given in memory, so a scan can be read back.
  */
-const memoryStore = (stored: ScannedFile[] = []) => {
+const storedAt = (path: string, lyricsModifiedAtMs: number | null = null): StoredTrack => ({
+  ...fileAt(path),
+  lyricsModifiedAtMs,
+});
+
+const memoryStore = (stored: StoredTrack[] = []) => {
   const artists = new Map<string, { id: string; name: string; hasImage: boolean }>();
   const albums = new Map<string, AlbumRow & { id: string; hasArtwork: boolean }>();
   const tracks: TrackRow[] = [];
@@ -210,7 +216,7 @@ describe('scanMusicLibrary', () => {
 
   it('leaves a file whose size and time have not changed alone', async () => {
     const track = `${ALBUM}/01.flac`;
-    const { store, tracks } = memoryStore([fileAt(track)]);
+    const { store, tracks } = memoryStore([storedAt(track)]);
     const readTags = vi.fn(() => Promise.resolve(tagsFor()));
 
     const result = await scanMusicLibrary({
@@ -228,7 +234,7 @@ describe('scanMusicLibrary', () => {
 
   it('reads everything again when forced to', async () => {
     const track = `${ALBUM}/01.flac`;
-    const { store } = memoryStore([fileAt(track)]);
+    const { store } = memoryStore([storedAt(track)]);
 
     const result = await scanMusicLibrary({
       libraryId: 'lib',
@@ -243,7 +249,7 @@ describe('scanMusicLibrary', () => {
   });
 
   it('removes what is no longer on the disk and tidies away what that leaves empty', async () => {
-    const { store } = memoryStore([fileAt('/music/gone.flac')]);
+    const { store } = memoryStore([storedAt('/music/gone.flac')]);
 
     const result = await scanMusicLibrary({
       libraryId: 'lib',
@@ -390,5 +396,57 @@ describe('scanMusicLibrary', () => {
     });
 
     expect(tracks).toHaveLength(0);
+  });
+
+  it('reads a track again when lyrics are dropped in beside it later', async () => {
+    const track = `${ALBUM}/05. Caramel.flac`;
+    const lyrics = `${ALBUM}/05. Caramel.lrc`;
+    const { store, tracks } = memoryStore([storedAt(track)]);
+
+    await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store,
+      artwork: keptArtwork(),
+      files: filesWith(
+        [fileAt(track), fileAt(lyrics, 20, 99)],
+        { [track]: tagsFor() },
+        { readSidecarLyrics: () => Promise.resolve('[00:01.00]Words') },
+      ),
+    });
+
+    expect(tracks[0]).toMatchObject({ lyrics: '[00:01.00]Words', lyricsModifiedAtMs: 99 });
+  });
+
+  it('leaves a track alone whose lyrics file has not changed', async () => {
+    const track = `${ALBUM}/05. Caramel.flac`;
+    const { store, tracks } = memoryStore([storedAt(track, 99)]);
+
+    await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store,
+      artwork: keptArtwork(),
+      files: filesWith([fileAt(track), fileAt(`${ALBUM}/05. Caramel.lrc`, 20, 99)], {
+        [track]: tagsFor(),
+      }),
+    });
+
+    expect(tracks).toHaveLength(0);
+  });
+
+  it('reads a track again when its lyrics file is taken away', async () => {
+    const track = `${ALBUM}/05. Caramel.flac`;
+    const { store, tracks } = memoryStore([storedAt(track, 99)]);
+
+    await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store,
+      artwork: keptArtwork(),
+      files: filesWith([fileAt(track)], { [track]: tagsFor() }),
+    });
+
+    expect(tracks[0]).toMatchObject({ lyrics: null, lyricsModifiedAtMs: null });
   });
 });

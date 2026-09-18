@@ -40,7 +40,8 @@ CREATE TABLE "music_track" (
 	"bitDepth" integer,
 	"sampleRate" integer,
 	"lyrics" text,
-	"lyricsAreSynced" boolean DEFAULT false NOT NULL
+	"lyricsAreSynced" boolean DEFAULT false NOT NULL,
+	"lyricsModifiedAtMs" bigint
 );
 --> statement-breakpoint
 CREATE TABLE "music_track_artist" (

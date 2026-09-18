@@ -56,6 +56,8 @@ const presenceWith = (entries: PresenceEntry[]) => {
   };
 };
 
+const ME = { accountId: 'acc', profileId: 'me' };
+
 describe('createMusicDevices', () => {
   it('lists every copy of Valence the profile has open, and nobody else’s', () => {
     const { presence } = presenceWith([
@@ -64,7 +66,7 @@ describe('createMusicDevices', () => {
       entry('theirs', 'them'),
     ]);
 
-    expect(createMusicDevices({ presence }).list('me')).toEqual([
+    expect(createMusicDevices({ presence }).list(ME)).toEqual([
       { clientId: 'laptop', label: 'MacBook', nowPlaying: null },
       { clientId: 'phone', label: 'iPhone', nowPlaying: null },
     ]);
@@ -74,23 +76,35 @@ describe('createMusicDevices', () => {
     const { presence } = presenceWith([entry('laptop', 'me')]);
     const devices = createMusicDevices({ presence });
 
-    expect(devices.report('me', 'laptop', NOW_PLAYING)).toBe(true);
-    expect(devices.list('me')[0]?.nowPlaying).toEqual(NOW_PLAYING);
+    expect(devices.report(ME, 'laptop', NOW_PLAYING)).toBe(true);
+    expect(devices.list(ME)[0]?.nowPlaying).toEqual(NOW_PLAYING);
   });
 
   it('does not take a report from a device that is not the profile’s', () => {
     const { presence } = presenceWith([entry('theirs', 'them')]);
 
-    expect(createMusicDevices({ presence }).report('me', 'theirs', NOW_PLAYING)).toBe(false);
+    expect(createMusicDevices({ presence }).report(ME, 'theirs', NOW_PLAYING)).toBe(false);
+  });
+
+  it('counts a window that has not said which profile it is as the account’s', () => {
+    const { presence } = presenceWith([entry('fresh-tab', null)]);
+
+    expect(createMusicDevices({ presence }).list(ME)).toHaveLength(1);
+  });
+
+  it('never counts another account’s device, whatever profile it says', () => {
+    const { presence } = presenceWith([{ ...entry('elsewhere', 'me'), accountId: 'other' }]);
+
+    expect(createMusicDevices({ presence }).list(ME)).toEqual([]);
   });
 
   it('tells whoever is listening when a device starts or stops playing', () => {
     const onChanged = vi.fn();
     const { presence } = presenceWith([entry('laptop', 'me')]);
 
-    createMusicDevices({ presence, onChanged }).report('me', 'laptop', null);
+    createMusicDevices({ presence, onChanged }).report(ME, 'laptop', null);
 
-    expect(onChanged).toHaveBeenCalledWith('me');
+    expect(onChanged).toHaveBeenCalledWith('acc');
   });
 
   it('forgets what a device was playing once it goes away, and says so', () => {
@@ -99,19 +113,19 @@ describe('createMusicDevices', () => {
     const devices = createMusicDevices({ presence, onChanged });
 
     change([entry('laptop', 'me')]);
-    devices.report('me', 'laptop', NOW_PLAYING);
+    devices.report(ME, 'laptop', NOW_PLAYING);
     onChanged.mockClear();
     change([]);
     change([entry('laptop', 'me')]);
 
-    expect(onChanged).toHaveBeenCalledWith('me');
-    expect(devices.list('me')[0]?.nowPlaying).toBeNull();
+    expect(onChanged).toHaveBeenCalledWith('acc');
+    expect(devices.list(ME)[0]?.nowPlaying).toBeNull();
   });
 
   it('passes a command to another of the profile’s devices, saying where it came from', () => {
     const { presence } = presenceWith([entry('laptop', 'me', 'MacBook'), entry('phone', 'me')]);
 
-    const sent = createMusicDevices({ presence }).command('me', 'laptop', 'phone', {
+    const sent = createMusicDevices({ presence }).command(ME, 'laptop', 'phone', {
       kind: 'pause',
     });
 
@@ -128,7 +142,7 @@ describe('createMusicDevices', () => {
     const { presence } = presenceWith([entry('laptop', 'me'), entry('theirs', 'them')]);
 
     expect(
-      createMusicDevices({ presence }).command('me', 'laptop', 'theirs', { kind: 'pause' }),
+      createMusicDevices({ presence }).command(ME, 'laptop', 'theirs', { kind: 'pause' }),
     ).toBe(false);
     expect(presence.tell).not.toHaveBeenCalled();
   });

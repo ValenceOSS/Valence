@@ -28,6 +28,7 @@ import {
 import { renditionFor } from './renditionFor';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { MusicServices } from './MusicServices';
+import type { Listener } from './createMusicDevices';
 
 type MusicRouteOptions = {
   viewerOf: (headers: Headers) => Promise<Viewer | null>;
@@ -46,6 +47,16 @@ const NO_PROFILE = { error: 'Choose a profile first.' } as const;
  */
 const profileOf = (viewer: Viewer | null): string | null =>
   viewer?.kind === 'account' ? viewer.profileId : null;
+
+/**
+ * Who is listening, for telling their devices apart from everybody else's: the account, and the
+ * profile where one has been chosen.
+ *
+ * @param viewer - Who is asking.
+ * @returns The listener, or nothing where nobody is signed in.
+ */
+const listenerOf = (viewer: Viewer | null): Listener | null =>
+  viewer?.kind === 'account' ? { accountId: viewer.accountId, profileId: viewer.profileId } : null;
 
 /**
  * Answers every music and playlist address: browsing, searching, streaming, lyrics, following
@@ -293,39 +304,39 @@ const registerMusicRoutes = (app: OpenAPIHono, { viewerOf, music }: MusicRouteOp
   });
 
   app.openapi(listDevicesRoute, async (context) => {
-    const profileId = profileOf(await viewerOf(context.req.raw.headers));
+    const listener = listenerOf(await viewerOf(context.req.raw.headers));
 
-    if (profileId === null) {
-      return context.json(NO_PROFILE, 401);
+    if (listener === null) {
+      return context.json(NOBODY, 401);
     }
 
-    return context.json({ devices: music.devices.list(profileId) }, 200);
+    return context.json({ devices: music.devices.list(listener) }, 200);
   });
 
   app.openapi(reportNowPlayingRoute, async (context) => {
-    const profileId = profileOf(await viewerOf(context.req.raw.headers));
+    const listener = listenerOf(await viewerOf(context.req.raw.headers));
 
-    if (profileId === null) {
-      return context.json(NO_PROFILE, 401);
+    if (listener === null) {
+      return context.json(NOBODY, 401);
     }
 
     const { clientId, nowPlaying } = context.req.valid('json');
 
-    return music.devices.report(profileId, clientId, nowPlaying)
+    return music.devices.report(listener, clientId, nowPlaying)
       ? context.json({ ok: true }, 200)
       : context.json({ error: 'That device is not connected.' }, 404);
   });
 
   app.openapi(commandDeviceRoute, async (context) => {
-    const profileId = profileOf(await viewerOf(context.req.raw.headers));
+    const listener = listenerOf(await viewerOf(context.req.raw.headers));
 
-    if (profileId === null) {
-      return context.json(NO_PROFILE, 401);
+    if (listener === null) {
+      return context.json(NOBODY, 401);
     }
 
     const { fromClientId, command } = context.req.valid('json');
     const sent = music.devices.command(
-      profileId,
+      listener,
       fromClientId,
       context.req.valid('param').clientId,
       command,
