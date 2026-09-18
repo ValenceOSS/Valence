@@ -1,6 +1,6 @@
 const WATCHING = 3;
 
-const LOGO = 'logo';
+const LOGO = 'valence';
 
 const BROWSING = 'Browsing the library';
 
