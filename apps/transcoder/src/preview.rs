@@ -281,7 +281,9 @@ impl PreviewRequest {
     /// address, so asking twice across a change to how clips are made does not.
     /// The preset joins the address only where it is not the best, so choosing
     /// a lower one makes new clips while the clips already made stay where
-    /// they are.
+    /// they are. A chosen start joins it the same way, and for the same reason
+    /// the audio track does: a clip cut from one moment must not be handed
+    /// back, already complete, for a request asking for another.
     #[must_use]
     pub fn id(&self) -> String {
         let mut hasher = Sha256::new();
@@ -292,6 +294,10 @@ impl PreviewRequest {
         hasher.update(self.duration_seconds.to_be_bytes());
         hasher.update(self.width().to_be_bytes());
         hasher.update(self.audio_stream_index.unwrap_or(u32::MAX).to_be_bytes());
+
+        if let Some(at_seconds) = self.at_seconds {
+            hasher.update(at_seconds.to_be_bytes());
+        }
 
         if let Some(tag) = self.quality.address_tag() {
             hasher.update(tag);
@@ -1597,6 +1603,30 @@ mod tests {
             request.id(),
             before_presets,
             "the best preset must answer to the address clips were made under before it existed"
+        );
+    }
+
+    #[test]
+    fn a_chosen_moment_is_part_of_the_address() {
+        let automatic = request();
+        let chosen = PreviewRequest {
+            at_seconds: Some(90),
+            ..request()
+        };
+        let chosen_elsewhere = PreviewRequest {
+            at_seconds: Some(91),
+            ..request()
+        };
+
+        assert_ne!(
+            automatic.id(),
+            chosen.id(),
+            "a clip cut from a chosen moment must not answer for the automatic one"
+        );
+        assert_ne!(
+            chosen.id(),
+            chosen_elsewhere.id(),
+            "two chosen moments must not share a clip"
         );
     }
 
