@@ -83,6 +83,7 @@ import { createDatabaseSegmentService } from '@ValenceServer/segments/createData
 import { createFingerprintSegmentProvider } from '@ValenceServer/segments/createFingerprintSegmentProvider';
 import { createSidecarSubtitleService } from '@ValenceServer/subtitles/createSidecarSubtitleService';
 import { createDatabaseProfileService } from '@ValenceServer/profiles/createDatabaseProfileService';
+import { createFileSplashscreenStore } from '@ValenceServer/splashscreen/createFileSplashscreenStore';
 import { createDatabaseBookService } from '@ValenceServer/books/createDatabaseBookService';
 import { ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { createEmbeddedSubtitleService } from '@ValenceServer/subtitles/createEmbeddedSubtitleService';
@@ -242,6 +243,7 @@ const settings = createDatabaseSettingsStore({
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    splashscreenFile: null,
   },
 });
 
@@ -572,6 +574,8 @@ await movePhotographsOnce({
 });
 
 const profileService = createDatabaseProfileService(db, env.PROFILE_IMAGE_DIR);
+
+const splashscreen = createFileSplashscreenStore(env.PROFILE_IMAGE_DIR, settings);
 
 const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR);
 
@@ -1011,12 +1015,12 @@ const jobs = await createJobQueue({
             db
               .select({ posterUrl: mediaItem.posterUrl, backdropUrl: mediaItem.backdropUrl })
               .from(mediaItem),
-          listProfilePhotoPaths: async () => {
+          listKeptPictures: async () => {
             const rows = await db
               .select({ photoPath: viewerProfile.photoPath })
               .from(viewerProfile);
 
-            return rows.map((row) => row.photoPath);
+            return [...rows.map((row) => row.photoPath), (await settings.read()).splashscreenFile];
           },
           onProblem: (path, reason) => {
             log.error('server', `image cache: ${path}: ${reason}`);
@@ -1663,6 +1667,7 @@ const app = createApp({
     });
   },
   profiles: profileService,
+  splashscreen,
   books: bookService,
   promoteProfile: async ({ profileId, email, password }) => {
     const rows = await db

@@ -21,6 +21,7 @@ const SETTINGS: ServerSettings = {
   jobsTimezone: '',
   certificationRegion: 'GB',
   fetchesCatalogueTrailers: false,
+  splashscreenFile: null,
 };
 
 const build = (seededJobTriggerKinds: string[] = []) => ({

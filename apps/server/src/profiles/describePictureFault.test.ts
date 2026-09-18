@@ -22,6 +22,13 @@ describe('saying why a picture was turned away', () => {
     expect(describePictureFault('tooDetailed').error).toContain(MOST_PIXELS_AN_EDGE.toString());
   });
 
+  it('names the limits a picture was actually judged against, where they are not a face’s', () => {
+    const limits = { mostBytes: 16 * 1024 * 1024, mostPixelsAnEdge: 8192 };
+
+    expect(describePictureFault('tooLarge', limits).error).toContain('16 MB');
+    expect(describePictureFault('tooDetailed', limits).error).toContain('8192 by 8192');
+  });
+
   it('answers a picture too big with the status that means exactly that', () => {
     expect(describePictureFault('tooLarge').status).toBe(413);
   });

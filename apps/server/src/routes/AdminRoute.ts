@@ -39,6 +39,7 @@ const AdminSettingsSchema = z
     certificationRegion: z.string().length(2),
     showsProfilesBeforeSignIn: z.boolean(),
     fetchesCatalogueTrailers: z.boolean(),
+    splashscreen: z.string().nullable(),
   })
   .openapi('AdminSettings');
 

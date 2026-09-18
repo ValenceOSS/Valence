@@ -27,6 +27,16 @@ describe('isPublicRoute', () => {
       expect(isPublicRoute('GET', '/api/profiles/prf_1/avatar', true)).toBe(true);
     });
 
+    it('shows the picture behind the way in only where it shows the faces', () => {
+      expect(isPublicRoute('GET', '/api/splashscreen')).toBe(false);
+      expect(isPublicRoute('GET', '/api/splashscreen', true)).toBe(true);
+    });
+
+    it('never lets the picture be changed without a session', () => {
+      expect(isPublicRoute('PUT', '/api/admin/splashscreen', true)).toBe(false);
+      expect(isPublicRoute('DELETE', '/api/admin/splashscreen', true)).toBe(false);
+    });
+
     it('draws the generated ones either way, since they say nothing about anybody', () => {
       expect(isPublicRoute('GET', '/api/profiles/avatars/rings')).toBe(true);
       expect(isPublicRoute('GET', '/api/profiles/avatars/rings', true)).toBe(true);
