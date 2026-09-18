@@ -14,8 +14,17 @@ import { app } from 'electron';
  * box; macOS leaves about a fifth of the canvas empty around it, and reserves that room for the
  * shadow and for making every icon in the dock look the same size. An icon drawn to its edges is
  * not richer, it is simply larger than its neighbours.
+ *
+ * Does nothing once packaged, which is what the paragraph above always said and what the code did
+ * not do. A packaged app has no `build` directory inside it — the artwork is the bundle's own by
+ * then, and that folder is what the bundle was made from rather than something carried within it.
+ * Asking for it there threw, and the throw came out through startup and took the window with it.
  */
 const theDockIcon = (): void => {
+  if (app.isPackaged) {
+    return;
+  }
+
   app.dock?.setIcon(join(app.getAppPath(), 'build/icon-macos.png'));
 };
 
