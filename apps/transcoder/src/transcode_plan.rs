@@ -1313,6 +1313,43 @@ const QSV_SMALLEST_BITRATE_KBPS: u32 = 1_000;
 /// old enough that this build does not carry it. Should one turn up, the mode would have to be
 /// chosen from the driver rather than from the backend.
 ///
+/// The encoders that have to be told a forced keyframe means an IDR frame.
+///
+/// NVENC is here for the same reason QSV is, and was not what this was found
+/// on: both take the same option and both default it off.
+const FORCED_IDR_ENCODERS: [&str; 6] = [
+    "h264_qsv",
+    "hevc_qsv",
+    "av1_qsv",
+    "h264_nvenc",
+    "hevc_nvenc",
+    "av1_nvenc",
+];
+
+/// Makes a forced keyframe come out as a frame a segment can open on.
+///
+/// `-force_key_frames` marks a frame; the encoder decides what it emits there.
+/// QSV and NVENC emit a plain I frame unless told otherwise, and a plain I
+/// frame is not somewhere HLS can cut — so the segments fall back to the
+/// encoder's own IDR cadence while the playlist still declares the length that
+/// was asked for.
+///
+/// Measured on an Intel box: a 23.976fps film asked for four second segments
+/// came out in 10.43 second ones, which is 250 frames, which is the encoder's
+/// default GOP and nothing to do with what Valence requested. A player told the
+/// first segment is four seconds and handed ten decodes all ten, then has
+/// nowhere to go and reports a stream it could not decode. `libx264` and the
+/// VAAPI encoders honour the mark on their own, which is why this only ever
+/// showed on QSV.
+#[must_use]
+pub fn forced_idr_arguments(encoder: &str) -> Vec<String> {
+    if FORCED_IDR_ENCODERS.contains(&encoder) {
+        return vec!["-forced_idr".to_owned(), "1".to_owned()];
+    }
+
+    Vec::new()
+}
+
 #[must_use]
 pub fn rate_control_arguments(encoder: &str, max_bitrate_kbps: u32) -> Vec<String> {
     if QSV_ENCODERS.contains(&encoder) {
@@ -1606,6 +1643,7 @@ impl TranscodePlan {
                 args.push("-c:v".into());
                 args.push(encoder.clone());
                 args.extend(rate_control_arguments(encoder, *max_bitrate_kbps));
+                args.extend(forced_idr_arguments(encoder));
                 args.extend(
                     NO_EMBEDDED_CAPTIONS
                         .iter()
@@ -1992,11 +2030,11 @@ impl TranscodePlan {
 #[cfg(test)]
 mod tests {
     use super::{
-        composited_graph, filter_name, fitted_size, force_key_frames_argument, frame_route,
-        keeps_frames_on_the_gpu, rate_control_arguments, software_equivalent, takes_ten_bit,
-        AudioAction, DeviceFilters, FrameRoute, HardwareAccel, SegmentContainer, SegmentStart,
-        SessionSpec, SubtitleAction, ToneMapping, TranscodePlan, VideoAction, DEFAULT_DEVICE,
-        TEXT_OVERLAY_FPS,
+        composited_graph, filter_name, fitted_size, force_key_frames_argument,
+        forced_idr_arguments, frame_route, keeps_frames_on_the_gpu, rate_control_arguments,
+        software_equivalent, takes_ten_bit, AudioAction, DeviceFilters, FrameRoute, HardwareAccel,
+        SegmentContainer, SegmentStart, SessionSpec, SubtitleAction, ToneMapping, TranscodePlan,
+        VideoAction, DEFAULT_DEVICE, TEXT_OVERLAY_FPS,
     };
 
     /// A build with a scaler and no compositor, as the existing routes assume.
@@ -2132,6 +2170,34 @@ mod tests {
     fn builds_the_expression_from_the_segment_length() {
         assert_eq!(force_key_frames_argument(4, 0.0), "expr:gte(t,n_forced*4)");
         assert_eq!(force_key_frames_argument(6, 0.0), "expr:gte(t,n_forced*6)");
+    }
+
+    /// Marking a frame is not the same as being given one a segment can open on.
+    ///
+    /// QSV emits a plain I frame where it is told to force a keyframe, and HLS
+    /// cannot cut on one, so the segments came out at the encoder's own GOP —
+    /// 10.43 seconds for a 23.976fps film asked for four — while the playlist
+    /// still promised four. The first segment played and the next had nowhere
+    /// to start.
+    #[test]
+    fn tells_qsv_that_a_forced_keyframe_is_an_idr_frame() {
+        assert_eq!(forced_idr_arguments("h264_qsv"), ["-forced_idr", "1"]);
+        assert_eq!(forced_idr_arguments("hevc_qsv"), ["-forced_idr", "1"]);
+    }
+
+    /// NVENC defaults it off the same way, and took the same option.
+    #[test]
+    fn tells_nvenc_the_same_thing() {
+        assert_eq!(forced_idr_arguments("h264_nvenc"), ["-forced_idr", "1"]);
+    }
+
+    /// The encoders that already honour the mark are not handed an option they
+    /// do not take, which would fail the encode outright.
+    #[test]
+    fn says_nothing_to_an_encoder_that_already_cuts_where_it_is_told() {
+        assert!(forced_idr_arguments("libx264").is_empty());
+        assert!(forced_idr_arguments("h264_vaapi").is_empty());
+        assert!(forced_idr_arguments("h264_videotoolbox").is_empty());
     }
 
     /// A copied stream keeps the keyframes it already has.
