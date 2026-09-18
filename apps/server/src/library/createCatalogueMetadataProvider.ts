@@ -1,5 +1,6 @@
 import { wait } from '@ValenceCore/functions/wait';
 import { z } from 'zod';
+import { createExpiringCache } from './createExpiringCache';
 import { CAST_STORED } from '@ValenceContracts/schemas/Person';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -67,6 +68,8 @@ const SearchResultSchema = z.object({
 });
 
 const SearchResponseSchema = z.object({ results: z.array(SearchResultSchema).default([]) });
+
+const CATALOGUE_ANSWER_LIVES_FOR_MS = 6 * 60 * 60 * 1000;
 
 const LogoSchema = z.object({
   file_path: z.string(),
@@ -381,7 +384,9 @@ const createCatalogueMetadataProvider = ({
   onProblem,
 }: CreateCatalogueMetadataProviderOptions): MetadataProvider => {
   const gate = createCatalogueGate(AT_ONCE);
-  const said = new Map<string, Promise<JsonValue | null>>();
+  const said = createExpiringCache<Promise<JsonValue | null>>(CATALOGUE_ANSWER_LIVES_FOR_MS, {
+    holds: REMEMBERED,
+  });
 
   const call: Fetcher =
     fetchImpl ??
@@ -439,6 +444,14 @@ const createCatalogueMetadataProvider = ({
    * What is remembered is the promise rather than the answer, so files being read at the same time
    * share one request in flight instead of each starting their own.
    *
+   * An answer is kept for six hours rather than for as long as the process runs. It used to be the
+   * latter, which made a catalogue the server had once read unchangeable until it was restarted: a
+   * season that aired afterwards never appeared, and neither did a correction made upstream. A
+   * failure was kept the same way, so one unreachable moment was permanent. Six hours is long
+   * enough that one scan of a large library asks each question once, which is the burst this is
+   * for and which can run for hours, and short enough that a season airing today is on the show's
+   * page today. See VAL-221.
+   *
    * @param path - The catalogue path being asked for.
    * @param key - The credential to ask with.
    * @param query - What to ask for.
@@ -455,14 +468,6 @@ const createCatalogueMetadataProvider = ({
     const asking = ask(path, key, query);
 
     said.set(at, asking);
-
-    if (said.size > REMEMBERED) {
-      const oldest = said.keys().next();
-
-      if (!(oldest.done ?? false)) {
-        said.delete(oldest.value);
-      }
-    }
 
     return asking;
   };
