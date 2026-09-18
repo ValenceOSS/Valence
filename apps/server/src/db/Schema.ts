@@ -896,9 +896,7 @@ const playlist = pgTable(
   'playlist',
   {
     id: text('id').primaryKey(),
-    profileId: text('profileId')
-      .notNull()
-      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    profileId: text('profileId').references(() => viewerProfile.id, { onDelete: 'set null' }),
     name: text('name').notNull(),
     description: text('description'),
     isShared: boolean('isShared').notNull().default(false),
@@ -919,9 +917,7 @@ const playlistEntry = pgTable(
     playlistId: text('playlistId')
       .notNull()
       .references(() => playlist.id, { onDelete: 'cascade' }),
-    mediaItemId: text('mediaItemId')
-      .notNull()
-      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    mediaItemId: text('mediaItemId').references(() => mediaItem.id, { onDelete: 'set null' }),
     position: doublePrecision('position').notNull(),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
   },

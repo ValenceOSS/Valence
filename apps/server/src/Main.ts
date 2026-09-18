@@ -51,6 +51,7 @@ import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
 import { migrateToLatest } from '@ValenceServer/db/migrateToLatest';
 import { settleTheOwner } from '@ValenceServer/auth/settleTheOwner';
 import { movePhotographsOnce } from '@ValenceServer/profiles/movePhotographsOnce';
+import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlaylistsOf';
 import {
   user,
   account,
@@ -1986,6 +1987,16 @@ const app = createApp({
     return true;
   },
   removeAccount: async (userId) => {
+    const theirs = await db
+      .select({ id: viewerProfile.id })
+      .from(viewerProfile)
+      .where(eq(viewerProfile.userId, userId));
+
+    await dropPrivatePlaylistsOf(
+      db,
+      theirs.map((one) => one.id),
+    );
+
     const [removed] = await db
       .delete(user)
       .where(eq(user.id, userId))

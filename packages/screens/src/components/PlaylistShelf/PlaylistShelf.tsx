@@ -4,6 +4,7 @@ import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/Playlist
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
+import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
@@ -17,7 +18,7 @@ import type { PlaylistShelfProps } from './PlaylistShelf.types';
  */
 const describePlaylist = (playlist: PlaylistSummary): string =>
   [
-    playlist.isMine ? null : `By ${playlist.owner.name}`,
+    playlist.isMine ? null : `By ${nameOfOwner(playlist.owner)}`,
     playlist.entryCount === 1 ? '1 thing' : `${playlist.entryCount.toString()} things`,
   ]
     .filter((part) => part !== null)
@@ -73,7 +74,7 @@ const PlaylistShelf = ({
             onPlay={() => {
               void fetchPlaylist(playlist.id).then((read) => {
                 const tracks = read.entries.flatMap((entry) =>
-                  entry.item.track === null ? [] : [entry.item.track],
+                  entry.item === null || entry.item.track === null ? [] : [entry.item.track],
                 );
 
                 player.play(tracks, 0, {

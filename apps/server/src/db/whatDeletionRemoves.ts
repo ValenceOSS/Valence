@@ -266,7 +266,7 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     table: 'playlist',
     column: 'profileId',
     owner: 'profile',
-    fate: 'goesWithIt',
+    fate: 'outlivesIt',
     rule: 'isShared',
   },
   {

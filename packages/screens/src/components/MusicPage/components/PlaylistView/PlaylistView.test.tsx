@@ -24,6 +24,7 @@ const summary = (overrides = {}) => ({
   isMine: true,
   owner: { profileId: '00000000-0000-4000-8000-000000000001', name: 'Dan', colour: '#3a8ee8' },
   entryCount: 3,
+  lostCount: 0,
   durationSeconds: 7600,
   artworkAlbumIds: [],
   updatedAt: '2026-09-18T00:00:00.000Z',
@@ -48,13 +49,23 @@ const entry = (
   },
 });
 
+const lostEntry = (n: number) => ({
+  id: `00000000-0000-4000-8000-0000000e${n.toString().padStart(4, '0')}`,
+  position: n * 1024,
+  addedAt: '2026-09-18T00:00:00.000Z',
+  item: null,
+});
+
 const ENTRIES = [entry(1, aTrack(1)), entry(2, aTrack(2)), entry(3, null, 'Arrival')];
 
 let requests = answerMusicRequests();
 
-const serve = (playlist = summary()) => {
+const serve = (
+  playlist = summary(),
+  entries: (ReturnType<typeof entry> | ReturnType<typeof lostEntry>)[] = ENTRIES,
+) => {
   requests = answerMusicRequests({
-    [`/api/playlists/${PLAYLIST_ID}`]: { playlist, entries: ENTRIES },
+    [`/api/playlists/${PLAYLIST_ID}`]: { playlist, entries },
   });
   vi.stubGlobal('fetch', requests);
 };
@@ -133,6 +144,64 @@ describe('PlaylistView', () => {
     expect(await screen.findByText('Shared playlist')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'More for Sunday morning' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('says a playlist belongs to a profile that is gone rather than leaving the line blank', async () => {
+    serve(summary({ isMine: false, isShared: true, owner: null }));
+
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    expect(await screen.findByText('a removed profile')).toBeInTheDocument();
+  });
+
+  it('says what a playlist lost with the library it came from', async () => {
+    serve(summary(), [entry(1, aTrack(1)), lostEntry(2), lostEntry(3)]);
+
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    expect(await screen.findByText('· 2 things no longer in the library')).toBeInTheDocument();
+    expect(
+      screen.getByText('2 things that were in this playlist went with the library they came from.'),
+    ).toBeInTheDocument();
+  });
+
+  it('counts only what is still there beside the ones that are gone', async () => {
+    serve(summary(), [entry(1, aTrack(1)), lostEntry(2)]);
+
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    expect(await screen.findByText('· 1 song')).toBeInTheDocument();
+  });
+
+  it('clears what is gone when its owner asks, an entry at a time', async () => {
+    serve(summary(), [entry(1, aTrack(1)), lostEntry(2), lostEntry(3)]);
+
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Remove what is gone from Sunday morning' }),
+    );
+
+    await waitFor(() => {
+      expect(requests).toHaveBeenCalledWith(
+        `/api/playlists/${PLAYLIST_ID}/entries/${lostEntry(2).id}`,
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+    });
+  });
+
+  it('does not offer to clear what is gone from somebody else’s playlist', async () => {
+    serve(summary({ isMine: false, isShared: true, owner: null }), [
+      entry(1, aTrack(1)),
+      lostEntry(2),
+    ]);
+
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    expect(await screen.findByText('No longer in the library')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Remove what is gone from Sunday morning' }),
     ).not.toBeInTheDocument();
   });
 

@@ -3,6 +3,7 @@ import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
+import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { createMemoryProfileService } from '@ValenceServer/profiles/createMemoryProfileService';
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
@@ -68,6 +69,7 @@ const PLAYLIST: PlaylistSummary = {
   isMine: true,
   owner: { profileId: '00000000-0000-4000-8000-000000000001', name: 'Dan', colour: '#3a8ee8' },
   entryCount: 0,
+  lostCount: 0,
   durationSeconds: 0,
   artworkAlbumIds: [],
   updatedAt: '2026-09-18T00:00:00.000Z',
@@ -142,10 +144,12 @@ const build = () => {
   const profiles = createMemoryProfileService();
   const { auth, settings, store } = createMemoryAuth();
   const music = fakeMusic();
+  const permissions = createMemoryPermissionService();
 
   const app = createApp({
     auth,
     settings,
+    permissions,
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
     library: createMemoryLibraryService(),
@@ -159,7 +163,7 @@ const build = () => {
     music,
   });
 
-  return { app, music, profiles, store };
+  return { app, music, permissions, profiles, store };
 };
 
 const listening = async (context: ReturnType<typeof build>) => {
@@ -336,6 +340,34 @@ describe('the music routes', () => {
     });
 
     expect(response.status).toBe(404);
+  });
+
+  it('refuse to let somebody who does not manage profiles clear a playlist nobody owns', async () => {
+    const me = await listening(context);
+
+    await me.ask(`/api/playlists/${PLAYLIST_ID}`, { method: 'DELETE' });
+
+    expect(context.music.playlists.remove).toHaveBeenCalledWith(
+      expect.anything(),
+      PLAYLIST_ID,
+      false,
+    );
+  });
+
+  it('let somebody who manages profiles clear a playlist nobody owns any more', async () => {
+    const me = await listening(context);
+
+    context.permissions.state.overrides[context.store.user[0]?.id ?? ''] = [
+      { permission: 'account.profiles', effect: 'allow' },
+    ];
+
+    await me.ask(`/api/playlists/${PLAYLIST_ID}`, { method: 'DELETE' });
+
+    expect(context.music.playlists.remove).toHaveBeenCalledWith(
+      expect.anything(),
+      PLAYLIST_ID,
+      true,
+    );
   });
 
   it('refuse a command for a device that is not the listener’s', async () => {

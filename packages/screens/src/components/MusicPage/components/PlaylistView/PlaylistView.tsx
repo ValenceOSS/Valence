@@ -33,6 +33,7 @@ import { PlaylistDialog } from '@ValenceScreens/components/PlaylistDialog/Playli
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
+import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
@@ -96,10 +97,13 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
 
   const { playlist, entries } = detail;
   const songs = entries.flatMap((entry) =>
-    entry.item.track === null ? [] : [{ entry, track: entry.item.track }],
+    entry.item === null || entry.item.track === null ? [] : [{ entry, track: entry.item.track }],
   );
   const tracks: MusicTrack[] = songs.map((song) => song.track);
-  const others = entries.filter((entry) => entry.item.track === null);
+  const others = entries.flatMap((entry) =>
+    entry.item === null || entry.item.track !== null ? [] : [{ id: entry.id, item: entry.item }],
+  );
+  const lost = entries.filter((entry) => entry.item === null);
   const source = { kind: 'playlist' as const, id: playlist.id, name: playlist.name };
   const options = { source, isOrdered: playlist.isOrdered };
 
@@ -120,10 +124,15 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
             {playlist.description === null ? null : (
               <span className="w-full pb-1 text-text">{playlist.description}</span>
             )}
-            <span className="font-semibold text-text">{playlist.owner.name}</span>
-            <span>· {countOf(entries.length, others.length === 0 ? 'song' : 'item')}</span>
+            <span className="font-semibold text-text">{nameOfOwner(playlist.owner)}</span>
+            <span>
+              · {countOf(entries.length - lost.length, others.length === 0 ? 'song' : 'item')}
+            </span>
             <span>· {formatDuration(playlist.durationSeconds)}</span>
             {playlist.isOrdered ? <span>· In order</span> : null}
+            {lost.length === 0 ? null : (
+              <span>· {countOf(lost.length, 'thing')} no longer in the library</span>
+            )}
           </>
         }
         actions={
@@ -257,19 +266,46 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
               Also in this playlist
             </h2>
             <ul className="flex flex-col">
-              {others.map((entry) => (
+              {others.map((other) => (
                 <li
-                  key={entry.id}
+                  key={other.id}
                   className="flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm"
                 >
-                  <span className="truncate text-text">{entry.item.title}</span>
+                  <span className="truncate text-text">{other.item.title}</span>
                   <span className="shrink-0 text-text-muted">
-                    {MEDIA_KIND_LABELS[entry.item.kind]}
-                    {entry.item.subtitle === null ? '' : ` · ${entry.item.subtitle}`}
+                    {MEDIA_KIND_LABELS[other.item.kind]}
+                    {other.item.subtitle === null ? '' : ` · ${other.item.subtitle}`}
                   </span>
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {lost.length === 0 ? null : (
+          <section aria-label="No longer in the library" className="flex flex-col gap-2 px-2">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-text-muted">
+              No longer in the library
+            </h2>
+            <p className="text-sm text-text-muted">
+              {countOf(lost.length, 'thing')} that {lost.length === 1 ? 'was' : 'were'} in this
+              playlist went with the library {lost.length === 1 ? 'it' : 'they'} came from.
+            </p>
+            {playlist.isMine ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="self-start"
+                label={`Remove what is gone from ${playlist.name}`}
+                onClick={() => {
+                  void Promise.all(
+                    lost.map((entry) => dropFromPlaylist(playlist.id, entry.id)),
+                  ).then(refresh);
+                }}
+              >
+                Remove {lost.length === 1 ? 'it' : 'them'}
+              </Button>
+            ) : null}
           </section>
         )}
       </div>
