@@ -14,7 +14,7 @@ const TRACK_CLASSES: Record<SliderTone, string> = {
 const FILL_CLASSES: Record<SliderTone, string> = {
   default: 'bg-primary',
   overlay: 'bg-on-scrim',
-  glass: 'bg-primary',
+  glass: 'bg-text',
 };
 
 /**
