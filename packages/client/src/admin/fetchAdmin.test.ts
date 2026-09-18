@@ -377,6 +377,7 @@ describe('fetchJobDefinitions', () => {
       description: 'Finds new, changed and removed files.',
       needsLibrary: true,
       destructive: false,
+      takesParts: false,
     },
     {
       kind: 'library.reset',
@@ -384,6 +385,7 @@ describe('fetchJobDefinitions', () => {
       description: 'Deletes everything in the library, then scans it from nothing.',
       needsLibrary: true,
       destructive: true,
+      takesParts: false,
     },
   ];
 
@@ -428,6 +430,14 @@ describe('runJob', () => {
     await runJob('library.regeneratePreviews', 'lib-1');
 
     expect(sentBody()).toEqual({ libraryId: 'lib-1' });
+  });
+
+  it('says which parts to clear for the job that clears them', async () => {
+    answerWith({ jobId: 'job-1', state: 'queued' });
+
+    await runJob('library.clearParts', 'lib-1', undefined, ['cast', 'artwork']);
+
+    expect(sentBody()).toEqual({ libraryId: 'lib-1', parts: ['cast', 'artwork'] });
   });
 
   it('leaves libraryId out of the body for a job that does not need one', async () => {

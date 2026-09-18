@@ -20,6 +20,7 @@ const definition: JobDefinition = {
   description: 'Looks for new and changed files.',
   needsLibrary: true,
   destructive: false,
+  takesParts: false,
 };
 
 const job = (overrides: Partial<Job> = {}): Job => ({

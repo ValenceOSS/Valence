@@ -6,6 +6,7 @@ import {
   startRegeneratePreviews,
   runDefinedJob,
   runDefinedJobAll,
+  clearPartsOfAll,
   subscribe,
   getSnapshot,
   resumeRunning,
@@ -194,6 +195,27 @@ describe('scanCoordinator', () => {
     await runDefinedJobAll('library.scan', [LIBRARY]);
 
     expect(runJobMock).toHaveBeenCalledWith('library.scan', LIBRARY.id, undefined);
+  });
+
+  it('asks each library to clear only the parts a library of its kind has', async () => {
+    const music: Library = { ...LIBRARY, id: 'library-2', name: 'Music', kind: 'music' };
+    const books: Library = { ...LIBRARY, id: 'library-3', name: 'Books', kind: 'books' };
+
+    runJobMock.mockResolvedValue({ jobId: 'job-8', state: 'queued' });
+    readScanStateMock.mockResolvedValue({
+      state: 'completed',
+      phase: null,
+      processed: null,
+      total: null,
+    });
+
+    await clearPartsOfAll('library.clearParts', [LIBRARY, music, books], ['trailers', 'lyrics']);
+
+    expect(runJobMock).toHaveBeenCalledTimes(2);
+    expect(runJobMock).toHaveBeenCalledWith('library.clearParts', LIBRARY.id, undefined, [
+      'trailers',
+    ]);
+    expect(runJobMock).toHaveBeenCalledWith('library.clearParts', music.id, undefined, ['lyrics']);
   });
 });
 

@@ -20,6 +20,7 @@ import type {
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 import type { ScanJob } from '@ValenceClient/library/fetchLibrary';
+import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 
 const AdminUserSchema = z.object({
   id: z.string(),
@@ -227,6 +228,7 @@ const JobDefinitionSchema = z.object({
   description: z.string(),
   needsLibrary: z.boolean(),
   destructive: z.boolean(),
+  takesParts: z.boolean(),
 });
 
 const ScheduleTriggerSchema = z.discriminatedUnion('kind', [
@@ -525,12 +527,14 @@ const fetchJobDefinitions = async (): Promise<JobDefinition[]> => {
  * @param kind - Which job.
  * @param libraryId - Which library, for the kinds that take one.
  * @param force - Whether to redo work already done.
+ * @param parts - Which parts of the library to clear, for the kind that clears them.
  * @returns The job to watch, or why it was refused.
  */
 const runJob = async (
   kind: string,
   libraryId?: string,
   force?: boolean,
+  parts?: readonly LibraryPart[],
 ): Promise<ScanJob | null> => {
   const response = await fetch(`/api/admin/jobs/${kind}/run`, {
     method: 'POST',
@@ -539,6 +543,7 @@ const runJob = async (
     body: JSON.stringify({
       ...(libraryId === undefined ? {} : { libraryId }),
       ...(force === undefined ? {} : { force }),
+      ...(parts === undefined ? {} : { parts }),
     }),
   }).catch(() => null);
 

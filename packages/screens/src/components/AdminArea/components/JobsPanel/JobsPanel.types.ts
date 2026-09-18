@@ -6,6 +6,7 @@ import type {
 } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { ScanEntry } from '@ValenceScreens/components/AdminArea/scanCoordinator';
+import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 
 type JobsPanelProps = {
   definitions: JobDefinition[];
@@ -15,7 +16,7 @@ type JobsPanelProps = {
   viewingJobKind: string | null;
   schedules: Map<string, JobTrigger[]>;
   schedulesTimezone?: string | null;
-  onRun: (kind: string) => void;
+  onRun: (kind: string, libraryIds?: string[], parts?: LibraryPart[]) => void;
   onStop: (kind: string) => void;
   onOpenSchedule: (kind: string) => void;
   onCloseSchedule: () => void;

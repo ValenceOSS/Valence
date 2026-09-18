@@ -13,6 +13,7 @@ const DEFINITIONS: JobDefinition[] = [
     description: 'Finds new, changed and removed files.',
     needsLibrary: true,
     destructive: false,
+    takesParts: false,
   },
   {
     kind: 'library.regeneratePreviews',
@@ -20,6 +21,7 @@ const DEFINITIONS: JobDefinition[] = [
     description: 'Renders preview clips for items that have none.',
     needsLibrary: true,
     destructive: false,
+    takesParts: false,
   },
   {
     kind: 'library.reset',
@@ -27,6 +29,7 @@ const DEFINITIONS: JobDefinition[] = [
     description: 'Deletes everything in every library, then scans it from nothing.',
     needsLibrary: true,
     destructive: true,
+    takesParts: false,
   },
 ];
 
@@ -69,7 +72,7 @@ describe('JobRunner', () => {
     ).toBeInTheDocument();
   });
 
-  it('runs a non-destructive job the moment Run is pressed', async () => {
+  it('asks which libraries a library job runs on before starting it', async () => {
     const onRun = vi.fn();
     const user = userEvent.setup();
 
@@ -87,7 +90,107 @@ describe('JobRunner', () => {
 
     await choose(user, 'Scan for changes', /Run now/);
 
-    expect(onRun).toHaveBeenCalledWith('library.scan');
+    expect(onRun).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Run on every library' }));
+
+    expect(onRun).toHaveBeenCalledWith('library.scan', ['lib-movies']);
+  });
+
+  it('runs a library job on only the libraries left ticked', async () => {
+    const onRun = vi.fn();
+    const user = userEvent.setup();
+    const shows: Library = { ...MOVIES, id: 'lib-shows', name: 'Shows', kind: 'shows' };
+
+    render(
+      <JobRunner
+        definitions={DEFINITIONS}
+        libraries={[MOVIES, shows]}
+        progress={new Map()}
+        working={[]}
+        onRun={onRun}
+        onStop={vi.fn()}
+        onOpenSchedule={vi.fn()}
+      />,
+    );
+
+    await choose(user, 'Scan for changes', /Run now/);
+    await user.click(screen.getByRole('checkbox', { name: /Movies/ }));
+    await user.click(screen.getByRole('button', { name: 'Run on 1 library' }));
+
+    expect(onRun).toHaveBeenCalledWith('library.scan', ['lib-shows']);
+  });
+
+  it('asks which parts to clear for the job that clears them, and has no schedule for it', async () => {
+    const onRun = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <JobRunner
+        definitions={[
+          {
+            kind: 'library.clearParts',
+            label: 'Clear and fetch again',
+            description: 'Erases the chosen parts of a library.',
+            needsLibrary: true,
+            destructive: true,
+            takesParts: true,
+          },
+        ]}
+        libraries={[MOVIES]}
+        progress={new Map()}
+        working={[]}
+        onRun={onRun}
+        onStop={vi.fn()}
+        onOpenSchedule={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Actions for Clear and fetch again' }),
+    );
+
+    expect(screen.queryByRole('menuitem', { name: /Edit schedule/ })).not.toBeInTheDocument();
+
+    await user.click(await screen.findByRole('menuitem', { name: /Run now/ }));
+    await user.click(screen.getByRole('checkbox', { name: /^Cast/ }));
+    await user.click(screen.getByRole('button', { name: 'Clear 1 part' }));
+
+    expect(onRun).toHaveBeenCalledWith('library.clearParts', ['lib-movies'], ['cast']);
+  });
+
+  it('asks before running a destructive server-wide job', async () => {
+    const onRun = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <JobRunner
+        definitions={[
+          {
+            kind: 'history.prune',
+            label: 'Prune old viewing history',
+            description: 'Forgets viewings older than a year.',
+            needsLibrary: false,
+            destructive: true,
+            takesParts: false,
+          },
+        ]}
+        libraries={[MOVIES]}
+        progress={new Map()}
+        working={[]}
+        onRun={onRun}
+        onStop={vi.fn()}
+        onOpenSchedule={vi.fn()}
+      />,
+    );
+
+    await choose(user, 'Prune old viewing history', /Run now/);
+
+    expect(onRun).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Prune old viewing history' }));
+
+    expect(onRun).toHaveBeenCalledWith('history.prune');
   });
 
   it('opens the schedule page when a row is pressed anywhere but Run', async () => {
@@ -150,9 +253,9 @@ describe('JobRunner', () => {
     );
 
     await choose(user, 'Reset and rebuild', /Run now/);
-    await user.click(screen.getByRole('button', { name: 'Reset and rebuild' }));
+    await user.click(screen.getByRole('button', { name: 'Reset and rebuild on every library' }));
 
-    expect(onRun).toHaveBeenCalledWith('library.reset');
+    expect(onRun).toHaveBeenCalledWith('library.reset', ['lib-movies']);
   });
 
   it('leaves a destructive job untouched when the confirmation is cancelled', async () => {
@@ -354,6 +457,7 @@ describe('JobRunner', () => {
         description: 'Asks the transcoder whether it is still answering.',
         needsLibrary: false,
         destructive: false,
+        takesParts: false,
       },
     ];
 
@@ -399,6 +503,7 @@ describe('JobRunner', () => {
         description: 'Retries metadata matching for every item on the server.',
         needsLibrary: false,
         destructive: false,
+        takesParts: false,
       },
     ];
 
@@ -430,6 +535,7 @@ describe('JobRunner', () => {
         description: 'Retries metadata matching for every item on the server.',
         needsLibrary: false,
         destructive: false,
+        takesParts: false,
       },
     ];
     const progress = new Map<string, ScanEntry>([

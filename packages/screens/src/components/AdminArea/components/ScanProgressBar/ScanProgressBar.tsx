@@ -6,6 +6,7 @@ const PHASE_LABELS: Record<string, string> = {
   previews: 'Generating previews',
   trickplay: 'Generating scrub previews',
   segments: 'Finding intros',
+  clearing: 'Clearing',
 };
 
 /**

@@ -66,6 +66,7 @@ import {
   startRegeneratePreviews,
   runDefinedJob,
   runDefinedJobAll,
+  clearPartsOfAll,
   stopJobs,
 } from './scanCoordinator';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
@@ -75,6 +76,7 @@ import type { CreatedWebhook } from '@ValenceClient/admin/fetchWebhooks';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { ADMIN_PANELS } from '@ValenceScreens/components/AdminArea/adminSections';
 import type { AdminAreaProps } from './AdminArea.types';
+import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 
 const HISTORY_LENGTH = 60;
 
@@ -286,11 +288,17 @@ const AdminArea = ({
   };
 
   const runJob = useCallback(
-    async (kind: string) => {
+    async (kind: string, libraryIds?: string[], parts?: LibraryPart[]) => {
       const definition = jobDefinitions.find((candidate) => candidate.kind === kind);
+      const chosen =
+        libraryIds === undefined
+          ? libraries
+          : libraries.filter((library) => libraryIds.includes(library.id));
 
-      if (definition?.needsLibrary === true) {
-        await runDefinedJobAll(kind, libraries);
+      if (parts !== undefined) {
+        await clearPartsOfAll(kind, chosen, parts);
+      } else if (definition?.needsLibrary === true) {
+        await runDefinedJobAll(kind, chosen);
       } else {
         await runDefinedJob(kind);
       }
@@ -359,8 +367,8 @@ const AdminArea = ({
   }, [onJobChange]);
 
   const startJob = useCallback(
-    (kind: string) => {
-      void runJob(kind);
+    (kind: string, libraryIds?: string[], parts?: LibraryPart[]) => {
+      void runJob(kind, libraryIds, parts);
     },
     [runJob],
   );

@@ -42,7 +42,8 @@ const isJobsTab = (value: string): value is JobsTab => JOBS_TABS.some((tab) => t
  * @param monitor - The latest readings, or null before any have arrived.
  * @param viewingJobKind - The job whose schedule is open, if any.
  * @param schedules - What makes each job run on its own.
- * @param onRun - Called with the job to start.
+ * @param onRun - Called with the job to start, the libraries to start it on for one that takes
+ *   them, and the parts to clear for the one that clears them.
  * @param onStop - Called with the job to stop.
  * @param onOpenSchedule - Called with the job whose schedule is to be opened.
  * @param onCloseSchedule - Called on going back to the list.

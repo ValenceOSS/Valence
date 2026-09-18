@@ -7,6 +7,8 @@ import { cancelJob, fetchRunningScans, runJob } from '@ValenceClient/admin/fetch
 import { waitForScanCompletion } from '@ValenceClient/library/waitForScanCompletion';
 import type { ScanJob } from '@ValenceClient/library/fetchLibrary';
 import type { Library } from '@ValenceContracts/schemas/Library';
+import { LIBRARY_PARTS_BY_KIND } from '@ValenceContracts/schemas/LibraryPart';
+import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 
 type ScanEntry = {
   libraryId: string;
@@ -307,6 +309,30 @@ const runDefinedJobAll = (
     () => undefined,
   );
 
+/**
+ * Clears parts of several libraries at once, each tracked separately. A library is only asked to
+ * clear the parts a library of its kind has, and one with none of them is left alone, so picking
+ * album covers and trailers across a music and a film library clears each of what it holds.
+ *
+ * @param kind - The job that clears parts.
+ * @param libraries - The libraries to clear parts of.
+ * @param parts - The parts to clear.
+ */
+const clearPartsOfAll = (
+  kind: string,
+  libraries: readonly Library[],
+  parts: readonly LibraryPart[],
+): Promise<void> =>
+  Promise.all(
+    libraries.flatMap((library) => {
+      const offered = parts.filter((part) => LIBRARY_PARTS_BY_KIND[library.kind].includes(part));
+
+      return offered.length === 0
+        ? []
+        : [runAndTrack(library.id, kind, () => runJob(kind, library.id, undefined, offered))];
+    }),
+  ).then(() => undefined);
+
 export type { ScanEntry };
 
 /**
@@ -344,6 +370,7 @@ export {
   startRegeneratePreviews,
   runDefinedJob,
   runDefinedJobAll,
+  clearPartsOfAll,
   stopJobs,
   resetForTests,
 };

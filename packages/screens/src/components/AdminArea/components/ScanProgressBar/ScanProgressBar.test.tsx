@@ -12,6 +12,14 @@ describe('ScanProgressBar', () => {
     ).toBeInTheDocument();
   });
 
+  it('names the clearing of parts of a library', () => {
+    render(
+      <ScanProgressBar label="Clearing parts of Movies" phase="clearing" processed={1} total={3} />,
+    );
+
+    expect(screen.getByText('Clearing')).toBeInTheDocument();
+  });
+
   it('reports how far through the current phase it is', () => {
     render(<ScanProgressBar label="Scanning Movies" phase="probing" processed={4} total={10} />);
 
