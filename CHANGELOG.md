@@ -1,5 +1,51 @@
 # Changelog
 
+## [0.4.0](https://github.com/ValenceOSS/Valence/compare/v0.3.0...v0.4.0) (2026-09-18)
+
+
+### Added
+
+* **landing:** scale the marketing page for larger screens ([#289](https://github.com/ValenceOSS/Valence/issues/289)) ([2cf3300](https://github.com/ValenceOSS/Valence/commit/2cf330076d89811abd2cd42f6c13d0cd711c6187))
+* **repo:** fetch the ffmpeg an Intel Mac needs ([#317](https://github.com/ValenceOSS/Valence/issues/317)) ([bad2b78](https://github.com/ValenceOSS/Valence/commit/bad2b78322b8bcce2feb4235f3068165715fbad3))
+* **repo:** rewrite the logging and queue system, and give jobs a history ([7a9d20f](https://github.com/ValenceOSS/Valence/commit/7a9d20f24863c6b4b769ceb95cc6d2875635c277))
+* **server:** a ceiling a child cannot lift ([#297](https://github.com/ValenceOSS/Valence/issues/297)) ([51d18e7](https://github.com/ValenceOSS/Valence/commit/51d18e75ca11015c886446646a486cacf92c2328))
+* **server:** a title's trailer, and profile pictures that outlive the container ([#306](https://github.com/ValenceOSS/Valence/issues/306)) ([a304441](https://github.com/ValenceOSS/Valence/commit/a304441550def056b6b6304fc64863499e67af63))
+* **server:** hiding what you are never going to watch ([#293](https://github.com/ValenceOSS/Valence/issues/293)) ([3219d26](https://github.com/ValenceOSS/Valence/commit/3219d2646063096958ff5ec187476a28c11ba994))
+* **server:** one pipe every content route passes through ([#292](https://github.com/ValenceOSS/Valence/issues/292)) ([c176a3c](https://github.com/ValenceOSS/Valence/commit/c176a3c6f744c84c20a587f48ddee9d2dfc24edc))
+* **server:** say what deleting an account, a profile or a library removes ([#322](https://github.com/ValenceOSS/Valence/issues/322)) ([d866fa6](https://github.com/ValenceOSS/Valence/commit/d866fa62e5a6800234f00b68c94f9e386efe99c4))
+* **server:** the age certificates the library never fetched ([#296](https://github.com/ValenceOSS/Valence/issues/296)) ([fe2fed8](https://github.com/ValenceOSS/Valence/commit/fe2fed86d1b25c360996c805f93ea01a217f52c4))
+* **server:** which libraries an account may see ([#295](https://github.com/ValenceOSS/Valence/issues/295)) ([f209802](https://github.com/ValenceOSS/Valence/commit/f209802396c0e25461cfdb8352576a0fc871301f))
+* **web:** a custom splashscreen behind the way in ([#312](https://github.com/ValenceOSS/Valence/issues/312)) ([931afc8](https://github.com/ValenceOSS/Valence/commit/931afc8bb211f25daa26a98d78e874cc471bb79c))
+* **web:** choose the libraries a job runs on, and clear chosen parts of them ([#323](https://github.com/ValenceOSS/Valence/issues/323)) ([ba575c9](https://github.com/ValenceOSS/Valence/commit/ba575c971d37becda9b0591e30533b6c29789ada))
+* **web:** choose where an item's hover preview is cut from ([#311](https://github.com/ValenceOSS/Valence/issues/311)) ([4f6002a](https://github.com/ValenceOSS/Valence/commit/4f6002ae215fac89f3010f03ffafa76be4c7b5d2))
+* **web:** music libraries, a player that follows you, playlists and lyrics ([#314](https://github.com/ValenceOSS/Valence/issues/314)) ([b551553](https://github.com/ValenceOSS/Valence/commit/b551553431365e8229e548428ba4e2a32c91c39d))
+* **web:** read ebooks, and keep, rate, share and find books like films ([#329](https://github.com/ValenceOSS/Valence/issues/329)) ([f8863f7](https://github.com/ValenceOSS/Valence/commit/f8863f7ec5b01b1474e31b6de6b7e341844c44fd))
+* **web:** redesign admin and profile as full pages with sidebars ([#305](https://github.com/ValenceOSS/Valence/issues/305)) ([381a935](https://github.com/ValenceOSS/Valence/commit/381a9357bbbdcd33b41dc0d7a88e3c99ac467681))
+* **web:** set a household up the first time somebody signs in ([#319](https://github.com/ValenceOSS/Valence/issues/319)) ([a55e73b](https://github.com/ValenceOSS/Valence/commit/a55e73b095c43732051d867affcb4b43de0dbfa7))
+
+
+### Fixed
+
+* **auth:** stop an administrator locking the operator out of their own server ([#318](https://github.com/ValenceOSS/Valence/issues/318)) ([b9f5cb4](https://github.com/ValenceOSS/Valence/commit/b9f5cb4c77354a28255996cb46f676fb7826efeb))
+* **desktop:** a rich presence that shows Valence, and a build that can be made ([#316](https://github.com/ValenceOSS/Valence/issues/316)) ([0a91953](https://github.com/ValenceOSS/Valence/commit/0a91953ec5c45cd993940d118438c5fb9846a2e2))
+* **server:** a history that stops naming what you were refused ([#294](https://github.com/ValenceOSS/Valence/issues/294)) ([7531b81](https://github.com/ValenceOSS/Valence/commit/7531b818bd9185b288459814b1f6369e273506cc))
+* **server:** an overview that only reports faults, and an Add trigger that opens ([#300](https://github.com/ValenceOSS/Valence/issues/300)) ([43c7419](https://github.com/ValenceOSS/Valence/commit/43c74192553b0ee6c193055e8ea377cee8ff1334))
+* **server:** apply a match correction to seasons added later ([#304](https://github.com/ValenceOSS/Valence/issues/304)) ([4b35bbd](https://github.com/ValenceOSS/Valence/commit/4b35bbd10adff1cba39f3d80eed58e65c0ff0c2b))
+* **server:** pick title logos by rating, not width ([#303](https://github.com/ValenceOSS/Valence/issues/303)) ([51b15b9](https://github.com/ValenceOSS/Valence/commit/51b15b9837dd9f1ee784aa59ab09c37183c9a5bd))
+* **server:** say why a picture was refused, rather than that it was ([#309](https://github.com/ValenceOSS/Valence/issues/309)) ([0f001dd](https://github.com/ValenceOSS/Valence/commit/0f001dd3714e4285f95f7b75287f1e6b740e6d40))
+* **server:** say why a playback session failed, and stop a log prefix looking like a secret ([#327](https://github.com/ValenceOSS/Valence/issues/327)) ([29f7b38](https://github.com/ValenceOSS/Valence/commit/29f7b38c64bb237a73332b18af8a1848c4410284))
+* **server:** three faults on the jobs page, each hiding the next ([#301](https://github.com/ValenceOSS/Valence/issues/301)) ([25cad35](https://github.com/ValenceOSS/Valence/commit/25cad359a79557b8d0837702006718d91e6be72c))
+* **server:** tidy away cached book pages ([#313](https://github.com/ValenceOSS/Valence/issues/313)) ([d5adadf](https://github.com/ValenceOSS/Valence/commit/d5adadf31d6861ad019bfd8899c3d28bcb2183c4))
+* **transcoder:** a sheet probe that does not crash, and says so when it does ([#290](https://github.com/ValenceOSS/Valence/issues/290)) ([9b2ea1b](https://github.com/ValenceOSS/Valence/commit/9b2ea1bfef346e557e9b89ba360b96acadc868dc))
+* **transcoder:** cut segments where the playlist says they are ([#326](https://github.com/ValenceOSS/Valence/issues/326)) ([ca31560](https://github.com/ValenceOSS/Valence/commit/ca315604fedf43778b3c712abbaf17a785c793b5))
+* **transcoder:** prove the compositor will draw before burning a subtitle onto the device ([#324](https://github.com/ValenceOSS/Valence/issues/324)) ([294b046](https://github.com/ValenceOSS/Valence/commit/294b0463d23d6868f2159702653b56688f8bf2fa))
+* **transcoder:** read a source's keyframes once, rather than on every play ([#328](https://github.com/ValenceOSS/Valence/issues/328)) ([531f0fe](https://github.com/ValenceOSS/Valence/commit/531f0fee4492e59e5b2f499f3abeadc994644b0c))
+* **ui:** a phone that answers a finger ([#315](https://github.com/ValenceOSS/Valence/issues/315)) ([0a285fc](https://github.com/ValenceOSS/Valence/commit/0a285fc9bdff37906c7a6fcf305f4dadc6f7a758))
+* **web:** a "who may watch this" worth looking at ([#298](https://github.com/ValenceOSS/Valence/issues/298)) ([3e75620](https://github.com/ValenceOSS/Valence/commit/3e756205b8a99a4ac0f1065ced56d939308d974e))
+* **web:** a countdown that stops at nought, and is not read off the wall clock ([#320](https://github.com/ValenceOSS/Valence/issues/320)) ([5caf9f0](https://github.com/ValenceOSS/Valence/commit/5caf9f05e6c0d67eddf90534be3aef329909b78f))
+* **web:** favourites and ratings that follow the face ([#291](https://github.com/ValenceOSS/Valence/issues/291)) ([e2ad697](https://github.com/ValenceOSS/Valence/commit/e2ad6970b9039597bd743a20f5ef931944302e43))
+* **web:** play a file the browser can play itself, and never hang on a keyframe scan ([#325](https://github.com/ValenceOSS/Valence/issues/325)) ([6e4dc43](https://github.com/ValenceOSS/Valence/commit/6e4dc438bb45ec07bbedf8f758dea62956885de1))
+
 ## [0.3.0](https://github.com/ValenceOSS/Valence/compare/v0.2.0...v0.3.0) (2026-09-16)
 
 
