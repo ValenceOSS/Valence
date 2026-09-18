@@ -17,13 +17,13 @@ const TRACK_CLASSES: Record<SliderTone, string> = {
   glass: 'bg-text/15',
 };
 
-const STRETCH_SPRING = { stiffness: 520, damping: 32, mass: 0.6 };
+const STRETCH_SPRING = { stiffness: 360, damping: 24, mass: 0.6 };
 
-const STRETCH_PER_SPEED = 0.35;
+const STRETCH_PER_SPEED = 1.1;
 
-const STRETCH_MOST = 0.6;
+const STRETCH_MOST = 1;
 
-const SETTLES_AFTER_MS = 70;
+const SETTLES_AFTER_MS = 120;
 
 const FILL_CLASSES: Record<SliderTone, string> = {
   default: 'bg-primary',
