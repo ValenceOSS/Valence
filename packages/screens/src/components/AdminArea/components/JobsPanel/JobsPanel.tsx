@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import { BackgroundJobs } from '@ValenceScreens/components/AdminArea/components/BackgroundJobs/BackgroundJobs';
+import { useMemo, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -8,15 +7,35 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { JobRunner } from '@ValenceScreens/components/AdminArea/components/JobRunner/JobRunner';
 import { JobHistory } from '@ValenceScreens/components/AdminArea/components/JobsPanel/components/JobHistory/JobHistory';
 import { JobSchedulePage } from '@ValenceScreens/components/AdminArea/components/JobSchedulePage/JobSchedulePage';
+import { TabPanel } from '@ValenceUI/TabPanel';
+import { TabRow } from '@ValenceUI/TabRow';
+import { Tabs } from '@ValenceUI/Tabs';
+import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import type { JobsPanelProps } from './JobsPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 
+const JOBS_TABS = ['history', 'run'] as const;
+
+type JobsTab = (typeof JOBS_TABS)[number];
+
 /**
- * The Work tab: what can be started by hand, what is running because something started it earlier,
- * and what each job's schedule is. Holds no state of its own — which job's schedule is open is
- * decided above it, so that opening one is a place the browser can return to.
+ * Whether a string the tab row handed back actually names one of this page's tabs.
  *
- * @param isUnreachable - Whether the service is not answering.
+ * @param value - What was chosen.
+ * @returns Whether it names a tab.
+ */
+const isJobsTab = (value: string): value is JobsTab => JOBS_TABS.some((tab) => tab === value);
+
+/**
+ * The Work tab: what happened and what is happening, and what can be started by hand or set to run
+ * on its own. One card rather than three — the live queue and the persisted history used to be shown
+ * as two separate tables of the same jobs under two different words for the same states; the history
+ * is kept live already, so it is the only one that needs to be here.
+ *
+ * Holds no state of its own about which job's schedule is open — that is decided above it, so that
+ * opening one is a place the browser can return to. Which of its own two tabs is showing is not:
+ * that resets when the page is left, the same as the Roles and Accounts editors' own tabs do.
+ *
  * @param definitions - The jobs the server offers.
  * @param libraries - The libraries a job can be run against.
  * @param progress - What is running now, by library.
@@ -32,7 +51,6 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
  * @param onViewLogs - Called with a job run's id, to open the log filtered to it.
  */
 const JobsPanel = ({
-  isUnreachable = false,
   definitions,
   libraries,
   progress,
@@ -48,6 +66,8 @@ const JobsPanel = ({
   onRemoveTrigger,
   onViewLogs,
 }: JobsPanelProps) => {
+  const [tab, setTab] = useState<JobsTab>('history');
+  const travel = useTravelDirection([...JOBS_TABS], tab);
   const working = useMemo(() => monitor?.queue.jobs ?? [], [monitor]);
   const failures = (monitor?.queue.jobs ?? []).filter((job) => job.state === 'failed').length;
   const viewing =
@@ -88,9 +108,16 @@ const JobsPanel = ({
         )}
       </DialogCompanion>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <Tabs
+        value={tab}
+        onValueChange={(next) => {
+          if (isJobsTab(next)) {
+            setTab(next);
+          }
+        }}
+      >
         <PanelCard
-          title="Background jobs"
+          title="Jobs"
           isFlush
           actions={
             <span className="text-xs text-text-muted">
@@ -101,29 +128,40 @@ const JobsPanel = ({
                   }`}
             </span>
           }
+          below={
+            <TabRow
+              label="What to show about jobs"
+              tone="underlined"
+              size="sm"
+              value={tab}
+              groups={[
+                {
+                  items: [
+                    { id: 'history', label: 'History' },
+                    { id: 'run', label: 'Run & schedule' },
+                  ],
+                },
+              ]}
+            />
+          }
         >
-          <BackgroundJobs
-            monitor={monitor}
-            isUnreachable={isUnreachable}
-            pageSize={10}
-            growsOnScroll={false}
-          />
+          <TabPanel value="history" travel={travel}>
+            <JobHistory definitions={definitions} onViewLogs={onViewLogs} />
+          </TabPanel>
+
+          <TabPanel value="run" travel={travel}>
+            <JobRunner
+              working={working}
+              definitions={definitions}
+              libraries={libraries}
+              progress={progress}
+              onRun={onRun}
+              onStop={onStop}
+              onOpenSchedule={onOpenSchedule}
+            />
+          </TabPanel>
         </PanelCard>
-
-        <JobHistory definitions={definitions} onViewLogs={onViewLogs} />
-      </div>
-
-      <PanelCard title="Run a job" isFlush>
-        <JobRunner
-          working={working}
-          definitions={definitions}
-          libraries={libraries}
-          progress={progress}
-          onRun={onRun}
-          onStop={onStop}
-          onOpenSchedule={onOpenSchedule}
-        />
-      </PanelCard>
+      </Tabs>
     </div>
   );
 };

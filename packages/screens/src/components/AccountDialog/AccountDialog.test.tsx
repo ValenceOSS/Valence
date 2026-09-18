@@ -79,13 +79,12 @@ describe('AccountDialog', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('says whose account it is once, on one line at the head', async () => {
+  it('says whose account it is once, at the head', async () => {
     draw();
 
     const heading = await screen.findByRole('heading', { name: 'Marques' });
 
     expect(heading).toHaveClass('text-base');
-    expect(heading.parentElement).toHaveClass('items-baseline');
     expect(screen.getByText('operator@valence.test')).toBeInTheDocument();
   });
 

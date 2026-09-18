@@ -395,10 +395,29 @@ const chooseLibrary = async (
   await actor.click(await screen.findByRole('menuitem', { name: action }));
 };
 
+/**
+ * Chooses something that acts on every library at once, from the panel's own actions menu.
+ */
+const chooseLibraryAction = async (
+  actor: ReturnType<typeof userEvent.setup>,
+  action: string | RegExp,
+) => {
+  await actor.click(await screen.findByRole('button', { name: 'Library actions' }));
+  await actor.click(await screen.findByRole('menuitem', { name: action }));
+};
+
 const goTo = async (actor: ReturnType<typeof userEvent.setup>, section: string) => {
   const bar = await screen.findByRole('tablist', { name: 'What to look at' });
 
   await actor.click(within(bar).getByRole('tab', { name: section }));
+};
+
+/**
+ * Opens the Jobs panel's own Run & schedule tab, which is where the live queue and the runnable job
+ * definitions live now that History is the default.
+ */
+const openWorkTab = async (actor: ReturnType<typeof userEvent.setup>) => {
+  await actor.click(await screen.findByRole('tab', { name: 'Run & schedule' }));
 };
 
 /**
@@ -464,10 +483,27 @@ describe('AdminArea', () => {
     expect(await screen.findByText('whole card, not encoder')).toBeInTheDocument();
   });
 
-  it('names the card, and says what it will not say, where there is room for it', async () => {
+  it('says nothing is readable when a card answers with neither figure', async () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(await screen.findByText('Apple M5 Pro · encoder not readable')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('41%')).toBeInTheDocument();
+    });
+
+    monitorArrives({
+      ...MONITOR,
+      resources: {
+        ...MONITOR.resources,
+        graphics: {
+          name: 'Apple M5 Pro',
+          encoderPercent: null,
+          devicePercent: null,
+          measured: 'wholeMachine',
+        },
+      },
+    });
+
+    expect(await screen.findByText('Nothing readable')).toBeInTheDocument();
   });
 
   it('reports room left on the disk the library is on, not on the one Valence boots from', async () => {
@@ -516,13 +552,16 @@ describe('AdminArea', () => {
   });
 
   it('shows what the media service is working on', async () => {
-    const actor = userEvent.setup();
-
     renderInAnAddress(<TheAdmin />);
 
-    await goTo(actor, 'Jobs');
+    await screen.findByText('42%');
 
-    expect(screen.getByText('Parasite (2019).mkv')).toBeInTheDocument();
+    const runningNow = screen.getByText('Running now').closest('section');
+
+    expect(runningNow).not.toBeNull();
+    expect(
+      await within(runningNow ?? document.body).findByText('Parasite (2019).mkv'),
+    ).toBeInTheDocument();
   });
 
   it('opens on the panel the address named, so a reload lands back where it was', async () => {
@@ -534,13 +573,13 @@ describe('AdminArea', () => {
   it('opens on the overview when the address names no panel', async () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(await screen.findByText('Load')).toBeInTheDocument();
+    expect(await screen.findByText('Server load')).toBeInTheDocument();
   });
 
   it('falls back to the overview when the address names one it does not have', async () => {
     renderInAnAddress(<TheAdmin panel="not-a-real-panel" />);
 
-    expect(await screen.findByText('Load')).toBeInTheDocument();
+    expect(await screen.findByText('Server load')).toBeInTheDocument();
   });
 
   it('tells the address when the panel changes, so a reload can return to it', async () => {
@@ -570,6 +609,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Jobs');
+    await openWorkTab(actor);
 
     expect(await screen.findByText('Scan for changes')).toBeInTheDocument();
     expect(screen.getByText('Reset and rebuild')).toBeInTheDocument();
@@ -596,6 +636,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Jobs');
+    await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Run now/);
 
     await waitFor(() => {
@@ -620,6 +661,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Jobs');
+    await openWorkTab(actor);
     await chooseJob(actor, 'Reset and rebuild', /Run now/);
 
     expect(await screen.findByRole('heading', { name: 'Reset and rebuild?' })).toBeInTheDocument();
@@ -636,6 +678,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Jobs');
+    await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Edit schedule/);
 
     const schedule = await screen.findByRole('dialog');
@@ -650,6 +693,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Jobs');
+    await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Edit schedule/);
     await actor.click(await screen.findByRole('button', { name: 'Add trigger' }));
     await actor.click(await screen.findByRole('button', { name: 'Add' }));
@@ -673,6 +717,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Jobs');
+    await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Edit schedule/);
     await actor.click(await screen.findByRole('button', { name: 'Add trigger' }));
     await actor.click(await screen.findByRole('button', { name: 'Add' }));
@@ -694,6 +739,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Jobs');
+    await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Edit schedule/);
     await actor.click(
       within(await screen.findByRole('dialog')).getByRole('button', { name: 'Done' }),
@@ -838,7 +884,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Libraries');
-    await actor.click(screen.getByRole('button', { name: 'Add library' }));
+    await chooseLibraryAction(actor, 'Add library');
 
     const dialog = screen.getByRole('dialog', { name: 'Add a library' });
 
@@ -874,7 +920,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Libraries');
-    await actor.click(screen.getByRole('button', { name: 'Scan all libraries' }));
+    await chooseLibraryAction(actor, 'Scan all libraries');
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -890,7 +936,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Libraries');
-    await actor.click(screen.getByRole('button', { name: 'Scan all libraries' }));
+    await chooseLibraryAction(actor, 'Scan all libraries');
 
     await waitFor(() => {
       expect(
@@ -913,7 +959,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Libraries');
-    await actor.click(screen.getByRole('button', { name: 'Reset and rebuild' }));
+    await chooseLibraryAction(actor, 'Reset and rebuild');
 
     expect(
       await screen.findByRole('dialog', { name: 'Reset and rebuild every library' }),
@@ -930,7 +976,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Libraries');
-    await actor.click(screen.getByRole('button', { name: 'Reset and rebuild' }));
+    await chooseLibraryAction(actor, 'Reset and rebuild');
 
     const dialog = await screen.findByRole('dialog', {
       name: 'Reset and rebuild every library',
@@ -951,7 +997,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Libraries');
-    await actor.click(screen.getByRole('button', { name: 'Reset and rebuild' }));
+    await chooseLibraryAction(actor, 'Reset and rebuild');
 
     const dialog = await screen.findByRole('dialog', {
       name: 'Reset and rebuild every library',
@@ -1116,7 +1162,7 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Libraries');
-    await actor.click(screen.getByRole('button', { name: 'Scan all libraries' }));
+    await chooseLibraryAction(actor, 'Scan all libraries');
 
     await waitFor(() => {
       expect(screen.getAllByText('Reading').length).toBeGreaterThan(1);
@@ -1143,16 +1189,25 @@ describe('AdminArea', () => {
     const withAccel = (hardwareAccel: string) =>
       respondWith({ ...OVERVIEW, settings: { ...OVERVIEW.settings, hardwareAccel } });
 
+    const openGraphicsInfo = async (actor: ReturnType<typeof userEvent.setup>) => {
+      await actor.hover(await screen.findByLabelText('About Graphics'));
+    };
+
     it('reports what was found when nobody has insisted', async () => {
+      const actor = userEvent.setup();
+
       renderInAnAddress(<TheAdmin />);
+      await openGraphicsInfo(actor);
 
       expect(await screen.findAllByText('videotoolbox · automatic')).not.toHaveLength(0);
     });
 
     it('stops claiming hardware once software only is forced', async () => {
       fetchMock.mockImplementation(withAccel('none'));
+      const actor = userEvent.setup();
 
       renderInAnAddress(<TheAdmin />);
+      await openGraphicsInfo(actor);
 
       expect(await screen.findAllByText('Software only · forced')).not.toHaveLength(0);
       expect(screen.queryByText(/videotoolbox/)).not.toBeInTheDocument();
@@ -1160,8 +1215,10 @@ describe('AdminArea', () => {
 
     it('reports the forced backend rather than the automatic pick', async () => {
       fetchMock.mockImplementation(withAccel('nvenc'));
+      const actor = userEvent.setup();
 
       renderInAnAddress(<TheAdmin />);
+      await openGraphicsInfo(actor);
 
       expect(await screen.findAllByText('NVENC · forced')).not.toHaveLength(0);
       expect(screen.queryByText(/videotoolbox/)).not.toBeInTheDocument();

@@ -1,5 +1,12 @@
 import type { ReactNode } from 'react';
 
+type StatTileDirection = 'up' | 'down';
+
+type StatTileTrend = {
+  direction: StatTileDirection;
+  label: string;
+};
+
 type StatTileProps = {
   label: string;
   value: string;
@@ -7,7 +14,8 @@ type StatTileProps = {
   icon?: ReactNode;
   fraction?: number;
   history?: ReactNode;
+  trend?: StatTileTrend;
   className?: string;
 };
 
-export type { StatTileProps };
+export type { StatTileProps, StatTileTrend, StatTileDirection };

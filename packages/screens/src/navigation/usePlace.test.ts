@@ -30,11 +30,11 @@ describe('usePlace', () => {
     const { result } = renderHookInAnAddress(() => usePlace());
 
     act(() => {
-      result.current.go({ section: 'admin' });
+      result.current.go({ section: 'films' });
     });
 
     await waitFor(() => {
-      expect(addressNow()).toBe('/admin');
+      expect(addressNow()).toBe('/films');
     });
   });
 
@@ -63,7 +63,7 @@ describe('usePlace', () => {
     const { result } = renderHookInAnAddress(() => usePlace());
 
     act(() => {
-      result.current.go({ section: 'admin' });
+      result.current.go({ section: 'films' });
     });
 
     await waitFor(() => {

@@ -3,12 +3,18 @@ import { PERMISSIONS } from '@ValenceContracts/schemas/Permission';
 
 const PermissionName = z.enum(PERMISSIONS);
 
+const RoleColor = z
+  .string()
+  .regex(/^#[0-9a-f]{6}$/i)
+  .nullable();
+
 const Role = z
   .object({
     id: z.string().uuid(),
     name: z.string().min(1).max(60),
     position: z.number().int().nonnegative(),
     permissions: z.array(PermissionName),
+    color: RoleColor,
   })
   .openapi('Role');
 
@@ -19,6 +25,7 @@ const RoleBody = z
     name: z.string().min(1).max(60),
     position: z.number().int().nonnegative(),
     permissions: z.array(PermissionName),
+    color: RoleColor.optional(),
   })
   .openapi('RoleBody');
 

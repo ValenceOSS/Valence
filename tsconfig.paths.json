@@ -100,6 +100,9 @@
       "@ValenceUI/NavBar": ["./packages/ui/src/components/NavBar/NavBar.tsx"],
       "@ValenceUI/NavBar.types": ["./packages/ui/src/components/NavBar/NavBar.types.ts"],
       "@ValenceUI/OptionMenu": ["./packages/ui/src/components/OptionMenu/OptionMenu.tsx"],
+      "@ValenceUI/OptionMenu.types": [
+        "./packages/ui/src/components/OptionMenu/OptionMenu.types.ts"
+      ],
       "@ValenceUI/PageDots": ["./packages/ui/src/components/PageDots/PageDots.tsx"],
       "@ValenceUI/PopoverPanel": ["./packages/ui/src/components/PopoverPanel/PopoverPanel.tsx"],
       "@ValenceUI/ProgressBar": ["./packages/ui/src/components/ProgressBar/ProgressBar.tsx"],
@@ -129,6 +132,12 @@
       "@ValenceUI/SegmentedRow": ["./packages/ui/src/components/SegmentedRow/SegmentedRow.tsx"],
       "@ValenceUI/SegmentedRow.types": [
         "./packages/ui/src/components/SegmentedRow/SegmentedRow.types.ts"
+      ],
+      "@ValenceUI/Sidebar": ["./packages/ui/src/components/Sidebar/Sidebar.tsx"],
+      "@ValenceUI/Sidebar.types": ["./packages/ui/src/components/Sidebar/Sidebar.types.ts"],
+      "@ValenceUI/SidebarGroup": ["./packages/ui/src/components/SidebarGroup/SidebarGroup.tsx"],
+      "@ValenceUI/SidebarGroup.types": [
+        "./packages/ui/src/components/SidebarGroup/SidebarGroup.types.ts"
       ],
       "@ValenceUI/Slider": ["./packages/ui/src/components/Slider/Slider.tsx"],
       "@ValenceUI/SlidingMark": ["./packages/ui/src/components/SlidingMark/SlidingMark.tsx"],
@@ -170,6 +179,7 @@
         "./packages/ui/src/components/VideoSurface/VideoSurface.types.ts"
       ],
       "@ValenceUI/animations/motion": ["./packages/ui/src/animations/motion.ts"],
+      "@ValenceUI/tokens/roleColours": ["./packages/ui/src/tokens/roleColours.ts"],
       "@ValenceUI/tokens/segmented": ["./packages/ui/src/tokens/segmented.ts"],
       "@ValenceUI/tokens/underlined": ["./packages/ui/src/tokens/underlined.ts"],
       "@ValenceUI/animations/reveal": ["./packages/ui/src/animations/reveal.ts"],

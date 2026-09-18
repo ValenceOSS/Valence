@@ -15,7 +15,7 @@ vi.mock('@ValenceClient/profiles/fetchEveryone', () => ({ fetchEveryone }));
 vi.mock('@ValenceClient/setup/fetchSetupStatus', () => ({ fetchSetupStatus }));
 
 const aCache = (): QueryClient =>
-  new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
 
 beforeEach(() => {
   vi.clearAllMocks();

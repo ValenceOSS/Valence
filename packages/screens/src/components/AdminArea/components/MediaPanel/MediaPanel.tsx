@@ -1,8 +1,8 @@
 import { Icon } from '@ValenceUI/Icon';
-import { RefreshIcon, Search01Icon } from '@hugeicons/core-free-icons';
-import { useCallback, useMemo, useState } from 'react';
+import { MoreHorizontalIcon, RefreshIcon, Search01Icon } from '@hugeicons/core-free-icons';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
 import { TextField } from '@ValenceUI/TextField';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
@@ -70,6 +70,10 @@ const MediaPanel = ({
     [media, search],
   );
 
+  const live = useRef({ rebuilding, rebuilt, onCorrect, rebuild });
+
+  live.current = { rebuilding, rebuilt, onCorrect, rebuild };
+
   const columns = useMemo<DataTableColumn<MediaSummary>[]>(
     () => [
       {
@@ -122,38 +126,44 @@ const MediaPanel = ({
         header: '',
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="flex justify-end gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              isLoading={rebuilding === row.original.id}
-              onClick={() => {
-                void rebuild(row.original);
-              }}
-            >
-              <Icon of={RefreshIcon} size={15} />
-              {rebuilding === row.original.id
-                ? 'Rebuilding…'
-                : rebuilt.has(row.original.id)
-                  ? 'Will rebuild'
-                  : 'Rebuild previews'}
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                onCorrect(row.original);
-              }}
-            >
-              <Icon of={Search01Icon} size={15} />
-              Wrong match?
-            </Button>
+          <span className="flex justify-end">
+            <ActionMenu
+              label={`Actions for ${nameOf(row.original)}`}
+              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
+              groups={[
+                {
+                  items: [
+                    {
+                      id: 'rebuild',
+                      label:
+                        live.current.rebuilding === row.original.id
+                          ? 'Rebuilding…'
+                          : live.current.rebuilt.has(row.original.id)
+                            ? 'Will rebuild'
+                            : 'Rebuild previews',
+                      icon: <Icon of={RefreshIcon} size={15} />,
+                      isDisabled: live.current.rebuilding === row.original.id,
+                      onChoose: () => {
+                        void live.current.rebuild(row.original);
+                      },
+                    },
+                    {
+                      id: 'wrong-match',
+                      label: 'Wrong match?',
+                      icon: <Icon of={Search01Icon} size={15} />,
+                      onChoose: () => {
+                        live.current.onCorrect(row.original);
+                      },
+                    },
+                  ],
+                },
+              ]}
+            />
           </span>
         ),
       },
     ],
-    [onCorrect, rebuild, rebuilding, rebuilt],
+    [],
   );
 
   return (

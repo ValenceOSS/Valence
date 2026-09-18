@@ -1,24 +1,18 @@
 import { Icon } from '@ValenceUI/Icon';
-import { MoreHorizontalIcon, RefreshIcon, Alert02Icon } from '@hugeicons/core-free-icons';
+import { MoreHorizontalIcon, Alert02Icon } from '@hugeicons/core-free-icons';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
-import { TextField } from '@ValenceUI/TextField';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { watchJobs } from '@ValenceClient/admin/fetchAdmin';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
-import { JobRunStatusSchema } from '@ValenceContracts/schemas/JobRun';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
-import type { SegmentedItem } from '@ValenceUI/SegmentedRow.types';
 import type { JobRunPage, JobRunRecord, JobRunStatus } from '@ValenceContracts/schemas/JobRun';
 import type { JobHistoryProps } from './JobHistory.types';
 
@@ -30,15 +24,21 @@ const REFRESH_THROTTLE_MS = 1_000;
 
 const NOTHING_RUN: JobRunRecord[] = [];
 
-type StatusFilter = JobRunStatus | 'all';
+const STATUSES = [
+  'queued',
+  'running',
+  'completed',
+  'failed',
+] as const satisfies readonly JobRunStatus[];
 
-const STATUS_ITEMS: SegmentedItem[] = [
-  { id: 'all', label: 'All' },
-  { id: 'queued', label: 'Queued' },
-  { id: 'running', label: 'Running' },
-  { id: 'completed', label: 'Done' },
-  { id: 'failed', label: 'Failed' },
-];
+const STATUS_LABELS: Readonly<Record<JobRunStatus, string>> = {
+  queued: 'Queued',
+  running: 'Running',
+  completed: 'Completed',
+  failed: 'Failed',
+};
+
+const STATUS_FILTER_OPTIONS = STATUSES.map((id) => ({ id, label: STATUS_LABELS[id] }));
 
 const STATUS_TONES: Readonly<Record<JobRunStatus, BadgeTone>> = {
   queued: 'warning',
@@ -93,8 +93,6 @@ const describeRunKind = (kind: string, labels: ReadonlyMap<string, string>): str
  */
 const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
   const cache = useQueryClient();
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<StatusFilter>('all');
   const [openIssuesFor, setOpenIssuesFor] = useState<string | null>(null);
 
   const labels = useMemo(
@@ -102,12 +100,7 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
     [definitions],
   );
 
-  const query = useMemo(
-    () => ({ status: status === 'all' ? null : status, search, limit: PAGE }),
-    [status, search],
-  );
-
-  const askedHistory = useQuery(adminQueries.jobHistory(query));
+  const askedHistory = useQuery(adminQueries.jobHistory({ limit: PAGE }));
   const askedIssues = useQuery(adminQueries.jobHistoryIssues(openIssuesFor));
 
   const records = askedHistory.data?.records ?? NOTHING_RUN;
@@ -183,9 +176,12 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
         id: 'status',
         header: 'Status',
         accessorFn: (record) => record.status,
+        filterFn: (row, columnId, filterValue) =>
+          filterValue === undefined || row.getValue(columnId) === filterValue,
+        meta: { filterOptions: STATUS_FILTER_OPTIONS },
         cell: ({ row }) => (
           <Badge size="sm" tone={STATUS_TONES[row.original.status]}>
-            {row.original.status}
+            {STATUS_LABELS[row.original.status]}
           </Badge>
         ),
       },
@@ -272,64 +268,13 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
   );
 
   return (
-    <PanelCard
-      title="Job history"
-      isFlush
-      actions={
-        <>
-          <TextField
-            label="Search job history"
-            isLabelHidden
-            size="sm"
-            type="search"
-            placeholder="Search"
-            value={search}
-            onValueChange={setSearch}
-            className="w-32 max-w-full"
-          />
-
-          <SegmentedRow
-            label="Filter job history by status"
-            size="xs"
-            tone="accent"
-            items={STATUS_ITEMS}
-            value={status}
-            onSelect={(id) => {
-              if (id === 'all') {
-                setStatus('all');
-
-                return;
-              }
-
-              const parsed = JobRunStatusSchema.safeParse(id);
-
-              if (parsed.success) {
-                setStatus(parsed.data);
-              }
-            }}
-          />
-
-          <Button
-            isIconOnly
-            variant="ghost"
-            size="xs"
-            label="Read the history again"
-            hasTooltip
-            isLoading={askedHistory.isFetching}
-            onClick={() => {
-              void askedHistory.refetch();
-            }}
-          >
-            <Icon of={RefreshIcon} size={15} />
-          </Button>
-        </>
-      }
-    >
+    <div className="flex flex-col gap-4">
       <DataTable
         label="What pg-boss has run"
         columns={columns}
         rows={records}
         getRowId={(record) => record.id}
+        height="fill"
         pageSize={ROWS_PER_PAGE}
         emptyMessage={
           askedHistory.isError
@@ -376,7 +321,7 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
           </>
         )}
       </Dialog>
-    </PanelCard>
+    </div>
   );
 };
 

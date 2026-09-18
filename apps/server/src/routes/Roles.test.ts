@@ -59,6 +59,7 @@ const signedInWith = async (granted: readonly Permission[], position = 200) => {
     const role = await context.permissions.createRole({
       name: 'Purpose-made',
       position,
+      color: null,
       permissions: [...granted],
     });
 
@@ -120,6 +121,7 @@ describe('managing roles over HTTP', () => {
       const response = await context.request('/api/admin/roles', 'POST', {
         name: 'Housemate',
         position: 120,
+        color: null,
         permissions: ['media.rescan'],
       });
 
@@ -134,6 +136,7 @@ describe('managing roles over HTTP', () => {
       const response = await context.request('/api/admin/roles', 'POST', {
         name: 'Overreach',
         position: 200,
+        color: null,
         permissions: [],
       });
 
@@ -145,6 +148,7 @@ describe('managing roles over HTTP', () => {
       const response = await context.request('/api/admin/roles', 'POST', {
         name: 'Sneaky',
         position: 100,
+        color: null,
         permissions: ['server.settings'],
       });
 
@@ -157,6 +161,7 @@ describe('managing roles over HTTP', () => {
       const response = await context.request('/api/admin/roles', 'POST', {
         name: 'Me But Better',
         position: 100,
+        color: null,
         permissions: ['administrator'],
       });
 
@@ -192,6 +197,7 @@ describe('managing roles over HTTP', () => {
       const member = await idOf(context, 'Member');
       const response = await context.request(`/api/admin/roles/${member}`, 'PATCH', {
         position: 900,
+        color: null,
       });
 
       expect(response.status).toBe(403);
@@ -333,6 +339,7 @@ describe('managing roles over HTTP', () => {
       const senior = await context.permissions.createRole({
         name: 'Senior',
         position: 500,
+        color: null,
         permissions: [],
       });
 

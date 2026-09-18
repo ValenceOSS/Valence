@@ -1,12 +1,28 @@
 name: CI
 
-# The gate every change goes through. Lint, types, the schema snapshot and the whole test suite, on
-# every push and every pull request, so a branch that cannot merge says so before anybody reviews it.
+# The gate every change goes through, on every push and every pull request, so a branch that cannot
+# merge says so before anybody reviews it.
 #
-# What is deliberately not here is the media pipeline. That job wants a Debian container, a Rust
-# build and three minutes of encoding against the FFmpeg Valence ships, which is well over ten
-# minutes of waiting — too slow to put in front of every push, and it lives in media-pipeline.yml to
-# be run when it earns its keep: before a release, and after touching the transcoder.
+# Three stages. Lint needs no build and starts at once. Build compiles every package something else
+# depends on, exactly once, and saves what turbo produced. Typecheck and every test job then restore
+# that and run against it — the `^build` each of their tasks depends on is answered from the cache
+# rather than compiled again, so nothing after the build stage rebuilds anything.
+#
+# One build job rather than one per package, deliberately. The packages form a chain — contracts,
+# then core, then client, then screens — and a job per link would wait on the link before it, paying
+# a runner's checkout and install at every step of a graph that compiles end to end in seconds. Each
+# package's build is still its own turbo task with its own block in the log; they share a runner
+# because splitting them would cost minutes to save seconds.
+#
+# Tests run one package per runner. Turbo and vitest each size their worker pool to the machine's
+# CPU count, and a GitHub-hosted runner has a handful of cores — every package at once on one box
+# oversubscribes it many times over, which is thrashing rather than parallelism. @valence/screens
+# goes further and is sharded four ways: it is the one package on jsdom rather than plain Node, and
+# its 491 files kept climbing well past where everything else, @valence/server's larger suite
+# included, had finished and stayed flat.
+#
+# The media pipeline is deliberately not here. It wants a Debian container, a Rust build and three
+# minutes of encoding, and lives in media-pipeline.yml to run when it earns its keep.
 
 on:
   push:
@@ -19,8 +35,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  checks:
-    name: Lint, types and tests
+  lint:
+    name: Lint and schema
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -36,13 +52,140 @@ jobs:
 
       - run: pnpm lint
 
-      - run: pnpm typecheck
-
       # A hand-written migration with no snapshot beside it leaves generation silent and recreating
       # tables that already exist. See VAL-193.
       - run: pnpm db:check
 
-      - run: pnpm test
+  build:
+    name: Build every package once
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Every package some other package's typecheck or test task needs as a `^build` dependency.
+      # Never a leaf app: nothing depends on one, and building one here would be waste (for
+      # `apps/web` today it would also surface a real but unrelated strictness gap between its own
+      # build and its typecheck script, worth its own fix).
+      - run: >-
+          pnpm turbo run build
+          --filter=@valence/contracts
+          --filter=@valence/core
+          --filter=@valence/plugin-sdk
+          --filter=@valence/ui
+          --filter=@valence/client
+          --filter=@valence/screens
+
+      # Keyed on the commit rather than on source hashes: this cache only has to outlive the jobs in
+      # this one run, every one of which wants exactly what this commit built.
+      - uses: actions/cache/save@v4
+        with:
+          path: .turbo/cache
+          key: turbo-build-${{ github.sha }}
+
+  typecheck:
+    name: Typecheck
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: .turbo/cache
+          key: turbo-build-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - run: pnpm typecheck
+
+  test:
+    name: Test (${{ matrix.package }})
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - '@valence/contracts'
+          - '@valence/core'
+          - '@valence/plugin-sdk'
+          - '@valence/tools'
+          - '@valence/ui'
+          - '@valence/client'
+          - '@valence/server'
+          - '@valence/web'
+          - '@valence/desktop'
+          - '@valence/landing'
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: .turbo/cache
+          key: turbo-build-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - run: pnpm turbo run test --filter=${{ matrix.package }}
+
+  test-screens:
+    name: Test (@valence/screens, shard ${{ matrix.shard }}/4)
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: .turbo/cache
+          key: turbo-build-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      # In two steps rather than `turbo run test -- --shard=…`. Turbo folds pass-through arguments
+      # into its hash, so a test run carrying a shard argument never matches what the build job
+      # cached and rebuilt every dependency itself. Restoring the builds through turbo with no extra
+      # arguments answers every one of them from the cache; vitest then takes the shard directly.
+      - run: pnpm turbo run build --filter=@valence/screens
+
+      - run: pnpm --filter @valence/screens exec vitest run --shard=${{ matrix.shard }}/4
 
   rust:
     name: Transcoder lint and tests

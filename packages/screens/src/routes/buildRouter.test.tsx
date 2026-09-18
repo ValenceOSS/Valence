@@ -32,10 +32,13 @@ describe('buildRouter', () => {
     expect(matched('/favourites')).toBe('/signed-in/shell/favourites');
   });
 
-  it('has no route for the account, the server or search, which are dialogs raised over whatever is showing', () => {
+  it('has no route for the account or search, which are dialogs raised over whatever is showing', () => {
     expect(matched('/account')).toBe('/signed-in/shell/$');
-    expect(matched('/admin')).toBe('/signed-in/shell/$');
     expect(matched('/search')).toBe('/signed-in/shell/$');
+  });
+
+  it('gives the server its own route, a real page rather than a dialog', () => {
+    expect(matched('/admin')).toBe('/signed-in/admin');
   });
 
   it('draws the player and a share link outside the chrome the sections sit in', () => {

@@ -126,6 +126,14 @@ jobs:
         env:
           OWNER: ${{ github.repository_owner }}
 
+      # The tag names the release as "v0.3.0"; the running app should say "0.3.0", the way its own
+      # CHANGELOG and package version already do.
+      - name: Work out the version
+        id: version
+        run: echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+
       - name: Work out how to tag it
         id: meta
         uses: docker/metadata-action@v6
@@ -164,6 +172,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: VALENCE_VERSION=${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false

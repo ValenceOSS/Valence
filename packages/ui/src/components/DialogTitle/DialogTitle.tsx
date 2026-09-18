@@ -6,9 +6,10 @@ import type { DialogTitleProps } from './DialogTitle.types';
  * anything the caller wants beside them, and a row beneath. Pinned rather than scrolled, so what a
  * dialog is about stays on screen while its content moves.
  *
- * No rule beneath it. A dialog is already a panel with an edge of its own, and a second line drawn
- * a few rows in cuts it into two boxes; the space and the weight of the title are what separate the
- * head from what follows.
+ * Tinted a shade different from the panel behind it, with a rule at its foot — the same way the
+ * foot of the dialog is set apart. A dialog is a surface with its own edge already, but a head and a
+ * foot sharing the middle's exact colour read as more of that surface rather than as the frame
+ * around it, which is what they actually are.
  *
  * The row beneath is where a dialog's own navigation goes. Putting it here rather than at the top of
  * the content keeps it still while the content scrolls under it, and stops the head and the first
@@ -19,9 +20,9 @@ import type { DialogTitleProps } from './DialogTitle.types';
  * @param icon - Something to draw before the title, such as whose account this is.
  * @param below - A row beneath the head, such as the dialog's own tabs.
  * @param children - Anything to sit beside the title, such as a close button.
- * @param size - How much room the head takes. Compact sets the title and its line side by side at
- *   body size, for a dialog that is a workspace — somewhere the panels are the point and a head
- *   the height of a banner is room taken from them on every panel.
+ * @param size - How much room the head takes. Compact sets both the title and its line smaller, for
+ *   a dialog that is a workspace — somewhere the panels are the point and a head the height of a
+ *   banner is room taken from them on every panel.
  * @param className - Extra classes for the caller's own layout.
  */
 const DialogTitle = ({
@@ -38,8 +39,8 @@ const DialogTitle = ({
   return (
     <header
       className={cn(
-        'flex shrink-0 flex-col',
-        isCompact ? 'gap-1 px-5 pt-3' : 'gap-4 px-6 pb-4 pt-6',
+        'flex shrink-0 flex-col border-b border-[var(--surface-line)] bg-[var(--color-surface)]',
+        isCompact ? 'gap-1 px-5 py-3' : 'gap-4 px-6 py-5',
         className,
       )}
     >
@@ -47,9 +48,7 @@ const DialogTitle = ({
         <div className={cn('flex min-w-0 items-center', isCompact ? 'gap-2.5' : 'gap-4')}>
           {icon === undefined ? null : <span className="flex shrink-0 items-center">{icon}</span>}
 
-          <div
-            className={cn('flex min-w-0', isCompact ? 'items-baseline gap-2.5' : 'flex-col gap-1')}
-          >
+          <div className="flex min-w-0 flex-col gap-0.5">
             <h2
               className={cn(
                 'truncate font-semibold text-text',

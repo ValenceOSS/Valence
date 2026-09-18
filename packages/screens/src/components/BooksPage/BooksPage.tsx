@@ -1,7 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
-import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { BookShelf } from '@ValenceScreens/components/BookShelf/BookShelf';
 
@@ -19,7 +18,6 @@ import { BookShelf } from '@ValenceScreens/components/BookShelf/BookShelf';
 const BooksPage = () => {
   const go = useNavigate();
   const { mayAdminister } = useWhatIMayDo();
-  const { go: goWithin } = usePlace();
   const prefersReducedMotion = useReducedMotionConfig();
 
   return (
@@ -45,7 +43,7 @@ const BooksPage = () => {
           {...(mayAdminister
             ? {
                 onAddLibrary: () => {
-                  goWithin({ admin: 'libraries' });
+                  void go({ to: '/admin/$panel', params: { panel: 'libraries' } });
                 },
               }
             : {})}

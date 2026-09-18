@@ -3,7 +3,9 @@ import type { DialogFooterProps } from './DialogFooter.types';
 
 /**
  * The foot of a dialog, holding the buttons that answer it. Pinned rather than scrolled, so the way
- * out of a dialog is always visible however long its content runs.
+ * out of a dialog is always visible however long its content runs. Tinted the same shade as the
+ * head, a step from the panel behind it, so the two read as the frame around the content rather than
+ * more of it.
  *
  * The buttons share the bar as equal columns. A question with two answers should not suggest which
  * one to give by making it wider, and a bar of actions with three buttons huddled at one end reads
@@ -27,7 +29,7 @@ const DialogFooter = ({ children, className }: DialogFooterProps) => (
     className={cn(
       'grid shrink-0 gap-3',
       'sm:grid-flow-col sm:[grid-auto-columns:1fr]',
-      'border-t border-[var(--surface-line)] p-4',
+      'border-t border-[var(--surface-line)] bg-[var(--color-surface)] p-4',
       '[&>*]:w-full',
       className,
     )}

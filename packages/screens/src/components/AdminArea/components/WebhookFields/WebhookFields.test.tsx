@@ -1,8 +1,13 @@
+import { useState } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { TabRow } from '@ValenceUI/TabRow';
+import { Tabs } from '@ValenceUI/Tabs';
+import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { DEFAULT_WEBHOOK_FILTERS } from '@ValenceContracts/schemas/Webhook';
 import { WebhookFields } from './WebhookFields';
+import { WEBHOOK_PANES, WEBHOOK_PANE_ITEMS, isWebhookPane } from './webhookPanes';
 import type { WebhookDraft, WebhookFieldsProps } from './WebhookFields.types';
 
 const aDraft = (overrides: Partial<WebhookDraft> = {}): WebhookDraft => ({
@@ -14,9 +19,39 @@ const aDraft = (overrides: Partial<WebhookDraft> = {}): WebhookDraft => ({
   ...overrides,
 });
 
-const draw = (overrides: Partial<WebhookFieldsProps> = {}) => {
+/**
+ * Stands in for the `Tabs` and `TabRow` a real caller wraps `WebhookFields` in, since the panes are
+ * bare `TabPanel`s that need a `Tabs` provider above them and a way to move between them.
+ */
+const Harness = (props: Omit<WebhookFieldsProps, 'travel'>) => {
+  const [pane, setPane] = useState<(typeof WEBHOOK_PANES)[number]>('where');
+  const travel = useTravelDirection([...WEBHOOK_PANES], pane);
+
+  return (
+    <Tabs
+      value={pane}
+      onValueChange={(next) => {
+        if (isWebhookPane(next)) {
+          setPane(next);
+        }
+      }}
+    >
+      <TabRow
+        label="What to change"
+        tone="underlined"
+        size="sm"
+        value={pane}
+        groups={[{ items: WEBHOOK_PANE_ITEMS }]}
+      />
+
+      <WebhookFields {...props} travel={travel} />
+    </Tabs>
+  );
+};
+
+const draw = (overrides: Partial<Omit<WebhookFieldsProps, 'travel'>> = {}) => {
   const onChange = vi.fn<(draft: WebhookDraft) => void>();
-  const props: WebhookFieldsProps = {
+  const props: Omit<WebhookFieldsProps, 'travel'> = {
     draft: aDraft(),
     onChange,
     accounts: [
@@ -30,7 +65,7 @@ const draw = (overrides: Partial<WebhookFieldsProps> = {}) => {
     ...overrides,
   };
 
-  render(<WebhookFields {...props} />);
+  render(<Harness {...props} />);
 
   return { ...props, onChange };
 };
@@ -62,7 +97,7 @@ describe('WebhookFields', () => {
     draw();
     await openPane(user, 'Events');
 
-    expect(screen.getByRole('checkbox', { name: 'Job failed' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Job failed' })).toBeChecked();
   });
 
   it('adds an event without disturbing the one already chosen', async () => {
@@ -70,7 +105,7 @@ describe('WebhookFields', () => {
     const { onChange } = draw();
 
     await openPane(user, 'Events');
-    await user.click(screen.getByRole('checkbox', { name: 'Signed in' }));
+    await user.click(screen.getByRole('switch', { name: 'Signed in' }));
 
     expect(changedTo(onChange).events).toStrictEqual(['job.failed', 'auth.succeeded']);
   });
@@ -80,7 +115,7 @@ describe('WebhookFields', () => {
     const { onChange } = draw();
 
     await openPane(user, 'Events');
-    await user.click(screen.getByRole('checkbox', { name: 'Job failed' }));
+    await user.click(screen.getByRole('switch', { name: 'Job failed' }));
 
     expect(changedTo(onChange).events).toStrictEqual([]);
   });
@@ -118,7 +153,7 @@ describe('WebhookFields', () => {
 
     const accounts = within(screen.getByRole('group', { name: 'Accounts' }));
 
-    await user.click(accounts.getByRole('checkbox', { name: 'Ada' }));
+    await user.click(accounts.getByRole('switch', { name: 'Ada' }));
 
     expect(changedTo(onChange).filters).toMatchObject({ accounts: ['account-1'], profiles: [] });
   });
@@ -157,7 +192,7 @@ describe('WebhookFields', () => {
     draw();
     await openPane(user, 'Events');
 
-    expect(screen.getByRole('checkbox', { name: 'Sign-in refused' })).toHaveAccessibleDescription(
+    expect(screen.getByRole('switch', { name: 'Sign-in refused' })).toHaveAccessibleDescription(
       /Rate-limited attempts are refused/,
     );
   });

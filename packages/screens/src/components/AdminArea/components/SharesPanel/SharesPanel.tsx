@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Unlink01Icon } from '@hugeicons/core-free-icons';
+import { InformationCircleIcon, Unlink01Icon } from '@hugeicons/core-free-icons';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -7,6 +7,7 @@ import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
+import { HoverCard } from '@ValenceUI/HoverCard';
 import { Spinner } from '@ValenceUI/Spinner';
 import { revokeAnybodysShare } from '@ValenceClient/sharing/fetchShares';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -116,7 +117,26 @@ const SharesPanel = () => {
   );
 
   return (
-    <PanelCard title="Shared links" isFlush>
+    <PanelCard
+      title="Shared links"
+      isFlush
+      actions={
+        <HoverCard
+          side="bottom"
+          align="end"
+          detail={
+            <p className="max-w-xs text-xs leading-relaxed">
+              Anybody holding one of these can watch what it points at without an account here.
+              Withdrawing a link stops it at once, and tells whoever made it.
+            </p>
+          }
+        >
+          <span className="text-text-muted hover:text-text">
+            <Icon of={InformationCircleIcon} size={14} label="About shared links" />
+          </span>
+        </HoverCard>
+      }
+    >
       <ConfirmDialog
         title="Withdraw this link?"
         detail={
@@ -148,11 +168,6 @@ const SharesPanel = () => {
             });
         }}
       />
-
-      <p className="px-4 pt-4 text-sm text-text-muted">
-        Anybody holding one of these can watch what it points at without an account here.
-        Withdrawing a link stops it at once, and tells whoever made it.
-      </p>
 
       {asked.isError ? (
         <CouldNotRead

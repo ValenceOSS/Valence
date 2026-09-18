@@ -37,7 +37,6 @@ const useSignOut = (): (() => Promise<void>) => {
       inspecting: null,
       playing: null,
       account: null,
-      admin: null,
     });
 
     await refresh();

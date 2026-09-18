@@ -68,7 +68,7 @@ const listening = (socket: ReturnType<typeof aSocket>) =>
   );
 
 beforeEach(() => {
-  cache = new QueryClient();
+  cache = new QueryClient({ defaultOptions: { queries: { gcTime: Infinity } } });
   getRealtimeClient.mockReturnValue(undefined);
 });
 

@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { JobsPanel } from './JobsPanel';
 import type { ReactElement } from 'react';
@@ -80,37 +81,23 @@ const props = {
 const renderPanel = (element: ReactElement) =>
   render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}
     >
       {element}
     </QueryClientProvider>,
   );
 
 describe('JobsPanel', () => {
-  it('tells failure apart from an empty queue', () => {
-    renderPanel(<JobsPanel {...props} isUnreachable />);
-
-    expect(screen.getByText(/could not be read from the server/)).toBeInTheDocument();
-    expect(screen.queryByText('Nothing queued.')).not.toBeInTheDocument();
-  });
-
-  it('says it is still reading before a reading arrives, rather than confirmed empty', () => {
+  it('opens on the history tab, the merged live-and-persisted view', () => {
     renderPanel(<JobsPanel {...props} />);
 
-    expect(screen.getByText('Reading the queue…')).toBeInTheDocument();
+    expect(screen.getByText('Reading job history…')).toBeInTheDocument();
   });
 
-  it('says the same when the queue is empty', () => {
-    renderPanel(<JobsPanel {...props} monitor={reading([])} />);
+  it('says nothing about the queue before a reading has arrived', () => {
+    renderPanel(<JobsPanel {...props} />);
 
-    expect(screen.getByText('Nothing queued.')).toBeInTheDocument();
-  });
-
-  it('shows what is in the queue', () => {
-    renderPanel(<JobsPanel {...props} monitor={reading([job()])} />);
-
-    expect(screen.getByText('Films')).toBeInTheDocument();
-    expect(screen.getByText('running')).toBeInTheDocument();
+    expect(screen.getByText('—')).toBeInTheDocument();
   });
 
   it('summarises the queue rather than making somebody count', () => {
@@ -131,49 +118,15 @@ describe('JobsPanel', () => {
     expect(screen.getByText(/1 failed/)).toBeInTheDocument();
   });
 
-  it('says a job is waiting when it has not started', () => {
-    renderPanel(<JobsPanel {...props} monitor={reading([job({ state: 'queued' })])} />);
+  it('switches to the run-and-schedule tab, and back', async () => {
+    const user = userEvent.setup();
+    renderPanel(<JobsPanel {...props} />);
 
-    expect(screen.getByText('waiting')).toBeInTheDocument();
-  });
+    await user.click(screen.getByRole('tab', { name: 'Run & schedule' }));
+    expect(screen.getByText('Scan for changes')).toBeInTheDocument();
 
-  it('reports a short run in milliseconds', () => {
-    const startedAtMs = Date.now() - 250;
-
-    renderPanel(
-      <JobsPanel
-        {...props}
-        monitor={reading([job({ startedAtMs, finishedAtMs: startedAtMs + 250 })])}
-      />,
-    );
-
-    expect(screen.getByText('250 ms')).toBeInTheDocument();
-  });
-
-  it('reports a longer run in seconds', () => {
-    const startedAtMs = Date.now() - 30_000;
-
-    renderPanel(
-      <JobsPanel
-        {...props}
-        monitor={reading([job({ startedAtMs, finishedAtMs: startedAtMs + 30_000 })])}
-      />,
-    );
-
-    expect(screen.getByText('30 s')).toBeInTheDocument();
-  });
-
-  it('shows why a job failed', () => {
-    renderPanel(
-      <JobsPanel
-        {...props}
-        monitor={reading([
-          job({ state: 'failed', failure: { message: 'no such path', chain: [] } }),
-        ])}
-      />,
-    );
-
-    expect(screen.getByText('no such path')).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'History' }));
+    expect(screen.getByRole('tab', { name: 'History' })).toHaveAttribute('aria-selected', 'true');
   });
 
   describe('opening a schedule', () => {
@@ -181,14 +134,14 @@ describe('JobsPanel', () => {
       renderPanel(<JobsPanel {...props} viewingJobKind="library.scan" />);
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText('Reading the queue…')).toBeInTheDocument();
+      expect(screen.getByText('Reading job history…')).toBeInTheDocument();
     });
 
     it('stays shut for a job kind it does not know', () => {
       renderPanel(<JobsPanel {...props} viewingJobKind="library.summon" />);
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      expect(screen.getByText('Reading the queue…')).toBeInTheDocument();
+      expect(screen.getByText('Reading job history…')).toBeInTheDocument();
     });
   });
 

@@ -1,6 +1,6 @@
 {
-  "id": "dedfcdc4-d13c-4209-92a3-9932e0a95628",
-  "prevId": "5915a048-365b-45e1-8d57-189294f8390c",
+  "id": "e165a0f2-9b31-46af-8e71-7a03662d5eed",
+  "prevId": "8835a150-4832-4462-8de2-e4aa9eac2a72",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3753,6 +3753,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "createdAt": {
           "name": "createdAt",

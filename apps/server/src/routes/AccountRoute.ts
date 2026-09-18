@@ -1,5 +1,9 @@
 import { createRoute, z } from '@hono/zod-openapi';
-import { ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
+import {
+  AvatarSchema,
+  ProfileColourSchema,
+  ViewerProfileSchema,
+} from '@ValenceContracts/schemas/ViewerProfile';
 
 const Account = z
   .object({
@@ -174,6 +178,121 @@ const editAccountRoute = createRoute({
   },
 });
 
+const resetAccountPasswordRoute = createRoute({
+  method: 'put',
+  path: '/api/admin/accounts/{userId}/password',
+  tags: ['Accounts'],
+  summary: 'Set an account’s password directly',
+  request: {
+    params: z.object({ userId: z.string().min(1) }),
+    body: {
+      content: {
+        'application/json': { schema: z.object({ password: z.string().min(8).max(200) }) },
+      },
+    },
+  },
+  responses: {
+    204: { description: 'The password was changed and every session was ended' },
+    403: {
+      description: 'Not permitted',
+      content: { 'application/json': { schema: AccountError } },
+    },
+    404: {
+      description: 'No such account',
+      content: { 'application/json': { schema: AccountError } },
+    },
+  },
+});
+
+const AccountSession = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    address: z.string().nullable(),
+    signedInAt: z.string(),
+    expiresAt: z.string(),
+  })
+  .openapi('AccountSession');
+
+const listAccountSessionsRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/accounts/{userId}/sessions',
+  tags: ['Accounts'],
+  summary: 'See everywhere an account is signed in',
+  request: { params: z.object({ userId: z.string().min(1) }) },
+  responses: {
+    200: {
+      description: 'Where the account is signed in',
+      content: { 'application/json': { schema: z.object({ sessions: z.array(AccountSession) }) } },
+    },
+    403: {
+      description: 'Not permitted',
+      content: { 'application/json': { schema: AccountError } },
+    },
+  },
+});
+
+const endAccountSessionsRoute = createRoute({
+  method: 'delete',
+  path: '/api/admin/accounts/{userId}/sessions',
+  tags: ['Accounts'],
+  summary: 'Sign an account out everywhere',
+  request: { params: z.object({ userId: z.string().min(1) }) },
+  responses: {
+    204: { description: 'Every session was ended' },
+    403: {
+      description: 'Not permitted',
+      content: { 'application/json': { schema: AccountError } },
+    },
+  },
+});
+
+const endAccountSessionRoute = createRoute({
+  method: 'delete',
+  path: '/api/admin/accounts/{userId}/sessions/{sessionId}',
+  tags: ['Accounts'],
+  summary: 'Sign one of an account’s sessions out',
+  request: { params: z.object({ userId: z.string().min(1), sessionId: z.string().min(1) }) },
+  responses: {
+    204: { description: 'The session was ended' },
+    403: {
+      description: 'Not permitted',
+      content: { 'application/json': { schema: AccountError } },
+    },
+  },
+});
+
+const setAccountAvatarRoute = createRoute({
+  method: 'patch',
+  path: '/api/admin/accounts/{userId}/avatar',
+  tags: ['Accounts'],
+  summary: 'Give an account a drawn face, an initial, or a new colour',
+  request: {
+    params: z.object({ userId: z.string().min(1) }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            avatar: AvatarSchema.optional(),
+            colour: ProfileColourSchema.optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    204: { description: 'Changed' },
+    403: {
+      description: 'Not permitted',
+      content: { 'application/json': { schema: AccountError } },
+    },
+    404: {
+      description: 'No such account',
+      content: { 'application/json': { schema: AccountError } },
+    },
+  },
+});
+
 export {
   listAccountsRoute,
   banAccountRoute,
@@ -181,4 +300,9 @@ export {
   removeAccountRoute,
   inviteAccountRoute,
   editAccountRoute,
+  resetAccountPasswordRoute,
+  listAccountSessionsRoute,
+  endAccountSessionsRoute,
+  endAccountSessionRoute,
+  setAccountAvatarRoute,
 };

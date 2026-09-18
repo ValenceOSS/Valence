@@ -119,6 +119,7 @@ describe('createMemoryPermissionService', () => {
       const created = await service.createRole({
         name: 'Housemate',
         position: 150,
+        color: null,
         permissions: ['media.rescan'],
       });
 

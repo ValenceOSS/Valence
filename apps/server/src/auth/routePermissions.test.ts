@@ -64,6 +64,7 @@ const signedInWith = async (permissionNames: readonly Permission[]) => {
   const role = await context.permissions.createRole({
     name: 'Purpose-made',
     position: 50,
+    color: null,
     permissions: [...permissionNames],
   });
 

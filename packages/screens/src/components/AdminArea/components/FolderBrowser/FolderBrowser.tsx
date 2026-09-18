@@ -150,7 +150,7 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
           </Button>
 
           <Button
-            variant="primary"
+            variant="glossy"
             size="sm"
             disabled={chosen === null}
             onClick={() => {

@@ -46,7 +46,7 @@ const draw = () => {
 
   return render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}
     >
       <Showing />
     </QueryClientProvider>,

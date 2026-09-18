@@ -80,7 +80,7 @@ const StillWatchingDialog = ({
           Stop
         </Button>
 
-        <Button variant="primary" size="sm" onClick={onCarryOn}>
+        <Button variant="glossy" size="sm" onClick={onCarryOn}>
           Still watching
         </Button>
       </DialogFooter>

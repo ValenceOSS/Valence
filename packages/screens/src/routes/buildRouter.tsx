@@ -3,7 +3,9 @@ import {
   createRoute,
   createRouter,
   lazyRouteComponent,
+  redirect,
 } from '@tanstack/react-router';
+import { z } from 'zod';
 import { readSearch } from '@ValenceClient/navigation/readSearch';
 import { ValenceRoot } from '@ValenceScreens/components/ValenceRoot/ValenceRoot';
 import { SignedIn } from '@ValenceScreens/components/SignedIn/SignedIn';
@@ -37,7 +39,16 @@ const ReadPage = lazyRouteComponent(
   'ReadPage',
 );
 
+const AdminPage = lazyRouteComponent(
+  async () => import('@ValenceScreens/components/AdminPage/AdminPage'),
+  'AdminPage',
+);
+
 const BROWSABLE = ['/shows', '/films', '/new', '/favourites'] as const;
+
+const ADMIN_DEFAULT_PANEL = 'overview';
+
+const adminSearch = z.object({ job: z.string().optional() });
 
 /**
  * Builds the router: every address Valence serves, what it carries, and what is drawn there.
@@ -88,6 +99,26 @@ const buildRouter = (title = 'Valence') => {
     ...carries,
   });
 
+  const adminIndex = createRoute({
+    getParentRoute: () => signedIn,
+    path: '/admin',
+    beforeLoad: () => {
+      redirect({
+        to: '/admin/$panel',
+        params: { panel: ADMIN_DEFAULT_PANEL },
+        replace: true,
+        throw: true,
+      });
+    },
+  });
+
+  const admin = createRoute({
+    getParentRoute: () => signedIn,
+    path: '/admin/$panel',
+    component: AdminPage,
+    validateSearch: adminSearch,
+  });
+
   const shell = createRoute({
     getParentRoute: () => signedIn,
     id: 'shell',
@@ -106,7 +137,7 @@ const buildRouter = (title = 'Valence') => {
   return createRouter({
     routeTree: root.addChildren([
       share,
-      signedIn.addChildren([watch, read, shell.addChildren(sections)]),
+      signedIn.addChildren([watch, read, adminIndex, admin, shell.addChildren(sections)]),
     ]),
     defaultErrorComponent: PageProblem,
     scrollRestoration: true,

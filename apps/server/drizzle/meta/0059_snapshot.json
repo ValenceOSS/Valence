@@ -1,5 +1,5 @@
 {
-  "id": "5915a048-365b-45e1-8d57-189294f8390c",
+  "id": "8835a150-4832-4462-8de2-e4aa9eac2a72",
   "prevId": "1de56b25-7cf8-4fc7-af60-7b801ee596d7",
   "version": "7",
   "dialect": "postgresql",
@@ -2242,12 +2242,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "trailerKey": {
-          "name": "trailerKey",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "seriesId": {
           "name": "seriesId",
           "type": "text",
@@ -3753,6 +3747,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "createdAt": {
           "name": "createdAt",

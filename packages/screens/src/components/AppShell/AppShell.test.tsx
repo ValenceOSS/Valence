@@ -24,7 +24,6 @@ const draw = (overrides: Partial<AppShellProps> = {}) => {
     onSectionChange: vi.fn(),
     isAccountOpen: false,
     onOpenAccount: vi.fn(),
-    isAdminOpen: false,
     onOpenAdmin: vi.fn(),
     isDownloadsOpen: false,
     onOpenDownloads: vi.fn(),
@@ -146,14 +145,6 @@ describe('AppShell', () => {
 
   it('lights the face while the account is open, since no section is current then', () => {
     draw({ isAccountOpen: true });
-
-    expect(
-      screen.getByRole('button', { name: 'Account' }).closest('[data-highlight="account"]'),
-    ).toHaveClass('text-text');
-  });
-
-  it('lights the face while the server dialog is open too, since that is where it was opened', () => {
-    draw({ isAdministrator: true, isAdminOpen: true });
 
     expect(
       screen.getByRole('button', { name: 'Account' }).closest('[data-highlight="account"]'),
@@ -367,7 +358,6 @@ describe('AppShell', () => {
         onSectionChange={vi.fn()}
         isAccountOpen={false}
         onOpenAccount={vi.fn()}
-        isAdminOpen={false}
         onOpenAdmin={vi.fn()}
         isDownloadsOpen={false}
         onOpenDownloads={vi.fn()}

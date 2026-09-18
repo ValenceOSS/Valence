@@ -41,14 +41,13 @@ describe('DialogTitle', () => {
     expect(title.parentElement).toHaveClass('flex-col');
   });
 
-  it('keeps to one line at body size where it heads a workspace', () => {
+  it('shrinks the title and its line together for a workspace head', () => {
     render(<DialogTitle size="compact" title="Server" detail="Valence 1.0 · Media service up" />);
 
     const title = screen.getByRole('heading', { name: 'Server' });
 
     expect(title).toHaveClass('text-base');
     expect(title).not.toHaveClass('text-2xl');
-    expect(title.parentElement).not.toHaveClass('flex-col');
     expect(screen.getByText('Valence 1.0 · Media service up')).toHaveClass('text-xs');
   });
 
@@ -56,8 +55,8 @@ describe('DialogTitle', () => {
     const { container: roomy } = render(<DialogTitle title="Share" />);
     const { container: compact } = render(<DialogTitle size="compact" title="Server" />);
 
-    expect(roomy.querySelector('header')).toHaveClass('pt-6');
-    expect(compact.querySelector('header')).toHaveClass('pt-3');
+    expect(roomy.querySelector('header')).toHaveClass('py-5');
+    expect(compact.querySelector('header')).toHaveClass('py-3');
   });
 
   it('sets a display name so devtools can identify it', () => {

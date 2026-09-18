@@ -186,7 +186,7 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
         </Button>
 
         <Button
-          variant="primary"
+          variant="glossy"
           isLoading={isAsking}
           disabled={picked === null || verdict === 'willNotFit'}
           onClick={() => {

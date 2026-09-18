@@ -359,7 +359,7 @@
 }
 
 :root {
-  overscroll-behavior: none;
+  overscroll-behavior-y: none;
   font-size: clamp(1rem, 0.8333vw, 1.75rem);
 }
 
@@ -566,13 +566,13 @@ body {
 .valence-card-shell {
   border-radius: var(--radius-2xl);
   background-color: var(--card-shell);
+  border: 1px solid var(--surface-line);
   padding: 0.25rem;
 }
 
 .valence-card-face {
   border-radius: var(--radius-xl);
   background-color: var(--card-face);
-  box-shadow: 0 0 0 1px var(--surface-line);
 }
 
 :root {

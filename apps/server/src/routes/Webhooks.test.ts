@@ -65,6 +65,7 @@ const signedInWith = async (granted: readonly Permission[]) => {
     const role = await permissions.createRole({
       name: 'Purpose-made',
       position: 200,
+      color: null,
       permissions: [...granted],
     });
 

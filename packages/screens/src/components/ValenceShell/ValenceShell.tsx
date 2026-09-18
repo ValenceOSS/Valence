@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Outlet } from '@tanstack/react-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Outlet, useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,7 +8,6 @@ import { ShowDialog } from '@ValenceScreens/components/ShowDialog/ShowDialog';
 import { MediaDetailDialog } from '@ValenceScreens/components/MediaDetailDialog/MediaDetailDialog';
 import { PersonDialog } from '@ValenceScreens/components/PersonDialog/PersonDialog';
 import { AccountDialog } from '@ValenceScreens/components/AccountDialog/AccountDialog';
-import { AdminDialog } from '@ValenceScreens/components/AdminDialog/AdminDialog';
 import { DownloadsDialog } from '@ValenceScreens/components/DownloadsDialog/DownloadsDialog';
 import { SearchDrawer } from '@ValenceScreens/components/SearchDrawer/SearchDrawer';
 import { ShareDialog } from '@ValenceScreens/components/ShareDialog/ShareDialog';
@@ -39,7 +38,7 @@ import { showSlug } from '@ValenceCore/functions/showSlug';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { STILL_WATCHING_ANSWER_SECONDS } from '@ValenceContracts/schemas/StillWatching';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
-import { ACCOUNT_OPENS_ON, ADMIN_OPENS_ON } from '@ValenceClient/navigation/readLocation';
+import { ACCOUNT_OPENS_ON } from '@ValenceClient/navigation/readLocation';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useSignOut } from '@ValenceScreens/session/useSignOut';
 import { useShell } from '@ValenceClient/shell/useShell';
@@ -58,25 +57,8 @@ const NOTHING_WAITING = { notifications: [], unread: 0 };
  */
 const ValenceShell = () => {
   const cache = useQueryClient();
-  const { place, go, replace } = usePlace();
-
-  const openAdminPanel = useCallback(
-    (next: string) => {
-      replace({ admin: next, adminJob: null });
-    },
-    [replace],
-  );
-
-  const openAdminJob = useCallback(
-    (next: string | null) => {
-      replace({ adminJob: next });
-    },
-    [replace],
-  );
-
-  const closeAdmin = useCallback(() => {
-    go({ admin: null, adminJob: null });
-  }, [go]);
+  const { place, go } = usePlace();
+  const navigate = useNavigate();
 
   const {
     watcher,
@@ -192,9 +174,8 @@ const ValenceShell = () => {
       onOpenAccount={() => {
         go({ account: ACCOUNT_OPENS_ON });
       }}
-      isAdminOpen={mayAdminister && place.admin !== null}
       onOpenAdmin={() => {
-        go({ admin: ADMIN_OPENS_ON });
+        void navigate({ to: '/admin' });
       }}
       isDownloadsOpen={place.downloads}
       onOpenDownloads={() => {
@@ -408,14 +389,6 @@ const ValenceShell = () => {
         onClose={() => {
           go({ isSearchOpen: false });
         }}
-      />
-
-      <AdminDialog
-        panel={mayAdminister ? place.admin : null}
-        job={place.adminJob}
-        onPanel={openAdminPanel}
-        onJob={openAdminJob}
-        onClose={closeAdmin}
       />
 
       <ShareDialog
