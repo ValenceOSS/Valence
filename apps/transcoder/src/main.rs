@@ -219,13 +219,17 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
     let state = AppState {
         registry: registry.clone(),
         ffprobe,
-        downloads: valence_transcoder::download::DownloadRegistry::new(),
+        downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),
         trickplay: valence_transcoder::trickplay::TrickplayRegistry::new(),
         previews: valence_transcoder::preview::PreviewRegistry::new(),
         monitor: valence_transcoder::monitor::Monitor::new(journal),
         audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: valence_transcoder::queue::WorkQueue::new(background_jobs()),
+        renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
         media_roots: env::var("VALENCE_MEDIA_ROOTS")
+            .map(|value| value.split(':').map(PathBuf::from).collect())
+            .unwrap_or_default(),
+        write_roots: env::var("VALENCE_WRITE_ROOTS")
             .map(|value| value.split(':').map(PathBuf::from).collect())
             .unwrap_or_default(),
     };

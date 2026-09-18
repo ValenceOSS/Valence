@@ -13,6 +13,7 @@ const PERMISSIONS = [
 
   'media.rescan',
   'media.delete',
+  'media.reencode',
   'media.override',
   'media.artwork',
   'media.hide',

@@ -701,6 +701,94 @@ const mediaItem = pgTable(
   ],
 );
 
+const mediaRendition = pgTable(
+  'media_rendition',
+  {
+    id: text('id').primaryKey(),
+    mediaItemId: text('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull().default('pinned'),
+    path: text('path').notNull(),
+    label: text('label').notNull(),
+    quality: text('quality'),
+    sizeBytes: bigint('sizeBytes', { mode: 'number' }).notNull(),
+    container: text('container').notNull(),
+    durationSeconds: real('durationSeconds').notNull(),
+    bitrateKbps: integer('bitrateKbps').notNull(),
+    videoCodec: text('videoCodec').notNull(),
+    videoRange: text('videoRange').notNull(),
+    videoRangeBase: text('videoRangeBase'),
+    videoBitDepth: integer('videoBitDepth'),
+    canCopySegments: boolean('canCopySegments'),
+    videoLevel: integer('videoLevel'),
+    videoFrameRate: real('videoFrameRate'),
+    videoIsInterlaced: boolean('videoIsInterlaced'),
+    videoRefFrames: integer('videoRefFrames'),
+    videoPixelAspect: text('videoPixelAspect'),
+    videoRotationDegrees: integer('videoRotationDegrees'),
+    width: integer('width').notNull(),
+    height: integer('height').notNull(),
+    audioStreams: jsonb('audioStreams').notNull(),
+    subtitleStreams: jsonb('subtitleStreams').notNull(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    createdBy: text('createdBy'),
+  },
+  (table) => [
+    uniqueIndex('media_rendition_path_idx').on(table.path),
+    index('media_rendition_item_idx').on(table.mediaItemId),
+    check('media_rendition_kind', sql`${table.kind} in ('pinned')`),
+  ],
+);
+
+const reencodeRequest = pgTable(
+  'reencode_request',
+  {
+    id: text('id').primaryKey(),
+    mediaItemId: text('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    mode: text('mode').notNull(),
+    state: text('state').notNull().default('queued'),
+    quality: text('quality'),
+    videoCodec: text('videoCodec'),
+    audio: text('audio').notNull(),
+    originalPath: text('originalPath').notNull(),
+    originalSizeBytes: bigint('originalSizeBytes', { mode: 'number' }).notNull(),
+    originalProbe: jsonb('originalProbe').notNull(),
+    workingPath: text('workingPath').notNull(),
+    asidePath: text('asidePath'),
+    renditionId: text('renditionId'),
+    samplePath: text('samplePath'),
+    estimatedBytes: bigint('estimatedBytes', { mode: 'number' }),
+    producedBytes: bigint('producedBytes', { mode: 'number' }),
+    progress: integer('progress').notNull().default(0),
+    bytesPerSecond: bigint('bytesPerSecond', { mode: 'number' }),
+    failure: text('failure'),
+    askedBy: text('askedBy'),
+    askedAt: timestamp('askedAt').notNull().defaultNow(),
+    startedAt: timestamp('startedAt'),
+    encodedAt: timestamp('encodedAt'),
+    reviewedAt: timestamp('reviewedAt'),
+  },
+  (table) => [
+    index('reencode_request_state_idx').on(table.state, table.askedAt),
+    index('reencode_request_item_idx').on(table.mediaItemId),
+    index('reencode_request_library_idx').on(table.libraryId),
+    check(
+      'reencode_request_mode',
+      sql`${table.mode} in ('replace', 'keep', 'audioOnly')`,
+    ),
+    check(
+      'reencode_request_state',
+      sql`${table.state} in ('queued', 'encoding', 'verifying', 'awaitingReview', 'finished', 'rejected', 'failed', 'cancelled')`,
+    ),
+  ],
+);
+
 const book = pgTable(
   'book',
   {
@@ -1142,7 +1230,9 @@ export {
   mediaOverride,
   mediaPreviewOverride,
   mediaItem,
+  mediaRendition,
   mediaSegment,
+  reencodeRequest,
   mediaItemJob,
   jobTrigger,
   webhookSubscription,

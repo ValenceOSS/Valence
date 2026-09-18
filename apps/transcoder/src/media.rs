@@ -194,6 +194,42 @@ pub struct SubtitleStream {
     pub is_image_based: bool,
 }
 
+/// How a stream's colour is to be read, as the container declares it.
+///
+/// Kept apart from [`MediaProbe`] on purpose. Nothing about playback negotiation needs it — the
+/// range alone decides that — and folding it in would mean a new probe version and a re-probe of
+/// every file in every library to answer a question only a re-encode asks.
+///
+/// What it is for is the one HDR mistake that passes every automated check. Re-encoding a PQ
+/// source without carrying its transfer and primaries through produces a perfectly valid file that
+/// shows grey and flat, because the bytes no longer say what they are. Every field is absent where
+/// the source declared nothing, which is the honest answer and is left alone rather than guessed.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ColourMetadata {
+    pub primaries: Option<String>,
+    pub transfer: Option<String>,
+    pub matrix: Option<String>,
+    pub range: Option<String>,
+}
+
+impl ColourMetadata {
+    /// Whether anything was declared at all.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.primaries.is_none()
+            && self.transfer.is_none()
+            && self.matrix.is_none()
+            && self.range.is_none()
+    }
+
+    /// Whether the transfer curve is one of the two that mean high dynamic range.
+    #[must_use]
+    pub fn is_high_dynamic_range(&self) -> bool {
+        matches!(self.transfer.as_deref(), Some("smpte2084" | "arib-std-b67"))
+    }
+}
+
 /// Everything Valence needs to know about a media file to negotiate playback.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

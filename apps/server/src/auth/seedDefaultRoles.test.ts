@@ -25,6 +25,7 @@ const emptySettings = () =>
     audioDbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
+    reencodesAwaitingReviewCap: 5,
   });
 
 /**

@@ -477,6 +477,13 @@
       "when": 1789757626881,
       "tag": "0067_a_playlist_outlives_what_it_loses",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1789772888037,
+      "tag": "0068_an_encode_and_the_original_it_came_from",
+      "breakpoints": true
     }
   ]
 }

@@ -19,6 +19,7 @@ import {
   PRUNE_LOGS_JOB,
   PRUNE_JOB_HISTORY_JOB,
   PRUNE_RESOURCE_HISTORY_JOB,
+  REENCODE_JOB,
   scheduleTriggerKind,
 } from './JobQueue';
 import type { ScheduleTrigger } from './scheduleTrigger';
@@ -213,6 +214,16 @@ const JOB_DEFINITIONS: JobDefinition[] = [
     destructive: false,
     takesParts: false,
     announcesFinish: false,
+  },
+  {
+    kind: REENCODE_JOB,
+    label: 'Work through the re-encoding queue',
+    description:
+      'Produces the encodes an administrator asked for, one file at a time. Each replacement waits for somebody to watch it and say it is fine before the original is disposed of, so this pauses rather than continuing once too many are waiting to be judged.',
+    needsLibrary: false,
+    destructive: true,
+    takesParts: false,
+    announcesFinish: true,
   },
   {
     kind: PRUNE_RESOURCE_HISTORY_JOB,
