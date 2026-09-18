@@ -9,6 +9,7 @@ import type {
 import type { LibraryService, ListItemsOptions, PreviewMomentOutcome } from './LibraryService';
 import type { Person } from '@ValenceContracts/schemas/Person';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import { LIBRARY_PARTS_BY_KIND } from '@ValenceContracts/schemas/LibraryPart';
 
 /**
  * Cuts everything held about an item down to what a browser needs to draw it. Written once and used
@@ -745,6 +746,19 @@ const createMemoryLibraryService = (
         ? { cleared: state.previewMoments?.delete(mediaId) ?? false }
         : null,
     ),
+
+  clearParts: (libraryId, parts) => {
+    const found = state.libraries.find((entry) => entry.id === libraryId);
+
+    if (
+      found === undefined ||
+      !parts.some((part) => LIBRARY_PARTS_BY_KIND[found.kind].includes(part))
+    ) {
+      return Promise.resolve(null);
+    }
+
+    return Promise.resolve({ jobId: `clear-${libraryId}`, state: 'queued' });
+  },
 
   reset: (libraryId) => {
     if (!state.libraries.some((entry) => entry.id === libraryId)) {

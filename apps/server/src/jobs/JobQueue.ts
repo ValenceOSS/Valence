@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LibraryPartSchema } from '@ValenceContracts/schemas/LibraryPart';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 const SCAN_LIBRARY_JOB = 'library.scan';
@@ -44,6 +45,13 @@ const DETECT_SEGMENTS_JOB = 'library.detectSegments';
 
 const DetectSegmentsJobSchema = z.object({
   libraryId: z.string().uuid(),
+});
+
+const CLEAR_LIBRARY_PARTS_JOB = 'library.clearParts';
+
+const ClearLibraryPartsJobSchema = z.object({
+  libraryId: z.string().uuid(),
+  parts: z.array(LibraryPartSchema).min(1),
 });
 
 const CLEANUP_IMAGE_CACHE_JOB = 'server.cleanupImageCache';
@@ -145,6 +153,8 @@ export {
   FetchLogosJobSchema,
   DETECT_SEGMENTS_JOB,
   DetectSegmentsJobSchema,
+  CLEAR_LIBRARY_PARTS_JOB,
+  ClearLibraryPartsJobSchema,
   CLEANUP_IMAGE_CACHE_JOB,
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,

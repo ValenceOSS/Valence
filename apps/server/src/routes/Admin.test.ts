@@ -570,6 +570,7 @@ describe('administration over HTTP', () => {
         'library.regenerateTrickplay',
         'library.detectSegments',
         'library.reset',
+        'library.clearParts',
         'server.cleanupImageCache',
         'server.cleanupSessions',
         'server.checkCatalogueConnectivity',
@@ -616,6 +617,58 @@ describe('administration over HTTP', () => {
     });
 
     expect(response.status).toBe(202);
+  });
+
+  it('clears the parts of a library an admin picks', async () => {
+    const { app, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/jobs/library.clearParts/run`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ libraryId: LIBRARY.id, parts: ['descriptions', 'artwork'] }),
+    });
+
+    expect(response.status).toBe(202);
+  });
+
+  it('will not clear parts of a library without being told which', async () => {
+    const { app, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/jobs/library.clearParts/run`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ libraryId: LIBRARY.id }),
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('will not clear a part that does not exist', async () => {
+    const { app, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/jobs/library.clearParts/run`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ libraryId: LIBRARY.id, parts: ['everything'] }),
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('clears nothing from a library that has none of the parts asked for', async () => {
+    const { app, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/jobs/library.clearParts/run`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ libraryId: LIBRARY.id, parts: ['lyrics'] }),
+    });
+
+    expect(response.status).toBe(404);
   });
 
   it('starts thumbnail regeneration for a library an admin picks', async () => {

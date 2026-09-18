@@ -123,6 +123,8 @@ import {
   FetchLogosJobSchema,
   DETECT_SEGMENTS_JOB,
   DetectSegmentsJobSchema,
+  CLEAR_LIBRARY_PARTS_JOB,
+  ClearLibraryPartsJobSchema,
   CLEANUP_IMAGE_CACHE_JOB,
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
@@ -1135,6 +1137,19 @@ const jobs = await createJobQueue({
           libraryService.runFetchLogos(parsed.data.libraryId, jobId),
         );
       },
+      [CLEAR_LIBRARY_PARTS_JOB]: async (jobId, payload) => {
+        const parsed = ClearLibraryPartsJobSchema.safeParse(payload);
+
+        if (!parsed.success) {
+          log.error('jobs', 'job queue: a clearing job carried data Valence could not read.');
+
+          return;
+        }
+
+        await runLibraryWork(CLEAR_LIBRARY_PARTS_JOB, parsed.data.libraryId, payload, () =>
+          libraryService.runClearParts(parsed.data.libraryId, parsed.data.parts, jobId),
+        );
+      },
       [DETECT_SEGMENTS_JOB]: async (jobId, payload) => {
         const parsed = DetectSegmentsJobSchema.safeParse(payload);
 
@@ -1614,6 +1629,7 @@ const libraryService = createDatabaseLibraryService({
   jobs,
   providers: [catalogueProvider, createFilenameMetadataProvider()],
   books: bookService,
+  images: { forget: (url) => images.forget(url) },
   music: {
     store: musicStore,
     artwork: musicArtwork,

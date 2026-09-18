@@ -475,6 +475,10 @@ const createCatalogueMetadataProvider = ({
   return {
     name: 'catalogue',
 
+    forgetAnswers: () => {
+      said.clear();
+    },
+
     describe: async (facts) => {
       const key = await readApiKey();
 

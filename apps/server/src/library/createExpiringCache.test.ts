@@ -69,4 +69,15 @@ describe('what it holds at most', () => {
 
     expect(cache.get('one')).toBe('one');
   });
+
+  it('forgets everything it holds when emptied', () => {
+    const cache = createExpiringCache<string>(1000);
+
+    cache.set('a', 'one');
+    cache.set('b', 'two');
+    cache.clear();
+
+    expect(cache.get('a')).toBeUndefined();
+    expect(cache.get('b')).toBeUndefined();
+  });
 });

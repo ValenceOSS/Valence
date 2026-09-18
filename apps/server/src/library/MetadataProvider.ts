@@ -69,6 +69,7 @@ type MetadataProvider = {
   readLogoUrl?: (options: { externalId: string; isSeries: boolean }) => Promise<string | null>;
   readPerson?: (personId: number) => Promise<Person | null>;
   search?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
+  forgetAnswers?: () => void;
 };
 
 /**
