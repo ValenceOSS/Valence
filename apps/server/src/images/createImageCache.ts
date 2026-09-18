@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -86,7 +87,7 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
 
         return { body, contentType };
       } catch (error) {
-        onProblem?.(url, error instanceof Error ? error.message : 'Unreachable.');
+        onProblem?.(url, error instanceof Error ? describeFailure(error) : 'Unreachable.');
 
         return null;
       }

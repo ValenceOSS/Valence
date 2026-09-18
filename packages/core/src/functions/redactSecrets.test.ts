@@ -133,3 +133,28 @@ describe('a cookie set before the rename', () => {
     expect(redactSecrets('cookie: flux_share=abc123def456')).not.toContain('abc123def456');
   });
 });
+
+describe('a word that is a word before it is a secret', () => {
+  it('leaves a log line alone, which is what a session line is', () => {
+    expect(redactSecrets('session: video=h264_qsv audio=copy subs=none accel=Qsv')).toBe(
+      'session: video=h264_qsv audio=copy subs=none accel=Qsv',
+    );
+  });
+
+  it('still hides one assigned to with an equals, which is how an address carries it', () => {
+    expect(redactSecrets('?session=abc123def')).toContain('[redacted]');
+    expect(redactSecrets('?session=abc123def')).not.toContain('abc123def');
+    expect(redactSecrets('auth=hunter2secretvalue')).not.toContain('hunter2secretvalue');
+  });
+
+  it('still hides the forms that are only ever a credential, after a colon as well', () => {
+    expect(redactSecrets('session_token: abc123def456')).not.toContain('abc123def456');
+    expect(redactSecrets('authorization: abc123def456')).not.toContain('abc123def456');
+  });
+
+  it('leaves the rest of a transcode line readable', () => {
+    const line = 'transcode: /media/a.mkv -> /transcodes/abc  ffmpeg -c:v h264_qsv -g 96';
+
+    expect(redactSecrets(line)).toBe(line);
+  });
+});
