@@ -440,6 +440,7 @@ const ShowDialog = ({
       <Dialog
         label={`${shown.title}, the trailer`}
         isOpen={isWatchingTrailer && trailerKey !== null}
+        className="sm:w-[min(64rem,94vw)]"
         onClose={() => {
           setIsWatchingTrailer(false);
         }}

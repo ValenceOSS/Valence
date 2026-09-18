@@ -1,7 +1,13 @@
 import { session } from 'electron';
 import { theServerAddress } from '@ValenceDesktop/main/theServerAddress';
+import {
+  isAVideoHost,
+  nameValenceToTheVideoHost,
+} from '@ValenceDesktop/main/nameValenceToTheVideoHost';
 
-const SOCKETS = { urls: ['ws://*/*', 'wss://*/*'] };
+const WATCHED = {
+  urls: ['ws://*/*', 'wss://*/*', 'https://*.youtube-nocookie.com/*', 'https://*.youtube.com/*'],
+};
 
 /**
  * Puts the session on the live connection, which is the one request that cannot be passed on.
@@ -15,9 +21,18 @@ const SOCKETS = { urls: ['ws://*/*', 'wss://*/*'] };
  * A handshake is still an ordinary request as far as the network stack is concerned, so the cookie
  * the session already holds is put on it here, on the way out. Only for the server this client
  * watches: a socket to anywhere else is none of our business and gets nothing.
+ *
+ * A trailer framed from a video host is dressed here too, for the plain reason that a session takes
+ * one listener for what goes out and a second would quietly replace the first.
  */
 const carryTheSessionToTheSocket = (): void => {
-  session.defaultSession.webRequest.onBeforeSendHeaders(SOCKETS, (details, respond) => {
+  session.defaultSession.webRequest.onBeforeSendHeaders(WATCHED, (details, respond) => {
+    if (isAVideoHost(details.url)) {
+      respond({ requestHeaders: nameValenceToTheVideoHost(details.requestHeaders) });
+
+      return;
+    }
+
     const server = theServerAddress();
 
     if (server === '') {
