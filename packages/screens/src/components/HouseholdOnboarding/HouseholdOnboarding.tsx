@@ -142,10 +142,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
   if (isWelcoming) {
     return (
       <main className="relative flex min-h-svh flex-col overflow-hidden">
-        <WayInBackground
-          splashscreen={asking.data?.splashscreen ?? null}
-          lights={[{ color: household.colour }]}
-        />
+        <WayInBackground splashscreen={asking.data?.splashscreen ?? null} />
 
         <WelcomeToValence name="Valence" household={name.trim()} onFinished={onDone} />
       </main>
@@ -154,10 +151,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
 
   return (
     <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-hidden px-6 py-16">
-      <WayInBackground
-        splashscreen={asking.data?.splashscreen ?? null}
-        lights={[{ color: household.colour }]}
-      />
+      <WayInBackground splashscreen={asking.data?.splashscreen ?? null} />
 
       <motion.span
         initial={{ opacity: 0, scale: 0.94 }}
@@ -178,119 +172,125 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
         </header>
 
         <Tabs value={step} onValueChange={() => undefined} className="flex w-full flex-col">
-          <TabPanel value="name" travel={travel} className="flex flex-col gap-5">
-            <TextField
-              label="What is this household called?"
-              value={name}
-              onValueChange={setName}
-              description="Yours, your family's, whatever the television gets called."
-              hasFocusOnMount
-              {...(wrong === null ? {} : { error: wrong })}
-            />
+          <TabPanel value="name" travel={travel}>
+            <div className="flex flex-col gap-5">
+              <TextField
+                label="What is this household called?"
+                value={name}
+                onValueChange={setName}
+                description="Yours, your family's, whatever the television gets called."
+                hasFocusOnMount
+                {...(wrong === null ? {} : { error: wrong })}
+              />
 
-            <Button
-              variant="glossy"
-              size="lg"
-              className="w-full"
-              isLoading={isSaving}
-              onClick={() => {
-                void keepTheName();
-              }}
-            >
-              Continue
-            </Button>
-          </TabPanel>
-
-          <TabPanel value="picture" travel={travel} className="flex flex-col items-center gap-5">
-            <HouseholdFace
-              household={household}
-              pending={picture}
-              className="size-24 rounded-full text-3xl"
-            />
-
-            {wrong === null ? null : (
-              <p role="alert" className="text-center text-sm text-danger">
-                {wrong}
-              </p>
-            )}
-
-            <FilePicker
-              label="Choose a picture"
-              accept={PICTURE_TYPES}
-              disabled={isSaving}
-              className="w-full"
-              onPick={(chosen) => {
-                void keepThePicture(chosen);
-              }}
-            >
               <Button
-                variant="secondary"
+                variant="glossy"
                 size="lg"
                 className="w-full"
                 isLoading={isSaving}
-                {...(picture === null ? {} : { isActive: true })}
+                onClick={() => {
+                  void keepTheName();
+                }}
               >
-                <Icon of={Image01Icon} size={18} />
-                {picture === null ? 'Choose a picture' : 'Pick another'}
+                Continue
               </Button>
-            </FilePicker>
-
-            <Button
-              variant="glossy"
-              size="lg"
-              className="w-full"
-              onClick={() => {
-                setWrong(null);
-                setStep('passkey');
-              }}
-            >
-              {picture === null ? 'Not now' : 'Continue'}
-            </Button>
+            </div>
           </TabPanel>
 
-          <TabPanel value="passkey" travel={travel} className="flex flex-col gap-5">
-            {noPasskeys !== null ? (
-              <p className="text-center text-sm text-text-muted">{noPasskeys}</p>
-            ) : hasPasskey ? (
-              <p className="text-center text-sm text-text">
-                That is set. You can sign in with it from now on.
-              </p>
-            ) : (
-              <>
-                <TextField
-                  label="Passkey name"
-                  value={passkeyName}
-                  onValueChange={setPasskeyName}
-                  description="Something you will recognise later, such as the device you are on."
-                  {...(wrong === null ? {} : { error: wrong })}
-                />
+          <TabPanel value="picture" travel={travel}>
+            <div className="flex flex-col items-center gap-5">
+              <HouseholdFace
+                household={household}
+                pending={picture}
+                className="size-24 rounded-full text-3xl"
+              />
 
+              {wrong === null ? null : (
+                <p role="alert" className="text-center text-sm text-danger">
+                  {wrong}
+                </p>
+              )}
+
+              <FilePicker
+                label="Choose a picture"
+                accept={PICTURE_TYPES}
+                disabled={isSaving}
+                className="w-full"
+                onPick={(chosen) => {
+                  void keepThePicture(chosen);
+                }}
+              >
                 <Button
                   variant="secondary"
                   size="lg"
                   className="w-full"
                   isLoading={isSaving}
-                  onClick={() => {
-                    void keepAPasskey();
-                  }}
+                  {...(picture === null ? {} : { isActive: true })}
                 >
-                  <Icon of={Key01Icon} size={18} />
-                  Add a passkey
+                  <Icon of={Image01Icon} size={18} />
+                  {picture === null ? 'Choose a picture' : 'Pick another'}
                 </Button>
-              </>
-            )}
+              </FilePicker>
 
-            <Button
-              variant="glossy"
-              size="lg"
-              className="w-full"
-              isLoading={isSaving}
-              onClick={() => {
-                void finish();
-              }}
-            >
-              Finish
-            </Button>
+              <Button
+                variant="glossy"
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  setWrong(null);
+                  setStep('passkey');
+                }}
+              >
+                {picture === null ? 'Not now' : 'Continue'}
+              </Button>
+            </div>
+          </TabPanel>
+
+          <TabPanel value="passkey" travel={travel}>
+            <div className="flex flex-col gap-5">
+              {noPasskeys !== null ? (
+                <p className="text-center text-sm text-text-muted">{noPasskeys}</p>
+              ) : hasPasskey ? (
+                <p className="text-center text-sm text-text">
+                  That is set. You can sign in with it from now on.
+                </p>
+              ) : (
+                <>
+                  <TextField
+                    label="Passkey name"
+                    value={passkeyName}
+                    onValueChange={setPasskeyName}
+                    description="Something you will recognise later, such as the device you are on."
+                    {...(wrong === null ? {} : { error: wrong })}
+                  />
+
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full"
+                    isLoading={isSaving}
+                    onClick={() => {
+                      void keepAPasskey();
+                    }}
+                  >
+                    <Icon of={Key01Icon} size={18} />
+                    Add a passkey
+                  </Button>
+                </>
+              )}
+
+              <Button
+                variant="glossy"
+                size="lg"
+                className="w-full"
+                isLoading={isSaving}
+                onClick={() => {
+                  void finish();
+                }}
+              >
+                Finish
+              </Button>
+            </div>
           </TabPanel>
         </Tabs>
 

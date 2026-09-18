@@ -1,10 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 import { WelcomeToValence } from './WelcomeToValence';
-
-afterEach(() => {
-  vi.useRealTimers();
-});
 
 describe('WelcomeToValence', () => {
   it('welcomes somebody to this instance by its own name', () => {
@@ -19,17 +16,21 @@ describe('WelcomeToValence', () => {
     expect(screen.getByText(/The Morgans is ready/)).toBeInTheDocument();
   });
 
-  it('leaves on its own rather than asking for a fourth click', () => {
-    vi.useFakeTimers();
-
+  it('waits to be dismissed rather than timing out on somebody still reading', () => {
     const onFinished = vi.fn();
 
     render(<WelcomeToValence name="Valence" household="The Morgans" onFinished={onFinished} />);
 
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start watching/ })).toBeInTheDocument();
     expect(onFinished).not.toHaveBeenCalled();
+  });
 
-    vi.advanceTimersByTime(3000);
+  it('hands over when they say they are ready', async () => {
+    const onFinished = vi.fn();
+
+    render(<WelcomeToValence name="Valence" household="The Morgans" onFinished={onFinished} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /Start watching/ }));
 
     expect(onFinished).toHaveBeenCalled();
   });

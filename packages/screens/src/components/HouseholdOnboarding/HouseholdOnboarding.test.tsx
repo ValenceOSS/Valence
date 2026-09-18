@@ -132,7 +132,7 @@ describe('setting a household up', () => {
     expect(onDone).not.toHaveBeenCalled();
   });
 
-  it('is done once the welcome has said its piece', async () => {
+  it('is done once they say they are ready, and not before', async () => {
     const onDone = vi.fn();
 
     renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={onDone} />);
@@ -141,14 +141,9 @@ describe('setting a household up', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Finish' }));
 
-    await screen.findByText('Welcome to Valence');
+    await userEvent.click(await screen.findByRole('button', { name: /Start watching/ }));
 
-    await waitFor(
-      () => {
-        expect(onDone).toHaveBeenCalled();
-      },
-      { timeout: 5000 },
-    );
+    expect(onDone).toHaveBeenCalled();
   });
 
   it('says why a passkey cannot be offered rather than leaving the step empty', async () => {
