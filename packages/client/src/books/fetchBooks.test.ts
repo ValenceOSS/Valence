@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { bookCoverUrl, bookPageUrl, saveReadingProgress } from './fetchBooks';
+import {
+  bookCoverUrl,
+  bookPageUrl,
+  fetchBookContents,
+  fetchBookDocument,
+  saveReadingProgress,
+} from './fetchBooks';
 
 const fetchMock = vi.fn<(input: string, options?: RequestInit) => Promise<Response>>();
 
@@ -38,7 +44,7 @@ describe('bookCoverUrl', () => {
 
 describe('saveReadingProgress', () => {
   it('says where somebody is up to', async () => {
-    await saveReadingProgress('a-book', 'a-chapter', 12);
+    await saveReadingProgress('a-book', 'a-chapter', { pageNumber: 12 });
 
     const [address, options] = fetchMock.mock.calls[0] ?? [];
 
@@ -48,7 +54,7 @@ describe('saveReadingProgress', () => {
   });
 
   it('sends no fraction, which is for text that reflows and not for a page', async () => {
-    await saveReadingProgress('a-book', 'a-chapter', 12);
+    await saveReadingProgress('a-book', 'a-chapter', { pageNumber: 12 });
 
     const sent = fetchMock.mock.calls[0]?.[1]?.body;
 
@@ -56,7 +62,7 @@ describe('saveReadingProgress', () => {
   });
 
   it('says when that was the last page', async () => {
-    await saveReadingProgress('a-book', 'a-chapter', 193, true);
+    await saveReadingProgress('a-book', 'a-chapter', { pageNumber: 193 }, true);
 
     const sent = fetchMock.mock.calls[0]?.[1]?.body;
 
@@ -66,12 +72,63 @@ describe('saveReadingProgress', () => {
   it('does not throw when the server cannot be reached, since a turn should not stutter', async () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
-    expect(await saveReadingProgress('a-book', 'a-chapter', 12)).toBe(false);
+    expect(await saveReadingProgress('a-book', 'a-chapter', { pageNumber: 12 })).toBe(false);
   });
 
   it('says so when the server refused it', async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 404 }));
 
-    expect(await saveReadingProgress('a-book', 'a-chapter', 12)).toBe(false);
+    expect(await saveReadingProgress('a-book', 'a-chapter', { pageNumber: 12 })).toBe(false);
+  });
+});
+
+describe('saveReadingProgress in text that reflows', () => {
+  it('says how far through somebody is, and no page', async () => {
+    await saveReadingProgress('a-book', 'a-chapter', { fraction: 0.25 });
+
+    const sent = fetchMock.mock.calls[0]?.[1]?.body;
+
+    expect(typeof sent === 'string' ? sent : '').toContain('"fraction":0.25');
+    expect(typeof sent === 'string' ? sent : '').toContain('"pageNumber":null');
+  });
+});
+
+describe('fetchBookContents', () => {
+  it('reads how a book is divided', async () => {
+    const contents = { parts: [{ size: 10 }], contents: [] };
+
+    fetchMock.mockResolvedValue(new Response(JSON.stringify(contents), { status: 200 }));
+
+    expect(await fetchBookContents('a-book', 'a-chapter')).toEqual(contents);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/books/a-book/chapters/a-chapter/contents');
+  });
+
+  it('says nothing for a book that does not reflow', async () => {
+    fetchMock.mockResolvedValue(new Response('{}', { status: 404 }));
+
+    expect(await fetchBookContents('a-book', 'a-chapter')).toBeNull();
+  });
+});
+
+describe('fetchBookDocument', () => {
+  it('reads one part of a book as text', async () => {
+    fetchMock.mockResolvedValue(new Response('<p>Hello</p>', { status: 200 }));
+
+    expect(await fetchBookDocument('a-book', 'a-chapter', 3)).toBe('<p>Hello</p>');
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      '/api/books/a-book/chapters/a-chapter/document?part=3',
+    );
+  });
+
+  it('says nothing of a part the book does not have', async () => {
+    fetchMock.mockResolvedValue(new Response('{}', { status: 404 }));
+
+    expect(await fetchBookDocument('a-book', 'a-chapter', 9)).toBeNull();
+  });
+
+  it('says so when the server fails', async () => {
+    fetchMock.mockResolvedValue(new Response('', { status: 500 }));
+
+    await expect(fetchBookDocument('a-book', 'a-chapter', 0)).rejects.toThrow();
   });
 });

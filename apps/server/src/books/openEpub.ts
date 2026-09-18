@@ -1,3 +1,4 @@
+import { linkToBookPlace } from '@ValenceContracts/schemas/Book';
 import { cleanBookDocument } from './cleanBookDocument';
 import { imageTypeFor } from './imageTypeFor';
 import { readEpubContents } from './readEpubContents';
@@ -25,16 +26,6 @@ const nameFor = (at: number): string => `Part ${(at + 1).toString()}`;
  */
 const folderOf = (href: string): string =>
   href.includes('/') ? href.slice(0, href.lastIndexOf('/')) : '';
-
-/**
- * Writes a place in the book as an address the reader follows rather than leaves the page for.
- *
- * @param part - Which part of the book.
- * @param anchor - Where in it, if anywhere.
- * @returns The address.
- */
-const placeLink = (part: number, anchor: string | null): string =>
-  `#valence-part-${part.toString()}${anchor === null ? '' : `:${anchor}`}`;
 
 /**
  * Opens an ebook, which is a zip of documents that lay themselves out wherever they are shown.
@@ -184,13 +175,13 @@ const openEpub = async (
           const anchor = hash === -1 || hash === href.length - 1 ? null : href.slice(hash + 1);
 
           if (hash === 0) {
-            return placeLink(part, anchor);
+            return linkToBookPlace(part, anchor);
           }
 
           const inside = insideTheBook(chapterBase, href);
           const to = inside === null ? -1 : spine.findIndex((one) => one.href === inside);
 
-          return to === -1 ? null : placeLink(to, anchor);
+          return to === -1 ? null : linkToBookPlace(to, anchor);
         },
       );
     },

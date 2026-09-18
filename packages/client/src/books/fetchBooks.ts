@@ -2,12 +2,19 @@ import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readFromServerOrAbsent } from '@ValenceClient/query/readFromServerOrAbsent';
 import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
+import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import {
+  BookContentsSchema,
   BookDetailSchema,
   BookSchema,
   ReadingProgressSchema,
 } from '@ValenceContracts/schemas/Book';
-import type { Book, BookDetail, ReadingProgress } from '@ValenceContracts/schemas/Book';
+import type {
+  Book,
+  BookContents,
+  BookDetail,
+  ReadingProgress,
+} from '@ValenceContracts/schemas/Book';
 
 const BookListSchema = z.object({ books: z.array(BookSchema) });
 
@@ -47,25 +54,69 @@ const fetchReadingProgress = async (bookId: string): Promise<ReadingProgress[]> 
  * telling Valence something, not asking it: a page that stopped to be sure the place had been written
  * would be a page that stutters, and a place that failed to save costs a reader one turn next time.
  *
+ * A page of a comic is a place a book has; a place in reflowing text is only a fraction of the way
+ * through, because how many pages it makes depends on the screen.
+ *
  * @param bookId - The book.
  * @param chapterId - The chapter they are in.
- * @param pageNumber - Which page they are on.
+ * @param place - Which page they are on, or how far through the text.
  * @param isFinished - Whether that was the last of it.
  * @returns Whether it was written.
  */
 const saveReadingProgress = async (
   bookId: string,
   chapterId: string,
-  pageNumber: number,
+  place: { pageNumber: number } | { fraction: number },
   isFinished = false,
 ): Promise<boolean> => {
   const response = await fetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
     method: 'PUT',
     headers: { 'content-type': 'application/json', ...profileHeaders() },
-    body: JSON.stringify({ pageNumber, fraction: null, isFinished }),
+    body: JSON.stringify({
+      pageNumber: 'pageNumber' in place ? place.pageNumber : null,
+      fraction: 'fraction' in place ? place.fraction : null,
+      isFinished,
+    }),
   }).catch(() => null);
 
   return response !== null && response.ok;
+};
+
+/**
+ * How a book that reflows is divided: how much each part holds, and its table of contents.
+ *
+ * @param bookId - The book.
+ * @param chapterId - The file it is in.
+ * @returns How it is divided, or nothing where it is not a book that reflows.
+ */
+const fetchBookContents = (bookId: string, chapterId: string): Promise<BookContents | null> =>
+  readFromServerOrAbsent(`/api/books/${bookId}/chapters/${chapterId}/contents`, BookContentsSchema);
+
+/**
+ * One part of a book that reflows, as the server has cleaned it: HTML with nothing in it that runs.
+ *
+ * @param bookId - The book.
+ * @param chapterId - The file it is in.
+ * @param part - Which part, counting from zero.
+ * @returns The part, or nothing where the book has no such part.
+ */
+const fetchBookDocument = async (
+  bookId: string,
+  chapterId: string,
+  part: number,
+): Promise<string | null> => {
+  const path = `/api/books/${bookId}/chapters/${chapterId}/document?part=${part.toString()}`;
+  const response = await fetch(path, { headers: { accept: 'text/html', ...profileHeaders() } });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new RequestFailed(path, response.status);
+  }
+
+  return response.text();
 };
 
 /**
@@ -99,6 +150,8 @@ export {
   bookCoverUrl,
   bookPageUrl,
   fetchBook,
+  fetchBookContents,
+  fetchBookDocument,
   fetchBooks,
   fetchReadingProgress,
   saveReadingProgress,

@@ -6,6 +6,64 @@ const BOOK_FORMATS = ['cbz', 'cbr', 'pdf', 'epub'] as const;
 
 const READING_DIRECTIONS = ['rightToLeft', 'leftToRight'] as const;
 
+const BOOK_DOCUMENT_TAGS = [
+  'p',
+  'div',
+  'span',
+  'br',
+  'hr',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'em',
+  'i',
+  'strong',
+  'b',
+  'u',
+  's',
+  'small',
+  'sub',
+  'sup',
+  'mark',
+  'blockquote',
+  'q',
+  'cite',
+  'pre',
+  'code',
+  'ul',
+  'ol',
+  'li',
+  'dl',
+  'dt',
+  'dd',
+  'table',
+  'thead',
+  'tbody',
+  'tfoot',
+  'tr',
+  'th',
+  'td',
+  'caption',
+  'img',
+  'figure',
+  'figcaption',
+  'a',
+  'ruby',
+  'rt',
+  'rp',
+  'section',
+  'article',
+  'aside',
+  'header',
+  'footer',
+  'nav',
+  'abbr',
+  'time',
+] as const;
+
 const BookLayoutSchema = z.enum(BOOK_LAYOUTS);
 
 const BookFormatSchema = z.enum(BOOK_FORMATS);
@@ -102,7 +160,33 @@ export type BookPage = z.infer<typeof BookPageSchema>;
 export type ReadingProgress = z.infer<typeof ReadingProgressSchema>;
 export type SaveReadingProgress = z.infer<typeof SaveReadingProgressSchema>;
 
+const PLACE_LINK = /^#valence-part-(\d+)(?::(.+))?$/;
+
+/**
+ * Writes a place in a book as a link inside one of its parts, so that following it moves the reader
+ * rather than the browser.
+ *
+ * @param part - Which part of the book.
+ * @param anchor - Where in it, if anywhere.
+ * @returns The link.
+ */
+const linkToBookPlace = (part: number, anchor: string | null): string =>
+  `#valence-part-${part.toString()}${anchor === null ? '' : `:${anchor}`}`;
+
+/**
+ * Reads the place a link inside a book points at, where it points at one.
+ *
+ * @param href - The link.
+ * @returns The part and where in it, or nothing where the link leads out of the book.
+ */
+const bookPlaceIn = (href: string): { part: number; anchor: string | null } | null => {
+  const found = PLACE_LINK.exec(href);
+
+  return found === null ? null : { part: Number(found[1]), anchor: found[2] ?? null };
+};
+
 export {
+  BOOK_DOCUMENT_TAGS,
   BOOK_FORMATS,
   BOOK_LAYOUTS,
   READING_DIRECTIONS,
@@ -116,5 +200,7 @@ export {
   ReadingDirectionSchema,
   ReadingProgressSchema,
   SaveReadingProgressSchema,
+  bookPlaceIn,
   directionFor,
+  linkToBookPlace,
 };

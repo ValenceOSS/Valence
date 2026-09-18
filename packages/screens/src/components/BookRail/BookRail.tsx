@@ -16,8 +16,11 @@ const WAITING = 6;
  * across: the covers in this library measure 3311 by 4717, which is a shade taller than two by three
  * and nothing like the shape a film is shown in.
  *
- * The cover is the first page of the first chapter, which is what a comic archive actually holds —
- * there is no separate artwork in one, and asking a catalogue for it is a different feature.
+ * A comic's cover is the first page of its first chapter, which is what a comic archive actually
+ * holds — there is no separate artwork in one. An ebook's is the picture it declares as its cover.
+ *
+ * Under a comic goes how many chapters it has, which is what somebody picking a volume wants to know;
+ * under an ebook goes who wrote it, since an ebook is a single file and "1 chapter" says nothing.
  *
  * @param libraryId - Which shelf.
  * @param title - What to call it.
@@ -63,7 +66,13 @@ const BookRail = ({ libraryId, title, onOpen }: BookRailProps) => {
           shape="poster"
           imageUrl={bookCoverUrl(book.id)}
           subtitle={
-            book.chapterCount === 1 ? '1 chapter' : `${book.chapterCount.toString()} chapters`
+            book.layout === 'reflow'
+              ? book.authors === null || book.authors.length === 0
+                ? 'Ebook'
+                : book.authors.join(', ')
+              : book.chapterCount === 1
+                ? '1 chapter'
+                : `${book.chapterCount.toString()} chapters`
           }
           {...(book.year === null ? {} : { eyebrow: book.year.toString() })}
           onSelect={() => {

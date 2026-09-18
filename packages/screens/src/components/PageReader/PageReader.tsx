@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Cancel01Icon, Menu01Icon } from '@hugeicons/core-free-icons';
+import { Menu01Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
@@ -12,9 +12,10 @@ import {
 } from '@ValenceScreens/reading/readerPreferences';
 import type { ReaderPreferences } from '@ValenceScreens/reading/readerPreferences';
 import { CLOSEST, distanceBetween, heldWithin, scaleFrom } from '@ValenceScreens/reading/pinch';
+import { useChromeThatHides } from '@ValenceScreens/reading/useChromeThatHides';
+import { useTurnKeys } from '@ValenceScreens/reading/useTurnKeys';
+import { ReaderChrome } from '@ValenceScreens/components/ReaderChrome/ReaderChrome';
 import type { PageReaderProps } from './PageReader.types';
-
-const CHROME_LINGERS_MS = 2600;
 
 const A_SWIPE = 48;
 
@@ -96,9 +97,8 @@ const PageReader = ({
       startAtPage,
     ),
   );
-  const [isChromeShown, setIsChromeShown] = useState(true);
+  const { isShown: isChromeShown, wake } = useChromeThatHides();
   const startedAt = useRef<number | null>(null);
-  const hideAt = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scale, setScale] = useState(CLOSEST);
   const [moved, setMoved] = useState({ x: 0, y: 0 });
   const pinch = useRef<{ from: number; base: number } | null>(null);
@@ -134,28 +134,6 @@ const PageReader = ({
     setScale(CLOSEST);
     setMoved({ x: 0, y: 0 });
   }, [first]);
-
-  const wake = useCallback(() => {
-    setIsChromeShown(true);
-
-    if (hideAt.current !== null) {
-      clearTimeout(hideAt.current);
-    }
-
-    hideAt.current = setTimeout(() => {
-      setIsChromeShown(false);
-    }, CHROME_LINGERS_MS);
-  }, []);
-
-  useEffect(() => {
-    wake();
-
-    return () => {
-      if (hideAt.current !== null) {
-        clearTimeout(hideAt.current);
-      }
-    };
-  }, [wake]);
 
   const ordering = useMemo(
     () => [...chapters].sort((one, other) => one.number - other.number),
@@ -205,39 +183,7 @@ const PageReader = ({
     turn(-1);
   }, [turn]);
 
-  useEffect(() => {
-    const isRightToLeft = settings.direction === 'rightToLeft';
-
-    const pressed = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-
-        return;
-      }
-
-      if (event.key === 'ArrowLeft') {
-        (isRightToLeft ? forward : back)();
-      }
-
-      if (event.key === 'ArrowRight') {
-        (isRightToLeft ? back : forward)();
-      }
-
-      if (event.key === 'ArrowDown' || event.key === ' ' || event.key === 'PageDown') {
-        forward();
-      }
-
-      if (event.key === 'ArrowUp' || event.key === 'PageUp') {
-        back();
-      }
-    };
-
-    window.addEventListener('keydown', pressed);
-
-    return () => {
-      window.removeEventListener('keydown', pressed);
-    };
-  }, [back, forward, onClose, settings.direction]);
+  useTurnKeys({ isRightToLeft: settings.direction === 'rightToLeft', forward, back, onClose });
 
   const change = (changed: Partial<ReaderPreferences>) => {
     const next = { ...settings, ...changed };
@@ -335,94 +281,109 @@ const PageReader = ({
         wake();
       }}
     >
-      <header
-        className={[
-          'absolute inset-x-0 top-0 z-10 flex items-center gap-3 p-3',
-          'bg-gradient-to-b from-shade/80 to-transparent',
-          'transition-opacity duration-[var(--duration-fast)]',
-          isChromeShown ? 'opacity-100' : 'pointer-events-none opacity-0',
-        ].join(' ')}
-      >
-        <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close the reader">
-          <Icon of={Cancel01Icon} size={18} />
-        </Button>
-
-        <span className="min-w-0 flex-1 truncate text-sm text-on-scrim">
-          {book.title} — {chapter?.title ?? ''}
-        </span>
-
-        <OptionMenu
-          label="How to read"
-          trigger={
-            <Button variant="ghost" size="sm">
-              <Icon of={Menu01Icon} size={18} />
-            </Button>
-          }
-          groups={[
-            {
-              name: 'Pages',
-              selectedId: settings.isDouble ? 'double' : 'single',
-              onSelect: (id) => {
-                change({ isDouble: id === 'double' });
-              },
-              options: [
-                { id: 'single', label: 'One page' },
-                { id: 'double', label: 'Two pages' },
-              ],
-            },
-            {
-              name: 'Spreads',
-              selectedId: settings.isOffset ? 'offset' : 'aligned',
-              onSelect: (id) => {
-                change({ isOffset: id === 'offset' });
-              },
-              options: [
-                {
-                  id: 'offset',
-                  label: 'Cover on its own',
-                  detail: 'Pairing starts after page one',
+      <ReaderChrome
+        title={`${book.title} — ${chapter?.title ?? ''}`}
+        isShown={isChromeShown}
+        isRightToLeft={settings.direction === 'rightToLeft'}
+        onForward={forward}
+        onBack={back}
+        onClose={onClose}
+        className="items-center justify-center"
+        menus={
+          <OptionMenu
+            label="How to read"
+            trigger={
+              <Button variant="ghost" size="sm">
+                <Icon of={Menu01Icon} size={18} />
+              </Button>
+            }
+            groups={[
+              {
+                name: 'Pages',
+                selectedId: settings.isDouble ? 'double' : 'single',
+                onSelect: (id) => {
+                  change({ isDouble: id === 'double' });
                 },
-                { id: 'aligned', label: 'Pair from the first page' },
-              ],
-            },
-            {
-              name: 'Fit',
-              selectedId: settings.fit,
-              onSelect: (id) => {
-                change({ fit: id === 'width' ? 'width' : id === 'height' ? 'height' : 'both' });
+                options: [
+                  { id: 'single', label: 'One page' },
+                  { id: 'double', label: 'Two pages' },
+                ],
               },
-              options: [
-                { id: 'both', label: 'Fit the screen' },
-                { id: 'width', label: 'Fit the width' },
-                { id: 'height', label: 'Fit the height' },
-              ],
-            },
-            {
-              name: 'Chapter',
-              selectedId: chapterId,
-              onSelect: onChapterChange,
-              options: ordering.map((one) => ({
-                id: one.id,
-                label: one.title,
-                ...(one.pageCount === null ? {} : { detail: `${one.pageCount.toString()} pages` }),
-              })),
-            },
-            {
-              name: 'Direction',
-              selectedId: settings.direction,
-              onSelect: (id) => {
-                change({ direction: id === 'rightToLeft' ? 'rightToLeft' : 'leftToRight' });
+              {
+                name: 'Spreads',
+                selectedId: settings.isOffset ? 'offset' : 'aligned',
+                onSelect: (id) => {
+                  change({ isOffset: id === 'offset' });
+                },
+                options: [
+                  {
+                    id: 'offset',
+                    label: 'Cover on its own',
+                    detail: 'Pairing starts after page one',
+                  },
+                  { id: 'aligned', label: 'Pair from the first page' },
+                ],
               },
-              options: [
-                { id: 'rightToLeft', label: 'Right to left', detail: 'How manga is read' },
-                { id: 'leftToRight', label: 'Left to right' },
-              ],
-            },
-          ]}
-        />
-      </header>
+              {
+                name: 'Fit',
+                selectedId: settings.fit,
+                onSelect: (id) => {
+                  change({ fit: id === 'width' ? 'width' : id === 'height' ? 'height' : 'both' });
+                },
+                options: [
+                  { id: 'both', label: 'Fit the screen' },
+                  { id: 'width', label: 'Fit the width' },
+                  { id: 'height', label: 'Fit the height' },
+                ],
+              },
+              {
+                name: 'Chapter',
+                selectedId: chapterId,
+                onSelect: onChapterChange,
+                options: ordering.map((one) => ({
+                  id: one.id,
+                  label: one.title,
+                  ...(one.pageCount === null
+                    ? {}
+                    : { detail: `${one.pageCount.toString()} pages` }),
+                })),
+              },
+              {
+                name: 'Direction',
+                selectedId: settings.direction,
+                onSelect: (id) => {
+                  change({ direction: id === 'rightToLeft' ? 'rightToLeft' : 'leftToRight' });
+                },
+                options: [
+                  { id: 'rightToLeft', label: 'Right to left', detail: 'How manga is read' },
+                  { id: 'leftToRight', label: 'Left to right' },
+                ],
+              },
+            ]}
+          />
+        }
+        footer={
+          <>
+            <Slider
+              label="Page"
+              tone="overlay"
+              value={at}
+              max={Math.max(groups.length - 1, 0)}
+              onValueChange={(value) => {
+                setAt(value);
+                wake();
+              }}
+              className="flex-1"
+            />
 
-      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+            <span className="w-24 shrink-0 text-right text-xs tabular-nums text-on-scrim/80">
+              {showing.length === 0
+                ? '—'
+                : `${((showing[0] ?? 0) + 1).toString()} / ${pageCount.toString()}`}
+            </span>
+          </>
+        }
+      >
         <div
           className="flex h-full w-full items-center justify-center"
           style={{
@@ -448,56 +409,7 @@ const PageReader = ({
             />
           ))}
         </div>
-
-        <div className="absolute inset-y-0 left-0 flex w-1/3">
-          <Button
-            variant="ghost"
-            className="h-full w-full opacity-0"
-            aria-label={settings.direction === 'rightToLeft' ? 'Next page' : 'Previous page'}
-            onClick={settings.direction === 'rightToLeft' ? forward : back}
-          >
-            <span />
-          </Button>
-        </div>
-
-        <div className="absolute inset-y-0 right-0 flex w-1/3">
-          <Button
-            variant="ghost"
-            className="h-full w-full opacity-0"
-            aria-label={settings.direction === 'rightToLeft' ? 'Previous page' : 'Next page'}
-            onClick={settings.direction === 'rightToLeft' ? back : forward}
-          >
-            <span />
-          </Button>
-        </div>
-      </div>
-
-      <footer
-        className={[
-          'absolute inset-x-0 bottom-0 z-10 flex items-center gap-3 p-3',
-          'bg-gradient-to-t from-shade/80 to-transparent',
-          'transition-opacity duration-[var(--duration-fast)]',
-          isChromeShown ? 'opacity-100' : 'pointer-events-none opacity-0',
-        ].join(' ')}
-      >
-        <Slider
-          label="Page"
-          tone="overlay"
-          value={at}
-          max={Math.max(groups.length - 1, 0)}
-          onValueChange={(value) => {
-            setAt(value);
-            wake();
-          }}
-          className="flex-1"
-        />
-
-        <span className="w-24 shrink-0 text-right text-xs tabular-nums text-on-scrim/80">
-          {showing.length === 0
-            ? '—'
-            : `${((showing[0] ?? 0) + 1).toString()} / ${pageCount.toString()}`}
-        </span>
-      </footer>
+      </ReaderChrome>
 
       <div className="hidden">
         {preloading.map((address) => (
