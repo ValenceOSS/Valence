@@ -22,14 +22,17 @@ type Reachability = {
   whenChanged: (listener: (isReachable: boolean) => void) => () => void;
 };
 
+type ClientKind = 'browser' | 'desktop' | 'tv';
+
 type Platform = {
   store: DeviceStore;
   describeThisClient: () => string;
   thisClientId: () => string;
+  thisClientKind: () => ClientKind;
   canKeepFiles: () => boolean;
   held: HeldFiles;
   reachability: Reachability;
   openSocket: Connect;
 };
 
-export type { DeviceStore, HeldFiles, Platform, Reachability };
+export type { ClientKind, DeviceStore, HeldFiles, Platform, Reachability };

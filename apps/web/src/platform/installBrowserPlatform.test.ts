@@ -18,4 +18,20 @@ describe('installBrowserPlatform', () => {
 
     expect(platformInUse().thisClientId()).toBe(platformInUse().thisClientId());
   });
+
+  it('is a browser on a machine somebody can type on', () => {
+    installBrowserPlatform();
+
+    expect(platformInUse().thisClientKind()).toBe('browser');
+  });
+
+  it('is a television when the browser is running on one', () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 SamsungBrowser/4.0',
+    );
+
+    installBrowserPlatform();
+
+    expect(platformInUse().thisClientKind()).toBe('tv');
+  });
 });

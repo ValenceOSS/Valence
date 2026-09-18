@@ -97,6 +97,7 @@ import { createDatabaseSegmentService } from '@ValenceServer/segments/createData
 import { createFingerprintSegmentProvider } from '@ValenceServer/segments/createFingerprintSegmentProvider';
 import { createSidecarSubtitleService } from '@ValenceServer/subtitles/createSidecarSubtitleService';
 import { createDatabaseProfileService } from '@ValenceServer/profiles/createDatabaseProfileService';
+import { createDatabaseHouseholdService } from '@ValenceServer/household/createDatabaseHouseholdService';
 import { createFileSplashscreenStore } from '@ValenceServer/splashscreen/createFileSplashscreenStore';
 import { createDatabaseBookService } from '@ValenceServer/books/createDatabaseBookService';
 import { ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
@@ -614,6 +615,8 @@ await movePhotographsOnce({
 
 const profileService = createDatabaseProfileService(db, env.PROFILE_IMAGE_DIR);
 
+const householdService = createDatabaseHouseholdService(db, env.PROFILE_IMAGE_DIR);
+
 const splashscreen = createFileSplashscreenStore(env.PROFILE_IMAGE_DIR, settings);
 
 const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR);
@@ -1055,11 +1058,19 @@ const jobs = await createJobQueue({
               .select({ posterUrl: mediaItem.posterUrl, backdropUrl: mediaItem.backdropUrl })
               .from(mediaItem),
           listKeptPictures: async () => {
-            const rows = await db
+            const faces = await db
               .select({ photoPath: viewerProfile.photoPath })
               .from(viewerProfile);
 
-            return [...rows.map((row) => row.photoPath), (await settings.read()).splashscreenFile];
+            const households = await db
+              .select({ photoPath: userProfile.photoPath })
+              .from(userProfile);
+
+            return [
+              ...faces.map((row) => row.photoPath),
+              ...households.map((row) => row.photoPath),
+              (await settings.read()).splashscreenFile,
+            ];
           },
           onProblem: (path, reason) => {
             log.error('server', `image cache: ${path}: ${reason}`);
@@ -1750,6 +1761,7 @@ const app = createApp({
     });
   },
   profiles: profileService,
+  households: householdService,
   splashscreen,
   books: bookService,
   promoteProfile: async ({ profileId, email, password }) => {
@@ -1949,40 +1961,12 @@ const app = createApp({
   endAccountSession: async (userId, sessionId) => {
     await db.delete(session).where(and(eq(session.id, sessionId), eq(session.userId, userId)));
   },
-  setAccountPhoto: async (userId, photo) => {
-    const [found] = await db
-      .select({ name: user.name })
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-
-    if (found === undefined) {
-      return 'notYours';
-    }
-
-    const profile = await profileService.ensureDefault(userId, found.name);
-
-    return profileService.savePhoto(userId, profile.id, photo);
-  },
-  setAccountAvatar: async (userId, changes) => {
-    const [found] = await db
-      .select({ name: user.name })
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-
-    if (found === undefined) {
-      return false;
-    }
-
-    const profile = await profileService.ensureDefault(userId, found.name);
-
-    return profileService.rename(userId, profile.id, {
-      name: profile.name,
-      colour: changes.colour ?? profile.colour,
+  setAccountPhoto: (userId, photo) => householdService.savePhoto(userId, photo),
+  setAccountAvatar: (userId, changes) =>
+    householdService.change(userId, {
       ...(changes.avatar === undefined ? {} : { avatar: changes.avatar }),
-    });
-  },
+      ...(changes.colour === undefined ? {} : { colour: changes.colour }),
+    }),
   capabilities: () => transcoder.capabilities(),
   artworkUsage: () => artworkUsage.read(),
   bookPageUsage: () => bookPageUsage.read(),

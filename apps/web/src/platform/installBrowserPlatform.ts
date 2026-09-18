@@ -1,3 +1,4 @@
+import { detectClientKind } from '@ValenceClient/playback/detectClientKind';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { theBrowsersStore } from '@ValenceWeb/platform/browserStore';
 import { describeThisBrowser } from '@ValenceWeb/platform/describeThisBrowser';
@@ -15,6 +16,7 @@ const installBrowserPlatform = (): void => {
     store: theBrowsersStore(),
     describeThisClient: describeThisBrowser,
     thisClientId: thisTabsId,
+    thisClientKind: () => detectClientKind(navigator.userAgent),
     canKeepFiles: () => false,
     held: noFilesAreKept(),
     reachability: theBrowsersReach(),

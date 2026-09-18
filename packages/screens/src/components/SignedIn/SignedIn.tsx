@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LayoutGroup } from 'motion/react';
 import { Outlet } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { FinishOnAnotherDevice } from '@ValenceScreens/components/FinishOnAnotherDevice/FinishOnAnotherDevice';
+import { HouseholdOnboarding } from '@ValenceScreens/components/HouseholdOnboarding/HouseholdOnboarding';
 import { ProfileGate } from '@ValenceScreens/components/ProfileGate/ProfileGate';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { shellContext } from '@ValenceClient/shell/shellContext';
@@ -10,6 +12,8 @@ import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { useWatchParty } from '@ValenceClient/party/useWatchParty';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
+import { householdQueries } from '@ValenceClient/query/householdQueries';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
@@ -27,6 +31,8 @@ const PARTY_NOTICE_LINGERS_MS = 6000;
 const MARK_FLIES_MS = 300;
 
 const MARKS_PLACE = 'valence-mark';
+
+const ASKS_AGAIN_MS = 4000;
 
 /**
  * Everything behind the way in: who is watching, what they have seen, how far through it they are,
@@ -56,7 +62,20 @@ const SignedIn = ({ title }: SignedInProps) => {
     setIsPageReading(isHolding);
   }, []);
 
-  const isWaiting = session.isPending || isPageReading;
+  const isTelevision = platformInUse().thisClientKind() === 'tv';
+
+  const settingUp = useQuery({
+    ...householdQueries.onboarding(),
+    enabled: user !== null,
+    refetchInterval: (query) =>
+      isTelevision && query.state.data?.isOnboarded === false ? ASKS_AGAIN_MS : false,
+  });
+
+  const setUp = settingUp.data ?? null;
+
+  const unfinished = setUp === null || setUp.isOnboarded ? null : setUp.household;
+
+  const isWaiting = session.isPending || isPageReading || (user !== null && settingUp.isPending);
 
   const [phase, setPhase] = useState<'holding' | 'fading' | 'gone'>('holding');
 
@@ -299,13 +318,28 @@ const SignedIn = ({ title }: SignedInProps) => {
     <LayoutGroup>
       {shell !== null ? (
         <shellContext.Provider value={shell}>
-          <Outlet />
+          {unfinished === null ? (
+            <Outlet />
+          ) : isTelevision ? (
+            <FinishOnAnotherDevice name={title} address={window.location.origin} />
+          ) : (
+            <HouseholdOnboarding
+              household={unfinished}
+              onDone={() => {
+                void cache.invalidateQueries({ queryKey: householdQueries.key });
+              }}
+            />
+          )}
         </shellContext.Provider>
       ) : phase !== 'gone' ? null : (
         <ProfileGate
           name={title}
+          isTelevision={isTelevision}
           onSignedIn={() => {
-            go({ section: 'home', search: '', inspecting: null, playing: null });
+            if (!window.location.pathname.startsWith('/device')) {
+              go({ section: 'home', search: '', inspecting: null, playing: null });
+            }
+
             void refresh();
           }}
         />

@@ -44,11 +44,18 @@ const AdminPage = lazyRouteComponent(
   'AdminPage',
 );
 
+const DeviceApproval = lazyRouteComponent(
+  async () => import('@ValenceScreens/components/DeviceApproval/DeviceApproval'),
+  'DeviceApproval',
+);
+
 const BROWSABLE = ['/shows', '/films', '/new', '/favourites'] as const;
 
 const ADMIN_DEFAULT_PANEL = 'overview';
 
 const adminSearch = z.object({ job: z.string().optional() });
+
+const deviceSearch = z.object({ user_code: z.string().optional() });
 
 /**
  * Builds the router: every address Valence serves, what it carries, and what is drawn there.
@@ -119,6 +126,13 @@ const buildRouter = (title = 'Valence') => {
     validateSearch: adminSearch,
   });
 
+  const device = createRoute({
+    getParentRoute: () => signedIn,
+    path: '/device',
+    component: () => <DeviceApproval name={title} />,
+    validateSearch: deviceSearch,
+  });
+
   const shell = createRoute({
     getParentRoute: () => signedIn,
     id: 'shell',
@@ -137,7 +151,7 @@ const buildRouter = (title = 'Valence') => {
   return createRouter({
     routeTree: root.addChildren([
       share,
-      signedIn.addChildren([watch, read, adminIndex, admin, shell.addChildren(sections)]),
+      signedIn.addChildren([watch, read, adminIndex, admin, device, shell.addChildren(sections)]),
     ]),
     defaultErrorComponent: PageProblem,
     scrollRestoration: true,
