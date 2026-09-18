@@ -29,11 +29,19 @@ const OPENING = { duration: 0.28, ease: [0.23, 1, 0.32, 1] } as const;
 
 const CLOSING = { duration: 0.18, ease: [0.23, 1, 0.32, 1] } as const;
 
+const CHANGING = { duration: 0.35, ease: [0.23, 1, 0.32, 1] } as const;
+
+const DISSOLVING = { duration: 0.9, ease: 'easeInOut' } as const;
+
 /**
  * The song playing, filling the screen: its cover, blown up and blurred into light behind
  * everything; the cover itself with what the song is, a like, the time and the few controls it
  * needs beneath it and nothing else; and its words following along with every line but the one
  * being sung drifting out of focus.
+ *
+ * Moving to another song carries the view with it rather than cutting: the light behind slowly
+ * dissolves into the next cover's, a new album's cover gives way to the old through a moment of
+ * blur, the name rises in, and the old song's words fall away as the new one's come up.
  *
  * It opens from the cover on the player bar, and the bar steps aside while it is open — the view
  * carries its own quiet controls, so nothing but the music is on the screen. Escape, the close button or the cover again
@@ -102,15 +110,22 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
           transition={OPENING}
           className="fixed inset-0 z-[35] overflow-hidden bg-shade text-on-scrim"
         >
-          {cover === null ? null : (
-            <img
-              src={cover}
-              alt=""
-              aria-hidden
-              draggable={false}
-              className="pointer-events-none absolute inset-0 size-full scale-125 object-cover opacity-70 blur-3xl saturate-150"
-            />
-          )}
+          <AnimatePresence initial={false}>
+            {cover === null ? null : (
+              <motion.img
+                key={cover}
+                src={cover}
+                alt=""
+                aria-hidden
+                draggable={false}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.7 }}
+                exit={{ opacity: 0 }}
+                transition={isStill ? CLOSING : DISSOLVING}
+                className="pointer-events-none absolute inset-0 size-full scale-125 object-cover blur-3xl saturate-150"
+              />
+            )}
+          </AnimatePresence>
           <span aria-hidden className="absolute inset-0 bg-shade/45" />
 
           <Button
@@ -127,23 +142,51 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
 
           <div className="relative grid h-full grid-cols-1 gap-10 px-6 pt-16 pb-32 sm:px-12 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:gap-16 lg:px-20">
             <div className="mx-auto flex w-full max-w-md flex-col justify-center gap-6">
-              <MusicArtwork
-                src={cover}
-                label={shown.title}
-                className="w-full shadow-[var(--shadow-overlay)]"
-              />
+              <div className="relative aspect-square w-full">
+                <AnimatePresence initial={false}>
+                  <motion.div
+                    key={shown.albumId}
+                    initial={
+                      isStill ? { opacity: 0 } : { opacity: 0, scale: 0.94, filter: 'blur(6px)' }
+                    }
+                    animate={
+                      isStill ? { opacity: 1 } : { opacity: 1, scale: 1, filter: 'blur(0px)' }
+                    }
+                    exit={
+                      isStill ? { opacity: 0 } : { opacity: 0, scale: 1.04, filter: 'blur(6px)' }
+                    }
+                    transition={isStill ? CLOSING : CHANGING}
+                    className="absolute inset-0"
+                  >
+                    <MusicArtwork
+                      src={cover}
+                      label={shown.title}
+                      className="w-full shadow-[var(--shadow-overlay)]"
+                    />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
 
               <div className="flex items-center justify-between gap-4">
-                <div className="flex min-w-0 flex-col">
-                  <h2 className="truncate text-lg font-semibold tracking-[-0.01em]">
-                    {shown.title}
-                  </h2>
-                  <p className="truncate text-on-scrim/65">
-                    {[shown.artists.map((artist) => artist.name).join(', '), shown.albumTitle]
-                      .filter((part) => part !== null && part !== '')
-                      .join(' — ')}
-                  </p>
-                </div>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={shown.trackId}
+                    initial={isStill ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                    animate={isStill ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                    exit={isStill ? { opacity: 0 } : { opacity: 0, y: -8 }}
+                    transition={CLOSING}
+                    className="flex min-w-0 flex-col"
+                  >
+                    <h2 className="truncate text-lg font-semibold tracking-[-0.01em]">
+                      {shown.title}
+                    </h2>
+                    <p className="truncate text-on-scrim/65">
+                      {[shown.artists.map((artist) => artist.name).join(', '), shown.albumTitle]
+                        .filter((part) => part !== null && part !== '')
+                        .join(' — ')}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
 
                 <BarButton
                   label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
@@ -177,20 +220,30 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
             </div>
 
             <div className="min-h-0 overflow-y-auto overscroll-contain py-[30vh] [mask-image:linear-gradient(to_bottom,transparent,black_18%,black_82%,transparent)]">
-              {lyrics === null || lyrics.lines.length === 0 ? (
-                <p className="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-on-scrim/60">
-                  {asked.isPending ? '' : 'No lyrics found'}
-                </p>
-              ) : (
-                <LyricLines
-                  lyrics={lyrics}
-                  at={at}
-                  look="immersive"
-                  onSeek={(seconds) => {
-                    player.seek(seconds);
-                  }}
-                />
-              )}
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={`${shown.trackId}-${lyrics === null ? 'none' : 'some'}`}
+                  initial={isStill ? { opacity: 0 } : { opacity: 0, y: 16 }}
+                  animate={isStill ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                  exit={isStill ? { opacity: 0 } : { opacity: 0, y: -16 }}
+                  transition={CHANGING}
+                >
+                  {lyrics === null || lyrics.lines.length === 0 ? (
+                    <p className="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-on-scrim/60">
+                      {asked.isPending ? '' : 'No lyrics found'}
+                    </p>
+                  ) : (
+                    <LyricLines
+                      lyrics={lyrics}
+                      at={at}
+                      look="immersive"
+                      onSeek={(seconds) => {
+                        player.seek(seconds);
+                      }}
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
         </motion.section>

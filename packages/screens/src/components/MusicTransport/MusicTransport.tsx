@@ -72,6 +72,7 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
       step={1}
       valueLabel={(value) => formatDuration(value)}
       isDisabled={!maySeek}
+      revealsThumb
       className="min-w-0 flex-1"
       onValueChange={(value) => {
         if (isFollowing) {

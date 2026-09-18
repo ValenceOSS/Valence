@@ -117,6 +117,24 @@ describe('ImmersiveMusic', () => {
     });
   });
 
+  it('carries the view on to the next song', async () => {
+    const { player, set } = playing();
+
+    renderInAnAddress(<ImmersiveMusic player={player} />);
+
+    act(() => {
+      setMusicImmersive(true);
+    });
+
+    await screen.findByRole('heading', { name: 'Track 1' });
+
+    act(() => {
+      set({ current: aTrack(2) });
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Track 2' })).toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(ImmersiveMusic.displayName).toBe('ImmersiveMusic');
   });
