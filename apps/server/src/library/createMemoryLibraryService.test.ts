@@ -199,6 +199,57 @@ describe('finding what somebody appeared in', () => {
   });
 });
 
+describe("a programme's own extras", () => {
+  const shows = {
+    id: LIBRARY_ID,
+    name: 'Programmes',
+    kind: 'shows',
+    path: '/media/tv',
+    itemCount: 0,
+    lastScannedAt: null,
+    defaultAudioLanguage: null,
+    filesAtOnce: null,
+  } as const;
+
+  const service = createMemoryLibraryService({
+    libraries: [shows],
+    media: [
+      film({
+        id: 'episode-1',
+        title: 'Good News',
+        metadata: {
+          hasPoster: false,
+          hasBackdrop: false,
+          hasLogo: false,
+          seriesTitle: 'Severance',
+          seasonNumber: 1,
+          episodeNumber: 1,
+        },
+      }),
+      film({
+        id: 'show-trailer',
+        title: 'Severance (Trailer)',
+        extraKind: 'trailer',
+        metadata: {
+          hasPoster: false,
+          hasBackdrop: false,
+          hasLogo: false,
+          seriesTitle: 'Severance',
+        },
+      }),
+    ],
+  });
+
+  it('comes back with the programme rather than among its episodes', async () => {
+    const detail = await service.getShow(asTheServer, LIBRARY_ID, 'severance');
+
+    expect((detail?.extras ?? []).map((one) => one.id)).toEqual(['show-trailer']);
+    expect(
+      (detail?.seasons ?? []).flatMap((season) => season.episodes).map((one) => one.id),
+    ).toEqual(['episode-1']);
+  });
+});
+
 describe('asking a library that is not held to do something', () => {
   const empty = createMemoryLibraryService({ libraries: [], media: [] });
 

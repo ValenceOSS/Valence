@@ -95,6 +95,8 @@ const SeasonResponseSchema = z.object({
 
 const CERTIFICATES = 'credits,release_dates,content_ratings';
 
+const CERTIFICATES_AND_VIDEOS = `${CERTIFICATES},videos`;
+
 const DetailResponseSchema = z.object({
   id: z.number(),
   title: z.string().optional(),
@@ -148,6 +150,20 @@ const DetailResponseSchema = z.object({
         .default([]),
     })
     .optional(),
+  videos: z
+    .object({
+      results: z
+        .array(
+          z.object({
+            key: z.string(),
+            site: z.string(),
+            type: z.string(),
+            official: z.boolean().optional(),
+          }),
+        )
+        .default([]),
+    })
+    .optional(),
 });
 
 type Fetcher = (
@@ -157,6 +173,7 @@ type Fetcher = (
 
 type CreateCatalogueMetadataProviderOptions = {
   readApiKey: () => Promise<string | null>;
+  readWantsTrailers?: () => Promise<boolean>;
   baseUrl?: string;
   imageBaseUrl?: string;
   fetchImpl?: Fetcher;
@@ -337,8 +354,27 @@ const imageUrl = (base: string, path: string | null | undefined, size: string): 
  * @param options - The credential to use, which catalogue to ask, and how to report a problem.
  * @returns The provider, ready to be asked about files.
  */
+/**
+ * Picks the trailer to remember out of everything a catalogue has filmed about a title: teasers,
+ * clips, featurettes and half a dozen trailers in as many languages.
+ *
+ * Only YouTube, because that is the only thing Valence can play one from, and an official one ahead
+ * of a fan cut. Nothing is what a title with no trailer gets, which is most of them.
+ *
+ * @param detail - The catalogue's own record, with its videos appended.
+ * @returns The YouTube identifier of the trailer, or null.
+ */
+const youTubeTrailerIn = (detail: z.infer<typeof DetailResponseSchema>): string | null => {
+  const filmed = (detail.videos?.results ?? []).filter(
+    (video) => video.site === 'YouTube' && video.type === 'Trailer',
+  );
+
+  return (filmed.find((video) => video.official === true) ?? filmed[0])?.key ?? null;
+};
+
 const createCatalogueMetadataProvider = ({
   readApiKey,
+  readWantsTrailers = () => Promise.resolve(false),
   baseUrl = DEFAULT_BASE_URL,
   imageBaseUrl = DEFAULT_IMAGE_BASE_URL,
   fetchImpl,
@@ -441,6 +477,9 @@ const createCatalogueMetadataProvider = ({
         return null;
       }
 
+      const wantsTrailers = await readWantsTrailers();
+      const appended = wantsTrailers ? CERTIFICATES_AND_VIDEOS : CERTIFICATES;
+
       const episodeNumber = facts.episode?.episodeNumber ?? null;
       const isEpisode = episodeNumber !== null;
       const fromFilename = readTitleFromPath(facts.path);
@@ -505,6 +544,7 @@ const createCatalogueMetadataProvider = ({
         const backdrop = still ?? imageUrl(imageBaseUrl, detail.backdrop_path, 'w1280');
 
         const certificates = readCertifications(detail);
+        const trailerKey = wantsTrailers ? youTubeTrailerIn(detail) : null;
 
         const seriesName = detail.title ?? detail.name ?? searchTitle;
         const episodeName = catalogueEpisodeName ?? knownEpisodeTitle;
@@ -531,6 +571,7 @@ const createCatalogueMetadataProvider = ({
           ...(Object.keys(certificates).length === 0 ? {} : { certifications: certificates }),
           ...(poster === null ? {} : { posterUrl: poster }),
           ...(backdrop === null ? {} : { backdropUrl: backdrop }),
+          ...(trailerKey === null ? {} : { trailerKey }),
         };
       };
 
@@ -542,7 +583,7 @@ const createCatalogueMetadataProvider = ({
         const detailed = await request(
           `/${facts.knownExternalKind ?? (isEpisode ? 'tv' : 'movie')}/${facts.knownExternalId}`,
           key,
-          { append_to_response: CERTIFICATES },
+          { append_to_response: appended },
         );
 
         const detail = DetailResponseSchema.safeParse(detailed);
@@ -586,7 +627,7 @@ const createCatalogueMetadataProvider = ({
       const detailed = await request(
         `${isEpisode ? '/tv' : '/movie'}/${first.id.toString()}`,
         key,
-        { append_to_response: CERTIFICATES },
+        { append_to_response: appended },
       );
 
       const detail = DetailResponseSchema.safeParse(detailed);

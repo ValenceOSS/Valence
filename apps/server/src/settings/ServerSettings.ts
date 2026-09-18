@@ -16,6 +16,7 @@ const ServerSettingsSchema = z.object({
   mediaDigestReadTo: z.string().datetime().nullable().default(null),
   jobsTimezone: z.string().default(''),
   certificationRegion: z.string().length(2).toUpperCase().default('GB'),
+  fetchesCatalogueTrailers: z.boolean().default(false),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;

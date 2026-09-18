@@ -31,6 +31,7 @@ each `${...}` in the file itself.
 | `CATALOGUE_API_KEY`  | no       | A TMDB key. Without one, titles come from filenames and nothing fetches posters, descriptions or cast.                                             |
 | `COOKIE_SECURE`      | no       | True by default, which is right behind HTTPS. Set it false only when testing over plain HTTP, or sign-in will appear to succeed and then not hold. |
 | `RENDER_GROUP_ID`    | no       | The group owning `/dev/dri/renderD128`, 44 by default. `ls -n /dev/dri` says which.                                                                |
+| `PROFILE_IMAGE_DIR`  | no       | Where profile pictures are kept, `/config/profiles` by default. Wherever you point it, a volume must be mapped there — see below.                  |
 
 Two good ways to make a secret:
 
@@ -166,6 +167,11 @@ Remove the database volume alone. `config`, `cache` and `transcodes` carry
 settings and generated files that the upgrade leaves perfectly good, and
 `docker compose down -v` would take all four rather than the one.
 
+`config` is the one that cannot be rebuilt. Alongside the settings it holds
+`/config/profiles`, the household's uploaded profile pictures — the only copy
+of each. `cache` and `transcodes` hold nothing that cannot be made again, so
+losing either costs a re-render and nothing else.
+
 A fresh install needs none of this.
 
 ## When something is wrong
@@ -175,6 +181,14 @@ no GPU. Delete `devices` and `group_add` and try again.
 
 **Sign-in succeeds and immediately forgets you.** `PUBLIC_URL` does not match
 what the browser is actually using, or `COOKIE_SECURE` is true over plain HTTP.
+
+**Everybody's profile picture is a broken image.** The directory holding them
+has no volume mapped behind it, so they went when the container was last
+recreated. `docker inspect <container> --format '{{json .Mounts}}'` says what is
+actually mapped; `PROFILE_IMAGE_DIR` says where Valence is writing them. Map a
+volume there and upload them again. A picture Valence cannot find now draws the
+profile's initial rather than a broken image, so this shows up as faces turning
+back into letters.
 
 **The library scans to nothing.** `MEDIA_PATH` points somewhere the container
 cannot read, or the library was added with the host path rather than `/media`.

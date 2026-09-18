@@ -37,6 +37,7 @@ type Metadata = {
   backdropUrl?: string;
   logoUrl?: string;
   externalId?: string;
+  trailerKey?: string;
 };
 
 type CatalogueMatch = {

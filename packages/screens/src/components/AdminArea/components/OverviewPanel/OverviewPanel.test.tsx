@@ -55,6 +55,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
+    fetchesCatalogueTrailers: false,
     certificationRegion: 'GB',
     trustedOrigins: [],
   },

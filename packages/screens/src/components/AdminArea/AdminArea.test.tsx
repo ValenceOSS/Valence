@@ -35,6 +35,7 @@ const OVERVIEW: AdminOverview = {
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
+    fetchesCatalogueTrailers: false,
     certificationRegion: 'GB',
   },
   transcoder: {

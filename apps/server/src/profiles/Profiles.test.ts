@@ -721,7 +721,7 @@ describe('giving a profile a picture of its own', () => {
     expect(response.headers.get('cache-control')).toContain('immutable');
   });
 
-  it('refuses a picture for somebody else’s profile', async () => {
+  it('refuses a picture for somebody else’s profile, and says that is why', async () => {
     const { context, cookie } = await signedInWithAProfile();
 
     const response = await context.app.request(
@@ -733,7 +733,8 @@ describe('giving a profile a picture of its own', () => {
       },
     );
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'No such profile on this account.' });
   });
 
   it('turns away nobody trying to upload a picture', async () => {

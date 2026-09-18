@@ -1327,10 +1327,21 @@ const createApp = ({
    * Tells every tab on an account that its profiles have changed, so a rename or a new picture shows
    * on the other devices that person is signed in on rather than waiting for a reload.
    *
+   * Told to everybody rather than to one account where the way in draws the household's faces,
+   * because then a face is not private to the account that owns it: every other household holds it
+   * in a cache keyed by when it last changed, and telling nobody leaves them all showing a face its
+   * owner replaced until something else happens to make them ask again.
+   *
    * @param accountId - Whose profiles changed.
    */
-  const announceProfiles = (accountId: string): void => {
-    realtime?.publish('profile', { changed: true }, { kind: 'accounts', accountIds: [accountId] });
+  const announceProfiles = async (accountId: string): Promise<void> => {
+    realtime?.publish(
+      'profile',
+      { changed: true },
+      (await settings.read()).showsProfilesBeforeSignIn
+        ? { kind: 'everyone' }
+        : { kind: 'accounts', accountIds: [accountId] },
+    );
   };
 
   /**
@@ -1769,7 +1780,7 @@ const createApp = ({
         ...(avatar === undefined ? {} : { avatar }),
       });
 
-      announceProfiles(account.id);
+      await announceProfiles(account.id);
 
       return context.json(created, 201);
     } catch (error) {
@@ -1799,7 +1810,7 @@ const createApp = ({
     });
 
     if (changed) {
-      announceProfiles(account.id);
+      await announceProfiles(account.id);
     }
 
     return changed
@@ -1817,7 +1828,7 @@ const createApp = ({
     const removed = await profiles.remove(account.id, context.req.valid('param').profileId);
 
     if (removed) {
-      announceProfiles(account.id);
+      await announceProfiles(account.id);
     }
 
     return removed
@@ -1924,13 +1935,19 @@ const createApp = ({
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    const saved = await profiles.savePhoto(account.id, context.req.param('profileId'), {
+    const profileId = context.req.param('profileId');
+
+    if (!(await profiles.belongsTo(account.id, profileId))) {
+      return context.json({ error: 'No such profile on this account.' }, 404);
+    }
+
+    const saved = await profiles.savePhoto(account.id, profileId, {
       body: new Uint8Array(await context.req.arrayBuffer()),
       contentType: context.req.header('content-type') ?? '',
     });
 
     if (saved) {
-      announceProfiles(account.id);
+      await announceProfiles(account.id);
     }
 
     return saved
@@ -1989,6 +2006,7 @@ const createApp = ({
           previewQuality: current.previewQuality,
           certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
+          fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
         },
@@ -2033,6 +2051,9 @@ const createApp = ({
       ...(patch.showsProfilesBeforeSignIn === undefined
         ? {}
         : { showsProfilesBeforeSignIn: patch.showsProfilesBeforeSignIn }),
+      ...(patch.fetchesCatalogueTrailers === undefined
+        ? {}
+        : { fetchesCatalogueTrailers: patch.fetchesCatalogueTrailers }),
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {
@@ -2058,6 +2079,7 @@ const createApp = ({
         previewQuality: updated.previewQuality,
         certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
+        fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
       },
       200,
     );
@@ -3213,7 +3235,7 @@ const createApp = ({
       return context.json({ error: 'No such account.' }, 404);
     }
 
-    announceProfiles(userId);
+    await announceProfiles(userId);
 
     return context.body(null, 204);
   });
@@ -3249,7 +3271,7 @@ const createApp = ({
     });
 
     if (saved === true) {
-      announceProfiles(userId);
+      await announceProfiles(userId);
     }
 
     return saved === true
@@ -3382,8 +3404,14 @@ const createApp = ({
 
     const { mediaId } = context.req.valid('param');
 
-    if ((await library.getMedia(mediaId)) === null) {
+    const item = await library.getMedia(mediaId);
+
+    if (item === null) {
       return context.json({ error: 'No such media item.' }, 404);
+    }
+
+    if ((item.extraKind ?? null) !== null) {
+      return context.body(null, 204);
     }
 
     const report = context.req.valid('json');

@@ -701,6 +701,9 @@ const AdminArea = ({
               onProfileVisibilitySaved={() => {
                 void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
               }}
+              onCatalogueTrailersSaved={() => {
+                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+              }}
             />
           </TabPanel>
 

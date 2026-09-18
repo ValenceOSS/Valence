@@ -54,6 +54,43 @@ describe('a film keeping its extras beside it', () => {
     ]);
   });
 
+  it('hangs one called nothing but the word off the film it sits beside', () => {
+    const found = groupExtras([FILM, '/media/films/Arrival (2016)/Trailer.mkv']);
+
+    expect(found.get('/media/films/Arrival (2016)/Trailer.mkv')).toEqual({
+      kind: 'trailer',
+      parentPath: FILM,
+      seriesFolder: null,
+    });
+  });
+
+  it('numbers a second one rather than reading it as a second film', () => {
+    const found = groupExtras([
+      FILM,
+      '/media/films/Arrival (2016)/Arrival (2016)-trailer2.mkv',
+      '/media/films/Arrival (2016)/trailer3.mkv',
+    ]);
+
+    expect(found.get('/media/films/Arrival (2016)/Arrival (2016)-trailer2.mkv')?.kind).toBe(
+      'trailer',
+    );
+    expect(found.get('/media/films/Arrival (2016)/trailer3.mkv')?.kind).toBe('trailer');
+  });
+
+  it('leaves a bare word alone where there is no single film for it to belong to', () => {
+    expect(groupExtras(['/media/films/Trailer.mkv']).size).toBe(0);
+    expect(
+      groupExtras(['/media/films/Short.mkv', '/media/films/Arrival.mkv', '/media/films/Dune.mkv'])
+        .size,
+    ).toBe(0);
+  });
+
+  it('never offers a bare word itself as its own parent', () => {
+    const found = groupExtras(['/media/films/A.mkv', '/media/films/trailer.mkv']);
+
+    expect(found.get('/media/films/trailer.mkv')?.parentPath).toBe('/media/films/A.mkv');
+  });
+
   it('leaves the film itself alone', () => {
     expect(groupExtras([FILM]).has(FILM)).toBe(false);
   });

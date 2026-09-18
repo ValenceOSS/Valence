@@ -17,12 +17,17 @@ const saveCertificationRegion = vi.hoisted(() =>
   vi.fn<(region: string) => Promise<boolean>>(() => Promise.resolve(true)),
 );
 
+const saveFetchesCatalogueTrailers = vi.hoisted(() =>
+  vi.fn<(fetches: boolean) => Promise<boolean>>(() => Promise.resolve(true)),
+);
+
 vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveCatalogueKey,
   saveHardwareAccel,
   savePreviewQuality,
   saveShowsProfilesBeforeSignIn,
   saveCertificationRegion,
+  saveFetchesCatalogueTrailers,
 }));
 
 const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOverview => ({
@@ -34,6 +39,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     hardwareAccel: '',
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
+    fetchesCatalogueTrailers: false,
     certificationRegion: 'GB',
     ...overrides,
   },
@@ -68,6 +74,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -83,6 +90,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -99,6 +107,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -115,6 +124,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -134,6 +144,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -156,6 +167,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -180,6 +192,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -202,6 +215,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -217,6 +231,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -240,6 +255,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -260,6 +276,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -281,6 +298,7 @@ describe('SettingsPanel', () => {
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={saved}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
       />,
     );
@@ -307,6 +325,7 @@ describe('SettingsPanel', () => {
         onHardwareAccelSaved={vi.fn()}
         onPreviewQualitySaved={saved}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
       />,
     );
@@ -331,6 +350,7 @@ describe('whose age certificates to read', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -346,6 +366,7 @@ describe('whose age certificates to read', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -361,6 +382,7 @@ describe('whose age certificates to read', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -379,6 +401,7 @@ describe('whose age certificates to read', () => {
         onPreviewQualitySaved={vi.fn()}
         onCertificationRegionSaved={saved}
         onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
       />,
     );
 
@@ -390,6 +413,73 @@ describe('whose age certificates to read', () => {
     });
     await waitFor(() => {
       expect(saved).toHaveBeenCalled();
+    });
+  });
+
+  it('leaves catalogue trailers off until an administrator turns them on', () => {
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('switch', { name: 'Fetch trailers from the catalogue' }),
+    ).not.toBeChecked();
+  });
+
+  it('turns catalogue trailers on, and says so', async () => {
+    const onCatalogueTrailersSaved = vi.fn();
+
+    saveFetchesCatalogueTrailers.mockResolvedValue(true);
+
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={onCatalogueTrailersSaved}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('switch', { name: 'Fetch trailers from the catalogue' }),
+    );
+
+    expect(saveFetchesCatalogueTrailers).toHaveBeenCalledWith(true);
+    expect(onCatalogueTrailersSaved).toHaveBeenCalled();
+  });
+
+  it('puts the switch back where a server would not take the change', async () => {
+    saveFetchesCatalogueTrailers.mockResolvedValue(false);
+
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
+      />,
+    );
+
+    const switched = screen.getByRole('switch', { name: 'Fetch trailers from the catalogue' });
+
+    await userEvent.click(switched);
+
+    await waitFor(() => {
+      expect(switched).not.toBeChecked();
     });
   });
 });

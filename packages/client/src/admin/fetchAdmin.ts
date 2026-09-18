@@ -37,6 +37,7 @@ const AdminOverviewSchema = z.object({
     hardwareAccel: z.string().default(''),
     previewQuality: PreviewQualitySchema.default('high'),
     showsProfilesBeforeSignIn: z.boolean().default(false),
+    fetchesCatalogueTrailers: z.boolean().default(false),
     certificationRegion: z.string().default('GB'),
   }),
   transcoder: z.object({
@@ -716,6 +717,29 @@ const saveHardwareAccel = async (hardwareAccel: string): Promise<boolean> => {
  * @param showsProfilesBeforeSignIn - Whether to show the faces.
  * @returns Whether the setting was written.
  */
+/**
+ * Sets whether the catalogue is asked for a trailer alongside everything else it is asked for.
+ *
+ * Off by default, and off is the honest default: playing one frames a page from a video host, which
+ * is the only thing Valence does that reaches outside the server it is installed on. A trailer on
+ * disk needs none of this and is always preferred to one fetched.
+ *
+ * @param fetchesCatalogueTrailers - Whether to fetch and offer them.
+ * @returns Whether the setting was written.
+ */
+const saveFetchesCatalogueTrailers = async (
+  fetchesCatalogueTrailers: boolean,
+): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ fetchesCatalogueTrailers }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 const saveShowsProfilesBeforeSignIn = async (
   showsProfilesBeforeSignIn: boolean,
 ): Promise<boolean> => {
@@ -804,6 +828,7 @@ export {
   savePreviewQuality,
   saveCertificationRegion,
   saveShowsProfilesBeforeSignIn,
+  saveFetchesCatalogueTrailers,
   fetchActiveSessions,
   watchActiveSessions,
   stopSession,

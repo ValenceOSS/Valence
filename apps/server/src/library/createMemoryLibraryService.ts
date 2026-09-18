@@ -643,18 +643,38 @@ const createMemoryLibraryService = (
         : null,
     ),
 
-  getShow: (viewer, libraryId, showId) =>
-    Promise.resolve(
-      state.libraries.some((entry) => entry.id === libraryId) && reaches(state, viewer, libraryId)
-        ? buildShowDetail(
-            state.media
-              .filter((item) => item.libraryId === libraryId)
-              .filter((item) => visible(state, viewer, item))
-              .map(toSummary),
-            showId,
-          )
-        : null,
-    ),
+  getShow: (viewer, libraryId, showId) => {
+    if (
+      !state.libraries.some((entry) => entry.id === libraryId) ||
+      !reaches(state, viewer, libraryId)
+    ) {
+      return Promise.resolve(null);
+    }
+
+    const mine = state.media
+      .filter((item) => item.libraryId === libraryId)
+      .filter((item) => visible(state, viewer, item))
+      .map(toSummary);
+
+    const detail = buildShowDetail(
+      mine.filter((item) => (item.extraKind ?? null) === null),
+      showId,
+    );
+
+    if (detail === null) {
+      return Promise.resolve(null);
+    }
+
+    const extras = mine.filter(
+      (item) =>
+        (item.extraKind ?? null) !== null &&
+        (detail.seriesId === null
+          ? item.seriesTitle === detail.title
+          : item.seriesId === detail.seriesId),
+    );
+
+    return Promise.resolve({ ...detail, extras });
+  },
 
   scan: (libraryId, force = false) =>
     Promise.resolve(

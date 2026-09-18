@@ -377,6 +377,39 @@ describe('what the header says about a series', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('offers a programme its own trailer, which sits above the seasons rather than in one', async () => {
+    const onPlay = vi.fn();
+    const trailer: MediaSummary = {
+      ...episode(1, 1),
+      id: 'show-trailer',
+      title: 'A Sign of Affection (Trailer)',
+      seasonNumber: null,
+      episodeNumber: null,
+      extraKind: 'trailer',
+    };
+
+    fetchShowMock.mockResolvedValue({
+      ...detail([{ seasonNumber: 1, episodes: [1, 2] }]),
+      extras: [trailer],
+    });
+
+    renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={onPlay} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Watch the trailer' }));
+
+    expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'show-trailer' }), 0);
+  });
+
+  it('offers no trailer for a programme that carries none', async () => {
+    fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
+
+    renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await screen.findByText('3 episodes');
+
+    expect(screen.queryByText('Watch the trailer')).not.toBeInTheDocument();
+  });
+
   it('draws nothing at all without a series to draw', () => {
     const { container } = renderInAnAddress(
       <ShowDialog show={null} onClose={vi.fn()} onPlay={vi.fn()} />,

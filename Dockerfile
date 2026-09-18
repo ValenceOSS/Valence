@@ -93,7 +93,7 @@ COPY --from=web-build /build/apps/server/dist ./apps/server/dist
 
 # /media is mounted read-only by compose. Flux never writes to a user's
 # library: no sidecars, no renames, nothing.
-RUN mkdir -p /config /cache/artefacts /transcodes /media
+RUN mkdir -p /config /config/profiles /cache/artefacts /transcodes /media
 
 ENV NODE_ENV=production \
     PORT=8420 \
@@ -102,6 +102,7 @@ ENV NODE_ENV=production \
     VALENCE_VAAPI_DEVICE=/dev/dri/renderD128 \
     VALENCE_TRANSCODE_DIR=/transcodes \
     VALENCE_ARTEFACT_DIR=/cache/artefacts \
+    PROFILE_IMAGE_DIR=/config/profiles \
     VALENCE_MEDIA_ROOTS=/media
 
 EXPOSE 8420

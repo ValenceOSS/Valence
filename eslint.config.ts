@@ -80,9 +80,9 @@ export default tseslint.config(
       'no-restricted-syntax': [
         'error',
         {
-          selector: 'JSXOpeningElement[name.name=/^(button|input|select|textarea|dialog)$/]',
+          selector: 'JSXOpeningElement[name.name=/^(button|input|select|textarea|dialog|iframe)$/]',
           message:
-            'Raw controls are banned. Compose Button, TextField, FilePicker or Dialog — see code standards section 9.',
+            'Raw controls are banned. Compose Button, TextField, FilePicker, Dialog or EmbeddedVideo — see code standards section 9.',
         },
         {
           selector: 'TSUnknownKeyword',
@@ -142,6 +142,7 @@ export default tseslint.config(
       'packages/ui/src/components/Button/Button.tsx',
       'packages/ui/src/components/TextField/TextField.tsx',
       'packages/ui/src/components/FilePicker/FilePicker.tsx',
+      'packages/ui/src/components/EmbeddedVideo/EmbeddedVideo.tsx',
     ],
     rules: {
       'no-restricted-syntax': [

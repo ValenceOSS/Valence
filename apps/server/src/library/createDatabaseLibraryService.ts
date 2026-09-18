@@ -28,7 +28,11 @@ import {
   rating,
   series,
 } from '@ValenceServer/db/Schema';
-import { LibraryKindSchema, MediaDetailSchema } from '@ValenceContracts/schemas/Library';
+import {
+  LibraryKindSchema,
+  MediaDetailSchema,
+  MediaSummarySchema,
+} from '@ValenceContracts/schemas/Library';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import {
@@ -239,6 +243,68 @@ const createDatabaseLibraryService = ({
     shapes.set(externalId, found);
 
     return found;
+  };
+
+  /**
+   * Reads a programme's own extras — the trailer above the seasons rather than beside an episode.
+   *
+   * Asked for separately because a programme is made of its episodes and extras are deliberately
+   * kept out of those: everything that lists a library filters them away, so a series trailer would
+   * otherwise be scanned, stored, and never seen by anybody.
+   *
+   * @param viewer - Who is asking, so that what they may not see stays unseen.
+   * @param libraryId - The library the programme sits in.
+   * @param detail - The programme, identified by its series where it has one and by its title where
+   *   the scanner could not resolve one.
+   * @returns Its extras, trailers first.
+   */
+  const extrasOfShow = async (
+    viewer: Viewer,
+    libraryId: string,
+    detail: ShowDetail,
+  ): Promise<MediaSummary[]> => {
+    const rows = await db
+      .select({
+        id: mediaItem.id,
+        libraryId: mediaItem.libraryId,
+        title: mediaItem.title,
+        year: mediaItem.year,
+        durationSeconds: mediaItem.durationSeconds,
+        width: mediaItem.width,
+        height: mediaItem.height,
+        videoCodec: mediaItem.videoCodec,
+        videoRange: mediaItem.videoRange,
+        addedAt: mediaItem.addedAt,
+        posterUrl: mediaItem.posterUrl,
+        backdropUrl: mediaItem.backdropUrl,
+        extraKind: mediaItem.extraKind,
+        parentId: mediaItem.parentId,
+        seriesId: mediaItem.seriesId,
+        seriesTitle: mediaItem.seriesTitle,
+      })
+      .from(mediaItem)
+      .where(
+        and(
+          eq(mediaItem.libraryId, libraryId),
+          isNotNull(mediaItem.extraKind),
+          detail.seriesId === null
+            ? eq(mediaItem.seriesTitle, detail.title)
+            : eq(mediaItem.seriesId, detail.seriesId),
+          visibleToViewer(db, viewer),
+        ),
+      )
+      .orderBy(asc(mediaItem.extraKind), asc(mediaItem.title));
+
+    return z.array(MediaSummarySchema).parse(
+      rows.map(({ posterUrl, backdropUrl, ...extra }) => ({
+        ...extra,
+        addedAt: extra.addedAt.toISOString(),
+        hasPoster: posterUrl !== null,
+        posterUrl,
+        hasBackdrop: backdropUrl !== null,
+        hasLogo: false,
+      })),
+    );
   };
 
   /**
@@ -1188,6 +1254,7 @@ const createDatabaseLibraryService = ({
         parentId: row.parentId,
         extraKind: row.extraKind,
         versionLabel: row.versionLabel,
+        trailerKey: row.trailerKey,
         extras: held
           .filter((one) => one.extraKind !== null)
           .map(({ posterUrl, ...extra }) => ({
@@ -1537,8 +1604,17 @@ const createDatabaseLibraryService = ({
       }
 
       const shape = await shapeOf(detail);
+      const extras = await extrasOfShow(viewer, libraryId, detail);
 
-      return shape === null ? detail : { ...detail, shape: shape.seasons };
+      const [cover] = await db
+        .select({ trailerKey: mediaItem.trailerKey })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, detail.coverMediaId))
+        .limit(1);
+
+      const whole = { ...detail, extras, trailerKey: cover?.trailerKey ?? null };
+
+      return shape === null ? whole : { ...whole, shape: shape.seasons };
     },
   };
 

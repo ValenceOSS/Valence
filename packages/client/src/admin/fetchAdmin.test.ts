@@ -53,6 +53,7 @@ const OVERVIEW = {
     hardwareAccel: '',
     previewQuality: 'high',
     showsProfilesBeforeSignIn: false,
+    fetchesCatalogueTrailers: false,
     certificationRegion: 'GB',
   },
   transcoder: {

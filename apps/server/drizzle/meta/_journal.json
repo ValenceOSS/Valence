@@ -421,6 +421,20 @@
       "when": 1789635049132,
       "tag": "0059_free_omega_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1789696768890,
+      "tag": "0060_a_trailer_the_catalogue_knows",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1789696769890,
+      "tag": "0061_a_face_is_a_name_not_a_path",
+      "breakpoints": true
     }
   ]
 }

@@ -36,6 +36,8 @@ const SeasonShapeSchema = z.object({
 const ShowDetailSchema = ShowSummarySchema.extend({
   seasons: z.array(ShowSeasonSchema),
   shape: z.array(SeasonShapeSchema).nullish(),
+  extras: z.array(MediaSummarySchema).optional(),
+  trailerKey: z.string().nullish(),
 });
 
 const ShowListSchema = z.object({ shows: z.array(ShowSummarySchema) });
