@@ -25,6 +25,8 @@ import {
   savePreviewQuality,
   watchActiveSessions,
   measureStorage,
+  saveSplashscreen,
+  removeSplashscreen,
 } from './fetchAdmin';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { Monitor } from './fetchAdmin';
@@ -1078,5 +1080,72 @@ describe('searchCatalogue, given an answer it cannot read', () => {
     answerWith({ matches: 'not a list' });
 
     await expect(searchCatalogue('Arrival', 'movie')).resolves.toEqual([]);
+  });
+});
+
+describe('the picture behind the way in', () => {
+  const aPicture = () => new File([new Uint8Array([1, 2, 3])], 'hall.jpg', { type: 'image/jpeg' });
+
+  it('sends the picture as itself, saying what kind it is', async () => {
+    answerWith({ splashscreen: '/api/splashscreen?v=a.jpg' });
+
+    await saveSplashscreen(aPicture());
+
+    const [url, init] = fetchMock.mock.calls.at(-1) ?? [];
+
+    expect(url).toBe('/api/admin/splashscreen');
+    expect(init?.method).toBe('PUT');
+    expect(new Headers(init?.headers).get('content-type')).toBe('image/jpeg');
+  });
+
+  it('answers with where the picture is now read from', async () => {
+    answerWith({ splashscreen: '/api/splashscreen?v=a.jpg' });
+
+    await expect(saveSplashscreen(aPicture())).resolves.toEqual({
+      splashscreen: '/api/splashscreen?v=a.jpg',
+    });
+  });
+
+  it('passes on the reason the server gave for refusing it', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 413,
+      json: () => Promise.resolve({ error: 'A picture has to be 16 MB or smaller.' }),
+    });
+
+    await expect(saveSplashscreen(aPicture())).resolves.toEqual({
+      problem: 'A picture has to be 16 MB or smaller.',
+    });
+  });
+
+  it('says something rather than nothing when a refusal explains itself badly', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.reject(new Error('x')),
+    });
+
+    await expect(saveSplashscreen(aPicture())).resolves.toEqual({
+      problem: 'The server answered 500.',
+    });
+  });
+
+  it('says the server could not be reached rather than blaming the picture', async () => {
+    fetchMock.mockRejectedValue(new Error('offline'));
+
+    await expect(saveSplashscreen(aPicture())).resolves.toEqual({
+      problem: 'The server could not be reached.',
+    });
+  });
+
+  it('takes the picture away, and says whether the server agreed', async () => {
+    answerWith({ removed: true });
+
+    await expect(removeSplashscreen()).resolves.toBe(true);
+    expect(fetchMock.mock.calls.at(-1)?.[1]?.method).toBe('DELETE');
+
+    answerWith({ error: 'That is for administrators.' }, false);
+
+    await expect(removeSplashscreen()).resolves.toBe(false);
   });
 });

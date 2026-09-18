@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import { Alert02Icon, Image01Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Badge } from '@ValenceUI/Badge';
@@ -9,6 +9,7 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { TextField } from '@ValenceUI/TextField';
 import { Switch } from '@ValenceUI/Switch';
+import { FilePicker } from '@ValenceUI/FilePicker';
 import {
   saveCertificationRegion,
   saveCatalogueKey,
@@ -16,6 +17,8 @@ import {
   savePreviewQuality,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
+  saveSplashscreen,
+  removeSplashscreen,
 } from '@ValenceClient/admin/fetchAdmin';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import { accelerationOptions } from '@ValenceScreens/components/AdminArea/accelerationOptions';
@@ -26,6 +29,8 @@ const PREVIEW_QUALITY_CHOICES = [
   { id: 'standard', label: 'Standard' },
   { id: 'high', label: 'High' },
 ] as const;
+
+const SPLASHSCREEN_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { certificationRegions } from '@ValenceScreens/components/AdminArea/certificationRegions';
 
@@ -40,6 +45,7 @@ import { certificationRegions } from '@ValenceScreens/components/AdminArea/certi
  * @param onHardwareAccelSaved - Called once the encoder choice has been written.
  * @param onPreviewQualitySaved - Called once the preview preset has been written.
  * @param onProfileVisibilitySaved - Called once the choice about showing the faces has been written.
+ * @param onSplashscreenSaved - Called once the picture behind the way in has been chosen or removed.
  */
 const SettingsPanel = ({
   overview,
@@ -49,6 +55,7 @@ const SettingsPanel = ({
   onCertificationRegionSaved,
   onProfileVisibilitySaved,
   onCatalogueTrailersSaved,
+  onSplashscreenSaved,
 }: SettingsPanelProps) => {
   const [catalogueKey, setCatalogueKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -61,6 +68,9 @@ const SettingsPanel = ({
   const [fetchesTrailers, setFetchesTrailers] = useState(
     overview?.settings.fetchesCatalogueTrailers ?? false,
   );
+  const [splashscreen, setSplashscreen] = useState(overview?.settings.splashscreen ?? null);
+  const [isChangingSplashscreen, setIsChangingSplashscreen] = useState(false);
+  const [splashscreenProblem, setSplashscreenProblem] = useState<string | null>(null);
 
   return (
     <PanelCard title="Settings" isFlush>
@@ -192,6 +202,86 @@ const SettingsPanel = ({
             }}
           />
         </SettingRow>
+
+        <div>
+          <SettingRow
+            title="Picture behind the way in"
+            description="Drawn behind the faces, with the colour of whoever is chosen still washing over it. Only somebody who may see the faces sees it, so it shows while Show who lives here is on. JPEG, PNG, WebP, AVIF or GIF, up to 16 MB."
+          >
+            {splashscreen === null ? null : (
+              <img
+                src={splashscreen}
+                alt="The picture behind the way in"
+                className="h-10 w-16 rounded-md object-cover"
+              />
+            )}
+
+            <FilePicker
+              label={splashscreen === null ? 'Choose a picture' : 'Replace the picture'}
+              accept={SPLASHSCREEN_TYPES}
+              disabled={isChangingSplashscreen}
+              onPick={(file) => {
+                setIsChangingSplashscreen(true);
+                setSplashscreenProblem(null);
+
+                void saveSplashscreen(file).then((answer) => {
+                  setIsChangingSplashscreen(false);
+
+                  if ('problem' in answer) {
+                    setSplashscreenProblem(answer.problem);
+
+                    return;
+                  }
+
+                  setSplashscreen(answer.splashscreen);
+                  onSplashscreenSaved();
+                });
+              }}
+            >
+              <span className="inline-flex h-8 items-center gap-1.5 rounded-pill border border-accent/30 bg-accent/15 px-3.5 text-[0.8125rem] font-medium text-accent transition-colors hover:bg-accent/25">
+                <Icon of={Image01Icon} size={15} />
+                {splashscreen === null ? 'Choose' : 'Replace'}
+              </span>
+            </FilePicker>
+
+            {splashscreen === null ? null : (
+              <Button
+                variant="soft"
+                size="sm"
+                disabled={isChangingSplashscreen}
+                onClick={() => {
+                  setIsChangingSplashscreen(true);
+                  setSplashscreenProblem(null);
+
+                  void removeSplashscreen().then((removed) => {
+                    setIsChangingSplashscreen(false);
+
+                    if (removed) {
+                      setSplashscreen(null);
+                      onSplashscreenSaved();
+
+                      return;
+                    }
+
+                    setSplashscreenProblem('The picture could not be removed. Try again.');
+                  });
+                }}
+              >
+                Remove
+              </Button>
+            )}
+          </SettingRow>
+
+          {splashscreenProblem === null ? null : (
+            <p
+              role="alert"
+              className="mx-5 mb-4 flex items-start gap-3 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-text"
+            >
+              <Icon of={Alert02Icon} size={18} className="mt-0.5 shrink-0 text-danger" />
+              {splashscreenProblem}
+            </p>
+          )}
+        </div>
 
         <SettingRow
           title="Fetch trailers from the catalogue"

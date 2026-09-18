@@ -85,8 +85,9 @@ Portrait.displayName = 'Portrait';
  * @param name - What this server calls itself, shown above the faces.
  */
 const ProfileGate = ({ onSignedIn, name = 'Valence' }: ProfileGateProps) => {
-  const asking = useQuery(sessionQueries.everyone());
-  const everyone = asking.data ?? null;
+  const asking = useQuery(sessionQueries.wayIn());
+  const everyone = asking.data?.profiles ?? null;
+  const splashscreen = asking.data?.splashscreen ?? null;
   const [chosen, setChosen] = useState<ViewerProfile | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -272,11 +273,19 @@ const ProfileGate = ({ onSignedIn, name = 'Valence' }: ProfileGateProps) => {
           hasGround ? 'opacity-100' : 'opacity-0',
         )}
       >
-        <MoodBackground
-          lights={chosen === null ? [] : [{ color: chosen.colour }]}
-          hasGrid
-          isDrifting
-        />
+        {splashscreen === null ? null : (
+          <>
+            <img src={splashscreen} alt="" className="absolute inset-0 size-full object-cover" />
+            <div className="absolute inset-0 bg-surface/55" />
+          </>
+        )}
+        <div className={cn('absolute inset-0 isolate', splashscreen === null ? '' : 'opacity-50')}>
+          <MoodBackground
+            lights={chosen === null ? [] : [{ color: chosen.colour }]}
+            hasGrid
+            isDrifting
+          />
+        </div>
       </div>
 
       <motion.div

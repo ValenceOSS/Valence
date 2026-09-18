@@ -45,6 +45,7 @@ const fetchMock = vi.fn();
 const serverWith = (
   everyone: ViewerProfile[] | 'refused',
   signIn: { ok: boolean; body?: string } = { ok: true },
+  splashscreen: string | null = null,
 ) => {
   fetchMock.mockImplementation((input: string) => {
     if (input.includes('/everyone')) {
@@ -54,7 +55,7 @@ const serverWith = (
               status: 401,
               headers: { 'content-type': 'application/json' },
             })
-          : new Response(JSON.stringify({ profiles: everyone }), {
+          : new Response(JSON.stringify({ profiles: everyone, splashscreen }), {
               status: 200,
               headers: { 'content-type': 'application/json' },
             }),
@@ -124,6 +125,24 @@ describe('ProfileGate', () => {
 
     expect(screen.getByRole('button', { name: /Marques/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Sam/ })).toBeInTheDocument();
+  });
+
+  it('draws the picture the household chose behind the faces', async () => {
+    serverWith(HOUSEHOLD, { ok: true }, '/api/splashscreen?v=a.jpg');
+
+    const { container } = renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
+
+    await arrive();
+
+    expect(container.querySelector('img[src="/api/splashscreen?v=a.jpg"]')).not.toBeNull();
+  });
+
+  it('keeps its own ground where no picture was chosen', async () => {
+    const { container } = renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
+
+    await arrive();
+
+    expect(container.querySelector('img[src^="/api/splashscreen"]')).toBeNull();
   });
 
   describe('a server that does not show who lives here', () => {

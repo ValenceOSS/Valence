@@ -21,6 +21,12 @@ const saveFetchesCatalogueTrailers = vi.hoisted(() =>
   vi.fn<(fetches: boolean) => Promise<boolean>>(() => Promise.resolve(true)),
 );
 
+const saveSplashscreen = vi.hoisted(() =>
+  vi.fn<(file: File) => Promise<{ splashscreen: string } | { problem: string }>>(),
+);
+
+const removeSplashscreen = vi.hoisted(() => vi.fn<() => Promise<boolean>>());
+
 vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveCatalogueKey,
   saveHardwareAccel,
@@ -28,6 +34,8 @@ vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveShowsProfilesBeforeSignIn,
   saveCertificationRegion,
   saveFetchesCatalogueTrailers,
+  saveSplashscreen,
+  removeSplashscreen,
 }));
 
 const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOverview => ({
@@ -41,6 +49,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     certificationRegion: 'GB',
+    splashscreen: null,
     ...overrides,
   },
   transcoder: {
@@ -75,6 +84,7 @@ describe('SettingsPanel', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -91,6 +101,7 @@ describe('SettingsPanel', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -108,6 +119,7 @@ describe('SettingsPanel', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -125,6 +137,7 @@ describe('SettingsPanel', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -145,6 +158,7 @@ describe('SettingsPanel', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -168,6 +182,7 @@ describe('SettingsPanel', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -193,6 +208,7 @@ describe('SettingsPanel', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -216,6 +232,7 @@ describe('SettingsPanel', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -232,6 +249,7 @@ describe('SettingsPanel', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -256,6 +274,7 @@ describe('SettingsPanel', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -277,6 +296,7 @@ describe('SettingsPanel', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -299,6 +319,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={saved}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
       />,
     );
@@ -326,6 +347,7 @@ describe('SettingsPanel', () => {
         onPreviewQualitySaved={saved}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
         onCertificationRegionSaved={vi.fn()}
       />,
     );
@@ -351,6 +373,7 @@ describe('whose age certificates to read', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -367,6 +390,7 @@ describe('whose age certificates to read', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -383,6 +407,7 @@ describe('whose age certificates to read', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -402,6 +427,7 @@ describe('whose age certificates to read', () => {
         onCertificationRegionSaved={saved}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -426,6 +452,7 @@ describe('whose age certificates to read', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -448,6 +475,7 @@ describe('whose age certificates to read', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={onCatalogueTrailersSaved}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -471,6 +499,7 @@ describe('whose age certificates to read', () => {
         onCertificationRegionSaved={vi.fn()}
         onProfileVisibilitySaved={vi.fn()}
         onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
       />,
     );
 
@@ -480,6 +509,111 @@ describe('whose age certificates to read', () => {
 
     await waitFor(() => {
       expect(switched).not.toBeChecked();
+    });
+  });
+
+  describe('the picture behind the way in', () => {
+    const renderWith = (splashscreen: string | null, onSplashscreenSaved: () => void = vi.fn()) =>
+      render(
+        <SettingsPanel
+          overview={overview({ splashscreen })}
+          onCatalogueKeySaved={vi.fn()}
+          onHardwareAccelSaved={vi.fn()}
+          onPreviewQualitySaved={vi.fn()}
+          onCertificationRegionSaved={vi.fn()}
+          onProfileVisibilitySaved={vi.fn()}
+          onCatalogueTrailersSaved={vi.fn()}
+          onSplashscreenSaved={onSplashscreenSaved}
+        />,
+      );
+
+    beforeEach(() => {
+      saveSplashscreen.mockReset();
+      removeSplashscreen.mockReset();
+    });
+
+    it('says it only shows where the faces are shown', () => {
+      renderWith(null);
+
+      expect(screen.getByText(/shows while Show who lives here is on/)).toBeInTheDocument();
+    });
+
+    it('offers nothing to remove before a picture is chosen', () => {
+      renderWith(null);
+
+      expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument();
+      expect(screen.queryByAltText('The picture behind the way in')).not.toBeInTheDocument();
+    });
+
+    it('shows the picture chosen', () => {
+      renderWith('/api/splashscreen?v=a.jpg');
+
+      expect(screen.getByAltText('The picture behind the way in')).toHaveAttribute(
+        'src',
+        '/api/splashscreen?v=a.jpg',
+      );
+    });
+
+    it('sends the picture picked, shows it, and tells whoever owns the overview', async () => {
+      const onSplashscreenSaved = vi.fn();
+      const picture = new File(['picture'], 'hall.jpg', { type: 'image/jpeg' });
+
+      saveSplashscreen.mockResolvedValue({ splashscreen: '/api/splashscreen?v=b.jpg' });
+
+      renderWith(null, onSplashscreenSaved);
+
+      await userEvent.upload(screen.getByLabelText(/Choose a picture/), picture);
+
+      expect(saveSplashscreen).toHaveBeenCalledWith(picture);
+      expect(await screen.findByAltText('The picture behind the way in')).toHaveAttribute(
+        'src',
+        '/api/splashscreen?v=b.jpg',
+      );
+      expect(onSplashscreenSaved).toHaveBeenCalled();
+    });
+
+    it('says why the server would not take a picture', async () => {
+      const onSplashscreenSaved = vi.fn();
+
+      saveSplashscreen.mockResolvedValue({ problem: 'A picture has to be 16 MB or smaller.' });
+
+      renderWith(null, onSplashscreenSaved);
+
+      await userEvent.upload(
+        screen.getByLabelText(/Choose a picture/),
+        new File(['picture'], 'hall.jpg', { type: 'image/jpeg' }),
+      );
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'A picture has to be 16 MB or smaller.',
+      );
+      expect(onSplashscreenSaved).not.toHaveBeenCalled();
+    });
+
+    it('goes back to the generated background when the picture is removed', async () => {
+      const onSplashscreenSaved = vi.fn();
+
+      removeSplashscreen.mockResolvedValue(true);
+
+      renderWith('/api/splashscreen?v=a.jpg', onSplashscreenSaved);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
+
+      await waitFor(() => {
+        expect(screen.queryByAltText('The picture behind the way in')).not.toBeInTheDocument();
+      });
+      expect(onSplashscreenSaved).toHaveBeenCalled();
+    });
+
+    it('keeps the picture and says so where it could not be removed', async () => {
+      removeSplashscreen.mockResolvedValue(false);
+
+      renderWith('/api/splashscreen?v=a.jpg');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('could not be removed');
+      expect(screen.getByAltText('The picture behind the way in')).toBeInTheDocument();
     });
   });
 });
