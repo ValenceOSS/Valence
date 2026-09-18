@@ -3,6 +3,7 @@ import { Button } from '@ValenceUI/Button';
 import { QrCode } from '@ValenceUI/QrCode';
 import { Spinner } from '@ValenceUI/Spinner';
 import { askWhetherTheDeviceMayIn, startDeviceGrant } from '@ValenceClient/session/auth';
+import { anAddressAPhoneCanReach } from '@ValenceScreens/session/anAddressAPhoneCanReach';
 import { whereToTypeTheCode } from '@ValenceScreens/session/whereToTypeTheCode';
 import type { DeviceGrant } from '@ValenceClient/session/auth';
 import type { TelevisionHandoffProps } from './TelevisionHandoff.types';
@@ -145,12 +146,16 @@ const TelevisionHandoff = ({ name, onSignedIn }: TelevisionHandoffProps) => {
       ) : (
         <div className="flex flex-col items-center gap-6">
           <QrCode
-            value={grant.verificationUriComplete}
+            value={anAddressAPhoneCanReach(grant.verificationUriComplete, window.location.origin)}
             label="Open this on your phone"
             size={200}
           />
 
-          <p className="text-base text-text-muted">{whereToTypeTheCode(grant.verificationUri)}</p>
+          <p className="text-base text-text-muted">
+            {whereToTypeTheCode(
+              anAddressAPhoneCanReach(grant.verificationUri, window.location.origin),
+            )}
+          </p>
 
           <p className="font-mono text-5xl font-semibold tracking-[0.2em] text-text">
             {grant.userCode}

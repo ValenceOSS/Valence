@@ -33,11 +33,19 @@ afterEach(() => {
 });
 
 describe('signing a television in from a phone', () => {
-  it('shows the code somebody has to type, and where to type it', async () => {
+  it('shows the code somebody has to type', async () => {
     render(<TelevisionHandoff name="Valence" onSignedIn={vi.fn()} />);
 
     expect(await screen.findByText('ABCD1234')).toBeInTheDocument();
-    expect(screen.getByText('valence.local:8420/device')).toBeInTheDocument();
+  });
+
+  it('sends the phone to the address this screen reached Valence on', async () => {
+    render(<TelevisionHandoff name="Valence" onSignedIn={vi.fn()} />);
+
+    await screen.findByText('ABCD1234');
+
+    expect(screen.getByText(`${window.location.host}/device`)).toBeInTheDocument();
+    expect(screen.queryByText('valence.local:8420/device')).not.toBeInTheDocument();
   });
 
   it('never puts the code it polls with on the screen', async () => {
