@@ -11,6 +11,7 @@ use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 
+use crate::audio::{touch, AudioBitrate, AudioRegistry};
 use crate::cache_sweep;
 use crate::capability::{detect_capabilities, Capabilities};
 use crate::download::{self, DownloadFile, DownloadJob, DownloadRegistry, DownloadRequest};
@@ -96,6 +97,8 @@ pub struct AppState {
     pub queue: WorkQueue,
     /// What the machine is using, and what has happened lately.
     pub monitor: Monitor,
+    /// Keeps one rendition of a track from being encoded twice at once.
+    pub audio: AudioRegistry,
 }
 
 impl AppState {
@@ -118,6 +121,16 @@ pub struct ProbeRequest {
 #[derive(Debug, Deserialize)]
 pub struct FileQuery {
     pub path: String,
+}
+
+/// Which track to play, and at which of the offered bitrates.
+///
+/// The bitrate arrives as text so that a number nobody offers is answered the
+/// same way as a word: with the service's own error rather than the extractor's.
+#[derive(Debug, Deserialize)]
+pub struct AudioQuery {
+    pub path: String,
+    pub kbps: String,
 }
 
 /// One byte range, as parsed from a `Range` header.
@@ -239,6 +252,16 @@ fn content_type_for(name: &str) -> &'static str {
         "m4s" | "mp4" => "video/mp4",
         "jpg" | "jpeg" => "image/jpeg",
         "vtt" => "text/vtt",
+        "mp3" => "audio/mpeg",
+        "flac" => "audio/flac",
+        "m4a" | "alac" => "audio/mp4",
+        "aac" => "audio/aac",
+        "ogg" | "oga" | "opus" => "audio/ogg",
+        "wav" => "audio/wav",
+        "wma" => "audio/x-ms-wma",
+        "aiff" | "aif" => "audio/aiff",
+        "ape" => "audio/x-ape",
+        "wv" => "audio/x-wavpack",
         _ => "application/octet-stream",
     }
 }
@@ -460,6 +483,84 @@ async fn direct_file(
             .get(header::RANGE)
             .and_then(|value| value.to_str().ok()),
         "No such file.",
+    )
+    .await
+}
+
+/// Serves a track at a lower bitrate, encoding it the first time it is asked for.
+///
+/// Encoded on a task of its own so a listener who skips ahead mid-encode does
+/// not throw the work away: whoever asks next finds it finished, or waits on
+/// the same encode rather than starting another.
+async fn audio_rendition(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(query): Query<AudioQuery>,
+) -> Response {
+    let Some(bitrate) = AudioBitrate::parse(&query.kbps) else {
+        return error(
+            StatusCode::BAD_REQUEST,
+            "Audio is offered at 96, 160 or 320 kbps.",
+        );
+    };
+
+    let path = PathBuf::from(&query.path);
+
+    if !state.is_readable(&path) {
+        return error(
+            StatusCode::FORBIDDEN,
+            "That file is outside the media roots.",
+        );
+    }
+
+    let config = state.registry.config();
+    let audio = state.audio.clone();
+    let ffmpeg = config.ffmpeg.clone();
+    let ffprobe = state.ffprobe.clone();
+    let artefact_root = config.artefact_root.clone();
+
+    let made = tokio::spawn(async move {
+        audio
+            .render(
+                crate::audio::Tools {
+                    ffmpeg: &ffmpeg,
+                    ffprobe: &ffprobe,
+                },
+                &artefact_root,
+                &path,
+                bitrate,
+            )
+            .await
+    })
+    .await;
+
+    let rendition = match made {
+        Ok(Ok(rendition)) => rendition,
+        Ok(Err(failure)) if failure.is_missing() => {
+            return error(StatusCode::NOT_FOUND, &failure.to_string());
+        }
+        Ok(Err(failure)) => {
+            tracing::warn!(target: "audio", %failure, "could not encode {}", query.path);
+
+            return error(StatusCode::INTERNAL_SERVER_ERROR, &failure.to_string());
+        }
+        Err(_) => {
+            return error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "The encode stopped before it finished.",
+            );
+        }
+    };
+
+    if let Err(failure) = touch(&rendition).await {
+        tracing::debug!(target: "audio", %failure, "could not mark a rendition as played");
+    }
+
+    stream_file(
+        &rendition,
+        "audio/mp4",
+        requested_range(&headers),
+        "No such rendition.",
     )
     .await
 }
@@ -1480,6 +1581,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/capabilities", get(capabilities))
         .route("/probe", post(probe))
         .route("/file", get(direct_file))
+        .route("/audio", get(audio_rendition))
         .route("/sessions", post(start_session))
         .route("/sessions/{id}/{name}", get(session_file))
         .route("/sessions/{id}", axum::routing::delete(stop_session))
@@ -1610,5 +1712,29 @@ mod tests {
         assert_eq!(content_type_for("segment1.m4s"), "video/mp4");
         assert_eq!(content_type_for("init.mp4"), "video/mp4");
         assert_eq!(content_type_for("notes.txt"), "application/octet-stream");
+    }
+
+    #[test]
+    fn serves_music_with_the_type_a_browser_will_play() {
+        for (name, expected) in [
+            ("01 Hunter.mp3", "audio/mpeg"),
+            ("01 Hunter.flac", "audio/flac"),
+            ("01 Hunter.FLAC", "audio/flac"),
+            ("01 Hunter.m4a", "audio/mp4"),
+            ("01 Hunter.alac", "audio/mp4"),
+            ("01 Hunter.aac", "audio/aac"),
+            ("01 Hunter.ogg", "audio/ogg"),
+            ("01 Hunter.oga", "audio/ogg"),
+            ("01 Hunter.opus", "audio/ogg"),
+            ("01 Hunter.wav", "audio/wav"),
+            ("01 Hunter.wma", "audio/x-ms-wma"),
+            ("01 Hunter.aiff", "audio/aiff"),
+            ("01 Hunter.aif", "audio/aiff"),
+            ("01 Hunter.ape", "audio/x-ape"),
+            ("01 Hunter.wv", "audio/x-wavpack"),
+            ("01 Hunter.dsf", "application/octet-stream"),
+        ] {
+            assert_eq!(content_type_for(name), expected, "{name}");
+        }
     }
 }

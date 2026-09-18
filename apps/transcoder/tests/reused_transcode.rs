@@ -134,6 +134,7 @@ fn app(registry: SessionRegistry) -> axum::Router {
         trickplay: valence_transcoder::trickplay::TrickplayRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
+        audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: WorkQueue::new(1),
         media_roots: Vec::new(),
     })

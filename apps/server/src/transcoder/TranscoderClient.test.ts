@@ -618,6 +618,62 @@ describe('reading a file the media service is still writing', () => {
 
     await expect(client().readFile('/media/Arrival.mkv', null)).resolves.toBeNull();
   });
+
+  it('asks for a track at the bitrate a listener wanted', async () => {
+    const { asked } = streaming({ contentType: 'audio/mp4' });
+
+    await client().readAudioRendition('/music/Björk/Homogenic/01 Hunter.flac', 160, null);
+
+    expect(asked[0]?.url).toBe(
+      `http://127.0.0.1:8477/audio?path=${encodeURIComponent('/music/Björk/Homogenic/01 Hunter.flac')}&kbps=160`,
+    );
+  });
+
+  it('asks for only the stretch of a track a player wanted', async () => {
+    const { asked } = streaming({ contentType: 'audio/mp4' });
+
+    await client().readAudioRendition('/music/Hunter.flac', 96, 'bytes=0-1023');
+
+    expect(asked[0]?.init?.headers).toMatchObject({ range: 'bytes=0-1023' });
+  });
+
+  it('asks for the whole track where no stretch was named', async () => {
+    const { asked } = streaming({ contentType: 'audio/mp4' });
+
+    await client().readAudioRendition('/music/Hunter.flac', 320, null);
+    await client().readAudioRendition('/music/Hunter.flac', 320);
+
+    expect(asked[0]?.init?.headers).toBeUndefined();
+    expect(asked[1]?.init?.headers).toBeUndefined();
+  });
+
+  it('carries what the media service said the track is', async () => {
+    streaming({ contentType: 'audio/mp4', status: 206 });
+
+    await expect(
+      client().readAudioRendition('/music/Hunter.flac', 160, 'bytes=0-1'),
+    ).resolves.toMatchObject({ contentType: 'audio/mp4', status: 206 });
+  });
+
+  it('falls back to the type a rendition always is where the media service named none', async () => {
+    streaming({ contentType: null });
+
+    await expect(
+      client().readAudioRendition('/music/Hunter.flac', 160, null),
+    ).resolves.toMatchObject({ contentType: 'audio/mp4' });
+  });
+
+  it('answers with nothing where the media service refused the track', async () => {
+    streaming({ ok: false, status: 404 });
+
+    await expect(client().readAudioRendition('/music/Hunter.flac', 160, null)).resolves.toBeNull();
+  });
+
+  it('answers with nothing where there is no track to read', async () => {
+    streaming({ body: null });
+
+    await expect(client().readAudioRendition('/music/Hunter.flac', 160, null)).resolves.toBeNull();
+  });
 });
 
 describe('the transcoder monitor socket', () => {
