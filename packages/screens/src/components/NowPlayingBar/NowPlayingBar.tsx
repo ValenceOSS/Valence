@@ -32,7 +32,6 @@ import {
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import {
   AUDIO_QUALITIES,
-  AUDIO_QUALITY_DETAILS,
   AUDIO_QUALITY_LABELS,
   AudioQualitySchema,
 } from '@ValenceContracts/schemas/Music';
@@ -47,6 +46,7 @@ import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import { useMusicSession } from '@ValenceScreens/music/useMusicSession';
 import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import { describeAudioQuality } from '@ValenceScreens/music/describeAudioQuality';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { MusicPanel } from '@ValenceScreens/music/musicPanel';
 import type { Variants } from 'motion/react';
@@ -430,7 +430,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                     options: AUDIO_QUALITIES.map((quality) => ({
                       id: quality,
                       label: AUDIO_QUALITY_LABELS[quality],
-                      detail: AUDIO_QUALITY_DETAILS[quality],
+                      detail: describeAudioQuality(quality, state.current?.bitrateKbps ?? null),
                     })),
                   },
                 ]}
