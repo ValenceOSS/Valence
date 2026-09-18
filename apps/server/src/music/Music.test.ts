@@ -116,6 +116,8 @@ const fakeMusic = () => {
       list: vi.fn(() => []),
       report: vi.fn(() => true),
       command: vi.fn(() => false),
+      playingOn: vi.fn(() => null),
+      order: vi.fn(() => false),
     },
     stream: vi.fn(() =>
       Promise.resolve({

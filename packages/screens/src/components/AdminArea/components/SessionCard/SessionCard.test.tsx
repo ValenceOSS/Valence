@@ -22,6 +22,26 @@ const IDLE_SESSION: ActiveSession = {
   deviceLabel: 'Living room TV',
   connectedAt: 1000,
   playback: null,
+  listening: null,
+};
+
+const LISTENING_SESSION: ActiveSession = {
+  ...IDLE_SESSION,
+  listening: {
+    trackId: '00000000-0000-4000-8000-000000000001',
+    title: 'Caramel',
+    artists: ['Sleep Token'],
+    albumId: '00000000-0000-4000-8000-000000000002',
+    hasArtwork: false,
+    isPlaying: true,
+    positionSeconds: 65,
+    durationSeconds: 290,
+    reportedAtMs: 1,
+    quality: 'low',
+    delivery: 'encoded',
+    codec: 'aac',
+    kbps: 96,
+  },
 };
 
 const WATCHING_SESSION: ActiveSession = {
@@ -388,6 +408,68 @@ describe('SessionCard', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('somebody listening to music', () => {
+    it('names the song, who it is by, and how it is reaching the device', () => {
+      render(
+        <SessionCard
+          session={LISTENING_SESSION}
+          isBusy={false}
+          onStop={vi.fn()}
+          onPause={vi.fn()}
+          onResume={vi.fn()}
+          onMessage={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByText('Caramel · Sleep Token')).toBeInTheDocument();
+      expect(screen.getByText('Encoding')).toBeInTheDocument();
+      expect(screen.getByText('· aac 96 kbps')).toBeInTheDocument();
+      expect(screen.getByText('1:05 / 4:50')).toBeInTheDocument();
+    });
+
+    it('says the file is going as it is where nothing is encoded', () => {
+      render(
+        <SessionCard
+          session={{
+            ...LISTENING_SESSION,
+            listening:
+              LISTENING_SESSION.listening === null
+                ? null
+                : { ...LISTENING_SESSION.listening, delivery: 'direct', codec: 'flac', kbps: 1492 },
+          }}
+          isBusy={false}
+          onStop={vi.fn()}
+          onPause={vi.fn()}
+          onResume={vi.fn()}
+          onMessage={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByText('Direct')).toBeInTheDocument();
+    });
+
+    it('offers the same controls as a film', () => {
+      const onPause = vi.fn();
+
+      render(
+        <SessionCard
+          session={LISTENING_SESSION}
+          isBusy={false}
+          onStop={vi.fn()}
+          onPause={onPause}
+          onResume={vi.fn()}
+          onMessage={vi.fn()}
+        />,
+      );
+
+      screen.getByRole('button', { name: 'Pause' }).click();
+
+      expect(onPause).toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Stream stats' })).not.toBeInTheDocument();
     });
   });
 });

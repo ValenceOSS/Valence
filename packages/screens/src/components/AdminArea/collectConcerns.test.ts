@@ -119,6 +119,7 @@ const streaming = (bufferedAheadSeconds: number, isPlaying = true): ActiveSessio
       presentedHeight: 1080,
     },
   },
+  listening: null,
 });
 
 const healthy = {

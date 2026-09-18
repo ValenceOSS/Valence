@@ -46,6 +46,7 @@ const WATCHING_SESSION: ActiveSession = {
     startedAt: 1500,
     health: null,
   },
+  listening: null,
 };
 
 const IDLE_SESSION: ActiveSession = { ...WATCHING_SESSION, playback: null };

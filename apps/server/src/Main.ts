@@ -619,6 +619,7 @@ const musicServices: MusicServices = {
         { kind: 'musicDevicesChanged' },
         { kind: 'accounts', accountIds: [accountId] },
       );
+      realtime.publish('sessions', { changed: true }, { kind: 'everyone' });
     },
   }),
   stream: (file, rendition, range) =>

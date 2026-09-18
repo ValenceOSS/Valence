@@ -1,4 +1,5 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
+import { ListeningSessionSchema } from '@ValenceContracts/schemas/MusicRemote';
 import { z } from 'zod';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
@@ -215,6 +216,7 @@ const ActiveSessionSchema = z.object({
         .nullable(),
     })
     .nullable(),
+  listening: ListeningSessionSchema.nullable().default(null),
 });
 
 const JobDefinitionSchema = z.object({

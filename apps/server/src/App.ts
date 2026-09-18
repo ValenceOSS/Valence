@@ -333,6 +333,7 @@ import type { HistoryService } from '@ValenceServer/history/HistoryService';
 import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 
 import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
+import { listeningFor } from '@ValenceServer/music/listeningFor';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
 
 const PROFILE_HEADER = 'x-valence-profile';
@@ -2214,7 +2215,27 @@ const createApp = ({
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    return context.json(presence.list(), 200);
+    const listeningOn = async (clientId: string) => {
+      const nowPlaying = music?.devices.playingOn(clientId) ?? null;
+
+      if (music === undefined || nowPlaying === null) {
+        return null;
+      }
+
+      return listeningFor(
+        nowPlaying,
+        await music.library.readTrackFile(asTheServer, nowPlaying.trackId),
+      );
+    };
+
+    return context.json(
+      await Promise.all(
+        presence
+          .list()
+          .map(async (entry) => ({ ...entry, listening: await listeningOn(entry.clientId) })),
+      ),
+      200,
+    );
   });
 
   app.openapi(adminStopSessionRoute, async (context) => {
@@ -2223,6 +2244,11 @@ const createApp = ({
     }
 
     const { clientId } = context.req.valid('param');
+
+    if (music?.devices.order(clientId, { kind: 'stop' }) === true) {
+      return context.body(null, 204);
+    }
+
     const transcoderSessionId = presence.list().find((entry) => entry.clientId === clientId)
       ?.playback?.transcoderSessionId;
 
@@ -2249,7 +2275,10 @@ const createApp = ({
       return context.json({ error: 'That tab is not open.' }, 404);
     }
 
-    if (!presence.pause(clientId, 'This stream was paused by an admin.')) {
+    if (
+      !presence.pause(clientId, 'This stream was paused by an admin.') &&
+      music?.devices.order(clientId, { kind: 'pause' }) !== true
+    ) {
       return context.json({ error: 'That tab is not watching anything.' }, 409);
     }
 
@@ -2275,7 +2304,10 @@ const createApp = ({
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    if (!presence.resume(context.req.valid('param').clientId)) {
+    const { clientId } = context.req.valid('param');
+    const isListening = music?.devices.order(clientId, { kind: 'resume' }) === true;
+
+    if (!presence.resume(clientId) && !isListening) {
       return context.json({ error: 'That tab is not open.' }, 404);
     }
 

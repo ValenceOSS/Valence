@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { ListeningSessionSchema } from '@ValenceContracts/schemas/MusicRemote';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { PREVIEW_QUALITIES } from '@ValenceContracts/schemas/PreviewQuality';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
@@ -203,6 +204,7 @@ const AdminSessionSchema = z
           .nullable(),
       })
       .nullable(),
+    listening: ListeningSessionSchema.nullable().default(null),
   })
   .openapi('AdminSession');
 

@@ -10,6 +10,7 @@ const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   deviceLabel: 'Chrome on macOS',
   connectedAt: 0,
   playback: null,
+  listening: null,
   ...overrides,
 });
 

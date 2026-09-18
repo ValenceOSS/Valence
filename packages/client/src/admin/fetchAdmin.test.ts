@@ -255,10 +255,10 @@ describe('fetchActiveSessions', () => {
     },
   };
 
-  it('reads every tab that has the app open', async () => {
+  it('reads every tab that has the app open, nobody listening where the server does not say', async () => {
     answerWith([SESSION]);
 
-    await expect(fetchActiveSessions()).resolves.toEqual([SESSION]);
+    await expect(fetchActiveSessions()).resolves.toEqual([{ ...SESSION, listening: null }]);
   });
 
   it('reads what the server found already made for a session', async () => {

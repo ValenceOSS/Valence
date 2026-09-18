@@ -27,6 +27,9 @@ const NOW_PLAYING: MusicNowPlaying = {
   durationSeconds: 300,
   isPlaying: true,
   volume: 0.8,
+  isMuted: false,
+  quality: 'lossless',
+  upNext: [],
   reportedAtMs: 1,
 };
 
@@ -145,5 +148,32 @@ describe('createMusicDevices', () => {
       createMusicDevices({ presence }).command(ME, 'laptop', 'theirs', { kind: 'pause' }),
     ).toBe(false);
     expect(presence.tell).not.toHaveBeenCalled();
+  });
+
+  it('says what a device is playing, for the sessions an operator sees', () => {
+    const { presence } = presenceWith([entry('laptop', 'me')]);
+    const devices = createMusicDevices({ presence });
+
+    devices.report(ME, 'laptop', NOW_PLAYING);
+
+    expect(devices.playingOn('laptop')).toEqual(NOW_PLAYING);
+    expect(devices.playingOn('phone')).toBeNull();
+  });
+
+  it('passes an operator’s pause to a device that is playing music, and only then', () => {
+    const { presence } = presenceWith([entry('laptop', 'me')]);
+    const devices = createMusicDevices({ presence });
+
+    expect(devices.order('laptop', { kind: 'pause' })).toBe(false);
+
+    devices.report(ME, 'laptop', NOW_PLAYING);
+
+    expect(devices.order('laptop', { kind: 'pause' })).toBe(true);
+    expect(presence.tell).toHaveBeenCalledWith('laptop', {
+      kind: 'music',
+      command: { kind: 'pause' },
+      fromClientId: 'server',
+      fromLabel: 'An administrator',
+    });
   });
 });

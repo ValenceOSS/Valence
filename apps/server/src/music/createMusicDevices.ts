@@ -24,6 +24,8 @@ type MusicDevices = {
     toClientId: string,
     command: MusicCommand,
   ) => boolean;
+  playingOn: (clientId: string) => MusicNowPlaying | null;
+  order: (clientId: string, command: MusicCommand) => boolean;
 };
 
 /**
@@ -104,6 +106,17 @@ const createMusicDevices = ({ presence, onChanged }: MusicDevicesOptions): Music
 
       return true;
     },
+
+    playingOn: (clientId) => playing.get(clientId) ?? null,
+
+    order: (clientId, command) =>
+      playing.has(clientId) &&
+      presence.tell(clientId, {
+        kind: 'music',
+        command,
+        fromClientId: 'server',
+        fromLabel: 'An administrator',
+      }),
 
     command: (listener, fromClientId, toClientId, command) => {
       const devices = owned(listener);
