@@ -18,6 +18,7 @@ const installDesktopPlatform = (): void => {
     store: theDesktopsStore(),
     describeThisClient: () => describeThisDesktop(navigator.userAgent),
     thisClientId: thisWindowsId,
+    thisClientKind: () => 'desktop',
     canKeepFiles: () => true,
     held: theDesktopsHeldFiles(),
     reachability: theDesktopsReach(),
