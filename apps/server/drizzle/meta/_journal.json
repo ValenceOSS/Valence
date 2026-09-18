@@ -414,6 +414,13 @@
       "when": 1789588860527,
       "tag": "0058_nifty_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1789690876925,
+      "tag": "0059_a_face_is_a_name_not_a_path",
+      "breakpoints": true
     }
   ]
 }
