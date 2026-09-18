@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { StillWatchingDialog } from './StillWatchingDialog';
@@ -105,13 +105,71 @@ describe('StillWatchingDialog', () => {
   });
 
   it('starts its countdown afresh each time it is asked', async () => {
-    const { rerender } = render(<StillWatchingDialog {...props} isOpen={false} />);
+    vi.useFakeTimers();
 
-    rerender(<StillWatchingDialog {...props} isOpen />);
+    try {
+      const { rerender } = render(
+        <StillWatchingDialog {...props} secondsToAnswer={5} isOpen={false} />,
+      );
 
-    await waitFor(() => {
-      expect(screen.getByText(/Stopping in 90 seconds/)).toBeInTheDocument();
-    });
+      rerender(<StillWatchingDialog {...props} secondsToAnswer={5} isOpen />);
+
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(screen.getByText(/Stopping in 2 seconds/)).toBeInTheDocument();
+
+      rerender(<StillWatchingDialog {...props} secondsToAnswer={5} isOpen={false} />);
+      rerender(<StillWatchingDialog {...props} secondsToAnswer={5} isOpen />);
+
+      expect(screen.getByText(/Stopping in 5 seconds/)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('gives up once rather than once a second after the time is up', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const onGiveUp = vi.fn();
+
+      render(<StillWatchingDialog {...props} secondsToAnswer={2} onGiveUp={onGiveUp} />);
+
+      await vi.advanceTimersByTimeAsync(6000);
+
+      expect(onGiveUp).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not give up the moment it is asked again after a run that expired', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const onGiveUp = vi.fn();
+
+      const { rerender } = render(
+        <StillWatchingDialog {...props} secondsToAnswer={2} onGiveUp={onGiveUp} />,
+      );
+
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(onGiveUp).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <StillWatchingDialog {...props} secondsToAnswer={2} isOpen={false} onGiveUp={onGiveUp} />,
+      );
+
+      rerender(<StillWatchingDialog {...props} secondsToAnswer={2} onGiveUp={onGiveUp} />);
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(onGiveUp).toHaveBeenCalledTimes(1);
+      expect(screen.getByText(/Stopping in 2 seconds/)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('sets a display name so devtools can identify it', () => {
