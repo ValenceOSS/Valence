@@ -7,6 +7,11 @@ type MediaForDownload = {
     path: string;
     sizeBytes: number;
     generation: number;
+    renditions?: {
+      id: string;
+      item: Parameters<typeof negotiatePlayback>[0];
+      path: string;
+    }[];
   } | null>;
   titleOf: (mediaId: string) => Promise<string | null>;
   episodesOf: (seriesId: string) => Promise<{ id: string; title: string }[]>;

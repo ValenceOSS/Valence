@@ -1,13 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { isImageSubtitle } from '@ValenceCore/functions/isImageSubtitle';
 import { and, desc, eq, inArray } from 'drizzle-orm';
+import { chooseSource } from '@ValenceCore/functions/chooseSource';
 import { compareToOriginal } from '@ValenceCore/functions/compareToOriginal';
 import { describeQualityMeaning } from '@ValenceCore/functions/describeQualityMeaning';
 import { estimateDownloadBytes } from '@ValenceCore/functions/estimateDownloadBytes';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
 import { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
 import { planToSessionSpec } from '@ValenceCore/functions/planToSessionSpec';
-import { resolveQualityStep } from '@ValenceCore/functions/resolveQualityStep';
+import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { DownloadQualitySchema, DownloadStateSchema } from '@ValenceContracts/schemas/Download';
 import { downloadHolding, preparedDownload } from '@ValenceServer/db/Schema';
@@ -106,22 +107,32 @@ const createDownloadService = ({
       return null;
     }
 
-    const clamp = resolveQualityStep(found.item, quality);
-    const plan = negotiatePlayback(found.item, media.keepingProfile(), clamp, null);
+    const chosen = chooseSource({
+      sources: sourcesOf(found),
+      profile: media.keepingProfile(),
+      requestedQuality: quality,
+      neverSmaller: true,
+    });
+
+    if (chosen === null) {
+      return null;
+    }
+
+    const source = chosen.source.item;
 
     const spec = planToSessionSpec({
-      plan,
-      inputPath: found.path,
-      sourceRange: found.item.videoRange,
-      sourceSize: [found.item.width, found.item.height],
-      sourceVideoCodec: found.item.videoCodec,
-      sourceBitDepth: found.item.videoBitDepth,
-      sourceIsInterlaced: found.item.videoIsInterlaced,
-      sourcePixelAspect: found.item.videoPixelAspect ?? null,
-      imageSubtitleIndexes: found.item.subtitleStreams
+      plan: chosen.plan,
+      inputPath: chosen.source.path,
+      sourceRange: source.videoRange,
+      sourceSize: [source.width, source.height],
+      sourceVideoCodec: source.videoCodec,
+      sourceBitDepth: source.videoBitDepth,
+      sourceIsInterlaced: source.videoIsInterlaced,
+      sourcePixelAspect: source.videoPixelAspect ?? null,
+      imageSubtitleIndexes: source.subtitleStreams
         .filter((stream) => isImageSubtitle(stream.format))
         .map((stream) => stream.index),
-      subtitleIndexes: found.item.subtitleStreams.map((stream) => stream.index),
+      subtitleIndexes: source.subtitleStreams.map((stream) => stream.index),
       capabilities: await capabilities(),
       ...(forcedAccel === undefined ? {} : { forcedAccel: await forcedAccel() }),
       startSeconds: 0,
@@ -135,21 +146,18 @@ const createDownloadService = ({
 
     const wanted =
       audioLanguages.length === 0
-        ? found.item.audioStreams.slice(0, 1)
-        : found.item.audioStreams.filter((stream) =>
-            audioLanguages.includes(stream.language ?? ''),
-          );
+        ? source.audioStreams.slice(0, 1)
+        : source.audioStreams.filter((stream) => audioLanguages.includes(stream.language ?? ''));
 
     return {
       title: found.item.title,
       request: {
         spec: spec.spec,
-        durationSeconds: found.item.durationSeconds,
-        audioStreamIndexes: (wanted.length === 0
-          ? found.item.audioStreams.slice(0, 1)
-          : wanted
-        ).map((stream) => stream.index),
-        subtitleStreamIndexes: found.item.subtitleStreams
+        durationSeconds: source.durationSeconds,
+        audioStreamIndexes: (wanted.length === 0 ? source.audioStreams.slice(0, 1) : wanted).map(
+          (stream) => stream.index,
+        ),
+        subtitleStreamIndexes: source.subtitleStreams
           .filter((stream) => !isImageSubtitle(stream.format))
           .map((stream) => stream.index),
         generation: found.generation,

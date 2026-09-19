@@ -65,6 +65,8 @@ const phone: DeviceProfile = {
   ],
 };
 
+const laptop: DeviceProfile = { ...phone, name: 'Laptop', maxWidth: 3840, maxHeight: 2160 };
+
 const original: PlayableSource = {
   id: 'original',
   isOriginal: true,
@@ -120,11 +122,7 @@ describe('chooseSource', () => {
 
   it('takes the largest rendition the device can take without encoding', () => {
     const chosen = chooseSource({
-      sources: [
-        original,
-        smallerCopy('10', 1920, 1080, 6000),
-        smallerCopy('20', 1280, 720, 2500),
-      ],
+      sources: [original, smallerCopy('10', 1920, 1080, 6000), smallerCopy('20', 1280, 720, 2500)],
       profile: phone,
     });
 
@@ -133,11 +131,7 @@ describe('chooseSource', () => {
 
   it('honours a rung the viewer pinned, because a clamped larger file is no longer passthrough', () => {
     const chosen = chooseSource({
-      sources: [
-        original,
-        smallerCopy('10', 1920, 1080, 6000),
-        smallerCopy('20', 1280, 720, 2400),
-      ],
+      sources: [original, smallerCopy('10', 1920, 1080, 6000), smallerCopy('20', 1280, 720, 2400)],
       profile: television,
       requestedQuality: '720p',
     });
@@ -199,5 +193,39 @@ describe('chooseSource', () => {
     });
 
     expect(chosen?.source.id).toBe('original');
+  });
+
+  it('refuses a rendition that would shrink the picture, where nothing may shrink it', () => {
+    const sources = [original, smallerCopy('10', 1920, 1080, 6000)];
+
+    expect(chooseSource({ sources, profile: laptop })?.source.id).toBe('10');
+
+    const kept = chooseSource({ sources, profile: laptop, neverSmaller: true });
+
+    expect(kept?.source.isOriginal).toBe(true);
+    expect(kept?.plan.video.kind).toBe('transcode');
+  });
+
+  it('takes a rendition of the same picture, which shrinks nothing', () => {
+    const chosen = chooseSource({
+      sources: [original, smallerCopy('40', 3840, 2160, 20000)],
+      profile: laptop,
+      neverSmaller: true,
+    });
+
+    expect(chosen?.source.id).toBe('40');
+    expect(chosen?.plan.video.kind).toBe('passthrough');
+  });
+
+  it('measures the floor against the rung asked for, not against the original', () => {
+    const chosen = chooseSource({
+      sources: [original, smallerCopy('20', 1280, 720, 2400)],
+      profile: laptop,
+      requestedQuality: '720p',
+      neverSmaller: true,
+    });
+
+    expect(chosen?.source.id).toBe('20');
+    expect(chosen?.plan.video.kind).toBe('passthrough');
   });
 });
