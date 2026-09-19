@@ -30,6 +30,7 @@ const toSummary = (item: MediaDetail): MediaSummary => ({
   videoCodec: item.videoCodec,
   videoRange: item.videoRange,
   addedAt: item.addedAt,
+  sizeBytes: item.sizeBytes ?? null,
   hasPoster: item.metadata.hasPoster,
   hasBackdrop: item.metadata.hasBackdrop,
   hasLogo: false,

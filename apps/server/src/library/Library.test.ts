@@ -218,6 +218,15 @@ describe('library routes', () => {
     expect(body).toMatchObject({ total: 1, items: [{ title: 'Arrival', year: 2016 }] });
   });
 
+  it('says how large each file is, which is what a re-encode is weighed against', async () => {
+    const { app } = build([detail({ sizeBytes: 70_000_000_000 })]);
+
+    const response = await app.request(`${BASE}/api/libraries/${LIBRARY_ID}/items`);
+    const body = await response.json();
+
+    expect(body).toMatchObject({ items: [{ sizeBytes: 70_000_000_000 }] });
+  });
+
   it('returns summaries rather than stream detail in the list', async () => {
     const { app } = build([detail()]);
 

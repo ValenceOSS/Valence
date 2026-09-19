@@ -105,6 +105,19 @@ describe('ReencodeDialog', () => {
     expect(screen.queryByText('Harry Potter and the Prisoner of Azkaban')).toBeNull();
   });
 
+  it('names the codec the way a person writes it on every row, not only in the menu', () => {
+    render(<ReencodeDialog {...props} />);
+
+    expect(screen.getByText(/3840×2160 · H\.264/)).toBeVisible();
+  });
+
+  it('says a size was never recorded rather than claiming the file is empty', () => {
+    render(<ReencodeDialog {...props} media={[item({ sizeBytes: null })]} />);
+
+    expect(screen.getByText(/size not recorded/)).toBeVisible();
+    expect(screen.queryByText(/0 B/)).toBeNull();
+  });
+
   it('names the codec the way a person writes it, not the way ffmpeg does', () => {
     render(<ReencodeDialog {...props} />);
 

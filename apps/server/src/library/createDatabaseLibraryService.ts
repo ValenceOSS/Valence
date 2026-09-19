@@ -978,6 +978,7 @@ const createDatabaseLibraryService = ({
           videoCodec: mediaItem.videoCodec,
           videoRange: mediaItem.videoRange,
           addedAt: mediaItem.addedAt,
+          sizeBytes: mediaItem.sizeBytes,
           posterUrl: mediaItem.posterUrl,
           backdropUrl: mediaItem.backdropUrl,
           logoUrl: mediaItem.logoUrl,

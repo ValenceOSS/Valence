@@ -44,6 +44,18 @@ const MODE_MEANINGS: Record<ReencodeMode, string> = {
 const SECTION = 'text-xs uppercase tracking-[0.14em] text-text-muted';
 
 /**
+ * How large a file is, or that nobody recorded it.
+ *
+ * Never "0 B" for a size the library does not hold. A file reported as empty reads as a broken file
+ * rather than as a missing figure, and it is the figure a re-encode is weighed against.
+ *
+ * @param sizeBytes - What the library recorded, where it did.
+ * @returns The size in words.
+ */
+const describeSize = (sizeBytes: number | null | undefined): string =>
+  typeof sizeBytes === 'number' && sizeBytes > 0 ? formatBytes(sizeBytes) : 'size not recorded';
+
+/**
  * What a file is called on a row, which is the programme rather than the episode.
  *
  * @param item - The item.
@@ -200,10 +212,9 @@ const ReencodeDialog = ({
           <div className="flex flex-wrap items-end gap-3">
             <TextField
               label="Find a title"
-              isLabelHidden
               size="sm"
               type="search"
-              placeholder="Find a title"
+              placeholder="Any title"
               value={search}
               onValueChange={setSearch}
               className="min-w-0 flex-1"
@@ -241,7 +252,7 @@ const ReencodeDialog = ({
                     <li key={item.id} className="rounded-md px-2 py-1.5 hover:bg-shade/20">
                       <Checkbox
                         label={nameOf(item)}
-                        description={`${item.width.toString()}×${item.height.toString()} · ${item.videoCodec} · ${formatBytes(item.sizeBytes ?? 0)}${refusal === null ? '' : ` — ${refusal.detail}`}`}
+                        description={`${item.width.toString()}×${item.height.toString()} · ${CODEC_NAMES[item.videoCodec] ?? item.videoCodec} · ${describeSize(item.sizeBytes)}${refusal === null ? '' : ` — ${refusal.detail}`}`}
                         checked={chosen.has(item.id)}
                         onCheckedChange={(next) => {
                           toggle(item.id, next);
