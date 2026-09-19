@@ -21,6 +21,9 @@ import { createDatabaseSentDownloadStore } from '@ValenceRequests/downloads/crea
 import { createDownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import { createDownloadQueue } from '@ValenceRequests/downloads/createDownloadQueue';
 import { createDownloadRoutes } from '@ValenceRequests/downloads/createDownloadRoutes';
+import { createDatabaseProfileStore } from '@ValenceRequests/profiles/createDatabaseProfileStore';
+import { createProfileRoutes } from '@ValenceRequests/profiles/createProfileRoutes';
+import { createProfileService } from '@ValenceRequests/profiles/createProfileService';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
 
@@ -89,6 +92,8 @@ const downloadClients = createDownloadClientService({
     ),
 });
 
+const profiles = createProfileService({ store: createDatabaseProfileStore(db) });
+
 const downloadQueue = createDownloadQueue({
   clients: downloadClients,
   downloads: createDatabaseSentDownloadStore(db),
@@ -122,7 +127,11 @@ const definitionTimer = setInterval(() => {
 const app = createApp({
   indexers,
   definitions,
-  downloads: createDownloadRoutes({ clients: downloadClients, queue: downloadQueue }),
+  profiles,
+  routes: [
+    createDownloadRoutes({ clients: downloadClients, queue: downloadQueue }),
+    createProfileRoutes(profiles),
+  ],
   secret: env.REQUESTS_SECRET,
   version: env.VALENCE_VERSION,
   readVpn: vpn.current,

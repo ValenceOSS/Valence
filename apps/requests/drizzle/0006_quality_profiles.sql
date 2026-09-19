@@ -1,0 +1,20 @@
+CREATE TABLE "valence_requests"."quality_profile" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"kind" text NOT NULL,
+	"resolutions" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"sources" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"music_qualities" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"smallest_mb" double precision,
+	"largest_mb" double precision,
+	"preferred_words" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"required_words" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"banned_words" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"is_upgrading" boolean DEFAULT false NOT NULL,
+	"upgrade_until_resolution" text,
+	"upgrade_until_source" text,
+	"upgrade_until_music_quality" text,
+	"library_ids" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);

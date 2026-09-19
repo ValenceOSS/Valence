@@ -116,6 +116,8 @@ const FOUND: ReleaseSearchOutcome = {
       problem: 'The indexer did not answer within 30 seconds',
     },
   ],
+  judgements: [],
+  pickedId: null,
 };
 
 beforeEach(() => {
@@ -368,6 +370,8 @@ describe('ReleaseSearchPanel', () => {
     searchReleases.mockResolvedValue({
       releases: [aRelease('Mystery.Box', { categories: [8000] })],
       indexers: FOUND.indexers,
+      judgements: [],
+      pickedId: null,
     });
 
     const user = userEvent.setup();
@@ -468,7 +472,12 @@ describe('ReleaseSearchPanel', () => {
   });
 
   it('says so when no indexer is switched on', async () => {
-    searchReleases.mockResolvedValue({ releases: [], indexers: [] });
+    searchReleases.mockResolvedValue({
+      releases: [],
+      indexers: [],
+      judgements: [],
+      pickedId: null,
+    });
 
     const user = userEvent.setup();
 
@@ -480,7 +489,12 @@ describe('ReleaseSearchPanel', () => {
   });
 
   it('says so when nothing was found', async () => {
-    searchReleases.mockResolvedValue({ releases: [], indexers: FOUND.indexers });
+    searchReleases.mockResolvedValue({
+      releases: [],
+      indexers: FOUND.indexers,
+      judgements: [],
+      pickedId: null,
+    });
 
     const user = userEvent.setup();
 
