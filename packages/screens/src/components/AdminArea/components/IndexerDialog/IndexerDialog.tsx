@@ -44,9 +44,18 @@ const KINDS = [
  * @param indexer - The indexer being changed, or null to add one.
  * @param start - What was chosen to add, for a new one.
  * @param onClose - Called when it is dismissed.
+ * @param onBack - Called to go back to where it was opened from, where there is somewhere to go
+ *   back to — the catalogue of sites a new indexer was chosen from — in place of dismissing it.
  * @param onSaved - Called with the indexer as kept.
  */
-const IndexerDialog = ({ isOpen, indexer, start = null, onClose, onSaved }: IndexerDialogProps) => {
+const IndexerDialog = ({
+  isOpen,
+  indexer,
+  start = null,
+  onClose,
+  onBack,
+  onSaved,
+}: IndexerDialogProps) => {
   const [form, setForm] = useState<IndexerForm>(() => formFor(indexer, start));
   const [shownFor, setShownFor] = useState({ indexer, start });
   const [tried, setTried] = useState<IndexerTest | null>(null);
@@ -412,8 +421,8 @@ const IndexerDialog = ({ isOpen, indexer, start = null, onClose, onSaved }: Inde
           </span>
         )}
 
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
+        <Button variant="secondary" onClick={onBack ?? onClose}>
+          {onBack === undefined ? 'Cancel' : 'Back'}
         </Button>
 
         <TryItButton isTrying={isTrying} verdict={verdict} isDisabled={isWorking} onTry={tryIt} />
