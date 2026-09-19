@@ -136,6 +136,7 @@ describe('DEFAULT_ROLES', () => {
       'jobs.runDestructive',
       'media.delete',
       'media.reencode',
+      'requests.manage',
       'account.invite',
       'account.manage',
       'account.ban',
