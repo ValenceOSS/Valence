@@ -28,6 +28,8 @@ const TorrentSchema = z.object({
   content_path: z.string().optional(),
 });
 
+const FileSchema = z.object({ name: z.string(), index: z.number().int().optional() });
+
 const TransferSchema = z.object({ dl_info_speed: z.number(), up_info_speed: z.number() });
 
 const NEVER_SECONDS = 8_640_000;
@@ -299,6 +301,29 @@ const createQbittorrentAdapter = (
       await answered(
         '/api/v2/torrents/delete',
         new URLSearchParams({ hashes: hash, deleteFiles: deleteData ? 'true' : 'false' }),
+      );
+    },
+
+    files: async (hash) => {
+      const listed = z
+        .array(FileSchema)
+        .parse(
+          await (await answered(`/api/v2/torrents/files?hash=${encodeURIComponent(hash)}`)).json(),
+        );
+
+      return listed.length === 0
+        ? null
+        : listed.map((file, position) => ({ index: file.index ?? position, name: file.name }));
+    },
+
+    skip: async (hash, indices) => {
+      if (indices.length === 0) {
+        return;
+      }
+
+      await answered(
+        '/api/v2/torrents/filePrio',
+        new URLSearchParams({ hash, id: indices.join('|'), priority: '0' }),
       );
     },
   };

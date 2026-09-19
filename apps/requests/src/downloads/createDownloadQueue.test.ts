@@ -7,6 +7,7 @@ import { createDownloadQueue } from './createDownloadQueue';
 import { createMemoryEventStore } from '@ValenceRequests/events/createMemoryEventStore';
 import { DownloadClientFailure } from './DownloadClientFailure';
 import type { DownloadStreamFrame } from '@ValenceContracts/schemas/DownloadQueue';
+import type { TorrentFile } from './TorrentFile';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 import type { ClientItem, DownloadClientAdapter } from './DownloadClientAdapter';
 import type { DownloadClientRecord } from './DownloadClientRecord';
@@ -130,7 +131,95 @@ const SEND = {
   indexerName: 'Jackett',
 };
 
+/**
+ * A client that lists the download given, and knows the files the torrent holds.
+ */
+const aSortingAdapter = (files: TorrentFile[] | null) => ({
+  ...anAdapter([anItem()]),
+  files: vi.fn((remoteId: string) => {
+    void remoteId;
+
+    return Promise.resolve(files);
+  }),
+  skip: vi.fn((remoteId: string, indices: readonly number[]) => {
+    void remoteId;
+    void indices;
+
+    return Promise.resolve();
+  }),
+});
+
 describe('createDownloadQueue', () => {
+  describe('leaving out what no library takes', () => {
+    it('leaves a torrent’s notes and samples out once, and fetches the rest', async () => {
+      const adapter = aSortingAdapter([
+        { index: 0, name: 'Dune/Dune.2021.mkv' },
+        { index: 1, name: 'Dune/RARBG.txt' },
+        { index: 2, name: 'Dune/Sample/sample.mkv' },
+      ]);
+      const { queue, downloads } = aQueue({ sent: [aSentDownload()], adapter });
+
+      await queue.check();
+      await queue.check();
+
+      expect(adapter.skip).toHaveBeenCalledTimes(1);
+      expect(adapter.skip).toHaveBeenCalledWith(HASH, [1, 2]);
+      expect(await downloads.find(aSentDownload().id)).toMatchObject({
+        state: 'downloading',
+        filesChecked: true,
+      });
+    });
+
+    it('throws out a torrent that holds a program, saying which', async () => {
+      const adapter = aSortingAdapter([
+        { index: 0, name: 'Dune/Dune.2021.1080p.mkv.exe' },
+        { index: 1, name: 'Dune/Dune.2021.1080p.mkv.lnk' },
+      ]);
+      const { queue, downloads, events } = aQueue({ sent: [aSentDownload()], adapter });
+
+      await queue.check();
+
+      const problem =
+        'It holds a program, Dune/Dune.2021.1080p.mkv.exe, which no film, series, album or book comes with';
+
+      expect(adapter.remove).toHaveBeenCalledWith(HASH, true);
+      expect(adapter.skip).not.toHaveBeenCalled();
+      expect(await downloads.find(aSentDownload().id)).toMatchObject({ state: 'failed', problem });
+      expect(await events.pending()).toMatchObject([{ kind: 'failed', problem }]);
+    });
+
+    it('throws out a torrent that holds nothing a library takes', async () => {
+      const { queue, downloads } = aQueue({
+        sent: [aSentDownload()],
+        adapter: aSortingAdapter([{ index: 0, name: 'Dune.rar' }]),
+      });
+
+      await queue.check();
+
+      expect(await downloads.find(aSentDownload().id)).toMatchObject({
+        state: 'failed',
+        problem: 'It holds nothing Valence can file',
+      });
+    });
+
+    it('waits for a magnet link to say what it holds, and leaves usenet be', async () => {
+      const waiting = aSortingAdapter(null);
+      const magnet = aQueue({ sent: [aSentDownload()], adapter: waiting });
+
+      await magnet.queue.check();
+
+      expect(waiting.skip).not.toHaveBeenCalled();
+      expect((await magnet.downloads.find(aSentDownload().id))?.filesChecked).toBe(false);
+
+      const usenet = aSortingAdapter([{ index: 0, name: 'Dune.exe' }]);
+      const nzb = aQueue({ sent: [aSentDownload({ protocol: 'usenet' })], adapter: usenet });
+
+      await nzb.queue.check();
+
+      expect(usenet.files).not.toHaveBeenCalled();
+    });
+  });
+
   describe('sending', () => {
     it('fetches the release and hands it to the first torrent client that is on', async () => {
       const second = aDownloadClient({

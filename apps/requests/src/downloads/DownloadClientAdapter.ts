@@ -1,4 +1,5 @@
 import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
+import type { TorrentFile } from '@ValenceRequests/downloads/TorrentFile';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 
 type ClientItem = {
@@ -49,6 +50,8 @@ type DownloadClientAdapter = {
   pause: (remoteId: string) => Promise<void>;
   resume: (remoteId: string) => Promise<void>;
   remove: (remoteId: string, deleteData: boolean) => Promise<void>;
+  files?: (remoteId: string) => Promise<TorrentFile[] | null>;
+  skip?: (remoteId: string, indices: readonly number[]) => Promise<void>;
 };
 
 export type { ClientFetch, ClientItem, ClientSettings, ClientSpeeds, DownloadClientAdapter };

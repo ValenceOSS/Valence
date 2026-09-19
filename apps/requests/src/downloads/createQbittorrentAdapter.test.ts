@@ -415,4 +415,35 @@ describe('createQbittorrentAdapter', () => {
     expect(formOf(asked[1]).get('deleteFiles')).toBe('true');
     expect(formOf(asked[2]).get('deleteFiles')).toBe('false');
   });
+
+  it('lists a torrent’s files once it knows them, and leaves out the ones asked', async () => {
+    const { fetch, asked } = aFakeClient({
+      'POST /api/v2/auth/login': loggingIn(),
+      'GET /api/v2/torrents/files': (request) =>
+        Response.json(
+          request.url.searchParams.get('hash') === HASH
+            ? [
+                { index: 0, name: 'Dune/Dune.mkv' },
+                { index: 1, name: 'Dune/RARBG.txt' },
+              ]
+            : [],
+        ),
+      'POST /api/v2/torrents/filePrio': () => new Response(''),
+    });
+    const adapter = createQbittorrentAdapter(SETTINGS, fetch);
+
+    expect(await adapter.files?.(HASH)).toEqual([
+      { index: 0, name: 'Dune/Dune.mkv' },
+      { index: 1, name: 'Dune/RARBG.txt' },
+    ]);
+    expect(await adapter.files?.('not-yet')).toBeNull();
+
+    await adapter.skip?.(HASH, [1, 3]);
+    await adapter.skip?.(HASH, []);
+
+    expect(formOf(asked.at(-1))).toEqual(
+      new URLSearchParams({ hash: HASH, id: '1|3', priority: '0' }),
+    );
+    expect(asked.filter((request) => request.url.pathname.endsWith('/filePrio'))).toHaveLength(1);
+  });
 });

@@ -24,6 +24,7 @@ type SentDownloadRecord = Pick<
   libraryId: string | null;
   libraryPath: string | null;
   filingAttempts: number;
+  filesChecked: boolean;
   updatedAt: string;
 };
 

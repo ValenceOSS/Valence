@@ -126,6 +126,7 @@ const sentDownload = requestsSchema.table(
     filedInto: text('filed_into'),
     filingProblem: text('filing_problem'),
     filingAttempts: integer('filing_attempts').notNull().default(0),
+    filesChecked: boolean('files_checked').notNull().default(false),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [unique('download_client_remote').on(table.clientId, table.remoteId)],

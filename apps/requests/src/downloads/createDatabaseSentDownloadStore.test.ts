@@ -17,6 +17,7 @@ const DUNE: SentDownloadRecord = {
   filedInto: null,
   filingProblem: null,
   filingAttempts: 0,
+  filesChecked: false,
   protocol: 'torrent',
   libraryKind: 'movies',
   title: 'Dune',

@@ -267,4 +267,34 @@ describe('createTransmissionAdapter', () => {
       { method: 'torrent-remove', arguments: { ids: [HASH], 'delete-local-data': true } },
     ]);
   });
+
+  it('lists a torrent’s files once it knows them, and leaves out the ones asked', async () => {
+    const { fetch, asked } = aTransmission({
+      'torrent-get': { torrents: [{ files: [{ name: 'Dune/Dune.mkv' }, { name: 'Dune/a.txt' }] }] },
+    });
+    const adapter = createTransmissionAdapter(SETTINGS, fetch);
+
+    expect(await adapter.files?.(HASH)).toEqual([
+      { index: 0, name: 'Dune/Dune.mkv' },
+      { index: 1, name: 'Dune/a.txt' },
+    ]);
+
+    await adapter.skip?.(HASH, [1]);
+    await adapter.skip?.(HASH, []);
+
+    expect(
+      asked
+        .filter((request) => request.headers['x-transmission-session-id'] === 'session-1')
+        .map(rpcOf),
+    ).toEqual([
+      { method: 'torrent-get', arguments: { ids: [HASH], fields: ['files'] } },
+      { method: 'torrent-set', arguments: { ids: [HASH], 'files-unwanted': [1] } },
+    ]);
+  });
+
+  it('knows no files for a magnet link still fetching what it holds', async () => {
+    const { fetch } = aTransmission({ 'torrent-get': { torrents: [{ files: [] }] } });
+
+    expect(await createTransmissionAdapter(SETTINGS, fetch).files?.(HASH)).toBeNull();
+  });
 });

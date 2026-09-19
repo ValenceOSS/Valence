@@ -2,15 +2,20 @@ import { randomUUID } from 'node:crypto';
 import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import { ReleaseSendSchema } from '@ValenceContracts/schemas/DownloadQueue';
 import { DownloadClientFailure } from '@ValenceRequests/downloads/DownloadClientFailure';
+import { sortTorrentFiles } from '@ValenceRequests/downloads/sortTorrentFiles';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
 import type {
   DownloadQueue,
   DownloadStreamFrame,
   QueuedDownload,
+  QueuedDownloadState,
   ReleaseSend,
 } from '@ValenceContracts/schemas/DownloadQueue';
-import type { ClientItem } from '@ValenceRequests/downloads/DownloadClientAdapter';
+import type {
+  ClientItem,
+  DownloadClientAdapter,
+} from '@ValenceRequests/downloads/DownloadClientAdapter';
 import type { DownloadClientRecord } from '@ValenceRequests/downloads/DownloadClientRecord';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import type { EventStore } from '@ValenceRequests/events/EventStore';
@@ -60,6 +65,13 @@ const UNASKABLE = 'The client could not be asked';
 const PROGRESS_WORTH_KEEPING = 0.01;
 
 const MISSING_AFTER_MS = 60_000;
+
+const FILES_CHECKED_WHILE: ReadonlySet<QueuedDownloadState> = new Set([
+  'queued',
+  'downloading',
+  'stalled',
+  'paused',
+]);
 
 const NOTHING_LIVE: Omit<Live, 'progress' | 'doneBytes'> = {
   downloadBytesPerSecond: null,
@@ -256,6 +268,55 @@ const createDownloadQueue = ({
     }
   };
 
+  const checkFiles = async (
+    record: SentDownloadRecord,
+    item: ClientItem | null,
+    adapter: DownloadClientAdapter,
+    clientName: string,
+  ): Promise<void> => {
+    if (
+      record.protocol !== 'torrent' ||
+      record.filesChecked ||
+      item === null ||
+      !FILES_CHECKED_WHILE.has(item.state) ||
+      adapter.files === undefined
+    ) {
+      return;
+    }
+
+    const files = await adapter.files(record.remoteId).catch(() => null);
+
+    if (files === null) {
+      return;
+    }
+
+    const sorted = sortTorrentFiles(files, record.libraryKind);
+    const at = now().toISOString();
+    const problem =
+      sorted.program !== null
+        ? `It holds a program, ${sorted.program}, which no film, series, album or book comes with`
+        : sorted.hasWanted
+          ? null
+          : 'It holds nothing Valence can file';
+
+    if (problem === null) {
+      await adapter.skip?.(record.remoteId, sorted.unwanted);
+      await downloads.update(record.id, { filesChecked: true, updatedAt: at });
+
+      return;
+    }
+
+    await adapter.remove(record.remoteId, true);
+    live.delete(record.id);
+    await downloads.update(record.id, {
+      state: 'failed',
+      problem,
+      filesChecked: true,
+      updatedAt: at,
+    });
+    await events.add({ kind: 'failed', title: record.title, clientName, problem });
+  };
+
   const round = async (): Promise<void> => {
     const [kept, sent] = await Promise.all([clients.records(), downloads.list()]);
 
@@ -275,7 +336,10 @@ const createDownloadQueue = ({
             readings.set(client.id, { isReachable: true, problem: null, ...speeds, checkedAt: at });
 
             for (const record of sent.filter((one) => one.clientId === client.id)) {
-              await follow(record, byId.get(record.remoteId.toLowerCase()) ?? null, client.name);
+              const item = byId.get(record.remoteId.toLowerCase()) ?? null;
+
+              await follow(record, item, client.name);
+              await checkFiles(record, item, adapter, client.name);
             }
           } catch (error) {
             readings.set(client.id, {
@@ -422,6 +486,7 @@ const createDownloadQueue = ({
           filedInto: null,
           filingProblem: null,
           filingAttempts: 0,
+          filesChecked: false,
           protocol: read.protocol,
           libraryKind: read.libraryKind,
           title: read.title,

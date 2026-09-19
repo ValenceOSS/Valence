@@ -29,6 +29,7 @@ const aSentDownload = (overrides: Partial<SentDownloadRecord> = {}): SentDownloa
   filedInto: null,
   filingProblem: null,
   filingAttempts: 0,
+  filesChecked: false,
   updatedAt: '2026-09-19T00:00:00.000Z',
   ...overrides,
 });
