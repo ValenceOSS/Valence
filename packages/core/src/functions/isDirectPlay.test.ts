@@ -100,8 +100,33 @@ describe('isDirectPlay', () => {
     expect(isDirectPlay(negotiatePlayback(hevc, takesMp4), hevc)).toBe(false);
   });
 
-  it('asks nothing of the tag for anything that is not HEVC', () => {
+  it('is false for an MP4 marked avc3, which keeps its parameter sets where a player may not look', () => {
     const h264 = { ...media, container: 'mp4', videoCodecTag: 'avc3' };
+    const takesMp4: DeviceProfile = {
+      ...profile,
+      directPlayProfiles: [
+        { container: 'mp4', videoCodecs: ['h264', 'hevc'], audioCodecs: ['aac', 'eac3'] },
+      ],
+    };
+
+    expect(negotiatePlayback(h264, takesMp4).video.kind).toBe('passthrough');
+    expect(isDirectPlay(negotiatePlayback(h264, takesMp4), h264)).toBe(false);
+  });
+
+  it('is true for an MP4 marked avc1, which is what almost everything writes', () => {
+    const h264 = { ...media, container: 'mp4', videoCodecTag: 'avc1' };
+    const takesMp4: DeviceProfile = {
+      ...profile,
+      directPlayProfiles: [
+        { container: 'mp4', videoCodecs: ['h264', 'hevc'], audioCodecs: ['aac', 'eac3'] },
+      ],
+    };
+
+    expect(isDirectPlay(negotiatePlayback(h264, takesMp4), h264)).toBe(true);
+  });
+
+  it('still hands over an H.264 MP4 probed before Valence read the tag, unlike HEVC', () => {
+    const h264 = { ...media, container: 'mp4' };
     const takesMp4: DeviceProfile = {
       ...profile,
       directPlayProfiles: [
