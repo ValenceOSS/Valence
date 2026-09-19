@@ -155,6 +155,7 @@ const AdminArea = ({
 
   const askedOverview = useQuery(adminQueries.overview());
   const askedLibraries = useQuery(libraryQueries.all());
+  const askedProfiles = useQuery(requestsQueries.profiles());
   const askedSessions = useQuery(adminQueries.sessions());
   const askedJobs = useQuery(adminQueries.jobs());
   const askedSchedules = useQuery(adminQueries.schedules());
@@ -743,6 +744,7 @@ const AdminArea = ({
           <TabPanel value="libraries" travel={travel}>
             <LibrariesPanel
               libraries={libraries}
+              profiles={askedProfiles.data ?? []}
               progress={scanProgress}
               isScanningAll={isScanningAll}
               isResettingAll={isResettingAll}

@@ -9,6 +9,7 @@ type SettingsPanelProps = {
   onProfileVisibilitySaved: () => void;
   onCatalogueTrailersSaved: () => void;
   onMusicDetailsSaved?: () => void;
+  onReleaseTypesSaved?: () => void;
   onSplashscreenSaved: () => void;
 };
 

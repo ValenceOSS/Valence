@@ -60,6 +60,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     fetchesMusicDetails: false,
+    requestReleaseTypes: ['album'],
     certificationRegion: 'GB',
     splashscreen: null,
     ...overrides,

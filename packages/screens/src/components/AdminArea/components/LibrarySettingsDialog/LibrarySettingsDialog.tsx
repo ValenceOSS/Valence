@@ -7,6 +7,8 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
+import { Switch } from '@ValenceUI/Switch';
+import { TextField } from '@ValenceUI/TextField';
 import { readLanguage, LANGUAGE_NAMES } from '@ValenceCore/functions/describeTrack';
 import { updateLibrary } from '@ValenceClient/library/fetchLibrary';
 import type { Library } from '@ValenceContracts/schemas/Library';
@@ -15,6 +17,8 @@ import type { LibrarySettingsDialogProps } from './LibrarySettingsDialog.types';
 const NONE_ID = 'none';
 
 const SERVER_ID = 'server';
+
+const THE_BEST = 'the-best';
 type LanguageOption = { id: string; label: string; detail?: string };
 
 const AT_ONCE_OPTIONS = [
@@ -54,6 +58,7 @@ const buildLanguageOptions = (): LanguageOption[] => {
  *
  * @param library - The library being changed, or null when the dialog is closed.
  * @param isOpen - Whether the dialog is showing.
+ * @param profiles - The quality profiles one of them may be judged by, where requesting is on.
  * @param onClose - Called when it is dismissed.
  * @param onUpdated - Called with the library once its settings have been written.
  * @param onRegenerate - Called with the library whose previews are to be remade.
@@ -61,6 +66,7 @@ const buildLanguageOptions = (): LanguageOption[] => {
 const LibrarySettingsDialog = ({
   library,
   isOpen,
+  profiles = [],
   onClose,
   onUpdated,
   onRegenerate,
@@ -69,6 +75,9 @@ const LibrarySettingsDialog = ({
 
   const [selected, setSelected] = useState(library?.defaultAudioLanguage ?? NONE_ID);
   const [atOnce, setAtOnce] = useState(library?.filesAtOnce?.toString() ?? SERVER_ID);
+  const [takesRequests, setTakesRequests] = useState(library?.takesRequests ?? true);
+  const [requestProfileId, setRequestProfileId] = useState(library?.requestProfileId ?? THE_BEST);
+  const [requestPath, setRequestPath] = useState(library?.requestPath ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<{ saved: Library; label: string } | null>(null);
@@ -76,6 +85,9 @@ const LibrarySettingsDialog = ({
   const reset = () => {
     setSelected(library?.defaultAudioLanguage ?? NONE_ID);
     setAtOnce(library?.filesAtOnce?.toString() ?? SERVER_ID);
+    setTakesRequests(library?.takesRequests ?? true);
+    setRequestProfileId(library?.requestProfileId ?? THE_BEST);
+    setRequestPath(library?.requestPath ?? '');
     setError(null);
     setConfirming(null);
   };
@@ -105,6 +117,9 @@ const LibrarySettingsDialog = ({
       const updated = await updateLibrary(library.id, {
         defaultAudioLanguage,
         filesAtOnce: atOnce === SERVER_ID ? null : Number.parseInt(atOnce, 10),
+        takesRequests,
+        requestProfileId: requestProfileId === THE_BEST ? null : requestProfileId,
+        requestPath: requestPath.trim() === '' ? null : requestPath.trim(),
       });
 
       if (changed && library.itemCount > 0) {
@@ -136,6 +151,11 @@ const LibrarySettingsDialog = ({
 
   const selectedLabel = languageOptions.find((option) => option.id === selected)?.label ?? selected;
   const atOnceLabel = AT_ONCE_OPTIONS.find((option) => option.id === atOnce)?.label ?? atOnce;
+  const profileLabel =
+    requestProfileId === THE_BEST
+      ? 'Whichever profile names this library'
+      : (profiles.find((profile) => profile.id === requestProfileId)?.name ??
+        'Whichever profile names this library');
 
   return (
     <DialogCompanion label={`${library.name} settings`} isOpen={isOpen} onClose={close}>
@@ -203,6 +223,65 @@ const LibrarySettingsDialog = ({
                 align="start"
                 matchTriggerWidth
               />
+            </fieldset>
+
+            <fieldset className="flex flex-col gap-3">
+              <legend className="text-sm font-medium text-text">Requests</legend>
+
+              <p className="text-xs text-text-muted">
+                Whether what people ask for can be filed here, which profile those releases are
+                judged by, and where they are put. Left alone, they are judged by whichever profile
+                names this library and filed in the library&rsquo;s own folder.
+              </p>
+
+              <Switch
+                label="Takes requests"
+                isOn={takesRequests}
+                onToggle={() => {
+                  setTakesRequests(!takesRequests);
+                }}
+              />
+
+              {!takesRequests ? null : (
+                <>
+                  <OptionMenu
+                    label="Quality profile for requests"
+                    groups={[
+                      {
+                        name: 'Quality',
+                        selectedId: requestProfileId,
+                        onSelect: setRequestProfileId,
+                        options: [
+                          { id: THE_BEST, label: 'Whichever profile names this library' },
+                          ...profiles
+                            .filter(
+                              (profile) =>
+                                profile.kind === (library.kind === 'music' ? 'music' : 'video'),
+                            )
+                            .map((profile) => ({ id: profile.id, label: profile.name })),
+                        ],
+                      },
+                    ]}
+                    trigger={
+                      <>
+                        <span className="truncate">{profileLabel}</span>
+                        <Icon of={UnfoldMoreIcon} size={15} className="shrink-0 text-text-muted" />
+                      </>
+                    }
+                    triggerShape="field"
+                    align="start"
+                    matchTriggerWidth
+                  />
+
+                  <TextField
+                    label="Where requests are filed"
+                    value={requestPath}
+                    onValueChange={setRequestPath}
+                    placeholder={library.path}
+                    description="A folder of its own for what is fetched, where you want it kept apart. The library’s own folder otherwise."
+                  />
+                </>
+              )}
             </fieldset>
 
             {error === null ? null : (

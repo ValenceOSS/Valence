@@ -18,6 +18,7 @@ import {
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,
+  saveRequestReleaseTypes,
   saveAudioDbKey,
   saveSplashscreen,
   removeSplashscreen,
@@ -35,6 +36,8 @@ const PREVIEW_QUALITY_CHOICES = [
 const SPLASHSCREEN_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { certificationRegions } from '@ValenceScreens/components/AdminArea/certificationRegions';
+import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
+import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 
 /**
  * What this server is configured with and who may sign into it: the metadata catalogue key, which
@@ -49,6 +52,7 @@ import { certificationRegions } from '@ValenceScreens/components/AdminArea/certi
  * @param onProfileVisibilitySaved - Called once the choice about showing the faces has been written.
  * @param onSplashscreenSaved - Called once the picture behind the way in has been chosen or removed.
  * @param onMusicDetailsSaved - Called once looking for music details on the web is turned on or off.
+ * @param onReleaseTypesSaved - Called once the kinds of record a request watches have been written.
  */
 const SettingsPanel = ({
   overview,
@@ -59,6 +63,7 @@ const SettingsPanel = ({
   onProfileVisibilitySaved,
   onCatalogueTrailersSaved,
   onMusicDetailsSaved,
+  onReleaseTypesSaved,
   onSplashscreenSaved,
 }: SettingsPanelProps) => {
   const [catalogueKey, setCatalogueKey] = useState('');
@@ -75,6 +80,9 @@ const SettingsPanel = ({
   const [audioDbKey, setAudioDbKey] = useState('');
   const [isSavingAudioDbKey, setIsSavingAudioDbKey] = useState(false);
   const [fetchesMusic, setFetchesMusic] = useState(overview?.settings.fetchesMusicDetails ?? false);
+  const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([
+    ...(overview?.settings.requestReleaseTypes ?? ['album']),
+  ]);
   const [splashscreen, setSplashscreen] = useState(overview?.settings.splashscreen ?? null);
   const [isChangingSplashscreen, setIsChangingSplashscreen] = useState(false);
   const [splashscreenProblem, setSplashscreenProblem] = useState<string | null>(null);
@@ -383,6 +391,32 @@ const SettingsPanel = ({
           >
             Save
           </Button>
+        </SettingRow>
+
+        <SettingRow
+          title="What a request for an artist watches"
+          description="Which of an artist's records are fetched where whoever asked did not say — their albums, and whatever else this household keeps. It can be changed on any one request."
+        >
+          <div className="w-72 max-w-full">
+            <ReleaseTypeChooser
+              value={releaseTypes}
+              onChange={(next) => {
+                const before = releaseTypes;
+
+                setReleaseTypes(next);
+
+                void saveRequestReleaseTypes(next).then((saved) => {
+                  if (saved) {
+                    onReleaseTypesSaved?.();
+
+                    return;
+                  }
+
+                  setReleaseTypes(before);
+                });
+              }}
+            />
+          </div>
         </SettingRow>
 
         <SettingRow
