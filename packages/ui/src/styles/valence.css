@@ -289,6 +289,7 @@
   --surface-divider: color-mix(in oklab, var(--color-text) 18%, transparent);
   --card-shell: color-mix(in oklab, var(--color-text) 5%, transparent);
   --card-face: var(--color-surface);
+  --mark-ink: none;
 
   --glass-tint: color-mix(in oklab, var(--color-surface-raised) 88%, transparent);
   --glass-edge: color-mix(in oklab, var(--color-border) 85%, transparent);
@@ -330,6 +331,8 @@
       --surface-divider: color-mix(in oklab, white 24%, transparent);
       --card-shell: color-mix(in oklab, white 3%, transparent);
       --card-face: color-mix(in oklab, var(--color-surface-raised) 90%, white);
+      --mark-ink: invert(1) brightness(1.7);
+      --mark-ink: invert(1) brightness(1.7);
       --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -16px rgb(0 0 0 / 0.7);
       --shadow-lifted: 0 2px 6px rgb(0 0 0 / 0.5), 0 18px 40px -20px rgb(0 0 0 / 0.8);
       --shadow-artwork: 0 18px 40px -24px rgb(0 0 0 / 0.9);
@@ -365,6 +368,7 @@
     --surface-divider: color-mix(in oklab, white 24%, transparent);
     --card-shell: color-mix(in oklab, white 3%, transparent);
     --card-face: color-mix(in oklab, var(--color-surface-raised) 90%, white);
+    --mark-ink: invert(1) brightness(1.7);
     --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -16px rgb(0 0 0 / 0.7);
     --shadow-lifted: 0 2px 6px rgb(0 0 0 / 0.5), 0 18px 40px -20px rgb(0 0 0 / 0.8);
     --shadow-artwork: 0 18px 40px -24px rgb(0 0 0 / 0.9);
@@ -595,6 +599,10 @@ body {
 .valence-card-face {
   border-radius: var(--radius-xl);
   background-color: var(--card-face);
+}
+
+.valence-mark-ink {
+  filter: var(--mark-ink);
 }
 
 :root {

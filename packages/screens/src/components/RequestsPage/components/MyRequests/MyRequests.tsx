@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Compass01Icon } from '@hugeicons/core-free-icons';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
+import { Card } from '@ValenceUI/Card';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { NothingHere } from '@ValenceUI/NothingHere';
@@ -84,10 +85,7 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
           const going = progressOfRequest(request, progress.data ?? []);
 
           return (
-            <li
-              key={request.id}
-              className="valence-card-face flex flex-wrap items-start gap-4 rounded-xl p-4"
-            >
+            <Card key={request.id} as="li" className="flex flex-wrap items-start gap-4">
               {isMusicRequest(request.kind) ? (
                 <MusicArtwork
                   src={request.posterUrl}
@@ -96,7 +94,7 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
                   className="w-16"
                 />
               ) : (
-                <span className="aspect-[2/3] w-16 shrink-0 overflow-hidden rounded-md bg-surface-raised">
+                <span className="aspect-[2/3] w-16 shrink-0 overflow-hidden rounded-md bg-surface-raised ring-1 ring-line">
                   {request.posterUrl === null ? null : (
                     <img
                       src={request.posterUrl}
@@ -174,7 +172,7 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
                   {request.state === 'available' && request.mediaId !== null ? 'Open' : 'Details'}
                 </Button>
               </span>
-            </li>
+            </Card>
           );
         })}
       </ul>
