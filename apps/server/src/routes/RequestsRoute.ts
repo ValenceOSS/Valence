@@ -39,6 +39,13 @@ import {
   RequestLogEntrySchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import {
+  CATALOGUE_SEARCH_KINDS,
+  CatalogueShelfSchema,
+  CatalogueTitleDetailSchema,
+  CatalogueTitleSchema,
+  RequestProgressSchema,
+} from '@ValenceContracts/schemas/CatalogueTitle';
+import {
   DownloadFilingSchema,
   DownloadQueueSchema,
   QueuedDownloadSchema,
@@ -679,6 +686,74 @@ const seriesSeasonsRoute = createRoute({
   }),
 });
 
+const discoverRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/discover',
+  tags: ['Requests'],
+  summary: 'List shelves of things to ask for, each saying where it stands',
+  responses: requestFailures({
+    200: {
+      description: 'Trending, popular and coming films and series, and popular music',
+      content: { 'application/json': { schema: z.array(CatalogueShelfSchema) } },
+    },
+  }),
+});
+
+const catalogueSearchRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/search',
+  tags: ['Requests'],
+  summary: 'Search the catalogue for a film, series, artist or album to ask for',
+  request: {
+    query: z.object({
+      query: z.string().trim().min(1).max(200),
+      kind: z.enum(CATALOGUE_SEARCH_KINDS),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'What was found, each saying where it stands',
+      content: { 'application/json': { schema: z.array(CatalogueTitleSchema) } },
+    },
+  }),
+});
+
+const catalogueTitleRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/title/{kind}/{id}',
+  tags: ['Requests'],
+  summary: 'Describe a title that can be asked for, and say where it stands',
+  request: {
+    params: z.object({
+      kind: z.enum(CATALOGUE_SEARCH_KINDS).openapi({ param: { name: 'kind', in: 'path' } }),
+      id: z
+        .string()
+        .min(1)
+        .max(64)
+        .openapi({ param: { name: 'id', in: 'path' } }),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'The title, with its artwork, cast or albums',
+      content: { 'application/json': { schema: CatalogueTitleDetailSchema } },
+    },
+  }),
+});
+
+const requestProgressRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/progress',
+  tags: ['Requests'],
+  summary: 'Say how the downloads your own requests are waiting on are going',
+  responses: requestFailures({
+    200: {
+      description: 'Each of your downloads, how far it has got and how long is left',
+      content: { 'application/json': { schema: z.array(RequestProgressSchema) } },
+    },
+  }),
+});
+
 const musicCatalogueRoute = createRoute({
   method: 'get',
   path: '/api/requests/catalogue/music',
@@ -832,6 +907,10 @@ export {
   searchMissingRoute,
   seriesSeasonsRoute,
   musicCatalogueRoute,
+  discoverRoute,
+  catalogueSearchRoute,
+  catalogueTitleRoute,
+  requestProgressRoute,
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,

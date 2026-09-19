@@ -255,6 +255,10 @@ import {
   searchMissingRoute,
   seriesSeasonsRoute,
   musicCatalogueRoute,
+  discoverRoute,
+  catalogueSearchRoute,
+  catalogueTitleRoute,
+  requestProgressRoute,
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,
@@ -402,7 +406,15 @@ import type {
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
+import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
+import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
+import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
+import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
+import { progressOf } from '@ValenceServer/requests/progressOf';
+import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
+import type { UnstoodTitle } from '@ValenceServer/requests/catalogue/UnstoodTitle';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
+import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { LogStore } from '@ValenceServer/logging/Logger';
 import type { JobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
 import type { ResourceHistoryStore } from '@ValenceServer/logging/createResourceHistoryStore';
@@ -474,6 +486,13 @@ const REQUEST_LIBRARY_KINDS: Record<MediaRequestKind, LibraryKind> = {
   series: 'shows',
   artist: 'music',
   album: 'music',
+};
+
+const NOT_STOOD: CatalogueStanding = {
+  status: 'askable',
+  mediaId: null,
+  requestId: null,
+  requestState: null,
 };
 
 const LIBRARY_KIND_WORDS: Record<LibraryKind, string> = {
@@ -640,6 +659,7 @@ type CreateAppOptions = {
     kind: MusicRequestKind,
   ) => Promise<RequestCatalogue | null>;
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
+  discovery?: Discovery;
   realtime?: RealtimePublisher;
   logs?: LogStore;
   jobHistory?: JobHistoryStore;
@@ -706,6 +726,7 @@ const createApp = ({
   describeForRequest = () => Promise.resolve(null),
   describeMusicForRequest = () => Promise.resolve(null),
   searchMusicCatalogue = () => Promise.resolve([]),
+  discovery = NO_DISCOVERY,
   permissions = createMemoryPermissionService(),
   history,
   apiKeys = createBetterAuthApiKeyService(auth),
@@ -4044,6 +4065,153 @@ const createApp = ({
     const { query, kind } = context.req.valid('query');
 
     return context.json(await searchMusicCatalogue(query, kind), 200);
+  });
+
+  /**
+   * What somebody may ask for: films and series, music, both or neither.
+   *
+   * @param headers - Who is asking.
+   * @returns Whether they may ask for each.
+   */
+  const whatMayBeAsked = async (headers: Headers) => {
+    const [video, music] = await Promise.all([
+      requires(headers, 'requests.ask'),
+      requires(headers, 'requests.askMusic'),
+    ]);
+
+    return { video, music };
+  };
+
+  /**
+   * Every request anybody has made, for saying what has been asked for already — or none where the
+   * requests service cannot say.
+   *
+   * @returns The requests.
+   */
+  const everyRequest = async () => {
+    const answer = await requestsClient?.listRequests();
+
+    return answer?.kind === 'answered' ? answer.value : [];
+  };
+
+  app.openapi(discoverRoute, async (context) => {
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video && !may.music) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const [shelves, requested] = await Promise.all([
+      discoverShelves(discovery, may),
+      everyRequest(),
+    ]);
+
+    return context.json(
+      await Promise.all(
+        shelves.map(async (shelf) => ({
+          ...shelf,
+          titles: await standTitles(shelf.titles, discovery.lookup, requested),
+        })),
+      ),
+      200,
+    );
+  });
+
+  app.openapi(catalogueSearchRoute, async (context) => {
+    const { query, kind } = context.req.valid('query');
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!(isMusicRequest(kind) ? may.music : may.video)) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const found: UnstoodTitle[] = isMusicRequest(kind)
+      ? (await searchMusicCatalogue(query, kind)).map((hit) => ({
+          kind: hit.kind,
+          id: hit.musicBrainzId,
+          title: hit.title,
+          subtitle: hit.artist ?? hit.disambiguation,
+          year: hit.year,
+          overview: null,
+          posterUrl: hit.coverUrl,
+        }))
+      : (await searchCatalogue(query, kind === 'film' ? 'movie' : 'tv')).map((match) => ({
+          kind,
+          id: match.externalId,
+          title: match.title,
+          subtitle: null,
+          year: match.year,
+          overview: match.overview,
+          posterUrl: match.posterUrl,
+        }));
+
+    return context.json(await standTitles(found, discovery.lookup, await everyRequest()), 200);
+  });
+
+  app.openapi(catalogueTitleRoute, async (context) => {
+    const { kind, id } = context.req.valid('param');
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!(isMusicRequest(kind) ? may.music : may.video)) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const described = await describeCatalogueTitle(discovery, kind, id);
+
+    if (described === null) {
+      return context.json(
+        { error: 'The catalogue does not know that, or cannot be asked just now.' },
+        404,
+      );
+    }
+
+    const [stood] = await standTitles([described], discovery.lookup, await everyRequest());
+
+    return context.json({ ...described, standing: stood?.standing ?? NOT_STOOD }, 200);
+  });
+
+  app.openapi(requestProgressRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const session = await readSessionOnce(auth, headers);
+    const answer = await throughRequests(
+      headers,
+      async (client) => {
+        const listed = await client.listRequests();
+
+        if (listed.kind !== 'answered') {
+          return listed;
+        }
+
+        const queue = await client.downloads();
+
+        return {
+          kind: 'answered' as const,
+          value: progressOf(
+            listed.value.filter((request) => request.requestedBy.id === session?.user.id),
+            queue.kind === 'answered' ? queue.value.downloads : [],
+          ),
+        };
+      },
+      [...ASKERS, ...SEES_EVERY_REQUEST],
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
   });
 
   app.openapi(searchMissingRoute, async (context) => {

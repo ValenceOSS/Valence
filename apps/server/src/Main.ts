@@ -82,8 +82,14 @@ import type { ScannedItem } from '@ValenceServer/library/scanLibrary';
 import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
+import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
 import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/albums/createDatabaseRequestedAlbumStore';
 import { tieRequestedAlbum } from '@ValenceServer/requests/albums/tieRequestedAlbum';
+import { createDatabaseCatalogueLookup } from '@ValenceServer/requests/catalogue/createDatabaseCatalogueLookup';
+import { findOnMusicBrainz } from '@ValenceServer/requests/deezer/findOnMusicBrainz';
+import { readDeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
+import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
+import type { DeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
 import { describeAlbumForRequest } from '@ValenceServer/requests/musicBrainz/describeAlbumForRequest';
 import { describeArtistForRequest } from '@ValenceServer/requests/musicBrainz/describeArtistForRequest';
 import { searchMusicCatalogue } from '@ValenceServer/requests/musicBrainz/searchMusicCatalogue';
@@ -693,6 +699,7 @@ const musicWeb = createMusicWeb({
     'coverartarchive.org': 250,
     'www.theaudiodb.com': 2100,
     'lrclib.net': 250,
+    'api.deezer.com': 250,
   },
 });
 
@@ -1937,6 +1944,32 @@ const describeMusicForRequest = (
 
 const requestedAlbums = createDatabaseRequestedAlbumStore(db);
 
+const CHARTS_LIVE_FOR_MS = 6 * 60 * 60 * 1000;
+
+const charted = createExpiringCache<Promise<DeezerCharts>>(CHARTS_LIVE_FOR_MS);
+
+const discovery: Discovery = {
+  discover: (list, kind) => catalogueProvider.discover?.(list, kind) ?? Promise.resolve([]),
+  charts: () => {
+    const kept = charted.get('charts');
+
+    if (kept !== undefined) {
+      return kept;
+    }
+
+    const reading = readDeezerCharts(musicWeb);
+
+    charted.set('charts', reading);
+
+    return reading;
+  },
+  describeTitle: (tmdbId, kind) =>
+    catalogueProvider.describeTitle?.(tmdbId, kind) ?? Promise.resolve(null),
+  describeMusic: describeMusicForRequest,
+  findOnMusicBrainz: (kind, deezerId) => findOnMusicBrainz(musicWeb, kind, deezerId),
+  lookup: createDatabaseCatalogueLookup(db),
+};
+
 const LINKS_TO_ARRIVALS: Record<MediaRequestKind, (mediaId: string) => string> = {
   film: (mediaId) => `/?item=${mediaId}`,
   series: (mediaId) => `/?show=${mediaId}`,
@@ -2575,6 +2608,7 @@ const app = createApp({
   describeForRequest,
   describeMusicForRequest,
   searchMusicCatalogue: (query, kind) => searchMusicCatalogue(musicWeb, query, kind),
+  discovery,
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
 });
 
