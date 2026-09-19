@@ -617,6 +617,10 @@ describe('AdminArea', () => {
           return Promise.resolve({ ok: true, json: () => Promise.resolve({ isEnabled: true }) });
         }
 
+        if (input.includes('/api/admin/requests/indexers')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+        }
+
         if (input.includes('/api/admin/requests')) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve(REQUESTS_OVERVIEW) });
         }
@@ -630,6 +634,18 @@ describe('AdminArea', () => {
 
       expect(await screen.findByText('Requests service')).toBeInTheDocument();
       expect(await screen.findByText('Answering')).toBeInTheDocument();
+    });
+
+    it('opens on the indexers where the address names them', async () => {
+      renderInAnAddress(<TheAdmin panel="indexers" />);
+
+      expect(await screen.findByText(/No indexers yet/)).toBeInTheDocument();
+    });
+
+    it('opens on searching by hand where the address names it', async () => {
+      renderInAnAddress(<TheAdmin panel="search" />);
+
+      expect(await screen.findByText(/Search every enabled indexer at once/)).toBeInTheDocument();
     });
 
     it('says the VPN is down above everything else', async () => {

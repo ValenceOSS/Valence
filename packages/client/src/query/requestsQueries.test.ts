@@ -5,10 +5,15 @@ import { requestsQueries } from './requestsQueries';
 const fetchRequestsAvailability = vi.hoisted(() => vi.fn());
 const fetchRequestsOverview = vi.hoisted(() => vi.fn());
 
+const fetchIndexers = vi.hoisted(() => vi.fn());
+const searchReleases = vi.hoisted(() => vi.fn());
+
 vi.mock('@ValenceClient/requests/fetchRequests', () => ({
   fetchRequestsAvailability,
   fetchRequestsOverview,
 }));
+
+vi.mock('@ValenceClient/requests/fetchIndexers', () => ({ fetchIndexers, searchReleases }));
 
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -50,5 +55,25 @@ describe('requestsQueries', () => {
   it('keeps everything about requesting under one key', () => {
     expect(requestsQueries.overview().queryKey.slice(0, 1)).toEqual(requestsQueries.key);
     expect(requestsQueries.availability().queryKey.slice(0, 1)).toEqual(requestsQueries.key);
+  });
+
+  it('asks for the indexers', async () => {
+    fetchIndexers.mockResolvedValue([]);
+
+    await expect(aCache().fetchQuery(requestsQueries.indexers())).resolves.toEqual([]);
+  });
+
+  it('searches only once something has been asked, and keeps each search apart', async () => {
+    searchReleases.mockResolvedValue({ releases: [], indexers: [] });
+
+    expect(requestsQueries.search(null).enabled).toBe(false);
+    await expect(aCache().fetchQuery(requestsQueries.search({ query: 'dune' }))).resolves.toEqual({
+      releases: [],
+      indexers: [],
+    });
+    expect(searchReleases).toHaveBeenCalledWith({ query: 'dune' });
+    expect(requestsQueries.search({ query: 'a' }).queryKey).not.toEqual(
+      requestsQueries.search({ query: 'b' }).queryKey,
+    );
   });
 });
