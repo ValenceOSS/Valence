@@ -518,3 +518,207 @@ describe('the catalogue and fetching releases, through the server', () => {
     },
   );
 });
+
+describe('download clients and the queue, through the server', () => {
+  const CLIENT = {
+    id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    name: 'qBittorrent',
+    kind: 'qbittorrent',
+    url: 'http://qbittorrent:8080',
+    username: 'admin',
+    hasPassword: true,
+    hasApiKey: false,
+    categories: {
+      movies: 'valence-films',
+      shows: 'valence-series',
+      music: 'valence-music',
+      books: 'valence-books',
+    },
+    priority: 25,
+    isEnabled: true,
+    createdAt: '2026-09-19T00:00:00.000Z',
+    updatedAt: '2026-09-19T00:00:00.000Z',
+  };
+
+  const DOWNLOAD = {
+    id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+    clientId: CLIENT.id,
+    clientName: 'qBittorrent',
+    protocol: 'torrent',
+    libraryKind: 'movies',
+    title: 'Dune',
+    indexerName: 'Jackett',
+    state: 'downloading',
+    problem: null,
+    progress: 0.5,
+    sizeBytes: 1000,
+    doneBytes: 500,
+    downloadBytesPerSecond: 100,
+    uploadBytesPerSecond: 5,
+    secondsLeft: 5,
+    seeds: 9,
+    peers: 2,
+    sentAt: '2026-09-19T00:00:00.000Z',
+    finishedAt: null,
+  };
+
+  const DRAFT = { name: 'qBittorrent', kind: 'qbittorrent', url: 'http://qbittorrent:8080' };
+
+  const SEND = {
+    indexerId: AN_INDEXER.id,
+    url: 'magnet:?xt=urn:btih:x',
+    title: 'Dune',
+    protocol: 'torrent',
+    libraryKind: 'movies',
+  };
+
+  const asked: string[] = [];
+
+  /**
+   * The requests service as it answers download questions when everything goes well.
+   */
+  const aWillingQueue = (url: string, init: { method?: string }): Response => {
+    const answer = (status: number, body: object | null) =>
+      new Response(body === null ? null : JSON.stringify(body), { status });
+    const method = init.method ?? 'GET';
+
+    asked.push(`${method} ${url}`);
+
+    if (method === 'DELETE') {
+      return answer(204, null);
+    }
+
+    if (url.endsWith('/test') || url.endsWith('/try')) {
+      return answer(200, { isWorking: true, problem: null, version: 'v5.0.1' });
+    }
+
+    if (url.endsWith('/pause') || url.endsWith('/resume')) {
+      return answer(200, DOWNLOAD);
+    }
+
+    if (url.endsWith('/api/downloads')) {
+      return method === 'POST'
+        ? answer(201, DOWNLOAD)
+        : answer(200, { clients: [], downloads: [DOWNLOAD], checkedAt: null });
+    }
+
+    if (url.endsWith('/api/clients')) {
+      return method === 'POST' ? answer(201, CLIENT) : answer(200, [CLIENT]);
+    }
+
+    return answer(200, CLIENT);
+  };
+
+  const ROUTES = [
+    ['GET', '/api/admin/requests/clients', undefined, 200],
+    ['POST', '/api/admin/requests/clients', DRAFT, 201],
+    ['POST', '/api/admin/requests/clients/try', DRAFT, 200],
+    ['PATCH', `/api/admin/requests/clients/${CLIENT.id}`, { priority: 3 }, 200],
+    ['POST', `/api/admin/requests/clients/${CLIENT.id}/test`, undefined, 200],
+    ['POST', `/api/admin/requests/clients/${CLIENT.id}/try`, DRAFT, 200],
+    ['DELETE', `/api/admin/requests/clients/${CLIENT.id}`, undefined, 204],
+    ['GET', '/api/admin/requests/downloads', undefined, 200],
+    ['POST', '/api/admin/requests/downloads', SEND, 201],
+    ['POST', `/api/admin/requests/downloads/${DOWNLOAD.id}/pause`, undefined, 200],
+    ['POST', `/api/admin/requests/downloads/${DOWNLOAD.id}/resume`, undefined, 200],
+    ['DELETE', `/api/admin/requests/downloads/${DOWNLOAD.id}?deleteData=true`, undefined, 204],
+  ] as const;
+
+  it.each(ROUTES)(
+    'answers %s %s for whoever manages requesting',
+    async (method, path, body, status) => {
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.manage'],
+        service: aWillingQueue,
+      });
+
+      expect((await ask(path, method, body)).status).toBe(status);
+    },
+  );
+
+  it('asks the service to delete what was downloaded only where asked', async () => {
+    const { ask } = await build({ isOn: true, isAdministrator: true, service: aWillingQueue });
+
+    asked.length = 0;
+    await ask(`/api/admin/requests/downloads/${DOWNLOAD.id}?deleteData=true`, 'DELETE');
+    await ask(`/api/admin/requests/downloads/${DOWNLOAD.id}`, 'DELETE');
+
+    expect(asked).toStrictEqual([
+      `DELETE http://requests:8421/api/downloads/${DOWNLOAD.id}?deleteData=true`,
+      `DELETE http://requests:8421/api/downloads/${DOWNLOAD.id}?deleteData=false`,
+    ]);
+  });
+
+  it('never hands a client’s password back', async () => {
+    const { ask } = await build({ isOn: true, isAdministrator: true, service: aWillingQueue });
+    const listed = JSON.stringify(await (await ask('/api/admin/requests/clients')).json());
+
+    expect(listed).toContain('"hasPassword":true');
+    expect(listed).not.toContain('password":"');
+  });
+
+  it.each(ROUTES)(
+    'refuses %s %s to somebody who does not manage requesting, and while it is off',
+    async (method, path, body) => {
+      const refused = await build({
+        isOn: true,
+        granted: ['requests.approve'],
+        service: aWillingQueue,
+      });
+      const off = await build({ isOn: false, isAdministrator: true });
+
+      expect((await refused.ask(path, method, body)).status).toBe(403);
+      expect((await off.ask(path, method, body)).status).toBe(404);
+    },
+  );
+
+  it.each(ROUTES)(
+    'says %s %s could not reach a service that is down',
+    async (method, path, body) => {
+      const { ask } = await build({
+        isOn: true,
+        isAdministrator: true,
+        service: () => new Response(null, { status: 503 }),
+      });
+
+      expect((await ask(path, method, body)).status).toBe(502);
+    },
+  );
+
+  it('passes on why a release was not sent, and a download the service does not have', async () => {
+    const refusing = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: () =>
+        new Response(JSON.stringify({ error: 'No torrent client is set up and switched on' }), {
+          status: 400,
+        }),
+    });
+    const sent = await refusing.ask('/api/admin/requests/downloads', 'POST', SEND);
+
+    expect(sent.status).toBe(400);
+    expect(await sent.json()).toEqual({ error: 'No torrent client is set up and switched on' });
+
+    const missing = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: () => new Response(JSON.stringify({ error: 'No such download.' }), { status: 404 }),
+    });
+
+    expect(
+      (await missing.ask(`/api/admin/requests/downloads/${DOWNLOAD.id}/pause`, 'POST')).status,
+    ).toBe(404);
+  });
+
+  it('refuses a release that is not one before asking the service', async () => {
+    const { ask } = await build({ isOn: true, isAdministrator: true, service: aWillingQueue });
+
+    asked.length = 0;
+
+    expect((await ask('/api/admin/requests/downloads', 'POST', { title: 'Dune' })).status).toBe(
+      400,
+    );
+    expect(asked).toStrictEqual([]);
+  });
+});

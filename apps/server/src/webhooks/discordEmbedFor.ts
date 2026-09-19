@@ -366,6 +366,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
     case 'requests.unreachable':
     case 'requests.vpnDown':
     case 'requests.indexerFailing':
+    case 'requests.downloadFailed':
     case 'catalogue.unreachable': {
       return { title: sentence, description: '', colour: COLOURS.failure, fields: [] };
     }
@@ -375,6 +376,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
     case 'requests.reachable':
     case 'requests.vpnUp':
     case 'requests.indexerWorking':
+    case 'requests.downloadStarted':
     case 'catalogue.reachable': {
       return { title: sentence, description: '', colour: COLOURS.arrival, fields: [] };
     }

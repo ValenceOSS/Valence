@@ -14,6 +14,13 @@ import { createPacer } from '@ValenceRequests/indexers/createPacer';
 import { createSiteClient } from '@ValenceRequests/cardigann/createSiteClient';
 import { createDatabaseDefinitionStore } from '@ValenceRequests/definitions/createDatabaseDefinitionStore';
 import { createDefinitionCatalogue } from '@ValenceRequests/definitions/createDefinitionCatalogue';
+import { createAdapterFor } from '@ValenceRequests/downloads/createAdapterFor';
+import { createDatabaseDownloadClientStore } from '@ValenceRequests/downloads/createDatabaseDownloadClientStore';
+import { createDatabaseDownloadEventStore } from '@ValenceRequests/downloads/createDatabaseDownloadEventStore';
+import { createDatabaseSentDownloadStore } from '@ValenceRequests/downloads/createDatabaseSentDownloadStore';
+import { createDownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
+import { createDownloadQueue } from '@ValenceRequests/downloads/createDownloadQueue';
+import { createDownloadRoutes } from '@ValenceRequests/downloads/createDownloadRoutes';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
 
@@ -72,6 +79,25 @@ const indexers = createIndexerService({
   }),
 });
 
+const downloadClients = createDownloadClientService({
+  store: createDatabaseDownloadClientStore(db),
+  adapterFor: (record) =>
+    createAdapterFor(
+      record.kind,
+      { ...record, categories: Object.values(record.categories) },
+      fetch,
+    ),
+});
+
+const downloadQueue = createDownloadQueue({
+  clients: downloadClients,
+  downloads: createDatabaseSentDownloadStore(db),
+  events: createDatabaseDownloadEventStore(db),
+  fetchRelease: (indexerId, url) => indexers.download(indexerId, url),
+});
+
+downloadQueue.start();
+
 /**
  * Brings the catalogue of definitions up to date where it is a day old or has never been fetched,
  * saying how it went.
@@ -96,6 +122,7 @@ const definitionTimer = setInterval(() => {
 const app = createApp({
   indexers,
   definitions,
+  downloads: createDownloadRoutes({ clients: downloadClients, queue: downloadQueue }),
   secret: env.REQUESTS_SECRET,
   version: env.VALENCE_VERSION,
   readVpn: vpn.current,
@@ -120,6 +147,7 @@ const server = serve({ fetch: app.fetch, port: env.REQUESTS_PORT }, (info) => {
  */
 const leave = (): void => {
   vpn.stop();
+  downloadQueue.stop();
   clearInterval(definitionTimer);
   server.close();
   void pool.end().then(() => process.exit(0));

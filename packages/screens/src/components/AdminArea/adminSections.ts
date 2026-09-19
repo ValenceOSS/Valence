@@ -1,6 +1,7 @@
 import {
   Activity01Icon,
   DashboardSquare01Icon,
+  Download04Icon,
   FolderLibraryIcon,
   InboxDownloadIcon,
   Search01Icon,
@@ -39,6 +40,7 @@ const ADMIN_SECTIONS = [
       { id: 'requests', label: 'Overview', icon: InboxDownloadIcon },
       { id: 'indexers', label: 'Indexers', icon: Database02Icon },
       { id: 'search', label: 'Search', icon: Search01Icon },
+      { id: 'downloads', label: 'Downloads', icon: Download04Icon },
     ],
   },
   {
