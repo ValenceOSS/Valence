@@ -70,6 +70,7 @@ const MediaRequestAskSchema = z.object({
   profileId: z.string().uuid().optional(),
   isPickedByHand: z.boolean().default(false),
   waitFor: ReleaseWaitSchema.default('digital'),
+  release: ReleaseSchema.optional(),
 });
 
 const MediaRequestDraftSchema = z.object({

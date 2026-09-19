@@ -5,6 +5,10 @@ import { judgeForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest'
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { mapClientPath } from '@ValenceRequests/mediaRequests/mapClientPath';
 import { planSearches } from '@ValenceRequests/mediaRequests/planSearches';
+import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
+import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft';
+import { syncItems } from '@ValenceRequests/mediaRequests/syncItems';
+import { MediaRequestDraftSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { episodesInDownload } from '@ValenceRequests/mediaRequests/episodesInDownload';
 import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
@@ -16,7 +20,11 @@ import type {
   ReleaseSearch,
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
-import type { MediaRequest, MissingSearch } from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  MediaRequest,
+  MediaRequestDraft,
+  MissingSearch,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import type { DownloadQueueService } from '@ValenceRequests/downloads/createDownloadQueue';
@@ -26,7 +34,10 @@ import type {
 } from '@ValenceRequests/downloads/SentDownloadRecord';
 import type { EventStore } from '@ValenceRequests/events/EventStore';
 import type { IndexerService } from '@ValenceRequests/indexers/createIndexerService';
-import type { BlockedReleaseStore } from '@ValenceRequests/mediaRequests/BlockedReleaseRecord';
+import type {
+  BlockedReleaseRecord,
+  BlockedReleaseStore,
+} from '@ValenceRequests/mediaRequests/BlockedReleaseRecord';
 import type {
   MediaRequestRecord,
   MediaRequestStore,
@@ -823,6 +834,58 @@ const createRequestWorker = ({
       () => undefined,
     );
 
+  const releasesOf = async (
+    found: Found,
+    blockedList: readonly BlockedReleaseRecord[],
+  ): Promise<ReleaseSearchOutcome> => {
+    const { request } = found;
+    const seasons = [
+      ...new Set(found.items.flatMap((item) => (item.season === null ? [] : [item.season]))),
+    ];
+    const searches: ReleaseSearch[] =
+      request.kind === 'film'
+        ? [{ query: request.title, mode: 'movie', tmdbId: request.tmdbId }]
+        : [
+            { query: request.title, mode: 'tv' },
+            ...seasons.map((season) => ({ query: request.title, mode: 'tv' as const, season })),
+          ];
+    const outcomes = await Promise.all(searches.map((search) => indexers.search(search)));
+    const releases = [
+      ...new Map(
+        outcomes.flatMap((outcome) => outcome.releases).map((one) => [one.id, one]),
+      ).values(),
+    ];
+    const reports = new Map<string, IndexerSearchReport>();
+
+    for (const report of outcomes.flatMap((outcome) => outcome.indexers)) {
+      const kept = reports.get(report.indexerId);
+
+      reports.set(report.indexerId, {
+        ...report,
+        found: (kept?.found ?? 0) + report.found,
+        tookMs: Math.max(kept?.tookMs ?? 0, report.tookMs),
+        problem: kept?.problem ?? report.problem,
+      });
+    }
+
+    const judged = judgeForRequest({
+      request,
+      items: found.items,
+      releases,
+      profile: await profileFor(request),
+      blocked: blockedList,
+      priorities: await priorities(),
+      isFetching: (item) => !IN_FLIGHT.has(item.state),
+    });
+
+    return {
+      releases: judged.releases,
+      indexers: [...reports.values()],
+      judgements: judged.judgements,
+      pickedId: judged.pickedId,
+    };
+  };
+
   const repeat = (name: string, work: () => Promise<void>, everyMs: number, firstMs = everyMs) => {
     const next = (afterMs: number) => {
       cancels.set(
@@ -850,56 +913,23 @@ const createRequestWorker = ({
     releasesFor: async (id: string): Promise<ReleaseSearchOutcome | null> => {
       const found = await find(id);
 
-      if (found === null) {
-        return null;
-      }
+      return found === null ? null : releasesOf(found, await blockedFor(id));
+    },
 
-      const { request } = found;
-      const seasons = [
-        ...new Set(found.items.flatMap((item) => (item.season === null ? [] : [item.season]))),
-      ];
-      const searches: ReleaseSearch[] =
-        request.kind === 'film'
-          ? [{ query: request.title, mode: 'movie', tmdbId: request.tmdbId }]
-          : [
-              { query: request.title, mode: 'tv' },
-              ...seasons.map((season) => ({ query: request.title, mode: 'tv' as const, season })),
-            ];
-      const outcomes = await Promise.all(searches.map((search) => indexers.search(search)));
-      const releases = [
-        ...new Map(
-          outcomes.flatMap((outcome) => outcome.releases).map((one) => [one.id, one]),
-        ).values(),
-      ];
-      const reports = new Map<string, IndexerSearchReport>();
+    releasesForDraft: (asked: MediaRequestDraft): Promise<ReleaseSearchOutcome> => {
+      const draft = MediaRequestDraftSchema.parse(asked);
+      const request = recordFromDraft(draft, randomUUID(), at());
 
-      for (const report of outcomes.flatMap((outcome) => outcome.indexers)) {
-        const kept = reports.get(report.indexerId);
-
-        reports.set(report.indexerId, {
-          ...report,
-          found: (kept?.found ?? 0) + report.found,
-          tookMs: Math.max(kept?.tookMs ?? 0, report.tookMs),
-          problem: kept?.problem ?? report.problem,
-        });
-      }
-
-      const judged = judgeForRequest({
-        request,
-        items: found.items,
-        releases,
-        profile: await profileFor(request),
-        blocked: await blockedFor(id),
-        priorities: await priorities(),
-        isFetching: (item) => !IN_FLIGHT.has(item.state),
-      });
-
-      return {
-        releases: judged.releases,
-        indexers: [...reports.values()],
-        judgements: judged.judgements,
-        pickedId: judged.pickedId,
-      };
+      return releasesOf(
+        {
+          request,
+          items: syncItems(request, draft.catalogue.episodes, []).add.map((one) => ({
+            ...itemFromDraft(one, randomUUID(), request.id, at()),
+            state: 'wanted',
+          })),
+        },
+        [],
+      );
     },
 
     pick: (id: string, picked: Release): Promise<MediaRequest | string | null> =>

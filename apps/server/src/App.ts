@@ -251,6 +251,7 @@ import {
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
   retryMediaRequestRoute,
+  draftReleasesRoute,
   searchMissingRoute,
   seriesSeasonsRoute,
   addQualityProfileRoute,
@@ -388,7 +389,12 @@ import type { ApiKeyService } from '@ValenceServer/auth/ApiKeyService';
 import type { WebhookStore } from '@ValenceServer/webhooks/WebhookStore';
 import type { RealtimePublisher } from '@ValenceServer/realtime/RealtimePublisher';
 import type { EventBus, WebhookOccurrence } from '@ValenceServer/events/EventBus';
-import type { MediaRequestKind, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  MediaRequestAsk,
+  MediaRequestDraft,
+  MediaRequestKind,
+  RequestCatalogue,
+} from '@ValenceContracts/schemas/MediaRequest';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import type { LogStore } from '@ValenceServer/logging/Logger';
 import type { JobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
@@ -3832,10 +3838,19 @@ const createApp = ({
     );
   });
 
-  app.openapi(askForMediaRoute, async (context) => {
-    const { headers } = context.req.raw;
+  type Drafted =
+    { kind: 'drafted'; draft: MediaRequestDraft } | { kind: 'refused'; status: 400; error: string };
+
+  /**
+   * What the requests service is told of something asked for: the catalogue's facts, the library
+   * it will be filed into, who asked and whether that makes it approved.
+   *
+   * @param headers - Who is asking.
+   * @param asked - What they asked for.
+   * @returns The request to make, or why it cannot be.
+   */
+  const draftFor = async (headers: Headers, asked: MediaRequestAsk): Promise<Drafted> => {
     const session = await readSessionOnce(auth, headers);
-    const asked = context.req.valid('json');
     const catalogue = await describeForRequest(asked.tmdbId, asked.kind);
     const libraryKind = asked.kind === 'film' ? 'movies' : 'shows';
     const libraries = (await library.list(asTheServer)).filter(
@@ -3845,35 +3860,55 @@ const createApp = ({
       asked.libraryId === undefined
         ? libraries[0]
         : libraries.find((entry) => entry.id === asked.libraryId);
-    const isApproved = await requires(headers, 'requests.autoApprove');
+
+    if (catalogue === null) {
+      return {
+        kind: 'refused',
+        status: 400,
+        error: 'The catalogue does not know that, or cannot be asked just now.',
+      };
+    }
+
+    if (chosen === undefined || session === null) {
+      return {
+        kind: 'refused',
+        status: 400,
+        error: `There is no library of ${asked.kind === 'film' ? 'films' : 'series'} to put it in.`,
+      };
+    }
+
+    return {
+      kind: 'drafted',
+      draft: {
+        kind: asked.kind,
+        tmdbId: asked.tmdbId,
+        seasons: asked.seasons,
+        profileId: asked.profileId ?? null,
+        isPickedByHand: asked.isPickedByHand,
+        waitFor: asked.waitFor,
+        libraryId: chosen.id,
+        libraryPath: chosen.path,
+        requestedBy: { id: session.user.id, name: session.user.name },
+        isApproved: await requires(headers, 'requests.autoApprove'),
+        catalogue,
+      },
+    };
+  };
+
+  app.openapi(askForMediaRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const asked = context.req.valid('json');
+    const isByHand = asked.isPickedByHand || asked.release !== undefined;
+
+    if (isByHand && !(await requires(headers, 'requests.manage'))) {
+      return context.json({ error: 'Picking a release is for whoever manages requesting.' }, 403);
+    }
+
+    const drafted = await draftFor(headers, asked);
     const answer = await throughRequests(
       headers,
-      (client) => {
-        if (catalogue === null) {
-          return Promise.resolve({
-            kind: 'refused' as const,
-            status: 400 as const,
-            error: 'The catalogue does not know that, or cannot be asked just now.',
-          });
-        }
-
-        if (chosen === undefined || session === null) {
-          return Promise.resolve({
-            kind: 'refused' as const,
-            status: 400 as const,
-            error: `There is no library of ${asked.kind === 'film' ? 'films' : 'series'} to put it in.`,
-          });
-        }
-
-        return client.addRequest({
-          ...asked,
-          libraryId: chosen.id,
-          libraryPath: chosen.path,
-          requestedBy: { id: session.user.id, name: session.user.name },
-          isApproved,
-          catalogue,
-        });
-      },
+      (client) =>
+        drafted.kind === 'refused' ? Promise.resolve(drafted) : client.addRequest(drafted.draft),
       ['requests.ask'],
     );
 
@@ -3882,6 +3917,7 @@ const createApp = ({
     }
 
     const { request, isNew } = answer.value;
+    const isApproved = drafted.kind === 'drafted' && drafted.draft.isApproved;
 
     if (isNew) {
       sayOfRequest({
@@ -3897,7 +3933,36 @@ const createApp = ({
       });
     }
 
-    return context.json(request, isNew ? 201 : 200);
+    if (asked.release === undefined || requestsClient === null) {
+      return context.json(request, isNew ? 201 : 200);
+    }
+
+    const picked = await requestsClient.pickRelease(request.id, asked.release);
+
+    if (picked.kind !== 'answered') {
+      return context.json(
+        {
+          error: `It was asked for, but that release could not be fetched: ${picked.kind === 'silent' ? picked.reason : picked.error}`,
+        },
+        400,
+      );
+    }
+
+    return context.json(picked.value, isNew ? 201 : 200);
+  });
+
+  app.openapi(draftReleasesRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const drafted = await draftFor(headers, context.req.valid('json'));
+    const answer = await throughRequests(headers, (client) =>
+      drafted.kind === 'refused'
+        ? Promise.resolve(drafted)
+        : client.releasesForDraft(drafted.draft),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
   });
 
   app.openapi(seriesSeasonsRoute, async (context) => {

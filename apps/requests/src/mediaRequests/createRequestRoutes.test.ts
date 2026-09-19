@@ -33,6 +33,9 @@ const theRoutes = (picked: MediaRequest | string | null = null) => {
       ),
     ),
     pick: vi.fn(() => Promise.resolve(picked)),
+    releasesForDraft: vi.fn(() =>
+      Promise.resolve({ releases: [], indexers: [], judgements: [], pickedId: null }),
+    ),
   };
   const log = createMemoryRequestLogStore();
   const routes = createRequestRoutes({
@@ -107,6 +110,17 @@ describe('createRequestRoutes', () => {
       ).json(),
     ).toMatchObject({ title: 'Dune: Part One' });
     expect((await ask(`/requests/${id}/catalogue`, 'PUT', {})).status).toBe(400);
+  });
+
+  it('searches by hand for a request not yet made, making nothing', async () => {
+    const { ask, worker } = theRoutes();
+
+    expect((await ask('/requests/releases', 'POST', DUNE)).status).toBe(200);
+    expect(worker.releasesForDraft).toHaveBeenCalledWith(
+      expect.objectContaining({ tmdbId: 438631 }),
+    );
+    expect(await (await ask('/requests')).json()).toEqual([]);
+    expect((await ask('/requests/releases', 'POST', { kind: 'film' })).status).toBe(400);
   });
 
   it('reads what a request has done', async () => {

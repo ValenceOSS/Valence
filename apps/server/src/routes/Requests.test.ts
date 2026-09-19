@@ -1085,6 +1085,80 @@ describe('requests for films and series, through the server', () => {
     expect((await nobody.ask('/api/requests/catalogue/series/1/seasons')).status).toBe(403);
   });
 
+  it('searches by hand before asking, and asks with the release picked, for whoever manages', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.manage', 'requests.ask'],
+      service: aWillingKeeper,
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    sent.length = 0;
+
+    expect(
+      (await ask('/api/requests/media/releases', 'POST', { kind: 'film', tmdbId: 1 })).status,
+    ).toBe(200);
+    expect(sent.map(({ method, url }) => `${method} ${url}`)).toEqual([
+      'POST http://requests:8421/api/requests/releases',
+    ]);
+
+    sent.length = 0;
+
+    const made = await ask('/api/requests/media', 'POST', {
+      kind: 'film',
+      tmdbId: 438631,
+      isPickedByHand: true,
+      release: RELEASE,
+    });
+
+    expect(made.status).toBe(201);
+    expect(sent.map(({ method, url }) => `${method} ${url}`)).toEqual([
+      'POST http://requests:8421/api/requests',
+      `POST http://requests:8421/api/requests/${REQUEST.id}/pick`,
+    ]);
+    expect(JSON.parse(sent[0]?.body ?? '{}')).not.toHaveProperty('release');
+  });
+
+  it('says a release picked on asking could not be fetched, and keeps picking to managers', async () => {
+    const picking = await build({
+      isOn: true,
+      granted: ['requests.manage', 'requests.ask'],
+      service: (url, init) =>
+        url.endsWith('/pick')
+          ? new Response(JSON.stringify({ error: 'No torrent client is set up' }), { status: 400 })
+          : aWillingKeeper(url, init),
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    expect(
+      await (
+        await picking.ask('/api/requests/media', 'POST', {
+          kind: 'film',
+          tmdbId: 438631,
+          release: RELEASE,
+        })
+      ).json(),
+    ).toEqual({
+      error: 'It was asked for, but that release could not be fetched: No torrent client is set up',
+    });
+
+    const asking = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
+
+    expect(
+      (
+        await asking.ask('/api/requests/media', 'POST', {
+          kind: 'film',
+          tmdbId: 1,
+          isPickedByHand: true,
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (await asking.ask('/api/requests/media/releases', 'POST', { kind: 'film', tmdbId: 1 }))
+        .status,
+    ).toBe(403);
+  });
+
   it('refuses asking to somebody who may not ask', async () => {
     const { ask } = await build({ isOn: true, service: aWillingKeeper });
 

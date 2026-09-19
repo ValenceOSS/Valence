@@ -6,10 +6,12 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { AskForMediaDialog } from './AskForMediaDialog';
 import type * as Admin from '@ValenceClient/admin/fetchAdmin';
 import type * as Requests from '@ValenceClient/requests/fetchMediaRequests';
+import type { Release } from '@ValenceContracts/schemas/Indexer';
 
 const searchCatalogue = vi.fn<typeof Admin.searchCatalogue>();
 const askForMedia = vi.fn<typeof Requests.askForMedia>();
 const fetchSeriesSeasons = vi.fn<typeof Requests.fetchSeriesSeasons>();
+const findReleasesFor = vi.fn<typeof Requests.findReleasesFor>();
 
 vi.mock('@ValenceClient/admin/fetchAdmin', async (actual) => ({
   ...(await actual<object>()),
@@ -28,7 +30,31 @@ vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   askForMedia: (...given: Parameters<typeof Requests.askForMedia>) => askForMedia(...given),
   fetchSeriesSeasons: (tmdbId: number) => fetchSeriesSeasons(tmdbId),
+  findReleasesFor: (...given: Parameters<typeof Requests.findReleasesFor>) =>
+    findReleasesFor(...given),
 }));
+
+const RELEASE: Release = {
+  id: 'dune-web',
+  title: 'Dune.2021.1080p.WEB-DL.x264-GRP',
+  indexerId: '0f8fad5b-d9cb-469f-a165-70867728950e',
+  indexerName: 'Jackett',
+  protocol: 'torrent',
+  sizeBytes: null,
+  seeders: 12,
+  leechers: 3,
+  grabs: null,
+  publishedAt: null,
+  categories: [],
+  downloadUrl: null,
+  magnetUrl: 'magnet:?xt=urn:btih:abc',
+  infoUrl: null,
+  infoHash: null,
+  downloadFactor: null,
+  uploadFactor: null,
+  minimumRatio: null,
+  minimumSeedSeconds: null,
+};
 
 const MADE = aMediaRequest({ state: 'awaitingApproval', approval: 'awaiting' });
 
@@ -46,6 +72,10 @@ beforeEach(() => {
     ]),
   );
   askForMedia.mockReset().mockResolvedValue({ value: MADE, refusal: null });
+  findReleasesFor.mockReset().mockResolvedValue({
+    value: { releases: [RELEASE], indexers: [], judgements: [], pickedId: null },
+    refusal: null,
+  });
   fetchSeriesSeasons.mockReset().mockResolvedValue([
     { season: 0, episodeCount: 2, firstAired: null },
     { season: 1, episodeCount: 9, firstAired: '2022-02-18' },
@@ -127,23 +157,48 @@ describe('AskForMediaDialog', () => {
     expect(fetchSeriesSeasons).toHaveBeenCalledWith(95396);
   });
 
-  it('asks for a release to be picked by hand', async () => {
+  it('finds releases before asking, and asks only once one is picked', async () => {
+    const user = userEvent.setup();
+    const { onAsked } = open();
+
+    await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Dune');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
+    await user.click(screen.getByRole('button', { name: 'I will pick it' }));
+    await user.click(screen.getByRole('button', { name: 'Find releases' }));
+
+    expect(await screen.findByText(RELEASE.title)).toBeInTheDocument();
+    expect(findReleasesFor).toHaveBeenCalledWith(
+      expect.objectContaining({ tmdbId: 438631, isPickedByHand: true }),
+    );
+    expect(askForMedia).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    await user.click(screen.getByRole('button', { name: 'Find releases' }));
+    await user.click(await screen.findByRole('button', { name: 'Fetch this' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith(
+        expect.objectContaining({ isPickedByHand: true, release: RELEASE }),
+      );
+    });
+    expect(onAsked).toHaveBeenCalled();
+  });
+
+  it('says why releases could not be found, making nothing', async () => {
     const user = userEvent.setup();
 
+    findReleasesFor.mockResolvedValue({ value: null, refusal: { message: 'Requesting is off.' } });
     open();
 
     await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Dune');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
     await user.click(screen.getByRole('button', { name: 'I will pick it' }));
+    await user.click(screen.getByRole('button', { name: 'Find releases' }));
 
-    expect(screen.getByText(/Nothing is fetched until you pick a release/)).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Ask for it' }));
-
-    await waitFor(() => {
-      expect(askForMedia).toHaveBeenCalledWith(expect.objectContaining({ isPickedByHand: true }));
-    });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Requesting is off.');
+    expect(askForMedia).not.toHaveBeenCalled();
   });
 
   it('says why it could not be asked for, and lets another be chosen', async () => {

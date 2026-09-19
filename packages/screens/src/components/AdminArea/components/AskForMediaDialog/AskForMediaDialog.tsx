@@ -15,10 +15,16 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { searchCatalogue } from '@ValenceClient/admin/fetchAdmin';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { askForMedia } from '@ValenceClient/requests/fetchMediaRequests';
+import { askForMedia, findReleasesFor } from '@ValenceClient/requests/fetchMediaRequests';
+import { ReleasePickTable } from '@ValenceScreens/components/AdminArea/components/ReleasePickTable/ReleasePickTable';
 import { CatalogueMatchList } from '@ValenceScreens/components/AdminArea/components/CatalogueMatchList/CatalogueMatchList';
 import type { CatalogueMatch } from '@ValenceClient/admin/fetchAdmin';
-import type { MediaRequestKind, ReleaseWait } from '@ValenceContracts/schemas/MediaRequest';
+import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
+import type {
+  MediaRequestAsk,
+  MediaRequestKind,
+  ReleaseWait,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { AskForMediaDialogProps } from './AskForMediaDialog.types';
 
 const KINDS: readonly { id: MediaRequestKind; label: string }[] = [
@@ -65,6 +71,9 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const [isPickedByHand, setIsPickedByHand] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
+  const [found, setFound] = useState<{ outcome: ReleaseSearchOutcome; at: number } | null>(null);
+  const [isFinding, setIsFinding] = useState(false);
+  const [pickingId, setPickingId] = useState<string | null>(null);
   const profiles = useQuery({ ...requestsQueries.profiles(), enabled: isOpen });
   const qualities = [
     { id: THE_LIBRARYS, label: 'The library’s own profile' },
@@ -94,21 +103,54 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
     });
   };
 
-  const ask = () => {
-    if (chosen === null) {
+  const asking = (): MediaRequestAsk | null =>
+    chosen === null
+      ? null
+      : {
+          kind,
+          tmdbId: Number(chosen.externalId),
+          ...(profileId === null ? {} : { profileId }),
+          isPickedByHand,
+          ...(kind === 'film' ? { waitFor } : { seasons }),
+        };
+
+  const findReleases = () => {
+    const asked = asking();
+
+    if (asked === null) {
+      return;
+    }
+
+    setIsFinding(true);
+    setProblem(null);
+
+    void findReleasesFor(asked)
+      .then(({ value, refusal }) => {
+        if (value === null) {
+          setProblem(refusal?.message ?? 'The indexers could not be asked.');
+
+          return;
+        }
+
+        setFound({ outcome: value, at: Date.now() });
+      })
+      .finally(() => {
+        setIsFinding(false);
+      });
+  };
+
+  const ask = (release: Release | null = null) => {
+    const asked = asking();
+
+    if (asked === null) {
       return;
     }
 
     setIsAsking(true);
+    setPickingId(release?.id ?? null);
     setProblem(null);
 
-    void askForMedia({
-      kind,
-      tmdbId: Number(chosen.externalId),
-      ...(profileId === null ? {} : { profileId }),
-      isPickedByHand,
-      ...(kind === 'film' ? { waitFor } : { seasons }),
-    })
+    void askForMedia({ ...asked, ...(release === null ? {} : { release }) })
       .then(({ value, refusal }) => {
         if (value === null) {
           setProblem(refusal?.message ?? 'That could not be asked for.');
@@ -119,11 +161,13 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
         onAsked(value);
         setChosen(null);
         setMatches(null);
+        setFound(null);
         setQuery('');
         onClose();
       })
       .finally(() => {
         setIsAsking(false);
+        setPickingId(null);
       });
   };
 
@@ -136,7 +180,17 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
       />
 
       <DialogContent className="flex flex-col gap-4">
-        {chosen === null ? (
+        {found !== null && chosen !== null ? (
+          <ReleasePickTable
+            found={found.outcome}
+            foundAt={found.at}
+            pickingId={pickingId}
+            emptyMessage="Nothing the indexers have is for this. Go back and fetch the best by itself, to wait for one."
+            onPick={(release) => {
+              ask(release);
+            }}
+          />
+        ) : chosen === null ? (
           <>
             <FormField label="What">
               <SegmentedRow
@@ -203,6 +257,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 onClick={() => {
                   setChosen(null);
                   setPicked(new Set());
+                  setFound(null);
                 }}
               >
                 Choose another
@@ -307,7 +362,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               label="Release"
               description={
                 isPickedByHand
-                  ? 'Nothing is fetched until you pick a release from what the indexers have.'
+                  ? 'You pick from what the indexers have before anything is asked for. Later episodes wait for a pick too.'
                   : 'The best release by its quality is fetched as soon as one turns up.'
               }
             >
@@ -332,13 +387,37 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
           </span>
         )}
 
+        {found === null ? null : (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setFound(null);
+            }}
+          >
+            Back
+          </Button>
+        )}
+
         <Button variant="secondary" onClick={onClose}>
           Cancel
         </Button>
 
-        <Button variant="glossy" disabled={!isReady} isLoading={isAsking} onClick={ask}>
-          Ask for it
-        </Button>
+        {found !== null ? null : isPickedByHand ? (
+          <Button variant="glossy" disabled={!isReady} isLoading={isFinding} onClick={findReleases}>
+            Find releases
+          </Button>
+        ) : (
+          <Button
+            variant="glossy"
+            disabled={!isReady}
+            isLoading={isAsking}
+            onClick={() => {
+              ask();
+            }}
+          >
+            Ask for it
+          </Button>
+        )}
       </DialogFooter>
     </DialogCompanion>
   );

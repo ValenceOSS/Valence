@@ -7,6 +7,7 @@ import {
   fetchMediaRequestReleases,
   fetchMediaRequests,
   fetchSeriesSeasons,
+  findReleasesFor,
   pickMediaRelease,
   refuseMediaRequest,
   removeMediaRequest,
@@ -128,9 +129,11 @@ describe('fetchMediaRequests', () => {
   it('searches for a request by hand, and for everything missing', async () => {
     const outcome = { releases: [], indexers: [], judgements: [], pickedId: null };
 
-    answering(outcome);
+    const asked = answering(outcome);
 
     expect(await fetchMediaRequestReleases(REQUEST.id)).toEqual(outcome);
+    expect((await findReleasesFor({ kind: 'film', tmdbId: 438631 })).value).toEqual(outcome);
+    expect(asked.mock.calls[1]?.[0]).toBe('/api/requests/media/releases');
 
     answering({ searched: 2, startedAt: '2026-09-19T00:00:00.000Z' });
 

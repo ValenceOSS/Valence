@@ -16,7 +16,7 @@ import type { RequestLogStore } from '@ValenceRequests/mediaRequests/RequestLogS
 type CreateRequestRoutesOptions = {
   service: RequestService;
   log: Pick<RequestLogStore, 'list'>;
-  worker: Pick<RequestWorker, 'searchMissing' | 'releasesFor' | 'pick'>;
+  worker: Pick<RequestWorker, 'searchMissing' | 'releasesFor' | 'releasesForDraft' | 'pick'>;
 };
 
 const NO_SUCH_REQUEST = { error: 'No such request.' };
@@ -24,8 +24,8 @@ const NO_SUCH_REQUEST = { error: 'No such request.' };
 /**
  * Requests for films and series, as routes under `/api`: making and listing them, approving and
  * refusing them, changing what they ask for, keeping them up to date with the catalogue, trying
- * again, searching by hand and picking a release, searching for everything still missing, and
- * reading what each has done.
+ * again, searching by hand and picking a release — for a request not yet made, too — searching for
+ * everything still missing, and reading what each has done.
  *
  * @param service - The requests.
  * @param log - What each request has done.
@@ -50,6 +50,14 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     const added: MediaRequestAdded = await service.add(draft);
 
     return context.json(added, added.isNew ? 201 : 200);
+  });
+
+  routes.post('/requests/releases', async (context) => {
+    const draft = await readBody(context.req.raw, MediaRequestDraftSchema);
+
+    return draft === null
+      ? context.json({ error: 'That is not a request.' }, 400)
+      : context.json(await worker.releasesForDraft(draft));
   });
 
   routes.get('/requests/following', async (context) => context.json(await service.following()));

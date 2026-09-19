@@ -980,6 +980,35 @@ describe('createRequestWorker', () => {
       expect(await worker.releasesFor('missing')).toBeNull();
     });
 
+    it('lists the releases for a request not yet made, keeping nothing', async () => {
+      const { worker, searched, requests } = aWorker({
+        requests: [],
+        items: [],
+        found: () => [aRelease('Severance.S01E01.1080p.WEB-DL.x264-GRP')],
+      });
+
+      const outcome = await worker.releasesForDraft({
+        kind: 'series',
+        tmdbId: 95396,
+        libraryId: 'series',
+        libraryPath: '/media/Series',
+        requestedBy: { id: 'someone', name: 'Someone' },
+        isApproved: true,
+        catalogue: {
+          title: 'Severance',
+          year: 2022,
+          episodes: [{ season: 1, episode: 1, title: '', airDate: '2022-02-18' }],
+        },
+      });
+
+      expect(outcome.releases.map((release) => release.title)).toEqual([
+        'Severance.S01E01.1080p.WEB-DL.x264-GRP',
+      ]);
+      expect(outcome.pickedId).toBe('Severance.S01E01.1080p.WEB-DL.x264-GRP');
+      expect(searched.map((search) => search.season)).toEqual([undefined, 1]);
+      expect(await requests.list()).toEqual([]);
+    });
+
     it('sends the release an admin picked, whatever it is called', async () => {
       const { worker, send } = aWorker();
 

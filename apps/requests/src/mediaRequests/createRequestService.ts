@@ -4,6 +4,9 @@ import {
   MediaRequestDraftSchema,
   RequestCatalogueSchema,
 } from '@ValenceContracts/schemas/MediaRequest';
+import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
+import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft';
+import { requestFactsOf } from '@ValenceRequests/mediaRequests/requestFactsOf';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
 import { syncItems } from '@ValenceRequests/mediaRequests/syncItems';
 import type {
@@ -44,23 +47,6 @@ const bothSeasons = (kept: number[] | null, asked: number[] | null): number[] | 
     : [...new Set([...kept, ...asked])].toSorted((left, right) => left - right);
 
 /**
- * The facts a request keeps from the catalogue.
- *
- * @param catalogue - What the catalogue says.
- * @returns The facts, as a request keeps them.
- */
-const factsOf = (catalogue: RequestCatalogue) => ({
-  title: catalogue.title,
-  year: catalogue.year,
-  aliases: catalogue.aliases,
-  overview: catalogue.overview,
-  posterUrl: catalogue.posterUrl,
-  runtimeMinutes: catalogue.runtimeMinutes,
-  releaseDates: catalogue.releaseDates,
-  isEnded: catalogue.isEnded,
-});
-
-/**
  * Keeps the requests for films and series and what each waits for: making one, or adding to one
  * already made for the same title; approving and refusing; changing what it asks for; bringing it up
  * to date with the catalogue; trying again what failed; and marking it arrived once the server has
@@ -91,23 +77,7 @@ const createRequestService = ({
     const { add, change, remove } = syncItems(record, episodes, await itemsOf(record.id));
 
     for (const draft of add) {
-      await items.insert({
-        ...draft,
-        id: randomUUID(),
-        requestId: record.id,
-        state: 'waiting',
-        problem: null,
-        releaseTitle: null,
-        indexerId: null,
-        downloadId: null,
-        filePath: null,
-        score: null,
-        filedTitle: null,
-        filedScore: null,
-        attempts: 0,
-        lastSearchedAt: null,
-        updatedAt: at,
-      });
+      await items.insert(itemFromDraft(draft, randomUUID(), record.id, at));
     }
 
     for (const { id, changes } of change) {
@@ -156,7 +126,7 @@ const createRequestService = ({
 
       if (kept !== undefined) {
         const merged = await requests.update(kept.id, {
-          ...factsOf(draft.catalogue),
+          ...requestFactsOf(draft.catalogue),
           seasons: bothSeasons(kept.seasons, draft.seasons),
           ...(draft.profileId === null ? {} : { profileId: draft.profileId }),
           ...(draft.isPickedByHand ? { isPickedByHand: true } : {}),
@@ -174,27 +144,7 @@ const createRequestService = ({
         return { request: await shown(record), isNew: false };
       }
 
-      const record = await requests.insert({
-        id: randomUUID(),
-        kind: draft.kind,
-        tmdbId: draft.tmdbId,
-        ...factsOf(draft.catalogue),
-        libraryId: draft.libraryId,
-        libraryPath: draft.libraryPath,
-        profileId: draft.profileId,
-        isPickedByHand: draft.isPickedByHand,
-        approval: draft.isApproved ? 'approved' : 'awaiting',
-        refusedBecause: null,
-        requestedById: draft.requestedBy.id,
-        requestedByName: draft.requestedBy.name,
-        seasons: draft.kind === 'film' ? null : draft.seasons,
-        waitFor: draft.waitFor,
-        mediaId: null,
-        problem: null,
-        catalogueCheckedAt: at,
-        createdAt: at,
-        updatedAt: at,
-      });
+      const record = await requests.insert(recordFromDraft(draft, randomUUID(), at));
 
       await sync(record, draft.catalogue.episodes);
       onChange();
@@ -220,7 +170,7 @@ const createRequestService = ({
         ...(change.waitFor === undefined ? {} : { waitFor: change.waitFor }),
         ...(change.profileId === undefined ? {} : { profileId: change.profileId }),
         ...(change.isPickedByHand === undefined ? {} : { isPickedByHand: change.isPickedByHand }),
-        ...(catalogue === null ? {} : factsOf(catalogue)),
+        ...(catalogue === null ? {} : requestFactsOf(catalogue)),
         updatedAt: now().toISOString(),
       });
 
@@ -244,7 +194,7 @@ const createRequestService = ({
       const catalogue = RequestCatalogueSchema.parse(update.catalogue);
       const at = now().toISOString();
       const record = await requests.update(id, {
-        ...factsOf(catalogue),
+        ...requestFactsOf(catalogue),
         ...(update.libraryPath === undefined ? {} : { libraryPath: update.libraryPath }),
         catalogueCheckedAt: at,
         updatedAt: at,

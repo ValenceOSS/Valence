@@ -326,12 +326,8 @@ const MediaRequestsPanel = () => {
         onClose={() => {
           setIsAsking(false);
         }}
-        onAsked={(request) => {
+        onAsked={() => {
           void reread();
-
-          if (request.isPickedByHand) {
-            setSearching(request);
-          }
         }}
       />
 

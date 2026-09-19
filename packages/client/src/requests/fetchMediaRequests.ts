@@ -50,6 +50,17 @@ const askForMedia = (asked: MediaRequestAsk): Promise<Sent<MediaRequest>> =>
   sendToRequests(REQUESTS, 'POST', asked, readRequest);
 
 /**
+ * Searches by hand for something before asking for it, making no request.
+ *
+ * @param asked - What would be asked for.
+ * @returns What was found, best first, or why not.
+ */
+const findReleasesFor = (asked: MediaRequestAsk): Promise<Sent<ReleaseSearchOutcome>> =>
+  sendToRequests(`${REQUESTS}/releases`, 'POST', asked, async (response) =>
+    ReleaseSearchOutcomeSchema.parse(await response.json()),
+  );
+
+/**
  * Changes the seasons a request asks for, or what a film waits for.
  *
  * @param id - Which.
@@ -155,6 +166,7 @@ export {
   fetchMediaRequestReleases,
   fetchMediaRequests,
   fetchSeriesSeasons,
+  findReleasesFor,
   pickMediaRelease,
   refuseMediaRequest,
   removeMediaRequest,

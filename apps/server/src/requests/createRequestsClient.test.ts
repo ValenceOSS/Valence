@@ -767,6 +767,24 @@ describe('createRequestsClient with requests for films and series', () => {
     ]);
   });
 
+  it('searches by hand for a request not yet made', async () => {
+    const outcome = { releases: [], indexers: [], judgements: [], pickedId: null };
+    const { client, fetch } = aClient(200, outcome);
+
+    expect(
+      await client.releasesForDraft({
+        kind: 'film',
+        tmdbId: 438631,
+        libraryId: 'films',
+        libraryPath: '/media/Films',
+        requestedBy: { id: 'someone', name: 'Someone' },
+        isApproved: true,
+        catalogue: { title: 'Dune', year: 2021 },
+      }),
+    ).toEqual({ kind: 'answered', value: outcome });
+    expect(fetch.mock.calls[0]?.[0]).toBe('http://requests:8421/api/requests/releases');
+  });
+
   it('reads what a request has done', async () => {
     expect(
       await aClient(200, [

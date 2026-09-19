@@ -677,6 +677,20 @@ const seriesSeasonsRoute = createRoute({
   }),
 });
 
+const draftReleasesRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/releases',
+  tags: ['Requests'],
+  summary: 'Search by hand for something before asking for it, making no request',
+  request: { body: { content: { 'application/json': { schema: MediaRequestAskSchema } } } },
+  responses: requestFailures({
+    200: {
+      description: 'The releases for it, best first',
+      content: { 'application/json': { schema: ReleaseSearchOutcomeSchema } },
+    },
+  }),
+});
+
 const searchMissingRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/missing',
@@ -792,6 +806,7 @@ export {
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
   retryMediaRequestRoute,
+  draftReleasesRoute,
   searchMissingRoute,
   seriesSeasonsRoute,
   addQualityProfileRoute,

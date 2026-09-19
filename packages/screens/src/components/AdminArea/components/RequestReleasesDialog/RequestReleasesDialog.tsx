@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { DataTable } from '@ValenceUI/DataTable';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -10,16 +9,13 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { pickMediaRelease } from '@ValenceClient/requests/fetchMediaRequests';
-import { releaseColumns } from '@ValenceScreens/components/AdminArea/releaseColumns';
-import { IndexerReportList } from '@ValenceScreens/components/AdminArea/components/IndexerReportList/IndexerReportList';
-import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import { ReleasePickTable } from '@ValenceScreens/components/AdminArea/components/ReleasePickTable/ReleasePickTable';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { RequestReleasesDialogProps } from './RequestReleasesDialog.types';
 
 /**
  * Searches for a request by hand: every release the indexers found for it, judged against its
- * library's profile and in the order they would be chosen, with any one of them to fetch instead —
- * refused ones included, since whoever picks one knows better than its name does.
+ * profile and in the order they would be chosen, with any one of them to fetch instead.
  *
  * @param request - The request, or nothing while the dialog is closed.
  * @param onClose - Called when it is dismissed.
@@ -29,59 +25,33 @@ const RequestReleasesDialog = ({ request, onClose, onPicked }: RequestReleasesDi
   const found = useQuery(requestsQueries.mediaRequestReleases(request?.id ?? null));
   const [picking, setPicking] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
-  const judged = useMemo(
-    () => new Map((found.data?.judgements ?? []).map((one) => [one.releaseId, one])),
-    [found.data],
-  );
-  const pickedId = found.data?.pickedId ?? null;
-  const now = found.dataUpdatedAt;
   const requestId = request?.id ?? null;
 
-  const columns = useMemo<DataTableColumn<Release>[]>(
-    () => [
-      ...releaseColumns({ judged, pickedId, now }),
-      {
-        id: 'act',
-        header: '',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="flex justify-end">
-            <Button
-              variant="secondary"
-              size="xs"
-              disabled={picking !== null || requestId === null}
-              isLoading={picking === row.original.id}
-              onClick={() => {
-                if (requestId === null) {
-                  return;
-                }
+  const pick = useCallback(
+    (release: Release) => {
+      if (requestId === null) {
+        return;
+      }
 
-                setPicking(row.original.id);
-                setProblem(null);
+      setPicking(release.id);
+      setProblem(null);
 
-                void pickMediaRelease(requestId, row.original)
-                  .then(({ value, refusal }) => {
-                    if (value === null) {
-                      setProblem(refusal?.message ?? 'That release could not be fetched.');
+      void pickMediaRelease(requestId, release)
+        .then(({ value, refusal }) => {
+          if (value === null) {
+            setProblem(refusal?.message ?? 'That release could not be fetched.');
 
-                      return;
-                    }
+            return;
+          }
 
-                    onPicked(value);
-                    onClose();
-                  })
-                  .finally(() => {
-                    setPicking(null);
-                  });
-              }}
-            >
-              Fetch this
-            </Button>
-          </span>
-        ),
-      },
-    ],
-    [judged, pickedId, now, picking, requestId, onPicked, onClose],
+          onPicked(value);
+          onClose();
+        })
+        .finally(() => {
+          setPicking(null);
+        });
+    },
+    [requestId, onPicked, onClose],
   );
 
   const title = request === null ? 'Releases' : `Releases for ${request.title}`;
@@ -91,10 +61,10 @@ const RequestReleasesDialog = ({ request, onClose, onPicked }: RequestReleasesDi
       <DialogTitle
         size="compact"
         title={title}
-        detail="Every release the indexers found for it, judged against its library’s profile, best first."
+        detail="Every release the indexers found for it, judged against its quality profile, best first."
       />
 
-      <DialogContent className="flex flex-col gap-3">
+      <DialogContent>
         {found.isError ? (
           <CouldNotRead
             what="The releases"
@@ -106,17 +76,13 @@ const RequestReleasesDialog = ({ request, onClose, onPicked }: RequestReleasesDi
         ) : found.data === undefined ? (
           <Spinner label="Asking every indexer" size="sm" />
         ) : (
-          <>
-            <IndexerReportList reports={found.data.indexers} />
-
-            <DataTable
-              label="Releases found"
-              columns={columns}
-              rows={found.data.releases}
-              getRowId={(release) => release.id}
-              emptyMessage="Nothing the indexers have is for this request."
-            />
-          </>
+          <ReleasePickTable
+            found={found.data}
+            foundAt={found.dataUpdatedAt}
+            pickingId={picking}
+            emptyMessage="Nothing the indexers have is for this request."
+            onPick={pick}
+          />
         )}
       </DialogContent>
 

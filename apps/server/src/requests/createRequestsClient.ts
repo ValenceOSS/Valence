@@ -475,6 +475,13 @@ const createRequestsClient = ({
     ): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/catalogue`, readRequest, { method: 'PUT', body: update }),
 
+    releasesForDraft: (draft: MediaRequestDraft): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
+      call('/api/requests/releases', (body) => ReleaseSearchOutcomeSchema.parse(body), {
+        method: 'POST',
+        body: draft,
+        waitMs: searchTimeoutMs,
+      }),
+
     requestLog: (id: string): Promise<RequestsAnswer<RequestLogEntry[]>> =>
       call(`${withRequest(id)}/log`, (body) => z.array(RequestLogEntrySchema).parse(body)),
 
