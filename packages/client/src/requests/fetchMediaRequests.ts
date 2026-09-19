@@ -158,14 +158,22 @@ const pickMediaRelease = (id: string, release: Release): Promise<Sent<MediaReque
   sendToRequests(`${REQUESTS}/${id}/pick`, 'POST', { release }, readRequest);
 
 /**
- * Forgets a request, leaving whatever it fetched where it is.
+ * Forgets a request — or cancels it, taking with it whatever it had started downloading, files
+ * and all.
  *
  * @param id - Which.
- * @returns Why not, where it was refused.
+ * @param isDeletingDownloads - Whether what it had started downloading goes too.
+ * @returns Why not, or nothing where it went.
  */
-const removeMediaRequest = async (id: string): Promise<Refusal> =>
-  (await sendToRequests(`${REQUESTS}/${id}`, 'DELETE', undefined, () => Promise.resolve(null)))
-    .refusal;
+const removeMediaRequest = async (id: string, isDeletingDownloads = false): Promise<Refusal> =>
+  (
+    await sendToRequests(
+      `${REQUESTS}/${id}${isDeletingDownloads ? '?deleteDownloads=true' : ''}`,
+      'DELETE',
+      undefined,
+      () => Promise.resolve(null),
+    )
+  ).refusal;
 
 /**
  * Searches now for everything still wanted, and anything a profile would upgrade.

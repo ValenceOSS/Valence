@@ -1598,9 +1598,9 @@ describe('requests for films and series, through the server', () => {
     expect(await (await ask('/api/requests/progress')).json()).toEqual([]);
   });
 
-  it('lets somebody cancel their own request while it waits to be approved, and nothing more', async () => {
+  it('lets somebody cancel their own request until it is in the library, with its downloads', async () => {
     let owner = '';
-    let approval = 'awaiting';
+    let state = 'downloading';
     const deleted: string[] = [];
     const { ask, accountId } = await build({
       isOn: true,
@@ -1612,22 +1612,23 @@ describe('requests for films and series, through the server', () => {
           return new Response(null, { status: 204 });
         }
 
-        return Response.json({ ...REQUEST, requestedBy: { id: owner, name: 'Me' }, approval });
+        return Response.json({ ...REQUEST, requestedBy: { id: owner, name: 'Me' }, state });
       },
     });
 
     owner = accountId;
 
     expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(204);
+    expect(deleted[0]).toMatch(/\?deleteDownloads=true$/);
 
-    approval = 'approved';
+    state = 'available';
 
     expect(await (await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).json()).toEqual({
-      error: 'Only a request still waiting to be approved can be cancelled.',
+      error: 'It is in the library already, so there is nothing left to cancel.',
     });
 
     owner = 'someone-else';
-    approval = 'awaiting';
+    state = 'wanted';
 
     expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(404);
     expect(deleted).toHaveLength(1);

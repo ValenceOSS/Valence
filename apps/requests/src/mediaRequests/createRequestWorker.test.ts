@@ -1162,6 +1162,25 @@ describe('createRequestWorker', () => {
       );
     });
 
+    it('takes the downloads a request had not finished filing out of their client, files and all', async () => {
+      const { worker, remove } = aWorker({
+        items: [
+          aRequestItem({ id: 'a', state: 'downloading', downloadId: aSentDownload().id }),
+          aRequestItem({ id: 'b', state: 'downloading', downloadId: aSentDownload().id }),
+          aRequestItem({
+            id: 'c',
+            state: 'filed',
+            downloadId: '3f2504e0-4f89-41d3-9a0c-000000000009',
+          }),
+        ],
+      });
+
+      expect(await worker.dropDownloads(aMediaRequest().id)).toBe(1);
+      expect(remove).toHaveBeenCalledTimes(1);
+      expect(remove).toHaveBeenCalledWith(aSentDownload().id, true);
+      expect(await worker.dropDownloads('someone-else')).toBe(0);
+    });
+
     it('sends the release an admin picked, whatever it is called', async () => {
       const { worker, send } = aWorker();
 

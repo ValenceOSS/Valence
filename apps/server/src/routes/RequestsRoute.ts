@@ -817,8 +817,11 @@ const removeMediaRequestRoute = createRoute({
   path: '/api/requests/media/{id}',
   tags: ['Requests'],
   summary:
-    'Forget a request, leaving whatever it fetched where it is — or cancel one of your own still waiting to be approved',
-  request: { params: RecordIdParameter },
+    'Forget a request, leaving whatever it fetched where it is — or cancel one of your own not yet in the library, deleting what it had started downloading',
+  request: {
+    params: RecordIdParameter,
+    query: z.object({ deleteDownloads: z.enum(['true', 'false']).optional() }),
+  },
   responses: requestFailures({ 204: { description: 'Forgotten' } }),
 });
 

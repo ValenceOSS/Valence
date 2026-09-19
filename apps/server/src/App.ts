@@ -4253,13 +4253,14 @@ const createApp = ({
   app.openapi(removeMediaRequestRoute, async (context) => {
     const { headers } = context.req.raw;
     const { id } = context.req.valid('param');
+    const isDeletingDownloads = context.req.valid('query').deleteDownloads === 'true';
     const isManager = await requires(headers, 'requests.manage');
     const session = await readSessionOnce(auth, headers);
     const answer = await throughRequests(
       headers,
       async (client) => {
         if (isManager) {
-          return client.removeRequest(id);
+          return client.removeRequest(id, isDeletingDownloads);
         }
 
         const found = await client.findRequest(id);
@@ -4272,13 +4273,13 @@ const createApp = ({
           return { kind: 'refused', status: 404, error: 'There is no such request.' };
         }
 
-        return found.value.approval === 'awaiting'
-          ? client.removeRequest(id)
-          : {
+        return found.value.state === 'filed' || found.value.state === 'available'
+          ? {
               kind: 'refused',
               status: 400,
-              error: 'Only a request still waiting to be approved can be cancelled.',
-            };
+              error: 'It is in the library already, so there is nothing left to cancel.',
+            }
+          : client.removeRequest(id, true);
       },
       ['requests.manage', ...ASKERS],
     );

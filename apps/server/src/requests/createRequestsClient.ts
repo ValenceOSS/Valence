@@ -497,8 +497,10 @@ const createRequestsClient = ({
         waitMs: searchTimeoutMs,
       }),
 
-    removeRequest: (id: string): Promise<RequestsAnswer<null>> =>
-      call(withRequest(id), () => null, { method: 'DELETE' }),
+    removeRequest: (id: string, isDeletingDownloads = false): Promise<RequestsAnswer<null>> =>
+      call(`${withRequest(id)}${isDeletingDownloads ? '?deleteDownloads=true' : ''}`, () => null, {
+        method: 'DELETE',
+      }),
 
     followedRequests: (): Promise<RequestsAnswer<FollowedRequest[]>> =>
       call('/api/requests/following', (body) => z.array(FollowedRequestSchema).parse(body)),
