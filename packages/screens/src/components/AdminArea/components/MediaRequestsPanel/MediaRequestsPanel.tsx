@@ -37,6 +37,13 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 
+const KIND_NAMES: Readonly<Record<MediaRequest['kind'], string>> = {
+  film: 'Film',
+  series: 'Series',
+  artist: 'Artist',
+  album: 'Album',
+};
+
 const IN_HAND = new Set<MediaRequest['state']>([
   'searching',
   'chosen',
@@ -46,11 +53,11 @@ const IN_HAND = new Set<MediaRequest['state']>([
 ]);
 
 /**
- * The Requested page: every film and series asked for, where each has got to — waiting on
- * approval, not out yet, wanted, downloading, filed or ready — and what can be done with it:
- * approving or refusing it, seeing every search it made and why, trying again what failed,
- * searching by hand to pick a release, and forgetting it. It is read again every few seconds, so a request can be watched all the way into
- * the library.
+ * The Requested page: every film, series, artist and album asked for, where each has got to —
+ * waiting on approval, not out yet, wanted, downloading, filed or ready — and what can be done
+ * with it: approving or refusing it, seeing every search it made and why, trying again what
+ * failed, searching by hand to pick a release, and forgetting it. It is read again every few
+ * seconds, so a request can be watched all the way into the library.
  *
  * Everything still wanted is searched for again every few hours by itself, and can be searched for
  * now from here.
@@ -119,7 +126,7 @@ const MediaRequestsPanel = () => {
                     {row.original.title}
                     {row.original.year === null ? '' : ` (${row.original.year.toString()})`}
                   </span>
-                  <Badge size="sm">{row.original.kind === 'film' ? 'Film' : 'Series'}</Badge>
+                  <Badge size="sm">{KIND_NAMES[row.original.kind]}</Badge>
                 </span>
 
                 {progress === null ? null : (
@@ -405,7 +412,7 @@ const MediaRequestsPanel = () => {
           columns={columns}
           rows={requests.data}
           getRowId={(request) => request.id}
-          emptyMessage="Nothing has been asked for yet. Ask for a film or series to have it fetched and filed into its library."
+          emptyMessage="Nothing has been asked for yet. Ask for a film, a series, an artist or an album to have it fetched and filed into its library."
         />
       )}
     </PanelCard>

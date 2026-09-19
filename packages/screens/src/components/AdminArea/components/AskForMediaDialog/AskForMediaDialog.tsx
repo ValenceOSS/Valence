@@ -15,20 +15,79 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { searchCatalogue } from '@ValenceClient/admin/fetchAdmin';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { askForMedia, findReleasesFor } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  askForMedia,
+  findReleasesFor,
+  searchMusicCatalogue,
+} from '@ValenceClient/requests/fetchMediaRequests';
+import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
+import { RELEASE_TYPE_NAMES } from '@ValenceScreens/components/AdminArea/RELEASE_TYPE_NAMES';
 import { ReleasePickTable } from '@ValenceScreens/components/AdminArea/components/ReleasePickTable/ReleasePickTable';
 import { CatalogueMatchList } from '@ValenceScreens/components/AdminArea/components/CatalogueMatchList/CatalogueMatchList';
+import { MusicMatchList } from '@ValenceScreens/components/AdminArea/components/MusicMatchList/MusicMatchList';
+import { describeMusicMatch } from '@ValenceScreens/components/AdminArea/components/MusicMatchList/describeMusicMatch';
 import type { CatalogueMatch } from '@ValenceClient/admin/fetchAdmin';
 import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
-import type { MediaRequestAsk, MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  MediaRequestAsk,
+  MediaRequestKind,
+  MusicCatalogueHit,
+  ReleaseType,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { AskForMediaDialogProps } from './AskForMediaDialog.types';
 
-const KINDS: readonly { id: MediaRequestKind; label: string }[] = [
-  { id: 'film', label: 'A film' },
-  { id: 'series', label: 'A series' },
+const KINDS: readonly { id: MediaRequestKind; label: string; one: string }[] = [
+  { id: 'film', label: 'A film', one: 'a film' },
+  { id: 'series', label: 'A series', one: 'a series' },
+  { id: 'artist', label: 'An artist', one: 'an artist' },
+  { id: 'album', label: 'An album', one: 'an album' },
 ];
 
+type Chosen = {
+  title: string;
+  year: number | null;
+  overview: string | null;
+  tmdbId: number | null;
+  musicBrainzId: string | null;
+};
+
+/**
+ * A film or series the catalogue offered, as the thing chosen to ask for.
+ *
+ * @param match - What the catalogue offered.
+ * @returns It chosen.
+ */
+const chosenFilm = (match: CatalogueMatch): Chosen => ({
+  title: match.title,
+  year: match.year,
+  overview: match.overview,
+  tmdbId: Number(match.externalId),
+  musicBrainzId: null,
+});
+
+/**
+ * An artist or album MusicBrainz found, as the thing chosen to ask for.
+ *
+ * @param match - What was found.
+ * @returns It chosen.
+ */
+const chosenMusic = (match: MusicCatalogueHit): Chosen => ({
+  title: match.title,
+  year: match.kind === 'album' ? match.year : null,
+  overview: describeMusicMatch(match),
+  tmdbId: null,
+  musicBrainzId: match.musicBrainzId,
+});
+
 const THE_LIBRARYS = 'library';
+
+const LATER_PICKS: Readonly<Record<MediaRequestKind, string>> = {
+  film: '',
+  series: ' Later episodes wait for a pick too.',
+  artist: ' Later albums wait for a pick too.',
+  album: '',
+};
 
 const PICKING = [
   { id: 'best', label: 'The best by its quality' },
@@ -41,10 +100,11 @@ const SEASON_CHOICES = [
 ] as const;
 
 /**
- * Asks for a film or a series: the catalogue is searched for it by name, and once one is chosen, it
- * says the quality wanted — a profile of its own, or its library's, which also says how long a
- * film is held before it is searched for — and a series which of its seasons are wanted, or every
- * one and whatever comes later.
+ * Asks for a film, a series, an artist or an album: the catalogue — TMDB, or MusicBrainz for music
+ * — is searched for it by name, and once one is chosen, it says the quality wanted — a profile of
+ * its own, or its library's, which also says how long a film is held before it is searched for —
+ * a series which of its seasons are wanted, or every one and whatever comes later, and an artist
+ * which kinds of their releases are, now and as they come out.
  *
  * @param isOpen - Whether the dialog is showing.
  * @param onClose - Called when it is dismissed.
@@ -54,8 +114,10 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const [kind, setKind] = useState<MediaRequestKind>('film');
   const [query, setQuery] = useState('');
   const [matches, setMatches] = useState<CatalogueMatch[] | null>(null);
+  const [musicMatches, setMusicMatches] = useState<MusicCatalogueHit[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [chosen, setChosen] = useState<CatalogueMatch | null>(null);
+  const [chosen, setChosen] = useState<Chosen | null>(null);
+  const [releaseTypes, setReleaseTypes] = useState<ReadonlySet<ReleaseType>>(new Set(['album']));
   const [seasonChoice, setSeasonChoice] = useState<'every' | 'some'>('every');
   const [picked, setPicked] = useState<ReadonlySet<number>>(new Set());
   const [isPickedByHand, setIsPickedByHand] = useState(false);
@@ -65,27 +127,40 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const [isFinding, setIsFinding] = useState(false);
   const [pickingId, setPickingId] = useState<string | null>(null);
   const profiles = useQuery({ ...requestsQueries.profiles(), enabled: isOpen });
+  const isMusic = isMusicRequest(kind);
   const qualities = [
     { id: THE_LIBRARYS, label: 'The library’s own profile' },
     ...(profiles.data ?? [])
-      .filter((profile) => profile.kind === 'video')
+      .filter((profile) => profile.kind === (isMusic ? 'music' : 'video'))
       .map((profile) => ({ id: profile.id, label: profile.name })),
   ];
   const quality = qualities.find((one) => one.id === (profileId ?? THE_LIBRARYS));
   const [problem, setProblem] = useState<string | null>(null);
 
   const listed = useQuery(
-    requestsQueries.seriesSeasons(
-      chosen === null || kind !== 'series' ? null : Number(chosen.externalId),
-    ),
+    requestsQueries.seriesSeasons(chosen === null || kind !== 'series' ? null : chosen.tmdbId),
   );
   const seasons =
     seasonChoice === 'every' ? null : [...picked].toSorted((left, right) => left - right);
-  const isReady = chosen !== null && (seasons === null || seasons.length > 0);
+  const isReady =
+    chosen !== null &&
+    (seasons === null || seasons.length > 0) &&
+    (kind !== 'artist' || releaseTypes.size > 0);
 
   const look = () => {
     setIsSearching(true);
     setProblem(null);
+
+    if (kind === 'artist' || kind === 'album') {
+      void searchMusicCatalogue(query.trim(), kind)
+        .catch(() => [])
+        .then((found) => {
+          setMusicMatches(found);
+          setIsSearching(false);
+        });
+
+      return;
+    }
 
     void searchCatalogue(query.trim(), kind === 'film' ? 'movie' : 'tv').then((found) => {
       setMatches(found);
@@ -98,10 +173,14 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
       ? null
       : {
           kind,
-          tmdbId: Number(chosen.externalId),
+          ...(chosen.tmdbId === null ? {} : { tmdbId: chosen.tmdbId }),
+          ...(chosen.musicBrainzId === null ? {} : { musicBrainzId: chosen.musicBrainzId }),
           ...(profileId === null ? {} : { profileId }),
           isPickedByHand,
-          ...(kind === 'film' ? {} : { seasons }),
+          ...(kind === 'series' ? { seasons } : {}),
+          ...(kind === 'artist'
+            ? { releaseTypes: RELEASE_TYPES.filter((type) => releaseTypes.has(type)) }
+            : {}),
         };
 
   const findReleases = () => {
@@ -151,6 +230,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
         onAsked(value);
         setChosen(null);
         setMatches(null);
+        setMusicMatches(null);
         setFound(null);
         setQuery('');
         onClose();
@@ -166,7 +246,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
       <DialogTitle
         size="compact"
         title="Ask for something"
-        detail="Find a film or series in the catalogue. Once it is approved, it is searched for, downloaded and filed into its library."
+        detail="Find a film, a series, an artist or an album in the catalogue. Once it is approved, it is searched for, downloaded and filed into its library."
       />
 
       <DialogContent className="flex flex-col gap-4">
@@ -194,6 +274,8 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   if (picked !== undefined) {
                     setKind(picked);
                     setMatches(null);
+                    setMusicMatches(null);
+                    setProfileId(null);
                   }
                 }}
               />
@@ -201,7 +283,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
 
             <div className="flex flex-wrap items-end gap-3">
               <TextField
-                label={`Search for a ${kind === 'film' ? 'film' : 'series'}`}
+                label={`Search for ${KINDS.find((one) => one.id === kind)?.one ?? 'it'}`}
                 value={query}
                 onValueChange={setQuery}
                 className="min-w-0 flex-1"
@@ -220,12 +302,30 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
 
             {isSearching ? <Spinner label="Asking the catalogue" size="sm" /> : null}
 
-            {matches === null || isSearching ? null : matches.length === 0 ? (
+            {isSearching ? null : isMusic ? (
+              musicMatches === null ? null : musicMatches.length === 0 ? (
+                <p className="font-body text-sm text-text-muted">
+                  MusicBrainz knows nothing under that name.
+                </p>
+              ) : (
+                <MusicMatchList
+                  matches={musicMatches}
+                  onChoose={(match) => {
+                    setChosen(chosenMusic(match));
+                  }}
+                />
+              )
+            ) : matches === null ? null : matches.length === 0 ? (
               <p className="font-body text-sm text-text-muted">
                 Nothing came back under that name.
               </p>
             ) : (
-              <CatalogueMatchList matches={matches} onChoose={setChosen} />
+              <CatalogueMatchList
+                matches={matches}
+                onChoose={(match) => {
+                  setChosen(chosenFilm(match));
+                }}
+              />
             )}
           </>
         ) : (
@@ -237,7 +337,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   {chosen.year === null ? '' : ` (${chosen.year.toString()})`}
                 </span>
                 <span className="line-clamp-3 font-body text-xs text-text-muted">
-                  {chosen.overview ?? 'No synopsis.'}
+                  {chosen.overview ?? (isMusic ? '' : 'No synopsis.')}
                 </span>
               </span>
 
@@ -283,7 +383,36 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               />
             </FormField>
 
-            {kind === 'film' ? null : (
+            {kind !== 'artist' ? null : (
+              <FormField
+                label="Releases"
+                description="Which of their releases are fetched, now and as new ones come out."
+              >
+                <ul aria-label="Which releases" className="grid gap-2 sm:grid-cols-3">
+                  {RELEASE_TYPES.map((type) => (
+                    <li key={type}>
+                      <Checkbox
+                        label={RELEASE_TYPE_NAMES[type].label}
+                        checked={releaseTypes.has(type)}
+                        onCheckedChange={(isChecked) => {
+                          const next = new Set(releaseTypes);
+
+                          if (isChecked) {
+                            next.add(type);
+                          } else {
+                            next.delete(type);
+                          }
+
+                          setReleaseTypes(next);
+                        }}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </FormField>
+            )}
+
+            {kind !== 'series' ? null : (
               <>
                 <FormField label="Seasons">
                   <SegmentedRow
@@ -333,7 +462,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               label="Release"
               description={
                 isPickedByHand
-                  ? 'You pick from what the indexers have before anything is asked for. Later episodes wait for a pick too.'
+                  ? `You pick from what the indexers have before anything is asked for.${LATER_PICKS[kind]}`
                   : 'The best release by its quality is fetched as soon as one turns up.'
               }
             >

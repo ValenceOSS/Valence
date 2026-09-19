@@ -112,8 +112,8 @@ indexers, and hand them to a download client of your own. It is a second
 service, `requests`, and nothing about it shows in Valence until it is set up:
 no sidebar group, no permissions, no webhook events.
 
-It is arriving in stages. Films and series can be requested, fetched and filed
-into their libraries now; music follows.
+It is arriving in stages. Films, series and music can be requested, fetched
+and filed into their libraries now.
 
 To switch it on:
 
@@ -205,14 +205,15 @@ again, or searches by hand to pick any release.
 Once a request is approved:
 
 - **Not out yet.** A film is held until it is out at home — digitally or on
-  disc, as chosen when it was asked for — and an episode until it airs. The
+  disc, as its quality profile says — and an episode until it airs. The
   catalogue is read again every night, so new episodes of a series asked for in
   full, and changed release dates, are picked up.
 - **Picking.** Everything wanted is searched for at once — a season that has
   finished airing as a whole — and the best release is sent to a download
   client, judged by the quality profile chosen when it was asked for, or else
-  the library's own. With neither, 1080p or 720p from any good source is taken. Where the profile upgrades, a better
-  release replaces what was fetched until the profile's limit is reached.
+  the library's own. With neither, 1080p or 720p from any good source is
+  taken. Where the profile upgrades, a better release replaces what was fetched
+  until the profile's limit is reached.
 - **Wanted, not failed.** A request that finds nothing acceptable stays wanted.
   Everything wanted is searched for again every six hours, and on demand with
   **Search for what is missing**; the indexers' newest releases are read every
@@ -240,6 +241,31 @@ service must see each library at the same path Valence does — both mount
 
 The `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`,
 `requests.filed` and `requests.available` webhooks follow a request along.
+
+### Music
+
+The same **Requested** page asks for music from MusicBrainz, which needs no key.
+Valence asks it no more than once a second and names itself when it does, as
+MusicBrainz asks of everyone.
+
+- **An artist** is watched: every release of theirs of the kinds chosen —
+  albums, EPs, singles, live records, compilations; albums alone unless told
+  otherwise — and every new one as MusicBrainz lists it, read again every night.
+- **An album** can be asked for on its own.
+
+Music goes through the same approval, searching, failure and retrying as films
+and series. Each album is searched for among the indexers' music by its artist
+and title, and judged by a music quality profile — FLAC before MP3 and so on —
+or else FLAC, MP3 320 or V0. A release of any edition or remaster of the album
+counts.
+
+A finished album is filed into the music library by what its tracks' tags say,
+not by what its download is called: as `Artist/Album (Year)/01 - Title.flac`,
+`1-01 - Title.flac` where it spans more than one disc, with its cover beside it.
+Tracks without tags are named from their files, and the album from the request.
+Valence then reads just that album's folder and ties the request to the album it
+found — by the MusicBrainz release group its tracks are tagged with, or else by
+where it was filed, which it remembers.
 
 ### A VPN for the download client
 

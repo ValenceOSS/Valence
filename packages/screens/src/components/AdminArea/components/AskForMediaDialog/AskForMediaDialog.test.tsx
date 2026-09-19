@@ -12,6 +12,7 @@ const searchCatalogue = vi.fn<typeof Admin.searchCatalogue>();
 const askForMedia = vi.fn<typeof Requests.askForMedia>();
 const fetchSeriesSeasons = vi.fn<typeof Requests.fetchSeriesSeasons>();
 const findReleasesFor = vi.fn<typeof Requests.findReleasesFor>();
+const searchMusicCatalogue = vi.fn<typeof Requests.searchMusicCatalogue>();
 
 vi.mock('@ValenceClient/admin/fetchAdmin', async (actual) => ({
   ...(await actual<object>()),
@@ -32,6 +33,8 @@ vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   fetchSeriesSeasons: (tmdbId: number) => fetchSeriesSeasons(tmdbId),
   findReleasesFor: (...given: Parameters<typeof Requests.findReleasesFor>) =>
     findReleasesFor(...given),
+  searchMusicCatalogue: (...given: Parameters<typeof Requests.searchMusicCatalogue>) =>
+    searchMusicCatalogue(...given),
 }));
 
 const RELEASE: Release = {
@@ -72,6 +75,31 @@ beforeEach(() => {
     ]),
   );
   askForMedia.mockReset().mockResolvedValue({ value: MADE, refusal: null });
+  searchMusicCatalogue.mockReset().mockImplementation((_query, kind) =>
+    Promise.resolve([
+      kind === 'artist'
+        ? {
+            kind,
+            musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+            title: 'Pink Floyd',
+            artist: null,
+            disambiguation: 'UK rock band',
+            type: null,
+            year: 1965,
+            coverUrl: null,
+          }
+        : {
+            kind,
+            musicBrainzId: 'f5093c06-23e3-404f-aeaa-40f72885ee3a',
+            title: 'The Dark Side of the Moon',
+            artist: 'Pink Floyd',
+            disambiguation: null,
+            type: 'album',
+            year: 1973,
+            coverUrl: null,
+          },
+    ]),
+  );
   findReleasesFor.mockReset().mockResolvedValue({
     value: { releases: [RELEASE], indexers: [], judgements: [], pickedId: null },
     refusal: null,
@@ -120,6 +148,62 @@ describe('AskForMediaDialog', () => {
       isPickedByHand: false,
     });
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('watches an artist found in MusicBrainz for the kinds of release ticked', async () => {
+    const user = userEvent.setup();
+    const { onAsked } = open();
+
+    await user.click(screen.getByRole('button', { name: 'An artist' }));
+    await user.type(screen.getByRole('textbox', { name: 'Search for an artist' }), 'Pink Floyd');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await user.click(await screen.findByRole('button', { name: /Pink Floyd/ }));
+
+    expect(screen.getByText('1965 · UK rock band')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Albums' })).toBeChecked();
+
+    await user.click(screen.getByRole('checkbox', { name: 'Live' }));
+    await user.click(screen.getByRole('button', { name: 'Quality' }));
+
+    expect(screen.queryByRole('menuitemradio', { name: 'UHD' })).not.toBeInTheDocument();
+
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Lossless' }));
+    await user.click(screen.getByRole('button', { name: 'Ask for it' }));
+
+    await waitFor(() => {
+      expect(onAsked).toHaveBeenCalledWith(MADE);
+    });
+    expect(searchMusicCatalogue).toHaveBeenCalledWith('Pink Floyd', 'artist');
+    expect(askForMedia).toHaveBeenCalledWith({
+      kind: 'artist',
+      musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+      profileId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+      isPickedByHand: false,
+      releaseTypes: ['album', 'live'],
+    });
+  });
+
+  it('asks for one album, with no kinds of release to choose', async () => {
+    const user = userEvent.setup();
+
+    open();
+
+    await user.click(screen.getByRole('button', { name: 'An album' }));
+    await user.type(screen.getByRole('textbox', { name: 'Search for an album' }), 'dark side');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await user.click(await screen.findByRole('button', { name: /The Dark Side of the Moon/ }));
+
+    expect(screen.queryByRole('list', { name: 'Which releases' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Ask for it' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith({
+        kind: 'album',
+        musicBrainzId: 'f5093c06-23e3-404f-aeaa-40f72885ee3a',
+        isPickedByHand: false,
+      });
+    });
   });
 
   it('asks for the seasons ticked, as the catalogue lists them', async () => {
