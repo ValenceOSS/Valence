@@ -399,6 +399,7 @@ import type {
   RequestCatalogue,
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
+import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
@@ -3834,6 +3835,8 @@ const createApp = ({
 
   const APPROVERS: readonly Permission[] = ['requests.approve', 'requests.manage'];
 
+  const ASKERS: readonly Permission[] = ['requests.ask', 'requests.askMusic'];
+
   const SEES_EVERY_REQUEST: readonly Permission[] = [
     'requests.viewAll',
     'requests.approve',
@@ -3853,7 +3856,7 @@ const createApp = ({
     const { headers } = context.req.raw;
     const session = await readSessionOnce(auth, headers);
     const answer = await throughRequests(headers, (client) => client.listRequests(), [
-      'requests.ask',
+      ...ASKERS,
       ...SEES_EVERY_REQUEST,
     ]);
 
@@ -3949,7 +3952,7 @@ const createApp = ({
       headers,
       (client) =>
         drafted.kind === 'refused' ? Promise.resolve(drafted) : client.addRequest(drafted.draft),
-      ['requests.ask'],
+      [isMusicRequest(asked.kind) ? 'requests.askMusic' : 'requests.ask'],
     );
 
     if (answer.kind !== 'answered') {
@@ -4028,7 +4031,9 @@ const createApp = ({
     const { headers } = context.req.raw;
     const may = (
       await Promise.all(
-        ['requests.ask' as const, ...APPROVERS].map((permission) => requires(headers, permission)),
+        ['requests.askMusic' as const, ...APPROVERS].map((permission) =>
+          requires(headers, permission),
+        ),
       )
     ).some(Boolean);
 
@@ -4078,8 +4083,36 @@ const createApp = ({
   });
 
   app.openapi(removeMediaRequestRoute, async (context) => {
-    const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.removeRequest(context.req.valid('param').id),
+    const { headers } = context.req.raw;
+    const { id } = context.req.valid('param');
+    const isManager = await requires(headers, 'requests.manage');
+    const session = await readSessionOnce(auth, headers);
+    const answer = await throughRequests(
+      headers,
+      async (client) => {
+        if (isManager) {
+          return client.removeRequest(id);
+        }
+
+        const found = await client.findRequest(id);
+
+        if (found.kind !== 'answered') {
+          return found;
+        }
+
+        if (found.value.requestedBy.id !== session?.user.id) {
+          return { kind: 'refused', status: 404, error: 'There is no such request.' };
+        }
+
+        return found.value.approval === 'awaiting'
+          ? client.removeRequest(id)
+          : {
+              kind: 'refused',
+              status: 400,
+              error: 'Only a request still waiting to be approved can be cancelled.',
+            };
+      },
+      ['requests.manage', ...ASKERS],
     );
 
     return answer.kind === 'answered'

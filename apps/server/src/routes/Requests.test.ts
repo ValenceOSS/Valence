@@ -1109,13 +1109,17 @@ describe('requests for films and series, through the server', () => {
     );
     const { ask } = await build({
       isOn: true,
-      granted: ['requests.ask'],
+      granted: ['requests.askMusic'],
       service: aWillingKeeper,
       describeMusicForRequest,
       libraries: [FILMS, MUSIC],
     });
 
     sent.length = 0;
+
+    expect(
+      (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 })).status,
+    ).toBe(403);
 
     const made = await ask('/api/requests/media', 'POST', {
       kind: 'artist',
@@ -1138,9 +1142,26 @@ describe('requests for films and series, through the server', () => {
       catalogue: { title: 'Pink Floyd', artist: 'Pink Floyd' },
     });
 
-    const nowhere = await build({
+    const filmsOnly = await build({
       isOn: true,
       granted: ['requests.ask'],
+      service: aWillingKeeper,
+      describeMusicForRequest,
+      libraries: [FILMS, MUSIC],
+    });
+
+    expect(
+      (
+        await filmsOnly.ask('/api/requests/media', 'POST', {
+          kind: 'artist',
+          musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+        })
+      ).status,
+    ).toBe(403);
+
+    const nowhere = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
       service: aWillingKeeper,
       describeMusicForRequest,
     });
@@ -1167,7 +1188,11 @@ describe('requests for films and series, through the server', () => {
       coverUrl: null,
     };
     const searchMusicCatalogue = vi.fn(() => Promise.resolve([hit]));
-    const asking = await build({ isOn: true, granted: ['requests.ask'], searchMusicCatalogue });
+    const asking = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
+      searchMusicCatalogue,
+    });
 
     const found = await asking.ask('/api/requests/catalogue/music?query=pink%20floyd&kind=artist');
 
@@ -1385,6 +1410,41 @@ describe('requests for films and series, through the server', () => {
       searched: 1,
       startedAt: '2026-09-19T00:00:00.000Z',
     });
+  });
+
+  it('lets somebody cancel their own request while it waits to be approved, and nothing more', async () => {
+    let owner = '';
+    let approval = 'awaiting';
+    const deleted: string[] = [];
+    const { ask, accountId } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: (url, init) => {
+        if (init.method === 'DELETE') {
+          deleted.push(url);
+
+          return new Response(null, { status: 204 });
+        }
+
+        return Response.json({ ...REQUEST, requestedBy: { id: owner, name: 'Me' }, approval });
+      },
+    });
+
+    owner = accountId;
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(204);
+
+    approval = 'approved';
+
+    expect(await (await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).json()).toEqual({
+      error: 'Only a request still waiting to be approved can be cancelled.',
+    });
+
+    owner = 'someone-else';
+    approval = 'awaiting';
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(404);
+    expect(deleted).toHaveLength(1);
   });
 
   it('passes on why the service would not do something', async () => {

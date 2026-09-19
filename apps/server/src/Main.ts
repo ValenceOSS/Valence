@@ -1938,7 +1938,7 @@ const describeMusicForRequest = (
 const requestedAlbums = createDatabaseRequestedAlbumStore(db);
 
 const LINKS_TO_ARRIVALS: Record<MediaRequestKind, (mediaId: string) => string> = {
-  film: (mediaId) => `/?inspecting=${mediaId}`,
+  film: (mediaId) => `/?item=${mediaId}`,
   series: (mediaId) => `/?show=${mediaId}`,
   artist: (mediaId) => `/music?listen=album:${mediaId}`,
   album: (mediaId) => `/music?listen=album:${mediaId}`,

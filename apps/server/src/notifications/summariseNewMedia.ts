@@ -130,7 +130,7 @@ const summariseNewMedia = (items: AddedItem[]): NewMediaSummary | null => {
     body: `${words.join(' and ')} — ${inWords(names)}`,
     link:
       only !== undefined
-        ? `/?inspecting=${only.id}`
+        ? `/?item=${only.id}`
         : onlySeries !== undefined
           ? `/?show=${onlySeries}`
           : onlyAlbum === undefined

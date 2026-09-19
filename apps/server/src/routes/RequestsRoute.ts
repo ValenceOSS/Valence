@@ -741,7 +741,8 @@ const removeMediaRequestRoute = createRoute({
   method: 'delete',
   path: '/api/requests/media/{id}',
   tags: ['Requests'],
-  summary: 'Forget a request, leaving whatever it fetched where it is',
+  summary:
+    'Forget a request, leaving whatever it fetched where it is — or cancel one of your own still waiting to be approved',
   request: { params: RecordIdParameter },
   responses: requestFailures({ 204: { description: 'Forgotten' } }),
 });
