@@ -21,6 +21,7 @@ const REQUEST = {
   overview: null,
   posterUrl: null,
   libraryId: 'films',
+  profileId: null,
   state: 'wanted',
   problem: null,
   approval: 'approved',

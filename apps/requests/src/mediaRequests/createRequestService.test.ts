@@ -88,6 +88,16 @@ describe('createRequestService', () => {
     expect(await service.list()).toHaveLength(1);
   });
 
+  it('keeps the quality asked for, and changes it', async () => {
+    const { service } = aService();
+    const profileId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+    const { request } = await service.add({ ...DUNE, profileId });
+
+    expect(request.profileId).toBe(profileId);
+    expect((await service.add(DUNE)).request.profileId).toBe(profileId);
+    expect((await service.change(request.id, { profileId: null }, null))?.profileId).toBeNull();
+  });
+
   it('approves and refuses', async () => {
     const { service } = aService();
     const { request } = await service.add(DUNE);

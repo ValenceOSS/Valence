@@ -175,6 +175,7 @@ const mediaRequest = requestsSchema.table(
     posterUrl: text('poster_url'),
     libraryId: text('library_id').notNull(),
     libraryPath: text('library_path').notNull(),
+    profileId: uuid('profile_id'),
     approval: text('approval', { enum: REQUEST_APPROVALS }).notNull().default('awaiting'),
     refusedBecause: text('refused_because'),
     requestedById: text('requested_by_id').notNull(),

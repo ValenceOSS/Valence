@@ -17,6 +17,7 @@ const aMediaRequest = (overrides: Partial<MediaRequestRecord> = {}): MediaReques
   posterUrl: null,
   libraryId: 'films',
   libraryPath: '/media/Films',
+  profileId: null,
   approval: 'approved',
   refusedBecause: null,
   requestedById: 'someone',

@@ -913,6 +913,7 @@ describe('requests for films and series, through the server', () => {
     overview: null,
     posterUrl: null,
     libraryId: FILMS.id,
+    profileId: null,
     state: 'wanted',
     problem: null,
     approval: 'approved',

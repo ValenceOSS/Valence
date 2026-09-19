@@ -160,7 +160,7 @@ const groupedByDownload = (
  * @param clients - The download clients.
  * @param queue - The download queue, to send to and take out of.
  * @param indexers - The indexers, to search.
- * @param profiles - The quality profiles, one of which may be each library's.
+ * @param profiles - The quality profiles, one of which a request or its library may name.
  * @param events - Where events wait for the server.
  * @param file - How a finished download is filed.
  * @param now - The clock.
@@ -228,10 +228,15 @@ const createRequestWorker = ({
       }));
   };
 
-  const profileFor = async (request: MediaRequestRecord): Promise<QualityProfile> =>
-    (await profiles.list()).find(
-      (profile) => profile.kind === 'video' && profile.libraryIds.includes(request.libraryId),
-    ) ?? DEFAULT_PROFILE;
+  const profileFor = async (request: MediaRequestRecord): Promise<QualityProfile> => {
+    const video = (await profiles.list()).filter((profile) => profile.kind === 'video');
+
+    return (
+      video.find((profile) => profile.id === request.profileId) ??
+      video.find((profile) => profile.libraryIds.includes(request.libraryId)) ??
+      DEFAULT_PROFILE
+    );
+  };
 
   const priorities = async () =>
     new Map((await indexers.list()).map((indexer) => [indexer.id, indexer.priority]));

@@ -187,6 +187,21 @@ describe('createRequestWorker', () => {
       ]);
     });
 
+    it('judges by the profile chosen for the request before the library’s own', async () => {
+      const chosen = aProfile({
+        id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+        sources: ['webdl', 'bluray'],
+      });
+      const { worker, send } = aWorker({
+        requests: [aMediaRequest({ profileId: chosen.id })],
+        profiles: [aProfile({ sources: ['bluray', 'webdl'], libraryIds: ['films'] }), chosen],
+      });
+
+      await worker.tick();
+
+      expect(send).toHaveBeenCalledWith(expect.objectContaining({ title: WEB }));
+    });
+
     it('holds a film that is not out yet, and episodes that have not aired', async () => {
       const { worker, items, searched } = aWorker({
         requests: [aMediaRequest(), SEVERANCE],

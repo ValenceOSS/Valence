@@ -16,6 +16,14 @@ vi.mock('@ValenceClient/admin/fetchAdmin', async (actual) => ({
     searchCatalogue(...given),
 }));
 
+vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
+  fetchProfiles: () =>
+    Promise.resolve([
+      { id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8', name: 'UHD', kind: 'video' },
+      { id: '7c9e6679-7425-40de-944b-e07fc1f90ae7', name: 'Lossless', kind: 'music' },
+    ]),
+}));
+
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   askForMedia: (...given: Parameters<typeof Requests.askForMedia>) => askForMedia(...given),
 }));
@@ -58,13 +66,23 @@ describe('AskForMediaDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
     await user.click(screen.getByRole('button', { name: 'Out on disc' }));
+    await user.click(screen.getByRole('button', { name: 'Quality' }));
+
+    expect(screen.queryByRole('menuitemradio', { name: 'Lossless' })).not.toBeInTheDocument();
+
+    await user.click(await screen.findByRole('menuitemradio', { name: 'UHD' }));
     await user.click(screen.getByRole('button', { name: 'Ask for it' }));
 
     await waitFor(() => {
       expect(onAsked).toHaveBeenCalledWith(MADE);
     });
     expect(searchCatalogue).toHaveBeenCalledWith('Dune', 'movie');
-    expect(askForMedia).toHaveBeenCalledWith({ kind: 'film', tmdbId: 438631, waitFor: 'physical' });
+    expect(askForMedia).toHaveBeenCalledWith({
+      kind: 'film',
+      tmdbId: 438631,
+      profileId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      waitFor: 'physical',
+    });
     expect(onClose).toHaveBeenCalled();
   });
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Search01Icon } from '@hugeicons/core-free-icons';
+import { useQuery } from '@tanstack/react-query';
+import { Search01Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -7,10 +8,12 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { FormField } from '@ValenceUI/FormField';
 import { Icon } from '@ValenceUI/Icon';
+import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { searchCatalogue } from '@ValenceClient/admin/fetchAdmin';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { askForMedia } from '@ValenceClient/requests/fetchMediaRequests';
 import { CatalogueMatchList } from '@ValenceScreens/components/AdminArea/components/CatalogueMatchList/CatalogueMatchList';
 import { readSeasonList } from './readSeasonList';
@@ -28,15 +31,18 @@ const WAITS: readonly { id: ReleaseWait; label: string }[] = [
   { id: 'physical', label: 'Out on disc' },
 ];
 
+const THE_LIBRARYS = 'library';
+
 const SEASON_CHOICES = [
   { id: 'every', label: 'Every season, and later ones' },
   { id: 'some', label: 'Only some seasons' },
 ] as const;
 
 /**
- * Asks for a film or a series: the catalogue is searched for it by name, and once one is chosen, a
- * film says what it waits for before it is searched for — out digitally or on disc — and a series
- * says which of its seasons are wanted, or every one and whatever comes later.
+ * Asks for a film or a series: the catalogue is searched for it by name, and once one is chosen, it
+ * says the quality wanted — a profile of its own, or its library's — and a film what it waits for
+ * before it is searched for, out digitally or on disc, and a series which of its seasons are
+ * wanted, or every one and whatever comes later.
  *
  * @param isOpen - Whether the dialog is showing.
  * @param onClose - Called when it is dismissed.
@@ -51,7 +57,16 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const [waitFor, setWaitFor] = useState<ReleaseWait>('digital');
   const [seasonChoice, setSeasonChoice] = useState<'every' | 'some'>('every');
   const [seasonText, setSeasonText] = useState('');
+  const [profileId, setProfileId] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
+  const profiles = useQuery({ ...requestsQueries.profiles(), enabled: isOpen });
+  const qualities = [
+    { id: THE_LIBRARYS, label: 'The library’s own profile' },
+    ...(profiles.data ?? [])
+      .filter((profile) => profile.kind === 'video')
+      .map((profile) => ({ id: profile.id, label: profile.name })),
+  ];
+  const quality = qualities.find((one) => one.id === (profileId ?? THE_LIBRARYS));
   const [problem, setProblem] = useState<string | null>(null);
 
   const seasons = seasonChoice === 'every' ? null : readSeasonList(seasonText);
@@ -78,6 +93,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
     void askForMedia({
       kind,
       tmdbId: Number(chosen.externalId),
+      ...(profileId === null ? {} : { profileId }),
       ...(kind === 'film' ? { waitFor } : { seasons }),
     })
       .then(({ value, refusal }) => {
@@ -178,6 +194,35 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 Choose another
               </Button>
             </div>
+
+            <FormField
+              label="Quality"
+              description="The profile its releases are judged by. Profiles are kept on the Profiles page."
+            >
+              <OptionMenu
+                label="Quality"
+                triggerShape="field"
+                matchTriggerWidth
+                groups={[
+                  {
+                    name: 'Quality',
+                    selectedId: profileId ?? THE_LIBRARYS,
+                    onSelect: (next) => {
+                      setProfileId(next === THE_LIBRARYS ? null : next);
+                    },
+                    options: qualities,
+                  },
+                ]}
+                trigger={
+                  <>
+                    <span className="truncate">
+                      {quality?.label ?? 'The library’s own profile'}
+                    </span>
+                    <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+                  </>
+                }
+              />
+            </FormField>
 
             {kind === 'film' ? (
               <FormField

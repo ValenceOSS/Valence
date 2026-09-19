@@ -158,6 +158,7 @@ const createRequestService = ({
         const merged = await requests.update(kept.id, {
           ...factsOf(draft.catalogue),
           seasons: bothSeasons(kept.seasons, draft.seasons),
+          ...(draft.profileId === null ? {} : { profileId: draft.profileId }),
           ...(draft.isApproved && kept.approval !== 'approved'
             ? { approval: 'approved', refusedBecause: null }
             : {}),
@@ -179,6 +180,7 @@ const createRequestService = ({
         ...factsOf(draft.catalogue),
         libraryId: draft.libraryId,
         libraryPath: draft.libraryPath,
+        profileId: draft.profileId,
         approval: draft.isApproved ? 'approved' : 'awaiting',
         refusedBecause: null,
         requestedById: draft.requestedBy.id,
@@ -214,6 +216,7 @@ const createRequestService = ({
       const record = await requests.update(id, {
         ...(change.seasons === undefined ? {} : { seasons: change.seasons }),
         ...(change.waitFor === undefined ? {} : { waitFor: change.waitFor }),
+        ...(change.profileId === undefined ? {} : { profileId: change.profileId }),
         ...(catalogue === null ? {} : factsOf(catalogue)),
         updatedAt: now().toISOString(),
       });

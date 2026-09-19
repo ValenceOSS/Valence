@@ -67,6 +67,7 @@ const MediaRequestAskSchema = z.object({
   tmdbId: z.number().int().positive(),
   seasons: SeasonsSchema.default(null),
   libraryId: z.string().uuid().optional(),
+  profileId: z.string().uuid().optional(),
   waitFor: ReleaseWaitSchema.default('digital'),
 });
 
@@ -75,6 +76,7 @@ const MediaRequestDraftSchema = z.object({
   tmdbId: z.number().int().positive(),
   libraryId: z.string().min(1),
   libraryPath: z.string().min(1),
+  profileId: z.string().uuid().nullable().default(null),
   seasons: SeasonsSchema.default(null),
   waitFor: ReleaseWaitSchema.default('digital'),
   requestedBy: RequesterSchema,
@@ -107,6 +109,7 @@ const MediaRequestSchema = z.object({
   overview: z.string().nullable(),
   posterUrl: z.string().nullable(),
   libraryId: z.string(),
+  profileId: z.string().nullable(),
   state: MediaRequestStateSchema,
   problem: z.string().nullable(),
   approval: RequestApprovalSchema,
@@ -122,6 +125,7 @@ const MediaRequestSchema = z.object({
 });
 
 const MediaRequestChangeSchema = z.object({
+  profileId: z.string().uuid().nullable().optional(),
   seasons: SeasonsSchema.optional(),
   waitFor: ReleaseWaitSchema.optional(),
 });

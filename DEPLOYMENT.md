@@ -209,9 +209,9 @@ Once a request is approved:
   catalogue is read again every night, so new episodes of a series asked for in
   full, and changed release dates, are picked up.
 - **Picking.** Everything wanted is searched for at once — a season that has
-  finished airing as a whole — and the best release by the library's quality
-  profile is sent to a download client. A library with no profile of its own
-  takes 1080p or 720p from any good source. Where the profile upgrades, a better
+  finished airing as a whole — and the best release is sent to a download
+  client, judged by the quality profile chosen when it was asked for, or else
+  the library's own. With neither, 1080p or 720p from any good source is taken. Where the profile upgrades, a better
   release replaces what was fetched until the profile's limit is reached.
 - **Wanted, not failed.** A request that finds nothing acceptable stays wanted.
   Everything wanted is searched for again every six hours, and on demand with

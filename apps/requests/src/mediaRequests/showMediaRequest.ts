@@ -24,6 +24,7 @@ const showMediaRequest = (
   overview: record.overview,
   posterUrl: record.posterUrl,
   libraryId: record.libraryId,
+  profileId: record.profileId,
   ...describeRequestState(record, items),
   approval: record.approval,
   refusedBecause: record.refusedBecause,
