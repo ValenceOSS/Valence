@@ -277,7 +277,7 @@ const AdminArea = ({
     [cache],
   );
 
-  const weighReencode = useCallback(async (mediaIds: string[], settings: ReencodeSettings) => {
+  const weighReencode = useCallback((mediaIds: string[], settings: ReencodeSettings) => {
     if (mediaIds.length === 0) {
       setReencodeEstimate(null);
 
@@ -285,8 +285,11 @@ const AdminArea = ({
     }
 
     setIsWeighingReencode(true);
-    setReencodeEstimate(await fetchReencodeEstimate(mediaIds, settings));
-    setIsWeighingReencode(false);
+
+    void fetchReencodeEstimate(mediaIds, settings).then((weighed) => {
+      setReencodeEstimate(weighed);
+      setIsWeighingReencode(false);
+    });
   }, []);
 
   const onLibraryUpdated = (updated: Library) => {
@@ -904,9 +907,7 @@ const AdminArea = ({
         media={everyFile}
         estimate={reencodeEstimate}
         isWeighing={isWeighingReencode}
-        onWeigh={(mediaIds, settings) => {
-          void weighReencode(mediaIds, settings);
-        }}
+        onWeigh={weighReencode}
         onStart={async (mediaIds, settings) => {
           const started = await startReencodes(mediaIds, settings);
 

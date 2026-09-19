@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ReencodeDialog } from './ReencodeDialog';
@@ -162,7 +162,9 @@ describe('ReencodeDialog', () => {
 
     await userEvent.click(screen.getByRole('checkbox', { name: /Pluribus/ }));
 
-    expect(onWeigh).toHaveBeenCalledWith(['a', 'b'], expect.anything());
+    await waitFor(() => {
+      expect(onWeigh).toHaveBeenCalledWith(['a', 'b'], expect.anything());
+    });
   });
 
   it('says a programme is partly taken when only some of it is', async () => {
@@ -293,7 +295,58 @@ describe('ReencodeDialog', () => {
 
     await userEvent.click(theFilm());
 
-    expect(onWeigh).toHaveBeenCalledWith(['item-1'], expect.objectContaining({ mode: 'replace' }));
+    await waitFor(() => {
+      expect(onWeigh).toHaveBeenCalledWith(['item-1'], expect.objectContaining({ mode: 'replace' }));
+    });
+  });
+
+  it('weighs once for a burst of choosing rather than once per tick', async () => {
+    const onWeigh = vi.fn();
+
+    render(<ReencodeDialog {...props} media={aProgramme} onWeigh={onWeigh} />);
+
+    await userEvent.click(screen.getByRole('checkbox', { name: /Pluribus/ }));
+
+    await waitFor(() => {
+      expect(onWeigh).toHaveBeenCalledWith(['a', 'b'], expect.anything());
+    });
+
+    expect(onWeigh.mock.calls.length).toBeLessThanOrEqual(2);
+  });
+
+  it('does not weigh again merely because the caller handed back a new function', async () => {
+    const onWeigh = vi.fn();
+
+    const { rerender } = render(<ReencodeDialog {...props} onWeigh={onWeigh} />);
+
+    await waitFor(() => {
+      expect(onWeigh).toHaveBeenCalled();
+    });
+
+    const soFar = onWeigh.mock.calls.length;
+
+    rerender(
+      <ReencodeDialog
+        {...props}
+        onWeigh={(mediaIds, settings) => {
+          onWeigh(mediaIds, settings);
+        }}
+      />,
+    );
+    rerender(
+      <ReencodeDialog
+        {...props}
+        onWeigh={(mediaIds, settings) => {
+          onWeigh(mediaIds, settings);
+        }}
+      />,
+    );
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 400);
+    });
+
+    expect(onWeigh.mock.calls.length).toBe(soFar);
   });
 
   it('says nothing about cost until something is chosen', () => {

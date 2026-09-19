@@ -18,6 +18,7 @@ import { judgeFreeSpace } from '@ValenceCore/functions/judgeFreeSpace';
 import { Choice } from '@ValenceScreens/components/Choice/Choice';
 import { FileGroup } from './components/FileGroup/FileGroup';
 import { groupIntoThings } from './groupIntoThings';
+import { useWeighing } from './useWeighing';
 import { describeSaving } from '@ValenceScreens/components/AdminArea/components/EncodingPanel/describeSaving';
 import { isLargerThan } from '@ValenceScreens/components/AdminArea/components/EncodingPanel/isLargerThan';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -134,13 +135,7 @@ const ReencodeDialog = ({
 
   const ids = useMemo(() => [...chosen], [chosen]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    onWeigh(ids, settings);
-  }, [isOpen, ids, settings, onWeigh]);
+  useWeighing(isOpen, ids, settings, onWeigh);
 
   useEffect(() => {
     if (!isOpen) {
