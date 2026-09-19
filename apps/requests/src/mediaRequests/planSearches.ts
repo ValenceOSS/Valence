@@ -1,3 +1,4 @@
+import { queryTitleOf } from '@ValenceRequests/mediaRequests/queryTitleOf';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
@@ -7,9 +8,10 @@ type PlannedSearch = { search: ReleaseSearch; itemIds: string[] };
 type Plannable = Pick<RequestItemRecord, 'id' | 'season' | 'episode' | 'airDate'>;
 
 /**
- * What to ask the indexers for a request's films or episodes that are wanted: a film by its title
- * and catalogue id; a season that has finished airing, with more than one episode of it wanted, as
- * a whole, since a season is usually released as one; and any other episode on its own.
+ * What to ask the indexers for a request's films or episodes that are wanted, by a title safe to
+ * search with: a film by its title and catalogue id; a season that has finished airing, with more
+ * than one episode of it wanted, as a whole, since a season is usually released as one; and any
+ * other episode on its own.
  *
  * @param request - What was asked for.
  * @param items - All its films or episodes, so a season is only searched whole once all of it aired.
@@ -27,10 +29,12 @@ const planSearches = (
     return [];
   }
 
+  const query = queryTitleOf(request.title);
+
   if (request.kind === 'film') {
     return [
       {
-        search: { query: request.title, mode: 'movie', tmdbId: request.tmdbId },
+        search: { query, mode: 'movie', tmdbId: request.tmdbId },
         itemIds: wanted.map((item) => item.id),
       },
     ];
@@ -51,7 +55,7 @@ const planSearches = (
       if (hasAired && inSeason.length > 1) {
         return [
           {
-            search: { query: request.title, mode: 'tv', season },
+            search: { query, mode: 'tv', season },
             itemIds: inSeason.map((item) => item.id),
           },
         ];
@@ -62,7 +66,7 @@ const planSearches = (
           ? []
           : [
               {
-                search: { query: request.title, mode: 'tv', season, episode: item.episode },
+                search: { query, mode: 'tv', season, episode: item.episode },
                 itemIds: [item.id],
               },
             ],

@@ -47,6 +47,15 @@ describe('planSearches', () => {
     ]);
   });
 
+  it('searches by a title that no indexer reads as leaving words out', () => {
+    const request = { ...SEVERANCE, title: 'Re:ZERO -Starting Life in Another World-' };
+    const episode = anEpisode(1, 1);
+
+    expect(planSearches(request, [episode], [episode], '2026-09-19')[0]?.search.query).toBe(
+      'Re:ZERO Starting Life in Another World',
+    );
+  });
+
   it('asks nothing where nothing is wanted', () => {
     expect(planSearches(SEVERANCE, [anEpisode(1, 1)], [], '2026-09-19')).toEqual([]);
   });
