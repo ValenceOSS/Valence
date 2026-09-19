@@ -242,7 +242,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   };
 
   return (
-    <DialogCompanion label="Ask for something" isOpen={isOpen} onClose={onClose}>
+    <DialogCompanion label="Ask for something" isOpen={isOpen} onClose={onClose} size="stage">
       <DialogTitle
         size="compact"
         title="Ask for something"

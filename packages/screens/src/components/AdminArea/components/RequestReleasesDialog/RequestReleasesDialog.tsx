@@ -57,7 +57,7 @@ const RequestReleasesDialog = ({ request, onClose, onPicked }: RequestReleasesDi
   const title = request === null ? 'Releases' : `Releases for ${request.title}`;
 
   return (
-    <DialogCompanion label={title} isOpen={request !== null} onClose={onClose}>
+    <DialogCompanion label={title} isOpen={request !== null} onClose={onClose} size="stage">
       <DialogTitle
         size="compact"
         title={title}
