@@ -101,7 +101,8 @@ const ServiceEventSchema = z.discriminatedUnion('kind', [
   RequestEventBaseSchema.extend({
     kind: z.literal('filed'),
     requestKind: MediaRequestKindSchema,
-    tmdbId: z.number().int().positive(),
+    tmdbId: z.number().int().positive().nullable(),
+    musicBrainzId: z.string().uuid().nullable().default(null),
     libraryId: z.string(),
     folder: z.string(),
   }),

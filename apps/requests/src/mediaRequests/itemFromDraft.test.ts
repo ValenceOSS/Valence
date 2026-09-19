@@ -5,7 +5,7 @@ describe('itemFromDraft', () => {
   it('waits for a film or episode, nothing searched for yet', () => {
     expect(
       itemFromDraft(
-        { season: 1, episode: 2, title: 'Half Loop', airDate: '2022-02-18' },
+        { musicBrainzId: null, season: 1, episode: 2, title: 'Half Loop', airDate: '2022-02-18' },
         'item',
         'request',
         '2026-09-19T00:00:00.000Z',

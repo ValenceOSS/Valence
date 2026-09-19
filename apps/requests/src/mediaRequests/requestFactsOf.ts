@@ -8,6 +8,7 @@ import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
  */
 const requestFactsOf = (catalogue: RequestCatalogue) => ({
   title: catalogue.title,
+  artistName: catalogue.artist,
   year: catalogue.year,
   aliases: catalogue.aliases,
   overview: catalogue.overview,

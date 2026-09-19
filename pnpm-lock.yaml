@@ -240,6 +240,9 @@ importers:
       iconv-lite:
         specifier: ^0.7.3
         version: 0.7.3
+      music-metadata:
+        specifier: ^11.15.0
+        version: 11.15.0
       pg:
         specifier: ^8.23.0
         version: 8.23.0

@@ -23,6 +23,7 @@ import type { SentDownloadRecord } from '@ValenceRequests/downloads/SentDownload
 import type { BlockedReleaseRecord } from '@ValenceRequests/mediaRequests/BlockedReleaseRecord';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
+import type { fileAlbum } from './fileAlbum';
 import type { fileDownload } from './fileDownload';
 
 const AT = new Date('2026-09-19T00:00:00.000Z');
@@ -50,6 +51,7 @@ type HarnessOptions = {
   profiles?: QualityProfile[];
   refuseSend?: string;
   filed?: typeof fileDownload;
+  filedMusic?: typeof fileAlbum;
   localPath?: string;
   reports?: IndexerSearchReport[];
 };
@@ -67,6 +69,7 @@ const aWorker = ({
   profiles = [],
   refuseSend,
   filed = vi.fn<typeof fileDownload>(() => Promise.resolve({ filed: new Map(), missing: [] })),
+  filedMusic = vi.fn<typeof fileAlbum>(() => Promise.resolve({ filed: new Map(), missing: [] })),
   localPath = '',
   reports = [
     {
@@ -140,6 +143,7 @@ const aWorker = ({
     events,
     log: log.store,
     file: filed,
+    fileMusic: filedMusic,
     now: () => AT,
     schedule: (run, afterMs) => {
       const entry = { run, afterMs };
@@ -195,6 +199,18 @@ describe('createRequestWorker', () => {
       expect(await events.pending()).toMatchObject([
         { kind: 'chosen', title: 'Dune', releaseTitle: BLURAY, requestedById: 'someone' },
       ]);
+    });
+
+    it('searches by a title no indexer reads as leaving words out', async () => {
+      const { worker, searched } = aWorker({
+        requests: [aMediaRequest({ title: 'Re:ZERO -Starting Life in Another World-' })],
+        items: [aRequestItem({ state: 'waiting' })],
+        found: () => [],
+      });
+
+      await worker.tick();
+
+      expect(searched[0]?.query).toBe('Re:ZERO Starting Life in Another World');
     });
 
     it('judges by the profile chosen for the request before the library’s own', async () => {
@@ -528,6 +544,89 @@ describe('createRequestWorker', () => {
     });
   });
 
+  describe('music', () => {
+    const PINK_FLOYD = aMediaRequest({
+      kind: 'artist',
+      tmdbId: null,
+      musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+      title: 'Pink Floyd',
+      artistName: 'Pink Floyd',
+      year: null,
+      libraryId: 'music',
+      libraryPath: '/media/Music',
+      releaseTypes: ['album'],
+      runtimeMinutes: null,
+    });
+    const THE_WALL = aRequestItem({
+      requestId: PINK_FLOYD.id,
+      musicBrainzId: 'a4c2e8f0-9d1b-3c5e-8f7a-2b4d6e8f0a1c',
+      title: 'The Wall',
+      airDate: '1979-11-30',
+    });
+
+    it('searches music for an album by its artist and title, and fetches it into music', async () => {
+      const { worker, searched, send, items } = aWorker({
+        requests: [PINK_FLOYD],
+        items: [THE_WALL],
+        found: () => [
+          aRelease('Pink Floyd - Animals (1977) [FLAC]'),
+          aRelease('Pink Floyd - The Wall (2011 Remaster) [FLAC]'),
+          aRelease('Pink Floyd - The Wall (1979) [MP3 320]'),
+        ],
+      });
+
+      await worker.tick();
+
+      expect(searched[0]).toEqual({
+        query: 'Pink Floyd The Wall',
+        mode: 'music',
+        artist: 'Pink Floyd',
+        album: 'The Wall',
+      });
+      expect(send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Pink Floyd - The Wall (2011 Remaster) [FLAC]',
+          libraryKind: 'music',
+        }),
+      );
+      expect(await theItem(items)).toMatchObject({ state: 'downloading' });
+    });
+
+    it('files a finished album by its tags, and says which album arrived where', async () => {
+      const folder = '/media/Music/Pink Floyd/The Wall (1979)';
+      const filedMusic = vi.fn<typeof fileAlbum>(() =>
+        Promise.resolve({ filed: new Map([[THE_WALL.id, folder]]), missing: [] }),
+      );
+      const { worker, items, events, filed } = aWorker({
+        requests: [PINK_FLOYD],
+        items: [{ ...THE_WALL, state: 'downloading', downloadId: aSentDownload().id }],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/The Wall' })],
+        filedMusic,
+      });
+
+      await worker.tick();
+
+      expect(filedMusic).toHaveBeenCalledWith(
+        expect.objectContaining({ artistName: 'Pink Floyd' }),
+        [expect.objectContaining({ title: 'The Wall' })],
+        '/downloads/The Wall',
+        true,
+      );
+      expect(filed).not.toHaveBeenCalled();
+      expect(await theItem(items)).toMatchObject({ state: 'filed', filePath: folder });
+      expect(await events.pending()).toMatchObject([
+        {
+          kind: 'filed',
+          requestKind: 'artist',
+          tmdbId: null,
+          musicBrainzId: THE_WALL.musicBrainzId,
+          libraryId: 'music',
+          folder,
+        },
+      ]);
+    });
+  });
+
   describe('upgrading', () => {
     const UPGRADING = aProfile({
       isUpgrading: true,
@@ -644,6 +743,38 @@ describe('createRequestWorker', () => {
       expect(filed).toHaveBeenCalledTimes(1);
     });
 
+    it('files a finished album into the music library it was sent for, by its tags', async () => {
+      const folder = '/media/Music/Pink Floyd/The Wall (1979)';
+      const filedMusic = vi.fn<typeof fileAlbum>(() =>
+        Promise.resolve({ filed: new Map([['album', folder]]), missing: [] }),
+      );
+      const { worker, downloads } = aWorker({
+        requests: [],
+        items: [],
+        sent: [
+          {
+            ...BY_HAND,
+            title: 'Pink Floyd - The Wall (1979) [FLAC]',
+            contentPath: '/downloads/The Wall',
+            libraryId: 'music',
+            libraryKind: 'music',
+            libraryPath: '/media/Music',
+          },
+        ],
+        filedMusic,
+      });
+
+      await worker.tick();
+
+      expect(filedMusic).toHaveBeenCalledWith(
+        { libraryPath: '/media/Music', title: 'Pink Floyd', artistName: 'Pink Floyd' },
+        [{ id: 'album', title: 'The Wall', airDate: null, filePath: null }],
+        '/downloads/The Wall',
+        true,
+      );
+      expect((await downloads.find(BY_HAND.id))?.filedInto).toBe(folder);
+    });
+
     it('leaves alone what was fetched for a request, or for no library, or is not finished', async () => {
       const filed = vi.fn<typeof fileDownload>();
       const { worker } = aWorker({
@@ -651,7 +782,7 @@ describe('createRequestWorker', () => {
         sent: [
           { ...BY_HAND, state: 'downloading' },
           { ...BY_HAND, id: '3f2504e0-4f89-41d3-9a0c-0305e82c3302', libraryPath: null },
-          { ...BY_HAND, id: '3f2504e0-4f89-41d3-9a0c-0305e82c3303', libraryKind: 'music' },
+          { ...BY_HAND, id: '3f2504e0-4f89-41d3-9a0c-0305e82c3303', libraryKind: 'books' },
         ],
         filed,
       });

@@ -35,7 +35,7 @@ import {
   REQUEST_APPROVALS,
   REQUEST_ITEM_STATES,
 } from '@ValenceContracts/schemas/MediaRequest';
-import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
+import type { ReleaseType, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 
 const requestsSchema = pgSchema('valence_requests');
@@ -169,8 +169,10 @@ const mediaRequest = requestsSchema.table(
   {
     id: uuid('id').primaryKey(),
     kind: text('kind', { enum: MEDIA_REQUEST_KINDS }).notNull(),
-    tmdbId: integer('tmdb_id').notNull(),
+    tmdbId: integer('tmdb_id'),
+    musicBrainzId: text('music_brainz_id'),
     title: text('title').notNull(),
+    artistName: text('artist_name'),
     year: integer('year'),
     aliases: jsonb('aliases').$type<string[]>().notNull().default([]),
     overview: text('overview'),
@@ -184,6 +186,7 @@ const mediaRequest = requestsSchema.table(
     requestedById: text('requested_by_id').notNull(),
     requestedByName: text('requested_by_name').notNull(),
     seasons: jsonb('seasons').$type<number[]>(),
+    releaseTypes: jsonb('release_types').$type<ReleaseType[]>(),
     runtimeMinutes: integer('runtime_minutes'),
     releaseDates: jsonb('release_dates')
       .$type<RequestCatalogue['releaseDates']>()
@@ -198,7 +201,10 @@ const mediaRequest = requestsSchema.table(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [unique('media_request_title').on(table.kind, table.tmdbId)],
+  (table) => [
+    unique('media_request_title').on(table.kind, table.tmdbId),
+    unique('media_request_music').on(table.kind, table.musicBrainzId),
+  ],
 );
 
 const requestItem = requestsSchema.table(
@@ -208,6 +214,7 @@ const requestItem = requestsSchema.table(
     requestId: uuid('request_id')
       .notNull()
       .references(() => mediaRequest.id, { onDelete: 'cascade' }),
+    musicBrainzId: text('music_brainz_id'),
     season: integer('season'),
     episode: integer('episode'),
     title: text('title').notNull(),
@@ -225,7 +232,10 @@ const requestItem = requestsSchema.table(
     lastSearchedAt: timestamp('last_searched_at', { withTimezone: true }),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [unique('request_item_episode').on(table.requestId, table.season, table.episode)],
+  (table) => [
+    unique('request_item_episode').on(table.requestId, table.season, table.episode),
+    unique('request_item_album').on(table.requestId, table.musicBrainzId),
+  ],
 );
 
 const blocklistedRelease = requestsSchema.table(

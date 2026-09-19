@@ -1,23 +1,26 @@
+import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 
 /**
  * The quality profile a request is judged by: the one chosen for it, or else the one its library
- * names, of the profiles for films and series.
+ * names — of the profiles for music where it is an artist or an album, and of those for films and
+ * series where it is not.
  *
  * @param request - The request.
  * @param profiles - Every profile.
  * @returns The profile, or null where there is none for it.
  */
 const chooseProfile = (
-  request: Pick<MediaRequestRecord, 'profileId' | 'libraryId'>,
+  request: Pick<MediaRequestRecord, 'kind' | 'profileId' | 'libraryId'>,
   profiles: readonly QualityProfile[],
 ): QualityProfile | null => {
-  const video = profiles.filter((profile) => profile.kind === 'video');
+  const kind = isMusicRequest(request.kind) ? 'music' : 'video';
+  const fitting = profiles.filter((profile) => profile.kind === kind);
 
   return (
-    video.find((profile) => profile.id === request.profileId) ??
-    video.find((profile) => profile.libraryIds.includes(request.libraryId)) ??
+    fitting.find((profile) => profile.id === request.profileId) ??
+    fitting.find((profile) => profile.libraryIds.includes(request.libraryId)) ??
     null
   );
 };

@@ -5,7 +5,8 @@ import type { z } from 'zod';
 
 /**
  * A request as it is first kept, from what was asked: approved or waiting on approval as the asker
- * may be, and with the facts the catalogue gave.
+ * may be, and with the facts the catalogue gave. Only a series keeps the seasons asked for, and
+ * only an artist the kinds of release, albums alone where none were named.
  *
  * @param draft - What was asked, read.
  * @param id - Its id.
@@ -20,6 +21,7 @@ const recordFromDraft = (
   id,
   kind: draft.kind,
   tmdbId: draft.tmdbId,
+  musicBrainzId: draft.musicBrainzId,
   ...requestFactsOf(draft.catalogue),
   libraryId: draft.libraryId,
   libraryPath: draft.libraryPath,
@@ -29,7 +31,8 @@ const recordFromDraft = (
   refusedBecause: null,
   requestedById: draft.requestedBy.id,
   requestedByName: draft.requestedBy.name,
-  seasons: draft.kind === 'film' ? null : draft.seasons,
+  seasons: draft.kind === 'series' ? draft.seasons : null,
+  releaseTypes: draft.kind === 'artist' ? (draft.releaseTypes ?? ['album']) : null,
   mediaId: null,
   problem: null,
   catalogueCheckedAt: at,
