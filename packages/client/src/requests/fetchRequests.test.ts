@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { NO_WORK } from '@ValenceContracts/schemas/Requests';
 import {
   checkRequestsNow,
   fetchRequestsAvailability,
@@ -57,7 +58,7 @@ describe('fetchRequestsOverview', () => {
   it('reads what the server last heard from the service', async () => {
     answering(AN_OVERVIEW);
 
-    await expect(fetchRequestsOverview()).resolves.toEqual(AN_OVERVIEW);
+    await expect(fetchRequestsOverview()).resolves.toEqual({ ...AN_OVERVIEW, work: NO_WORK });
   });
 });
 
@@ -65,7 +66,7 @@ describe('checkRequestsNow', () => {
   it('asks the server to check now, and reads what it heard', async () => {
     const fetchMock = answering(AN_OVERVIEW);
 
-    await expect(checkRequestsNow()).resolves.toEqual(AN_OVERVIEW);
+    await expect(checkRequestsNow()).resolves.toEqual({ ...AN_OVERVIEW, work: NO_WORK });
     expect(fetchMock).toHaveBeenCalledWith('/api/admin/requests/check', {
       method: 'POST',
       credentials: 'same-origin',
