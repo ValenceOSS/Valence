@@ -1886,9 +1886,11 @@ const reencodeService = createDatabaseReencodeService({
         .select({
           path: mediaItem.path,
           libraryId: mediaItem.libraryId,
+          libraryPath: library.path,
           seriesTitle: mediaItem.seriesTitle,
         })
         .from(mediaItem)
+        .innerJoin(library, eq(library.id, mediaItem.libraryId))
         .where(eq(mediaItem.id, mediaId))
         .limit(1);
 
@@ -1902,6 +1904,7 @@ const reencodeService = createDatabaseReencodeService({
             seriesTitle: row.seriesTitle,
             path: row.path,
             libraryId: row.libraryId,
+            libraryPath: row.libraryPath,
           };
     },
   },

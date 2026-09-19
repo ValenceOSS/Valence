@@ -51,9 +51,15 @@ manager's generator set to 48 characters is fine.
 
 Valence mounts your library read only, and nothing it does needs more than that
 — with one exception. Re-encoding media, either to reclaim disk by replacing a
-file or to keep a smaller copy beside it, writes into the folder the film is in:
-a `.valence` directory holding the new file while it is made and the original
-once it has been swapped aside. That cannot happen under `:ro`.
+file or to keep a smaller copy beside it, writes into a `.valence` folder at the
+top of each library — one per library, not one per film — holding the new file
+while it is made and the original once it has been swapped aside. That cannot
+happen under `:ro`.
+
+It sits under the library root rather than somewhere else on purpose. Swapping
+an encode into place is a rename, and a rename is only instant and atomic within
+one filesystem; across a volume boundary it would become a copy of the whole
+file, needing the disk twice over and able to half-finish.
 
 If you want it, set `MEDIA_ACCESS` to an empty string so the mount becomes read
 and write. Leave it alone otherwise; Valence checks before it starts an encode

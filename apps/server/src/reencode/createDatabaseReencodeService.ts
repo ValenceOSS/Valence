@@ -44,6 +44,7 @@ type ReencodeSubject = {
   seriesTitle: string | null;
   path: string;
   libraryId: string;
+  libraryPath: string;
 };
 
 type ReencodeMedia = {
@@ -215,7 +216,7 @@ const createDatabaseReencodeService = ({
 
       subjects.set(mediaId, found);
 
-      const { directory } = reencodePathsFor(found.path, 'probe');
+      const { directory } = reencodePathsFor(found.libraryPath, found.path, 'probe');
       const known = writable.get(directory) ?? (await canWriteInto(directory));
 
       writable.set(directory, known);
@@ -315,7 +316,7 @@ const createDatabaseReencodeService = ({
       return;
     }
 
-    const paths = reencodePathsFor(found.path, row.id);
+    const paths = reencodePathsFor(found.libraryPath, found.path, row.id);
 
     if (!(await canWriteInto(paths.directory))) {
       await failWith(row.id, 'Valence cannot write to the folder this file is in.');
@@ -503,7 +504,7 @@ const createDatabaseReencodeService = ({
         }
 
         const id = randomUUID();
-        const paths = reencodePathsFor(found.path, id);
+        const paths = reencodePathsFor(found.libraryPath, found.path, id);
         const facts = await readFacts(found.path).catch(() => null);
 
         if (facts === null) {
@@ -644,7 +645,7 @@ const createDatabaseReencodeService = ({
         return false;
       }
 
-      const paths = reencodePathsFor(found.path, row.id);
+      const paths = reencodePathsFor(found.libraryPath, found.path, row.id);
 
       const planned = planReencodeSpec({
         item: found.item,
