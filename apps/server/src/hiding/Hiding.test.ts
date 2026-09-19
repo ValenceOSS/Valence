@@ -31,6 +31,9 @@ const shelf = (id: string, name: string, kind: Library['kind']): Library => ({
   lastScannedAt: null,
   defaultAudioLanguage: null,
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
 });
 
 const film = (id: string, libraryId: string, title: string, seriesTitle?: string): MediaDetail => ({

@@ -325,6 +325,9 @@ const createMemoryLibraryService = (
       lastScannedAt: null,
       defaultAudioLanguage: null,
       filesAtOnce: null,
+      takesRequests: true,
+      requestProfileId: null,
+      requestPath: null,
     };
 
     state.libraries.push(created);
@@ -340,6 +343,18 @@ const createMemoryLibraryService = (
     }
 
     found.defaultAudioLanguage = input.defaultAudioLanguage;
+
+    if (input.takesRequests !== undefined) {
+      found.takesRequests = input.takesRequests;
+    }
+
+    if (input.requestProfileId !== undefined) {
+      found.requestProfileId = input.requestProfileId;
+    }
+
+    if (input.requestPath !== undefined) {
+      found.requestPath = input.requestPath;
+    }
 
     if (input.filesAtOnce !== undefined) {
       found.filesAtOnce = input.filesAtOnce;

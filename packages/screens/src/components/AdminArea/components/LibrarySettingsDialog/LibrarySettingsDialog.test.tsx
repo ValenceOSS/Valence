@@ -19,6 +19,9 @@ const films = (overrides: Partial<Library> = {}): Library => ({
   lastScannedAt: null,
   defaultAudioLanguage: null,
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
   ...overrides,
 });
 
@@ -114,6 +117,9 @@ describe('LibrarySettingsDialog', () => {
       expect(updateLibraryMock).toHaveBeenCalledWith(films().id, {
         defaultAudioLanguage: 'de',
         filesAtOnce: null,
+        takesRequests: true,
+        requestProfileId: null,
+        requestPath: null,
       });
     });
 

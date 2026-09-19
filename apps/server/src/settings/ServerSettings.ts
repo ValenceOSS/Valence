@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
+import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
 
 const ServerSettingsSchema = z.object({
   trustedOrigins: z.array(z.string().url()),
@@ -22,6 +23,7 @@ const ServerSettingsSchema = z.object({
   ownerAccountId: z.string().default(''),
   splashscreenFile: z.string().nullable().default(null),
   reencodesAwaitingReviewCap: z.number().int().positive().max(50).default(5),
+  requestReleaseTypes: ReleaseTypesSchema.default(['album']),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;

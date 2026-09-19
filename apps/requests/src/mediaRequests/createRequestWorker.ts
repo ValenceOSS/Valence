@@ -1020,6 +1020,10 @@ const createRequestWorker = ({
         return unfinished.length;
       }),
 
+    blockedFor,
+
+    unblock: (id: string): Promise<boolean> => blocked.remove(id),
+
     releasesFor: async (id: string): Promise<ReleaseSearchOutcome | null> => {
       const found = await find(id);
 

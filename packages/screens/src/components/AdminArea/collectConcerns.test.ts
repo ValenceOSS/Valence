@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { NO_WORK } from '@ValenceContracts/schemas/Requests';
 import { collectConcerns } from './collectConcerns';
 import type { ActiveSession, AdminOverview, Job, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
@@ -72,6 +73,9 @@ const library = (overrides: Partial<Library> = {}): Library => ({
   ...overrides,
   defaultAudioLanguage: null,
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
 });
 
 const failedJob = (message: string | null = null): Job => ({
@@ -770,6 +774,7 @@ describe('collectConcerns', () => {
       isReachable: true,
       checkedAt: '2026-09-19T12:00:00.000Z',
       status: { version: '0.4.0', vpn, indexers: { total: 0, enabled: 0, failing: [] } },
+      work: NO_WORK,
     });
 
     it('says so when the service stopped answering, and where it was looked for', () => {
@@ -780,6 +785,7 @@ describe('collectConcerns', () => {
           isReachable: false,
           checkedAt: '2026-09-19T12:00:00.000Z',
           status: null,
+          work: NO_WORK,
         },
       });
 
@@ -798,6 +804,7 @@ describe('collectConcerns', () => {
             isReachable: false,
             checkedAt: null,
             status: null,
+            work: NO_WORK,
           },
         }),
       ).toEqual([]);
@@ -902,6 +909,7 @@ describe('collectConcerns', () => {
             isReachable: false,
             checkedAt: null,
             status: null,
+            work: NO_WORK,
           },
         }),
       ).toEqual([]);

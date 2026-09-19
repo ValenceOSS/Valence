@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { NO_WORK } from '@ValenceContracts/schemas/Requests';
 import type { RequestsStatus, RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import type { RequestsReading } from '@ValenceServer/requests/createRequestsClient';
 import { createRequestsMonitor } from './createRequestsMonitor';
@@ -60,6 +61,7 @@ describe('createRequestsMonitor', () => {
       isReachable: false,
       checkedAt: null,
       status: null,
+      work: NO_WORK,
     });
   });
 
@@ -71,6 +73,7 @@ describe('createRequestsMonitor', () => {
       address: 'http://requests:8421',
       isReachable: true,
       checkedAt: NOW.toISOString(),
+      work: NO_WORK,
       status: {
         version: '0.4.0',
         vpn: aVpn(true),

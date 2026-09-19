@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { NO_WORK } from '@ValenceContracts/schemas/Requests';
 import { describeRequestsVpn } from './describeRequestsVpn';
 import type { RequestsOverview, RequestsVpn } from '@ValenceContracts/schemas/Requests';
 
@@ -22,6 +23,7 @@ const hearing = (vpn: RequestsVpn | null): RequestsOverview => ({
     vpn === null
       ? null
       : { version: '0.4.0', vpn, indexers: { total: 0, enabled: 0, failing: [] } },
+  work: NO_WORK,
 });
 
 describe('describeRequestsVpn', () => {

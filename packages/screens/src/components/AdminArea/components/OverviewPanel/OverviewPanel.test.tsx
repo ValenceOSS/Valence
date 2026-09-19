@@ -112,6 +112,9 @@ const library = (overrides: Partial<Library> = {}): Library => ({
   ...overrides,
   defaultAudioLanguage: null,
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
 });
 
 const job = (overrides: Partial<Job> = {}): Job => ({

@@ -37,6 +37,19 @@ const theRoutes = (picked: MediaRequest | string | null = null) => {
       Promise.resolve({ releases: [], indexers: [], judgements: [], pickedId: null }),
     ),
     dropDownloads: vi.fn(() => Promise.resolve(1)),
+    blockedFor: vi.fn((id: string) =>
+      Promise.resolve([
+        {
+          id: '0b1d2c3e-4f56-4a78-9b01-23456789abcd',
+          requestId: id,
+          title: 'Dune.2021.2160p',
+          indexerId: null,
+          reason: 'It stalled',
+          at: '2026-09-19T00:00:00.000Z',
+        },
+      ]),
+    ),
+    unblock: vi.fn((id: string) => Promise.resolve(id !== 'missing')),
   };
   const log = createMemoryRequestLogStore();
   const routes = createRequestRoutes({
@@ -156,6 +169,30 @@ describe('createRequestRoutes', () => {
     expect(worker.dropDownloads).toHaveBeenCalledWith(id);
     expect((await ask('/requests/missing?deleteDownloads=true', 'DELETE')).status).toBe(404);
     expect(worker.dropDownloads).toHaveBeenCalledTimes(1);
+  });
+
+  it('lists the releases a request will not try again, and lifts one', async () => {
+    const { ask, worker } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect(await (await ask(`/requests/${id}/blocklist`)).json()).toEqual([
+      {
+        id: '0b1d2c3e-4f56-4a78-9b01-23456789abcd',
+        requestId: id,
+        title: 'Dune.2021.2160p',
+        indexerId: null,
+        reason: 'It stalled',
+        at: '2026-09-19T00:00:00.000Z',
+      },
+    ]);
+    expect((await ask('/requests/missing/blocklist')).status).toBe(404);
+
+    expect(
+      (await ask(`/requests/${id}/blocklist/0b1d2c3e-4f56-4a78-9b01-23456789abcd`, 'DELETE'))
+        .status,
+    ).toBe(204);
+    expect(worker.unblock).toHaveBeenCalledWith('0b1d2c3e-4f56-4a78-9b01-23456789abcd');
+    expect((await ask(`/requests/${id}/blocklist/missing`, 'DELETE')).status).toBe(404);
   });
 
   it('searches for what is missing, and by hand, and sends a pick', async () => {

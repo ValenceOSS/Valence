@@ -1,4 +1,5 @@
 import { createReachabilityWatch } from '@ValenceServer/events/createReachabilityWatch';
+import { NO_WORK } from '@ValenceContracts/schemas/Requests';
 import type { RequestsOverview, RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import type { RequestsClient } from '@ValenceServer/requests/createRequestsClient';
 
@@ -47,7 +48,13 @@ const createRequestsMonitor = ({
   onIndexerWorking = () => undefined,
 }: CreateRequestsMonitorOptions) => {
   let failingIndexers = new Map<string, string>();
-  let latest: RequestsOverview = { address, isReachable: false, checkedAt: null, status: null };
+  let latest: RequestsOverview = {
+    address,
+    isReachable: false,
+    checkedAt: null,
+    status: null,
+    work: NO_WORK,
+  };
   let silence = '';
   let lastVpn: RequestsVpn | null = null;
 
@@ -76,13 +83,13 @@ const createRequestsMonitor = ({
 
       if (reading.kind === 'silent') {
         silence = reading.reason;
-        latest = { address, isReachable: false, checkedAt, status: null };
+        latest = { address, isReachable: false, checkedAt, status: null, work: NO_WORK };
         service.record(false);
 
         return false;
       }
 
-      latest = { address, isReachable: true, checkedAt, status: reading.status };
+      latest = { address, isReachable: true, checkedAt, status: reading.status, work: NO_WORK };
       service.record(true);
 
       const nowFailing = new Map(

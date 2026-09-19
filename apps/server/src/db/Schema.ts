@@ -173,6 +173,9 @@ const library = pgTable('library', {
   defaultAudioLanguage: text('defaultAudioLanguage'),
   filesAtOnce: integer('filesAtOnce'),
   generation: integer('generation').notNull().default(0),
+  takesRequests: boolean('takesRequests').notNull().default(true),
+  requestProfileId: text('requestProfileId'),
+  requestPath: text('requestPath'),
 });
 
 const viewerProfile = pgTable(

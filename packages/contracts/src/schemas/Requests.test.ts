@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  NO_WORK,
   RequestsAvailabilitySchema,
   RequestsOverviewSchema,
   RequestsStatusSchema,
@@ -52,7 +53,7 @@ describe('Requests', () => {
     expect(RequestsAvailabilitySchema.parse({ isEnabled: false })).toEqual({ isEnabled: false });
   });
 
-  it('reads the overview of a service that could not be reached', () => {
+  it('reads the overview of a service that could not be reached, which has no work to show', () => {
     const overview = {
       address: 'http://requests:8421',
       isReachable: false,
@@ -60,6 +61,28 @@ describe('Requests', () => {
       status: null,
     };
 
-    expect(RequestsOverviewSchema.parse(overview)).toEqual(overview);
+    expect(RequestsOverviewSchema.parse(overview)).toEqual({ ...overview, work: NO_WORK });
+  });
+
+  it('reads what the service is working on', () => {
+    const work = {
+      awaitingApproval: 2,
+      searching: 1,
+      downloading: 3,
+      failed: 0,
+      arrivedToday: 4,
+      downloadBytesPerSecond: 12_582_912,
+      clients: { total: 2, reachable: 1, failing: [{ name: 'qBittorrent', problem: 'No answer' }] },
+    };
+
+    expect(
+      RequestsOverviewSchema.parse({
+        address: 'http://requests:8421',
+        isReachable: true,
+        checkedAt: null,
+        status: null,
+        work,
+      }).work,
+    ).toEqual(work);
   });
 });

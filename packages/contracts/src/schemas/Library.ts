@@ -51,11 +51,17 @@ const LibrarySchema = z.object({
   lastScan: ScanResultSchema.optional(),
   defaultAudioLanguage: z.string().nullable(),
   filesAtOnce: z.number().int().positive().max(16).nullable(),
+  takesRequests: z.boolean().default(true),
+  requestProfileId: z.string().uuid().nullable().default(null),
+  requestPath: z.string().nullable().default(null),
 });
 
 const UpdateLibraryRequestSchema = z.object({
   defaultAudioLanguage: z.string().nullable(),
   filesAtOnce: z.number().int().positive().max(16).nullable().optional(),
+  takesRequests: z.boolean().optional(),
+  requestProfileId: z.string().uuid().nullable().optional(),
+  requestPath: z.string().trim().nullable().optional(),
 });
 
 const MediaSummarySchema = z.object({

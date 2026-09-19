@@ -38,6 +38,9 @@ const theLibrary = {
   lastScannedAt: null,
   defaultAudioLanguage: null,
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
 } as const;
 
 describe('what a library offers to filter by', () => {
@@ -209,6 +212,9 @@ describe("a programme's own extras", () => {
     lastScannedAt: null,
     defaultAudioLanguage: null,
     filesAtOnce: null,
+    takesRequests: true,
+    requestProfileId: null,
+    requestPath: null,
   } as const;
 
   const service = createMemoryLibraryService({
@@ -333,6 +339,9 @@ describe('deleting a library', () => {
     lastScannedAt: null,
     defaultAudioLanguage: null,
     filesAtOnce: null,
+    takesRequests: true,
+    requestProfileId: null,
+    requestPath: null,
   };
 
   it('forgets the library and everything in it', async () => {

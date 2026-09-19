@@ -187,6 +187,30 @@ const MediaRequestChangeSchema = z.object({
   isPickedByHand: z.boolean().optional(),
   seasons: SeasonsSchema.optional(),
   releaseTypes: ReleaseTypesSchema.optional(),
+  libraryId: z.string().min(1).optional(),
+  libraryPath: z.string().min(1).optional(),
+});
+
+const MEDIA_REQUEST_DECISIONS = ['approve', 'refuse'] as const;
+
+const MediaRequestDecisionSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(100),
+  decision: z.enum(MEDIA_REQUEST_DECISIONS),
+  reason: z.string().trim().max(500).default(''),
+});
+
+const MediaRequestDecidedSchema = z.object({
+  decided: z.array(MediaRequestSchema),
+  refused: z.array(z.object({ id: z.string().uuid(), problem: z.string() })),
+});
+
+const BlockedReleaseSchema = z.object({
+  id: z.string().uuid(),
+  requestId: z.string().uuid(),
+  title: z.string(),
+  indexerId: z.string().nullable(),
+  reason: z.string(),
+  at: z.string().datetime(),
 });
 
 const MediaRequestRevisionSchema = z.object({
@@ -263,6 +287,9 @@ type MediaRequestDraft = z.input<typeof MediaRequestDraftSchema>;
 type RequestItem = z.infer<typeof RequestItemSchema>;
 type MediaRequest = z.infer<typeof MediaRequestSchema>;
 type MediaRequestChange = z.infer<typeof MediaRequestChangeSchema>;
+type MediaRequestDecision = z.infer<typeof MediaRequestDecisionSchema>;
+type MediaRequestDecided = z.infer<typeof MediaRequestDecidedSchema>;
+type BlockedRelease = z.infer<typeof BlockedReleaseSchema>;
 type MediaRequestRefusal = z.input<typeof MediaRequestRefusalSchema>;
 type MediaRequestRevision = z.input<typeof MediaRequestRevisionSchema>;
 type MediaRequestAdded = z.infer<typeof MediaRequestAddedSchema>;
@@ -275,6 +302,7 @@ type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;
 type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
 
 export type {
+  BlockedRelease,
   CatalogueAlbum,
   CatalogueEpisode,
   CatalogueSeason,
@@ -284,6 +312,8 @@ export type {
   MediaRequestAdded,
   MediaRequestAsk,
   MediaRequestChange,
+  MediaRequestDecided,
+  MediaRequestDecision,
   MediaRequestDraft,
   MediaRequestKind,
   MediaRequestPick,
@@ -311,7 +341,9 @@ export {
   MUSIC_REQUEST_KINDS,
   RELEASE_TYPES,
   REQUEST_APPROVALS,
+  MEDIA_REQUEST_DECISIONS,
   REQUEST_ITEM_STATES,
+  BlockedReleaseSchema,
   CalendarDateSchema,
   CatalogueAlbumSchema,
   CatalogueEpisodeSchema,
@@ -321,6 +353,8 @@ export {
   MediaRequestArrivalSchema,
   MediaRequestAskSchema,
   MediaRequestChangeSchema,
+  MediaRequestDecidedSchema,
+  MediaRequestDecisionSchema,
   MediaRequestDraftSchema,
   MediaRequestKindSchema,
   MediaRequestPickSchema,

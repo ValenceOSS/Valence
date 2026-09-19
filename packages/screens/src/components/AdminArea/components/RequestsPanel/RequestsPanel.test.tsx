@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { NO_WORK } from '@ValenceContracts/schemas/Requests';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { RequestsPanel } from './RequestsPanel';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
@@ -29,6 +30,7 @@ const ANSWERING: RequestsOverview = {
     },
     indexers: { total: 0, enabled: 0, failing: [] },
   },
+  work: NO_WORK,
 };
 
 const NOT_CHECKED_VPN = {
@@ -45,6 +47,7 @@ const NOT_CHECKED: RequestsOverview = {
   isReachable: false,
   checkedAt: null,
   status: null,
+  work: NO_WORK,
 };
 
 beforeEach(() => {

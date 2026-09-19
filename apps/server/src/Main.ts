@@ -314,6 +314,7 @@ const settings = createDatabaseSettingsStore({
     jobsTimezone: '',
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
+    requestReleaseTypes: ['album'],
     fetchesMusicDetails: false,
     audioDbKey: '',
     ownerAccountId: '',

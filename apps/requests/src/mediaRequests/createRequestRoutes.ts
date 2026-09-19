@@ -18,7 +18,13 @@ type CreateRequestRoutesOptions = {
   log: Pick<RequestLogStore, 'list'>;
   worker: Pick<
     RequestWorker,
-    'searchMissing' | 'releasesFor' | 'releasesForDraft' | 'pick' | 'dropDownloads'
+    | 'searchMissing'
+    | 'releasesFor'
+    | 'releasesForDraft'
+    | 'pick'
+    | 'dropDownloads'
+    | 'blockedFor'
+    | 'unblock'
   >;
 };
 
@@ -28,7 +34,8 @@ const NO_SUCH_REQUEST = { error: 'No such request.' };
  * Requests for films and series, as routes under `/api`: making and listing them, approving and
  * refusing them, changing what they ask for, keeping them up to date with the catalogue, trying
  * again, searching by hand and picking a release — for a request not yet made, too — searching for
- * everything still missing, and reading what each has done. A request cancelled can take the
+ * everything still missing, reading what each has done, and lifting a release it will not try
+ * again. A request cancelled can take the
  * downloads it had not yet finished filing with it, files and all.
  *
  * @param service - The requests.
@@ -123,6 +130,20 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
       ? context.json({ error: 'That is not what the catalogue says.' }, 400)
       : answer(await service.updateCatalogue(context.req.param('id'), update));
   });
+
+  routes.get('/requests/:id/blocklist', async (context) => {
+    const id = context.req.param('id');
+
+    return (await service.find(id)) === null
+      ? context.json(NO_SUCH_REQUEST, 404)
+      : context.json(await worker.blockedFor(id));
+  });
+
+  routes.delete('/requests/:id/blocklist/:blockId', async (context) =>
+    (await worker.unblock(context.req.param('blockId')))
+      ? context.body(null, 204)
+      : context.json({ error: 'No such blocked release.' }, 404),
+  );
 
   routes.get('/requests/:id/log', async (context) => {
     const id = context.req.param('id');

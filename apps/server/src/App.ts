@@ -257,6 +257,9 @@ import {
   musicCatalogueRoute,
   discoverRoute,
   catalogueBrowseRoute,
+  decideMediaRequestsRoute,
+  liftMediaBlockRoute,
+  mediaRequestBlocklistRoute,
   catalogueSearchRoute,
   catalogueTitleRoute,
   requestProgressRoute,
@@ -396,11 +399,13 @@ import type { WebhookStore } from '@ValenceServer/webhooks/WebhookStore';
 import type { RealtimePublisher } from '@ValenceServer/realtime/RealtimePublisher';
 import type { EventBus, WebhookOccurrence } from '@ValenceServer/events/EventBus';
 import type {
+  MediaRequest,
   MediaRequestAsk,
   MediaRequestDraft,
   MediaRequestKind,
   MusicCatalogueHit,
   MusicRequestKind,
+  ReleaseType,
   RequestCatalogue,
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
@@ -408,6 +413,8 @@ import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
+import { workOf } from '@ValenceServer/requests/workOf';
+import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
 import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
@@ -1052,11 +1059,17 @@ const createApp = ({
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    const { defaultAudioLanguage, filesAtOnce } = context.req.valid('json');
+    const { defaultAudioLanguage, filesAtOnce, takesRequests, requestProfileId, requestPath } =
+      context.req.valid('json');
 
     const updated = await library.update(context.req.valid('param').id, {
       defaultAudioLanguage,
       ...(filesAtOnce === undefined ? {} : { filesAtOnce }),
+      ...(takesRequests === undefined ? {} : { takesRequests }),
+      ...(requestProfileId === undefined ? {} : { requestProfileId }),
+      ...(requestPath === undefined
+        ? {}
+        : { requestPath: requestPath === '' ? null : requestPath }),
     });
 
     if (updated === null) {
@@ -2408,6 +2421,7 @@ const createApp = ({
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
           fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
           fetchesMusicDetails: current.fetchesMusicDetails,
+          requestReleaseTypes: current.requestReleaseTypes,
           splashscreen: await splashscreen.address(),
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
@@ -2461,6 +2475,9 @@ const createApp = ({
       ...(patch.fetchesMusicDetails === undefined
         ? {}
         : { fetchesMusicDetails: patch.fetchesMusicDetails }),
+      ...(patch.requestReleaseTypes === undefined
+        ? {}
+        : { requestReleaseTypes: patch.requestReleaseTypes }),
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {
@@ -2489,6 +2506,7 @@ const createApp = ({
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,
         fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
         fetchesMusicDetails: updated.fetchesMusicDetails,
+        requestReleaseTypes: updated.requestReleaseTypes,
         splashscreen: await splashscreen.address(),
       },
       200,
@@ -3761,14 +3779,48 @@ const createApp = ({
     return context.json({ isEnabled: requests !== null }, 200);
   });
 
+  /**
+   * What requesting is doing just now, read afresh alongside the overview the monitor keeps: what
+   * waits on somebody, what is being fetched and how fast, and which download clients answer.
+   *
+   * @returns The overview, with the work in it.
+   */
+  const requestsOverview = async (): Promise<RequestsOverview | null> => {
+    const latest = requests?.overview();
+
+    if (latest === undefined) {
+      return null;
+    }
+
+    if (requestsClient === null || !latest.isReachable) {
+      return latest;
+    }
+
+    const [listed, queued] = await Promise.all([
+      requestsClient.listRequests(),
+      requestsClient.downloads(),
+    ]);
+
+    return {
+      ...latest,
+      work: workOf(
+        listed.kind === 'answered' ? listed.value : [],
+        queued.kind === 'answered' ? queued.value : null,
+        new Date().toISOString().slice(0, DATE_LENGTH),
+      ),
+    };
+  };
+
   app.openapi(adminRequestsOverviewRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'requests.manage'))) {
       return context.json({ error: 'That is for whoever sets up requesting.' }, 403);
     }
 
-    return requests === null
+    const overview = await requestsOverview();
+
+    return overview === null
       ? context.json({ error: 'Requesting is off.' }, 404)
-      : context.json(requests.overview(), 200);
+      : context.json(overview, 200);
   });
 
   app.openapi(adminCheckRequestsRoute, async (context) => {
@@ -3782,10 +3834,16 @@ const createApp = ({
 
     await requests.check();
 
-    return context.json(requests.overview(), 200);
+    const overview = await requestsOverview();
+
+    return overview === null
+      ? context.json({ error: 'Requesting is off.' }, 404)
+      : context.json(overview, 200);
   });
 
   const NOT_YOURS = { error: 'That is for whoever sets up requesting.' };
+
+  const DATE_LENGTH = 10;
 
   /**
    * Asks the requests service again how it is, after an indexer changed, so that a warning about
@@ -3913,12 +3971,21 @@ const createApp = ({
    * @param asked - What they asked for.
    * @returns The request to make, or why it cannot be.
    */
+  /**
+   * The release types a music request watches when nobody said, which whoever set the server up
+   * chose.
+   *
+   * @returns The types.
+   */
+  const defaultReleaseTypes = async (): Promise<ReleaseType[]> =>
+    (await settings.read()).requestReleaseTypes;
+
   const draftFor = async (headers: Headers, asked: MediaRequestAsk): Promise<Drafted> => {
     const session = await readSessionOnce(auth, headers);
     const catalogue = await catalogueFor(asked);
     const libraryKind = REQUEST_LIBRARY_KINDS[asked.kind];
     const libraries = (await library.list(asTheServer)).filter(
-      (entry) => entry.kind === libraryKind,
+      (entry) => entry.kind === libraryKind && entry.takesRequests,
     );
     const chosen =
       asked.libraryId === undefined
@@ -3948,11 +4015,12 @@ const createApp = ({
         tmdbId: asked.tmdbId ?? null,
         musicBrainzId: asked.musicBrainzId ?? null,
         seasons: asked.seasons,
-        releaseTypes: asked.releaseTypes ?? null,
-        profileId: asked.profileId ?? null,
+        releaseTypes:
+          asked.releaseTypes ?? (isMusicRequest(asked.kind) ? await defaultReleaseTypes() : null),
+        profileId: asked.profileId ?? chosen.requestProfileId,
         isPickedByHand: asked.isPickedByHand,
         libraryId: chosen.id,
-        libraryPath: chosen.path,
+        libraryPath: chosen.requestPath ?? chosen.path,
         requestedBy: { id: session.user.id, name: session.user.name },
         isApproved: await requires(headers, 'requests.autoApprove'),
         catalogue,
@@ -4394,6 +4462,71 @@ const createApp = ({
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
       : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(mediaRequestBlocklistRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.requestBlocklist(context.req.valid('param').id),
+      APPROVERS,
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(liftMediaBlockRoute, async (context) => {
+    const { id, blockId } = context.req.valid('param');
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.liftBlock(id, blockId),
+      APPROVERS,
+    );
+
+    return answer.kind === 'answered'
+      ? context.body(null, 204)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(decideMediaRequestsRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const mayDecide = await Promise.all(
+      APPROVERS.map((permission) => requires(headers, permission)),
+    );
+
+    if (!mayDecide.includes(true)) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const { ids, decision, reason } = context.req.valid('json');
+    const decided: MediaRequest[] = [];
+    const refused: { id: string; problem: string }[] = [];
+
+    for (const id of ids) {
+      const answer = await throughRequests(
+        context.req.raw.headers,
+        (client) =>
+          decision === 'approve' ? client.approveRequest(id) : client.refuseRequest(id, reason),
+        APPROVERS,
+      );
+
+      if (answer.kind === 'answered') {
+        decided.push(answer.value);
+      } else {
+        refused.push({ id, problem: answer.error });
+      }
+    }
+
+    if (decided.length === 0 && refused.length > 0) {
+      return context.json({ error: refused[0]?.problem ?? 'Nothing could be decided.' }, 502);
+    }
+
+    return context.json({ decided, refused }, 200);
   });
 
   app.openapi(mediaRequestReleasesRoute, async (context) => {

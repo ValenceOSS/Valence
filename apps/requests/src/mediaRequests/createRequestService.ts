@@ -204,6 +204,8 @@ const createRequestService = ({
         ...(change.releaseTypes === undefined ? {} : { releaseTypes: change.releaseTypes }),
         ...(change.profileId === undefined ? {} : { profileId: change.profileId }),
         ...(change.isPickedByHand === undefined ? {} : { isPickedByHand: change.isPickedByHand }),
+        ...(change.libraryId === undefined ? {} : { libraryId: change.libraryId }),
+        ...(change.libraryPath === undefined ? {} : { libraryPath: change.libraryPath }),
         ...(catalogue === null ? {} : requestFactsOf(catalogue)),
         updatedAt: now().toISOString(),
       });
