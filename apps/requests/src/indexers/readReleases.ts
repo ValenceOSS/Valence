@@ -52,6 +52,22 @@ const whole = (text: string | undefined): number | null => {
 };
 
 /**
+ * Reads a fractional number an indexer wrote as text.
+ *
+ * @param text - What it wrote.
+ * @returns The number, or null where there was none.
+ */
+const decimal = (text: string | undefined): number | null => {
+  if (text === undefined || text.trim() === '') {
+    return null;
+  }
+
+  const value = Number(text);
+
+  return Number.isFinite(value) && value >= 0 ? value : null;
+};
+
+/**
  * Reads the results an indexer answered a search with, as releases anything else in Valence can
  * compare: the size, who is sharing it, when it was posted, and where to fetch it from.
  *
@@ -116,6 +132,10 @@ const readReleases = (document: object, indexer: ReleaseSource): Release[] => {
         magnetUrl: magnet,
         infoUrl: item.comments ?? null,
         infoHash: attribute('infohash') ?? null,
+        downloadFactor: decimal(attribute('downloadvolumefactor')),
+        uploadFactor: decimal(attribute('uploadvolumefactor')),
+        minimumRatio: decimal(attribute('minimumratio')),
+        minimumSeedSeconds: whole(attribute('minimumseedtime')),
       },
     ];
   });

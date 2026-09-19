@@ -32,6 +32,10 @@ const TORZNAB = `<?xml version="1.0" encoding="UTF-8"?>
       <torznab:attr name="grabs" value="1200" />
       <torznab:attr name="magneturl" value="magnet:?xt=urn:btih:abc" />
       <torznab:attr name="infohash" value="abc" />
+      <torznab:attr name="downloadvolumefactor" value="0" />
+      <torznab:attr name="uploadvolumefactor" value="2" />
+      <torznab:attr name="minimumratio" value="1.0" />
+      <torznab:attr name="minimumseedtime" value="172800" />
     </item>
     <item>
       <title>Inception.2010.720p</title>
@@ -81,6 +85,10 @@ describe('readReleases', () => {
       magnetUrl: 'magnet:?xt=urn:btih:abc',
       infoUrl: 'https://tracker.example/details/1',
       infoHash: 'abc',
+      downloadFactor: 0,
+      uploadFactor: 2,
+      minimumRatio: 1,
+      minimumSeedSeconds: 172_800,
     });
   });
 
@@ -95,6 +103,7 @@ describe('readReleases', () => {
       seeders: null,
       leechers: null,
       publishedAt: null,
+      downloadFactor: null,
     });
   });
 
@@ -124,6 +133,16 @@ describe('readReleases', () => {
         seeders: null,
       }),
     ]);
+  });
+
+  it('reads no freeleech terms that are not numbers', () => {
+    const xml =
+      '<rss><channel><item><title>A</title><torznab:attr name="downloadvolumefactor" value="free"/><torznab:attr name="uploadvolumefactor" value=""/></item></channel></rss>';
+
+    expect(readReleases(readIndexerXml(xml), JACKETT)[0]).toMatchObject({
+      downloadFactor: null,
+      uploadFactor: null,
+    });
   });
 
   it('counts leechers where the feed names them itself', () => {
