@@ -125,6 +125,26 @@ describe('discordEmbedFor', () => {
     );
   });
 
+  it('colours a failed download as bad news, and a started one as good', () => {
+    const failed = embed({
+      ...anEnvelope,
+      event: 'requests.downloadFailed',
+      data: { title: 'Dune', client: 'SABnzbd', problem: 'Out of retention' },
+    });
+    const started = embed({
+      ...anEnvelope,
+      event: 'requests.downloadStarted',
+      data: { title: 'Dune', client: 'qBittorrent' },
+    });
+
+    expect(failed.color).toBe(
+      embed({ ...anEnvelope, event: 'transcoder.unreachable', data: { reason: 'x' } }).color,
+    );
+    expect(started.color).toBe(
+      embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color,
+    );
+  });
+
   it('colours the requests service going quiet like the transcoder going quiet', () => {
     const quiet = embed({
       ...anEnvelope,

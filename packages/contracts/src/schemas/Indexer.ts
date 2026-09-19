@@ -25,6 +25,8 @@ const IndexerCapabilitiesSchema = z.object({
   limit: z.number().int().positive().nullable(),
 });
 
+const ReleaseProtocolSchema = z.enum(['torrent', 'usenet']);
+
 const IndexerSettingsSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));
 
 const IndexerSchema = z.object({
@@ -109,7 +111,7 @@ const ReleaseSchema = z.object({
   title: z.string(),
   indexerId: z.string().uuid(),
   indexerName: z.string(),
-  protocol: z.enum(['torrent', 'usenet']),
+  protocol: ReleaseProtocolSchema,
   sizeBytes: z.number().nonnegative().nullable(),
   seeders: z.number().int().nonnegative().nullable(),
   leechers: z.number().int().nonnegative().nullable(),
@@ -159,6 +161,7 @@ type IndexerSearchReport = z.infer<typeof IndexerSearchReportSchema>;
 type ReleaseSearchOutcome = z.infer<typeof ReleaseSearchOutcomeSchema>;
 type IndexerHealth = z.infer<typeof IndexerHealthSchema>;
 type IndexerSettings = z.infer<typeof IndexerSettingsSchema>;
+type ReleaseProtocol = z.infer<typeof ReleaseProtocolSchema>;
 
 export type {
   Indexer,
@@ -173,6 +176,7 @@ export type {
   IndexerSettings,
   IndexerTest,
   Release,
+  ReleaseProtocol,
   ReleaseSearch,
   ReleaseSearchOutcome,
 };
@@ -191,6 +195,7 @@ export {
   IndexerSettingsSchema,
   IndexerTestSchema,
   ReleaseDownloadRequestSchema,
+  ReleaseProtocolSchema,
   ReleaseSchema,
   ReleaseSearchOutcomeSchema,
   ReleaseSearchSchema,
