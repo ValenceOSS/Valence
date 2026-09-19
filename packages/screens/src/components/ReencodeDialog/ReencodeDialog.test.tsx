@@ -115,19 +115,88 @@ describe('ReencodeDialog', () => {
     expect(screen.getByText(/never converts anything/)).toBeVisible();
   });
 
-  it('offers every episode of a programme, not one standing for all of them', () => {
+  const aProgramme = [
+    item({
+      id: 'a',
+      libraryId: 'library-1',
+      title: 'Charm Offensive',
+      seriesTitle: 'Pluribus',
+      seasonNumber: 1,
+      episodeNumber: 1,
+      sizeBytes: 4 * GIGABYTE,
+    }),
+    item({
+      id: 'b',
+      libraryId: 'library-1',
+      title: 'Grace',
+      seriesTitle: 'Pluribus',
+      seasonNumber: 1,
+      episodeNumber: 2,
+      sizeBytes: 2 * GIGABYTE,
+    }),
+  ];
+
+  it('offers a programme as one row carrying what all of it costs', () => {
+    render(<ReencodeDialog {...props} media={aProgramme} />);
+
+    expect(screen.getByRole('checkbox', { name: /Pluribus/ })).toHaveAccessibleDescription(
+      /2 files · 6\.0 GB/,
+    );
+  });
+
+  it('opens a programme to every episode it is made of', async () => {
+    render(<ReencodeDialog {...props} media={aProgramme} />);
+
+    expect(screen.queryByRole('checkbox', { name: /Charm Offensive/ })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: /Show what Pluribus is made of/ }));
+
+    expect(screen.getByRole('checkbox', { name: /Charm Offensive/ })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Grace/ })).toBeInTheDocument();
+  });
+
+  it('takes every episode when the programme itself is ticked', async () => {
+    const onWeigh = vi.fn();
+
+    render(<ReencodeDialog {...props} media={aProgramme} onWeigh={onWeigh} />);
+
+    await userEvent.click(screen.getByRole('checkbox', { name: /Pluribus/ }));
+
+    expect(onWeigh).toHaveBeenCalledWith(['a', 'b'], expect.anything());
+  });
+
+  it('says a programme is partly taken when only some of it is', async () => {
+    render(<ReencodeDialog {...props} media={aProgramme} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /Show what Pluribus is made of/ }));
+    await userEvent.click(screen.getByRole('checkbox', { name: /Charm Offensive/ }));
+
+    expect(screen.getByRole('checkbox', { name: /Pluribus/ })).toHaveAttribute(
+      'aria-checked',
+      'mixed',
+    );
+  });
+
+  it('gathers a film cuts under the film, not only a programme episodes', () => {
     render(
       <ReencodeDialog
         {...props}
         media={[
-          item({ id: 'a', libraryId: 'library-1', title: 'Charm Offensive', seriesTitle: 'Pluribus' }),
-          item({ id: 'b', libraryId: 'library-1', title: 'Grace', seriesTitle: 'Pluribus' }),
+          item({ id: 'film', title: 'Parasite', parentId: null }),
+          item({ id: 'bw', title: 'Parasite', parentId: 'film', versionLabel: 'B&W' }),
         ]}
       />,
     );
 
-    expect(screen.getByRole('checkbox', { name: /Charm Offensive/ })).toBeVisible();
-    expect(screen.getByRole('checkbox', { name: /Grace/ })).toBeVisible();
+    expect(screen.getByRole('checkbox', { name: /Parasite/ })).toHaveAccessibleDescription(
+      /2 files/,
+    );
+  });
+
+  it('draws an ordinary film as a plain row with nothing to open', () => {
+    render(<ReencodeDialog {...props} />);
+
+    expect(screen.queryByRole('button', { name: /is made of/ })).toBeNull();
   });
 
   it('shows one library at a time, so films and episodes are not one long list', () => {

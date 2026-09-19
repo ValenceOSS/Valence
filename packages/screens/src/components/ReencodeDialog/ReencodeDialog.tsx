@@ -16,6 +16,8 @@ import { describeCodecTrade } from '@ValenceCore/functions/describeCodecTrade';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { judgeFreeSpace } from '@ValenceCore/functions/judgeFreeSpace';
 import { Choice } from '@ValenceScreens/components/Choice/Choice';
+import { FileGroup } from './components/FileGroup/FileGroup';
+import { groupIntoThings } from './groupIntoThings';
 import { describeSaving } from '@ValenceScreens/components/AdminArea/components/EncodingPanel/describeSaving';
 import { isLargerThan } from '@ValenceScreens/components/AdminArea/components/EncodingPanel/isLargerThan';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -42,18 +44,6 @@ const MODE_MEANINGS: Record<ReencodeMode, string> = {
 };
 
 const SECTION = 'text-xs uppercase tracking-[0.14em] text-text-muted';
-
-/**
- * How large a file is, or that nobody recorded it.
- *
- * Never "0 B" for a size the library does not hold. A file reported as empty reads as a broken file
- * rather than as a missing figure, and it is the figure a re-encode is weighed against.
- *
- * @param sizeBytes - What the library recorded, where it did.
- * @returns The size in words.
- */
-const describeSize = (sizeBytes: number | null | undefined): string =>
-  typeof sizeBytes === 'number' && sizeBytes > 0 ? formatBytes(sizeBytes) : 'size not recorded';
 
 /**
  * What a file is called on a row, which is the programme rather than the episode.
@@ -135,6 +125,8 @@ const ReencodeDialog = ({
     [media, looking, threshold, search],
   );
 
+  const groups = useMemo(() => groupIntoThings(shown), [shown]);
+
   const chosenElsewhere = useMemo(
     () => media.filter((item) => chosen.has(item.id) && item.libraryId !== looking).length,
     [media, chosen, looking],
@@ -171,22 +163,10 @@ const ReencodeDialog = ({
   const room = judgeFreeSpace({ bytes: wanted, freeBytes: estimate?.freeBytes ?? null });
   const isFull = (estimate?.awaitingReview ?? 0) >= (estimate?.awaitingReviewCap ?? 5);
 
-  const toggle = (id: string, isChosen: boolean) => {
+  const toggleMany = (items: readonly MediaSummary[], isChosen: boolean) => {
     const next = new Set(chosen);
 
-    if (isChosen) {
-      next.add(id);
-    } else {
-      next.delete(id);
-    }
-
-    setChosen(next);
-  };
-
-  const toggleAll = (isChosen: boolean) => {
-    const next = new Set(chosen);
-
-    for (const item of shown) {
+    for (const item of items) {
       if (isChosen) {
         next.add(item.id);
       } else {
@@ -196,6 +176,9 @@ const ReencodeDialog = ({
 
     setChosen(next);
   };
+
+  const refusalFor = (mediaId: string): string | null =>
+    estimate?.candidates.find((one) => one.mediaId === mediaId)?.refusal?.detail ?? null;
 
   const start = async () => {
     setIsStarting(true);
@@ -259,32 +242,26 @@ const ReencodeDialog = ({
           ) : (
             <>
               <Checkbox
-                label={`Everything shown (${shown.length.toString()})${chosenElsewhere === 0 ? '' : ` · ${chosenElsewhere.toString()} chosen in another library`}`}
+                label={`Everything shown (${shown.length.toString()} ${shown.length === 1 ? 'file' : 'files'})${chosenElsewhere === 0 ? '' : ` · ${chosenElsewhere.toString()} chosen in another library`}`}
                 checked={allShownChosen}
                 isMixed={someShownChosen && !allShownChosen}
-                onCheckedChange={toggleAll}
+                onCheckedChange={(next) => {
+                  toggleMany(shown, next);
+                }}
               />
 
-              <ul className="flex max-h-64 flex-col gap-0.5 overflow-y-auto rounded-lg border border-line bg-subtle p-2">
-                {shown.map((item) => {
-                  const refusal =
-                    estimate?.candidates.find((one) => one.mediaId === item.id)?.refusal ?? null;
+              <ul className="flex max-h-72 flex-col gap-0.5 overflow-y-auto rounded-lg border border-line bg-subtle p-2">
+                {groups.map((group) => (
+                  <FileGroup
+                    key={group.key}
+                    group={group}
+                    chosen={chosen}
+                    refusalFor={refusalFor}
+                    onToggle={toggleMany}
+                  />
+                ))}
 
-                  return (
-                    <li key={item.id} className="rounded-md px-2 py-1.5 hover:bg-shade/20">
-                      <Checkbox
-                        label={nameOf(item)}
-                        description={`${item.width.toString()}×${item.height.toString()} · ${CODEC_NAMES[item.videoCodec] ?? item.videoCodec} · ${describeSize(item.sizeBytes)}${refusal === null ? '' : ` — ${refusal.detail}`}`}
-                        checked={chosen.has(item.id)}
-                        onCheckedChange={(next) => {
-                          toggle(item.id, next);
-                        }}
-                      />
-                    </li>
-                  );
-                })}
-
-                {shown.length === 0 ? (
+                {groups.length === 0 ? (
                   <li className="px-2 py-3 text-sm text-text-muted">Nothing matches that.</li>
                 ) : null}
               </ul>
