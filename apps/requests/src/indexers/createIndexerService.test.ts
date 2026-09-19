@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { IndexerFailure } from './IndexerFailure';
 import { CaptchaNeeded } from './CaptchaNeeded';
 import { readDefinition } from '@ValenceRequests/cardigann/readDefinition';
+import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import { createIndexerService } from './createIndexerService';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import type { IndexerClient, IndexerConnection } from './createIndexerClient';
@@ -293,6 +294,45 @@ describe('createIndexerService', () => {
       expect.objectContaining({ indexerName: 'Jackett', found: 1, problem: null }),
     ]);
     expect(client.search).toHaveBeenCalledTimes(2);
+  });
+
+  it('judges what it found against a profile, and puts it in the order it would be chosen', async () => {
+    const { service } = aService(
+      [anIndexer()],
+      aClient({
+        search: (indexer) => [
+          { ...aRelease(indexer, 'Dune.2021.720p.WEB-DL.x264-GRP'), id: 'small', seeders: 50 },
+          { ...aRelease(indexer, 'Dune.2021.1080p.BluRay.x264-GRP'), id: 'best', seeders: 5 },
+          { ...aRelease(indexer, 'Dune.2021.2160p.BluRay.x265-GRP'), id: 'refused' },
+        ],
+      }),
+    );
+    const profile = {
+      ...QualityProfileDraftSchema.parse({ name: 'HD', kind: 'video' }),
+      id: SECOND,
+      createdAt: NOW.toISOString(),
+      updatedAt: NOW.toISOString(),
+    };
+
+    const outcome = await service.search({ query: 'dune', runtimeMinutes: 155 }, profile);
+
+    expect(outcome.releases.map((release) => release.id)).toEqual(['best', 'small', 'refused']);
+    expect(outcome.pickedId).toBe('best');
+    expect(outcome.judgements.map((judgement) => judgement.isRejected)).toEqual([
+      false,
+      false,
+      true,
+    ]);
+    expect(outcome.judgements[0]?.parsed.resolution).toBe('1080p');
+  });
+
+  it('judges nothing without a profile', async () => {
+    const { service } = aService([anIndexer()]);
+
+    expect(await service.search({ query: 'dune' })).toMatchObject({
+      judgements: [],
+      pickedId: null,
+    });
   });
 
   it('searches only the indexers asked for', async () => {

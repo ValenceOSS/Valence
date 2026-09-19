@@ -14,6 +14,17 @@ import {
   DOWNLOAD_CLIENT_KINDS,
 } from '@ValenceContracts/schemas/DownloadClient';
 import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
+import {
+  MUSIC_QUALITIES,
+  RELEASE_SOURCES,
+  RESOLUTIONS,
+} from '@ValenceContracts/schemas/ParsedRelease';
+import { PROFILE_KINDS } from '@ValenceContracts/schemas/QualityProfile';
+import type {
+  MusicQuality,
+  ReleaseSource,
+  Resolution,
+} from '@ValenceContracts/schemas/ParsedRelease';
 import type { DownloadCategories } from '@ValenceContracts/schemas/DownloadClient';
 import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue';
 import type { IndexerCapabilities, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
@@ -113,7 +124,29 @@ const downloadEvent = requestsSchema.table('download_event', {
   at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+const qualityProfile = requestsSchema.table('quality_profile', {
+  id: uuid('id').primaryKey(),
+  name: text('name').notNull(),
+  kind: text('kind', { enum: PROFILE_KINDS }).notNull(),
+  resolutions: jsonb('resolutions').$type<Resolution[]>().notNull().default([]),
+  sources: jsonb('sources').$type<ReleaseSource[]>().notNull().default([]),
+  musicQualities: jsonb('music_qualities').$type<MusicQuality[]>().notNull().default([]),
+  smallestMb: doublePrecision('smallest_mb'),
+  largestMb: doublePrecision('largest_mb'),
+  preferredWords: jsonb('preferred_words').$type<string[]>().notNull().default([]),
+  requiredWords: jsonb('required_words').$type<string[]>().notNull().default([]),
+  bannedWords: jsonb('banned_words').$type<string[]>().notNull().default([]),
+  isUpgrading: boolean('is_upgrading').notNull().default(false),
+  upgradeUntilResolution: text('upgrade_until_resolution', { enum: RESOLUTIONS }),
+  upgradeUntilSource: text('upgrade_until_source', { enum: RELEASE_SOURCES }),
+  upgradeUntilMusicQuality: text('upgrade_until_music_quality', { enum: MUSIC_QUALITIES }),
+  libraryIds: jsonb('library_ids').$type<string[]>().notNull().default([]),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export {
+  qualityProfile,
   downloadClient,
   downloadEvent,
   indexer,
