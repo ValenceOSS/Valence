@@ -90,6 +90,8 @@ import type { JobSchedules, ScheduleTrigger } from '@ValenceClient/admin/fetchAd
 import type { CreatedWebhook } from '@ValenceClient/admin/fetchWebhooks';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { ADMIN_PANELS } from '@ValenceScreens/components/AdminArea/adminSections';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { RequestsPanel } from './components/RequestsPanel/RequestsPanel';
 import type { AdminAreaProps } from './AdminArea.types';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 
@@ -149,6 +151,9 @@ const AdminArea = ({
   const askedJobs = useQuery(adminQueries.jobs());
   const askedSchedules = useQuery(adminQueries.schedules());
   const askedMonitor = useQuery(adminQueries.monitor());
+  const askedRequests = useQuery(requestsQueries.availability());
+  const hasRequests = askedRequests.data?.isEnabled ?? false;
+  const askedRequestsOverview = useQuery(requestsQueries.overview(hasRequests));
 
   const overview = askedOverview.data ?? null;
   const monitor = askedMonitor.data ?? null;
@@ -568,6 +573,7 @@ const AdminArea = ({
             sessions,
             history,
             encoderHistory,
+            requests: hasRequests ? (askedRequestsOverview.data ?? null) : null,
           })}
           onOpenPanel={showPanel}
         />
@@ -760,6 +766,12 @@ const AdminArea = ({
             />
           </TabPanel>
 
+          {hasRequests ? (
+            <TabPanel value="requests" travel={travel}>
+              <RequestsPanel />
+            </TabPanel>
+          ) : null}
+
           <TabPanel value="accounts" travel={travel}>
             <AccountsPanel />
           </TabPanel>
@@ -808,6 +820,7 @@ const AdminArea = ({
               webhooks={webhooks}
               accounts={webhookAccounts}
               profiles={webhookProfiles}
+              hasRequests={hasRequests}
               created={createdWebhook}
               onCreate={async (webhook) => {
                 const { created, refusal } = await createWebhook(webhook);

@@ -590,6 +590,66 @@ describe('AdminArea', () => {
     expect(await screen.findByText('Server load')).toBeInTheDocument();
   });
 
+  describe('where requesting is on', () => {
+    const REQUESTS_OVERVIEW = {
+      address: 'http://requests:8421',
+      isReachable: true,
+      checkedAt: '2026-09-19T12:00:00.000Z',
+      status: {
+        version: '0.4.0',
+        vpn: {
+          isConfigured: true,
+          isUp: false,
+          publicAddress: null,
+          country: null,
+          checkedAt: '2026-09-19T12:00:00.000Z',
+          problem: 'The tunnel is stopped',
+        },
+      },
+    };
+
+    beforeEach(() => {
+      const otherwise = respondWith();
+
+      fetchMock.mockImplementation((input: string, init?: RequestInit) => {
+        if (input.includes('/api/requests/availability')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ isEnabled: true }) });
+        }
+
+        if (input.includes('/api/admin/requests')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(REQUESTS_OVERVIEW) });
+        }
+
+        return otherwise(input, init);
+      });
+    });
+
+    it('opens on the requests service where the address names it', async () => {
+      renderInAnAddress(<TheAdmin panel="requests" />);
+
+      expect(await screen.findByText('Requests service')).toBeInTheDocument();
+      expect(await screen.findByText('Answering')).toBeInTheDocument();
+    });
+
+    it('says the VPN is down above everything else', async () => {
+      renderInAnAddress(<TheAdmin />);
+
+      expect(await screen.findByText('The VPN is down')).toBeInTheDocument();
+    });
+  });
+
+  it('draws no requests panel where requesting is off', async () => {
+    renderInAnAddress(<TheAdmin panel="requests" />);
+
+    await screen.findByText('Processor');
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/requests/availability', expect.anything());
+    });
+
+    expect(screen.queryByText('Requests service')).not.toBeInTheDocument();
+    expect(screen.queryByText('The VPN is down')).not.toBeInTheDocument();
+  });
+
   it('tells the address when the panel changes, so a reload can return to it', async () => {
     const actor = userEvent.setup();
     const onPanel = vi.fn();

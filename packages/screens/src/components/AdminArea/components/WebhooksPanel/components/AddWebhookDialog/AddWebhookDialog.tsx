@@ -35,6 +35,7 @@ const A_NEW_WEBHOOK: WebhookDraft = {
  * @param onCreate - Called with the subscription to make, answering with any refusal.
  * @param accounts - The accounts a new subscription can be narrowed to.
  * @param profiles - The profiles a new subscription can be narrowed to.
+ * @param hasRequests - Whether requesting is on, without which its events are not offered.
  */
 const AddWebhookDialog = ({
   isOpen,
@@ -42,6 +43,7 @@ const AddWebhookDialog = ({
   onCreate,
   accounts,
   profiles,
+  hasRequests = false,
 }: AddWebhookDialogProps) => {
   const [draft, setDraft] = useState<WebhookDraft>(A_NEW_WEBHOOK);
   const [refusal, setRefusal] = useState<string | null>(null);
@@ -114,6 +116,7 @@ const AddWebhookDialog = ({
             onChange={setDraft}
             accounts={accounts}
             profiles={profiles}
+            hasRequests={hasRequests}
             travel={travel}
           />
         </DialogContent>

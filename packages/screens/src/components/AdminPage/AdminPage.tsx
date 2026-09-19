@@ -15,7 +15,8 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { AdminArea } from '@ValenceScreens/components/AdminArea/AdminArea';
-import { ADMIN_PANELS, ADMIN_SECTIONS } from '@ValenceScreens/components/AdminArea/adminSections';
+import { visibleAdminSections } from '@ValenceScreens/components/AdminArea/visibleAdminSections';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { describeAcceleration } from '@ValenceScreens/components/AdminArea/describeAcceleration';
 import {
   readSidebarCollapsed,
@@ -38,7 +39,10 @@ const AdminPage = () => {
   const { mayAdminister, isLoading } = useWhatIMayDo();
   const [isCollapsed, setIsCollapsed] = useState(readSidebarCollapsed);
 
-  const showing = ADMIN_PANELS.find((one) => one.id === panel)?.id ?? 'overview';
+  const requesting = useQuery(requestsQueries.availability());
+  const sections = visibleAdminSections(requesting.data?.isEnabled ?? false);
+  const showing =
+    sections.flatMap((section) => section.items).find((one) => one.id === panel)?.id ?? 'overview';
 
   const asked = useQuery(adminQueries.overview());
   const overview = asked.data ?? null;
@@ -102,7 +106,7 @@ const AdminPage = () => {
               {isCollapsed ? null : <span className="font-semibold text-text">Valence</span>}
             </Button>
           }
-          groups={ADMIN_SECTIONS.map((section) => ({
+          groups={sections.map((section) => ({
             ...(section.label === null ? {} : { label: section.label }),
             items: section.items,
           }))}

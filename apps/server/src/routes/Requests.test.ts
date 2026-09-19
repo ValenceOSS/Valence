@@ -187,3 +187,15 @@ describe('GET /api/admin/jobs/definitions', () => {
     expect(await kindsFrom(await off.ask('/api/admin/jobs/definitions'))).toBe(false);
   });
 });
+
+describe('GET /api/admin/permissions', () => {
+  it('offers the requests permissions only while requesting is on', async () => {
+    const on = await build({ isOn: true, isAdministrator: true });
+    const off = await build({ isOn: false, isAdministrator: true });
+    const offersRequests = async (response: Response) =>
+      JSON.stringify(await response.json()).includes('requests.ask');
+
+    expect(await offersRequests(await on.ask('/api/admin/permissions'))).toBe(true);
+    expect(await offersRequests(await off.ask('/api/admin/permissions'))).toBe(false);
+  });
+});
