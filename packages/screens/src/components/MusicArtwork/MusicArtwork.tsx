@@ -8,7 +8,8 @@ import type { MusicArtworkProps } from './MusicArtwork.types';
 
 /**
  * An album's cover or an artist's picture, square or round, with a quiet note standing in wherever
- * there is no picture or it will not load — so a grid of albums never has a hole in it.
+ * there is no picture, until it has loaded, or where it will not — so a grid of albums never has a
+ * hole in it, nor a broken picture where a slow one is still on its way.
  *
  * A picture given a name to travel as is one thing wherever it appears under that name: opening an
  * album from its tile carries the cover from the tile up into the album's header, rather than one
@@ -30,6 +31,7 @@ const MusicArtwork = ({
   className,
 }: MusicArtworkProps) => {
   const [hasFailed, setHasFailed] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState<string | null>(null);
   const prefersReducedMotion = useReducedMotionConfig();
   const isShown = src !== null && hasFailed !== src;
 
@@ -50,22 +52,27 @@ const MusicArtwork = ({
         className,
       )}
     >
+      {isShown && hasLoaded === src ? null : <Icon of={MusicNote01Icon} size={20} />}
+
       {isShown ? (
         <img
           src={src}
           alt={label}
           loading="lazy"
           draggable={false}
-          className="size-full object-cover"
+          className={cn(
+            'absolute inset-0 size-full object-cover transition-opacity duration-[var(--duration-fast)] ease-[var(--ease-out)]',
+            hasLoaded === src ? 'opacity-100' : 'opacity-0',
+          )}
+          onLoad={() => {
+            setHasLoaded(src);
+          }}
           onError={() => {
             setHasFailed(src);
           }}
         />
       ) : (
-        <>
-          <Icon of={MusicNote01Icon} size={20} />
-          <span className="sr-only">{label}</span>
-        </>
+        <span className="sr-only">{label}</span>
       )}
     </motion.span>
   );

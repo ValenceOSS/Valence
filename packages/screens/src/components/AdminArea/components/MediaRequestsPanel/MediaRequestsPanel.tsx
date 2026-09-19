@@ -26,6 +26,8 @@ import {
   retryMediaRequest,
   searchMissing,
 } from '@ValenceClient/requests/fetchMediaRequests';
+import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { AskForMediaDialog } from '@ValenceScreens/components/AdminArea/components/AskForMediaDialog/AskForMediaDialog';
 import { RefuseRequestDialog } from '@ValenceScreens/components/AdminArea/components/RefuseRequestDialog/RefuseRequestDialog';
@@ -109,16 +111,25 @@ const MediaRequestsPanel = () => {
 
           return (
             <span className="flex min-w-0 items-start gap-3">
-              <span className="aspect-[2/3] w-9 shrink-0 overflow-hidden rounded-md bg-surface-raised">
-                {row.original.posterUrl === null ? null : (
-                  <img
-                    src={row.original.posterUrl}
-                    alt=""
-                    loading="lazy"
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </span>
+              {isMusicRequest(row.original.kind) ? (
+                <MusicArtwork
+                  src={row.original.posterUrl}
+                  label={`The cover of ${row.original.title}`}
+                  shape={row.original.kind === 'artist' ? 'round' : 'square'}
+                  className="w-9"
+                />
+              ) : (
+                <span className="aspect-[2/3] w-9 shrink-0 overflow-hidden rounded-md bg-surface-raised">
+                  {row.original.posterUrl === null ? null : (
+                    <img
+                      src={row.original.posterUrl}
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </span>
+              )}
 
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-2">
