@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ReencodeDialog } from './ReencodeDialog';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { ReencodeEstimate } from '@ValenceContracts/schemas/Reencode';
+import type { ReencodeCandidate, ReencodeEstimate } from '@ValenceContracts/schemas/Reencode';
 
 const GIGABYTE = 1024 ** 3;
 
@@ -29,8 +29,24 @@ const item = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
   ...overrides,
 });
 
+const candidate = (overrides: Partial<ReencodeCandidate> = {}): ReencodeCandidate => ({
+  mediaId: 'item-1',
+  title: 'Azkaban',
+  seriesTitle: null,
+  libraryId: 'library-1',
+  sizeBytes: 70 * GIGABYTE,
+  durationSeconds: 8520,
+  width: 3840,
+  height: 2160,
+  videoCodec: 'h264',
+  videoRange: 'SDR',
+  estimatedBytes: 6 * GIGABYTE,
+  refusal: null,
+  ...overrides,
+});
+
 const estimate = (overrides: Partial<ReencodeEstimate> = {}): ReencodeEstimate => ({
-  candidates: [],
+  candidates: [candidate()],
   nowBytes: 70 * GIGABYTE,
   afterBytes: 6 * GIGABYTE,
   freeBytes: 900 * GIGABYTE,
@@ -49,11 +65,14 @@ const props = {
   onClose: vi.fn(),
 };
 
+const theFilm = () =>
+  screen.getByRole('checkbox', { name: /Harry Potter and the Prisoner of Azkaban/ });
+
 describe('ReencodeDialog', () => {
   it('offers the three things somebody can ask for', () => {
     render(<ReencodeDialog {...props} />);
 
-    expect(screen.getByRole('button', { name: 'Replace the original' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Replace' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Keep alongside' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Audio only' })).toBeVisible();
   });
@@ -72,15 +91,24 @@ describe('ReencodeDialog', () => {
     expect(screen.getByText(/never converts anything/)).toBeVisible();
   });
 
-  it('shows only the files above the size rule', () => {
-    render(
-      <ReencodeDialog
-        {...props}
-        media={[item(), item({ id: 'item-2', title: 'A short', sizeBytes: 2 * GIGABYTE })]}
-      />,
-    );
+  it('shows everything by default rather than hiding it behind a size rule', () => {
+    render(<ReencodeDialog {...props} media={[item({ sizeBytes: 2 * GIGABYTE })]} />);
 
-    expect(screen.queryByText('A short')).toBeNull();
+    expect(theFilm()).toBeVisible();
+  });
+
+  it('hides what falls below the size rule once one is set', async () => {
+    render(<ReencodeDialog {...props} media={[item({ sizeBytes: 2 * GIGABYTE })]} />);
+
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Larger than (GB)' }), '20');
+
+    expect(screen.queryByText('Harry Potter and the Prisoner of Azkaban')).toBeNull();
+  });
+
+  it('names the codec the way a person writes it, not the way ffmpeg does', () => {
+    render(<ReencodeDialog {...props} />);
+
+    expect(screen.getByRole('button', { name: 'Codec' })).toHaveTextContent('HEVC');
   });
 
   it('weighs what was chosen', async () => {
@@ -88,22 +116,26 @@ describe('ReencodeDialog', () => {
 
     render(<ReencodeDialog {...props} onWeigh={onWeigh} />);
 
-    await userEvent.click(
-      screen.getByRole('checkbox', {
-        name: /Harry Potter and the Prisoner of Azkaban/,
-      }),
-    );
+    await userEvent.click(theFilm());
 
     expect(onWeigh).toHaveBeenCalledWith(['item-1'], expect.objectContaining({ mode: 'replace' }));
   });
 
-  it('shows the totals both ways round', () => {
+  it('says nothing about cost until something is chosen', () => {
     render(<ReencodeDialog {...props} estimate={estimate()} />);
+
+    expect(screen.queryByText(/Frees about/)).toBeNull();
+  });
+
+  it('shows the totals both ways round once something is', async () => {
+    render(<ReencodeDialog {...props} estimate={estimate()} />);
+
+    await userEvent.click(theFilm());
 
     expect(screen.getByText(/Frees about/)).toBeVisible();
   });
 
-  it('refuses to start when there is not enough room, and says what would happen', () => {
+  it('refuses to start when there is not enough room, and says what would happen', async () => {
     render(
       <ReencodeDialog
         {...props}
@@ -111,51 +143,33 @@ describe('ReencodeDialog', () => {
       />,
     );
 
+    await userEvent.click(theFilm());
+
     expect(screen.getByText('There is not enough room')).toBeVisible();
   });
 
-  it('says the queue is paused when too many are already waiting', () => {
+  it('says the queue is paused when too many are already waiting', async () => {
     render(
-      <ReencodeDialog
-        {...props}
-        estimate={estimate({ awaitingReview: 5, awaitingReviewCap: 5 })}
-      />,
+      <ReencodeDialog {...props} estimate={estimate({ awaitingReview: 5, awaitingReviewCap: 5 })} />,
     );
 
+    await userEvent.click(theFilm());
+
     expect(screen.getByText('The queue is paused')).toBeVisible();
+  });
+
+  it('will not start with nothing chosen, and says so on the button', () => {
+    render(<ReencodeDialog {...props} />);
+
+    expect(screen.getByRole('button', { name: 'Choose something first' })).toBeDisabled();
   });
 
   it('asks again before queueing a replacement', async () => {
     const onStart = vi.fn(() => Promise.resolve(true));
 
-    render(
-      <ReencodeDialog
-        {...props}
-        onStart={onStart}
-        estimate={estimate({
-          candidates: [
-            {
-              mediaId: 'item-1',
-              title: 'Azkaban',
-              seriesTitle: null,
-              libraryId: 'library-1',
-              sizeBytes: 70 * GIGABYTE,
-              durationSeconds: 8520,
-              width: 3840,
-              height: 2160,
-              videoCodec: 'h264',
-              videoRange: 'SDR',
-              estimatedBytes: 6 * GIGABYTE,
-              refusal: null,
-            },
-          ],
-        })}
-      />,
-    );
+    render(<ReencodeDialog {...props} onStart={onStart} estimate={estimate()} />);
 
-    await userEvent.click(
-      screen.getByRole('checkbox', { name: /Harry Potter and the Prisoner of Azkaban/ }),
-    );
+    await userEvent.click(theFilm());
     await userEvent.click(screen.getByRole('button', { name: /^Re-encode 1$/ }));
 
     expect(screen.getByText(/gone for good/)).toBeVisible();
@@ -168,20 +182,10 @@ describe('ReencodeDialog', () => {
         {...props}
         estimate={estimate({
           candidates: [
-            {
-              mediaId: 'item-1',
-              title: 'Azkaban',
-              seriesTitle: null,
-              libraryId: 'library-1',
-              sizeBytes: 70 * GIGABYTE,
-              durationSeconds: 8520,
-              width: 3840,
-              height: 2160,
-              videoCodec: 'h264',
-              videoRange: 'SDR',
+            candidate({
               estimatedBytes: null,
               refusal: { code: 'BeingWatched', detail: 'Somebody is watching it now.' },
-            },
+            }),
           ],
         })}
       />,

@@ -7,37 +7,44 @@ import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { TextField } from '@ValenceUI/TextField';
 import { REENCODE_CODECS } from '@ValenceContracts/schemas/Reencode';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
+import { CODEC_NAMES } from '@ValenceCore/functions/renditionLabel';
 import { describeCodecTrade } from '@ValenceCore/functions/describeCodecTrade';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { judgeFreeSpace } from '@ValenceCore/functions/judgeFreeSpace';
+import { Choice } from '@ValenceScreens/components/Choice/Choice';
 import { describeSaving } from '@ValenceScreens/components/AdminArea/components/EncodingPanel/describeSaving';
 import { isLargerThan } from '@ValenceScreens/components/AdminArea/components/EncodingPanel/isLargerThan';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { ReencodeCodec, ReencodeMode, ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
+import type {
+  ReencodeCodec,
+  ReencodeMode,
+  ReencodeSettings,
+} from '@ValenceContracts/schemas/Reencode';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import type { ReencodeDialogProps } from './ReencodeDialog.types';
 
 const MODES: readonly { id: ReencodeMode; label: string }[] = [
-  { id: 'replace', label: 'Replace the original' },
+  { id: 'replace', label: 'Replace' },
   { id: 'keep', label: 'Keep alongside' },
   { id: 'audioOnly', label: 'Audio only' },
 ];
 
 const MODE_MEANINGS: Record<ReencodeMode, string> = {
   replace:
-    'The encode takes the original file place and the original is kept until you have watched the result and confirmed it. Frees disk. Nothing else in Valence destroys your own media.',
-  keep: 'The encode is added beside the original, which stays. Costs disk, and buys a household where the box never converts anything at seven on a Sunday.',
+    'Frees disk. The original is kept until you have watched the result and confirmed it — nothing else in Valence destroys your own media.',
+  keep: 'Costs disk, and buys a household where the box never converts anything at seven on a Sunday.',
   audioOnly:
-    'The picture is copied untouched and only the lossless audio is compressed. A real saving without touching a frame, and the safest of the three.',
+    'The picture is copied untouched and only the lossless audio is compressed. The safest of the three.',
 };
 
+const SECTION = 'text-xs uppercase tracking-[0.14em] text-text-muted';
+
 /**
- * What a re-encode is called on a row, which is the programme rather than the episode.
+ * What a file is called on a row, which is the programme rather than the episode.
  *
  * @param item - The item.
  * @returns What to call it.
@@ -49,6 +56,10 @@ const nameOf = (item: MediaSummary): string =>
 
 /**
  * Choosing what to re-encode, to what, and seeing what it would cost before anything starts.
+ *
+ * Read top to bottom as a sentence: what to work on, what to do with it, what that costs. The files
+ * come first because picking them is the work and everything else is three small decisions; the
+ * cost comes last because it is what somebody checks with their hand already on the button.
  *
  * The projection is shown both ways round on purpose. Replacing frees disk and keeping a rendition
  * alongside spends it, and since "re-encode" reads as "saves space" to almost everybody, a screen
@@ -78,7 +89,7 @@ const ReencodeDialog = ({
   const [quality, setQuality] = useState<QualityStepId>('1080p');
   const [videoCodec, setVideoCodec] = useState<ReencodeCodec>('hevc');
   const [compressesAudio, setCompressesAudio] = useState(false);
-  const [largerThan, setLargerThan] = useState('20');
+  const [largerThan, setLargerThan] = useState('');
   const [search, setSearch] = useState('');
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
   const [isConfirming, setIsConfirming] = useState(false);
@@ -133,11 +144,7 @@ const ReencodeDialog = ({
       ? null
       : Math.max(0, estimate.afterBytes - estimate.nowBytes) + estimate.committedBytes;
 
-  const room = judgeFreeSpace({
-    bytes: wanted,
-    freeBytes: estimate?.freeBytes ?? null,
-  });
-
+  const room = judgeFreeSpace({ bytes: wanted, freeBytes: estimate?.freeBytes ?? null });
   const isFull = (estimate?.awaitingReview ?? 0) >= (estimate?.awaitingReviewCap ?? 5);
 
   const toggle = (id: string, isChosen: boolean) => {
@@ -180,161 +187,161 @@ const ReencodeDialog = ({
   };
 
   return (
-    <Dialog label="Re-encode media" isOpen={isOpen} onClose={onClose} size="stage">
+    <Dialog label="Re-encode media" isOpen={isOpen} onClose={onClose}>
       <DialogTitle
         title="Re-encode media"
-        detail="Choose what to work on, and what to turn it into. Nothing starts until you press the button at the bottom."
+        detail="Nothing starts until you press the button at the bottom."
       />
 
-      <DialogContent>
-        <div className="grid gap-5 lg:grid-cols-[1fr_22rem]">
-          <div className="flex min-w-0 flex-col gap-3">
-            <div className="flex flex-wrap items-end gap-3">
-              <TextField
-                label="Find a title"
-                size="sm"
-                type="search"
-                placeholder="Find a title"
-                value={search}
-                onValueChange={setSearch}
-                className="w-56 max-w-full"
-              />
+      <DialogContent className="flex flex-col gap-6">
+        <fieldset className="flex flex-col gap-3">
+          <legend className={SECTION}>What to work on</legend>
 
-              <TextField
-                label="Larger than (GB)"
-                size="sm"
-                type="number"
-                min={0}
-                value={largerThan}
-                onValueChange={setLargerThan}
-                className="w-40"
-              />
-            </div>
-
-            <Checkbox
-              label={`Everything shown (${shown.length.toString()})`}
-              checked={allShownChosen}
-              isMixed={someShownChosen && !allShownChosen}
-              onCheckedChange={toggleAll}
+          <div className="flex flex-wrap items-end gap-3">
+            <TextField
+              label="Find a title"
+              isLabelHidden
+              size="sm"
+              type="search"
+              placeholder="Find a title"
+              value={search}
+              onValueChange={setSearch}
+              className="min-w-0 flex-1"
             />
 
-            <ul className="flex max-h-[26rem] flex-col gap-1 overflow-y-auto pr-1">
-              {shown.map((item) => {
-                const refusal =
-                  estimate?.candidates.find((one) => one.mediaId === item.id)?.refusal ?? null;
-
-                return (
-                  <li key={item.id} className="rounded-md px-1 py-1.5 hover:bg-subtle">
-                    <Checkbox
-                      label={nameOf(item)}
-                      description={`${item.width.toString()}×${item.height.toString()} ${item.videoCodec} · ${formatBytes(item.sizeBytes ?? 0)}${refusal === null ? '' : ` · ${refusal.detail}`}`}
-                      checked={chosen.has(item.id)}
-                      onCheckedChange={(next) => {
-                        toggle(item.id, next);
-                      }}
-                    />
-                  </li>
-                );
-              })}
-
-              {shown.length === 0 ? (
-                <li className="px-1 py-3 text-sm text-text-muted">Nothing here matches that.</li>
-              ) : null}
-            </ul>
+            <TextField
+              label="Larger than (GB)"
+              size="sm"
+              type="number"
+              min={0}
+              placeholder="Any size"
+              value={largerThan}
+              onValueChange={setLargerThan}
+              className="w-36"
+            />
           </div>
 
-          <div className="flex flex-col gap-4">
-            <SegmentedRow
-              label="What to do with the encode"
-              size="sm"
-              items={MODES}
-              value={mode}
-              onSelect={(id) => {
-                setMode(MODES.find((one) => one.id === id)?.id ?? 'replace');
-              }}
+          {media.length === 0 ? (
+            <p className="text-sm text-text-muted">Nothing has been scanned yet.</p>
+          ) : (
+            <>
+              <Checkbox
+                label={`Everything shown (${shown.length.toString()})`}
+                checked={allShownChosen}
+                isMixed={someShownChosen && !allShownChosen}
+                onCheckedChange={toggleAll}
+              />
+
+              <ul className="flex max-h-64 flex-col gap-0.5 overflow-y-auto rounded-lg border border-line bg-subtle p-2">
+                {shown.map((item) => {
+                  const refusal =
+                    estimate?.candidates.find((one) => one.mediaId === item.id)?.refusal ?? null;
+
+                  return (
+                    <li key={item.id} className="rounded-md px-2 py-1.5 hover:bg-shade/20">
+                      <Checkbox
+                        label={nameOf(item)}
+                        description={`${item.width.toString()}×${item.height.toString()} · ${item.videoCodec} · ${formatBytes(item.sizeBytes ?? 0)}${refusal === null ? '' : ` — ${refusal.detail}`}`}
+                        checked={chosen.has(item.id)}
+                        onCheckedChange={(next) => {
+                          toggle(item.id, next);
+                        }}
+                      />
+                    </li>
+                  );
+                })}
+
+                {shown.length === 0 ? (
+                  <li className="px-2 py-3 text-sm text-text-muted">Nothing matches that.</li>
+                ) : null}
+              </ul>
+            </>
+          )}
+        </fieldset>
+
+        <fieldset className="flex flex-col gap-3">
+          <legend className={SECTION}>What to do with them</legend>
+
+          <SegmentedRow
+            label="What to do with the encode"
+            size="sm"
+            items={MODES}
+            value={mode}
+            onSelect={(id) => {
+              setMode(MODES.find((one) => one.id === id)?.id ?? 'replace');
+            }}
+          />
+
+          <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
+            {MODE_MEANINGS[mode]}
+          </p>
+
+          {mode === 'audioOnly' ? null : (
+            <div className="flex flex-col gap-2 rounded-lg border border-line bg-subtle px-3 py-2">
+              <Choice
+                label="Quality"
+                value={quality}
+                options={QUALITY_STEPS.map((step) => ({ id: step.id, label: step.label }))}
+                onSelect={(id) => {
+                  setQuality(QUALITY_STEPS.find((step) => step.id === id)?.id ?? '1080p');
+                }}
+              />
+
+              <Choice
+                label="Codec"
+                value={videoCodec}
+                options={REENCODE_CODECS.map((codec) => ({
+                  id: codec,
+                  label: CODEC_NAMES[codec] ?? codec,
+                  detail: describeCodecTrade(codec),
+                }))}
+                onSelect={(id) => {
+                  setVideoCodec(REENCODE_CODECS.find((one) => one === id) ?? 'hevc');
+                }}
+              />
+            </div>
+          )}
+
+          {mode === 'audioOnly' ? null : (
+            <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
+              {describeCodecTrade(videoCodec)}
+            </p>
+          )}
+
+          {mode === 'audioOnly' ? null : (
+            <Checkbox
+              label="Compress the lossless audio too"
+              description="A TrueHD or DTS-HD track is often a large share of a remux. Compressing it narrows 7.1 to 5.1."
+              checked={compressesAudio}
+              onCheckedChange={setCompressesAudio}
             />
+          )}
+        </fieldset>
 
-            <p className="font-body text-xs text-text-muted">{MODE_MEANINGS[mode]}</p>
+        {estimate === null || ids.length === 0 ? null : (
+          <fieldset className="flex flex-col gap-3">
+            <legend className={SECTION}>What that costs</legend>
 
-            {mode === 'audioOnly' ? null : (
-              <>
-                <OptionMenu
-                  label="Quality"
-                  triggerShape="field"
-                  matchTriggerWidth
-                  trigger={<span>{quality}</span>}
-                  groups={[
-                    {
-                      name: 'Quality',
-                      selectedId: quality,
-                      onSelect: (id) => {
-                        setQuality(
-                          QUALITY_STEPS.find((step) => step.id === id)?.id ?? '1080p',
-                        );
-                      },
-                      options: QUALITY_STEPS.map((step) => ({ id: step.id, label: step.label })),
-                    },
-                  ]}
-                />
-
-                <OptionMenu
-                  label="Codec"
-                  triggerShape="field"
-                  matchTriggerWidth
-                  trigger={<span>{videoCodec}</span>}
-                  groups={[
-                    {
-                      name: 'Codec',
-                      selectedId: videoCodec,
-                      onSelect: (id) => {
-                        setVideoCodec(
-                          REENCODE_CODECS.find((one) => one === id) ?? 'hevc',
-                        );
-                      },
-                      options: REENCODE_CODECS.map((codec) => ({
-                        id: codec,
-                        label: codec,
-                        detail: describeCodecTrade(codec),
-                      })),
-                    },
-                  ]}
-                />
-
-                <p className="font-body text-xs text-text-muted">
-                  {describeCodecTrade(videoCodec)}
-                </p>
-
-                <Checkbox
-                  label="Compress the lossless audio too"
-                  description="A TrueHD or DTS-HD track is often a large share of a remux. Compressing it narrows 7.1 to 5.1."
-                  checked={compressesAudio}
-                  onCheckedChange={setCompressesAudio}
-                />
-              </>
-            )}
-
-            {estimate === null ? null : (
-              <div className="flex flex-col gap-1 rounded-lg border border-line bg-subtle p-3 text-sm">
-                <span className="text-text">
-                  {formatBytes(estimate.nowBytes)} → {formatBytes(estimate.afterBytes)}
-                </span>
-                <span className="font-body text-xs text-text-muted">
-                  {describeSaving({
-                    mode,
-                    nowBytes: estimate.nowBytes,
-                    afterBytes: estimate.afterBytes,
-                  })}
-                </span>
-                <span className="font-body text-xs text-text-muted">
-                  {estimate.freeBytes === null
-                    ? 'Free space could not be read.'
-                    : `${formatBytes(estimate.freeBytes)} free`}
-                  {estimate.committedBytes === 0
-                    ? ''
-                    : `, and ${formatBytes(estimate.committedBytes)} already promised to work in the queue`}
-                </span>
-              </div>
-            )}
+            <div className="flex flex-col gap-1 rounded-lg border border-line bg-subtle p-3">
+              <span className="text-sm text-text">
+                {formatBytes(estimate.nowBytes)} → {formatBytes(estimate.afterBytes)}
+              </span>
+              <span className="font-body text-xs text-text-muted">
+                {describeSaving({
+                  mode,
+                  nowBytes: estimate.nowBytes,
+                  afterBytes: estimate.afterBytes,
+                })}
+              </span>
+              <span className="font-body text-xs text-text-muted">
+                {estimate.freeBytes === null
+                  ? 'Free space could not be read.'
+                  : `${formatBytes(estimate.freeBytes)} free`}
+                {estimate.committedBytes === 0
+                  ? ''
+                  : `, and ${formatBytes(estimate.committedBytes)} already promised to work in the queue`}
+              </span>
+            </div>
 
             {room === 'willNotFit' ? (
               <Callout title="There is not enough room" tone="danger">
@@ -350,7 +357,7 @@ const ReencodeDialog = ({
 
             {isFull ? (
               <Callout title="The queue is paused" tone="warning">
-                {`${(estimate?.awaitingReview ?? 0).toString()} encodes are already waiting to be judged. Review some before adding more.`}
+                {`${estimate.awaitingReview.toString()} encodes are already waiting to be judged. Review some before adding more.`}
               </Callout>
             ) : null}
 
@@ -359,8 +366,8 @@ const ReencodeDialog = ({
                 The reason is written under each one.
               </Callout>
             )}
-          </div>
-        </div>
+          </fieldset>
+        )}
       </DialogContent>
 
       <DialogFooter>
@@ -382,9 +389,11 @@ const ReencodeDialog = ({
             setIsConfirming(true);
           }}
         >
-          {mode === 'keep'
-            ? `Keep ${acceptedCount.toString()} alongside`
-            : `Re-encode ${acceptedCount.toString()}`}
+          {acceptedCount <= 0
+            ? 'Choose something first'
+            : mode === 'keep'
+              ? `Keep ${acceptedCount.toString()} alongside`
+              : `Re-encode ${acceptedCount.toString()}`}
         </Button>
       </DialogFooter>
 
