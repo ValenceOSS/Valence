@@ -9,7 +9,6 @@ import {
   UnfoldMoreIcon,
 } from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
-import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -18,8 +17,6 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
-import { formatBytes } from '@ValenceCore/functions/formatBytes';
-import { describeAge } from '@ValenceCore/functions/describeAge';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { fetchRelease } from '@ValenceClient/requests/fetchIndexers';
 import { sendRelease } from '@ValenceClient/requests/fetchDownloadQueue';
@@ -29,6 +26,8 @@ import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import { downloadFile } from '@ValenceScreens/admin/downloadFile';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { releaseColumns } from '@ValenceScreens/components/AdminArea/releaseColumns';
+import { IndexerReportList } from '@ValenceScreens/components/AdminArea/components/IndexerReportList/IndexerReportList';
 import { inReleaseOrder } from './inReleaseOrder';
 import { libraryKindOf } from './libraryKindOf';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
@@ -88,95 +87,7 @@ const ReleaseSearchPanel = () => {
 
   const columns = useMemo<DataTableColumn<Release>[]>(
     () => [
-      {
-        id: 'title',
-        header: 'Release',
-        accessorFn: (release) => release.title,
-        cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="break-all text-sm text-text">{row.original.title}</span>
-
-            <span className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
-              {row.original.indexerName}
-              <Badge size="sm">{row.original.protocol === 'torrent' ? 'Torrent' : 'Usenet'}</Badge>
-            </span>
-          </span>
-        ),
-      },
-      ...(judged.size === 0
-        ? []
-        : [
-            {
-              id: 'verdict',
-              header: 'Verdict',
-              enableSorting: false,
-              cell: ({ row }: { row: { original: Release } }) => {
-                const judgement = judged.get(row.original.id);
-
-                if (judgement === undefined) {
-                  return null;
-                }
-
-                const isPicked = pickedId === row.original.id;
-
-                return (
-                  <span className="flex min-w-0 flex-col items-start gap-1">
-                    <Badge
-                      size="sm"
-                      tone={isPicked ? 'success' : judgement.isRejected ? 'danger' : 'quiet'}
-                    >
-                      {isPicked
-                        ? `Picked · ${judgement.score.toString()}`
-                        : judgement.isRejected
-                          ? 'Refused'
-                          : `Scores ${judgement.score.toString()}`}
-                    </Badge>
-
-                    <span className="text-xs text-text-muted">
-                      {(judgement.isRejected ? judgement.rejections : judgement.reasons).join('. ')}
-                    </span>
-                  </span>
-                );
-              },
-            },
-          ]),
-      {
-        id: 'size',
-        header: 'Size',
-        accessorFn: (release) => release.sizeBytes ?? -1,
-        cell: ({ row }) => (
-          <span className="whitespace-nowrap text-sm text-text">
-            {row.original.sizeBytes === null ? '—' : formatBytes(row.original.sizeBytes)}
-          </span>
-        ),
-      },
-      {
-        id: 'peers',
-        header: 'Peers',
-        accessorFn: (release) => release.seeders ?? release.grabs ?? -1,
-        cell: ({ row }) => (
-          <span className="whitespace-nowrap text-sm text-text">
-            {row.original.protocol === 'usenet'
-              ? row.original.grabs === null
-                ? '—'
-                : `${row.original.grabs.toString()} grabs`
-              : `${row.original.seeders?.toString() ?? '?'} / ${row.original.leechers?.toString() ?? '?'}`}
-          </span>
-        ),
-      },
-      {
-        id: 'age',
-        header: 'Age',
-        accessorFn: (release) =>
-          release.publishedAt === null ? 0 : Date.parse(release.publishedAt),
-        cell: ({ row }) => (
-          <span className="whitespace-nowrap text-sm text-text-muted">
-            {row.original.publishedAt === null
-              ? '—'
-              : (describeAge(row.original.publishedAt, now) ?? '—')}
-          </span>
-        ),
-      },
+      ...releaseColumns({ judged, pickedId, now }),
       {
         id: 'act',
         header: '',
@@ -476,17 +387,7 @@ const ReleaseSearchPanel = () => {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          <ul aria-label="What each indexer said" className="flex flex-wrap gap-2 px-4">
-            {found.data.indexers.map((report) => (
-              <li key={report.indexerId}>
-                <Badge size="sm" tone={report.problem === null ? 'quiet' : 'danger'}>
-                  {report.problem === null
-                    ? `${report.indexerName}: ${report.found.toString()} in ${(report.tookMs / 1000).toFixed(1)}s`
-                    : `${report.indexerName}: ${report.problem}`}
-                </Badge>
-              </li>
-            ))}
-          </ul>
+          <IndexerReportList reports={found.data.indexers} />
 
           <DataTable
             label="Releases found"

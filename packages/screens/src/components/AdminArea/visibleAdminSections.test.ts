@@ -20,6 +20,7 @@ describe('visibleAdminSections', () => {
     expect(ids).not.toContain('search');
     expect(ids).not.toContain('downloads');
     expect(ids).not.toContain('profiles');
+    expect(ids).not.toContain('requested');
   });
 
   it('leaves everything else as it was', () => {

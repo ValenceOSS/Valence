@@ -16,6 +16,8 @@ type DownloadClientForm = {
   password: string;
   apiKey: string;
   categories: DownloadCategories;
+  remotePath: string;
+  localPath: string;
   priority: string;
   isEnabled: boolean;
 };
@@ -38,6 +40,8 @@ const A_NEW_CLIENT: DownloadClientForm = {
   password: '',
   apiKey: '',
   categories: DEFAULT_DOWNLOAD_CATEGORIES,
+  remotePath: '',
+  localPath: '',
   priority: '25',
   isEnabled: true,
 };
@@ -83,6 +87,8 @@ const formFor = (client: DownloadClient | null): DownloadClientForm =>
         password: '',
         apiKey: '',
         categories: client.categories,
+        remotePath: client.remotePath,
+        localPath: client.localPath,
         priority: client.priority.toString(),
         isEnabled: client.isEnabled,
       };
@@ -126,6 +132,17 @@ const readDownloadClientForm = (form: DownloadClientForm): ReadDownloadClientFor
     return { draft: null, problem: 'Each kind needs a category of its own.' };
   }
 
+  const remotePath = form.remotePath.trim();
+  const localPath = form.localPath.trim();
+
+  if ((remotePath === '') !== (localPath === '')) {
+    return {
+      draft: null,
+      problem:
+        'Say where the downloads folder is both as the client sees it and as Valence does, or neither.',
+    };
+  }
+
   const priority = readWholeNumber(form.priority, 1, 50);
 
   if (priority === null) {
@@ -143,6 +160,8 @@ const readDownloadClientForm = (form: DownloadClientForm): ReadDownloadClientFor
       password: isSabnzbd ? '' : form.password,
       apiKey: isSabnzbd ? form.apiKey.trim() : '',
       categories,
+      remotePath,
+      localPath,
       priority,
       isEnabled: form.isEnabled,
     },

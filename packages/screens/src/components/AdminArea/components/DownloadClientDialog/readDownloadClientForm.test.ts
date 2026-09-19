@@ -41,6 +41,8 @@ describe('formFor', () => {
       password: '',
       apiKey: '',
       categories: { movies: 'films', shows: 'tv', music: 'music', books: 'books' },
+      remotePath: '',
+      localPath: '',
       priority: '3',
       isEnabled: false,
     });
@@ -65,11 +67,23 @@ describe('readDownloadClientForm', () => {
           music: 'valence-music',
           books: 'valence-books',
         },
+        remotePath: '',
+        localPath: '',
         priority: 25,
         isEnabled: true,
       },
       problem: null,
     });
+  });
+
+  it('reads where the client and Valence each see the downloads folder', () => {
+    expect(
+      readDownloadClientForm({
+        ...FILLED,
+        remotePath: ' /downloads ',
+        localPath: '/Users/marques/Downloads/Valence',
+      }).draft,
+    ).toMatchObject({ remotePath: '/downloads', localPath: '/Users/marques/Downloads/Valence' });
   });
 
   it('reads SABnzbd with its key, and no login', () => {
@@ -95,6 +109,10 @@ describe('readDownloadClientForm', () => {
     [
       { categories: { ...A_NEW_CLIENT.categories, shows: ' Valence-Films ' } },
       'Each kind needs a category of its own.',
+    ],
+    [
+      { remotePath: '/downloads' },
+      'Say where the downloads folder is both as the client sees it and as Valence does, or neither.',
     ],
     [{ priority: '0' }, 'Priority is a whole number from 1 to 50.'],
   ])('says what is wrong with %o', (change, problem) => {

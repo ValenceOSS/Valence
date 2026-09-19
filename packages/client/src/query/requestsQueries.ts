@@ -8,11 +8,17 @@ import { fetchCatalogue, fetchDefinition } from '@ValenceClient/requests/fetchDe
 import { fetchDownloadClients } from '@ValenceClient/requests/fetchDownloadClients';
 import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
 import { fetchProfiles } from '@ValenceClient/requests/fetchProfiles';
+import {
+  fetchMediaRequestReleases,
+  fetchMediaRequests,
+} from '@ValenceClient/requests/fetchMediaRequests';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 
 const REQUESTS = ['requests'] as const;
 
 const OVERVIEW_EVERY_MS = 30_000;
+
+const MEDIA_REQUESTS_EVERY_MS = 5000;
 
 /**
  * Whether this server takes requests, which only changes when the server is restarted with or
@@ -129,6 +135,34 @@ const profiles = () =>
     queryFn: () => fetchProfiles(),
   });
 
+/**
+ * The requests for films and series somebody may see, asked again every few seconds while they are
+ * on screen, so a request can be watched moving from being searched for to being ready.
+ *
+ * @returns The query.
+ */
+const mediaRequests = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media'],
+    queryFn: () => fetchMediaRequests(),
+    refetchInterval: MEDIA_REQUESTS_EVERY_MS,
+  });
+
+/**
+ * What a search by hand found for one request, asked once and kept while the page is open.
+ *
+ * @param id - Which request, or nothing before one is chosen.
+ * @returns The query.
+ */
+const mediaRequestReleases = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media', id, 'releases'],
+    queryFn: () => fetchMediaRequestReleases(id ?? ''),
+    enabled: id !== null,
+    staleTime: Infinity,
+    retry: false,
+  });
+
 const requestsQueries = {
   key: REQUESTS,
   availability,
@@ -140,6 +174,8 @@ const requestsQueries = {
   downloadClients,
   downloadQueue,
   profiles,
+  mediaRequests,
+  mediaRequestReleases,
 };
 
 export { requestsQueries };

@@ -9,6 +9,7 @@ import {
   SlidersHorizontalIcon,
   Database02Icon,
   Link01Icon,
+  Ticket01Icon,
   Settings02Icon,
   ShieldUserIcon,
   TaskDaily01Icon,
@@ -41,6 +42,7 @@ const ADMIN_SECTIONS = [
     label: 'Requests',
     items: [
       { id: 'requests', label: 'Overview', icon: InboxDownloadIcon },
+      { id: 'requested', label: 'Requested', icon: Ticket01Icon },
       { id: 'indexers', label: 'Indexers', icon: Database02Icon },
       { id: 'search', label: 'Search', icon: Search01Icon },
       { id: 'profiles', label: 'Profiles', icon: SlidersHorizontalIcon },
