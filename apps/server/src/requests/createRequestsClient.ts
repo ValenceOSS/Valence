@@ -24,6 +24,12 @@ import {
   QueuedDownloadSchema,
 } from '@ValenceContracts/schemas/DownloadQueue';
 import { readServerSentEvents } from '@ValenceServer/requests/readServerSentEvents';
+import { QualityProfileSchema } from '@ValenceContracts/schemas/QualityProfile';
+import type {
+  QualityProfile,
+  QualityProfileChange,
+  QualityProfileDraft,
+} from '@ValenceContracts/schemas/QualityProfile';
 import type {
   DownloadClient,
   DownloadClientChange,
@@ -170,6 +176,8 @@ const createRequestsClient = ({
 
   const withDownload = (id: string) => `/api/downloads/${encodeURIComponent(id)}`;
 
+  const withProfile = (id: string) => `/api/profiles/${encodeURIComponent(id)}`;
+
   return {
     readStatus: async (): Promise<RequestsReading> => {
       const answer = await call('/api/status', (body) => RequestsStatusSchema.parse(body));
@@ -264,6 +272,27 @@ const createRequestsClient = ({
         return { kind: 'silent', reason: `${address} did not answer` };
       }
     },
+
+    listProfiles: (): Promise<RequestsAnswer<QualityProfile[]>> =>
+      call('/api/profiles', (body) => z.array(QualityProfileSchema).parse(body)),
+
+    addProfile: (draft: QualityProfileDraft): Promise<RequestsAnswer<QualityProfile>> =>
+      call('/api/profiles', (body) => QualityProfileSchema.parse(body), {
+        method: 'POST',
+        body: draft,
+      }),
+
+    changeProfile: (
+      id: string,
+      change: QualityProfileChange,
+    ): Promise<RequestsAnswer<QualityProfile>> =>
+      call(withProfile(id), (body) => QualityProfileSchema.parse(body), {
+        method: 'PATCH',
+        body: change,
+      }),
+
+    removeProfile: (id: string): Promise<RequestsAnswer<null>> =>
+      call(withProfile(id), () => null, { method: 'DELETE' }),
 
     listClients: (): Promise<RequestsAnswer<DownloadClient[]>> =>
       call('/api/clients', (body) => z.array(DownloadClientSchema).parse(body)),

@@ -241,6 +241,10 @@ import { setupStatusRoute, setupCompleteRoute } from './routes/SetupRoute';
 import { JOB_DEFINITIONS, RESET_LIBRARY_JOB } from '@ValenceServer/jobs/jobDefinitions';
 import type { JobDefinition } from '@ValenceServer/jobs/jobDefinitions';
 import {
+  addQualityProfileRoute,
+  changeQualityProfileRoute,
+  listQualityProfilesRoute,
+  removeQualityProfileRoute,
   addDownloadClientRoute,
   changeDownloadClientRoute,
   listDownloadClientsRoute,
@@ -3742,6 +3746,46 @@ const createApp = ({
       ? { kind: 'refused', status: answer.status, error: answer.error }
       : answer;
   };
+
+  app.openapi(listQualityProfilesRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.listProfiles(),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(addQualityProfileRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.addProfile(context.req.valid('json')),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 201)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(changeQualityProfileRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.changeProfile(context.req.valid('param').id, context.req.valid('json')),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(removeQualityProfileRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.removeProfile(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.body(null, 204)
+      : context.json({ error: answer.error }, answer.status);
+  });
 
   app.openapi(listDownloadClientsRoute, async (context) => {
     const answer = await throughRequests(context.req.raw.headers, (client) => client.listClients());
