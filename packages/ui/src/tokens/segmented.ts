@@ -1,6 +1,6 @@
 const SEGMENTED = {
   track:
-    'valence-rail relative flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-md',
+    'valence-rail relative isolate flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-md',
   trackSizes: {
     xs: 'p-[3px]',
     sm: 'p-[3px]',
