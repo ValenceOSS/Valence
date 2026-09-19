@@ -145,10 +145,29 @@ services:
       # http://gluetun:8000 with the vpn profile below.
       VPN_URL: ${VPN_URL:-}
       VPN_API_KEY: ${VPN_API_KEY:-}
+
+      # Optional: FlareSolverr, for indexers whose sites sit behind a Cloudflare
+      # check. http://flaresolverr:8191 with the flaresolverr profile below.
+      FLARESOLVERR_URL: ${FLARESOLVERR_URL:-}
+
+      # Where the indexer catalogue comes from: a GitHub repository of Cardigann
+      # definitions, fetched daily. Prowlarr's, unless you point it elsewhere.
+      DEFINITIONS_REPOSITORY: ${DEFINITIONS_REPOSITORY:-Prowlarr/Indexers}
+      DEFINITIONS_BRANCH: ${DEFINITIONS_BRANCH:-master}
+      DEFINITIONS_PATH: ${DEFINITIONS_PATH:-definitions/v11}
       TZ: ${TZ:-UTC}
     volumes:
       - ${MEDIA_PATH:?set MEDIA_PATH, e.g. /mnt/tank/media}:/media
       - ${DOWNLOADS_PATH:-./downloads}:/downloads
+
+  # Optional: solves Cloudflare's browser check for indexers behind one,
+  # started with the flaresolverr profile.
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    profiles: [flaresolverr]
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
 
   # Optional: a VPN for your download client, started with the vpn profile.
   # Put the download client on its network with `network_mode: service:gluetun`

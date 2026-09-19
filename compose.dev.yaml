@@ -82,12 +82,24 @@ services:
       REQUESTS_SECRET: ${REQUESTS_SECRET:-}
       VPN_URL: ${VPN_URL:-}
       VPN_API_KEY: ${VPN_API_KEY:-}
+      FLARESOLVERR_URL: ${FLARESOLVERR_URL:-}
+      DEFINITIONS_REPOSITORY: ${DEFINITIONS_REPOSITORY:-Prowlarr/Indexers}
+      DEFINITIONS_BRANCH: ${DEFINITIONS_BRANCH:-master}
+      DEFINITIONS_PATH: ${DEFINITIONS_PATH:-definitions/v11}
       TZ: ${TZ:-UTC}
     ports:
       - '8421:8421'
     volumes:
       - ${VALENCE_MEDIA_PATH:-./media}:/media
       - ${VALENCE_DOWNLOADS_PATH:-./downloads}:/downloads
+
+  # Only with `--profile flaresolverr`, and FLARESOLVERR_URL=http://flaresolverr:8191.
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    profiles: [flaresolverr]
+    restart: unless-stopped
+    ports:
+      - '8191:8191'
 
 volumes:
   db-data:
