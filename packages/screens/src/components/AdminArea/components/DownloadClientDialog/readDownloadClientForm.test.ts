@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { A_NEW_CLIENT, formFor, readDownloadClientForm } from './readDownloadClientForm';
+import {
+  A_NEW_CLIENT,
+  choosingKind,
+  formFor,
+  readDownloadClientForm,
+} from './readDownloadClientForm';
 import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
 
 const KEPT: DownloadClient = {
@@ -20,8 +25,9 @@ const KEPT: DownloadClient = {
 const FILLED = { ...A_NEW_CLIENT, name: ' qBittorrent ', url: ' http://qbittorrent:8080 ' };
 
 describe('formFor', () => {
-  it('opens empty for a new client', () => {
+  it('opens on a qBittorrent at its usual address for a new client', () => {
     expect(formFor(null)).toEqual(A_NEW_CLIENT);
+    expect(A_NEW_CLIENT).toMatchObject({ name: 'qBittorrent', url: 'http://qbittorrent:8080' });
   });
 
   it('opens on a kept client, with its password left for somebody to type', () => {
@@ -82,5 +88,29 @@ describe('readDownloadClientForm', () => {
     [{ priority: '0' }, 'Priority is a whole number from 1 to 50.'],
   ])('says what is wrong with %o', (change, problem) => {
     expect(readDownloadClientForm({ ...FILLED, ...change })).toEqual({ draft: null, problem });
+  });
+});
+
+describe('choosingKind', () => {
+  it('brings the kind’s name and usual address in place of the last kind’s', () => {
+    expect(choosingKind(A_NEW_CLIENT, 'sabnzbd')).toEqual({
+      kind: 'sabnzbd',
+      name: 'SABnzbd',
+      url: 'http://sabnzbd:8080',
+    });
+    expect(choosingKind({ ...A_NEW_CLIENT, name: ' ', url: '' }, 'nzbget')).toEqual({
+      kind: 'nzbget',
+      name: 'NZBGet',
+      url: 'http://nzbget:6789',
+    });
+  });
+
+  it('keeps a name and address somebody typed', () => {
+    expect(
+      choosingKind(
+        { ...A_NEW_CLIENT, name: 'Seedbox', url: 'http://seedbox:9091' },
+        'transmission',
+      ),
+    ).toEqual({ kind: 'transmission', name: 'Seedbox', url: 'http://seedbox:9091' });
   });
 });

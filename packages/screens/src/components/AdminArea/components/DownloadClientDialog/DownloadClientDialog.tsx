@@ -14,18 +14,15 @@ import {
   tryDownloadClient,
 } from '@ValenceClient/requests/fetchDownloadClients';
 import { TryItButton } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton';
-import { formFor, readDownloadClientForm } from './readDownloadClientForm';
-import type { DownloadClientKind } from '@ValenceContracts/schemas/DownloadClient';
+import {
+  CLIENT_KINDS,
+  choosingKind,
+  formFor,
+  readDownloadClientForm,
+} from './readDownloadClientForm';
 import type { TryVerdict } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton.types';
 import type { DownloadClientForm } from './readDownloadClientForm';
 import type { DownloadClientDialogProps } from './DownloadClientDialog.types';
-
-const KINDS: readonly { id: DownloadClientKind; label: string; address: string }[] = [
-  { id: 'qbittorrent', label: 'qBittorrent', address: 'http://qbittorrent:8080' },
-  { id: 'transmission', label: 'Transmission', address: 'http://transmission:9091' },
-  { id: 'sabnzbd', label: 'SABnzbd', address: 'http://sabnzbd:8080' },
-  { id: 'nzbget', label: 'NZBGet', address: 'http://nzbget:6789' },
-];
 
 /**
  * Adds a download client, or changes one already kept: where it is, how to log in to it, and the
@@ -56,7 +53,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
     setVerdict(null);
   }
 
-  const kind = KINDS.find((one) => one.id === form.kind);
+  const kind = CLIENT_KINDS.find((one) => one.id === form.kind);
   const isSabnzbd = form.kind === 'sabnzbd';
 
   const change = (next: Partial<DownloadClientForm>) => {
@@ -147,19 +144,13 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
             <SegmentedRow
               label="Client"
               size="sm"
-              items={KINDS}
+              items={CLIENT_KINDS}
               value={form.kind}
               onSelect={(next) => {
-                const chosen = KINDS.find((one) => one.id === next);
+                const chosen = CLIENT_KINDS.find((one) => one.id === next);
 
                 if (chosen !== undefined) {
-                  change({
-                    kind: chosen.id,
-                    name:
-                      form.name === '' || KINDS.some((one) => one.label === form.name)
-                        ? chosen.label
-                        : form.name,
-                  });
+                  change(choosingKind(form, chosen.id));
                 }
               }}
             />

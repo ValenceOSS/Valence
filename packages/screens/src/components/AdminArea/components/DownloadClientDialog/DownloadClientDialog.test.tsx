@@ -57,7 +57,8 @@ const open = (client: DownloadClient | null = null) => {
  * Fills in where a new client is.
  */
 const fillIn = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.type(screen.getByRole('textbox', { name: /Address/ }), 'http://qbittorrent:8080');
+  await user.clear(screen.getByRole('textbox', { name: /Address/ }));
+  await user.type(screen.getByRole('textbox', { name: /Address/ }), 'http://localhost:18080');
 };
 
 describe('DownloadClientDialog', () => {
@@ -78,7 +79,7 @@ describe('DownloadClientDialog', () => {
     expect(addDownloadClient).toHaveBeenCalledWith({
       kind: 'qbittorrent',
       name: 'qBittorrent',
-      url: 'http://qbittorrent:8080',
+      url: 'http://localhost:18080',
       username: 'admin',
       password: 'secret',
       apiKey: '',
@@ -96,6 +97,7 @@ describe('DownloadClientDialog', () => {
     await user.click(screen.getByRole('button', { name: 'SABnzbd' }));
 
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('SABnzbd');
+    expect(screen.getByRole('textbox', { name: /Address/ })).toHaveValue('http://sabnzbd:8080');
     expect(screen.getByLabelText(/API key/)).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: /Username/ })).not.toBeInTheDocument();
 
@@ -110,10 +112,13 @@ describe('DownloadClientDialog', () => {
 
     open();
 
+    await user.clear(screen.getByRole('textbox', { name: 'Name' }));
     await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Seedbox');
+    await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'NZBGet' }));
 
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Seedbox');
+    expect(screen.getByRole('textbox', { name: /Address/ })).toHaveValue('http://localhost:18080');
   });
 
   it('shows a tick once it answered', async () => {
@@ -208,6 +213,7 @@ describe('DownloadClientDialog', () => {
 
     open();
 
+    await user.clear(screen.getByRole('textbox', { name: 'Name' }));
     await user.click(screen.getByRole('button', { name: 'Try it' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Give the client a name.');
