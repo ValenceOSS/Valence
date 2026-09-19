@@ -23,6 +23,12 @@ const ACCOUNT = {
   banReason: null,
   position: 0,
   isAdministrator: true,
+  face: {
+    name: 'Marques',
+    colour: '#3a8ee8',
+    avatar: { kind: 'initial' },
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
   roles: ['Admin'],
 };
 
@@ -55,6 +61,22 @@ describe('reading the accounts', () => {
 
     await expect(fetchAccounts()).resolves.toMatchObject([{ name: 'Marques' }]);
     expect(lastCall().url).toBe('/api/admin/accounts');
+  });
+
+  it('reads the household the server actually sends as an account face', async () => {
+    answering({ accounts: [ACCOUNT] });
+
+    const [read] = await fetchAccounts();
+
+    expect(read?.face).toMatchObject({ name: 'Marques', colour: '#3a8ee8' });
+  });
+
+  it('reads an account with no face at all', async () => {
+    answering({ accounts: [{ ...ACCOUNT, face: null }] });
+
+    const [read] = await fetchAccounts();
+
+    expect(read?.face).toBeNull();
   });
 
   it('carries a ban and its reason through, since that is what the page shows', async () => {

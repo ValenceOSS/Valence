@@ -7,7 +7,7 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { clearException, setException } from '@ValenceClient/admin/fetchLibraryAccess';
 import { hidingSubjectOf } from '@ValenceClient/library/hidingSubjectOf';
 import { useShell } from '@ValenceClient/shell/useShell';
-import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
+import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import type { DecideForSomebodyProps } from './DecideForSomebody.types';
 
 const CHOICES = [
@@ -88,7 +88,11 @@ const DecideForSomebody = ({ about, onClose }: DecideForSomebodyProps) => {
                   {(account.name.trim()[0] ?? '?').toUpperCase()}
                 </span>
               ) : (
-                <ProfileFace profile={account.face} className="size-9 shrink-0 rounded-full" />
+                <HouseholdFace
+                  household={account.face}
+                  accountId={account.id}
+                  className="size-9 shrink-0 rounded-full"
+                />
               )}
 
               <span className="flex min-w-0 flex-1 flex-col">

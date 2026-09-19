@@ -3,7 +3,7 @@ import { Search01Icon } from '@hugeicons/core-free-icons';
 import { Icon } from '@ValenceUI/Icon';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
-import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
+import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import type { RoleMembersProps } from './RoleMembers.types';
 
 /**
@@ -56,7 +56,11 @@ const RoleMembers = ({ accounts, heldIds, onToggle }: RoleMembersProps) => {
                     {(account.name.trim()[0] ?? '?').toUpperCase()}
                   </span>
                 ) : (
-                  <ProfileFace profile={account.face} className="size-8 shrink-0 rounded-full" />
+                  <HouseholdFace
+                    household={account.face}
+                    accountId={account.id}
+                    className="size-8 shrink-0 rounded-full"
+                  />
                 )}
 
                 <span className="flex min-w-0 flex-col">
