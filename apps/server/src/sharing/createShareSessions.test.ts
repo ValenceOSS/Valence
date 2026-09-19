@@ -65,6 +65,39 @@ describe('createShareSessions', () => {
     expect(sessions.isClaimedBy('session-1', 'share-1')).toBe(false);
   });
 
+  it('keeps the claim while a player that started twice has only let go once', () => {
+    const sessions = createShareSessions();
+
+    sessions.claim('session-1', 'share-1');
+    sessions.claim('session-1', 'share-1');
+    sessions.release('session-1', 'share-1');
+
+    expect(sessions.isClaimedBy('session-1', 'share-1')).toBe(true);
+  });
+
+  it('lets the session go once the last of them has', () => {
+    const sessions = createShareSessions();
+
+    sessions.claim('session-1', 'share-1');
+    sessions.claim('session-1', 'share-1');
+    sessions.release('session-1', 'share-1');
+    sessions.release('session-1', 'share-1');
+
+    expect(sessions.isClaimedBy('session-1', 'share-1')).toBe(false);
+  });
+
+  it('counts each share separately, so one letting go says nothing about the other', () => {
+    const sessions = createShareSessions();
+
+    sessions.claim('session-1', 'share-1');
+    sessions.claim('session-1', 'share-1');
+    sessions.claim('session-1', 'share-2');
+    sessions.release('session-1', 'share-2');
+
+    expect(sessions.isClaimedBy('session-1', 'share-1')).toBe(true);
+    expect(sessions.isClaimedBy('session-1', 'share-2')).toBe(false);
+  });
+
   it('keeps one session’s claims apart from another’s', () => {
     const sessions = createShareSessions();
 

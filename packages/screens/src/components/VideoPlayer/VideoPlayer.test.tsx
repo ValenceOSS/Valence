@@ -385,7 +385,7 @@ describe('VideoPlayer', () => {
     attachMock.mockRejectedValue({ category: 4, code: 4032 });
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('did not arrive');
+    expect(await screen.findByRole('alert')).toHaveTextContent('could not be loaded');
   });
 
   it('stops the session and tears down the engine when closed', async () => {

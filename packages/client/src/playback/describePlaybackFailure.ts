@@ -14,6 +14,14 @@ const PlaybackEngineErrorSchema = z.object({
  * claiming more than the engine actually reported. A wrong explanation is worse than a vague one:
  * somebody told their connection is at fault will go and restart a router that was working.
  *
+ * Everything that is not a decode failure says only that the stream did not load, because that is
+ * all that is known. It used to add that the server may have failed to convert the file, which sent
+ * somebody hunting a transcode that had in fact finished perfectly: a guest was being refused the
+ * segments, and the player cannot tell a refusal from a conversion that never happened. The two
+ * engines do not even agree on what the numbers mean — these are shaka's categories and the media
+ * element's own error codes, mapped onto the same few integers — so naming a cause is guesswork
+ * dressed as a diagnosis.
+ *
  * @param category - The engine's own category for the failure.
  * @returns What to tell the viewer.
  */
@@ -23,7 +31,7 @@ const describePlaybackFailure = (category: number | null): string => {
   }
 
   if (category === NETWORK || category === MANIFEST || category === STREAMING) {
-    return 'The stream did not arrive. The server may have failed to convert this file.';
+    return 'The stream could not be loaded. Try again, and say so if it keeps happening.';
   }
 
   return 'The stream could not be played.';
