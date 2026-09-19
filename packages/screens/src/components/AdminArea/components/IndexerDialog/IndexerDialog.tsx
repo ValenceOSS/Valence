@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import { Cancel01Icon, Tick02Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -50,11 +50,14 @@ const IndexerDialog = ({ isOpen, indexer, start = null, onClose, onSaved }: Inde
   const [tried, setTried] = useState<IndexerTest | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [isWorking, setIsWorking] = useState(false);
+  const [isTrying, setIsTrying] = useState(false);
+  const [verdict, setVerdict] = useState<'working' | 'failing' | null>(null);
 
   if (shownFor.indexer !== indexer || shownFor.start !== start) {
     setShownFor({ indexer, start });
     setForm(formFor(indexer, start));
     setTried(null);
+    setVerdict(null);
     setProblem(null);
   }
 
@@ -72,11 +75,13 @@ const IndexerDialog = ({ isOpen, indexer, start = null, onClose, onSaved }: Inde
 
   const change = (next: Partial<IndexerForm>) => {
     setForm((current) => ({ ...current, ...next }));
+    setVerdict(null);
     setProblem(null);
   };
 
   const setSetting = (name: string, value: string | boolean) => {
     setForm((current) => ({ ...current, settings: { ...current.settings, [name]: value } }));
+    setVerdict(null);
     setProblem(null);
   };
 
@@ -108,19 +113,34 @@ const IndexerDialog = ({ isOpen, indexer, start = null, onClose, onSaved }: Inde
     }
 
     setIsWorking(true);
+    setIsTrying(true);
     setTried(null);
+    setVerdict(null);
 
     void tryIndexer(draft, indexer?.id)
       .then(({ value, refusal }) => {
         setTried(value);
-        setProblem(refusal?.message ?? null);
 
-        if (value?.captcha === null) {
-          setForm((current) => ({ ...current, settings: { ...current.settings, CAPTCHA: '' } }));
+        if (value === null) {
+          setVerdict('failing');
+          setProblem(refusal?.message ?? 'It could not be tried.');
+
+          return;
         }
+
+        if (value.captcha !== null) {
+          setProblem(null);
+
+          return;
+        }
+
+        setVerdict(value.isWorking ? 'working' : 'failing');
+        setProblem(value.isWorking ? null : (value.problem ?? 'It did not answer.'));
+        setForm((current) => ({ ...current, settings: { ...current.settings, CAPTCHA: '' } }));
       })
       .finally(() => {
         setIsWorking(false);
+        setIsTrying(false);
       });
   };
 
@@ -154,11 +174,12 @@ const IndexerDialog = ({ isOpen, indexer, start = null, onClose, onSaved }: Inde
   };
 
   const toggleCategory = (id: number) => {
-    change({
-      categories: form.categories.includes(id)
-        ? form.categories.filter((one) => one !== id)
-        : [...form.categories, id],
-    });
+    setForm((current) => ({
+      ...current,
+      categories: current.categories.includes(id)
+        ? current.categories.filter((one) => one !== id)
+        : [...current.categories, id],
+    }));
   };
 
   const title =
@@ -373,18 +394,13 @@ const IndexerDialog = ({ isOpen, indexer, start = null, onClose, onSaved }: Inde
           </FormField>
         )}
 
-        {tried === null || tried.captcha !== null ? null : (
-          <p
-            role="status"
-            className={tried.isWorking ? 'text-sm text-success' : 'text-sm text-danger'}
-          >
-            {tried.isWorking
-              ? `It answered, and can search ${
-                  (tried.capabilities?.modes ?? []).map((one) => one.mode).join(', ') || 'by words'
-                }.`
-              : (tried.problem ?? 'It did not answer.')}
-          </p>
-        )}
+        <p role="status" className="sr-only">
+          {verdict === 'working' && tried !== null
+            ? `It answered, and can search ${
+                (tried.capabilities?.modes ?? []).map((one) => one.mode).join(', ') || 'by words'
+              }.`
+            : ''}
+        </p>
       </DialogContent>
 
       <DialogFooter>
@@ -398,7 +414,13 @@ const IndexerDialog = ({ isOpen, indexer, start = null, onClose, onSaved }: Inde
           Cancel
         </Button>
 
-        <Button variant="secondary" disabled={isWorking} onClick={tryIt}>
+        <Button variant="secondary" disabled={isWorking} isLoading={isTrying} onClick={tryIt}>
+          {verdict === null || isTrying ? null : (
+            <Icon
+              of={verdict === 'working' ? Tick02Icon : Cancel01Icon}
+              className={verdict === 'working' ? 'text-success' : 'text-danger'}
+            />
+          )}
           Try it
         </Button>
 
