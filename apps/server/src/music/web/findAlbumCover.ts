@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { quotedForMusicBrainz } from './quotedForMusicBrainz';
 import { tidyAlbumTitle } from './tidyAlbumTitle';
 import type { MusicWeb } from './createMusicWeb';
 
@@ -9,15 +10,6 @@ const ReleaseGroupsSchema = z.object({
     .array(z.object({ id: z.string().min(1), score: z.number().catch(0) }))
     .catch([]),
 });
-
-/**
- * Quotes a name for a MusicBrainz search, so a title with quotation marks or a backslash in it is
- * searched for as it is rather than read as part of the query.
- *
- * @param name - The name.
- * @returns It quoted.
- */
-const quoted = (name: string): string => `"${name.replace(/["\\]/g, '\\$&')}"`;
 
 type AlbumToFind = {
   title: string;
@@ -56,7 +48,7 @@ const findAlbumCover = async (web: MusicWeb, album: AlbumToFind): Promise<Uint8A
   let best: { id: string } | undefined;
 
   for (const title of titles) {
-    const query = `releasegroup:${quoted(title)} AND artist:${quoted(album.artistName)}`;
+    const query = `releasegroup:${quotedForMusicBrainz(title)} AND artist:${quotedForMusicBrainz(album.artistName)}`;
     const found = ReleaseGroupsSchema.safeParse(
       await web.json(
         `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(query)}&fmt=json&limit=3`,
