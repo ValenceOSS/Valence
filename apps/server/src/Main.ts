@@ -25,6 +25,7 @@ import { createRealtimeClock } from '@ValenceServer/realtime/createRealtimeClock
 import { createEntitlements } from '@ValenceServer/realtime/createEntitlements';
 import { watchPermissionChanges } from '@ValenceServer/realtime/watchPermissionChanges';
 import { relayMonitor } from '@ValenceServer/realtime/relayMonitor';
+import { relayDownloads } from '@ValenceServer/requests/relayDownloads';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
 import { createLogger } from '@ValenceServer/logging/createLogger';
 import { createDatabaseLogStore } from '@ValenceServer/logging/createDatabaseLogStore';
@@ -2419,6 +2420,54 @@ void relayMonitor({
   retryMs: MONITOR_RETRY_MS,
   keepGoing: () => true,
 });
+
+if (requestsClient !== null) {
+  let isDownloadsHeard = false;
+
+  realtime.onHeard('downloads', (isHeard) => {
+    isDownloadsHeard = isHeard;
+
+    void requestsClient.watchDownloads(isHeard);
+  });
+
+  void relayDownloads({
+    stream: (onFrame, signal) => requestsClient.streamDownloads(onFrame, signal),
+    onQueue: (queue) => {
+      realtime.publish('downloads', queue, { kind: 'everyone' });
+    },
+    onEvent: (event) => {
+      if (event.kind === 'started') {
+        log.info('requests', `sent ${event.title} to ${event.clientName}`);
+
+        void events.publish({
+          event: 'requests.downloadStarted',
+          data: { title: event.title, client: event.clientName },
+        });
+
+        return;
+      }
+
+      const problem = event.problem ?? 'no reason given';
+
+      log.warn('requests', `${event.title} failed in ${event.clientName} — ${problem}`);
+
+      void events.publish({
+        event: 'requests.downloadFailed',
+        data: { title: event.title, client: event.clientName, problem },
+      });
+    },
+    acknowledge: async (ids) => {
+      await requestsClient.acknowledgeDownloadEvents(ids);
+    },
+    onConnected: () => {
+      void requestsClient.watchDownloads(isDownloadsHeard);
+    },
+    onLost: () => undefined,
+    wait: (afterMs) => new Promise((resolve) => setTimeout(resolve, afterMs)),
+    retryMs: MONITOR_RETRY_MS,
+    keepGoing: () => true,
+  });
+}
 
 const WEB_ROOT = './apps/web/dist';
 

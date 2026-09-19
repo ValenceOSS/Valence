@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createRequestsClient } from './createRequestsClient';
+import type { DownloadStreamFrame } from '@ValenceContracts/schemas/DownloadQueue';
 
 const A_SECRET = 'a-secret-long-enough-to-be-worth-keeping';
 
@@ -359,6 +360,239 @@ describe('createRequestsClient', () => {
         kind: 'silent',
         reason: 'http://requests:8421 did not answer',
       });
+    });
+  });
+});
+
+describe('createRequestsClient with download clients', () => {
+  const A_CLIENT = {
+    id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+    name: 'qBittorrent',
+    kind: 'qbittorrent' as const,
+    url: 'http://qbittorrent:8080',
+    username: 'admin',
+    hasPassword: true,
+    hasApiKey: false,
+    category: 'valence',
+    priority: 25,
+    isEnabled: true,
+    createdAt: '2026-09-19T00:00:00.000Z',
+    updatedAt: '2026-09-19T00:00:00.000Z',
+  };
+
+  const A_DOWNLOAD = {
+    id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+    clientId: A_CLIENT.id,
+    clientName: 'qBittorrent',
+    protocol: 'torrent' as const,
+    title: 'Dune',
+    indexerName: null,
+    state: 'queued' as const,
+    problem: null,
+    progress: 0,
+    sizeBytes: null,
+    doneBytes: null,
+    downloadBytesPerSecond: null,
+    uploadBytesPerSecond: null,
+    secondsLeft: null,
+    seeds: null,
+    peers: null,
+    sentAt: '2026-09-19T00:00:00.000Z',
+    finishedAt: null,
+  };
+
+  const A_QUEUE = { clients: [], downloads: [A_DOWNLOAD], checkedAt: null };
+
+  const A_TEST = { isWorking: true, problem: null, version: 'v5.0.1' };
+
+  const A_DRAFT = {
+    name: 'qBittorrent',
+    kind: 'qbittorrent' as const,
+    url: 'http://qbittorrent:8080',
+  };
+
+  /**
+   * A client over a service that answers every call the one way.
+   */
+  const aClient = (status: number, body: object | null) => {
+    const fetch = vi.fn((url: string, init: { method?: string }) => {
+      void url;
+      void init;
+
+      return Promise.resolve(new Response(body === null ? null : JSON.stringify(body), { status }));
+    });
+
+    return {
+      fetch,
+      client: createRequestsClient({ address: 'http://requests:8421', secret: A_SECRET, fetch }),
+    };
+  };
+
+  /**
+   * Where each call went, and how.
+   */
+  const addressed = (fetch: ReturnType<typeof aClient>['fetch']) =>
+    fetch.mock.calls.map(([url, init]) => `${init.method ?? 'GET'} ${url}`);
+
+  it('keeps, changes, tests and removes download clients', async () => {
+    const listing = aClient(200, [A_CLIENT]);
+
+    expect(await listing.client.listClients()).toEqual({ kind: 'answered', value: [A_CLIENT] });
+
+    const keeping = aClient(201, A_CLIENT);
+
+    expect((await keeping.client.addClient(A_DRAFT)).kind).toBe('answered');
+    expect((await keeping.client.changeClient(A_CLIENT.id, { priority: 3 })).kind).toBe('answered');
+
+    const testing = aClient(200, A_TEST);
+
+    expect(await testing.client.testClient(A_CLIENT.id)).toEqual({
+      kind: 'answered',
+      value: A_TEST,
+    });
+    expect((await testing.client.tryClient(A_DRAFT)).kind).toBe('answered');
+    expect((await testing.client.tryClient(A_DRAFT, A_CLIENT.id)).kind).toBe('answered');
+
+    const removing = aClient(204, null);
+
+    expect(await removing.client.removeClient(A_CLIENT.id)).toEqual({
+      kind: 'answered',
+      value: null,
+    });
+    expect([
+      ...addressed(keeping.fetch),
+      ...addressed(testing.fetch),
+      ...addressed(removing.fetch),
+    ]).toEqual([
+      'POST http://requests:8421/api/clients',
+      `PATCH http://requests:8421/api/clients/${A_CLIENT.id}`,
+      `POST http://requests:8421/api/clients/${A_CLIENT.id}/test`,
+      'POST http://requests:8421/api/clients/try',
+      `POST http://requests:8421/api/clients/${A_CLIENT.id}/try`,
+      `DELETE http://requests:8421/api/clients/${A_CLIENT.id}`,
+    ]);
+  });
+
+  it('reads the queue, sends a release, and acts on a download', async () => {
+    expect(await aClient(200, A_QUEUE).client.downloads()).toEqual({
+      kind: 'answered',
+      value: A_QUEUE,
+    });
+
+    const acting = aClient(200, A_DOWNLOAD);
+
+    expect(
+      (
+        await acting.client.sendRelease({
+          indexerId: A_CLIENT.id,
+          url: 'magnet:?',
+          title: 'Dune',
+          protocol: 'torrent',
+        })
+      ).kind,
+    ).toBe('answered');
+    expect((await acting.client.pauseDownload(A_DOWNLOAD.id)).kind).toBe('answered');
+    expect((await acting.client.resumeDownload(A_DOWNLOAD.id)).kind).toBe('answered');
+
+    const quiet = aClient(204, null);
+
+    await quiet.client.removeDownload(A_DOWNLOAD.id, true);
+    await quiet.client.removeDownload(A_DOWNLOAD.id, false);
+    await quiet.client.watchDownloads(true);
+    await quiet.client.acknowledgeDownloadEvents([1, 2]);
+
+    expect([...addressed(acting.fetch), ...addressed(quiet.fetch)]).toEqual([
+      'POST http://requests:8421/api/downloads',
+      `POST http://requests:8421/api/downloads/${A_DOWNLOAD.id}/pause`,
+      `POST http://requests:8421/api/downloads/${A_DOWNLOAD.id}/resume`,
+      `DELETE http://requests:8421/api/downloads/${A_DOWNLOAD.id}?deleteData=true`,
+      `DELETE http://requests:8421/api/downloads/${A_DOWNLOAD.id}?deleteData=false`,
+      'POST http://requests:8421/api/downloads/watch',
+      'POST http://requests:8421/api/downloads/events/ack',
+    ]);
+  });
+
+  it('passes on why a release was not sent', async () => {
+    expect(
+      await aClient(400, {
+        error: 'No torrent client is set up and switched on',
+      }).client.sendRelease({
+        indexerId: A_CLIENT.id,
+        url: 'magnet:?',
+        title: 'Dune',
+        protocol: 'torrent',
+      }),
+    ).toEqual({
+      kind: 'refused',
+      status: 400,
+      error: 'No torrent client is set up and switched on',
+    });
+  });
+
+  describe('streaming the queue', () => {
+    /**
+     * A service whose stream says what it is given, then ends.
+     */
+    const streaming = (said: string, status = 200) =>
+      createRequestsClient({
+        address: 'http://requests:8421',
+        secret: A_SECRET,
+        fetch: () =>
+          Promise.resolve(
+            new Response(status === 200 ? said : null, {
+              status,
+              headers: { 'content-type': 'text/event-stream' },
+            }),
+          ),
+      });
+
+    it('hands on each frame of the stream, skipping what it cannot read', async () => {
+      const heard: DownloadStreamFrame[] = [];
+      const frame: DownloadStreamFrame = { kind: 'queue', queue: A_QUEUE };
+
+      expect(
+        await streaming(
+          `data: ${JSON.stringify(frame)}\n\ndata: not json\n\ndata: {"kind":"gossip"}\n\n`,
+        ).streamDownloads((read) => heard.push(read), new AbortController().signal),
+      ).toBe('http://requests:8421 closed the stream of downloads');
+      expect(heard).toEqual([frame]);
+    });
+
+    it('says why the stream could not be followed', async () => {
+      const signal = new AbortController().signal;
+
+      expect(await streaming('', 401).streamDownloads(() => undefined, signal)).toBe(
+        'http://requests:8421 answered 401',
+      );
+
+      const offline = createRequestsClient({
+        address: 'http://requests:8421',
+        secret: A_SECRET,
+        fetch: () => Promise.reject(new TypeError('offline')),
+      });
+
+      expect(await offline.streamDownloads(() => undefined, signal)).toBe(
+        'http://requests:8421 did not answer',
+      );
+
+      const breaking = createRequestsClient({
+        address: 'http://requests:8421',
+        secret: A_SECRET,
+        fetch: () =>
+          Promise.resolve(
+            new Response(
+              new ReadableStream({
+                start: (controller) => {
+                  controller.error(new Error('reset'));
+                },
+              }),
+            ),
+          ),
+      });
+
+      expect(await breaking.streamDownloads(() => undefined, signal)).toBe(
+        'http://requests:8421 stopped streaming the downloads',
+      );
     });
   });
 });

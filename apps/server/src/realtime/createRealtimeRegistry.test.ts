@@ -435,3 +435,107 @@ describe('a registry asked about connections it does not hold', () => {
     expect(world.registry.topicsOf('tab')).toEqual([]);
   });
 });
+
+describe('a registry telling a producer whether anybody listens', () => {
+  it('says when a topic gains its first listener and loses its last', async () => {
+    const world = createWorld(new Map([['admin', ['requests.manage']]]));
+    const first = createTab('first', 'admin');
+    const second = createTab('second', 'admin');
+    const heard: boolean[] = [];
+
+    world.registry.onHeard('downloads', (isHeard) => heard.push(isHeard));
+    world.registry.open(first.connection);
+    world.registry.open(second.connection);
+    await world.registry.subscribe('first', ['downloads']);
+    await world.registry.subscribe('second', ['downloads', 'media']);
+    world.registry.unsubscribe('first', ['downloads']);
+    world.registry.close('second');
+
+    expect(heard).toStrictEqual([true, false]);
+  });
+
+  it('knows a topic is already heard when asked late, and stops telling one who has gone', async () => {
+    const world = createWorld(new Map([['admin', ['requests.manage']]]));
+    const tab = createTab('tab', 'admin');
+    const heard: boolean[] = [];
+
+    world.registry.open(tab.connection);
+    await world.registry.subscribe('tab', ['downloads']);
+
+    const stop = world.registry.onHeard('downloads', (isHeard) => heard.push(isHeard));
+
+    world.registry.onHeard('downloads', () => undefined);
+    stop();
+    world.registry.close('tab');
+
+    expect(heard).toStrictEqual([]);
+  });
+
+  it('says a topic is no longer heard when the permission for it goes', async () => {
+    const granted = new Map<string, Permission[]>([['admin', ['requests.manage']]]);
+    const world = createWorld(granted);
+    const tab = createTab('tab', 'admin');
+    const heard: boolean[] = [];
+
+    world.registry.onHeard('downloads', (isHeard) => heard.push(isHeard));
+    world.registry.open(tab.connection);
+    await world.registry.subscribe('tab', ['downloads']);
+
+    granted.set('admin', []);
+    await world.registry.recheck('admin');
+
+    expect(heard).toStrictEqual([true, false]);
+  });
+
+  it('says a topic is no longer heard when the permission goes between events', async () => {
+    const granted = new Map<string, Permission[]>([['admin', ['requests.manage']]]);
+    const world = createWorld(granted);
+    const tab = createTab('tab', 'admin');
+    const heard: boolean[] = [];
+
+    world.registry.onHeard('downloads', (isHeard) => heard.push(isHeard));
+    world.registry.open(tab.connection);
+    await world.registry.subscribe('tab', ['downloads']);
+
+    granted.set('admin', []);
+    world.registry.publish('downloads', { clients: [] }, { kind: 'everyone' });
+    world.clock.tick();
+    await world.registry.drain();
+
+    expect(heard).toStrictEqual([true, false]);
+  });
+
+  it('says a topic is no longer heard when its only listener’s socket dies, or the registry stops', async () => {
+    const world = createWorld(new Map([['admin', ['requests.manage']]]));
+    const heard: boolean[] = [];
+    let isAlive = true;
+
+    world.registry.onHeard('downloads', (isHeard) => heard.push(isHeard));
+    world.registry.open({
+      id: 'dying',
+      accountId: 'admin',
+      profileId: null,
+      deliver: () => {
+        if (!isAlive) {
+          throw new Error('socket is gone');
+        }
+      },
+    });
+    await world.registry.subscribe('dying', ['downloads']);
+
+    isAlive = false;
+    world.registry.publish('downloads', { clients: [] }, { kind: 'everyone' });
+    world.clock.tick();
+    await world.registry.drain();
+
+    expect(heard).toStrictEqual([true, false]);
+
+    const stopping = createTab('tab', 'admin');
+
+    world.registry.open(stopping.connection);
+    await world.registry.subscribe('tab', ['downloads']);
+    world.registry.stop();
+
+    expect(heard).toStrictEqual([true, false, true, false]);
+  });
+});
