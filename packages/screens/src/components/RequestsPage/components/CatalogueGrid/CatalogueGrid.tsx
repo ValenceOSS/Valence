@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { motion } from 'motion/react';
 import { Compass01Icon } from '@hugeicons/core-free-icons';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { NothingHere } from '@ValenceUI/NothingHere';
-import { RevealItem } from '@ValenceUI/RevealItem';
 import { Spinner } from '@ValenceUI/Spinner';
-import { groupVariants } from '@ValenceUI/animations/reveal';
+import { VirtualGrid } from '@ValenceUI/VirtualGrid';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { describeStanding } from '@ValenceScreens/components/AskableDialog/describeStanding';
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import type { CatalogueGridProps } from './CatalogueGrid.types';
 
-const COLUMNS = 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6';
+const LEAST_CARD_WIDTH = 170;
+
+const POSTER_ROW_HEIGHT = 330;
 
 const BEFORE_THE_END = '0px 0px 800px 0px';
 
@@ -87,33 +87,38 @@ const CatalogueGrid = ({ browsing, onAsk }: CatalogueGridProps) => {
 
   return (
     <div className="flex flex-col gap-8">
-      <motion.ul
-        variants={groupVariants}
-        initial="hidden"
-        animate="shown"
-        className={`grid gap-x-4 gap-y-8 ${COLUMNS}`}
+      <VirtualGrid
+        count={titles.length}
+        label="What there is to ask for"
+        leastCardWidth={LEAST_CARD_WIDTH}
+        rowHeight={POSTER_ROW_HEIGHT}
       >
-        {titles.map((title, at) => {
+        {(at) => {
+          const title = titles[at];
+
+          if (title === undefined) {
+            return null;
+          }
+
           const standing = describeStanding(title.standing);
 
           return (
-            <RevealItem key={`${title.kind}:${title.id}`} index={at}>
-              <MediaCard
-                title={title.title}
-                subtitle={title.year?.toString() ?? ''}
-                badges={[
-                  REQUEST_KIND_NAMES[title.kind],
-                  ...(standing === null ? [] : [standing.label]),
-                ]}
-                {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
-                onSelect={() => {
-                  onAsk(askingOf(title));
-                }}
-              />
-            </RevealItem>
+            <MediaCard
+              key={`${title.kind}:${title.id}`}
+              title={title.title}
+              subtitle={title.year?.toString() ?? ''}
+              badges={[
+                REQUEST_KIND_NAMES[title.kind],
+                ...(standing === null ? [] : [standing.label]),
+              ]}
+              {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
+              onSelect={() => {
+                onAsk(askingOf(title));
+              }}
+            />
           );
-        })}
-      </motion.ul>
+        }}
+      </VirtualGrid>
 
       <div ref={setEnd} className="flex justify-center">
         {isFetchingNextPage ? <Spinner label="Reading more" /> : null}
