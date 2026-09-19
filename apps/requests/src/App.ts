@@ -19,6 +19,7 @@ type CreateAppOptions = {
   isDatabaseUp: () => Promise<boolean>;
   indexers: IndexerService;
   definitions: Pick<DefinitionCatalogue, 'catalogue' | 'detail' | 'refresh'>;
+  downloads?: Hono;
 };
 
 const NO_SUCH_INDEXER = { error: 'No such indexer.' };
@@ -33,6 +34,7 @@ const NO_SUCH_INDEXER = { error: 'No such indexer.' };
  * @param isDatabaseUp - Whether the database answers.
  * @param indexers - The indexers, and searching them.
  * @param definitions - The catalogue of sites a definition describes.
+ * @param downloads - The download clients and the queue, mounted under `/api`.
  * @returns The app.
  */
 const createApp = ({
@@ -42,6 +44,7 @@ const createApp = ({
   isDatabaseUp,
   indexers,
   definitions,
+  downloads = new Hono(),
 }: CreateAppOptions) => {
   const app = new Hono();
 
@@ -52,6 +55,8 @@ const createApp = ({
   );
 
   app.use('/api/*', bearerAuth({ token: secret }));
+
+  app.route('/api', downloads);
 
   app.get('/api/status', async (context) =>
     context.json({

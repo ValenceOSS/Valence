@@ -3,7 +3,7 @@ import { IndexerFailure } from './IndexerFailure';
 import { CaptchaNeeded } from './CaptchaNeeded';
 import { readDefinition } from '@ValenceRequests/cardigann/readDefinition';
 import { createIndexerService } from './createIndexerService';
-import { createMemoryIndexerStore } from './createMemoryIndexerStore';
+import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import type { IndexerClient, IndexerConnection } from './createIndexerClient';
 import type { IndexerRecord } from './IndexerRecord';
 import type { IndexerCapabilities, Release } from '@ValenceContracts/schemas/Indexer';
@@ -107,7 +107,7 @@ const aClient = (
  * The service over a store holding the indexers given.
  */
 const aService = (records: IndexerRecord[] = [], client = aClient()) => {
-  const store = createMemoryIndexerStore(records);
+  const store = createMemoryRecordStore<IndexerRecord>(records);
 
   return { service: createIndexerService({ store, client, now: () => NOW }), store, client };
 };
@@ -431,7 +431,7 @@ search:
      * The service with definitions to find.
      */
     const withDefinitions = (records: IndexerRecord[] = [], client = aClient()) => {
-      const store = createMemoryIndexerStore(records);
+      const store = createMemoryRecordStore<IndexerRecord>(records);
 
       return {
         service: createIndexerService({ store, client, definitions, now: () => NOW }),
