@@ -15,6 +15,7 @@ describe('aScratchDatabase', () => {
     ).toEqual([
       { table_name: '__migrations' },
       { table_name: 'indexer' },
+      { table_name: 'indexer_definition' },
       { table_name: 'setting' },
     ]);
   });

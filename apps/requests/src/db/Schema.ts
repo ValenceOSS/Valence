@@ -1,5 +1,6 @@
 import { boolean, integer, jsonb, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import type { IndexerCapabilities } from '@ValenceContracts/schemas/Indexer';
+import type { IndexerCapabilities, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
+import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 
 const requestsSchema = pgSchema('valence_requests');
 
@@ -12,7 +13,10 @@ const setting = requestsSchema.table('setting', {
 const indexer = requestsSchema.table('indexer', {
   id: uuid('id').primaryKey(),
   name: text('name').notNull(),
-  kind: text('kind', { enum: ['torznab', 'newznab'] }).notNull(),
+  kind: text('kind', { enum: ['torznab', 'newznab', 'cardigann'] }).notNull(),
+  definitionId: text('definition_id'),
+  settings: jsonb('settings').$type<IndexerSettings>().notNull().default({}),
+  session: jsonb('session').$type<SiteSession>(),
   url: text('url').notNull(),
   apiKey: text('api_key').notNull().default(''),
   priority: integer('priority').notNull().default(25),
@@ -29,4 +33,16 @@ const indexer = requestsSchema.table('indexer', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-export { indexer, requestsSchema, setting };
+const indexerDefinition = requestsSchema.table('indexer_definition', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  language: text('language').notNull().default(''),
+  privacy: text('privacy', { enum: ['public', 'semi-private', 'private'] }).notNull(),
+  categories: jsonb('categories').$type<string[]>().notNull().default([]),
+  yaml: text('yaml').notNull(),
+  sha: text('sha').notNull(),
+  fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export { indexer, indexerDefinition, requestsSchema, setting };

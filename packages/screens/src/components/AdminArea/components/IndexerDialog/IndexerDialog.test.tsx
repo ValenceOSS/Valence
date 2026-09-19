@@ -22,6 +22,10 @@ const KEPT: Indexer = {
   kind: 'torznab',
   url: 'http://jackett:9117/',
   hasApiKey: true,
+  definitionId: null,
+  settings: {},
+  secretsSet: [],
+  privacy: null,
   priority: 25,
   isEnabled: true,
   categories: [],
@@ -47,6 +51,7 @@ const WORKING: IndexerTest = {
   isWorking: true,
   problem: null,
   capabilities: { categories: [], modes: [{ mode: 'movie', parameters: ['q'] }], limit: null },
+  captcha: null,
 };
 
 /**
@@ -149,7 +154,12 @@ describe('IndexerDialog', () => {
 
   it('says why an indexer did not answer when tried', async () => {
     tryIndexer.mockResolvedValue({
-      value: { isWorking: false, problem: 'The indexer refused the API key', capabilities: null },
+      value: {
+        isWorking: false,
+        problem: 'The indexer refused the API key',
+        capabilities: null,
+        captcha: null,
+      },
       refusal: null,
     });
 

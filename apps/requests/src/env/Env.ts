@@ -12,6 +12,13 @@ const EnvSchema = z.object({
   VPN_API_KEY: z.string().default(''),
   VPN_CHECK_SECONDS: z.coerce.number().int().positive().default(30),
   VALENCE_VERSION: z.string().default('0.0.0'),
+  DEFINITIONS_REPOSITORY: z.string().default('Prowlarr/Indexers'),
+  DEFINITIONS_BRANCH: z.string().default('master'),
+  DEFINITIONS_PATH: z.string().default('definitions/v11'),
+  FLARESOLVERR_URL: z
+    .string()
+    .default('')
+    .transform((value) => value.trim().replace(/\/+$/, '')),
 });
 
 type Env = z.infer<typeof EnvSchema>;

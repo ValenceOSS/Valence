@@ -1,6 +1,11 @@
-import type { Indexer } from '@ValenceContracts/schemas/Indexer';
+import type { Indexer, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
+import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 
-type IndexerRecord = Omit<Indexer, 'hasApiKey'> & { apiKey: string };
+type IndexerRecord = Omit<Indexer, 'hasApiKey' | 'settings' | 'secretsSet' | 'privacy'> & {
+  apiKey: string;
+  settings: IndexerSettings;
+  session: SiteSession | null;
+};
 
 type IndexerStore = {
   list: () => Promise<IndexerRecord[]>;
