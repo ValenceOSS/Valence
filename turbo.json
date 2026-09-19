@@ -15,7 +15,11 @@
     "AUTH_RATE_LIMIT_MAX",
     "CATALOGUE_API_KEY",
     "IMAGE_CACHE_DIR",
-    "TRANSCODER_URL"
+    "TRANSCODER_URL",
+    "REQUESTS_URL",
+    "REQUESTS_SECRET",
+    "VPN_URL",
+    "VPN_API_KEY"
   ],
   "tasks": {
     "build": {
