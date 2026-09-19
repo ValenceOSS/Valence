@@ -97,6 +97,29 @@ const RequestsPanel = () => {
               {vpn.label}
             </Badge>
           </SettingRow>
+
+          {overview.status === null ? null : (
+            <SettingRow
+              title="Indexers"
+              description={
+                overview.status.indexers.total === 0
+                  ? 'None yet. Add one on the Indexers page to have something to search.'
+                  : `${overview.status.indexers.enabled.toString()} of ${overview.status.indexers.total.toString()} switched on.${overview.status.indexers.failing.map((one) => ` ${one.name}: ${one.problem}`).join('')}`
+              }
+            >
+              {overview.status.indexers.failing.length > 0 ? (
+                <Badge size="sm" tone="warning">
+                  {`${overview.status.indexers.failing.length.toString()} failing`}
+                </Badge>
+              ) : overview.status.indexers.total === 0 ? (
+                <Badge size="sm">None</Badge>
+              ) : (
+                <Badge size="sm" tone="success">
+                  Working
+                </Badge>
+              )}
+            </SettingRow>
+          )}
         </SettingList>
       )}
     </PanelCard>

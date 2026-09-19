@@ -15,6 +15,13 @@ const A_STATUS = {
     checkedAt: '2026-09-19T00:00:00.000Z',
     problem: null,
   },
+  indexers: {
+    total: 2,
+    enabled: 2,
+    failing: [
+      { id: '0f8fad5b-d9cb-469f-a165-70867728950e', name: 'Jackett', problem: 'Timed out' },
+    ],
+  },
 };
 
 describe('Requests', () => {
@@ -22,7 +29,7 @@ describe('Requests', () => {
     expect(RequestsStatusSchema.parse(A_STATUS)).toEqual(A_STATUS);
   });
 
-  it('reads a service with no VPN set up', () => {
+  it('reads a service with no VPN set up, and one too old to say about its indexers', () => {
     const status = {
       version: '0.4.0',
       vpn: {
@@ -35,7 +42,10 @@ describe('Requests', () => {
       },
     };
 
-    expect(RequestsStatusSchema.parse(status)).toEqual(status);
+    expect(RequestsStatusSchema.parse(status)).toEqual({
+      ...status,
+      indexers: { total: 0, enabled: 0, failing: [] },
+    });
   });
 
   it('reads whether requesting is on at all', () => {

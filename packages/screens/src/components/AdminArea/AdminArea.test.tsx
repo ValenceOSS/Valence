@@ -605,6 +605,7 @@ describe('AdminArea', () => {
           checkedAt: '2026-09-19T12:00:00.000Z',
           problem: 'The tunnel is stopped',
         },
+        indexers: { total: 0, enabled: 0, failing: [] },
       },
     };
 
@@ -614,6 +615,10 @@ describe('AdminArea', () => {
       fetchMock.mockImplementation((input: string, init?: RequestInit) => {
         if (input.includes('/api/requests/availability')) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve({ isEnabled: true }) });
+        }
+
+        if (input.includes('/api/admin/requests/indexers')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
         }
 
         if (input.includes('/api/admin/requests')) {
@@ -629,6 +634,18 @@ describe('AdminArea', () => {
 
       expect(await screen.findByText('Requests service')).toBeInTheDocument();
       expect(await screen.findByText('Answering')).toBeInTheDocument();
+    });
+
+    it('opens on the indexers where the address names them', async () => {
+      renderInAnAddress(<TheAdmin panel="indexers" />);
+
+      expect(await screen.findByText(/No indexers yet/)).toBeInTheDocument();
+    });
+
+    it('opens on searching by hand where the address names it', async () => {
+      renderInAnAddress(<TheAdmin panel="search" />);
+
+      expect(await screen.findByText(/Search every enabled indexer at once/)).toBeInTheDocument();
     });
 
     it('says the VPN is down above everything else', async () => {

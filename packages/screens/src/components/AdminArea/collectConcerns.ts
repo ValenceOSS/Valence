@@ -78,6 +78,27 @@ const collectConcerns = ({
     });
   }
 
+  const failingIndexers =
+    requests?.isReachable === true ? (requests.status?.indexers.failing ?? []) : [];
+
+  if (failingIndexers.length > 0) {
+    const [first] = failingIndexers;
+
+    concerns.push({
+      id: 'requests-indexers',
+      tone: 'attention',
+      title:
+        failingIndexers.length === 1
+          ? `The indexer ${first?.name ?? ''} keeps failing`
+          : `${failingIndexers.length.toString()} indexers keep failing`,
+      detail:
+        failingIndexers.length === 1
+          ? (first?.problem ?? '')
+          : failingIndexers.map((indexer) => `${indexer.name}: ${indexer.problem}`).join(' · '),
+      panel: 'indexers',
+    });
+  }
+
   const vpn = requests?.status?.vpn ?? null;
 
   if (requests?.isReachable === true && vpn?.isConfigured === true && vpn.isUp === false) {

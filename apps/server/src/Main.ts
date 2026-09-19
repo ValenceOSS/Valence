@@ -887,15 +887,16 @@ if (requestsSetup.kind === 'incomplete') {
   );
 }
 
-const requests =
+const requestsClient =
   requestsSetup.kind === 'on'
+    ? createRequestsClient({ address: requestsSetup.address, secret: requestsSetup.secret, fetch })
+    : null;
+
+const requests =
+  requestsSetup.kind === 'on' && requestsClient !== null
     ? createRequestsMonitor({
         address: requestsSetup.address,
-        client: createRequestsClient({
-          address: requestsSetup.address,
-          secret: requestsSetup.secret,
-          fetch,
-        }),
+        client: requestsClient,
         onLost: (reason) => {
           log.warn('requests', `the requests service stopped answering — ${reason}`);
 
@@ -918,6 +919,16 @@ const requests =
             event: 'requests.vpnUp',
             data: { publicAddress: vpn.publicAddress, country: vpn.country },
           });
+        },
+        onIndexerFailing: ({ name, problem }) => {
+          log.warn('requests', `the indexer ${name} keeps failing — ${problem}`);
+
+          void events.publish({ event: 'requests.indexerFailing', data: { name, problem } });
+        },
+        onIndexerWorking: ({ name }) => {
+          log.info('requests', `the indexer ${name} is working again`);
+
+          void events.publish({ event: 'requests.indexerWorking', data: { name } });
         },
       })
     : null;
@@ -2213,6 +2224,7 @@ const app = createApp({
   listRunningJobs: () => jobs.listRunning(),
   jobDefinitions,
   requests,
+  requestsClient,
   cancelJob: (jobId) => jobs.cancel(jobId),
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
 });

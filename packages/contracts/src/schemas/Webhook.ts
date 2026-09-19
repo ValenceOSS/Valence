@@ -19,6 +19,8 @@ const WEBHOOK_EVENTS = [
   'requests.reachable',
   'requests.vpnDown',
   'requests.vpnUp',
+  'requests.indexerFailing',
+  'requests.indexerWorking',
   'auth.succeeded',
   'auth.failed',
   'account.created',
@@ -68,6 +70,8 @@ const WEBHOOK_EVENT_LABELS: Record<WebhookEvent, string> = {
   'requests.reachable': 'Requests answering',
   'requests.vpnDown': 'VPN down',
   'requests.vpnUp': 'VPN up',
+  'requests.indexerFailing': 'Indexer failing',
+  'requests.indexerWorking': 'Indexer working again',
   'auth.succeeded': 'Signed in',
   'auth.failed': 'Sign-in refused',
   'account.created': 'Account made',
@@ -81,6 +85,7 @@ const WEBHOOK_EVENT_LABELS: Record<WebhookEvent, string> = {
 
 const WEBHOOK_EVENT_NOTES: Partial<Record<WebhookEvent, string>> = {
   'auth.failed': 'Rate-limited attempts are refused before Valence sees them.',
+  'requests.indexerFailing': 'Sent after three failures in a row. Five turn the indexer off.',
   'playback.started': 'Names the person and what they are watching.',
   'playback.stopped': 'Names the person and what they were watching.',
 };
@@ -112,7 +117,14 @@ const WEBHOOK_EVENT_GROUPS: readonly WebhookEventGroup[] = [
   {
     id: 'requests',
     label: 'Requests',
-    events: ['requests.unreachable', 'requests.reachable', 'requests.vpnDown', 'requests.vpnUp'],
+    events: [
+      'requests.unreachable',
+      'requests.reachable',
+      'requests.vpnDown',
+      'requests.vpnUp',
+      'requests.indexerFailing',
+      'requests.indexerWorking',
+    ],
   },
   {
     id: 'people',
@@ -304,6 +316,16 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
     ...WebhookEnvelopeSchema,
     event: z.literal('requests.vpnUp'),
     data: z.object({ publicAddress: z.string().nullable(), country: z.string().nullable() }),
+  }),
+  z.object({
+    ...WebhookEnvelopeSchema,
+    event: z.literal('requests.indexerFailing'),
+    data: z.object({ name: z.string(), problem: z.string() }),
+  }),
+  z.object({
+    ...WebhookEnvelopeSchema,
+    event: z.literal('requests.indexerWorking'),
+    data: z.object({ name: z.string() }),
   }),
   z.object({
     ...WebhookEnvelopeSchema,

@@ -105,6 +105,26 @@ describe('discordEmbedFor', () => {
     expect(up.color).toBe(embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color);
   });
 
+  it('colours an indexer failing as bad news, and one working again as good', () => {
+    const failing = embed({
+      ...anEnvelope,
+      event: 'requests.indexerFailing',
+      data: { name: 'Jackett', problem: 'Timed out' },
+    });
+    const working = embed({
+      ...anEnvelope,
+      event: 'requests.indexerWorking',
+      data: { name: 'Jackett' },
+    });
+
+    expect(failing.color).toBe(
+      embed({ ...anEnvelope, event: 'transcoder.unreachable', data: { reason: 'x' } }).color,
+    );
+    expect(working.color).toBe(
+      embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color,
+    );
+  });
+
   it('colours the requests service going quiet like the transcoder going quiet', () => {
     const quiet = embed({
       ...anEnvelope,

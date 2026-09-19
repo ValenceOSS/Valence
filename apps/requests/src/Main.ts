@@ -7,6 +7,13 @@ import { createDatabase } from '@ValenceRequests/db/Database';
 import { readEnv } from '@ValenceRequests/env/Env';
 import { createVpnWatch } from '@ValenceRequests/vpn/createVpnWatch';
 import { readGluetun } from '@ValenceRequests/vpn/readGluetun';
+import { createDatabaseIndexerStore } from '@ValenceRequests/indexers/createDatabaseIndexerStore';
+import { createIndexerClient } from '@ValenceRequests/indexers/createIndexerClient';
+import { createIndexerService } from '@ValenceRequests/indexers/createIndexerService';
+import { createPacer } from '@ValenceRequests/indexers/createPacer';
+import { createSiteClient } from '@ValenceRequests/cardigann/createSiteClient';
+import { createDatabaseDefinitionStore } from '@ValenceRequests/definitions/createDatabaseDefinitionStore';
+import { createDefinitionCatalogue } from '@ValenceRequests/definitions/createDefinitionCatalogue';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
 
@@ -42,7 +49,53 @@ const vpn = createVpnWatch({
 
 await vpn.start();
 
+const DEFINITIONS_EVERY_MS = 24 * 60 * 60 * 1000;
+
+const definitions = createDefinitionCatalogue({
+  store: createDatabaseDefinitionStore(db),
+  source: {
+    repository: env.DEFINITIONS_REPOSITORY,
+    branch: env.DEFINITIONS_BRANCH,
+    path: env.DEFINITIONS_PATH,
+  },
+  fetch,
+});
+
+const indexers = createIndexerService({
+  store: createDatabaseIndexerStore(db),
+  definitions: definitions.definition,
+  client: createIndexerClient({
+    fetch,
+    pacer: createPacer(),
+    definitions: definitions.definition,
+    site: createSiteClient({ fetch, flareSolverrUrl: env.FLARESOLVERR_URL }),
+  }),
+});
+
+/**
+ * Brings the catalogue of definitions up to date where it is a day old or has never been fetched,
+ * saying how it went.
+ */
+const refreshDefinitions = async (): Promise<void> => {
+  if (await definitions.isStale(DEFINITIONS_EVERY_MS)) {
+    const read = await definitions.refresh();
+
+    say(
+      read.problem ??
+        `${read.definitions.length.toString()} indexer definitions from ${read.source}.`,
+    );
+  }
+};
+
+void refreshDefinitions();
+
+const definitionTimer = setInterval(() => {
+  void refreshDefinitions();
+}, DEFINITIONS_EVERY_MS);
+
 const app = createApp({
+  indexers,
+  definitions,
   secret: env.REQUESTS_SECRET,
   version: env.VALENCE_VERSION,
   readVpn: vpn.current,
@@ -57,7 +110,7 @@ const app = createApp({
   },
 });
 
-const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
+const server = serve({ fetch: app.fetch, port: env.REQUESTS_PORT }, (info) => {
   say(`Listening on port ${info.port.toString()}.`);
   say(env.VPN_URL === '' ? 'No VPN is set up.' : `Watching the VPN at ${env.VPN_URL}.`);
 });
@@ -67,6 +120,7 @@ const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
  */
 const leave = (): void => {
   vpn.stop();
+  clearInterval(definitionTimer);
   server.close();
   void pool.end().then(() => process.exit(0));
 };

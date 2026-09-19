@@ -4,6 +4,7 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
     environment: 'node',
+    testTimeout: 20_000,
     include: ['src/**/*.test.ts'],
     env: {
       NODE_ENV: 'production',

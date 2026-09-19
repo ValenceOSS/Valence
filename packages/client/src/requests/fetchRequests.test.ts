@@ -19,6 +19,7 @@ const AN_OVERVIEW = {
       checkedAt: null,
       problem: null,
     },
+    indexers: { total: 0, enabled: 0, failing: [] },
   },
 };
 

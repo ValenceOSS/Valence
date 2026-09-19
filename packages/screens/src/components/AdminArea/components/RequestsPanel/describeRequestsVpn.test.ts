@@ -18,7 +18,10 @@ const hearing = (vpn: RequestsVpn | null): RequestsOverview => ({
   address: 'http://requests:8421',
   isReachable: vpn !== null,
   checkedAt: '2026-09-19T12:00:00.000Z',
-  status: vpn === null ? null : { version: '0.4.0', vpn },
+  status:
+    vpn === null
+      ? null
+      : { version: '0.4.0', vpn, indexers: { total: 0, enabled: 0, failing: [] } },
 });
 
 describe('describeRequestsVpn', () => {

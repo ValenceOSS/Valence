@@ -1,3 +1,5 @@
+import { downloadFile } from '@ValenceScreens/admin/downloadFile';
+
 /**
  * Hands the reader a text file.
  *
@@ -9,16 +11,7 @@
  * @param text - What goes in it.
  */
 const downloadText = (name: string, text: string): void => {
-  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-  const address = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-
-  link.href = address;
-  link.download = name;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(address);
+  downloadFile(name, new Blob([text], { type: 'text/plain;charset=utf-8' }));
 };
 
 export { downloadText };

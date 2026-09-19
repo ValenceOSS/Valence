@@ -63,8 +63,8 @@ service, `requests`, and nothing about it shows in Valence until it is set up:
 no sidebar group, no permissions, no webhook events.
 
 It is arriving in stages. For now the service runs, reports whether its VPN is
-up, and is watched by Valence; indexers, download clients and requests
-themselves follow.
+up, is watched by Valence, and searches your indexers; download clients and
+requests themselves follow.
 
 To switch it on:
 
@@ -72,13 +72,14 @@ To switch it on:
    in Dockge, or `docker compose --profile requests up -d`.
 2. Set these, and restart Valence:
 
-| Setting           | Required | What it is                                                                                                 |
-| ----------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
-| `REQUESTS_URL`    | yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                  |
-| `REQUESTS_SECRET` | yes      | At least 32 characters, the same for both. Valence presents it on every call; the service refuses without. |
-| `DOWNLOADS_PATH`  | no       | Where your download client writes, on the host, `./downloads` by default.                                  |
-| `VPN_URL`         | no       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                 |
-| `VPN_API_KEY`     | no       | The key gluetun's control server was given. `docker run --rm qmcgaw/gluetun genkey` makes one.             |
+| Setting            | Required | What it is                                                                                                 |
+| ------------------ | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `REQUESTS_URL`     | yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                  |
+| `REQUESTS_SECRET`  | yes      | At least 32 characters, the same for both. Valence presents it on every call; the service refuses without. |
+| `DOWNLOADS_PATH`   | no       | Where your download client writes, on the host, `./downloads` by default.                                  |
+| `VPN_URL`          | no       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                 |
+| `VPN_API_KEY`      | no       | The key gluetun's control server was given. `docker run --rm qmcgaw/gluetun genkey` makes one.             |
+| `FLARESOLVERR_URL` | no       | FlareSolverr, `http://flaresolverr:8191`, for indexers whose sites sit behind Cloudflare's browser check.  |
 
 Setting only one of `REQUESTS_URL` and `REQUESTS_SECRET` leaves requesting off,
 and the log says which is missing.
@@ -86,6 +87,34 @@ and the log says which is missing.
 Unlike Valence, the requests service mounts `MEDIA_PATH` writable, because
 filing what it downloads into the library is its whole job. Valence itself still
 never writes there.
+
+### Indexers
+
+The admin area's Indexers page adds them. Any Torznab or Newznab feed works —
+Jackett, Prowlarr, NZBHydra or a usenet indexer's own API — and so does any site
+in the catalogue: several hundred public and private trackers, each described by
+a [Cardigann definition](https://github.com/Jackett/Jackett/wiki/Definition-format).
+Valence runs the definitions itself; it does not need Jackett or Prowlarr.
+
+The catalogue is fetched from GitHub once a day and kept in the database, so a
+site the definitions stop describing keeps working until you remove it. It comes
+from Prowlarr's definitions by default; to use another copy — your own fork, say —
+set these on the requests service:
+
+| Setting                  | Default             |
+| ------------------------ | ------------------- |
+| `DEFINITIONS_REPOSITORY` | `Prowlarr/Indexers` |
+| `DEFINITIONS_BRANCH`     | `master`            |
+| `DEFINITIONS_PATH`       | `definitions/v11`   |
+
+Some sites answer with Cloudflare's browser check rather than their pages. The
+`flaresolverr` profile starts [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr),
+which gets past it; set `FLARESOLVERR_URL` to `http://flaresolverr:8191` to use
+it. Without it, those indexers say that Cloudflare stopped them.
+
+Valence raises a warning, and sends the `requests.indexerFailing` webhook, when
+an enabled indexer fails three times in a row; five turn it off.
+`requests.indexerWorking` follows when it answers again.
 
 ### A VPN for the download client
 
