@@ -7,6 +7,10 @@ import { createDatabase } from '@ValenceRequests/db/Database';
 import { readEnv } from '@ValenceRequests/env/Env';
 import { createVpnWatch } from '@ValenceRequests/vpn/createVpnWatch';
 import { readGluetun } from '@ValenceRequests/vpn/readGluetun';
+import { createDatabaseIndexerStore } from '@ValenceRequests/indexers/createDatabaseIndexerStore';
+import { createIndexerClient } from '@ValenceRequests/indexers/createIndexerClient';
+import { createIndexerService } from '@ValenceRequests/indexers/createIndexerService';
+import { createPacer } from '@ValenceRequests/indexers/createPacer';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
 
@@ -42,7 +46,13 @@ const vpn = createVpnWatch({
 
 await vpn.start();
 
+const indexers = createIndexerService({
+  store: createDatabaseIndexerStore(db),
+  client: createIndexerClient({ fetch, pacer: createPacer() }),
+});
+
 const app = createApp({
+  indexers,
   secret: env.REQUESTS_SECRET,
   version: env.VALENCE_VERSION,
   readVpn: vpn.current,

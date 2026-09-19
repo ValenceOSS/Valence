@@ -8,6 +8,13 @@
       "when": 1789777503336,
       "tag": "0000_requests_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789779761201,
+      "tag": "0001_indexers",
+      "breakpoints": true
     }
   ]
 }

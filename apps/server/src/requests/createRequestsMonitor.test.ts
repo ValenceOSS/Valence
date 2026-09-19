@@ -22,7 +22,11 @@ const aVpn = (isUp: boolean | null): RequestsVpn => ({
  */
 const answered = (isUp: boolean | null): RequestsReading => ({
   kind: 'answered',
-  status: { version: '0.4.0', vpn: aVpn(isUp) } satisfies RequestsStatus,
+  status: {
+    version: '0.4.0',
+    vpn: aVpn(isUp),
+    indexers: { total: 0, enabled: 0, failing: [] },
+  } satisfies RequestsStatus,
 });
 
 const SILENT: RequestsReading = { kind: 'silent', reason: 'http://requests:8421 did not answer' };
@@ -67,7 +71,11 @@ describe('createRequestsMonitor', () => {
       address: 'http://requests:8421',
       isReachable: true,
       checkedAt: NOW.toISOString(),
-      status: { version: '0.4.0', vpn: aVpn(true) },
+      status: {
+        version: '0.4.0',
+        vpn: aVpn(true),
+        indexers: { total: 0, enabled: 0, failing: [] },
+      },
     });
   });
 
@@ -118,7 +126,11 @@ describe('createRequestsMonitor', () => {
   it('says a tunnel is down without a reason where gluetun gave none', async () => {
     const { monitor, onVpnDown } = aMonitor({
       kind: 'answered',
-      status: { version: '0.4.0', vpn: { ...aVpn(false), problem: null } },
+      status: {
+        version: '0.4.0',
+        vpn: { ...aVpn(false), problem: null },
+        indexers: { total: 0, enabled: 0, failing: [] },
+      },
     });
 
     await monitor.check();

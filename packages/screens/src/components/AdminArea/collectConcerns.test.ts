@@ -769,7 +769,7 @@ describe('collectConcerns', () => {
       address: 'http://requests:8421',
       isReachable: true,
       checkedAt: '2026-09-19T12:00:00.000Z',
-      status: { version: '0.4.0', vpn },
+      status: { version: '0.4.0', vpn, indexers: { total: 0, enabled: 0, failing: [] } },
     });
 
     it('says so when the service stopped answering, and where it was looked for', () => {

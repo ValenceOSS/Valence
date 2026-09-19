@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { IndexerHealthSchema } from './Indexer';
 
 const RequestsVpnSchema = z.object({
   isConfigured: z.boolean(),
@@ -12,6 +13,7 @@ const RequestsVpnSchema = z.object({
 const RequestsStatusSchema = z.object({
   version: z.string(),
   vpn: RequestsVpnSchema,
+  indexers: IndexerHealthSchema.default({ total: 0, enabled: 0, failing: [] }),
 });
 
 const RequestsAvailabilitySchema = z.object({
