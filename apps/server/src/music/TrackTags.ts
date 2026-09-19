@@ -24,6 +24,7 @@ type TrackTags = {
   lyrics: string | null;
   picture: TrackPicture | null;
   albumMusicbrainzId: string | null;
+  releaseGroupMusicbrainzId: string | null;
   artistMusicbrainzIds: string[];
 };
 

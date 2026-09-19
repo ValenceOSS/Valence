@@ -923,11 +923,13 @@ const musicAlbum = pgTable(
     isCompilation: boolean('isCompilation').notNull().default(false),
     artworkPath: text('artworkPath'),
     musicbrainzId: text('musicbrainzId'),
+    releaseGroupMusicbrainzId: text('releaseGroupMusicbrainzId'),
     lookedUpAt: timestamp('lookedUpAt'),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex('music_album_key_idx').on(table.libraryId, table.artistId, table.titleKey),
+    index('music_album_release_group_idx').on(table.libraryId, table.releaseGroupMusicbrainzId),
     index('music_album_recent_idx').on(table.libraryId, table.addedAt),
     index('music_album_artist_idx').on(table.artistId),
   ],

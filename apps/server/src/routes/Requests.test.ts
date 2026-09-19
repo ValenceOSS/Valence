@@ -21,7 +21,12 @@ import {
 import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { Library } from '@ValenceContracts/schemas/Library';
-import type { MediaRequestKind, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  MusicCatalogueHit,
+  MusicRequestKind,
+  RequestCatalogue,
+  VideoRequestKind,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { EventBus } from '@ValenceServer/events/EventBus';
 
 const A_STATUS: RequestsStatus = {
@@ -133,6 +138,17 @@ const FILMS: Library = {
   filesAtOnce: null,
 };
 
+const MUSIC: Library = {
+  id: '1c6a7e2b-3d4f-4a5b-9c8d-7e6f5a4b3c2d',
+  name: 'Music',
+  kind: 'music',
+  path: '/media/Music',
+  itemCount: 0,
+  lastScannedAt: null,
+  defaultAudioLanguage: null,
+  filesAtOnce: null,
+};
+
 const build = async ({
   isOn,
   granted = [],
@@ -140,13 +156,22 @@ const build = async ({
   service = aWillingService,
   events,
   describeForRequest,
+  describeMusicForRequest,
+  searchMusicCatalogue,
+  libraries = [FILMS],
 }: {
   isOn: boolean;
   granted?: readonly Permission[];
   isAdministrator?: boolean;
   service?: (url: string, init: { method?: string; body?: string }) => Response;
   events?: EventBus;
-  describeForRequest?: (tmdbId: number, kind: MediaRequestKind) => Promise<RequestCatalogue | null>;
+  describeForRequest?: (tmdbId: number, kind: VideoRequestKind) => Promise<RequestCatalogue | null>;
+  describeMusicForRequest?: (
+    musicBrainzId: string,
+    kind: MusicRequestKind,
+  ) => Promise<RequestCatalogue | null>;
+  searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
+  libraries?: Library[];
 }) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
@@ -177,9 +202,11 @@ const build = async ({
     jobDefinitions: jobDefinitionsFor(isOn),
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
-    library: createMemoryLibraryService({ libraries: [FILMS], media: [] }),
+    library: createMemoryLibraryService({ libraries, media: [] }),
     ...(events === undefined ? {} : { events }),
     ...(describeForRequest === undefined ? {} : { describeForRequest }),
+    ...(describeMusicForRequest === undefined ? {} : { describeMusicForRequest }),
+    ...(searchMusicCatalogue === undefined ? {} : { searchMusicCatalogue }),
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),
     subtitles: createMemorySubtitleService({}),
@@ -926,7 +953,9 @@ describe('requests for films and series, through the server', () => {
     id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
     kind: 'film',
     tmdbId: 438631,
+    musicBrainzId: null,
     title: 'Dune',
+    artistName: null,
     year: 2021,
     overview: null,
     posterUrl: null,
@@ -939,6 +968,7 @@ describe('requests for films and series, through the server', () => {
     refusedBecause: 'No room',
     requestedBy: { id: 'someone-else', name: 'Someone' },
     seasons: null,
+    releaseTypes: null,
     releaseDate: '2021-12-03',
     items: [],
     mediaId: null,
@@ -956,6 +986,8 @@ describe('requests for films and series, through the server', () => {
     releaseDates: { theatrical: null, digital: '2021-12-03', physical: null },
     episodes: [],
     isEnded: false,
+    artist: null,
+    albums: [],
   };
 
   const sent: Array<{ method: string; url: string; body: string | undefined }> = [];
@@ -1069,6 +1101,85 @@ describe('requests for films and series, through the server', () => {
     expect(
       (await nowhere.ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 1 })).status,
     ).toBe(201);
+  });
+
+  it('watches an artist, described by MusicBrainz, into the music library', async () => {
+    const describeMusicForRequest = vi.fn(() =>
+      Promise.resolve({ ...DUNE, title: 'Pink Floyd', artist: 'Pink Floyd' }),
+    );
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      describeMusicForRequest,
+      libraries: [FILMS, MUSIC],
+    });
+
+    sent.length = 0;
+
+    const made = await ask('/api/requests/media', 'POST', {
+      kind: 'artist',
+      musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+      releaseTypes: ['album', 'live'],
+    });
+
+    expect(made.status).toBe(201);
+    expect(describeMusicForRequest).toHaveBeenCalledWith(
+      '83d91898-7763-47d7-b03b-b92132375c47',
+      'artist',
+    );
+    expect(JSON.parse(sent[0]?.body ?? '{}')).toMatchObject({
+      kind: 'artist',
+      tmdbId: null,
+      musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+      releaseTypes: ['album', 'live'],
+      libraryId: MUSIC.id,
+      libraryPath: '/media/Music',
+      catalogue: { title: 'Pink Floyd', artist: 'Pink Floyd' },
+    });
+
+    const nowhere = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      describeMusicForRequest,
+    });
+
+    expect(
+      await (
+        await nowhere.ask('/api/requests/media', 'POST', {
+          kind: 'album',
+          musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+        })
+      ).json(),
+    ).toEqual({ error: 'There is no library of music to put it in.' });
+  });
+
+  it('searches MusicBrainz for artists and albums, for whoever may ask', async () => {
+    const hit: MusicCatalogueHit = {
+      kind: 'artist',
+      musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+      title: 'Pink Floyd',
+      artist: null,
+      disambiguation: 'UK rock band',
+      type: null,
+      year: 1965,
+      coverUrl: null,
+    };
+    const searchMusicCatalogue = vi.fn(() => Promise.resolve([hit]));
+    const asking = await build({ isOn: true, granted: ['requests.ask'], searchMusicCatalogue });
+
+    const found = await asking.ask('/api/requests/catalogue/music?query=pink%20floyd&kind=artist');
+
+    expect(found.status).toBe(200);
+    expect(await found.json()).toEqual([hit]);
+    expect(searchMusicCatalogue).toHaveBeenCalledWith('pink floyd', 'artist');
+
+    const nobody = await build({ isOn: true, searchMusicCatalogue });
+
+    expect(
+      (await nobody.ask('/api/requests/catalogue/music?query=pink%20floyd&kind=artist')).status,
+    ).toBe(403);
   });
 
   it('lists the seasons a series has for whoever may ask', async () => {

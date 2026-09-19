@@ -34,6 +34,7 @@ const tagsFor = (overrides: Partial<TrackTags> = {}): TrackTags => ({
   lyrics: null,
   picture: null,
   albumMusicbrainzId: null,
+  releaseGroupMusicbrainzId: null,
   artistMusicbrainzIds: [],
   ...overrides,
 });
@@ -263,6 +264,30 @@ describe('scanMusicLibrary', () => {
     expect(store.removeByPaths).toHaveBeenCalledWith('lib', ['/music/gone.flac']);
     expect(store.prune).toHaveBeenCalledWith('lib');
     expect(result.removed).toBe(1);
+  });
+
+  it('reads one folder, removing only what is gone from it, without calling it a scan', async () => {
+    const { store } = memoryStore([
+      storedAt(`${ALBUM}/01 old.mp3`),
+      storedAt('/music/Another Album/01.flac'),
+    ]);
+
+    await scanMusicLibrary({
+      libraryId: 'lib',
+      root: ALBUM,
+      isPartial: true,
+      store,
+      artwork: keptArtwork(),
+      files: filesWith([fileAt(`${ALBUM}/01.flac`)], {
+        [`${ALBUM}/01.flac`]: tagsFor({ releaseGroupMusicbrainzId: 'group' }),
+      }),
+    });
+
+    expect(store.removeByPaths).toHaveBeenCalledWith('lib', [`${ALBUM}/01 old.mp3`]);
+    expect(store.keepAlbum).toHaveBeenCalledWith(
+      expect.objectContaining({ releaseGroupMusicbrainzId: 'group' }),
+    );
+    expect(store.markScanned).not.toHaveBeenCalled();
   });
 
   it('reports a file it could not read as a track', async () => {

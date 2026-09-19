@@ -1,0 +1,2 @@
+ALTER TABLE "music_album" ADD COLUMN "releaseGroupMusicbrainzId" text;--> statement-breakpoint
+CREATE INDEX "music_album_release_group_idx" ON "music_album" USING btree ("libraryId","releaseGroupMusicbrainzId");

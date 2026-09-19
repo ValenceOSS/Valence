@@ -34,6 +34,8 @@ import {
   MediaRequestRefusalSchema,
   MediaRequestSchema,
   MissingSearchSchema,
+  MUSIC_REQUEST_KINDS,
+  MusicCatalogueHitSchema,
   RequestLogEntrySchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import {
@@ -677,6 +679,25 @@ const seriesSeasonsRoute = createRoute({
   }),
 });
 
+const musicCatalogueRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/music',
+  tags: ['Requests'],
+  summary: 'Search MusicBrainz for an artist or an album to ask for',
+  request: {
+    query: z.object({
+      query: z.string().trim().min(1).max(200),
+      kind: z.enum(MUSIC_REQUEST_KINDS),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'The artists or albums found, best matches first',
+      content: { 'application/json': { schema: z.array(MusicCatalogueHitSchema) } },
+    },
+  }),
+});
+
 const draftReleasesRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/releases',
@@ -809,6 +830,7 @@ export {
   draftReleasesRoute,
   searchMissingRoute,
   seriesSeasonsRoute,
+  musicCatalogueRoute,
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,

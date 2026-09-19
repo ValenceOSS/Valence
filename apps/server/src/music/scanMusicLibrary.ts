@@ -37,6 +37,7 @@ type AlbumRow = {
   genres: string[];
   isCompilation: boolean;
   musicbrainzId: string | null;
+  releaseGroupMusicbrainzId: string | null;
 };
 
 type TrackRow = {
@@ -90,6 +91,7 @@ type ScanMusicLibraryOptions = {
   store: MusicStore;
   artwork: MusicArtwork;
   force?: boolean;
+  isPartial?: boolean;
   onProblem?: (path: string, reason: string) => void;
   onProgress?: (processed: number, total: number) => void;
   isCancelled?: () => boolean;
@@ -127,6 +129,9 @@ const stemOf = (path: string): string => path.replace(/\.[^./]+$/, '');
  * `.txt` beside the track — and a lyrics file dropped in, changed or taken away later is noticed on
  * the next scan by its own time, since that is how lyrics usually arrive: after the music.
  *
+ * A partial scan reads one folder of the library, such as an album just filed into it, and takes
+ * away only what is gone from that folder — the rest of the library is not under it, not gone.
+ *
  * @param options - The library, where it is, what to read it with, and where to put it.
  * @returns What the scan changed.
  */
@@ -138,6 +143,7 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
     store,
     artwork,
     force = false,
+    isPartial = false,
     onProblem,
     onProgress,
     isCancelled,
@@ -221,6 +227,7 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
       genres: tags.genres,
       isCompilation: tags.isCompilation,
       musicbrainzId: tags.albumMusicbrainzId,
+      releaseGroupMusicbrainzId: tags.releaseGroupMusicbrainzId,
     });
 
     const credited = tags.artists.length === 0 ? [albumArtistName] : tags.artists;
@@ -297,11 +304,17 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
   }
 
   const present = new Set(found.map((file) => file.path));
-  const gone = [...stored.keys()].filter((path) => !present.has(path));
+  const within = `${root.replace(/\/+$/, '')}/`;
+  const gone = [...stored.keys()].filter(
+    (path) => !present.has(path) && (!isPartial || path.startsWith(within)),
+  );
   const removed = gone.length === 0 ? 0 : await store.removeByPaths(libraryId, gone);
 
   await store.prune(libraryId);
-  await store.markScanned(libraryId);
+
+  if (!isPartial) {
+    await store.markScanned(libraryId);
+  }
 
   return { added, updated, removed, failed };
 };

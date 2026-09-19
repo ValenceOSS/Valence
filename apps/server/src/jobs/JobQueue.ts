@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MediaRequestKindSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { LibraryPartSchema } from '@ValenceContracts/schemas/LibraryPart';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
@@ -27,8 +28,9 @@ const ScanRequestFolderJobSchema = z.object({
   request: z
     .object({
       id: z.string().uuid(),
-      kind: z.enum(['film', 'series']),
-      tmdbId: z.number().int().positive(),
+      kind: MediaRequestKindSchema,
+      tmdbId: z.number().int().positive().nullable().default(null),
+      musicBrainzId: z.string().uuid().nullable().default(null),
     })
     .nullable()
     .default(null),
