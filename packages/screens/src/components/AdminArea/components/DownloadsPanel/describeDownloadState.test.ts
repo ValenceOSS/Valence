@@ -29,7 +29,7 @@ const A_DOWNLOAD: QueuedDownload = {
 describe('describeDownloadState', () => {
   it.each([
     ['queued', 'Queued', 'quiet'],
-    ['downloading', 'Downloading', 'accent'],
+    ['downloading', 'Downloading', 'busy'],
     ['paused', 'Paused', 'quiet'],
     ['done', 'Done', 'success'],
   ] as const)('says a %s download is %s', (state, label, tone) => {
@@ -74,7 +74,7 @@ describe('describeDownloadState', () => {
         filedInto: '/media/Films/The Matrix (1999)',
       }),
     ).toEqual({
-      label: 'Filed',
+      label: 'Completed',
       tone: 'success',
       detail: 'Filed into /media/Films/The Matrix (1999).',
     });

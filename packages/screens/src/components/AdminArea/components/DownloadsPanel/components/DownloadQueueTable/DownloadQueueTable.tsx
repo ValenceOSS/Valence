@@ -99,6 +99,9 @@ const DownloadQueueTable = ({
           return (
             <span className="flex items-center gap-1.5">
               <Badge size="sm" tone={state.tone}>
+                {row.original.state === 'downloading' ? (
+                  <Spinner size="xs" label={`Downloading ${row.original.title}`} />
+                ) : null}
                 {state.label}
               </Badge>
 

@@ -13,7 +13,7 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
     case 'queued':
       return { label: 'Queued', tone: 'quiet', detail: download.problem };
     case 'downloading':
-      return { label: 'Downloading', tone: 'accent', detail: download.problem };
+      return { label: 'Downloading', tone: 'busy', detail: download.problem };
     case 'stalled':
       return {
         label: 'Stalled',
@@ -32,7 +32,11 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
       };
     case 'done':
       if (download.filedInto !== null) {
-        return { label: 'Filed', tone: 'success', detail: `Filed into ${download.filedInto}.` };
+        return {
+          label: 'Completed',
+          tone: 'success',
+          detail: `Filed into ${download.filedInto}.`,
+        };
       }
 
       return download.filingProblem === null

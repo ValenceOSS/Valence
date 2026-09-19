@@ -6,6 +6,7 @@ import { spinVariants, spinTransition, reducedSpinTransition } from '@ValenceUI/
 import type { SpinnerProps, SpinnerSize } from './Spinner.types';
 
 const SIZE_PIXELS: Record<SpinnerSize, number> = {
+  xs: 12,
   sm: 16,
   md: 24,
   lg: 32,
@@ -16,7 +17,7 @@ const SIZE_PIXELS: Record<SpinnerSize, number> = {
  * required rather than optional: a spinner is invisible to anybody not looking at the screen, and
  * this is the only thing that says what is being waited for.
  *
- * @param size - How large to draw it, from a line of text to the middle of a page.
+ * @param size - How large to draw it, from inside a badge to the middle of a page.
  * @param label - What is being waited for, read out and shown to anybody hovering.
  * @param className - Extra classes for the caller's own layout.
  */

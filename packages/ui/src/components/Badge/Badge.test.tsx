@@ -63,4 +63,11 @@ describe('Badge', () => {
     expect(badgeOf('Finished')).toHaveClass('border-success/35');
     expect(badgeOf('Finished')).not.toHaveClass('border-accent/40');
   });
+
+  it('paints something under way in its own colour, apart from a warning', () => {
+    render(<Badge tone="busy">Downloading</Badge>);
+
+    expect(badgeOf('Downloading')).toHaveClass('border-busy/45');
+    expect(badgeOf('Downloading')).not.toHaveClass('border-highlight/50');
+  });
 });
