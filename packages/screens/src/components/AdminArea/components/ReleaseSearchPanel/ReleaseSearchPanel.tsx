@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Copy01Icon,
+  Download04Icon,
   LinkSquare02Icon,
   Magnet01Icon,
   MoreHorizontalIcon,
@@ -18,6 +18,8 @@ import { TextField } from '@ValenceUI/TextField';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeAge } from '@ValenceCore/functions/describeAge';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { fetchRelease } from '@ValenceClient/requests/fetchIndexers';
+import { downloadFile } from '@ValenceScreens/admin/downloadFile';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { inReleaseOrder } from './inReleaseOrder';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
@@ -60,6 +62,7 @@ const ReleaseSearchPanel = () => {
   const [asked, setAsked] = useState<ReleaseSearch | null>(null);
   const found = useQuery(requestsQueries.search(asked));
   const now = found.dataUpdatedAt;
+  const [said, setSaid] = useState<{ text: string; isProblem: boolean } | null>(null);
 
   const columns = useMemo<DataTableColumn<Release>[]>(
     () => [
@@ -120,7 +123,36 @@ const ReleaseSearchPanel = () => {
         header: '',
         enableSorting: false,
         cell: ({ row }) => {
-          const { magnetUrl, downloadUrl, infoUrl, title } = row.original;
+          const { magnetUrl, downloadUrl, infoUrl, title, indexerId, protocol } = row.original;
+          const kind = protocol === 'usenet' ? 'NZB' : 'torrent';
+
+          const save = () => {
+            setSaid({ text: `Fetching the ${kind}…`, isProblem: false });
+
+            void fetchRelease(indexerId, downloadUrl ?? '').then(async ({ value, refusal }) => {
+              if (value === null) {
+                setSaid({
+                  text: refusal?.message ?? `The ${kind} could not be fetched.`,
+                  isProblem: true,
+                });
+
+                return;
+              }
+
+              if (value.kind === 'magnet') {
+                await navigator.clipboard.writeText(value.url);
+                setSaid({
+                  text: 'That release is a magnet link, which has been copied.',
+                  isProblem: false,
+                });
+
+                return;
+              }
+
+              downloadFile(value.name, value.file);
+              setSaid({ text: `Saved ${title}.`, isProblem: false });
+            });
+          };
 
           return (
             <span className="flex justify-end">
@@ -136,17 +168,19 @@ const ReleaseSearchPanel = () => {
                         icon: <Icon of={Magnet01Icon} size={15} />,
                         isDisabled: magnetUrl === null,
                         onChoose: () => {
-                          void navigator.clipboard.writeText(magnetUrl ?? '');
+                          void navigator.clipboard.writeText(magnetUrl ?? '').then(() => {
+                            setSaid({ text: 'The magnet link has been copied.', isProblem: false });
+                          });
                         },
                       },
                       {
                         id: 'download',
-                        label: 'Copy the download link',
-                        icon: <Icon of={Copy01Icon} size={15} />,
+                        label: `Save the ${kind}`,
+                        detail:
+                          'Fetched through Valence, with whatever the site needs to hand it over.',
+                        icon: <Icon of={Download04Icon} size={15} />,
                         isDisabled: downloadUrl === null,
-                        onChoose: () => {
-                          void navigator.clipboard.writeText(downloadUrl ?? '');
-                        },
+                        onChoose: save,
                       },
                       {
                         id: 'page',
@@ -249,6 +283,15 @@ const ReleaseSearchPanel = () => {
           }}
         />
       </form>
+
+      {said === null ? null : (
+        <p
+          role="status"
+          className={`px-4 pb-3 text-sm ${said.isProblem ? 'text-danger' : 'text-text-muted'}`}
+        >
+          {said.text}
+        </p>
+      )}
 
       {asked === null ? (
         <p className="px-4 pb-6 text-sm text-text-muted">

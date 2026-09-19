@@ -5,8 +5,16 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { IndexersPanel } from './IndexersPanel';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 import type * as Indexers from '@ValenceClient/requests/fetchIndexers';
+import type * as Definitions from '@ValenceClient/requests/fetchDefinitions';
 
 const fetchIndexers = vi.fn<typeof Indexers.fetchIndexers>();
+const fetchCatalogue = vi.fn<typeof Definitions.fetchCatalogue>();
+
+vi.mock('@ValenceClient/requests/fetchDefinitions', () => ({
+  fetchCatalogue: () => fetchCatalogue(),
+  refreshCatalogue: vi.fn(),
+  fetchDefinition: () => new Promise(() => undefined),
+}));
 const changeIndexer = vi.fn<typeof Indexers.changeIndexer>();
 const removeIndexer = vi.fn<typeof Indexers.removeIndexer>();
 const testIndexer = vi.fn<typeof Indexers.testIndexer>();
@@ -57,6 +65,22 @@ const choose = async (user: ReturnType<typeof userEvent.setup>, action: string) 
 };
 
 beforeEach(() => {
+  fetchCatalogue.mockReset().mockResolvedValue({
+    definitions: [
+      {
+        id: 'rutor',
+        name: 'RuTor',
+        description: 'A Russian tracker',
+        language: 'ru-RU',
+        privacy: 'public',
+        protocol: 'torrent',
+        categories: ['TV'],
+      },
+    ],
+    updatedAt: null,
+    source: 'Prowlarr/Indexers@master/definitions/v11',
+    problem: null,
+  });
   fetchIndexers.mockReset().mockResolvedValue([anIndexer()]);
   changeIndexer.mockReset().mockResolvedValue({ value: anIndexer(), refusal: null });
   removeIndexer.mockReset().mockResolvedValue(null);
@@ -106,6 +130,46 @@ describe('IndexersPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Add an indexer' }));
 
     expect(await screen.findByRole('dialog', { name: 'Add an indexer' })).toBeInTheDocument();
+  });
+
+  it('adds a site chosen from the catalogue', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<IndexersPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Add an indexer' }));
+    await user.click(await screen.findByText('RuTor'));
+
+    expect(await screen.findByRole('dialog', { name: 'Add RuTor' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Add RuTor' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('closes the catalogue without adding anything', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<IndexersPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Add an indexer' }));
+    await user.click(await screen.findByRole('button', { name: 'Close' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows a site’s privacy in place of its kind', async () => {
+    fetchIndexers.mockResolvedValue([
+      anIndexer({ kind: 'cardigann', privacy: 'private', definitionId: 'hdb' }),
+    ]);
+
+    renderInAnAddress(<IndexersPanel />);
+
+    expect(await screen.findByText('Private site')).toBeInTheDocument();
   });
 
   it('opens the dialog to change one', async () => {

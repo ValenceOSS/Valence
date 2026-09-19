@@ -143,7 +143,55 @@ const searchReleases = async (search: ReleaseSearch): Promise<ReleaseSearchOutco
   return ReleaseSearchOutcomeSchema.parse(await response.json());
 };
 
+type SavedRelease = { kind: 'magnet'; url: string } | { kind: 'file'; file: Blob; name: string };
+
+/**
+ * Fetches a release through the server, with whatever the site needs to hand it over — which, for
+ * a private site, is the session Valence keeps for it.
+ *
+ * @param indexerId - The indexer that found it.
+ * @param url - Its download link.
+ * @returns The torrent or NZB to save, or the magnet link it turned out to be, or why not.
+ */
+const fetchRelease = async (indexerId: string, url: string): Promise<Sent<SavedRelease>> => {
+  const response = await fetch(`${INDEXERS}/${indexerId}/download`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ url }),
+  }).catch(() => null);
+
+  if (response === null) {
+    return { value: null, refusal: UNREACHABLE };
+  }
+
+  const refusal = await readRefusal(response);
+
+  if (refusal !== null) {
+    return { value: null, refusal };
+  }
+
+  if ((response.headers.get('content-type') ?? '').includes('json')) {
+    return {
+      value: {
+        kind: 'magnet',
+        url: z.object({ magnet: z.string() }).parse(await response.json()).magnet,
+      },
+      refusal: null,
+    };
+  }
+
+  const name =
+    /filename="([^"]+)"/.exec(response.headers.get('content-disposition') ?? '')?.[1] ??
+    'release.torrent';
+
+  return { value: { kind: 'file', file: await response.blob(), name }, refusal: null };
+};
+
+export type { SavedRelease };
+
 export {
+  fetchRelease,
   addIndexer,
   changeIndexer,
   fetchIndexers,

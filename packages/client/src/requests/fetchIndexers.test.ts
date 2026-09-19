@@ -3,6 +3,7 @@ import {
   addIndexer,
   changeIndexer,
   fetchIndexers,
+  fetchRelease,
   removeIndexer,
   searchReleases,
   testIndexer,
@@ -15,6 +16,10 @@ const AN_INDEXER = {
   kind: 'torznab',
   url: 'http://jackett:9117/',
   hasApiKey: true,
+  definitionId: null,
+  settings: {},
+  secretsSet: [],
+  privacy: null,
   priority: 25,
   isEnabled: true,
   categories: [],
@@ -29,7 +34,12 @@ const AN_INDEXER = {
   updatedAt: '2026-09-19T00:00:00.000Z',
 };
 
-const A_TEST = { isWorking: false, problem: 'The indexer refused the API key', capabilities: null };
+const A_TEST = {
+  isWorking: false,
+  problem: 'The indexer refused the API key',
+  capabilities: null,
+  captcha: null,
+};
 
 const A_DRAFT = { name: 'Jackett', kind: 'torznab' as const, url: 'http://jackett:9117/' };
 
@@ -138,5 +148,70 @@ describe('searchReleases', () => {
     answering({ error: 'The requests service could not be heard.' }, 502);
 
     await expect(searchReleases({ query: 'dune' })).rejects.toMatchObject({ status: 502 });
+  });
+});
+
+describe('fetchRelease', () => {
+  it('gives a torrent as a file named as the server named it', async () => {
+    const fetchMock = vi.fn<(input: string, init?: RequestInit) => Promise<Response>>(() =>
+      Promise.resolve(
+        new Response(new Uint8Array([0x64]), {
+          headers: {
+            'content-type': 'application/x-bittorrent',
+            'content-disposition': 'attachment; filename="release.torrent"',
+          },
+        }),
+      ),
+    );
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { value, refusal } = await fetchRelease(AN_INDEXER.id, 'https://x/1');
+
+    expect(refusal).toBeNull();
+    expect(value?.kind === 'file' ? [value.name, value.file.size] : null).toEqual([
+      'release.torrent',
+      1,
+    ]);
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ url: 'https://x/1' }));
+  });
+
+  it('names a file the server did not name', async () => {
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response(new Uint8Array([1]))));
+
+    const { value } = await fetchRelease(AN_INDEXER.id, 'x');
+
+    expect(value?.kind === 'file' ? value.name : null).toBe('release.torrent');
+  });
+
+  it('gives a magnet link as one', async () => {
+    vi.stubGlobal('fetch', () =>
+      Promise.resolve(
+        new Response(JSON.stringify({ magnet: 'magnet:?xt=urn:btih:A' }), {
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
+    );
+
+    await expect(fetchRelease(AN_INDEXER.id, 'x')).resolves.toEqual({
+      value: { kind: 'magnet', url: 'magnet:?xt=urn:btih:A' },
+      refusal: null,
+    });
+  });
+
+  it('says why it could not be fetched', async () => {
+    answering({ error: 'The site answered 410' }, 502);
+
+    await expect(fetchRelease(AN_INDEXER.id, 'x')).resolves.toEqual({
+      value: null,
+      refusal: { message: 'The site answered 410' },
+    });
+
+    vi.stubGlobal('fetch', () => Promise.reject(new TypeError('offline')));
+
+    await expect(fetchRelease(AN_INDEXER.id, 'x')).resolves.toEqual({
+      value: null,
+      refusal: { message: 'The server could not be reached.' },
+    });
   });
 });

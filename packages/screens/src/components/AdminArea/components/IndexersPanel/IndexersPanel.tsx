@@ -20,10 +20,21 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { changeIndexer, removeIndexer, testIndexer } from '@ValenceClient/requests/fetchIndexers';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { IndexerDialog } from '@ValenceScreens/components/AdminArea/components/IndexerDialog/IndexerDialog';
+import { IndexerCatalogueDialog } from '@ValenceScreens/components/AdminArea/components/IndexerCatalogueDialog/IndexerCatalogueDialog';
+import type { IndexerStart } from '@ValenceScreens/components/AdminArea/IndexerStart';
 import { describeIndexerSearches } from './describeIndexerSearches';
 import { describeIndexerState } from './describeIndexerState';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
+
+const KIND_LABELS: Readonly<Record<string, string>> = {
+  torznab: 'Torznab',
+  newznab: 'Newznab',
+  cardigann: 'Site',
+  public: 'Public site',
+  'semi-private': 'Semi-private site',
+  private: 'Private site',
+};
 
 /**
  * Every indexer requesting searches: how each is doing, what it can be searched for, and the
@@ -36,7 +47,8 @@ const IndexersPanel = () => {
   const cache = useQueryClient();
   const asked = useQuery(requestsQueries.indexers());
   const [editing, setEditing] = useState<Indexer | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
+  const [isChoosing, setIsChoosing] = useState(false);
+  const [start, setStart] = useState<IndexerStart | null>(null);
   const [removing, setRemoving] = useState<Indexer | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -85,7 +97,7 @@ const IndexersPanel = () => {
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex flex-wrap items-center gap-2">
               <span className="truncate font-medium text-text">{row.original.name}</span>
-              <Badge size="sm">{row.original.kind === 'torznab' ? 'Torznab' : 'Newznab'}</Badge>
+              <Badge size="sm">{KIND_LABELS[row.original.privacy ?? row.original.kind]}</Badge>
             </span>
 
             <span className="truncate text-xs text-text-muted">{row.original.url}</span>
@@ -203,18 +215,30 @@ const IndexersPanel = () => {
           variant="ghost"
           size="xs"
           onClick={() => {
-            setIsAdding(true);
+            setIsChoosing(true);
           }}
         >
           Add an indexer
         </Button>
       }
     >
-      <IndexerDialog
-        isOpen={isAdding || editing !== null}
-        indexer={editing}
+      <IndexerCatalogueDialog
+        isOpen={isChoosing}
         onClose={() => {
-          setIsAdding(false);
+          setIsChoosing(false);
+        }}
+        onChoose={(chosen) => {
+          setIsChoosing(false);
+          setStart(chosen);
+        }}
+      />
+
+      <IndexerDialog
+        isOpen={start !== null || editing !== null}
+        indexer={editing}
+        start={start}
+        onClose={() => {
+          setStart(null);
           setEditing(null);
         }}
         onSaved={() => {
@@ -270,7 +294,7 @@ const IndexersPanel = () => {
           columns={columns}
           rows={asked.data}
           getRowId={(indexer) => indexer.id}
-          emptyMessage="No indexers yet. Add a Torznab or Newznab indexer, or a feed from Jackett or Prowlarr, to have something to search."
+          emptyMessage="No indexers yet. Add a site from the catalogue, or any Torznab or Newznab indexer, to have something to search."
         />
       )}
     </PanelCard>
