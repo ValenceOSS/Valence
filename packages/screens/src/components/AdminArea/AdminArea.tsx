@@ -77,6 +77,8 @@ import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { ADMIN_PANELS } from '@ValenceScreens/components/AdminArea/adminSections';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { RequestsPanel } from './components/RequestsPanel/RequestsPanel';
+import { IndexersPanel } from './components/IndexersPanel/IndexersPanel';
+import { ReleaseSearchPanel } from './components/ReleaseSearchPanel/ReleaseSearchPanel';
 import type { AdminAreaProps } from './AdminArea.types';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 
@@ -695,9 +697,19 @@ const AdminArea = ({
           </TabPanel>
 
           {hasRequests ? (
-            <TabPanel value="requests" travel={travel}>
-              <RequestsPanel />
-            </TabPanel>
+            <>
+              <TabPanel value="requests" travel={travel}>
+                <RequestsPanel />
+              </TabPanel>
+
+              <TabPanel value="indexers" travel={travel}>
+                <IndexersPanel />
+              </TabPanel>
+
+              <TabPanel value="search" travel={travel}>
+                <ReleaseSearchPanel />
+              </TabPanel>
+            </>
           ) : null}
 
           <TabPanel value="accounts" travel={travel}>

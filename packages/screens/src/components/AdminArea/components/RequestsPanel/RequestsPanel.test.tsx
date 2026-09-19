@@ -31,6 +31,15 @@ const ANSWERING: RequestsOverview = {
   },
 };
 
+const NOT_CHECKED_VPN = {
+  isConfigured: false,
+  isUp: null,
+  publicAddress: null,
+  country: null,
+  checkedAt: null,
+  problem: null,
+};
+
 const NOT_CHECKED: RequestsOverview = {
   address: 'http://requests:8421',
   isReachable: false,
@@ -111,6 +120,49 @@ describe('RequestsPanel', () => {
     renderInAnAddress(<RequestsPanel />);
 
     expect(await screen.findByRole('button', { name: /try again/i })).toBeInTheDocument();
+  });
+
+  it('says there are no indexers yet, and where to add one', async () => {
+    renderInAnAddress(<RequestsPanel />);
+
+    expect(await screen.findByText(/None yet. Add one on the Indexers page/)).toBeInTheDocument();
+  });
+
+  it('says how many indexers are on, and which are failing', async () => {
+    fetchRequestsOverview.mockResolvedValue({
+      ...ANSWERING,
+      status: {
+        version: '0.4.0',
+        vpn: ANSWERING.status?.vpn ?? NOT_CHECKED_VPN,
+        indexers: {
+          total: 3,
+          enabled: 2,
+          failing: [
+            { id: '0f8fad5b-d9cb-469f-a165-70867728950e', name: 'Jackett', problem: 'Timed out' },
+          ],
+        },
+      },
+    });
+
+    renderInAnAddress(<RequestsPanel />);
+
+    expect(await screen.findByText('1 failing')).toBeInTheDocument();
+    expect(screen.getByText('2 of 3 switched on. Jackett: Timed out')).toBeInTheDocument();
+  });
+
+  it('says every indexer is working where none are failing', async () => {
+    fetchRequestsOverview.mockResolvedValue({
+      ...ANSWERING,
+      status: {
+        version: '0.4.0',
+        vpn: ANSWERING.status?.vpn ?? NOT_CHECKED_VPN,
+        indexers: { total: 1, enabled: 1, failing: [] },
+      },
+    });
+
+    renderInAnAddress(<RequestsPanel />);
+
+    expect(await screen.findByText('Working')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

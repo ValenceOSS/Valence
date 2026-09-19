@@ -824,5 +824,85 @@ describe('collectConcerns', () => {
       expect(collectConcerns({ ...healthy, requests: answering(aVpn(true)) })).toEqual([]);
       expect(collectConcerns({ ...healthy, requests: answering(aVpn(null)) })).toEqual([]);
     });
+
+    it('says an indexer keeps failing, and why', () => {
+      const concerns = collectConcerns({
+        ...healthy,
+        requests: {
+          ...answering(aVpn(null)),
+          status: {
+            version: '0.4.0',
+            vpn: aVpn(null),
+            indexers: {
+              total: 2,
+              enabled: 2,
+              failing: [
+                {
+                  id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+                  name: 'Jackett',
+                  problem: 'Timed out',
+                },
+              ],
+            },
+          },
+        },
+      });
+
+      expect(concerns).toEqual([
+        {
+          id: 'requests-indexers',
+          tone: 'attention',
+          title: 'The indexer Jackett keeps failing',
+          detail: 'Timed out',
+          panel: 'indexers',
+        },
+      ]);
+    });
+
+    it('counts several failing indexers together', () => {
+      const [concern] = collectConcerns({
+        ...healthy,
+        requests: {
+          ...answering(aVpn(null)),
+          status: {
+            version: '0.4.0',
+            vpn: aVpn(null),
+            indexers: {
+              total: 2,
+              enabled: 2,
+              failing: [
+                {
+                  id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+                  name: 'Jackett',
+                  problem: 'Timed out',
+                },
+                {
+                  id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+                  name: 'NZBgeek',
+                  problem: 'Refused the key',
+                },
+              ],
+            },
+          },
+        },
+      });
+
+      expect(concern?.title).toBe('2 indexers keep failing');
+      expect(concern?.detail).toBe('Jackett: Timed out · NZBgeek: Refused the key');
+    });
+
+    it('says nothing about indexers while the service cannot be reached', () => {
+      expect(
+        collectConcerns({
+          ...healthy,
+          requests: {
+            address: 'http://requests:8421',
+            isReachable: false,
+            checkedAt: null,
+            status: null,
+          },
+        }),
+      ).toEqual([]);
+    });
   });
 });
