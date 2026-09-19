@@ -324,8 +324,12 @@ const createRequestWorker = ({
       await update(item, { state: 'searching' });
     }
 
-    const run = async (search: ReleaseSearch, itemIds: readonly string[]) => {
-      for (const query of queries) {
+    const run = async (
+      search: ReleaseSearch,
+      itemIds: readonly string[],
+      asking: readonly string[] = queries,
+    ) => {
+      for (const query of asking) {
         const outcome = await indexers.search({ ...search, query });
         const current = (await items.list()).filter((item) => item.requestId === found.request.id);
 
@@ -353,7 +357,7 @@ const createRequestWorker = ({
       if (!isFetched && plan.search.episode === undefined && found.request.kind === 'series') {
         for (const item of fetching.filter((one) => plan.itemIds.includes(one.id))) {
           if (pending.has(item.id) && item.episode !== null) {
-            await run({ ...plan.search, episode: item.episode }, [item.id]);
+            await run({ ...plan.search, episode: item.episode }, [item.id], [found.request.title]);
           }
         }
       }
@@ -581,16 +585,27 @@ const createRequestWorker = ({
 
   const pollFeeds = () =>
     serially(async () => {
+      const fetching = await Promise.all(
+        (await approved()).map(async (found) => {
+          const profile = await profileFor(found.request);
+
+          return {
+            found,
+            isFetching: (item: RequestItemRecord) =>
+              item.state === 'wanted' || isUpgradable(profile, item),
+          };
+        }),
+      );
+      const wanting = fetching.filter(({ found, isFetching }) => found.items.some(isFetching));
+
+      if (wanting.length === 0) {
+        return;
+      }
+
       const outcome = await indexers.search({ query: '', mode: 'search' });
 
-      for (const found of await approved()) {
-        const profile = await profileFor(found.request);
-
-        await fetchFrom(
-          found,
-          outcome.releases,
-          (item) => item.state === 'wanted' || isUpgradable(profile, item),
-        );
+      for (const { found, isFetching } of wanting) {
+        await fetchFrom(found, outcome.releases, isFetching);
       }
     });
 

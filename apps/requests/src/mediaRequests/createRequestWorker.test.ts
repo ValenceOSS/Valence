@@ -562,6 +562,42 @@ describe('createRequestWorker', () => {
     });
   });
 
+  describe('asking the indexers no more than it needs to', () => {
+    it('reads no newest releases while nothing is wanted', async () => {
+      const { worker, searched } = aWorker({ items: [aRequestItem({ state: 'downloading' })] });
+
+      await worker.pollFeeds();
+
+      expect(searched).toEqual([]);
+    });
+
+    it('searches each episode by its own title alone, once a season pack is not found', async () => {
+      const episodes = [1, 2].map((episode) =>
+        aRequestItem({
+          id: `e${episode.toString()}`,
+          requestId: SEVERANCE.id,
+          season: 1,
+          episode,
+          airDate: '2022-02-18',
+        }),
+      );
+      const { worker, searched } = aWorker({
+        requests: [{ ...SEVERANCE, aliases: ['Separation'] }],
+        items: episodes,
+        found: () => [],
+      });
+
+      await worker.tick();
+
+      expect(searched.map(({ query, episode }) => [query, episode])).toEqual([
+        ['Severance', undefined],
+        ['Separation', undefined],
+        ['Severance', 1],
+        ['Severance', 2],
+      ]);
+    });
+  });
+
   describe('by hand', () => {
     it('lists the releases for a request, judged, with each indexer once', async () => {
       const { worker } = aWorker({
