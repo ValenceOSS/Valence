@@ -164,7 +164,7 @@ const app = createApp({
   definitions,
   profiles,
   routes: [
-    createDownloadRoutes({ clients: downloadClients, queue: downloadQueue }),
+    createDownloadRoutes({ clients: downloadClients, queue: downloadQueue, filing: requestWorker }),
     createProfileRoutes(profiles),
     createRequestRoutes({ service: mediaRequests, worker: requestWorker }),
   ],

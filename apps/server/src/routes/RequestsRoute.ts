@@ -35,6 +35,7 @@ import {
   MissingSearchSchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import {
+  DownloadFilingSchema,
   DownloadQueueSchema,
   QueuedDownloadSchema,
   ReleaseSendSchema,
@@ -495,6 +496,24 @@ const resumeQueuedDownloadRoute = createRoute({
   }),
 });
 
+const fileQueuedDownloadRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/downloads/{id}/file',
+  tags: ['Admin'],
+  summary: 'File a download into a library of films or series, now or once it has finished',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: DownloadFilingSchema } } },
+  },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'The download, as it now is',
+      content: { 'application/json': { schema: QueuedDownloadAnswer } },
+    },
+  }),
+});
+
 const removeQueuedDownloadRoute = createRoute({
   method: 'delete',
   path: '/api/admin/requests/downloads/{id}',
@@ -742,6 +761,7 @@ export {
   addDownloadClientRoute,
   changeDownloadClientRoute,
   listDownloadClientsRoute,
+  fileQueuedDownloadRoute,
   pauseQueuedDownloadRoute,
   readDownloadQueueRoute,
   removeDownloadClientRoute,

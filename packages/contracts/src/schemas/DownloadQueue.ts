@@ -58,6 +58,8 @@ const DownloadQueueSchema = z.object({
   checkedAt: z.string().datetime().nullable(),
 });
 
+const FilingLibrarySchema = z.object({ id: z.string().min(1), path: z.string().min(1) });
+
 const ReleaseSendSchema = z.object({
   indexerId: z.string().uuid(),
   url: z.string().min(1),
@@ -68,11 +70,12 @@ const ReleaseSendSchema = z.object({
   indexerName: z.string().max(200).nullable().default(null),
   clientId: z.string().uuid().optional(),
   libraryId: z.string().min(1).optional(),
-  library: z
-    .object({ id: z.string().min(1), path: z.string().min(1) })
-    .nullable()
-    .default(null),
+  library: FilingLibrarySchema.nullable().default(null),
 });
+
+const DownloadFilingSchema = z.object({ libraryId: z.string().min(1) });
+
+const DownloadFilingOrderSchema = z.object({ library: FilingLibrarySchema });
 
 const DownloadRemovalSchema = z.object({ deleteData: z.boolean().default(false) });
 
@@ -125,6 +128,8 @@ type DownloadClientState = z.infer<typeof DownloadClientStateSchema>;
 type DownloadQueue = z.infer<typeof DownloadQueueSchema>;
 type ReleaseSend = z.input<typeof ReleaseSendSchema>;
 type DownloadRemoval = z.input<typeof DownloadRemovalSchema>;
+type DownloadFiling = z.infer<typeof DownloadFilingSchema>;
+type DownloadFilingOrder = z.infer<typeof DownloadFilingOrderSchema>;
 type ServiceEvent = z.infer<typeof ServiceEventSchema>;
 type ServiceEventKind = ServiceEvent['kind'];
 type DownloadStreamFrame = z.infer<typeof DownloadStreamFrameSchema>;
@@ -132,6 +137,8 @@ type DownloadStreamFrame = z.infer<typeof DownloadStreamFrameSchema>;
 export type {
   DownloadClientState,
   DownloadQueue,
+  DownloadFiling,
+  DownloadFilingOrder,
   DownloadRemoval,
   DownloadStreamFrame,
   QueuedDownload,
@@ -145,6 +152,8 @@ export {
   QUEUED_DOWNLOAD_STATES,
   DownloadClientStateSchema,
   DownloadQueueSchema,
+  DownloadFilingOrderSchema,
+  DownloadFilingSchema,
   DownloadRemovalSchema,
   DownloadStreamFrameSchema,
   DownloadWatchSchema,

@@ -37,9 +37,19 @@ const aDownload = (overrides: Partial<QueuedDownload> = {}): QueuedDownload => (
  * The table over the downloads given.
  */
 const show = (downloads: QueuedDownload[], busyId: string | null = null) => {
-  const handlers = { onPause: vi.fn(), onResume: vi.fn(), onRemove: vi.fn() };
+  const handlers = { onPause: vi.fn(), onResume: vi.fn(), onRemove: vi.fn(), onFile: vi.fn() };
 
-  renderInAnAddress(<DownloadQueueTable downloads={downloads} busyId={busyId} {...handlers} />);
+  renderInAnAddress(
+    <DownloadQueueTable
+      downloads={downloads}
+      libraries={[
+        { id: 'films', name: 'Films', kind: 'movies' },
+        { id: 'albums', name: 'Albums', kind: 'music' },
+      ]}
+      busyId={busyId}
+      {...handlers}
+    />,
+  );
 
   return handlers;
 };
@@ -168,5 +178,31 @@ describe('DownloadQueueTable', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(DownloadQueueTable.displayName).toBe('DownloadQueueTable');
+  });
+
+  it('files a film into a library of films, saying when', async () => {
+    const user = userEvent.setup();
+    const { onFile } = show([
+      aDownload({ state: 'done' }),
+      aDownload({ id: 'filed', title: 'Heat', state: 'done', filedInto: '/media/Films/Heat' }),
+      aDownload({ id: 'coming', title: 'Arrival' }),
+      aDownload({ id: 'album', title: 'Kid A', libraryKind: 'music', state: 'done' }),
+    ]);
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Dune' }));
+    expect(screen.getByText('Now, named from the release.')).toBeInTheDocument();
+    await user.click(screen.getByRole('menuitem', { name: /File into Films/ }));
+    expect(onFile).toHaveBeenCalledWith(expect.objectContaining({ title: 'Dune' }), 'films');
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Heat' }));
+    expect(screen.getByText('Again, beside what was filed before.')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Arrival' }));
+    expect(screen.getByText('Once it has downloaded.')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Kid A' }));
+    expect(screen.queryByRole('menuitem', { name: /File into/ })).not.toBeInTheDocument();
   });
 });

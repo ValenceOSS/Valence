@@ -1,5 +1,6 @@
 import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
 import { describe, expect, it, vi } from 'vitest';
+import { aSentDownload } from '@ValenceRequests/testing/aSentDownload';
 import { createDownloadRoutes } from './createDownloadRoutes';
 import type { DownloadClient, DownloadClientTest } from '@ValenceContracts/schemas/DownloadClient';
 import type {
@@ -93,7 +94,14 @@ const theRoutes = () => {
     }),
     acknowledge: vi.fn(() => Promise.resolve()),
   };
-  const routes = createDownloadRoutes({ clients, queue, keepAliveMs: 5 });
+  const filing = {
+    fileNow: vi.fn((id: string) =>
+      Promise.resolve(
+        id === 'claimed' ? ('claimed' as const) : id === 'gone' ? null : aSentDownload({ id }),
+      ),
+    ),
+  };
+  const routes = createDownloadRoutes({ clients, queue, filing, keepAliveMs: 5 });
 
   const ask = (path: string, method = 'GET', body?: object | string) =>
     routes.request(path, {
@@ -109,6 +117,7 @@ const theRoutes = () => {
     routes,
     clients,
     queue,
+    filing,
     stopListening,
     tell: (frame: DownloadStreamFrame) => listening?.(frame),
   };
@@ -160,6 +169,21 @@ describe('createDownloadRoutes', () => {
 
       expect(sent.status).toBe(201);
       expect(await sent.json()).toEqual(DOWNLOAD);
+    });
+
+    it('files a download into the library asked for, saying why not where it cannot', async () => {
+      const { ask, filing } = theRoutes();
+      const library = { id: 'films', path: '/media/Films' };
+
+      const filed = await ask(`/downloads/${DOWNLOAD.id}/file`, 'POST', { library });
+
+      expect(filed.status).toBe(200);
+      expect(await filed.json()).toEqual(DOWNLOAD);
+      expect(filing.fileNow).toHaveBeenCalledWith(DOWNLOAD.id, library);
+      expect((await ask('/downloads/claimed/file', 'POST', { library })).status).toBe(400);
+      expect((await ask('/downloads/gone/file', 'POST', { library })).status).toBe(404);
+      expect((await ask('/downloads/other/file', 'POST', { library })).status).toBe(404);
+      expect((await ask(`/downloads/${DOWNLOAD.id}/file`, 'POST', {})).status).toBe(400);
     });
 
     it('says why a release could not be sent', async () => {

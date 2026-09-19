@@ -523,6 +523,17 @@ describe('createRequestsClient with download clients', () => {
     ]);
   });
 
+  it('files a download into the library given', async () => {
+    const { client, fetch } = aClient(200, A_DOWNLOAD);
+
+    expect(
+      (await client.fileDownload(A_DOWNLOAD.id, { id: 'films', path: '/media/Films' })).kind,
+    ).toBe('answered');
+    expect(fetch.mock.calls[0]?.[0]).toBe(
+      `http://requests:8421/api/downloads/${A_DOWNLOAD.id}/file`,
+    );
+  });
+
   it('passes on why a release was not sent', async () => {
     expect(
       await aClient(400, {

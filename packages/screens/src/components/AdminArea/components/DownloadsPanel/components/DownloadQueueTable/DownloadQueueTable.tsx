@@ -1,5 +1,11 @@
 import { useMemo } from 'react';
-import { Delete02Icon, MoreHorizontalIcon, PauseIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import {
+  Delete02Icon,
+  FolderLibraryIcon,
+  MoreHorizontalIcon,
+  PauseIcon,
+  PlayIcon,
+} from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -39,14 +45,18 @@ const describeArrived = (download: QueuedDownload): string | null => {
  * it — pausing, resuming and removing.
  *
  * @param downloads - The downloads.
+ * @param libraries - The libraries a film or series can be filed into.
  * @param busyId - The download being acted on, whose actions wait until it is done.
+ * @param onFile - Called to file a download into a library.
  * @param onPause - Called to pause a download.
  * @param onResume - Called to resume one.
  * @param onRemove - Called to remove one.
  */
 const DownloadQueueTable = ({
   downloads,
+  libraries,
   busyId,
+  onFile,
   onPause,
   onResume,
   onRemove,
@@ -208,13 +218,35 @@ const DownloadQueueTable = ({
                       },
                     ],
                   },
+                  {
+                    items: libraries
+                      .filter(
+                        (library) =>
+                          library.kind === row.original.libraryKind &&
+                          (library.kind === 'movies' || library.kind === 'shows'),
+                      )
+                      .map((library) => ({
+                        id: `file-${library.id}`,
+                        label: `File into ${library.name}`,
+                        detail:
+                          row.original.state !== 'done'
+                            ? 'Once it has downloaded.'
+                            : row.original.filedInto === null
+                              ? 'Now, named from the release.'
+                              : 'Again, beside what was filed before.',
+                        icon: <Icon of={FolderLibraryIcon} size={15} />,
+                        onChoose: () => {
+                          onFile(row.original, library.id);
+                        },
+                      })),
+                  },
                 ]}
               />
             </span>
           ),
       },
     ],
-    [busyId, onPause, onResume, onRemove],
+    [busyId, libraries, onFile, onPause, onResume, onRemove],
   );
 
   return (

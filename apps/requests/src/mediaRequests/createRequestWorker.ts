@@ -20,7 +20,10 @@ import type { MediaRequest, MissingSearch } from '@ValenceContracts/schemas/Medi
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import type { DownloadQueueService } from '@ValenceRequests/downloads/createDownloadQueue';
-import type { SentDownloadStore } from '@ValenceRequests/downloads/SentDownloadRecord';
+import type {
+  SentDownloadRecord,
+  SentDownloadStore,
+} from '@ValenceRequests/downloads/SentDownloadRecord';
 import type { EventStore } from '@ValenceRequests/events/EventStore';
 import type { IndexerService } from '@ValenceRequests/indexers/createIndexerService';
 import type { BlockedReleaseStore } from '@ValenceRequests/mediaRequests/BlockedReleaseRecord';
@@ -858,6 +861,32 @@ const createRequestWorker = ({
         const after = await find(id);
 
         return after === null ? null : showMediaRequest(after.request, after.items);
+      }),
+
+    fileNow: (
+      id: string,
+      library: { id: string; path: string },
+    ): Promise<SentDownloadRecord | 'claimed' | null> =>
+      serially(async () => {
+        if ((await downloads.find(id)) === null) {
+          return null;
+        }
+
+        if ((await items.list()).some((item) => item.downloadId === id)) {
+          return 'claimed';
+        }
+
+        await downloads.update(id, {
+          libraryId: library.id,
+          libraryPath: library.path,
+          filedInto: null,
+          filingProblem: null,
+          filingAttempts: 0,
+          updatedAt: at(),
+        });
+        await fileSentByHand();
+
+        return downloads.find(id);
       }),
 
     nudge: (): void => {

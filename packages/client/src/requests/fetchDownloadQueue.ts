@@ -56,6 +56,19 @@ const resumeQueuedDownload = (id: string): Promise<Sent<QueuedDownload>> =>
   );
 
 /**
+ * Files a download of a film or series into a library: now, where it has finished, and otherwise
+ * once it does.
+ *
+ * @param id - Which.
+ * @param libraryId - The library to file it into.
+ * @returns The download as it now is, or why not.
+ */
+const fileQueuedDownload = (id: string, libraryId: string): Promise<Sent<QueuedDownload>> =>
+  sendToRequests(`${DOWNLOADS}/${id}/file`, 'POST', { libraryId }, async (response) =>
+    QueuedDownloadSchema.parse(await response.json()),
+  );
+
+/**
  * Takes a download out of its client and the queue.
  *
  * @param id - Which.
@@ -95,6 +108,7 @@ const watchDownloadQueue = (
 
 export {
   fetchDownloadQueue,
+  fileQueuedDownload,
   pauseQueuedDownload,
   removeQueuedDownload,
   resumeQueuedDownload,

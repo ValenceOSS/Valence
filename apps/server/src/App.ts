@@ -258,6 +258,7 @@ import {
   addDownloadClientRoute,
   changeDownloadClientRoute,
   listDownloadClientsRoute,
+  fileQueuedDownloadRoute,
   pauseQueuedDownloadRoute,
   readDownloadQueueRoute,
   removeDownloadClientRoute,
@@ -4151,6 +4152,26 @@ const createApp = ({
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 201)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(fileQueuedDownloadRoute, async (context) => {
+    const { libraryId } = context.req.valid('json');
+    const into = (await library.list(asTheServer)).find(
+      (entry) => entry.id === libraryId && (entry.kind === 'movies' || entry.kind === 'shows'),
+    );
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      into === undefined
+        ? Promise.resolve({
+            kind: 'refused' as const,
+            status: 400 as const,
+            error: 'That is not a library of films or series.',
+          })
+        : client.fileDownload(context.req.valid('param').id, { id: into.id, path: into.path }),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
       : context.json({ error: answer.error }, answer.status);
   });
 

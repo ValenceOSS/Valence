@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchDownloadQueue,
+  fileQueuedDownload,
   pauseQueuedDownload,
   removeQueuedDownload,
   resumeQueuedDownload,
@@ -76,10 +77,12 @@ describe('fetchDownloadQueue', () => {
     ).toEqual(A_DOWNLOAD);
     expect((await pauseQueuedDownload(A_DOWNLOAD.id)).value).toEqual(A_DOWNLOAD);
     expect((await resumeQueuedDownload(A_DOWNLOAD.id)).value).toEqual(A_DOWNLOAD);
+    expect((await fileQueuedDownload(A_DOWNLOAD.id, 'films')).value).toEqual(A_DOWNLOAD);
     expect(fetchMock.mock.calls.map(([path]) => path)).toEqual([
       '/api/admin/requests/downloads',
       `/api/admin/requests/downloads/${A_DOWNLOAD.id}/pause`,
       `/api/admin/requests/downloads/${A_DOWNLOAD.id}/resume`,
+      `/api/admin/requests/downloads/${A_DOWNLOAD.id}/file`,
     ]);
   });
 

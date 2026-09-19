@@ -693,6 +693,35 @@ describe('createRequestWorker', () => {
       expect((await items.list())[0]).toMatchObject({ state: 'filing', attempts: 4 });
     });
 
+    it('files a download now, into the library asked for, whenever it was sent', async () => {
+      const filed = vi.fn<typeof fileDownload>(() =>
+        Promise.resolve({ filed: new Map([['film', '/x']]), missing: [] }),
+      );
+      const { worker, downloads } = aWorker({
+        requests: [],
+        items: [],
+        sent: [{ ...BY_HAND, libraryId: null, libraryPath: null, filingAttempts: 5 }],
+        filed,
+      });
+
+      const now = await worker.fileNow(BY_HAND.id, { id: 'films', path: '/media/Films' });
+
+      expect(now).toMatchObject({ filedInto: '/media/Films/The Matrix (1999)', filingAttempts: 0 });
+      expect(await downloads.find(BY_HAND.id)).toMatchObject({ libraryId: 'films' });
+      expect(await worker.fileNow('gone', { id: 'films', path: '/media/Films' })).toBeNull();
+    });
+
+    it('leaves a download fetched for a request to the request', async () => {
+      const { worker } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: BY_HAND.id })],
+        sent: [BY_HAND],
+      });
+
+      expect(await worker.fileNow(BY_HAND.id, { id: 'films', path: '/media/Films' })).toBe(
+        'claimed',
+      );
+    });
+
     it('files the episodes a series download holds', async () => {
       const root = await mkdtemp(join(tmpdir(), 'valence-by-hand-'));
       const filed = vi.fn<typeof fileDownload>(() =>

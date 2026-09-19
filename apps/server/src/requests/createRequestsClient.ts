@@ -373,6 +373,16 @@ const createRequestsClient = ({
         waitMs: CLIENT_TIMEOUT_MS,
       }),
 
+    fileDownload: (
+      id: string,
+      library: { id: string; path: string },
+    ): Promise<RequestsAnswer<QueuedDownload>> =>
+      call(`${withDownload(id)}/file`, (body) => QueuedDownloadSchema.parse(body), {
+        method: 'POST',
+        body: { library },
+        waitMs: REFRESH_TIMEOUT_MS,
+      }),
+
     removeDownload: (id: string, deleteData: boolean): Promise<RequestsAnswer<null>> =>
       call(`${withDownload(id)}?deleteData=${deleteData ? 'true' : 'false'}`, () => null, {
         method: 'DELETE',

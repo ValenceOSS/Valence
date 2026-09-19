@@ -5,6 +5,7 @@ import {
   DownloadClientDraftSchema,
 } from '@ValenceContracts/schemas/DownloadClient';
 import {
+  DownloadFilingOrderSchema,
   ServiceEventAckSchema,
   DownloadWatchSchema,
   ReleaseSendSchema,
@@ -12,8 +13,10 @@ import {
 import { readBody } from '@ValenceRequests/readBody';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import type { DownloadQueueService } from '@ValenceRequests/downloads/createDownloadQueue';
+import type { RequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
 
 type CreateDownloadRoutesOptions = {
+  filing?: Pick<RequestWorker, 'fileNow'>;
   clients: Pick<DownloadClientService, 'list' | 'add' | 'change' | 'remove' | 'test' | 'tryDraft'>;
   queue: Pick<
     DownloadQueueService,
@@ -38,12 +41,14 @@ const KEEP_ALIVE_MS = 15_000;
  * The stream says nothing of its own between rounds but a comment now and then, so a proxy between
  * the two does not take it for idle and close it.
  *
+ * @param filing - What files a finished download into a library.
  * @param clients - The download clients.
  * @param queue - The queue.
  * @param keepAliveMs - How long the stream may be quiet before it says something.
  * @returns The routes.
  */
 const createDownloadRoutes = ({
+  filing = { fileNow: () => Promise.resolve(null) },
   clients,
   queue,
   keepAliveMs = KEEP_ALIVE_MS,
@@ -164,6 +169,29 @@ const createDownloadRoutes = ({
       return typeof done === 'string' ? context.json({ error: done }, 400) : context.json(done);
     });
   }
+
+  routes.post('/downloads/:id/file', async (context) => {
+    const order = await readBody(context.req.raw, DownloadFilingOrderSchema);
+
+    if (order === null) {
+      return context.json({ error: 'Say which library to file it into.' }, 400);
+    }
+
+    const id = context.req.param('id');
+    const filed = await filing.fileNow(id, order.library);
+
+    if (filed === 'claimed') {
+      return context.json(
+        { error: 'It was fetched for a request, which files it by itself.' },
+        400,
+      );
+    }
+
+    const shown =
+      filed === null ? undefined : (await queue.queue()).downloads.find((one) => one.id === id);
+
+    return shown === undefined ? context.json(NO_SUCH_DOWNLOAD, 404) : context.json(shown);
+  });
 
   routes.delete('/downloads/:id', async (context) => {
     const removed = await queue.remove(

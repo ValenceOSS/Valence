@@ -736,6 +736,41 @@ describe('download clients and the queue, through the server', () => {
     ).toBe(404);
   });
 
+  it('files a download into a library of films or series, and no other', async () => {
+    const libraries: Array<{ id: string; path: string }> = [];
+    const { ask } = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: (url, init) => {
+        if (url.endsWith('/file')) {
+          libraries.push(
+            z
+              .object({ library: z.object({ id: z.string(), path: z.string() }) })
+              .parse(JSON.parse(init.body ?? '{}')).library,
+          );
+
+          return new Response(JSON.stringify(DOWNLOAD), { status: 200 });
+        }
+
+        return aWillingQueue(url, init);
+      },
+    });
+
+    const filed = await ask(`/api/admin/requests/downloads/${DOWNLOAD.id}/file`, 'POST', {
+      libraryId: FILMS.id,
+    });
+
+    expect(filed.status).toBe(200);
+    expect(libraries).toEqual([{ id: FILMS.id, path: '/media/Films' }]);
+    expect(
+      await (
+        await ask(`/api/admin/requests/downloads/${DOWNLOAD.id}/file`, 'POST', {
+          libraryId: 'elsewhere',
+        })
+      ).json(),
+    ).toEqual({ error: 'That is not a library of films or series.' });
+  });
+
   it('sends a film or series for the library it will be filed into, and anything else for none', async () => {
     const libraries: Array<{ id: string; path: string } | null> = [];
     const { ask } = await build({
