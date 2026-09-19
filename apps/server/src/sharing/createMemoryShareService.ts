@@ -157,6 +157,8 @@ const createMemoryShareService = (
 
       return Promise.resolve({
         id: held.id,
+        createdBy: held.createdBy,
+        createdByName: held.createdBy,
         kind: held.kind,
         mediaId: held.mediaId,
         seriesId: held.seriesId,

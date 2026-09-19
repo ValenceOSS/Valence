@@ -384,6 +384,46 @@ describe('createRealtimeRegistry', () => {
     expect(tab.events()).toStrictEqual([]);
   });
 
+  it('refuses every topic to a guest, whatever the topic asks for in permissions', async () => {
+    const world = createWorld(new Map());
+    const heard: FromServer[] = [];
+
+    world.registry.open({
+      id: 'a-guest',
+      accountId: null,
+      profileId: null,
+      deliver: (message) => {
+        heard.push(message);
+      },
+    });
+
+    const split = await world.registry.subscribe('a-guest', ['media', 'presence']);
+
+    expect(split.allowed).toStrictEqual([]);
+    expect(split.refused).toStrictEqual(['media', 'presence']);
+  });
+
+  it('sends a guest nothing that is published to everyone, having refused the subscription', async () => {
+    const world = createWorld(new Map());
+    const heard: FromServer[] = [];
+
+    world.registry.open({
+      id: 'a-guest',
+      accountId: null,
+      profileId: null,
+      deliver: (message) => {
+        heard.push(message);
+      },
+    });
+
+    await world.registry.subscribe('a-guest', ['media']);
+    world.registry.publish('media', { added: 1 }, { kind: 'everyone' });
+    world.clock.tick();
+    await world.registry.drain();
+
+    expect(heard.filter((message) => message.kind === 'event')).toStrictEqual([]);
+  });
+
   it('refuses everything for a connection it does not know', async () => {
     const world = createWorld(new Map());
 

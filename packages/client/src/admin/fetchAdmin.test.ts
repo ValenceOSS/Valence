@@ -260,7 +260,26 @@ describe('fetchActiveSessions', () => {
   it('reads every tab that has the app open, nobody listening where the server does not say', async () => {
     answerWith([SESSION]);
 
-    await expect(fetchActiveSessions()).resolves.toEqual([{ ...SESSION, listening: null }]);
+    await expect(fetchActiveSessions()).resolves.toEqual([
+      { ...SESSION, listening: null, isGuest: false, guestOf: null },
+    ]);
+  });
+
+  it('reads a tab as somebody\u2019s guest where the server says whose link it came in on', async () => {
+    answerWith([{ ...SESSION, isGuest: true, guestOf: 'Dan', profileId: null, profileName: null }]);
+
+    const [session] = await fetchActiveSessions();
+
+    expect(session?.isGuest).toBe(true);
+    expect(session?.guestOf).toBe('Dan');
+  });
+
+  it('reads a tab as nobody\u2019s guest where an older server says nothing about guests', async () => {
+    answerWith([SESSION]);
+
+    const [session] = await fetchActiveSessions();
+
+    expect(session?.isGuest).toBe(false);
   });
 
   it('reads what the server found already made for a session', async () => {

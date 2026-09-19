@@ -183,6 +183,8 @@ const AdminSessionSchema = z
     clientId: z.string(),
     profileId: z.string().nullable(),
     profileName: z.string().nullable(),
+    isGuest: z.boolean(),
+    guestOf: z.string().nullable(),
     deviceLabel: z.string(),
     connectedAt: z.number(),
     playback: z

@@ -13,6 +13,7 @@ type ShareGateOptions = {
   shares: ShareService;
   sessions: ShareSessions;
   itemOf: (mediaId: string) => Promise<{ id: string; seriesId: string | null } | null>;
+  shareHoldingTab?: (clientId: string) => string | null;
 };
 
 /**
@@ -31,12 +32,18 @@ type ShareGateOptions = {
  *   than what is closed, so a route added later is shut to a share until somebody opens it;
  * * the thing being asked for is inside what the link covers.
  *
+ * A request naming a tab rather than an item — the presence heartbeat, and the note that a tab has
+ * stopped watching — is checked against the link the tab itself came in on. Those routes are
+ * addressed by a client identifier and nothing else, and the signed-in path checks one against the
+ * account that owns it; a guest owns no account, so `null === null` would have let any guest drive
+ * any other guest's card.
+ *
  * @param shares - Where links are resolved.
  * @param sessions - Which share started which playback session.
  * @param itemOf - How to look up the item a request names, to check it against the link's scope.
  * @returns The middleware.
  */
-const createShareGate = ({ shares, sessions, itemOf }: ShareGateOptions) =>
+const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGateOptions) =>
   createMiddleware(async (context, next) => {
     const token = getCookie(context, SHARE_COOKIE);
 
@@ -78,6 +85,16 @@ const createShareGate = ({ shares, sessions, itemOf }: ShareGateOptions) =>
 
     if (reach.kind === 'needsSession') {
       if (!sessions.isClaimedBy(reach.sessionId, found.id)) {
+        return context.json({ error: 'That is not part of what was shared.' }, 403);
+      }
+
+      await next();
+
+      return;
+    }
+
+    if (reach.kind === 'needsTab') {
+      if (shareHoldingTab?.(reach.clientId) !== found.id) {
         return context.json({ error: 'That is not part of what was shared.' }, 403);
       }
 

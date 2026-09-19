@@ -96,7 +96,10 @@ import { detectLibrarySegments } from '@ValenceServer/segments/detectLibrarySegm
 import { createDatabaseWatchProgressService } from '@ValenceServer/progress/createDatabaseWatchProgressService';
 import { createDatabaseFavouriteService } from '@ValenceServer/favourites/createDatabaseFavouriteService';
 import { createDatabaseRatingService } from '@ValenceServer/ratings/createDatabaseRatingService';
+import { getCookie } from 'hono/cookie';
 import { createDatabaseShareService } from '@ValenceServer/sharing/createDatabaseShareService';
+import { guestAtTheDoor } from '@ValenceServer/sharing/guestAtTheDoor';
+import { SHARE_COOKIE } from '@ValenceServer/sharing/createShareGate';
 import { createShareSessions } from '@ValenceServer/sharing/createShareSessions';
 import { createPlaybackSessions } from '@ValenceServer/playback/createPlaybackSessions';
 import { createDatabaseSegmentService } from '@ValenceServer/segments/createDatabaseSegmentService';
@@ -329,6 +332,8 @@ const signInStore = createDatabaseSignInStore(db);
 const historyService = createDatabaseHistoryService(db);
 
 const persisted = await settings.read();
+
+const shareService = createDatabaseShareService(db);
 
 const auth = createAuth({
   env,
@@ -1977,7 +1982,7 @@ const app = createApp({
   favourites: createDatabaseFavouriteService(db),
   hiding: createDatabaseHiddenService(db),
   ratings: createDatabaseRatingService(db),
-  shares: createDatabaseShareService(db),
+  shares: shareService,
   shareSessions: createShareSessions(),
   playbackSessions: createPlaybackSessions(),
   sayALinkWasWithdrawn: async ({ accountId, title, byName }) => {
@@ -2304,8 +2309,8 @@ const realtimeHandler = createRealtimeHandler({
   },
   presence: {
     connect: (arrival) => presence.connect(arrival),
-    disconnect: (clientId) => {
-      presence.disconnect(clientId);
+    disconnect: (clientId, socketId) => {
+      presence.disconnect(clientId, socketId);
     },
     nameOf: async (accountId, profileId) => {
       const named =
@@ -2446,19 +2451,28 @@ app.get(
   '/api/realtime',
   nodeWebSocket.upgradeWebSocket(async (context) => {
     const account = (await readSessionOnce(auth, context.req.raw.headers))?.user ?? null;
+    const who =
+      account === null
+        ? await guestAtTheDoor(getCookie(context, SHARE_COOKIE), shareService)
+        : null;
 
-    if (account === null) {
+    if (account === null && who === null) {
       return {};
     }
 
-    const accountId = account.id;
+    const accountId = account?.id ?? null;
     let session: RealtimeSession | null = null;
     let heartbeat: ReturnType<typeof setInterval> | null = null;
 
     return {
       onOpen: (_event, socket) => {
         session = realtimeHandler.open(
-          { accountId, profileId: null },
+          {
+            accountId,
+            profileId: null,
+            guestOf: who?.guestOf ?? null,
+            viaShare: who?.shareId ?? null,
+          },
           {
             send: (raw) => {
               socket.send(raw);

@@ -67,6 +67,21 @@ describe('what a guest may ask for', () => {
     });
   });
 
+  it('lets a guest open the realtime socket, which is how it appears in active sessions', () => {
+    expect(asking('/api/realtime').kind).toBe('allowed');
+  });
+
+  it('lets a guest say what its own tab is playing, and names the tab to be checked', () => {
+    expect(asking('/api/presence/tab-1/heartbeat')).toEqual({
+      kind: 'needsTab',
+      clientId: 'tab-1',
+    });
+  });
+
+  it('lets a guest say its tab has stopped, and names the tab to be checked', () => {
+    expect(asking('/api/presence/tab-1/watching')).toEqual({ kind: 'needsTab', clientId: 'tab-1' });
+  });
+
   it('hands the whole name to the check rather than the part that looked like an identifier', () => {
     const asked = asking(`/api/playback/session/direct-${FILM}/heartbeat`);
 
@@ -80,10 +95,6 @@ describe('what a guest may never ask for', () => {
     expect(asking('/api/libraries/2b6f0cc9-04f0-4f26-9f1a-1d5b2ea92d9f/items').kind).toBe(
       'refused',
     );
-  });
-
-  it('refuses the realtime socket, so a link is never a live feed of the household', () => {
-    expect(asking('/api/realtime').kind).toBe('refused');
   });
 
   it('refuses search', () => {

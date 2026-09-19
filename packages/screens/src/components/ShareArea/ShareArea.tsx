@@ -1,3 +1,4 @@
+import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { Icon } from '@ValenceUI/Icon';
 import { Button } from '@ValenceUI/Button';
 import { BookOpen01Icon } from '@hugeicons/core-free-icons';
@@ -75,6 +76,16 @@ const ShareArea = ({
       abandoned = true;
     };
   }, [token]);
+
+  const isOpen = standing.kind === 'opened';
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    return watchPresence();
+  }, [isOpen]);
 
   const closed = ended ?? (standing.kind === 'closed' ? standing.ended : null);
 

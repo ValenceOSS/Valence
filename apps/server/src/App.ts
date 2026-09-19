@@ -692,6 +692,7 @@ const createApp = ({
             shareGate: createShareGate({
               shares,
               sessions: shareSessions,
+              shareHoldingTab: (clientId) => presence.shareOf(clientId),
               itemOf: async (mediaId) => {
                 const item = await library.getMedia(mediaId);
 
@@ -2399,9 +2400,17 @@ const createApp = ({
 
     return context.json(
       await Promise.all(
-        presence
-          .list()
-          .map(async (entry) => ({ ...entry, listening: await listeningOn(entry.clientId) })),
+        presence.list().map(async (entry) => ({
+          clientId: entry.clientId,
+          profileId: entry.profileId,
+          profileName: entry.profileName,
+          isGuest: entry.viaShare !== null,
+          guestOf: entry.guestOf,
+          deviceLabel: entry.deviceLabel,
+          connectedAt: entry.connectedAt,
+          playback: entry.playback,
+          listening: await listeningOn(entry.clientId),
+        })),
       ),
       200,
     );
@@ -4881,12 +4890,6 @@ const createApp = ({
   });
 
   app.openapi(presenceHeartbeatRoute, async (context) => {
-    const account = await readAccount(context.req.raw.headers);
-
-    if (account === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
-    }
-
     const { clientId } = context.req.valid('param');
     const { isPlaying, health } = context.req.valid('json');
 
@@ -4900,12 +4903,6 @@ const createApp = ({
   });
 
   app.openapi(presenceStopWatchingRoute, async (context) => {
-    const account = await readAccount(context.req.raw.headers);
-
-    if (account === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
-    }
-
     const { clientId } = context.req.valid('param');
 
     if (!(await isTheDeviceOfWhoeverIsAsking(context.req.raw.headers, clientId))) {

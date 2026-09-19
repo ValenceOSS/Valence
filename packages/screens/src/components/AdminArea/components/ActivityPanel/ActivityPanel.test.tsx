@@ -7,6 +7,8 @@ const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   clientId: 'cli_1',
   profileId: 'prf_1',
   profileName: 'Dan',
+  isGuest: false,
+  guestOf: null,
   deviceLabel: 'Chrome on macOS',
   connectedAt: 0,
   playback: null,

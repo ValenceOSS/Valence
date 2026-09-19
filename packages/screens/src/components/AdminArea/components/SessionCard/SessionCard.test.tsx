@@ -19,6 +19,8 @@ const IDLE_SESSION: ActiveSession = {
   clientId: 'tab-1',
   profileId: 'profile-1',
   profileName: 'Dan',
+  isGuest: false,
+  guestOf: null,
   deviceLabel: 'Living room TV',
   connectedAt: 1000,
   playback: null,

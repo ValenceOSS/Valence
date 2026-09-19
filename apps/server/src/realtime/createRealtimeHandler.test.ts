@@ -261,7 +261,7 @@ describe('createRealtimeHandler', () => {
     expect(world.presenceCalls.connected).toStrictEqual([]);
   });
 
-  it('registers a tab once, not again on every profile switch', async () => {
+  it('registers a tab again on a profile switch, so the name it is listed under keeps up', async () => {
     const world = createWorld();
     const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
 
@@ -276,7 +276,7 @@ describe('createRealtimeHandler', () => {
       }),
     );
 
-    expect(world.presenceCalls.connected).toStrictEqual(['tab-one']);
+    expect(world.presenceCalls.connected).toStrictEqual(['tab-one', 'tab-one']);
   });
 
   it('takes the device label the tab gave', async () => {

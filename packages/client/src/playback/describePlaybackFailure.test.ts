@@ -6,16 +6,22 @@ describe('describePlaybackFailure', () => {
     expect(describePlaybackFailure(3)).toBe('This browser could not decode the stream.');
   });
 
-  it('says the stream never arrived when the manifest could not be read', () => {
-    expect(describePlaybackFailure(4)).toContain('did not arrive');
+  it('says only that the stream would not load when the manifest could not be read', () => {
+    expect(describePlaybackFailure(4)).toContain('could not be loaded');
   });
 
   it('says the same when the network failed', () => {
-    expect(describePlaybackFailure(1)).toContain('did not arrive');
+    expect(describePlaybackFailure(1)).toContain('could not be loaded');
   });
 
   it('says the same when streaming stopped', () => {
-    expect(describePlaybackFailure(5)).toContain('did not arrive');
+    expect(describePlaybackFailure(5)).toContain('could not be loaded');
+  });
+
+  it('never blames the server for converting, which is a cause it cannot know', () => {
+    for (const category of [1, 4, 5]) {
+      expect(describePlaybackFailure(category)).not.toContain('convert');
+    }
   });
 
   it('does not blame the browser for a failure it cannot place', () => {

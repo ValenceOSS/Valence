@@ -32,6 +32,8 @@ type PresenceEntry = {
   accountId: string | null;
   profileId: string | null;
   profileName: string | null;
+  guestOf: string | null;
+  viaShare: string | null;
   deviceLabel: string;
   connectedAt: number;
   playback: PresencePlayback | null;
@@ -67,17 +69,22 @@ type PresenceWatchers = {
 
 type PresenceArrival = {
   clientId: string;
+  socketId: string;
   accountId?: string | null;
   profileId: string | null;
   profileName: string | null;
+  guestOf?: string | null;
+  viaShare?: string | null;
   deviceLabel: string;
   send: (event: PresenceControlEvent) => void;
 };
 
 type PresenceService = {
   connect: (arrival: PresenceArrival) => boolean;
-  disconnect: (clientId: string) => void;
+  disconnect: (clientId: string, socketId: string) => void;
   ownerOf: (clientId: string) => string | null;
+  isHeldBy: (clientId: string, socketId: string) => boolean;
+  shareOf: (clientId: string) => string | null;
   startPlayback: (clientId: string, playback: PresenceStartPlaybackInput) => void;
   stopPlayback: (clientId: string) => void;
   heartbeatPlayback: (
@@ -96,6 +103,7 @@ type PresenceService = {
 
 type Connection = {
   entry: PresenceEntry;
+  socketId: string;
   send: (event: PresenceControlEvent) => void;
 };
 
@@ -153,22 +161,40 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
   };
 
   return {
-    connect: ({ clientId, accountId = null, profileId, profileName, deviceLabel, send }) => {
+    connect: ({
+      clientId,
+      socketId,
+      accountId = null,
+      profileId,
+      profileName,
+      guestOf = null,
+      viaShare = null,
+      deviceLabel,
+      send,
+    }) => {
       const already = connections.get(clientId);
+      const isTheSamePerson = already !== undefined && already.entry.accountId === accountId;
 
-      if (already !== undefined && already.entry.accountId !== accountId) {
+      if (already !== undefined && !isTheSamePerson && already.socketId !== socketId) {
         return false;
       }
 
+      if (already !== undefined && !isTheSamePerson) {
+        endPlayback(already);
+      }
+
       connections.set(clientId, {
+        socketId,
         entry: {
           clientId,
           accountId,
           profileId,
           profileName,
+          guestOf,
+          viaShare,
           deviceLabel,
-          connectedAt: Date.now(),
-          playback: null,
+          connectedAt: isTheSamePerson ? already.entry.connectedAt : Date.now(),
+          playback: isTheSamePerson ? already.entry.playback : null,
         },
         send,
       });
@@ -180,13 +206,18 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
 
     ownerOf: (clientId) => connections.get(clientId)?.entry.accountId ?? null,
 
-    disconnect: (clientId) => {
+    isHeldBy: (clientId, socketId) => connections.get(clientId)?.socketId === socketId,
+
+    shareOf: (clientId) => connections.get(clientId)?.entry.viaShare ?? null,
+
+    disconnect: (clientId, socketId) => {
       const connection = connections.get(clientId);
 
-      if (connection !== undefined) {
-        endPlayback(connection);
+      if (connection === undefined || connection.socketId !== socketId) {
+        return;
       }
 
+      endPlayback(connection);
       connections.delete(clientId);
       announce();
     },

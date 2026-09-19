@@ -94,6 +94,7 @@ describe('presence over HTTP', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: store.user[0]?.id ?? null,
       profileId: null,
       profileName: null,
@@ -126,6 +127,7 @@ describe('presence over HTTP', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: store.user[0]?.id ?? null,
       profileId: null,
       profileName: null,
@@ -159,6 +161,7 @@ describe('presence over HTTP', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: store.user[0]?.id ?? null,
       profileId: null,
       profileName: null,
@@ -209,6 +212,7 @@ describe('presence over HTTP', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: store.user[0]?.id ?? null,
       profileId: null,
       profileName: null,
@@ -250,6 +254,7 @@ describe('presence over HTTP', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: store.user[0]?.id ?? null,
       profileId: null,
       profileName: null,
@@ -277,6 +282,7 @@ describe('presence over HTTP', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: store.user[0]?.id ?? null,
       profileId: null,
       profileName: null,

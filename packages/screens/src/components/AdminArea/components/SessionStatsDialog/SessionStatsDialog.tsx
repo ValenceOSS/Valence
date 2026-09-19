@@ -1,3 +1,4 @@
+import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { Icon } from '@ValenceUI/Icon';
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -55,7 +56,7 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
 
       <DialogContent>
         <dl className="flex flex-col divide-y divide-[var(--surface-line)]">
-          <Row name="Viewer">{session.profileName ?? 'Unknown viewer'}</Row>
+          <Row name="Viewer">{nameOfSession(session)}</Row>
           <Row name="Device">{session.deviceLabel}</Row>
 
           {playback === null ? (
