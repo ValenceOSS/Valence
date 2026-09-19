@@ -2714,7 +2714,14 @@ const createApp = ({
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    return context.json({ permissions: [...PERMISSIONS] }, 200);
+    return context.json(
+      {
+        permissions: PERMISSIONS.filter(
+          (permission) => requests !== null || !permission.startsWith('requests.'),
+        ),
+      },
+      200,
+    );
   });
 
   app.openapi(listRolesRoute, async (context) => {

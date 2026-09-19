@@ -2,6 +2,7 @@ import {
   Activity01Icon,
   DashboardSquare01Icon,
   FolderLibraryIcon,
+  InboxDownloadIcon,
   Link01Icon,
   Settings02Icon,
   ShieldUserIcon,
@@ -29,6 +30,10 @@ const ADMIN_SECTIONS = [
       { id: 'libraries', label: 'Libraries', icon: FolderLibraryIcon },
       { id: 'media', label: 'Media', icon: Video01Icon },
     ],
+  },
+  {
+    label: 'Requests',
+    items: [{ id: 'requests', label: 'Overview', icon: InboxDownloadIcon }],
   },
   {
     label: 'People',

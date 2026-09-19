@@ -30,6 +30,7 @@ import type { EditWebhookDialogProps } from './EditWebhookDialog.types';
  * @param onSave - Called with the change to make, answering with any refusal.
  * @param accounts - The accounts this subscription can be narrowed to.
  * @param profiles - The profiles this subscription can be narrowed to.
+ * @param hasRequests - Whether requesting is on, without which its events are not offered.
  */
 const EditWebhookDialog = ({
   webhook,
@@ -37,6 +38,7 @@ const EditWebhookDialog = ({
   onSave,
   accounts,
   profiles,
+  hasRequests = false,
 }: EditWebhookDialogProps) => {
   const [draft, setDraft] = useState<WebhookDraft | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
@@ -117,6 +119,7 @@ const EditWebhookDialog = ({
             onChange={setDraft}
             accounts={accounts}
             profiles={profiles}
+            hasRequests={hasRequests}
             travel={travel}
           />
         </DialogContent>

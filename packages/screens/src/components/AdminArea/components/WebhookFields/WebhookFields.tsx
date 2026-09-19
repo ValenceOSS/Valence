@@ -58,9 +58,17 @@ const isMediaKind = (candidate: string): candidate is MediaKind =>
  * @param onChange - Told the whole draft again whenever any part of it changes.
  * @param accounts - The accounts this subscription can be narrowed to.
  * @param profiles - The profiles this subscription can be narrowed to.
+ * @param hasRequests - Whether requesting is on, without which its events are not offered.
  * @param travel - Which way the pane should slide in from.
  */
-const WebhookFields = ({ draft, onChange, accounts, profiles, travel }: WebhookFieldsProps) => {
+const WebhookFields = ({
+  draft,
+  onChange,
+  accounts,
+  profiles,
+  hasRequests = false,
+  travel,
+}: WebhookFieldsProps) => {
   const noteIdPrefix = useId();
 
   const setEvents = (events: WebhookSubscribableEvent[]) => {
@@ -121,80 +129,82 @@ const WebhookFields = ({ draft, onChange, accounts, profiles, travel }: WebhookF
 
       <TabPanel value="events" travel={travel}>
         <div className="flex flex-col gap-5">
-          {WEBHOOK_EVENT_GROUPS.map((group) => {
-            const chosenHere = group.events.filter((event) => draft.events.includes(event));
-            const isEveryOne = chosenHere.length === group.events.length;
+          {WEBHOOK_EVENT_GROUPS.filter((group) => hasRequests || group.id !== 'requests').map(
+            (group) => {
+              const chosenHere = group.events.filter((event) => draft.events.includes(event));
+              const isEveryOne = chosenHere.length === group.events.length;
 
-            return (
-              <div key={group.id} className="flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-medium text-text">{group.label}</span>
+              return (
+                <div key={group.id} className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-text">{group.label}</span>
 
-                  <Button
-                    variant="bare"
-                    size="sm"
-                    onClick={() => {
-                      setEvents(
-                        isEveryOne
-                          ? draft.events.filter((event) => !group.events.includes(event))
-                          : [
-                              ...draft.events,
-                              ...group.events.filter((event) => !draft.events.includes(event)),
-                            ],
-                      );
-                    }}
-                  >
-                    {isEveryOne ? 'None' : 'All'}
-                  </Button>
-                </div>
-
-                <ul
-                  role="group"
-                  aria-label={group.label}
-                  className="flex flex-col divide-y divide-[var(--surface-line)]"
-                >
-                  {group.events.map((event) => (
-                    <li
-                      key={event}
-                      className="flex items-start justify-between gap-4 py-2.5 first:pt-0"
+                    <Button
+                      variant="bare"
+                      size="sm"
+                      onClick={() => {
+                        setEvents(
+                          isEveryOne
+                            ? draft.events.filter((event) => !group.events.includes(event))
+                            : [
+                                ...draft.events,
+                                ...group.events.filter((event) => !draft.events.includes(event)),
+                              ],
+                        );
+                      }}
                     >
-                      <div className="flex min-w-0 flex-col gap-0.5">
-                        <span className="text-sm font-medium text-text">
-                          {WEBHOOK_EVENT_LABELS[event]}
-                        </span>
+                      {isEveryOne ? 'None' : 'All'}
+                    </Button>
+                  </div>
 
-                        {WEBHOOK_EVENT_NOTES[event] === undefined ? null : (
-                          <span
-                            id={`${noteIdPrefix}-${event}`}
-                            className="text-xs leading-relaxed text-text-muted"
-                          >
-                            {WEBHOOK_EVENT_NOTES[event]}
+                  <ul
+                    role="group"
+                    aria-label={group.label}
+                    className="flex flex-col divide-y divide-[var(--surface-line)]"
+                  >
+                    {group.events.map((event) => (
+                      <li
+                        key={event}
+                        className="flex items-start justify-between gap-4 py-2.5 first:pt-0"
+                      >
+                        <div className="flex min-w-0 flex-col gap-0.5">
+                          <span className="text-sm font-medium text-text">
+                            {WEBHOOK_EVENT_LABELS[event]}
                           </span>
-                        )}
-                      </div>
 
-                      <Switch
-                        label={WEBHOOK_EVENT_LABELS[event]}
-                        isLabelHidden
-                        isOn={draft.events.includes(event)}
-                        onToggle={() => {
-                          setEvents(
-                            draft.events.includes(event)
-                              ? draft.events.filter((one) => one !== event)
-                              : [...draft.events, event],
-                          );
-                        }}
-                        {...(WEBHOOK_EVENT_NOTES[event] === undefined
-                          ? {}
-                          : { describedBy: `${noteIdPrefix}-${event}` })}
-                        className="mt-0.5 shrink-0"
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
+                          {WEBHOOK_EVENT_NOTES[event] === undefined ? null : (
+                            <span
+                              id={`${noteIdPrefix}-${event}`}
+                              className="text-xs leading-relaxed text-text-muted"
+                            >
+                              {WEBHOOK_EVENT_NOTES[event]}
+                            </span>
+                          )}
+                        </div>
+
+                        <Switch
+                          label={WEBHOOK_EVENT_LABELS[event]}
+                          isLabelHidden
+                          isOn={draft.events.includes(event)}
+                          onToggle={() => {
+                            setEvents(
+                              draft.events.includes(event)
+                                ? draft.events.filter((one) => one !== event)
+                                : [...draft.events, event],
+                            );
+                          }}
+                          {...(WEBHOOK_EVENT_NOTES[event] === undefined
+                            ? {}
+                            : { describedBy: `${noteIdPrefix}-${event}` })}
+                          className="mt-0.5 shrink-0"
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            },
+          )}
         </div>
       </TabPanel>
 
