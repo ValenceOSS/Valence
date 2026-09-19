@@ -26,6 +26,8 @@ describe('DownloadClientDraftSchema', () => {
         music: 'valence-music',
         books: 'valence-books',
       },
+      remotePath: '',
+      localPath: '',
       priority: 25,
       isEnabled: true,
     });
@@ -85,5 +87,13 @@ describe('PROTOCOL_OF_CLIENT', () => {
       sabnzbd: 'usenet',
       nzbget: 'usenet',
     });
+  });
+});
+
+describe('the folders a client and Valence each see', () => {
+  it('drops a slash at the end, but keeps the root', () => {
+    expect(
+      DownloadClientChangeSchema.parse({ remotePath: ' /downloads/ ', localPath: '/' }),
+    ).toEqual({ remotePath: '/downloads', localPath: '/' });
   });
 });

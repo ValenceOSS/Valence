@@ -15,6 +15,8 @@ const KEPT: DownloadClient = {
   username: 'me',
   hasPassword: true,
   hasApiKey: false,
+  remotePath: '',
+  localPath: '',
   categories: { movies: 'films', shows: 'tv', music: 'music', books: 'books' },
   priority: 3,
   isEnabled: false,

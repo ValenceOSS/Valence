@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { relayDownloads } from './relayDownloads';
 import type {
-  DownloadEvent,
+  ServiceEvent,
   DownloadQueue,
   DownloadStreamFrame,
 } from '@ValenceContracts/schemas/DownloadQueue';
@@ -11,12 +11,11 @@ const QUEUE: DownloadQueue = { clients: [], downloads: [], checkedAt: null };
 /**
  * An event with the id given.
  */
-const anEvent = (id: number): DownloadEvent => ({
+const anEvent = (id: number): ServiceEvent => ({
   id,
   kind: 'started',
   title: 'Dune',
   clientName: 'qBittorrent',
-  problem: null,
   at: '2026-09-19T00:00:00.000Z',
 });
 
@@ -27,7 +26,7 @@ const aRelay = (streams: DownloadStreamFrame[][]) => {
   let opened = 0;
   const heard: {
     queues: DownloadQueue[];
-    events: DownloadEvent[];
+    events: ServiceEvent[];
     acknowledged: number[][];
     connected: number;
     lost: string[];

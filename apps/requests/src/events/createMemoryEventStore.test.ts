@@ -1,16 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { createMemoryDownloadEventStore } from './createMemoryDownloadEventStore';
+import { createMemoryEventStore } from './createMemoryEventStore';
 
-describe('createMemoryDownloadEventStore', () => {
+describe('createMemoryEventStore', () => {
   it('keeps events in order until they are acknowledged', async () => {
-    const store = createMemoryDownloadEventStore(() => new Date('2026-09-19T00:00:00.000Z'));
+    const store = createMemoryEventStore(() => new Date('2026-09-19T00:00:00.000Z'));
 
-    const first = await store.add({
-      kind: 'started',
-      title: 'Dune',
-      clientName: 'q',
-      problem: null,
-    });
+    const first = await store.add({ kind: 'started', title: 'Dune', clientName: 'q' });
     const second = await store.add({
       kind: 'failed',
       title: 'Dune',
@@ -23,7 +18,6 @@ describe('createMemoryDownloadEventStore', () => {
       kind: 'started',
       title: 'Dune',
       clientName: 'q',
-      problem: null,
       at: '2026-09-19T00:00:00.000Z',
     });
 
@@ -33,11 +27,10 @@ describe('createMemoryDownloadEventStore', () => {
   });
 
   it('keeps the time by the clock by default', async () => {
-    const event = await createMemoryDownloadEventStore().add({
+    const event = await createMemoryEventStore().add({
       kind: 'started',
       title: 'Dune',
       clientName: 'q',
-      problem: null,
     });
 
     expect(Date.parse(event.at)).not.toBeNaN();

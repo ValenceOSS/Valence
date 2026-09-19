@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { createDownloadQueue } from './createDownloadQueue';
-import { createMemoryDownloadEventStore } from './createMemoryDownloadEventStore';
+import { createMemoryEventStore } from '@ValenceRequests/events/createMemoryEventStore';
 import { DownloadClientFailure } from './DownloadClientFailure';
 import type { DownloadStreamFrame } from '@ValenceContracts/schemas/DownloadQueue';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
@@ -29,6 +29,8 @@ const aClient = (overrides: Partial<DownloadClientRecord> = {}): DownloadClientR
   password: '',
   apiKey: '',
   categories: DEFAULT_DOWNLOAD_CATEGORIES,
+  remotePath: '',
+  localPath: '',
   priority: 25,
   isEnabled: true,
   createdAt: AT.toISOString(),
@@ -54,6 +56,7 @@ const anItem = (overrides: Partial<ClientItem> = {}): ClientItem => ({
   secondsLeft: 5,
   seeds: 9,
   peers: 2,
+  path: null,
   ...overrides,
 });
 
@@ -64,6 +67,7 @@ const aDownload = (overrides: Partial<SentDownloadRecord> = {}): SentDownloadRec
   id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
   clientId: QBITTORRENT.id,
   remoteId: HASH,
+  contentPath: null,
   protocol: 'torrent',
   libraryKind: 'movies',
   title: 'Dune',
@@ -136,7 +140,7 @@ const aQueue = ({
 } = {}) => {
   const store = createMemoryRecordStore(clients);
   const downloads = createMemoryRecordStore(sent);
-  const events = createMemoryDownloadEventStore(() => AT);
+  const events = createMemoryEventStore(() => AT);
   const waits: { run: () => void; afterMs: number; isCancelled: boolean }[] = [];
   const schedule = vi.fn((run: () => void, afterMs: number) => {
     const wait = { run, afterMs, isCancelled: false };
@@ -221,7 +225,6 @@ describe('createDownloadQueue', () => {
           kind: 'started',
           title: 'Dune',
           clientName: 'qBittorrent',
-          problem: null,
           at: AT.toISOString(),
         },
       ]);
@@ -403,7 +406,7 @@ describe('createDownloadQueue', () => {
 
       await queue.check();
 
-      expect((await events.pending())[0]?.problem).toBe('qBittorrent says it failed');
+      expect(await events.pending()).toMatchObject([{ problem: 'qBittorrent says it failed' }]);
     });
 
     it('notes when a download finished', async () => {
@@ -419,6 +422,18 @@ describe('createDownloadQueue', () => {
         state: 'done',
         finishedAt: AT.toISOString(),
       });
+    });
+
+    it('keeps where its client put a download, once it says', async () => {
+      const kept = aDownload();
+      const { queue, downloads } = aQueue({
+        sent: [kept],
+        adapter: anAdapter([anItem({ path: '/downloads/valence/Dune' })]),
+      });
+
+      await queue.check();
+
+      expect((await downloads.find(kept.id))?.contentPath).toBe('/downloads/valence/Dune');
     });
 
     it('fails a download taken out of its client before it finished, but not one that had', async () => {

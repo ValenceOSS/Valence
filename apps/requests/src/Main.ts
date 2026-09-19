@@ -16,7 +16,7 @@ import { createDatabaseDefinitionStore } from '@ValenceRequests/definitions/crea
 import { createDefinitionCatalogue } from '@ValenceRequests/definitions/createDefinitionCatalogue';
 import { createAdapterFor } from '@ValenceRequests/downloads/createAdapterFor';
 import { createDatabaseDownloadClientStore } from '@ValenceRequests/downloads/createDatabaseDownloadClientStore';
-import { createDatabaseDownloadEventStore } from '@ValenceRequests/downloads/createDatabaseDownloadEventStore';
+import { createDatabaseEventStore } from '@ValenceRequests/events/createDatabaseEventStore';
 import { createDatabaseSentDownloadStore } from '@ValenceRequests/downloads/createDatabaseSentDownloadStore';
 import { createDownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import { createDownloadQueue } from '@ValenceRequests/downloads/createDownloadQueue';
@@ -97,7 +97,7 @@ const profiles = createProfileService({ store: createDatabaseProfileStore(db) })
 const downloadQueue = createDownloadQueue({
   clients: downloadClients,
   downloads: createDatabaseSentDownloadStore(db),
-  events: createDatabaseDownloadEventStore(db),
+  events: createDatabaseEventStore(db),
   fetchRelease: (indexerId, url) => indexers.download(indexerId, url),
 });
 

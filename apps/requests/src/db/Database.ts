@@ -2,22 +2,28 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import {
+  blocklistedRelease,
   downloadClient,
-  downloadEvent,
   indexer,
   indexerDefinition,
+  mediaRequest,
   qualityProfile,
+  requestItem,
   sentDownload,
+  serviceEvent,
   setting,
 } from '@ValenceRequests/db/Schema';
 
 const schema = {
+  blocklistedRelease,
   downloadClient,
-  downloadEvent,
   indexer,
   indexerDefinition,
+  mediaRequest,
   qualityProfile,
+  requestItem,
   sentDownload,
+  serviceEvent,
   setting,
 };
 

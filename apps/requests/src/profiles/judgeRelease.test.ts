@@ -1,46 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { aProfile } from '@ValenceRequests/testing/aProfile';
+import { aRelease } from '@ValenceRequests/testing/aRelease';
 import { judgeRelease } from './judgeRelease';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
-
-/**
- * A profile with anything the test cares about changed.
- */
-const aProfile = (overrides: Partial<QualityProfile> = {}): QualityProfile => ({
-  ...QualityProfileDraftSchema.parse({ name: 'HD', kind: 'video' }),
-  id: '0f8fad5b-d9cb-469f-a165-70867728950e',
-  createdAt: '2026-09-19T00:00:00.000Z',
-  updatedAt: '2026-09-19T00:00:00.000Z',
-  ...overrides,
-});
-
-/**
- * A release of the name given.
- */
-const aRelease = (title: string, overrides: Partial<Release> = {}): Release => ({
-  id: title,
-  title,
-  indexerId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
-  indexerName: 'Jackett',
-  protocol: 'torrent',
-  sizeBytes: null,
-  seeders: 10,
-  leechers: 1,
-  grabs: null,
-  publishedAt: null,
-  categories: [2000],
-  downloadUrl: null,
-  magnetUrl: null,
-  infoUrl: null,
-  infoHash: null,
-  downloadFactor: null,
-  uploadFactor: null,
-  minimumRatio: null,
-  minimumSeedSeconds: null,
-  ...overrides,
-});
 
 /**
  * Judges a release of the name given.

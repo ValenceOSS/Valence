@@ -52,6 +52,28 @@ describe('DownloadStreamFrameSchema', () => {
     expect(frame.kind).toBe('events');
   });
 
+  it('reads a request filed into a library', () => {
+    const frame = DownloadStreamFrameSchema.parse({
+      kind: 'events',
+      events: [
+        {
+          id: 2,
+          kind: 'filed',
+          title: 'Dune',
+          requestId: '0f8fad5b-d9cb-469f-a165-70867728950e',
+          requestedById: 'someone',
+          requestKind: 'film',
+          tmdbId: 438631,
+          libraryId: 'films',
+          folder: '/media/Films/Dune (2021)',
+          at: '2026-09-19T00:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(frame.kind === 'events' ? frame.events[0]?.kind : null).toBe('filed');
+  });
+
   it('refuses a frame it does not know', () => {
     expect(() => DownloadStreamFrameSchema.parse({ kind: 'gossip' })).toThrow();
   });

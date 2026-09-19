@@ -17,6 +17,8 @@ const QBITTORRENT: DownloadClientRecord = {
   password: 'secret',
   apiKey: '',
   categories: DEFAULT_DOWNLOAD_CATEGORIES,
+  remotePath: '',
+  localPath: '',
   priority: 25,
   isEnabled: true,
   createdAt: '2026-09-18T00:00:00.000Z',
@@ -77,6 +79,8 @@ describe('createDownloadClientService', () => {
       hasPassword: true,
       hasApiKey: false,
       categories: DEFAULT_DOWNLOAD_CATEGORIES,
+      remotePath: '',
+      localPath: '',
       priority: 25,
       isEnabled: true,
       createdAt: QBITTORRENT.createdAt,
@@ -94,6 +98,8 @@ describe('createDownloadClientService', () => {
     expect(added).toMatchObject({
       name: 'NZBGet',
       categories: DEFAULT_DOWNLOAD_CATEGORIES,
+      remotePath: '',
+      localPath: '',
       createdAt: AT.toISOString(),
     });
     expect((await store.find(added.id))?.password).toBe('');

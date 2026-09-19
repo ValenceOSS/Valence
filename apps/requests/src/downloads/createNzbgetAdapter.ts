@@ -34,6 +34,8 @@ const HistorySchema = z.object({
   Category: z.string(),
   Status: z.string(),
   FileSizeMB: z.number(),
+  DestDir: z.string().default(''),
+  FinalDir: z.string().default(''),
 });
 
 const StatusSchema = z.object({ DownloadRate: z.number() });
@@ -196,6 +198,7 @@ const createNzbgetAdapter = (
           secondsLeft: isTheOne && speed > 0 ? Math.round(remaining / speed) : null,
           seeds: null,
           peers: null,
+          path: null,
         };
       });
 
@@ -215,6 +218,7 @@ const createNzbgetAdapter = (
           secondsLeft: null,
           seeds: null,
           peers: null,
+          path: job.FinalDir || job.DestDir || null,
         };
       });
 

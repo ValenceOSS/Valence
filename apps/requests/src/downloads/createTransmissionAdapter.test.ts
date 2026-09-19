@@ -60,6 +60,7 @@ const TORRENT = {
   peersSendingToUs: 4,
   peersGettingFromUs: 1,
   labels: ['valence'],
+  downloadDir: '/downloads/valence/',
 };
 
 describe('createTransmissionAdapter', () => {
@@ -205,6 +206,7 @@ describe('createTransmissionAdapter', () => {
       secondsLeft: 3,
       seeds: 4,
       peers: 1,
+      path: '/downloads/valence/Dune',
     });
     expect(listed.map((torrent) => [torrent.remoteId, torrent.state])).toEqual([
       [HASH, 'downloading'],

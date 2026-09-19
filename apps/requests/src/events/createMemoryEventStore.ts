@@ -1,5 +1,6 @@
-import type { DownloadEvent } from '@ValenceContracts/schemas/DownloadQueue';
-import type { DownloadEventStore } from '@ValenceRequests/downloads/DownloadEventStore';
+import { ServiceEventSchema } from '@ValenceContracts/schemas/DownloadQueue';
+import type { ServiceEvent } from '@ValenceContracts/schemas/DownloadQueue';
+import type { EventStore } from '@ValenceRequests/events/EventStore';
 
 /**
  * Events held in memory, for tests of everything that raises them without a database.
@@ -7,13 +8,13 @@ import type { DownloadEventStore } from '@ValenceRequests/downloads/DownloadEven
  * @param now - The clock.
  * @returns The store.
  */
-const createMemoryDownloadEventStore = (now: () => Date = () => new Date()): DownloadEventStore => {
+const createMemoryEventStore = (now: () => Date = () => new Date()): EventStore => {
   let next = 1;
-  let held: DownloadEvent[] = [];
+  let held: ServiceEvent[] = [];
 
   return {
     add: (event) => {
-      const kept = { ...event, id: next, at: now().toISOString() };
+      const kept = ServiceEventSchema.parse({ ...event, id: next, at: now().toISOString() });
 
       next += 1;
       held = [...held, kept];
@@ -29,4 +30,4 @@ const createMemoryDownloadEventStore = (now: () => Date = () => new Date()): Dow
   };
 };
 
-export { createMemoryDownloadEventStore };
+export { createMemoryEventStore };

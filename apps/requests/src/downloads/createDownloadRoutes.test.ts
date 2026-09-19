@@ -17,6 +17,8 @@ const CLIENT: DownloadClient = {
   hasPassword: true,
   hasApiKey: false,
   categories: DEFAULT_DOWNLOAD_CATEGORIES,
+  remotePath: '',
+  localPath: '',
   priority: 25,
   isEnabled: true,
   createdAt: '2026-09-19T00:00:00.000Z',

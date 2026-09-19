@@ -267,6 +267,7 @@ describe('createQbittorrentAdapter', () => {
             eta: 6,
             num_seeds: 12,
             num_leechs: 3,
+            content_path: '/downloads/valence/Dune',
           },
           {
             hash: 'b',
@@ -297,7 +298,9 @@ describe('createQbittorrentAdapter', () => {
       secondsLeft: 6,
       seeds: 12,
       peers: 3,
+      path: '/downloads/valence/Dune',
     });
+    expect(arrival?.path).toBeNull();
     expect(arrival?.state).toBe('stalled');
     expect(arrival?.doneBytes).toBe(5);
     expect(arrival?.secondsLeft).toBeNull();

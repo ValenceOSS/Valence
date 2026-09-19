@@ -1,5 +1,5 @@
 import type {
-  DownloadEvent,
+  ServiceEvent,
   DownloadQueue,
   DownloadStreamFrame,
 } from '@ValenceContracts/schemas/DownloadQueue';
@@ -9,7 +9,7 @@ const REMEMBERED = 1000;
 type RelayDownloadsOptions = {
   stream: (onFrame: (frame: DownloadStreamFrame) => void, signal: AbortSignal) => Promise<string>;
   onQueue: (queue: DownloadQueue) => void;
-  onEvent: (event: DownloadEvent) => void;
+  onEvent: (event: ServiceEvent) => void;
   acknowledge: (ids: number[]) => Promise<void>;
   onConnected: () => void;
   onLost: (reason: string) => void;

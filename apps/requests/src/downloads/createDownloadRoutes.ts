@@ -5,7 +5,7 @@ import {
   DownloadClientDraftSchema,
 } from '@ValenceContracts/schemas/DownloadClient';
 import {
-  DownloadEventAckSchema,
+  ServiceEventAckSchema,
   DownloadWatchSchema,
   ReleaseSendSchema,
 } from '@ValenceContracts/schemas/DownloadQueue';
@@ -142,7 +142,7 @@ const createDownloadRoutes = ({
   });
 
   routes.post('/downloads/events/ack', async (context) => {
-    const asked = await readBody(context.req.raw, DownloadEventAckSchema);
+    const asked = await readBody(context.req.raw, ServiceEventAckSchema);
 
     if (asked === null) {
       return context.json({ error: 'Say which events were heard.' }, 400);

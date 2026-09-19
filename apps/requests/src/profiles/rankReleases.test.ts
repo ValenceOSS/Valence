@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { aRelease as aSeededRelease } from '@ValenceRequests/testing/aRelease';
 import { rankReleases } from './rankReleases';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { Judgement } from '@ValenceContracts/schemas/QualityProfile';
@@ -7,30 +8,15 @@ const FIRST = '0f8fad5b-d9cb-469f-a165-70867728950e';
 const SECOND = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
 
 /**
- * A release with anything the test cares about changed.
+ * A release found by the first indexer, with anything the test cares about changed.
  */
-const aRelease = (id: string, overrides: Partial<Release> = {}): Release => ({
-  id,
-  title: id,
-  indexerId: FIRST,
-  indexerName: 'Jackett',
-  protocol: 'torrent',
-  sizeBytes: null,
-  seeders: 10,
-  leechers: 1,
-  grabs: null,
-  publishedAt: '2026-09-01T00:00:00.000Z',
-  categories: [],
-  downloadUrl: null,
-  magnetUrl: null,
-  infoUrl: null,
-  infoHash: null,
-  downloadFactor: null,
-  uploadFactor: null,
-  minimumRatio: null,
-  minimumSeedSeconds: null,
-  ...overrides,
-});
+const aRelease = (id: string, overrides: Partial<Release> = {}): Release =>
+  aSeededRelease(id, {
+    indexerId: FIRST,
+    publishedAt: '2026-09-01T00:00:00.000Z',
+    categories: [],
+    ...overrides,
+  });
 
 /**
  * A judgement of a release.

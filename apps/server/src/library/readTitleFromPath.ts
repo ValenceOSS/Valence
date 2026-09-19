@@ -1,22 +1,6 @@
+import { VIDEO_FILE_EXTENSIONS } from '@ValenceContracts/constants/VIDEO_FILE_EXTENSIONS';
 import { isInRenditionDirectory } from './isInRenditionDirectory';
 import { readSeasonDirectory } from './readSeasonDirectory';
-
-const MEDIA_EXTENSIONS = new Set([
-  'mkv',
-  'mp4',
-  'm4v',
-  'mov',
-  'avi',
-  'webm',
-  'ts',
-  'm2ts',
-  'mpg',
-  'mpeg',
-  'wmv',
-  'flv',
-  'ogv',
-  '3gp',
-]);
 
 const NOISE = new Set([
   '1080p',
@@ -107,7 +91,7 @@ const isMediaFile = (fileName: string): boolean => {
   return (
     !fileName.startsWith('.') &&
     !isInRenditionDirectory(fileName) &&
-    MEDIA_EXTENSIONS.has(extension)
+    VIDEO_FILE_EXTENSIONS.has(extension)
   );
 };
 

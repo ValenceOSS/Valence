@@ -1,6 +1,5 @@
+import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
 import { describeLanguage, readLanguage } from '@ValenceCore/functions/describeTrack';
-
-const SUBTITLE_EXTENSIONS = new Set(['srt', 'vtt', 'ass', 'ssa']);
 
 const BITMAP_SUBTITLE_EXTENSIONS = new Set(['sup', 'sub', 'idx']);
 
@@ -136,7 +135,7 @@ const findSidecarSubtitles = (
   for (const file of files) {
     const { stem: fileStem, extension } = splitName(file.name);
 
-    if (!SUBTITLE_EXTENSIONS.has(extension)) {
+    if (!TEXT_SUBTITLE_EXTENSIONS.has(extension)) {
       continue;
     }
 

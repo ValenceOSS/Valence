@@ -12,7 +12,7 @@ import type {
 import type { ClientItem } from '@ValenceRequests/downloads/DownloadClientAdapter';
 import type { DownloadClientRecord } from '@ValenceRequests/downloads/DownloadClientRecord';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
-import type { DownloadEventStore } from '@ValenceRequests/downloads/DownloadEventStore';
+import type { EventStore } from '@ValenceRequests/events/EventStore';
 import type {
   SentDownloadRecord,
   SentDownloadStore,
@@ -24,7 +24,7 @@ type Schedule = (run: () => void, afterMs: number) => () => void;
 type CreateDownloadQueueOptions = {
   clients: Pick<DownloadClientService, 'records' | 'adapterOf'>;
   downloads: SentDownloadStore;
-  events: DownloadEventStore;
+  events: EventStore;
   fetchRelease: (indexerId: string, url: string) => Promise<ReleaseFile | null>;
   now?: () => Date;
   schedule?: Schedule;
@@ -241,11 +241,13 @@ const createDownloadQueue = ({
             progress: item.progress,
             doneBytes: item.doneBytes,
             sizeBytes: item.sizeBytes ?? record.sizeBytes,
+            contentPath: item.path ?? record.contentPath,
           };
     const hasMoved =
       'progress' in next &&
       (Math.abs(next.progress - record.progress) >= PROGRESS_WORTH_KEEPING ||
-        next.sizeBytes !== record.sizeBytes);
+        next.sizeBytes !== record.sizeBytes ||
+        next.contentPath !== record.contentPath);
 
     if (next.state === record.state && next.problem === record.problem && !hasMoved) {
       return;
@@ -417,6 +419,7 @@ const createDownloadQueue = ({
           id: randomUUID(),
           clientId: client.id,
           remoteId,
+          contentPath: null,
           protocol: read.protocol,
           libraryKind: read.libraryKind,
           title: read.title,
@@ -436,7 +439,6 @@ const createDownloadQueue = ({
           kind: 'started',
           title: read.title,
           clientName: client.name,
-          problem: null,
         });
       }
 

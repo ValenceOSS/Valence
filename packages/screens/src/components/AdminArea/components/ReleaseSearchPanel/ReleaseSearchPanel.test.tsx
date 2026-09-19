@@ -106,6 +106,8 @@ const aClient = (overrides: Partial<DownloadClient> = {}): DownloadClient => ({
   username: '',
   hasPassword: false,
   hasApiKey: false,
+  remotePath: '',
+  localPath: '',
   categories: {
     movies: 'valence-films',
     shows: 'valence-series',

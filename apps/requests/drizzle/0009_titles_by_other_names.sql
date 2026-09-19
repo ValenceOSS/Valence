@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "aliases" jsonb DEFAULT '[]'::jsonb NOT NULL;

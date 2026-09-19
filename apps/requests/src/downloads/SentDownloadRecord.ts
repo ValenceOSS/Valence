@@ -18,6 +18,7 @@ type SentDownloadRecord = Pick<
   | 'finishedAt'
 > & {
   remoteId: string;
+  contentPath: string | null;
   updatedAt: string;
 };
 

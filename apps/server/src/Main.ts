@@ -2550,14 +2550,14 @@ if (requestsClient !== null) {
         return;
       }
 
-      const problem = event.problem ?? 'no reason given';
+      if (event.kind === 'failed') {
+        log.warn('requests', `${event.title} failed in ${event.clientName} — ${event.problem}`);
 
-      log.warn('requests', `${event.title} failed in ${event.clientName} — ${problem}`);
-
-      void events.publish({
-        event: 'requests.downloadFailed',
-        data: { title: event.title, client: event.clientName, problem },
-      });
+        void events.publish({
+          event: 'requests.downloadFailed',
+          data: { title: event.title, client: event.clientName, problem: event.problem },
+        });
+      }
     },
     acknowledge: async (ids) => {
       await requestsClient.acknowledgeDownloadEvents(ids);
