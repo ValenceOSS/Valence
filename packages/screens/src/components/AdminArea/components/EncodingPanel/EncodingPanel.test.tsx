@@ -92,6 +92,20 @@ describe('EncodingPanel', () => {
     expect(screen.getByRole('progressbar')).toBeVisible();
   });
 
+  it('says how much faster than watching it, rather than how fast the file grows', () => {
+    const started = new Date(Date.now() - 180_000).toISOString();
+
+    render(
+      <EncodingPanel
+        {...props}
+        reencodes={[at('a', 'encoding', { progress: 0.5, startedAt: started })]}
+      />,
+    );
+
+    expect(screen.getByText(/× real time/)).toBeVisible();
+    expect(screen.queryByText(/MB\/s/)).toBeNull();
+  });
+
   it('stops one that has not finished', async () => {
     const onStop = vi.fn(() => Promise.resolve(true));
 

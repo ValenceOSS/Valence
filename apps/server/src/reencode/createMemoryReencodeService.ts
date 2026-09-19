@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { estimateReencodeBytes } from '@ValenceCore/functions/estimateReencodeBytes';
 import { projectDiskAfter } from '@ValenceCore/functions/projectDiskAfter';
+import {
+  REENCODES_STILL_TO_BE_WRITTEN,
+  REENCODES_UNDER_WAY,
+} from '@ValenceContracts/schemas/Reencode';
 import { refuseReencode } from './refuseReencode';
 import type { ReencodeService } from './ReencodeService';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
@@ -71,7 +75,7 @@ const createMemoryReencodeService = ({
             isAlreadyUnderWay: requests.some(
               (one) =>
                 one.mediaId === mediaId &&
-                ['queued', 'encoding', 'verifying', 'awaitingReview'].includes(one.state),
+                REENCODES_UNDER_WAY.some((state) => state === one.state),
             ),
             isBeingWatched: isBeingWatched(mediaId),
             isFolderWritable,
@@ -104,7 +108,7 @@ const createMemoryReencodeService = ({
         afterBytes,
         freeBytes,
         committedBytes: requests
-          .filter((one) => ['queued', 'encoding', 'verifying'].includes(one.state))
+          .filter((one) => REENCODES_STILL_TO_BE_WRITTEN.some((state) => state === one.state))
           .reduce((total, one) => total + (one.estimatedBytes ?? 0), 0),
         awaitingReview: requests.filter((one) => one.state === 'awaitingReview').length,
         awaitingReviewCap: AWAITING_REVIEW_CAP,
@@ -213,6 +217,12 @@ const createMemoryReencodeService = ({
     },
 
     work: (onProgress) => {
+      for (const [at, one] of requests.entries()) {
+        if (one.state === 'encoding' || one.state === 'verifying') {
+          requests[at] = { ...one, state: 'queued', progress: 0, bytesPerSecond: null };
+        }
+      }
+
       const queued = requests.filter((one) => one.state === 'queued');
 
       for (const [at, one] of queued.entries()) {

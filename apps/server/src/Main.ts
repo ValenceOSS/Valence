@@ -2265,6 +2265,8 @@ for (const kind of await schedules.sync()) {
   log.info('server', `schedule: running ${kind} on startup`);
 }
 
+await jobs.enqueue(REENCODE_JOB, {}, REENCODE_JOB);
+
 const parties = createPartyRegistry(() => randomUUID());
 
 const realtimeHandler = createRealtimeHandler({

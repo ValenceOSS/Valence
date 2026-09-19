@@ -7,7 +7,12 @@ import { renditionLabel } from '@ValenceCore/functions/renditionLabel';
 import { MonitorDisksSchema } from '@ValenceServer/maintenance/DiskUse';
 import { mediaItem, mediaRendition, reencodeRequest } from '@ValenceServer/db/Schema';
 import { RenditionSchema } from '@ValenceContracts/schemas/Rendition';
-import { ReencodeSchema, ReencodeSettingsSchema } from '@ValenceContracts/schemas/Reencode';
+import {
+  REENCODES_STILL_TO_BE_WRITTEN,
+  REENCODES_UNDER_WAY,
+  ReencodeSchema,
+  ReencodeSettingsSchema,
+} from '@ValenceContracts/schemas/Reencode';
 import { MediaFactsSchema } from './MediaFacts';
 import { canWriteInto } from './canWriteInto';
 import { factsFromProbe } from './factsFromProbe';
@@ -33,10 +38,6 @@ const SAMPLE_SECONDS = 60;
 const A_SCENE_WITH_MOTION = 0.4;
 
 const ASK_AGAIN_MS = 4000;
-
-const UNDER_WAY = ['queued', 'encoding', 'verifying', 'awaitingReview'] as const;
-
-const STILL_TO_BE_WRITTEN = ['queued', 'encoding', 'verifying'] as const;
 
 type ReencodeSubject = {
   item: MediaItem;
@@ -166,7 +167,7 @@ const createDatabaseReencodeService = ({
     const rows = await db
       .select({ estimatedBytes: reencodeRequest.estimatedBytes })
       .from(reencodeRequest)
-      .where(inArray(reencodeRequest.state, [...STILL_TO_BE_WRITTEN]));
+      .where(inArray(reencodeRequest.state, [...REENCODES_STILL_TO_BE_WRITTEN]));
 
     return rows.reduce((total, row) => total + (row.estimatedBytes ?? 0), 0);
   };
@@ -191,7 +192,7 @@ const createDatabaseReencodeService = ({
       .where(
         and(
           inArray(reencodeRequest.mediaItemId, mediaIds),
-          inArray(reencodeRequest.state, [...UNDER_WAY]),
+          inArray(reencodeRequest.state, [...REENCODES_UNDER_WAY]),
         ),
       );
 
@@ -307,6 +308,68 @@ const createDatabaseReencodeService = ({
       .where(eq(reencodeRequest.id, id));
   };
 
+  /**
+   * Takes the oldest thing waiting, in a way nothing else can take at the same time.
+   *
+   * Reading a row and then marking it is two steps, and two workers reading between each other's
+   * steps both believe they have it — so one film is encoded twice, onto one path, by two processes
+   * writing over each other. `for update skip locked` makes the taking the same statement as the
+   * finding: whoever gets there second finds nothing rather than finding the same thing.
+   *
+   * One at a time and oldest first, deliberately. At its peak a replacement holds the original, the
+   * new file and whatever ffmpeg is still writing, so running a batch in parallel multiplies the
+   * worst case by the size of the batch — and a feature for reclaiming storage must not be the
+   * thing that exhausts it.
+   *
+   * @returns The request now being worked on, or nothing where none was waiting.
+   */
+  const claimTheNextOne = async (): Promise<RequestRow | undefined> => {
+    const taken = await db
+      .update(reencodeRequest)
+      .set({ state: 'encoding', startedAt: new Date(), failure: null })
+      .where(
+        sql`${reencodeRequest.id} = (
+          select ${reencodeRequest.id} from ${reencodeRequest}
+          where ${reencodeRequest.state} = 'queued'
+          order by ${reencodeRequest.askedAt} asc
+          limit 1
+          for update skip locked
+        )`,
+      )
+      .returning();
+
+    return taken[0];
+  };
+
+  /**
+   * Takes back up anything that was being worked on when this server last stopped.
+   *
+   * A server restarts for ordinary reasons — an update, a crash, somebody pulling a plug — and an
+   * encode outlives it: the media service is a separate process and carries on writing. What does
+   * not outlive it is the loop that was watching, so without this a row sits at `encoding` for ever
+   * while a finished file sits unused beside the film, and that file can never be asked for again
+   * because something is already under way on it.
+   *
+   * Simply queued again, because asking for a rendition that already exists answers that it is
+   * ready rather than encoding it a second time. So work that finished is picked straight back up
+   * at the swap, and work that did not starts over — without either case being written out here as
+   * a special one.
+   */
+  const pickUpWhereItWasLeft = async (): Promise<void> => {
+    const stranded = await db
+      .update(reencodeRequest)
+      .set({ state: 'queued', progress: 0, bytesPerSecond: null })
+      .where(inArray(reencodeRequest.state, ['encoding', 'verifying']))
+      .returning({ originalPath: reencodeRequest.originalPath });
+
+    for (const row of stranded) {
+      onProblem?.(
+        'reencode',
+        `took ${row.originalPath} back up, since this server stopped while it was being worked on`,
+      );
+    }
+  };
+
   const encode = async (row: RequestRow, isCancelled: () => boolean): Promise<void> => {
     const found = await media.findForReencode(row.mediaItemId);
 
@@ -343,11 +406,6 @@ const createDatabaseReencodeService = ({
 
       return;
     }
-
-    await db
-      .update(reencodeRequest)
-      .set({ state: 'encoding', startedAt: new Date(), failure: null })
-      .where(eq(reencodeRequest.id, row.id));
 
     let answer = await transcoder.requestRendition({
       ...planned.request,
@@ -563,7 +621,7 @@ const createDatabaseReencodeService = ({
       const rows = await db.select().from(reencodeRequest).where(eq(reencodeRequest.id, id));
       const row = rows[0];
 
-      if (row === undefined || !['queued', 'encoding', 'verifying'].includes(row.state)) {
+      if (row === undefined || !REENCODES_STILL_TO_BE_WRITTEN.some((state) => state === row.state)) {
         return false;
       }
 
@@ -722,6 +780,8 @@ const createDatabaseReencodeService = ({
     },
 
     work: async (onProgress, isCancelled) => {
+      await pickUpWhereItWasLeft();
+
       const cap = await awaitingReviewCap();
       let done = 0;
 
@@ -730,14 +790,7 @@ const createDatabaseReencodeService = ({
           return;
         }
 
-        const rows = await db
-          .select()
-          .from(reencodeRequest)
-          .where(eq(reencodeRequest.state, 'queued'))
-          .orderBy(asc(reencodeRequest.askedAt))
-          .limit(1);
-
-        const row = rows[0];
+        const row = await claimTheNextOne();
 
         if (row === undefined) {
           return;
@@ -748,7 +801,7 @@ const createDatabaseReencodeService = ({
           .from(reencodeRequest)
           .where(eq(reencodeRequest.state, 'queued'));
 
-        onProgress(done, done + (waiting[0]?.counted ?? 1));
+        onProgress(done, done + 1 + (waiting[0]?.counted ?? 0));
 
         await encode(row, isCancelled).catch(async (error: Error) => {
           await failWith(row.id, error.message);

@@ -20,6 +20,7 @@ import {
 } from '@ValenceClient/admin/fetchRoles';
 import { fetchWebhooks, fetchWebhookDeliveries } from '@ValenceClient/admin/fetchWebhooks';
 import { fetchReencodes, fetchRenditions } from '@ValenceClient/admin/fetchReencodes';
+import { whenToAskAgain } from '@ValenceClient/admin/whenToAskAgain';
 import { fetchEverybodysShares } from '@ValenceClient/sharing/fetchShares';
 import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { JobRunQuery } from '@ValenceContracts/schemas/JobRun';
@@ -326,13 +327,22 @@ const exceptionsOn = (subject: { kind: 'item' | 'series'; subjectId: string } | 
 /**
  * Every re-encode, including the ones waiting for somebody to judge them.
  *
- * Refetched rather than long-lived, because an encode running for hours is exactly the thing an
- * administrator leaves a page open on.
+ * Asked for again while anything is still being written, because an encode reports its progress by
+ * writing it down rather than by announcing it — so a page that asked once shows the bar where it
+ * was when the page opened, and only moves when somebody reloads.
+ *
+ * It stops asking once nothing is running. A queue that has been empty since Tuesday is not worth a
+ * request every two seconds, and what remains — encodes waiting to be judged — changes only when
+ * somebody judges one.
  *
  * @returns The query.
  */
 const reencodes = () =>
-  queryOptions({ queryKey: [...ADMIN, 'reencodes'], queryFn: () => fetchReencodes() });
+  queryOptions({
+    queryKey: [...ADMIN, 'reencodes'],
+    queryFn: () => fetchReencodes(),
+    refetchInterval: ({ state }) => whenToAskAgain(state.data ?? []),
+  });
 
 /**
  * What is kept beside one item.

@@ -107,6 +107,10 @@ describe('adminQueries', () => {
     expect(adminQueries.scans().refetchInterval).toBeGreaterThan(0);
   });
 
+  it('watches an encode on a timer, since it reports progress by writing it down', () => {
+    expect(typeof adminQueries.reencodes().refetchInterval).toBe('function');
+  });
+
   it('reads a running scan', async () => {
     await expect(aCache().fetchQuery(adminQueries.scans())).resolves.toEqual([]);
   });

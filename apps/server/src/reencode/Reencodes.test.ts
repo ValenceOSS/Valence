@@ -333,6 +333,23 @@ describe('re-encoding over the API', () => {
     expect((await reencodes.list())[0]?.state).toBe('rejected');
   });
 
+  it('takes work back up that this server stopped in the middle of', async () => {
+    const { signedIn, reencodes } = asAdministrator();
+
+    await signedIn.request(`${BASE}/api/reencodes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mediaIds: [MEDIA_ID], ...replacing }),
+    });
+
+    await reencodes.work(
+      () => undefined,
+      () => false,
+    );
+
+    expect((await reencodes.list())[0]?.state).toBe('awaitingReview');
+  });
+
   it('answers with nothing for a re-encode that is not there', async () => {
     const { signedIn } = asAdministrator();
 

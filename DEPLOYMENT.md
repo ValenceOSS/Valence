@@ -78,7 +78,23 @@ Two things worth knowing before you turn it on:
   original, or rejected it, which puts the original back in one action. There is
   no timer and no way to skip that step.
 
-The permission is its own: `media.reencode`, separate from deleting media.
+The permission is its own: `media.reencode`, separate from deleting media. No
+default role but Administrator grants it.
+
+Two more things the compose file sets for you, worth knowing if you run Valence
+from source rather than from the image:
+
+- `VALENCE_WRITE_ROOTS` tells the media service which directories it may write
+  finished encodes into, as a colon-separated list — the image sets it to
+  `/media`. It is deliberately separate from the directories it may *read*, and
+  deliberately empty-means-nowhere: reading a file somebody asked to watch and
+  writing over the top of it are not the same permission, and a service with no
+  authentication of its own should not treat them as though they were. Without
+  it every encode is refused.
+- **How many encodes may wait for judgement at once** is a server setting,
+  five by default. Each one holds both the original and its replacement until
+  you look at it, so the queue pauses at that number rather than going on
+  consuming disk. Raise it if you have the room.
 
 ## Hardware transcoding
 

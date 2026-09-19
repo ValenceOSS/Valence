@@ -1,6 +1,5 @@
+import { REENCODES_STILL_TO_BE_WRITTEN } from '@ValenceContracts/schemas/Reencode';
 import type { Reencode } from '@ValenceContracts/schemas/Reencode';
-
-const UNDER_WAY = ['queued', 'encoding', 'verifying'] as const;
 
 type SortedReencodes = {
   awaitingReview: Reencode[];
@@ -22,13 +21,13 @@ type SortedReencodes = {
 const sortReencodes = (reencodes: readonly Reencode[]): SortedReencodes => ({
   awaitingReview: reencodes.filter((one) => one.state === 'awaitingReview'),
   underWay: reencodes.filter((one) =>
-    UNDER_WAY.some((state) => state === one.state),
+    REENCODES_STILL_TO_BE_WRITTEN.some((state) => state === one.state),
   ),
   settled: reencodes.filter(
-    (one) => one.state !== 'awaitingReview' && !UNDER_WAY.some((state) => state === one.state),
+    (one) => one.state !== 'awaitingReview' && !REENCODES_STILL_TO_BE_WRITTEN.some((state) => state === one.state),
   ),
 });
 
 export type { SortedReencodes };
 
-export { UNDER_WAY, sortReencodes };
+export { sortReencodes };

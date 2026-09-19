@@ -6,6 +6,7 @@ import { DataTable } from '@ValenceUI/DataTable';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { FilmRoll01Icon } from '@hugeicons/core-free-icons';
+import { describeEncodeProgress } from '@ValenceClient/admin/describeEncodeProgress';
 import { describeReencodeState } from '@ValenceClient/admin/describeReencodeState';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
@@ -221,9 +222,9 @@ const EncodingPanel = ({
                     readout={
                       <span className="font-body text-xs text-text-muted">
                         {describeReencodeState(one.state)}
-                        {one.bytesPerSecond === null
+                        {describeEncodeProgress(one) === ''
                           ? ''
-                          : ` · ${formatBytes(one.bytesPerSecond)}/s`}
+                          : ` · ${describeEncodeProgress(one)}`}
                       </span>
                     }
                   />

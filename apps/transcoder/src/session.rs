@@ -985,35 +985,12 @@ impl SessionRegistry {
 
         let spec = deliverable(&self.config, spec, boundaries.can_copy).await;
 
-        let device_filters = match spec.hardware_accel.pipeline() {
-            Some(pipeline) => {
-                let capabilities = crate::capability::detect_capabilities(
-                    &self.config.ffmpeg,
-                    &self.config.device,
-                )
-                .await;
-
-                DeviceFilters {
-                    scaler: capabilities
-                        .hardware_scalers
-                        .iter()
-                        .any(|found| found == pipeline.scaler),
-                    overlay: capabilities
-                        .hardware_overlays
-                        .iter()
-                        .any(|found| found == pipeline.overlay),
-                    tone_map: pipeline.tone_map.is_some_and(|mapper| {
-                        let name = crate::transcode_plan::filter_name(mapper);
-
-                        capabilities
-                            .hardware_tone_maps
-                            .iter()
-                            .any(|found| found == name)
-                    }),
-                }
-            }
-            None => DeviceFilters::default(),
-        };
+        let device_filters = crate::capability::device_filters_for(
+            &self.config.ffmpeg,
+            &self.config.device,
+            spec.hardware_accel,
+        )
+        .await;
 
         let plan = TranscodePlan {
             spec: spec.clone(),

@@ -1313,10 +1313,15 @@ fn write_in_the_background(state: &AppState, request: &RenditionRequest, path: &
 
     tokio::spawn(async move {
         let plan = TranscodePlan {
+            device_filters: crate::capability::device_filters_for(
+                &ffmpeg,
+                &device,
+                asked.spec.hardware_accel,
+            )
+            .await,
             spec: asked.spec.clone(),
             output_directory: String::new(),
             device,
-            device_filters: DeviceFilters::default(),
             start_at: SegmentStart::default(),
             cut_seconds: 0.0,
         };

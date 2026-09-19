@@ -18,6 +18,10 @@ const REENCODE_STATES = [
 
 const ReencodeStateSchema = z.enum(REENCODE_STATES);
 
+const REENCODES_STILL_TO_BE_WRITTEN = ['queued', 'encoding', 'verifying'] as const;
+
+const REENCODES_UNDER_WAY = [...REENCODES_STILL_TO_BE_WRITTEN, 'awaitingReview'] as const;
+
 const REENCODE_CODECS = ['h264', 'hevc', 'av1'] as const;
 
 const ReencodeCodecSchema = z.enum(REENCODE_CODECS);
@@ -146,6 +150,8 @@ export type {
 };
 
 export {
+  REENCODES_STILL_TO_BE_WRITTEN,
+  REENCODES_UNDER_WAY,
   REENCODE_AUDIO_CHOICES,
   REENCODE_CODECS,
   REENCODE_MODES,

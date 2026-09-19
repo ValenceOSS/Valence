@@ -28,6 +28,7 @@ use tokio::process::Command;
 use crate::download::{progress_from, rate, written_from};
 use crate::integrity::decodes;
 use crate::probe::{probe_colour, probe_media};
+use crate::steps_aside::steps_aside;
 use crate::transcode_plan::{SessionSpec, TrackCarry, TranscodePlan};
 
 /// What a working file is called while it is being written.
@@ -319,6 +320,11 @@ pub async fn verify(
 
 /// Produces the rendition, reporting how far through it is as it goes.
 ///
+/// Encoded politely, so that a film somebody is watching always wins a contended processor. A
+/// rendition runs for minutes against a household that is using the machine now, and the one thing
+/// it must never do is make somebody's evening stutter to save disk overnight. It still takes
+/// everything going spare, and gives it up the moment anything else wants it.
+///
 /// The source's colour is read here rather than sent by the caller. It is a fact about the file,
 /// this is the process holding ffprobe, and carrying it through is what stops a PQ source coming
 /// back grey — a failure that passes every automated check because the file is perfectly valid. A
@@ -368,7 +374,7 @@ pub async fn generate(
         }
     };
 
-    let mut child = Command::new(ffmpeg)
+    let mut child = steps_aside(&mut Command::new(ffmpeg))
         .args(rendition_arguments(plan, &asked, &working))
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
