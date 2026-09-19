@@ -162,6 +162,14 @@ const judgeRelease = (
           judgeChoice(parsed.source, profile.sources, 100, null),
         ]
       : [
+          {
+            score: 0,
+            rejections:
+              parsed.resolution === null && parsed.codec === null
+                ? []
+                : ['It is a video, not music'],
+            reasons: [],
+          },
           judgeChoice(
             parsed.musicQuality,
             profile.musicQualities,
