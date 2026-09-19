@@ -22,7 +22,6 @@ const say = (line: string): void => {
   process.stdout.write(`[requests] ${line}\n`);
 };
 
-await db.execute(sql`create schema if not exists valence_requests`);
 await migrate(db, {
   migrationsFolder: MIGRATIONS_FOLDER,
   migrationsSchema: 'valence_requests',

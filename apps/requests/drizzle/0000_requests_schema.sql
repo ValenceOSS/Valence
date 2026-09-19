@@ -1,4 +1,4 @@
-CREATE SCHEMA "valence_requests";
+CREATE SCHEMA IF NOT EXISTS "valence_requests";
 --> statement-breakpoint
 CREATE TABLE "valence_requests"."setting" (
 	"key" text PRIMARY KEY NOT NULL,
