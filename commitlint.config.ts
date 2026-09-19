@@ -28,6 +28,7 @@ const config: UserConfig = {
         'landing',
         'server',
         'transcoder',
+        'requests',
         'desktop',
         'ui',
         'contracts',

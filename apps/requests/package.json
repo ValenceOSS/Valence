@@ -1,0 +1,31 @@
+{
+  "name": "@valence/requests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/Main.ts",
+    "build": "tsc --build",
+    "start": "node dist/Main.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "bundle": "esbuild src/Main.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/Main.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.17",
+    "@valence/contracts": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.7",
+    "pg": "^8.23.0",
+    "zod": "^4.6.4"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "@vitest/coverage-v8": "^4.1.11",
+    "drizzle-kit": "^0.31.10",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.13",
+    "vitest": "^4.1.11"
+  }
+}
