@@ -168,6 +168,9 @@ pub fn working_path(output: &Path) -> PathBuf {
 ///
 /// Only MP4 has anything to say: its index is written at the end unless it is asked otherwise, and
 /// a file whose index is at the end cannot start playing until all of it has arrived.
+///
+/// Asked of where the file is going rather than of the name it is being written under, which
+/// carries no extension a muxer would recognise.
 #[must_use]
 pub fn container_arguments(output: &Path) -> Vec<String> {
     let extension = output
@@ -182,6 +185,44 @@ pub fn container_arguments(output: &Path) -> Vec<String> {
     Vec::new()
 }
 
+/// Which muxer to write with, named rather than left to be guessed.
+///
+/// ffmpeg picks a muxer from the output filename, and the file is deliberately written under a name
+/// no scanner would take for media — which is also a name ffmpeg has never heard of. Left to guess,
+/// it refuses to open the output at all: "unable to choose an output format, use a standard
+/// extension or specify the format manually". This is specifying it manually.
+///
+/// Read from where the file is going rather than from where it is being written, which is the same
+/// mistake in a second place: the working name carries none of the facts the muxer is chosen from.
+///
+/// Every container the library scanner will index has an entry. Anything else says nothing and
+/// lets ffmpeg try, since a wrong muxer is worse than an absent one — it would write a file the
+/// streams do not fit in.
+#[must_use]
+pub fn format_arguments(output: &Path) -> Vec<String> {
+    let extension = output
+        .extension()
+        .map(|found| found.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
+
+    let format = match extension.as_str() {
+        "mkv" => "matroska",
+        "mp4" | "m4v" => "mp4",
+        "mov" => "mov",
+        "webm" => "webm",
+        "ts" | "m2ts" | "mts" => "mpegts",
+        "avi" => "avi",
+        "mpg" | "mpeg" => "mpeg",
+        "wmv" => "asf",
+        "flv" => "flv",
+        "ogv" => "ogg",
+        "3gp" => "3gp",
+        _ => return Vec::new(),
+    };
+
+    vec!["-f".to_owned(), format.to_owned()]
+}
+
 /// The whole command, from the banner to the file it writes.
 #[must_use]
 pub fn rendition_arguments(
@@ -189,12 +230,15 @@ pub fn rendition_arguments(
     request: &RenditionRequest,
     working: &Path,
 ) -> Vec<String> {
+    let output = PathBuf::from(&request.output_path);
+
     let mut args =
         plan.to_rendition_args(&request.carry, request.from_seconds, request.for_seconds);
 
     args.push("-progress".to_owned());
     args.push("pipe:1".to_owned());
-    args.extend(container_arguments(working));
+    args.extend(container_arguments(&output));
+    args.extend(format_arguments(&output));
     args.push("-y".to_owned());
     args.push(working.to_string_lossy().into_owned());
 
@@ -468,7 +512,10 @@ pub async fn is_complete(output: &Path) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{container_arguments, working_path, RenditionRequest};
+    use super::{
+        container_arguments, format_arguments, rendition_arguments, working_path, RenditionRequest,
+    };
+    use crate::transcode_plan::{DeviceFilters, SegmentStart, TranscodePlan, DEFAULT_DEVICE};
     use std::path::Path;
 
     /// The exact shape the server sends, which is where the names have to agree.
@@ -544,6 +591,93 @@ mod tests {
     #[test]
     fn reads_an_extension_however_it_was_capitalised() {
         assert!(!container_arguments(Path::new("/media/x.MP4")).is_empty());
+    }
+
+    fn asked() -> RenditionRequest {
+        serde_json::from_str(AS_THE_SERVER_SENDS_IT).expect("the shapes should agree")
+    }
+
+    fn plan_for(request: &RenditionRequest) -> TranscodePlan {
+        TranscodePlan {
+            spec: request.spec.clone(),
+            output_directory: String::new(),
+            device: DEFAULT_DEVICE.to_owned(),
+            device_filters: DeviceFilters::default(),
+            start_at: SegmentStart::default(),
+            cut_seconds: 0.0,
+        }
+    }
+
+    /// ffmpeg chooses a muxer from the output name, and the working name is deliberately one it has
+    /// never heard of — so left to guess it refuses to open the output at all.
+    #[test]
+    fn names_the_muxer_rather_than_leaving_it_to_be_guessed() {
+        assert_eq!(
+            format_arguments(Path::new("/media/Films/X.mkv")),
+            vec!["-f".to_owned(), "matroska".to_owned()]
+        );
+    }
+
+    #[test]
+    fn names_a_muxer_for_every_container_the_scanner_indexes() {
+        for (name, format) in [
+            ("x.mkv", "matroska"),
+            ("x.mp4", "mp4"),
+            ("x.m4v", "mp4"),
+            ("x.mov", "mov"),
+            ("x.webm", "webm"),
+            ("x.ts", "mpegts"),
+            ("x.m2ts", "mpegts"),
+            ("x.avi", "avi"),
+            ("x.mpg", "mpeg"),
+            ("x.wmv", "asf"),
+            ("x.flv", "flv"),
+            ("x.ogv", "ogg"),
+            ("x.3gp", "3gp"),
+        ] {
+            assert_eq!(
+                format_arguments(Path::new(name)),
+                vec!["-f".to_owned(), format.to_owned()],
+                "{name} should be written with {format}"
+            );
+        }
+    }
+
+    /// A wrong muxer is worse than an absent one: it would write a file the streams do not fit in.
+    #[test]
+    fn says_nothing_about_a_container_it_does_not_know() {
+        assert!(format_arguments(Path::new("/media/Films/X.wat")).is_empty());
+    }
+
+    /// The bug this exists to stop. The working name carries none of the facts a muxer is chosen
+    /// from, so asking it produced "unable to choose an output format" and no encode at all.
+    #[test]
+    fn chooses_the_muxer_from_where_the_file_is_going_not_the_name_it_is_written_under() {
+        let request = asked();
+        let working = working_path(Path::new(&request.output_path));
+        let args = rendition_arguments(&plan_for(&request), &request, &working);
+
+        assert!(args.windows(2).any(|pair| pair == ["-f", "matroska"]));
+        assert!(args
+            .last()
+            .is_some_and(|last| last.ends_with(".valencepart")));
+    }
+
+    /// The same mistake in a second place: faststart was never applied, since the working name is
+    /// not an mp4 name either.
+    #[test]
+    fn puts_an_mp4_index_at_the_front_even_though_it_is_written_under_another_name() {
+        let mut request = asked();
+
+        request.output_path = "/media/Films/Azkaban (2004)/.valence/abc.mp4".to_owned();
+
+        let working = working_path(Path::new(&request.output_path));
+        let args = rendition_arguments(&plan_for(&request), &request, &working);
+
+        assert!(args
+            .windows(2)
+            .any(|pair| pair == ["-movflags", "+faststart"]));
+        assert!(args.windows(2).any(|pair| pair == ["-f", "mp4"]));
     }
 
     #[test]
