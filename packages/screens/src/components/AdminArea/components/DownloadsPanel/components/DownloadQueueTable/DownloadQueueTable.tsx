@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import {
   Delete02Icon,
   FolderLibraryIcon,
+  InformationCircleIcon,
   MoreHorizontalIcon,
   PauseIcon,
   PlayIcon,
@@ -9,9 +10,11 @@ import {
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
+import { HoverCard } from '@ValenceUI/HoverCard';
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
+import { Tooltip } from '@ValenceUI/Tooltip';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { describeDownloadState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeDownloadState';
@@ -68,10 +71,10 @@ const DownloadQueueTable = ({
         header: 'Release',
         accessorFn: (download) => download.title,
         cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate font-medium text-text" title={row.original.title}>
-              {row.original.title}
-            </span>
+          <span className="flex max-w-[32rem] min-w-0 flex-col gap-0.5">
+            <Tooltip label={row.original.title}>
+              <span className="truncate font-medium text-text">{row.original.title}</span>
+            </Tooltip>
 
             <span className="truncate text-xs text-text-muted">
               {[
@@ -93,13 +96,21 @@ const DownloadQueueTable = ({
           const state = describeDownloadState(row.original);
 
           return (
-            <span className="flex min-w-0 flex-col items-start gap-1">
+            <span className="flex items-center gap-1.5">
               <Badge size="sm" tone={state.tone}>
                 {state.label}
               </Badge>
 
               {state.detail === null ? null : (
-                <span className="text-xs text-text-muted">{state.detail}</span>
+                <HoverCard
+                  side="bottom"
+                  align="start"
+                  detail={<span className="break-words text-text-muted">{state.detail}</span>}
+                >
+                  <span className="text-text-muted hover:text-text">
+                    <Icon of={InformationCircleIcon} size={14} label={state.detail} />
+                  </span>
+                </HoverCard>
               )}
             </span>
           );

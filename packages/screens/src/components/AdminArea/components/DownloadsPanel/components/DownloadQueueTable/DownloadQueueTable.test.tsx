@@ -100,8 +100,19 @@ describe('DownloadQueueTable', () => {
 
     expect(row.getByText('Series · SABnzbd')).toBeInTheDocument();
     expect(row.getByText('4.0 GB')).toBeInTheDocument();
-    expect(row.getByText(/finished it with a warning/)).toBeInTheDocument();
+    expect(row.getByRole('img', { name: /finished it with a warning/ })).toBeInTheDocument();
+    expect(row.queryByText(/finished it with a warning/)).not.toBeInTheDocument();
     expect(row.getAllByText('—')).toHaveLength(3);
+  });
+
+  it('keeps where a download was filed behind an icon beside its state, until hovered', async () => {
+    show([aDownload({ state: 'done', progress: 1, filedInto: '/media/Films/Dune (2021)' })]);
+
+    await userEvent.hover(
+      within(rowOf('Dune')).getByRole('img', { name: 'Filed into /media/Films/Dune (2021).' }),
+    );
+
+    expect(await screen.findByText('Filed into /media/Films/Dune (2021).')).toBeInTheDocument();
   });
 
   it('shows what has arrived where the size is not known yet, or nothing has', () => {
