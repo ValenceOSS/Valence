@@ -752,4 +752,77 @@ describe('collectConcerns', () => {
 
     expect(concerns.find((concern) => concern.id === 'artefacts')).toBeUndefined();
   });
+
+  describe('the requests service', () => {
+    const aVpn = (isUp: boolean | null, problem: string | null = null) => ({
+      isConfigured: isUp !== null,
+      isUp,
+      publicAddress: null,
+      country: null,
+      checkedAt: null,
+      problem,
+    });
+
+    const answering = (vpn: ReturnType<typeof aVpn>) => ({
+      address: 'http://requests:8421',
+      isReachable: true,
+      checkedAt: '2026-09-19T12:00:00.000Z',
+      status: { version: '0.4.0', vpn },
+    });
+
+    it('says so when the service stopped answering, and where it was looked for', () => {
+      const concerns = collectConcerns({
+        ...healthy,
+        requests: {
+          address: 'http://requests:8421',
+          isReachable: false,
+          checkedAt: '2026-09-19T12:00:00.000Z',
+          status: null,
+        },
+      });
+
+      expect(concerns).toEqual([
+        expect.objectContaining({ id: 'requests', tone: 'broken', panel: 'requests' }),
+      ]);
+      expect(concerns[0]?.detail).toContain('http://requests:8421');
+    });
+
+    it('says nothing before the server has checked on it', () => {
+      expect(
+        collectConcerns({
+          ...healthy,
+          requests: {
+            address: 'http://requests:8421',
+            isReachable: false,
+            checkedAt: null,
+            status: null,
+          },
+        }),
+      ).toEqual([]);
+    });
+
+    it('says why when the VPN is down', () => {
+      const concerns = collectConcerns({
+        ...healthy,
+        requests: answering(aVpn(false, 'The tunnel is stopped')),
+      });
+
+      expect(concerns).toEqual([
+        expect.objectContaining({ id: 'requests-vpn', detail: 'The tunnel is stopped' }),
+      ]);
+    });
+
+    it('still says the VPN is down where gluetun gave no reason', () => {
+      const concerns = collectConcerns({ ...healthy, requests: answering(aVpn(false)) });
+
+      expect(concerns[0]?.detail).toBe(
+        'The requests service cannot reach the tunnel it downloads through.',
+      );
+    });
+
+    it('says nothing about a VPN that is up, or was never set up', () => {
+      expect(collectConcerns({ ...healthy, requests: answering(aVpn(true)) })).toEqual([]);
+      expect(collectConcerns({ ...healthy, requests: answering(aVpn(null)) })).toEqual([]);
+    });
+  });
 });

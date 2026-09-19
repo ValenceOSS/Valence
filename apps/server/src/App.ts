@@ -239,6 +239,13 @@ import {
 } from '@ValenceServer/routes/SubtitleRoute';
 import { setupStatusRoute, setupCompleteRoute } from './routes/SetupRoute';
 import { JOB_DEFINITIONS, RESET_LIBRARY_JOB } from '@ValenceServer/jobs/jobDefinitions';
+import type { JobDefinition } from '@ValenceServer/jobs/jobDefinitions';
+import {
+  adminCheckRequestsRoute,
+  adminRequestsOverviewRoute,
+  requestsAvailabilityRoute,
+} from '@ValenceServer/routes/RequestsRoute';
+import type { RequestsMonitor } from '@ValenceServer/requests/createRequestsMonitor';
 import {
   SCAN_LIBRARY_JOB,
   REGENERATE_PREVIEWS_JOB,
@@ -547,6 +554,8 @@ type CreateAppOptions = {
   isTranscoderReachable?: () => Promise<boolean>;
   transcoderAddress?: string;
   listRunningJobs?: () => RunningJob[];
+  jobDefinitions?: readonly JobDefinition[];
+  requests?: RequestsMonitor | null;
   cancelJob?: (jobId: string) => Promise<boolean>;
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   realtime?: RealtimePublisher;
@@ -605,6 +614,8 @@ const createApp = ({
   folderDisk = createFolderDisk(),
   transcoderAddress = '',
   listRunningJobs = () => [],
+  jobDefinitions = JOB_DEFINITIONS,
+  requests = null,
   cancelJob = () => Promise.resolve(false),
   searchCatalogue = () => Promise.resolve([]),
   permissions = createMemoryPermissionService(),
@@ -2482,7 +2493,7 @@ const createApp = ({
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    return context.json({ definitions: JOB_DEFINITIONS }, 200);
+    return context.json({ definitions: [...jobDefinitions] }, 200);
   });
 
   app.openapi(adminRunJobRoute, async (context) => {
@@ -2493,7 +2504,7 @@ const createApp = ({
     const { kind } = context.req.valid('param');
     const { libraryId, force, parts } = context.req.valid('json');
 
-    const definition = JOB_DEFINITIONS.find((job) => job.kind === kind);
+    const definition = jobDefinitions.find((job) => job.kind === kind);
 
     if (
       definition?.destructive === true &&
@@ -2703,7 +2714,14 @@ const createApp = ({
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    return context.json({ permissions: [...PERMISSIONS] }, 200);
+    return context.json(
+      {
+        permissions: PERMISSIONS.filter(
+          (permission) => requests !== null || !permission.startsWith('requests.'),
+        ),
+      },
+      200,
+    );
   });
 
   app.openapi(listRolesRoute, async (context) => {
@@ -3614,6 +3632,38 @@ const createApp = ({
     await announceProfiles(userId);
 
     return context.body(null, 204);
+  });
+
+  app.openapi(requestsAvailabilityRoute, async (context) => {
+    if ((await readSessionOnce(auth, context.req.raw.headers)) === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    return context.json({ isEnabled: requests !== null }, 200);
+  });
+
+  app.openapi(adminRequestsOverviewRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'requests.manage'))) {
+      return context.json({ error: 'That is for whoever sets up requesting.' }, 403);
+    }
+
+    return requests === null
+      ? context.json({ error: 'Requesting is off.' }, 404)
+      : context.json(requests.overview(), 200);
+  });
+
+  app.openapi(adminCheckRequestsRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'requests.manage'))) {
+      return context.json({ error: 'That is for whoever sets up requesting.' }, 403);
+    }
+
+    if (requests === null) {
+      return context.json({ error: 'Requesting is off.' }, 404);
+    }
+
+    await requests.check();
+
+    return context.json(requests.overview(), 200);
   });
 
   app.openapi(listMyPermissionsRoute, async (context) => {

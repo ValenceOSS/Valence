@@ -168,6 +168,25 @@ describe('WebhookFields', () => {
     expect(screen.getByRole('group', { name: 'Watching' })).toBeInTheDocument();
   });
 
+  it('leaves the requests events out where requesting is off', async () => {
+    const user = userEvent.setup();
+
+    draw();
+    await openPane(user, 'Events');
+
+    expect(screen.queryByRole('group', { name: 'Requests' })).not.toBeInTheDocument();
+  });
+
+  it('offers the requests events where requesting is on', async () => {
+    const user = userEvent.setup();
+
+    draw({ hasRequests: true });
+    await openPane(user, 'Events');
+
+    expect(screen.getByRole('group', { name: 'Requests' })).toBeInTheDocument();
+    expect(screen.getByText('VPN down')).toBeInTheDocument();
+  });
+
   it('takes a whole group at once, which is what trying a different set of hooks means', async () => {
     const user = userEvent.setup();
     const { onChange } = draw();

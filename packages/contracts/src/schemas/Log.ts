@@ -10,6 +10,7 @@ const LOG_SOURCES = [
   'auth',
   'playback',
   'catalogue',
+  'requests',
 ] as const;
 
 const LogLevelSchema = z.enum(LOG_LEVELS);

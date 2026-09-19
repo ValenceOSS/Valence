@@ -54,6 +54,8 @@ services:
       # The clock scheduled jobs keep. A container has no other way to know where it is, and
       # defaults to UTC — so without this, "daily at 03:00" is 03:00 UTC rather than 3am here.
       TZ: ${TZ:-UTC}
+      REQUESTS_URL: ${REQUESTS_URL:-}
+      REQUESTS_SECRET: ${REQUESTS_SECRET:-}
     ports:
       - '8420:8420'
     devices:
@@ -63,6 +65,29 @@ services:
       - cache:/cache
       - transcodes:/transcodes
       - ${VALENCE_MEDIA_PATH:-./media}:/media:ro
+
+  # Only with `docker compose -f compose.dev.yaml --profile requests up`, and
+  # with REQUESTS_URL=http://requests:8421 and REQUESTS_SECRET set in .env.
+  requests:
+    build:
+      context: .
+      dockerfile: apps/requests/Dockerfile
+    profiles: [requests]
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://valence:valence@db:5432/valence
+      REQUESTS_SECRET: ${REQUESTS_SECRET:-}
+      VPN_URL: ${VPN_URL:-}
+      VPN_API_KEY: ${VPN_API_KEY:-}
+      TZ: ${TZ:-UTC}
+    ports:
+      - '8421:8421'
+    volumes:
+      - ${VALENCE_MEDIA_PATH:-./media}:/media
+      - ${VALENCE_DOWNLOADS_PATH:-./downloads}:/downloads
 
 volumes:
   db-data:

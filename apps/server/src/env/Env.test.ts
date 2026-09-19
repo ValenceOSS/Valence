@@ -31,4 +31,17 @@ describe('readEnv', () => {
   it('rejects an unknown NODE_ENV', () => {
     expect(() => readEnv({ NODE_ENV: 'staging' })).toThrow();
   });
+
+  it('leaves requesting off unless it is asked for', () => {
+    const env = readEnv({});
+
+    expect(env.REQUESTS_URL).toBe('');
+    expect(env.REQUESTS_SECRET).toBe('');
+  });
+
+  it('drops a trailing slash from where the requests service answers', () => {
+    expect(readEnv({ REQUESTS_URL: ' http://requests:8421/ ' }).REQUESTS_URL).toBe(
+      'http://requests:8421',
+    );
+  });
 });

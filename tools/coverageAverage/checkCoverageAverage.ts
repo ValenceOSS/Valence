@@ -14,6 +14,7 @@ const PACKAGES = [
   'packages/screens',
   'packages/ui',
   'apps/server',
+  'apps/requests',
   'apps/web',
 ] as const;
 

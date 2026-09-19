@@ -7,6 +7,7 @@ type AddWebhookDialogProps = {
   onCreate: (webhook: NewWebhook) => Promise<Refusal>;
   accounts: WebhookFilterChoice[];
   profiles: WebhookFilterChoice[];
+  hasRequests?: boolean;
 };
 
 export type { AddWebhookDialogProps };

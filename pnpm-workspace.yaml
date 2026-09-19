@@ -3,6 +3,7 @@ packages:
   - 'apps/landing'
   - 'apps/web'
   - 'apps/server'
+  - 'apps/requests'
   - 'apps/transcoder'
   - 'packages/*'
   - 'tools'

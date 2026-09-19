@@ -14,6 +14,7 @@ const GROUP_LABELS: Record<string, string> = {
   sharing: 'Sharing',
   streaming: 'Streaming',
   download: 'Downloads',
+  requests: 'Requests',
   account: 'Accounts',
   server: 'Server',
 };

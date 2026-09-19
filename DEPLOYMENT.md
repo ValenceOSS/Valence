@@ -55,6 +55,47 @@ stops the container from starting at all, and the failure does not say why.
 Without a GPU everything still works; anything that cannot be direct played is
 converted on the processor instead, which is slower and costs more of it.
 
+## Requesting (optional)
+
+Valence can take requests for films, series and music, find them on your
+indexers, and hand them to a download client of your own. It is a second
+service, `requests`, and nothing about it shows in Valence until it is set up:
+no sidebar group, no permissions, no webhook events.
+
+It is arriving in stages. For now the service runs, reports whether its VPN is
+up, and is watched by Valence; indexers, download clients and requests
+themselves follow.
+
+To switch it on:
+
+1. Start the stack with the `requests` profile: `COMPOSE_PROFILES=requests`
+   in Dockge, or `docker compose --profile requests up -d`.
+2. Set these, and restart Valence:
+
+| Setting           | Required | What it is                                                                                                 |
+| ----------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `REQUESTS_URL`    | yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                  |
+| `REQUESTS_SECRET` | yes      | At least 32 characters, the same for both. Valence presents it on every call; the service refuses without. |
+| `DOWNLOADS_PATH`  | no       | Where your download client writes, on the host, `./downloads` by default.                                  |
+| `VPN_URL`         | no       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                 |
+| `VPN_API_KEY`     | no       | The key gluetun's control server was given. `docker run --rm qmcgaw/gluetun genkey` makes one.             |
+
+Setting only one of `REQUESTS_URL` and `REQUESTS_SECRET` leaves requesting off,
+and the log says which is missing.
+
+Unlike Valence, the requests service mounts `MEDIA_PATH` writable, because
+filing what it downloads into the library is its whole job. Valence itself still
+never writes there.
+
+### A VPN for the download client
+
+The `vpn` profile starts [gluetun](https://github.com/qdm12/gluetun). Fill in its
+provider settings from gluetun's wiki, put your download client on its network
+with `network_mode: service:gluetun`, and publish the client's web port on
+gluetun rather than on the client. With `VPN_URL` and `VPN_API_KEY` set, the
+admin area's Requests page shows whether the tunnel is up and where traffic
+leaves from, and Valence raises a warning and a webhook when it drops.
+
 ## The proxy
 
 Valence speaks plain HTTP on `VALENCE_PORT` and expects something in front of

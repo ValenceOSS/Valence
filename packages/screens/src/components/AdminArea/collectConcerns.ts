@@ -1,5 +1,6 @@
 import type { ActiveSession, AdminOverview, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
+import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
 import { valenceCpuShare } from './valenceCpuShare';
 import { libraryDisk } from './libraryDisk';
 import { memoryEnvelope } from './memoryEnvelope';
@@ -22,6 +23,7 @@ type CollectConcernsOptions = {
   sessions?: ActiveSession[];
   history?: number[];
   encoderHistory?: number[];
+  requests?: RequestsOverview | null;
 };
 
 const MEMORY_PRESSURE = 0.92;
@@ -52,6 +54,7 @@ const TONE_ORDER: Record<ConcernTone, number> = { broken: 0, attention: 1, setup
  * @param sessions - What is being watched at the moment.
  * @param history - Recent processor readings, used to tell a spike from sustained load.
  * @param encoderHistory - The same for the graphics encoder.
+ * @param requests - What the server last heard from the requests service, where requesting is on.
  * @returns The concerns, broken things before things merely wanting attention.
  */
 const collectConcerns = ({
@@ -61,8 +64,31 @@ const collectConcerns = ({
   sessions = [],
   history = [],
   encoderHistory = [],
+  requests = null,
 }: CollectConcernsOptions): Concern[] => {
   const concerns: Concern[] = [];
+
+  if (requests !== null && requests.checkedAt !== null && !requests.isReachable) {
+    concerns.push({
+      id: 'requests',
+      tone: 'broken',
+      title: 'The requests service is unreachable',
+      detail: `Nothing asked for will be searched for or downloaded until it is back. Looked for it at ${requests.address}.`,
+      panel: 'requests',
+    });
+  }
+
+  const vpn = requests?.status?.vpn ?? null;
+
+  if (requests?.isReachable === true && vpn?.isConfigured === true && vpn.isUp === false) {
+    concerns.push({
+      id: 'requests-vpn',
+      tone: 'broken',
+      title: 'The VPN is down',
+      detail: vpn.problem ?? 'The requests service cannot reach the tunnel it downloads through.',
+      panel: 'requests',
+    });
+  }
 
   if (overview !== null && !overview.transcoder.isReachable) {
     const address = overview.transcoder.address;

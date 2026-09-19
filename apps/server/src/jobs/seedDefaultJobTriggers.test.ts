@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createMemoryJobScheduleService } from './createMemoryJobScheduleService';
 import { createMemorySettingsStore } from '@ValenceServer/settings/createMemorySettingsStore';
-import { DEFAULT_JOB_TRIGGERS } from './jobDefinitions';
+import { DEFAULT_JOB_TRIGGERS, jobDefinitionsFor } from './jobDefinitions';
 import { seedDefaultJobTriggers } from './seedDefaultJobTriggers';
 import type { ServerSettings } from '@ValenceServer/settings/ServerSettings';
 
@@ -133,6 +133,22 @@ describe('seedDefaultJobTriggers', () => {
 
     expect(await seedDefaultJobTriggers({ schedules, settings })).toEqual([
       'server.cleanupImageCache',
+    ]);
+  });
+
+  it('leaves the requests check unseeded while requesting is off, and seeds it once it is on', async () => {
+    const settings = createMemorySettingsStore(SETTINGS);
+    const off = createMemoryJobScheduleService(jobDefinitionsFor(false));
+
+    expect(await seedDefaultJobTriggers({ schedules: off, settings })).not.toContain(
+      'server.checkRequests',
+    );
+    expect((await settings.read()).seededJobTriggerKinds).not.toContain('server.checkRequests');
+
+    const on = createMemoryJobScheduleService(jobDefinitionsFor(true));
+
+    expect(await seedDefaultJobTriggers({ schedules: on, settings })).toEqual([
+      'server.checkRequests',
     ]);
   });
 });
