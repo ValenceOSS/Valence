@@ -25,6 +25,7 @@ const SETTINGS: ServerSettings = {
   audioDbKey: '',
   ownerAccountId: '',
   splashscreenFile: null,
+  reencodesAwaitingReviewCap: 5,
 };
 
 const build = (seededJobTriggerKinds: string[] = []) => ({

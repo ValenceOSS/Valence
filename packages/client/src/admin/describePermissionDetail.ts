@@ -16,6 +16,8 @@ const DETAILS: Record<Permission, string> = {
 
   'media.rescan': 'Ask Valence to read one item again, picking up a file or metadata change.',
   'media.delete': 'Delete a media file from disk, not just from the library.',
+  'media.reencode':
+    'Re-encode media at a chosen quality, either replacing the original file or keeping the result beside it. Replacing destroys the original once it has been reviewed, and nothing brings back what a lossy encoder discarded.',
   'media.override': 'Correct an item’s metadata by hand when the catalogue matched it wrong.',
   'media.artwork': 'Replace an item’s poster or backdrop with a different picture.',
   'media.hide': 'Hide an item from every profile, not only their own.',

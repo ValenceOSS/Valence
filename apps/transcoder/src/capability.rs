@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
-use crate::transcode_plan::{HardwareAccel, ToneMapping};
+use crate::transcode_plan::{DeviceFilters, HardwareAccel, ToneMapping};
 
 /// An encoder Valence may use, and the acceleration it belongs to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1054,6 +1054,42 @@ static CACHE: tokio::sync::OnceCell<Capabilities> = tokio::sync::OnceCell::const
 ///
 /// Only actually runs the detection once; every call after the first reuses
 /// the cached result. See `CACHE`.
+/// Which of the filters a backend's chain needs this build actually has.
+///
+/// Asked rather than assumed, and the difference is the whole speed of the job. `scale_vt` arrived
+/// in `FFmpeg` 7.0 and some builds ship `scale_npp` in place of `scale_cuda`, so whether frames can
+/// be resized on the card is a property of the binary rather than of the card. Answered wrongly in
+/// the pessimistic direction, every frame is pulled down to main memory, resized there and handed
+/// back — which runs, and runs at a fraction of the speed, with nothing to say why.
+///
+/// Software acceleration has no chain to speak of, so it needs no probing.
+pub async fn device_filters_for(ffmpeg: &str, device: &str, accel: HardwareAccel) -> DeviceFilters {
+    let Some(pipeline) = accel.pipeline() else {
+        return DeviceFilters::default();
+    };
+
+    let capabilities = detect_capabilities(ffmpeg, device).await;
+
+    DeviceFilters {
+        scaler: capabilities
+            .hardware_scalers
+            .iter()
+            .any(|found| found == pipeline.scaler),
+        overlay: capabilities
+            .hardware_overlays
+            .iter()
+            .any(|found| found == pipeline.overlay),
+        tone_map: pipeline.tone_map.is_some_and(|mapper| {
+            let name = crate::transcode_plan::filter_name(mapper);
+
+            capabilities
+                .hardware_tone_maps
+                .iter()
+                .any(|found| found == name)
+        }),
+    }
+}
+
 pub async fn detect_capabilities(ffmpeg: &str, device: &str) -> Capabilities {
     CACHE
         .get_or_init(|| detect_capabilities_uncached(ffmpeg, device))

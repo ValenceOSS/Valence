@@ -94,8 +94,15 @@ services:
       - config:/config
       - cache:/cache
       - transcodes:/transcodes
-      # Read only, and Valence would not write here even if it could.
-      - ${MEDIA_PATH:?set MEDIA_PATH, e.g. /mnt/tank/media}:/media:ro
+      # Read only by default, which is the right way to run a media server and
+      # is what Valence expects. Re-encoding is the one feature that needs more:
+      # it writes into a `.valence` folder at the top of each library and
+      # renames from there into place, so it cannot work under `:ro`. Under the
+      # library root rather than elsewhere on purpose: swapping an encode in is
+      # a rename, and a rename is only instant within one filesystem. Drop the `:ro` if
+      # you want it, and Valence will say plainly that it cannot write rather
+      # than failing two hours into an encode.
+      - ${MEDIA_PATH:?set MEDIA_PATH, e.g. /mnt/tank/media}:/media${MEDIA_ACCESS:-:ro}
 
     # Hardware transcoding. Delete both of these if the machine has no GPU:
     # a device that is not there stops the container from starting at all.

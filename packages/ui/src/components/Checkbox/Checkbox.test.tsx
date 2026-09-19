@@ -67,3 +67,29 @@ describe('Checkbox, with a qualification beneath it', () => {
     expect(screen.getByRole('checkbox')).not.toHaveAccessibleDescription();
   });
 });
+
+describe('Checkbox standing for several things at once', () => {
+  it('says it is partly ticked rather than ticked or not', () => {
+    render(<Checkbox label="Everything over 20 GB" isMixed />);
+
+    expect(screen.getByRole('checkbox', { name: 'Everything over 20 GB' })).toHaveAttribute(
+      'aria-checked',
+      'mixed',
+    );
+  });
+
+  it('is an ordinary checkbox when the things beneath it agree', () => {
+    render(<Checkbox label="Everything over 20 GB" checked />);
+
+    expect(screen.getByRole('checkbox', { name: 'Everything over 20 GB' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+  });
+
+  it('still says what it is for', () => {
+    render(<Checkbox label="Everything over 20 GB" isMixed />);
+
+    expect(screen.getByText('Everything over 20 GB')).toBeVisible();
+  });
+});

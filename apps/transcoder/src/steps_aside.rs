@@ -50,3 +50,27 @@ pub fn steps_aside(command: &mut Command) -> &mut Command {
 
     command
 }
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::{steps_aside, POLITENESS};
+    use tokio::process::Command;
+
+    /// A render that arrives at the processor as an equal competes with the film somebody is
+    /// watching, which is the one thing a background job must never do.
+    #[tokio::test]
+    async fn runs_a_child_below_whatever_somebody_is_waiting_on() {
+        let reported = steps_aside(&mut Command::new("sh"))
+            .args(["-c", "ps -o nice= -p $$"])
+            .output()
+            .await
+            .expect("sh should run");
+
+        let nice: i32 = String::from_utf8_lossy(&reported.stdout)
+            .trim()
+            .parse()
+            .expect("ps should report a niceness");
+
+        assert_eq!(nice, POLITENESS);
+    }
+}

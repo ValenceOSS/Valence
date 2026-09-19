@@ -8,7 +8,7 @@ use tokio::process::Command;
 use crate::media::Chapter;
 use crate::media::{
     audio_codec, bit_depth_from_pix_fmt, is_image_subtitle, subtitle_format, video_codec,
-    AudioStream, Container, MediaProbe, SubtitleStream, VideoRange, VideoStream,
+    AudioStream, ColourMetadata, Container, MediaProbe, SubtitleStream, VideoRange, VideoStream,
 };
 
 /// What this version of Valence decides about a file when it probes it.
@@ -87,6 +87,9 @@ struct FfprobeStream {
     bits_per_raw_sample: Option<String>,
     pix_fmt: Option<String>,
     color_transfer: Option<String>,
+    color_primaries: Option<String>,
+    color_space: Option<String>,
+    color_range: Option<String>,
     level: Option<i64>,
     r_frame_rate: Option<String>,
     field_order: Option<String>,
@@ -467,6 +470,78 @@ pub async fn probe_media(ffprobe: &str, path: &Path) -> Result<MediaProbe, Probe
     }
 
     parse_ffprobe_output(&String::from_utf8_lossy(&output.stdout), path)
+}
+
+/// Reads a colour field, treating ffprobe's own word for "it did not say" as nothing.
+///
+/// ffprobe writes `unknown` rather than omitting the field for a stream that declared no primaries
+/// or no matrix, and passing that word to an encoder is worse than passing nothing: `unknown` is a
+/// value the encoder will happily write into the file, where an absent one leaves the default.
+fn stated(value: Option<&String>) -> Option<String> {
+    let text = value?.trim();
+
+    (!text.is_empty() && text != "unknown" && text != "reserved").then(|| text.to_owned())
+}
+
+/// Reads the colour a stream declares, so a re-encode can declare the same.
+///
+/// Its own call rather than part of [`probe_media`], and deliberately so: adding these to the
+/// stored probe would mean a new probe version and a re-probe of every file in every library, to
+/// answer a question only a re-encode ever asks. One extra ffprobe on the file about to be encoded
+/// for two hours is not a cost worth avoiding.
+///
+/// Only the video stream is read, and only its declarations — nothing is inferred. A source that
+/// says nothing about its colour gets a re-encode that says nothing either, which is the same file
+/// it was.
+///
+/// # Errors
+///
+/// Returns [`ProbeError::Spawn`] when ffprobe cannot be run, [`ProbeError::Failed`] when it rejects
+/// the file, and [`ProbeError::Parse`] when its output cannot be read.
+pub async fn probe_colour(ffprobe: &str, path: &Path) -> Result<ColourMetadata, ProbeError> {
+    let output = Command::new(ffprobe)
+        .args([
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
+            "-show_streams",
+            "-select_streams",
+            "v:0",
+        ])
+        .arg(path)
+        .kill_on_drop(true)
+        .output()
+        .await?;
+
+    if !output.status.success() {
+        return Err(ProbeError::Failed {
+            status: output.status.code().unwrap_or(-1),
+            stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+        });
+    }
+
+    parse_colour_output(&String::from_utf8_lossy(&output.stdout))
+}
+
+/// Reads the colour declarations out of ffprobe's answer.
+///
+/// # Errors
+///
+/// Returns [`ProbeError::Parse`] when the output cannot be read as ffprobe's own shape.
+fn parse_colour_output(text: &str) -> Result<ColourMetadata, ProbeError> {
+    let parsed: FfprobeOutput = serde_json::from_str(text)?;
+
+    let Some(stream) = parsed.streams.first() else {
+        return Ok(ColourMetadata::default());
+    };
+
+    Ok(ColourMetadata {
+        primaries: stated(stream.color_primaries.as_ref()),
+        transfer: stated(stream.color_transfer.as_ref()),
+        matrix: stated(stream.color_space.as_ref()),
+        range: stated(stream.color_range.as_ref()),
+    })
 }
 
 #[cfg(test)]

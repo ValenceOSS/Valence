@@ -3,6 +3,8 @@ use std::fmt::Write as _;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+use crate::media::ColourMetadata;
+
 /// A hardware acceleration backend the host may offer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -182,6 +184,65 @@ pub enum AudioAction {
         channels: u8,
         max_bitrate_kbps: u32,
     },
+}
+
+/// What happens to one audio track in a file being kept.
+///
+/// Per track rather than per file, which is the whole difference between this and
+/// [`AudioAction`]. A session sends one track, so one decision covers it; a file somebody keeps
+/// holds every track it had, and a 7.1 lossless track and a stereo commentary want opposite
+/// answers. A single `-c:a` would give them the same one.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(
+    tag = "kind",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
+pub enum AudioCarry {
+    Copy {
+        stream_index: u32,
+    },
+    Encode {
+        stream_index: u32,
+        encoder: String,
+        channels: u8,
+        max_bitrate_kbps: u32,
+    },
+}
+
+impl AudioCarry {
+    /// Which stream this decision is about, as ffprobe numbers it.
+    #[must_use]
+    pub fn stream_index(&self) -> u32 {
+        match self {
+            Self::Copy { stream_index } | Self::Encode { stream_index, .. } => *stream_index,
+        }
+    }
+}
+
+/// Everything a file being kept carries beyond its picture.
+///
+/// A remux holds more than video, and a naive re-encode drops all of it silently: every audio
+/// track but one, every subtitle track, the chapters, and the colour metadata that is the
+/// difference between a 4K film and a grey one. Each of those is a regression nobody notices until
+/// later, so they are named here and carried deliberately rather than left to whatever ffmpeg does
+/// unasked.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrackCarry {
+    #[serde(default)]
+    pub audio: Vec<AudioCarry>,
+    #[serde(default)]
+    pub subtitle_stream_indexes: Vec<u32>,
+    #[serde(default)]
+    pub colour: ColourMetadata,
+    /// Whether to carry the chapters and the container-level tags across.
+    ///
+    /// On for anything replacing a library original, where losing the chapter marks would lose
+    /// something segment detection already reads. Off is here for a sixty second sample, which has
+    /// no chapters worth speaking of and whose tags would name the whole film.
+    #[serde(default)]
+    pub keeps_chapters: bool,
 }
 
 /// How a subtitle stream is delivered.
@@ -1895,14 +1956,17 @@ impl TranscodePlan {
     /// rather than decodes-and-discards, which is what makes resuming an hour
     /// into a film cost nothing.
     ///
-    #[must_use]
-    pub fn to_download_args_from(&self, from_seconds: u32) -> Vec<String> {
-        let mut args: Vec<String> = vec![
-            "-hide_banner".into(),
-            "-nostdin".into(),
-            "-loglevel".into(),
-            "error".into(),
-        ];
+    /// Everything up to and including the input: the banner, the card to open where the frames go
+    /// through it, where to seek to, and the file itself.
+    ///
+    /// Shared rather than written twice, so that a download and a kept rendition provably open the
+    /// same file on the same card in the same way. What differs between them starts after this.
+    fn push_open(&self, args: &mut Vec<String>, from_seconds: u32) {
+        args.extend(
+            ["-hide_banner", "-nostdin", "-loglevel", "error"]
+                .iter()
+                .map(|argument| (*argument).to_owned()),
+        );
 
         let on_the_gpu = frame_route(&self.spec, self.device_filters).decodes_on_the_device();
 
@@ -1925,6 +1989,13 @@ impl TranscodePlan {
 
         args.push("-i".into());
         args.push(self.spec.input_path.clone());
+    }
+
+    #[must_use]
+    pub fn to_download_args_from(&self, from_seconds: u32) -> Vec<String> {
+        let mut args: Vec<String> = Vec::new();
+
+        self.push_open(&mut args, from_seconds);
 
         let is_mapped = self.push_video_args(&mut args);
 
@@ -1938,6 +2009,154 @@ impl TranscodePlan {
         }
 
         self.push_audio_args(&mut args);
+
+        args
+    }
+
+    /// Adds the colour the source declared, so the output declares the same.
+    ///
+    /// The one HDR mistake that passes every automated check. A PQ source re-encoded without its
+    /// transfer and primaries carried through produces a file that is perfectly valid, the right
+    /// duration, the right size, and grey — because the bytes no longer say what they are, and
+    /// every player reads them as ordinary range. It is the most common way to ruin a 4K file and
+    /// nothing downstream would ever catch it.
+    ///
+    /// Only where the picture is being encoded. A copied stream keeps its own declarations, and
+    /// these arguments would be ignored anyway. Only what the source actually stated, too: ffmpeg
+    /// writes `unknown` into a file given the word, where saying nothing leaves the default.
+    ///
+    /// x265 additionally wants telling, because it writes its own headers rather than taking
+    /// ffmpeg's. `repeat-headers` puts them on every keyframe, which is what lets a player that
+    /// joined late know what it is looking at.
+    fn push_colour_args(&self, args: &mut Vec<String>, colour: &ColourMetadata) {
+        let VideoAction::Encode { encoder, .. } = &self.spec.video else {
+            return;
+        };
+
+        for (flag, value) in [
+            ("-color_primaries", colour.primaries.as_ref()),
+            ("-color_trc", colour.transfer.as_ref()),
+            ("-colorspace", colour.matrix.as_ref()),
+            ("-color_range", colour.range.as_ref()),
+        ] {
+            if let Some(value) = value {
+                args.push(flag.into());
+                args.push(value.clone());
+            }
+        }
+
+        if encoder == "libx265" && colour.is_high_dynamic_range() {
+            args.push("-x265-params".into());
+            args.push("hdr-opt=1:repeat-headers=1".into());
+        }
+    }
+
+    /// Adds the maps and the codecs for every track a kept file carries beyond its picture.
+    ///
+    /// Written per track rather than per stream type, which is the whole point. `-c:a` applies to
+    /// everything mapped, so a file with a lossless 7.1 track and a stereo commentary would have
+    /// both put through the same encoder at the same channel count — the commentary re-encoded for
+    /// nothing, and the surround track narrowed whether or not anybody asked.
+    fn push_carried_tracks(args: &mut Vec<String>, carry: &TrackCarry) {
+        for track in &carry.audio {
+            args.push("-map".into());
+            args.push(format!("0:{}", track.stream_index()));
+        }
+
+        for index in &carry.subtitle_stream_indexes {
+            args.push("-map".into());
+            args.push(format!("0:{index}"));
+        }
+
+        if carry.keeps_chapters {
+            args.push("-map".into());
+            args.push("0:t?".into());
+        }
+
+        for (position, track) in carry.audio.iter().enumerate() {
+            match track {
+                AudioCarry::Copy { .. } => {
+                    args.push(format!("-c:a:{position}"));
+                    args.push("copy".into());
+                }
+                AudioCarry::Encode {
+                    encoder,
+                    channels,
+                    max_bitrate_kbps,
+                    ..
+                } => {
+                    args.push(format!("-c:a:{position}"));
+                    args.push(encoder.clone());
+                    args.push(format!("-ac:a:{position}"));
+                    args.push(channels.to_string());
+                    args.push(format!("-b:a:{position}"));
+                    args.push(format!("{max_bitrate_kbps}k"));
+                }
+            }
+        }
+
+        if !carry.subtitle_stream_indexes.is_empty() {
+            args.push("-c:s".into());
+            args.push("copy".into());
+        }
+
+        if carry.keeps_chapters {
+            args.push("-c:t".into());
+            args.push("copy".into());
+            args.push("-map_chapters".into());
+            args.push("0".into());
+            args.push("-map_metadata".into());
+            args.push("0".into());
+        } else {
+            args.push("-map_chapters".into());
+            args.push("-1".into());
+        }
+    }
+
+    /// The same decisions, written as one file somebody keeps.
+    ///
+    /// A third shape beside the session's segments and the download's progressive MP4, and it
+    /// exists because neither of those is safe to put in a library. A session sends one audio track
+    /// and leaves subtitles to a sidecar; a download carries a little more and still drops the
+    /// chapters, the attachments and the colour. For a file on a plane that is fine. For a file
+    /// taking the place of somebody's only copy of a remux, every one of those is a silent
+    /// regression discovered months later.
+    ///
+    /// So this is a single pass rather than segments joined afterwards — `-f segment` cannot carry
+    /// chapters and a concat copy cannot put them back — and everything worth keeping is named
+    /// rather than left to whatever ffmpeg does unasked.
+    ///
+    /// The caller adds the output path, and the muxer flags that belong to the container it chose.
+    /// `from_seconds` and `for_seconds` are how a sixty second sample is cut out of the middle, and
+    /// are nought and nothing for the whole film.
+    #[must_use]
+    pub fn to_rendition_args(
+        &self,
+        carry: &TrackCarry,
+        from_seconds: u32,
+        for_seconds: Option<u32>,
+    ) -> Vec<String> {
+        let mut args: Vec<String> = Vec::new();
+
+        self.push_open(&mut args, from_seconds);
+
+        let is_mapped = self.push_video_args(&mut args);
+
+        if !is_mapped {
+            args.push("-map".into());
+            args.push("0:v:0".into());
+        }
+
+        Self::push_carried_tracks(&mut args, carry);
+        self.push_colour_args(&mut args, &carry.colour);
+
+        if let Some(seconds) = for_seconds {
+            args.push("-t".into());
+            args.push(seconds.to_string());
+        }
+
+        args.push("-max_muxing_queue_size".into());
+        args.push("1024".into());
 
         args
     }
@@ -2032,10 +2251,11 @@ mod tests {
     use super::{
         composited_graph, filter_name, fitted_size, force_key_frames_argument,
         forced_idr_arguments, frame_route, keeps_frames_on_the_gpu, rate_control_arguments,
-        software_equivalent, takes_ten_bit, AudioAction, DeviceFilters, FrameRoute, HardwareAccel,
-        SegmentContainer, SegmentStart, SessionSpec, SubtitleAction, ToneMapping, TranscodePlan,
-        VideoAction, DEFAULT_DEVICE, TEXT_OVERLAY_FPS,
+        software_equivalent, takes_ten_bit, AudioAction, AudioCarry, DeviceFilters, FrameRoute,
+        HardwareAccel, SegmentContainer, SegmentStart, SessionSpec, SubtitleAction, ToneMapping,
+        TrackCarry, TranscodePlan, VideoAction, DEFAULT_DEVICE, TEXT_OVERLAY_FPS,
     };
+    use crate::media::ColourMetadata;
 
     /// A build with a scaler and no compositor, as the existing routes assume.
     const SCALER_ONLY: DeviceFilters = DeviceFilters {
@@ -3621,6 +3841,209 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
 
     /// A build with a hardware scaler and no compositor, which is what the
     /// fallback routes are about.
+    fn encoding(encoder: &str) -> SessionSpec {
+        SessionSpec {
+            video: VideoAction::Encode {
+                encoder: encoder.into(),
+                max_bitrate_kbps: 4500,
+                max_width: 1920,
+                max_height: 1080,
+                tone_map: None,
+                deinterlace: false,
+                square_pixels: false,
+            },
+            source_size: Some((3840, 2160)),
+            ..spec()
+        }
+    }
+
+    fn carrying() -> TrackCarry {
+        TrackCarry {
+            audio: vec![
+                AudioCarry::Encode {
+                    stream_index: 1,
+                    encoder: "eac3".into(),
+                    channels: 6,
+                    max_bitrate_kbps: 640,
+                },
+                AudioCarry::Copy { stream_index: 2 },
+            ],
+            subtitle_stream_indexes: vec![3, 4],
+            colour: ColourMetadata::default(),
+            keeps_chapters: true,
+        }
+    }
+
+    fn pairs(args: &[String], flag: &str) -> Vec<String> {
+        args.windows(2)
+            .filter(|pair| pair[0] == flag)
+            .map(|pair| pair[1].clone())
+            .collect()
+    }
+
+    /// A remux holds several tracks and a naive encode keeps one, which is a regression nobody
+    /// notices until somebody looks for the commentary.
+    #[test]
+    fn carries_every_audio_track_a_kept_file_was_asked_for() {
+        let args = plan(encoding("libx265")).to_rendition_args(&carrying(), 0, None);
+        let mapped = pairs(&args, "-map");
+
+        assert!(mapped.contains(&"0:1".to_owned()));
+        assert!(mapped.contains(&"0:2".to_owned()));
+    }
+
+    /// `-c:a` applies to everything mapped, so one decision for two tracks is the wrong shape.
+    #[test]
+    fn decides_each_audio_track_on_its_own_rather_than_all_of_them_together() {
+        let args = plan(encoding("libx265")).to_rendition_args(&carrying(), 0, None);
+
+        assert_eq!(pairs(&args, "-c:a:0"), vec!["eac3".to_owned()]);
+        assert_eq!(pairs(&args, "-c:a:1"), vec!["copy".to_owned()]);
+        assert_eq!(pairs(&args, "-ac:a:0"), vec!["6".to_owned()]);
+        assert_eq!(pairs(&args, "-b:a:0"), vec!["640k".to_owned()]);
+    }
+
+    /// Bitmap subtitles cannot be converted to text at all, so they are copied or they are lost.
+    #[test]
+    fn carries_every_subtitle_track_by_copying_it() {
+        let args = plan(encoding("libx265")).to_rendition_args(&carrying(), 0, None);
+        let mapped = pairs(&args, "-map");
+
+        assert!(mapped.contains(&"0:3".to_owned()));
+        assert!(mapped.contains(&"0:4".to_owned()));
+        assert_eq!(pairs(&args, "-c:s"), vec!["copy".to_owned()]);
+    }
+
+    /// Chapters are already read into the library and used by segment detection, so losing them
+    /// loses something somebody is relying on.
+    #[test]
+    fn carries_the_chapters_and_the_tags_for_a_whole_film() {
+        let args = plan(encoding("libx265")).to_rendition_args(&carrying(), 0, None);
+
+        assert_eq!(pairs(&args, "-map_chapters"), vec!["0".to_owned()]);
+        assert_eq!(pairs(&args, "-map_metadata"), vec!["0".to_owned()]);
+    }
+
+    /// A sixty second sample has no chapters worth speaking of, and tags that would name the film.
+    #[test]
+    fn leaves_the_chapters_out_of_a_sample() {
+        let carry = TrackCarry {
+            keeps_chapters: false,
+            ..carrying()
+        };
+
+        let args = plan(encoding("libx265")).to_rendition_args(&carry, 600, Some(60));
+
+        assert_eq!(pairs(&args, "-map_chapters"), vec!["-1".to_owned()]);
+        assert_eq!(pairs(&args, "-ss"), vec!["600".to_owned()]);
+        assert_eq!(pairs(&args, "-t"), vec!["60".to_owned()]);
+    }
+
+    /// The most common way to ruin a 4K file, and one that passes every automated check because
+    /// the file is perfectly valid.
+    #[test]
+    fn declares_the_colour_the_source_declared() {
+        let carry = TrackCarry {
+            colour: ColourMetadata {
+                primaries: Some("bt2020".into()),
+                transfer: Some("smpte2084".into()),
+                matrix: Some("bt2020nc".into()),
+                range: Some("tv".into()),
+            },
+            ..carrying()
+        };
+
+        let args = plan(encoding("libx265")).to_rendition_args(&carry, 0, None);
+
+        assert_eq!(pairs(&args, "-color_primaries"), vec!["bt2020".to_owned()]);
+        assert_eq!(pairs(&args, "-color_trc"), vec!["smpte2084".to_owned()]);
+        assert_eq!(pairs(&args, "-colorspace"), vec!["bt2020nc".to_owned()]);
+        assert_eq!(pairs(&args, "-color_range"), vec!["tv".to_owned()]);
+    }
+
+    /// x265 writes its own headers rather than taking ffmpeg's, so it has to be told separately.
+    #[test]
+    fn tells_x265_about_high_dynamic_range_as_well() {
+        let carry = TrackCarry {
+            colour: ColourMetadata {
+                transfer: Some("smpte2084".into()),
+                ..ColourMetadata::default()
+            },
+            ..carrying()
+        };
+
+        let args = plan(encoding("libx265")).to_rendition_args(&carry, 0, None);
+
+        assert_eq!(
+            pairs(&args, "-x265-params"),
+            vec!["hdr-opt=1:repeat-headers=1".to_owned()]
+        );
+    }
+
+    /// Ordinary range needs nothing said about it, and saying it would be noise.
+    #[test]
+    fn says_nothing_extra_to_x265_about_an_ordinary_picture() {
+        let carry = TrackCarry {
+            colour: ColourMetadata {
+                transfer: Some("bt709".into()),
+                ..ColourMetadata::default()
+            },
+            ..carrying()
+        };
+
+        let args = plan(encoding("libx265")).to_rendition_args(&carry, 0, None);
+
+        assert!(pairs(&args, "-x265-params").is_empty());
+    }
+
+    /// A source that declared nothing gets an encode that declares nothing, rather than a guess.
+    #[test]
+    fn declares_no_colour_where_the_source_declared_none() {
+        let args = plan(encoding("libx265")).to_rendition_args(&carrying(), 0, None);
+
+        assert!(pairs(&args, "-color_primaries").is_empty());
+        assert!(pairs(&args, "-color_trc").is_empty());
+    }
+
+    /// A copied stream carries its own declarations, and these arguments would be ignored.
+    #[test]
+    fn says_nothing_about_colour_when_the_picture_is_only_being_copied() {
+        let carry = TrackCarry {
+            colour: ColourMetadata {
+                transfer: Some("smpte2084".into()),
+                ..ColourMetadata::default()
+            },
+            ..carrying()
+        };
+
+        let args = plan(spec()).to_rendition_args(&carry, 0, None);
+
+        assert!(pairs(&args, "-color_trc").is_empty());
+    }
+
+    /// The picture has to be mapped, or a file with several tracks writes whichever ffmpeg guessed.
+    #[test]
+    fn maps_the_picture_alongside_the_tracks() {
+        let args = plan(encoding("libx265")).to_rendition_args(&carrying(), 0, None);
+
+        assert!(pairs(&args, "-map").contains(&"0:v:0".to_owned()));
+    }
+
+    /// A download is the same transcode and must stay the same transcode.
+    #[test]
+    fn leaves_a_download_reading_exactly_as_it_did() {
+        let args = plan(encoding("libx265")).to_download_args();
+
+        assert_eq!(
+            &args[0..4],
+            ["-hide_banner", "-nostdin", "-loglevel", "error"]
+        );
+        assert!(args
+            .windows(2)
+            .any(|pair| pair == ["-i", "/media/film.mkv"]));
+        assert!(!args.iter().any(|argument| argument == "-map_chapters"));
+    }
+
     fn plan(spec: SessionSpec) -> TranscodePlan {
         plan_on(spec, SCALER_ONLY)
     }

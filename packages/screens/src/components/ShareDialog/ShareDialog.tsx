@@ -8,7 +8,7 @@ import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import { titleLogoUrl } from '@ValenceScreens/library/titleLogoUrl';
 import { TextField } from '@ValenceUI/TextField';
-import { Choice } from './components/Choice/Choice';
+import { Choice } from '@ValenceScreens/components/Choice/Choice';
 import { createShare, shareAddress } from '@ValenceClient/sharing/fetchShares';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import type { NewShare } from '@ValenceContracts/schemas/Share';

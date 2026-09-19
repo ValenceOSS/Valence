@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::audio::{touch, AudioBitrate, AudioRegistry};
 use crate::cache_sweep;
 use crate::capability::{detect_capabilities, Capabilities};
-use crate::download::{self, DownloadFile, DownloadJob, DownloadRegistry, DownloadRequest};
+use crate::download::{self, DownloadFile, DownloadJob, DownloadRequest};
 use crate::fingerprint::{fingerprint, FingerprintJob, FingerprintRequest};
 use crate::frame::{take_frame, FrameRequest};
 use crate::monitor::{Monitor, Report};
@@ -23,7 +23,9 @@ use crate::preview::{
     PreviewRegistry, PreviewRequest,
 };
 use crate::probe::probe_media;
+use crate::progress_registry::ProgressRegistry;
 use crate::queue::WorkQueue;
+use crate::rendition::{self, RenditionJob, RenditionRequest};
 use crate::session::{await_run, segment_number, Reuse, SessionRegistry};
 use crate::subtitle::{extract_subtitle, SubtitleRequest};
 use crate::transcode_plan::HardwareAccel;
@@ -83,7 +85,7 @@ pub struct AppState {
     ///
     /// A download runs for minutes and is asked about every few seconds, so
     /// without this the asking would be what started the work, over and over.
-    pub downloads: DownloadRegistry,
+    pub downloads: ProgressRegistry,
     /// Keeps one clip from being rendered twice at once.
     ///
     /// Previews share an output path derived from the request, so concurrent
@@ -99,6 +101,21 @@ pub struct AppState {
     pub monitor: Monitor,
     /// Keeps one rendition of a track from being encoded twice at once.
     pub audio: AudioRegistry,
+    /// Keeps one kept file from being written twice at once, remembers how far through it is, and
+    /// holds why the last attempt failed.
+    ///
+    /// Two writers to one path in a library would truncate each other's work, and the caller polls
+    /// rather than waits — so without a claim taken before anything is spawned, the asking would be
+    /// what starts the encode, over and over.
+    pub renditions: ProgressRegistry,
+    /// Directories the media service will write finished files into.
+    ///
+    /// Separate from `media_roots`, and deliberately narrower. Reading a file somebody asked to
+    /// watch and writing one over the top of it are not the same permission, and a service with no
+    /// authentication of its own should not treat them as though they were. Empty means it will
+    /// write nowhere at all, which is the right answer for an installation that never turned this
+    /// on.
+    pub write_roots: Vec<PathBuf>,
 }
 
 impl AppState {
@@ -110,6 +127,27 @@ impl AppState {
         }
 
         self.media_roots.iter().any(|root| path.starts_with(root))
+    }
+
+    /// Whether a path lies inside a configured write root.
+    ///
+    /// Fails shut where `is_readable` fails open, and the difference is the point. An empty read
+    /// list means an installation that never restricted reading; an empty write list means one that
+    /// never asked for anything to be written, and writing into a library on the strength of a
+    /// request arriving is exactly what must not happen.
+    ///
+    /// A parent component anywhere in the path is refused outright rather than resolved, because a
+    /// prefix test on a path holding `..` proves nothing about where the file lands.
+    #[must_use]
+    pub fn is_writable(&self, path: &Path) -> bool {
+        if path
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_) | Component::RootDir))
+        {
+            return false;
+        }
+
+        self.write_roots.iter().any(|root| path.starts_with(root))
     }
 }
 
@@ -1144,6 +1182,185 @@ async fn start_subtitle(
 /// The claim is already taken by the caller, and is given up here whatever
 /// becomes of the work — including where the queue drops it before it runs,
 /// which would otherwise leave that film unable to be asked for again.
+/// Names a rendition to stop or to remove: the path it was to be written to.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RenditionPath {
+    pub output_path: String,
+}
+
+/// Starts producing a kept file, or says how the one already under way is getting on.
+///
+/// The one route here that writes outside the service's own directories, so it checks two things
+/// rather than one: that the source may be read, and that the destination may be written. The
+/// second is not the first — a library mounted read only is a normal and sensible way to run a
+/// media server, and this is the place to say so rather than two hours into an encode.
+async fn start_rendition(
+    State(state): State<AppState>,
+    Json(request): Json<RenditionRequest>,
+) -> Response {
+    let source = PathBuf::from(&request.spec.input_path);
+    let output = PathBuf::from(&request.output_path);
+
+    if !state.is_readable(&source) {
+        return error(
+            StatusCode::FORBIDDEN,
+            "That file is outside the media roots.",
+        );
+    }
+
+    if !state.is_writable(&output) {
+        return error(
+            StatusCode::FORBIDDEN,
+            "That destination is outside the directories this service may write to.",
+        );
+    }
+
+    let id = request.id();
+
+    if rendition::is_complete(&output).await {
+        let size = tokio::fs::metadata(&output)
+            .await
+            .ok()
+            .map(|found| found.len());
+
+        return (
+            StatusCode::OK,
+            Json(rendition::RenditionFile {
+                id,
+                is_ready: true,
+                progress: 100,
+                bytes_per_second: None,
+                size_bytes: size,
+                failure: None,
+            }),
+        )
+            .into_response();
+    }
+
+    if let Some(reason) = state.renditions.failure(&id).await {
+        return (StatusCode::OK, Json(rendition::failed(id, reason))).into_response();
+    }
+
+    if let Some((progress, rate)) = state.renditions.progress(&id).await {
+        return (
+            StatusCode::ACCEPTED,
+            Json(rendition::pending(id, progress, rate)),
+        )
+            .into_response();
+    }
+
+    if !state.renditions.claim(&id).await {
+        return (StatusCode::ACCEPTED, Json(rendition::pending(id, 0, None))).into_response();
+    }
+
+    write_in_the_background(&state, &request, &source, id.clone());
+
+    (StatusCode::ACCEPTED, Json(rendition::pending(id, 0, None))).into_response()
+}
+
+/// Asks a running encode to stop, and takes its working file with it.
+async fn stop_rendition(
+    State(state): State<AppState>,
+    Json(request): Json<RenditionPath>,
+) -> Response {
+    let stopped = state.renditions.stop(&request.output_path).await;
+
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({ "stopped": stopped })),
+    )
+        .into_response()
+}
+
+/// Removes a finished rendition, for somebody who did not like it.
+///
+/// Refused for anything outside a write root, on the same reasoning as writing one: the service
+/// should never be handed a path to delete on somebody else's authority.
+async fn forget_rendition(
+    State(state): State<AppState>,
+    Json(request): Json<RenditionPath>,
+) -> Response {
+    let path = PathBuf::from(&request.output_path);
+
+    if !state.is_writable(&path) {
+        return error(
+            StatusCode::FORBIDDEN,
+            "That file is outside the directories this service may write to.",
+        );
+    }
+
+    match rendition::forget(&path).await {
+        Ok(()) => (StatusCode::OK, Json(serde_json::json!({ "removed": true }))).into_response(),
+        Err(failure) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
+    }
+}
+
+/// Writes a kept file on the queue, for a caller that is not waiting.
+///
+/// The claim is taken before this is called and released here whatever happens. A failure is left
+/// against the address rather than dropped, because an encode that fails in the background has
+/// nobody to tell and the next ask would otherwise start the same doomed two hours again.
+fn write_in_the_background(state: &AppState, request: &RenditionRequest, path: &Path, id: String) {
+    let config = state.registry.config();
+    let renditions = state.renditions.clone();
+    let queue = state.queue.clone();
+    let ffmpeg = config.ffmpeg.clone();
+    let ffprobe = state.ffprobe.clone();
+    let device = config.device.clone();
+    let asked = request.clone();
+    let subject = name_of(path);
+
+    tokio::spawn(async move {
+        let plan = TranscodePlan {
+            device_filters: crate::capability::device_filters_for(
+                &ffmpeg,
+                &device,
+                asked.spec.hardware_accel,
+            )
+            .await,
+            spec: asked.spec.clone(),
+            output_directory: String::new(),
+            device,
+            start_at: SegmentStart::default(),
+            cut_seconds: 0.0,
+        };
+
+        let noting = renditions.clone();
+        let noted = id.clone();
+        let stop = renditions.stopper(&id).await;
+
+        let outcome = queue
+            .run(
+                RenditionJob::new(subject),
+                None,
+                rendition::generate(
+                    &ffmpeg,
+                    &ffprobe,
+                    &plan,
+                    &asked,
+                    &stop,
+                    move |progress, rate| {
+                        let noting = noting.clone();
+                        let noted = noted.clone();
+
+                        tokio::spawn(async move {
+                            noting.note(&noted, progress, rate).await;
+                        });
+                    },
+                ),
+            )
+            .await;
+
+        if let Err(failure) = outcome {
+            tracing::warn!(target: "rendition", %failure, subject = %id, "could not write the rendition");
+            renditions.fail(&id, failure.to_string()).await;
+        }
+
+        renditions.release(&id).await;
+    });
+}
+
 /// Starts preparing a download and returns without waiting for it.
 ///
 /// The claim is taken before this is called and released here whatever happens.
@@ -1596,6 +1813,9 @@ pub fn create_router(state: AppState) -> Router {
         .route("/previews/forget", post(forget_preview))
         .route("/previews/{id}/{name}", get(preview_file))
         .route("/subtitles", post(start_subtitle))
+        .route("/renditions", post(start_rendition))
+        .route("/renditions/stop", post(stop_rendition))
+        .route("/renditions/forget", post(forget_rendition))
         .route("/downloads", post(start_download))
         .route("/downloads/forget", post(forget_download))
         .route("/downloads/stop", post(stop_download))
@@ -1609,7 +1829,64 @@ pub fn create_router(state: AppState) -> Router {
 
 #[cfg(test)]
 mod tests {
-    use super::{content_type_for, is_safe_segment_name, parse_range};
+    use super::{content_type_for, is_safe_segment_name, parse_range, AppState};
+    use std::path::{Path, PathBuf};
+
+    fn writing_to(roots: &[&str]) -> AppState {
+        AppState {
+            registry: crate::session::SessionRegistry::new(crate::session::SessionConfig {
+                device: crate::transcode_plan::DEFAULT_DEVICE.to_owned(),
+                ffmpeg: "ffmpeg".to_owned(),
+                ffprobe: "ffprobe".to_owned(),
+                cache_root: PathBuf::from("/tmp/transcodes"),
+                artefact_root: PathBuf::from("/tmp/artefacts"),
+                idle_timeout: std::time::Duration::from_secs(60),
+                manifest_timeout: std::time::Duration::from_secs(120),
+                max_concurrent: 2,
+            }),
+            ffprobe: "ffprobe".to_owned(),
+            downloads: crate::progress_registry::ProgressRegistry::new(),
+            renditions: crate::progress_registry::ProgressRegistry::new(),
+            trickplay: crate::trickplay::TrickplayRegistry::new(),
+            previews: crate::preview::PreviewRegistry::new(),
+            monitor: crate::monitor::Monitor::new(crate::monitor::Journal::new()),
+            audio: crate::audio::AudioRegistry::new(),
+            queue: crate::queue::WorkQueue::new(1),
+            media_roots: Vec::new(),
+            write_roots: roots.iter().map(PathBuf::from).collect(),
+        }
+    }
+
+    /// Writing where an operator said Valence may write.
+    #[test]
+    fn writes_inside_a_root_it_was_given() {
+        assert!(writing_to(&["/media"]).is_writable(Path::new("/media/Films/X/.valence/a.mkv")));
+    }
+
+    /// Reading a file somebody asked to watch and writing one over the top of it are not the same
+    /// permission, so an unstated write list means nowhere rather than everywhere.
+    #[test]
+    fn writes_nowhere_when_nobody_said_where() {
+        assert!(!writing_to(&[]).is_writable(Path::new("/media/Films/X/a.mkv")));
+    }
+
+    #[test]
+    fn refuses_a_path_outside_every_root() {
+        assert!(!writing_to(&["/media"]).is_writable(Path::new("/etc/passwd")));
+    }
+
+    /// A prefix test on a path holding `..` proves nothing about where the file lands, so such a
+    /// path is refused outright rather than resolved.
+    #[test]
+    fn refuses_a_path_that_climbs_out_of_its_root() {
+        assert!(!writing_to(&["/media"]).is_writable(Path::new("/media/../etc/passwd")));
+    }
+
+    /// A neighbouring directory whose name merely starts the same way is not inside the root.
+    #[test]
+    fn refuses_a_relative_path_that_could_mean_anywhere() {
+        assert!(!writing_to(&["/media"]).is_writable(Path::new("media/Films/X/a.mkv")));
+    }
 
     #[test]
     fn reads_a_range_from_the_start() {

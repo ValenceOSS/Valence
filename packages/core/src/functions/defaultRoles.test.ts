@@ -118,6 +118,7 @@ describe('DEFAULT_ROLES', () => {
       'library.delete',
       'jobs.runDestructive',
       'media.delete',
+      'media.reencode',
       'account.invite',
       'account.manage',
       'account.ban',

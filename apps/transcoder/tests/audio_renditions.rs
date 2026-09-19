@@ -107,13 +107,15 @@ fn app_with(root: &Path, ffmpeg: String, media_roots: Vec<PathBuf>) -> axum::Rou
             max_concurrent: 2,
         }),
         ffprobe: ffprobe(),
-        downloads: valence_transcoder::download::DownloadRegistry::new(),
+        downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),
         trickplay: TrickplayRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
         audio: AudioRegistry::new(),
         queue: WorkQueue::new(1),
+        renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
         media_roots,
+        write_roots: Vec::new(),
     })
 }
 

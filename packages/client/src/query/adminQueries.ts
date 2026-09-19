@@ -19,6 +19,8 @@ import {
   fetchAccountPermissions,
 } from '@ValenceClient/admin/fetchRoles';
 import { fetchWebhooks, fetchWebhookDeliveries } from '@ValenceClient/admin/fetchWebhooks';
+import { fetchReencodes, fetchRenditions } from '@ValenceClient/admin/fetchReencodes';
+import { whenToAskAgain } from '@ValenceClient/admin/whenToAskAgain';
 import { fetchEverybodysShares } from '@ValenceClient/sharing/fetchShares';
 import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { JobRunQuery } from '@ValenceContracts/schemas/JobRun';
@@ -250,6 +252,28 @@ const everything = (libraryIds: readonly string[]) =>
   });
 
 /**
+ * Every file on the server, one entry per file rather than per thing.
+ *
+ * The other listing keeps one entry per programme, which is what correcting a match wants: a
+ * correction applies to a whole series and offering four hundred episodes to choose between would
+ * be four hundred ways to say the same thing. Re-encoding is the opposite — every episode is its
+ * own file on its own disk, and collapsing them would offer exactly one of them.
+ *
+ * @param libraryIds - The libraries to read, which is all of them.
+ * @returns The query.
+ */
+const everyFile = (libraryIds: readonly string[]) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'everyFile', [...libraryIds].sort()],
+    queryFn: async () => {
+      const shelves = await Promise.all(libraryIds.map((id) => readWholeLibrary(id)));
+
+      return shelves.flat();
+    },
+    enabled: libraryIds.length > 0,
+  });
+
+/**
  * Every link this server has handed out, and who handed each one out.
  *
  * @returns The query.
@@ -300,7 +324,43 @@ const exceptionsOn = (subject: { kind: 'item' | 'series'; subjectId: string } | 
     enabled: subject !== null,
   });
 
+/**
+ * Every re-encode, including the ones waiting for somebody to judge them.
+ *
+ * Asked for again while anything is still being written, because an encode reports its progress by
+ * writing it down rather than by announcing it — so a page that asked once shows the bar where it
+ * was when the page opened, and only moves when somebody reloads.
+ *
+ * It stops asking once nothing is running. A queue that has been empty since Tuesday is not worth a
+ * request every two seconds, and what remains — encodes waiting to be judged — changes only when
+ * somebody judges one.
+ *
+ * @returns The query.
+ */
+const reencodes = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'reencodes'],
+    queryFn: () => fetchReencodes(),
+    refetchInterval: ({ state }) => whenToAskAgain(state.data ?? []),
+  });
+
+/**
+ * What is kept beside one item.
+ *
+ * @param mediaId - The item, or nothing while none is being looked at.
+ * @returns The query.
+ */
+const renditions = (mediaId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'renditions', mediaId],
+    queryFn: () => fetchRenditions(mediaId ?? ''),
+    enabled: mediaId !== null,
+  });
+
 const adminQueries = {
+  everyFile,
+  reencodes,
+  renditions,
   exceptionsOn,
   libraryAccess,
   folders,

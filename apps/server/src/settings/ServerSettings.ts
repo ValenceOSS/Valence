@@ -21,6 +21,7 @@ const ServerSettingsSchema = z.object({
   audioDbKey: z.string().default(''),
   ownerAccountId: z.string().default(''),
   splashscreenFile: z.string().nullable().default(null),
+  reencodesAwaitingReviewCap: z.number().int().positive().max(50).default(5),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;

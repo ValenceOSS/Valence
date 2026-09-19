@@ -1,7 +1,8 @@
-import { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
+import { chooseSource } from '@ValenceCore/functions/chooseSource';
+import type { PlayableSource } from '@ValenceCore/functions/chooseSource';
+import type { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { isImageSubtitle } from '@ValenceCore/functions/isImageSubtitle';
-import { resolveQualityStep } from '@ValenceCore/functions/resolveQualityStep';
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import { planToSessionSpec } from '@ValenceCore/functions/planToSessionSpec';
 import { segmentContainerFor } from '@ValenceCore/functions/segmentContainerFor';
@@ -85,49 +86,6 @@ const asDelivered = (plan: PlaybackPlan, item: MediaItem, encodesVideo: boolean)
   };
 };
 
-/**
- * The audio track a player would pick on its own if nothing were negotiated: the one the file marks
- * as default, or the first. Knowing this is what makes it possible to tell a session that happens to
- * be playing the natural track from one that had to be steered onto it.
- *
- * @param item - The file, as the catalogue holds it.
- * @returns That track's index, or null where the file has no audio at all.
- */
-const naturalAudioStreamIndex = (item: Parameters<typeof negotiatePlayback>[0]): number | null =>
-  (item.audioStreams.find((stream) => stream.isDefault) ?? item.audioStreams[0])?.index ?? null;
-
-/**
- * Whether a plan amounts to handing over the file untouched — nothing remuxed, nothing re-encoded,
- * the track the player would have chosen anyway, and no subtitles burned in. Anything less counts as
- * the server doing work, and is worth saying so, because direct play is the only mode that costs
- * nothing to serve.
- *
- * HEVC never qualifies, whatever the plan says. An HEVC stream in MP4 is marked either `hvc1` or
- * `hev1`, the marking decides whether a player will decode it, and Valence does not know which a given
- * file carries — the catalogue records the codec and not the tag it was written with. Sending it
- * through a session instead costs a copy, which is close to nothing, and the session marks it
- * `hvc1` on the way out. So the tag is right on every path rather than on the paths that happen to
- * re-wrap it.
- *
- * That is stricter than Jellyfin, which serves HEVC statically and retags only what it remuxes. The
- * difference is a file Valence copies where Jellyfin would not, against a black picture on any player
- * that reads the tag strictly. Worth revisiting if the catalogue ever learns the tag.
- *
- * @param plan - What the negotiator decided.
- * @param item - The file it decided about.
- * @returns Whether the file is being handed over as it is.
- */
-const isDirectPlay = (
-  plan: Parameters<typeof describePlaybackMode>[0],
-  item: Parameters<typeof negotiatePlayback>[0],
-): boolean =>
-  plan.container.kind === 'passthrough' &&
-  plan.video.kind === 'passthrough' &&
-  plan.audio.kind === 'passthrough' &&
-  plan.audio.streamIndex === naturalAudioStreamIndex(item) &&
-  plan.subtitles.kind !== 'burnIn' &&
-  item.videoCodec !== 'hevc';
-
 type MediaLookup = {
   findForPlayback: (mediaId: string) => Promise<{
     item: Parameters<typeof negotiatePlayback>[0];
@@ -135,8 +93,28 @@ type MediaLookup = {
     defaultAudioLanguage: string | null;
     generation: number;
     previewMoment?: PreviewMoment | null;
+    renditions?: { id: string; item: Parameters<typeof negotiatePlayback>[0]; path: string }[];
   } | null>;
 };
+
+/**
+ * Every file an item can be played from: the original, and anything somebody chose to keep beside
+ * it.
+ *
+ * @param found - What the library holds for this item.
+ * @returns The files to choose between, the original first.
+ */
+const sourcesOf = (
+  found: NonNullable<Awaited<ReturnType<MediaLookup['findForPlayback']>>>,
+): PlayableSource[] => [
+  { id: 'original', isOriginal: true, item: found.item, path: found.path },
+  ...(found.renditions ?? []).map((one) => ({
+    id: one.id,
+    isOriginal: false,
+    item: one.item,
+    path: one.path,
+  })),
+];
 
 type CreatePlaybackServiceOptions = {
   media: MediaLookup;
@@ -190,10 +168,18 @@ const createPlaybackService = ({
         return null;
       }
 
-      const qualityClamp = resolveQualityStep(found.item, requestedQuality ?? 'original');
-      const plan = negotiatePlayback(found.item, profile, qualityClamp, found.defaultAudioLanguage);
+      const chosen = chooseSource({
+        sources: sourcesOf(found),
+        profile,
+        requestedQuality: requestedQuality ?? 'original',
+        preferredAudioLanguage: found.defaultAudioLanguage,
+      });
 
-      return { mode: describePlaybackMode(plan), plan };
+      if (chosen === null) {
+        return null;
+      }
+
+      return { mode: describePlaybackMode(chosen.plan), plan: chosen.plan };
     },
 
     start: async (
@@ -211,16 +197,22 @@ const createPlaybackService = ({
         return { kind: 'notFound' };
       }
 
-      const qualityClamp = resolveQualityStep(found.item, requestedQuality ?? 'original');
-      const plan = negotiatePlayback(
-        found.item,
+      const chosen = chooseSource({
+        sources: sourcesOf(found),
         profile,
-        qualityClamp,
-        found.defaultAudioLanguage,
-        subtitleStreamIndex,
-      );
+        requestedQuality: requestedQuality ?? 'original',
+        preferredAudioLanguage: found.defaultAudioLanguage,
+        chosenSubtitleStreamIndex: subtitleStreamIndex ?? null,
+      });
 
-      if (isDirectPlay(plan, found.item) && audioStreamIndex === undefined) {
+      if (chosen === null) {
+        return { kind: 'notFound' };
+      }
+
+      const { plan } = chosen;
+      const source = chosen.source.item;
+
+      if (chosen.isDirectPlay && chosen.source.isOriginal && audioStreamIndex === undefined) {
         return {
           kind: 'started',
           session: {
@@ -236,17 +228,17 @@ const createPlaybackService = ({
 
       const outcome = planToSessionSpec({
         plan,
-        inputPath: found.path,
-        sourceRange: found.item.videoRange,
-        sourceSize: [found.item.width, found.item.height],
-        sourceVideoCodec: found.item.videoCodec,
-        sourceBitDepth: found.item.videoBitDepth,
-        sourceIsInterlaced: found.item.videoIsInterlaced,
-        sourcePixelAspect: found.item.videoPixelAspect ?? null,
-        imageSubtitleIndexes: found.item.subtitleStreams
+        inputPath: chosen.source.path,
+        sourceRange: source.videoRange,
+        sourceSize: [source.width, source.height],
+        sourceVideoCodec: source.videoCodec,
+        sourceBitDepth: source.videoBitDepth,
+        sourceIsInterlaced: source.videoIsInterlaced,
+        sourcePixelAspect: source.videoPixelAspect ?? null,
+        imageSubtitleIndexes: source.subtitleStreams
           .filter((stream) => isImageSubtitle(stream.format))
           .map((stream) => stream.index),
-        subtitleIndexes: found.item.subtitleStreams.map((stream) => stream.index),
+        subtitleIndexes: source.subtitleStreams.map((stream) => stream.index),
         capabilities: await capabilities(),
         forcedAccel: await forcedAccel(),
         startSeconds,
@@ -267,7 +259,7 @@ const createPlaybackService = ({
         const session = await transcoder.startSession(outcome.spec, deviceId);
 
         const delivered = withDeliveredRange(
-          asDelivered(plan, found.item, session.encodesVideo),
+          asDelivered(plan, source, session.encodesVideo),
           outcome.deliveredRange,
         );
 

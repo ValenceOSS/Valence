@@ -14,7 +14,6 @@
 //! every track they might want, because there is nowhere to fetch a missing one
 //! from at thirty thousand feet.
 
-use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -26,7 +25,6 @@ use sha2::{Digest, Sha256};
 use thiserror::Error;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
-use tokio::sync::Mutex;
 
 use crate::transcode_plan::{SessionSpec, TranscodePlan};
 
@@ -616,100 +614,13 @@ pub async fn forget(cache_root: &Path, id: &str) -> std::io::Result<()> {
     }
 }
 
-/// What is known about a preparation while it is running.
-#[derive(Clone, Default)]
-struct InFlight {
-    progress: u8,
-    bytes_per_second: Option<u64>,
-    stop: Arc<AtomicBool>,
-}
-
-/// Keeps one preparation per download, however many people ask for it, and holds
-/// the switch that stops each one.
-#[derive(Clone, Default)]
-pub struct DownloadRegistry {
-    in_flight: Arc<Mutex<HashMap<String, InFlight>>>,
-}
-
-impl DownloadRegistry {
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Takes this download to prepare, unless something already has.
-    ///
-    /// A download runs for minutes, and the client asks how it is going every
-    /// few seconds. Without a claim taken before anything is spawned, every ask
-    /// would start another encode of the same film.
-    pub async fn claim(&self, id: &str) -> bool {
-        let mut in_flight = self.in_flight.lock().await;
-
-        if in_flight.contains_key(id) {
-            return false;
-        }
-
-        in_flight.insert(id.to_owned(), InFlight::default());
-
-        true
-    }
-
-    /// The switch that stops this preparation, for whoever is running it.
-    pub async fn stopper(&self, id: &str) -> Arc<AtomicBool> {
-        self.in_flight
-            .lock()
-            .await
-            .get(id)
-            .map_or_else(Arc::default, |held| Arc::clone(&held.stop))
-    }
-
-    /// Asks a running preparation to stop where it is.
-    ///
-    /// What it has finished stays on disk, so asking for it again picks up from
-    /// there rather than starting the film over.
-    pub async fn stop(&self, id: &str) -> bool {
-        let in_flight = self.in_flight.lock().await;
-
-        let Some(held) = in_flight.get(id) else {
-            return false;
-        };
-
-        held.stop.store(true, Ordering::Relaxed);
-
-        true
-    }
-
-    /// Records how far through a claimed download is, and how fast it is going.
-    pub async fn note(&self, id: &str, progress: u8, bytes_per_second: Option<u64>) {
-        let mut in_flight = self.in_flight.lock().await;
-
-        if let Some(held) = in_flight.get_mut(id) {
-            held.progress = progress;
-            held.bytes_per_second = bytes_per_second;
-        }
-    }
-
-    /// How far through a download is and how fast, where one is under way.
-    pub async fn progress(&self, id: &str) -> Option<(u8, Option<u64>)> {
-        self.in_flight
-            .lock()
-            .await
-            .get(id)
-            .map(|held| (held.progress, held.bytes_per_second))
-    }
-
-    /// Lets go of a download, whether it finished or failed.
-    pub async fn release(&self, id: &str) {
-        self.in_flight.lock().await.remove(id);
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::{
-        carried, pending, progress_from, rate, seconds_done, written_from, DownloadRegistry,
-        DownloadRequest, DOWNLOAD_NAME,
+        carried, pending, progress_from, rate, seconds_done, written_from, DownloadRequest,
+        DOWNLOAD_NAME,
     };
+    use crate::progress_registry::ProgressRegistry;
     use std::sync::atomic::Ordering;
     use std::time::Duration;
 
@@ -821,7 +732,7 @@ mod tests {
 
     #[tokio::test]
     async fn hands_the_same_switch_to_whoever_runs_a_claimed_download() {
-        let registry = DownloadRegistry::new();
+        let registry = ProgressRegistry::new();
 
         registry.claim("abc").await;
 
@@ -834,14 +745,14 @@ mod tests {
 
     #[tokio::test]
     async fn says_there_was_nothing_to_stop_rather_than_pretending_there_was() {
-        let registry = DownloadRegistry::new();
+        let registry = ProgressRegistry::new();
 
         assert!(!registry.stop("abc").await);
     }
 
     #[tokio::test]
     async fn leaves_a_new_claim_unstopped_after_an_earlier_one_was_stopped() {
-        let registry = DownloadRegistry::new();
+        let registry = ProgressRegistry::new();
 
         registry.claim("abc").await;
         registry.stop("abc").await;
@@ -884,7 +795,7 @@ mod tests {
 
     #[tokio::test]
     async fn lets_one_preparation_through_and_turns_the_rest_away() {
-        let registry = DownloadRegistry::new();
+        let registry = ProgressRegistry::new();
 
         assert!(registry.claim("abc").await);
         assert!(!registry.claim("abc").await);
@@ -896,7 +807,7 @@ mod tests {
 
     #[tokio::test]
     async fn remembers_how_far_through_a_claimed_download_is() {
-        let registry = DownloadRegistry::new();
+        let registry = ProgressRegistry::new();
 
         registry.claim("abc").await;
         registry.note("abc", 42, Some(8_000_000)).await;
@@ -906,7 +817,7 @@ mod tests {
 
     #[tokio::test]
     async fn knows_nothing_about_a_download_nobody_claimed() {
-        let registry = DownloadRegistry::new();
+        let registry = ProgressRegistry::new();
 
         registry.note("abc", 42, None).await;
 

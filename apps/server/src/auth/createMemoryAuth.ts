@@ -90,6 +90,7 @@ const createMemoryAuth = (
     audioDbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
+    reencodesAwaitingReviewCap: 5,
   });
 
   const auth = createAuth({
