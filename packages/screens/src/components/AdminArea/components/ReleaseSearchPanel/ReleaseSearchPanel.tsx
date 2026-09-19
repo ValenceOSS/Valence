@@ -6,6 +6,7 @@ import {
   Magnet01Icon,
   MoreHorizontalIcon,
   SentIcon,
+  UnfoldMoreIcon,
 } from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -13,6 +14,7 @@ import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Icon } from '@ValenceUI/Icon';
+import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
@@ -57,6 +59,9 @@ const numbered = (text: string): number | undefined => {
  * of thing they name, and every release the indexers found, most widely shared first, with where
  * each came from and a way to fetch it.
  *
+ * A search can be judged against a quality profile, which puts the releases in the order they would
+ * be chosen, marks the pick, and says of each what it scored and why, or why it was refused.
+ *
  * A search is asked once and kept for as long as the page is open, so going back to one does not
  * ask every indexer again. Each indexer's own answer is shown above the results, so one that
  * failed or timed out says so rather than simply finding nothing.
@@ -67,7 +72,16 @@ const ReleaseSearchPanel = () => {
   const [season, setSeason] = useState('');
   const [episode, setEpisode] = useState('');
   const [asked, setAsked] = useState<ReleaseSearch | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [runtime, setRuntime] = useState('');
   const found = useQuery(requestsQueries.search(asked));
+  const profiles = useQuery(requestsQueries.profiles());
+  const profile = (profiles.data ?? []).find((one) => one.id === profileId) ?? null;
+  const judged = useMemo(
+    () => new Map((found.data?.judgements ?? []).map((one) => [one.releaseId, one])),
+    [found.data],
+  );
+  const pickedId = found.data?.pickedId ?? null;
   const clients = useQuery(requestsQueries.downloadClients());
   const now = found.dataUpdatedAt;
   const [said, setSaid] = useState<{ text: string; isProblem: boolean } | null>(null);
@@ -89,6 +103,43 @@ const ReleaseSearchPanel = () => {
           </span>
         ),
       },
+      ...(judged.size === 0
+        ? []
+        : [
+            {
+              id: 'verdict',
+              header: 'Verdict',
+              enableSorting: false,
+              cell: ({ row }: { row: { original: Release } }) => {
+                const judgement = judged.get(row.original.id);
+
+                if (judgement === undefined) {
+                  return null;
+                }
+
+                const isPicked = pickedId === row.original.id;
+
+                return (
+                  <span className="flex min-w-0 flex-col items-start gap-1">
+                    <Badge
+                      size="sm"
+                      tone={isPicked ? 'success' : judgement.isRejected ? 'danger' : 'quiet'}
+                    >
+                      {isPicked
+                        ? `Picked · ${judgement.score.toString()}`
+                        : judgement.isRejected
+                          ? 'Refused'
+                          : `Scores ${judgement.score.toString()}`}
+                    </Badge>
+
+                    <span className="text-xs text-text-muted">
+                      {(judgement.isRejected ? judgement.rejections : judgement.reasons).join('. ')}
+                    </span>
+                  </span>
+                );
+              },
+            },
+          ]),
       {
         id: 'size',
         header: 'Size',
@@ -262,7 +313,7 @@ const ReleaseSearchPanel = () => {
         },
       },
     ],
-    [now, clients.data, asked],
+    [now, clients.data, asked, judged, pickedId],
   );
 
   const search = () => {
@@ -275,15 +326,27 @@ const ReleaseSearchPanel = () => {
       return;
     }
 
+    const runtimeMinutes = numbered(runtime);
+
     setAsked({
       query: words,
       mode,
       ...(seasonNumber === undefined ? {} : { season: seasonNumber }),
       ...(episodeNumber === undefined ? {} : { episode: episodeNumber }),
+      ...(profile === null ? {} : { profileId: profile.id }),
+      ...(profile?.kind !== 'video' || runtimeMinutes === undefined || runtimeMinutes === 0
+        ? {}
+        : { runtimeMinutes }),
     });
   };
 
-  const releases = useMemo(() => inReleaseOrder(found.data?.releases ?? []), [found.data]);
+  const releases = useMemo(
+    () =>
+      (found.data?.judgements.length ?? 0) > 0
+        ? (found.data?.releases ?? [])
+        : inReleaseOrder(found.data?.releases ?? []),
+    [found.data],
+  );
 
   return (
     <PanelCard title="Search" isFlush>
@@ -331,19 +394,58 @@ const ReleaseSearchPanel = () => {
           </Button>
         </div>
 
-        <SegmentedRow
-          label="What it is"
-          size="sm"
-          items={MODES}
-          value={mode}
-          onSelect={(next) => {
-            const chosen = MODES.find((one) => one.id === next)?.id;
+        <div className="flex flex-wrap items-end gap-3">
+          <SegmentedRow
+            label="What it is"
+            size="sm"
+            items={MODES}
+            value={mode}
+            onSelect={(next) => {
+              const chosen = MODES.find((one) => one.id === next)?.id;
 
-            if (chosen !== undefined) {
-              setMode(chosen);
+              if (chosen !== undefined) {
+                setMode(chosen);
+              }
+            }}
+          />
+
+          <OptionMenu
+            label="Judge against"
+            groups={[
+              {
+                name: 'Judge against',
+                selectedId: profileId ?? 'none',
+                onSelect: (next) => {
+                  setProfileId(next === 'none' ? null : next);
+                },
+                options: [
+                  { id: 'none', label: 'No profile' },
+                  ...(profiles.data ?? []).map((one) => ({ id: one.id, label: one.name })),
+                ],
+              },
+            ]}
+            trigger={
+              <>
+                <span className="truncate">
+                  {profile === null ? 'No profile' : `Judged against ${profile.name}`}
+                </span>
+                <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+              </>
             }
-          }}
-        />
+          />
+
+          {profile?.kind !== 'video' ? null : (
+            <TextField
+              label="Running time (minutes)"
+              type="number"
+              min={1}
+              value={runtime}
+              onValueChange={setRuntime}
+              placeholder="For judging size"
+              className="w-48"
+            />
+          )}
+        </div>
       </form>
 
       {said === null ? null : (
