@@ -58,18 +58,32 @@ mod tests {
 
     /// A render that arrives at the processor as an equal competes with the film somebody is
     /// watching, which is the one thing a background job must never do.
+    ///
+    /// The kernel is asked directly rather than through `ps`, which is not on every image this is
+    /// built in: a Debian slim image carries no `procps`, so the question came back empty there
+    /// while passing everywhere a developer ran it.
     #[tokio::test]
+    #[allow(
+        unsafe_code,
+        reason = "getpriority has no safe wrapper; the block is the call and nothing else"
+    )]
     async fn runs_a_child_below_whatever_somebody_is_waiting_on() {
-        let reported = steps_aside(&mut Command::new("sh"))
-            .args(["-c", "ps -o nice= -p $$"])
-            .output()
-            .await
-            .expect("sh should run");
+        let mut child = steps_aside(&mut Command::new("sleep"))
+            .arg("30")
+            .spawn()
+            .expect("sleep should run");
 
-        let nice: i32 = String::from_utf8_lossy(&reported.stdout)
-            .trim()
-            .parse()
-            .expect("ps should report a niceness");
+        let pid = child
+            .id()
+            .expect("a child that has just started has an identifier");
+
+        // SAFETY: getpriority reads one process's scheduling priority and writes nothing.
+        let nice = unsafe { libc::getpriority(libc::PRIO_PROCESS, pid) };
+
+        child
+            .kill()
+            .await
+            .expect("the child should stop when asked");
 
         assert_eq!(nice, POLITENESS);
     }
