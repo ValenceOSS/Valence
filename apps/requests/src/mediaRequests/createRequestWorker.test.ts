@@ -674,9 +674,23 @@ describe('createRequestWorker', () => {
 
       await worker.tick();
 
-      expect((await downloads.find(BY_HAND.id))?.filingProblem).toBe(
-        'Valence cannot see /downloads/The Matrix (1999) [1080p], where qBittorrent put it. Set where qBittorrent saves downloads, as it sees them and as Valence does, on the Downloads page.',
-      );
+      expect(await downloads.find(BY_HAND.id)).toMatchObject({
+        filingProblem:
+          'Valence cannot see /downloads/The Matrix (1999) [1080p], where qBittorrent put it. Set where qBittorrent saves downloads, as it sees them and as Valence does, on the Downloads page.',
+        filingAttempts: 0,
+      });
+    });
+
+    it('keeps trying to file for a request while its download cannot be seen', async () => {
+      const { worker, items } = aWorker({
+        items: [aRequestItem({ state: 'filing', downloadId: aSentDownload().id, attempts: 4 })],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/Dune' })],
+        filed: () => Promise.reject(Object.assign(new Error('ENOENT'), { code: 'ENOENT' })),
+      });
+
+      await worker.tick();
+
+      expect((await items.list())[0]).toMatchObject({ state: 'filing', attempts: 4 });
     });
 
     it('files the episodes a series download holds', async () => {

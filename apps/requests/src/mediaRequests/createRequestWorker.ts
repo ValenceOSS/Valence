@@ -91,21 +91,26 @@ const DEFAULT_PROFILE: QualityProfile = {
 };
 
 /**
- * Says why a finished download could not be filed — most often because this service does not see
- * the download where its client says it put it, which a folder set on the client puts right.
+ * Says why a finished download could not be filed, and whether it counts as a try. Most often this
+ * service does not see the download where its client says it put it, which a folder set on the
+ * client puts right — so that is not held against the download, which is filed once it can be seen.
  *
  * @param error - What was thrown, where it was an error.
  * @param path - Where the download was looked for.
  * @param clientName - The client that downloaded it.
- * @returns The reason, in words.
+ * @returns The reason, in words, and whether it counts.
  */
-const whyNotFiled = (error: Error | null, path: string, clientName: string): string => {
-  if (error !== null && 'code' in error && error.code === 'ENOENT') {
-    return `Valence cannot see ${path}, where ${clientName} put it. Set where ${clientName} saves downloads, as it sees them and as Valence does, on the Downloads page.`;
-  }
-
-  return `It could not be filed: ${error?.message ?? 'no reason given'}`;
-};
+const whyNotFiled = (
+  error: Error | null,
+  path: string,
+  clientName: string,
+): { problem: string; isATry: boolean } =>
+  error !== null && 'code' in error && error.code === 'ENOENT'
+    ? {
+        problem: `Valence cannot see ${path}, where ${clientName} put it. Set where ${clientName} saves downloads, as it sees them and as Valence does, on the Downloads page.`,
+        isATry: false,
+      }
+    : { problem: `It could not be filed: ${error?.message ?? 'no reason given'}`, isATry: true };
 
 /**
  * A request's films or episodes in one state, by the download each belongs to.
@@ -498,11 +503,13 @@ const createRequestWorker = ({
 
       const attempts = (filing[0]?.attempts ?? 0) + 1;
 
-      const retryOrFail = async (problem: string) => {
+      const retryOrFail = async (problem: string, isATry = true) => {
         for (const item of filing) {
-          await (attempts >= MOST_FILING_ATTEMPTS
-            ? giveUp(request, item, problem)
-            : update(item, { problem, attempts }));
+          await (!isATry
+            ? update(item, { problem })
+            : attempts >= MOST_FILING_ATTEMPTS
+              ? giveUp(request, item, problem)
+              : update(item, { problem, attempts }));
         }
       };
 
@@ -559,7 +566,9 @@ const createRequestWorker = ({
           say(`Filed ${download.title} for ${request.title}.`);
         }
       } catch (error) {
-        await retryOrFail(whyNotFiled(error instanceof Error ? error : null, path, client.name));
+        const why = whyNotFiled(error instanceof Error ? error : null, path, client.name);
+
+        await retryOrFail(why.problem, why.isATry);
       }
     }
   };
@@ -588,10 +597,10 @@ const createRequestWorker = ({
         year: parsed.year,
       };
 
-      const couldNot = async (problem: string) => {
+      const couldNot = async (problem: string, isATry = true) => {
         await downloads.update(download.id, {
           filingProblem: problem,
-          filingAttempts: download.filingAttempts + 1,
+          filingAttempts: download.filingAttempts + (isATry ? 1 : 0),
           updatedAt: at(),
         });
       };
@@ -640,7 +649,9 @@ const createRequestWorker = ({
         });
         say(`Filed ${download.title} into ${folder}.`);
       } catch (error) {
-        await couldNot(whyNotFiled(error instanceof Error ? error : null, path, client.name));
+        const why = whyNotFiled(error instanceof Error ? error : null, path, client.name);
+
+        await couldNot(why.problem, why.isATry);
       }
     }
   };
