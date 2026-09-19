@@ -104,9 +104,8 @@ describe('writeLocation', () => {
 
   it('writes what it can read back', () => {
     const place = {
-      section: 'films',
+      section: 'search',
       search: 'blade',
-      isSearchOpen: true,
       inspecting: 'abc',
       book: 'def',
       show: null,
