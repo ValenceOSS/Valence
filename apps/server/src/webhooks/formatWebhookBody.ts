@@ -127,6 +127,14 @@ const sentenceFor = (payload: WebhookPayload): string => {
       return `The VPN the requests service downloads through is down — ${payload.data.reason}`;
     }
 
+    case 'requests.indexerFailing': {
+      return `The indexer ${payload.data.name} keeps failing — ${payload.data.problem}`;
+    }
+
+    case 'requests.indexerWorking': {
+      return `The indexer ${payload.data.name} is answering again. Nothing needs doing.`;
+    }
+
     case 'requests.vpnUp': {
       const where = [payload.data.publicAddress, payload.data.country].filter(
         (part) => part !== null,

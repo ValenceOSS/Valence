@@ -241,10 +241,19 @@ import { setupStatusRoute, setupCompleteRoute } from './routes/SetupRoute';
 import { JOB_DEFINITIONS, RESET_LIBRARY_JOB } from '@ValenceServer/jobs/jobDefinitions';
 import type { JobDefinition } from '@ValenceServer/jobs/jobDefinitions';
 import {
+  addIndexerRoute,
   adminCheckRequestsRoute,
   adminRequestsOverviewRoute,
+  changeIndexerRoute,
+  listIndexersRoute,
+  removeIndexerRoute,
   requestsAvailabilityRoute,
+  searchReleasesRoute,
+  testIndexerRoute,
+  tryIndexerChangeRoute,
+  tryIndexerRoute,
 } from '@ValenceServer/routes/RequestsRoute';
+import type { RequestsClient } from '@ValenceServer/requests/createRequestsClient';
 import type { RequestsMonitor } from '@ValenceServer/requests/createRequestsMonitor';
 import {
   SCAN_LIBRARY_JOB,
@@ -556,6 +565,7 @@ type CreateAppOptions = {
   listRunningJobs?: () => RunningJob[];
   jobDefinitions?: readonly JobDefinition[];
   requests?: RequestsMonitor | null;
+  requestsClient?: RequestsClient | null;
   cancelJob?: (jobId: string) => Promise<boolean>;
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   realtime?: RealtimePublisher;
@@ -616,6 +626,7 @@ const createApp = ({
   listRunningJobs = () => [],
   jobDefinitions = JOB_DEFINITIONS,
   requests = null,
+  requestsClient = null,
   cancelJob = () => Promise.resolve(false),
   searchCatalogue = () => Promise.resolve([]),
   permissions = createMemoryPermissionService(),
@@ -3664,6 +3675,201 @@ const createApp = ({
     await requests.check();
 
     return context.json(requests.overview(), 200);
+  });
+
+  const NOT_YOURS = { error: 'That is for whoever sets up requesting.' };
+
+  const REQUESTING_OFF = { error: 'Requesting is off.' };
+
+  /**
+   * Whether somebody may reach through to the requests service, and the client to do it with.
+   *
+   * @param headers - Who is asking.
+   * @returns The client, or why not.
+   */
+  const reachRequests = async (headers: Headers): Promise<RequestsClient | 'refused' | 'off'> =>
+    !(await requires(headers, 'requests.manage')) ? 'refused' : (requestsClient ?? 'off');
+
+  app.openapi(listIndexersRoute, async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const answer = await client.listIndexers();
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.kind === 'silent' ? answer.reason : answer.error }, 502);
+  });
+
+  app.openapi(addIndexerRoute, async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const answer = await client.addIndexer(context.req.valid('json'));
+
+    if (answer.kind === 'silent') {
+      return context.json({ error: answer.reason }, 502);
+    }
+
+    return answer.kind === 'refused'
+      ? context.json({ error: answer.error }, 400)
+      : context.json(answer.value, 201);
+  });
+
+  app.openapi(tryIndexerRoute, async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const answer = await client.tryIndexer(context.req.valid('json'));
+
+    if (answer.kind === 'silent') {
+      return context.json({ error: answer.reason }, 502);
+    }
+
+    return answer.kind === 'refused'
+      ? context.json({ error: answer.error }, 400)
+      : context.json(answer.value, 200);
+  });
+
+  app.openapi(changeIndexerRoute, async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const answer = await client.changeIndexer(
+      context.req.valid('param').id,
+      context.req.valid('json'),
+    );
+
+    if (answer.kind === 'silent') {
+      return context.json({ error: answer.reason }, 502);
+    }
+
+    if (answer.kind === 'refused') {
+      return answer.status === 404
+        ? context.json({ error: answer.error }, 404)
+        : context.json({ error: answer.error }, 400);
+    }
+
+    return context.json(answer.value, 200);
+  });
+
+  app.openapi(removeIndexerRoute, async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const answer = await client.removeIndexer(context.req.valid('param').id);
+
+    if (answer.kind === 'silent') {
+      return context.json({ error: answer.reason }, 502);
+    }
+
+    return answer.kind === 'refused'
+      ? context.json({ error: answer.error }, 404)
+      : context.body(null, 204);
+  });
+
+  app.openapi(testIndexerRoute, async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const answer = await client.testIndexer(context.req.valid('param').id);
+
+    if (answer.kind === 'silent') {
+      return context.json({ error: answer.reason }, 502);
+    }
+
+    return answer.kind === 'refused'
+      ? context.json({ error: answer.error }, 404)
+      : context.json(answer.value, 200);
+  });
+
+  app.openapi(tryIndexerChangeRoute, async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const answer = await client.tryIndexer(
+      context.req.valid('json'),
+      context.req.valid('param').id,
+    );
+
+    if (answer.kind === 'silent') {
+      return context.json({ error: answer.reason }, 502);
+    }
+
+    return answer.kind === 'refused'
+      ? context.json({ error: answer.error }, 400)
+      : context.json(answer.value, 200);
+  });
+
+  app.openapi(searchReleasesRoute, async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const answer = await client.search(context.req.valid('json'));
+
+    if (answer.kind === 'silent') {
+      return context.json({ error: answer.reason }, 502);
+    }
+
+    return answer.kind === 'refused'
+      ? context.json({ error: answer.error }, 400)
+      : context.json(answer.value, 200);
   });
 
   app.openapi(listMyPermissionsRoute, async (context) => {
