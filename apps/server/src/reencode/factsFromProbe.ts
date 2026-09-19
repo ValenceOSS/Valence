@@ -27,6 +27,7 @@ const factsFromProbe = ({ probe, sizeBytes, modifiedAtMs }: FactsFromProbeOption
     durationSeconds: probe.durationSeconds,
     bitrateKbps: probe.bitrateKbps,
     videoCodec: probe.video?.codec ?? 'unknown',
+    videoCodecTag: probe.video?.codecTag ?? null,
     videoRange: probe.video?.range ?? 'SDR',
     videoRangeBase: probe.video?.rangeBase ?? null,
     videoBitDepth: probe.video?.bitDepth ?? null,

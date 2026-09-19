@@ -2,22 +2,45 @@ import { naturalAudioStreamIndex } from '@ValenceCore/functions/naturalAudioStre
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 
+const CONTAINERS_THAT_CARRY_A_CODEC_TAG = ['mp4', 'mov'];
+
+const HEVC_TAG_A_PLAYER_WILL_TAKE = 'hvc1';
+
+/**
+ * Whether an HEVC stream can be handed to a player as it is.
+ *
+ * An HEVC stream in an ISO base media file is marked either `hvc1` or `hev1`, and the marking
+ * decides whether a player will decode it. `hvc1` keeps the parameter sets in the configuration
+ * record, which is where a decoder looks before it decodes anything. `hev1` allows them in the
+ * stream instead: Safari refuses it outright and Chromium draws nothing from it, so a perfectly
+ * good copy arrives as sound over a black picture. FFmpeg writes `hev1` unasked, which is why a
+ * session retags on the way out.
+ *
+ * Only the ISO base media family has such a field, and here that is MP4 and QuickTime. Matroska
+ * stores HEVC as `V_MPEGH/ISO/HEVC` with the parameter sets in CodecPrivate, so there is no tag to
+ * get wrong and nothing to check — which is most of a remux library, and all of it was being sent
+ * through a session to fix a tag that was never there.
+ *
+ * An MP4 whose tag is not known is refused, and that is the point of refusing rather than assuming:
+ * a file probed before Valence read the tag holds no answer, and no answer is not the same as `hvc1`.
+ * The next scan re-probes it, because the probe version moved.
+ *
+ * @param item - The file being weighed.
+ * @returns Whether its picture can be handed over untouched.
+ */
+const hevcMayBeHandedOver = (item: MediaItem): boolean =>
+  !CONTAINERS_THAT_CARRY_A_CODEC_TAG.includes(item.container) ||
+  item.videoCodecTag === HEVC_TAG_A_PLAYER_WILL_TAKE;
+
 /**
  * Whether a plan amounts to handing over the file untouched — nothing remuxed, nothing re-encoded,
  * the track the player would have chosen anyway, and no subtitles burned in. Anything less counts as
  * the server doing work, and is worth saying so, because direct play is the only mode that costs
  * nothing to serve.
  *
- * HEVC never qualifies, whatever the plan says. An HEVC stream in MP4 is marked either `hvc1` or
- * `hev1`, the marking decides whether a player will decode it, and Valence does not know which a given
- * file carries — the catalogue records the codec and not the tag it was written with. Sending it
- * through a session instead costs a copy, which is close to nothing, and the session marks it
- * `hvc1` on the way out. So the tag is right on every path rather than on the paths that happen to
- * re-wrap it.
- *
- * That is stricter than Jellyfin, which serves HEVC statically and retags only what it remuxes. The
- * difference is a file Valence copies where Jellyfin would not, against a black picture on any player
- * that reads the tag strictly. Worth revisiting if the catalogue ever learns the tag.
+ * HEVC qualifies where the file says it may, which is the codec tag above. Valence used to refuse
+ * every HEVC file outright on the grounds that it could not tell `hvc1` from `hev1` — true of the
+ * catalogue and false of the file, since ffprobe had been reporting the tag all along.
  *
  * @param plan - What the negotiator decided.
  * @param item - The file it decided about.
@@ -29,6 +52,6 @@ const isDirectPlay = (plan: PlaybackPlan, item: MediaItem): boolean =>
   plan.audio.kind === 'passthrough' &&
   plan.audio.streamIndex === naturalAudioStreamIndex(item.audioStreams) &&
   plan.subtitles.kind !== 'burnIn' &&
-  item.videoCodec !== 'hevc';
+  (item.videoCodec !== 'hevc' || hevcMayBeHandedOver(item));
 
 export { isDirectPlay };

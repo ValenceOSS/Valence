@@ -240,12 +240,50 @@ describe('createPlaybackService', () => {
     expect(outcome).toMatchObject({ kind: 'started', session: { delivery: { kind: 'direct' } } });
   });
 
-  it('sends HEVC through a session, since only a session can mark the tag it needs', async () => {
+  it('hands over an HEVC file whose container carries no tag to get wrong', async () => {
     const { service } = harness(null);
 
     const outcome = await service.start(MEDIA_ID, capableProfile, 0);
 
+    expect(outcome).toMatchObject({ kind: 'started', session: { delivery: { kind: 'direct' } } });
+  });
+
+  it('sends an hev1 file through a session, since only a session can mark the tag it needs', async () => {
+    const { service } = harness(null, false, {
+      ...bilingual,
+      container: 'mp4',
+      videoCodecTag: 'hev1',
+    });
+
+    const takesMp4: DeviceProfile = {
+      ...capableProfile,
+      directPlayProfiles: [
+        { container: 'mp4', videoCodecs: ['hevc', 'h264'], audioCodecs: ['truehd', 'aac'] },
+      ],
+    };
+
+    const outcome = await service.start(MEDIA_ID, takesMp4, 0);
+
     expect(outcome).toMatchObject({ kind: 'started', session: { delivery: { kind: 'hls' } } });
+  });
+
+  it('hands over an hvc1 file, which is what the tag is there to say', async () => {
+    const { service } = harness(null, false, {
+      ...bilingual,
+      container: 'mp4',
+      videoCodecTag: 'hvc1',
+    });
+
+    const takesMp4: DeviceProfile = {
+      ...capableProfile,
+      directPlayProfiles: [
+        { container: 'mp4', videoCodecs: ['hevc', 'h264'], audioCodecs: ['truehd', 'aac'] },
+      ],
+    };
+
+    const outcome = await service.start(MEDIA_ID, takesMp4, 0);
+
+    expect(outcome).toMatchObject({ kind: 'started', session: { delivery: { kind: 'direct' } } });
   });
 
   it('direct plays when the forced language matches the file default', async () => {

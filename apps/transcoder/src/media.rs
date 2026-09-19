@@ -109,6 +109,17 @@ pub struct Chapter {
 pub struct VideoStream {
     pub index: u32,
     pub codec: String,
+    /// What the container marks this encoding as, where it marks it at all.
+    ///
+    /// The thing that decides whether an HEVC stream can be handed to a player untouched. `hvc1`
+    /// keeps the parameter sets in the configuration record, which is where a decoder looks before
+    /// it decodes anything; `hev1` allows them in the stream instead, and Safari refuses that
+    /// outright while Chromium draws nothing from it. `FFmpeg` writes `hev1` unasked.
+    ///
+    /// Absent where the container carries no such field, which is every Matroska file: the tag is
+    /// an ISO base media file concern, and Matroska keeps the parameter sets in `CodecPrivate` where
+    /// there is nothing to get wrong.
+    pub codec_tag: Option<String>,
     pub width: u32,
     pub height: u32,
     pub range: VideoRange,

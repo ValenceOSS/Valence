@@ -155,7 +155,7 @@ describe('chooseSource', () => {
     expect(chosen?.plan.video.kind).toBe('transcode');
   });
 
-  it('keeps an HEVC rendition in the running, since a session copies it rather than encoding it', () => {
+  it('keeps an HEVC rendition in the running, and hands a Matroska one over as it is', () => {
     const hevcCopy: PlayableSource = {
       id: '30',
       isOriginal: false,
@@ -171,6 +171,35 @@ describe('chooseSource', () => {
     const chosen = chooseSource({ sources: [original, hevcCopy], profile: sdrOnly });
 
     expect(chosen?.source.id).toBe('30');
+    expect(chosen?.plan.video.kind).toBe('passthrough');
+    expect(chosen?.isDirectPlay).toBe(true);
+  });
+
+  it('still takes an hev1 rendition, which passes the picture through but is not handed over', () => {
+    const mislabelled: PlayableSource = {
+      id: '40',
+      isOriginal: false,
+      item: {
+        ...at(remux, 1920, 1080, 5000),
+        id: '3f2504e0-4f89-41d3-9a0c-0305e82c3340',
+        container: 'mp4',
+        videoRange: 'SDR',
+        videoCodecTag: 'hev1',
+      },
+      path: '/media/Films/Azkaban (2004)/.valence/40.mp4',
+    };
+
+    const sdrOnly: DeviceProfile = {
+      ...television,
+      supportedVideoRanges: ['SDR'],
+      directPlayProfiles: [
+        { container: 'mp4', videoCodecs: ['hevc', 'h264'], audioCodecs: ['truehd', 'eac3', 'aac'] },
+      ],
+    };
+
+    const chosen = chooseSource({ sources: [original, mislabelled], profile: sdrOnly });
+
+    expect(chosen?.source.id).toBe('40');
     expect(chosen?.plan.video.kind).toBe('passthrough');
     expect(chosen?.isDirectPlay).toBe(false);
   });

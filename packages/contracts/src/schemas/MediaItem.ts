@@ -129,6 +129,12 @@ const MediaItemSchema = z.object({
     .describe(
       'How many frames the decoder must keep. Only meaningful for H.264: ffprobe reports a flat 1 for HEVC whatever the stream holds, so a ceiling never refuses an HEVC source.',
     ),
+  videoCodecTag: z
+    .string()
+    .nullish()
+    .describe(
+      'What the container marks this encoding as, where it marks it at all. The thing that decides whether an HEVC stream can be handed to a player untouched: `hvc1` keeps the parameter sets in the configuration record, where a decoder looks before it decodes anything, while `hev1` allows them in the stream instead, which Safari refuses and Chromium draws nothing from. Absent where the container carries no such field \u2014 every Matroska file, since the tag is an ISO base media file concern \u2014 and also where a file predates knowing, which is read as neither.',
+    ),
   videoPixelAspect: z
     .string()
     .nullish()

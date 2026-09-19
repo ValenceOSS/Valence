@@ -218,6 +218,23 @@ async fn detects_hlg_from_a_real_file() {
 }
 
 #[tokio::test]
+async fn reads_the_codec_tag_from_a_real_iso_base_media_file() {
+    let result = probe(&hdr10_mp4()).await;
+
+    assert_eq!(
+        result.video.expect("has video").codec_tag.as_deref(),
+        Some("hvc1")
+    );
+}
+
+#[tokio::test]
+async fn reports_no_codec_tag_for_a_container_that_has_no_such_field() {
+    let result = probe(&subtitles_mkv()).await;
+
+    assert!(result.video.expect("has video").codec_tag.is_none());
+}
+
+#[tokio::test]
 async fn reads_a_matroska_file_with_subtitles() {
     let result = probe(&subtitles_mkv()).await;
 

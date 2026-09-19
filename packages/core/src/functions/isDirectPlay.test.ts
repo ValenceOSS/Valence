@@ -56,18 +56,74 @@ describe('isDirectPlay', () => {
     expect(isDirectPlay(negotiatePlayback(rewrapped, profile), rewrapped)).toBe(false);
   });
 
-  it('is false for HEVC, which goes through a session so its tag is right', () => {
+  it('is true for HEVC in a container with no tag to get wrong, which is every Matroska file', () => {
     const hevc = { ...media, videoCodec: 'hevc' };
 
     expect(negotiatePlayback(hevc, profile).video.kind).toBe('passthrough');
-    expect(isDirectPlay(negotiatePlayback(hevc, profile), hevc)).toBe(false);
+    expect(isDirectPlay(negotiatePlayback(hevc, profile), hevc)).toBe(true);
+  });
+
+  it('is true for an MP4 marked hvc1, which is what a player reads its parameter sets from', () => {
+    const hevc = { ...media, container: 'mp4', videoCodec: 'hevc', videoCodecTag: 'hvc1' };
+    const takesMp4: DeviceProfile = {
+      ...profile,
+      directPlayProfiles: [
+        { container: 'mp4', videoCodecs: ['h264', 'hevc'], audioCodecs: ['aac', 'eac3'] },
+      ],
+    };
+
+    expect(isDirectPlay(negotiatePlayback(hevc, takesMp4), hevc)).toBe(true);
+  });
+
+  it('is false for an MP4 marked hev1, which Safari refuses and Chromium draws nothing from', () => {
+    const hevc = { ...media, container: 'mp4', videoCodec: 'hevc', videoCodecTag: 'hev1' };
+    const takesMp4: DeviceProfile = {
+      ...profile,
+      directPlayProfiles: [
+        { container: 'mp4', videoCodecs: ['h264', 'hevc'], audioCodecs: ['aac', 'eac3'] },
+      ],
+    };
+
+    expect(negotiatePlayback(hevc, takesMp4).video.kind).toBe('passthrough');
+    expect(isDirectPlay(negotiatePlayback(hevc, takesMp4), hevc)).toBe(false);
+  });
+
+  it('is false for an MP4 probed before Valence read the tag, because no answer is not hvc1', () => {
+    const hevc = { ...media, container: 'mp4', videoCodec: 'hevc' };
+    const takesMp4: DeviceProfile = {
+      ...profile,
+      directPlayProfiles: [
+        { container: 'mp4', videoCodecs: ['h264', 'hevc'], audioCodecs: ['aac', 'eac3'] },
+      ],
+    };
+
+    expect(isDirectPlay(negotiatePlayback(hevc, takesMp4), hevc)).toBe(false);
+  });
+
+  it('asks nothing of the tag for anything that is not HEVC', () => {
+    const h264 = { ...media, container: 'mp4', videoCodecTag: 'avc3' };
+    const takesMp4: DeviceProfile = {
+      ...profile,
+      directPlayProfiles: [
+        { container: 'mp4', videoCodecs: ['h264', 'hevc'], audioCodecs: ['aac', 'eac3'] },
+      ],
+    };
+
+    expect(isDirectPlay(negotiatePlayback(h264, takesMp4), h264)).toBe(true);
   });
 
   it('is false when a track other than the natural one is being sent', () => {
     const twoTracks: MediaItem = {
       ...media,
       audioStreams: [
-        { index: 1, codec: 'truehd', channels: 8, language: 'eng', isDefault: true, isAtmos: false },
+        {
+          index: 1,
+          codec: 'truehd',
+          channels: 8,
+          language: 'eng',
+          isDefault: true,
+          isAtmos: false,
+        },
         { index: 2, codec: 'aac', channels: 2, language: 'fra', isDefault: false, isAtmos: false },
       ],
     };

@@ -28,7 +28,7 @@ use crate::media::{
 /// another. Comparing this instead makes it automatic, and closes the trap
 /// where a rule fix looks right in dev — the file gets rescanned there for
 /// other reasons — and silently does nothing on an install where it does not.
-pub const PROBE_VERSION: u32 = 1;
+pub const PROBE_VERSION: u32 = 2;
 
 /// Why a probe failed.
 #[derive(Debug, Error)]
@@ -79,6 +79,7 @@ struct FfprobeStream {
     index: u32,
     codec_type: Option<String>,
     codec_name: Option<String>,
+    codec_tag_string: Option<String>,
     profile: Option<String>,
     width: Option<u32>,
     height: Option<u32>,
@@ -310,6 +311,7 @@ fn video_stream_of(output: &FfprobeOutput) -> Option<VideoStream> {
             VideoStream {
                 index: stream.index,
                 codec: video_codec(stream.codec_name.as_deref().unwrap_or_default()),
+                codec_tag: codec_tag_of(stream),
                 width: stream.width.unwrap_or_default(),
                 height: stream.height.unwrap_or_default(),
                 range: detected.range,
@@ -331,6 +333,17 @@ fn video_stream_of(output: &FfprobeOutput) -> Option<VideoStream> {
                     .or_else(|| stream.pix_fmt.as_deref().and_then(bit_depth_from_pix_fmt)),
             }
         })
+}
+
+/// What the container marks this stream as, where it marks it at all.
+///
+/// ffprobe writes `[0][0][0][0]` for a stream whose tag is zero, which is every stream in
+/// Matroska: the tag is an ISO base media file concern and Matroska has no field for one. That is
+/// reported as nothing, because nothing is what the container says.
+fn codec_tag_of(stream: &FfprobeStream) -> Option<String> {
+    let text = stream.codec_tag_string.as_deref()?.trim();
+
+    (!text.is_empty() && text != "[0][0][0][0]").then(|| text.to_owned())
 }
 
 fn to_media_probe(output: &FfprobeOutput, path: &Path) -> MediaProbe {
@@ -847,6 +860,87 @@ mod tests {
         let probe = parse_ffprobe_output(json, Path::new("/media/film.mkv")).expect("parses");
 
         assert!(probe.audio_streams[0].title.is_none());
+    }
+
+    #[test]
+    fn reads_the_tag_that_says_an_hevc_stream_can_be_handed_over() {
+        let json = r#"{
+            "streams": [{
+                "index": 0,
+                "codec_type": "video",
+                "codec_name": "hevc",
+                "codec_tag_string": "hvc1",
+                "width": 3840,
+                "height": 2160
+            }],
+            "format": {"format_name": "mov,mp4,m4a"}
+        }"#;
+
+        let probe = parse_ffprobe_output(json, Path::new("/media/film.mp4")).expect("parses");
+
+        assert_eq!(
+            probe.video.expect("a video stream").codec_tag.as_deref(),
+            Some("hvc1")
+        );
+    }
+
+    #[test]
+    fn reads_the_tag_ffmpeg_writes_unasked() {
+        let json = r#"{
+            "streams": [{
+                "index": 0,
+                "codec_type": "video",
+                "codec_name": "hevc",
+                "codec_tag_string": "hev1",
+                "width": 3840,
+                "height": 2160
+            }],
+            "format": {"format_name": "mov,mp4,m4a"}
+        }"#;
+
+        let probe = parse_ffprobe_output(json, Path::new("/media/film.mp4")).expect("parses");
+
+        assert_eq!(
+            probe.video.expect("a video stream").codec_tag.as_deref(),
+            Some("hev1")
+        );
+    }
+
+    #[test]
+    fn reports_no_tag_for_a_container_that_carries_none() {
+        let json = r#"{
+            "streams": [{
+                "index": 0,
+                "codec_type": "video",
+                "codec_name": "hevc",
+                "codec_tag_string": "[0][0][0][0]",
+                "width": 3840,
+                "height": 2160
+            }],
+            "format": {"format_name": "matroska,webm"}
+        }"#;
+
+        let probe = parse_ffprobe_output(json, Path::new("/media/film.mkv")).expect("parses");
+
+        assert!(probe.video.expect("a video stream").codec_tag.is_none());
+    }
+
+    #[test]
+    fn reports_no_tag_where_ffprobe_said_nothing_at_all() {
+        let json = r#"{
+            "streams": [{
+                "index": 0,
+                "codec_type": "video",
+                "codec_name": "hevc",
+                "width": 3840,
+                "height": 2160
+            }],
+            "format": {"format_name": "matroska,webm"}
+        }"#;
+
+        let probe = parse_ffprobe_output(json, Path::new("/media/film.mkv")).expect("parses");
+
+        assert!(probe.video.expect("a video stream").codec_tag.is_none());
     }
 
     #[test]

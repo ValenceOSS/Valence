@@ -24,6 +24,7 @@ type FetchLike = (url: string, init?: HttpRequestInit) => Promise<HttpResponse>;
 const ProbeVideoSchema = z.object({
   index: z.number().int(),
   codec: z.string(),
+  codecTag: z.string().nullable().default(null),
   width: z.number().int(),
   height: z.number().int(),
   range: z.string(),
