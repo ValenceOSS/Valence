@@ -91,6 +91,23 @@ const DEFAULT_PROFILE: QualityProfile = {
 };
 
 /**
+ * Says why a finished download could not be filed — most often because this service does not see
+ * the download where its client says it put it, which a folder set on the client puts right.
+ *
+ * @param error - What was thrown, where it was an error.
+ * @param path - Where the download was looked for.
+ * @param clientName - The client that downloaded it.
+ * @returns The reason, in words.
+ */
+const whyNotFiled = (error: Error | null, path: string, clientName: string): string => {
+  if (error !== null && 'code' in error && error.code === 'ENOENT') {
+    return `Valence cannot see ${path}, where ${clientName} put it. Set where ${clientName} saves downloads, as it sees them and as Valence does, on the Downloads page.`;
+  }
+
+  return `It could not be filed: ${error?.message ?? 'no reason given'}`;
+};
+
+/**
  * A request's films or episodes in one state, by the download each belongs to.
  *
  * @param all - The films or episodes.
@@ -494,11 +511,13 @@ const createRequestWorker = ({
         continue;
       }
 
+      const path = mapClientPath(download.contentPath, client);
+
       try {
         const { filed, missing } = await file(
           request,
           filing,
-          mapClientPath(download.contentPath, client),
+          path,
           download.protocol === 'torrent',
         );
 
@@ -540,9 +559,7 @@ const createRequestWorker = ({
           say(`Filed ${download.title} for ${request.title}.`);
         }
       } catch (error) {
-        await retryOrFail(
-          `It could not be filed: ${error instanceof Error ? error.message : 'no reason given'}`,
-        );
+        await retryOrFail(whyNotFiled(error instanceof Error ? error : null, path, client.name));
       }
     }
   };
@@ -623,9 +640,7 @@ const createRequestWorker = ({
         });
         say(`Filed ${download.title} into ${folder}.`);
       } catch (error) {
-        await couldNot(
-          `It could not be filed: ${error instanceof Error ? error.message : 'no reason given'}`,
-        );
+        await couldNot(whyNotFiled(error instanceof Error ? error : null, path, client.name));
       }
     }
   };

@@ -664,6 +664,21 @@ describe('createRequestWorker', () => {
       );
     });
 
+    it('says where to set the folder when the download cannot be seen', async () => {
+      const { worker, downloads } = aWorker({
+        requests: [],
+        items: [],
+        sent: [BY_HAND],
+        filed: () => Promise.reject(Object.assign(new Error('ENOENT'), { code: 'ENOENT' })),
+      });
+
+      await worker.tick();
+
+      expect((await downloads.find(BY_HAND.id))?.filingProblem).toBe(
+        'Valence cannot see /downloads/The Matrix (1999) [1080p], where qBittorrent put it. Set where qBittorrent saves downloads, as it sees them and as Valence does, on the Downloads page.',
+      );
+    });
+
     it('files the episodes a series download holds', async () => {
       const root = await mkdtemp(join(tmpdir(), 'valence-by-hand-'));
       const filed = vi.fn<typeof fileDownload>(() =>
