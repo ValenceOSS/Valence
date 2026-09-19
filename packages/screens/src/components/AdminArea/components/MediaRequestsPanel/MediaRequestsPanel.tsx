@@ -29,6 +29,7 @@ import {
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { AskForMediaDialog } from '@ValenceScreens/components/AdminArea/components/AskForMediaDialog/AskForMediaDialog';
 import { RefuseRequestDialog } from '@ValenceScreens/components/AdminArea/components/RefuseRequestDialog/RefuseRequestDialog';
 import { RequestLogDialog } from '@ValenceScreens/components/AdminArea/components/RequestLogDialog/RequestLogDialog';
@@ -38,13 +39,6 @@ import { describeRequestProgress } from './describeRequestProgress';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
-
-const KIND_NAMES: Readonly<Record<MediaRequest['kind'], string>> = {
-  film: 'Film',
-  series: 'Series',
-  artist: 'Artist',
-  album: 'Album',
-};
 
 const IN_HAND = new Set<MediaRequest['state']>([
   'searching',
@@ -137,7 +131,7 @@ const MediaRequestsPanel = () => {
                     {row.original.title}
                     {row.original.year === null ? '' : ` (${row.original.year.toString()})`}
                   </span>
-                  <Badge size="sm">{KIND_NAMES[row.original.kind]}</Badge>
+                  <Badge size="sm">{REQUEST_KIND_NAMES[row.original.kind]}</Badge>
                 </span>
 
                 {progress === null ? null : (

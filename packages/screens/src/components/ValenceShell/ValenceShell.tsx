@@ -47,6 +47,9 @@ import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import { ImmersiveMusic } from '@ValenceScreens/components/ImmersiveMusic/ImmersiveMusic';
 import { NowPlayingBar } from '@ValenceScreens/components/NowPlayingBar/NowPlayingBar';
 import { useMusicLights } from '@ValenceScreens/music/musicLights';
+import { AskableDialog } from '@ValenceScreens/components/AskableDialog/AskableDialog';
+import { placeOfArrival } from '@ValenceScreens/requests/placeOfArrival';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.types';
 import type { Inbox } from '@ValenceClient/notifications/fetchNotifications';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -83,7 +86,10 @@ const ValenceShell = () => {
   const keptBooks = useFavourites(watching, 'books');
   const rate = useRate(watching);
   const hiding = useHidden(watching);
-  const { mayAdminister } = useWhatIMayDo();
+  const { mayAdminister, may } = useWhatIMayDo();
+  const requesting = useQuery(requestsQueries.availability());
+  const mayRequest =
+    requesting.data?.isEnabled === true && (may('requests.ask') || may('requests.askMusic'));
   const leave = useSignOut();
 
   const [openShow, setOpenShow] = useState<ShowSummary | null>(null);
@@ -208,6 +214,7 @@ const ValenceShell = () => {
       hasMark={!isHoldingTheScreen}
       {...(libraries.data === undefined ? {} : { libraryKinds })}
       {...(isStockKnown ? { stocked } : {})}
+      mayRequest={mayRequest}
       notifications={
         <NotificationBell
           notifications={inbox.notifications}
@@ -428,6 +435,18 @@ const ValenceShell = () => {
           go({ isSearchOpen: false });
         }}
       />
+
+      {mayRequest ? (
+        <AskableDialog
+          asking={place.asking}
+          onClose={() => {
+            go({ asking: null });
+          }}
+          onOpen={(kind, mediaId) => {
+            go(placeOfArrival(kind, mediaId));
+          }}
+        />
+      ) : null}
 
       <ShareDialog
         subject={sharing}

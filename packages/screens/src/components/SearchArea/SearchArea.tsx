@@ -19,6 +19,7 @@ import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
 import type { SearchAreaProps, SearchKind } from './SearchArea.types';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
+import { AskableResults } from './components/AskableResults/AskableResults';
 
 const SETTLE_MILLISECONDS = 250;
 
@@ -63,6 +64,8 @@ const asNumber = (value: string | null): number | undefined =>
  * @param isKept - Whether each item is kept.
  * @param onToggleKept - Told to keep something, or stop.
  * @param onOpenBook - Told which book was chosen, where books are searched too.
+ * @param onAsk - Told which title not in the library was chosen, where somebody may ask for one;
+ *   without it, only the library is searched.
  * @param onHide - Told to hide something from this viewer.
  */
 const SearchArea = ({
@@ -79,6 +82,7 @@ const SearchArea = ({
   onToggleKept,
   onHide,
   onOpenBook,
+  onAsk,
 }: SearchAreaProps) => {
   const [kind, setKind] = useState<SearchKind>('everything');
   const [decade, setDecade] = useState<string | null>(null);
@@ -399,6 +403,9 @@ const SearchArea = ({
             )}
           </motion.div>
         </AnimatePresence>
+        {onAsk === undefined || settled.search === undefined ? null : (
+          <AskableResults query={settled.search} kind={kind} onAsk={onAsk} />
+        )}
       </motion.section>
     </motion.div>
   );

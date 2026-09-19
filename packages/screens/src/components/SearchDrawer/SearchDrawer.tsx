@@ -56,6 +56,9 @@ const SearchDrawer = ({ isOpen, onClose }: SearchDrawerProps) => {
           onInspect={(media) => {
             go({ inspecting: media.id });
           }}
+          onAsk={(asking) => {
+            go({ asking });
+          }}
           onItemsLoaded={rememberItems}
           watchedFractionFor={(mediaId) => {
             const found = progress.get(mediaId);

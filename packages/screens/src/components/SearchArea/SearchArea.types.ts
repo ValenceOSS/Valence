@@ -17,6 +17,7 @@ type SearchAreaProps = {
   onToggleKept?: (media: MediaSummary) => void;
   onHide?: (media: MediaSummary) => void;
   onOpenBook?: (book: Book) => void;
+  onAsk?: (asking: string) => void;
 };
 
 export type { SearchAreaProps, SearchKind };
