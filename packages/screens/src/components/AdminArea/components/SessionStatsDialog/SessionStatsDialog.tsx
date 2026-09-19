@@ -1,3 +1,4 @@
+import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { Icon } from '@ValenceUI/Icon';
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
@@ -64,11 +65,7 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
           ) : (
             <>
               <Row name="Title">{playback.mediaTitle}</Row>
-              <Row name="Delivery">
-                {playback.mode === 'transcode'
-                  ? 'Transcoding — the server is converting this on the fly'
-                  : 'Direct play — the original file, unconverted'}
-              </Row>
+              <Row name="Delivery">{describeSessionDelivery(playback).detail}</Row>
               <Row name="Reused">{describeTranscodeReuse(playback.reuse)}</Row>
               <Row name="Status">
                 {playback.isPlaying
