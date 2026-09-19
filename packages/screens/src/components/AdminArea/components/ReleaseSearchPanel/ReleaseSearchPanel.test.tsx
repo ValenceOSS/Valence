@@ -5,6 +5,9 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { ReleaseSearchPanel } from './ReleaseSearchPanel';
 import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
 import type * as Indexers from '@ValenceClient/requests/fetchIndexers';
+import type * as Queue from '@ValenceClient/requests/fetchDownloadQueue';
+import type * as Clients from '@ValenceClient/requests/fetchDownloadClients';
+import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
 
 const searchReleases = vi.fn<typeof Indexers.searchReleases>();
 
@@ -17,6 +20,36 @@ vi.mock('@ValenceClient/requests/fetchIndexers', () => ({
   fetchRelease: (...given: Parameters<typeof Indexers.fetchRelease>) => fetchRelease(...given),
   fetchIndexers: vi.fn(),
 }));
+
+const fetchDownloadClients = vi.fn<typeof Clients.fetchDownloadClients>();
+const sendRelease = vi.fn<typeof Queue.sendRelease>();
+
+vi.mock('@ValenceClient/requests/fetchDownloadClients', () => ({
+  fetchDownloadClients: () => fetchDownloadClients(),
+}));
+
+vi.mock('@ValenceClient/requests/fetchDownloadQueue', () => ({
+  sendRelease: (...given: Parameters<typeof Queue.sendRelease>) => sendRelease(...given),
+}));
+
+/**
+ * A download client, with anything the test cares about changed.
+ */
+const aClient = (overrides: Partial<DownloadClient> = {}): DownloadClient => ({
+  id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+  name: 'qBittorrent',
+  kind: 'qbittorrent',
+  url: 'http://qbittorrent:8080',
+  username: '',
+  hasPassword: false,
+  hasApiKey: false,
+  category: 'valence',
+  priority: 25,
+  isEnabled: true,
+  createdAt: '2026-09-19T00:00:00.000Z',
+  updatedAt: '2026-09-19T00:00:00.000Z',
+  ...overrides,
+});
 
 vi.mock('@ValenceScreens/admin/downloadFile', () => ({
   downloadFile: (name: string, file: Blob) => {
@@ -87,6 +120,35 @@ beforeEach(() => {
     refusal: null,
   });
   downloadFile.mockReset();
+  fetchDownloadClients
+    .mockReset()
+    .mockResolvedValue([
+      aClient({ id: '6ba7b811-9dad-11d1-80b4-00c04fd430c8', name: 'Off', isEnabled: false }),
+      aClient(),
+    ]);
+  sendRelease.mockReset().mockResolvedValue({
+    value: {
+      id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+      clientId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      clientName: 'qBittorrent',
+      protocol: 'torrent',
+      title: 'Dune.Part.Two.2024.2160p',
+      indexerName: 'Jackett',
+      state: 'queued',
+      problem: null,
+      progress: 0,
+      sizeBytes: 8_000_000_000,
+      doneBytes: null,
+      downloadBytesPerSecond: null,
+      uploadBytesPerSecond: null,
+      secondsLeft: null,
+      seeds: null,
+      peers: null,
+      sentAt: '2026-09-19T00:00:00.000Z',
+      finishedAt: null,
+    },
+    refusal: null,
+  });
 });
 
 afterEach(() => {
@@ -268,6 +330,72 @@ describe('ReleaseSearchPanel', () => {
     await user.click(await screen.findByRole('menuitem', { name: /Save the torrent/ }));
 
     expect(await screen.findByText('The torrent could not be fetched.')).toBeInTheDocument();
+  });
+
+  it('sends a release to the first torrent client that is on', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await searchFor(user, 'dune');
+    await user.click(
+      await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: /Send to qBittorrent/ }));
+
+    expect(
+      await screen.findByText('Sent Dune.Part.Two.2024.2160p to qBittorrent.'),
+    ).toBeInTheDocument();
+    expect(sendRelease).toHaveBeenCalledWith({
+      indexerId: JACKETT,
+      url: 'http://jackett/dl/1',
+      title: 'Dune.Part.Two.2024.2160p',
+      protocol: 'torrent',
+      sizeBytes: 8_000_000_000,
+      indexerName: 'Jackett',
+      clientId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    });
+  });
+
+  it('says why a release could not be sent', async () => {
+    sendRelease.mockResolvedValueOnce({
+      value: null,
+      refusal: { message: 'qBittorrent could not be reached' },
+    });
+    sendRelease.mockResolvedValueOnce({ value: null, refusal: null });
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await searchFor(user, 'dune');
+
+    for (const said of [
+      'qBittorrent could not be reached',
+      'Dune.Part.Two.2024.2160p could not be sent.',
+    ]) {
+      await user.click(
+        await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }),
+      );
+      await user.click(await screen.findByRole('menuitem', { name: /Send to qBittorrent/ }));
+
+      expect(await screen.findByText(said)).toBeInTheDocument();
+    }
+  });
+
+  it('offers no client for a release nothing switched on can take', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await searchFor(user, 'dune');
+    await user.click(
+      await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.NZB' }),
+    );
+
+    expect(
+      await screen.findByRole('menuitem', { name: /Send to a usenet client/ }),
+    ).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('opens a release’s page somewhere else', async () => {

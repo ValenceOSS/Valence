@@ -1,3 +1,4 @@
+import { readWholeNumber } from '@ValenceCore/functions/readWholeNumber';
 import type {
   Indexer,
   IndexerDraft,
@@ -75,22 +76,6 @@ const formFor = (indexer: Indexer | null, start: IndexerStart | null = null): In
 };
 
 /**
- * Reads a whole number typed into the form, within the range allowed.
- *
- * @param text - What was typed.
- * @param low - The least allowed.
- * @param high - The most allowed.
- * @returns The number, or null where it is not one in range.
- */
-const wholeIn = (text: string, low: number, high: number): number | null => {
-  const value = Number(text.trim());
-
-  return text.trim() !== '' && Number.isInteger(value) && value >= low && value <= high
-    ? value
-    : null;
-};
-
-/**
  * Reads the indexer form into an indexer to keep or try, or says the first thing wrong with it in
  * words that point at the field.
  *
@@ -109,20 +94,20 @@ const readIndexerForm = (form: IndexerForm): ReadIndexerForm => {
     return { draft: null, problem: 'The address needs to be a whole http or https address.' };
   }
 
-  const priority = wholeIn(form.priority, 1, 50);
+  const priority = readWholeNumber(form.priority, 1, 50);
 
   if (priority === null) {
     return { draft: null, problem: 'Priority is a whole number from 1 to 50.' };
   }
 
   const perMinute =
-    form.requestsPerMinute.trim() === '' ? null : wholeIn(form.requestsPerMinute, 1, 600);
+    form.requestsPerMinute.trim() === '' ? null : readWholeNumber(form.requestsPerMinute, 1, 600);
 
   if (perMinute === null && form.requestsPerMinute.trim() !== '') {
     return { draft: null, problem: 'The limit is a whole number of searches a minute, up to 600.' };
   }
 
-  const timeout = wholeIn(form.timeoutSeconds, 5, 120);
+  const timeout = readWholeNumber(form.timeoutSeconds, 5, 120);
 
   if (timeout === null) {
     return { draft: null, problem: 'Wait between 5 and 120 seconds for an answer.' };

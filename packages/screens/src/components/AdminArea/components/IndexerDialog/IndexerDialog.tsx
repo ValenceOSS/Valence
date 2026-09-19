@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Cancel01Icon, Tick02Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -16,11 +16,13 @@ import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { addIndexer, changeIndexer, tryIndexer } from '@ValenceClient/requests/fetchIndexers';
+import { TryItButton } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton';
 import { DefinitionSettingsFields } from './components/DefinitionSettingsFields/DefinitionSettingsFields';
 import { formFor, readIndexerForm } from './readIndexerForm';
 import type { IndexerCategory, IndexerTest } from '@ValenceContracts/schemas/Indexer';
 import type { IndexerForm } from './readIndexerForm';
 import type { IndexerDialogProps } from './IndexerDialog.types';
+import type { TryVerdict } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton.types';
 
 const KINDS = [
   { id: 'torznab', label: 'Torznab' },
@@ -51,7 +53,7 @@ const IndexerDialog = ({ isOpen, indexer, start = null, onClose, onSaved }: Inde
   const [problem, setProblem] = useState<string | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [isTrying, setIsTrying] = useState(false);
-  const [verdict, setVerdict] = useState<'working' | 'failing' | null>(null);
+  const [verdict, setVerdict] = useState<TryVerdict>(null);
 
   if (shownFor.indexer !== indexer || shownFor.start !== start) {
     setShownFor({ indexer, start });
@@ -414,15 +416,7 @@ const IndexerDialog = ({ isOpen, indexer, start = null, onClose, onSaved }: Inde
           Cancel
         </Button>
 
-        <Button variant="secondary" disabled={isWorking} isLoading={isTrying} onClick={tryIt}>
-          {verdict === null || isTrying ? null : (
-            <Icon
-              of={verdict === 'working' ? Tick02Icon : Cancel01Icon}
-              className={verdict === 'working' ? 'text-success' : 'text-danger'}
-            />
-          )}
-          Try it
-        </Button>
+        <TryItButton isTrying={isTrying} verdict={verdict} isDisabled={isWorking} onTry={tryIt} />
 
         <Button
           variant="glossy"

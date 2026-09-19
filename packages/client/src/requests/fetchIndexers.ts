@@ -1,13 +1,14 @@
 import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
-import { readRefusal } from '@ValenceClient/admin/readRefusal';
+import { sendToRequests } from '@ValenceClient/requests/sendToRequests';
 import {
   IndexerSchema,
   IndexerTestSchema,
   ReleaseSearchOutcomeSchema,
 } from '@ValenceContracts/schemas/Indexer';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
+import type { Sent } from '@ValenceClient/requests/sendToRequests';
 import type {
   Indexer,
   IndexerChange,
@@ -18,44 +19,6 @@ import type {
 } from '@ValenceContracts/schemas/Indexer';
 
 const INDEXERS = '/api/admin/requests/indexers';
-
-const UNREACHABLE: Refusal = { message: 'The server could not be reached.' };
-
-type Sent<Value> = { value: Value | null; refusal: Refusal };
-
-/**
- * Sends something to the indexer routes, and reads the answer or why it was refused.
- *
- * @param path - Where to send it.
- * @param method - How.
- * @param body - What to send, where anything.
- * @param read - How to read a good answer.
- * @returns The answer, or the refusal.
- */
-const send = async <Value>(
-  path: string,
-  method: string,
-  body: object | undefined,
-  read: (response: Response) => Promise<Value>,
-): Promise<Sent<Value>> => {
-  const response = await fetch(path, {
-    method,
-    credentials: 'same-origin',
-    ...(body === undefined
-      ? {}
-      : { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }),
-  }).catch(() => null);
-
-  if (response === null) {
-    return { value: null, refusal: UNREACHABLE };
-  }
-
-  const refusal = await readRefusal(response);
-
-  return refusal === null
-    ? { value: await read(response), refusal: null }
-    : { value: null, refusal };
-};
 
 /**
  * Reads the indexers requesting searches, without their keys.
@@ -71,7 +34,9 @@ const fetchIndexers = (): Promise<Indexer[]> => readFromServer(INDEXERS, z.array
  * @returns It as kept, or why not.
  */
 const addIndexer = (draft: IndexerDraft): Promise<Sent<Indexer>> =>
-  send(INDEXERS, 'POST', draft, async (response) => IndexerSchema.parse(await response.json()));
+  sendToRequests(INDEXERS, 'POST', draft, async (response) =>
+    IndexerSchema.parse(await response.json()),
+  );
 
 /**
  * Changes a kept indexer.
@@ -81,7 +46,7 @@ const addIndexer = (draft: IndexerDraft): Promise<Sent<Indexer>> =>
  * @returns It as changed, or why not.
  */
 const changeIndexer = (id: string, change: IndexerChange): Promise<Sent<Indexer>> =>
-  send(`${INDEXERS}/${id}`, 'PATCH', change, async (response) =>
+  sendToRequests(`${INDEXERS}/${id}`, 'PATCH', change, async (response) =>
     IndexerSchema.parse(await response.json()),
   );
 
@@ -92,7 +57,8 @@ const changeIndexer = (id: string, change: IndexerChange): Promise<Sent<Indexer>
  * @returns Why not, where it was refused.
  */
 const removeIndexer = async (id: string): Promise<Refusal> =>
-  (await send(`${INDEXERS}/${id}`, 'DELETE', undefined, () => Promise.resolve(null))).refusal;
+  (await sendToRequests(`${INDEXERS}/${id}`, 'DELETE', undefined, () => Promise.resolve(null)))
+    .refusal;
 
 /**
  * Asks a kept indexer whether it answers, reading what it can search again.
@@ -101,7 +67,7 @@ const removeIndexer = async (id: string): Promise<Refusal> =>
  * @returns Whether it answered, or why the question was refused.
  */
 const testIndexer = (id: string): Promise<Sent<IndexerTest>> =>
-  send(`${INDEXERS}/${id}/test`, 'POST', undefined, async (response) =>
+  sendToRequests(`${INDEXERS}/${id}/test`, 'POST', undefined, async (response) =>
     IndexerTestSchema.parse(await response.json()),
   );
 
@@ -113,7 +79,7 @@ const testIndexer = (id: string): Promise<Sent<IndexerTest>> =>
  * @returns Whether it answered, or why the question was refused.
  */
 const tryIndexer = (draft: IndexerDraft, id?: string): Promise<Sent<IndexerTest>> =>
-  send(
+  sendToRequests(
     id === undefined ? `${INDEXERS}/try` : `${INDEXERS}/${id}/try`,
     'POST',
     draft,
@@ -153,40 +119,26 @@ type SavedRelease = { kind: 'magnet'; url: string } | { kind: 'file'; file: Blob
  * @param url - Its download link.
  * @returns The torrent or NZB to save, or the magnet link it turned out to be, or why not.
  */
-const fetchRelease = async (indexerId: string, url: string): Promise<Sent<SavedRelease>> => {
-  const response = await fetch(`${INDEXERS}/${indexerId}/download`, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ url }),
-  }).catch(() => null);
+const fetchRelease = (indexerId: string, url: string): Promise<Sent<SavedRelease>> =>
+  sendToRequests(
+    `${INDEXERS}/${indexerId}/download`,
+    'POST',
+    { url },
+    async (response): Promise<SavedRelease> => {
+      if ((response.headers.get('content-type') ?? '').includes('json')) {
+        return {
+          kind: 'magnet',
+          url: z.object({ magnet: z.string() }).parse(await response.json()).magnet,
+        };
+      }
 
-  if (response === null) {
-    return { value: null, refusal: UNREACHABLE };
-  }
+      const name =
+        /filename="([^"]+)"/.exec(response.headers.get('content-disposition') ?? '')?.[1] ??
+        'release.torrent';
 
-  const refusal = await readRefusal(response);
-
-  if (refusal !== null) {
-    return { value: null, refusal };
-  }
-
-  if ((response.headers.get('content-type') ?? '').includes('json')) {
-    return {
-      value: {
-        kind: 'magnet',
-        url: z.object({ magnet: z.string() }).parse(await response.json()).magnet,
-      },
-      refusal: null,
-    };
-  }
-
-  const name =
-    /filename="([^"]+)"/.exec(response.headers.get('content-disposition') ?? '')?.[1] ??
-    'release.torrent';
-
-  return { value: { kind: 'file', file: await response.blob(), name }, refusal: null };
-};
+      return { kind: 'file', file: await response.blob(), name };
+    },
+  );
 
 export type { SavedRelease };
 
