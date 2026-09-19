@@ -4,6 +4,10 @@ import {
   RequestsOverviewSchema,
 } from '@ValenceContracts/schemas/Requests';
 import {
+  IndexerCatalogueSchema,
+  IndexerDefinitionDetailSchema,
+} from '@ValenceContracts/schemas/IndexerDefinition';
+import {
   IndexerChangeSchema,
   IndexerDraftSchema,
   IndexerSchema,
@@ -78,6 +82,13 @@ const adminCheckRequestsRoute = createRoute({
 });
 
 const IndexerAnswer = IndexerSchema.openapi('Indexer');
+
+const DefinitionIdParameter = z.object({
+  id: z
+    .string()
+    .min(1)
+    .openapi({ param: { name: 'id', in: 'path' } }),
+});
 
 const IndexerTestAnswer = IndexerTestSchema.openapi('IndexerTest');
 
@@ -236,7 +247,56 @@ const searchReleasesRoute = createRoute({
   }),
 });
 
+const listDefinitionsRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/definitions',
+  tags: ['Admin'],
+  summary: 'List the sites Valence has definitions for',
+  responses: failures({
+    200: {
+      description: 'Every definition in the catalogue, and how the catalogue last fared',
+      content: {
+        'application/json': { schema: IndexerCatalogueSchema.openapi('IndexerCatalogue') },
+      },
+    },
+  }),
+});
+
+const refreshDefinitionsRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/definitions/refresh',
+  tags: ['Admin'],
+  summary: 'Fetch the definitions that changed since the catalogue was last brought up to date',
+  responses: failures({
+    200: {
+      description: 'The catalogue, brought up to date where it could be',
+      content: { 'application/json': { schema: IndexerCatalogueSchema } },
+    },
+  }),
+});
+
+const readDefinitionRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/definitions/{id}',
+  tags: ['Admin'],
+  summary: 'Describe one definition, with the settings it asks for',
+  request: { params: DefinitionIdParameter },
+  responses: failures({
+    200: {
+      description: 'The definition',
+      content: {
+        'application/json': {
+          schema: IndexerDefinitionDetailSchema.openapi('IndexerDefinitionDetail'),
+        },
+      },
+    },
+  }),
+});
+
 export {
+  listDefinitionsRoute,
+  readDefinitionRoute,
+  refreshDefinitionsRoute,
   addIndexerRoute,
   adminCheckRequestsRoute,
   adminRequestsOverviewRoute,
