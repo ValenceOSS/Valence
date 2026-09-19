@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search01Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
+import { cn } from '@ValenceUI/cn';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -249,7 +250,12 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
         detail="Find a film, a series, an artist or an album in the catalogue. Once it is approved, it is searched for, downloaded and filed into its library."
       />
 
-      <DialogContent className="flex flex-col gap-4">
+      <DialogContent
+        className={cn(
+          'flex flex-col gap-4',
+          found !== null && chosen !== null ? 'min-h-0 overflow-hidden' : '',
+        )}
+      >
         {found !== null && chosen !== null ? (
           <ReleasePickTable
             found={found.outcome}

@@ -64,7 +64,7 @@ const RequestReleasesDialog = ({ request, onClose, onPicked }: RequestReleasesDi
         detail="Every release the indexers found for it, judged against its quality profile, best first."
       />
 
-      <DialogContent>
+      <DialogContent className="flex min-h-0 flex-col overflow-hidden">
         {found.isError ? (
           <CouldNotRead
             what="The releases"
