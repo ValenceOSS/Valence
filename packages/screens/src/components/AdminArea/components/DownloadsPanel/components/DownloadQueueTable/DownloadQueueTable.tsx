@@ -7,6 +7,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { describeDownloadState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeDownloadState';
 import { describeSpeeds } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeSpeeds';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
@@ -63,7 +64,11 @@ const DownloadQueueTable = ({
             </span>
 
             <span className="truncate text-xs text-text-muted">
-              {[row.original.clientName, row.original.indexerName]
+              {[
+                LIBRARY_KIND_NAMES[row.original.libraryKind].label,
+                row.original.clientName,
+                row.original.indexerName,
+              ]
                 .filter((part) => part !== null)
                 .join(' · ')}
             </span>

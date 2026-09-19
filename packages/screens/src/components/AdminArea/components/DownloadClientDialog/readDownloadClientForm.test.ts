@@ -15,7 +15,7 @@ const KEPT: DownloadClient = {
   username: 'me',
   hasPassword: true,
   hasApiKey: false,
-  category: 'films',
+  categories: { movies: 'films', shows: 'tv', music: 'music', books: 'books' },
   priority: 3,
   isEnabled: false,
   createdAt: '2026-09-19T00:00:00.000Z',
@@ -38,7 +38,7 @@ describe('formFor', () => {
       username: 'me',
       password: '',
       apiKey: '',
-      category: 'films',
+      categories: { movies: 'films', shows: 'tv', music: 'music', books: 'books' },
       priority: '3',
       isEnabled: false,
     });
@@ -57,7 +57,12 @@ describe('readDownloadClientForm', () => {
         username: 'admin',
         password: ' pw ',
         apiKey: '',
-        category: 'valence',
+        categories: {
+          movies: 'valence-films',
+          shows: 'valence-series',
+          music: 'valence-music',
+          books: 'valence-books',
+        },
         priority: 25,
         isEnabled: true,
       },
@@ -82,8 +87,12 @@ describe('readDownloadClientForm', () => {
     [{ url: 'qbittorrent:8080' }, 'The address needs to be a whole http or https address.'],
     [{ url: 'ftp://qbittorrent' }, 'The address needs to be a whole http or https address.'],
     [
-      { category: 'tv/films' },
-      'The category is letters, numbers, spaces, dots, dashes and underscores.',
+      { categories: { ...A_NEW_CLIENT.categories, shows: 'tv/films' } },
+      'A category is letters, numbers, spaces, dots, dashes and underscores.',
+    ],
+    [
+      { categories: { ...A_NEW_CLIENT.categories, shows: ' Valence-Films ' } },
+      'Each kind needs a category of its own.',
     ],
     [{ priority: '0' }, 'Priority is a whole number from 1 to 50.'],
   ])('says what is wrong with %o', (change, problem) => {

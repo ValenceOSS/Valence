@@ -16,7 +16,12 @@ const A_CLIENT = {
   username: 'admin',
   hasPassword: true,
   hasApiKey: false,
-  category: 'valence',
+  categories: {
+    movies: 'valence-films',
+    shows: 'valence-series',
+    music: 'valence-music',
+    books: 'valence-books',
+  },
   priority: 25,
   isEnabled: true,
   createdAt: '2026-09-19T00:00:00.000Z',

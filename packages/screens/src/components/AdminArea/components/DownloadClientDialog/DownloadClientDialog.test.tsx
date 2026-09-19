@@ -27,7 +27,12 @@ const KEPT: DownloadClient = {
   username: 'admin',
   hasPassword: true,
   hasApiKey: false,
-  category: 'valence',
+  categories: {
+    movies: 'valence-films',
+    shows: 'valence-series',
+    music: 'valence-music',
+    books: 'valence-books',
+  },
   priority: 25,
   isEnabled: true,
   createdAt: '2026-09-19T00:00:00.000Z',
@@ -83,7 +88,12 @@ describe('DownloadClientDialog', () => {
       username: 'admin',
       password: 'secret',
       apiKey: '',
-      category: 'valence',
+      categories: {
+        movies: 'valence-films',
+        shows: 'valence-series',
+        music: 'valence-music',
+        books: 'valence-books',
+      },
       priority: 25,
       isEnabled: true,
     });
@@ -105,6 +115,7 @@ describe('DownloadClientDialog', () => {
 
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Transmission');
     expect(screen.getByText(/label Valence puts on what it sends/)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Series' })).toHaveValue('valence-series');
   });
 
   it('keeps a name somebody typed when the kind changes', async () => {
@@ -201,7 +212,7 @@ describe('DownloadClientDialog', () => {
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Try it' }));
     await screen.findByText(/It answered/);
-    await user.type(screen.getByRole('textbox', { name: 'Category' }), 's');
+    await user.type(screen.getByRole('textbox', { name: 'Books' }), 's');
 
     expect(
       screen.getByRole('button', { name: 'Try it' }).querySelector('.text-success'),

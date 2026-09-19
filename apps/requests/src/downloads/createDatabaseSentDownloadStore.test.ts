@@ -1,3 +1,4 @@
+import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
 import { describe, expect, it } from 'vitest';
 import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
 import { createDatabaseDownloadClientStore } from './createDatabaseDownloadClientStore';
@@ -11,6 +12,7 @@ const DUNE: SentDownloadRecord = {
   clientId: CLIENT_ID,
   remoteId: 'c12fe1c06bba254a9dc9f519b335aa7c1367a88a',
   protocol: 'torrent',
+  libraryKind: 'movies',
   title: 'Dune',
   indexerName: 'Jackett',
   state: 'queued',
@@ -37,7 +39,7 @@ const withAClient = async () => {
     username: '',
     password: '',
     apiKey: '',
-    category: 'valence',
+    categories: DEFAULT_DOWNLOAD_CATEGORIES,
     priority: 25,
     isEnabled: true,
     createdAt: '2026-09-19T00:00:00.000Z',

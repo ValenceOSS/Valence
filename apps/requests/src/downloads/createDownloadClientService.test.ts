@@ -1,3 +1,4 @@
+import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import { createDownloadClientService } from './createDownloadClientService';
@@ -15,7 +16,7 @@ const QBITTORRENT: DownloadClientRecord = {
   username: 'admin',
   password: 'secret',
   apiKey: '',
-  category: 'valence',
+  categories: DEFAULT_DOWNLOAD_CATEGORIES,
   priority: 25,
   isEnabled: true,
   createdAt: '2026-09-18T00:00:00.000Z',
@@ -75,7 +76,7 @@ describe('createDownloadClientService', () => {
       username: 'admin',
       hasPassword: true,
       hasApiKey: false,
-      category: 'valence',
+      categories: DEFAULT_DOWNLOAD_CATEGORIES,
       priority: 25,
       isEnabled: true,
       createdAt: QBITTORRENT.createdAt,
@@ -92,7 +93,7 @@ describe('createDownloadClientService', () => {
 
     expect(added).toMatchObject({
       name: 'NZBGet',
-      category: 'valence',
+      categories: DEFAULT_DOWNLOAD_CATEGORIES,
       createdAt: AT.toISOString(),
     });
     expect((await store.find(added.id))?.password).toBe('');

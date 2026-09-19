@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DownloadClientKindSchema } from './DownloadClient';
 import { ReleaseProtocolSchema } from './Indexer';
+import { LibraryKindSchema } from './Library';
 
 const QUEUED_DOWNLOAD_STATES = [
   'queued',
@@ -19,6 +20,7 @@ const QueuedDownloadSchema = z.object({
   clientId: z.string().uuid(),
   clientName: z.string(),
   protocol: ReleaseProtocolSchema,
+  libraryKind: LibraryKindSchema,
   title: z.string(),
   indexerName: z.string().nullable(),
   state: QueuedDownloadStateSchema,
@@ -58,6 +60,7 @@ const ReleaseSendSchema = z.object({
   url: z.string().min(1),
   title: z.string().trim().min(1).max(500),
   protocol: ReleaseProtocolSchema,
+  libraryKind: LibraryKindSchema,
   sizeBytes: z.number().nonnegative().nullable().default(null),
   indexerName: z.string().max(200).nullable().default(null),
   clientId: z.string().uuid().optional(),

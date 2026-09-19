@@ -43,7 +43,12 @@ const aClient = (overrides: Partial<DownloadClient> = {}): DownloadClient => ({
   username: '',
   hasPassword: false,
   hasApiKey: false,
-  category: 'valence',
+  categories: {
+    movies: 'valence-films',
+    shows: 'valence-series',
+    music: 'valence-music',
+    books: 'valence-books',
+  },
   priority: 25,
   isEnabled: true,
   createdAt: '2026-09-19T00:00:00.000Z',
@@ -132,6 +137,7 @@ beforeEach(() => {
       clientId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
       clientName: 'qBittorrent',
       protocol: 'torrent',
+      libraryKind: 'movies',
       title: 'Dune.Part.Two.2024.2160p',
       indexerName: 'Jackett',
       state: 'queued',
@@ -351,9 +357,50 @@ describe('ReleaseSearchPanel', () => {
       url: 'http://jackett/dl/1',
       title: 'Dune.Part.Two.2024.2160p',
       protocol: 'torrent',
+      libraryKind: 'movies',
       sizeBytes: 8_000_000_000,
       indexerName: 'Jackett',
       clientId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    });
+  });
+
+  it('asks what a release is for where neither the search nor its categories say', async () => {
+    searchReleases.mockResolvedValue({
+      releases: [aRelease('Mystery.Box', { categories: [8000] })],
+      indexers: FOUND.indexers,
+    });
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await searchFor(user, 'mystery');
+    await user.click(await screen.findByRole('button', { name: 'Actions for Mystery.Box' }));
+
+    expect(await screen.findByRole('menuitem', { name: /as a film/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /as a book/ })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('menuitem', { name: /Send to qBittorrent as a series/ }));
+
+    await waitFor(() => {
+      expect(sendRelease).toHaveBeenCalledWith(expect.objectContaining({ libraryKind: 'shows' }));
+    });
+  });
+
+  it('sends what was searched for as that kind', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Series' }));
+    await searchFor(user, 'dune');
+    await user.click(
+      await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: /Send to qBittorrent/ }));
+
+    await waitFor(() => {
+      expect(sendRelease).toHaveBeenCalledWith(expect.objectContaining({ libraryKind: 'shows' }));
     });
   });
 

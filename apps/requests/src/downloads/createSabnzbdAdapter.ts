@@ -79,7 +79,7 @@ const readTimeLeft = (text: string): number =>
     .reduce((total, part, index) => total + part * ([1, 60, 3600, 86_400][index] ?? 0), 0);
 
 /**
- * Speaks to SABnzbd's API with its key. Only jobs in the client's category are listed or touched:
+ * Speaks to SABnzbd's API with its key. Only jobs in the client's categories are listed or touched:
  * those still in its queue, and those it has finished with, from its history. SABnzbd files a job
  * under a category it does not have as its default, where it would never be found again, so the
  * category is made the first time something is sent.
@@ -146,7 +146,8 @@ const createSabnzbdAdapter = (
 
   const queue = async () => QueueSchema.parse(await ask({ mode: 'queue', limit: '500' })).queue;
 
-  const isOurs = (category: string) => category.toLowerCase() === settings.category.toLowerCase();
+  const isOurs = (category: string) =>
+    settings.categories.some((one) => one.toLowerCase() === category.toLowerCase());
 
   return {
     version: async () => {
@@ -155,20 +156,15 @@ const createSabnzbdAdapter = (
       return VersionSchema.parse(await ask({ mode: 'version' })).version;
     },
 
-    add: async (file, title) => {
+    add: async (file, title, category) => {
       if (file.kind !== 'nzb') {
         throw new DownloadClientFailure(`${settings.name} takes NZBs, not torrents`);
       }
 
       const { categories } = CategoriesSchema.parse(await ask({ mode: 'get_cats' }));
 
-      if (!categories.some(isOurs)) {
-        await ask({
-          mode: 'set_config',
-          section: 'categories',
-          keyword: settings.category,
-          name: settings.category,
-        });
+      if (!categories.some((one) => one.toLowerCase() === category.toLowerCase())) {
+        await ask({ mode: 'set_config', section: 'categories', keyword: category, name: category });
       }
 
       const form = new FormData();
@@ -176,7 +172,7 @@ const createSabnzbdAdapter = (
       form.append('mode', 'addfile');
       form.append('output', 'json');
       form.append('apikey', settings.apiKey);
-      form.append('cat', settings.category);
+      form.append('cat', category);
       form.append('nzbname', title);
       form.append(
         'name',

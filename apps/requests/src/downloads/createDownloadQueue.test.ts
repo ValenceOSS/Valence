@@ -1,3 +1,4 @@
+import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
@@ -27,7 +28,7 @@ const aClient = (overrides: Partial<DownloadClientRecord> = {}): DownloadClientR
   username: '',
   password: '',
   apiKey: '',
-  category: 'valence',
+  categories: DEFAULT_DOWNLOAD_CATEGORIES,
   priority: 25,
   isEnabled: true,
   createdAt: AT.toISOString(),
@@ -64,6 +65,7 @@ const aDownload = (overrides: Partial<SentDownloadRecord> = {}): SentDownloadRec
   clientId: QBITTORRENT.id,
   remoteId: HASH,
   protocol: 'torrent',
+  libraryKind: 'movies',
   title: 'Dune',
   indexerName: 'Jackett',
   state: 'downloading',
@@ -83,9 +85,10 @@ const aDownload = (overrides: Partial<SentDownloadRecord> = {}): SentDownloadRec
 const anAdapter = (items: ClientItem[] = []) => {
   const adapter = {
     version: vi.fn(() => Promise.resolve('v5')),
-    add: vi.fn((file: ReleaseFile, title: string) => {
+    add: vi.fn((file: ReleaseFile, title: string, category: string) => {
       void file;
       void title;
+      void category;
 
       return Promise.resolve(HASH);
     }),
@@ -161,6 +164,7 @@ const SEND = {
   url: 'http://jackett/dl/1',
   title: 'Dune',
   protocol: 'torrent' as const,
+  libraryKind: 'movies' as const,
   sizeBytes: 1000,
   indexerName: 'Jackett',
 };
@@ -198,6 +202,7 @@ describe('createDownloadQueue', () => {
       expect(adapter.add).toHaveBeenCalledWith(
         { kind: 'torrent', bytes: new Uint8Array([1]) },
         'Dune',
+        'valence-films',
       );
       expect(sent).toMatchObject({
         clientId: QBITTORRENT.id,
@@ -231,7 +236,18 @@ describe('createDownloadQueue', () => {
       expect(adapter.add).toHaveBeenCalledWith(
         { kind: 'magnet', url: 'magnet:?xt=urn:btih:x' },
         'Dune',
+        'valence-films',
       );
+    });
+
+    it('files a release under the category for the kind of library it is for', async () => {
+      const { queue, adapter, downloads } = aQueue();
+
+      expect(await queue.send({ ...SEND, libraryKind: 'shows' })).toMatchObject({
+        libraryKind: 'shows',
+      });
+      expect(adapter.add.mock.calls[0]?.[2]).toBe('valence-series');
+      expect((await downloads.list())[0]?.libraryKind).toBe('shows');
     });
 
     it('sends to the client asked for', async () => {

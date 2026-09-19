@@ -13,12 +13,14 @@ describe('ReleaseSendSchema', () => {
         url: 'magnet:?xt=urn:btih:abc',
         title: ' Dune ',
         protocol: 'torrent',
+        libraryKind: 'movies',
       }),
     ).toEqual({
       indexerId: '0f8fad5b-d9cb-469f-a165-70867728950e',
       url: 'magnet:?xt=urn:btih:abc',
       title: 'Dune',
       protocol: 'torrent',
+      libraryKind: 'movies',
       sizeBytes: null,
       indexerName: null,
     });

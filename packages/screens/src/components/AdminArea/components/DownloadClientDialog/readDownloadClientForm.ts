@@ -1,5 +1,8 @@
 import { readWholeNumber } from '@ValenceCore/functions/readWholeNumber';
+import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
+import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
 import type {
+  DownloadCategories,
   DownloadClient,
   DownloadClientDraft,
   DownloadClientKind,
@@ -12,7 +15,7 @@ type DownloadClientForm = {
   username: string;
   password: string;
   apiKey: string;
-  category: string;
+  categories: DownloadCategories;
   priority: string;
   isEnabled: boolean;
 };
@@ -34,7 +37,7 @@ const A_NEW_CLIENT: DownloadClientForm = {
   username: '',
   password: '',
   apiKey: '',
-  category: 'valence',
+  categories: DEFAULT_DOWNLOAD_CATEGORIES,
   priority: '25',
   isEnabled: true,
 };
@@ -79,7 +82,7 @@ const formFor = (client: DownloadClient | null): DownloadClientForm =>
         username: client.username,
         password: '',
         apiKey: '',
-        category: client.category,
+        categories: client.categories,
         priority: client.priority.toString(),
         isEnabled: client.isEnabled,
       };
@@ -95,7 +98,12 @@ const formFor = (client: DownloadClient | null): DownloadClientForm =>
 const readDownloadClientForm = (form: DownloadClientForm): ReadDownloadClientForm => {
   const name = form.name.trim();
   const url = form.url.trim();
-  const category = form.category.trim();
+  const categories = {
+    movies: form.categories.movies.trim(),
+    shows: form.categories.shows.trim(),
+    music: form.categories.music.trim(),
+    books: form.categories.books.trim(),
+  };
 
   if (name === '') {
     return { draft: null, problem: 'Give the client a name.' };
@@ -105,11 +113,17 @@ const readDownloadClientForm = (form: DownloadClientForm): ReadDownloadClientFor
     return { draft: null, problem: 'The address needs to be a whole http or https address.' };
   }
 
-  if (!/^[\w .-]+$/.test(category)) {
+  if (LIBRARY_KINDS.some((kind) => !/^[\w .-]+$/.test(categories[kind]))) {
     return {
       draft: null,
-      problem: 'The category is letters, numbers, spaces, dots, dashes and underscores.',
+      problem: 'A category is letters, numbers, spaces, dots, dashes and underscores.',
     };
+  }
+
+  if (
+    new Set(LIBRARY_KINDS.map((kind) => categories[kind].toLowerCase())).size < LIBRARY_KINDS.length
+  ) {
+    return { draft: null, problem: 'Each kind needs a category of its own.' };
   }
 
   const priority = readWholeNumber(form.priority, 1, 50);
@@ -128,7 +142,7 @@ const readDownloadClientForm = (form: DownloadClientForm): ReadDownloadClientFor
       username: isSabnzbd ? '' : form.username.trim(),
       password: isSabnzbd ? '' : form.password,
       apiKey: isSabnzbd ? form.apiKey.trim() : '',
-      category,
+      categories,
       priority,
       isEnabled: form.isEnabled,
     },

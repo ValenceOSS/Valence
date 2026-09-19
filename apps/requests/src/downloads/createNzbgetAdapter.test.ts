@@ -12,7 +12,7 @@ const SETTINGS: ClientSettings = {
   username: 'nzbget',
   password: 'tegbzn6789',
   apiKey: '',
-  category: 'valence',
+  categories: ['valence'],
 };
 
 const CallSchema = z.object({ method: z.string(), params: z.array(JsonValueSchema) });
@@ -92,6 +92,7 @@ describe('createNzbgetAdapter', () => {
       await createNzbgetAdapter(SETTINGS, fetch).add(
         { kind: 'nzb', bytes: new TextEncoder().encode('<nzb/>') },
         'Dune',
+        'valence',
       ),
     ).toBe('42');
     expect(callOf(asked[0]).params.slice(0, 3)).toEqual([
@@ -104,12 +105,12 @@ describe('createNzbgetAdapter', () => {
   it('says so when the NZB is refused, and refuses torrents', async () => {
     const adapter = createNzbgetAdapter(SETTINGS, anNzbget({ append: 0 }).fetch);
 
-    await expect(adapter.add({ kind: 'nzb', bytes: new Uint8Array() }, 'Dune')).rejects.toThrow(
-      'would not take the NZB',
-    );
-    await expect(adapter.add({ kind: 'torrent', bytes: new Uint8Array() }, 'Dune')).rejects.toThrow(
-      'takes NZBs, not torrents',
-    );
+    await expect(
+      adapter.add({ kind: 'nzb', bytes: new Uint8Array() }, 'Dune', 'valence'),
+    ).rejects.toThrow('would not take the NZB');
+    await expect(
+      adapter.add({ kind: 'torrent', bytes: new Uint8Array() }, 'Dune', 'valence'),
+    ).rejects.toThrow('takes NZBs, not torrents');
   });
 
   it('lists its own jobs from the queue and the history', async () => {

@@ -1,0 +1,2 @@
+ALTER TABLE "valence_requests"."download_client" ADD COLUMN "categories" jsonb DEFAULT '{"movies":"valence-films","shows":"valence-series","music":"valence-music","books":"valence-books"}'::jsonb NOT NULL;--> statement-breakpoint
+ALTER TABLE "valence_requests"."download" ADD COLUMN "library_kind" text DEFAULT 'movies' NOT NULL;

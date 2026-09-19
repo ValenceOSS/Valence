@@ -10,7 +10,7 @@ const SETTINGS: ClientSettings = {
   username: '',
   password: '',
   apiKey: 'sab-key',
-  category: 'valence',
+  categories: ['valence'],
 };
 
 const QUEUE = {
@@ -158,6 +158,7 @@ describe('createSabnzbdAdapter', () => {
     await createSabnzbdAdapter(SETTINGS, fetch).add(
       { kind: 'nzb', bytes: new Uint8Array() },
       'Dune',
+      'valence',
     );
 
     expect(queryOf(asked[1])).toMatchObject({
@@ -178,6 +179,7 @@ describe('createSabnzbdAdapter', () => {
       await createSabnzbdAdapter(SETTINGS, fetch).add(
         { kind: 'nzb', bytes: new TextEncoder().encode('<nzb/>') },
         'Dune',
+        'valence',
       ),
     ).toBe('SABnzbd_nzo_9');
 
@@ -198,12 +200,12 @@ describe('createSabnzbdAdapter', () => {
         .fetch,
     );
 
-    await expect(adapter.add({ kind: 'nzb', bytes: new Uint8Array() }, 'Dune')).rejects.toThrow(
-      'would not take the NZB',
-    );
-    await expect(adapter.add({ kind: 'magnet', url: 'magnet:?' }, 'Dune')).rejects.toThrow(
-      'takes NZBs, not torrents',
-    );
+    await expect(
+      adapter.add({ kind: 'nzb', bytes: new Uint8Array() }, 'Dune', 'valence'),
+    ).rejects.toThrow('would not take the NZB');
+    await expect(
+      adapter.add({ kind: 'magnet', url: 'magnet:?' }, 'Dune', 'valence'),
+    ).rejects.toThrow('takes NZBs, not torrents');
   });
 
   it('lists its own jobs from the queue and the history', async () => {

@@ -50,7 +50,12 @@ const CLIENT: DownloadClient = {
   username: 'admin',
   hasPassword: true,
   hasApiKey: false,
-  category: 'valence',
+  categories: {
+    movies: 'valence-films',
+    shows: 'valence-series',
+    music: 'valence-music',
+    books: 'valence-books',
+  },
   priority: 25,
   isEnabled: true,
   createdAt: '2026-09-19T00:00:00.000Z',
@@ -70,6 +75,7 @@ const DOWNLOAD: QueuedDownload = {
   clientId: CLIENT.id,
   clientName: 'qBittorrent',
   protocol: 'torrent',
+  libraryKind: 'movies',
   title: 'Dune',
   indexerName: 'Jackett',
   state: 'downloading',
@@ -261,7 +267,7 @@ describe('DownloadsPanel', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Clients' }));
 
-    expect(await screen.findByText('http://qbittorrent:8080 · valence')).toBeInTheDocument();
+    expect(await screen.findByText('http://qbittorrent:8080')).toBeInTheDocument();
 
     await choose(user, 'qBittorrent', /Test/);
 

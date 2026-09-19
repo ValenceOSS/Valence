@@ -76,7 +76,7 @@ const readHistoryStatus = (
 
 /**
  * Speaks to NZBGet's JSON-RPC with its control username and password. Only jobs in the client's
- * category are listed or touched: those in its queue, and those in its history.
+ * categories are listed or touched: those in its queue, and those in its history.
  *
  * NZBGet reports one speed for everything, so it is a job's speed whenever exactly one is
  * downloading. It keeps a finished job's files wherever it filed them, so removing one only takes it
@@ -133,7 +133,7 @@ const createNzbgetAdapter = (
   return {
     version: async () => z.string().parse(await rpc('version')),
 
-    add: async (file, title) => {
+    add: async (file, title, category) => {
       if (file.kind !== 'nzb') {
         throw new DownloadClientFailure(`${settings.name} takes NZBs, not torrents`);
       }
@@ -145,7 +145,7 @@ const createNzbgetAdapter = (
           await rpc('append', [
             `${title}.nzb`,
             Buffer.from(file.bytes).toString('base64'),
-            settings.category,
+            category,
             0,
             false,
             false,
@@ -167,11 +167,11 @@ const createNzbgetAdapter = (
       const groups = z
         .array(GroupSchema)
         .parse(await rpc('listgroups', [0]))
-        .filter((group) => group.Category === settings.category);
+        .filter((group) => settings.categories.includes(group.Category));
       const history = z
         .array(HistorySchema)
         .parse(await rpc('history', [false]))
-        .filter((job) => job.Category === settings.category);
+        .filter((job) => settings.categories.includes(job.Category));
       const downloading = groups.filter((group) => group.Status === 'DOWNLOADING');
       const speed = downloading.length === 1 ? await rate() : null;
 

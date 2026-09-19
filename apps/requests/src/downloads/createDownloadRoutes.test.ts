@@ -1,3 +1,4 @@
+import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
 import { describe, expect, it, vi } from 'vitest';
 import { createDownloadRoutes } from './createDownloadRoutes';
 import type { DownloadClient, DownloadClientTest } from '@ValenceContracts/schemas/DownloadClient';
@@ -15,7 +16,7 @@ const CLIENT: DownloadClient = {
   username: 'admin',
   hasPassword: true,
   hasApiKey: false,
-  category: 'valence',
+  categories: DEFAULT_DOWNLOAD_CATEGORIES,
   priority: 25,
   isEnabled: true,
   createdAt: '2026-09-19T00:00:00.000Z',
@@ -29,6 +30,7 @@ const DOWNLOAD: QueuedDownload = {
   clientId: CLIENT.id,
   clientName: 'qBittorrent',
   protocol: 'torrent',
+  libraryKind: 'movies',
   title: 'Dune',
   indexerName: 'Jackett',
   state: 'queued',
@@ -54,6 +56,7 @@ const SEND = {
   url: 'magnet:?xt=urn:btih:x',
   title: 'Dune',
   protocol: 'torrent',
+  libraryKind: 'movies',
 };
 
 /**

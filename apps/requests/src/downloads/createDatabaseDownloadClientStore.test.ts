@@ -1,3 +1,4 @@
+import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
 import { describe, expect, it } from 'vitest';
 import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
 import { createDatabaseDownloadClientStore } from './createDatabaseDownloadClientStore';
@@ -11,7 +12,7 @@ const QBITTORRENT: DownloadClientRecord = {
   username: 'admin',
   password: 'secret',
   apiKey: '',
-  category: 'valence',
+  categories: DEFAULT_DOWNLOAD_CATEGORIES,
   priority: 25,
   isEnabled: true,
   createdAt: '2026-09-19T00:00:00.000Z',

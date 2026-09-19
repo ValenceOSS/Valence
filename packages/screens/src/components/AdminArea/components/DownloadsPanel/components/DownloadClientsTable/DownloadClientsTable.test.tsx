@@ -14,7 +14,12 @@ const QBITTORRENT: DownloadClient = {
   username: 'admin',
   hasPassword: true,
   hasApiKey: false,
-  category: 'valence',
+  categories: {
+    movies: 'valence-films',
+    shows: 'valence-series',
+    music: 'valence-music',
+    books: 'valence-books',
+  },
   priority: 25,
   isEnabled: true,
   createdAt: '2026-09-19T00:00:00.000Z',
@@ -72,7 +77,7 @@ describe('DownloadClientsTable', () => {
     const seedbox = within(rowOf('Seedbox'));
 
     expect(seedbox.getByText('qBittorrent')).toBeInTheDocument();
-    expect(seedbox.getByText('http://seedbox:8080 · valence')).toBeInTheDocument();
+    expect(seedbox.getByText('http://seedbox:8080')).toBeInTheDocument();
     expect(seedbox.getByText('Answering')).toBeInTheDocument();
     expect(seedbox.getByText('↓ 1.0 MB/s · ↑ 1.0 KB/s')).toBeInTheDocument();
     expect(within(rowOf('Usenet')).getByText('Off')).toBeInTheDocument();

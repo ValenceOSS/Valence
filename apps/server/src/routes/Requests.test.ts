@@ -528,7 +528,12 @@ describe('download clients and the queue, through the server', () => {
     username: 'admin',
     hasPassword: true,
     hasApiKey: false,
-    category: 'valence',
+    categories: {
+      movies: 'valence-films',
+      shows: 'valence-series',
+      music: 'valence-music',
+      books: 'valence-books',
+    },
     priority: 25,
     isEnabled: true,
     createdAt: '2026-09-19T00:00:00.000Z',
@@ -540,6 +545,7 @@ describe('download clients and the queue, through the server', () => {
     clientId: CLIENT.id,
     clientName: 'qBittorrent',
     protocol: 'torrent',
+    libraryKind: 'movies',
     title: 'Dune',
     indexerName: 'Jackett',
     state: 'downloading',
@@ -563,6 +569,7 @@ describe('download clients and the queue, through the server', () => {
     url: 'magnet:?xt=urn:btih:x',
     title: 'Dune',
     protocol: 'torrent',
+    libraryKind: 'movies',
   };
 
   const asked: string[] = [];

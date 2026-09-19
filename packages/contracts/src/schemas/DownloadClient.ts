@@ -1,5 +1,7 @@
 import { z } from 'zod';
+import { LibraryKindSchema } from './Library';
 import type { ReleaseProtocol } from './Indexer';
+import type { LibraryKind } from './Library';
 
 const DOWNLOAD_CLIENT_KINDS = ['qbittorrent', 'transmission', 'sabnzbd', 'nzbget'] as const;
 
@@ -21,6 +23,27 @@ const CategorySchema = z
   .max(60)
   .regex(/^[\w .-]+$/, 'Letters, numbers, spaces, dots, dashes and underscores only');
 
+const DEFAULT_DOWNLOAD_CATEGORIES: Readonly<Record<LibraryKind, string>> = {
+  movies: 'valence-films',
+  shows: 'valence-series',
+  music: 'valence-music',
+  books: 'valence-books',
+};
+
+const DownloadCategoriesSchema = z
+  .object({
+    movies: CategorySchema,
+    shows: CategorySchema,
+    music: CategorySchema,
+    books: CategorySchema,
+  })
+  .refine(
+    (categories) =>
+      new Set(Object.values(categories).map((category) => category.toLowerCase())).size ===
+      LibraryKindSchema.options.length,
+    'Each kind needs a category of its own',
+  );
+
 const DownloadClientSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(80),
@@ -29,7 +52,12 @@ const DownloadClientSchema = z.object({
   username: z.string(),
   hasPassword: z.boolean(),
   hasApiKey: z.boolean(),
-  category: z.string(),
+  categories: z.object({
+    movies: z.string(),
+    shows: z.string(),
+    music: z.string(),
+    books: z.string(),
+  }),
   priority: z.number().int().min(1).max(50),
   isEnabled: z.boolean(),
   createdAt: z.string().datetime(),
@@ -43,7 +71,7 @@ const DownloadClientDraftSchema = z.object({
   username: z.string().trim().max(200).default(''),
   password: z.string().max(200).default(''),
   apiKey: z.string().trim().max(200).default(''),
-  category: CategorySchema.default('valence'),
+  categories: DownloadCategoriesSchema.default(DEFAULT_DOWNLOAD_CATEGORIES),
   priority: z.number().int().min(1).max(50).default(25),
   isEnabled: z.boolean().default(true),
 });
@@ -55,7 +83,7 @@ const DownloadClientChangeSchema = z.object({
   username: z.string().trim().max(200).optional(),
   password: z.string().max(200).optional(),
   apiKey: z.string().trim().max(200).optional(),
-  category: CategorySchema.optional(),
+  categories: DownloadCategoriesSchema.optional(),
   priority: z.number().int().min(1).max(50).optional(),
   isEnabled: z.boolean().optional(),
 });
@@ -67,11 +95,13 @@ const DownloadClientTestSchema = z.object({
 });
 
 type DownloadClient = z.infer<typeof DownloadClientSchema>;
+type DownloadCategories = z.infer<typeof DownloadCategoriesSchema>;
 type DownloadClientDraft = z.input<typeof DownloadClientDraftSchema>;
 type DownloadClientChange = z.infer<typeof DownloadClientChangeSchema>;
 type DownloadClientTest = z.infer<typeof DownloadClientTestSchema>;
 
 export type {
+  DownloadCategories,
   DownloadClient,
   DownloadClientChange,
   DownloadClientDraft,
@@ -80,7 +110,9 @@ export type {
 };
 
 export {
+  DEFAULT_DOWNLOAD_CATEGORIES,
   DOWNLOAD_CLIENT_KINDS,
+  DownloadCategoriesSchema,
   PROTOCOL_OF_CLIENT,
   DownloadClientChangeSchema,
   DownloadClientDraftSchema,
