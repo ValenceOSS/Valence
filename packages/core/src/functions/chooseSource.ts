@@ -28,6 +28,7 @@ type ChooseSourceOptions = {
   preferredAudioLanguage?: string | null;
   chosenSubtitleStreamIndex?: number | null;
   pinnedSourceId?: string | null;
+  neverSmaller?: boolean;
 };
 
 /**
@@ -45,7 +46,7 @@ const weigh = (
     requestedQuality = 'original',
     preferredAudioLanguage = null,
     chosenSubtitleStreamIndex = null,
-  }: Omit<ChooseSourceOptions, 'sources' | 'pinnedSourceId'>,
+  }: Omit<ChooseSourceOptions, 'sources' | 'pinnedSourceId' | 'neverSmaller'>,
 ): ChosenSource => {
   const qualityClamp = resolveQualityStep(source.item, requestedQuality);
   const plan = negotiatePlayback(
@@ -72,7 +73,9 @@ const weigh = (
  * @returns Which of them to prefer, as a comparator.
  */
 const betterFirst = (left: ChosenSource, right: ChosenSource): number => {
-  const area = right.source.item.width * right.source.item.height - left.source.item.width * left.source.item.height;
+  const area =
+    right.source.item.width * right.source.item.height -
+    left.source.item.width * left.source.item.height;
 
   if (area !== 0) {
     return area;
@@ -83,6 +86,24 @@ const betterFirst = (left: ChosenSource, right: ChosenSource): number => {
   }
 
   return right.source.item.bitrateKbps - left.source.item.bitrateKbps;
+};
+
+/**
+ * The picture the request would have come back with had the original been the only file there is.
+ *
+ * @param weighed - Every candidate, already negotiated.
+ * @returns The height asked for, or zero where there is nothing to ask about.
+ */
+const pictureAsked = (weighed: readonly ChosenSource[]): number => {
+  const original = weighed.find((candidate) => candidate.source.isOriginal) ?? weighed[0];
+
+  if (original === undefined) {
+    return 0;
+  }
+
+  return original.qualityClamp === null
+    ? original.source.item.height
+    : Math.min(original.source.item.height, original.qualityClamp.maxHeight);
 };
 
 /**
@@ -103,12 +124,18 @@ const betterFirst = (left: ChosenSource, right: ChosenSource): number => {
  * Where nothing avoids encoding, the original is what gets encoded. A rendition is already a
  * generation down, and encoding from it would stack one loss on another to save nothing.
  *
+ * `neverSmaller` bars a rendition from standing in where it would shrink the picture the request
+ * asked for. Streaming does not want that — a phone is better served a 1080p copy than a 4K encode,
+ * and nobody is promised anything. A download is: somebody who chose the original and was quoted
+ * its size should not quietly receive half the picture in a file they then carry around.
+ *
  * @param options - The files available, the device asking, and anything it asked for by name.
  * @returns The file to play and what playing it involves, or nothing where there are no files.
  */
 const chooseSource = ({
   sources,
   pinnedSourceId = null,
+  neverSmaller = false,
   ...asked
 }: ChooseSourceOptions): ChosenSource | null => {
   if (sources.length === 0) {
@@ -122,7 +149,11 @@ const chooseSource = ({
   }
 
   const weighed = sources.map((source) => weigh(source, asked));
-  const withoutEncoding = weighed.filter((candidate) => candidate.plan.video.kind === 'passthrough');
+  const floor = neverSmaller ? pictureAsked(weighed) : 0;
+  const withoutEncoding = weighed.filter(
+    (candidate) =>
+      candidate.plan.video.kind === 'passthrough' && candidate.source.item.height >= floor,
+  );
   const best = [...withoutEncoding].sort(betterFirst)[0];
 
   if (best !== undefined) {

@@ -175,7 +175,7 @@ import { createMusicFileSystem } from '@ValenceServer/music/createMusicFileSyste
 import { createDatabasePlaylistService } from '@ValenceServer/playlists/createDatabasePlaylistService';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
 import { sweepArtefactCache } from '@ValenceServer/maintenance/sweepArtefactCache';
-import { AudioStreamSchema,MediaItemSchema } from '@ValenceContracts/schemas/MediaItem';
+import { AudioStreamSchema, MediaItemSchema } from '@ValenceContracts/schemas/MediaItem';
 import {
   TRICKPLAY_INTERVAL_SECONDS,
   TRICKPLAY_TILE_WIDTH,
@@ -1851,9 +1851,26 @@ const downloadService = createDownloadService({
 
       const row = rows[0];
 
-      return row === undefined
-        ? null
-        : { item, path: row.path, sizeBytes: row.sizeBytes, generation: row.generation };
+      if (row === undefined) {
+        return null;
+      }
+
+      const kept = await db
+        .select()
+        .from(mediaRendition)
+        .where(eq(mediaRendition.mediaItemId, mediaId));
+
+      return {
+        item,
+        path: row.path,
+        sizeBytes: row.sizeBytes,
+        generation: row.generation,
+        renditions: kept.map((one) => ({
+          id: one.id,
+          path: one.path,
+          item: MediaItemSchema.parse({ ...one, id: one.id, title: item.title }),
+        })),
+      };
     },
     titleOf: async (mediaId) => (await libraryService.getMedia(mediaId))?.title ?? null,
     episodesOf: async (seriesId) =>
@@ -1911,8 +1928,7 @@ const reencodeService = createDatabaseReencodeService({
   transcoder,
   capabilities: async () => transcoder.capabilities(),
   forcedAccel: async () => (await settings.read()).hardwareAccel,
-  isBeingWatched: (mediaId) =>
-    presence.list().some((entry) => entry.playback?.mediaId === mediaId),
+  isBeingWatched: (mediaId) => presence.list().some((entry) => entry.playback?.mediaId === mediaId),
   awaitingReviewCap: async () => (await settings.read()).reencodesAwaitingReviewCap,
   afterChange: async (mediaItemId) => {
     await libraryService.rebuildArtefacts(mediaItemId);

@@ -1,5 +1,5 @@
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
-import type { PlayableSource } from '@ValenceCore/functions/chooseSource';
+import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import type { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { isImageSubtitle } from '@ValenceCore/functions/isImageSubtitle';
@@ -96,25 +96,6 @@ type MediaLookup = {
     renditions?: { id: string; item: Parameters<typeof negotiatePlayback>[0]; path: string }[];
   } | null>;
 };
-
-/**
- * Every file an item can be played from: the original, and anything somebody chose to keep beside
- * it.
- *
- * @param found - What the library holds for this item.
- * @returns The files to choose between, the original first.
- */
-const sourcesOf = (
-  found: NonNullable<Awaited<ReturnType<MediaLookup['findForPlayback']>>>,
-): PlayableSource[] => [
-  { id: 'original', isOriginal: true, item: found.item, path: found.path },
-  ...(found.renditions ?? []).map((one) => ({
-    id: one.id,
-    isOriginal: false,
-    item: one.item,
-    path: one.path,
-  })),
-];
 
 type CreatePlaybackServiceOptions = {
   media: MediaLookup;
