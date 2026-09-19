@@ -5,6 +5,7 @@ import { judgeForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest'
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { mapClientPath } from '@ValenceRequests/mediaRequests/mapClientPath';
 import { planSearches } from '@ValenceRequests/mediaRequests/planSearches';
+import { queryTitleOf } from '@ValenceRequests/mediaRequests/queryTitleOf';
 import { chooseProfile } from '@ValenceRequests/mediaRequests/chooseProfile';
 import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
 import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft';
@@ -836,12 +837,13 @@ const createRequestWorker = ({
     const seasons = [
       ...new Set(found.items.flatMap((item) => (item.season === null ? [] : [item.season]))),
     ];
+    const query = queryTitleOf(request.title);
     const searches: ReleaseSearch[] =
       request.kind === 'film'
-        ? [{ query: request.title, mode: 'movie', tmdbId: request.tmdbId }]
+        ? [{ query, mode: 'movie', tmdbId: request.tmdbId }]
         : [
-            { query: request.title, mode: 'tv' },
-            ...seasons.map((season) => ({ query: request.title, mode: 'tv' as const, season })),
+            { query, mode: 'tv' },
+            ...seasons.map((season) => ({ query, mode: 'tv' as const, season })),
           ];
     const outcomes = await Promise.all(searches.map((search) => indexers.search(search)));
     const releases = [

@@ -1009,6 +1009,28 @@ describe('createRequestWorker', () => {
       expect(await requests.list()).toEqual([]);
     });
 
+    it('searches by hand with a title no indexer reads as leaving words out', async () => {
+      const { worker, searched } = aWorker({ requests: [], items: [], found: () => [] });
+
+      await worker.releasesForDraft({
+        kind: 'series',
+        tmdbId: 65942,
+        libraryId: 'series',
+        libraryPath: '/media/Series',
+        requestedBy: { id: 'someone', name: 'Someone' },
+        isApproved: true,
+        catalogue: {
+          title: 'Re:ZERO -Starting Life in Another World-',
+          year: 2016,
+          episodes: [{ season: 1, episode: 1, title: '', airDate: '2016-04-04' }],
+        },
+      });
+
+      expect(new Set(searched.map((search) => search.query))).toEqual(
+        new Set(['Re:ZERO Starting Life in Another World']),
+      );
+    });
+
     it('sends the release an admin picked, whatever it is called', async () => {
       const { worker, send } = aWorker();
 
