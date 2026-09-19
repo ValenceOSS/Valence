@@ -25,6 +25,8 @@ describe('IndexerDraftSchema', () => {
       categories: [],
       requestsPerMinute: null,
       timeoutSeconds: 30,
+      definitionId: null,
+      settings: {},
     });
   });
 
@@ -102,6 +104,15 @@ describe('ReleaseSearchOutcomeSchema', () => {
       ],
     };
 
-    expect(ReleaseSearchOutcomeSchema.parse(outcome)).toEqual(outcome);
+    expect(ReleaseSearchOutcomeSchema.parse(outcome)).toEqual({
+      ...outcome,
+      releases: outcome.releases.map((release) => ({
+        ...release,
+        downloadFactor: null,
+        uploadFactor: null,
+        minimumRatio: null,
+        minimumSeedSeconds: null,
+      })),
+    });
   });
 });

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const INDEXER_KINDS = ['torznab', 'newznab'] as const;
+const INDEXER_KINDS = ['torznab', 'newznab', 'cardigann'] as const;
 
 const IndexerKindSchema = z.enum(INDEXER_KINDS);
 
@@ -25,12 +25,18 @@ const IndexerCapabilitiesSchema = z.object({
   limit: z.number().int().positive().nullable(),
 });
 
+const IndexerSettingsSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));
+
 const IndexerSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(80),
   kind: IndexerKindSchema,
   url: z.string().url(),
   hasApiKey: z.boolean(),
+  definitionId: z.string().nullable().default(null),
+  settings: IndexerSettingsSchema.default({}),
+  secretsSet: z.array(z.string()).default([]),
+  privacy: z.enum(['public', 'semi-private', 'private']).nullable().default(null),
   priority: z.number().int().min(1).max(50),
   isEnabled: z.boolean(),
   categories: z.array(z.number().int()),
@@ -55,6 +61,8 @@ const IndexerDraftSchema = z.object({
   categories: z.array(z.number().int()).default([]),
   requestsPerMinute: z.number().int().positive().max(600).nullable().default(null),
   timeoutSeconds: z.number().int().min(5).max(120).default(30),
+  definitionId: z.string().min(1).nullable().default(null),
+  settings: IndexerSettingsSchema.default({}),
 });
 
 const IndexerChangeSchema = z.object({
@@ -67,13 +75,17 @@ const IndexerChangeSchema = z.object({
   categories: z.array(z.number().int()).optional(),
   requestsPerMinute: z.number().int().positive().max(600).nullable().optional(),
   timeoutSeconds: z.number().int().min(5).max(120).optional(),
+  settings: IndexerSettingsSchema.optional(),
 });
 
 const IndexerTestSchema = z.object({
   isWorking: z.boolean(),
   problem: z.string().nullable(),
   capabilities: IndexerCapabilitiesSchema.nullable(),
+  captcha: z.object({ image: z.string() }).nullable().default(null),
 });
+
+const ReleaseDownloadRequestSchema = z.object({ url: z.string().min(1) });
 
 const ReleaseSearchSchema = z.object({
   query: z.string().trim().max(200).default(''),
@@ -146,6 +158,7 @@ type Release = z.infer<typeof ReleaseSchema>;
 type IndexerSearchReport = z.infer<typeof IndexerSearchReportSchema>;
 type ReleaseSearchOutcome = z.infer<typeof ReleaseSearchOutcomeSchema>;
 type IndexerHealth = z.infer<typeof IndexerHealthSchema>;
+type IndexerSettings = z.infer<typeof IndexerSettingsSchema>;
 
 export type {
   Indexer,
@@ -157,6 +170,7 @@ export type {
   IndexerKind,
   IndexerSearchMode,
   IndexerSearchReport,
+  IndexerSettings,
   IndexerTest,
   Release,
   ReleaseSearch,
@@ -167,13 +181,16 @@ export {
   INDEXER_KINDS,
   INDEXER_SEARCH_MODES,
   IndexerCapabilitiesSchema,
+  IndexerCategorySchema,
   IndexerChangeSchema,
   IndexerDraftSchema,
   IndexerHealthSchema,
   IndexerKindSchema,
   IndexerSchema,
   IndexerSearchModeSchema,
+  IndexerSettingsSchema,
   IndexerTestSchema,
+  ReleaseDownloadRequestSchema,
   ReleaseSchema,
   ReleaseSearchOutcomeSchema,
   ReleaseSearchSchema,

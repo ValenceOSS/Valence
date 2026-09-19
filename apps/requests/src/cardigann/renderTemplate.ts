@@ -13,7 +13,7 @@ type Expression =
 type TemplateNode =
   | { kind: 'text'; text: string }
   | { kind: 'print'; expression: Expression }
-  | { kind: 'if'; condition: Expression; then: TemplateNode[]; otherwise: TemplateNode[] }
+  | { kind: 'if'; condition: Expression; whenSet: TemplateNode[]; otherwise: TemplateNode[] }
   | {
       kind: 'range';
       list: Expression;
@@ -138,7 +138,7 @@ const readExpression = (tokens: string[], isNested = false): Expression => {
 const parse = (template: string): TemplateNode[] => {
   type Open =
     | { kind: 'root'; nodes: TemplateNode[] }
-    | { kind: 'if'; node: Extract<TemplateNode, { kind: 'if' }>; branch: 'then' | 'otherwise' }
+    | { kind: 'if'; node: Extract<TemplateNode, { kind: 'if' }>; branch: 'whenSet' | 'otherwise' }
     | { kind: 'range'; node: Extract<TemplateNode, { kind: 'range' }> };
 
   const root: Open = { kind: 'root', nodes: [] };
@@ -171,12 +171,12 @@ const parse = (template: string): TemplateNode[] => {
       const node: Extract<TemplateNode, { kind: 'if' }> = {
         kind: 'if',
         condition: readExpression(tokenise(action.slice(2))),
-        then: [],
+        whenSet: [],
         otherwise: [],
       };
 
       into().push(node);
-      stack.push({ kind: 'if', node, branch: 'then' });
+      stack.push({ kind: 'if', node, branch: 'whenSet' });
     } else if (keyword === 'else') {
       const open = stack.at(-1);
 
@@ -187,13 +187,13 @@ const parse = (template: string): TemplateNode[] => {
           const node: Extract<TemplateNode, { kind: 'if' }> = {
             kind: 'if',
             condition: readExpression(tokenise(action.replace(/^else\s+if/, ''))),
-            then: [],
+            whenSet: [],
             otherwise: [],
           };
 
           open.node.otherwise.push(node);
           stack.pop();
-          stack.push({ kind: 'if', node, branch: 'then' });
+          stack.push({ kind: 'if', node, branch: 'whenSet' });
         }
       }
     } else if (keyword === 'end') {
@@ -299,7 +299,7 @@ const write = (
           return escape(asText(evaluate(node.expression, scope)));
         case 'if':
           return write(
-            isSet(evaluate(node.condition, scope)) ? node.then : node.otherwise,
+            isSet(evaluate(node.condition, scope)) ? node.whenSet : node.otherwise,
             scope,
             escape,
           );

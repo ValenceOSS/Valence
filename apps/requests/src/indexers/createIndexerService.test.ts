@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { IndexerFailure } from './IndexerFailure';
+import { CaptchaNeeded } from './CaptchaNeeded';
+import { readDefinition } from '@ValenceRequests/cardigann/readDefinition';
 import { createIndexerService } from './createIndexerService';
 import { createMemoryIndexerStore } from './createMemoryIndexerStore';
 import type { IndexerClient, IndexerConnection } from './createIndexerClient';
@@ -23,6 +25,9 @@ const anIndexer = (overrides: Partial<IndexerRecord> = {}): IndexerRecord => ({
   kind: 'torznab',
   url: 'http://jackett:9117/',
   apiKey: 'a-key',
+  definitionId: null,
+  settings: {},
+  session: null,
   priority: 25,
   isEnabled: true,
   categories: [],
@@ -72,6 +77,7 @@ const aClient = (
   answers: {
     capabilities?: IndexerCapabilities | Error;
     search?: (indexer: IndexerConnection) => Release[];
+    download?: Error;
   } = {},
 ): IndexerClient => ({
   capabilities: vi.fn(() =>
@@ -85,6 +91,15 @@ const aClient = (
     } catch (error) {
       return Promise.reject(error instanceof Error ? error : new Error('no'));
     }
+  }),
+  download: vi.fn((indexer: IndexerConnection, url: string) => {
+    if (answers.download instanceof Error) {
+      return Promise.reject(answers.download);
+    }
+
+    indexer.session = { cookies: { sid: 'after' }, userAgent: null };
+
+    return Promise.resolve({ kind: 'magnet' as const, url });
   }),
 });
 
@@ -133,7 +148,7 @@ describe('createIndexerService', () => {
       hasApiKey: true,
       createdAt: NOW.toISOString(),
     });
-    expect((await store.find(added.id))?.apiKey).toBe('secret');
+    expect((await store.find(typeof added === 'string' ? '' : added.id))?.apiKey).toBe('secret');
   });
 
   it('changes only what it is told, and keeps the key when none is given', async () => {
@@ -187,6 +202,7 @@ describe('createIndexerService', () => {
       isWorking: true,
       problem: null,
       capabilities: CAPS,
+      captcha: null,
     });
     expect(await store.find(anIndexer().id)).toMatchObject({
       capabilities: CAPS,
@@ -205,6 +221,7 @@ describe('createIndexerService', () => {
       isWorking: false,
       problem: 'The indexer refused the API key',
       capabilities: null,
+      captcha: null,
     });
     expect(await store.find(anIndexer().id)).toMatchObject({
       failures: 1,
@@ -377,6 +394,254 @@ describe('createIndexerService', () => {
         },
         { id: '1b4e28ba-2fa1-41d2-883f-0016d3cca427', name: 'Quiet', problem: 'Failing' },
       ],
+    });
+  });
+
+  describe('indexers made from definitions', () => {
+    const DEFINITION = readDefinition(`id: alpha
+name: Alpha
+type: semi-private
+links: [https://alpha.example/]
+settings:
+  - {name: username, type: text, label: Username}
+  - {name: password, type: password, label: Password}
+  - {name: freeleech, type: checkbox, label: Free only}
+caps:
+  modes:
+    search: [q]
+search:
+  rows:
+    selector: tr
+  fields:
+    title:
+      selector: a
+`);
+
+    const definitions = (id: string) => Promise.resolve(id === 'alpha' ? DEFINITION : null);
+
+    const A_DRAFT = {
+      name: 'Alpha',
+      kind: 'cardigann' as const,
+      url: 'https://alpha.example/',
+      definitionId: 'alpha',
+      settings: { username: 'ada', password: 'hunter2', freeleech: true, CAPTCHA: 'x1y2' },
+    };
+
+    /**
+     * The service with definitions to find.
+     */
+    const withDefinitions = (records: IndexerRecord[] = [], client = aClient()) => {
+      const store = createMemoryIndexerStore(records);
+
+      return {
+        service: createIndexerService({ store, client, definitions, now: () => NOW }),
+        store,
+        client,
+      };
+    };
+
+    const kept = (overrides: Partial<IndexerRecord> = {}) =>
+      anIndexer({
+        kind: 'cardigann',
+        definitionId: 'alpha',
+        apiKey: '',
+        settings: { username: 'ada', password: 'hunter2', freeleech: true },
+        session: { cookies: { sid: 'kept' }, userAgent: null },
+        ...overrides,
+      });
+
+    it('refuses to add an indexer whose definition is not in the catalogue', async () => {
+      const { service } = withDefinitions();
+
+      expect(await service.add({ ...A_DRAFT, definitionId: 'nope' })).toBe(
+        'There is no definition named nope in the catalogue',
+      );
+      expect(await service.add({ ...A_DRAFT, definitionId: null })).toBe(
+        'There is no definition named nothing in the catalogue',
+      );
+    });
+
+    it('adds one, showing its settings but never its secrets, and never keeping a captcha answer', async () => {
+      const { service, store } = withDefinitions();
+      const added = await service.add(A_DRAFT);
+
+      expect(added).toMatchObject({
+        kind: 'cardigann',
+        definitionId: 'alpha',
+        settings: { username: 'ada', freeleech: true },
+        secretsSet: ['password'],
+        privacy: 'semi-private',
+      });
+      expect(JSON.stringify(added)).not.toContain('hunter2');
+      expect((await store.list())[0]?.settings).toEqual({
+        username: 'ada',
+        password: 'hunter2',
+        freeleech: true,
+      });
+    });
+
+    it('shows an indexer whose definition has gone as having no privacy', async () => {
+      const { service } = withDefinitions([
+        kept({ definitionId: 'gone' }),
+        anIndexer({ id: SECOND, name: 'Torznab' }),
+      ]);
+
+      expect((await service.list()).map((one) => one.privacy)).toEqual([null, null]);
+    });
+
+    it('keeps a secret left blank, replaces one given, and forgets the session', async () => {
+      const { service, store } = withDefinitions([kept()]);
+
+      await service.change(kept().id, { settings: { username: 'grace', password: '' } });
+
+      expect(await store.find(kept().id)).toMatchObject({
+        settings: { username: 'grace', password: 'hunter2', freeleech: true },
+        session: null,
+      });
+
+      await service.change(kept().id, { settings: { password: 'new-one', CAPTCHA: 'z' } });
+
+      expect((await store.find(kept().id))?.settings).toEqual({
+        username: 'grace',
+        password: 'new-one',
+        freeleech: true,
+      });
+    });
+
+    it('keeps no secret that was never given', async () => {
+      const { service, store } = withDefinitions();
+
+      await service.add({ ...A_DRAFT, settings: { username: 'ada', password: '' } });
+
+      expect((await store.list())[0]?.settings).toEqual({ username: 'ada' });
+    });
+
+    it('forgets the session when the address moves, and keeps it for anything else', async () => {
+      const { service, store } = withDefinitions([kept()]);
+
+      await service.change(kept().id, { priority: 3 });
+
+      expect((await store.find(kept().id))?.session).toEqual({
+        cookies: { sid: 'kept' },
+        userAgent: null,
+      });
+
+      await service.change(kept().id, { url: 'https://mirror.alpha.example/' });
+
+      expect((await store.find(kept().id))?.session).toBeNull();
+    });
+
+    it('shows the captcha a test meets, without counting it as a failure', async () => {
+      const { service, store } = withDefinitions(
+        [kept()],
+        aClient({ capabilities: new CaptchaNeeded('data:image/png;base64,AQID') }),
+      );
+
+      expect(await service.test(kept().id)).toEqual({
+        isWorking: false,
+        problem: 'Type the characters in the picture to log in',
+        capabilities: null,
+        captcha: { image: 'data:image/png;base64,AQID' },
+      });
+      expect((await store.find(kept().id))?.failures).toBe(0);
+    });
+
+    it('tries a definition before it is kept, with the captcha answer and the kept secrets', async () => {
+      const { service, client } = withDefinitions([kept()]);
+
+      await service.tryDraft(
+        { ...A_DRAFT, settings: { username: 'ada', password: '', CAPTCHA: 'x1y2' } },
+        kept().id,
+      );
+
+      expect(client.capabilities).toHaveBeenCalledWith(
+        expect.objectContaining({
+          settings: { username: 'ada', password: 'hunter2', freeleech: true, CAPTCHA: 'x1y2' },
+        }),
+      );
+    });
+
+    it('says so when a definition to try is not in the catalogue', async () => {
+      const { service } = withDefinitions();
+
+      expect(await service.tryDraft({ ...A_DRAFT, definitionId: 'nope' })).toEqual({
+        isWorking: false,
+        problem: 'There is no definition named nope in the catalogue',
+        capabilities: null,
+        captcha: null,
+      });
+    });
+
+    it('carries a draft’s session from one try to the next, so a captcha answer meets the page it came from', async () => {
+      const seen: (string | undefined)[] = [];
+      const client = aClient();
+
+      client.capabilities = vi.fn((indexer: IndexerConnection) => {
+        seen.push(indexer.session?.cookies['sid']);
+        indexer.session = { cookies: { sid: `after-${seen.length.toString()}` }, userAgent: null };
+
+        return Promise.resolve(CAPS);
+      });
+
+      const { service } = withDefinitions([], client);
+
+      await service.tryDraft(A_DRAFT);
+      await service.tryDraft(A_DRAFT);
+
+      expect(seen).toEqual([undefined, 'after-1']);
+    });
+
+    it('forgets the oldest draft sessions once there are many', async () => {
+      const { service } = withDefinitions();
+
+      for (let at = 0; at < 60; at += 1) {
+        await service.tryDraft({ ...A_DRAFT, url: `https://alpha${at.toString()}.example/` });
+      }
+
+      expect(await service.tryDraft(A_DRAFT)).toMatchObject({ isWorking: true });
+    });
+
+    it('keeps the session a search leaves behind', async () => {
+      const client = aClient({
+        search: (indexer) => {
+          indexer.session = { cookies: { sid: 'fresh' }, userAgent: null };
+
+          return [];
+        },
+      });
+      const { service, store } = withDefinitions([kept()], client);
+
+      await service.search({ query: 'dune' });
+
+      expect((await store.find(kept().id))?.session).toEqual({
+        cookies: { sid: 'fresh' },
+        userAgent: null,
+      });
+    });
+
+    it('fetches a release, keeping the session it leaves behind', async () => {
+      const { service, store } = withDefinitions([kept()]);
+
+      expect(await service.download(kept().id, 'https://alpha.example/dl/1')).toEqual({
+        kind: 'magnet',
+        url: 'https://alpha.example/dl/1',
+      });
+      expect((await store.find(kept().id))?.session).toEqual({
+        cookies: { sid: 'after' },
+        userAgent: null,
+      });
+      expect(await service.download('7c9e6679-7425-40de-944b-e07fc1f90ae8', 'x')).toBeNull();
+    });
+
+    it('passes on why a release could not be fetched', async () => {
+      const { service } = withDefinitions(
+        [kept()],
+        aClient({ download: new IndexerFailure('Gone') }),
+      );
+
+      await expect(service.download(kept().id, 'https://alpha.example/dl/1')).rejects.toThrow(
+        'Gone',
+      );
     });
   });
 });

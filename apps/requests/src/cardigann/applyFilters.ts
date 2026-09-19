@@ -105,7 +105,9 @@ const applyFilter = (
     case 'htmlencode':
       return encodeHTML(text);
     case 'validfilename':
-      return text.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '');
+      return [...text]
+        .filter((character) => !'<>:"/\\|?*'.includes(character) && character.charCodeAt(0) >= 0x20)
+        .join('');
     case 'diacritics':
       return first === 'replace'
         ? text

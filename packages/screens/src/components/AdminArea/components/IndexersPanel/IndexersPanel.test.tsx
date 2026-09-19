@@ -29,6 +29,10 @@ const anIndexer = (overrides: Partial<Indexer> = {}): Indexer => ({
   kind: 'torznab',
   url: 'http://jackett:9117/',
   hasApiKey: true,
+  definitionId: null,
+  settings: {},
+  secretsSet: [],
+  privacy: null,
   priority: 25,
   isEnabled: true,
   categories: [],
@@ -57,7 +61,7 @@ beforeEach(() => {
   changeIndexer.mockReset().mockResolvedValue({ value: anIndexer(), refusal: null });
   removeIndexer.mockReset().mockResolvedValue(null);
   testIndexer.mockReset().mockResolvedValue({
-    value: { isWorking: true, problem: null, capabilities: null },
+    value: { isWorking: true, problem: null, capabilities: null, captcha: null },
     refusal: null,
   });
 });
@@ -139,7 +143,12 @@ describe('IndexersPanel', () => {
 
   it('says why a test failed', async () => {
     testIndexer.mockResolvedValue({
-      value: { isWorking: false, problem: 'The indexer refused the API key', capabilities: null },
+      value: {
+        isWorking: false,
+        problem: 'The indexer refused the API key',
+        capabilities: null,
+        captcha: null,
+      },
       refusal: null,
     });
 
@@ -156,7 +165,7 @@ describe('IndexersPanel', () => {
 
   it('still says a test failed where no reason came back', async () => {
     testIndexer.mockResolvedValue({
-      value: { isWorking: false, problem: null, capabilities: null },
+      value: { isWorking: false, problem: null, capabilities: null, captcha: null },
       refusal: null,
     });
 

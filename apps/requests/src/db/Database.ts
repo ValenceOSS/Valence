@@ -1,9 +1,9 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
-import { indexer, setting } from '@ValenceRequests/db/Schema';
+import { indexer, indexerDefinition, setting } from '@ValenceRequests/db/Schema';
 
-const schema = { indexer, setting };
+const schema = { indexer, indexerDefinition, setting };
 
 type RequestsDatabase = PgDatabase<PgQueryResultHKT, typeof schema>;
 

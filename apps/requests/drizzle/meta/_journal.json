@@ -15,6 +15,13 @@
       "when": 1789779761201,
       "tag": "0001_indexers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789783669507,
+      "tag": "0002_definitions_and_sessions",
+      "breakpoints": true
     }
   ]
 }

@@ -24,6 +24,7 @@ import type { SiteClient, SiteResponse } from '@ValenceRequests/cardigann/create
 import type { SiteRequest } from '@ValenceRequests/cardigann/SiteRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 import type { TemplateValue } from '@ValenceRequests/cardigann/TemplateVariables';
+import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 
 type CreateCardigannIndexerOptions = {
   definition: CardigannDefinition;
@@ -36,8 +37,6 @@ type CreateCardigannIndexerOptions = {
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
 };
-
-type Download = { kind: 'magnet'; url: string } | { kind: 'torrent'; bytes: Uint8Array };
 
 /**
  * Waits the given time.
@@ -473,7 +472,7 @@ const createCardigannIndexer = ({
         });
   };
 
-  const download = async (link: string): Promise<Download> => {
+  const download = async (link: string): Promise<ReleaseFile> => {
     if (link.startsWith('magnet:')) {
       return { kind: 'magnet', url: link };
     }
@@ -597,6 +596,6 @@ const createCardigannIndexer = ({
 
 type CardigannIndexer = ReturnType<typeof createCardigannIndexer>;
 
-export type { CardigannIndexer, Download };
+export type { CardigannIndexer };
 
 export { createCardigannIndexer };
