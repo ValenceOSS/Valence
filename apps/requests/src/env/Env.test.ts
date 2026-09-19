@@ -7,7 +7,7 @@ describe('readEnv', () => {
   it('applies defaults beside the secret', () => {
     const env = readEnv({ REQUESTS_SECRET: A_SECRET });
 
-    expect(env.PORT).toBe(8421);
+    expect(env.REQUESTS_PORT).toBe(8421);
     expect(env.VPN_URL).toBe('');
     expect(env.VPN_CHECK_SECONDS).toBe(30);
   });
@@ -26,7 +26,9 @@ describe('readEnv', () => {
     );
   });
 
-  it('coerces the port from a string', () => {
-    expect(readEnv({ REQUESTS_SECRET: A_SECRET, PORT: '9000' }).PORT).toBe(9000);
+  it('coerces the port from a string, leaving the server’s own PORT alone', () => {
+    const env = readEnv({ REQUESTS_SECRET: A_SECRET, REQUESTS_PORT: '9000', PORT: '8420' });
+
+    expect(env.REQUESTS_PORT).toBe(9000);
   });
 });

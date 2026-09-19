@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().positive().default(8421),
+  REQUESTS_PORT: z.coerce.number().int().positive().default(8421),
   DATABASE_URL: z.string().url().default('postgres://valence:valence@localhost:5432/valence'),
   REQUESTS_SECRET: z.string().min(32),
   VPN_URL: z
