@@ -318,28 +318,24 @@ describe('downloads, which are a dialog rather than a page', () => {
   });
 });
 
-describe('search, which is a dialog rather than a page', () => {
-  it('opens over whichever section it was opened from', () => {
-    expect(writeLocation({ ...HOME, section: 'films', isSearchOpen: true })).toBe(
-      '/films?search=open',
-    );
+describe('search, which is a page of its own', () => {
+  it('is written as its own address, carrying what was typed', () => {
+    expect(writeLocation({ ...HOME, section: 'search', search: 'blade' })).toBe('/search?q=blade');
   });
 
-  it('is shut when nothing in the address says otherwise', () => {
-    expect(placeIn('/films', {}).isSearchOpen).toBe(false);
+  it('leaves what was typed behind when somewhere else is written, so no page filters by it', () => {
+    expect(writeLocation({ ...HOME, section: 'films', search: 'blade' })).toBe('/films');
   });
 
-  it('still answers the address it used to be a page at, so held links keep working', () => {
-    const place = placeIn('/search', {});
-
-    expect(place.section).toBe('home');
-    expect(place.isSearchOpen).toBe(true);
-  });
-
-  it('lets a held search link still open with what was typed', () => {
+  it('reads the page and what was typed back out of the address', () => {
     const place = placeIn('/search', { q: 'blade' });
 
-    expect(place.isSearchOpen).toBe(true);
+    expect(place.section).toBe('search');
     expect(place.search).toBe('blade');
+  });
+
+  it('still answers the addresses held from when it was a sheet', () => {
+    expect(placeIn('/films', { search: 'open' }).section).toBe('search');
+    expect(placeIn('/films', {}).section).toBe('films');
   });
 });

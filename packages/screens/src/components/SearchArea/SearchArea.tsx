@@ -18,6 +18,9 @@ import { FilterChips } from './components/FilterChips/FilterChips';
 import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
 import type { SearchAreaProps, SearchKind } from './SearchArea.types';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { AlbumShelf } from '@ValenceScreens/components/AlbumShelf/AlbumShelf';
+import { ArtistShelf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { AskableResults } from './components/AskableResults/AskableResults';
 
@@ -29,6 +32,7 @@ const KINDS: { id: SearchKind; label: string }[] = [
   { id: 'everything', label: 'Everything' },
   { id: 'films', label: 'Films' },
   { id: 'shows', label: 'Shows' },
+  { id: 'music', label: 'Music' },
   { id: 'books', label: 'Books' },
 ];
 
@@ -136,7 +140,7 @@ const SearchArea = ({
 
     return {
       ...(liveSearch.trim() === '' ? {} : { search: liveSearch }),
-      ...(kind === 'everything' || kind === 'books' ? {} : { kind }),
+      ...(kind === 'films' || kind === 'shows' ? { kind } : {}),
       ...(genre === null ? {} : { genre }),
       ...(startsAt === undefined ? {} : { yearFrom: startsAt, yearTo: startsAt + DECADE - 1 }),
       ...(minRating === null ? {} : { minRating: Number(minRating) }),
@@ -159,13 +163,27 @@ const SearchArea = ({
 
   const found = useQuery({
     ...libraryQueries.across(libraryIds, settled),
-    enabled: kind !== 'books',
+    enabled: kind !== 'books' && kind !== 'music',
   });
 
   const items = useMemo(
-    () => (kind === 'books' ? [] : collapseToShows(found.data ?? [])),
+    () => (kind === 'books' || kind === 'music' ? [] : collapseToShows(found.data ?? [])),
     [found.data, kind],
   );
+
+  const wantsMusic =
+    (kind === 'everything' || kind === 'music') &&
+    settled.search !== undefined &&
+    settled.search !== '';
+
+  const foundMusic = useQuery({
+    ...musicQueries.search(settled.search ?? ''),
+    enabled: wantsMusic,
+  });
+
+  const music = wantsMusic
+    ? (foundMusic.data ?? { tracks: [], albums: [], artists: [], playlists: [] })
+    : { tracks: [], albums: [], artists: [], playlists: [] };
 
   const wantsBooks =
     (kind === 'everything' || kind === 'books') &&
@@ -181,13 +199,14 @@ const SearchArea = ({
   });
 
   const books = wantsBooks ? (foundBooks.data ?? []) : [];
-  const howMany = items.length + books.length;
+  const howMany = items.length + books.length + music.albums.length + music.artists.length;
 
   const isReading =
     libraries.isPending ||
     (libraryIds.length > 0 &&
-      ((kind !== 'books' && found.isPending) ||
+      ((kind !== 'books' && kind !== 'music' && found.isPending) ||
         (wantsBooks && foundBooks.isPending) ||
+        (wantsMusic && foundMusic.isPending) ||
         asked !== settled));
 
   useEffect(() => {
@@ -214,7 +233,7 @@ const SearchArea = ({
       exit="gone"
       className="flex flex-col gap-6"
     >
-      <div className="sticky top-0 z-10 flex flex-col gap-6 bg-surface-raised px-6 pb-4 pt-5">
+      <div className="flex flex-col gap-6">
         <motion.div
           variants={revealVariants(prefersReducedMotion)}
           transition={revealTransition(prefersReducedMotion, 'heavy')}
@@ -329,7 +348,7 @@ const SearchArea = ({
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion)}
         aria-label="Results"
-        className="flex flex-col gap-5 px-6 pb-6"
+        className="flex flex-col gap-5"
       >
         <header className="flex flex-wrap items-center justify-between gap-3 text-sm text-text-muted">
           {isReading ? (
@@ -398,6 +417,13 @@ const SearchArea = ({
 
                 {books.length === 0 || onOpenBook === undefined ? null : (
                   <BookRow title="Books" books={books} onOpen={onOpenBook} />
+                )}
+
+                {music.artists.length === 0 && music.albums.length === 0 ? null : (
+                  <div className="flex flex-col gap-8 [--music-lane:0px]">
+                    <ArtistShelf heading="Artists" artists={music.artists} />
+                    <AlbumShelf heading="Albums" albums={music.albums} />
+                  </div>
                 )}
               </div>
             )}

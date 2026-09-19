@@ -19,11 +19,7 @@ describe('usePlace', () => {
 
     const { result } = renderHookInAnAddress(() => usePlace());
 
-    expect(result.current.place).toMatchObject({
-      section: 'home',
-      isSearchOpen: true,
-      search: 'blade',
-    });
+    expect(result.current.place).toMatchObject({ section: 'search', search: 'blade' });
   });
 
   it('writes where somebody moved to into the address', async () => {

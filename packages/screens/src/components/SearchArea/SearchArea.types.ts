@@ -1,7 +1,7 @@
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
-type SearchKind = 'everything' | 'films' | 'shows' | 'books';
+type SearchKind = 'everything' | 'films' | 'shows' | 'music' | 'books';
 
 type SearchAreaProps = {
   search: string;

@@ -6,7 +6,6 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { describeStanding } from '@ValenceScreens/components/AskableDialog/describeStanding';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
-import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
@@ -62,7 +61,7 @@ const AskableResults = ({ query, kind, onAsk }: AskableResultsProps) => {
   return (
     <section aria-label="Not in your library yet" className="flex flex-col gap-6">
       {video.length === 0 ? null : (
-        <Rail title="Not in your library yet" sizesCards className="-mx-6">
+        <Rail title="Not in your library yet" sizesCards className="-mx-[var(--rail-lane)]">
           {video.map((title, at) => {
             const standing = describeStanding(title.standing);
 
@@ -91,29 +90,30 @@ const AskableResults = ({ query, kind, onAsk }: AskableResultsProps) => {
       )}
 
       {music.length === 0 ? null : (
-        <MusicShelf heading="Artists not in your library yet" layout="rail">
-          {music.map((title) => (
-            <MusicTile
-              key={title.id}
-              title={title.title}
-              detail={[title.subtitle, describeStanding(title.standing)?.label ?? null]
-                .filter((part) => part !== null)
-                .join(' · ')}
-              shape="round"
-              artwork={
-                <MusicArtwork
-                  src={title.posterUrl}
-                  label={title.title}
-                  shape="round"
-                  className="w-full"
-                />
-              }
-              onOpen={() => {
-                onAsk(askingOf(title));
-              }}
-            />
+        <Rail title="Artists not in your library yet" sizesCards className="-mx-[var(--rail-lane)]">
+          {music.map((title, at) => (
+            <RevealItem key={title.id} index={at} className="shrink-0 snap-start">
+              <MusicTile
+                title={title.title}
+                detail={[title.subtitle, describeStanding(title.standing)?.label ?? null]
+                  .filter((part) => part !== null)
+                  .join(' · ')}
+                shape="round"
+                artwork={
+                  <MusicArtwork
+                    src={title.posterUrl}
+                    label={title.title}
+                    shape="round"
+                    className="w-full"
+                  />
+                }
+                onOpen={() => {
+                  onAsk(askingOf(title));
+                }}
+              />
+            </RevealItem>
           ))}
-        </MusicShelf>
+        </Rail>
       )}
     </section>
   );
