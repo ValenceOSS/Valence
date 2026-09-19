@@ -162,7 +162,7 @@ const SECTION_LABELS: Record<ShellSection, string> = {
   favourites: 'Favourites',
   read: 'Books',
   music: 'Music',
-  requests: 'Requests',
+  requests: 'Discover',
   search: 'Search',
   account: 'Account',
 };
@@ -199,8 +199,10 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  *   in the bar is offered only where there is something to find there — an empty library is not a
  *   place to go — and every place is offered until the answer arrives, rather than places
  *   appearing one by one as it does.
- * @param mayRequest - Whether this viewer may ask for things, which is when the Requests page is
- *   offered at all.
+ * @param mayRequest - Whether this viewer may ask for things, which is when Discover is offered at
+ *   all.
+ * @param onOpenFavourites - Told to show what this viewer has kept, from the account menu.
+ * @param onOpenMyRequests - Told to show what this viewer has asked for, from the account menu.
  * @param notifications - The bell and what is behind it.
  * @param hasMark - Whether the bar draws the mark itself. It does not while a screen held over the
  *   page is still showing it: the mark is one thing moving from there to here, and two of them on
@@ -228,6 +230,8 @@ const AppShell = ({
   libraryKinds,
   stocked,
   mayRequest = false,
+  onOpenFavourites,
+  onOpenMyRequests,
   notifications,
 }: AppShellProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -428,6 +432,26 @@ const AppShell = ({
                   icon: <Icon of={UserCircleIcon} size={16} />,
                   onChoose: onOpenAccount,
                 },
+                ...(onOpenFavourites === undefined
+                  ? []
+                  : [
+                      {
+                        id: 'favourites',
+                        label: 'Favourites',
+                        icon: <Icon of={FavouriteIcon} size={16} />,
+                        onChoose: onOpenFavourites,
+                      },
+                    ]),
+                ...(mayRequest && onOpenMyRequests !== undefined
+                  ? [
+                      {
+                        id: 'my-requests',
+                        label: 'My requests',
+                        icon: <Icon of={Compass01Icon} size={16} />,
+                        onChoose: onOpenMyRequests,
+                      },
+                    ]
+                  : []),
                 ...(isAdministrator
                   ? [
                       {

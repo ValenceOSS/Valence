@@ -479,19 +479,19 @@ describe('the places the bar offers', () => {
   it('offers every place until it is known which of them hold anything', () => {
     draw();
 
-    expect(offered()).toEqual(['Home', 'Shows', 'Films', 'Books', 'New & Popular', 'Favourites']);
+    expect(offered()).toEqual(['Home', 'Shows', 'Films', 'Books']);
   });
 
   it('offers films, programmes and books only where they hold something', () => {
     draw({ stocked: ['films'] });
 
-    expect(offered()).toEqual(['Home', 'Films', 'New & Popular', 'Favourites']);
+    expect(offered()).toEqual(['Home', 'Films']);
   });
 
   it('keeps the places that are never empty however little there is', () => {
     draw({ stocked: [] });
 
-    expect(offered()).toEqual(['Home', 'New & Popular', 'Favourites']);
+    expect(offered()).toEqual(['Home']);
   });
 
   it('fills the sheet in well before the page reaches the bar, so no hero shows through it', () => {

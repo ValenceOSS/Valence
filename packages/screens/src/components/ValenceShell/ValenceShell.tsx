@@ -9,7 +9,6 @@ import { MediaDetailDialog } from '@ValenceScreens/components/MediaDetailDialog/
 import { PersonDialog } from '@ValenceScreens/components/PersonDialog/PersonDialog';
 import { AccountDialog } from '@ValenceScreens/components/AccountDialog/AccountDialog';
 import { DownloadsDialog } from '@ValenceScreens/components/DownloadsDialog/DownloadsDialog';
-import { SearchDrawer } from '@ValenceScreens/components/SearchDrawer/SearchDrawer';
 import { ShareDialog } from '@ValenceScreens/components/ShareDialog/ShareDialog';
 import type { ShareSubject } from '@ValenceScreens/components/ShareDialog/ShareDialog.types';
 import { StillWatchingDialog } from '@ValenceScreens/components/StillWatchingDialog/StillWatchingDialog';
@@ -203,9 +202,9 @@ const ValenceShell = () => {
       onOpenDownloads={() => {
         go({ downloads: true });
       }}
-      isSearchOpen={place.isSearchOpen}
+      isSearchOpen={place.section === 'search'}
       onOpenSearch={() => {
-        go({ isSearchOpen: true });
+        go({ section: 'search' });
       }}
       moodLights={
         place.section === 'home' ? moodLights : place.section === 'music' ? [...musicLights] : []
@@ -215,6 +214,12 @@ const ValenceShell = () => {
       {...(libraries.data === undefined ? {} : { libraryKinds })}
       {...(isStockKnown ? { stocked } : {})}
       mayRequest={mayRequest}
+      onOpenFavourites={() => {
+        go({ section: 'favourites' });
+      }}
+      onOpenMyRequests={() => {
+        go({ section: 'requests', requestsView: 'mine' });
+      }}
       notifications={
         <NotificationBell
           notifications={inbox.notifications}
@@ -426,13 +431,6 @@ const ValenceShell = () => {
         isOpen={place.downloads}
         onClose={() => {
           go({ downloads: false });
-        }}
-      />
-
-      <SearchDrawer
-        isOpen={place.isSearchOpen}
-        onClose={() => {
-          go({ isSearchOpen: false });
         }}
       />
 
