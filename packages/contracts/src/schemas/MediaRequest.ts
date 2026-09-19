@@ -157,6 +157,12 @@ const FollowedRequestSchema = z.object({
   libraryId: z.string(),
 });
 
+const RequestLogEntrySchema = z.object({
+  id: z.number().int().positive(),
+  at: z.string().datetime(),
+  message: z.string(),
+});
+
 const MissingSearchSchema = z.object({
   searched: z.number().int().nonnegative(),
   startedAt: z.string().datetime(),
@@ -184,6 +190,7 @@ type RequestCatalogueUpdate = z.input<typeof RequestCatalogueUpdateSchema>;
 type MediaRequestArrival = z.infer<typeof MediaRequestArrivalSchema>;
 type FollowedRequest = z.infer<typeof FollowedRequestSchema>;
 type MissingSearch = z.infer<typeof MissingSearchSchema>;
+type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;
 
 export type {
   CatalogueEpisode,
@@ -208,6 +215,7 @@ export type {
   Requester,
   RequestItem,
   RequestItemState,
+  RequestLogEntry,
 };
 
 export {
@@ -237,5 +245,6 @@ export {
   RequestCatalogueUpdateSchema,
   RequestItemSchema,
   RequestItemStateSchema,
+  RequestLogEntrySchema,
   RequesterSchema,
 };

@@ -3,6 +3,7 @@ import {
   approveMediaRequest,
   askForMedia,
   changeMediaRequest,
+  fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchMediaRequests,
   pickMediaRelease,
@@ -104,6 +105,14 @@ describe('fetchMediaRequests', () => {
       `POST /api/requests/media/${REQUEST.id}/retry`,
       `POST /api/requests/media/${REQUEST.id}/pick`,
     ]);
+  });
+
+  it('reads what a request has done', async () => {
+    const said = [{ id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.' }];
+    const asked = answering(said);
+
+    expect(await fetchMediaRequestLog(REQUEST.id)).toEqual(said);
+    expect(asked.mock.calls[0]?.[0]).toBe(`/api/requests/media/${REQUEST.id}/log`);
   });
 
   it('searches for a request by hand, and for everything missing', async () => {

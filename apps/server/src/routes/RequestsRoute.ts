@@ -33,6 +33,7 @@ import {
   MediaRequestRefusalSchema,
   MediaRequestSchema,
   MissingSearchSchema,
+  RequestLogEntrySchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import {
   DownloadFilingSchema,
@@ -731,6 +732,20 @@ const mediaRequestReleasesRoute = createRoute({
   }),
 });
 
+const mediaRequestLogRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/media/{id}/log',
+  tags: ['Requests'],
+  summary: 'Read what a request has done: every search, what it found, and what became of it',
+  request: { params: RecordIdParameter },
+  responses: requestFailures({
+    200: {
+      description: 'What it did, newest first',
+      content: { 'application/json': { schema: z.array(RequestLogEntrySchema) } },
+    },
+  }),
+});
+
 const pickMediaReleaseRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/{id}/pick',
@@ -748,6 +763,7 @@ export {
   askForMediaRoute,
   changeMediaRequestRoute,
   listMediaRequestsRoute,
+  mediaRequestLogRoute,
   mediaRequestReleasesRoute,
   pickMediaReleaseRoute,
   refuseMediaRequestRoute,

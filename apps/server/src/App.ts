@@ -245,6 +245,7 @@ import {
   askForMediaRoute,
   changeMediaRequestRoute,
   listMediaRequestsRoute,
+  mediaRequestLogRoute,
   mediaRequestReleasesRoute,
   pickMediaReleaseRoute,
   refuseMediaRequestRoute,
@@ -3990,6 +3991,18 @@ const createApp = ({
   app.openapi(retryMediaRequestRoute, async (context) => {
     const answer = await throughRequests(context.req.raw.headers, (client) =>
       client.retryRequest(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(mediaRequestLogRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.requestLog(context.req.valid('param').id),
+      APPROVERS,
     );
 
     return answer.kind === 'answered'

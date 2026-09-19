@@ -57,6 +57,7 @@ import {
   MediaRequestAddedSchema,
   MediaRequestSchema,
   MissingSearchSchema,
+  RequestLogEntrySchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type {
   FollowedRequest,
@@ -66,6 +67,7 @@ import type {
   MediaRequestRevision,
   MissingSearch,
   RequestCatalogueUpdate,
+  RequestLogEntry,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
 
@@ -472,6 +474,9 @@ const createRequestsClient = ({
       update: RequestCatalogueUpdate,
     ): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/catalogue`, readRequest, { method: 'PUT', body: update }),
+
+    requestLog: (id: string): Promise<RequestsAnswer<RequestLogEntry[]>> =>
+      call(`${withRequest(id)}/log`, (body) => z.array(RequestLogEntrySchema).parse(body)),
 
     requestReleases: (id: string): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
       call(`${withRequest(id)}/releases`, (body) => ReleaseSearchOutcomeSchema.parse(body), {

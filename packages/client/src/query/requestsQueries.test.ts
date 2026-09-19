@@ -33,10 +33,12 @@ vi.mock('@ValenceClient/requests/fetchProfiles', () => ({ fetchProfiles }));
 
 const fetchMediaRequests = vi.hoisted(() => vi.fn());
 const fetchMediaRequestReleases = vi.hoisted(() => vi.fn());
+const fetchMediaRequestLog = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   fetchMediaRequests,
   fetchMediaRequestReleases,
+  fetchMediaRequestLog,
 }));
 
 const aCache = (): QueryClient =>
@@ -143,5 +145,10 @@ describe('requestsQueries', () => {
       aCache().fetchQuery(requestsQueries.mediaRequestReleases('dune')),
     ).resolves.toEqual({ releases: [] });
     expect(fetchMediaRequestReleases).toHaveBeenCalledWith('dune');
+
+    fetchMediaRequestLog.mockResolvedValue([]);
+
+    expect(requestsQueries.mediaRequestLog(null).enabled).toBe(false);
+    await expect(aCache().fetchQuery(requestsQueries.mediaRequestLog('dune'))).resolves.toEqual([]);
   });
 });

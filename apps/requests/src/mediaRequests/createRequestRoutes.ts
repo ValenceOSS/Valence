@@ -11,9 +11,11 @@ import { readBody } from '@ValenceRequests/readBody';
 import type { MediaRequestAdded } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestService } from '@ValenceRequests/mediaRequests/createRequestService';
 import type { RequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
+import type { RequestLogStore } from '@ValenceRequests/mediaRequests/RequestLogStore';
 
 type CreateRequestRoutesOptions = {
   service: RequestService;
+  log: Pick<RequestLogStore, 'list'>;
   worker: Pick<RequestWorker, 'searchMissing' | 'releasesFor' | 'pick'>;
 };
 
@@ -22,13 +24,15 @@ const NO_SUCH_REQUEST = { error: 'No such request.' };
 /**
  * Requests for films and series, as routes under `/api`: making and listing them, approving and
  * refusing them, changing what they ask for, keeping them up to date with the catalogue, trying
- * again, searching by hand and picking a release, and searching for everything still missing.
+ * again, searching by hand and picking a release, searching for everything still missing, and
+ * reading what each has done.
  *
  * @param service - The requests.
+ * @param log - What each request has done.
  * @param worker - What fetches them.
  * @returns The routes.
  */
-const createRequestRoutes = ({ service, worker }: CreateRequestRoutesOptions) => {
+const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOptions) => {
   const routes = new Hono();
 
   const answer = <Shown>(shown: Shown | null) =>
@@ -100,6 +104,14 @@ const createRequestRoutes = ({ service, worker }: CreateRequestRoutesOptions) =>
     return update === null
       ? context.json({ error: 'That is not what the catalogue says.' }, 400)
       : answer(await service.updateCatalogue(context.req.param('id'), update));
+  });
+
+  routes.get('/requests/:id/log', async (context) => {
+    const id = context.req.param('id');
+
+    return (await service.find(id)) === null
+      ? context.json(NO_SUCH_REQUEST, 404)
+      : context.json(await log.list(id));
   });
 
   routes.get('/requests/:id/releases', async (context) =>

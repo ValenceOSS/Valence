@@ -2,7 +2,11 @@ import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { sendToRequests } from '@ValenceClient/requests/sendToRequests';
 import { ReleaseSearchOutcomeSchema } from '@ValenceContracts/schemas/Indexer';
-import { MediaRequestSchema, MissingSearchSchema } from '@ValenceContracts/schemas/MediaRequest';
+import {
+  MediaRequestSchema,
+  MissingSearchSchema,
+  RequestLogEntrySchema,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { Sent } from '@ValenceClient/requests/sendToRequests';
 import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
@@ -11,6 +15,7 @@ import type {
   MediaRequestAsk,
   MediaRequestChange,
   MissingSearch,
+  RequestLogEntry,
 } from '@ValenceContracts/schemas/MediaRequest';
 
 const REQUESTS = '/api/requests/media';
@@ -90,6 +95,15 @@ const fetchMediaRequestReleases = (id: string): Promise<ReleaseSearchOutcome> =>
   readFromServer(`${REQUESTS}/${id}/releases`, ReleaseSearchOutcomeSchema);
 
 /**
+ * Reads what a request has done: every search, what it found, and what became of it.
+ *
+ * @param id - Which.
+ * @returns What it did, newest first.
+ */
+const fetchMediaRequestLog = (id: string): Promise<RequestLogEntry[]> =>
+  readFromServer(`${REQUESTS}/${id}/log`, z.array(RequestLogEntrySchema));
+
+/**
  * Fetches a release picked by hand for a request.
  *
  * @param id - Which request.
@@ -123,6 +137,7 @@ export {
   approveMediaRequest,
   askForMedia,
   changeMediaRequest,
+  fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchMediaRequests,
   pickMediaRelease,

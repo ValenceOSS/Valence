@@ -36,6 +36,7 @@ import type {
   RequestItemStore,
 } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 import type { ProfileService } from '@ValenceRequests/profiles/createProfileService';
+import type { RequestLogStore } from '@ValenceRequests/mediaRequests/RequestLogStore';
 import type { Schedule } from '@ValenceRequests/timing/Schedule';
 
 type CreateRequestWorkerOptions = {
@@ -48,6 +49,7 @@ type CreateRequestWorkerOptions = {
   indexers: Pick<IndexerService, 'search' | 'list'>;
   profiles: Pick<ProfileService, 'list'>;
   events: EventStore;
+  log: RequestLogStore;
   file?: typeof fileDownload;
   now?: () => Date;
   schedule?: Schedule;
@@ -162,6 +164,7 @@ const groupedByDownload = (
  * @param indexers - The indexers, to search.
  * @param profiles - The quality profiles, one of which a request or its library may name.
  * @param events - Where events wait for the server.
+ * @param log - Where what each request did is kept, for whoever wants to see why.
  * @param file - How a finished download is filed.
  * @param now - The clock.
  * @param schedule - How to wait.
@@ -183,6 +186,7 @@ const createRequestWorker = ({
   indexers,
   profiles,
   events,
+  log,
   file = fileDownload,
   now = () => new Date(),
   schedule = waitThenRun,
@@ -216,6 +220,11 @@ const createRequestWorker = ({
 
   const update = (item: RequestItemRecord, changes: Partial<Omit<RequestItemRecord, 'id'>>) =>
     items.update(item.id, { ...changes, updatedAt: at() });
+
+  const note = async (request: MediaRequestRecord, message: string) => {
+    await log.add(request.id, message);
+    say(`${request.title}: ${message}`);
+  };
 
   const approved = async (): Promise<Found[]> => {
     const [kept, waiting] = await Promise.all([requests.list(), items.list()]);
@@ -318,8 +327,6 @@ const createRequestWorker = ({
       requestedById: request.requestedById,
       releaseTitle: release.title,
     });
-    say(`Chose ${release.title} for ${request.title}.`);
-
     return null;
   };
 
@@ -327,7 +334,7 @@ const createRequestWorker = ({
     { request, items: all }: Found,
     releases: readonly Release[],
     isFetching: (item: RequestItemRecord) => boolean,
-  ): Promise<boolean> => {
+  ): Promise<{ isSent: boolean; said: string }> => {
     const judged = judgeForRequest({
       request,
       items: all,
@@ -340,13 +347,34 @@ const createRequestWorker = ({
     const picked = judged.releases.find((release) => release.id === judged.pickedId);
     const holding = picked === undefined ? undefined : judged.holding.get(picked.id);
     const score = judged.judgements.find((judgement) => judgement.releaseId === judged.pickedId);
+    const forIt = judged.releases.length;
 
     if (picked === undefined || holding === undefined || score === undefined) {
-      return false;
+      const best = judged.releases[0];
+      const why = judged.judgements[0]?.rejections.join('; ');
+
+      return {
+        isSent: false,
+        said:
+          best === undefined || why === undefined
+            ? `none of the ${releases.length.toString()} found were for it`
+            : `${forIt.toString()} of them for it, and none would do — the best, ${best.title}, because ${why}`,
+      };
     }
 
-    return (await send(request, picked, holding, score.score)) === null;
+    const problem = await send(request, picked, holding, score.score);
+
+    return problem === null
+      ? { isSent: true, said: `chose ${picked.title}, the best of ${forIt.toString()} for it` }
+      : { isSent: false, said: `chose ${picked.title}, but could not send it: ${problem}` };
   };
+
+  const describeSearch = (search: ReleaseSearch): string =>
+    search.season === undefined
+      ? 'it'
+      : search.episode === undefined
+        ? `season ${search.season.toString()}`
+        : `S${search.season.toString().padStart(2, '0')}E${search.episode.toString().padStart(2, '0')}`;
 
   const searchFor = async (found: Found, fetching: readonly RequestItemRecord[]) => {
     const pending = new Set(fetching.map((item) => item.id));
@@ -367,14 +395,28 @@ const createRequestWorker = ({
       for (const query of asking) {
         const outcome = await indexers.search({ ...search, query });
         const current = (await items.list()).filter((item) => item.requestId === found.request.id);
+        const fetched = await fetchFrom(
+          { ...found, items: current },
+          outcome.releases,
+          (item) => itemIds.includes(item.id) && pending.has(item.id),
+        );
+        const unanswered = outcome.indexers.filter((report) => report.problem !== null);
 
-        if (
-          await fetchFrom(
-            { ...found, items: current },
-            outcome.releases,
-            (item) => itemIds.includes(item.id) && pending.has(item.id),
-          )
-        ) {
+        await note(
+          found.request,
+          [
+            `Searched for ${describeSearch(search)}${query === found.request.title ? '' : ` as “${query}”`}`,
+            outcome.indexers.length === 0
+              ? ': no indexer is switched on'
+              : `: ${outcome.releases.length.toString()} found by ${outcome.indexers.length.toString()} indexer${outcome.indexers.length === 1 ? '' : 's'}, ${fetched.said}`,
+            ...unanswered.map(
+              (report) => `. ${report.indexerName} could not answer: ${report.problem ?? ''}`,
+            ),
+            '.',
+          ].join(''),
+        );
+
+        if (fetched.isSent) {
           for (const id of itemIds) {
             pending.delete(id);
           }
@@ -408,13 +450,23 @@ const createRequestWorker = ({
   };
 
   const release = async ({ request, items: all }: Found) => {
-    for (const item of all.filter((one) => one.state === 'waiting')) {
-      const isOut = item.airDate === null ? item.season === null : item.airDate <= today();
+    const out = all.filter(
+      (item) =>
+        item.state === 'waiting' &&
+        (item.airDate === null ? item.season === null : item.airDate <= today()),
+    );
 
-      if (isOut) {
-        await update(item, { state: 'wanted', problem: null, lastSearchedAt: null });
-        say(`${request.title}${item.season === null ? '' : ` ${item.title}`} is out, and wanted.`);
-      }
+    for (const item of out) {
+      await update(item, { state: 'wanted', problem: null, lastSearchedAt: null });
+    }
+
+    if (out.length > 0) {
+      await note(
+        request,
+        request.kind === 'film'
+          ? 'It is out, and wanted.'
+          : `${out.length.toString()} episode${out.length === 1 ? ' is' : 's are'} out, and wanted.`,
+      );
     }
   };
 
@@ -459,6 +511,10 @@ const createRequestWorker = ({
           await update(item, letGo(item, 'The download was taken out before it finished'));
         }
 
+        await note(
+          request,
+          'Its download was taken out before it finished, so it is wanted again.',
+        );
         continue;
       }
 
@@ -489,7 +545,10 @@ const createRequestWorker = ({
         await update(item, letGo(item, `${reason}. Trying the next best release.`));
       }
 
-      say(`${download.title} failed for ${request.title}: ${reason}.`);
+      await note(
+        request,
+        `${download.title} failed: ${reason}. It is blocklisted, and the next best is looked for.`,
+      );
     }
   };
 
@@ -512,6 +571,10 @@ const createRequestWorker = ({
       const attempts = (filing[0]?.attempts ?? 0) + 1;
 
       const retryOrFail = async (problem: string, isATry = true) => {
+        if (filing[0]?.problem !== problem) {
+          await note(request, `${download.title} could not be filed: ${problem}`);
+        }
+
         for (const item of filing) {
           await (!isATry
             ? update(item, { problem })
@@ -571,7 +634,10 @@ const createRequestWorker = ({
             libraryId: request.libraryId,
             folder: libraryFolderOf(request),
           });
-          say(`Filed ${download.title} for ${request.title}.`);
+          await note(
+            request,
+            `Filed ${filed.size.toString()} from ${download.title} into ${libraryFolderOf(request)}.`,
+          );
         }
       } catch (error) {
         const why = whyNotFiled(error instanceof Error ? error : null, path, client.name);
@@ -729,7 +795,11 @@ const createRequestWorker = ({
       const outcome = await indexers.search({ query: '', mode: 'search' });
 
       for (const { found, isFetching } of wanting) {
-        await fetchFrom(found, outcome.releases, isFetching);
+        const fetched = await fetchFrom(found, outcome.releases, isFetching);
+
+        if (fetched.isSent) {
+          await note(found.request, `Among the newest releases, ${fetched.said}.`);
+        }
       }
     });
 
@@ -862,6 +932,8 @@ const createRequestWorker = ({
         if (problem !== null) {
           return problem;
         }
+
+        await note(found.request, `${picked.title} was picked by hand.`);
 
         const after = await find(id);
 

@@ -12,6 +12,7 @@ const retryMediaRequest = vi.fn<typeof Requests.retryMediaRequest>();
 const removeMediaRequest = vi.fn<typeof Requests.removeMediaRequest>();
 const searchMissing = vi.fn<typeof Requests.searchMissing>();
 const fetchMediaRequestReleases = vi.fn<typeof Requests.fetchMediaRequestReleases>();
+const fetchMediaRequestLog = vi.fn<typeof Requests.fetchMediaRequestLog>();
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   fetchMediaRequests: () => fetchMediaRequests(),
@@ -20,6 +21,7 @@ vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   removeMediaRequest: (id: string) => removeMediaRequest(id),
   searchMissing: () => searchMissing(),
   fetchMediaRequestReleases: (id: string) => fetchMediaRequestReleases(id),
+  fetchMediaRequestLog: (id: string) => fetchMediaRequestLog(id),
   askForMedia: vi.fn(),
   refuseMediaRequest: vi.fn(),
   pickMediaRelease: vi.fn(),
@@ -141,6 +143,13 @@ describe('MediaRequestsPanel', () => {
     await choose(user, 'Severance', /Pick a release/);
     expect(await screen.findByText('Releases for Severance')).toBeInTheDocument();
     expect(fetchMediaRequestReleases).toHaveBeenCalledWith(SEVERANCE.id);
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    fetchMediaRequestLog.mockResolvedValue([
+      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.' },
+    ]);
+    await choose(user, 'Dune', /See what it has done/);
+    expect(await screen.findByText('Searched for it.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Close' }));
 
     await user.click(screen.getByRole('button', { name: 'Ask for something' }));

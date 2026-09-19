@@ -766,6 +766,14 @@ describe('createRequestsClient with requests for films and series', () => {
     ]);
   });
 
+  it('reads what a request has done', async () => {
+    expect(
+      await aClient(200, [
+        { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.' },
+      ]).client.requestLog(REQUEST.id),
+    ).toMatchObject({ kind: 'answered', value: [{ message: 'Searched for it.' }] });
+  });
+
   it('searches for a request by hand, sends a pick, and removes one', async () => {
     const outcome = { releases: [], indexers: [], judgements: [], pickedId: null };
 

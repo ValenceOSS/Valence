@@ -10,8 +10,13 @@ import { aProfile } from '@ValenceRequests/testing/aProfile';
 import { aRelease } from '@ValenceRequests/testing/aRelease';
 import { aRequestItem } from '@ValenceRequests/testing/aRequestItem';
 import { aSentDownload } from '@ValenceRequests/testing/aSentDownload';
+import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
 import { createRequestWorker } from './createRequestWorker';
-import type { Release, ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
+import type {
+  IndexerSearchReport,
+  Release,
+  ReleaseSearch,
+} from '@ValenceContracts/schemas/Indexer';
 import type { QueuedDownload, ReleaseSend } from '@ValenceContracts/schemas/DownloadQueue';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { SentDownloadRecord } from '@ValenceRequests/downloads/SentDownloadRecord';
@@ -46,6 +51,7 @@ type HarnessOptions = {
   refuseSend?: string;
   filed?: typeof fileDownload;
   localPath?: string;
+  reports?: IndexerSearchReport[];
 };
 
 /**
@@ -62,12 +68,22 @@ const aWorker = ({
   refuseSend,
   filed = vi.fn<typeof fileDownload>(() => Promise.resolve({ filed: new Map(), missing: [] })),
   localPath = '',
+  reports = [
+    {
+      indexerId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+      indexerName: 'Jackett',
+      found: 2,
+      tookMs: 10,
+      problem: null,
+    },
+  ],
 }: HarnessOptions = {}) => {
   const requestStore = createMemoryRecordStore(requests);
   const itemStore = createMemoryRecordStore(items);
   const blockedStore = createMemoryRecordStore(blocked);
   const downloads = createMemoryRecordStore(sent);
   const events = createMemoryEventStore(() => AT);
+  const log = createMemoryRequestLogStore(() => AT);
   const searched: ReleaseSearch[] = [];
   let sends = 0;
   const send = vi.fn((release: ReleaseSend): Promise<QueuedDownload | string> => {
@@ -113,15 +129,7 @@ const aWorker = ({
 
         return Promise.resolve({
           releases: found(asked),
-          indexers: [
-            {
-              indexerId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
-              indexerName: 'Jackett',
-              found: 2,
-              tookMs: 10,
-              problem: null,
-            },
-          ],
+          indexers: reports,
           judgements: [],
           pickedId: null,
         });
@@ -130,6 +138,7 @@ const aWorker = ({
     },
     profiles: { list: () => Promise.resolve(profiles) },
     events,
+    log: log.store,
     file: filed,
     now: () => AT,
     schedule: (run, afterMs) => {
@@ -155,6 +164,7 @@ const aWorker = ({
     scheduled,
     filed,
     requests: requestStore,
+    said: log.said,
   };
 };
 
@@ -765,6 +775,143 @@ describe('createRequestWorker', () => {
       expect(filed.mock.calls[0]?.[1]).toEqual([
         { id: '1x2', season: 1, episode: 2, title: '', airDate: null, filePath: null },
       ]);
+    });
+  });
+
+  describe('saying what it did', () => {
+    /**
+     * What a harness said of its one request.
+     */
+    const linesOf = (said: ReturnType<typeof aWorker>['said']) => said.map((line) => line.message);
+
+    it('says what came out, what each search found, and what it chose', async () => {
+      const { worker, said } = aWorker({ items: [aRequestItem({ state: 'waiting' })] });
+
+      await worker.tick();
+
+      expect(linesOf(said)).toEqual([
+        'It is out, and wanted.',
+        `Searched for it: 2 found by 1 indexer, chose ${BLURAY}, the best of 2 for it.`,
+      ]);
+    });
+
+    it('says when nothing found was for it, or none would do, and which indexers failed', async () => {
+      const { worker, said } = aWorker({
+        requests: [aMediaRequest({ aliases: ['Dune Part One'] })],
+        found: (search) =>
+          search.query === 'Dune'
+            ? [aRelease('Heat.1995.1080p.BluRay.x264-GRP')]
+            : [aRelease(BLURAY, { seeders: 0 })],
+        reports: [
+          {
+            indexerId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+            indexerName: 'Jackett',
+            found: 1,
+            tookMs: 10,
+            problem: null,
+          },
+          {
+            indexerId: '0f8fad5b-d9cb-469f-a165-70867728950e',
+            indexerName: 'Nyaa',
+            found: 0,
+            tookMs: 30_000,
+            problem: 'Timed out',
+          },
+        ],
+      });
+
+      await worker.tick();
+
+      expect(linesOf(said)).toEqual([
+        'Searched for it: 1 found by 2 indexers, none of the 1 found were for it. Nyaa could not answer: Timed out.',
+        `Searched for it as “Dune Part One”: 1 found by 2 indexers, 1 of them for it, and none would do — the best, ${BLURAY}, because Nobody is seeding it. Nyaa could not answer: Timed out.`,
+      ]);
+    });
+
+    it('says when no indexer is switched on, and names the episode searched for', async () => {
+      const { worker, said } = aWorker({
+        requests: [SEVERANCE],
+        items: [aRequestItem({ requestId: SEVERANCE.id, season: 1, episode: 2 })],
+        found: () => [],
+        reports: [],
+      });
+
+      await worker.tick();
+
+      expect(linesOf(said)).toEqual(['Searched for S01E02: no indexer is switched on.']);
+    });
+
+    it('says what became of a download, and why one could not be filed, once', async () => {
+      const failing = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        sent: [aSentDownload({ state: 'failed', problem: 'Gone' })],
+        found: () => [],
+      });
+
+      await failing.worker.tick();
+
+      expect(linesOf(failing.said)[0]).toBe(
+        'Dune failed: Gone. It is blocklisted, and the next best is looked for.',
+      );
+
+      const filing = aWorker({
+        items: [aRequestItem({ state: 'filing', downloadId: aSentDownload().id })],
+        sent: [aSentDownload({ state: 'done' })],
+      });
+
+      await filing.worker.tick();
+      await filing.worker.tick();
+
+      expect(linesOf(filing.said)).toEqual([
+        'Dune could not be filed: qBittorrent has not said where it put the download',
+      ]);
+
+      const filed = aWorker({
+        items: [aRequestItem({ state: 'filing', downloadId: aSentDownload().id })],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/Dune' })],
+        filed: () => Promise.resolve({ filed: new Map([[aRequestItem().id, '/x']]), missing: [] }),
+      });
+
+      await filed.worker.tick();
+
+      expect(linesOf(filed.said)).toEqual(['Filed 1 from Dune into /media/Films/Dune (2021).']);
+
+      const gone = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        found: () => [],
+      });
+
+      await gone.worker.tick();
+
+      expect(linesOf(gone.said)[0]).toBe(
+        'Its download was taken out before it finished, so it is wanted again.',
+      );
+    });
+
+    it('says what it chose among the newest releases, and what was picked by hand', async () => {
+      const feeds = aWorker({ items: [aRequestItem({ lastSearchedAt: AT.toISOString() })] });
+
+      await feeds.worker.pollFeeds();
+
+      expect(linesOf(feeds.said)).toEqual([
+        `Among the newest releases, chose ${BLURAY}, the best of 2 for it.`,
+      ]);
+
+      const byHand = aWorker();
+
+      await byHand.worker.pick(aMediaRequest().id, aRelease(BLURAY));
+
+      expect(linesOf(byHand.said)).toEqual([`${BLURAY} was picked by hand.`]);
+    });
+
+    it('says when it chose a release it could not send', async () => {
+      const { worker, said } = aWorker({ refuseSend: 'No torrent client is set up' });
+
+      await worker.tick();
+
+      expect(linesOf(said)[0]).toBe(
+        `Searched for it: 2 found by 1 indexer, chose ${BLURAY}, but could not send it: No torrent client is set up.`,
+      );
     });
   });
 

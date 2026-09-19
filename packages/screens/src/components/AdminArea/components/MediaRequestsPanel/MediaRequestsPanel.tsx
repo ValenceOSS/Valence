@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Cancel01Icon,
+  Clock01Icon,
   Delete02Icon,
   MoreHorizontalIcon,
   ReloadIcon,
@@ -26,6 +27,7 @@ import {
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { AskForMediaDialog } from '@ValenceScreens/components/AdminArea/components/AskForMediaDialog/AskForMediaDialog';
 import { RefuseRequestDialog } from '@ValenceScreens/components/AdminArea/components/RefuseRequestDialog/RefuseRequestDialog';
+import { RequestLogDialog } from '@ValenceScreens/components/AdminArea/components/RequestLogDialog/RequestLogDialog';
 import { RequestReleasesDialog } from '@ValenceScreens/components/AdminArea/components/RequestReleasesDialog/RequestReleasesDialog';
 import { describeRequestBadge } from './describeRequestBadge';
 import { describeRequestProgress } from './describeRequestProgress';
@@ -44,8 +46,8 @@ const IN_HAND = new Set<MediaRequest['state']>([
 /**
  * The Requested page: every film and series asked for, where each has got to — waiting on
  * approval, not out yet, wanted, downloading, filed or ready — and what can be done with it:
- * approving or refusing it, trying again what failed, searching by hand to pick a release, and
- * forgetting it. It is read again every few seconds, so a request can be watched all the way into
+ * approving or refusing it, seeing every search it made and why, trying again what failed,
+ * searching by hand to pick a release, and forgetting it. It is read again every few seconds, so a request can be watched all the way into
  * the library.
  *
  * Everything still wanted is searched for again every few hours by itself, and can be searched for
@@ -58,6 +60,7 @@ const MediaRequestsPanel = () => {
   const [refusing, setRefusing] = useState<MediaRequest | null>(null);
   const [searching, setSearching] = useState<MediaRequest | null>(null);
   const [removing, setRemoving] = useState<MediaRequest | null>(null);
+  const [reading, setReading] = useState<MediaRequest | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [said, setSaid] = useState<{ text: string; isProblem: boolean } | null>(null);
   const [isSearchingMissing, setIsSearchingMissing] = useState(false);
@@ -197,6 +200,15 @@ const MediaRequestsPanel = () => {
                     {
                       items: [
                         {
+                          id: 'log',
+                          label: 'See what it has done',
+                          detail: 'Every search, what it found, and why.',
+                          icon: <Icon of={Clock01Icon} size={15} />,
+                          onChoose: () => {
+                            setReading(request);
+                          },
+                        },
+                        {
                           id: 'retry',
                           label: 'Search again now',
                           detail: 'Tries again whatever failed, too.',
@@ -317,6 +329,13 @@ const MediaRequestsPanel = () => {
         }}
         onPicked={() => {
           void reread();
+        }}
+      />
+
+      <RequestLogDialog
+        request={reading}
+        onClose={() => {
+          setReading(null);
         }}
       />
 

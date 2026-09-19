@@ -958,6 +958,10 @@ describe('requests for films and series, through the server', () => {
       return Response.json({ searched: 1, startedAt: '2026-09-19T00:00:00.000Z' });
     }
 
+    if (url.endsWith('/log')) {
+      return Response.json([{ id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched.' }]);
+    }
+
     if (url.endsWith('/releases')) {
       return Response.json({ releases: [], indexers: [], judgements: [], pickedId: null });
     }
@@ -1136,6 +1140,9 @@ describe('requests for films and series, through the server', () => {
 
     expect((await ask(`/api/requests/media/${REQUEST.id}/retry`, 'POST')).status).toBe(200);
     expect((await ask(`/api/requests/media/${REQUEST.id}/releases`)).status).toBe(200);
+    expect(await (await ask(`/api/requests/media/${REQUEST.id}/log`)).json()).toMatchObject([
+      { message: 'Searched.' },
+    ]);
     expect(
       (await ask(`/api/requests/media/${REQUEST.id}/pick`, 'POST', { release: RELEASE })).status,
     ).toBe(200);

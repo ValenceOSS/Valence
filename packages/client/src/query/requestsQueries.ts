@@ -9,6 +9,7 @@ import { fetchDownloadClients } from '@ValenceClient/requests/fetchDownloadClien
 import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
 import { fetchProfiles } from '@ValenceClient/requests/fetchProfiles';
 import {
+  fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchMediaRequests,
 } from '@ValenceClient/requests/fetchMediaRequests';
@@ -163,6 +164,21 @@ const mediaRequestReleases = (id: string | null) =>
     retry: false,
   });
 
+/**
+ * What one request has done, read again every few seconds while it is open, so a search can be
+ * followed as it goes.
+ *
+ * @param id - Which request, or nothing before one is chosen.
+ * @returns The query.
+ */
+const mediaRequestLog = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media', id, 'log'],
+    queryFn: () => fetchMediaRequestLog(id ?? ''),
+    enabled: id !== null,
+    refetchInterval: MEDIA_REQUESTS_EVERY_MS,
+  });
+
 const requestsQueries = {
   key: REQUESTS,
   availability,
@@ -176,6 +192,7 @@ const requestsQueries = {
   profiles,
   mediaRequests,
   mediaRequestReleases,
+  mediaRequestLog,
 };
 
 export { requestsQueries };

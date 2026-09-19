@@ -27,6 +27,7 @@ import { createProfileService } from '@ValenceRequests/profiles/createProfileSer
 import { createDatabaseBlockedReleaseStore } from '@ValenceRequests/mediaRequests/createDatabaseBlockedReleaseStore';
 import { createDatabaseMediaRequestStore } from '@ValenceRequests/mediaRequests/createDatabaseMediaRequestStore';
 import { createDatabaseRequestItemStore } from '@ValenceRequests/mediaRequests/createDatabaseRequestItemStore';
+import { createDatabaseRequestLogStore } from '@ValenceRequests/mediaRequests/createDatabaseRequestLogStore';
 import { createRequestRoutes } from '@ValenceRequests/mediaRequests/createRequestRoutes';
 import { createRequestService } from '@ValenceRequests/mediaRequests/createRequestService';
 import { createRequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
@@ -117,6 +118,8 @@ const requestStore = createDatabaseMediaRequestStore(db);
 
 const requestItems = createDatabaseRequestItemStore(db);
 
+const requestLog = createDatabaseRequestLogStore(db);
+
 const requestWorker = createRequestWorker({
   requests: requestStore,
   items: requestItems,
@@ -127,6 +130,7 @@ const requestWorker = createRequestWorker({
   indexers,
   profiles,
   events,
+  log: requestLog,
   say,
 });
 
@@ -166,7 +170,7 @@ const app = createApp({
   routes: [
     createDownloadRoutes({ clients: downloadClients, queue: downloadQueue, filing: requestWorker }),
     createProfileRoutes(profiles),
-    createRequestRoutes({ service: mediaRequests, worker: requestWorker }),
+    createRequestRoutes({ service: mediaRequests, log: requestLog, worker: requestWorker }),
   ],
   secret: env.REQUESTS_SECRET,
   version: env.VALENCE_VERSION,

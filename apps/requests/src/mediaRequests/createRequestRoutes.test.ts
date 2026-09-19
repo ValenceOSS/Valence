@@ -4,6 +4,7 @@ import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRec
 import { aRelease } from '@ValenceRequests/testing/aRelease';
 import { createRequestRoutes } from './createRequestRoutes';
 import { createRequestService } from './createRequestService';
+import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
@@ -33,7 +34,9 @@ const theRoutes = (picked: MediaRequest | string | null = null) => {
     ),
     pick: vi.fn(() => Promise.resolve(picked)),
   };
+  const log = createMemoryRequestLogStore();
   const routes = createRequestRoutes({
+    log: log.store,
     service: createRequestService({
       requests: createMemoryRecordStore<MediaRequestRecord>(),
       items: createMemoryRecordStore<RequestItemRecord>(),
@@ -48,7 +51,7 @@ const theRoutes = (picked: MediaRequest | string | null = null) => {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
 
-  return { ask, worker };
+  return { ask, worker, log };
 };
 
 /**
@@ -104,6 +107,18 @@ describe('createRequestRoutes', () => {
       ).json(),
     ).toMatchObject({ title: 'Dune: Part One' });
     expect((await ask(`/requests/${id}/catalogue`, 'PUT', {})).status).toBe(400);
+  });
+
+  it('reads what a request has done', async () => {
+    const { ask, log } = theRoutes();
+    const id = await madeDune(ask);
+
+    await log.store.add(id, 'Searched for it.');
+
+    expect(await (await ask(`/requests/${id}/log`)).json()).toMatchObject([
+      { message: 'Searched for it.' },
+    ]);
+    expect((await ask('/requests/missing/log')).status).toBe(404);
   });
 
   it('lists what is followed, finds one, and removes one', async () => {

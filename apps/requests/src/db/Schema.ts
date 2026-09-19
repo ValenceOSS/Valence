@@ -241,7 +241,17 @@ const blocklistedRelease = requestsSchema.table(
   (table) => [unique('blocklisted_release_title').on(table.requestId, table.title)],
 );
 
+const requestLog = requestsSchema.table('request_log', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  requestId: uuid('request_id')
+    .notNull()
+    .references(() => mediaRequest.id, { onDelete: 'cascade' }),
+  message: text('message').notNull(),
+  at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export {
+  requestLog,
   blocklistedRelease,
   mediaRequest,
   qualityProfile,
