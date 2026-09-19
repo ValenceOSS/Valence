@@ -156,4 +156,83 @@ describe('createRequestsMonitor', () => {
 
     expect(onVpnDown).not.toHaveBeenCalled();
   });
+
+  describe('indexers', () => {
+    const JACKETT = {
+      id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+      name: 'Jackett',
+      problem: 'Timed out',
+    };
+
+    /**
+     * The service answering with these indexers failing.
+     */
+    const failing = (...indexers: (typeof JACKETT)[]): RequestsReading => ({
+      kind: 'answered',
+      status: {
+        version: '0.4.0',
+        vpn: aVpn(null),
+        indexers: { total: 2, enabled: 2, failing: indexers },
+      },
+    });
+
+    const watching = (...readings: RequestsReading[]) => {
+      const onIndexerFailing = vi.fn();
+      const onIndexerWorking = vi.fn();
+      const monitor = createRequestsMonitor({
+        address: 'http://requests:8421',
+        client: { readStatus: () => Promise.resolve(readings.shift() ?? SILENT) },
+        onLost: vi.fn(),
+        onRegained: vi.fn(),
+        onVpnDown: vi.fn(),
+        onVpnUp: vi.fn(),
+        onIndexerFailing,
+        onIndexerWorking,
+      });
+
+      return { monitor, onIndexerFailing, onIndexerWorking };
+    };
+
+    it('says once, with why, when an indexer starts failing', async () => {
+      const { monitor, onIndexerFailing } = watching(failing(), failing(JACKETT), failing(JACKETT));
+
+      await monitor.check();
+      await monitor.check();
+      await monitor.check();
+
+      expect(onIndexerFailing).toHaveBeenCalledTimes(1);
+      expect(onIndexerFailing).toHaveBeenCalledWith({ name: 'Jackett', problem: 'Timed out' });
+    });
+
+    it('says once when it stops', async () => {
+      const { monitor, onIndexerWorking } = watching(failing(JACKETT), failing(), failing());
+
+      await monitor.check();
+      await monitor.check();
+      await monitor.check();
+
+      expect(onIndexerWorking).toHaveBeenCalledTimes(1);
+      expect(onIndexerWorking).toHaveBeenCalledWith({ name: 'Jackett' });
+    });
+
+    it('stays quiet about indexers where nobody is listening', async () => {
+      const monitor = createRequestsMonitor({
+        address: 'http://requests:8421',
+        client: {
+          readStatus: vi
+            .fn<() => Promise<RequestsReading>>()
+            .mockResolvedValueOnce(failing(JACKETT))
+            .mockResolvedValueOnce(failing()),
+        },
+        onLost: vi.fn(),
+        onRegained: vi.fn(),
+        onVpnDown: vi.fn(),
+        onVpnUp: vi.fn(),
+      });
+
+      await monitor.check();
+
+      await expect(monitor.check()).resolves.toBe(true);
+    });
+  });
 });

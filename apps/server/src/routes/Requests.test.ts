@@ -11,6 +11,7 @@ import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRa
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
 import { createRequestsMonitor } from '@ValenceServer/requests/createRequestsMonitor';
+import { createRequestsClient } from '@ValenceServer/requests/createRequestsClient';
 import { jobDefinitionsFor } from '@ValenceServer/jobs/jobDefinitions';
 import {
   RequestsAvailabilitySchema,
@@ -32,17 +33,65 @@ const A_STATUS: RequestsStatus = {
   indexers: { total: 0, enabled: 0, failing: [] },
 };
 
+const AN_INDEXER = {
+  id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+  name: 'Jackett',
+  kind: 'torznab',
+  url: 'http://jackett:9117/',
+  hasApiKey: true,
+  priority: 25,
+  isEnabled: true,
+  categories: [],
+  requestsPerMinute: null,
+  timeoutSeconds: 30,
+  capabilities: null,
+  failures: 0,
+  lastProblem: null,
+  lastFailedAt: null,
+  turnedOffBecause: null,
+  createdAt: '2026-09-19T00:00:00.000Z',
+  updatedAt: '2026-09-19T00:00:00.000Z',
+};
+
+const A_TEST = { isWorking: true, problem: null, capabilities: null };
+
 /**
- * A server with requesting on or off, and somebody signed in holding what is asked for.
+ * The requests service as it answers when everything goes well.
  */
+const aWillingService = (url: string, init: { method?: string }): Response => {
+  const answer = (status: number, body: object | null) =>
+    new Response(body === null ? null : JSON.stringify(body), { status });
+  const method = init.method ?? 'GET';
+
+  if (url.endsWith('/api/search')) {
+    return answer(200, { releases: [], indexers: [] });
+  }
+
+  if (url.endsWith('/test') || url.endsWith('/try')) {
+    return answer(200, A_TEST);
+  }
+
+  if (method === 'DELETE') {
+    return answer(204, null);
+  }
+
+  if (method === 'POST') {
+    return answer(201, AN_INDEXER);
+  }
+
+  return answer(200, url.endsWith('/api/indexers') ? [AN_INDEXER] : AN_INDEXER);
+};
+
 const build = async ({
   isOn,
   granted = [],
   isAdministrator = false,
+  service = aWillingService,
 }: {
   isOn: boolean;
   granted?: readonly Permission[];
   isAdministrator?: boolean;
+  service?: (url: string, init: { method?: string }) => Response;
 }) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
@@ -63,6 +112,13 @@ const build = async ({
     settings,
     permissions,
     requests,
+    requestsClient: isOn
+      ? createRequestsClient({
+          address: 'http://requests:8421',
+          secret: 'a-secret-long-enough-to-be-worth-keeping',
+          fetch: (url, init) => Promise.resolve(service(url, init)),
+        })
+      : null,
     jobDefinitions: jobDefinitionsFor(isOn),
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
@@ -91,8 +147,16 @@ const build = async ({
     await permissions.assignRole(accountId, role.id);
   }
 
-  const ask = (path: string, method = 'GET') =>
-    app.request(`${TEST_ORIGIN}${path}`, { method, headers: { cookie, origin: TEST_ORIGIN } });
+  const ask = (path: string, method = 'GET', body?: object) =>
+    app.request(`${TEST_ORIGIN}${path}`, {
+      method,
+      headers: {
+        cookie,
+        origin: TEST_ORIGIN,
+        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
 
   return { app, ask, readStatus };
 };
@@ -198,5 +262,118 @@ describe('GET /api/admin/permissions', () => {
 
     expect(await offersRequests(await on.ask('/api/admin/permissions'))).toBe(true);
     expect(await offersRequests(await off.ask('/api/admin/permissions'))).toBe(false);
+  });
+});
+
+describe('indexers and searching, through the server', () => {
+  const ID = AN_INDEXER.id;
+  const DRAFT = { name: 'Jackett', kind: 'torznab', url: 'http://jackett:9117/', apiKey: 'a-key' };
+
+  it('lists, adds, changes, tests, tries and removes indexers for whoever manages requesting', async () => {
+    const { ask } = await build({ isOn: true, granted: ['requests.manage'] });
+
+    expect((await ask('/api/admin/requests/indexers')).status).toBe(200);
+    expect((await ask('/api/admin/requests/indexers', 'POST', DRAFT)).status).toBe(201);
+    expect((await ask('/api/admin/requests/indexers/try', 'POST', DRAFT)).status).toBe(200);
+    expect((await ask(`/api/admin/requests/indexers/${ID}`, 'PATCH', { priority: 3 })).status).toBe(
+      200,
+    );
+    expect((await ask(`/api/admin/requests/indexers/${ID}/test`, 'POST')).status).toBe(200);
+    expect((await ask(`/api/admin/requests/indexers/${ID}/try`, 'POST', DRAFT)).status).toBe(200);
+    expect((await ask(`/api/admin/requests/indexers/${ID}`, 'DELETE')).status).toBe(204);
+    expect((await ask('/api/admin/requests/search', 'POST', { query: 'dune' })).status).toBe(200);
+  });
+
+  it('never hands an indexer’s key back', async () => {
+    const { ask } = await build({ isOn: true, isAdministrator: true });
+    const listed = JSON.stringify(await (await ask('/api/admin/requests/indexers')).json());
+
+    expect(listed).toContain('"hasApiKey":true');
+    expect(listed).not.toContain('a-key');
+  });
+
+  it.each([
+    ['GET', '/api/admin/requests/indexers', undefined],
+    ['POST', '/api/admin/requests/indexers', DRAFT],
+    ['POST', '/api/admin/requests/indexers/try', DRAFT],
+    ['PATCH', `/api/admin/requests/indexers/${ID}`, { priority: 3 }],
+    ['DELETE', `/api/admin/requests/indexers/${ID}`, undefined],
+    ['POST', `/api/admin/requests/indexers/${ID}/test`, undefined],
+    ['POST', `/api/admin/requests/indexers/${ID}/try`, DRAFT],
+    ['POST', '/api/admin/requests/search', { query: 'dune' }],
+  ])(
+    'refuses %s %s to somebody who does not manage requesting, and while it is off',
+    async (method, path, body) => {
+      const refused = await build({ isOn: true, granted: ['requests.approve'] });
+      const off = await build({ isOn: false, isAdministrator: true });
+
+      expect((await refused.ask(path, method, body)).status).toBe(403);
+      expect((await off.ask(path, method, body)).status).toBe(404);
+    },
+  );
+
+  it.each([
+    ['GET', '/api/admin/requests/indexers', undefined],
+    ['POST', '/api/admin/requests/indexers', DRAFT],
+    ['POST', '/api/admin/requests/indexers/try', DRAFT],
+    ['PATCH', `/api/admin/requests/indexers/${ID}`, { priority: 3 }],
+    ['DELETE', `/api/admin/requests/indexers/${ID}`, undefined],
+    ['POST', `/api/admin/requests/indexers/${ID}/test`, undefined],
+    ['POST', `/api/admin/requests/indexers/${ID}/try`, DRAFT],
+    ['POST', '/api/admin/requests/search', { query: 'dune' }],
+  ])('says %s %s could not reach a service that is down', async (method, path, body) => {
+    const { ask } = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: () => new Response(null, { status: 503 }),
+    });
+
+    expect((await ask(path, method, body)).status).toBe(502);
+  });
+
+  it('passes on the service turning away an indexer it does not have', async () => {
+    const { ask } = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: () => new Response(JSON.stringify({ error: 'No such indexer.' }), { status: 404 }),
+    });
+
+    for (const [method, path, body] of [
+      ['PATCH', `/api/admin/requests/indexers/${ID}`, { priority: 3 }],
+      ['DELETE', `/api/admin/requests/indexers/${ID}`, undefined],
+      ['POST', `/api/admin/requests/indexers/${ID}/test`, undefined],
+    ] as const) {
+      const response = await ask(path, method, body);
+
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ error: 'No such indexer.' });
+    }
+
+    expect((await ask('/api/admin/requests/indexers')).status).toBe(502);
+  });
+
+  it('passes on the service refusing what it was sent', async () => {
+    const { ask } = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: () =>
+        new Response(JSON.stringify({ error: 'That is not an indexer.' }), { status: 400 }),
+    });
+
+    for (const [method, path, body] of [
+      ['POST', '/api/admin/requests/indexers', DRAFT],
+      ['POST', '/api/admin/requests/indexers/try', DRAFT],
+      ['PATCH', `/api/admin/requests/indexers/${ID}`, { priority: 3 }],
+      ['POST', `/api/admin/requests/indexers/${ID}/try`, DRAFT],
+      ['POST', '/api/admin/requests/search', { query: 'dune' }],
+    ] as const) {
+      expect((await ask(path, method, body)).status).toBe(400);
+    }
+  });
+
+  it('refuses a body that is not what the route takes, before asking the service', async () => {
+    const { ask } = await build({ isOn: true, isAdministrator: true });
+
+    expect((await ask('/api/admin/requests/indexers', 'POST', { name: 'x' })).status).toBe(400);
   });
 });

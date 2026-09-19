@@ -4,17 +4,22 @@ import type { RequestsClient } from '@ValenceServer/requests/createRequestsClien
 
 type CreateRequestsMonitorOptions = {
   address: string;
-  client: RequestsClient;
+  client: Pick<RequestsClient, 'readStatus'>;
   now?: () => Date;
   onLost: (reason: string) => void;
   onRegained: () => void;
   onVpnDown: (reason: string) => void;
   onVpnUp: (vpn: RequestsVpn) => void;
+  onIndexerFailing?: (indexer: { name: string; problem: string }) => void;
+  onIndexerWorking?: (indexer: { name: string }) => void;
 };
 
 /**
  * Keeps the server's last word on the requests service, and speaks up when it, or the VPN it
  * downloads through, stops or starts answering.
+ *
+ * Indexers are judged the same way: the service says which are failing, and each one is spoken of
+ * once when it starts and once when it stops.
  *
  * A VPN is only judged while the service answers — a service nobody can reach says nothing about
  * its tunnel either way — and only where one was set up at all.
@@ -26,6 +31,8 @@ type CreateRequestsMonitorOptions = {
  * @param onRegained - Told once when it answers again.
  * @param onVpnDown - Told why, once, when the tunnel drops.
  * @param onVpnUp - Told once when it comes back.
+ * @param onIndexerFailing - Told once, with why, when an indexer starts failing.
+ * @param onIndexerWorking - Told once when an indexer that was failing stops.
  * @returns The monitor: check it, and read what it last found.
  */
 const createRequestsMonitor = ({
@@ -36,7 +43,10 @@ const createRequestsMonitor = ({
   onRegained,
   onVpnDown,
   onVpnUp,
+  onIndexerFailing = () => undefined,
+  onIndexerWorking = () => undefined,
 }: CreateRequestsMonitorOptions) => {
+  let failingIndexers = new Map<string, string>();
   let latest: RequestsOverview = { address, isReachable: false, checkedAt: null, status: null };
   let silence = '';
   let lastVpn: RequestsVpn | null = null;
@@ -74,6 +84,24 @@ const createRequestsMonitor = ({
 
       latest = { address, isReachable: true, checkedAt, status: reading.status };
       service.record(true);
+
+      const nowFailing = new Map(
+        reading.status.indexers.failing.map((indexer) => [indexer.id, indexer.name]),
+      );
+
+      for (const indexer of reading.status.indexers.failing) {
+        if (!failingIndexers.has(indexer.id)) {
+          onIndexerFailing({ name: indexer.name, problem: indexer.problem });
+        }
+      }
+
+      for (const [id, name] of failingIndexers) {
+        if (!nowFailing.has(id)) {
+          onIndexerWorking({ name });
+        }
+      }
+
+      failingIndexers = nowFailing;
 
       if (reading.status.vpn.isConfigured) {
         lastVpn = reading.status.vpn;

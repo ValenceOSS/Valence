@@ -417,4 +417,26 @@ describe('formatWebhookBody', () => {
 
     expect(written.body).toBe('The VPN the requests service downloads through is up.');
   });
+
+  it('names an indexer that keeps failing, and why', () => {
+    const written = formatWebhookBody('ntfy', {
+      ...anEnvelope,
+      event: 'requests.indexerFailing',
+      data: { name: 'Jackett', problem: 'The indexer refused the API key' },
+    });
+
+    expect(written.body).toBe(
+      'The indexer Jackett keeps failing — The indexer refused the API key',
+    );
+  });
+
+  it('says an indexer came back is nothing to act on', () => {
+    const written = formatWebhookBody('ntfy', {
+      ...anEnvelope,
+      event: 'requests.indexerWorking',
+      data: { name: 'Jackett' },
+    });
+
+    expect(written.body).toContain('Nothing needs doing');
+  });
 });
