@@ -4,10 +4,11 @@ import type { Coalesced, Schedule } from './createCoalescer';
 import type { Entitlements } from './createEntitlements';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { FromServer, RealtimeTopic } from '@ValenceContracts/schemas/Realtime';
+import type { Permission } from '@ValenceContracts/schemas/Permission';
 
 type RealtimeConnection = {
   id: string;
-  accountId: string;
+  accountId: string | null;
   profileId: string | null;
   deliver: (message: FromServer) => void;
 };
@@ -64,7 +65,7 @@ const withinReach = (connection: RealtimeConnection, reach: Reach): boolean => {
   }
 
   if (reach.kind === 'accounts') {
-    return reach.accountIds.includes(connection.accountId);
+    return connection.accountId !== null && reach.accountIds.includes(connection.accountId);
   }
 
   if (reach.kind === 'connections') {
@@ -103,6 +104,20 @@ const createRealtimeRegistry = ({
   const subscriptions = new Map<string, Set<RealtimeTopic>>();
   const reaches = new Map<string, { topic: RealtimeTopic; reach: Reach }>();
 
+  /**
+   * What a connection is entitled to hear.
+   *
+   * A guest holds a share link and no account, so it holds no permissions either — and rather than
+   * ask a permission store about somebody who is not in it, the answer is simply nothing. Every
+   * subscription a guest asks for is refused outright regardless; this is what keeps a topic it
+   * somehow held from being delivered anyway.
+   *
+   * @param connection - Whose entitlements to read.
+   * @returns The permissions held.
+   */
+  const heldBy = async (connection: RealtimeConnection): Promise<ReadonlySet<Permission>> =>
+    connection.accountId === null ? new Set() : await entitlements.of(connection.accountId);
+
   const sendTo = (connection: RealtimeConnection, message: FromServer) => {
     try {
       connection.deliver(message);
@@ -138,7 +153,7 @@ const createRealtimeRegistry = ({
         continue;
       }
 
-      const held = await entitlements.of(connection.accountId);
+      const held = await heldBy(connection);
 
       if (!mayHearTopic(addressed.topic, held)) {
         subscriptions.get(connection.id)?.delete(addressed.topic);
@@ -159,7 +174,7 @@ const createRealtimeRegistry = ({
         continue;
       }
 
-      const held = await entitlements.of(connection.accountId);
+      const held = await heldBy(connection);
       const lost = [...already].filter((topic) => !mayHearTopic(topic, held));
 
       if (lost.length === 0) {
@@ -203,6 +218,12 @@ const createRealtimeRegistry = ({
       const connection = connections.get(connectionId);
 
       if (connection === undefined) {
+        return { allowed: [], refused: [...topics] };
+      }
+
+      if (connection.accountId === null) {
+        sendTo(connection, { kind: 'subscribed', topics: [], refused: [...topics] });
+
         return { allowed: [], refused: [...topics] };
       }
 

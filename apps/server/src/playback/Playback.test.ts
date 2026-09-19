@@ -864,6 +864,7 @@ describe('telling presence what is being watched', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -946,6 +947,7 @@ describe('telling presence what is being watched', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -996,6 +998,7 @@ describe('telling presence what is being watched', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,

@@ -262,6 +262,7 @@ describe('administration over HTTP', () => {
 
     context.presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -286,6 +287,7 @@ describe('administration over HTTP', () => {
 
     context.presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -324,6 +326,7 @@ describe('administration over HTTP', () => {
 
     context.presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -377,6 +380,7 @@ describe('administration over HTTP', () => {
 
     context.presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -399,6 +403,7 @@ describe('administration over HTTP', () => {
 
     context.presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -995,6 +1000,7 @@ describe('watching and steering what is being watched', () => {
   const watching = (presence: ReturnType<typeof build>['presence'], clientId = 'tab-1') => {
     presence.connect({
       clientId,
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -1066,6 +1072,7 @@ describe('watching and steering what is being watched', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,

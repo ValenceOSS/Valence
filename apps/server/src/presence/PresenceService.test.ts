@@ -35,6 +35,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: 'profile-1',
       profileName: 'Dan',
@@ -52,6 +53,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: 'me',
       profileId: null,
       profileName: null,
@@ -70,6 +72,7 @@ describe('createPresenceService', () => {
     expect(
       presence.connect({
         clientId: 'tab-1',
+        socketId: 'socket-1',
         accountId: 'me',
         profileId: null,
         profileName: 'Mine',
@@ -81,6 +84,7 @@ describe('createPresenceService', () => {
     expect(
       presence.connect({
         clientId: 'tab-1',
+        socketId: 'socket-2',
         accountId: 'somebody-else',
         profileId: null,
         profileName: 'Theirs',
@@ -95,11 +99,62 @@ describe('createPresenceService', () => {
     ]);
   });
 
+  it('lets the tab itself sign in as somebody else, which is what signing out and back in is', () => {
+    const presence = createPresenceService();
+
+    presence.connect({
+      clientId: 'tab-1',
+      socketId: 'socket-1',
+      accountId: 'me',
+      profileId: null,
+      profileName: 'Mine',
+      deviceLabel: 'Chrome on Mac',
+      send: vi.fn(),
+    });
+
+    expect(
+      presence.connect({
+        clientId: 'tab-1',
+        socketId: 'socket-1',
+        accountId: 'somebody-else',
+        profileId: null,
+        profileName: 'Theirs',
+        deviceLabel: 'Chrome on Mac',
+        send: vi.fn(),
+      }),
+    ).toBe(true);
+
+    expect(presence.list()[0]?.profileName).toBe('Theirs');
+  });
+
+  it('keeps a tab listed when a socket that was replaced finally closes', () => {
+    const presence = createPresenceService();
+
+    const arriving = (socketId: string) => ({
+      clientId: 'tab-1',
+      socketId,
+      accountId: 'me',
+      profileId: null,
+      profileName: 'Mine',
+      deviceLabel: 'Chrome on Mac',
+      send: vi.fn(),
+    });
+
+    presence.connect(arriving('socket-1'));
+    presence.startPlayback('tab-1', PLAYBACK);
+    presence.connect(arriving('socket-2'));
+    presence.disconnect('tab-1', 'socket-1');
+
+    expect(presence.list()).toHaveLength(1);
+    expect(presence.list()[0]?.playback).not.toBeNull();
+  });
+
   it('lets the same account reconnect a tab it already had, as a new socket does', () => {
     const presence = createPresenceService();
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: 'me',
       profileId: null,
       profileName: null,
@@ -110,6 +165,7 @@ describe('createPresenceService', () => {
     expect(
       presence.connect({
         clientId: 'tab-1',
+        socketId: 'socket-1',
         accountId: 'me',
         profileId: null,
         profileName: null,
@@ -124,13 +180,14 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
       deviceLabel: 'Chrome on Mac',
       send: vi.fn(),
     });
-    presence.disconnect('tab-1');
+    presence.disconnect('tab-1', 'socket-1');
 
     expect(presence.list()).toEqual([]);
   });
@@ -140,6 +197,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -158,6 +216,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -174,6 +233,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -191,6 +251,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -208,6 +269,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -224,6 +286,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -260,6 +323,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -281,6 +345,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -300,6 +365,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -322,6 +388,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -345,6 +412,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -367,6 +435,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -389,6 +458,7 @@ describe('createPresenceService', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -444,6 +514,7 @@ describe('the things presence is asked about tabs it does not have', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -462,6 +533,7 @@ describe('the things presence is asked about tabs it does not have', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -491,6 +563,7 @@ describe('the things presence is asked about tabs it does not have', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: null,
       profileId: null,
       profileName: null,
@@ -532,6 +605,7 @@ describe('createPresenceService, telling somebody about viewings', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: 'account-1',
       profileId: 'profile-1',
       profileName: 'Dan',
@@ -581,7 +655,7 @@ describe('createPresenceService, telling somebody about viewings', () => {
     const { presence, stopped } = watching();
 
     presence.startPlayback('tab-1', PLAYBACK);
-    presence.disconnect('tab-1');
+    presence.disconnect('tab-1', 'socket-1');
 
     expect(stopped).toHaveBeenCalledTimes(1);
   });
@@ -607,7 +681,7 @@ describe('createPresenceService, telling somebody about viewings', () => {
   it('says nothing about a tab that disconnects without having watched anything', () => {
     const { presence, stopped } = watching();
 
-    presence.disconnect('tab-1');
+    presence.disconnect('tab-1', 'socket-1');
 
     expect(stopped).not.toHaveBeenCalled();
   });
@@ -617,7 +691,7 @@ describe('createPresenceService, telling somebody about viewings', () => {
 
     presence.startPlayback('tab-1', PLAYBACK);
     presence.stopPlayback('tab-1');
-    presence.disconnect('tab-1');
+    presence.disconnect('tab-1', 'socket-1');
 
     expect(stopped).toHaveBeenCalledTimes(1);
   });
@@ -634,6 +708,7 @@ describe('createPresenceService, a client that asks twice', () => {
 
     presence.connect({
       clientId: 'tab-1',
+      socketId: 'socket-1',
       accountId: 'account-1',
       profileId: 'profile-1',
       profileName: 'Dan',

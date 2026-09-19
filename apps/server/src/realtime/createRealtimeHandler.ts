@@ -12,8 +12,10 @@ type RealtimeSocket = {
 };
 
 type Who = {
-  accountId: string;
+  accountId: string | null;
   profileId: string | null;
+  guestOf?: string | null;
+  viaShare?: string | null;
 };
 
 type RealtimeSession = {
@@ -26,13 +28,16 @@ type RealtimeSession = {
 type PresenceBinding = {
   connect: (arrival: {
     clientId: string;
+    socketId: string;
     accountId: string | null;
     profileId: string | null;
     profileName: string | null;
+    guestOf: string | null;
+    viaShare: string | null;
     deviceLabel: string;
     send: (event: PresenceControl) => void;
-  }) => boolean;
-  disconnect: (clientId: string) => void;
+  }) => void;
+  disconnect: (clientId: string, socketId: string) => void;
   nameOf: (accountId: string, profileId: string | null) => Promise<string | null>;
 };
 
@@ -121,7 +126,10 @@ const createRealtimeHandler = ({
         return myName;
       }
 
-      myName = (await presence?.nameOf(who.accountId, chosenProfileId)) ?? null;
+      myName =
+        who.accountId === null
+          ? (who.guestOf ?? null)
+          : ((await presence?.nameOf(who.accountId, chosenProfileId)) ?? null);
 
       return myName ?? UNNAMED;
     };
@@ -168,7 +176,7 @@ const createRealtimeHandler = ({
         }
 
         if (read.data.kind.startsWith('party')) {
-          if (party !== undefined) {
+          if (party !== undefined && who.accountId !== null) {
             handlePartyMessage(
               read.data,
               {
@@ -193,7 +201,8 @@ const createRealtimeHandler = ({
         const { clientId, deviceLabel } = read.data;
 
         const profileId =
-          read.data.profileId === null || (await ownsProfile(who.accountId, read.data.profileId))
+          read.data.profileId === null ||
+          (who.accountId !== null && (await ownsProfile(who.accountId, read.data.profileId)))
             ? read.data.profileId
             : null;
 
@@ -204,19 +213,23 @@ const createRealtimeHandler = ({
           myName = null;
         }
 
-        if (presence === undefined || clientId === undefined || claimed === clientId) {
+        if (presence === undefined || clientId === undefined) {
           return;
         }
 
-        const named = await presence.nameOf(who.accountId, profileId);
+        const named =
+          who.accountId === null ? null : await presence.nameOf(who.accountId, profileId);
 
         myName = named ?? myName;
 
-        const took = presence.connect({
+        presence.connect({
           clientId,
+          socketId: id,
           accountId: who.accountId,
           profileId,
           profileName: named,
+          guestOf: who.guestOf ?? null,
+          viaShare: who.viaShare ?? null,
           deviceLabel: deviceLabel ?? 'Unknown device',
           send: (event) => {
             write({
@@ -229,9 +242,7 @@ const createRealtimeHandler = ({
           },
         });
 
-        if (took) {
-          claimed = clientId;
-        }
+        claimed = clientId;
       },
 
       ping: () => {
@@ -240,7 +251,7 @@ const createRealtimeHandler = ({
 
       close: () => {
         if (claimed !== null) {
-          presence?.disconnect(claimed);
+          presence?.disconnect(claimed, id);
         }
 
         if (party !== undefined) {

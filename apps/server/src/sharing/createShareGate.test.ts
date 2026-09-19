@@ -5,6 +5,8 @@ import type { ResolvedShare, ShareService } from './ShareService';
 
 const A_SHARE: ResolvedShare = {
   id: 'share-1',
+  createdBy: 'account-1',
+  createdByName: 'Dan',
   kind: 'item',
   mediaId: 'film-1',
   seriesId: null,

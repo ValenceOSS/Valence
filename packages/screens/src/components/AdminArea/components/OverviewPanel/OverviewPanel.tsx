@@ -1,3 +1,4 @@
+import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { Icon } from '@ValenceUI/Icon';
 import { ArrowRight01Icon, RefreshIcon } from '@hugeicons/core-free-icons';
 import { useMemo, useState } from 'react';
@@ -202,7 +203,7 @@ const OverviewPanel = ({
                       {session.playback?.mediaTitle ?? ''}
                     </span>
                     <span className="truncate text-xs text-text-muted">
-                      {session.profileName ?? 'Unknown viewer'} · {session.deviceLabel}
+                      {nameOfSession(session)} · {session.deviceLabel}
                     </span>
                   </span>
 

@@ -92,6 +92,25 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
     return found?.howMany ?? 0;
   };
 
+  /**
+   * What to call whoever made a link.
+   *
+   * A guest is listed on the dashboard as somebody's guest, and this is the somebody. The account
+   * rather than a profile, because a link belongs to an account — `share.createdBy` says so.
+   *
+   * @param accountId - Who made it.
+   * @returns Their name, or nothing where the account is gone.
+   */
+  const nameOfAccount = async (accountId: string): Promise<string | null> => {
+    const rows = await db
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, accountId))
+      .limit(1);
+
+    return rows[0]?.name ?? null;
+  };
+
   const titleOf = async (kind: ShareKind, subjectId: string): Promise<string | null> => {
     if (kind === 'series') {
       const rows = await db
@@ -324,6 +343,8 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
 
       return {
         id: row.id,
+        createdBy: row.createdBy,
+        createdByName: await nameOfAccount(row.createdBy),
         kind,
         mediaId: row.mediaItemId,
         seriesId: row.seriesId,

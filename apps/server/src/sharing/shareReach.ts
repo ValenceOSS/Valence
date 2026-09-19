@@ -17,6 +17,7 @@ type ShareReach =
   | { kind: 'needsItem'; mediaId: string }
   | { kind: 'needsBook'; bookId: string }
   | { kind: 'needsSession'; sessionId: string }
+  | { kind: 'needsTab'; clientId: string }
   | { kind: 'refused' };
 
 const ID = '[0-9a-fA-F-]{36}';
@@ -49,7 +50,16 @@ const SESSION_ROUTES: readonly RegExp[] = [
   new RegExp(`^/api/playback/session/(${SESSION_ID})/[^/]+$`),
 ];
 
-const OPEN_TO_A_GUEST: readonly RegExp[] = [/^\/api\/share\/[^/]+$/, /^\/api\/health$/];
+const OPEN_TO_A_GUEST: readonly RegExp[] = [
+  /^\/api\/share\/[^/]+$/,
+  /^\/api\/health$/,
+  /^\/api\/realtime$/,
+];
+
+const PRESENCE_ROUTES: readonly RegExp[] = [
+  new RegExp(`^/api/presence/(${SESSION_ID})/heartbeat$`),
+  new RegExp(`^/api/presence/(${SESSION_ID})/watching$`),
+];
 
 /**
  * Decides what a guest holding a share link may ask for. Everything is refused unless it is named
@@ -97,6 +107,14 @@ const reachOf = (request: ShareRequest): ShareReach => {
 
     if (found?.[1] !== undefined) {
       return { kind: 'needsSession', sessionId: found[1] };
+    }
+  }
+
+  for (const route of PRESENCE_ROUTES) {
+    const found = route.exec(request.path);
+
+    if (found?.[1] !== undefined) {
+      return { kind: 'needsTab', clientId: found[1] };
     }
   }
 

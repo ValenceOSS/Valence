@@ -8,6 +8,8 @@ import type {
 
 type ResolvedShare = {
   id: string;
+  createdBy: string;
+  createdByName: string | null;
   kind: ShareKind;
   mediaId: string | null;
   seriesId: string | null;

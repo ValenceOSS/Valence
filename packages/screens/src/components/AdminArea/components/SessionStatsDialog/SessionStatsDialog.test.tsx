@@ -31,6 +31,8 @@ const WATCHING_SESSION: ActiveSession = {
   clientId: 'tab-1',
   profileId: 'profile-1',
   profileName: 'Dan',
+  isGuest: false,
+  guestOf: null,
   deviceLabel: 'Chrome on macOS',
   connectedAt: 1000,
   playback: {

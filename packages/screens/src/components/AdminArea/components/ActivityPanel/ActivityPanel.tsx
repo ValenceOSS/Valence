@@ -1,3 +1,4 @@
+import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { useState } from 'react';
 import { SessionCard } from '@ValenceScreens/components/AdminArea/components/SessionCard/SessionCard';
 import { SessionMessageDialog } from '@ValenceScreens/components/AdminArea/components/SessionMessageDialog/SessionMessageDialog';
@@ -75,7 +76,7 @@ const ActivityPanel = ({
         )}
       </div>
       <SessionMessageDialog
-        watcher={watcher?.profileName ?? watcher?.deviceLabel ?? 'this screen'}
+        watcher={watcher === undefined ? 'this screen' : nameOfSession(watcher)}
         isOpen={watcher !== undefined}
         onSend={async (text) => {
           if (watcher !== undefined) {
