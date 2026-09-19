@@ -9,6 +9,7 @@ import { fetchDownloadClients } from '@ValenceClient/requests/fetchDownloadClien
 import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
 import { fetchProfiles } from '@ValenceClient/requests/fetchProfiles';
 import {
+  fetchRequestBlocklist,
   fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchMediaRequests,
@@ -194,6 +195,19 @@ const mediaRequestLog = (id: string | null) =>
   });
 
 /**
+ * The releases one request will not try again, read when its page is open.
+ *
+ * @param id - Which request, or nothing before one is chosen.
+ * @returns The query.
+ */
+const requestBlocklist = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media', id, 'blocklist'],
+    queryFn: () => fetchRequestBlocklist(id ?? ''),
+    enabled: id !== null,
+  });
+
+/**
  * The seasons a series has, which only change when a new one is announced, so they are kept for
  * an hour.
  *
@@ -299,6 +313,7 @@ const requestsQueries = {
   mediaRequests,
   mediaRequestReleases,
   mediaRequestLog,
+  requestBlocklist,
   seriesSeasons,
   discover,
   catalogueBrowse,

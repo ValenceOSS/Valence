@@ -402,7 +402,6 @@ import type {
   MediaRequest,
   MediaRequestAsk,
   MediaRequestDraft,
-  MediaRequestKind,
   MusicCatalogueHit,
   MusicRequestKind,
   ReleaseType,
@@ -410,6 +409,7 @@ import type {
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { libraryKindOf } from '@ValenceContracts/functions/libraryKindOf';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
@@ -488,13 +488,6 @@ const neverKeep = (): Record<string, string> => ({ 'cache-control': 'no-store' }
 const SignInBodySchema = z.object({ password: z.string().min(1) });
 
 const OVERVIEW_PATIENCE_MILLISECONDS = 5_000;
-
-const REQUEST_LIBRARY_KINDS: Record<MediaRequestKind, LibraryKind> = {
-  film: 'movies',
-  series: 'shows',
-  artist: 'music',
-  album: 'music',
-};
 
 const NOT_STOOD: CatalogueStanding = {
   status: 'askable',
@@ -3983,7 +3976,7 @@ const createApp = ({
   const draftFor = async (headers: Headers, asked: MediaRequestAsk): Promise<Drafted> => {
     const session = await readSessionOnce(auth, headers);
     const catalogue = await catalogueFor(asked);
-    const libraryKind = REQUEST_LIBRARY_KINDS[asked.kind];
+    const libraryKind = libraryKindOf(asked.kind);
     const libraries = (await library.list(asTheServer)).filter(
       (entry) => entry.kind === libraryKind && entry.takesRequests,
     );

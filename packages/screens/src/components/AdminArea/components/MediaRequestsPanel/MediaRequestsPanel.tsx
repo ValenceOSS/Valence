@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ArrowRight01Icon,
   Cancel01Icon,
   Clock01Icon,
   Delete02Icon,
@@ -13,6 +14,7 @@ import {
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
+import { Checkbox } from '@ValenceUI/Checkbox';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -20,8 +22,8 @@ import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import {
-  approveMediaRequest,
   changeMediaRequest,
+  decideMediaRequests,
   removeMediaRequest,
   retryMediaRequest,
   searchMissing,
@@ -31,12 +33,13 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { AskForMediaDialog } from '@ValenceScreens/components/AdminArea/components/AskForMediaDialog/AskForMediaDialog';
+import { ApproveRequestDialog } from '@ValenceScreens/components/AdminArea/components/ApproveRequestDialog/ApproveRequestDialog';
 import { RefuseRequestDialog } from '@ValenceScreens/components/AdminArea/components/RefuseRequestDialog/RefuseRequestDialog';
-import { RequestLogDialog } from '@ValenceScreens/components/AdminArea/components/RequestLogDialog/RequestLogDialog';
-import { RequestReleasesDialog } from '@ValenceScreens/components/AdminArea/components/RequestReleasesDialog/RequestReleasesDialog';
+import { RequestDetailDialog } from '@ValenceScreens/components/AdminArea/components/RequestDetailDialog/RequestDetailDialog';
 import { describeRequestBadge } from './describeRequestBadge';
 import { describeRequestProgress } from './describeRequestProgress';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import type { RequestDetailTab } from '@ValenceScreens/components/AdminArea/components/RequestDetailDialog/RequestDetailDialog.types';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 
@@ -63,9 +66,14 @@ const MediaRequestsPanel = () => {
   const requests = useQuery(requestsQueries.mediaRequests());
   const [isAsking, setIsAsking] = useState(false);
   const [refusing, setRefusing] = useState<MediaRequest | null>(null);
-  const [searching, setSearching] = useState<MediaRequest | null>(null);
+  const [approving, setApproving] = useState<MediaRequest | null>(null);
   const [removing, setRemoving] = useState<MediaRequest | null>(null);
-  const [reading, setReading] = useState<MediaRequest | null>(null);
+  const [reading, setReading] = useState<{ request: MediaRequest; tab: RequestDetailTab } | null>(
+    null,
+  );
+  const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
+  const [isDeciding, setIsDeciding] = useState(false);
+  const [refusingChosen, setRefusingChosen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [said, setSaid] = useState<{ text: string; isProblem: boolean } | null>(null);
   const [isSearchingMissing, setIsSearchingMissing] = useState(false);
@@ -94,8 +102,79 @@ const MediaRequestsPanel = () => {
     [reread],
   );
 
+  const awaiting = (requests.data ?? []).filter((request) => request.approval === 'awaiting');
+  const chosenAwaiting = awaiting.filter((request) => chosen.has(request.id));
+
+  const choose = useCallback((id: string, isChosen: boolean) => {
+    setChosen((held) => {
+      const next = new Set(held);
+
+      if (isChosen) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+
+      return next;
+    });
+  }, []);
+
+  const decide = useCallback(
+    (decision: 'approve' | 'refuse', reason = '') => {
+      const ids = [...chosen];
+
+      if (ids.length === 0) {
+        return;
+      }
+
+      setIsDeciding(true);
+      setSaid(null);
+
+      void decideMediaRequests(ids, decision, reason)
+        .then(({ value, refusal }) => {
+          if (value === null) {
+            setSaid({
+              text: refusal?.message ?? 'They could not be decided.',
+              isProblem: true,
+            });
+
+            return;
+          }
+
+          setChosen(new Set());
+          setSaid({
+            text:
+              value.refused.length === 0
+                ? `${value.decided.length.toString()} ${decision === 'approve' ? 'approved' : 'refused'}.`
+                : `${value.decided.length.toString()} done, ${value.refused.length.toString()} could not be.`,
+            isProblem: value.refused.length > 0,
+          });
+        })
+        .then(reread)
+        .finally(() => {
+          setIsDeciding(false);
+        });
+    },
+    [chosen, reread],
+  );
+
   const columns = useMemo<DataTableColumn<MediaRequest>[]>(
     () => [
+      {
+        id: 'chosen',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) =>
+          row.original.approval === 'awaiting' ? (
+            <Checkbox
+              label={`Choose ${row.original.title}`}
+              checked={chosen.has(row.original.id)}
+              onCheckedChange={(isChosen) => {
+                choose(row.original.id, isChosen);
+              }}
+            />
+          ) : null,
+      },
       {
         id: 'title',
         header: 'Asked for',
@@ -191,9 +270,10 @@ const MediaRequestsPanel = () => {
                               {
                                 id: 'approve',
                                 label: 'Approve',
+                                detail: 'Look it over, and change it first if you like.',
                                 icon: <Icon of={Tick02Icon} size={15} />,
                                 onChoose: () => {
-                                  act(request, () => approveMediaRequest(request.id));
+                                  setApproving(request);
                                 },
                               },
                             ]),
@@ -214,12 +294,21 @@ const MediaRequestsPanel = () => {
                     {
                       items: [
                         {
+                          id: 'open',
+                          label: 'Open',
+                          detail: 'How it is going, what it found, and what it will not try.',
+                          icon: <Icon of={ArrowRight01Icon} size={15} />,
+                          onChoose: () => {
+                            setReading({ request, tab: 'going' });
+                          },
+                        },
+                        {
                           id: 'log',
                           label: 'See what it has done',
                           detail: 'Every search, what it found, and why.',
                           icon: <Icon of={Clock01Icon} size={15} />,
                           onChoose: () => {
-                            setReading(request);
+                            setReading({ request, tab: 'history' });
                           },
                         },
                         {
@@ -238,7 +327,7 @@ const MediaRequestsPanel = () => {
                           detail: 'Search every indexer and choose what to fetch.',
                           icon: <Icon of={Search01Icon} size={15} />,
                           onChoose: () => {
-                            setSearching(request);
+                            setReading({ request, tab: 'releases' });
                           },
                         },
                         {
@@ -281,7 +370,7 @@ const MediaRequestsPanel = () => {
         },
       },
     ],
-    [act, busyId],
+    [act, busyId, chosen, choose],
   );
 
   return (
@@ -353,20 +442,39 @@ const MediaRequestsPanel = () => {
         }}
       />
 
-      <RequestReleasesDialog
-        request={searching}
+      <ApproveRequestDialog
+        request={approving}
         onClose={() => {
-          setSearching(null);
+          setApproving(null);
         }}
-        onPicked={() => {
+        onApproved={() => {
           void reread();
         }}
       />
 
-      <RequestLogDialog
-        request={reading}
+      <RequestDetailDialog
+        request={reading?.request ?? null}
+        openOn={reading?.tab ?? 'going'}
         onClose={() => {
           setReading(null);
+        }}
+        onChanged={() => {
+          void reread();
+        }}
+      />
+
+      <RefuseRequestDialog
+        request={refusingChosen ? (chosenAwaiting[0] ?? null) : null}
+        howMany={chosen.size}
+        onClose={() => {
+          setRefusingChosen(false);
+        }}
+        onRefused={() => {
+          void reread();
+        }}
+        onRefuseMany={(reason) => {
+          setRefusingChosen(false);
+          decide('refuse', reason);
         }}
       />
 
@@ -417,6 +525,51 @@ const MediaRequestsPanel = () => {
           columns={columns}
           rows={requests.data}
           getRowId={(request) => request.id}
+          toolbar={
+            awaiting.length === 0 ? undefined : (
+              <div className="mr-auto flex flex-wrap items-center gap-3">
+                <Checkbox
+                  label={`Choose all ${awaiting.length.toString()} waiting on approval`}
+                  checked={chosenAwaiting.length === awaiting.length}
+                  onCheckedChange={(isChosen) => {
+                    setChosen(isChosen ? new Set(awaiting.map((one) => one.id)) : new Set());
+                  }}
+                />
+
+                <span className="text-sm text-text-muted">
+                  {chosen.size === 0
+                    ? `${awaiting.length.toString()} waiting on approval`
+                    : `${chosen.size.toString()} chosen`}
+                </span>
+
+                {chosen.size === 0 ? null : (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="xs"
+                      isLoading={isDeciding}
+                      onClick={() => {
+                        decide('approve');
+                      }}
+                    >
+                      Approve them
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      disabled={isDeciding}
+                      onClick={() => {
+                        setRefusingChosen(true);
+                      }}
+                    >
+                      Refuse them
+                    </Button>
+                  </>
+                )}
+              </div>
+            )
+          }
           emptyMessage="Nothing has been asked for yet. Ask for a film, a series, an artist or an album to have it fetched and filed into its library."
         />
       )}

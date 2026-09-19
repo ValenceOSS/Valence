@@ -3,7 +3,9 @@ import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { sendToRequests } from '@ValenceClient/requests/sendToRequests';
 import { ReleaseSearchOutcomeSchema } from '@ValenceContracts/schemas/Indexer';
 import {
+  BlockedReleaseSchema,
   CatalogueSeasonSchema,
+  MediaRequestDecidedSchema,
   MediaRequestSchema,
   MissingSearchSchema,
   MusicCatalogueHitSchema,
@@ -13,8 +15,10 @@ import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { Sent } from '@ValenceClient/requests/sendToRequests';
 import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
 import type {
+  BlockedRelease,
   CatalogueSeason,
   MediaRequest,
+  MediaRequestDecided,
   MediaRequestAsk,
   MediaRequestChange,
   MissingSearch,
@@ -91,6 +95,49 @@ const approveMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
  */
 const refuseMediaRequest = (id: string, reason: string): Promise<Sent<MediaRequest>> =>
   sendToRequests(`${REQUESTS}/${id}/refuse`, 'POST', { reason }, readRequest);
+
+/**
+ * Approves or refuses several requests in one go.
+ *
+ * @param ids - Which requests.
+ * @param decision - Whether they are approved or refused.
+ * @param reason - Why they were refused, where they were.
+ * @returns What was decided and what could not be, or why not.
+ */
+const decideMediaRequests = (
+  ids: readonly string[],
+  decision: 'approve' | 'refuse',
+  reason = '',
+): Promise<Sent<MediaRequestDecided>> =>
+  sendToRequests(
+    `${REQUESTS}/decide`,
+    'POST',
+    { ids: [...ids], decision, reason },
+    async (response) => MediaRequestDecidedSchema.parse(await response.json()),
+  );
+
+/**
+ * Reads the releases a request will not try again, and why each was given up on.
+ *
+ * @param id - Which request.
+ * @returns What it will not try again.
+ */
+const fetchRequestBlocklist = (id: string): Promise<BlockedRelease[]> =>
+  readFromServer(`${REQUESTS}/${id}/blocklist`, z.array(BlockedReleaseSchema));
+
+/**
+ * Lets a request try a release it had given up on again.
+ *
+ * @param id - Which request.
+ * @param blockId - Which release it had given up on.
+ * @returns Why not, where it could not be.
+ */
+const liftRequestBlock = async (id: string, blockId: string): Promise<Refusal> =>
+  (
+    await sendToRequests(`${REQUESTS}/${id}/blocklist/${blockId}`, 'DELETE', undefined, () =>
+      Promise.resolve(null),
+    )
+  ).refusal;
 
 /**
  * Tries again whatever failed in a request, and searches again for what is wanted.
@@ -189,11 +236,14 @@ export {
   approveMediaRequest,
   askForMedia,
   changeMediaRequest,
+  decideMediaRequests,
+  fetchRequestBlocklist,
   fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchMediaRequests,
   fetchSeriesSeasons,
   findReleasesFor,
+  liftRequestBlock,
   pickMediaRelease,
   refuseMediaRequest,
   removeMediaRequest,
