@@ -13,6 +13,7 @@ const A_STATUS = {
     checkedAt: null,
     problem: null,
   },
+  indexers: { total: 0, enabled: 0, failing: [] },
 };
 
 /**

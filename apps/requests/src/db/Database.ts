@@ -1,10 +1,11 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { setting } from '@ValenceRequests/db/Schema';
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { indexer, setting } from '@ValenceRequests/db/Schema';
 
-const schema = { setting };
+const schema = { indexer, setting };
 
-type RequestsDatabase = ReturnType<typeof createDatabase>['db'];
+type RequestsDatabase = PgDatabase<PgQueryResultHKT, typeof schema>;
 
 /**
  * Opens the connection pool and binds the service's own schema to it.
@@ -21,4 +22,4 @@ const createDatabase = (databaseUrl: string) => {
 
 export type { RequestsDatabase };
 
-export { createDatabase };
+export { createDatabase, schema };

@@ -27,6 +27,7 @@ const ANSWERING: RequestsOverview = {
       checkedAt: '2026-09-19T12:00:00.000Z',
       problem: null,
     },
+    indexers: { total: 0, enabled: 0, failing: [] },
   },
 };
 

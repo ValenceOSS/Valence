@@ -605,6 +605,7 @@ describe('AdminArea', () => {
           checkedAt: '2026-09-19T12:00:00.000Z',
           problem: 'The tunnel is stopped',
         },
+        indexers: { total: 0, enabled: 0, failing: [] },
       },
     };
 
