@@ -4,6 +4,7 @@ import {
   Cancel01Icon,
   Clock01Icon,
   Delete02Icon,
+  HandPointingRight01Icon,
   MoreHorizontalIcon,
   ReloadIcon,
   Search01Icon,
@@ -20,6 +21,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import {
   approveMediaRequest,
+  changeMediaRequest,
   removeMediaRequest,
   retryMediaRequest,
   searchMissing,
@@ -227,6 +229,23 @@ const MediaRequestsPanel = () => {
                             setSearching(request);
                           },
                         },
+                        {
+                          id: 'picking',
+                          label: request.isPickedByHand
+                            ? 'Fetch the best by itself'
+                            : 'Only fetch what I pick',
+                          detail: request.isPickedByHand
+                            ? 'Searches for it, and fetches the best by its quality.'
+                            : 'Stops searching for it by itself.',
+                          icon: <Icon of={HandPointingRight01Icon} size={15} />,
+                          onChoose: () => {
+                            act(request, () =>
+                              changeMediaRequest(request.id, {
+                                isPickedByHand: !request.isPickedByHand,
+                              }),
+                            );
+                          },
+                        },
                       ],
                     },
                     {
@@ -307,8 +326,12 @@ const MediaRequestsPanel = () => {
         onClose={() => {
           setIsAsking(false);
         }}
-        onAsked={() => {
+        onAsked={(request) => {
           void reread();
+
+          if (request.isPickedByHand) {
+            setSearching(request);
+          }
         }}
       />
 

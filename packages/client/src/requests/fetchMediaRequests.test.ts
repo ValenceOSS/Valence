@@ -6,6 +6,7 @@ import {
   fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchMediaRequests,
+  fetchSeriesSeasons,
   pickMediaRelease,
   refuseMediaRequest,
   removeMediaRequest,
@@ -23,6 +24,7 @@ const REQUEST = {
   posterUrl: null,
   libraryId: 'films',
   profileId: null,
+  isPickedByHand: false,
   state: 'wanted',
   problem: null,
   approval: 'approved',
@@ -105,6 +107,14 @@ describe('fetchMediaRequests', () => {
       `POST /api/requests/media/${REQUEST.id}/retry`,
       `POST /api/requests/media/${REQUEST.id}/pick`,
     ]);
+  });
+
+  it('reads the seasons a series has', async () => {
+    const seasons = [{ season: 1, episodeCount: 9, firstAired: '2022-02-18' }];
+    const asked = answering(seasons);
+
+    expect(await fetchSeriesSeasons(95396)).toEqual(seasons);
+    expect(asked.mock.calls[0]?.[0]).toBe('/api/requests/catalogue/series/95396/seasons');
   });
 
   it('reads what a request has done', async () => {

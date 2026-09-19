@@ -8,6 +8,7 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { FormField } from '@ValenceUI/FormField';
 import { Icon } from '@ValenceUI/Icon';
+import { Checkbox } from '@ValenceUI/Checkbox';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -16,7 +17,6 @@ import { searchCatalogue } from '@ValenceClient/admin/fetchAdmin';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { askForMedia } from '@ValenceClient/requests/fetchMediaRequests';
 import { CatalogueMatchList } from '@ValenceScreens/components/AdminArea/components/CatalogueMatchList/CatalogueMatchList';
-import { readSeasonList } from './readSeasonList';
 import type { CatalogueMatch } from '@ValenceClient/admin/fetchAdmin';
 import type { MediaRequestKind, ReleaseWait } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskForMediaDialogProps } from './AskForMediaDialog.types';
@@ -32,6 +32,11 @@ const WAITS: readonly { id: ReleaseWait; label: string }[] = [
 ];
 
 const THE_LIBRARYS = 'library';
+
+const PICKING = [
+  { id: 'best', label: 'The best by its quality' },
+  { id: 'hand', label: 'I will pick it' },
+] as const;
 
 const SEASON_CHOICES = [
   { id: 'every', label: 'Every season, and later ones' },
@@ -56,7 +61,8 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const [chosen, setChosen] = useState<CatalogueMatch | null>(null);
   const [waitFor, setWaitFor] = useState<ReleaseWait>('digital');
   const [seasonChoice, setSeasonChoice] = useState<'every' | 'some'>('every');
-  const [seasonText, setSeasonText] = useState('');
+  const [picked, setPicked] = useState<ReadonlySet<number>>(new Set());
+  const [isPickedByHand, setIsPickedByHand] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
   const profiles = useQuery({ ...requestsQueries.profiles(), enabled: isOpen });
@@ -69,8 +75,14 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const quality = qualities.find((one) => one.id === (profileId ?? THE_LIBRARYS));
   const [problem, setProblem] = useState<string | null>(null);
 
-  const seasons = seasonChoice === 'every' ? null : readSeasonList(seasonText);
-  const isReady = chosen !== null && (seasonChoice === 'every' || seasons !== null);
+  const listed = useQuery(
+    requestsQueries.seriesSeasons(
+      chosen === null || kind !== 'series' ? null : Number(chosen.externalId),
+    ),
+  );
+  const seasons =
+    seasonChoice === 'every' ? null : [...picked].toSorted((left, right) => left - right);
+  const isReady = chosen !== null && (seasons === null || seasons.length > 0);
 
   const look = () => {
     setIsSearching(true);
@@ -94,6 +106,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
       kind,
       tmdbId: Number(chosen.externalId),
       ...(profileId === null ? {} : { profileId }),
+      isPickedByHand,
       ...(kind === 'film' ? { waitFor } : { seasons }),
     })
       .then(({ value, refusal }) => {
@@ -189,6 +202,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 size="xs"
                 onClick={() => {
                   setChosen(null);
+                  setPicked(new Set());
                 }}
               >
                 Choose another
@@ -257,20 +271,56 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   />
                 </FormField>
 
-                {seasonChoice === 'every' ? null : (
-                  <TextField
-                    label="Which seasons"
-                    value={seasonText}
-                    onValueChange={setSeasonText}
-                    placeholder="1, 3-5"
-                    description="Specials are season 0."
-                    {...(seasonText !== '' && seasons === null
-                      ? { error: 'Seasons are numbers, such as 1, 3-5.' }
-                      : {})}
-                  />
+                {seasonChoice === 'every' ? null : listed.data === undefined ? (
+                  <Spinner label="Asking the catalogue for its seasons" size="sm" />
+                ) : (
+                  <ul aria-label="Which seasons" className="grid gap-2 sm:grid-cols-2">
+                    {listed.data.map((one) => (
+                      <li key={one.season}>
+                        <Checkbox
+                          label={one.season === 0 ? 'Specials' : `Season ${one.season.toString()}`}
+                          description={[
+                            `${one.episodeCount.toString()} episode${one.episodeCount === 1 ? '' : 's'}`,
+                            ...(one.firstAired === null ? [] : [one.firstAired.slice(0, 4)]),
+                          ].join(' · ')}
+                          checked={picked.has(one.season)}
+                          onCheckedChange={(isChecked) => {
+                            const next = new Set(picked);
+
+                            if (isChecked) {
+                              next.add(one.season);
+                            } else {
+                              next.delete(one.season);
+                            }
+
+                            setPicked(next);
+                          }}
+                        />
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </>
             )}
+
+            <FormField
+              label="Release"
+              description={
+                isPickedByHand
+                  ? 'Nothing is fetched until you pick a release from what the indexers have.'
+                  : 'The best release by its quality is fetched as soon as one turns up.'
+              }
+            >
+              <SegmentedRow
+                label="Release"
+                size="sm"
+                items={PICKING}
+                value={isPickedByHand ? 'hand' : 'best'}
+                onSelect={(next) => {
+                  setIsPickedByHand(next === 'hand');
+                }}
+              />
+            </FormField>
           </>
         )}
       </DialogContent>

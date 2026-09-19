@@ -18,6 +18,7 @@ const aMediaRequest = (overrides: Partial<MediaRequestRecord> = {}): MediaReques
   libraryId: 'films',
   libraryPath: '/media/Films',
   profileId: null,
+  isPickedByHand: false,
   approval: 'approved',
   refusedBecause: null,
   requestedById: 'someone',

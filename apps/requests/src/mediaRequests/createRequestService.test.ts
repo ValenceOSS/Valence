@@ -98,6 +98,17 @@ describe('createRequestService', () => {
     expect((await service.change(request.id, { profileId: null }, null))?.profileId).toBeNull();
   });
 
+  it('keeps whether its release is picked by hand, and changes it', async () => {
+    const { service } = aService();
+    const { request } = await service.add({ ...DUNE, isPickedByHand: true });
+
+    expect(request.isPickedByHand).toBe(true);
+    expect((await service.add(DUNE)).request.isPickedByHand).toBe(true);
+    expect(
+      (await service.change(request.id, { isPickedByHand: false }, null))?.isPickedByHand,
+    ).toBe(false);
+  });
+
   it('approves and refuses', async () => {
     const { service } = aService();
     const { request } = await service.add(DUNE);

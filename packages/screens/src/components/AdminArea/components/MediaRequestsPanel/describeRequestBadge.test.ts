@@ -48,6 +48,9 @@ describe('describeRequestBadge', () => {
     expect(describeRequestBadge(aMediaRequest()).detail).toBe(
       'Searched for again every few hours.',
     );
+    expect(describeRequestBadge(aMediaRequest({ isPickedByHand: true })).detail).toBe(
+      'Waiting for a release to be picked by hand.',
+    );
     expect(describeRequestBadge(aMediaRequest({ problem: 'Nothing yet' })).detail).toBe(
       'Nothing yet',
     );

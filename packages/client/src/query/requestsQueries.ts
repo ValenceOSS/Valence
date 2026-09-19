@@ -12,6 +12,7 @@ import {
   fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchMediaRequests,
+  fetchSeriesSeasons,
 } from '@ValenceClient/requests/fetchMediaRequests';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 
@@ -179,6 +180,21 @@ const mediaRequestLog = (id: string | null) =>
     refetchInterval: MEDIA_REQUESTS_EVERY_MS,
   });
 
+/**
+ * The seasons a series has, which only change when a new one is announced, so they are kept for
+ * an hour.
+ *
+ * @param tmdbId - The series' catalogue id, or nothing before one is chosen.
+ * @returns The query.
+ */
+const seriesSeasons = (tmdbId: number | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'seasons', tmdbId],
+    queryFn: () => fetchSeriesSeasons(tmdbId ?? 0),
+    enabled: tmdbId !== null,
+    staleTime: 60 * 60 * 1000,
+  });
+
 const requestsQueries = {
   key: REQUESTS,
   availability,
@@ -193,6 +209,7 @@ const requestsQueries = {
   mediaRequests,
   mediaRequestReleases,
   mediaRequestLog,
+  seriesSeasons,
 };
 
 export { requestsQueries };

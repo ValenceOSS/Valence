@@ -13,6 +13,7 @@ const removeMediaRequest = vi.fn<typeof Requests.removeMediaRequest>();
 const searchMissing = vi.fn<typeof Requests.searchMissing>();
 const fetchMediaRequestReleases = vi.fn<typeof Requests.fetchMediaRequestReleases>();
 const fetchMediaRequestLog = vi.fn<typeof Requests.fetchMediaRequestLog>();
+const changeMediaRequest = vi.fn<typeof Requests.changeMediaRequest>();
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   fetchMediaRequests: () => fetchMediaRequests(),
@@ -22,6 +23,8 @@ vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   searchMissing: () => searchMissing(),
   fetchMediaRequestReleases: (id: string) => fetchMediaRequestReleases(id),
   fetchMediaRequestLog: (id: string) => fetchMediaRequestLog(id),
+  changeMediaRequest: (...given: Parameters<typeof Requests.changeMediaRequest>) =>
+    changeMediaRequest(...given),
   askForMedia: vi.fn(),
   refuseMediaRequest: vi.fn(),
   pickMediaRelease: vi.fn(),
@@ -113,6 +116,20 @@ describe('MediaRequestsPanel', () => {
     });
     await waitFor(() => {
       expect(fetchMediaRequests).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('switches a request between fetching the best by itself and only what is picked', async () => {
+    const user = userEvent.setup();
+
+    changeMediaRequest.mockResolvedValue({ value: DUNE, refusal: null });
+    fetchMediaRequests.mockResolvedValue([aMediaRequest({ isPickedByHand: true })]);
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await choose(user, 'Dune', /Fetch the best by itself/);
+
+    await waitFor(() => {
+      expect(changeMediaRequest).toHaveBeenCalledWith(DUNE.id, { isPickedByHand: false });
     });
   });
 

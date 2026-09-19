@@ -244,6 +244,18 @@ describe('createRequestWorker', () => {
       expect(searched).toHaveLength(1);
     });
 
+    it('never searches by itself for a request whose release is picked by hand', async () => {
+      const { worker, searched } = aWorker({
+        requests: [aMediaRequest({ isPickedByHand: true })],
+      });
+
+      await worker.tick();
+      await worker.searchMissing();
+      await worker.pollFeeds();
+
+      expect(searched).toEqual([]);
+    });
+
     it('leaves a request waiting on approval alone', async () => {
       const { worker, searched } = aWorker({
         requests: [aMediaRequest({ approval: 'awaiting' })],

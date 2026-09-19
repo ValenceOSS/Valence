@@ -3,6 +3,7 @@ import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { sendToRequests } from '@ValenceClient/requests/sendToRequests';
 import { ReleaseSearchOutcomeSchema } from '@ValenceContracts/schemas/Indexer';
 import {
+  CatalogueSeasonSchema,
   MediaRequestSchema,
   MissingSearchSchema,
   RequestLogEntrySchema,
@@ -11,6 +12,7 @@ import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { Sent } from '@ValenceClient/requests/sendToRequests';
 import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
 import type {
+  CatalogueSeason,
   MediaRequest,
   MediaRequestAsk,
   MediaRequestChange,
@@ -95,6 +97,18 @@ const fetchMediaRequestReleases = (id: string): Promise<ReleaseSearchOutcome> =>
   readFromServer(`${REQUESTS}/${id}/releases`, ReleaseSearchOutcomeSchema);
 
 /**
+ * Reads the seasons a series has, to choose which to ask for.
+ *
+ * @param tmdbId - The series' catalogue id.
+ * @returns Its seasons, specials first.
+ */
+const fetchSeriesSeasons = (tmdbId: number): Promise<CatalogueSeason[]> =>
+  readFromServer(
+    `/api/requests/catalogue/series/${tmdbId.toString()}/seasons`,
+    z.array(CatalogueSeasonSchema),
+  );
+
+/**
  * Reads what a request has done: every search, what it found, and what became of it.
  *
  * @param id - Which.
@@ -140,6 +154,7 @@ export {
   fetchMediaRequestLog,
   fetchMediaRequestReleases,
   fetchMediaRequests,
+  fetchSeriesSeasons,
   pickMediaRelease,
   refuseMediaRequest,
   removeMediaRequest,

@@ -27,6 +27,7 @@ import {
   QualityProfileSchema,
 } from '@ValenceContracts/schemas/QualityProfile';
 import {
+  CatalogueSeasonSchema,
   MediaRequestAskSchema,
   MediaRequestChangeSchema,
   MediaRequestPickSchema,
@@ -654,6 +655,28 @@ const askForMediaRoute = createRoute({
   }),
 });
 
+const seriesSeasonsRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/series/{tmdbId}/seasons',
+  tags: ['Requests'],
+  summary: 'List the seasons a series has, to choose which to ask for',
+  request: {
+    params: z.object({
+      tmdbId: z.coerce
+        .number()
+        .int()
+        .positive()
+        .openapi({ param: { name: 'tmdbId', in: 'path' } }),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'Its seasons, specials first, with how many episodes each holds',
+      content: { 'application/json': { schema: z.array(CatalogueSeasonSchema) } },
+    },
+  }),
+});
+
 const searchMissingRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/missing',
@@ -770,6 +793,7 @@ export {
   removeMediaRequestRoute,
   retryMediaRequestRoute,
   searchMissingRoute,
+  seriesSeasonsRoute,
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,

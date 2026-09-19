@@ -54,7 +54,11 @@ const describeRequestBadge = (request: MediaRequest): StateBadge => {
       return {
         label: 'Wanted',
         tone: 'warning',
-        detail: request.problem ?? 'Searched for again every few hours.',
+        detail:
+          request.problem ??
+          (request.isPickedByHand
+            ? 'Waiting for a release to be picked by hand.'
+            : 'Searched for again every few hours.'),
       };
     case 'searching':
       return { label: 'Searching', tone: 'accent', detail: null };

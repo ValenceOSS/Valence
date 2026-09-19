@@ -914,6 +914,7 @@ describe('requests for films and series, through the server', () => {
     posterUrl: null,
     libraryId: FILMS.id,
     profileId: null,
+    isPickedByHand: false,
     state: 'wanted',
     problem: null,
     approval: 'approved',
@@ -1051,6 +1052,37 @@ describe('requests for films and series, through the server', () => {
     expect(
       (await nowhere.ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 1 })).status,
     ).toBe(201);
+  });
+
+  it('lists the seasons a series has for whoever may ask', async () => {
+    const asking = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      describeForRequest: () =>
+        Promise.resolve({
+          ...DUNE,
+          episodes: [
+            { season: 1, episode: 1, title: '', airDate: '2022-02-18' },
+            { season: 0, episode: 1, title: '', airDate: null },
+          ],
+        }),
+    });
+
+    expect(await (await asking.ask('/api/requests/catalogue/series/95396/seasons')).json()).toEqual(
+      [
+        { season: 0, episodeCount: 1, firstAired: null },
+        { season: 1, episodeCount: 1, firstAired: '2022-02-18' },
+      ],
+    );
+
+    const unknown = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
+
+    expect((await unknown.ask('/api/requests/catalogue/series/1/seasons')).status).toBe(404);
+
+    const nobody = await build({ isOn: true, service: aWillingKeeper });
+
+    expect((await nobody.ask('/api/requests/catalogue/series/1/seasons')).status).toBe(403);
   });
 
   it('refuses asking to somebody who may not ask', async () => {

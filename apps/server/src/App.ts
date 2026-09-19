@@ -252,6 +252,7 @@ import {
   removeMediaRequestRoute,
   retryMediaRequestRoute,
   searchMissingRoute,
+  seriesSeasonsRoute,
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,
@@ -388,6 +389,7 @@ import type { WebhookStore } from '@ValenceServer/webhooks/WebhookStore';
 import type { RealtimePublisher } from '@ValenceServer/realtime/RealtimePublisher';
 import type { EventBus, WebhookOccurrence } from '@ValenceServer/events/EventBus';
 import type { MediaRequestKind, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
+import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import type { LogStore } from '@ValenceServer/logging/Logger';
 import type { JobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
 import type { ResourceHistoryStore } from '@ValenceServer/logging/createResourceHistoryStore';
@@ -3896,6 +3898,25 @@ const createApp = ({
     }
 
     return context.json(request, isNew ? 201 : 200);
+  });
+
+  app.openapi(seriesSeasonsRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const may = (
+      await Promise.all(
+        ['requests.ask' as const, ...APPROVERS].map((permission) => requires(headers, permission)),
+      )
+    ).some(Boolean);
+
+    if (!may) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const catalogue = await describeForRequest(context.req.valid('param').tmdbId, 'series');
+
+    return catalogue === null
+      ? context.json({ error: 'The catalogue does not know that series, or cannot be asked.' }, 404)
+      : context.json(seasonsOf(catalogue.episodes), 200);
   });
 
   app.openapi(searchMissingRoute, async (context) => {

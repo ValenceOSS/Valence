@@ -152,6 +152,9 @@ const groupedByDownload = (
  * best is looked for at once. Filing that fails is tried again a few times before the film or
  * episode is marked failed for an admin to look at.
  *
+ * A request whose release is to be picked by hand is never searched for by itself, only followed
+ * and filed once one is picked.
+ *
  * A release sent by hand for a library of films or series is filed too once it has finished,
  * named from what the release's own name says it is.
  *
@@ -236,6 +239,9 @@ const createRequestWorker = ({
         items: waiting.filter((item) => item.requestId === request.id),
       }));
   };
+
+  const searchedByItself = async (): Promise<Found[]> =>
+    (await approved()).filter((found) => !found.request.isPickedByHand);
 
   const profileFor = async (request: MediaRequestRecord): Promise<QualityProfile> => {
     const video = (await profiles.list()).filter((profile) => profile.kind === 'video');
@@ -740,7 +746,7 @@ const createRequestWorker = ({
 
       await fileSentByHand();
 
-      for (const found of await approved()) {
+      for (const found of await searchedByItself()) {
         const unsearched = found.items.filter(
           (item) => item.state === 'wanted' && item.lastSearchedAt === null,
         );
@@ -756,7 +762,7 @@ const createRequestWorker = ({
       const startedAt = at();
       let searched = 0;
 
-      for (const found of await approved()) {
+      for (const found of await searchedByItself()) {
         const profile = await profileFor(found.request);
         const fetching = found.items.filter(
           (item) => item.state === 'wanted' || isUpgradable(profile, item),
@@ -776,7 +782,7 @@ const createRequestWorker = ({
   const pollFeeds = () =>
     serially(async () => {
       const fetching = await Promise.all(
-        (await approved()).map(async (found) => {
+        (await searchedByItself()).map(async (found) => {
           const profile = await profileFor(found.request);
 
           return {

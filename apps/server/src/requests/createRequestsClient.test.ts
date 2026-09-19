@@ -693,6 +693,7 @@ describe('createRequestsClient with requests for films and series', () => {
     posterUrl: null,
     libraryId: 'films',
     profileId: null,
+    isPickedByHand: false,
     state: 'wanted' as const,
     problem: null,
     approval: 'approved' as const,

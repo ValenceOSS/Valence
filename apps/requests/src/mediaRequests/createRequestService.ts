@@ -159,6 +159,7 @@ const createRequestService = ({
           ...factsOf(draft.catalogue),
           seasons: bothSeasons(kept.seasons, draft.seasons),
           ...(draft.profileId === null ? {} : { profileId: draft.profileId }),
+          ...(draft.isPickedByHand ? { isPickedByHand: true } : {}),
           ...(draft.isApproved && kept.approval !== 'approved'
             ? { approval: 'approved', refusedBecause: null }
             : {}),
@@ -181,6 +182,7 @@ const createRequestService = ({
         libraryId: draft.libraryId,
         libraryPath: draft.libraryPath,
         profileId: draft.profileId,
+        isPickedByHand: draft.isPickedByHand,
         approval: draft.isApproved ? 'approved' : 'awaiting',
         refusedBecause: null,
         requestedById: draft.requestedBy.id,
@@ -217,6 +219,7 @@ const createRequestService = ({
         ...(change.seasons === undefined ? {} : { seasons: change.seasons }),
         ...(change.waitFor === undefined ? {} : { waitFor: change.waitFor }),
         ...(change.profileId === undefined ? {} : { profileId: change.profileId }),
+        ...(change.isPickedByHand === undefined ? {} : { isPickedByHand: change.isPickedByHand }),
         ...(catalogue === null ? {} : factsOf(catalogue)),
         updatedAt: now().toISOString(),
       });

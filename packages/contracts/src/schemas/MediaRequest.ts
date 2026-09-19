@@ -68,6 +68,7 @@ const MediaRequestAskSchema = z.object({
   seasons: SeasonsSchema.default(null),
   libraryId: z.string().uuid().optional(),
   profileId: z.string().uuid().optional(),
+  isPickedByHand: z.boolean().default(false),
   waitFor: ReleaseWaitSchema.default('digital'),
 });
 
@@ -77,6 +78,7 @@ const MediaRequestDraftSchema = z.object({
   libraryId: z.string().min(1),
   libraryPath: z.string().min(1),
   profileId: z.string().uuid().nullable().default(null),
+  isPickedByHand: z.boolean().default(false),
   seasons: SeasonsSchema.default(null),
   waitFor: ReleaseWaitSchema.default('digital'),
   requestedBy: RequesterSchema,
@@ -110,6 +112,7 @@ const MediaRequestSchema = z.object({
   posterUrl: z.string().nullable(),
   libraryId: z.string(),
   profileId: z.string().nullable(),
+  isPickedByHand: z.boolean(),
   state: MediaRequestStateSchema,
   problem: z.string().nullable(),
   approval: RequestApprovalSchema,
@@ -126,6 +129,7 @@ const MediaRequestSchema = z.object({
 
 const MediaRequestChangeSchema = z.object({
   profileId: z.string().uuid().nullable().optional(),
+  isPickedByHand: z.boolean().optional(),
   seasons: SeasonsSchema.optional(),
   waitFor: ReleaseWaitSchema.optional(),
 });
@@ -155,6 +159,12 @@ const FollowedRequestSchema = z.object({
   kind: MediaRequestKindSchema,
   tmdbId: z.number().int().positive(),
   libraryId: z.string(),
+});
+
+const CatalogueSeasonSchema = z.object({
+  season: z.number().int().nonnegative(),
+  episodeCount: z.number().int().nonnegative(),
+  firstAired: CalendarDateSchema.nullable(),
 });
 
 const RequestLogEntrySchema = z.object({
@@ -191,9 +201,11 @@ type MediaRequestArrival = z.infer<typeof MediaRequestArrivalSchema>;
 type FollowedRequest = z.infer<typeof FollowedRequestSchema>;
 type MissingSearch = z.infer<typeof MissingSearchSchema>;
 type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;
+type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
 
 export type {
   CatalogueEpisode,
+  CatalogueSeason,
   FollowedRequest,
   MediaRequest,
   MediaRequestArrival,
@@ -226,6 +238,7 @@ export {
   REQUEST_ITEM_STATES,
   CalendarDateSchema,
   CatalogueEpisodeSchema,
+  CatalogueSeasonSchema,
   FollowedRequestSchema,
   MediaRequestAddedSchema,
   MediaRequestArrivalSchema,
