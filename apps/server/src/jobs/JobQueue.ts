@@ -18,6 +18,19 @@ const ScanLibraryJobSchema = z.object({
   runOf: z.number().int().positive().optional(),
 });
 
+const SCAN_REQUEST_FOLDER_JOB = 'requests.scanFolder';
+
+const ScanRequestFolderJobSchema = z.object({
+  libraryId: z.string().uuid(),
+  folder: z.string().min(1),
+  requestId: z.string().uuid(),
+  kind: z.enum(['film', 'series']),
+  tmdbId: z.number().int().positive(),
+  title: z.string(),
+});
+
+const REFRESH_REQUESTS_JOB = 'requests.refreshCatalogue';
+
 const REGENERATE_PREVIEWS_JOB = 'library.regeneratePreviews';
 
 const RegeneratePreviewsJobSchema = z.object({
@@ -147,6 +160,9 @@ export {
   ScanLibraryJobSchema,
   READ_AGAIN_JOB,
   ReadAgainJobSchema,
+  SCAN_REQUEST_FOLDER_JOB,
+  ScanRequestFolderJobSchema,
+  REFRESH_REQUESTS_JOB,
   REGENERATE_PREVIEWS_JOB,
   RegeneratePreviewsJobSchema,
   REGENERATE_TRICKPLAY_JOB,

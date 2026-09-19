@@ -27,6 +27,14 @@ import {
   QualityProfileSchema,
 } from '@ValenceContracts/schemas/QualityProfile';
 import {
+  MediaRequestAskSchema,
+  MediaRequestChangeSchema,
+  MediaRequestPickSchema,
+  MediaRequestRefusalSchema,
+  MediaRequestSchema,
+  MissingSearchSchema,
+} from '@ValenceContracts/schemas/MediaRequest';
+import {
   DownloadQueueSchema,
   QueuedDownloadSchema,
   ReleaseSendSchema,
@@ -562,7 +570,171 @@ const removeQualityProfileRoute = createRoute({
   responses: failures({ ...REFUSED_BODY, 204: { description: 'Removed' } }),
 });
 
+const MediaRequestAnswer = MediaRequestSchema.openapi('MediaRequest');
+
+/**
+ * The failures every route onto somebody's requests can answer with, beside its own.
+ *
+ * @param extra - What else this route can answer.
+ * @returns The responses.
+ */
+const requestFailures = <Extra extends object>(extra: Extra) => ({
+  ...REFUSED_BODY,
+  ...extra,
+  403: {
+    description: 'Not allowed to do this with requests',
+    content: { 'application/json': { schema: RequestsError } },
+  },
+  404: {
+    description: 'Requesting is off, or there is no such request',
+    content: { 'application/json': { schema: RequestsError } },
+  },
+  502: {
+    description: 'The requests service could not be heard',
+    content: { 'application/json': { schema: RequestsError } },
+  },
+});
+
+const ONE_REQUEST = {
+  200: {
+    description: 'The request, as it now is',
+    content: { 'application/json': { schema: MediaRequestAnswer } },
+  },
+};
+
+const listMediaRequestsRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/media',
+  tags: ['Requests'],
+  summary:
+    'List requests for films and series: everybody’s to those who approve, otherwise one’s own',
+  responses: requestFailures({
+    200: {
+      description: 'The requests, newest first',
+      content: { 'application/json': { schema: z.array(MediaRequestAnswer) } },
+    },
+  }),
+});
+
+const askForMediaRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media',
+  tags: ['Requests'],
+  summary: 'Ask for a film, or for a series or some of its seasons',
+  request: { body: { content: { 'application/json': { schema: MediaRequestAskSchema } } } },
+  responses: requestFailures({
+    200: {
+      description: 'It had been asked for already; this was added to that request',
+      content: { 'application/json': { schema: MediaRequestAnswer } },
+    },
+    201: {
+      description: 'The request, as made',
+      content: { 'application/json': { schema: MediaRequestAnswer } },
+    },
+  }),
+});
+
+const searchMissingRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/missing',
+  tags: ['Requests'],
+  summary: 'Search now for everything still wanted, and anything a profile would upgrade',
+  responses: requestFailures({
+    200: {
+      description: 'How many requests were searched for',
+      content: { 'application/json': { schema: MissingSearchSchema.openapi('MissingSearch') } },
+    },
+  }),
+});
+
+const changeMediaRequestRoute = createRoute({
+  method: 'patch',
+  path: '/api/requests/media/{id}',
+  tags: ['Requests'],
+  summary: 'Change the seasons a request asks for, or what a film waits for',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: MediaRequestChangeSchema } } },
+  },
+  responses: requestFailures(ONE_REQUEST),
+});
+
+const removeMediaRequestRoute = createRoute({
+  method: 'delete',
+  path: '/api/requests/media/{id}',
+  tags: ['Requests'],
+  summary: 'Forget a request, leaving whatever it fetched where it is',
+  request: { params: RecordIdParameter },
+  responses: requestFailures({ 204: { description: 'Forgotten' } }),
+});
+
+const approveMediaRequestRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/approve',
+  tags: ['Requests'],
+  summary: 'Approve a request, so it is fetched',
+  request: { params: RecordIdParameter },
+  responses: requestFailures(ONE_REQUEST),
+});
+
+const refuseMediaRequestRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/refuse',
+  tags: ['Requests'],
+  summary: 'Refuse a request, saying why where there is a reason worth giving',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: MediaRequestRefusalSchema } } },
+  },
+  responses: requestFailures(ONE_REQUEST),
+});
+
+const retryMediaRequestRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/retry',
+  tags: ['Requests'],
+  summary: 'Try again whatever failed in a request, and search again for what is wanted',
+  request: { params: RecordIdParameter },
+  responses: requestFailures(ONE_REQUEST),
+});
+
+const mediaRequestReleasesRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/media/{id}/releases',
+  tags: ['Requests'],
+  summary: 'Search for a request by hand, judging every release found',
+  request: { params: RecordIdParameter },
+  responses: requestFailures({
+    200: {
+      description: 'The releases for it, best first',
+      content: { 'application/json': { schema: ReleaseSearchOutcomeSchema } },
+    },
+  }),
+});
+
+const pickMediaReleaseRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/pick',
+  tags: ['Requests'],
+  summary: 'Fetch the release picked by hand for a request',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: MediaRequestPickSchema } } },
+  },
+  responses: requestFailures(ONE_REQUEST),
+});
+
 export {
+  approveMediaRequestRoute,
+  askForMediaRoute,
+  changeMediaRequestRoute,
+  listMediaRequestsRoute,
+  mediaRequestReleasesRoute,
+  pickMediaReleaseRoute,
+  refuseMediaRequestRoute,
+  removeMediaRequestRoute,
+  retryMediaRequestRoute,
+  searchMissingRoute,
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,

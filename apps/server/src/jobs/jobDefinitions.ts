@@ -15,6 +15,7 @@ import {
   CHECK_TRANSCODER_JOB,
   CHECK_DISK_SPACE_JOB,
   CHECK_REQUESTS_JOB,
+  REFRESH_REQUESTS_JOB,
   SEND_MEDIA_DIGEST_JOB,
   PRUNE_WEBHOOK_DELIVERIES_JOB,
   PRUNE_LOGS_JOB,
@@ -187,6 +188,16 @@ const JOB_DEFINITIONS: JobDefinition[] = [
     announcesFinish: false,
   },
   {
+    kind: REFRESH_REQUESTS_JOB,
+    label: 'Bring requests up to date with the catalogue',
+    description:
+      'Asks the catalogue again about every film not yet fetched and every series still running, so a new episode is wanted the day it is announced and a film is held until the release date it has now.',
+    needsLibrary: false,
+    destructive: false,
+    takesParts: false,
+    announcesFinish: false,
+  },
+  {
     kind: SEND_MEDIA_DIGEST_JOB,
     label: 'Tell the household about new media',
     description:
@@ -253,6 +264,7 @@ const DEFAULT_JOB_TRIGGERS: Record<string, ScheduleTrigger[]> = {
   [CHECK_TRANSCODER_JOB]: [{ kind: 'everyMinutes', minutes: 5 }],
   [CHECK_DISK_SPACE_JOB]: [{ kind: 'everyMinutes', minutes: 15 }],
   [CHECK_REQUESTS_JOB]: [{ kind: 'everyMinutes', minutes: 5 }],
+  [REFRESH_REQUESTS_JOB]: [{ kind: 'daily', hour: 4, minute: 30 }],
   [SEND_MEDIA_DIGEST_JOB]: [{ kind: 'everyHours', hours: 1 }],
   [CLEANUP_SESSIONS_JOB]: [{ kind: 'daily', hour: 5, minute: 30 }],
   [PRUNE_WEBHOOK_DELIVERIES_JOB]: [{ kind: 'daily', hour: 5, minute: 45 }],
@@ -277,7 +289,7 @@ const scheduleQueueNameFor = (kind: string): string => {
   return definition?.needsLibrary === true ? scheduleTriggerKind(kind) : kind;
 };
 
-const REQUESTS_JOB_KINDS: readonly string[] = [CHECK_REQUESTS_JOB];
+const REQUESTS_JOB_KINDS: readonly string[] = [CHECK_REQUESTS_JOB, REFRESH_REQUESTS_JOB];
 
 /**
  * The jobs this server offers, which leaves out the ones that speak to the requests service where

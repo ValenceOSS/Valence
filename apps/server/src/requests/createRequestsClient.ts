@@ -47,10 +47,26 @@ import type {
   IndexerChange,
   IndexerDraft,
   IndexerTest,
+  Release,
   ReleaseSearch,
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import {
+  FollowedRequestSchema,
+  MediaRequestAddedSchema,
+  MediaRequestSchema,
+  MissingSearchSchema,
+} from '@ValenceContracts/schemas/MediaRequest';
+import type {
+  FollowedRequest,
+  MediaRequest,
+  MediaRequestAdded,
+  MediaRequestDraft,
+  MediaRequestRevision,
+  MissingSearch,
+  RequestCatalogueUpdate,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
 
 type RequestsReading =
@@ -177,6 +193,10 @@ const createRequestsClient = ({
   const withDownload = (id: string) => `/api/downloads/${encodeURIComponent(id)}`;
 
   const withProfile = (id: string) => `/api/profiles/${encodeURIComponent(id)}`;
+
+  const withRequest = (id: string) => `/api/requests/${encodeURIComponent(id)}`;
+
+  const readRequest = (body: JsonValue) => MediaRequestSchema.parse(body);
 
   return {
     readStatus: async (): Promise<RequestsReading> => {
@@ -406,6 +426,66 @@ const createRequestsClient = ({
 
       return `${address} closed the stream of downloads`;
     },
+
+    listRequests: (): Promise<RequestsAnswer<MediaRequest[]>> =>
+      call('/api/requests', (body) => z.array(MediaRequestSchema).parse(body)),
+
+    findRequest: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
+      call(withRequest(id), readRequest),
+
+    addRequest: (draft: MediaRequestDraft): Promise<RequestsAnswer<MediaRequestAdded>> =>
+      call('/api/requests', (body) => MediaRequestAddedSchema.parse(body), {
+        method: 'POST',
+        body: draft,
+      }),
+
+    changeRequest: (
+      id: string,
+      revision: MediaRequestRevision,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(withRequest(id), readRequest, { method: 'PATCH', body: revision }),
+
+    approveRequest: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/approve`, readRequest, { method: 'POST' }),
+
+    refuseRequest: (id: string, reason: string): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/refuse`, readRequest, { method: 'POST', body: { reason } }),
+
+    retryRequest: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/retry`, readRequest, { method: 'POST' }),
+
+    requestArrived: (id: string, mediaId: string): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/arrived`, readRequest, { method: 'POST', body: { mediaId } }),
+
+    updateRequestCatalogue: (
+      id: string,
+      update: RequestCatalogueUpdate,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/catalogue`, readRequest, { method: 'PUT', body: update }),
+
+    requestReleases: (id: string): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
+      call(`${withRequest(id)}/releases`, (body) => ReleaseSearchOutcomeSchema.parse(body), {
+        waitMs: searchTimeoutMs,
+      }),
+
+    pickRelease: (id: string, release: Release): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/pick`, readRequest, {
+        method: 'POST',
+        body: { release },
+        waitMs: searchTimeoutMs,
+      }),
+
+    removeRequest: (id: string): Promise<RequestsAnswer<null>> =>
+      call(withRequest(id), () => null, { method: 'DELETE' }),
+
+    followedRequests: (): Promise<RequestsAnswer<FollowedRequest[]>> =>
+      call('/api/requests/following', (body) => z.array(FollowedRequestSchema).parse(body)),
+
+    searchMissing: (): Promise<RequestsAnswer<MissingSearch>> =>
+      call('/api/requests/missing', (body) => MissingSearchSchema.parse(body), {
+        method: 'POST',
+        waitMs: REFRESH_TIMEOUT_MS,
+      }),
 
     search: (search: ReleaseSearch): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
       call('/api/search', (body) => ReleaseSearchOutcomeSchema.parse(body), {

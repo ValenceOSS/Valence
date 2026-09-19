@@ -79,6 +79,8 @@ import { describeQuality } from '@ValenceServer/library/describeQuality';
 import { describeSignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
 import { ARRIVED_TITLES_KEPT } from '@ValenceContracts/schemas/Webhook';
 import type { ScannedItem } from '@ValenceServer/library/scanLibrary';
+import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library';
+import type { MediaRequestKind, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { PresenceViewing } from '@ValenceServer/presence/PresenceService';
 import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -119,6 +121,9 @@ import type { FinishedJob } from '@ValenceServer/jobs/createJobQueue';
 import {
   READ_CERTIFICATES_AGAIN_JOB,
   SCAN_LIBRARY_JOB,
+  SCAN_REQUEST_FOLDER_JOB,
+  ScanRequestFolderJobSchema,
+  REFRESH_REQUESTS_JOB,
   READ_AGAIN_JOB,
   ReadAgainJobSchema,
   ScanLibraryJobSchema,
@@ -1116,19 +1121,11 @@ const jobs = await createJobQueue({
               );
 
               const libraryName = scanned?.name ?? 'A library';
-              const libraryKind = scanned?.kind ?? 'movies';
-              const arrived = arrivals.get(libraryId) ?? [];
-              const departed = departures.get(libraryId) ?? [];
-
-              arrivals.delete(libraryId);
-              departures.delete(libraryId);
-
-              const named = (item: ScannedItem) => ({
-                ...item,
-                kind: mediaKindOf(item, libraryKind),
+              const arrived = await sayWhatAScanChanged(
                 libraryId,
-                libraryName,
-              });
+                { name: libraryName, kind: scanned?.kind ?? 'movies' },
+                result,
+              );
 
               scanRuns.record(runId ?? `${LONE_SCAN}:${jobId}`, runOf ?? 1, {
                 libraryId,
@@ -1137,21 +1134,96 @@ const jobs = await createJobQueue({
                 arrived: arrived.slice(0, ARRIVED_TITLES_KEPT).map((item) => item.title),
                 arrivedNotListed: Math.max(arrived.length - ARRIVED_TITLES_KEPT, 0),
               });
-
-              for (const item of arrived) {
-                await events.publish({ event: 'media.added', data: named(item) });
-              }
-
-              for (const item of departed) {
-                await events.publish({ event: 'media.removed', data: named(item) });
-              }
-
-              if (result.added + result.updated + result.removed > 0) {
-                realtime.publish('media', { added: result.added }, { kind: 'everyone' });
-              }
             },
           });
         });
+      },
+      [SCAN_REQUEST_FOLDER_JOB]: async (jobId, payload) => {
+        const parsed = ScanRequestFolderJobSchema.safeParse(payload);
+
+        if (!parsed.success) {
+          log.error(
+            'jobs',
+            'job queue: a request’s folder scan carried data Valence could not read.',
+          );
+
+          return;
+        }
+
+        const filed = parsed.data;
+
+        await runLibraryWork(SCAN_REQUEST_FOLDER_JOB, filed.libraryId, payload, async () => {
+          const result = await libraryService.runScanFolder(filed.libraryId, filed.folder, jobId);
+          const scanned = (await libraryService.list(asTheServer)).find(
+            (entry) => entry.id === filed.libraryId,
+          );
+
+          if (result === null || scanned === undefined) {
+            log.warn('requests', `${filed.title} was filed into a library that is not there now`);
+
+            return;
+          }
+
+          await sayWhatAScanChanged(filed.libraryId, scanned, result);
+          await libraryService.regeneratePreviews(filed.libraryId);
+          await libraryService.regenerateTrickplay(filed.libraryId);
+
+          const mediaId = await libraryService.findByCatalogueId(
+            filed.libraryId,
+            filed.kind,
+            filed.tmdbId.toString(),
+          );
+
+          jobs.reportProgress(jobId, mediaId === null ? 'not found' : 'found', 1, 1);
+
+          if (mediaId === null) {
+            log.warn(
+              'requests',
+              `${filed.title} was filed, but reading ${filed.folder} did not find it as the catalogue’s ${filed.tmdbId.toString()}`,
+            );
+
+            return;
+          }
+
+          await sayARequestArrived(filed, mediaId);
+        });
+      },
+      [REFRESH_REQUESTS_JOB]: async (jobId) => {
+        if (requestsClient === null) {
+          return;
+        }
+
+        const followed = await requestsClient.followedRequests();
+
+        if (followed.kind !== 'answered') {
+          log.warn(
+            'requests',
+            'refreshing requests: the requests service would not say what it follows',
+          );
+
+          return;
+        }
+
+        const libraries = await libraryService.list(asTheServer);
+        let done = 0;
+
+        for (const request of followed.value) {
+          jobs.reportProgress(jobId, 'asking the catalogue', done, followed.value.length);
+
+          const catalogue = await describeForRequest(request.tmdbId, request.kind);
+          const libraryPath = libraries.find((entry) => entry.id === request.libraryId)?.path;
+
+          if (catalogue !== null) {
+            await requestsClient.updateRequestCatalogue(request.id, {
+              catalogue,
+              ...(libraryPath === undefined ? {} : { libraryPath }),
+            });
+          }
+
+          done += 1;
+        }
+
+        jobs.reportProgress(jobId, `${done.toString()} brought up to date`, done, done);
       },
       [READ_AGAIN_JOB]: async (jobId, payload) => {
         const parsed = ReadAgainJobSchema.safeParse(payload);
@@ -1753,6 +1825,116 @@ const libraryService = createDatabaseLibraryService({
 });
 
 /**
+ * Tells anything subscribed what a scan brought in and took out, and every open page that the
+ * library changed, handing back what arrived.
+ *
+ * @param libraryId - The library scanned.
+ * @param scanned - Its name and kind.
+ * @param result - What the scan changed.
+ * @returns What arrived.
+ */
+const sayWhatAScanChanged = async (
+  libraryId: string,
+  scanned: { name: string; kind: LibraryKind },
+  result: ScanResult,
+): Promise<ScannedItem[]> => {
+  const arrived = arrivals.get(libraryId) ?? [];
+  const departed = departures.get(libraryId) ?? [];
+
+  arrivals.delete(libraryId);
+  departures.delete(libraryId);
+
+  const named = (item: ScannedItem) => ({
+    ...item,
+    kind: mediaKindOf(item, scanned.kind),
+    libraryId,
+    libraryName: scanned.name,
+  });
+
+  for (const item of arrived) {
+    await events.publish({ event: 'media.added', data: named(item) });
+  }
+
+  for (const item of departed) {
+    await events.publish({ event: 'media.removed', data: named(item) });
+  }
+
+  if (result.added + result.updated + result.removed > 0) {
+    realtime.publish('media', { added: result.added }, { kind: 'everyone' });
+  }
+
+  return arrived;
+};
+
+/**
+ * What the catalogue says about a film or series somebody is asking for.
+ *
+ * @param tmdbId - Its catalogue id.
+ * @param kind - Whether it is a film or a series.
+ * @returns What a request needs to know, or null where the catalogue would not say.
+ */
+const describeForRequest = async (
+  tmdbId: number,
+  kind: MediaRequestKind,
+): Promise<RequestCatalogue | null> =>
+  (await catalogueProvider.describeForRequest?.(
+    tmdbId.toString(),
+    kind === 'film' ? 'movie' : 'tv',
+  )) ?? null;
+
+/**
+ * Ties a request to the item the library found it as, and tells whoever asked that it is ready —
+ * in the app, and by push where they chose — and anything subscribed.
+ *
+ * @param filed - The request, as it was filed.
+ * @param mediaId - The film, or the series, the library found.
+ */
+const sayARequestArrived = async (
+  filed: { requestId: string; kind: MediaRequestKind; title: string },
+  mediaId: string,
+): Promise<void> => {
+  if (requestsClient === null) {
+    return;
+  }
+
+  const arrived = await requestsClient.requestArrived(filed.requestId, mediaId);
+
+  if (arrived.kind !== 'answered') {
+    log.warn('requests', `${filed.title} is in the library, but the requests service was not told`);
+
+    return;
+  }
+
+  const { requestedBy } = arrived.value;
+
+  log.info('requests', `${filed.title} is in the library, as ${requestedBy.name} asked`);
+
+  await events.publish({
+    event: 'requests.available',
+    data: { title: filed.title, requestedBy: requestedBy.name, mediaId },
+  });
+  await notifyHousehold({
+    store: notifications,
+    event: 'requests.available',
+    title: `${filed.title} is ready`,
+    body: `${filed.title}, which you asked for, is in the library now.`,
+    link: filed.kind === 'film' ? `/?inspecting=${mediaId}` : `/?show=${mediaId}`,
+    vapid: await readPushKeys(),
+    only: [requestedBy.id],
+    onProblem: (reason) => {
+      log.error('requests', `telling ${requestedBy.name}: ${reason}`);
+    },
+    announce: (userIds) => {
+      realtime.publish(
+        'notifications',
+        { event: 'requests.available' },
+        { kind: 'accounts', accountIds: [...userIds] },
+      );
+    },
+  });
+};
+
+/**
  * Finds where an item's file is on disk, which is what the subtitle services need before they can
  * look beside it or inside it.
  *
@@ -2328,6 +2510,7 @@ const app = createApp({
   requests,
   requestsClient,
   cancelJob: (jobId) => jobs.cancel(jobId),
+  describeForRequest,
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
 });
 
@@ -2539,24 +2722,62 @@ if (requestsClient !== null) {
       realtime.publish('downloads', queue, { kind: 'everyone' });
     },
     onEvent: (event) => {
-      if (event.kind === 'started') {
-        log.info('requests', `sent ${event.title} to ${event.clientName}`);
+      switch (event.kind) {
+        case 'started': {
+          log.info('requests', `sent ${event.title} to ${event.clientName}`);
 
-        void events.publish({
-          event: 'requests.downloadStarted',
-          data: { title: event.title, client: event.clientName },
-        });
+          void events.publish({
+            event: 'requests.downloadStarted',
+            data: { title: event.title, client: event.clientName },
+          });
 
-        return;
-      }
+          return;
+        }
 
-      if (event.kind === 'failed') {
-        log.warn('requests', `${event.title} failed in ${event.clientName} — ${event.problem}`);
+        case 'failed': {
+          log.warn('requests', `${event.title} failed in ${event.clientName} — ${event.problem}`);
 
-        void events.publish({
-          event: 'requests.downloadFailed',
-          data: { title: event.title, client: event.clientName, problem: event.problem },
-        });
+          void events.publish({
+            event: 'requests.downloadFailed',
+            data: { title: event.title, client: event.clientName, problem: event.problem },
+          });
+
+          return;
+        }
+
+        case 'chosen': {
+          log.info('requests', `chose ${event.releaseTitle} for ${event.title}`);
+
+          void events.publish({
+            event: 'requests.chosen',
+            data: { title: event.title, release: event.releaseTitle },
+          });
+
+          return;
+        }
+
+        case 'filed': {
+          log.info('requests', `filed ${event.title} into ${event.folder}`);
+
+          void events.publish({
+            event: 'requests.filed',
+            data: { title: event.title, folder: event.folder },
+          });
+          void jobs.enqueue(SCAN_REQUEST_FOLDER_JOB, {
+            libraryId: event.libraryId,
+            folder: event.folder,
+            requestId: event.requestId,
+            kind: event.requestKind,
+            tmdbId: event.tmdbId,
+            title: event.title,
+          });
+
+          return;
+        }
+
+        case 'stuck': {
+          log.warn('requests', `${event.title} is stuck — ${event.problem}`);
+        }
       }
     },
     acknowledge: async (ids) => {

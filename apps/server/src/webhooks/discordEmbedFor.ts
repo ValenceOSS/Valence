@@ -377,10 +377,16 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
     case 'requests.vpnUp':
     case 'requests.indexerWorking':
     case 'requests.downloadStarted':
+    case 'requests.made':
+    case 'requests.approved':
+    case 'requests.chosen':
+    case 'requests.filed':
+    case 'requests.available':
     case 'catalogue.reachable': {
       return { title: sentence, description: '', colour: COLOURS.arrival, fields: [] };
     }
 
+    case 'requests.refused':
     case 'webhook.test': {
       return { title: sentence, description: '', colour: COLOURS.quiet, fields: [] };
     }

@@ -125,6 +125,20 @@ describe('discordEmbedFor', () => {
     );
   });
 
+  it('colours a request arriving as good news, and a refusal as quiet', () => {
+    expect(
+      embed({
+        ...anEnvelope,
+        event: 'requests.available',
+        data: { title: 'Dune', requestedBy: 'Sam', mediaId: 'media-1' },
+      }).color,
+    ).toBe(embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color);
+    expect(
+      embed({ ...anEnvelope, event: 'requests.refused', data: { title: 'Dune', reason: null } })
+        .color,
+    ).toBe(embed({ ...anEnvelope, event: 'webhook.test', data: {} }).color);
+  });
+
   it('colours a failed download as bad news, and a started one as good', () => {
     const failed = embed({
       ...anEnvelope,

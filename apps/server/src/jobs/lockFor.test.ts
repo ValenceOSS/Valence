@@ -5,11 +5,16 @@ import {
   READ_AGAIN_JOB,
   REGENERATE_PREVIEWS_JOB,
   SCAN_LIBRARY_JOB,
+  SCAN_REQUEST_FOLDER_JOB,
 } from './JobQueue';
 
 describe('the key a piece of library work is serialised under', () => {
   it('is one key for reading and re-reading, which both decide what a library holds', () => {
     expect(lockFor(READ_AGAIN_JOB, 'one')).toBe(lockFor(SCAN_LIBRARY_JOB, 'one'));
+  });
+
+  it('is the same key for reading the one folder a request was filed into', () => {
+    expect(lockFor(SCAN_REQUEST_FOLDER_JOB, 'one')).toBe(lockFor(SCAN_LIBRARY_JOB, 'one'));
   });
 
   it('is a key of its own for work that only makes artefacts for what is already there', () => {

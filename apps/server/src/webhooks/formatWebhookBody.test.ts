@@ -459,4 +459,62 @@ describe('formatWebhookBody', () => {
 
     expect(written.body).toBe('Dune failed in SABnzbd — Out of retention');
   });
+
+  it('follows a request from being made to being ready to watch', () => {
+    const said = (payload: Parameters<typeof formatWebhookBody>[1]) =>
+      formatWebhookBody('ntfy', payload).body;
+
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'requests.made',
+        data: { title: 'Dune', kind: 'film', requestedBy: 'Sam' },
+      }),
+    ).toBe('Sam asked for the film Dune.');
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'requests.approved',
+        data: { title: 'Dune', approvedBy: null },
+      }),
+    ).toBe('Dune was approved as it was asked for.');
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'requests.approved',
+        data: { title: 'Dune', approvedBy: 'Alex' },
+      }),
+    ).toBe('Alex approved Dune.');
+    expect(
+      said({ ...anEnvelope, event: 'requests.refused', data: { title: 'Dune', reason: null } }),
+    ).toBe('Dune was refused.');
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'requests.refused',
+        data: { title: 'Dune', reason: 'No room' },
+      }),
+    ).toBe('Dune was refused — No room');
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'requests.chosen',
+        data: { title: 'Dune', release: 'Dune.2021.1080p.WEB-DL' },
+      }),
+    ).toBe('Dune.2021.1080p.WEB-DL was chosen for Dune.');
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'requests.filed',
+        data: { title: 'Dune', folder: '/media/Films/Dune (2021)' },
+      }),
+    ).toBe('Dune was filed into /media/Films/Dune (2021).');
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'requests.available',
+        data: { title: 'Dune', requestedBy: 'Sam', mediaId: 'media-1' },
+      }),
+    ).toBe('Dune is ready to watch, as Sam asked.');
+  });
 });

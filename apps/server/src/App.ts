@@ -241,6 +241,16 @@ import { setupStatusRoute, setupCompleteRoute } from './routes/SetupRoute';
 import { JOB_DEFINITIONS, RESET_LIBRARY_JOB } from '@ValenceServer/jobs/jobDefinitions';
 import type { JobDefinition } from '@ValenceServer/jobs/jobDefinitions';
 import {
+  approveMediaRequestRoute,
+  askForMediaRoute,
+  changeMediaRequestRoute,
+  listMediaRequestsRoute,
+  mediaRequestReleasesRoute,
+  pickMediaReleaseRoute,
+  refuseMediaRequestRoute,
+  removeMediaRequestRoute,
+  retryMediaRequestRoute,
+  searchMissingRoute,
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,
@@ -374,7 +384,8 @@ import type { PermissionService } from '@ValenceServer/auth/PermissionService';
 import type { ApiKeyService } from '@ValenceServer/auth/ApiKeyService';
 import type { WebhookStore } from '@ValenceServer/webhooks/WebhookStore';
 import type { RealtimePublisher } from '@ValenceServer/realtime/RealtimePublisher';
-import type { EventBus } from '@ValenceServer/events/EventBus';
+import type { EventBus, WebhookOccurrence } from '@ValenceServer/events/EventBus';
+import type { MediaRequestKind, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { LogStore } from '@ValenceServer/logging/Logger';
 import type { JobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
 import type { ResourceHistoryStore } from '@ValenceServer/logging/createResourceHistoryStore';
@@ -592,6 +603,7 @@ type CreateAppOptions = {
   requestsClient?: RequestsClient | null;
   cancelJob?: (jobId: string) => Promise<boolean>;
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
+  describeForRequest?: (tmdbId: number, kind: MediaRequestKind) => Promise<RequestCatalogue | null>;
   realtime?: RealtimePublisher;
   logs?: LogStore;
   jobHistory?: JobHistoryStore;
@@ -655,6 +667,7 @@ const createApp = ({
   requestsClient = null,
   cancelJob = () => Promise.resolve(false),
   searchCatalogue = () => Promise.resolve([]),
+  describeForRequest = () => Promise.resolve(null),
   permissions = createMemoryPermissionService(),
   history,
   apiKeys = createBetterAuthApiKeyService(auth),
@@ -3722,8 +3735,18 @@ const createApp = ({
    * @param headers - Who is asking.
    * @returns The client, or why not.
    */
-  const reachRequests = async (headers: Headers): Promise<RequestsClient | 'refused' | 'off'> =>
-    !(await requires(headers, 'requests.manage')) ? 'refused' : (requestsClient ?? 'off');
+  const reachRequests = async (
+    headers: Headers,
+    allowed: readonly Permission[] = ['requests.manage'],
+  ): Promise<RequestsClient | 'refused' | 'off'> => {
+    for (const permission of allowed) {
+      if (await requires(headers, permission)) {
+        return requestsClient ?? 'off';
+      }
+    }
+
+    return 'refused';
+  };
 
   /**
    * Asks the requests service something on somebody's behalf, and says in one shape what came of
@@ -3732,16 +3755,18 @@ const createApp = ({
    *
    * @param headers - Who is asking.
    * @param ask - What to ask the service.
+   * @param allowed - The permissions, any one of which lets them ask.
    * @returns The answer, or why not.
    */
   const throughRequests = async <Value>(
     headers: Headers,
     ask: (client: RequestsClient) => Promise<RequestsAnswer<Value>>,
+    allowed: readonly Permission[] = ['requests.manage'],
   ): Promise<
     | { kind: 'answered'; value: Value }
     | { kind: 'refused'; status: 400 | 403 | 404 | 502; error: string }
   > => {
-    const client = await reachRequests(headers);
+    const client = await reachRequests(headers, allowed);
 
     if (client === 'refused') {
       return { kind: 'refused', status: 403, ...NOT_YOURS };
@@ -3761,6 +3786,235 @@ const createApp = ({
       ? { kind: 'refused', status: answer.status, error: answer.error }
       : answer;
   };
+
+  const APPROVERS: readonly Permission[] = ['requests.approve', 'requests.manage'];
+
+  const SEES_EVERY_REQUEST: readonly Permission[] = [
+    'requests.viewAll',
+    'requests.approve',
+    'requests.manage',
+  ];
+
+  /**
+   * Says a request's news to anything subscribed, where anything could be.
+   *
+   * @param payload - What happened.
+   */
+  const sayOfRequest = (payload: WebhookOccurrence): void => {
+    void events?.publish(payload);
+  };
+
+  app.openapi(listMediaRequestsRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const session = await readSessionOnce(auth, headers);
+    const answer = await throughRequests(headers, (client) => client.listRequests(), [
+      'requests.ask',
+      ...SEES_EVERY_REQUEST,
+    ]);
+
+    if (answer.kind !== 'answered') {
+      return context.json({ error: answer.error }, answer.status);
+    }
+
+    const seesAll = (
+      await Promise.all(SEES_EVERY_REQUEST.map((permission) => requires(headers, permission)))
+    ).some(Boolean);
+
+    return context.json(
+      seesAll
+        ? answer.value
+        : answer.value.filter((request) => request.requestedBy.id === session?.user.id),
+      200,
+    );
+  });
+
+  app.openapi(askForMediaRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const session = await readSessionOnce(auth, headers);
+    const asked = context.req.valid('json');
+    const catalogue = await describeForRequest(asked.tmdbId, asked.kind);
+    const libraryKind = asked.kind === 'film' ? 'movies' : 'shows';
+    const libraries = (await library.list(asTheServer)).filter(
+      (entry) => entry.kind === libraryKind,
+    );
+    const chosen =
+      asked.libraryId === undefined
+        ? libraries[0]
+        : libraries.find((entry) => entry.id === asked.libraryId);
+    const isApproved = await requires(headers, 'requests.autoApprove');
+    const answer = await throughRequests(
+      headers,
+      (client) => {
+        if (catalogue === null) {
+          return Promise.resolve({
+            kind: 'refused' as const,
+            status: 400 as const,
+            error: 'The catalogue does not know that, or cannot be asked just now.',
+          });
+        }
+
+        if (chosen === undefined || session === null) {
+          return Promise.resolve({
+            kind: 'refused' as const,
+            status: 400 as const,
+            error: `There is no library of ${asked.kind === 'film' ? 'films' : 'series'} to put it in.`,
+          });
+        }
+
+        return client.addRequest({
+          ...asked,
+          libraryId: chosen.id,
+          libraryPath: chosen.path,
+          requestedBy: { id: session.user.id, name: session.user.name },
+          isApproved,
+          catalogue,
+        });
+      },
+      ['requests.ask'],
+    );
+
+    if (answer.kind !== 'answered') {
+      return context.json({ error: answer.error }, answer.status);
+    }
+
+    const { request, isNew } = answer.value;
+
+    if (isNew) {
+      sayOfRequest({
+        event: 'requests.made',
+        data: { title: request.title, kind: request.kind, requestedBy: request.requestedBy.name },
+      });
+    }
+
+    if (isApproved && (isNew || request.approval === 'approved')) {
+      sayOfRequest({
+        event: 'requests.approved',
+        data: { title: request.title, approvedBy: null },
+      });
+    }
+
+    return context.json(request, isNew ? 201 : 200);
+  });
+
+  app.openapi(searchMissingRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.searchMissing(),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(changeMediaRequestRoute, async (context) => {
+    const { id } = context.req.valid('param');
+    const change = context.req.valid('json');
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      async (client) => {
+        if (change.seasons === undefined) {
+          return client.changeRequest(id, { change });
+        }
+
+        const found = await client.findRequest(id);
+
+        if (found.kind !== 'answered') {
+          return found;
+        }
+
+        return client.changeRequest(id, {
+          change,
+          catalogue: await describeForRequest(found.value.tmdbId, found.value.kind),
+        });
+      },
+      APPROVERS,
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(removeMediaRequestRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.removeRequest(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.body(null, 204)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(approveMediaRequestRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const session = await readSessionOnce(auth, headers);
+    const answer = await throughRequests(
+      headers,
+      (client) => client.approveRequest(context.req.valid('param').id),
+      APPROVERS,
+    );
+
+    if (answer.kind !== 'answered') {
+      return context.json({ error: answer.error }, answer.status);
+    }
+
+    sayOfRequest({
+      event: 'requests.approved',
+      data: { title: answer.value.title, approvedBy: session?.user.name ?? null },
+    });
+
+    return context.json(answer.value, 200);
+  });
+
+  app.openapi(refuseMediaRequestRoute, async (context) => {
+    const { reason } = context.req.valid('json');
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.refuseRequest(context.req.valid('param').id, reason),
+      APPROVERS,
+    );
+
+    if (answer.kind !== 'answered') {
+      return context.json({ error: answer.error }, answer.status);
+    }
+
+    sayOfRequest({
+      event: 'requests.refused',
+      data: { title: answer.value.title, reason: answer.value.refusedBecause },
+    });
+
+    return context.json(answer.value, 200);
+  });
+
+  app.openapi(retryMediaRequestRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.retryRequest(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(mediaRequestReleasesRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.requestReleases(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(pickMediaReleaseRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.pickRelease(context.req.valid('param').id, context.req.valid('json').release),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
 
   app.openapi(listQualityProfilesRoute, async (context) => {
     const answer = await throughRequests(context.req.raw.headers, (client) =>
