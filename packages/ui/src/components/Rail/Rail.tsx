@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { cn } from '@ValenceUI/cn';
+import { RAIL } from '@ValenceUI/tokens/rail';
 import { groupVariants } from '@ValenceUI/animations/reveal';
 import { usePagedScroller } from '@ValenceUI/usePagedScroller';
 import { Button } from '@ValenceUI/Button';
@@ -25,10 +26,7 @@ const CHEVRON = [
 
 const LEAST_REACH = 44;
 
-const TOKENS = [
-  '[--rail-gap:1rem] [--rail-peek:2rem] sm:[--rail-peek:5rem]',
-  '[--rail-lane:2.5rem] sm:[--rail-lane:4.5rem]',
-].join(' ');
+const TOKENS = ['[--rail-gap:1rem] [--rail-peek:2rem] sm:[--rail-peek:5rem]', RAIL.lane].join(' ');
 
 const PER = {
   wide: '[--rail-per:2] sm:[--rail-per:3] md:[--rail-per:4] lg:[--rail-per:5] xl:[--rail-per:6]',

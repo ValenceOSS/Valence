@@ -72,12 +72,36 @@ const pushWorker = (): Plugin => ({
   },
 });
 
+const PATHS = fileURLToPath(new URL('../../tsconfig.paths.json', import.meta.url));
+
+/**
+ * Starts the dev server again, in place, whenever the path aliases change.
+ *
+ * The aliases are read once, as the server starts, so one added for a new component resolved to
+ * nothing — and went on resolving to nothing, the failure cached — until somebody restarted the
+ * server by hand. Restarting in place, as pressing `r` in its terminal does, reads them again and
+ * forgets what failed, and the page reloads with them.
+ */
+const aliasesAsTheyChange = (): Plugin => ({
+  name: 'valence-aliases-as-they-change',
+
+  configureServer: (server) => {
+    server.watcher.add(PATHS);
+    server.watcher.on('change', (file) => {
+      if (file === PATHS) {
+        server.config.logger.info('path aliases changed; starting again', { timestamp: true });
+        void server.restart();
+      }
+    });
+  },
+});
+
 const cert = certificate('local.pem');
 const key = certificate('local-key.pem');
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: [react(), tailwindcss(), pushWorker()],
+  plugins: [react(), tailwindcss(), pushWorker(), aliasesAsTheyChange()],
   server: {
     port: 5173,
     host: true,

@@ -192,6 +192,7 @@
       "@ValenceUI/animations/motion": ["./packages/ui/src/animations/motion.ts"],
       "@ValenceUI/tokens/menu": ["./packages/ui/src/tokens/menu.ts"],
       "@ValenceUI/tokens/roleColours": ["./packages/ui/src/tokens/roleColours.ts"],
+      "@ValenceUI/tokens/rail": ["./packages/ui/src/tokens/rail.ts"],
       "@ValenceUI/tokens/segmented": ["./packages/ui/src/tokens/segmented.ts"],
       "@ValenceUI/tokens/underlined": ["./packages/ui/src/tokens/underlined.ts"],
       "@ValenceUI/animations/reveal": ["./packages/ui/src/animations/reveal.ts"],
