@@ -39,6 +39,7 @@ type RealtimeRegistry = {
   recheck: (accountId: string) => Promise<void>;
   recheckAll: () => Promise<void>;
   topicsOf: (connectionId: string) => RealtimeTopic[];
+  onHeard: (topic: RealtimeTopic, listen: (isHeard: boolean) => void) => () => void;
   count: () => number;
   drain: () => Promise<void>;
   stop: () => void;
@@ -84,6 +85,9 @@ const withinReach = (connection: RealtimeConnection, reach: Reach): boolean => {
  * sent; and again for every connection at the moment of delivery, because roles are editable while a
  * socket is held open. Only the second check protects anything — the first is a courtesy.
  *
+ * Whoever produces a topic can ask to hear when its first listener arrives and its last one leaves,
+ * so a feed that costs something to make is only made while somebody is listening.
+ *
  * A publisher never waits for a socket. Publishing gathers into a short window and returns, so a
  * scan changing four thousand items is neither slowed by a stalled client nor able to push four
  * thousand frames at one.
@@ -103,6 +107,24 @@ const createRealtimeRegistry = ({
   const connections = new Map<string, RealtimeConnection>();
   const subscriptions = new Map<string, Set<RealtimeTopic>>();
   const reaches = new Map<string, { topic: RealtimeTopic; reach: Reach }>();
+  const hearing = new Map<
+    RealtimeTopic,
+    { isHeard: boolean; listeners: Set<(isHeard: boolean) => void> }
+  >();
+
+  const reconsider = () => {
+    for (const [topic, watched] of hearing) {
+      const isHeard = [...subscriptions.values()].some((topics) => topics.has(topic));
+
+      if (isHeard !== watched.isHeard) {
+        watched.isHeard = isHeard;
+
+        for (const listen of watched.listeners) {
+          listen(isHeard);
+        }
+      }
+    }
+  };
 
   /**
    * What a connection is entitled to hear.
@@ -124,6 +146,7 @@ const createRealtimeRegistry = ({
     } catch {
       connections.delete(connection.id);
       subscriptions.delete(connection.id);
+      reconsider();
     }
   };
 
@@ -157,6 +180,7 @@ const createRealtimeRegistry = ({
 
       if (!mayHearTopic(addressed.topic, held)) {
         subscriptions.get(connection.id)?.delete(addressed.topic);
+        reconsider();
         sendTo(connection, { kind: 'dropped', topics: [addressed.topic] });
 
         continue;
@@ -185,6 +209,7 @@ const createRealtimeRegistry = ({
         already.delete(topic);
       }
 
+      reconsider();
       sendTo(connection, { kind: 'dropped', topics: lost });
     }
   };
@@ -212,6 +237,7 @@ const createRealtimeRegistry = ({
     close: (connectionId) => {
       connections.delete(connectionId);
       subscriptions.delete(connectionId);
+      reconsider();
     },
 
     subscribe: async (connectionId, topics) => {
@@ -236,6 +262,7 @@ const createRealtimeRegistry = ({
       }
 
       subscriptions.set(connectionId, already);
+      reconsider();
       sendTo(connection, { kind: 'subscribed', topics: split.allowed, refused: split.refused });
 
       return split;
@@ -251,6 +278,8 @@ const createRealtimeRegistry = ({
       for (const topic of topics) {
         already.delete(topic);
       }
+
+      reconsider();
     },
 
     identify: (connectionId, profileId) => {
@@ -282,6 +311,20 @@ const createRealtimeRegistry = ({
 
     topicsOf: (connectionId) => [...(subscriptions.get(connectionId) ?? [])],
 
+    onHeard: (topic, listen) => {
+      const watched = hearing.get(topic) ?? {
+        isHeard: [...subscriptions.values()].some((topics) => topics.has(topic)),
+        listeners: new Set(),
+      };
+
+      watched.listeners.add(listen);
+      hearing.set(topic, watched);
+
+      return () => {
+        watched.listeners.delete(listen);
+      };
+    },
+
     count: () => connections.size,
 
     drain: async () => {
@@ -295,6 +338,7 @@ const createRealtimeRegistry = ({
       connections.clear();
       subscriptions.clear();
       reaches.clear();
+      reconsider();
     },
   };
 };

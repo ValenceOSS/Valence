@@ -241,6 +241,18 @@ import { setupStatusRoute, setupCompleteRoute } from './routes/SetupRoute';
 import { JOB_DEFINITIONS, RESET_LIBRARY_JOB } from '@ValenceServer/jobs/jobDefinitions';
 import type { JobDefinition } from '@ValenceServer/jobs/jobDefinitions';
 import {
+  addDownloadClientRoute,
+  changeDownloadClientRoute,
+  listDownloadClientsRoute,
+  pauseQueuedDownloadRoute,
+  readDownloadQueueRoute,
+  removeDownloadClientRoute,
+  removeQueuedDownloadRoute,
+  resumeQueuedDownloadRoute,
+  sendReleaseRoute,
+  testDownloadClientRoute,
+  tryDownloadClientChangeRoute,
+  tryDownloadClientRoute,
   addIndexerRoute,
   adminCheckRequestsRoute,
   adminRequestsOverviewRoute,
@@ -256,7 +268,7 @@ import {
   tryIndexerChangeRoute,
   tryIndexerRoute,
 } from '@ValenceServer/routes/RequestsRoute';
-import type { RequestsClient } from '@ValenceServer/requests/createRequestsClient';
+import type { RequestsAnswer, RequestsClient } from '@ValenceServer/requests/createRequestsClient';
 import { ReleaseDownloadRequestSchema } from '@ValenceContracts/schemas/Indexer';
 import type { RequestsMonitor } from '@ValenceServer/requests/createRequestsMonitor';
 import {
@@ -3708,6 +3720,162 @@ const createApp = ({
    */
   const reachRequests = async (headers: Headers): Promise<RequestsClient | 'refused' | 'off'> =>
     !(await requires(headers, 'requests.manage')) ? 'refused' : (requestsClient ?? 'off');
+
+  /**
+   * Asks the requests service something on somebody's behalf, and says in one shape what came of
+   * it: the answer, or the refusal and the status that fits it — not theirs to ask, requesting off,
+   * the service refusing the question, or the service not heard at all.
+   *
+   * @param headers - Who is asking.
+   * @param ask - What to ask the service.
+   * @returns The answer, or why not.
+   */
+  const throughRequests = async <Value>(
+    headers: Headers,
+    ask: (client: RequestsClient) => Promise<RequestsAnswer<Value>>,
+  ): Promise<
+    | { kind: 'answered'; value: Value }
+    | { kind: 'refused'; status: 400 | 403 | 404 | 502; error: string }
+  > => {
+    const client = await reachRequests(headers);
+
+    if (client === 'refused') {
+      return { kind: 'refused', status: 403, ...NOT_YOURS };
+    }
+
+    if (client === 'off') {
+      return { kind: 'refused', status: 404, ...REQUESTING_OFF };
+    }
+
+    const answer = await ask(client);
+
+    if (answer.kind === 'silent') {
+      return { kind: 'refused', status: 502, error: answer.reason };
+    }
+
+    return answer.kind === 'refused'
+      ? { kind: 'refused', status: answer.status, error: answer.error }
+      : answer;
+  };
+
+  app.openapi(listDownloadClientsRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) => client.listClients());
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(addDownloadClientRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.addClient(context.req.valid('json')),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 201)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(tryDownloadClientRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.tryClient(context.req.valid('json')),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(changeDownloadClientRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.changeClient(context.req.valid('param').id, context.req.valid('json')),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(removeDownloadClientRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.removeClient(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.body(null, 204)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(testDownloadClientRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.testClient(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(tryDownloadClientChangeRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.tryClient(context.req.valid('json'), context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(readDownloadQueueRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) => client.downloads());
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(sendReleaseRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.sendRelease(context.req.valid('json')),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 201)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(pauseQueuedDownloadRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.pauseDownload(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(resumeQueuedDownloadRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.resumeDownload(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(removeQueuedDownloadRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.removeDownload(
+        context.req.valid('param').id,
+        context.req.valid('query').deleteData === 'true',
+      ),
+    );
+
+    return answer.kind === 'answered'
+      ? context.body(null, 204)
+      : context.json({ error: answer.error }, answer.status);
+  });
 
   app.openapi(listIndexersRoute, async (context) => {
     const client = await reachRequests(context.req.raw.headers);

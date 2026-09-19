@@ -14,6 +14,28 @@ import type {
   IndexerDefinitionDetail,
 } from '@ValenceContracts/schemas/IndexerDefinition';
 import { RequestsStatusSchema } from '@ValenceContracts/schemas/Requests';
+import {
+  DownloadClientSchema,
+  DownloadClientTestSchema,
+} from '@ValenceContracts/schemas/DownloadClient';
+import {
+  DownloadQueueSchema,
+  DownloadStreamFrameSchema,
+  QueuedDownloadSchema,
+} from '@ValenceContracts/schemas/DownloadQueue';
+import { readServerSentEvents } from '@ValenceServer/requests/readServerSentEvents';
+import type {
+  DownloadClient,
+  DownloadClientChange,
+  DownloadClientDraft,
+  DownloadClientTest,
+} from '@ValenceContracts/schemas/DownloadClient';
+import type {
+  DownloadQueue,
+  DownloadStreamFrame,
+  QueuedDownload,
+  ReleaseSend,
+} from '@ValenceContracts/schemas/DownloadQueue';
 import type {
   Indexer,
   IndexerChange,
@@ -61,6 +83,8 @@ const SEARCH_TIMEOUT_MS = 150_000;
 const REFRESH_TIMEOUT_MS = 300_000;
 
 const MagnetSchema = z.object({ magnet: z.string() });
+
+const CLIENT_TIMEOUT_MS = 30_000;
 
 /**
  * Speaks to the requests service on the server's behalf, presenting the secret the two share.
@@ -141,6 +165,10 @@ const createRequestsClient = ({
   };
 
   const withIndexer = (id: string) => `/api/indexers/${encodeURIComponent(id)}`;
+
+  const withClient = (id: string) => `/api/clients/${encodeURIComponent(id)}`;
+
+  const withDownload = (id: string) => `/api/downloads/${encodeURIComponent(id)}`;
 
   return {
     readStatus: async (): Promise<RequestsReading> => {
@@ -235,6 +263,119 @@ const createRequestsClient = ({
       } catch {
         return { kind: 'silent', reason: `${address} did not answer` };
       }
+    },
+
+    listClients: (): Promise<RequestsAnswer<DownloadClient[]>> =>
+      call('/api/clients', (body) => z.array(DownloadClientSchema).parse(body)),
+
+    addClient: (draft: DownloadClientDraft): Promise<RequestsAnswer<DownloadClient>> =>
+      call('/api/clients', (body) => DownloadClientSchema.parse(body), {
+        method: 'POST',
+        body: draft,
+      }),
+
+    changeClient: (
+      id: string,
+      change: DownloadClientChange,
+    ): Promise<RequestsAnswer<DownloadClient>> =>
+      call(withClient(id), (body) => DownloadClientSchema.parse(body), {
+        method: 'PATCH',
+        body: change,
+      }),
+
+    removeClient: (id: string): Promise<RequestsAnswer<null>> =>
+      call(withClient(id), () => null, { method: 'DELETE' }),
+
+    testClient: (id: string): Promise<RequestsAnswer<DownloadClientTest>> =>
+      call(`${withClient(id)}/test`, (body) => DownloadClientTestSchema.parse(body), {
+        method: 'POST',
+        waitMs: CLIENT_TIMEOUT_MS,
+      }),
+
+    tryClient: (
+      draft: DownloadClientDraft,
+      id?: string,
+    ): Promise<RequestsAnswer<DownloadClientTest>> =>
+      call(
+        id === undefined ? '/api/clients/try' : `${withClient(id)}/try`,
+        (body) => DownloadClientTestSchema.parse(body),
+        { method: 'POST', body: draft, waitMs: CLIENT_TIMEOUT_MS },
+      ),
+
+    downloads: (): Promise<RequestsAnswer<DownloadQueue>> =>
+      call('/api/downloads', (body) => DownloadQueueSchema.parse(body)),
+
+    sendRelease: (release: ReleaseSend): Promise<RequestsAnswer<QueuedDownload>> =>
+      call('/api/downloads', (body) => QueuedDownloadSchema.parse(body), {
+        method: 'POST',
+        body: release,
+        waitMs: searchTimeoutMs,
+      }),
+
+    pauseDownload: (id: string): Promise<RequestsAnswer<QueuedDownload>> =>
+      call(`${withDownload(id)}/pause`, (body) => QueuedDownloadSchema.parse(body), {
+        method: 'POST',
+        waitMs: CLIENT_TIMEOUT_MS,
+      }),
+
+    resumeDownload: (id: string): Promise<RequestsAnswer<QueuedDownload>> =>
+      call(`${withDownload(id)}/resume`, (body) => QueuedDownloadSchema.parse(body), {
+        method: 'POST',
+        waitMs: CLIENT_TIMEOUT_MS,
+      }),
+
+    removeDownload: (id: string, deleteData: boolean): Promise<RequestsAnswer<null>> =>
+      call(`${withDownload(id)}?deleteData=${deleteData ? 'true' : 'false'}`, () => null, {
+        method: 'DELETE',
+        waitMs: CLIENT_TIMEOUT_MS,
+      }),
+
+    watchDownloads: (isWatching: boolean): Promise<RequestsAnswer<null>> =>
+      call('/api/downloads/watch', () => null, { method: 'POST', body: { isWatching } }),
+
+    acknowledgeDownloadEvents: (ids: readonly number[]): Promise<RequestsAnswer<null>> =>
+      call('/api/downloads/events/ack', () => null, { method: 'POST', body: { ids } }),
+
+    streamDownloads: async (
+      onFrame: (frame: DownloadStreamFrame) => void,
+      signal: AbortSignal,
+    ): Promise<string> => {
+      let response: Response;
+
+      try {
+        response = await fetch(`${address}/api/downloads/stream`, {
+          headers: { Authorization: `Bearer ${secret}`, accept: 'text/event-stream' },
+          signal,
+        });
+      } catch {
+        return `${address} did not answer`;
+      }
+
+      if (!response.ok || response.body === null) {
+        return `${address} answered ${response.status.toString()}`;
+      }
+
+      try {
+        await readServerSentEvents(response.body, (data) => {
+          let read: JsonValue = null;
+
+          try {
+            read = JsonValueSchema.parse(JSON.parse(data));
+          } catch {
+            return;
+          }
+
+          const frame = DownloadStreamFrameSchema.safeParse(read);
+
+          if (frame.success) {
+            onFrame(frame.data);
+          }
+        });
+      } catch {
+        return `${address} stopped streaming the downloads`;
+      }
+
+      return `${address} closed the stream of downloads`;
     },
 
     search: (search: ReleaseSearch): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
