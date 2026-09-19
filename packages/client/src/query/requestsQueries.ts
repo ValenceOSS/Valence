@@ -5,6 +5,8 @@ import {
 } from '@ValenceClient/requests/fetchRequests';
 import { fetchIndexers, searchReleases } from '@ValenceClient/requests/fetchIndexers';
 import { fetchCatalogue, fetchDefinition } from '@ValenceClient/requests/fetchDefinitions';
+import { fetchDownloadClients } from '@ValenceClient/requests/fetchDownloadClients';
+import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 
 const REQUESTS = ['requests'] as const;
@@ -92,6 +94,29 @@ const definition = (id: string | null) =>
     staleTime: Infinity,
   });
 
+/**
+ * The download clients releases are sent to.
+ *
+ * @returns The query.
+ */
+const downloadClients = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'clients'],
+    queryFn: () => fetchDownloadClients(),
+  });
+
+/**
+ * Every download Valence has sent, and how each client is — read once, then kept up to date by the
+ * live connection rather than asked for again.
+ *
+ * @returns The query.
+ */
+const downloadQueue = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'downloads'],
+    queryFn: () => fetchDownloadQueue(),
+  });
+
 const requestsQueries = {
   key: REQUESTS,
   availability,
@@ -100,6 +125,8 @@ const requestsQueries = {
   search,
   catalogue,
   definition,
+  downloadClients,
+  downloadQueue,
 };
 
 export { requestsQueries };

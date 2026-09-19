@@ -20,6 +20,13 @@ const fetchDefinition = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/requests/fetchDefinitions', () => ({ fetchCatalogue, fetchDefinition }));
 
+const fetchDownloadClients = vi.hoisted(() => vi.fn());
+const fetchDownloadQueue = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/requests/fetchDownloadClients', () => ({ fetchDownloadClients }));
+
+vi.mock('@ValenceClient/requests/fetchDownloadQueue', () => ({ fetchDownloadQueue }));
+
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
 
@@ -94,5 +101,17 @@ describe('requestsQueries', () => {
       id: '1337x',
     });
     expect(fetchDefinition).toHaveBeenCalledWith('1337x');
+  });
+
+  it('asks for the download clients, and the queue', async () => {
+    fetchDownloadClients.mockResolvedValue([]);
+    fetchDownloadQueue.mockResolvedValue({ clients: [], downloads: [], checkedAt: null });
+
+    await expect(aCache().fetchQuery(requestsQueries.downloadClients())).resolves.toEqual([]);
+    await expect(aCache().fetchQuery(requestsQueries.downloadQueue())).resolves.toEqual({
+      clients: [],
+      downloads: [],
+      checkedAt: null,
+    });
   });
 });

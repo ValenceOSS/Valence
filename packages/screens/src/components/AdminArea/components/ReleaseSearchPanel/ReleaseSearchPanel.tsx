@@ -5,6 +5,7 @@ import {
   LinkSquare02Icon,
   Magnet01Icon,
   MoreHorizontalIcon,
+  SentIcon,
 } from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -19,6 +20,8 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeAge } from '@ValenceCore/functions/describeAge';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { fetchRelease } from '@ValenceClient/requests/fetchIndexers';
+import { sendRelease } from '@ValenceClient/requests/fetchDownloadQueue';
+import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import { downloadFile } from '@ValenceScreens/admin/downloadFile';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { inReleaseOrder } from './inReleaseOrder';
@@ -61,6 +64,7 @@ const ReleaseSearchPanel = () => {
   const [episode, setEpisode] = useState('');
   const [asked, setAsked] = useState<ReleaseSearch | null>(null);
   const found = useQuery(requestsQueries.search(asked));
+  const clients = useQuery(requestsQueries.downloadClients());
   const now = found.dataUpdatedAt;
   const [said, setSaid] = useState<{ text: string; isProblem: boolean } | null>(null);
 
@@ -125,6 +129,34 @@ const ReleaseSearchPanel = () => {
         cell: ({ row }) => {
           const { magnetUrl, downloadUrl, infoUrl, title, indexerId, protocol } = row.original;
           const kind = protocol === 'usenet' ? 'NZB' : 'torrent';
+          const target = (clients.data ?? []).find(
+            (client) => client.isEnabled && PROTOCOL_OF_CLIENT[client.kind] === protocol,
+          );
+          const address = downloadUrl ?? magnetUrl;
+
+          const send = () => {
+            if (target === undefined || address === null) {
+              return;
+            }
+
+            setSaid({ text: `Sending ${title} to ${target.name}…`, isProblem: false });
+
+            void sendRelease({
+              indexerId,
+              url: address,
+              title,
+              protocol,
+              sizeBytes: row.original.sizeBytes,
+              indexerName: row.original.indexerName,
+              clientId: target.id,
+            }).then(({ value, refusal }) => {
+              setSaid(
+                value === null
+                  ? { text: refusal?.message ?? `${title} could not be sent.`, isProblem: true }
+                  : { text: `Sent ${title} to ${value.clientName}.`, isProblem: false },
+              );
+            });
+          };
 
           const save = () => {
             setSaid({ text: `Fetching the ${kind}…`, isProblem: false });
@@ -163,6 +195,20 @@ const ReleaseSearchPanel = () => {
                   {
                     items: [
                       {
+                        id: 'send',
+                        label:
+                          target === undefined
+                            ? `Send to a ${protocol === 'usenet' ? 'usenet' : 'torrent'} client`
+                            : `Send to ${target.name}`,
+                        detail:
+                          target === undefined
+                            ? `No ${protocol === 'usenet' ? 'usenet' : 'torrent'} client is switched on. Add one on the Downloads page.`
+                            : 'Fetched through Valence and handed over, then followed on the Downloads page.',
+                        icon: <Icon of={SentIcon} size={15} />,
+                        isDisabled: target === undefined || address === null,
+                        onChoose: send,
+                      },
+                      {
                         id: 'magnet',
                         label: 'Copy the magnet link',
                         icon: <Icon of={Magnet01Icon} size={15} />,
@@ -200,7 +246,7 @@ const ReleaseSearchPanel = () => {
         },
       },
     ],
-    [now],
+    [now, clients.data],
   );
 
   const search = () => {
