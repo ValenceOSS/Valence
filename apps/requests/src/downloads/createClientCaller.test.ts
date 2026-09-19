@@ -13,11 +13,14 @@ describe('createClientCaller', () => {
       body: 'x',
     });
 
-    expect(fetch.mock.calls[0]?.[1]).toMatchObject({ method: 'GET', headers: {} });
+    expect(fetch.mock.calls[0]?.[1]).toMatchObject({
+      method: 'GET',
+      headers: { connection: 'close' },
+    });
     expect(fetch.mock.calls[0]?.[1]).not.toHaveProperty('body');
     expect(fetch.mock.calls[1]?.[1]).toMatchObject({
       method: 'POST',
-      headers: { a: 'b' },
+      headers: { a: 'b', connection: 'close' },
       body: 'x',
     });
   });

@@ -95,7 +95,10 @@ const readTorrent = (torrent: z.infer<typeof TorrentSchema>): ClientItem => {
  * first time something is added.
  *
  * qBittorrent 5 renamed pausing and resuming to stopping and starting, so the new words are tried
- * first and the old ones where they are not known.
+ * first and the old ones where they are not known. It also names its session cookie after its port,
+ * `QBT_SID_8080` rather than `SID`, and answers a login with nothing rather than `Ok.`, so the cookie
+ * is found by what it holds rather than by one name. A torrent it already has is refused as a
+ * conflict; that one is filed under the category instead, so it is followed like any other.
  *
  * @param settings - Where it is, how to log in, and the category to keep to.
  * @param fetch - How to ask.
@@ -133,7 +136,9 @@ const createQbittorrentAdapter = (
       throw new DownloadClientFailure(`${settings.name} refused the username or password`);
     }
 
-    cookie = /SID=[^;]+/.exec(response.headers.get('set-cookie') ?? '')?.[0] ?? '';
+    cookie =
+      /(?:^|[\s,])([\w-]*SID[\w-]*=[^;,\s]+)/.exec(response.headers.get('set-cookie') ?? '')?.[1] ??
+      '';
   };
 
   const ask = async (path: string, form?: URLSearchParams | FormData): Promise<Response> => {
@@ -232,6 +237,15 @@ const createQbittorrentAdapter = (
       form.append('category', settings.category);
 
       const response = await ask('/api/v2/torrents/add', form);
+
+      if (response.status === 409) {
+        await answered(
+          '/api/v2/torrents/setCategory',
+          new URLSearchParams({ hashes: hash, category: settings.category }),
+        );
+
+        return hash;
+      }
 
       if (!response.ok || (await response.text()).trim() === 'Fails.') {
         throw new DownloadClientFailure(`${settings.name} would not take the torrent`);

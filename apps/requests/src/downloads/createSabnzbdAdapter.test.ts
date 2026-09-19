@@ -112,6 +112,14 @@ describe('createSabnzbdAdapter', () => {
       createSabnzbdAdapter({ ...SETTINGS, apiKey: 'wrong' }, aSabnzbd({}).fetch).version(),
     ).rejects.toThrow('SABnzbd refused the API key');
 
+    const forbidden = aFakeClient({
+      'GET /sabnzbd/api': () => new Response('API Key Incorrect', { status: 403 }),
+    });
+
+    await expect(createSabnzbdAdapter(SETTINGS, forbidden.fetch).version()).rejects.toThrow(
+      'SABnzbd refused the API key',
+    );
+
     const plain = aFakeClient({ 'GET /sabnzbd/api': () => new Response('API Key Required') });
 
     await expect(createSabnzbdAdapter(SETTINGS, plain.fetch).version()).rejects.toThrow(
@@ -141,8 +149,30 @@ describe('createSabnzbdAdapter', () => {
     );
   });
 
+  it('makes its category the first time, since SABnzbd would file the job elsewhere', async () => {
+    const { fetch, asked } = aSabnzbd({
+      get_cats: { categories: ['*', 'movies'] },
+      addfile: { status: true, nzo_ids: ['SABnzbd_nzo_9'] },
+    });
+
+    await createSabnzbdAdapter(SETTINGS, fetch).add(
+      { kind: 'nzb', bytes: new Uint8Array() },
+      'Dune',
+    );
+
+    expect(queryOf(asked[1])).toMatchObject({
+      mode: 'set_config',
+      section: 'categories',
+      keyword: 'valence',
+      name: 'valence',
+    });
+  });
+
   it('uploads an NZB into its category, under the release’s name', async () => {
-    const { fetch, asked } = aSabnzbd({ addfile: { status: true, nzo_ids: ['SABnzbd_nzo_9'] } });
+    const { fetch, asked } = aSabnzbd({
+      get_cats: { categories: ['*', 'Valence'] },
+      addfile: { status: true, nzo_ids: ['SABnzbd_nzo_9'] },
+    });
 
     expect(
       await createSabnzbdAdapter(SETTINGS, fetch).add(
@@ -151,8 +181,10 @@ describe('createSabnzbdAdapter', () => {
       ),
     ).toBe('SABnzbd_nzo_9');
 
-    const form = asked[0]?.body instanceof FormData ? asked[0].body : new FormData();
+    const added = asked.at(-1);
+    const form = added?.body instanceof FormData ? added.body : new FormData();
 
+    expect(asked).toHaveLength(2);
     expect(form.get('cat')).toBe('valence');
     expect(form.get('nzbname')).toBe('Dune');
     expect(form.get('apikey')).toBe('sab-key');
@@ -162,7 +194,8 @@ describe('createSabnzbdAdapter', () => {
   it('says so when the NZB is refused, and refuses torrents', async () => {
     const adapter = createSabnzbdAdapter(
       SETTINGS,
-      aSabnzbd({ addfile: { status: true, nzo_ids: [] } }).fetch,
+      aSabnzbd({ get_cats: { categories: ['valence'] }, addfile: { status: true, nzo_ids: [] } })
+        .fetch,
     );
 
     await expect(adapter.add({ kind: 'nzb', bytes: new Uint8Array() }, 'Dune')).rejects.toThrow(
