@@ -36,8 +36,16 @@ import type { DialogCompanionProps } from './DialogCompanion.types';
  * @param isOpen - Whether it is showing.
  * @param onClose - Told when it was dismissed.
  * @param children - The panel's content, usually a title and some content.
+ * @param size - How large it stands when it stands alone, as a dialog of its own; beside another,
+ *   it takes the column it is given.
  */
-const DialogCompanion = ({ label, isOpen, onClose, children }: DialogCompanionProps) => {
+const DialogCompanion = ({
+  label,
+  isOpen,
+  onClose,
+  children,
+  size = 'default',
+}: DialogCompanionProps) => {
   const slot = useContext(companionContext);
   const hasRoomBeside = useRoomBeside();
   const id = useId();
@@ -63,7 +71,7 @@ const DialogCompanion = ({ label, isOpen, onClose, children }: DialogCompanionPr
 
   if (standsAlone) {
     return (
-      <Dialog label={label} isOpen={isOpen} onClose={onClose}>
+      <Dialog label={label} isOpen={isOpen} onClose={onClose} size={size}>
         {children}
       </Dialog>
     );

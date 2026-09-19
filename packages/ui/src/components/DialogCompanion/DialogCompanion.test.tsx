@@ -28,6 +28,18 @@ const noRoomBeside = () => {
 };
 
 describe('DialogCompanion', () => {
+  it('stands as large as it is asked to where it stands alone', () => {
+    render(
+      <DialogCompanion label="Add an indexer" isOpen onClose={vi.fn()} size="stage">
+        <p>Every site</p>
+      </DialogCompanion>,
+    );
+
+    expect(screen.getByRole('dialog', { name: 'Add an indexer' })).toHaveClass(
+      'sm:w-[min(60rem,94vw)]',
+    );
+  });
+
   it('is an ordinary dialog where there is nothing to stand beside', () => {
     render(
       <DialogCompanion label="Stream stats" isOpen onClose={vi.fn()}>

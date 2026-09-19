@@ -90,7 +90,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="font-medium text-text">{row.original.name}</span>
-            <span className="text-xs text-text-muted">{row.original.description}</span>
+            <span className="line-clamp-2 text-xs text-text-muted">{row.original.description}</span>
           </span>
         ),
       },
@@ -175,15 +175,15 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
   );
 
   return (
-    <DialogCompanion label="Add an indexer" isOpen={isOpen} onClose={onClose}>
+    <DialogCompanion label="Add an indexer" isOpen={isOpen} onClose={onClose} size="stage">
       <DialogTitle
         size="compact"
         title="Add an indexer"
         detail="Choose the site to search, or a generic Torznab or Newznab feed for one that is not listed."
       />
 
-      <DialogContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
+      <DialogContent className="flex min-h-0 flex-col gap-4 overflow-hidden">
+        <div className="grid shrink-0 gap-2 sm:grid-cols-2">
           {GENERIC.map((generic) => (
             <Button
               key={generic.id}
@@ -200,14 +200,14 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
           ))}
         </div>
 
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex shrink-0 flex-wrap items-end gap-3">
           <TextField
             label="Find a site"
             type="search"
             value={words}
             onValueChange={setWords}
             placeholder="1337x, rutracker, anime…"
-            className="min-w-0 flex-1"
+            className="min-w-[14rem] flex-1"
           />
           {menu('Category', category, categories, setCategory)}
           {menu('Language', language, languages, setLanguage)}
@@ -216,6 +216,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
         <SegmentedRow
           label="Privacy"
           size="sm"
+          className="shrink-0 self-start"
           items={PRIVACIES}
           value={privacy}
           onSelect={(next) => {
@@ -242,6 +243,9 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
             label="Sites"
             columns={columns}
             rows={shown}
+            height="parent"
+            growsOnScroll
+            className="min-h-0 flex-1"
             getRowId={(definition) => definition.id}
             onChooseRow={(definition) => {
               onChoose({ kind: 'cardigann', definitionId: definition.id, name: definition.name });
@@ -256,7 +260,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
       </DialogContent>
 
       <DialogFooter>
-        <span role="status" className="mr-auto text-xs text-text-muted">
+        <span role="status" className="mr-auto line-clamp-2 min-w-0 flex-1 text-xs text-text-muted">
           {problem ??
             asked.data?.problem ??
             (asked.data === undefined
