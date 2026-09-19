@@ -1,3 +1,6 @@
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryEventStore } from '@ValenceRequests/events/createMemoryEventStore';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
@@ -559,6 +562,136 @@ describe('createRequestWorker', () => {
 
       expect(searched).toEqual([{ query: '', mode: 'search' }]);
       expect(send).toHaveBeenCalled();
+    });
+  });
+
+  describe('filing what was sent by hand', () => {
+    const BY_HAND = aSentDownload({
+      title: 'The.Matrix.1999.1080p.BrRip.x264-YIFY',
+      state: 'done',
+      contentPath: '/downloads/The Matrix (1999) [1080p]',
+      libraryId: 'films',
+      libraryPath: '/media/Films',
+    });
+
+    it('files a finished film into the library it was sent for, named from the release', async () => {
+      const filed = vi.fn<typeof fileDownload>(() =>
+        Promise.resolve({
+          filed: new Map([['film', '/media/Films/The Matrix (1999)/The Matrix (1999).mp4']]),
+          missing: [],
+        }),
+      );
+      const { worker, downloads, events } = aWorker({
+        requests: [],
+        items: [],
+        sent: [BY_HAND],
+        filed,
+        localPath: '/srv/downloads',
+      });
+
+      await worker.tick();
+
+      expect(filed).toHaveBeenCalledWith(
+        { libraryPath: '/media/Films', title: 'The Matrix', year: 1999 },
+        [{ id: 'film', season: null, episode: null, title: '', airDate: null, filePath: null }],
+        '/srv/downloads/The Matrix (1999) [1080p]',
+        true,
+      );
+      expect((await downloads.find(BY_HAND.id))?.filedInto).toBe('/media/Films/The Matrix (1999)');
+      expect(await events.pending()).toMatchObject([
+        { kind: 'imported', libraryId: 'films', folder: '/media/Films/The Matrix (1999)' },
+      ]);
+
+      await worker.tick();
+
+      expect(filed).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves alone what was fetched for a request, or for no library, or is not finished', async () => {
+      const filed = vi.fn<typeof fileDownload>();
+      const { worker } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: BY_HAND.id })],
+        sent: [
+          { ...BY_HAND, state: 'downloading' },
+          { ...BY_HAND, id: '3f2504e0-4f89-41d3-9a0c-0305e82c3302', libraryPath: null },
+          { ...BY_HAND, id: '3f2504e0-4f89-41d3-9a0c-0305e82c3303', libraryKind: 'music' },
+        ],
+        filed,
+      });
+
+      await worker.tick();
+
+      expect(filed).not.toHaveBeenCalled();
+    });
+
+    it('says why a download sent by hand could not be filed, and gives up in the end', async () => {
+      const { worker, downloads } = aWorker({
+        requests: [],
+        items: [],
+        sent: [
+          { ...BY_HAND, contentPath: null },
+          { ...BY_HAND, id: '3f2504e0-4f89-41d3-9a0c-0305e82c3302', title: '' },
+          { ...BY_HAND, id: '3f2504e0-4f89-41d3-9a0c-0305e82c3303' },
+          { ...BY_HAND, id: '3f2504e0-4f89-41d3-9a0c-0305e82c3304', filingAttempts: 5 },
+        ],
+        filed: () => Promise.resolve({ filed: new Map(), missing: ['film'] }),
+      });
+
+      await worker.tick();
+
+      expect(
+        (await downloads.list()).map((one) => [one.filingProblem, one.filingAttempts]),
+      ).toEqual([
+        ['qBittorrent has not said where it put the download', 1],
+        ['Its name does not say what it is', 1],
+        ['No video in it could be filed', 1],
+        [null, 5],
+      ]);
+    });
+
+    it('says why filing failed', async () => {
+      const { worker, downloads } = aWorker({
+        requests: [],
+        items: [],
+        sent: [BY_HAND],
+        filed: () => Promise.reject(new Error('EACCES')),
+      });
+
+      await worker.tick();
+
+      expect((await downloads.find(BY_HAND.id))?.filingProblem).toBe(
+        'It could not be filed: EACCES',
+      );
+    });
+
+    it('files the episodes a series download holds', async () => {
+      const root = await mkdtemp(join(tmpdir(), 'valence-by-hand-'));
+      const filed = vi.fn<typeof fileDownload>(() =>
+        Promise.resolve({ filed: new Map([['1x2', '/x']]), missing: [] }),
+      );
+
+      await writeFile(join(root, 'Severance.S01E02.1080p.mkv'), 'two');
+
+      const { worker } = aWorker({
+        requests: [],
+        items: [],
+        sent: [
+          {
+            ...BY_HAND,
+            title: 'Severance.S01E02.1080p.WEB-DL',
+            libraryKind: 'shows',
+            libraryPath: '/media/Series',
+            contentPath: join(root, 'Severance.S01E02.1080p.mkv'),
+          },
+        ],
+        filed,
+      });
+
+      await worker.tick();
+
+      expect(filed.mock.calls[0]?.[1]).toEqual([
+        { id: '1x2', season: 1, episode: 2, title: '', airDate: null, filePath: null },
+      ]);
     });
   });
 

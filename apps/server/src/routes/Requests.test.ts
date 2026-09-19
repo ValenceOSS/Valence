@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { signUpForTest, makeAdministrator, TEST_ORIGIN } from '@ValenceServer/auth/signUpForTest';
@@ -582,6 +583,8 @@ describe('download clients and the queue, through the server', () => {
     peers: 2,
     sentAt: '2026-09-19T00:00:00.000Z',
     finishedAt: null,
+    filedInto: null,
+    filingProblem: null,
   };
 
   const DRAFT = { name: 'qBittorrent', kind: 'qbittorrent', url: 'http://qbittorrent:8080' };
@@ -731,6 +734,34 @@ describe('download clients and the queue, through the server', () => {
     expect(
       (await missing.ask(`/api/admin/requests/downloads/${DOWNLOAD.id}/pause`, 'POST')).status,
     ).toBe(404);
+  });
+
+  it('sends a film or series for the library it will be filed into, and anything else for none', async () => {
+    const libraries: Array<{ id: string; path: string } | null> = [];
+    const { ask } = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: (url, init) => {
+        libraries.push(
+          z
+            .object({ library: z.object({ id: z.string(), path: z.string() }).nullable() })
+            .parse(JSON.parse(init.body ?? '{}')).library,
+        );
+
+        return aWillingQueue(url, init);
+      },
+    });
+
+    await ask('/api/admin/requests/downloads', 'POST', SEND);
+    await ask('/api/admin/requests/downloads', 'POST', { ...SEND, libraryId: 'elsewhere' });
+    await ask('/api/admin/requests/downloads', 'POST', { ...SEND, libraryKind: 'shows' });
+    await ask('/api/admin/requests/downloads', 'POST', {
+      ...SEND,
+      libraryKind: 'music',
+      library: { id: 'x', path: '/etc' },
+    });
+
+    expect(libraries).toEqual([{ id: FILMS.id, path: '/media/Films' }, null, null, null]);
   });
 
   it('refuses a release that is not one before asking the service', async () => {

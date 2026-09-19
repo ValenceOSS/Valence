@@ -36,6 +36,8 @@ const QueuedDownloadSchema = z.object({
   peers: z.number().int().nonnegative().nullable(),
   sentAt: z.string().datetime(),
   finishedAt: z.string().datetime().nullable(),
+  filedInto: z.string().nullable().default(null),
+  filingProblem: z.string().nullable().default(null),
 });
 
 const DownloadClientStateSchema = z.object({
@@ -65,6 +67,11 @@ const ReleaseSendSchema = z.object({
   sizeBytes: z.number().nonnegative().nullable().default(null),
   indexerName: z.string().max(200).nullable().default(null),
   clientId: z.string().uuid().optional(),
+  libraryId: z.string().min(1).optional(),
+  library: z
+    .object({ id: z.string().min(1), path: z.string().min(1) })
+    .nullable()
+    .default(null),
 });
 
 const DownloadRemovalSchema = z.object({ deleteData: z.boolean().default(false) });
@@ -96,6 +103,11 @@ const ServiceEventSchema = z.discriminatedUnion('kind', [
     folder: z.string(),
   }),
   RequestEventBaseSchema.extend({ kind: z.literal('stuck'), problem: z.string() }),
+  EventBaseSchema.extend({
+    kind: z.literal('imported'),
+    libraryId: z.string(),
+    folder: z.string(),
+  }),
 ]);
 
 const DownloadStreamFrameSchema = z.discriminatedUnion('kind', [

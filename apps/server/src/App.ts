@@ -4133,8 +4133,20 @@ const createApp = ({
   });
 
   app.openapi(sendReleaseRoute, async (context) => {
+    const sending = context.req.valid('json');
+    const fileable =
+      sending.libraryKind === 'movies' || sending.libraryKind === 'shows'
+        ? (await library.list(asTheServer)).filter((entry) => entry.kind === sending.libraryKind)
+        : [];
+    const into =
+      sending.libraryId === undefined
+        ? fileable[0]
+        : fileable.find((entry) => entry.id === sending.libraryId);
     const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.sendRelease(context.req.valid('json')),
+      client.sendRelease({
+        ...sending,
+        library: into === undefined ? null : { id: into.id, path: into.path },
+      }),
     );
 
     return answer.kind === 'answered'

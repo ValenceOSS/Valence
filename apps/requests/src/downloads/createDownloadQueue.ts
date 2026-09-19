@@ -139,6 +139,8 @@ const createDownloadQueue = ({
       sizeBytes: record.sizeBytes,
       sentAt: record.sentAt,
       finishedAt: record.finishedAt,
+      filedInto: record.filedInto,
+      filingProblem: record.filingProblem,
     };
   };
 
@@ -398,13 +400,28 @@ const createDownloadQueue = ({
       const already = (await downloads.list()).find(
         (record) => record.clientId === client.id && record.remoteId === remoteId,
       );
+      const refiled =
+        already === undefined || read.library === null || already.filedInto !== null
+          ? already
+          : ((await downloads.update(already.id, {
+              libraryId: read.library.id,
+              libraryPath: read.library.path,
+              filingProblem: null,
+              filingAttempts: 0,
+              updatedAt: at,
+            })) ?? already);
       const record =
-        already ??
+        refiled ??
         (await downloads.insert({
           id: randomUUID(),
           clientId: client.id,
           remoteId,
           contentPath: null,
+          libraryId: read.library?.id ?? null,
+          libraryPath: read.library?.path ?? null,
+          filedInto: null,
+          filingProblem: null,
+          filingAttempts: 0,
           protocol: read.protocol,
           libraryKind: read.libraryKind,
           title: read.title,

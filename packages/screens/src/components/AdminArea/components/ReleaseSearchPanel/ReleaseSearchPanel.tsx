@@ -17,6 +17,7 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
+import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { fetchRelease } from '@ValenceClient/requests/fetchIndexers';
 import { sendRelease } from '@ValenceClient/requests/fetchDownloadQueue';
@@ -29,6 +30,7 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { releaseColumns } from '@ValenceScreens/components/AdminArea/releaseColumns';
 import { IndexerReportList } from '@ValenceScreens/components/AdminArea/components/IndexerReportList/IndexerReportList';
 import { inReleaseOrder } from './inReleaseOrder';
+import { describeWhereItGoes } from './describeWhereItGoes';
 import { libraryKindOf } from './libraryKindOf';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { IndexerSearchMode, Release, ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
@@ -82,6 +84,7 @@ const ReleaseSearchPanel = () => {
   );
   const pickedId = found.data?.pickedId ?? null;
   const clients = useQuery(requestsQueries.downloadClients());
+  const libraries = useQuery(libraryQueries.all());
   const now = found.dataUpdatedAt;
   const [said, setSaid] = useState<{ text: string; isProblem: boolean } | null>(null);
 
@@ -179,7 +182,11 @@ const ReleaseSearchPanel = () => {
                               libraryKind === null
                                 ? `Send to ${target.name} as ${LIBRARY_KIND_NAMES[sending].one}`
                                 : `Send to ${target.name}`,
-                            detail: `As ${LIBRARY_KIND_NAMES[sending].one}, filed under ${target.categories[sending]} and followed on the Downloads page.`,
+                            detail: describeWhereItGoes(
+                              sending,
+                              libraries.data ?? [],
+                              target.categories[sending],
+                            ),
                             icon: <Icon of={SentIcon} size={15} />,
                             isDisabled: address === null,
                             onChoose: () => {
@@ -224,7 +231,7 @@ const ReleaseSearchPanel = () => {
         },
       },
     ],
-    [now, clients.data, asked, judged, pickedId],
+    [now, clients.data, libraries.data, asked, judged, pickedId],
   );
 
   const search = () => {

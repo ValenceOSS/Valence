@@ -210,6 +210,25 @@ describe('createDownloadQueue', () => {
       expect((await downloads.list())[0]?.libraryKind).toBe('shows');
     });
 
+    it('remembers the library a release is for, even one sent before', async () => {
+      const { queue, downloads } = aQueue();
+      const library = { id: 'films', path: '/media/Films' };
+
+      await queue.send(SEND);
+      await queue.send({ ...SEND, library });
+
+      expect(await downloads.list()).toMatchObject([
+        { libraryId: 'films', libraryPath: '/media/Films', filedInto: null },
+      ]);
+
+      const [kept] = await downloads.list();
+
+      await downloads.update(kept?.id ?? '', { filedInto: '/media/Films/Dune (2021)' });
+      await queue.send({ ...SEND, library: { id: 'other', path: '/media/Other' } });
+
+      expect((await downloads.list())[0]?.libraryId).toBe('films');
+    });
+
     it('sends to the client asked for', async () => {
       const chosen = aDownloadClient({
         id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',

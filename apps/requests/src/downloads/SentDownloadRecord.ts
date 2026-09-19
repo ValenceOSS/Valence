@@ -16,9 +16,14 @@ type SentDownloadRecord = Pick<
   | 'doneBytes'
   | 'sentAt'
   | 'finishedAt'
+  | 'filedInto'
+  | 'filingProblem'
 > & {
   remoteId: string;
   contentPath: string | null;
+  libraryId: string | null;
+  libraryPath: string | null;
+  filingAttempts: number;
   updatedAt: string;
 };
 

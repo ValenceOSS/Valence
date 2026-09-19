@@ -225,6 +225,8 @@ beforeEach(() => {
       peers: null,
       sentAt: '2026-09-19T00:00:00.000Z',
       finishedAt: null,
+      filedInto: null,
+      filingProblem: null,
     },
     refusal: null,
   });

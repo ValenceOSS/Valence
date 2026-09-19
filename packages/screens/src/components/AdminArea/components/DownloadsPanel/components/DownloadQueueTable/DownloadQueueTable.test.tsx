@@ -28,6 +28,8 @@ const aDownload = (overrides: Partial<QueuedDownload> = {}): QueuedDownload => (
   peers: 2,
   sentAt: '2026-09-19T00:00:00.000Z',
   finishedAt: null,
+  filedInto: null,
+  filingProblem: null,
   ...overrides,
 });
 

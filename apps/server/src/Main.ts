@@ -1168,10 +1168,18 @@ const jobs = await createJobQueue({
           await libraryService.regeneratePreviews(filed.libraryId);
           await libraryService.regenerateTrickplay(filed.libraryId);
 
+          const { request } = filed;
+
+          if (request === null) {
+            jobs.reportProgress(jobId, `added ${result.added.toString()}`, 1, 1);
+
+            return;
+          }
+
           const mediaId = await libraryService.findByCatalogueId(
             filed.libraryId,
-            filed.kind,
-            filed.tmdbId.toString(),
+            request.kind,
+            request.tmdbId.toString(),
           );
 
           jobs.reportProgress(jobId, mediaId === null ? 'not found' : 'found', 1, 1);
@@ -1179,13 +1187,13 @@ const jobs = await createJobQueue({
           if (mediaId === null) {
             log.warn(
               'requests',
-              `${filed.title} was filed, but reading ${filed.folder} did not find it as the catalogue’s ${filed.tmdbId.toString()}`,
+              `${filed.title} was filed, but reading ${filed.folder} did not find it as the catalogue’s ${request.tmdbId.toString()}`,
             );
 
             return;
           }
 
-          await sayARequestArrived(filed, mediaId);
+          await sayARequestArrived({ ...request, title: filed.title }, mediaId);
         });
       },
       [REFRESH_REQUESTS_JOB]: async (jobId) => {
@@ -1890,14 +1898,14 @@ const describeForRequest = async (
  * @param mediaId - The film, or the series, the library found.
  */
 const sayARequestArrived = async (
-  filed: { requestId: string; kind: MediaRequestKind; title: string },
+  filed: { id: string; kind: MediaRequestKind; title: string },
   mediaId: string,
 ): Promise<void> => {
   if (requestsClient === null) {
     return;
   }
 
-  const arrived = await requestsClient.requestArrived(filed.requestId, mediaId);
+  const arrived = await requestsClient.requestArrived(filed.id, mediaId);
 
   if (arrived.kind !== 'answered') {
     log.warn('requests', `${filed.title} is in the library, but the requests service was not told`);
@@ -2766,10 +2774,25 @@ if (requestsClient !== null) {
           void jobs.enqueue(SCAN_REQUEST_FOLDER_JOB, {
             libraryId: event.libraryId,
             folder: event.folder,
-            requestId: event.requestId,
-            kind: event.requestKind,
-            tmdbId: event.tmdbId,
             title: event.title,
+            request: { id: event.requestId, kind: event.requestKind, tmdbId: event.tmdbId },
+          });
+
+          return;
+        }
+
+        case 'imported': {
+          log.info('requests', `filed ${event.title} into ${event.folder}`);
+
+          void events.publish({
+            event: 'requests.filed',
+            data: { title: event.title, folder: event.folder },
+          });
+          void jobs.enqueue(SCAN_REQUEST_FOLDER_JOB, {
+            libraryId: event.libraryId,
+            folder: event.folder,
+            title: event.title,
+            request: null,
           });
 
           return;

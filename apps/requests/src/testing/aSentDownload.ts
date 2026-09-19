@@ -24,6 +24,11 @@ const aSentDownload = (overrides: Partial<SentDownloadRecord> = {}): SentDownloa
   doneBytes: 500,
   sentAt: '2026-09-19T00:00:00.000Z',
   finishedAt: null,
+  libraryId: null,
+  libraryPath: null,
+  filedInto: null,
+  filingProblem: null,
+  filingAttempts: 0,
   updatedAt: '2026-09-19T00:00:00.000Z',
   ...overrides,
 });

@@ -23,10 +23,15 @@ const SCAN_REQUEST_FOLDER_JOB = 'requests.scanFolder';
 const ScanRequestFolderJobSchema = z.object({
   libraryId: z.string().uuid(),
   folder: z.string().min(1),
-  requestId: z.string().uuid(),
-  kind: z.enum(['film', 'series']),
-  tmdbId: z.number().int().positive(),
   title: z.string(),
+  request: z
+    .object({
+      id: z.string().uuid(),
+      kind: z.enum(['film', 'series']),
+      tmdbId: z.number().int().positive(),
+    })
+    .nullable()
+    .default(null),
 });
 
 const REFRESH_REQUESTS_JOB = 'requests.refreshCatalogue';

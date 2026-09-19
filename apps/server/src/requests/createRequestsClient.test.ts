@@ -407,6 +407,8 @@ describe('createRequestsClient with download clients', () => {
     peers: null,
     sentAt: '2026-09-19T00:00:00.000Z',
     finishedAt: null,
+    filedInto: null,
+    filingProblem: null,
   };
 
   const A_QUEUE = { clients: [], downloads: [A_DOWNLOAD], checkedAt: null };

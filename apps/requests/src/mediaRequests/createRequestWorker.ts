@@ -5,6 +5,8 @@ import { judgeForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest'
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { mapClientPath } from '@ValenceRequests/mediaRequests/mapClientPath';
 import { planSearches } from '@ValenceRequests/mediaRequests/planSearches';
+import { episodesInDownload } from '@ValenceRequests/mediaRequests/episodesInDownload';
+import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
 import { wantsUpgrade } from '@ValenceRequests/mediaRequests/wantsUpgrade';
 import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
@@ -37,7 +39,7 @@ type CreateRequestWorkerOptions = {
   requests: MediaRequestStore;
   items: RequestItemStore;
   blocked: BlockedReleaseStore;
-  downloads: Pick<SentDownloadStore, 'find'>;
+  downloads: Pick<SentDownloadStore, 'find' | 'list' | 'update'>;
   clients: Pick<DownloadClientService, 'records'>;
   queue: Pick<DownloadQueueService, 'send' | 'remove'>;
   indexers: Pick<IndexerService, 'search' | 'list'>;
@@ -122,6 +124,9 @@ const groupedByDownload = (
  * A download that fails, or stalls for hours, blocklists its release for that request and the next
  * best is looked for at once. Filing that fails is tried again a few times before the film or
  * episode is marked failed for an admin to look at.
+ *
+ * A release sent by hand for a library of films or series is filed too once it has finished,
+ * named from what the release's own name says it is.
  *
  * @param requests - Where requests are kept.
  * @param items - Where what each waits for is kept.
@@ -542,6 +547,89 @@ const createRequestWorker = ({
     }
   };
 
+  const fileSentByHand = async () => {
+    const claimed = new Set(
+      (await items.list()).flatMap((item) => (item.downloadId === null ? [] : [item.downloadId])),
+    );
+    const finished = (await downloads.list()).filter(
+      (download) =>
+        download.state === 'done' &&
+        download.libraryId !== null &&
+        download.libraryPath !== null &&
+        download.filedInto === null &&
+        download.filingAttempts < MOST_FILING_ATTEMPTS &&
+        (download.libraryKind === 'movies' || download.libraryKind === 'shows') &&
+        !claimed.has(download.id),
+    );
+
+    for (const download of finished) {
+      const client = (await clients.records()).find((one) => one.id === download.clientId);
+      const parsed = parseReleaseName(download.title);
+      const into = {
+        libraryPath: download.libraryPath ?? '',
+        title: parsed.title,
+        year: parsed.year,
+      };
+
+      const couldNot = async (problem: string) => {
+        await downloads.update(download.id, {
+          filingProblem: problem,
+          filingAttempts: download.filingAttempts + 1,
+          updatedAt: at(),
+        });
+      };
+
+      if (client === undefined || download.contentPath === null) {
+        await couldNot(`${client?.name ?? 'Its client'} has not said where it put the download`);
+        continue;
+      }
+
+      if (parsed.title === '') {
+        await couldNot('Its name does not say what it is');
+        continue;
+      }
+
+      const path = mapClientPath(download.contentPath, client);
+
+      try {
+        const wanted =
+          download.libraryKind === 'movies'
+            ? [{ id: 'film', season: null, episode: null }]
+            : await episodesInDownload(path, parsed);
+        const { filed } = await file(
+          into,
+          wanted.map((one) => ({ ...one, title: '', airDate: null, filePath: null })),
+          path,
+          download.protocol === 'torrent',
+        );
+
+        if (filed.size === 0) {
+          await couldNot('No video in it could be filed');
+          continue;
+        }
+
+        const folder = libraryFolderOf(into);
+
+        await downloads.update(download.id, {
+          filedInto: folder,
+          filingProblem: null,
+          updatedAt: at(),
+        });
+        await events.add({
+          kind: 'imported',
+          title: download.title,
+          libraryId: download.libraryId ?? '',
+          folder,
+        });
+        say(`Filed ${download.title} into ${folder}.`);
+      } catch (error) {
+        await couldNot(
+          `It could not be filed: ${error instanceof Error ? error.message : 'no reason given'}`,
+        );
+      }
+    }
+  };
+
   const tick = () =>
     serially(async () => {
       for (const step of [release, follow, fileFinished]) {
@@ -549,6 +637,8 @@ const createRequestWorker = ({
           await step(found);
         }
       }
+
+      await fileSentByHand();
 
       for (const found of await approved()) {
         const unsearched = found.items.filter(
