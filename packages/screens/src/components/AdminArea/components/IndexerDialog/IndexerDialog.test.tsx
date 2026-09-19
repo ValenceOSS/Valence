@@ -210,9 +210,10 @@ describe('IndexerDialog', () => {
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Try it' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'It answered, and can search movie.',
-    );
+    expect(await screen.findByText('It answered, and can search movie.')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Try it' }).querySelector('.text-success'),
+    ).not.toBeNull();
     expect(tryIndexer).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'NZBgeek' }),
       undefined,
@@ -237,7 +238,67 @@ describe('IndexerDialog', () => {
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Try it' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('The indexer refused the API key');
+    expect(await screen.findByRole('alert')).toHaveTextContent('The indexer refused the API key');
+    expect(
+      screen.getByRole('button', { name: 'Try it' }).querySelector('.text-danger'),
+    ).not.toBeNull();
+  });
+
+  it('spins while it is being tried', async () => {
+    let answer: (tried: Awaited<ReturnType<typeof Indexers.tryIndexer>>) => void = () => undefined;
+
+    tryIndexer.mockReturnValue(
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+    );
+
+    const user = userEvent.setup();
+
+    open();
+
+    await fillIn(user);
+    await user.click(screen.getByRole('button', { name: 'Try it' }));
+
+    expect(screen.getByRole('status', { name: 'Working' })).toBeInTheDocument();
+
+    answer({ value: WORKING, refusal: null });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('status', { name: 'Working' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('forgets how it went once something is changed, but not for a category', async () => {
+    tryIndexer.mockResolvedValue({
+      value: {
+        ...WORKING,
+        capabilities: {
+          categories: [{ id: 2000, name: 'Movies', subcategories: [] }],
+          modes: [],
+          limit: null,
+        },
+      },
+      refusal: null,
+    });
+
+    const user = userEvent.setup();
+
+    open();
+
+    await fillIn(user);
+    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await screen.findByText('It answered, and can search by words.');
+    await user.click(screen.getByRole('checkbox', { name: 'Movies' }));
+
+    const tryButton = screen.getByRole('button', { name: 'Try it' });
+
+    expect(tryButton.querySelector('.text-success')).not.toBeNull();
+
+    await user.type(screen.getByRole('textbox', { name: /Name/ }), 'x');
+
+    expect(tryButton.querySelector('.text-success')).toBeNull();
+    expect(screen.queryByText(/It answered/)).not.toBeInTheDocument();
   });
 
   it('says where trying it was refused altogether', async () => {
@@ -458,7 +519,7 @@ describe('IndexerDialog', () => {
       await waitFor(() => {
         expect(tryIndexer.mock.calls.at(-1)?.[0].settings?.['CAPTCHA']).toBe('x7k2');
       });
-      expect(await screen.findByRole('status')).toHaveTextContent('It answered');
+      expect(await screen.findByText(/It answered/)).toBeInTheDocument();
     });
 
     it('says so when the site’s definition has left the catalogue', async () => {
