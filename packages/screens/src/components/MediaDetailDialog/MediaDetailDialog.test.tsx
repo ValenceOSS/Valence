@@ -518,26 +518,29 @@ describe('keeping something, and getting back to where you were', () => {
 });
 
 describe('opening one item after another', () => {
-  const header = () => document.querySelector('.transition-opacity.duration-700');
+  const overlay = (name: string) => screen.getByRole('heading', { name }).parentElement;
 
   const logo = () => document.querySelector('img[src*="/image/logo"]');
 
-  it('shows the next item’s title rather than opening it already faded out', async () => {
+  it('keeps the overlay up while the preview plays, rather than fading it away', () => {
     detailMock.mockResolvedValue(detail());
 
-    const view = renderInAnAddress(
-      <MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />,
-    );
-
-    expect(header()?.className).toContain('opacity-100');
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     act(() => {
       preview.report(true);
     });
 
-    await waitFor(() => {
-      expect(header()?.className).toContain('opacity-0');
-    });
+    expect(overlay('Arrival')?.className).not.toContain('opacity-0');
+    expect(screen.getByRole('heading', { name: 'Arrival' })).toBeInTheDocument();
+  });
+
+  it('shows the next item’s title rather than the last one’s', async () => {
+    detailMock.mockResolvedValue(detail());
+
+    const view = renderInAnAddress(
+      <MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />,
+    );
 
     view.rerender(<MediaDetailDialog media={null} onClose={vi.fn()} onPlay={vi.fn()} />);
     view.rerender(
@@ -549,9 +552,34 @@ describe('opening one item after another', () => {
     );
 
     await waitFor(() => {
-      expect(header()?.className).toContain('opacity-100');
+      expect(screen.getByRole('heading', { name: 'Dune' })).toBeInTheDocument();
     });
-    expect(screen.getByRole('heading', { name: 'Dune' })).toBeInTheDocument();
+  });
+
+  it('lets the lettering be the title, rather than printing the name beneath it', () => {
+    detailMock.mockResolvedValue(detail());
+
+    renderInAnAddress(
+      <MediaDetailDialog
+        media={{ ...summary, hasLogo: true }}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+      />,
+    );
+
+    const heading = screen.getByRole('heading', { name: 'Arrival' });
+
+    expect(heading.querySelector('img')).not.toBeNull();
+    expect(heading.textContent).toBe('');
+  });
+
+  it('prints the name where there is no lettering to draw', () => {
+    detailMock.mockResolvedValue(detail());
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    expect(screen.getByRole('heading', { name: 'Arrival' }).textContent).toBe('Arrival');
+    expect(logo()).toBeNull();
   });
 
   it('tries an item’s lettering again the next time it is opened', async () => {

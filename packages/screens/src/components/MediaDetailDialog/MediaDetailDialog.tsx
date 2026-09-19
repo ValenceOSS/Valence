@@ -58,6 +58,8 @@ const ORIGINAL_VERSION = 'Original';
 
 const CAST_PLACEHOLDERS = 5;
 
+const LOGO_BOX = 'max-h-[16svh] w-auto max-w-[min(70vw,26rem)] object-contain object-left';
+
 /**
  * Builds the address an item's artwork is served from, served by Valence rather than by the catalogue so
  * that a library keeps working when the catalogue does not.
@@ -120,7 +122,6 @@ const MediaDetailDialog = ({
     resume: undefined,
     siblings: [],
   });
-  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
   const { mark: pastTheArtwork, hasPassed: hasScrolledPast } = useHasScrolledPast();
   const [isDownloading, setIsDownloading] = useState(false);
@@ -139,7 +140,6 @@ const MediaDetailDialog = ({
     }
 
     setLastShown(media);
-    setIsPreviewPlaying(false);
     setUnlettered(null);
     setVersion(null);
 
@@ -157,6 +157,7 @@ const MediaDetailDialog = ({
   }
 
   const shown = media ?? lastShown;
+  const isLettered = shown?.hasLogo === true && unlettered !== shown.id;
 
   const preparing = (prepared.data ?? []).find(
     (one) => one.mediaId === shown?.id && one.state !== 'ready' && one.state !== 'failed',
@@ -230,14 +231,9 @@ const MediaDetailDialog = ({
                     })}
                 repeats={false}
                 fills
-                onPlayingChange={setIsPreviewPlaying}
               />
 
-              <BackdropScrim
-                className={`transition-opacity duration-700 ${
-                  isPreviewPlaying ? 'opacity-0' : 'opacity-100'
-                }`}
-              />
+              <BackdropScrim />
             </div>
 
             {onBack === undefined ? null : (
@@ -259,45 +255,40 @@ const MediaDetailDialog = ({
               variants={staggerVariants}
               initial="hidden"
               animate="shown"
-              className={`absolute inset-x-0 bottom-0 flex flex-col gap-4 p-5 transition-opacity duration-700 sm:p-8 ${
-                isPreviewPlaying ? 'pointer-events-none opacity-0' : 'opacity-100'
-              }`}
+              className="absolute inset-x-0 bottom-0 flex flex-col gap-4 p-5 sm:p-8"
             >
-              {shown.hasLogo && unlettered !== shown.id ? (
-                <motion.div
-                  variants={revealVariants(prefersReducedMotion)}
-                  transition={revealTransition(prefersReducedMotion)}
-                >
+              <motion.h2
+                variants={revealVariants(prefersReducedMotion)}
+                transition={revealTransition(prefersReducedMotion, 'heavy')}
+                className={
+                  isLettered
+                    ? 'flex'
+                    : 'max-w-[16ch] text-[clamp(2rem,6vw,3.75rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim'
+                }
+              >
+                {isLettered ? (
                   <TitleLogo
                     src={titleLogoUrl(shown.id)}
-                    alt=""
-                    className="max-h-[7svh] w-auto max-w-[min(55vw,15rem)] object-contain object-left"
+                    alt={shown.seriesTitle ?? shown.title}
+                    className={LOGO_BOX}
                     onError={() => {
                       setUnlettered(shown.id);
                     }}
                   />
-                </motion.div>
-              ) : null}
-
-              <motion.div
-                variants={revealVariants(prefersReducedMotion)}
-                transition={revealTransition(prefersReducedMotion)}
-                className="flex flex-wrap items-center justify-between gap-3"
-              >
-                <span className="text-sm font-medium uppercase tracking-[0.2em] text-on-scrim/75">
-                  {shown.seriesTitle === null || shown.seriesTitle === undefined
-                    ? null
-                    : shown.title}
-                </span>
-              </motion.div>
-
-              <motion.h2
-                variants={revealVariants(prefersReducedMotion)}
-                transition={revealTransition(prefersReducedMotion, 'heavy')}
-                className="max-w-[16ch] text-[clamp(2rem,6vw,3.75rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim"
-              >
-                {shown.seriesTitle ?? shown.title}
+                ) : (
+                  (shown.seriesTitle ?? shown.title)
+                )}
               </motion.h2>
+
+              {shown.seriesTitle === null || shown.seriesTitle === undefined ? null : (
+                <motion.span
+                  variants={revealVariants(prefersReducedMotion)}
+                  transition={revealTransition(prefersReducedMotion)}
+                  className="text-sm font-medium uppercase tracking-[0.2em] text-on-scrim/75"
+                >
+                  {shown.title}
+                </motion.span>
+              )}
 
               <motion.div
                 variants={revealVariants(prefersReducedMotion)}
