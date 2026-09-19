@@ -166,13 +166,15 @@ async fn asking_twice_at_once_renders_one_clip_rather_than_two() {
             manifest_timeout: std::time::Duration::from_secs(120),
             max_concurrent: 2,
         }),
-        downloads: valence_transcoder::download::DownloadRegistry::new(),
+        downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),
         trickplay: TrickplayRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
         audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: WorkQueue::new(2),
         ffprobe: ffprobe(),
+        renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
+        write_roots: Vec::new(),
         media_roots: vec![source.parent().expect("a parent").to_path_buf()],
     });
 

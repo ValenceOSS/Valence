@@ -56,12 +56,14 @@ fn app(name: &str) -> axum::Router {
             max_concurrent: 2,
         }),
         ffprobe: ffprobe(),
-        downloads: valence_transcoder::download::DownloadRegistry::new(),
+        downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),
         trickplay: TrickplayRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
         audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: WorkQueue::new(1),
+        renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
+        write_roots: Vec::new(),
         media_roots: Vec::new(),
     })
 }

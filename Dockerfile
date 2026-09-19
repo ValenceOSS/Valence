@@ -103,7 +103,8 @@ ENV NODE_ENV=production \
     VALENCE_TRANSCODE_DIR=/transcodes \
     VALENCE_ARTEFACT_DIR=/cache/artefacts \
     PROFILE_IMAGE_DIR=/config/profiles \
-    VALENCE_MEDIA_ROOTS=/media
+    VALENCE_MEDIA_ROOTS=/media \
+    VALENCE_WRITE_ROOTS=/media
 
 EXPOSE 8420
 

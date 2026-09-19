@@ -32,6 +32,7 @@ each `${...}` in the file itself.
 | `COOKIE_SECURE`      | no       | True by default, which is right behind HTTPS. Set it false only when testing over plain HTTP, or sign-in will appear to succeed and then not hold. |
 | `RENDER_GROUP_ID`    | no       | The group owning `/dev/dri/renderD128`, 44 by default. `ls -n /dev/dri` says which.                                                                |
 | `PROFILE_IMAGE_DIR`  | no       | Where profile pictures are kept, `/config/profiles` by default. Wherever you point it, a volume must be mapped there — see below.                  |
+| `MEDIA_ACCESS`       | no       | `:ro` by default, which is how a media server should run. Set it to an empty string to mount media read and write, which only re-encoding needs.   |
 
 Two good ways to make a secret:
 
@@ -45,6 +46,39 @@ head -c 48 /dev/urandom | base64
 If you cannot reach a terminal on the host, any long random string will do for
 both — they are never typed by a person and never shown anywhere. A password
 manager's generator set to 48 characters is fine.
+
+## Re-encoding, and why media is read only
+
+Valence mounts your library read only, and nothing it does needs more than that
+— with one exception. Re-encoding media, either to reclaim disk by replacing a
+file or to keep a smaller copy beside it, writes into a `.valence` folder at the
+top of each library — one per library, not one per film — holding the new file
+while it is made and the original once it has been swapped aside. That cannot
+happen under `:ro`.
+
+It sits under the library root rather than somewhere else on purpose. Swapping
+an encode into place is a rename, and a rename is only instant and atomic within
+one filesystem; across a volume boundary it would become a copy of the whole
+file, needing the disk twice over and able to half-finish.
+
+If you want it, set `MEDIA_ACCESS` to an empty string so the mount becomes read
+and write. Leave it alone otherwise; Valence checks before it starts an encode
+and says plainly that the folder is read only, rather than failing part way
+through two hours of work.
+
+Two things worth knowing before you turn it on:
+
+- **Replacing a file is the only thing in Valence that destroys your own media.**
+  Everything else that looks destructive — resetting a library, clearing its
+  artwork — deletes rows and derived files that a rescan brings back. A
+  re-encoded remux does not come back: what a lossy encoder discards is gone.
+- **Nothing is discarded until you have looked at it.** A replacement is
+  verified, swapped into place, and then waits. Both files sit on disk until you
+  have watched the result and either confirmed it, which disposes of the
+  original, or rejected it, which puts the original back in one action. There is
+  no timer and no way to skip that step.
+
+The permission is its own: `media.reencode`, separate from deleting media.
 
 ## Hardware transcoding
 

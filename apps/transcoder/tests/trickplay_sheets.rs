@@ -78,12 +78,14 @@ fn app(name: &str) -> axum::Router {
             max_concurrent: 2,
         }),
         ffprobe: ffprobe(),
-        downloads: valence_transcoder::download::DownloadRegistry::new(),
+        downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),
         trickplay: TrickplayRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
         audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: WorkQueue::new(1),
+        renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
+        write_roots: Vec::new(),
         media_roots: Vec::new(),
     })
 }
@@ -226,12 +228,14 @@ async fn refuses_a_file_outside_the_media_roots() {
             max_concurrent: 2,
         }),
         ffprobe: ffprobe(),
-        downloads: valence_transcoder::download::DownloadRegistry::new(),
+        downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),
         trickplay: TrickplayRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
         audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: WorkQueue::new(1),
+        renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
+        write_roots: Vec::new(),
         media_roots: vec![PathBuf::from("/nowhere")],
     });
 
@@ -303,13 +307,15 @@ async fn asking_twice_at_once_renders_one_set_rather_than_two() {
             manifest_timeout: std::time::Duration::from_secs(120),
             max_concurrent: 2,
         }),
-        downloads: valence_transcoder::download::DownloadRegistry::new(),
+        downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),
         trickplay: TrickplayRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
         audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: WorkQueue::new(1),
         ffprobe: ffprobe(),
+        renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
+        write_roots: Vec::new(),
         media_roots: Vec::new(),
     });
 

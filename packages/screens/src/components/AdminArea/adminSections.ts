@@ -1,6 +1,7 @@
 import {
   Activity01Icon,
   DashboardSquare01Icon,
+  FilmRoll01Icon,
   FolderLibraryIcon,
   Link01Icon,
   Settings02Icon,
@@ -28,6 +29,7 @@ const ADMIN_SECTIONS = [
     items: [
       { id: 'libraries', label: 'Libraries', icon: FolderLibraryIcon },
       { id: 'media', label: 'Media', icon: Video01Icon },
+      { id: 'encoding', label: 'Encoding', icon: FilmRoll01Icon },
     ],
   },
   {

@@ -13,6 +13,7 @@ const LABELS: Record<Permission, string> = {
 
   'media.rescan': 'Rescan one item',
   'media.delete': 'Delete media from disk',
+  'media.reencode': 'Re-encode media',
   'media.override': 'Correct metadata',
   'media.artwork': 'Change artwork',
   'media.hide': 'Hide an item from everybody',

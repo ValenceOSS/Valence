@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Tick02Icon } from '@hugeicons/core-free-icons';
+import { MinusSignIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { useId } from 'react';
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import { cn } from '@ValenceUI/cn';
@@ -14,6 +14,8 @@ import type { CheckboxProps } from './Checkbox.types';
  * @param label - What ticking it means.
  * @param description - A qualification the label would be worse for carrying, shown beneath it.
  * @param checked - Whether it is ticked, for a caller holding the state.
+ * @param isMixed - Whether it stands for several things that do not agree, which a tick would
+ *   misstate — some of the rows beneath a "select all" are chosen and some are not.
  * @param defaultChecked - Whether it starts ticked, for a caller that would rather not.
  * @param disabled - Whether it can be changed at all.
  * @param onCheckedChange - Told the new state when it changes.
@@ -23,6 +25,7 @@ const Checkbox = ({
   label,
   description,
   checked,
+  isMixed = false,
   defaultChecked,
   disabled = false,
   onCheckedChange,
@@ -40,7 +43,7 @@ const Checkbox = ({
       )}
     >
       <RadixCheckbox.Root
-        {...(checked === undefined ? {} : { checked })}
+        {...(isMixed ? { checked: 'indeterminate' as const } : checked === undefined ? {} : { checked })}
         {...(defaultChecked === undefined ? {} : { defaultChecked })}
         {...(onCheckedChange === undefined ? {} : { onCheckedChange })}
         disabled={disabled}
@@ -54,11 +57,12 @@ const Checkbox = ({
           'motion-reduce:transition-none',
           'focus-visible:ring-[3px] focus-visible:ring-ring',
           'data-[state=checked]:border-primary data-[state=checked]:bg-primary',
+          'data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary',
           'disabled:cursor-not-allowed disabled:opacity-50',
         )}
       >
         <RadixCheckbox.Indicator className="flex text-primary-foreground animate-in zoom-in-75 duration-[var(--duration-instant)] motion-reduce:animate-none">
-          <Icon of={Tick02Icon} size={14} />
+          <Icon of={isMixed ? MinusSignIcon : Tick02Icon} size={14} />
         </RadixCheckbox.Indicator>
       </RadixCheckbox.Root>
       {description === undefined ? (

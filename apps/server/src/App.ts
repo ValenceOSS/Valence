@@ -351,8 +351,10 @@ import type { HistoryService } from '@ValenceServer/history/HistoryService';
 import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 
 import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
+import { registerReencodeRoutes } from '@ValenceServer/reencode/registerReencodeRoutes';
 import { listeningFor } from '@ValenceServer/music/listeningFor';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
+import type { ReencodeService } from '@ValenceServer/reencode/ReencodeService';
 
 const PROFILE_HEADER = 'x-valence-profile';
 
@@ -511,6 +513,8 @@ type CreateAppOptions = {
   splashscreen?: SplashscreenStore;
   books?: BookService;
   music?: MusicServices;
+  reencodes?: ReencodeService;
+  onReencodeQueued?: () => void;
   promoteProfile?: (request: {
     profileId: string;
     email: string;
@@ -591,6 +595,8 @@ const createApp = ({
   splashscreen = createMemorySplashscreenStore(),
   books,
   music,
+  reencodes,
+  onReencodeQueued,
   promoteProfile,
   listUsers,
   capabilities,
@@ -4547,6 +4553,15 @@ const createApp = ({
 
   if (music !== undefined) {
     registerMusicRoutes(app, { viewerOf, music, requires });
+  }
+
+  if (reencodes !== undefined) {
+    registerReencodeRoutes(app, {
+      reencodes,
+      requires,
+      accountOf: async (headers) => (await readAccount(headers))?.id ?? null,
+      ...(onReencodeQueued === undefined ? {} : { onQueued: onReencodeQueued }),
+    });
   }
 
   app.openapi(findBooksRoute, async (context) => {

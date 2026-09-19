@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
   ClapperboardIcon,
+  FilmRoll01Icon,
   MoreHorizontalIcon,
   RefreshIcon,
   Search01Icon,
@@ -14,6 +15,7 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaPanelProps } from './MediaPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { formatBytes } from '@ValenceCore/functions/formatBytes';
 
 /**
  * Names a row by its programme rather than by the episode standing in for it, so a series appears
@@ -45,6 +47,7 @@ const isSeries = (item: MediaSummary): boolean =>
  * @param onChooseMoment - Called with the item whose preview moment is to be chosen.
  * @param onRebuildArtefacts - Called with the item whose previews and thumbnails are to be remade,
  *   answering whether the request was accepted.
+ * @param onReencode - Called with the item to be re-encoded, where re-encoding is offered at all.
  */
 const MediaPanel = ({
   isUnreachable = false,
@@ -52,6 +55,7 @@ const MediaPanel = ({
   onCorrect,
   onChooseMoment,
   onRebuildArtefacts,
+  onReencode,
 }: MediaPanelProps) => {
   const [search, setSearch] = useState('');
   const [rebuilding, setRebuilding] = useState<string | null>(null);
@@ -77,9 +81,9 @@ const MediaPanel = ({
     [media, search],
   );
 
-  const live = useRef({ rebuilding, rebuilt, onCorrect, onChooseMoment, rebuild });
+  const live = useRef({ rebuilding, rebuilt, onCorrect, onChooseMoment, onReencode, rebuild });
 
-  live.current = { rebuilding, rebuilt, onCorrect, onChooseMoment, rebuild };
+  live.current = { rebuilding, rebuilt, onCorrect, onChooseMoment, onReencode, rebuild };
 
   const columns = useMemo<DataTableColumn<MediaSummary>[]>(
     () => [
@@ -115,6 +119,18 @@ const MediaPanel = ({
         accessorFn: (item) => item.year ?? 0,
         cell: ({ row }) => (
           <span className="tabular-nums text-text-muted">{row.original.year ?? '—'}</span>
+        ),
+      },
+      {
+        id: 'size',
+        header: 'Size',
+        accessorFn: (item) => item.sizeBytes ?? 0,
+        cell: ({ row }) => (
+          <span className="tabular-nums text-text-muted">
+            {row.original.sizeBytes === null || row.original.sizeBytes === undefined
+              ? '—'
+              : formatBytes(row.original.sizeBytes)}
+          </span>
         ),
       },
       {
@@ -170,6 +186,18 @@ const MediaPanel = ({
                         live.current.onChooseMoment(row.original);
                       },
                     },
+                    ...(live.current.onReencode === undefined
+                      ? []
+                      : [
+                          {
+                            id: 'reencode',
+                            label: 'Re-encode\u2026',
+                            icon: <Icon of={FilmRoll01Icon} size={15} />,
+                            onChoose: () => {
+                              live.current.onReencode?.(row.original);
+                            },
+                          },
+                        ]),
                   ],
                 },
               ]}

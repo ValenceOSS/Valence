@@ -19,6 +19,7 @@ import {
   fetchAccountPermissions,
 } from '@ValenceClient/admin/fetchRoles';
 import { fetchWebhooks, fetchWebhookDeliveries } from '@ValenceClient/admin/fetchWebhooks';
+import { fetchReencodes, fetchRenditions } from '@ValenceClient/admin/fetchReencodes';
 import { fetchEverybodysShares } from '@ValenceClient/sharing/fetchShares';
 import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { JobRunQuery } from '@ValenceContracts/schemas/JobRun';
@@ -300,7 +301,33 @@ const exceptionsOn = (subject: { kind: 'item' | 'series'; subjectId: string } | 
     enabled: subject !== null,
   });
 
+/**
+ * Every re-encode, including the ones waiting for somebody to judge them.
+ *
+ * Refetched rather than long-lived, because an encode running for hours is exactly the thing an
+ * administrator leaves a page open on.
+ *
+ * @returns The query.
+ */
+const reencodes = () =>
+  queryOptions({ queryKey: [...ADMIN, 'reencodes'], queryFn: () => fetchReencodes() });
+
+/**
+ * What is kept beside one item.
+ *
+ * @param mediaId - The item, or nothing while none is being looked at.
+ * @returns The query.
+ */
+const renditions = (mediaId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'renditions', mediaId],
+    queryFn: () => fetchRenditions(mediaId ?? ''),
+    enabled: mediaId !== null,
+  });
+
 const adminQueries = {
+  reencodes,
+  renditions,
   exceptionsOn,
   libraryAccess,
   folders,

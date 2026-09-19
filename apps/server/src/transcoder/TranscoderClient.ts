@@ -150,6 +150,19 @@ const DownloadFileSchema = z.object({
   sizeBytes: z.number().int().nonnegative().nullable().optional(),
 });
 
+const RenditionFileSchema = z.object({
+  id: z.string(),
+  isReady: z.boolean(),
+  progress: z.number().int().min(0).max(100),
+  bytesPerSecond: z.number().int().nonnegative().nullable().optional(),
+  sizeBytes: z.number().int().nonnegative().nullable().optional(),
+  failure: z.string().nullable().optional(),
+});
+
+const RenditionRemovedSchema = z.object({ removed: z.boolean() });
+
+const RenditionStoppedSchema = z.object({ stopped: z.boolean() });
+
 const SweepReportSchema = z.object({
   removed: z.number().int().nonnegative(),
   freedBytes: z.number().int().nonnegative(),
@@ -234,6 +247,32 @@ type DownloadRequest = {
 
 type DownloadFile = z.infer<typeof DownloadFileSchema>;
 
+type RenditionAudioCarry =
+  | { kind: 'copy'; streamIndex: number }
+  | {
+      kind: 'encode';
+      streamIndex: number;
+      encoder: string;
+      channels: number;
+      maxBitrateKbps: number;
+    };
+
+type RenditionRequest = {
+  spec: SessionSpec;
+  carry: {
+    audio: RenditionAudioCarry[];
+    subtitleStreamIndexes: number[];
+    colour: { primaries?: string; transfer?: string; matrix?: string; range?: string };
+    keepsChapters: boolean;
+  };
+  durationSeconds: number;
+  outputPath: string;
+  fromSeconds?: number;
+  forSeconds?: number;
+};
+
+type RenditionFile = z.infer<typeof RenditionFileSchema>;
+
 type SessionSpec = {
   inputPath: string;
   startSeconds: number;
@@ -295,6 +334,9 @@ type Transcoder = {
     range: string | null,
   ) => Promise<TranscoderStreamedFile | null>;
   requestDownload: (request: DownloadRequest) => Promise<DownloadFile>;
+  requestRendition: (request: RenditionRequest) => Promise<RenditionFile>;
+  stopRendition: (outputPath: string) => Promise<boolean>;
+  forgetRendition: (outputPath: string) => Promise<boolean>;
   readDownloadFile: (
     id: string,
     name: string,
@@ -666,6 +708,19 @@ const createTranscoderClient = ({
     requestDownload: async (request) =>
       DownloadFileSchema.parse(await (await postJson('/downloads', request)).json()),
 
+    requestRendition: async (request) =>
+      RenditionFileSchema.parse(await (await postRender('/renditions', request)).json()),
+
+    stopRendition: async (outputPath) =>
+      RenditionStoppedSchema.parse(
+        await (await postJson('/renditions/stop', { outputPath })).json(),
+      ).stopped,
+
+    forgetRendition: async (outputPath) =>
+      RenditionRemovedSchema.parse(
+        await (await postJson('/renditions/forget', { outputPath })).json(),
+      ).removed,
+
     readDownloadFile: async (id, name, range) =>
       openStream(
         `${origin}/downloads/${encodeURIComponent(id)}/${encodeURIComponent(name)}`,
@@ -727,6 +782,9 @@ export type {
   SessionResponse,
   DownloadFile,
   DownloadRequest,
+  RenditionAudioCarry,
+  RenditionFile,
+  RenditionRequest,
   SessionSpec,
   Transcoder,
   TranscoderCapabilities,

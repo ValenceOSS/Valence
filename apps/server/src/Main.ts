@@ -57,6 +57,7 @@ import {
   account,
   library,
   mediaItem,
+  mediaRendition,
   mediaItemJob,
   mediaPreviewOverride,
   userProfile,
@@ -140,6 +141,7 @@ import {
   PRUNE_LOGS_JOB,
   PRUNE_JOB_HISTORY_JOB,
   PRUNE_RESOURCE_HISTORY_JOB,
+  REENCODE_JOB,
   DeliverWebhookJobSchema,
   scheduleTriggerKind,
 } from '@ValenceServer/jobs/JobQueue';
@@ -173,7 +175,7 @@ import { createMusicFileSystem } from '@ValenceServer/music/createMusicFileSyste
 import { createDatabasePlaylistService } from '@ValenceServer/playlists/createDatabasePlaylistService';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
 import { sweepArtefactCache } from '@ValenceServer/maintenance/sweepArtefactCache';
-import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
+import { AudioStreamSchema,MediaItemSchema } from '@ValenceContracts/schemas/MediaItem';
 import {
   TRICKPLAY_INTERVAL_SECONDS,
   TRICKPLAY_TILE_WIDTH,
@@ -198,6 +200,7 @@ import { createDatabaseSignInStore } from '@ValenceServer/accounts/createDatabas
 import { recordSignIn } from '@ValenceServer/accounts/recordSignIn';
 import { createDatabasePermissionService } from '@ValenceServer/auth/createDatabasePermissionService';
 import { createDownloadService } from '@ValenceServer/downloads/createDownloadService';
+import { createDatabaseReencodeService } from '@ValenceServer/reencode/createDatabaseReencodeService';
 import { keepingProfile } from '@ValenceServer/downloads/keepingProfile';
 import { readCertificatesAgain } from '@ValenceServer/library/readCertificatesAgain';
 const ChapterListSchema = z.array(
@@ -279,6 +282,7 @@ const settings = createDatabaseSettingsStore({
     audioDbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
+    reencodesAwaitingReviewCap: 5,
   },
 });
 
@@ -1256,6 +1260,14 @@ const jobs = await createJobQueue({
         );
         void bookPageUsage.refresh();
       },
+      [REENCODE_JOB]: async (jobId) => {
+        await reencodeService.work(
+          (processed, total) => {
+            jobs.reportProgress(jobId, 'encoding', processed, total);
+          },
+          () => jobs.isCancelled(jobId),
+        );
+      },
       [CLEANUP_ARTEFACT_CACHE_JOB]: async () => {
         const swept = await sweepArtefactCache({
           quality: (await settings.read()).previewQuality,
@@ -1782,18 +1794,30 @@ const playbackService = createPlaybackService({
 
       const row = rows[0];
 
-      return row === undefined
-        ? null
-        : {
-            item,
-            path: row.path,
-            defaultAudioLanguage: row.defaultAudioLanguage,
-            generation: row.generation,
-            previewMoment:
-              row.atSeconds === null
-                ? null
-                : { atSeconds: row.atSeconds, durationSeconds: row.clipSeconds },
-          };
+      if (row === undefined) {
+        return null;
+      }
+
+      const kept = await db
+        .select()
+        .from(mediaRendition)
+        .where(eq(mediaRendition.mediaItemId, mediaId));
+
+      return {
+        item,
+        path: row.path,
+        defaultAudioLanguage: row.defaultAudioLanguage,
+        generation: row.generation,
+        previewMoment:
+          row.atSeconds === null
+            ? null
+            : { atSeconds: row.atSeconds, durationSeconds: row.clipSeconds },
+        renditions: kept.map((one) => ({
+          id: one.id,
+          path: one.path,
+          item: MediaItemSchema.parse({ ...one, id: one.id, title: item.title }),
+        })),
+      };
     },
   },
   transcoder,
@@ -1848,6 +1872,58 @@ const downloadService = createDownloadService({
   forcedAccel: async () => (await settings.read()).hardwareAccel,
 });
 
+const reencodeService = createDatabaseReencodeService({
+  db,
+  media: {
+    findForReencode: async (mediaId) => {
+      const item = await libraryService.getMedia(mediaId);
+
+      if (item === null) {
+        return null;
+      }
+
+      const rows = await db
+        .select({
+          path: mediaItem.path,
+          libraryId: mediaItem.libraryId,
+          libraryPath: library.path,
+          seriesTitle: mediaItem.seriesTitle,
+        })
+        .from(mediaItem)
+        .innerJoin(library, eq(library.id, mediaItem.libraryId))
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      const row = rows[0];
+
+      return row === undefined
+        ? null
+        : {
+            item,
+            title: item.title,
+            seriesTitle: row.seriesTitle,
+            path: row.path,
+            libraryId: row.libraryId,
+            libraryPath: row.libraryPath,
+          };
+    },
+  },
+  transcoder,
+  capabilities: async () => transcoder.capabilities(),
+  forcedAccel: async () => (await settings.read()).hardwareAccel,
+  isBeingWatched: (mediaId) =>
+    presence.list().some((entry) => entry.playback?.mediaId === mediaId),
+  awaitingReviewCap: async () => (await settings.read()).reencodesAwaitingReviewCap,
+  afterChange: async (mediaItemId) => {
+    await libraryService.rebuildArtefacts(mediaItemId);
+
+    realtime.publish('media', { event: 'changed', mediaId: mediaItemId }, { kind: 'everyone' });
+  },
+  onProblem: (what, reason) => {
+    log.warn('jobs', `re-encoding ${what}: ${reason}`);
+  },
+});
+
 const app = createApp({
   auth,
   settings,
@@ -1878,6 +1954,10 @@ const app = createApp({
   events,
   readPushPublicKey: async () => (await readPushKeys()).publicKey,
   downloads: downloadService,
+  reencodes: reencodeService,
+  onReencodeQueued: () => {
+    void jobs.enqueue(REENCODE_JOB, {}, REENCODE_JOB);
+  },
   favourites: createDatabaseFavouriteService(db),
   hiding: createDatabaseHiddenService(db),
   ratings: createDatabaseRatingService(db),

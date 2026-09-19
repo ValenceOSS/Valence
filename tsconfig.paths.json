@@ -25,6 +25,8 @@
       "@ValenceUI/Badge.types": ["./packages/ui/src/components/Badge/Badge.types.ts"],
       "@ValenceUI/Button": ["./packages/ui/src/components/Button/Button.tsx"],
       "@ValenceUI/Button/buttonStyles": ["./packages/ui/src/components/Button/buttonStyles.ts"],
+      "@ValenceUI/Callout": ["./packages/ui/src/components/Callout/Callout.tsx"],
+      "@ValenceUI/Callout.types": ["./packages/ui/src/components/Callout/Callout.types.ts"],
       "@ValenceUI/Card": ["./packages/ui/src/components/Card/Card.tsx"],
       "@ValenceUI/Card.types": ["./packages/ui/src/components/Card/Card.types.ts"],
       "@ValenceUI/CardHeader": ["./packages/ui/src/components/CardHeader/CardHeader.tsx"],

@@ -6,6 +6,7 @@ type MediaPanelProps = {
   onCorrect: (media: MediaSummary) => void;
   onChooseMoment: (media: MediaSummary) => void;
   onRebuildArtefacts: (media: MediaSummary) => Promise<boolean>;
+  onReencode?: (media: MediaSummary) => void;
 };
 
 export type { MediaPanelProps };
