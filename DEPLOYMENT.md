@@ -112,8 +112,8 @@ indexers, and hand them to a download client of your own. It is a second
 service, `requests`, and nothing about it shows in Valence until it is set up:
 no sidebar group, no permissions, no webhook events.
 
-It is arriving in stages. Films, series and music can be requested, fetched
-and filed into their libraries now.
+Films, series and music can be requested, fetched and filed into their
+libraries, by whoever you let ask as well as from the admin area.
 
 To switch it on:
 
@@ -135,7 +135,25 @@ and the log says which is missing.
 
 Unlike Valence, the requests service mounts `MEDIA_PATH` writable, because
 filing what it downloads into the library is its whole job. Valence itself still
-never writes there.
+never writes there: one service writes to your library, and it is the one whose
+job that is.
+
+### What each library takes
+
+A library's own settings, on the Libraries page, say how requesting treats it:
+
+- **Takes requests.** Off, and nothing is filed there and it is not offered when
+  somebody asks. A library of things you ripped yourself can be left out of
+  requesting entirely.
+- **Quality profile for requests.** The profile releases for it are judged by.
+  Left alone, whichever profile names this library is used, and failing that the
+  defaults below.
+- **Where requests are filed.** A folder of its own for what is fetched, where
+  you want it kept apart from what you already had. The library's own folder
+  otherwise.
+
+There is one server-wide setting beside them, on the Settings page: **what a
+request for an artist watches** — albums alone unless you say otherwise.
 
 ### Indexers
 
@@ -198,9 +216,25 @@ download can be found.
 The admin area's **Requested** page asks for a film or series from the
 catalogue, which needs `CATALOGUE_API_KEY`. Somebody allowed to ask
 (`requests.ask`) makes a request; it waits for somebody who approves
-(`requests.approve`) unless the asker's role has `requests.autoApprove`. The
-page shows every request as it moves along, and approves, refuses, searches
-again, or searches by hand to pick any release.
+(`requests.approve`) unless the asker's role has `requests.autoApprove`.
+
+The page shows every request as it moves along. Approving one opens it first, so
+its quality profile, the library it will be filed into and the seasons or kinds
+of record it watches can be changed before anything is fetched; several waiting
+at once can be approved, or refused with one reason between them, by ticking
+them. A refusal's reason is shown to whoever asked, on their own requests page.
+
+Opening a request shows everything about it in one place:
+
+- how it is going, and every download it is waiting on with its speed, size,
+  what is left, and how many are sharing it — the same downloads the Downloads
+  page shows, which can be held, let go or taken out from here;
+- which release was chosen for each part of it, and how well that scored;
+- every release the indexers have for it now, judged in the order they would be
+  chosen, so what was taken and why the rest were not is in one table — and any
+  of them can be fetched instead;
+- everything it has done, newest first;
+- and what it will never try again, which can be let back.
 
 Once a request is approved:
 
@@ -219,7 +253,10 @@ Once a request is approved:
   **Search for what is missing**; the indexers' newest releases are read every
   quarter of an hour for anything wanted.
 - **Failure.** A download that fails, or stalls for six hours, blocklists that
-  release for the request, and the next best is fetched straight away.
+  release for the request, and the next best is fetched straight away. What a
+  request has given up on is listed under **Never again** when it is opened, and
+  letting one back has the next search consider it again — which is what to do
+  when the release was fine and the download client was not.
 - **Filing.** A finished download is filed into the library the request is for,
   as `Title (Year)/Title (Year).mkv` for a film and
   `Title (Year)/Season 01/Title (Year) - S01E01 - Episode.mkv` for an episode,
@@ -267,6 +304,28 @@ Valence then reads just that album's folder and ties the request to the album it
 found — by the MusicBrainz release group its tracks are tagged with, or else by
 where it was filed, which it remembers.
 
+### What people see
+
+Requesting is not an admin-only feature, and what somebody may do decides what
+they are shown. Nobody sees any of it while requesting is off.
+
+- **Discover** appears in the bar for anybody who may ask (`requests.ask` for
+  films and series, `requests.askMusic` for music). It shows what is trending,
+  popular and coming, the studios behind them, and the albums and artists most
+  listened to — each marked as in your library, asked for already, or there to
+  be asked for. Movies and Shows are those lists whole, going on as far as they
+  are scrolled.
+- **Searching** looks in the catalogue as well as the library, so something the
+  server does not have yet comes back under "Not in your library yet".
+- **A title's page** shows its artwork, what it is about and who is in it, with
+  the way to ask: seasons for a series, albums for an artist.
+- **My requests**, in the account menu, shows what somebody has asked for and
+  how far each has got, including how fast it is coming down. A request can be
+  cancelled until it is in the library, which deletes whatever it had started
+  downloading.
+- **Arrivals** are told to whoever asked, in the app and by push where they
+  chose it.
+
 ### A VPN for the download client
 
 The `vpn` profile starts [gluetun](https://github.com/qdm12/gluetun). Fill in its
@@ -275,6 +334,23 @@ with `network_mode: service:gluetun`, and publish the client's web port on
 gluetun rather than on the client. With `VPN_URL` and `VPN_API_KEY` set, the
 admin area's Requests page shows whether the tunnel is up and where traffic
 leaves from, and Valence raises a warning and a webhook when it drops.
+
+**The kill switch is the point of doing it this way.** gluetun's firewall is on
+unless you turn it off (`FIREWALL=on`, its default), and a container sharing
+gluetun's network has no other way out: when the tunnel drops, the download
+client's traffic stops rather than going out over your own address. Two things
+undo that, so do neither:
+
+- do not give the download client `network_mode: bridge` or ports of its own —
+  its web interface is published on gluetun, which is what keeps it behind the
+  firewall;
+- do not add your LAN to `FIREWALL_OUTBOUND_SUBNETS` beyond what you need to
+  reach the web interface, since anything listed there is reachable without the
+  tunnel.
+
+The requests service does not go through the VPN and does not need to: it talks
+to your indexers and to the download client, and the download client is what
+speaks to the swarm.
 
 ## The proxy
 
