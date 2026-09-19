@@ -1,34 +1,16 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readRefusal } from './readRefusal';
 import type { Refusal } from './readRefusal';
-import { z } from 'zod';
-import { ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
+import { AccountListSchema } from '@ValenceContracts/schemas/Account';
+import type { Account } from '@ValenceContracts/schemas/Account';
 import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
-
-const AccountSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string(),
-  createdAt: z.string(),
-  isBanned: z.boolean(),
-  banReason: z.string().nullable(),
-  position: z.number().nullable(),
-  isAdministrator: z.boolean(),
-  face: ViewerProfileSchema.nullable().default(null),
-  roles: z.array(z.string()),
-});
-
-type Account = z.infer<typeof AccountSchema>;
 
 /**
  * Everybody with an account on this server, with what each may do and whether they are banned. What
  * the administration page needs to show them all in one table.
  */
-const fetchAccounts = async (): Promise<Account[]> => {
-  return (
-    await readFromServer('/api/admin/accounts', z.object({ accounts: z.array(AccountSchema) }))
-  ).accounts;
-};
+const fetchAccounts = async (): Promise<Account[]> =>
+  (await readFromServer('/api/admin/accounts', AccountListSchema)).accounts;
 
 /**
  * Bans an account, with a reason the person is shown when they next try to sign in. Their sessions
