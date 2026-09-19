@@ -51,6 +51,19 @@ type CatalogueMatch = {
   posterUrl: string | null;
 };
 
+type CatalogueList = 'trending' | 'popular' | 'upcoming';
+
+type CatalogueDescription = {
+  title: string;
+  year: number | null;
+  overview: string | null;
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  genres: string[];
+  runtimeMinutes: number | null;
+  cast: { name: string; role: string | null; photoUrl: string | null }[];
+};
+
 type SeriesShape = {
   seasons: {
     seasonNumber: number;
@@ -71,6 +84,11 @@ type MetadataProvider = {
   readLogoUrl?: (options: { externalId: string; isSeries: boolean }) => Promise<string | null>;
   readPerson?: (personId: number) => Promise<Person | null>;
   search?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
+  discover?: (list: CatalogueList, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
+  describeTitle?: (
+    externalId: string,
+    kind: 'tv' | 'movie',
+  ) => Promise<CatalogueDescription | null>;
   describeForRequest?: (
     externalId: string,
     kind: 'tv' | 'movie',
@@ -149,6 +167,15 @@ const resolveMetadata = async (
   return null;
 };
 
-export type { CastMember, CatalogueMatch, MediaFacts, Metadata, MetadataProvider, SeriesShape };
+export type {
+  CastMember,
+  CatalogueDescription,
+  CatalogueList,
+  CatalogueMatch,
+  MediaFacts,
+  Metadata,
+  MetadataProvider,
+  SeriesShape,
+};
 
 export { resolveMetadata, resolveSeriesShape };

@@ -740,6 +740,79 @@ describe('describing a film or series for a request', () => {
   });
 });
 
+describe('discovering and describing titles to ask for', () => {
+  it('lists what is trending, popular or coming, as titles to choose from', async () => {
+    const { instance, calls } = provider({
+      '/trending/movie/week': {
+        results: [{ id: 438631, title: 'Dune', release_date: '2021-09-15', poster_path: '/d.jpg' }],
+      },
+      '/tv/on_the_air': { results: [{ id: 95396, name: 'Severance' }] },
+    });
+
+    await expect(instance.discover?.('trending', 'movie')).resolves.toEqual([
+      {
+        externalId: '438631',
+        kind: 'movie',
+        title: 'Dune',
+        year: 2021,
+        overview: null,
+        posterUrl: 'https://image.tmdb.org/t/p/w342/d.jpg',
+      },
+    ]);
+    await expect(instance.discover?.('upcoming', 'tv')).resolves.toMatchObject([
+      { externalId: '95396', title: 'Severance' },
+    ]);
+    await expect(instance.discover?.('popular', 'movie')).resolves.toEqual([]);
+    expect(calls.map((call) => new URL(call).pathname)).toEqual([
+      '/3/trending/movie/week',
+      '/3/tv/on_the_air',
+      '/3/movie/popular',
+    ]);
+  });
+
+  it('describes a title with its backdrop, genres, running time and cast', async () => {
+    const { instance, calls } = provider({
+      '/tv/95396': {
+        id: 95396,
+        name: 'Severance',
+        first_air_date: '2022-02-18',
+        overview: 'Work and life, split.',
+        backdrop_path: '/b.jpg',
+        genres: [{ name: 'Drama' }],
+        episode_run_time: [55],
+        credits: {
+          cast: [
+            { name: 'Adam Scott', character: 'Mark S.', profile_path: '/a.jpg' },
+            { name: 'Britt Lower', character: '' },
+          ],
+        },
+      },
+    });
+
+    await expect(instance.describeTitle?.('95396', 'tv')).resolves.toEqual({
+      title: 'Severance',
+      year: 2022,
+      overview: 'Work and life, split.',
+      posterUrl: null,
+      backdropUrl: 'https://image.tmdb.org/t/p/w1280/b.jpg',
+      genres: ['Drama'],
+      runtimeMinutes: 55,
+      cast: [
+        { name: 'Adam Scott', role: 'Mark S.', photoUrl: 'https://image.tmdb.org/t/p/w185/a.jpg' },
+        { name: 'Britt Lower', role: null, photoUrl: null },
+      ],
+    });
+    expect(calls[0]).toContain('append_to_response=credits');
+  });
+
+  it('has nothing to list or describe without a key', async () => {
+    const { instance } = provider({}, { key: null });
+
+    await expect(instance.discover?.('trending', 'tv')).resolves.toEqual([]);
+    await expect(instance.describeTitle?.('1', 'movie')).resolves.toBeNull();
+  });
+});
+
 describe('the two ways a catalogue key can be presented', () => {
   const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJmbHV4In0.signature';
 

@@ -7,7 +7,13 @@ import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { readTitleFromPath } from './readTitleFromPath';
 import { pickLogo } from './pickLogo';
 import { createCatalogueGate } from './createCatalogueGate';
-import type { CastMember, Metadata, MetadataProvider } from './MetadataProvider';
+import type {
+  CastMember,
+  CatalogueList,
+  CatalogueMatch,
+  Metadata,
+  MetadataProvider,
+} from './MetadataProvider';
 import { readCertifications } from '@ValenceServer/library/readCertifications';
 import { readRequestCatalogue } from '@ValenceServer/library/readRequestCatalogue';
 
@@ -71,6 +77,14 @@ const SearchResultSchema = z.object({
 const SearchResponseSchema = z.object({ results: z.array(SearchResultSchema).default([]) });
 
 const CATALOGUE_ANSWER_LIVES_FOR_MS = 6 * 60 * 60 * 1000;
+
+const LIST_PATHS: Readonly<Record<CatalogueList, Record<'tv' | 'movie', string>>> = {
+  trending: { movie: '/trending/movie/week', tv: '/trending/tv/week' },
+  popular: { movie: '/movie/popular', tv: '/tv/popular' },
+  upcoming: { movie: '/movie/upcoming', tv: '/tv/on_the_air' },
+};
+
+const CAST_DESCRIBED = 12;
 
 const LogoSchema = z.object({
   file_path: z.string(),
@@ -168,6 +182,11 @@ const DetailResponseSchema = z.object({
         .default([]),
     })
     .optional(),
+});
+
+const TitleResponseSchema = DetailResponseSchema.extend({
+  runtime: z.number().int().nullish(),
+  episode_run_time: z.array(z.number().int()).default([]),
 });
 
 type Fetcher = (
@@ -348,6 +367,30 @@ const pickBestMatch = (
  */
 const imageUrl = (base: string, path: string | null | undefined, size: string): string | null =>
   path === null || path === undefined || path === '' ? null : `${base}/${size}${path}`;
+
+/**
+ * A title the catalogue listed, as offered to choose from: its catalogue id, title, year, synopsis
+ * and poster.
+ *
+ * @param entry - What the catalogue listed.
+ * @param kind - Whether it is a film or a series.
+ * @param fallback - The title to give it where the catalogue names nothing.
+ * @param base - Where the catalogue keeps its images.
+ * @returns It as a match.
+ */
+const matchOf = (
+  entry: SearchResult,
+  kind: 'tv' | 'movie',
+  fallback: string,
+  base: string,
+): CatalogueMatch => ({
+  externalId: entry.id.toString(),
+  kind,
+  title: entry.title ?? entry.name ?? fallback,
+  year: readYear(entry.release_date ?? entry.first_air_date),
+  overview: entry.overview === undefined || entry.overview === '' ? null : entry.overview,
+  posterUrl: imageUrl(base, entry.poster_path, 'w342'),
+});
 
 /**
  * Reads metadata from an online catalogue — descriptions, cast, artwork, ratings — for files whose
@@ -733,14 +776,57 @@ const createCatalogueMetadataProvider = ({
         return [];
       }
 
-      return results.data.results.map((entry) => ({
-        externalId: entry.id.toString(),
-        kind,
-        title: entry.title ?? entry.name ?? query,
-        year: readYear(entry.release_date ?? entry.first_air_date),
-        overview: entry.overview === undefined || entry.overview === '' ? null : entry.overview,
-        posterUrl: imageUrl(imageBaseUrl, entry.poster_path, 'w342'),
-      }));
+      return results.data.results.map((entry) => matchOf(entry, kind, query, imageBaseUrl));
+    },
+
+    discover: async (list, kind) => {
+      const key = await readApiKey();
+
+      if (key === null || key === '') {
+        return [];
+      }
+
+      const results = SearchResponseSchema.safeParse(
+        await request(LIST_PATHS[list][kind], key, {}),
+      );
+
+      return results.success
+        ? results.data.results.map((entry) => matchOf(entry, kind, '', imageBaseUrl))
+        : [];
+    },
+
+    describeTitle: async (externalId, kind) => {
+      const key = await readApiKey();
+
+      if (key === null || key === '') {
+        return null;
+      }
+
+      const detail = TitleResponseSchema.safeParse(
+        await request(`/${kind}/${externalId}`, key, { append_to_response: 'credits' }),
+      );
+
+      if (!detail.success) {
+        return null;
+      }
+
+      const found = detail.data;
+      const runtime = found.runtime ?? found.episode_run_time[0] ?? 0;
+
+      return {
+        title: found.title ?? found.name ?? '',
+        year: readYear(found.release_date ?? found.first_air_date),
+        overview: found.overview === undefined || found.overview === '' ? null : found.overview,
+        posterUrl: imageUrl(imageBaseUrl, found.poster_path, 'w342'),
+        backdropUrl: imageUrl(imageBaseUrl, found.backdrop_path, 'w1280'),
+        genres: found.genres.map((genre) => genre.name),
+        runtimeMinutes: runtime > 0 ? runtime : null,
+        cast: (found.credits?.cast ?? []).slice(0, CAST_DESCRIBED).map((member) => ({
+          name: member.name,
+          role: member.character === undefined || member.character === '' ? null : member.character,
+          photoUrl: imageUrl(imageBaseUrl, member.profile_path, 'w185'),
+        })),
+      };
     },
 
     describeForRequest: async (externalId, kind) => {
