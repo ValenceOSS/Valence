@@ -116,10 +116,10 @@ const pictureAsked = (weighed: readonly ChosenSource[]): number => {
  * a 1080p copy of it; a 1080p copy the phone plays is better than encoding the remux for it.
  *
  * Video passthrough rather than direct play is the test, deliberately. Direct play additionally
- * means the bytes are handed over untouched, which HEVC never is here — Valence cannot tell `hvc1`
- * from `hev1` and sends HEVC through a session to be sure of the tag. That session copies the
- * picture rather than encoding it, so an HEVC rendition still buys exactly what it was made to buy,
- * and judging it on direct play would have refused every one of them.
+ * means the bytes are handed over untouched, and an HEVC file that a session has to retag is not
+ * handed over untouched. That session copies the picture rather than encoding it, so such a
+ * rendition still buys exactly what it was made to buy, and judging it on direct play would refuse
+ * it for a cost it does not carry.
  *
  * Where nothing avoids encoding, the original is what gets encoded. A rendition is already a
  * generation down, and encoding from it would stack one loss on another to save nothing.

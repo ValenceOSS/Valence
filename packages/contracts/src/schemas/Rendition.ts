@@ -31,6 +31,7 @@ const RenditionSchema = z.object({
   videoFrameRate: z.number().positive().nullish(),
   videoIsInterlaced: z.boolean().default(false),
   videoRefFrames: z.number().int().positive().nullish(),
+  videoCodecTag: z.string().nullish(),
   videoPixelAspect: z.string().nullish(),
   videoRotationDegrees: z.number().int().nullish(),
   width: z.number().int().positive(),

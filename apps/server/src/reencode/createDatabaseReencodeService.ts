@@ -31,7 +31,10 @@ import type {
   ReencodeSettings,
 } from '@ValenceContracts/schemas/Reencode';
 import type { Rendition } from '@ValenceContracts/schemas/Rendition';
-import type { Transcoder, TranscoderCapabilities } from '@ValenceServer/transcoder/TranscoderClient';
+import type {
+  Transcoder,
+  TranscoderCapabilities,
+} from '@ValenceServer/transcoder/TranscoderClient';
 
 const SAMPLE_SECONDS = 60;
 
@@ -277,6 +280,7 @@ const createDatabaseReencodeService = ({
         videoFrameRate: facts.videoFrameRate,
         videoIsInterlaced: facts.videoIsInterlaced,
         videoRefFrames: facts.videoRefFrames,
+        videoCodecTag: facts.videoCodecTag,
         videoPixelAspect: facts.videoPixelAspect,
         videoRotationDegrees: facts.videoRotationDegrees,
         width: facts.width,
@@ -476,6 +480,7 @@ const createDatabaseReencodeService = ({
         videoFrameRate: facts.videoFrameRate,
         videoIsInterlaced: facts.videoIsInterlaced,
         videoRefFrames: facts.videoRefFrames,
+        videoCodecTag: facts.videoCodecTag,
         videoPixelAspect: facts.videoPixelAspect,
         videoRotationDegrees: facts.videoRotationDegrees,
         width: facts.width,
@@ -609,10 +614,7 @@ const createDatabaseReencodeService = ({
     },
 
     list: async () => {
-      const rows = await db
-        .select()
-        .from(reencodeRequest)
-        .orderBy(asc(reencodeRequest.askedAt));
+      const rows = await db.select().from(reencodeRequest).orderBy(asc(reencodeRequest.askedAt));
 
       return Promise.all(rows.map(async (row) => asReencode(row, await titleFor(row))));
     },
@@ -621,7 +623,10 @@ const createDatabaseReencodeService = ({
       const rows = await db.select().from(reencodeRequest).where(eq(reencodeRequest.id, id));
       const row = rows[0];
 
-      if (row === undefined || !REENCODES_STILL_TO_BE_WRITTEN.some((state) => state === row.state)) {
+      if (
+        row === undefined ||
+        !REENCODES_STILL_TO_BE_WRITTEN.some((state) => state === row.state)
+      ) {
         return false;
       }
 
@@ -748,9 +753,7 @@ const createDatabaseReencodeService = ({
         return null;
       }
 
-      return transcoder
-        .readFrame({ inputPath: path, atSeconds: seconds, width })
-        .catch(() => null);
+      return transcoder.readFrame({ inputPath: path, atSeconds: seconds, width }).catch(() => null);
     },
 
     renditionsFor: async (mediaId) => {

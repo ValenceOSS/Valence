@@ -664,6 +664,7 @@ const mediaItem = pgTable(
     durationSeconds: real('durationSeconds').notNull(),
     bitrateKbps: integer('bitrateKbps'),
     videoCodec: text('videoCodec').notNull(),
+    videoCodecTag: text('videoCodecTag'),
     videoRange: text('videoRange').notNull(),
     videoRangeBase: text('videoRangeBase'),
     videoBitDepth: integer('videoBitDepth'),
@@ -732,6 +733,7 @@ const mediaRendition = pgTable(
     durationSeconds: real('durationSeconds').notNull(),
     bitrateKbps: integer('bitrateKbps').notNull(),
     videoCodec: text('videoCodec').notNull(),
+    videoCodecTag: text('videoCodecTag'),
     videoRange: text('videoRange').notNull(),
     videoRangeBase: text('videoRangeBase'),
     videoBitDepth: integer('videoBitDepth'),
@@ -793,10 +795,7 @@ const reencodeRequest = pgTable(
     index('reencode_request_state_idx').on(table.state, table.askedAt),
     index('reencode_request_item_idx').on(table.mediaItemId),
     index('reencode_request_library_idx').on(table.libraryId),
-    check(
-      'reencode_request_mode',
-      sql`${table.mode} in ('replace', 'keep', 'audioOnly')`,
-    ),
+    check('reencode_request_mode', sql`${table.mode} in ('replace', 'keep', 'audioOnly')`),
     check(
       'reencode_request_state',
       sql`${table.state} in ('queued', 'encoding', 'verifying', 'awaitingReview', 'finished', 'rejected', 'failed', 'cancelled')`,

@@ -28,6 +28,7 @@ const probe = (): MediaProbe => ({
   video: {
     index: 0,
     codec: 'hevc',
+    codecTag: null,
     width: 3840,
     height: 2160,
     range: 'HDR10',

@@ -8,6 +8,7 @@ const MediaFactsSchema = z.object({
   durationSeconds: z.number(),
   bitrateKbps: z.number().int().nullable(),
   videoCodec: z.string(),
+  videoCodecTag: z.string().nullable(),
   videoRange: z.string(),
   videoRangeBase: z.string().nullable(),
   videoBitDepth: z.number().int().nullable(),

@@ -320,11 +320,12 @@ pub struct SessionSpec {
     pub container: SegmentContainer,
     /// What the source video is, where the caller knows it.
     ///
-    /// Read only when copying, and only to tag the output. A copied HEVC
-    /// stream must be marked `hvc1` in fragmented MP4: `hev1` is the other
-    /// legal marking, it is what `FFmpeg` writes unasked, and a player given it
-    /// shows a black picture and plays the sound. Absent means the tag is left
-    /// alone, which is right for every codec that has only one.
+    /// Read only when copying, and only to tag the output. A copied HEVC stream
+    /// must be marked `hvc1` in fragmented MP4 and a copied H.264 one `avc1`:
+    /// `hev1` and `avc3` are the other legal markings, they put the parameter
+    /// sets where some players will not look, and a player given one shows a
+    /// black picture and plays the sound. Absent means the tag is left alone,
+    /// which is right for every codec that has only one.
     #[serde(default)]
     pub source_video_codec: Option<String>,
 }
@@ -1660,12 +1661,17 @@ impl TranscodePlan {
     /// What a copied video stream has to be marked as, where it has to be
     /// marked at all.
     ///
-    /// Only HEVC, and only in fragmented MP4. `hvc1` says the parameter sets
-    /// live in the configuration record, which is what a player reads before it
-    /// decodes anything; `hev1` allows them in the stream instead, and is what
-    /// `FFmpeg` writes for HEVC in MP4 unless it is told otherwise. Safari
-    /// refuses `hev1` outright and Chromium decodes nothing from it, so a
-    /// perfectly good copy arrives as sound over a black picture.
+    /// Only in fragmented MP4, and only for the two codecs whose tag says where
+    /// the parameter sets live. `hvc1` and `avc1` put them in the configuration
+    /// record, which is what a player reads before it decodes anything; `hev1`
+    /// and `avc3` allow them in the stream instead, and Safari refuses that
+    /// outright while Chromium decodes nothing from it, so a perfectly good copy
+    /// arrives as sound over a black picture.
+    ///
+    /// `FFmpeg` writes `hev1` for HEVC unless it is told otherwise, and `avc1`
+    /// for H.264. Saying both leaves neither to a default: a session is where a
+    /// file that arrived marked the wrong way gets marked the right way, and
+    /// that is the whole reason such a file is sent through one.
     ///
     /// Transport streams carry no codec tag at all, so there is nothing to say.
     fn copied_video_tag(&self) -> Option<&'static str> {
@@ -1675,6 +1681,7 @@ impl TranscodePlan {
 
         match self.spec.source_video_codec.as_deref() {
             Some("hevc") => Some("hvc1"),
+            Some("h264") => Some("avc1"),
             _ => None,
         }
     }
@@ -2313,10 +2320,21 @@ mod tests {
         assert!(!args.iter().any(|argument| argument == "-tag:v"));
     }
 
-    /// H.264 has one marking in MP4 and `FFmpeg` already writes it.
+    /// H.264 has the same two markings as HEVC — `avc1` out of band and `avc3`
+    /// in band. `FFmpeg` writes `avc1`, and saying so leaves nothing to a
+    /// default: a file that arrived marked `avc3` is sent through a session
+    /// precisely so it comes out marked the other way.
+    #[test]
+    fn marks_a_copied_h264_stream_as_avc1_in_fragmented_mp4() {
+        let args = plan(copying("h264", SegmentContainer::Fmp4)).to_ffmpeg_args();
+
+        assert!(args.windows(2).any(|pair| pair == ["-tag:v", "avc1"]));
+    }
+
+    /// Everything else has one marking, and nothing to say about it.
     #[test]
     fn leaves_the_tag_alone_for_a_codec_with_only_one() {
-        let args = plan(copying("h264", SegmentContainer::Fmp4)).to_ffmpeg_args();
+        let args = plan(copying("av1", SegmentContainer::Fmp4)).to_ffmpeg_args();
 
         assert!(!args.iter().any(|argument| argument == "-tag:v"));
     }
