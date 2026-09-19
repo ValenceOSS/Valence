@@ -59,6 +59,10 @@ const aRelease = (indexer: IndexerConnection, title: string): Release => ({
   magnetUrl: null,
   infoUrl: null,
   infoHash: null,
+  downloadFactor: null,
+  uploadFactor: null,
+  minimumRatio: null,
+  minimumSeedSeconds: null,
 });
 
 /**

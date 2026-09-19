@@ -21,6 +21,10 @@ const aRelease = (title: string, overrides: Partial<Release> = {}): Release => (
   magnetUrl: null,
   infoUrl: null,
   infoHash: null,
+  downloadFactor: null,
+  uploadFactor: null,
+  minimumRatio: null,
+  minimumSeedSeconds: null,
   ...overrides,
 });
 

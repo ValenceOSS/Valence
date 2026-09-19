@@ -108,6 +108,10 @@ const ReleaseSchema = z.object({
   magnetUrl: z.string().nullable(),
   infoUrl: z.string().nullable(),
   infoHash: z.string().nullable(),
+  downloadFactor: z.number().nonnegative().nullable().default(null),
+  uploadFactor: z.number().nonnegative().nullable().default(null),
+  minimumRatio: z.number().nonnegative().nullable().default(null),
+  minimumSeedSeconds: z.number().int().nonnegative().nullable().default(null),
 });
 
 const IndexerSearchReportSchema = z.object({
