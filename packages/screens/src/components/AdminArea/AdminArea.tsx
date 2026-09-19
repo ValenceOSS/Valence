@@ -156,9 +156,13 @@ const AdminArea = ({
   const libraries = useMemo(() => askedLibraries.data ?? [], [askedLibraries.data]);
 
   const askedMedia = useQuery(adminQueries.everything(libraries.map((library) => library.id)));
+  const askedEveryFile = useQuery(
+    adminQueries.everyFile(libraries.map((library) => library.id)),
+  );
   const askedReencodes = useQuery(adminQueries.reencodes());
 
   const media = askedMedia.data ?? [];
+  const everyFile = askedEveryFile.data ?? [];
   const reencodes = askedReencodes.data ?? [];
   const sessions = askedSessions.data ?? [];
   const jobDefinitions = useMemo(() => askedJobs.data ?? [], [askedJobs.data]);
@@ -896,7 +900,8 @@ const AdminArea = ({
 
       <ReencodeDialog
         isOpen={isChoosingReencode}
-        media={media}
+        libraries={libraries}
+        media={everyFile}
         estimate={reencodeEstimate}
         isWeighing={isWeighingReencode}
         onWeigh={(mediaIds, settings) => {

@@ -251,6 +251,28 @@ const everything = (libraryIds: readonly string[]) =>
   });
 
 /**
+ * Every file on the server, one entry per file rather than per thing.
+ *
+ * The other listing keeps one entry per programme, which is what correcting a match wants: a
+ * correction applies to a whole series and offering four hundred episodes to choose between would
+ * be four hundred ways to say the same thing. Re-encoding is the opposite — every episode is its
+ * own file on its own disk, and collapsing them would offer exactly one of them.
+ *
+ * @param libraryIds - The libraries to read, which is all of them.
+ * @returns The query.
+ */
+const everyFile = (libraryIds: readonly string[]) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'everyFile', [...libraryIds].sort()],
+    queryFn: async () => {
+      const shelves = await Promise.all(libraryIds.map((id) => readWholeLibrary(id)));
+
+      return shelves.flat();
+    },
+    enabled: libraryIds.length > 0,
+  });
+
+/**
  * Every link this server has handed out, and who handed each one out.
  *
  * @returns The query.
@@ -326,6 +348,7 @@ const renditions = (mediaId: string | null) =>
   });
 
 const adminQueries = {
+  everyFile,
   reencodes,
   renditions,
   exceptionsOn,

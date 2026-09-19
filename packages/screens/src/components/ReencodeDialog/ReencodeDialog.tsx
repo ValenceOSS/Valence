@@ -81,7 +81,8 @@ const nameOf = (item: MediaSummary): string =>
  * queueing twenty files on a Friday needs to know on Friday which three will not work.
  *
  * @param isOpen - Whether it is showing.
- * @param media - Everything the libraries hold, to choose from.
+ * @param libraries - The libraries to choose between, shown one at a time.
+ * @param media - Every file the libraries hold, one entry each rather than one per programme.
  * @param estimate - What the server says the current choice would cost.
  * @param isWeighing - Whether the server is still working that out.
  * @param onWeigh - Called with the choice whenever it changes.
@@ -90,6 +91,7 @@ const nameOf = (item: MediaSummary): string =>
  */
 const ReencodeDialog = ({
   isOpen,
+  libraries,
   media,
   estimate,
   isWeighing = false,
@@ -103,6 +105,7 @@ const ReencodeDialog = ({
   const [compressesAudio, setCompressesAudio] = useState(false);
   const [largerThan, setLargerThan] = useState('');
   const [search, setSearch] = useState('');
+  const [libraryId, setLibraryId] = useState<string | null>(null);
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
   const [isConfirming, setIsConfirming] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
@@ -119,14 +122,22 @@ const ReencodeDialog = ({
 
   const threshold = largerThan.trim() === '' ? null : Number(largerThan);
 
+  const looking = libraryId ?? libraries[0]?.id ?? null;
+
   const shown = useMemo(
     () =>
       media.filter(
         (item) =>
+          item.libraryId === looking &&
           isLargerThan(item.sizeBytes, threshold) &&
           nameOf(item).toLowerCase().includes(search.trim().toLowerCase()),
       ),
-    [media, threshold, search],
+    [media, looking, threshold, search],
+  );
+
+  const chosenElsewhere = useMemo(
+    () => media.filter((item) => chosen.has(item.id) && item.libraryId !== looking).length,
+    [media, chosen, looking],
   );
 
   const ids = useMemo(() => [...chosen], [chosen]);
@@ -143,6 +154,7 @@ const ReencodeDialog = ({
     if (!isOpen) {
       setChosen(new Set());
       setSearch('');
+      setLibraryId(null);
     }
   }, [isOpen]);
 
@@ -209,6 +221,16 @@ const ReencodeDialog = ({
         <fieldset className="flex flex-col gap-3">
           <legend className={SECTION}>What to work on</legend>
 
+          {libraries.length < 2 ? null : (
+            <SegmentedRow
+              label="Which library to look in"
+              size="sm"
+              items={libraries.map((one) => ({ id: one.id, label: one.name }))}
+              value={looking ?? ''}
+              onSelect={setLibraryId}
+            />
+          )}
+
           <div className="flex flex-wrap items-end gap-3">
             <TextField
               label="Find a title"
@@ -237,7 +259,7 @@ const ReencodeDialog = ({
           ) : (
             <>
               <Checkbox
-                label={`Everything shown (${shown.length.toString()})`}
+                label={`Everything shown (${shown.length.toString()})${chosenElsewhere === 0 ? '' : ` · ${chosenElsewhere.toString()} chosen in another library`}`}
                 checked={allShownChosen}
                 isMixed={someShownChosen && !allShownChosen}
                 onCheckedChange={toggleAll}

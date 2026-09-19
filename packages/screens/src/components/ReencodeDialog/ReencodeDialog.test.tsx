@@ -56,8 +56,32 @@ const estimate = (overrides: Partial<ReencodeEstimate> = {}): ReencodeEstimate =
   ...overrides,
 });
 
+const LIBRARIES = [
+  {
+    id: 'library-1',
+    name: 'Movies',
+    kind: 'movies' as const,
+    path: '/media/Movies',
+    itemCount: 1,
+    lastScannedAt: null,
+    defaultAudioLanguage: null,
+    filesAtOnce: null,
+  },
+  {
+    id: 'library-2',
+    name: 'Shows',
+    kind: 'shows' as const,
+    path: '/media/Shows',
+    itemCount: 1,
+    lastScannedAt: null,
+    defaultAudioLanguage: null,
+    filesAtOnce: null,
+  },
+];
+
 const props = {
   isOpen: true,
+  libraries: LIBRARIES,
   media: [item()],
   estimate: null,
   onWeigh: vi.fn(),
@@ -89,6 +113,75 @@ describe('ReencodeDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Keep alongside' }));
 
     expect(screen.getByText(/never converts anything/)).toBeVisible();
+  });
+
+  it('offers every episode of a programme, not one standing for all of them', () => {
+    render(
+      <ReencodeDialog
+        {...props}
+        media={[
+          item({ id: 'a', libraryId: 'library-1', title: 'Charm Offensive', seriesTitle: 'Pluribus' }),
+          item({ id: 'b', libraryId: 'library-1', title: 'Grace', seriesTitle: 'Pluribus' }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole('checkbox', { name: /Charm Offensive/ })).toBeVisible();
+    expect(screen.getByRole('checkbox', { name: /Grace/ })).toBeVisible();
+  });
+
+  it('shows one library at a time, so films and episodes are not one long list', () => {
+    render(
+      <ReencodeDialog
+        {...props}
+        media={[
+          item({ id: 'a', libraryId: 'library-1', title: 'Azkaban' }),
+          item({ id: 'b', libraryId: 'library-2', title: 'Charm Offensive' }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole('checkbox', { name: /Azkaban/ })).toBeVisible();
+    expect(screen.queryByText('Charm Offensive')).toBeNull();
+  });
+
+  it('shows the other library when asked for it', async () => {
+    render(
+      <ReencodeDialog
+        {...props}
+        media={[
+          item({ id: 'a', libraryId: 'library-1', title: 'Azkaban' }),
+          item({ id: 'b', libraryId: 'library-2', title: 'Charm Offensive' }),
+        ]}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Shows' }));
+
+    expect(screen.getByRole('checkbox', { name: /Charm Offensive/ })).toBeVisible();
+  });
+
+  it('remembers what was chosen in a library it is no longer looking at', async () => {
+    render(
+      <ReencodeDialog
+        {...props}
+        media={[
+          item({ id: 'a', libraryId: 'library-1', title: 'Azkaban' }),
+          item({ id: 'b', libraryId: 'library-2', title: 'Charm Offensive' }),
+        ]}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('checkbox', { name: /Azkaban/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Shows' }));
+
+    expect(screen.getByText(/1 chosen in another library/)).toBeVisible();
+  });
+
+  it('offers no library picker where there is only one', () => {
+    render(<ReencodeDialog {...props} libraries={[LIBRARIES[0]!]} />);
+
+    expect(screen.queryByRole('button', { name: 'Movies' })).toBeNull();
   });
 
   it('shows everything by default rather than hiding it behind a size rule', () => {
