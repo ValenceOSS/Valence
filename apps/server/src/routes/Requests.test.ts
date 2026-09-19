@@ -39,6 +39,10 @@ const AN_INDEXER = {
   kind: 'torznab',
   url: 'http://jackett:9117/',
   hasApiKey: true,
+  definitionId: null,
+  settings: {},
+  secretsSet: [],
+  privacy: null,
   priority: 25,
   isEnabled: true,
   categories: [],
@@ -53,7 +57,7 @@ const AN_INDEXER = {
   updatedAt: '2026-09-19T00:00:00.000Z',
 };
 
-const A_TEST = { isWorking: true, problem: null, capabilities: null };
+const A_TEST = { isWorking: true, problem: null, capabilities: null, captcha: null };
 
 /**
  * The requests service as it answers when everything goes well.
@@ -65,6 +69,38 @@ const aWillingService = (url: string, init: { method?: string }): Response => {
 
   if (url.endsWith('/api/search')) {
     return answer(200, { releases: [], indexers: [] });
+  }
+
+  if (url.endsWith('/api/definitions') || url.endsWith('/api/definitions/refresh')) {
+    return answer(200, {
+      definitions: [],
+      updatedAt: null,
+      source: 'Prowlarr/Indexers@master/definitions/v11',
+      problem: null,
+    });
+  }
+
+  if (url.includes('/api/definitions/')) {
+    return answer(200, {
+      id: '1337x',
+      name: '1337x',
+      description: '',
+      language: 'en-US',
+      privacy: 'public',
+      protocol: 'torrent',
+      categories: [],
+      links: ['https://1337x.to/'],
+      settings: [],
+      standardCategories: [],
+      hasCaptcha: false,
+      needsFlareSolverr: false,
+    });
+  }
+
+  if (url.endsWith('/download')) {
+    return new Response(new Uint8Array([0x64, 0x65]), {
+      headers: { 'content-type': 'application/x-bittorrent' },
+    });
   }
 
   if (url.endsWith('/test') || url.endsWith('/try')) {
@@ -376,4 +412,109 @@ describe('indexers and searching, through the server', () => {
 
     expect((await ask('/api/admin/requests/indexers', 'POST', { name: 'x' })).status).toBe(400);
   });
+});
+
+describe('the catalogue and fetching releases, through the server', () => {
+  const ID = AN_INDEXER.id;
+
+  it('lists, refreshes and describes definitions for whoever manages requesting', async () => {
+    const { ask } = await build({ isOn: true, granted: ['requests.manage'] });
+
+    expect((await ask('/api/admin/requests/definitions')).status).toBe(200);
+    expect((await ask('/api/admin/requests/definitions/refresh', 'POST')).status).toBe(200);
+    expect((await ask('/api/admin/requests/definitions/1337x')).status).toBe(200);
+  });
+
+  it('fetches a release as a file to save', async () => {
+    const { ask } = await build({ isOn: true, isAdministrator: true });
+    const response = await ask(`/api/admin/requests/indexers/${ID}/download`, 'POST', {
+      url: 'https://x/1',
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-disposition')).toBe(
+      'attachment; filename="release.torrent"',
+    );
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([0x64, 0x65]));
+  });
+
+  it('names an NZB as one, and gives a magnet link as JSON', async () => {
+    const nzb = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: () => new Response('<nzb/>', { headers: { 'content-type': 'application/x-nzb' } }),
+    });
+
+    expect(
+      (
+        await nzb.ask(`/api/admin/requests/indexers/${ID}/download`, 'POST', { url: 'x' })
+      ).headers.get('content-disposition'),
+    ).toBe('attachment; filename="release.nzb"');
+
+    const magnet = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: () =>
+        new Response(JSON.stringify({ magnet: 'magnet:?xt=urn:btih:A' }), {
+          headers: { 'content-type': 'application/json' },
+        }),
+    });
+
+    expect(
+      await (
+        await magnet.ask(`/api/admin/requests/indexers/${ID}/download`, 'POST', { url: 'x' })
+      ).json(),
+    ).toEqual({
+      magnet: 'magnet:?xt=urn:btih:A',
+    });
+  });
+
+  it('refuses to fetch without saying what, and passes on a refusal or a silence', async () => {
+    const { ask } = await build({ isOn: true, isAdministrator: true });
+
+    expect((await ask(`/api/admin/requests/indexers/${ID}/download`, 'POST', {})).status).toBe(400);
+
+    const missing = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: () => new Response(JSON.stringify({ error: 'No such indexer.' }), { status: 404 }),
+    });
+
+    expect(
+      (await missing.ask(`/api/admin/requests/indexers/${ID}/download`, 'POST', { url: 'x' }))
+        .status,
+    ).toBe(404);
+
+    const down = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: () => new Response(null, { status: 503 }),
+    });
+
+    expect(
+      (await down.ask(`/api/admin/requests/indexers/${ID}/download`, 'POST', { url: 'x' })).status,
+    ).toBe(502);
+    expect((await down.ask('/api/admin/requests/definitions')).status).toBe(502);
+    expect((await down.ask('/api/admin/requests/definitions/refresh', 'POST')).status).toBe(502);
+    expect((await down.ask('/api/admin/requests/definitions/x')).status).toBe(502);
+    expect((await missing.ask('/api/admin/requests/definitions/x')).status).toBe(404);
+  });
+
+  it.each([
+    ['GET', '/api/admin/requests/definitions'],
+    ['POST', '/api/admin/requests/definitions/refresh'],
+    ['GET', '/api/admin/requests/definitions/x'],
+    ['POST', `/api/admin/requests/indexers/${AN_INDEXER.id}/download`],
+  ])(
+    'refuses %s %s to somebody who does not manage requesting, and while it is off',
+    async (method, path) => {
+      const refused = await build({ isOn: true, granted: ['requests.approve'] });
+      const off = await build({ isOn: false, isAdministrator: true });
+
+      const body = method === 'POST' ? { url: 'x' } : undefined;
+
+      expect((await refused.ask(path, method, body)).status).toBe(403);
+      expect((await off.ask(path, method, body)).status).toBe(404);
+    },
+  );
 });

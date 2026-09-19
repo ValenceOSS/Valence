@@ -5,6 +5,14 @@ import {
   ReleaseSearchOutcomeSchema,
 } from '@ValenceContracts/schemas/Indexer';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
+import {
+  IndexerCatalogueSchema,
+  IndexerDefinitionDetailSchema,
+} from '@ValenceContracts/schemas/IndexerDefinition';
+import type {
+  IndexerCatalogue,
+  IndexerDefinitionDetail,
+} from '@ValenceContracts/schemas/IndexerDefinition';
 import { RequestsStatusSchema } from '@ValenceContracts/schemas/Requests';
 import type {
   Indexer,
@@ -24,6 +32,9 @@ type RequestsAnswer<Value> =
   | { kind: 'answered'; value: Value }
   | { kind: 'refused'; status: 400 | 404; error: string }
   | { kind: 'silent'; reason: string };
+
+type ReleaseDownload =
+  { kind: 'magnet'; url: string } | { kind: 'file'; bytes: Uint8Array; contentType: string };
 
 type RequestsFetch = (
   url: string,
@@ -46,6 +57,10 @@ type CreateRequestsClientOptions = {
 const RefusalSchema = z.object({ error: z.string() });
 
 const SEARCH_TIMEOUT_MS = 150_000;
+
+const REFRESH_TIMEOUT_MS = 300_000;
+
+const MagnetSchema = z.object({ magnet: z.string() });
 
 /**
  * Speaks to the requests service on the server's behalf, presenting the secret the two share.
@@ -165,6 +180,63 @@ const createRequestsClient = ({
         { method: 'POST', body: draft, waitMs: searchTimeoutMs },
       ),
 
+    catalogue: (): Promise<RequestsAnswer<IndexerCatalogue>> =>
+      call('/api/definitions', (body) => IndexerCatalogueSchema.parse(body), {
+        waitMs: searchTimeoutMs,
+      }),
+
+    refreshCatalogue: (): Promise<RequestsAnswer<IndexerCatalogue>> =>
+      call('/api/definitions/refresh', (body) => IndexerCatalogueSchema.parse(body), {
+        method: 'POST',
+        waitMs: REFRESH_TIMEOUT_MS,
+      }),
+
+    definition: (id: string): Promise<RequestsAnswer<IndexerDefinitionDetail>> =>
+      call(`/api/definitions/${encodeURIComponent(id)}`, (body) =>
+        IndexerDefinitionDetailSchema.parse(body),
+      ),
+
+    download: async (id: string, url: string): Promise<RequestsAnswer<ReleaseDownload>> => {
+      try {
+        const response = await fetch(`${address}${withIndexer(id)}/download`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${secret}`, 'content-type': 'application/json' },
+          body: JSON.stringify({ url }),
+          signal: AbortSignal.timeout(searchTimeoutMs),
+        });
+        const contentType = response.headers.get('content-type') ?? '';
+
+        if (response.ok && contentType.includes('json')) {
+          return {
+            kind: 'answered',
+            value: { kind: 'magnet', url: MagnetSchema.parse(await response.json()).magnet },
+          };
+        }
+
+        if (response.ok) {
+          return {
+            kind: 'answered',
+            value: {
+              kind: 'file',
+              bytes: new Uint8Array(await response.arrayBuffer()),
+              contentType,
+            },
+          };
+        }
+
+        const refusal = RefusalSchema.safeParse(await response.json().catch(() => ({})));
+        const error = refusal.success
+          ? refusal.data.error
+          : `${address} answered ${response.status.toString()}`;
+
+        return response.status === 400 || response.status === 404
+          ? { kind: 'refused', status: response.status, error }
+          : { kind: 'silent', reason: error };
+      } catch {
+        return { kind: 'silent', reason: `${address} did not answer` };
+      }
+    },
+
     search: (search: ReleaseSearch): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
       call('/api/search', (body) => ReleaseSearchOutcomeSchema.parse(body), {
         method: 'POST',
@@ -176,6 +248,6 @@ const createRequestsClient = ({
 
 type RequestsClient = ReturnType<typeof createRequestsClient>;
 
-export type { RequestsAnswer, RequestsClient, RequestsReading };
+export type { ReleaseDownload, RequestsAnswer, RequestsClient, RequestsReading };
 
 export { createRequestsClient };

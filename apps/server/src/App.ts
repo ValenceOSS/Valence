@@ -245,7 +245,10 @@ import {
   adminCheckRequestsRoute,
   adminRequestsOverviewRoute,
   changeIndexerRoute,
+  listDefinitionsRoute,
   listIndexersRoute,
+  readDefinitionRoute,
+  refreshDefinitionsRoute,
   removeIndexerRoute,
   requestsAvailabilityRoute,
   searchReleasesRoute,
@@ -254,6 +257,7 @@ import {
   tryIndexerRoute,
 } from '@ValenceServer/routes/RequestsRoute';
 import type { RequestsClient } from '@ValenceServer/requests/createRequestsClient';
+import { ReleaseDownloadRequestSchema } from '@ValenceContracts/schemas/Indexer';
 import type { RequestsMonitor } from '@ValenceServer/requests/createRequestsMonitor';
 import {
   SCAN_LIBRARY_JOB,
@@ -3863,6 +3867,105 @@ const createApp = ({
     return answer.kind === 'refused'
       ? context.json({ error: answer.error }, 400)
       : context.json(answer.value, 200);
+  });
+
+  app.openapi(listDefinitionsRoute, async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const answer = await client.catalogue();
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.kind === 'silent' ? answer.reason : answer.error }, 502);
+  });
+
+  app.openapi(refreshDefinitionsRoute, async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const answer = await client.refreshCatalogue();
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.kind === 'silent' ? answer.reason : answer.error }, 502);
+  });
+
+  app.openapi(readDefinitionRoute, async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const answer = await client.definition(context.req.valid('param').id);
+
+    if (answer.kind === 'silent') {
+      return context.json({ error: answer.reason }, 502);
+    }
+
+    return answer.kind === 'refused'
+      ? context.json({ error: answer.error }, 404)
+      : context.json(answer.value, 200);
+  });
+
+  app.post('/api/admin/requests/indexers/:id/download', async (context) => {
+    const client = await reachRequests(context.req.raw.headers);
+
+    if (client === 'refused') {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (client === 'off') {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const asked = ReleaseDownloadRequestSchema.safeParse(
+      await context.req.json().catch(() => null),
+    );
+
+    if (!asked.success) {
+      return context.json({ error: 'Say which release to fetch.' }, 400);
+    }
+
+    const answer = await client.download(context.req.param('id'), asked.data.url);
+
+    if (answer.kind === 'silent') {
+      return context.json({ error: answer.reason }, 502);
+    }
+
+    if (answer.kind === 'refused') {
+      return context.json({ error: answer.error }, answer.status);
+    }
+
+    if (answer.value.kind === 'magnet') {
+      return context.json({ magnet: answer.value.url }, 200);
+    }
+
+    const isNzb = answer.value.contentType.includes('nzb');
+
+    return context.body(answer.value.bytes.slice(), 200, {
+      'content-type': answer.value.contentType,
+      'content-disposition': `attachment; filename="release.${isNzb ? 'nzb' : 'torrent'}"`,
+    });
   });
 
   app.openapi(searchReleasesRoute, async (context) => {

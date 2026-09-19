@@ -97,6 +97,10 @@ describe('createRequestsClient', () => {
       kind: 'torznab',
       url: 'http://jackett:9117/',
       hasApiKey: true,
+      definitionId: null,
+      settings: {},
+      secretsSet: [],
+      privacy: null,
       priority: 25,
       isEnabled: true,
       categories: [],
@@ -111,7 +115,7 @@ describe('createRequestsClient', () => {
       updatedAt: '2026-09-19T00:00:00.000Z',
     };
 
-    const A_TEST = { isWorking: true, problem: null, capabilities: null };
+    const A_TEST = { isWorking: true, problem: null, capabilities: null, captcha: null };
 
     const A_DRAFT = { name: 'Jackett', kind: 'torznab' as const, url: 'http://jackett:9117/' };
 
@@ -243,6 +247,117 @@ describe('createRequestsClient', () => {
       expect(await client.listIndexers()).toEqual({
         kind: 'silent',
         reason: 'http://requests:8421 answered, but not as the requests service',
+      });
+    });
+
+    it('reads the catalogue, refreshes it, and describes one definition', async () => {
+      const catalogue = {
+        definitions: [],
+        updatedAt: null,
+        source: 'Prowlarr/Indexers@master/definitions/v11',
+        problem: null,
+      };
+      const { client, fetch } = aClient(200, catalogue);
+
+      expect(await client.catalogue()).toEqual({ kind: 'answered', value: catalogue });
+      expect(await client.refreshCatalogue()).toEqual({ kind: 'answered', value: catalogue });
+      expect(fetch.mock.calls.map((call) => String(call.at(0)))).toEqual([
+        'http://requests:8421/api/definitions',
+        'http://requests:8421/api/definitions/refresh',
+      ]);
+
+      const detail = {
+        id: '1337x',
+        name: '1337x',
+        description: '',
+        language: 'en-US',
+        privacy: 'public',
+        protocol: 'torrent',
+        categories: [],
+        links: ['https://1337x.to/'],
+        settings: [],
+        standardCategories: [],
+        hasCaptcha: false,
+        needsFlareSolverr: true,
+      };
+
+      expect(await aClient(200, detail).client.definition('1337x')).toEqual({
+        kind: 'answered',
+        value: detail,
+      });
+    });
+
+    it('fetches a release as a file, or as a magnet link', async () => {
+      const fileFetch = vi.fn<(url: string, init: { body?: string }) => Promise<Response>>(() =>
+        Promise.resolve(
+          new Response(new Uint8Array([0x64]), {
+            headers: { 'content-type': 'application/x-bittorrent' },
+          }),
+        ),
+      );
+      const file = createRequestsClient({
+        address: 'http://requests:8421',
+        secret: A_SECRET,
+        fetch: fileFetch,
+      });
+
+      expect(await file.download(AN_INDEXER.id, 'https://x/1')).toEqual({
+        kind: 'answered',
+        value: {
+          kind: 'file',
+          bytes: new Uint8Array([0x64]),
+          contentType: 'application/x-bittorrent',
+        },
+      });
+      expect(JSON.parse(String(fileFetch.mock.calls.at(0)?.[1].body))).toEqual({
+        url: 'https://x/1',
+      });
+
+      const magnet = createRequestsClient({
+        address: 'http://requests:8421',
+        secret: A_SECRET,
+        fetch: () =>
+          Promise.resolve(
+            new Response(JSON.stringify({ magnet: 'magnet:?xt=urn:btih:A' }), {
+              headers: { 'content-type': 'application/json' },
+            }),
+          ),
+      });
+
+      expect(await magnet.download(AN_INDEXER.id, 'x')).toEqual({
+        kind: 'answered',
+        value: { kind: 'magnet', url: 'magnet:?xt=urn:btih:A' },
+      });
+    });
+
+    it('passes on why a release could not be fetched', async () => {
+      expect(
+        await aClient(404, { error: 'No such indexer.' }).client.download(AN_INDEXER.id, 'x'),
+      ).toEqual({
+        kind: 'refused',
+        status: 404,
+        error: 'No such indexer.',
+      });
+      expect(
+        await aClient(502, { error: 'The site answered 410' }).client.download(AN_INDEXER.id, 'x'),
+      ).toEqual({
+        kind: 'silent',
+        reason: 'The site answered 410',
+      });
+      expect(await aClient(500, null).client.download(AN_INDEXER.id, 'x')).toEqual({
+        kind: 'silent',
+        reason: 'http://requests:8421 answered 500',
+      });
+
+      const offline = createRequestsClient({
+        address: 'http://requests:8421',
+        secret: A_SECRET,
+        fetch: () => Promise.reject(new TypeError('offline')),
+      });
+
+      expect(await offline.download(AN_INDEXER.id, 'x')).toEqual({
+        kind: 'silent',
+        reason: 'http://requests:8421 did not answer',
       });
     });
   });
