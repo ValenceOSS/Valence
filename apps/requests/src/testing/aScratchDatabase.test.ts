@@ -23,6 +23,7 @@ describe('aScratchDatabase', () => {
       { table_name: 'media_request' },
       { table_name: 'quality_profile' },
       { table_name: 'request_item' },
+      { table_name: 'request_log' },
       { table_name: 'setting' },
     ]);
   });

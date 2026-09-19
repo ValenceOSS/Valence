@@ -111,6 +111,27 @@ describe('judgeRelease', () => {
     ]);
   });
 
+  it('judges a release by the limits for its own quality before the profile’s own', () => {
+    const profile = aProfile({
+      largestMb: 100_000,
+      sizes: [{ source: 'webdl', resolution: '1080p', minMb: 750, maxMb: 4000 }],
+    });
+
+    expect(
+      judge('Dune.2021.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 10 * GB }, 120).rejections,
+    ).toEqual([
+      'At 5,120 MB an hour it is larger than this profile takes for 1080p from a web download, 4,000',
+    ]);
+    expect(
+      judge('Dune.2021.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 1 * GB }, 120).rejections,
+    ).toEqual([
+      'At 512 MB an hour it is smaller than this profile takes for 1080p from a web download, 750',
+    ]);
+    expect(
+      judge('Dune.2021.1080p.BluRay.x264-GRP', profile, { sizeBytes: 10 * GB }, 120).isRejected,
+    ).toBe(false);
+  });
+
   it('judges several episodes by their time together, and leaves a whole season be', () => {
     const profile = aProfile({ largestMb: 3000 });
 

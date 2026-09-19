@@ -3885,7 +3885,6 @@ const createApp = ({
         seasons: asked.seasons,
         profileId: asked.profileId ?? null,
         isPickedByHand: asked.isPickedByHand,
-        waitFor: asked.waitFor,
         libraryId: chosen.id,
         libraryPath: chosen.path,
         requestedBy: { id: session.user.id, name: session.user.name },

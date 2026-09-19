@@ -634,6 +634,8 @@ describe('createRequestsClient with quality profiles', () => {
     requiredWords: [],
     bannedWords: [],
     isUpgrading: false,
+    releaseWait: 'digital',
+    sizes: [],
     upgradeUntilResolution: null,
     upgradeUntilSource: null,
     upgradeUntilMusicQuality: null,
@@ -700,7 +702,6 @@ describe('createRequestsClient with requests for films and series', () => {
     refusedBecause: null,
     requestedBy: { id: 'someone', name: 'Someone' },
     seasons: null,
-    waitFor: 'digital' as const,
     releaseDate: '2021-12-03',
     items: [],
     mediaId: null,
@@ -746,7 +747,7 @@ describe('createRequestsClient with requests for films and series', () => {
 
     for (const asked of [
       one.client.findRequest(REQUEST.id),
-      one.client.changeRequest(REQUEST.id, { change: { waitFor: 'physical' } }),
+      one.client.changeRequest(REQUEST.id, { change: { isPickedByHand: true } }),
       one.client.approveRequest(REQUEST.id),
       one.client.refuseRequest(REQUEST.id, 'No room'),
       one.client.retryRequest(REQUEST.id),

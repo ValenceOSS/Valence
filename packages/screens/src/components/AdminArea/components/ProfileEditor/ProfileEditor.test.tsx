@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
-import { ProfileDialog } from './ProfileDialog';
+import { ProfileEditor } from './ProfileEditor';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type * as Profiles from '@ValenceClient/requests/fetchProfiles';
@@ -34,6 +34,8 @@ const KEPT: QualityProfile = {
   requiredWords: [],
   bannedWords: ['cam'],
   isUpgrading: false,
+  releaseWait: 'digital',
+  sizes: [],
   upgradeUntilResolution: null,
   upgradeUntilSource: null,
   upgradeUntilMusicQuality: null,
@@ -73,20 +75,22 @@ beforeEach(() => {
  */
 const open = (profile: QualityProfile | null = null) => {
   const handlers = { onClose: vi.fn(), onSaved: vi.fn() };
-  const shown = renderInAnAddress(<ProfileDialog isOpen profile={profile} {...handlers} />);
+  const shown = renderInAnAddress(<ProfileEditor profile={profile} {...handlers} />);
 
   return { ...handlers, ...shown };
 };
 
-describe('ProfileDialog', () => {
-  it('adds a video profile, ranking what it takes, for the libraries chosen', async () => {
+describe('ProfileEditor', () => {
+  it('adds a video profile, ranking what it takes and sizing each quality, for the libraries chosen', async () => {
     const user = userEvent.setup();
     const { onSaved, onClose } = open();
 
     await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
     await user.click(screen.getByRole('checkbox', { name: '2160p' }));
     await user.click(screen.getByRole('button', { name: 'Move 2160p up' }));
-    await user.type(screen.getByRole('spinbutton', { name: /Largest/ }), '20000');
+    screen.getByRole('slider', { name: 'Largest for WEB-DL 2160p' }).focus();
+    await user.keyboard('{ArrowLeft}');
+    await user.click(screen.getByRole('button', { name: 'Out on disc' }));
     await user.type(screen.getByRole('textbox', { name: 'Preferred words' }), 'HDR, Atmos');
     await user.click(await screen.findByRole('checkbox', { name: /Films/ }));
     await user.click(screen.getByRole('button', { name: 'Add profile' }));
@@ -100,12 +104,21 @@ describe('ProfileDialog', () => {
         name: 'UHD',
         kind: 'video',
         resolutions: ['1080p', '2160p', '720p'],
-        largestMb: 20000,
+        smallestMb: null,
+        largestMb: null,
+        releaseWait: 'physical',
         preferredWords: ['HDR', 'Atmos'],
         libraryIds: ['films'],
       }),
     );
     expect(screen.queryByRole('checkbox', { name: /Albums/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('spinbutton', { name: /Largest/ })).not.toBeInTheDocument();
+    expect(addProfile.mock.calls[0]?.[0].sizes).toContainEqual({
+      source: 'webdl',
+      resolution: '2160p',
+      minMb: 1500,
+      maxMb: 39_601,
+    });
   });
 
   it('asks a music profile for formats, sizes an album, and offers music libraries', async () => {
@@ -202,8 +215,7 @@ describe('ProfileDialog', () => {
     const { rerender, onClose, onSaved } = open(KEPT);
 
     rerender(
-      <ProfileDialog
-        isOpen
+      <ProfileEditor
         profile={{ ...KEPT, id: 'b', name: 'Other' }}
         onClose={onClose}
         onSaved={onSaved}
@@ -214,6 +226,6 @@ describe('ProfileDialog', () => {
   });
 
   it('sets a display name so devtools can identify it', () => {
-    expect(ProfileDialog.displayName).toBe('ProfileDialog');
+    expect(ProfileEditor.displayName).toBe('ProfileEditor');
   });
 });

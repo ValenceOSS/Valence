@@ -95,14 +95,13 @@ const open = () => {
 };
 
 describe('AskForMediaDialog', () => {
-  it('finds a film in the catalogue and asks for it, held until it is out on disc', async () => {
+  it('finds a film in the catalogue and asks for it in the quality chosen', async () => {
     const user = userEvent.setup();
     const { onAsked, onClose } = open();
 
     await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Dune');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
-    await user.click(screen.getByRole('button', { name: 'Out on disc' }));
     await user.click(screen.getByRole('button', { name: 'Quality' }));
 
     expect(screen.queryByRole('menuitemradio', { name: 'Lossless' })).not.toBeInTheDocument();
@@ -119,7 +118,6 @@ describe('AskForMediaDialog', () => {
       tmdbId: 438631,
       profileId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
       isPickedByHand: false,
-      waitFor: 'physical',
     });
     expect(onClose).toHaveBeenCalled();
   });

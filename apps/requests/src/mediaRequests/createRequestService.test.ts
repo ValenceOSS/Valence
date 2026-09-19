@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
+import { aProfile } from '@ValenceRequests/testing/aProfile';
 import { createRequestService } from './createRequestService';
 import type { MediaRequestDraft } from '@ValenceContracts/schemas/MediaRequest';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -131,8 +132,17 @@ describe('createRequestService', () => {
     expect(await service.change('missing', {}, null)).toBeNull();
   });
 
-  it('holds a film until the release the admin now chooses', async () => {
-    const { service } = aService();
+  it('holds a film until it is out in the way its quality profile says', async () => {
+    const requests = createMemoryRecordStore<MediaRequestRecord>();
+    const items = createMemoryRecordStore<RequestItemRecord>();
+    const service = createRequestService({
+      requests,
+      items,
+      profiles: {
+        list: () => Promise.resolve([aProfile({ releaseWait: 'physical', libraryIds: ['films'] })]),
+      },
+      now: () => AT,
+    });
     const { request } = await service.add({
       ...DUNE,
       catalogue: {
@@ -141,9 +151,7 @@ describe('createRequestService', () => {
       },
     });
 
-    expect(
-      (await service.change(request.id, { waitFor: 'physical' }, null))?.items[0]?.airDate,
-    ).toBe('2022-01-11');
+    expect(request.releaseDate).toBe('2022-01-11');
   });
 
   it('brings a request up to date with the catalogue and its library', async () => {

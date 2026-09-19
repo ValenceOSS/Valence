@@ -17,7 +17,11 @@ describe('showMediaRequest', () => {
     expect(shown.requestedBy).toEqual({ id: 'someone', name: 'Someone' });
   });
 
-  it('says the day a film is held until', () => {
-    expect(showMediaRequest(aMediaRequest(), []).releaseDate).toBe('2021-12-03');
+  it('says the day a film is held until, and none for a series', () => {
+    expect(showMediaRequest(aMediaRequest(), [aRequestItem()]).releaseDate).toBe('2021-12-03');
+    expect(
+      showMediaRequest(aMediaRequest({ kind: 'series' }), [aRequestItem({ season: 1, episode: 1 })])
+        .releaseDate,
+    ).toBeNull();
   });
 });

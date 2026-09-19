@@ -42,6 +42,8 @@ const HD: QualityProfile = {
   requiredWords: [],
   bannedWords: [],
   isUpgrading: false,
+  releaseWait: 'digital',
+  sizes: [],
   upgradeUntilResolution: null,
   upgradeUntilSource: null,
   upgradeUntilMusicQuality: null,

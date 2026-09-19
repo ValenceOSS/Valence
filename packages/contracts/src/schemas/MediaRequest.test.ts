@@ -11,7 +11,7 @@ describe('MediaRequestAskSchema', () => {
       kind: 'series',
       tmdbId: 1399,
       seasons: null,
-      waitFor: 'digital',
+      isPickedByHand: false,
     });
   });
 

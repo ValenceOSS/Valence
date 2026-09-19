@@ -1,0 +1,2 @@
+ALTER TABLE "valence_requests"."quality_profile" ADD COLUMN "release_wait" text DEFAULT 'digital' NOT NULL;--> statement-breakpoint
+ALTER TABLE "valence_requests"."media_request" DROP COLUMN "wait_for";

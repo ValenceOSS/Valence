@@ -19,7 +19,8 @@ import {
   RELEASE_SOURCES,
   RESOLUTIONS,
 } from '@ValenceContracts/schemas/ParsedRelease';
-import { PROFILE_KINDS } from '@ValenceContracts/schemas/QualityProfile';
+import { PROFILE_KINDS, RELEASE_WAITS } from '@ValenceContracts/schemas/QualityProfile';
+import type { QualitySize } from '@ValenceContracts/schemas/QualityProfile';
 import type {
   MusicQuality,
   ReleaseSource,
@@ -31,7 +32,6 @@ import type { IndexerCapabilities, IndexerSettings } from '@ValenceContracts/sch
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import {
   MEDIA_REQUEST_KINDS,
-  RELEASE_WAITS,
   REQUEST_APPROVALS,
   REQUEST_ITEM_STATES,
 } from '@ValenceContracts/schemas/MediaRequest';
@@ -150,10 +150,12 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   musicQualities: jsonb('music_qualities').$type<MusicQuality[]>().notNull().default([]),
   smallestMb: doublePrecision('smallest_mb'),
   largestMb: doublePrecision('largest_mb'),
+  sizes: jsonb('sizes').$type<QualitySize[]>().notNull().default([]),
   preferredWords: jsonb('preferred_words').$type<string[]>().notNull().default([]),
   requiredWords: jsonb('required_words').$type<string[]>().notNull().default([]),
   bannedWords: jsonb('banned_words').$type<string[]>().notNull().default([]),
   isUpgrading: boolean('is_upgrading').notNull().default(false),
+  releaseWait: text('release_wait', { enum: RELEASE_WAITS }).notNull().default('digital'),
   upgradeUntilResolution: text('upgrade_until_resolution', { enum: RESOLUTIONS }),
   upgradeUntilSource: text('upgrade_until_source', { enum: RELEASE_SOURCES }),
   upgradeUntilMusicQuality: text('upgrade_until_music_quality', { enum: MUSIC_QUALITIES }),
@@ -182,7 +184,6 @@ const mediaRequest = requestsSchema.table(
     requestedById: text('requested_by_id').notNull(),
     requestedByName: text('requested_by_name').notNull(),
     seasons: jsonb('seasons').$type<number[]>(),
-    waitFor: text('wait_for', { enum: RELEASE_WAITS }).notNull().default('digital'),
     runtimeMinutes: integer('runtime_minutes'),
     releaseDates: jsonb('release_dates')
       .$type<RequestCatalogue['releaseDates']>()

@@ -1,4 +1,5 @@
 import { releaseDateOf } from '@ValenceRequests/mediaRequests/releaseDateOf';
+import type { ReleaseWait } from '@ValenceContracts/schemas/QualityProfile';
 import type { CatalogueEpisode } from '@ValenceContracts/schemas/MediaRequest';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
@@ -23,16 +24,25 @@ const LETTING_GO = new Set<RequestItemRecord['state']>(['waiting', 'wanted', 'fa
  * @param request - The request.
  * @param episodes - Every episode the catalogue knows of.
  * @param items - What the request waits for now.
+ * @param waitFor - What its quality profile holds a film until.
  * @returns What to add, change and remove.
  */
 const syncItems = (
-  request: Pick<MediaRequestRecord, 'kind' | 'title' | 'seasons' | 'waitFor' | 'releaseDates'>,
+  request: Pick<MediaRequestRecord, 'kind' | 'title' | 'seasons' | 'releaseDates'>,
   episodes: readonly CatalogueEpisode[],
   items: readonly RequestItemRecord[],
+  waitFor: ReleaseWait = 'digital',
 ): ItemChanges => {
   const wanted: ItemDraft[] =
     request.kind === 'film'
-      ? [{ season: null, episode: null, title: request.title, airDate: releaseDateOf(request) }]
+      ? [
+          {
+            season: null,
+            episode: null,
+            title: request.title,
+            airDate: releaseDateOf(request, waitFor),
+          },
+        ]
       : episodes
           .filter((episode) =>
             request.seasons === null

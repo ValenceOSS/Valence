@@ -825,6 +825,8 @@ describe('quality profiles, through the server', () => {
     requiredWords: [],
     bannedWords: [],
     isUpgrading: false,
+    releaseWait: 'digital',
+    sizes: [],
     upgradeUntilResolution: null,
     upgradeUntilSource: null,
     upgradeUntilMusicQuality: null,
@@ -921,7 +923,6 @@ describe('requests for films and series, through the server', () => {
     refusedBecause: 'No room',
     requestedBy: { id: 'someone-else', name: 'Someone' },
     seasons: null,
-    waitFor: 'digital',
     releaseDate: '2021-12-03',
     items: [],
     mediaId: null,
@@ -1221,7 +1222,7 @@ describe('requests for films and series, through the server', () => {
       catalogue: { title: 'Dune' },
     });
     expect(
-      (await ask(`/api/requests/media/${REQUEST.id}`, 'PATCH', { waitFor: 'physical' })).status,
+      (await ask(`/api/requests/media/${REQUEST.id}`, 'PATCH', { isPickedByHand: true })).status,
     ).toBe(200);
   });
 

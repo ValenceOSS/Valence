@@ -8,6 +8,8 @@ import type {
   ProfileKind,
   QualityProfile,
   QualityProfileDraft,
+  QualitySize,
+  ReleaseWait,
 } from '@ValenceContracts/schemas/QualityProfile';
 
 type ProfileForm = {
@@ -18,6 +20,8 @@ type ProfileForm = {
   musicQualities: MusicQuality[];
   smallestMb: string;
   largestMb: string;
+  sizes: QualitySize[];
+  releaseWait: ReleaseWait;
   preferredWords: string;
   requiredWords: string;
   bannedWords: string;
@@ -41,6 +45,8 @@ const A_NEW_PROFILE: ProfileForm = {
   musicQualities: DEFAULTS.musicQualities,
   smallestMb: '',
   largestMb: '',
+  sizes: DEFAULTS.sizes,
+  releaseWait: DEFAULTS.releaseWait,
   preferredWords: '',
   requiredWords: '',
   bannedWords: '',
@@ -68,6 +74,8 @@ const formFor = (profile: QualityProfile | null): ProfileForm =>
         musicQualities: profile.musicQualities,
         smallestMb: profile.smallestMb?.toString() ?? '',
         largestMb: profile.largestMb?.toString() ?? '',
+        sizes: profile.sizes,
+        releaseWait: profile.releaseWait,
         preferredWords: profile.preferredWords.join(', '),
         requiredWords: profile.requiredWords.join(', '),
         bannedWords: profile.bannedWords.join(', '),
@@ -109,7 +117,8 @@ const sizeOf = (text: string): number | null | undefined => {
 /**
  * Reads the profile form into a profile to keep, or says the first thing wrong with it in words
  * that point at the field. A video profile must allow at least one resolution, and a music profile
- * at least one format, or it would take nothing.
+ * at least one format, or it would take nothing. Video is limited by the size of each quality, and
+ * music by the size of an album.
  *
  * @param form - The form as it stands.
  * @returns The profile, or what is wrong.
@@ -131,11 +140,20 @@ const readProfileForm = (form: ProfileForm): ReadProfileForm => {
     return { draft: null, problem: 'Allow at least one format.' };
   }
 
-  if (smallestMb === undefined || largestMb === undefined || largestMb === 0) {
+  const isMusic = form.kind === 'music';
+
+  if (isMusic && (smallestMb === undefined || largestMb === undefined || largestMb === 0)) {
     return { draft: null, problem: 'A size is a number of megabytes.' };
   }
 
-  if (smallestMb !== null && largestMb !== null && largestMb <= smallestMb) {
+  if (
+    isMusic &&
+    smallestMb !== null &&
+    smallestMb !== undefined &&
+    largestMb !== null &&
+    largestMb !== undefined &&
+    largestMb <= smallestMb
+  ) {
     return { draft: null, problem: 'The largest size has to be more than the smallest.' };
   }
 
@@ -146,8 +164,10 @@ const readProfileForm = (form: ProfileForm): ReadProfileForm => {
       resolutions: form.resolutions,
       sources: form.sources,
       musicQualities: form.musicQualities,
-      smallestMb,
-      largestMb,
+      smallestMb: isMusic ? (smallestMb ?? null) : null,
+      largestMb: isMusic ? (largestMb ?? null) : null,
+      sizes: form.sizes,
+      releaseWait: form.releaseWait,
       preferredWords: wordsOf(form.preferredWords),
       requiredWords: wordsOf(form.requiredWords),
       bannedWords: wordsOf(form.bannedWords),

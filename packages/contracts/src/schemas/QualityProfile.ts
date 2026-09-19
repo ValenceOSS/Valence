@@ -5,10 +5,63 @@ import {
   ReleaseSourceSchema,
   ResolutionSchema,
 } from './ParsedRelease';
+import type { ReleaseSource, Resolution } from './ParsedRelease';
 
 const PROFILE_KINDS = ['video', 'music'] as const;
 
 const ProfileKindSchema = z.enum(PROFILE_KINDS);
+
+const RELEASE_WAITS = ['digital', 'physical'] as const;
+
+const ReleaseWaitSchema = z.enum(RELEASE_WAITS);
+
+const VIDEO_QUALITIES = [
+  { source: 'remux', resolution: '2160p' },
+  { source: 'bluray', resolution: '2160p' },
+  { source: 'webdl', resolution: '2160p' },
+  { source: 'webrip', resolution: '2160p' },
+  { source: 'hdtv', resolution: '2160p' },
+  { source: 'remux', resolution: '1080p' },
+  { source: 'bluray', resolution: '1080p' },
+  { source: 'webdl', resolution: '1080p' },
+  { source: 'webrip', resolution: '1080p' },
+  { source: 'hdtv', resolution: '1080p' },
+  { source: 'bluray', resolution: '720p' },
+  { source: 'webdl', resolution: '720p' },
+  { source: 'webrip', resolution: '720p' },
+  { source: 'hdtv', resolution: '720p' },
+  { source: 'bluray', resolution: '576p' },
+  { source: 'dvd', resolution: '576p' },
+  { source: 'bluray', resolution: '480p' },
+  { source: 'webdl', resolution: '480p' },
+  { source: 'webrip', resolution: '480p' },
+  { source: 'hdtv', resolution: '480p' },
+  { source: 'dvd', resolution: '480p' },
+] as const satisfies readonly { source: ReleaseSource; resolution: Resolution }[];
+
+const QualitySizeSchema = z.object({
+  source: ReleaseSourceSchema,
+  resolution: ResolutionSchema,
+  minMb: z.number().nonnegative().nullable(),
+  maxMb: z.number().positive().nullable(),
+});
+
+const RECOMMENDED_QUALITY_SIZES: readonly z.infer<typeof QualitySizeSchema>[] = [
+  { source: 'remux', resolution: '2160p', minMb: 11244, maxMb: null },
+  { source: 'bluray', resolution: '2160p', minMb: 5676, maxMb: null },
+  { source: 'webdl', resolution: '2160p', minMb: 1500, maxMb: null },
+  { source: 'webrip', resolution: '2160p', minMb: 1500, maxMb: null },
+  { source: 'hdtv', resolution: '2160p', minMb: 1500, maxMb: null },
+  { source: 'remux', resolution: '1080p', minMb: 4146, maxMb: null },
+  { source: 'bluray', resolution: '1080p', minMb: 3024, maxMb: null },
+  { source: 'webdl', resolution: '1080p', minMb: 750, maxMb: null },
+  { source: 'webrip', resolution: '1080p', minMb: 750, maxMb: null },
+  { source: 'hdtv', resolution: '1080p', minMb: 900, maxMb: null },
+  { source: 'bluray', resolution: '720p', minMb: 1026, maxMb: null },
+  { source: 'webdl', resolution: '720p', minMb: 600, maxMb: null },
+  { source: 'webrip', resolution: '720p', minMb: 600, maxMb: null },
+  { source: 'hdtv', resolution: '720p', minMb: 600, maxMb: null },
+];
 
 const WordsSchema = z.array(z.string().trim().min(1).max(100)).max(50);
 
@@ -21,10 +74,12 @@ const QualityProfileSchema = z.object({
   musicQualities: z.array(MusicQualitySchema),
   smallestMb: z.number().nonnegative().nullable(),
   largestMb: z.number().positive().nullable(),
+  sizes: z.array(QualitySizeSchema),
   preferredWords: z.array(z.string()),
   requiredWords: z.array(z.string()),
   bannedWords: z.array(z.string()),
   isUpgrading: z.boolean(),
+  releaseWait: ReleaseWaitSchema,
   upgradeUntilResolution: ResolutionSchema.nullable(),
   upgradeUntilSource: ReleaseSourceSchema.nullable(),
   upgradeUntilMusicQuality: MusicQualitySchema.nullable(),
@@ -44,10 +99,15 @@ const QualityProfileDraftSchema = z.object({
   musicQualities: z.array(MusicQualitySchema).max(10).default(['flac', 'mp3-320', 'mp3-v0']),
   smallestMb: z.number().nonnegative().nullable().default(null),
   largestMb: z.number().positive().nullable().default(null),
+  sizes: z
+    .array(QualitySizeSchema)
+    .max(60)
+    .default([...RECOMMENDED_QUALITY_SIZES]),
   preferredWords: WordsSchema.default([]),
   requiredWords: WordsSchema.default([]),
   bannedWords: WordsSchema.default([]),
   isUpgrading: z.boolean().default(false),
+  releaseWait: ReleaseWaitSchema.default('digital'),
   upgradeUntilResolution: ResolutionSchema.nullable().default(null),
   upgradeUntilSource: ReleaseSourceSchema.nullable().default(null),
   upgradeUntilMusicQuality: MusicQualitySchema.nullable().default(null),
@@ -62,10 +122,12 @@ const QualityProfileChangeSchema = z.object({
   musicQualities: z.array(MusicQualitySchema).max(10).optional(),
   smallestMb: z.number().nonnegative().nullable().optional(),
   largestMb: z.number().positive().nullable().optional(),
+  sizes: z.array(QualitySizeSchema).max(60).optional(),
   preferredWords: WordsSchema.optional(),
   requiredWords: WordsSchema.optional(),
   bannedWords: WordsSchema.optional(),
   isUpgrading: z.boolean().optional(),
+  releaseWait: ReleaseWaitSchema.optional(),
   upgradeUntilResolution: ResolutionSchema.nullable().optional(),
   upgradeUntilSource: ReleaseSourceSchema.nullable().optional(),
   upgradeUntilMusicQuality: MusicQualitySchema.nullable().optional(),
@@ -82,18 +144,33 @@ const JudgementSchema = z.object({
 });
 
 type ProfileKind = (typeof PROFILE_KINDS)[number];
+type ReleaseWait = (typeof RELEASE_WAITS)[number];
+type QualitySize = z.infer<typeof QualitySizeSchema>;
 type QualityProfile = z.infer<typeof QualityProfileSchema>;
 type QualityProfileDraft = z.input<typeof QualityProfileDraftSchema>;
 type QualityProfileChange = z.input<typeof QualityProfileChangeSchema>;
 type Judgement = z.infer<typeof JudgementSchema>;
 
-export type { Judgement, ProfileKind, QualityProfile, QualityProfileChange, QualityProfileDraft };
+export type {
+  Judgement,
+  ProfileKind,
+  QualityProfile,
+  QualityProfileChange,
+  QualityProfileDraft,
+  QualitySize,
+  ReleaseWait,
+};
 
 export {
   PROFILE_KINDS,
+  RECOMMENDED_QUALITY_SIZES,
+  RELEASE_WAITS,
+  VIDEO_QUALITIES,
   JudgementSchema,
   ProfileKindSchema,
   QualityProfileChangeSchema,
   QualityProfileDraftSchema,
   QualityProfileSchema,
+  QualitySizeSchema,
+  ReleaseWaitSchema,
 };

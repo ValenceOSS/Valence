@@ -30,7 +30,6 @@ const recordFromDraft = (
   requestedById: draft.requestedBy.id,
   requestedByName: draft.requestedBy.name,
   seasons: draft.kind === 'film' ? null : draft.seasons,
-  waitFor: draft.waitFor,
   mediaId: null,
   problem: null,
   catalogueCheckedAt: at,

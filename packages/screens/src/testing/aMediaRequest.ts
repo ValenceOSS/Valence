@@ -23,7 +23,6 @@ const aMediaRequest = (overrides: Partial<MediaRequest> = {}): MediaRequest => (
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Sam' },
   seasons: null,
-  waitFor: 'digital',
   releaseDate: '2021-12-03',
   items: [],
   mediaId: null,

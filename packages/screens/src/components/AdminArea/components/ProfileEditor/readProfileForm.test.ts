@@ -1,3 +1,4 @@
+import { RECOMMENDED_QUALITY_SIZES } from '@ValenceContracts/schemas/QualityProfile';
 import { describe, expect, it } from 'vitest';
 import { A_NEW_PROFILE, formFor, readProfileForm } from './readProfileForm';
 import type { ProfileForm } from './readProfileForm';
@@ -16,6 +17,8 @@ const KEPT: QualityProfile = {
   requiredWords: [],
   bannedWords: ['karaoke'],
   isUpgrading: true,
+  releaseWait: 'digital',
+  sizes: [],
   upgradeUntilResolution: null,
   upgradeUntilSource: null,
   upgradeUntilMusicQuality: 'flac',
@@ -46,12 +49,13 @@ describe('formFor', () => {
 });
 
 describe('readProfileForm', () => {
-  it('reads a profile, words split by commas', () => {
+  it('reads a profile, words split by commas, its sizes by quality', () => {
     expect(
       readProfileForm({
         ...FILLED,
         smallestMb: ' 500 ',
         largestMb: '8000',
+        releaseWait: 'physical',
         preferredWords: 'HDR, Atmos, , /\\bdv\\b/',
         isUpgrading: true,
         upgradeUntilResolution: '1080p',
@@ -64,8 +68,10 @@ describe('readProfileForm', () => {
         resolutions: ['1080p', '720p'],
         sources: ['remux', 'bluray', 'webdl', 'webrip', 'hdtv'],
         musicQualities: ['flac', 'mp3-320', 'mp3-v0'],
-        smallestMb: 500,
-        largestMb: 8000,
+        smallestMb: null,
+        largestMb: null,
+        sizes: [...RECOMMENDED_QUALITY_SIZES],
+        releaseWait: 'physical',
         preferredWords: ['HDR', 'Atmos', '/\\bdv\\b/'],
         requiredWords: [],
         bannedWords: [],
@@ -89,9 +95,12 @@ describe('readProfileForm', () => {
     [{ name: ' ' }, 'Give the profile a name.'],
     [{ resolutions: [] }, 'Allow at least one resolution.'],
     [{ kind: 'music', musicQualities: [] }, 'Allow at least one format.'],
-    [{ smallestMb: 'lots' }, 'A size is a number of megabytes.'],
-    [{ largestMb: '0' }, 'A size is a number of megabytes.'],
-    [{ smallestMb: '900', largestMb: '800' }, 'The largest size has to be more than the smallest.'],
+    [{ kind: 'music', smallestMb: 'lots' }, 'A size is a number of megabytes.'],
+    [{ kind: 'music', largestMb: '0' }, 'A size is a number of megabytes.'],
+    [
+      { kind: 'music', smallestMb: '900', largestMb: '800' },
+      'The largest size has to be more than the smallest.',
+    ],
   ])('says what is wrong with %o', (change, problem) => {
     expect(readProfileForm({ ...FILLED, ...change })).toEqual({ draft: null, problem });
   });

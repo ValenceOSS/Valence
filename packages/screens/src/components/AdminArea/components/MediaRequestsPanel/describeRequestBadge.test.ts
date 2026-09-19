@@ -24,9 +24,9 @@ describe('describeRequestBadge', () => {
     expect(describeRequestBadge(aMediaRequest({ state: 'awaitingApproval' })).label).toBe(
       'Awaiting approval',
     );
-    expect(
-      describeRequestBadge(aMediaRequest({ state: 'waiting', waitFor: 'physical' })).detail,
-    ).toBe('Held until 3 Dec 2021, when it is out on disc.');
+    expect(describeRequestBadge(aMediaRequest({ state: 'waiting' })).detail).toBe(
+      'Held until 3 Dec 2021, when its quality profile says it is out.',
+    );
     expect(
       describeRequestBadge(aMediaRequest({ state: 'waiting', releaseDate: null })).detail,
     ).toBeNull();

@@ -5,6 +5,7 @@ import { judgeForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest'
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { mapClientPath } from '@ValenceRequests/mediaRequests/mapClientPath';
 import { planSearches } from '@ValenceRequests/mediaRequests/planSearches';
+import { chooseProfile } from '@ValenceRequests/mediaRequests/chooseProfile';
 import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
 import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft';
 import { syncItems } from '@ValenceRequests/mediaRequests/syncItems';
@@ -254,15 +255,8 @@ const createRequestWorker = ({
   const searchedByItself = async (): Promise<Found[]> =>
     (await approved()).filter((found) => !found.request.isPickedByHand);
 
-  const profileFor = async (request: MediaRequestRecord): Promise<QualityProfile> => {
-    const video = (await profiles.list()).filter((profile) => profile.kind === 'video');
-
-    return (
-      video.find((profile) => profile.id === request.profileId) ??
-      video.find((profile) => profile.libraryIds.includes(request.libraryId)) ??
-      DEFAULT_PROFILE
-    );
-  };
+  const profileFor = async (request: MediaRequestRecord): Promise<QualityProfile> =>
+    chooseProfile(request, await profiles.list()) ?? DEFAULT_PROFILE;
 
   const priorities = async () =>
     new Map((await indexers.list()).map((indexer) => [indexer.id, indexer.priority]));

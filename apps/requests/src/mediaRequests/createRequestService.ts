@@ -4,6 +4,7 @@ import {
   MediaRequestDraftSchema,
   RequestCatalogueSchema,
 } from '@ValenceContracts/schemas/MediaRequest';
+import { chooseProfile } from '@ValenceRequests/mediaRequests/chooseProfile';
 import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
 import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft';
 import { requestFactsOf } from '@ValenceRequests/mediaRequests/requestFactsOf';
@@ -23,10 +24,12 @@ import type {
   MediaRequestStore,
 } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemStore } from '@ValenceRequests/mediaRequests/RequestItemRecord';
+import type { ProfileService } from '@ValenceRequests/profiles/createProfileService';
 
 type CreateRequestServiceOptions = {
   requests: MediaRequestStore;
   items: RequestItemStore;
+  profiles?: Pick<ProfileService, 'list'>;
   now?: () => Date;
   onChange?: () => void;
 };
@@ -56,6 +59,7 @@ const bothSeasons = (kept: number[] | null, asked: number[] | null): number[] | 
  *
  * @param requests - Where requests are kept.
  * @param items - Where what each waits for is kept.
+ * @param profiles - The quality profiles, which say how long a film is held.
  * @param now - The clock.
  * @param onChange - Told when there may be something new to fetch.
  * @returns The service.
@@ -63,6 +67,7 @@ const bothSeasons = (kept: number[] | null, asked: number[] | null): number[] | 
 const createRequestService = ({
   requests,
   items,
+  profiles = { list: () => Promise.resolve([]) },
   now = () => new Date(),
   onChange = () => undefined,
 }: CreateRequestServiceOptions) => {
@@ -74,7 +79,12 @@ const createRequestService = ({
 
   const sync = async (record: MediaRequestRecord, episodes: RequestCatalogue['episodes']) => {
     const at = now().toISOString();
-    const { add, change, remove } = syncItems(record, episodes, await itemsOf(record.id));
+    const { add, change, remove } = syncItems(
+      record,
+      episodes,
+      await itemsOf(record.id),
+      chooseProfile(record, await profiles.list())?.releaseWait,
+    );
 
     for (const draft of add) {
       await items.insert(itemFromDraft(draft, randomUUID(), record.id, at));
@@ -167,7 +177,6 @@ const createRequestService = ({
       const catalogue = given === null ? null : RequestCatalogueSchema.parse(given);
       const record = await requests.update(id, {
         ...(change.seasons === undefined ? {} : { seasons: change.seasons }),
-        ...(change.waitFor === undefined ? {} : { waitFor: change.waitFor }),
         ...(change.profileId === undefined ? {} : { profileId: change.profileId }),
         ...(change.isPickedByHand === undefined ? {} : { isPickedByHand: change.isPickedByHand }),
         ...(catalogue === null ? {} : requestFactsOf(catalogue)),

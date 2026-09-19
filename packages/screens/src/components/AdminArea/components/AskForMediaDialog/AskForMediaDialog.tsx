@@ -20,21 +20,12 @@ import { ReleasePickTable } from '@ValenceScreens/components/AdminArea/component
 import { CatalogueMatchList } from '@ValenceScreens/components/AdminArea/components/CatalogueMatchList/CatalogueMatchList';
 import type { CatalogueMatch } from '@ValenceClient/admin/fetchAdmin';
 import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
-import type {
-  MediaRequestAsk,
-  MediaRequestKind,
-  ReleaseWait,
-} from '@ValenceContracts/schemas/MediaRequest';
+import type { MediaRequestAsk, MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskForMediaDialogProps } from './AskForMediaDialog.types';
 
 const KINDS: readonly { id: MediaRequestKind; label: string }[] = [
   { id: 'film', label: 'A film' },
   { id: 'series', label: 'A series' },
-];
-
-const WAITS: readonly { id: ReleaseWait; label: string }[] = [
-  { id: 'digital', label: 'Out digitally' },
-  { id: 'physical', label: 'Out on disc' },
 ];
 
 const THE_LIBRARYS = 'library';
@@ -51,9 +42,9 @@ const SEASON_CHOICES = [
 
 /**
  * Asks for a film or a series: the catalogue is searched for it by name, and once one is chosen, it
- * says the quality wanted — a profile of its own, or its library's — and a film what it waits for
- * before it is searched for, out digitally or on disc, and a series which of its seasons are
- * wanted, or every one and whatever comes later.
+ * says the quality wanted — a profile of its own, or its library's, which also says how long a
+ * film is held before it is searched for — and a series which of its seasons are wanted, or every
+ * one and whatever comes later.
  *
  * @param isOpen - Whether the dialog is showing.
  * @param onClose - Called when it is dismissed.
@@ -65,7 +56,6 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const [matches, setMatches] = useState<CatalogueMatch[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [chosen, setChosen] = useState<CatalogueMatch | null>(null);
-  const [waitFor, setWaitFor] = useState<ReleaseWait>('digital');
   const [seasonChoice, setSeasonChoice] = useState<'every' | 'some'>('every');
   const [picked, setPicked] = useState<ReadonlySet<number>>(new Set());
   const [isPickedByHand, setIsPickedByHand] = useState(false);
@@ -111,7 +101,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
           tmdbId: Number(chosen.externalId),
           ...(profileId === null ? {} : { profileId }),
           isPickedByHand,
-          ...(kind === 'film' ? { waitFor } : { seasons }),
+          ...(kind === 'film' ? {} : { seasons }),
         };
 
   const findReleases = () => {
@@ -293,26 +283,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               />
             </FormField>
 
-            {kind === 'film' ? (
-              <FormField
-                label="Search once it is"
-                description="A film is held until then, so nothing is fetched from cinemas."
-              >
-                <SegmentedRow
-                  label="Search once it is"
-                  size="sm"
-                  items={WAITS}
-                  value={waitFor}
-                  onSelect={(next) => {
-                    const picked = WAITS.find((one) => one.id === next)?.id;
-
-                    if (picked !== undefined) {
-                      setWaitFor(picked);
-                    }
-                  }}
-                />
-              </FormField>
-            ) : (
+            {kind === 'film' ? null : (
               <>
                 <FormField label="Seasons">
                   <SegmentedRow

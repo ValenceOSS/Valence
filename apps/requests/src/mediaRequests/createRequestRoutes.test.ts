@@ -97,9 +97,9 @@ describe('createRequestRoutes', () => {
     const id = await madeDune(ask);
 
     expect(
-      await (await ask(`/requests/${id}`, 'PATCH', { change: { waitFor: 'physical' } })).json(),
-    ).toMatchObject({ waitFor: 'physical' });
-    expect((await ask(`/requests/${id}`, 'PATCH', { change: { waitFor: 'cinema' } })).status).toBe(
+      await (await ask(`/requests/${id}`, 'PATCH', { change: { isPickedByHand: true } })).json(),
+    ).toMatchObject({ isPickedByHand: true });
+    expect((await ask(`/requests/${id}`, 'PATCH', { change: { seasons: 'all' } })).status).toBe(
       400,
     );
     expect(

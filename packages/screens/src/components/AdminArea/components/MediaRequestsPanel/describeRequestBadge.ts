@@ -35,7 +35,7 @@ const describeRequestBadge = (request: MediaRequest): StateBadge => {
           detail:
             request.releaseDate === null
               ? null
-              : `Held until ${describeCalendarDay(request.releaseDate)}, when it is out ${request.waitFor === 'digital' ? 'digitally' : 'on disc'}.`,
+              : `Held until ${describeCalendarDay(request.releaseDate)}, when its quality profile says it is out.`,
         };
       }
 

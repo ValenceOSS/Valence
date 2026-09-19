@@ -32,7 +32,6 @@ const REQUEST = {
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Someone' },
   seasons: null,
-  waitFor: 'digital',
   releaseDate: '2021-12-03',
   items: [],
   mediaId: null,
@@ -91,7 +90,7 @@ describe('fetchMediaRequests', () => {
 
     for (const sending of [
       askForMedia({ kind: 'film', tmdbId: 438631 }),
-      changeMediaRequest(REQUEST.id, { waitFor: 'physical' }),
+      changeMediaRequest(REQUEST.id, { isPickedByHand: true }),
       approveMediaRequest(REQUEST.id),
       refuseMediaRequest(REQUEST.id, 'No room'),
       retryMediaRequest(REQUEST.id),

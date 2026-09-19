@@ -137,6 +137,7 @@ const requestWorker = createRequestWorker({
 const mediaRequests = createRequestService({
   requests: requestStore,
   items: requestItems,
+  profiles,
   onChange: requestWorker.nudge,
 });
 

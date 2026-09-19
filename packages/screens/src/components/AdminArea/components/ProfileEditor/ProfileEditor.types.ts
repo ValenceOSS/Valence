@@ -1,10 +1,9 @@
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 
-type ProfileDialogProps = {
-  isOpen: boolean;
+type ProfileEditorProps = {
   profile: QualityProfile | null;
   onClose: () => void;
   onSaved: (profile: QualityProfile) => void;
 };
 
-export type { ProfileDialogProps };
+export type { ProfileEditorProps };

@@ -27,10 +27,6 @@ const REQUEST_APPROVALS = ['awaiting', 'approved', 'refused'] as const;
 
 const RequestApprovalSchema = z.enum(REQUEST_APPROVALS);
 
-const RELEASE_WAITS = ['digital', 'physical'] as const;
-
-const ReleaseWaitSchema = z.enum(RELEASE_WAITS);
-
 const CalendarDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const CatalogueEpisodeSchema = z.object({
@@ -69,7 +65,6 @@ const MediaRequestAskSchema = z.object({
   libraryId: z.string().uuid().optional(),
   profileId: z.string().uuid().optional(),
   isPickedByHand: z.boolean().default(false),
-  waitFor: ReleaseWaitSchema.default('digital'),
   release: ReleaseSchema.optional(),
 });
 
@@ -81,7 +76,6 @@ const MediaRequestDraftSchema = z.object({
   profileId: z.string().uuid().nullable().default(null),
   isPickedByHand: z.boolean().default(false),
   seasons: SeasonsSchema.default(null),
-  waitFor: ReleaseWaitSchema.default('digital'),
   requestedBy: RequesterSchema,
   isApproved: z.boolean(),
   catalogue: RequestCatalogueSchema,
@@ -120,7 +114,6 @@ const MediaRequestSchema = z.object({
   refusedBecause: z.string().nullable(),
   requestedBy: RequesterSchema,
   seasons: SeasonsSchema,
-  waitFor: ReleaseWaitSchema,
   releaseDate: CalendarDateSchema.nullable(),
   items: z.array(RequestItemSchema),
   mediaId: z.string().nullable(),
@@ -132,7 +125,6 @@ const MediaRequestChangeSchema = z.object({
   profileId: z.string().uuid().nullable().optional(),
   isPickedByHand: z.boolean().optional(),
   seasons: SeasonsSchema.optional(),
-  waitFor: ReleaseWaitSchema.optional(),
 });
 
 const MediaRequestRevisionSchema = z.object({
@@ -183,7 +175,6 @@ type MediaRequestKind = (typeof MEDIA_REQUEST_KINDS)[number];
 type RequestItemState = (typeof REQUEST_ITEM_STATES)[number];
 type MediaRequestState = (typeof MEDIA_REQUEST_STATES)[number];
 type RequestApproval = (typeof REQUEST_APPROVALS)[number];
-type ReleaseWait = (typeof RELEASE_WAITS)[number];
 type CatalogueEpisode = z.infer<typeof CatalogueEpisodeSchema>;
 type RequestCatalogue = z.infer<typeof RequestCatalogueSchema>;
 type RequestCatalogueDraft = z.input<typeof RequestCatalogueSchema>;
@@ -220,7 +211,6 @@ export type {
   MediaRequestRevision,
   MediaRequestState,
   MissingSearch,
-  ReleaseWait,
   RequestApproval,
   RequestCatalogue,
   RequestCatalogueDraft,
@@ -234,7 +224,6 @@ export type {
 export {
   MEDIA_REQUEST_KINDS,
   MEDIA_REQUEST_STATES,
-  RELEASE_WAITS,
   REQUEST_APPROVALS,
   REQUEST_ITEM_STATES,
   CalendarDateSchema,
@@ -253,7 +242,6 @@ export {
   MediaRequestSchema,
   MediaRequestStateSchema,
   MissingSearchSchema,
-  ReleaseWaitSchema,
   RequestApprovalSchema,
   RequestCatalogueSchema,
   RequestCatalogueUpdateSchema,
