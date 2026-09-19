@@ -722,3 +722,95 @@ describe('download clients and the queue, through the server', () => {
     expect(asked).toStrictEqual([]);
   });
 });
+
+describe('quality profiles, through the server', () => {
+  const PROFILE = {
+    id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    name: 'HD',
+    kind: 'video',
+    resolutions: ['1080p'],
+    sources: ['bluray'],
+    musicQualities: [],
+    smallestMb: null,
+    largestMb: null,
+    preferredWords: [],
+    requiredWords: [],
+    bannedWords: [],
+    isUpgrading: false,
+    upgradeUntilResolution: null,
+    upgradeUntilSource: null,
+    upgradeUntilMusicQuality: null,
+    libraryIds: [],
+    createdAt: '2026-09-19T00:00:00.000Z',
+    updatedAt: '2026-09-19T00:00:00.000Z',
+  };
+
+  /**
+   * The requests service as it answers profile questions when everything goes well.
+   */
+  const aWillingKeeper = (url: string, init: { method?: string }): Response => {
+    const method = init.method ?? 'GET';
+
+    if (method === 'DELETE') {
+      return new Response(null, { status: 204 });
+    }
+
+    if (url.endsWith('/api/profiles')) {
+      return method === 'POST'
+        ? new Response(JSON.stringify(PROFILE), { status: 201 })
+        : new Response(JSON.stringify([PROFILE]), { status: 200 });
+    }
+
+    return new Response(JSON.stringify(PROFILE), { status: 200 });
+  };
+
+  const ROUTES = [
+    ['GET', '/api/admin/requests/profiles', undefined, 200],
+    ['POST', '/api/admin/requests/profiles', { name: 'HD', kind: 'video' }, 201],
+    ['PATCH', `/api/admin/requests/profiles/${PROFILE.id}`, { name: 'UHD' }, 200],
+    ['DELETE', `/api/admin/requests/profiles/${PROFILE.id}`, undefined, 204],
+  ] as const;
+
+  it.each(ROUTES)(
+    'answers %s %s for whoever manages requesting',
+    async (method, path, body, status) => {
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.manage'],
+        service: aWillingKeeper,
+      });
+
+      expect((await ask(path, method, body)).status).toBe(status);
+    },
+  );
+
+  it.each(ROUTES)(
+    'refuses %s %s to somebody who does not manage requesting, and while it is off',
+    async (method, path, body) => {
+      const refused = await build({
+        isOn: true,
+        granted: ['requests.approve'],
+        service: aWillingKeeper,
+      });
+      const off = await build({ isOn: false, isAdministrator: true });
+
+      expect((await refused.ask(path, method, body)).status).toBe(403);
+      expect((await off.ask(path, method, body)).status).toBe(404);
+    },
+  );
+
+  it('passes on a profile the service does not have, and one it will not take', async () => {
+    const missing = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: () => new Response(JSON.stringify({ error: 'No such profile.' }), { status: 404 }),
+    });
+
+    expect((await missing.ask(`/api/admin/requests/profiles/${PROFILE.id}`, 'DELETE')).status).toBe(
+      404,
+    );
+    expect((await missing.ask('/api/admin/requests/profiles', 'POST', { name: 'x' })).status).toBe(
+      400,
+    );
+  });
+});

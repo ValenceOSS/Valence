@@ -6,6 +6,7 @@ import {
   ReleaseSearchOutcomeSchema,
 } from '@ValenceContracts/schemas/Indexer';
 import { RequestsStatusSchema } from '@ValenceContracts/schemas/Requests';
+import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import type { IndexerCapabilities } from '@ValenceContracts/schemas/Indexer';
 import type { RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import { createIndexerService } from '@ValenceRequests/indexers/createIndexerService';
@@ -172,7 +173,7 @@ describe('createApp', () => {
 
     downloads.get('/downloads', (context) => context.json({ clients: [] }));
 
-    const app = createApp({ ...THE_REST, downloads });
+    const app = createApp({ ...THE_REST, routes: [downloads] });
 
     expect((await app.request('/api/downloads')).status).toBe(401);
     expect(
@@ -269,6 +270,32 @@ describe('createApp', () => {
       const response = await ask('/api/search', 'POST', { query: 'dune' });
 
       expect(ReleaseSearchOutcomeSchema.parse(await response.json()).indexers).toHaveLength(1);
+    });
+
+    it('judges a search against a profile, and refuses one it does not have', async () => {
+      const profile = {
+        ...QualityProfileDraftSchema.parse({ name: 'HD', kind: 'video' }),
+        id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+        createdAt: '2026-09-19T00:00:00.000Z',
+        updatedAt: '2026-09-19T00:00:00.000Z',
+      };
+      const app = createApp({
+        ...THE_REST,
+        profiles: { find: (id) => Promise.resolve(id === profile.id ? profile : null) },
+      });
+      const search = (profileId: string) =>
+        app.request('/api/search', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${A_SECRET}`, 'content-type': 'application/json' },
+          body: JSON.stringify({ query: 'dune', profileId }),
+        });
+
+      expect((await search(profile.id)).status).toBe(200);
+
+      const refused = await search('7c9e6679-7425-40de-944b-e07fc1f90ae7');
+
+      expect(refused.status).toBe(400);
+      expect(await refused.json()).toEqual({ error: 'No such profile.' });
     });
 
     it('refuses a search that is not one', async () => {

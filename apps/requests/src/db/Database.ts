@@ -6,11 +6,20 @@ import {
   downloadEvent,
   indexer,
   indexerDefinition,
+  qualityProfile,
   sentDownload,
   setting,
 } from '@ValenceRequests/db/Schema';
 
-const schema = { downloadClient, downloadEvent, indexer, indexerDefinition, sentDownload, setting };
+const schema = {
+  downloadClient,
+  downloadEvent,
+  indexer,
+  indexerDefinition,
+  qualityProfile,
+  sentDownload,
+  setting,
+};
 
 type RequestsDatabase = PgDatabase<PgQueryResultHKT, typeof schema>;
 

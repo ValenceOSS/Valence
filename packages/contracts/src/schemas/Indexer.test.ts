@@ -113,6 +113,8 @@ describe('ReleaseSearchOutcomeSchema', () => {
         minimumRatio: null,
         minimumSeedSeconds: null,
       })),
+      judgements: [],
+      pickedId: null,
     });
   });
 });

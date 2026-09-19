@@ -27,6 +27,10 @@ vi.mock('@ValenceClient/requests/fetchDownloadClients', () => ({ fetchDownloadCl
 
 vi.mock('@ValenceClient/requests/fetchDownloadQueue', () => ({ fetchDownloadQueue }));
 
+const fetchProfiles = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/requests/fetchProfiles', () => ({ fetchProfiles }));
+
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
 
@@ -113,5 +117,11 @@ describe('requestsQueries', () => {
       downloads: [],
       checkedAt: null,
     });
+  });
+
+  it('asks for the quality profiles', async () => {
+    fetchProfiles.mockResolvedValue([]);
+
+    await expect(aCache().fetchQuery(requestsQueries.profiles())).resolves.toEqual([]);
   });
 });
