@@ -18,7 +18,7 @@ import { Tooltip } from '@ValenceUI/Tooltip';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { describeDownloadState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeDownloadState';
-import { describeSpeeds } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeSpeeds';
+import { SpeedReadout } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/SpeedReadout/SpeedReadout';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
@@ -147,12 +147,10 @@ const DownloadQueueTable = ({
         header: 'Speed',
         accessorFn: (download) => download.downloadBytesPerSecond ?? -1,
         cell: ({ row }) => (
-          <span className="text-xs tabular-nums text-text-muted">
-            {describeSpeeds(
-              row.original.downloadBytesPerSecond,
-              row.original.uploadBytesPerSecond,
-            ) ?? '—'}
-          </span>
+          <SpeedReadout
+            down={row.original.downloadBytesPerSecond}
+            up={row.original.uploadBytesPerSecond}
+          />
         ),
       },
       {

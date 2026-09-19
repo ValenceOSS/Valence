@@ -70,7 +70,8 @@ describe('DownloadQueueTable', () => {
     expect(row.getByText('Downloading')).toBeInTheDocument();
     expect(row.getByText('45%')).toBeInTheDocument();
     expect(row.getByText('2.0 GB of 4.0 GB')).toBeInTheDocument();
-    expect(row.getByText('↓ 1.0 MB/s · ↑ 40 KB/s')).toBeInTheDocument();
+    expect(row.getByText('↓ 1.0 MB/s')).toBeInTheDocument();
+    expect(row.getByText('↑ 40 KB/s')).toBeInTheDocument();
     expect(row.getByText('12 min')).toBeInTheDocument();
     expect(row.getByText('9 seeding · 2 fetching')).toBeInTheDocument();
     expect(
