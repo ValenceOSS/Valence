@@ -119,6 +119,8 @@ describe('writeLocation', () => {
       account: null,
       downloads: false,
       listen: null,
+      asking: null,
+      requestsView: null,
     } as const;
 
     expect(readLocation(`http://valence.local${writeLocation(place)}`)).toEqual(place);
@@ -129,6 +131,17 @@ describe('writeLocation', () => {
 
     expect(writeLocation(place)).toBe('/music?listen=album%3Aabc');
     expect(readLocation(`http://valence.local${writeLocation(place)}`)).toEqual(place);
+  });
+
+  it('carries a title to ask for over any section, and which view of the requests page is open', () => {
+    const asking = { ...HOME, section: 'films', asking: 'film:438631' } as const;
+    const mine = { ...HOME, section: 'requests', requestsView: 'mine' } as const;
+
+    expect(writeLocation(asking)).toBe('/films?ask=film%3A438631');
+    expect(readLocation(`http://valence.local${writeLocation(asking)}`)).toEqual(asking);
+    expect(writeLocation(mine)).toBe('/requests?view=mine');
+    expect(readLocation(`http://valence.local${writeLocation(mine)}`)).toEqual(mine);
+    expect(placeIn('/films', { view: 'mine' }).requestsView).toBeNull();
   });
 
   it('carries a listening party in the music section', () => {

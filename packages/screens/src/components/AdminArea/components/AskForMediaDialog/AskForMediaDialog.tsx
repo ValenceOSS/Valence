@@ -9,7 +9,6 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { FormField } from '@ValenceUI/FormField';
 import { Icon } from '@ValenceUI/Icon';
-import { Checkbox } from '@ValenceUI/Checkbox';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -22,8 +21,8 @@ import {
   searchMusicCatalogue,
 } from '@ValenceClient/requests/fetchMediaRequests';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
-import { RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
-import { RELEASE_TYPE_NAMES } from '@ValenceScreens/components/AdminArea/RELEASE_TYPE_NAMES';
+import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
+import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
 import { ReleasePickTable } from '@ValenceScreens/components/AdminArea/components/ReleasePickTable/ReleasePickTable';
 import { CatalogueMatchList } from '@ValenceScreens/components/AdminArea/components/CatalogueMatchList/CatalogueMatchList';
 import { MusicMatchList } from '@ValenceScreens/components/AdminArea/components/MusicMatchList/MusicMatchList';
@@ -95,11 +94,6 @@ const PICKING = [
   { id: 'hand', label: 'I will pick it' },
 ] as const;
 
-const SEASON_CHOICES = [
-  { id: 'every', label: 'Every season, and later ones' },
-  { id: 'some', label: 'Only some seasons' },
-] as const;
-
 /**
  * Asks for a film, a series, an artist or an album: the catalogue — TMDB, or MusicBrainz for music
  * — is searched for it by name, and once one is chosen, it says the quality wanted — a profile of
@@ -118,9 +112,8 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const [musicMatches, setMusicMatches] = useState<MusicCatalogueHit[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [chosen, setChosen] = useState<Chosen | null>(null);
-  const [releaseTypes, setReleaseTypes] = useState<ReadonlySet<ReleaseType>>(new Set(['album']));
-  const [seasonChoice, setSeasonChoice] = useState<'every' | 'some'>('every');
-  const [picked, setPicked] = useState<ReadonlySet<number>>(new Set());
+  const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>(['album']);
+  const [seasons, setSeasons] = useState<number[] | null>(null);
   const [isPickedByHand, setIsPickedByHand] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
@@ -138,15 +131,10 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const quality = qualities.find((one) => one.id === (profileId ?? THE_LIBRARYS));
   const [problem, setProblem] = useState<string | null>(null);
 
-  const listed = useQuery(
-    requestsQueries.seriesSeasons(chosen === null || kind !== 'series' ? null : chosen.tmdbId),
-  );
-  const seasons =
-    seasonChoice === 'every' ? null : [...picked].toSorted((left, right) => left - right);
   const isReady =
     chosen !== null &&
     (seasons === null || seasons.length > 0) &&
-    (kind !== 'artist' || releaseTypes.size > 0);
+    (kind !== 'artist' || releaseTypes.length > 0);
 
   const look = () => {
     setIsSearching(true);
@@ -179,9 +167,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
           ...(profileId === null ? {} : { profileId }),
           isPickedByHand,
           ...(kind === 'series' ? { seasons } : {}),
-          ...(kind === 'artist'
-            ? { releaseTypes: RELEASE_TYPES.filter((type) => releaseTypes.has(type)) }
-            : {}),
+          ...(kind === 'artist' ? { releaseTypes } : {}),
         };
 
   const findReleases = () => {
@@ -352,7 +338,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 size="xs"
                 onClick={() => {
                   setChosen(null);
-                  setPicked(new Set());
+                  setSeasons(null);
                   setFound(null);
                 }}
               >
@@ -390,78 +376,11 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             </FormField>
 
             {kind !== 'artist' ? null : (
-              <FormField
-                label="Releases"
-                description="Which of their releases are fetched, now and as new ones come out."
-              >
-                <ul aria-label="Which releases" className="grid gap-2 sm:grid-cols-3">
-                  {RELEASE_TYPES.map((type) => (
-                    <li key={type}>
-                      <Checkbox
-                        label={RELEASE_TYPE_NAMES[type].label}
-                        checked={releaseTypes.has(type)}
-                        onCheckedChange={(isChecked) => {
-                          const next = new Set(releaseTypes);
-
-                          if (isChecked) {
-                            next.add(type);
-                          } else {
-                            next.delete(type);
-                          }
-
-                          setReleaseTypes(next);
-                        }}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </FormField>
+              <ReleaseTypeChooser value={releaseTypes} onChange={setReleaseTypes} />
             )}
 
-            {kind !== 'series' ? null : (
-              <>
-                <FormField label="Seasons">
-                  <SegmentedRow
-                    label="Seasons"
-                    size="sm"
-                    items={SEASON_CHOICES}
-                    value={seasonChoice}
-                    onSelect={(next) => {
-                      setSeasonChoice(next === 'some' ? 'some' : 'every');
-                    }}
-                  />
-                </FormField>
-
-                {seasonChoice === 'every' ? null : listed.data === undefined ? (
-                  <Spinner label="Asking the catalogue for its seasons" size="sm" />
-                ) : (
-                  <ul aria-label="Which seasons" className="grid gap-2 sm:grid-cols-2">
-                    {listed.data.map((one) => (
-                      <li key={one.season}>
-                        <Checkbox
-                          label={one.season === 0 ? 'Specials' : `Season ${one.season.toString()}`}
-                          description={[
-                            `${one.episodeCount.toString()} episode${one.episodeCount === 1 ? '' : 's'}`,
-                            ...(one.firstAired === null ? [] : [one.firstAired.slice(0, 4)]),
-                          ].join(' · ')}
-                          checked={picked.has(one.season)}
-                          onCheckedChange={(isChecked) => {
-                            const next = new Set(picked);
-
-                            if (isChecked) {
-                              next.add(one.season);
-                            } else {
-                              next.delete(one.season);
-                            }
-
-                            setPicked(next);
-                          }}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
+            {kind !== 'series' || chosen.tmdbId === null ? null : (
+              <SeasonChooser tmdbId={chosen.tmdbId} seasons={seasons} onChange={setSeasons} />
             )}
 
             <FormField
