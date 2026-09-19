@@ -1,4 +1,4 @@
-import { chmod, mkdtemp, readdir, rm } from 'node:fs/promises';
+import { chmod, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -45,7 +45,12 @@ describe('canWriteInto', () => {
     expect(await canWriteInto(join(root, '.valence'))).toBe(false);
   });
 
-  it('says no for somewhere that cannot exist', async () => {
-    expect(await canWriteInto('/proc/valence/nowhere')).toBe(false);
+  it('says no where the folder could not be made at all', async () => {
+    const root = await somewhere();
+    const notADirectory = join(root, 'Azkaban.mkv');
+
+    await writeFile(notADirectory, 'the remux');
+
+    expect(await canWriteInto(join(notADirectory, '.valence'))).toBe(false);
   });
 });
