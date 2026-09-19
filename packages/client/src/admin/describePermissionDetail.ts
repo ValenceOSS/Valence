@@ -31,6 +31,15 @@ const DETAILS: Record<Permission, string> = {
 
   'download.media': 'Save a copy of media to a device, for watching without a connection.',
 
+  'requests.ask': 'Ask for a film or series the server does not have yet.',
+  'requests.askMusic': 'Ask for an artist or album the server does not have yet.',
+  'requests.autoApprove':
+    'Have what they ask for searched for and downloaded without waiting for somebody to approve it.',
+  'requests.viewAll': 'See what everybody has asked for, and how each download is getting on.',
+  'requests.approve': 'Approve or turn down what other people have asked for.',
+  'requests.manage':
+    'Set up the indexers, download clients and quality profiles requesting uses, and see the VPN.',
+
   'account.invite': 'Invite somebody new to sign in and hold an account.',
   'account.manage': 'Rename, suspend or remove an existing account.',
   'account.ban': 'Ban an account, ending its sessions and refusing it a way back in.',

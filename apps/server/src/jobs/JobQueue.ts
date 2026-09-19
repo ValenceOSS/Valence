@@ -66,6 +66,8 @@ const CHECK_TRANSCODER_JOB = 'server.checkTranscoder';
 
 const CHECK_DISK_SPACE_JOB = 'server.checkDiskSpace';
 
+const CHECK_REQUESTS_JOB = 'server.checkRequests';
+
 const SEND_MEDIA_DIGEST_JOB = 'server.sendMediaDigest';
 
 const DELIVER_WEBHOOK_JOB = 'webhook.deliver';
@@ -161,6 +163,7 @@ export {
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
   CHECK_TRANSCODER_JOB,
   CHECK_DISK_SPACE_JOB,
+  CHECK_REQUESTS_JOB,
   SEND_MEDIA_DIGEST_JOB,
   DELIVER_WEBHOOK_JOB,
   PRUNE_WEBHOOK_DELIVERIES_JOB,

@@ -366,4 +366,55 @@ describe('formatWebhookBody', () => {
 
     expect(written.body).toContain('connection refused');
   });
+
+  it('carries the reason the requests service could not be reached', () => {
+    const written = formatWebhookBody('ntfy', {
+      ...anEnvelope,
+      event: 'requests.unreachable',
+      data: { reason: 'http://requests:8421 did not answer' },
+    });
+
+    expect(written.body).toContain('requests service could not be reached');
+    expect(written.body).toContain('did not answer');
+  });
+
+  it('says the requests service came back', () => {
+    const written = formatWebhookBody('ntfy', {
+      ...anEnvelope,
+      event: 'requests.reachable',
+      data: {},
+    });
+
+    expect(written.body).toContain('Nothing needs doing');
+  });
+
+  it('says why the VPN went down', () => {
+    const written = formatWebhookBody('ntfy', {
+      ...anEnvelope,
+      event: 'requests.vpnDown',
+      data: { reason: 'The tunnel is stopped' },
+    });
+
+    expect(written.body).toContain('The tunnel is stopped');
+  });
+
+  it('says where traffic leaves from once the VPN is back', () => {
+    const written = formatWebhookBody('ntfy', {
+      ...anEnvelope,
+      event: 'requests.vpnUp',
+      data: { publicAddress: '203.0.113.7', country: 'Netherlands' },
+    });
+
+    expect(written.body).toContain('leaving from 203.0.113.7, Netherlands');
+  });
+
+  it('says the VPN is up without saying where when it does not know', () => {
+    const written = formatWebhookBody('ntfy', {
+      ...anEnvelope,
+      event: 'requests.vpnUp',
+      data: { publicAddress: null, country: null },
+    });
+
+    expect(written.body).toBe('The VPN the requests service downloads through is up.');
+  });
 });

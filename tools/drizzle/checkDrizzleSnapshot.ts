@@ -5,11 +5,7 @@ import { describeSnapshotDrift } from './describeSnapshotDrift';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 
-const SERVER = join(ROOT, 'apps', 'server');
-
-const MIGRATIONS = join(SERVER, 'drizzle');
-
-const JOURNAL = join(MIGRATIONS, 'meta', '_journal.json');
+const APPS = ['server', 'requests'] as const;
 
 const say = (line: string): void => {
   process.stdout.write(`${line}\n`);
@@ -18,12 +14,13 @@ const say = (line: string): void => {
 /**
  * Every migration and snapshot presently on disk, as paths relative to the migrations directory.
  *
+ * @param migrations - The migrations directory.
  * @returns The paths, sorted.
  */
-const whatIsThere = (): string[] =>
-  readdirSync(MIGRATIONS, { recursive: true, withFileTypes: true })
+const whatIsThere = (migrations: string): string[] =>
+  readdirSync(migrations, { recursive: true, withFileTypes: true })
     .filter((one) => one.isFile())
-    .map((one) => relative(MIGRATIONS, join(one.parentPath, one.name)))
+    .map((one) => relative(migrations, join(one.parentPath, one.name)))
     .sort();
 
 /**
@@ -34,11 +31,12 @@ const whatIsThere = (): string[] =>
  * is deliberately one nothing answers on, rather than letting a developer's own `.env` decide
  * whether this check can run.
  *
+ * @param app - The app whose schema to generate from.
  * @throws If drizzle-kit could not be run at all.
  */
-const generate = (): void => {
+const generate = (app: string): void => {
   const outcome = spawnSync('npx', ['drizzle-kit', 'generate'], {
-    cwd: SERVER,
+    cwd: app,
     stdio: 'pipe',
     env: { ...process.env, DATABASE_URL: 'postgres://nobody:nobody@127.0.0.1:1/nothing' },
   });
@@ -57,32 +55,40 @@ const generate = (): void => {
  * exist.
  *
  * Whatever generating wrote is removed again, and the journal put back as it was, so that running
- * this leaves the tree exactly as it found it whether it passes or fails.
+ * this leaves the tree exactly as it found it whether it passes or fails. The server and the requests
+ * service each keep their own migrations, so each is checked on its own.
+ *
+ * @param name - The app to check, by its directory under `apps`.
  */
-const checkDrizzleSnapshot = (): void => {
-  const before = whatIsThere();
-  const journal = readFileSync(JOURNAL, 'utf8');
+const checkDrizzleSnapshot = (name: string): void => {
+  const app = join(ROOT, 'apps', name);
+  const migrations = join(app, 'drizzle');
+  const journalPath = join(migrations, 'meta', '_journal.json');
+  const before = whatIsThere(migrations);
+  const journal = readFileSync(journalPath, 'utf8');
 
-  generate();
+  generate(app);
 
-  const produced = whatIsThere().filter((one) => !before.includes(one));
+  const produced = whatIsThere(migrations).filter((one) => !before.includes(one));
 
   for (const one of produced) {
-    rmSync(join(MIGRATIONS, one), { force: true });
+    rmSync(join(migrations, one), { force: true });
   }
 
-  writeFileSync(JOURNAL, journal);
+  writeFileSync(journalPath, journal);
 
   const drift = describeSnapshotDrift(produced);
 
   if (drift === null) {
-    say('The newest Drizzle snapshot still describes the schema.');
+    say(`The newest Drizzle snapshot in ${name} still describes the schema.`);
 
     return;
   }
 
   process.exitCode = 1;
-  process.stderr.write(`${drift}\n`);
+  process.stderr.write(`${name}: ${drift}\n`);
 };
 
-checkDrizzleSnapshot();
+for (const name of APPS) {
+  checkDrizzleSnapshot(name);
+}

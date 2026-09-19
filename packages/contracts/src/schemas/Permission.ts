@@ -28,6 +28,13 @@ const PERMISSIONS = [
 
   'download.media',
 
+  'requests.ask',
+  'requests.askMusic',
+  'requests.autoApprove',
+  'requests.viewAll',
+  'requests.approve',
+  'requests.manage',
+
   'account.keys',
 
   'account.invite',
