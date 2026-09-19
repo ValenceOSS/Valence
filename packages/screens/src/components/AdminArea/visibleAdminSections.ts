@@ -1,7 +1,13 @@
 import { ADMIN_SECTIONS } from '@ValenceScreens/components/AdminArea/adminSections';
 import type { AdminPanelId } from '@ValenceScreens/components/AdminArea/adminSections';
 
-const REQUESTS_PANELS: readonly AdminPanelId[] = ['requests', 'indexers', 'search', 'downloads'];
+const REQUESTS_PANELS: readonly AdminPanelId[] = [
+  'requests',
+  'indexers',
+  'search',
+  'profiles',
+  'downloads',
+];
 
 /**
  * The admin sidebar as this server should show it: the Requests group only where the requests

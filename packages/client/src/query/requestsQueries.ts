@@ -7,6 +7,7 @@ import { fetchIndexers, searchReleases } from '@ValenceClient/requests/fetchInde
 import { fetchCatalogue, fetchDefinition } from '@ValenceClient/requests/fetchDefinitions';
 import { fetchDownloadClients } from '@ValenceClient/requests/fetchDownloadClients';
 import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
+import { fetchProfiles } from '@ValenceClient/requests/fetchProfiles';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 
 const REQUESTS = ['requests'] as const;
@@ -117,6 +118,17 @@ const downloadQueue = () =>
     queryFn: () => fetchDownloadQueue(),
   });
 
+/**
+ * The quality profiles searches are judged against.
+ *
+ * @returns The query.
+ */
+const profiles = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'profiles'],
+    queryFn: () => fetchProfiles(),
+  });
+
 const requestsQueries = {
   key: REQUESTS,
   availability,
@@ -127,6 +139,7 @@ const requestsQueries = {
   definition,
   downloadClients,
   downloadQueue,
+  profiles,
 };
 
 export { requestsQueries };
