@@ -20,7 +20,7 @@ const aRelease = (title: string, overrides: Partial<Release> = {}): Release => (
   grabs: null,
   publishedAt: null,
   categories: [2000],
-  downloadUrl: null,
+  downloadUrl: `http://jackett:9117/dl/${encodeURIComponent(title)}`,
   magnetUrl: null,
   infoUrl: null,
   infoHash: null,

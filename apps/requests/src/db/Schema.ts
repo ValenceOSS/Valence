@@ -211,6 +211,8 @@ const requestItem = requestsSchema.table(
     downloadId: uuid('download_id').references(() => sentDownload.id, { onDelete: 'set null' }),
     filePath: text('file_path'),
     score: doublePrecision('score'),
+    filedTitle: text('filed_title'),
+    filedScore: doublePrecision('filed_score'),
     attempts: integer('attempts').notNull().default(0),
     lastSearchedAt: timestamp('last_searched_at', { withTimezone: true }),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

@@ -3,6 +3,7 @@ import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import { ReleaseSendSchema } from '@ValenceContracts/schemas/DownloadQueue';
 import { DownloadClientFailure } from '@ValenceRequests/downloads/DownloadClientFailure';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
+import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
 import type {
   DownloadQueue,
   DownloadStreamFrame,
@@ -18,8 +19,7 @@ import type {
   SentDownloadStore,
 } from '@ValenceRequests/downloads/SentDownloadRecord';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
-
-type Schedule = (run: () => void, afterMs: number) => () => void;
+import type { Schedule } from '@ValenceRequests/timing/Schedule';
 
 type CreateDownloadQueueOptions = {
   clients: Pick<DownloadClientService, 'records' | 'adapterOf'>;
@@ -67,21 +67,6 @@ const NOTHING_LIVE: Omit<Live, 'progress' | 'doneBytes'> = {
   secondsLeft: null,
   seeds: null,
   peers: null,
-};
-
-/**
- * Waits with the clock this process has.
- *
- * @param run - What to do.
- * @param afterMs - How long to wait first.
- * @returns How to stop waiting.
- */
-const waitThenRun: Schedule = (run, afterMs) => {
-  const timer = setTimeout(run, afterMs);
-
-  return () => {
-    clearTimeout(timer);
-  };
 };
 
 /**

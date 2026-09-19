@@ -21,6 +21,8 @@ const aRequestItem = (overrides: Partial<RequestItemRecord> = {}): RequestItemRe
   downloadId: null,
   filePath: null,
   score: null,
+  filedTitle: null,
+  filedScore: null,
   attempts: 0,
   lastSearchedAt: null,
   updatedAt: '2026-09-19T00:00:00.000Z',

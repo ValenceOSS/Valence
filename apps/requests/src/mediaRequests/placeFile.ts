@@ -1,6 +1,17 @@
 import { copyFile, link, mkdir, rename, stat, unlink } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
+type FileSystem = {
+  copyFile: typeof copyFile;
+  link: typeof link;
+  mkdir: typeof mkdir;
+  rename: typeof rename;
+  stat: typeof stat;
+  unlink: typeof unlink;
+};
+
+const THIS_DISK: FileSystem = { copyFile, link, mkdir, rename, stat, unlink };
+
 /**
  * Whether a file system error is one of the named kinds.
  *
@@ -21,27 +32,32 @@ const isErrorOf = (error: Error, codes: readonly string[]): boolean =>
  * @param source - The downloaded file.
  * @param destination - Where it belongs.
  * @param isKeepingSource - Whether the download must keep its file, as a seeding torrent must.
+ * @param files - The file system.
  * @returns How it was put there.
  */
 const placeFile = async (
   source: string,
   destination: string,
   isKeepingSource: boolean,
+  files: FileSystem = THIS_DISK,
 ): Promise<'linked' | 'copied' | 'moved' | 'already'> => {
-  await mkdir(dirname(destination), { recursive: true });
+  await files.mkdir(dirname(destination), { recursive: true });
 
-  const [from, to] = await Promise.all([stat(source), stat(destination).catch(() => null)]);
+  const [from, to] = await Promise.all([
+    files.stat(source),
+    files.stat(destination).catch(() => null),
+  ]);
 
   if (to !== null) {
     if (to.ino === from.ino && to.dev === from.dev) {
       return 'already';
     }
 
-    await unlink(destination);
+    await files.unlink(destination);
   }
 
   try {
-    await link(source, destination);
+    await files.link(source, destination);
 
     return 'linked';
   } catch (error) {
@@ -51,20 +67,20 @@ const placeFile = async (
   }
 
   if (isKeepingSource) {
-    await copyFile(source, destination);
+    await files.copyFile(source, destination);
 
     return 'copied';
   }
 
   try {
-    await rename(source, destination);
+    await files.rename(source, destination);
   } catch (error) {
     if (!(error instanceof Error) || !isErrorOf(error, ['EXDEV'])) {
       throw error;
     }
 
-    await copyFile(source, destination);
-    await unlink(source);
+    await files.copyFile(source, destination);
+    await files.unlink(source);
   }
 
   return 'moved';

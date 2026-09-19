@@ -24,6 +24,12 @@ import { createDownloadRoutes } from '@ValenceRequests/downloads/createDownloadR
 import { createDatabaseProfileStore } from '@ValenceRequests/profiles/createDatabaseProfileStore';
 import { createProfileRoutes } from '@ValenceRequests/profiles/createProfileRoutes';
 import { createProfileService } from '@ValenceRequests/profiles/createProfileService';
+import { createDatabaseBlockedReleaseStore } from '@ValenceRequests/mediaRequests/createDatabaseBlockedReleaseStore';
+import { createDatabaseMediaRequestStore } from '@ValenceRequests/mediaRequests/createDatabaseMediaRequestStore';
+import { createDatabaseRequestItemStore } from '@ValenceRequests/mediaRequests/createDatabaseRequestItemStore';
+import { createRequestRoutes } from '@ValenceRequests/mediaRequests/createRequestRoutes';
+import { createRequestService } from '@ValenceRequests/mediaRequests/createRequestService';
+import { createRequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
 
@@ -94,14 +100,43 @@ const downloadClients = createDownloadClientService({
 
 const profiles = createProfileService({ store: createDatabaseProfileStore(db) });
 
+const sentDownloads = createDatabaseSentDownloadStore(db);
+
+const events = createDatabaseEventStore(db);
+
 const downloadQueue = createDownloadQueue({
   clients: downloadClients,
-  downloads: createDatabaseSentDownloadStore(db),
-  events: createDatabaseEventStore(db),
+  downloads: sentDownloads,
+  events,
   fetchRelease: (indexerId, url) => indexers.download(indexerId, url),
 });
 
 downloadQueue.start();
+
+const requestStore = createDatabaseMediaRequestStore(db);
+
+const requestItems = createDatabaseRequestItemStore(db);
+
+const requestWorker = createRequestWorker({
+  requests: requestStore,
+  items: requestItems,
+  blocked: createDatabaseBlockedReleaseStore(db),
+  downloads: sentDownloads,
+  clients: downloadClients,
+  queue: downloadQueue,
+  indexers,
+  profiles,
+  events,
+  say,
+});
+
+const mediaRequests = createRequestService({
+  requests: requestStore,
+  items: requestItems,
+  onChange: requestWorker.nudge,
+});
+
+await requestWorker.start();
 
 /**
  * Brings the catalogue of definitions up to date where it is a day old or has never been fetched,
@@ -131,6 +166,7 @@ const app = createApp({
   routes: [
     createDownloadRoutes({ clients: downloadClients, queue: downloadQueue }),
     createProfileRoutes(profiles),
+    createRequestRoutes({ service: mediaRequests, worker: requestWorker }),
   ],
   secret: env.REQUESTS_SECRET,
   version: env.VALENCE_VERSION,
@@ -157,6 +193,7 @@ const server = serve({ fetch: app.fetch, port: env.REQUESTS_PORT }, (info) => {
 const leave = (): void => {
   vpn.stop();
   downloadQueue.stop();
+  requestWorker.stop();
   clearInterval(definitionTimer);
   server.close();
   void pool.end().then(() => process.exit(0));

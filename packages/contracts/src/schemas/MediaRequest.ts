@@ -126,6 +126,13 @@ const MediaRequestChangeSchema = z.object({
   waitFor: ReleaseWaitSchema.optional(),
 });
 
+const MediaRequestRevisionSchema = z.object({
+  change: MediaRequestChangeSchema,
+  catalogue: RequestCatalogueSchema.nullable().default(null),
+});
+
+const MediaRequestAddedSchema = z.object({ request: MediaRequestSchema, isNew: z.boolean() });
+
 const MediaRequestRefusalSchema = z.object({
   reason: z.string().trim().max(500).default(''),
 });
@@ -158,6 +165,7 @@ type RequestApproval = (typeof REQUEST_APPROVALS)[number];
 type ReleaseWait = (typeof RELEASE_WAITS)[number];
 type CatalogueEpisode = z.infer<typeof CatalogueEpisodeSchema>;
 type RequestCatalogue = z.infer<typeof RequestCatalogueSchema>;
+type RequestCatalogueDraft = z.input<typeof RequestCatalogueSchema>;
 type Requester = z.infer<typeof RequesterSchema>;
 type MediaRequestAsk = z.input<typeof MediaRequestAskSchema>;
 type MediaRequestDraft = z.input<typeof MediaRequestDraftSchema>;
@@ -165,6 +173,8 @@ type RequestItem = z.infer<typeof RequestItemSchema>;
 type MediaRequest = z.infer<typeof MediaRequestSchema>;
 type MediaRequestChange = z.infer<typeof MediaRequestChangeSchema>;
 type MediaRequestRefusal = z.input<typeof MediaRequestRefusalSchema>;
+type MediaRequestRevision = z.input<typeof MediaRequestRevisionSchema>;
+type MediaRequestAdded = z.infer<typeof MediaRequestAddedSchema>;
 type MediaRequestPick = z.infer<typeof MediaRequestPickSchema>;
 type RequestCatalogueUpdate = z.input<typeof RequestCatalogueUpdateSchema>;
 type MediaRequestArrival = z.infer<typeof MediaRequestArrivalSchema>;
@@ -176,17 +186,20 @@ export type {
   FollowedRequest,
   MediaRequest,
   MediaRequestArrival,
+  MediaRequestAdded,
   MediaRequestAsk,
   MediaRequestChange,
   MediaRequestDraft,
   MediaRequestKind,
   MediaRequestPick,
   MediaRequestRefusal,
+  MediaRequestRevision,
   MediaRequestState,
   MissingSearch,
   ReleaseWait,
   RequestApproval,
   RequestCatalogue,
+  RequestCatalogueDraft,
   RequestCatalogueUpdate,
   Requester,
   RequestItem,
@@ -202,6 +215,7 @@ export {
   CalendarDateSchema,
   CatalogueEpisodeSchema,
   FollowedRequestSchema,
+  MediaRequestAddedSchema,
   MediaRequestArrivalSchema,
   MediaRequestAskSchema,
   MediaRequestChangeSchema,
@@ -209,6 +223,7 @@ export {
   MediaRequestKindSchema,
   MediaRequestPickSchema,
   MediaRequestRefusalSchema,
+  MediaRequestRevisionSchema,
   MediaRequestSchema,
   MediaRequestStateSchema,
   MissingSearchSchema,

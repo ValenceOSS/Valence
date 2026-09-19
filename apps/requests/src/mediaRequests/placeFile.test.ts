@@ -1,4 +1,13 @@
-import { mkdir, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
+import {
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rename,
+  stat,
+  unlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -42,5 +51,66 @@ describe('placeFile', () => {
     const { root } = await aDownload();
 
     await expect(placeFile(join(root, 'nothing.mkv'), join(root, 'x.mkv'), true)).rejects.toThrow();
+  });
+});
+
+/**
+ * A file system error of the kind given.
+ */
+const failing = (code: string) => () =>
+  Promise.reject(Object.assign(new Error(`${code}: it went wrong`), { code }));
+
+describe('placeFile across disks', () => {
+  it('copies a torrent’s file it cannot link, so the torrent can still seed', async () => {
+    const { root, source } = await aDownload();
+    const destination = join(root, 'Films', 'Dune.mkv');
+    const files = { copyFile, link: failing('EXDEV'), mkdir, rename, stat, unlink };
+
+    expect(await placeFile(source, destination, true, files)).toBe('copied');
+    expect(await readFile(source, 'utf8')).toBe('film');
+  });
+
+  it('moves anything else it cannot link, copying where even a move cannot cross', async () => {
+    const { root, source } = await aDownload();
+    const destination = join(root, 'Films', 'Dune.mkv');
+
+    expect(
+      await placeFile(source, destination, false, {
+        copyFile,
+        link: failing('EXDEV'),
+        mkdir,
+        rename,
+        stat,
+        unlink,
+      }),
+    ).toBe('moved');
+
+    const again = await aDownload();
+
+    expect(
+      await placeFile(again.source, join(again.root, 'Dune.mkv'), false, {
+        copyFile,
+        link: failing('EXDEV'),
+        mkdir,
+        rename: failing('EXDEV'),
+        stat,
+        unlink,
+      }),
+    ).toBe('moved');
+    await expect(stat(again.source)).rejects.toThrow();
+  });
+
+  it('says what went wrong where it is not a matter of disks', async () => {
+    const { root, source } = await aDownload();
+    const files = { copyFile, link: failing('EACCES'), mkdir, rename, stat, unlink };
+
+    await expect(placeFile(source, join(root, 'x.mkv'), true, files)).rejects.toThrow('EACCES');
+    await expect(
+      placeFile(source, join(root, 'y.mkv'), false, {
+        ...files,
+        link: failing('EXDEV'),
+        rename: failing('EACCES'),
+      }),
+    ).rejects.toThrow('EACCES');
   });
 });

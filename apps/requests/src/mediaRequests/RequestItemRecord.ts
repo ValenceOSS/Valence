@@ -4,6 +4,8 @@ import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 type RequestItemRecord = RequestItem & {
   requestId: string;
   indexerId: string | null;
+  filedTitle: string | null;
+  filedScore: number | null;
   attempts: number;
 };
 
