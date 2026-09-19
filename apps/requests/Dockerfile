@@ -32,7 +32,7 @@ COPY apps/requests/drizzle ./apps/requests/drizzle
 COPY --from=build /build/apps/requests/dist ./apps/requests/dist
 
 ENV NODE_ENV=production \
-    PORT=8421 \
+    REQUESTS_PORT=8421 \
     VALENCE_VERSION=${VALENCE_VERSION}
 
 EXPOSE 8421

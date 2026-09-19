@@ -67,7 +67,7 @@ const app = createApp({
   },
 });
 
-const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
+const server = serve({ fetch: app.fetch, port: env.REQUESTS_PORT }, (info) => {
   say(`Listening on port ${info.port.toString()}.`);
   say(env.VPN_URL === '' ? 'No VPN is set up.' : `Watching the VPN at ${env.VPN_URL}.`);
 });
