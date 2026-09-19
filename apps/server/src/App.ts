@@ -3737,6 +3737,14 @@ const createApp = ({
 
   const NOT_YOURS = { error: 'That is for whoever sets up requesting.' };
 
+  /**
+   * Asks the requests service again how it is, after an indexer changed, so that a warning about
+   * one that was removed, turned back on or mended goes at once rather than at the next check.
+   */
+  const recheckRequests = async (): Promise<void> => {
+    await requests?.check();
+  };
+
   const REQUESTING_OFF = { error: 'Requesting is off.' };
 
   /**
@@ -4341,9 +4349,13 @@ const createApp = ({
       return context.json({ error: answer.reason }, 502);
     }
 
-    return answer.kind === 'refused'
-      ? context.json({ error: answer.error }, 400)
-      : context.json(answer.value, 201);
+    if (answer.kind === 'refused') {
+      return context.json({ error: answer.error }, 400);
+    }
+
+    await recheckRequests();
+
+    return context.json(answer.value, 201);
   });
 
   app.openapi(tryIndexerRoute, async (context) => {
@@ -4394,6 +4406,8 @@ const createApp = ({
         : context.json({ error: answer.error }, 400);
     }
 
+    await recheckRequests();
+
     return context.json(answer.value, 200);
   });
 
@@ -4414,9 +4428,13 @@ const createApp = ({
       return context.json({ error: answer.reason }, 502);
     }
 
-    return answer.kind === 'refused'
-      ? context.json({ error: answer.error }, 404)
-      : context.body(null, 204);
+    if (answer.kind === 'refused') {
+      return context.json({ error: answer.error }, 404);
+    }
+
+    await recheckRequests();
+
+    return context.body(null, 204);
   });
 
   app.openapi(testIndexerRoute, async (context) => {
@@ -4436,9 +4454,13 @@ const createApp = ({
       return context.json({ error: answer.reason }, 502);
     }
 
-    return answer.kind === 'refused'
-      ? context.json({ error: answer.error }, 404)
-      : context.json(answer.value, 200);
+    if (answer.kind === 'refused') {
+      return context.json({ error: answer.error }, 404);
+    }
+
+    await recheckRequests();
+
+    return context.json(answer.value, 200);
   });
 
   app.openapi(tryIndexerChangeRoute, async (context) => {

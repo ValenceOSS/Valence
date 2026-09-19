@@ -55,6 +55,9 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { StatStrip } from './components/StatStrip/StatStrip';
 import { ConcernsBanner } from './components/ConcernsBanner/ConcernsBanner';
 import { collectConcerns } from './collectConcerns';
+import { concernKey } from './concernKey';
+import { readDismissedConcerns, saveDismissedConcerns } from './dismissedConcerns';
+import { standingDismissals } from './standingDismissals';
 import { valenceCpuShare } from './valenceCpuShare';
 import { valenceMemoryUse } from './valenceMemoryUse';
 import { memoryEnvelope } from './memoryEnvelope';
@@ -162,6 +165,7 @@ const AdminArea = ({
 
   const overview = askedOverview.data ?? null;
   const monitor = askedMonitor.data ?? null;
+  const [dismissedConcerns, setDismissedConcerns] = useState(readDismissedConcerns);
 
   const libraries = useMemo(() => askedLibraries.data ?? [], [askedLibraries.data]);
 
@@ -558,6 +562,34 @@ const AdminArea = ({
     </dl>
   );
 
+  const concerns = collectConcerns({
+    overview,
+    monitor,
+    libraries,
+    sessions,
+    history,
+    encoderHistory,
+    requests: hasRequests ? (askedRequestsOverview.data ?? null) : null,
+  });
+  const isEverythingRead =
+    overview !== null &&
+    monitor !== null &&
+    askedLibraries.data !== undefined &&
+    (!hasRequests || askedRequestsOverview.data !== undefined);
+
+  useEffect(() => {
+    if (!isEverythingRead) {
+      return;
+    }
+
+    const kept = standingDismissals(dismissedConcerns, concerns);
+
+    if (kept.length !== dismissedConcerns.length) {
+      setDismissedConcerns(kept);
+      saveDismissedConcerns(kept);
+    }
+  }, [isEverythingRead, concerns, dismissedConcerns]);
+
   return (
     <motion.div
       variants={staggerVariants}
@@ -571,16 +603,14 @@ const AdminArea = ({
         transition={revealTransition(prefersReducedMotion)}
       >
         <ConcernsBanner
-          concerns={collectConcerns({
-            overview,
-            monitor,
-            libraries,
-            sessions,
-            history,
-            encoderHistory,
-            requests: hasRequests ? (askedRequestsOverview.data ?? null) : null,
-          })}
+          concerns={concerns.filter((concern) => !dismissedConcerns.includes(concernKey(concern)))}
           onOpenPanel={showPanel}
+          onDismiss={(concern) => {
+            const dismissed = [...dismissedConcerns, concernKey(concern)];
+
+            setDismissedConcerns(dismissed);
+            saveDismissedConcerns(dismissed);
+          }}
         />
       </motion.div>
 

@@ -15,13 +15,15 @@ const concern = (over: Partial<Concern> = {}): Concern => ({
 
 describe('ConcernsBanner', () => {
   it('draws nothing when nothing needs a person', () => {
-    const { container } = render(<ConcernsBanner concerns={[]} onOpenPanel={vi.fn()} />);
+    const { container } = render(
+      <ConcernsBanner concerns={[]} onOpenPanel={vi.fn()} onDismiss={vi.fn()} />,
+    );
 
     expect(container).toBeEmptyDOMElement();
   });
 
   it('reports what is wrong', () => {
-    render(<ConcernsBanner concerns={[concern()]} onOpenPanel={vi.fn()} />);
+    render(<ConcernsBanner concerns={[concern()]} onOpenPanel={vi.fn()} onDismiss={vi.fn()} />);
 
     expect(screen.getByText('The media service is unreachable')).toBeInTheDocument();
   });
@@ -42,11 +44,29 @@ describe('ConcernsBanner', () => {
           }),
         ]}
         onOpenPanel={onOpenPanel}
+        onDismiss={vi.fn()}
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: /never been scanned/ }));
+    await user.click(screen.getByRole('button', { name: /^Films has never been scanned/ }));
 
     expect(onOpenPanel).toHaveBeenCalledWith('libraries');
+  });
+
+  it('dismisses one without opening its panel', async () => {
+    const onOpenPanel = vi.fn<(panel: string) => void>();
+    const onDismiss = vi.fn<(dismissed: Concern) => void>();
+    const user = userEvent.setup();
+
+    render(
+      <ConcernsBanner concerns={[concern()]} onOpenPanel={onOpenPanel} onDismiss={onDismiss} />,
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'Dismiss “The media service is unreachable”' }),
+    );
+
+    expect(onDismiss).toHaveBeenCalledWith(concern());
+    expect(onOpenPanel).not.toHaveBeenCalled();
   });
 });

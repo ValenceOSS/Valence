@@ -341,6 +341,22 @@ describe('indexers and searching, through the server', () => {
     expect((await ask('/api/admin/requests/search', 'POST', { query: 'dune' })).status).toBe(200);
   });
 
+  it('asks the service how it is again once an indexer is added, changed, tested or removed', async () => {
+    const { ask, readStatus } = await build({ isOn: true, granted: ['requests.manage'] });
+
+    await ask('/api/admin/requests/indexers', 'POST', DRAFT);
+    await ask(`/api/admin/requests/indexers/${ID}`, 'PATCH', { priority: 3 });
+    await ask(`/api/admin/requests/indexers/${ID}/test`, 'POST');
+    await ask(`/api/admin/requests/indexers/${ID}`, 'DELETE');
+
+    expect(readStatus).toHaveBeenCalledTimes(4);
+
+    await ask('/api/admin/requests/indexers');
+    await ask('/api/admin/requests/indexers/try', 'POST', DRAFT);
+
+    expect(readStatus).toHaveBeenCalledTimes(4);
+  });
+
   it('never hands an indexer’s key back', async () => {
     const { ask } = await build({ isOn: true, isAdministrator: true });
     const listed = JSON.stringify(await (await ask('/api/admin/requests/indexers')).json());

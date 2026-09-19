@@ -1,5 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Alert02Icon, ArrowRight01Icon, InformationCircleIcon } from '@hugeicons/core-free-icons';
+import {
+  Alert02Icon,
+  ArrowRight01Icon,
+  Cancel01Icon,
+  InformationCircleIcon,
+} from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { Card } from '@ValenceUI/Card';
 import type { ConcernTone } from '@ValenceScreens/components/AdminArea/collectConcerns';
@@ -14,12 +19,14 @@ const TONE_CLASSES: Record<ConcernTone, string> = {
 /**
  * What needs a person, above everything else on the admin page. Each concern is pressable and opens
  * the panel it can be dealt with in, so being told about a problem and getting to it are one gesture
- * rather than two.
+ * rather than two. Each can also be dismissed, for a problem somebody knows about and has chosen to
+ * live with.
  *
  * @param concerns - What is wrong, worst first.
  * @param onOpenPanel - Called with the panel a concern is dealt with in.
+ * @param onDismiss - Called with a concern somebody dismissed.
  */
-const ConcernsBanner = ({ concerns, onOpenPanel }: ConcernsBannerProps) => {
+const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProps) => {
   if (concerns.length === 0) {
     return null;
   }
@@ -28,10 +35,10 @@ const ConcernsBanner = ({ concerns, onOpenPanel }: ConcernsBannerProps) => {
     <Card as="section" padding="sm" className="flex flex-col">
       <ul className="flex flex-col">
         {concerns.map((concern) => (
-          <li key={concern.id}>
+          <li key={concern.id} className="flex items-center gap-1">
             <Button
               variant="ghost"
-              className="h-auto w-full justify-start gap-3 rounded-md px-3 py-2.5 text-left"
+              className="h-auto min-w-0 flex-1 justify-start gap-3 rounded-md px-3 py-2.5 text-left"
               onClick={() => {
                 onOpenPanel(concern.panel);
               }}
@@ -50,6 +57,18 @@ const ConcernsBanner = ({ concerns, onOpenPanel }: ConcernsBannerProps) => {
               </span>
 
               <Icon of={ArrowRight01Icon} size={14} className="shrink-0 text-text-muted" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              isIconOnly
+              label={`Dismiss “${concern.title}”`}
+              onClick={() => {
+                onDismiss(concern);
+              }}
+            >
+              <Icon of={Cancel01Icon} size={14} />
             </Button>
           </li>
         ))}
