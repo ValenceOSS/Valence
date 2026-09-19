@@ -4,6 +4,7 @@ import {
   fetchRequestsOverview,
 } from '@ValenceClient/requests/fetchRequests';
 import { fetchIndexers, searchReleases } from '@ValenceClient/requests/fetchIndexers';
+import { fetchCatalogue, fetchDefinition } from '@ValenceClient/requests/fetchDefinitions';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 
 const REQUESTS = ['requests'] as const;
@@ -65,6 +66,40 @@ const search = (asked: ReleaseSearch | null) =>
     retry: false,
   });
 
-const requestsQueries = { key: REQUESTS, availability, overview, indexers, search };
+/**
+ * The catalogue of sites Valence has definitions for.
+ *
+ * @returns The query.
+ */
+const catalogue = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'catalogue'],
+    queryFn: () => fetchCatalogue(),
+    staleTime: 60_000,
+  });
+
+/**
+ * One definition, with the settings it asks for, which only changes when the catalogue does.
+ *
+ * @param id - Which, or nothing before one is chosen.
+ * @returns The query.
+ */
+const definition = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'definition', id],
+    queryFn: () => fetchDefinition(id ?? ''),
+    enabled: id !== null,
+    staleTime: Infinity,
+  });
+
+const requestsQueries = {
+  key: REQUESTS,
+  availability,
+  overview,
+  indexers,
+  search,
+  catalogue,
+  definition,
+};
 
 export { requestsQueries };

@@ -1,4 +1,10 @@
-import type { Indexer, IndexerDraft, IndexerKind } from '@ValenceContracts/schemas/Indexer';
+import type {
+  Indexer,
+  IndexerDraft,
+  IndexerKind,
+  IndexerSettings,
+} from '@ValenceContracts/schemas/Indexer';
+import type { IndexerStart } from '@ValenceScreens/components/AdminArea/IndexerStart';
 
 type IndexerForm = {
   kind: IndexerKind;
@@ -10,6 +16,8 @@ type IndexerForm = {
   timeoutSeconds: string;
   isEnabled: boolean;
   categories: number[];
+  definitionId: string | null;
+  settings: IndexerSettings;
 };
 
 type ReadIndexerForm = { draft: IndexerDraft; problem: null } | { draft: null; problem: string };
@@ -24,29 +32,47 @@ const A_NEW_INDEXER: IndexerForm = {
   timeoutSeconds: '30',
   isEnabled: true,
   categories: [],
+  definitionId: null,
+  settings: {},
 };
 
 /**
- * The form as it opens on an indexer already kept. The key is never sent back, so its field starts
- * empty and stays that way unless somebody types a new one.
+ * The form as it opens: on an indexer already kept, or on what was chosen to add. A key is never
+ * sent back, so its field starts empty and stays that way unless somebody types a new one; a site
+ * chosen from the catalogue starts with its own name, and its address once its definition arrives.
  *
- * @param indexer - The indexer.
+ * @param indexer - The indexer being changed, where it is one.
+ * @param start - What was chosen to add, where it is a new one.
  * @returns The form.
  */
-const formFor = (indexer: Indexer | null): IndexerForm =>
-  indexer === null
-    ? A_NEW_INDEXER
-    : {
-        kind: indexer.kind,
-        name: indexer.name,
-        url: indexer.url,
-        apiKey: '',
-        priority: indexer.priority.toString(),
-        requestsPerMinute: indexer.requestsPerMinute?.toString() ?? '',
-        timeoutSeconds: indexer.timeoutSeconds.toString(),
-        isEnabled: indexer.isEnabled,
-        categories: indexer.categories,
-      };
+const formFor = (indexer: Indexer | null, start: IndexerStart | null = null): IndexerForm => {
+  if (indexer === null) {
+    return start === null
+      ? A_NEW_INDEXER
+      : start.kind === 'cardigann'
+        ? {
+            ...A_NEW_INDEXER,
+            kind: 'cardigann',
+            name: start.name,
+            definitionId: start.definitionId,
+          }
+        : { ...A_NEW_INDEXER, kind: start.kind };
+  }
+
+  return {
+    kind: indexer.kind,
+    name: indexer.name,
+    url: indexer.url,
+    apiKey: '',
+    priority: indexer.priority.toString(),
+    requestsPerMinute: indexer.requestsPerMinute?.toString() ?? '',
+    timeoutSeconds: indexer.timeoutSeconds.toString(),
+    isEnabled: indexer.isEnabled,
+    categories: indexer.categories,
+    definitionId: indexer.definitionId,
+    settings: indexer.settings,
+  };
+};
 
 /**
  * Reads a whole number typed into the form, within the range allowed.
@@ -113,6 +139,8 @@ const readIndexerForm = (form: IndexerForm): ReadIndexerForm => {
       timeoutSeconds: timeout,
       isEnabled: form.isEnabled,
       categories: form.categories,
+      definitionId: form.kind === 'cardigann' ? form.definitionId : null,
+      settings: form.kind === 'cardigann' ? form.settings : {},
     },
     problem: null,
   };

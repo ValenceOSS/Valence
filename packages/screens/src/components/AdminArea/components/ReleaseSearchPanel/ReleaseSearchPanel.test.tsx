@@ -8,10 +8,20 @@ import type * as Indexers from '@ValenceClient/requests/fetchIndexers';
 
 const searchReleases = vi.fn<typeof Indexers.searchReleases>();
 
+const fetchRelease = vi.fn<typeof Indexers.fetchRelease>();
+const downloadFile = vi.fn<(name: string, file: Blob) => void>();
+
 vi.mock('@ValenceClient/requests/fetchIndexers', () => ({
   searchReleases: (...given: Parameters<typeof Indexers.searchReleases>) =>
     searchReleases(...given),
+  fetchRelease: (...given: Parameters<typeof Indexers.fetchRelease>) => fetchRelease(...given),
   fetchIndexers: vi.fn(),
+}));
+
+vi.mock('@ValenceScreens/admin/downloadFile', () => ({
+  downloadFile: (name: string, file: Blob) => {
+    downloadFile(name, file);
+  },
 }));
 
 const JACKETT = '0f8fad5b-d9cb-469f-a165-70867728950e';
@@ -72,6 +82,11 @@ const FOUND: ReleaseSearchOutcome = {
 
 beforeEach(() => {
   searchReleases.mockReset().mockResolvedValue(FOUND);
+  fetchRelease.mockReset().mockResolvedValue({
+    value: { kind: 'file', file: new Blob(['d']), name: 'release.torrent' },
+    refusal: null,
+  });
+  downloadFile.mockReset();
 });
 
 afterEach(() => {
@@ -178,7 +193,7 @@ describe('ReleaseSearchPanel', () => {
     expect(searchReleases).not.toHaveBeenCalled();
   });
 
-  it('copies a release’s magnet and download links', async () => {
+  it('copies a release’s magnet link', async () => {
     const user = userEvent.setup();
 
     renderInAnAddress(<ReleaseSearchPanel />);
@@ -192,13 +207,67 @@ describe('ReleaseSearchPanel', () => {
     await waitFor(async () => {
       expect(await navigator.clipboard.readText()).toBe('magnet:?xt=urn:btih:abc');
     });
+    expect(await screen.findByText('The magnet link has been copied.')).toBeInTheDocument();
+  });
 
-    await user.click(screen.getByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }));
-    await user.click(await screen.findByRole('menuitem', { name: /Copy the download link/ }));
+  it('saves a release fetched through Valence', async () => {
+    const user = userEvent.setup();
 
-    await waitFor(async () => {
-      expect(await navigator.clipboard.readText()).toBe('http://jackett/dl/1');
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await searchFor(user, 'dune');
+    await user.click(
+      await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: /Save the torrent/ }));
+
+    expect(await screen.findByText('Saved Dune.Part.Two.2024.2160p.')).toBeInTheDocument();
+    expect(fetchRelease).toHaveBeenCalledWith(JACKETT, 'http://jackett/dl/1');
+    expect(downloadFile).toHaveBeenCalledWith('release.torrent', expect.any(Blob));
+  });
+
+  it('copies a release that turns out to be a magnet link', async () => {
+    fetchRelease.mockResolvedValue({
+      value: { kind: 'magnet', url: 'magnet:?xt=urn:btih:zzz' },
+      refusal: null,
     });
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await searchFor(user, 'dune');
+    await user.click(
+      await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.NZB' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: /Save the NZB/ }));
+
+    expect(
+      await screen.findByText('That release is a magnet link, which has been copied.'),
+    ).toBeInTheDocument();
+    expect(await navigator.clipboard.readText()).toBe('magnet:?xt=urn:btih:zzz');
+  });
+
+  it('says why a release could not be saved', async () => {
+    fetchRelease.mockResolvedValue({ value: null, refusal: { message: 'The site answered 410' } });
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await searchFor(user, 'dune');
+    await user.click(
+      await screen.findByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: /Save the torrent/ }));
+
+    expect(await screen.findByText('The site answered 410')).toBeInTheDocument();
+
+    fetchRelease.mockResolvedValue({ value: null, refusal: null });
+    await user.click(screen.getByRole('button', { name: 'Actions for Dune.Part.Two.2024.2160p' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Save the torrent/ }));
+
+    expect(await screen.findByText('The torrent could not be fetched.')).toBeInTheDocument();
   });
 
   it('opens a release’s page somewhere else', async () => {

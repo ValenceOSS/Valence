@@ -49,6 +49,8 @@ describe('formFor', () => {
       timeoutSeconds: '60',
       isEnabled: false,
       categories: [2000],
+      definitionId: null,
+      settings: {},
     });
   });
 
@@ -57,7 +59,41 @@ describe('formFor', () => {
   });
 });
 
+describe('formFor, adding', () => {
+  it('opens on a site chosen from the catalogue with its name', () => {
+    expect(
+      formFor(null, { kind: 'cardigann', definitionId: '1337x', name: '1337x' }),
+    ).toMatchObject({
+      kind: 'cardigann',
+      name: '1337x',
+      definitionId: '1337x',
+      url: '',
+    });
+  });
+
+  it('opens on a generic kind chosen from the catalogue', () => {
+    expect(formFor(null, { kind: 'newznab' }).kind).toBe('newznab');
+  });
+});
+
 describe('readIndexerForm', () => {
+  it('sends a site’s definition and settings, and a generic indexer neither', () => {
+    const site = readIndexerForm({
+      ...FILLED,
+      kind: 'cardigann',
+      definitionId: '1337x',
+      settings: { sort: 'size' },
+    });
+
+    expect(site.draft).toMatchObject({ definitionId: '1337x', settings: { sort: 'size' } });
+    expect(
+      readIndexerForm({ ...FILLED, definitionId: 'x', settings: { a: 'b' } }).draft,
+    ).toMatchObject({
+      definitionId: null,
+      settings: {},
+    });
+  });
+
   it('reads a filled form, trimming what was typed', () => {
     expect(readIndexerForm(FILLED)).toEqual({
       draft: {
@@ -70,6 +106,8 @@ describe('readIndexerForm', () => {
         timeoutSeconds: 30,
         isEnabled: true,
         categories: [],
+        definitionId: null,
+        settings: {},
       },
       problem: null,
     });

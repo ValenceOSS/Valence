@@ -15,6 +15,11 @@ vi.mock('@ValenceClient/requests/fetchRequests', () => ({
 
 vi.mock('@ValenceClient/requests/fetchIndexers', () => ({ fetchIndexers, searchReleases }));
 
+const fetchCatalogue = vi.hoisted(() => vi.fn());
+const fetchDefinition = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/requests/fetchDefinitions', () => ({ fetchCatalogue, fetchDefinition }));
+
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
 
@@ -75,5 +80,19 @@ describe('requestsQueries', () => {
     expect(requestsQueries.search({ query: 'a' }).queryKey).not.toEqual(
       requestsQueries.search({ query: 'b' }).queryKey,
     );
+  });
+
+  it('asks for the catalogue, and for one definition only once one is chosen', async () => {
+    fetchCatalogue.mockResolvedValue({ definitions: [] });
+    fetchDefinition.mockResolvedValue({ id: '1337x' });
+
+    await expect(aCache().fetchQuery(requestsQueries.catalogue())).resolves.toEqual({
+      definitions: [],
+    });
+    expect(requestsQueries.definition(null).enabled).toBe(false);
+    await expect(aCache().fetchQuery(requestsQueries.definition('1337x'))).resolves.toEqual({
+      id: '1337x',
+    });
+    expect(fetchDefinition).toHaveBeenCalledWith('1337x');
   });
 });
