@@ -7,21 +7,26 @@ import type { ShelfSources } from './discoverShelves';
  */
 const sources = () => {
   const given = {
-    discover: vi.fn<ShelfSources['discover']>((list, kind) =>
-      Promise.resolve(
-        list === 'upcoming' && kind === 'tv'
-          ? []
-          : [
-              {
-                externalId: '438631',
-                kind,
-                title: 'Dune',
-                year: 2021,
-                overview: null,
-                posterUrl: null,
-              },
-            ],
-      ),
+    browse: vi.fn<ShelfSources['browse']>(({ list, kind }) =>
+      Promise.resolve({
+        matches:
+          list === 'upcoming' && kind === 'tv'
+            ? []
+            : [
+                {
+                  externalId: '438631',
+                  kind,
+                  title: 'Dune',
+                  year: 2021,
+                  overview: null,
+                  posterUrl: null,
+                },
+              ],
+        hasMore: true,
+      }),
+    ),
+    studios: vi.fn<ShelfSources['studios']>(() =>
+      Promise.resolve([{ id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://p/d.png' }]),
     ),
     charts: vi.fn<ShelfSources['charts']>(() =>
       Promise.resolve({
@@ -36,8 +41,11 @@ const sources = () => {
 
 describe('discoverShelves', () => {
   it('shelves films, series and music for somebody who may ask for them all', async () => {
-    const shelves = await discoverShelves(sources(), { video: true, music: true });
+    const { shelves, studios } = await discoverShelves(sources(), { video: true, music: true });
 
+    expect(studios).toEqual([
+      { id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://p/d.png' },
+    ]);
     expect(shelves.map((shelf) => shelf.id)).toEqual([
       'trending-films',
       'trending-series',
@@ -48,6 +56,8 @@ describe('discoverShelves', () => {
       'popular-artists',
     ]);
     expect(shelves[1]?.titles[0]).toMatchObject({ kind: 'series', id: '438631' });
+    expect(shelves[1]?.browse).toEqual({ kind: 'series', list: 'trending', studio: null });
+    expect(shelves[5]?.browse).toBeNull();
     expect(shelves[5]?.titles[0]).toEqual({
       kind: 'album',
       id: 'deezer-7',
@@ -61,10 +71,12 @@ describe('discoverShelves', () => {
 
   it('shelves only what somebody may ask for, asking nothing more', async () => {
     const asked = sources();
-    const shelves = await discoverShelves(asked, { video: false, music: true });
+    const { shelves, studios } = await discoverShelves(asked, { video: false, music: true });
 
     expect(shelves.map((shelf) => shelf.id)).toEqual(['popular-albums', 'popular-artists']);
-    expect(asked.discover).not.toHaveBeenCalled();
+    expect(studios).toEqual([]);
+    expect(asked.browse).not.toHaveBeenCalled();
+    expect(asked.studios).not.toHaveBeenCalled();
 
     const films = sources();
 

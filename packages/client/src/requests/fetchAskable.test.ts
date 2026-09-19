@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchAskable, fetchDiscover, fetchRequestProgress, searchAskable } from './fetchAskable';
+import {
+  fetchAskable,
+  fetchCatalogueBrowse,
+  fetchDiscover,
+  fetchRequestProgress,
+  searchAskable,
+} from './fetchAskable';
 
 const DUNE = {
   kind: 'film',
@@ -30,11 +36,45 @@ afterEach(() => {
 });
 
 describe('fetchAskable', () => {
-  it('reads the shelves of things to ask for', async () => {
-    const asked = answering([{ id: 'trending-films', title: 'Trending films', titles: [DUNE] }]);
+  it('reads the shelves of things to ask for, and the studios', async () => {
+    const asked = answering({
+      shelves: [
+        {
+          id: 'trending-films',
+          title: 'Trending films',
+          titles: [DUNE],
+          browse: { kind: 'film', list: 'trending', studio: null },
+        },
+      ],
+      studios: [{ id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://p/d.png' }],
+    });
 
-    expect(await fetchDiscover()).toMatchObject([{ id: 'trending-films', titles: [DUNE] }]);
+    expect(await fetchDiscover()).toMatchObject({
+      shelves: [{ id: 'trending-films', titles: [DUNE] }],
+      studios: [{ id: '2' }],
+    });
     expect(asked.mock.calls[0]?.[0]).toBe('/api/requests/discover');
+  });
+
+  it('reads a page of a whole list, by studio where one was chosen', async () => {
+    const asked = answering({ titles: [DUNE], page: 2, hasMore: false });
+
+    expect(await fetchCatalogueBrowse({ kind: 'film', list: 'popular', studio: null }, 2)).toEqual({
+      titles: [DUNE],
+      page: 2,
+      hasMore: false,
+    });
+    expect(asked.mock.calls[0]?.[0]).toBe(
+      '/api/requests/catalogue/browse?kind=film&list=popular&page=2',
+    );
+
+    const byStudio = answering({ titles: [], page: 1, hasMore: false });
+
+    await fetchCatalogueBrowse({ kind: 'series', list: 'popular', studio: '2' }, 1);
+
+    expect(byStudio.mock.calls[0]?.[0]).toBe(
+      '/api/requests/catalogue/browse?kind=series&list=popular&studio=2&page=1',
+    );
   });
 
   it('searches for things to ask for, of the kind given', async () => {

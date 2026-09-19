@@ -749,20 +749,27 @@ describe('discovering and describing titles to ask for', () => {
       '/tv/on_the_air': { results: [{ id: 95396, name: 'Severance' }] },
     });
 
-    await expect(instance.discover?.('trending', 'movie')).resolves.toEqual([
-      {
-        externalId: '438631',
-        kind: 'movie',
-        title: 'Dune',
-        year: 2021,
-        overview: null,
-        posterUrl: 'https://image.tmdb.org/t/p/w342/d.jpg',
-      },
-    ]);
-    await expect(instance.discover?.('upcoming', 'tv')).resolves.toMatchObject([
-      { externalId: '95396', title: 'Severance' },
-    ]);
-    await expect(instance.discover?.('popular', 'movie')).resolves.toEqual([]);
+    await expect(
+      instance.browse?.({ list: 'trending', kind: 'movie', page: 1, studio: null }),
+    ).resolves.toEqual({
+      matches: [
+        {
+          externalId: '438631',
+          kind: 'movie',
+          title: 'Dune',
+          year: 2021,
+          overview: null,
+          posterUrl: 'https://image.tmdb.org/t/p/w342/d.jpg',
+        },
+      ],
+      hasMore: false,
+    });
+    await expect(
+      instance.browse?.({ list: 'upcoming', kind: 'tv', page: 1, studio: null }),
+    ).resolves.toMatchObject({ matches: [{ externalId: '95396', title: 'Severance' }] });
+    await expect(
+      instance.browse?.({ list: 'popular', kind: 'movie', page: 1, studio: null }),
+    ).resolves.toEqual({ matches: [], hasMore: false });
     expect(calls.map((call) => new URL(call).pathname)).toEqual([
       '/3/trending/movie/week',
       '/3/tv/on_the_air',
@@ -808,7 +815,10 @@ describe('discovering and describing titles to ask for', () => {
   it('has nothing to list or describe without a key', async () => {
     const { instance } = provider({}, { key: null });
 
-    await expect(instance.discover?.('trending', 'tv')).resolves.toEqual([]);
+    await expect(
+      instance.browse?.({ list: 'trending', kind: 'tv', page: 1, studio: null }),
+    ).resolves.toEqual({ matches: [], hasMore: false });
+    await expect(instance.studios?.()).resolves.toEqual([]);
     await expect(instance.describeTitle?.('1', 'movie')).resolves.toBeNull();
   });
 });

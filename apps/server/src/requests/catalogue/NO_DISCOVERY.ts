@@ -3,7 +3,8 @@ import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
 const NOTHING_FOUND = () => Promise.resolve(new Map<string, string>());
 
 const NO_DISCOVERY: Discovery = {
-  discover: () => Promise.resolve([]),
+  browse: () => Promise.resolve({ matches: [], hasMore: false }),
+  studios: () => Promise.resolve([]),
   charts: () => Promise.resolve({ albums: [], artists: [] }),
   describeTitle: () => Promise.resolve(null),
   describeMusic: () => Promise.resolve(null),

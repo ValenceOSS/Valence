@@ -1,13 +1,16 @@
 import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import {
-  CatalogueShelfSchema,
+  CatalogueDiscoverySchema,
+  CataloguePageSchema,
   CatalogueTitleDetailSchema,
   CatalogueTitleSchema,
   RequestProgressSchema,
 } from '@ValenceContracts/schemas/CatalogueTitle';
 import type {
-  CatalogueShelf,
+  CatalogueBrowse,
+  CatalogueDiscovery,
+  CataloguePage,
   CatalogueTitle,
   CatalogueTitleDetail,
   RequestProgress,
@@ -16,12 +19,30 @@ import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 
 /**
  * Reads the shelves of things to ask for: what is trending, popular and coming, each saying
- * whether it is here already, asked for, or there to be asked for.
+ * whether it is here already, asked for, or there to be asked for, and the studios to browse by.
  *
- * @returns The shelves.
+ * @returns The shelves and the studios.
  */
-const fetchDiscover = (): Promise<CatalogueShelf[]> =>
-  readFromServer('/api/requests/discover', z.array(CatalogueShelfSchema));
+const fetchDiscover = (): Promise<CatalogueDiscovery> =>
+  readFromServer('/api/requests/discover', CatalogueDiscoverySchema);
+
+/**
+ * Reads a page of a whole list of films or series to ask for, rather than the shelf's worth of it.
+ *
+ * @param browsing - Which list, of which kind, and whose studio where one was chosen.
+ * @param page - Which page, counting from one.
+ * @returns The page, each title saying where it stands, and whether there is more after it.
+ */
+const fetchCatalogueBrowse = (browsing: CatalogueBrowse, page: number): Promise<CataloguePage> =>
+  readFromServer(
+    `/api/requests/catalogue/browse?${new URLSearchParams({
+      kind: browsing.kind,
+      list: browsing.list,
+      ...(browsing.studio === null ? {} : { studio: browsing.studio }),
+      page: page.toString(),
+    }).toString()}`,
+    CataloguePageSchema,
+  );
 
 /**
  * Searches the catalogue for films, series, artists or albums to ask for.
@@ -57,4 +78,4 @@ const fetchAskable = (kind: MediaRequestKind, id: string): Promise<CatalogueTitl
 const fetchRequestProgress = (): Promise<RequestProgress[]> =>
   readFromServer('/api/requests/progress', z.array(RequestProgressSchema));
 
-export { fetchAskable, fetchDiscover, fetchRequestProgress, searchAskable };
+export { fetchAskable, fetchCatalogueBrowse, fetchDiscover, fetchRequestProgress, searchAskable };

@@ -26,10 +26,42 @@ const CatalogueTitleSchema = z.object({
   standing: CatalogueStandingSchema,
 });
 
+const CATALOGUE_LISTS = ['trending', 'popular', 'upcoming'] as const;
+
+const CatalogueListSchema = z.enum(CATALOGUE_LISTS);
+
+const CATALOGUE_BROWSE_KINDS = ['film', 'series'] as const;
+
+const CatalogueBrowseKindSchema = z.enum(CATALOGUE_BROWSE_KINDS);
+
+const CatalogueBrowseSchema = z.object({
+  kind: CatalogueBrowseKindSchema,
+  list: CatalogueListSchema,
+  studio: z.string().nullable(),
+});
+
 const CatalogueShelfSchema = z.object({
   id: z.string().min(1),
   title: z.string(),
   titles: z.array(CatalogueTitleSchema),
+  browse: CatalogueBrowseSchema.nullable(),
+});
+
+const CatalogueStudioSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  logoUrl: z.string().nullable(),
+});
+
+const CatalogueDiscoverySchema = z.object({
+  shelves: z.array(CatalogueShelfSchema),
+  studios: z.array(CatalogueStudioSchema),
+});
+
+const CataloguePageSchema = z.object({
+  titles: z.array(CatalogueTitleSchema),
+  page: z.number().int().positive(),
+  hasMore: z.boolean(),
 });
 
 const CatalogueCreditSchema = z.object({
@@ -59,7 +91,13 @@ const RequestProgressSchema = z.object({
   secondsLeft: z.number().nonnegative().nullable(),
 });
 
+type CatalogueBrowse = z.infer<typeof CatalogueBrowseSchema>;
+type CatalogueBrowseKind = z.infer<typeof CatalogueBrowseKindSchema>;
+type CatalogueDiscovery = z.infer<typeof CatalogueDiscoverySchema>;
+type CatalogueList = z.infer<typeof CatalogueListSchema>;
+type CataloguePage = z.infer<typeof CataloguePageSchema>;
 type CatalogueStanding = z.infer<typeof CatalogueStandingSchema>;
+type CatalogueStudio = z.infer<typeof CatalogueStudioSchema>;
 type CatalogueTitle = z.infer<typeof CatalogueTitleSchema>;
 type CatalogueShelf = z.infer<typeof CatalogueShelfSchema>;
 type CatalogueCredit = z.infer<typeof CatalogueCreditSchema>;
@@ -67,20 +105,34 @@ type CatalogueTitleDetail = z.infer<typeof CatalogueTitleDetailSchema>;
 type RequestProgress = z.infer<typeof RequestProgressSchema>;
 
 export type {
+  CatalogueBrowse,
+  CatalogueBrowseKind,
   CatalogueCredit,
+  CatalogueDiscovery,
+  CatalogueList,
+  CataloguePage,
   CatalogueShelf,
   CatalogueStanding,
+  CatalogueStudio,
   CatalogueTitle,
   CatalogueTitleDetail,
   RequestProgress,
 };
 
 export {
+  CATALOGUE_BROWSE_KINDS,
+  CATALOGUE_LISTS,
   CATALOGUE_SEARCH_KINDS,
   CATALOGUE_STANDINGS,
+  CatalogueBrowseKindSchema,
+  CatalogueBrowseSchema,
   CatalogueCreditSchema,
+  CatalogueDiscoverySchema,
+  CatalogueListSchema,
+  CataloguePageSchema,
   CatalogueShelfSchema,
   CatalogueStandingSchema,
+  CatalogueStudioSchema,
   CatalogueTitleDetailSchema,
   CatalogueTitleSchema,
   RequestProgressSchema,

@@ -256,6 +256,7 @@ import {
   seriesSeasonsRoute,
   musicCatalogueRoute,
   discoverRoute,
+  catalogueBrowseRoute,
   catalogueSearchRoute,
   catalogueTitleRoute,
   requestProgressRoute,
@@ -4105,18 +4106,61 @@ const createApp = ({
       return context.json(NOT_YOURS, 403);
     }
 
-    const [shelves, requested] = await Promise.all([
+    const [discovered, requested] = await Promise.all([
       discoverShelves(discovery, may),
       everyRequest(),
     ]);
 
     return context.json(
-      await Promise.all(
-        shelves.map(async (shelf) => ({
-          ...shelf,
-          titles: await standTitles(shelf.titles, discovery.lookup, requested),
-        })),
-      ),
+      {
+        shelves: await Promise.all(
+          discovered.shelves.map(async (shelf) => ({
+            ...shelf,
+            titles: await standTitles(shelf.titles, discovery.lookup, requested),
+          })),
+        ),
+        studios: discovered.studios,
+      },
+      200,
+    );
+  });
+
+  app.openapi(catalogueBrowseRoute, async (context) => {
+    const { kind, list, studio, page } = context.req.valid('query');
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const browsed = await discovery.browse({
+      list,
+      kind: kind === 'film' ? 'movie' : 'tv',
+      page,
+      studio: studio ?? null,
+    });
+
+    const titles = browsed.matches.map((match) => ({
+      kind,
+      id: match.externalId,
+      title: match.title,
+      subtitle: null,
+      year: match.year,
+      overview: match.overview,
+      posterUrl: match.posterUrl,
+    }));
+
+    return context.json(
+      {
+        titles: await standTitles(titles, discovery.lookup, await everyRequest()),
+        page,
+        hasMore: browsed.hasMore,
+      },
       200,
     );
   });

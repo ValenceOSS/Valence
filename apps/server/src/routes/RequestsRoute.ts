@@ -40,7 +40,10 @@ import {
 } from '@ValenceContracts/schemas/MediaRequest';
 import {
   CATALOGUE_SEARCH_KINDS,
-  CatalogueShelfSchema,
+  CATALOGUE_BROWSE_KINDS,
+  CATALOGUE_LISTS,
+  CatalogueDiscoverySchema,
+  CataloguePageSchema,
   CatalogueTitleDetailSchema,
   CatalogueTitleSchema,
   RequestProgressSchema,
@@ -693,8 +696,29 @@ const discoverRoute = createRoute({
   summary: 'List shelves of things to ask for, each saying where it stands',
   responses: requestFailures({
     200: {
-      description: 'Trending, popular and coming films and series, and popular music',
-      content: { 'application/json': { schema: z.array(CatalogueShelfSchema) } },
+      description: 'Trending, popular and coming films and series, popular music, and the studios',
+      content: { 'application/json': { schema: CatalogueDiscoverySchema } },
+    },
+  }),
+});
+
+const catalogueBrowseRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/browse',
+  tags: ['Requests'],
+  summary: 'List a page of films or series to ask for, whole rather than a shelf of them',
+  request: {
+    query: z.object({
+      kind: z.enum(CATALOGUE_BROWSE_KINDS),
+      list: z.enum(CATALOGUE_LISTS),
+      studio: z.string().max(32).optional(),
+      page: z.coerce.number().int().positive().max(500).default(1),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'The page, each title saying where it stands, and whether there is more',
+      content: { 'application/json': { schema: CataloguePageSchema } },
     },
   }),
 });
@@ -911,6 +935,7 @@ export {
   seriesSeasonsRoute,
   musicCatalogueRoute,
   discoverRoute,
+  catalogueBrowseRoute,
   catalogueSearchRoute,
   catalogueTitleRoute,
   requestProgressRoute,

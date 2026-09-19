@@ -32,12 +32,17 @@ const ReleaseGroupPageSchema = z.object({
  *
  * @param web - The way out to the web, paced as MusicBrainz asks.
  * @param musicBrainzId - The artist's MusicBrainz id.
+ * @param mostPages - How many pages of release groups to read at most. Every one of them, for a
+ *   request that will watch the artist, since a missed album is an album never fetched; a few for a
+ *   page somebody is waiting on, since MusicBrainz answers once a second and nobody waits half a
+ *   minute to read what an artist is.
  * @returns What a request keeps of them, or null where MusicBrainz does not know them or cannot be
  *   asked.
  */
 const describeArtistForRequest = async (
   web: MusicWeb,
   musicBrainzId: string,
+  mostPages: number = MOST_PAGES,
 ): Promise<RequestCatalogue | null> => {
   const id = encodeURIComponent(musicBrainzId);
   const artist = ArtistSchema.safeParse(
@@ -50,7 +55,7 @@ const describeArtistForRequest = async (
 
   const groups = [];
 
-  for (let page = 0; page < MOST_PAGES; page += 1) {
+  for (let page = 0; page < Math.max(Math.min(mostPages, MOST_PAGES), 1); page += 1) {
     const read = ReleaseGroupPageSchema.safeParse(
       await web.json(
         `https://musicbrainz.org/ws/2/release-group?artist=${id}&limit=${PAGE.toString()}&offset=${(page * PAGE).toString()}&fmt=json`,

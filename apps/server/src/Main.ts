@@ -90,6 +90,7 @@ import { findOnMusicBrainz } from '@ValenceServer/requests/deezer/findOnMusicBra
 import { readDeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
 import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
 import type { DeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
+import type { CatalogueStudio } from '@ValenceContracts/schemas/CatalogueTitle';
 import { describeAlbumForRequest } from '@ValenceServer/requests/musicBrainz/describeAlbumForRequest';
 import { describeArtistForRequest } from '@ValenceServer/requests/musicBrainz/describeArtistForRequest';
 import { searchMusicCatalogue } from '@ValenceServer/requests/musicBrainz/searchMusicCatalogue';
@@ -1937,9 +1938,10 @@ const describeForRequest = async (
 const describeMusicForRequest = (
   musicBrainzId: string,
   kind: MusicRequestKind,
+  mostPages?: number,
 ): Promise<RequestCatalogue | null> =>
   kind === 'artist'
-    ? describeArtistForRequest(musicWeb, musicBrainzId)
+    ? describeArtistForRequest(musicWeb, musicBrainzId, mostPages)
     : describeAlbumForRequest(musicWeb, musicBrainzId);
 
 const requestedAlbums = createDatabaseRequestedAlbumStore(db);
@@ -1948,8 +1950,58 @@ const CHARTS_LIVE_FOR_MS = 6 * 60 * 60 * 1000;
 
 const charted = createExpiringCache<Promise<DeezerCharts>>(CHARTS_LIVE_FOR_MS);
 
+const studioed = createExpiringCache<Promise<CatalogueStudio[]>>(CHARTS_LIVE_FOR_MS);
+
+const ALBUM_PAGES_SHOWN = 3;
+
+const described = createExpiringCache<Promise<RequestCatalogue | null>>(CHARTS_LIVE_FOR_MS);
+
+const foundOnMusicBrainz = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
+
+/**
+ * Keeps an answer for as long as the charts are kept, so opening the same album twice asks
+ * MusicBrainz once. MusicBrainz answers a request a second, and a page somebody is waiting on is
+ * the worst place to spend that.
+ *
+ * @param kept - The cache to keep it in.
+ * @param key - What it is kept under.
+ * @param read - How to read it where it is not kept yet.
+ * @returns The answer.
+ */
+const keeping = <T>(
+  kept: ReturnType<typeof createExpiringCache<Promise<T>>>,
+  key: string,
+  read: () => Promise<T>,
+): Promise<T> => {
+  const already = kept.get(key);
+
+  if (already !== undefined) {
+    return already;
+  }
+
+  const reading = read();
+
+  kept.set(key, reading);
+
+  return reading;
+};
+
 const discovery: Discovery = {
-  discover: (list, kind) => catalogueProvider.discover?.(list, kind) ?? Promise.resolve([]),
+  browse: (browsing) =>
+    catalogueProvider.browse?.(browsing) ?? Promise.resolve({ matches: [], hasMore: false }),
+  studios: () => {
+    const kept = studioed.get('studios');
+
+    if (kept !== undefined) {
+      return kept;
+    }
+
+    const reading = catalogueProvider.studios?.() ?? Promise.resolve([]);
+
+    studioed.set('studios', reading);
+
+    return reading;
+  },
   charts: () => {
     const kept = charted.get('charts');
 
@@ -1965,8 +2017,14 @@ const discovery: Discovery = {
   },
   describeTitle: (tmdbId, kind) =>
     catalogueProvider.describeTitle?.(tmdbId, kind) ?? Promise.resolve(null),
-  describeMusic: describeMusicForRequest,
-  findOnMusicBrainz: (kind, deezerId) => findOnMusicBrainz(musicWeb, kind, deezerId),
+  describeMusic: (musicBrainzId, kind) =>
+    keeping(described, `${kind}:${musicBrainzId}`, () =>
+      describeMusicForRequest(musicBrainzId, kind, ALBUM_PAGES_SHOWN),
+    ),
+  findOnMusicBrainz: (kind, deezerId) =>
+    keeping(foundOnMusicBrainz, `${kind}:${deezerId.toString()}`, () =>
+      findOnMusicBrainz(musicWeb, kind, deezerId),
+    ),
   lookup: createDatabaseCatalogueLookup(db),
 };
 

@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import {
   fetchRequestsAvailability,
   fetchRequestsOverview,
@@ -16,10 +16,12 @@ import {
 } from '@ValenceClient/requests/fetchMediaRequests';
 import {
   fetchAskable,
+  fetchCatalogueBrowse,
   fetchDiscover,
   fetchRequestProgress,
   searchAskable,
 } from '@ValenceClient/requests/fetchAskable';
+import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 
@@ -222,6 +224,24 @@ const discover = (isEnabled = true) =>
   });
 
 /**
+ * A whole list of films or series to ask for, a page at a time, so a page of them can be scrolled
+ * through without end. Kept for a few minutes, as the shelves are.
+ *
+ * @param browsing - Which list, of which kind, and whose studio where one was chosen.
+ * @param isEnabled - Whether to ask at all.
+ * @returns The query.
+ */
+const catalogueBrowse = (browsing: CatalogueBrowse, isEnabled = true) =>
+  infiniteQueryOptions({
+    queryKey: [...REQUESTS, 'browse', browsing.kind, browsing.list, browsing.studio],
+    queryFn: ({ pageParam }) => fetchCatalogueBrowse(browsing, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
+    staleTime: DISCOVER_KEPT_MS,
+    enabled: isEnabled,
+  });
+
+/**
  * What the catalogue has of a kind under a name, to ask for.
  *
  * @param query - What was typed, or nothing where nothing has been.
@@ -281,6 +301,7 @@ const requestsQueries = {
   mediaRequestLog,
   seriesSeasons,
   discover,
+  catalogueBrowse,
   askableSearch,
   askable,
   requestProgress,

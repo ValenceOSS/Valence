@@ -1,12 +1,27 @@
 import { DEEZER_ID_PREFIX } from '@ValenceServer/requests/catalogue/DEEZER_ID_PREFIX';
 import type { UnstoodTitle } from '@ValenceServer/requests/catalogue/UnstoodTitle';
-import type { CatalogueList, CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
+import type {
+  CatalogueBrowsing,
+  CatalogueMatch,
+  CataloguePaged,
+} from '@ValenceServer/library/MetadataProvider';
 import type { DeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
+import type {
+  CatalogueBrowse,
+  CatalogueList,
+  CatalogueStudio,
+} from '@ValenceContracts/schemas/CatalogueTitle';
 
-type UnstoodShelf = { id: string; title: string; titles: UnstoodTitle[] };
+type UnstoodShelf = {
+  id: string;
+  title: string;
+  titles: UnstoodTitle[];
+  browse: CatalogueBrowse | null;
+};
 
 type ShelfSources = {
-  discover: (list: CatalogueList, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
+  browse: (browsing: CatalogueBrowsing) => Promise<CataloguePaged>;
+  studios: () => Promise<CatalogueStudio[]>;
   charts: () => Promise<DeezerCharts>;
 };
 
@@ -47,30 +62,39 @@ const titleOf = (match: CatalogueMatch): UnstoodTitle => ({
  *
  * @param sources - Where each shelf is read from.
  * @param may - What the viewer may ask for.
- * @returns The shelves, in the order they are shown.
+ * @returns The shelves, in the order they are shown, and the studios to browse by.
  */
 const discoverShelves = async (
   sources: ShelfSources,
   may: { video: boolean; music: boolean },
-): Promise<UnstoodShelf[]> => {
-  const [video, charts] = await Promise.all([
+): Promise<{ shelves: UnstoodShelf[]; studios: CatalogueStudio[] }> => {
+  const [video, studios, charts] = await Promise.all([
     may.video
       ? Promise.all(
           VIDEO_SHELVES.map(async (shelf) => ({
             id: shelf.id,
             title: shelf.title,
-            titles: (await sources.discover(shelf.list, shelf.kind)).map(titleOf),
+            titles: (
+              await sources.browse({ list: shelf.list, kind: shelf.kind, page: 1, studio: null })
+            ).matches.map(titleOf),
+            browse: {
+              kind: shelf.kind === 'movie' ? ('film' as const) : ('series' as const),
+              list: shelf.list,
+              studio: null,
+            },
           })),
         )
       : Promise.resolve([]),
+    may.video ? sources.studios() : Promise.resolve([]),
     may.music ? sources.charts() : Promise.resolve({ albums: [], artists: [] }),
   ]);
 
-  return [
+  const shelves = [
     ...video,
     {
       id: 'popular-albums',
       title: 'Popular albums',
+      browse: null,
       titles: charts.albums.map((album) => ({
         kind: 'album' as const,
         id: `${DEEZER_ID_PREFIX}${album.deezerId.toString()}`,
@@ -84,6 +108,7 @@ const discoverShelves = async (
     {
       id: 'popular-artists',
       title: 'Popular artists',
+      browse: null,
       titles: charts.artists.map((artist) => ({
         kind: 'artist' as const,
         id: `${DEEZER_ID_PREFIX}${artist.deezerId.toString()}`,
@@ -95,6 +120,8 @@ const discoverShelves = async (
       })),
     },
   ].filter((shelf) => shelf.titles.length > 0);
+
+  return { shelves, studios };
 };
 
 export type { ShelfSources, UnstoodShelf };

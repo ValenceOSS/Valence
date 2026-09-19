@@ -74,7 +74,16 @@ const SearchResultSchema = z.object({
   vote_average: z.number().optional(),
 });
 
-const SearchResponseSchema = z.object({ results: z.array(SearchResultSchema).default([]) });
+const SearchResponseSchema = z.object({
+  results: z.array(SearchResultSchema).default([]),
+  total_pages: z.number().int().nonnegative().default(1),
+});
+
+const CompanyResponseSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  logo_path: z.string().nullish(),
+});
 
 const CATALOGUE_ANSWER_LIVES_FOR_MS = 6 * 60 * 60 * 1000;
 
@@ -83,6 +92,8 @@ const LIST_PATHS: Readonly<Record<CatalogueList, Record<'tv' | 'movie', string>>
   popular: { movie: '/movie/popular', tv: '/tv/popular' },
   upcoming: { movie: '/movie/upcoming', tv: '/tv/on_the_air' },
 };
+
+const STUDIO_IDS = [2, 420, 174, 33, 4, 5, 127928, 3, 1, 521, 10342, 41077] as const;
 
 const CAST_DESCRIBED = 12;
 
@@ -779,20 +790,61 @@ const createCatalogueMetadataProvider = ({
       return results.data.results.map((entry) => matchOf(entry, kind, query, imageBaseUrl));
     },
 
-    discover: async (list, kind) => {
+    browse: async ({ list, kind, page, studio }) => {
+      const key = await readApiKey();
+
+      if (key === null || key === '') {
+        return { matches: [], hasMore: false };
+      }
+
+      const asked =
+        studio === null
+          ? { path: LIST_PATHS[list][kind], query: {} }
+          : {
+              path: `/discover/${kind}`,
+              query: { with_companies: studio, sort_by: 'popularity.desc' },
+            };
+
+      const results = SearchResponseSchema.safeParse(
+        await request(asked.path, key, { ...asked.query, page: page.toString() }),
+      );
+
+      if (!results.success) {
+        return { matches: [], hasMore: false };
+      }
+
+      return {
+        matches: results.data.results.map((entry) => matchOf(entry, kind, '', imageBaseUrl)),
+        hasMore: page < results.data.total_pages,
+      };
+    },
+
+    studios: async () => {
       const key = await readApiKey();
 
       if (key === null || key === '') {
         return [];
       }
 
-      const results = SearchResponseSchema.safeParse(
-        await request(LIST_PATHS[list][kind], key, {}),
+      const answers = await Promise.all(
+        STUDIO_IDS.map(async (id) => {
+          const company = CompanyResponseSchema.safeParse(
+            await request(`/company/${id.toString()}`, key, {}),
+          );
+
+          return company.success
+            ? {
+                id: company.data.id.toString(),
+                name: company.data.name,
+                logoUrl: imageUrl(imageBaseUrl, company.data.logo_path, 'w300'),
+              }
+            : null;
+        }),
       );
 
-      return results.success
-        ? results.data.results.map((entry) => matchOf(entry, kind, '', imageBaseUrl))
-        : [];
+      return answers
+        .filter((studio) => studio !== null)
+        .filter((studio) => studio.logoUrl !== null);
     },
 
     describeTitle: async (externalId, kind) => {

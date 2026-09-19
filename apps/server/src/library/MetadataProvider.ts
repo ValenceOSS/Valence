@@ -2,6 +2,7 @@ import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import type { Person } from '@ValenceContracts/schemas/Person';
 import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
+import type { CatalogueList, CatalogueStudio } from '@ValenceContracts/schemas/CatalogueTitle';
 
 type MediaFacts = {
   path: string;
@@ -51,7 +52,14 @@ type CatalogueMatch = {
   posterUrl: string | null;
 };
 
-type CatalogueList = 'trending' | 'popular' | 'upcoming';
+type CatalogueBrowsing = {
+  list: CatalogueList;
+  kind: 'tv' | 'movie';
+  page: number;
+  studio: string | null;
+};
+
+type CataloguePaged = { matches: CatalogueMatch[]; hasMore: boolean };
 
 type CatalogueDescription = {
   title: string;
@@ -84,7 +92,8 @@ type MetadataProvider = {
   readLogoUrl?: (options: { externalId: string; isSeries: boolean }) => Promise<string | null>;
   readPerson?: (personId: number) => Promise<Person | null>;
   search?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
-  discover?: (list: CatalogueList, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
+  browse?: (browsing: CatalogueBrowsing) => Promise<CataloguePaged>;
+  studios?: () => Promise<CatalogueStudio[]>;
   describeTitle?: (
     externalId: string,
     kind: 'tv' | 'movie',
@@ -169,9 +178,11 @@ const resolveMetadata = async (
 
 export type {
   CastMember,
+  CatalogueBrowsing,
   CatalogueDescription,
   CatalogueList,
   CatalogueMatch,
+  CataloguePaged,
   MediaFacts,
   Metadata,
   MetadataProvider,

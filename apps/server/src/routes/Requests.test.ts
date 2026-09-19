@@ -1419,21 +1419,25 @@ describe('requests for films and series, through the server', () => {
 
   const DISCOVERY: Discovery = {
     ...NO_DISCOVERY,
-    discover: (list, kind) =>
-      Promise.resolve(
-        list === 'trending' && kind === 'movie'
-          ? [
-              {
-                externalId: '438631',
-                kind,
-                title: 'Dune',
-                year: 2021,
-                overview: null,
-                posterUrl: null,
-              },
-            ]
-          : [],
-      ),
+    browse: ({ list, kind }) =>
+      Promise.resolve({
+        matches:
+          list === 'trending' && kind === 'movie'
+            ? [
+                {
+                  externalId: '438631',
+                  kind,
+                  title: 'Dune',
+                  year: 2021,
+                  overview: null,
+                  posterUrl: null,
+                },
+              ]
+            : [],
+        hasMore: list === 'trending',
+      }),
+    studios: () =>
+      Promise.resolve([{ id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://p/d.png' }]),
     charts: () =>
       Promise.resolve({
         albums: [{ deezerId: 7, title: 'Pylon', artist: 'Band', coverUrl: null }],
@@ -1467,17 +1471,21 @@ describe('requests for films and series, through the server', () => {
       service: aWillingKeeper,
       discovery: DISCOVERY,
     });
-    const shelves = z
-      .array(
-        z.object({
-          id: z.string(),
-          titles: z.array(z.object({ standing: z.object({ status: z.string() }) })),
-        }),
-      )
+    const discovered = z
+      .object({
+        shelves: z.array(
+          z.object({
+            id: z.string(),
+            titles: z.array(z.object({ standing: z.object({ status: z.string() }) })),
+          }),
+        ),
+        studios: z.array(z.object({ id: z.string() })),
+      })
       .parse(await (await films.ask('/api/requests/discover')).json());
 
-    expect(shelves.map((shelf) => shelf.id)).toEqual(['trending-films']);
-    expect(shelves[0]?.titles[0]?.standing.status).toBe('requested');
+    expect(discovered.shelves.map((shelf) => shelf.id)).toEqual(['trending-films']);
+    expect(discovered.shelves[0]?.titles[0]?.standing.status).toBe('requested');
+    expect(discovered.studios).toEqual([{ id: '2' }]);
 
     const music = await build({
       isOn: true,
@@ -1486,13 +1494,47 @@ describe('requests for films and series, through the server', () => {
       discovery: DISCOVERY,
     });
 
-    expect(await (await music.ask('/api/requests/discover')).json()).toMatchObject([
-      { id: 'popular-albums', titles: [{ id: 'deezer-7', standing: { status: 'askable' } }] },
-    ]);
+    expect(await (await music.ask('/api/requests/discover')).json()).toMatchObject({
+      shelves: [
+        { id: 'popular-albums', titles: [{ id: 'deezer-7', standing: { status: 'askable' } }] },
+      ],
+      studios: [],
+    });
 
     const nobody = await build({ isOn: true, service: aWillingKeeper, discovery: DISCOVERY });
 
     expect((await nobody.ask('/api/requests/discover')).status).toBe(403);
+  });
+
+  it('browses a whole list a page at a time, saying whether there is more', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect(
+      await (await ask('/api/requests/catalogue/browse?kind=film&list=trending&page=1')).json(),
+    ).toMatchObject({
+      titles: [{ id: '438631', standing: { status: 'requested' } }],
+      page: 1,
+      hasMore: true,
+    });
+    expect(
+      await (await ask('/api/requests/catalogue/browse?kind=series&list=popular')).json(),
+    ).toMatchObject({ titles: [], hasMore: false });
+
+    const music = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect((await music.ask('/api/requests/catalogue/browse?kind=film&list=popular')).status).toBe(
+      403,
+    );
   });
 
   it('searches and describes titles to ask for, by what a viewer may ask for', async () => {
