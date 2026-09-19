@@ -73,7 +73,8 @@ describe('DownloadQueueTable', () => {
     expect(row.getByText('↓ 1.0 MB/s')).toBeInTheDocument();
     expect(row.getByText('↑ 40 KB/s')).toBeInTheDocument();
     expect(row.getByText('12 min')).toBeInTheDocument();
-    expect(row.getByText('9 seeding · 2 fetching')).toBeInTheDocument();
+    expect(row.getByText('9 seeding')).toBeInTheDocument();
+    expect(row.getByText('2 fetching')).toBeInTheDocument();
     expect(
       row.getByRole('progressbar', { name: 'How much of Dune has arrived' }),
     ).toBeInTheDocument();
@@ -141,7 +142,8 @@ describe('DownloadQueueTable', () => {
 
     expect(within(rowOf('Part')).getByText('1.0 KB')).toBeInTheDocument();
     expect(within(rowOf('Sized')).getByText('4.0 GB')).toBeInTheDocument();
-    expect(within(rowOf('Lonely')).getByText('0 seeding · 3 fetching')).toBeInTheDocument();
+    expect(within(rowOf('Lonely')).getByText('0 seeding')).toBeInTheDocument();
+    expect(within(rowOf('Lonely')).getByText('3 fetching')).toBeInTheDocument();
   });
 
   it('pauses a download that is going, and resumes one that is paused', async () => {

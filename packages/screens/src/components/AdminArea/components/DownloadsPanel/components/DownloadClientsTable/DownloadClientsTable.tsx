@@ -13,7 +13,8 @@ import { DataTable } from '@ValenceUI/DataTable';
 import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { describeClientState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeClientState';
-import { SpeedReadout } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/SpeedReadout/SpeedReadout';
+import { ReadoutLines } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/ReadoutLines/ReadoutLines';
+import { speedsOf } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/speedsOf';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { DownloadClient, DownloadClientKind } from '@ValenceContracts/schemas/DownloadClient';
 import type { DownloadClientsTableProps } from './DownloadClientsTable.types';
@@ -101,10 +102,14 @@ const DownloadClientsTable = ({
         cell: ({ row }) => {
           const reading = byId.get(row.original.id);
 
-          return reading?.isReachable === true ? (
-            <SpeedReadout down={reading.downloadBytesPerSecond} up={reading.uploadBytesPerSecond} />
-          ) : (
-            <SpeedReadout down={null} up={null} />
+          return (
+            <ReadoutLines
+              lines={
+                reading?.isReachable === true
+                  ? speedsOf(reading.downloadBytesPerSecond, reading.uploadBytesPerSecond)
+                  : []
+              }
+            />
           );
         },
       },
