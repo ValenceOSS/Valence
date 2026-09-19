@@ -49,6 +49,34 @@ describe('createQbittorrentAdapter', () => {
     expect(asked[0]?.headers['referer']).toBe('http://qbittorrent:8080/');
   });
 
+  it('logs in to qBittorrent 5, which names its cookie after its port and says nothing', async () => {
+    const { fetch } = aFakeClient({
+      'POST /api/v2/auth/login': () =>
+        new Response(null, {
+          status: 204,
+          headers: {
+            'set-cookie': 'QBT_SID_18080=4HeAsYe1BDH5+QF3L/9=; HttpOnly; SameSite=Lax; path=/',
+          },
+        }),
+      'GET /api/v2/app/version': (request) =>
+        request.headers['cookie'] === 'QBT_SID_18080=4HeAsYe1BDH5+QF3L/9='
+          ? new Response('v5.2.3')
+          : new Response('', { status: 403 }),
+    });
+
+    expect(await createQbittorrentAdapter(SETTINGS, fetch).version()).toBe('v5.2.3');
+  });
+
+  it('says the password was wrong, as qBittorrent 5 says it', async () => {
+    const { fetch } = aFakeClient({
+      'POST /api/v2/auth/login': () => new Response('', { status: 401 }),
+    });
+
+    await expect(createQbittorrentAdapter(SETTINGS, fetch).version()).rejects.toThrow(
+      'qBittorrent refused the username or password',
+    );
+  });
+
   it('says the password was wrong', async () => {
     const { fetch } = aFakeClient({ 'POST /api/v2/auth/login': () => new Response('Fails.') });
 
@@ -148,6 +176,22 @@ describe('createQbittorrentAdapter', () => {
     const form = added?.body instanceof FormData ? added.body : new FormData();
 
     expect(form.get('torrents')).toBeInstanceOf(Blob);
+  });
+
+  it('follows a torrent it already had, filing it under its category', async () => {
+    const { fetch, asked } = aFakeClient({
+      'POST /api/v2/auth/login': loggingIn(),
+      'POST /api/v2/torrents/createCategory': () => new Response('', { status: 409 }),
+      'POST /api/v2/torrents/add': () => new Response('Conflict', { status: 409 }),
+      'POST /api/v2/torrents/setCategory': () => new Response(''),
+    });
+
+    expect(
+      await createQbittorrentAdapter(SETTINGS, fetch).add({ kind: 'magnet', url: MAGNET }, 'Dune'),
+    ).toBe(HASH);
+    expect(formOf(asked.at(-1))).toEqual(
+      new URLSearchParams({ hashes: HASH, category: 'valence' }),
+    );
   });
 
   it('refuses an NZB, and a torrent it cannot read', async () => {

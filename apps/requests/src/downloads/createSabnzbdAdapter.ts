@@ -18,6 +18,8 @@ const RefusalSchema = z.object({ status: z.literal(false), error: z.string() });
 
 const VersionSchema = z.object({ version: z.string() });
 
+const CategoriesSchema = z.object({ categories: z.array(z.string()) });
+
 const AddedSchema = z.object({ status: z.literal(true), nzo_ids: z.array(z.string()).min(1) });
 
 const QueueSchema = z.object({
@@ -78,7 +80,9 @@ const readTimeLeft = (text: string): number =>
 
 /**
  * Speaks to SABnzbd's API with its key. Only jobs in the client's category are listed or touched:
- * those still in its queue, and those it has finished with, from its history.
+ * those still in its queue, and those it has finished with, from its history. SABnzbd files a job
+ * under a category it does not have as its default, where it would never be found again, so the
+ * category is made the first time something is sent.
  *
  * SABnzbd downloads one job at a time, so the speed it reports is that job's speed whenever exactly
  * one is downloading.
@@ -95,6 +99,10 @@ const createSabnzbdAdapter = (
   const address = joinClientPath(settings.url, '/api');
 
   const read = async (response: Response) => {
+    if (response.status === 401 || response.status === 403) {
+      throw new DownloadClientFailure(`${settings.name} refused the API key`);
+    }
+
     if (!response.ok) {
       throw new DownloadClientFailure(`${settings.name} answered ${response.status.toString()}`);
     }
@@ -138,6 +146,8 @@ const createSabnzbdAdapter = (
 
   const queue = async () => QueueSchema.parse(await ask({ mode: 'queue', limit: '500' })).queue;
 
+  const isOurs = (category: string) => category.toLowerCase() === settings.category.toLowerCase();
+
   return {
     version: async () => {
       await queue();
@@ -148,6 +158,17 @@ const createSabnzbdAdapter = (
     add: async (file, title) => {
       if (file.kind !== 'nzb') {
         throw new DownloadClientFailure(`${settings.name} takes NZBs, not torrents`);
+      }
+
+      const { categories } = CategoriesSchema.parse(await ask({ mode: 'get_cats' }));
+
+      if (!categories.some(isOurs)) {
+        await ask({
+          mode: 'set_config',
+          section: 'categories',
+          keyword: settings.category,
+          name: settings.category,
+        });
       }
 
       const form = new FormData();
@@ -177,7 +198,7 @@ const createSabnzbdAdapter = (
     list: async () => {
       const { kbpersec, slots } = await queue();
       const { history } = HistorySchema.parse(await ask({ mode: 'history', limit: '500' }));
-      const ours = slots.filter((slot) => slot.cat === settings.category);
+      const ours = slots.filter((slot) => isOurs(slot.cat));
       const downloading = ours.filter((slot) => QUEUE_STATES[slot.status] === 'downloading');
       const speed = kbpersec * 1024;
 
@@ -202,7 +223,7 @@ const createSabnzbdAdapter = (
       });
 
       const finished = history.slots
-        .filter((slot) => slot.category === settings.category)
+        .filter((slot) => isOurs(slot.category))
         .map((slot): ClientItem => {
           const state =
             slot.status === 'Completed'
