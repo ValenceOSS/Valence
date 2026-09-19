@@ -13,6 +13,7 @@ const aDownload = (overrides: Partial<QueuedDownload> = {}): QueuedDownload => (
   clientId: '0f8fad5b-d9cb-469f-a165-70867728950e',
   clientName: 'qBittorrent',
   protocol: 'torrent',
+  libraryKind: 'movies',
   title: 'Dune',
   indexerName: 'Jackett',
   state: 'downloading',
@@ -53,7 +54,7 @@ describe('DownloadQueueTable', () => {
 
     const row = within(rowOf('Dune'));
 
-    expect(row.getByText('qBittorrent · Jackett')).toBeInTheDocument();
+    expect(row.getByText('Films · qBittorrent · Jackett')).toBeInTheDocument();
     expect(row.getByText('Downloading')).toBeInTheDocument();
     expect(row.getByText('45%')).toBeInTheDocument();
     expect(row.getByText('2.0 GB of 4.0 GB')).toBeInTheDocument();
@@ -69,6 +70,7 @@ describe('DownloadQueueTable', () => {
     show([
       aDownload({
         protocol: 'usenet',
+        libraryKind: 'shows',
         clientName: 'SABnzbd',
         indexerName: null,
         state: 'done',
@@ -84,7 +86,7 @@ describe('DownloadQueueTable', () => {
 
     const row = within(rowOf('Dune'));
 
-    expect(row.getByText('SABnzbd')).toBeInTheDocument();
+    expect(row.getByText('Series · SABnzbd')).toBeInTheDocument();
     expect(row.getByText('4.0 GB')).toBeInTheDocument();
     expect(row.getByText(/finished it with a warning/)).toBeInTheDocument();
     expect(row.getAllByText('—')).toHaveLength(3);

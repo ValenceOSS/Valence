@@ -9,7 +9,12 @@ import {
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { DOWNLOAD_CLIENT_KINDS } from '@ValenceContracts/schemas/DownloadClient';
+import {
+  DEFAULT_DOWNLOAD_CATEGORIES,
+  DOWNLOAD_CLIENT_KINDS,
+} from '@ValenceContracts/schemas/DownloadClient';
+import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
+import type { DownloadCategories } from '@ValenceContracts/schemas/DownloadClient';
 import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue';
 import type { IndexerCapabilities, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
@@ -65,7 +70,10 @@ const downloadClient = requestsSchema.table('download_client', {
   username: text('username').notNull().default(''),
   password: text('password').notNull().default(''),
   apiKey: text('api_key').notNull().default(''),
-  category: text('category').notNull().default('valence'),
+  categories: jsonb('categories')
+    .$type<DownloadCategories>()
+    .notNull()
+    .default(DEFAULT_DOWNLOAD_CATEGORIES),
   priority: integer('priority').notNull().default(25),
   isEnabled: boolean('is_enabled').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -81,6 +89,7 @@ const sentDownload = requestsSchema.table(
       .references(() => downloadClient.id, { onDelete: 'cascade' }),
     remoteId: text('remote_id').notNull(),
     protocol: text('protocol', { enum: ['torrent', 'usenet'] }).notNull(),
+    libraryKind: text('library_kind', { enum: LIBRARY_KINDS }).notNull().default('movies'),
     title: text('title').notNull(),
     indexerName: text('indexer_name'),
     state: text('state', { enum: QUEUED_DOWNLOAD_STATES }).notNull().default('queued'),

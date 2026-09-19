@@ -86,7 +86,8 @@ const waitThenRun: Schedule = (run, afterMs) => {
 
 /**
  * The queue of everything Valence has handed to a download client: sending a release to the right
- * client, following each download as its client reports it, and pausing, resuming or removing it.
+ * client, under the client's category for the kind of library it is for, following each download as
+ * its client reports it, and pausing, resuming or removing it.
  *
  * Download clients cannot say when something changes, so each is asked in turn — every couple of
  * seconds while somebody is watching, and every half a minute otherwise, which is only to notice a
@@ -144,6 +145,7 @@ const createDownloadQueue = ({
       clientId: record.clientId,
       clientName: named.get(record.clientId)?.name ?? 'A client that has gone',
       protocol: record.protocol,
+      libraryKind: record.libraryKind,
       title: record.title,
       indexerName: record.indexerName,
       state: record.state,
@@ -398,7 +400,9 @@ const createDownloadQueue = ({
       let remoteId: string;
 
       try {
-        remoteId = await clients.adapterOf(client).add(file, read.title);
+        remoteId = await clients
+          .adapterOf(client)
+          .add(file, read.title, client.categories[read.libraryKind]);
       } catch (error) {
         return error instanceof DownloadClientFailure ? error.message : UNASKABLE;
       }
@@ -414,6 +418,7 @@ const createDownloadQueue = ({
           clientId: client.id,
           remoteId,
           protocol: read.protocol,
+          libraryKind: read.libraryKind,
           title: read.title,
           indexerName: read.indexerName,
           state: 'queued',

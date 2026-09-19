@@ -35,7 +35,7 @@ const shown = (record: DownloadClientRecord): DownloadClient => ({
   username: record.username,
   hasPassword: record.password !== '',
   hasApiKey: record.apiKey !== '',
-  category: record.category,
+  categories: record.categories,
   priority: record.priority,
   isEnabled: record.isEnabled,
   createdAt: record.createdAt,

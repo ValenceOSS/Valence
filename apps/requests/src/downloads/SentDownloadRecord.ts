@@ -6,6 +6,7 @@ type SentDownloadRecord = Pick<
   | 'id'
   | 'clientId'
   | 'protocol'
+  | 'libraryKind'
   | 'title'
   | 'indexerName'
   | 'state'

@@ -13,6 +13,8 @@ import {
   changeDownloadClient,
   tryDownloadClient,
 } from '@ValenceClient/requests/fetchDownloadClients';
+import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
+import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { TryItButton } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton';
 import {
   CLIENT_KINDS,
@@ -25,9 +27,10 @@ import type { DownloadClientForm } from './readDownloadClientForm';
 import type { DownloadClientDialogProps } from './DownloadClientDialog.types';
 
 /**
- * Adds a download client, or changes one already kept: where it is, how to log in to it, and the
- * category — a label, in Transmission — that marks what Valence sent, so nothing else in the client
- * is ever listed or touched.
+ * Adds a download client, or changes one already kept: where it is, how to log in to it, and a
+ * category — a label, in Transmission — for each kind of library, which marks what Valence sent and
+ * what it is for, so nothing else in the client is ever listed or touched and each kind can be given
+ * a folder of its own there, as Sonarr and Radarr each have theirs.
  *
  * It can be tried before it is saved. A password or key is never shown back; leaving one empty when
  * changing a client keeps the one it has.
@@ -214,33 +217,40 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextField
-            label="Category"
-            value={form.category}
-            onValueChange={(category) => {
-              change({ category });
-            }}
-            description={
-              form.kind === 'transmission'
-                ? 'The label Valence puts on what it sends, and the only torrents it looks at.'
-                : 'Where Valence files what it sends, and the only downloads it looks at.'
-            }
-            required
-          />
+        <FormField
+          label={form.kind === 'transmission' ? 'Labels' : 'Categories'}
+          description={
+            form.kind === 'transmission'
+              ? 'The label Valence puts on what it sends for each kind of library, and the only torrents it looks at.'
+              : 'Where Valence files what it sends for each kind of library — give each its own folder in the client — and the only downloads it looks at.'
+          }
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            {LIBRARY_KINDS.map((libraryKind) => (
+              <TextField
+                key={libraryKind}
+                label={LIBRARY_KIND_NAMES[libraryKind].label}
+                value={form.categories[libraryKind]}
+                onValueChange={(category) => {
+                  change({ categories: { ...form.categories, [libraryKind]: category } });
+                }}
+                required
+              />
+            ))}
+          </div>
+        </FormField>
 
-          <TextField
-            label="Priority"
-            type="number"
-            min={1}
-            max={50}
-            value={form.priority}
-            onValueChange={(priority) => {
-              change({ priority });
-            }}
-            description="The lowest is sent releases first."
-          />
-        </div>
+        <TextField
+          label="Priority"
+          type="number"
+          min={1}
+          max={50}
+          value={form.priority}
+          onValueChange={(priority) => {
+            change({ priority });
+          }}
+          description="The lowest is sent releases first."
+        />
 
         <Switch
           label="Send releases to this client"

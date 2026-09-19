@@ -373,7 +373,12 @@ describe('createRequestsClient with download clients', () => {
     username: 'admin',
     hasPassword: true,
     hasApiKey: false,
-    category: 'valence',
+    categories: {
+      movies: 'valence-films',
+      shows: 'valence-series',
+      music: 'valence-music',
+      books: 'valence-books',
+    },
     priority: 25,
     isEnabled: true,
     createdAt: '2026-09-19T00:00:00.000Z',
@@ -385,6 +390,7 @@ describe('createRequestsClient with download clients', () => {
     clientId: A_CLIENT.id,
     clientName: 'qBittorrent',
     protocol: 'torrent' as const,
+    libraryKind: 'movies' as const,
     title: 'Dune',
     indexerName: null,
     state: 'queued' as const,
@@ -488,6 +494,7 @@ describe('createRequestsClient with download clients', () => {
           url: 'magnet:?',
           title: 'Dune',
           protocol: 'torrent',
+          libraryKind: 'movies',
         })
       ).kind,
     ).toBe('answered');
@@ -521,6 +528,7 @@ describe('createRequestsClient with download clients', () => {
         url: 'magnet:?',
         title: 'Dune',
         protocol: 'torrent',
+        libraryKind: 'movies',
       }),
     ).toEqual({
       kind: 'refused',

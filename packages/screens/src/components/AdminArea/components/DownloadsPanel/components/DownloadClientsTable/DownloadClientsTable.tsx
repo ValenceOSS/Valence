@@ -62,9 +62,7 @@ const DownloadClientsTable = ({
               <Badge size="sm">{KIND_LABELS[row.original.kind]}</Badge>
             </span>
 
-            <span className="truncate text-xs text-text-muted">
-              {row.original.url} · {row.original.category}
-            </span>
+            <span className="truncate text-xs text-text-muted">{row.original.url}</span>
           </span>
         ),
       },

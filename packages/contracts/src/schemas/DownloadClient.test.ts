@@ -20,7 +20,12 @@ describe('DownloadClientDraftSchema', () => {
       username: '',
       password: '',
       apiKey: '',
-      category: 'valence',
+      categories: {
+        movies: 'valence-films',
+        shows: 'valence-series',
+        music: 'valence-music',
+        books: 'valence-books',
+      },
       priority: 25,
       isEnabled: true,
     });
@@ -43,9 +48,20 @@ describe('DownloadClientDraftSchema', () => {
         name: 'SABnzbd',
         kind: 'sabnzbd',
         url: 'http://sabnzbd:8080',
-        category: 'tv/../films',
+        categories: { movies: 'tv/../films', shows: 'tv', music: 'music', books: 'books' },
       }),
     ).toThrow();
+  });
+
+  it('refuses two kinds sharing a category, whatever their case', () => {
+    expect(() =>
+      DownloadClientDraftSchema.parse({
+        name: 'SABnzbd',
+        kind: 'sabnzbd',
+        url: 'http://sabnzbd:8080',
+        categories: { movies: 'films', shows: 'Films', music: 'music', books: 'books' },
+      }),
+    ).toThrow('Each kind needs a category of its own');
   });
 
   it('refuses a kind it does not know', () => {

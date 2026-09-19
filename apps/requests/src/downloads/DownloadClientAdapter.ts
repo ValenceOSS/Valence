@@ -27,7 +27,7 @@ type ClientSettings = {
   username: string;
   password: string;
   apiKey: string;
-  category: string;
+  categories: readonly string[];
 };
 
 type ClientFetch = (
@@ -42,7 +42,7 @@ type ClientFetch = (
 
 type DownloadClientAdapter = {
   version: () => Promise<string>;
-  add: (file: ReleaseFile, title: string) => Promise<string>;
+  add: (file: ReleaseFile, title: string, category: string) => Promise<string>;
   list: () => Promise<ClientItem[]>;
   speeds: () => Promise<ClientSpeeds>;
   pause: (remoteId: string) => Promise<void>;

@@ -10,7 +10,7 @@ const SETTINGS: ClientSettings = {
   username: 'admin',
   password: 'secret',
   apiKey: '',
-  category: 'valence',
+  categories: ['valence'],
 };
 
 const HASH = 'c12fe1c06bba254a9dc9f519b335aa7c1367a88a';
@@ -144,7 +144,11 @@ describe('createQbittorrentAdapter', () => {
     });
 
     expect(
-      await createQbittorrentAdapter(SETTINGS, fetch).add({ kind: 'magnet', url: MAGNET }, 'Dune'),
+      await createQbittorrentAdapter(SETTINGS, fetch).add(
+        { kind: 'magnet', url: MAGNET },
+        'Dune',
+        'valence',
+      ),
     ).toBe(HASH);
 
     const added = asked.find((request) => request.url.pathname.endsWith('/add'));
@@ -169,7 +173,11 @@ describe('createQbittorrentAdapter', () => {
     );
 
     expect(
-      await createQbittorrentAdapter(SETTINGS, fetch).add({ kind: 'torrent', bytes }, 'Abc'),
+      await createQbittorrentAdapter(SETTINGS, fetch).add(
+        { kind: 'torrent', bytes },
+        'Abc',
+        'valence',
+      ),
     ).toBe('f697e5114ed0e822312d869e459189a9cb0124a5');
 
     const added = asked.find((request) => request.url.pathname.endsWith('/add'));
@@ -187,7 +195,11 @@ describe('createQbittorrentAdapter', () => {
     });
 
     expect(
-      await createQbittorrentAdapter(SETTINGS, fetch).add({ kind: 'magnet', url: MAGNET }, 'Dune'),
+      await createQbittorrentAdapter(SETTINGS, fetch).add(
+        { kind: 'magnet', url: MAGNET },
+        'Dune',
+        'valence',
+      ),
     ).toBe(HASH);
     expect(formOf(asked.at(-1))).toEqual(
       new URLSearchParams({ hashes: HASH, category: 'valence' }),
@@ -197,11 +209,15 @@ describe('createQbittorrentAdapter', () => {
   it('refuses an NZB, and a torrent it cannot read', async () => {
     const adapter = createQbittorrentAdapter(SETTINGS, aFakeClient({}).fetch);
 
-    await expect(adapter.add({ kind: 'nzb', bytes: new Uint8Array() }, 'Dune')).rejects.toThrow(
-      'takes torrents, not NZBs',
-    );
     await expect(
-      adapter.add({ kind: 'torrent', bytes: new TextEncoder().encode('<html>') }, 'Dune'),
+      adapter.add({ kind: 'nzb', bytes: new Uint8Array() }, 'Dune', 'valence'),
+    ).rejects.toThrow('takes torrents, not NZBs');
+    await expect(
+      adapter.add(
+        { kind: 'torrent', bytes: new TextEncoder().encode('<html>') },
+        'Dune',
+        'valence',
+      ),
     ).rejects.toThrow('not a torrent Valence can read');
   });
 
@@ -215,6 +231,7 @@ describe('createQbittorrentAdapter', () => {
       createQbittorrentAdapter(SETTINGS, refusingCategory.fetch).add(
         { kind: 'magnet', url: MAGNET },
         'Dune',
+        'valence',
       ),
     ).rejects.toThrow('would not make the category valence');
 
@@ -228,6 +245,7 @@ describe('createQbittorrentAdapter', () => {
       createQbittorrentAdapter(SETTINGS, refusingTorrent.fetch).add(
         { kind: 'magnet', url: MAGNET },
         'Dune',
+        'valence',
       ),
     ).rejects.toThrow('would not take the torrent');
   });
@@ -289,6 +307,29 @@ describe('createQbittorrentAdapter', () => {
     expect(heat?.doneBytes).toBeNull();
     expect(alien?.state).toBe('queued');
     expect(alien?.progress).toBe(1);
+  });
+
+  it('lists every one of its categories', async () => {
+    const { fetch, asked } = aFakeClient({
+      'POST /api/v2/auth/login': loggingIn(),
+      'GET /api/v2/torrents/info': (request) =>
+        Response.json([
+          {
+            hash: request.url.searchParams.get('category') ?? '',
+            name: 'x',
+            state: 'uploading',
+            progress: 1,
+          },
+        ]),
+    });
+
+    const listed = await createQbittorrentAdapter(
+      { ...SETTINGS, categories: ['valence-films', 'valence-series'] },
+      fetch,
+    ).list();
+
+    expect(listed.map((item) => item.remoteId)).toEqual(['valence-films', 'valence-series']);
+    expect(asked.filter((request) => request.url.pathname.endsWith('/info'))).toHaveLength(2);
   });
 
   it('reads how fast it is going altogether', async () => {

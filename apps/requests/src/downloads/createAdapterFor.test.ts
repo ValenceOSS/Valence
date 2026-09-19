@@ -9,7 +9,7 @@ const SETTINGS: ClientSettings = {
   username: 'u',
   password: 'p',
   apiKey: 'k',
-  category: 'valence',
+  categories: ['valence'],
 };
 
 describe('createAdapterFor', () => {

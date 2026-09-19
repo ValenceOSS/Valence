@@ -131,8 +131,8 @@ const readTorrent = (torrent: z.infer<typeof TorrentSchema>): ClientItem => {
 
 /**
  * Speaks to Transmission's RPC, carrying the session id it hands out on the first question and
- * asking again whenever it hands out a new one. Torrents are labelled with the client's category,
- * and only labelled ones are listed or touched.
+ * asking again whenever it hands out a new one. Torrents are labelled with the client's category for
+ * their kind of library, and only torrents with one of its labels are listed or touched.
  *
  * @param settings - Where it is, how to log in, and the label to keep to.
  * @param fetch - How to ask.
@@ -192,7 +192,7 @@ const createTransmissionAdapter = (
     version: async () =>
       z.string().parse((await rpc('session-get', { fields: ['version'] }))['version']),
 
-    add: async (file) => {
+    add: async (file, _title, category) => {
       if (file.kind === 'nzb') {
         throw new DownloadClientFailure(`${settings.name} takes torrents, not NZBs`);
       }
@@ -208,7 +208,7 @@ const createTransmissionAdapter = (
       );
       const hash = hashString.toLowerCase();
 
-      await rpc('torrent-set', { ...each(hash), labels: [settings.category] });
+      await rpc('torrent-set', { ...each(hash), labels: [category] });
 
       return hash;
     },
@@ -217,7 +217,7 @@ const createTransmissionAdapter = (
       z
         .array(TorrentSchema)
         .parse((await rpc('torrent-get', { fields: FIELDS }))['torrents'])
-        .filter((torrent) => torrent.labels.includes(settings.category))
+        .filter((torrent) => torrent.labels.some((label) => settings.categories.includes(label)))
         .map(readTorrent),
 
     speeds: async () => {

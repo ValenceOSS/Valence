@@ -91,8 +91,8 @@ const readTorrent = (torrent: z.infer<typeof TorrentSchema>): ClientItem => {
 
 /**
  * Speaks to qBittorrent's web API, logging in with a cookie that is kept and renewed when it
- * lapses. Only torrents in its own category are listed or touched, and that category is made the
- * first time something is added.
+ * lapses. Only torrents in the client's categories — one for each kind of library — are listed or
+ * touched, and a category is made the first time something is added to it.
  *
  * qBittorrent 5 renamed pausing and resuming to stopping and starting, so the new words are tried
  * first and the old ones where they are not known. It also names its session cookie after its port,
@@ -200,7 +200,7 @@ const createQbittorrentAdapter = (
   return {
     version: async () => (await (await answered('/api/v2/app/version')).text()).trim(),
 
-    add: async (file) => {
+    add: async (file, _title, category) => {
       if (file.kind === 'nzb') {
         throw new DownloadClientFailure(`${settings.name} takes torrents, not NZBs`);
       }
@@ -211,15 +211,13 @@ const createQbittorrentAdapter = (
         throw new DownloadClientFailure('The release is not a torrent Valence can read');
       }
 
-      const category = await ask(
+      const made = await ask(
         '/api/v2/torrents/createCategory',
-        new URLSearchParams({ category: settings.category, savePath: '' }),
+        new URLSearchParams({ category, savePath: '' }),
       );
 
-      if (!category.ok && category.status !== 409) {
-        throw new DownloadClientFailure(
-          `${settings.name} would not make the category ${settings.category}`,
-        );
+      if (!made.ok && made.status !== 409) {
+        throw new DownloadClientFailure(`${settings.name} would not make the category ${category}`);
       }
 
       const form = new FormData();
@@ -234,14 +232,14 @@ const createQbittorrentAdapter = (
         );
       }
 
-      form.append('category', settings.category);
+      form.append('category', category);
 
       const response = await ask('/api/v2/torrents/add', form);
 
       if (response.status === 409) {
         await answered(
           '/api/v2/torrents/setCategory',
-          new URLSearchParams({ hashes: hash, category: settings.category }),
+          new URLSearchParams({ hashes: hash, category }),
         );
 
         return hash;
@@ -254,16 +252,22 @@ const createQbittorrentAdapter = (
       return hash;
     },
 
-    list: async () => {
-      const response = await answered(
-        `/api/v2/torrents/info?category=${encodeURIComponent(settings.category)}`,
-      );
-
-      return z
-        .array(TorrentSchema)
-        .parse(await response.json())
-        .map(readTorrent);
-    },
+    list: async () =>
+      (
+        await Promise.all(
+          settings.categories.map(async (category) =>
+            z
+              .array(TorrentSchema)
+              .parse(
+                await (
+                  await answered(`/api/v2/torrents/info?category=${encodeURIComponent(category)}`)
+                ).json(),
+              ),
+          ),
+        )
+      )
+        .flat()
+        .map(readTorrent),
 
     speeds: async () => {
       const transfer = TransferSchema.parse(await (await answered('/api/v2/transfer/info')).json());

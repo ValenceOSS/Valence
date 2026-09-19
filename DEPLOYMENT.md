@@ -123,19 +123,23 @@ torrents, and SABnzbd or NZBGet for usenet. Give each the address the requests
 service reaches it at — inside the compose network, its container's name, such
 as `http://qbittorrent:8080` — and its login, or SABnzbd's API key.
 
-Each client has a category (a label, in Transmission), `valence` by default.
-Everything Valence sends is filed under it, and Valence only ever lists, pauses
-or removes what carries it, so the rest of your client is left alone.
+Each client has a category (a label, in Transmission) for each kind of library:
+`valence-films`, `valence-series`, `valence-music` and `valence-books` by default.
+Everything Valence sends is filed under the one for what it is, and Valence only
+ever lists, pauses or removes what carries one of them, so the rest of your
+client is left alone. Like Sonarr's and Radarr's categories, each can be given
+its own download folder in the client.
 
-Search sends a release to the first client switched on that takes its kind, and
-the Downloads page follows each one as it downloads: progress, speed, time
-left, and seeds and peers for torrents. The clients are asked every couple of
-seconds while that page is open, and every half a minute otherwise, which is how
-Valence notices a download finishing or failing. The `requests.downloadStarted`
-and `requests.downloadFailed` webhooks follow.
+Search sends a release to the first client switched on that takes it, as the
+kind searched for — or, searching for anything, the kind its indexer filed it
+under, asking where that does not say. The Downloads page follows each one as it
+downloads: progress, speed, time left, and seeds and peers for torrents. The
+clients are asked every couple of seconds while that page is open, and every half
+a minute otherwise, which is how Valence notices a download finishing or failing.
+The `requests.downloadStarted` and `requests.downloadFailed` webhooks follow.
 
-Valence files what arrives into your library in a later stage, so point each
-client's download folder at `DOWNLOADS_PATH` now.
+Valence files what arrives into your libraries in a later stage, so point each
+category's folder somewhere under `DOWNLOADS_PATH` now.
 
 ### A VPN for the download client
 

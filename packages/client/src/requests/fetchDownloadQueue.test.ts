@@ -15,6 +15,7 @@ const A_DOWNLOAD = {
   clientId: '0f8fad5b-d9cb-469f-a165-70867728950e',
   clientName: 'qBittorrent',
   protocol: 'torrent',
+  libraryKind: 'movies',
   title: 'Dune',
   indexerName: 'Jackett',
   state: 'downloading',
@@ -67,6 +68,7 @@ describe('fetchDownloadQueue', () => {
           url: 'magnet:?',
           title: 'Dune',
           protocol: 'torrent',
+          libraryKind: 'movies',
         })
       ).value,
     ).toEqual(A_DOWNLOAD);

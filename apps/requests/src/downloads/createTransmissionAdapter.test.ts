@@ -12,7 +12,7 @@ const SETTINGS: ClientSettings = {
   username: '',
   password: '',
   apiKey: '',
-  category: 'valence',
+  categories: ['valence'],
 };
 
 const HASH = 'c12fe1c06bba254a9dc9f519b335aa7c1367a88a';
@@ -133,6 +133,7 @@ describe('createTransmissionAdapter', () => {
       await createTransmissionAdapter(SETTINGS, fetch).add(
         { kind: 'magnet', url: 'magnet:?xt=urn:btih:x' },
         'Dune',
+        'valence',
       ),
     ).toBe(HASH);
 
@@ -156,6 +157,7 @@ describe('createTransmissionAdapter', () => {
       await createTransmissionAdapter(SETTINGS, fetch).add(
         { kind: 'torrent', bytes: new TextEncoder().encode('d4:infode') },
         'Dune',
+        'valence',
       ),
     ).toBe(HASH);
     expect(rpcOf(asked[1]).arguments['metainfo']).toBe(Buffer.from('d4:infode').toString('base64'));
@@ -166,6 +168,7 @@ describe('createTransmissionAdapter', () => {
       createTransmissionAdapter(SETTINGS, aFakeClient({}).fetch).add(
         { kind: 'nzb', bytes: new Uint8Array() },
         'Dune',
+        'valence',
       ),
     ).rejects.toThrow('takes torrents, not NZBs');
   });
@@ -215,6 +218,24 @@ describe('createTransmissionAdapter', () => {
     ]);
     expect(listed[6]?.problem).toBe('No data found!');
     expect(listed[7]?.problem).toBe('Tracker gone');
+  });
+
+  it('lists a torrent carrying any of its labels', async () => {
+    const { fetch } = aTransmission({
+      'torrent-get': {
+        torrents: [
+          { ...TORRENT, labels: ['valence-series'] },
+          { ...TORRENT, hashString: 'other', labels: ['films'] },
+        ],
+      },
+    });
+
+    const listed = await createTransmissionAdapter(
+      { ...SETTINGS, categories: ['valence-films', 'valence-series'] },
+      fetch,
+    ).list();
+
+    expect(listed.map((item) => item.remoteId)).toEqual([HASH]);
   });
 
   it('reads how fast it is going altogether', async () => {

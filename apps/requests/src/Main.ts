@@ -81,7 +81,12 @@ const indexers = createIndexerService({
 
 const downloadClients = createDownloadClientService({
   store: createDatabaseDownloadClientStore(db),
-  adapterFor: (record) => createAdapterFor(record.kind, record, fetch),
+  adapterFor: (record) =>
+    createAdapterFor(
+      record.kind,
+      { ...record, categories: Object.values(record.categories) },
+      fetch,
+    ),
 });
 
 const downloadQueue = createDownloadQueue({

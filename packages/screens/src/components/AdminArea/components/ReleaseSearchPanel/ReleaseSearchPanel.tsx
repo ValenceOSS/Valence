@@ -22,9 +22,13 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { fetchRelease } from '@ValenceClient/requests/fetchIndexers';
 import { sendRelease } from '@ValenceClient/requests/fetchDownloadQueue';
 import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
+import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
+import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
+import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import { downloadFile } from '@ValenceScreens/admin/downloadFile';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { inReleaseOrder } from './inReleaseOrder';
+import { libraryKindOf } from './libraryKindOf';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { IndexerSearchMode, Release, ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 
@@ -133,8 +137,9 @@ const ReleaseSearchPanel = () => {
             (client) => client.isEnabled && PROTOCOL_OF_CLIENT[client.kind] === protocol,
           );
           const address = downloadUrl ?? magnetUrl;
+          const libraryKind = libraryKindOf(row.original, asked?.mode ?? 'search');
 
-          const send = () => {
+          const send = (sending: LibraryKind) => {
             if (target === undefined || address === null) {
               return;
             }
@@ -146,6 +151,7 @@ const ReleaseSearchPanel = () => {
               url: address,
               title,
               protocol,
+              libraryKind: sending,
               sizeBytes: row.original.sizeBytes,
               indexerName: row.original.indexerName,
               clientId: target.id,
@@ -194,20 +200,30 @@ const ReleaseSearchPanel = () => {
                 groups={[
                   {
                     items: [
-                      {
-                        id: 'send',
-                        label:
-                          target === undefined
-                            ? `Send to a ${protocol === 'usenet' ? 'usenet' : 'torrent'} client`
-                            : `Send to ${target.name}`,
-                        detail:
-                          target === undefined
-                            ? `No ${protocol === 'usenet' ? 'usenet' : 'torrent'} client is switched on. Add one on the Downloads page.`
-                            : 'Fetched through Valence and handed over, then followed on the Downloads page.',
-                        icon: <Icon of={SentIcon} size={15} />,
-                        isDisabled: target === undefined || address === null,
-                        onChoose: send,
-                      },
+                      ...(target === undefined
+                        ? [
+                            {
+                              id: 'send',
+                              label: `Send to a ${protocol === 'usenet' ? 'usenet' : 'torrent'} client`,
+                              detail: `No ${protocol === 'usenet' ? 'usenet' : 'torrent'} client is switched on. Add one on the Downloads page.`,
+                              icon: <Icon of={SentIcon} size={15} />,
+                              isDisabled: true,
+                              onChoose: () => undefined,
+                            },
+                          ]
+                        : (libraryKind === null ? LIBRARY_KINDS : [libraryKind]).map((sending) => ({
+                            id: `send-${sending}`,
+                            label:
+                              libraryKind === null
+                                ? `Send to ${target.name} as ${LIBRARY_KIND_NAMES[sending].one}`
+                                : `Send to ${target.name}`,
+                            detail: `As ${LIBRARY_KIND_NAMES[sending].one}, filed under ${target.categories[sending]} and followed on the Downloads page.`,
+                            icon: <Icon of={SentIcon} size={15} />,
+                            isDisabled: address === null,
+                            onChoose: () => {
+                              send(sending);
+                            },
+                          }))),
                       {
                         id: 'magnet',
                         label: 'Copy the magnet link',
@@ -246,7 +262,7 @@ const ReleaseSearchPanel = () => {
         },
       },
     ],
-    [now, clients.data],
+    [now, clients.data, asked],
   );
 
   const search = () => {
