@@ -25,6 +25,11 @@ const EnvSchema = z.object({
     .default('false')
     .transform((value) => value === 'true'),
   TRANSCODER_URL: z.string().min(1).default('unix:/run/valence-transcoder.sock'),
+  REQUESTS_URL: z
+    .string()
+    .default('')
+    .transform((value) => value.trim().replace(/\/+$/, '')),
+  REQUESTS_SECRET: z.string().default(''),
   MEDIA_JOBS: z.coerce.number().int().positive().default(defaultMediaJobs()),
   CATALOGUE_API_KEY: z.string().default(''),
   IMAGE_CACHE_DIR: z.string().default('/cache/images'),

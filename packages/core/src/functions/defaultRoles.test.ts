@@ -94,6 +94,23 @@ describe('DEFAULT_ROLES', () => {
       expect(resolved.has('jobs.run')).toBe(false);
     });
 
+    it('lets a Member ask for things, but not wave their own requests through', () => {
+      const resolved = resolvePermissions({ roles: [roleNamed('Member')] });
+
+      expect(resolved.has('requests.ask')).toBe(true);
+      expect(resolved.has('requests.askMusic')).toBe(true);
+      expect(resolved.has('requests.autoApprove')).toBe(false);
+      expect(resolved.has('requests.approve')).toBe(false);
+    });
+
+    it('lets a Manager approve requests, but not set up where they are downloaded from', () => {
+      const resolved = resolvePermissions({ roles: [roleNamed('Manager')] });
+
+      expect(resolved.has('requests.approve')).toBe(true);
+      expect(resolved.has('requests.viewAll')).toBe(true);
+      expect(resolved.has('requests.manage')).toBe(false);
+    });
+
     it('gives Restricted no capability at all', () => {
       expect(resolvePermissions({ roles: [roleNamed('Restricted')] }).size).toBe(0);
     });

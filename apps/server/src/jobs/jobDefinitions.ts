@@ -14,6 +14,7 @@ import {
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
   CHECK_TRANSCODER_JOB,
   CHECK_DISK_SPACE_JOB,
+  CHECK_REQUESTS_JOB,
   SEND_MEDIA_DIGEST_JOB,
   PRUNE_WEBHOOK_DELIVERIES_JOB,
   PRUNE_LOGS_JOB,
@@ -176,6 +177,16 @@ const JOB_DEFINITIONS: JobDefinition[] = [
     announcesFinish: false,
   },
   {
+    kind: CHECK_REQUESTS_JOB,
+    label: 'Check the requests service',
+    description:
+      'Asks the requests service whether it is still answering, and whether the VPN it downloads through is up, so an operator hears about either going quiet from a notification.',
+    needsLibrary: false,
+    destructive: false,
+    takesParts: false,
+    announcesFinish: false,
+  },
+  {
     kind: SEND_MEDIA_DIGEST_JOB,
     label: 'Tell the household about new media',
     description:
@@ -241,6 +252,7 @@ const DEFAULT_JOB_TRIGGERS: Record<string, ScheduleTrigger[]> = {
   [CHECK_CATALOGUE_CONNECTIVITY_JOB]: [{ kind: 'daily', hour: 5, minute: 0 }],
   [CHECK_TRANSCODER_JOB]: [{ kind: 'everyMinutes', minutes: 5 }],
   [CHECK_DISK_SPACE_JOB]: [{ kind: 'everyMinutes', minutes: 15 }],
+  [CHECK_REQUESTS_JOB]: [{ kind: 'everyMinutes', minutes: 5 }],
   [SEND_MEDIA_DIGEST_JOB]: [{ kind: 'everyHours', hours: 1 }],
   [CLEANUP_SESSIONS_JOB]: [{ kind: 'daily', hour: 5, minute: 30 }],
   [PRUNE_WEBHOOK_DELIVERIES_JOB]: [{ kind: 'daily', hour: 5, minute: 45 }],
@@ -265,6 +277,20 @@ const scheduleQueueNameFor = (kind: string): string => {
   return definition?.needsLibrary === true ? scheduleTriggerKind(kind) : kind;
 };
 
+const REQUESTS_JOB_KINDS: readonly string[] = [CHECK_REQUESTS_JOB];
+
+/**
+ * The jobs this server offers, which leaves out the ones that speak to the requests service where
+ * requesting is off — there is nothing for them to check.
+ *
+ * @param hasRequests - Whether requesting is on.
+ * @returns The definitions to offer.
+ */
+const jobDefinitionsFor = (hasRequests: boolean): JobDefinition[] =>
+  hasRequests
+    ? JOB_DEFINITIONS
+    : JOB_DEFINITIONS.filter((definition) => !REQUESTS_JOB_KINDS.includes(definition.kind));
+
 const JobRunRequestSchema = z.object({
   libraryId: z.string().uuid().optional(),
   force: z.boolean().optional(),
@@ -278,5 +304,6 @@ export {
   DEFAULT_JOB_TRIGGERS,
   JobRunRequestSchema,
   RESET_LIBRARY_JOB,
+  jobDefinitionsFor,
   scheduleQueueNameFor,
 };
