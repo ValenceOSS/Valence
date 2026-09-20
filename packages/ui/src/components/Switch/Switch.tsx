@@ -102,7 +102,11 @@ const Switch = ({
             'transition-[translate] duration-[var(--duration-fast)] ease-[var(--ease-out)]',
             'motion-reduce:transition-none',
             isOn ? 'translate-x-[18px]' : 'translate-x-0',
-            isOn ? (isOverlay ? 'bg-shade' : 'bg-surface') : 'bg-on-scrim',
+            isOn
+              ? isOverlay
+                ? 'bg-shade'
+                : 'bg-[color-mix(in_oklab,var(--color-text-muted)_25%,var(--color-surface))]'
+              : 'bg-on-scrim',
           )}
         />
       </span>

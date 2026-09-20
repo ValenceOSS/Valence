@@ -82,6 +82,14 @@ describe('Switch', () => {
     expect(container.querySelector('.bg-accent')).not.toBeInTheDocument();
   });
 
+  it('draws the knob in the grey the track is when off, so on reads as the reverse of off', () => {
+    const { container } = render(<Switch label="Subtitles" isOn onToggle={vi.fn()} />);
+
+    expect(container.querySelector('[role="switch"] [data-state="checked"]')).toHaveClass(
+      'bg-[color-mix(in_oklab,var(--color-text-muted)_25%,var(--color-surface))]',
+    );
+  });
+
   it('points to text elsewhere that explains it, such as a note beside a hidden label', () => {
     render(
       <>
