@@ -105,6 +105,12 @@ export default tseslint.config(
           message:
             'A button that is muted until it is pointed at is variant="subtle", not a look in className — see code standards section 9.',
         },
+        {
+          selector:
+            'JSXOpeningElement[name.name="Skeleton"] > JSXAttribute[name.name="className"] > Literal[value=/\\brounded\\b/]',
+          message:
+            'A skeleton takes its corners from shape, not className. Use shape="soft" or shape="round".',
+        },
       ],
     },
   },

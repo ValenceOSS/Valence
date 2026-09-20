@@ -56,7 +56,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
   if (detail === undefined) {
     return (
       <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading the album" className="size-48 rounded-md" />
+        <Skeleton label="Reading the album" shape="soft" className="size-48" />
         <Skeleton className="h-12 w-2/3" />
       </div>
     );

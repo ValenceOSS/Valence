@@ -116,7 +116,7 @@ const BookDialog = ({
           />
         ) : book === null ? (
           <div className="flex gap-5">
-            <Skeleton className="aspect-[2/3] w-32 shrink-0 rounded-lg sm:w-40" />
+            <Skeleton className="aspect-[2/3] w-32 shrink-0 sm:w-40" />
             <div className="flex flex-1 flex-col gap-3">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-8 w-3/4" />

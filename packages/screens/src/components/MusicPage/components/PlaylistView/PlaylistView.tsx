@@ -91,7 +91,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
   if (detail === undefined) {
     return (
       <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading the playlist" className="size-48 rounded-md" />
+        <Skeleton label="Reading the playlist" shape="soft" className="size-48" />
         <Skeleton className="h-12 w-2/3" />
       </div>
     );

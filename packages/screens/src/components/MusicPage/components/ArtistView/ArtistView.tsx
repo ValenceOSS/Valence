@@ -59,7 +59,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
   if (detail === undefined) {
     return (
       <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading the artist" className="size-48 rounded-full" />
+        <Skeleton label="Reading the artist" shape="round" className="size-48" />
         <Skeleton className="h-12 w-1/2" />
       </div>
     );
