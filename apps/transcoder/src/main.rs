@@ -224,7 +224,8 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
         previews: valence_transcoder::preview::PreviewRegistry::new(),
         monitor: valence_transcoder::monitor::Monitor::new(journal),
         audio: valence_transcoder::audio::AudioRegistry::new(),
-        queue: valence_transcoder::queue::WorkQueue::new(background_jobs()),
+        queue: valence_transcoder::queue::WorkQueue::new(background_jobs())
+            .with_lane("fingerprint", fingerprint_jobs()),
         renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
         media_roots: env::var("VALENCE_MEDIA_ROOTS")
             .map(|value| value.split(':').map(PathBuf::from).collect())
@@ -321,6 +322,30 @@ fn background_jobs() -> usize {
         .ok()
         .and_then(|value| value.parse().ok())
         .unwrap_or(AT_A_TIME)
+}
+
+/// How many files may be fingerprinted at once.
+///
+/// More than one, unlike every other kind of background work, because
+/// fingerprinting is an audio decode and some arithmetic rather than a render:
+/// it spends most of its time waiting on a disk, so running several overlaps
+/// the waiting rather than competing for the machine. A library's worth of it
+/// done strictly one file at a time is hours of a job nobody is waiting on.
+///
+/// Capped rather than set to the core count, because several decodes reading
+/// several large files at once is a demand on storage rather than on
+/// processors, and storage is what this actually waits for.
+fn fingerprint_jobs() -> usize {
+    const AT_MOST: usize = 4;
+
+    env::var("VALENCE_FINGERPRINT_JOBS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or_else(|| {
+            std::thread::available_parallelism()
+                .map_or(1, std::num::NonZeroUsize::get)
+                .min(AT_MOST)
+        })
 }
 
 #[tokio::main]

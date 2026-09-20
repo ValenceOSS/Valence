@@ -8,7 +8,7 @@
 //! take, and so an operator can see what it is doing rather than guessing from
 //! a fan.
 
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::error::Error;
 use std::future::Future;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -202,6 +202,9 @@ impl Drop for Abandonment {
 pub struct WorkQueue {
     permits: Arc<Semaphore>,
     concurrency: usize,
+    /// Kinds of work that wait in a lane of their own rather than in the main
+    /// one, by name.
+    lanes: Arc<HashMap<String, Arc<Semaphore>>>,
     jobs: Arc<Mutex<VecDeque<JobRecord>>>,
     next_id: Arc<AtomicU64>,
 }
@@ -219,9 +222,35 @@ impl WorkQueue {
         Self {
             permits: Arc::new(Semaphore::new(concurrency)),
             concurrency,
+            lanes: Arc::new(HashMap::new()),
             jobs: Arc::new(Mutex::new(VecDeque::new())),
             next_id: Arc::new(AtomicU64::new(1)),
         }
+    }
+
+    /// Gives one kind of work a lane of its own, so it neither waits behind the
+    /// main one nor crowds it.
+    ///
+    /// The ceiling on background work exists to keep it away from the film
+    /// somebody is watching, and a render is what that ceiling is really about:
+    /// it is minutes of the whole machine. Fingerprinting is an audio decode
+    /// and some arithmetic, and holding the single slot that renders queue for
+    /// means a library's worth of it runs strictly one file at a time — which
+    /// is hours of a job nothing else is waiting on.
+    ///
+    /// Lanes are separate ceilings rather than a shared one, so a lane filling
+    /// up delays only its own kind.
+    #[must_use]
+    pub fn with_lane(mut self, kind: &str, concurrency: usize) -> Self {
+        let mut lanes = HashMap::clone(&self.lanes);
+
+        lanes.insert(
+            kind.to_owned(),
+            Arc::new(Semaphore::new(concurrency.max(1))),
+        );
+        self.lanes = Arc::new(lanes);
+
+        self
     }
 
     async fn record(&self, job: JobRecord) {
@@ -277,7 +306,12 @@ impl WorkQueue {
         })
         .await;
 
-        let permit = self.permits.acquire().await;
+        let lane = self
+            .lanes
+            .get(job.kind())
+            .map_or(&self.permits, |held| held);
+
+        let permit = lane.acquire().await;
 
         self.amend(id, |job| {
             job.state = JobState::Running;
@@ -524,6 +558,104 @@ timestamps up by eye"
 
         let _ = one.await;
         let _ = two.await;
+    }
+
+    fn fingerprints(subject: &'static str) -> TestJob {
+        TestJob {
+            kind: "fingerprint",
+            subject,
+        }
+    }
+
+    #[tokio::test]
+    async fn a_lane_runs_its_own_kind_while_the_main_one_is_full() {
+        let queue = WorkQueue::new(1).with_lane("fingerprint", 2);
+        let render = queue.clone();
+        let listening = queue.clone();
+
+        let held = tokio::spawn(async move {
+            render
+                .run(thumbnails("a.mkv"), None, async {
+                    tokio::time::sleep(Duration::from_millis(80)).await;
+
+                    Ok::<(), std::io::Error>(())
+                })
+                .await
+        });
+
+        tokio::time::sleep(Duration::from_millis(10)).await;
+
+        let listened = tokio::spawn(async move {
+            listening
+                .run(fingerprints("b.mkv"), None, async {
+                    tokio::time::sleep(Duration::from_millis(20)).await;
+
+                    Ok::<(), std::io::Error>(())
+                })
+                .await
+        });
+
+        tokio::time::sleep(Duration::from_millis(20)).await;
+
+        let snapshot = queue.snapshot().await;
+        let audio = snapshot
+            .jobs
+            .iter()
+            .find(|job| job.subject == "b.mkv")
+            .expect("recorded");
+
+        assert_eq!(audio.state, JobState::Running);
+
+        let _ = held.await;
+        let _ = listened.await;
+    }
+
+    #[tokio::test]
+    async fn a_lane_still_has_a_ceiling_of_its_own() {
+        let queue = WorkQueue::new(4).with_lane("fingerprint", 1);
+        let first = queue.clone();
+        let second = queue.clone();
+
+        let one = tokio::spawn(async move {
+            first
+                .run(fingerprints("a.mkv"), None, async {
+                    tokio::time::sleep(Duration::from_millis(60)).await;
+
+                    Ok::<(), std::io::Error>(())
+                })
+                .await
+        });
+
+        tokio::time::sleep(Duration::from_millis(10)).await;
+
+        let two = tokio::spawn(async move {
+            second
+                .run(fingerprints("b.mkv"), None, async {
+                    Ok::<(), std::io::Error>(())
+                })
+                .await
+        });
+
+        tokio::time::sleep(Duration::from_millis(20)).await;
+
+        let snapshot = queue.snapshot().await;
+        let waiting = snapshot
+            .jobs
+            .iter()
+            .find(|job| job.subject == "b.mkv")
+            .expect("queued");
+
+        assert_eq!(waiting.state, JobState::Queued);
+
+        let _ = one.await;
+        let _ = two.await;
+    }
+
+    #[tokio::test]
+    async fn work_with_no_lane_of_its_own_waits_in_the_main_one() {
+        let queue = WorkQueue::new(2).with_lane("fingerprint", 1);
+
+        assert_eq!(queue.snapshot().await.concurrency, 2);
     }
 
     #[tokio::test]
