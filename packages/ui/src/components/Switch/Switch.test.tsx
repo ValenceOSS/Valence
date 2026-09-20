@@ -82,11 +82,20 @@ describe('Switch', () => {
     expect(container.querySelector('.bg-accent')).not.toBeInTheDocument();
   });
 
-  it('draws the knob in the grey the track is when off, so on reads as the reverse of off', () => {
+  it('draws the knob in the grey a button is filled with when on, so on reads as the reverse of off', () => {
     const { container } = render(<Switch label="Subtitles" isOn onToggle={vi.fn()} />);
 
     expect(container.querySelector('[role="switch"] [data-state="checked"]')).toHaveClass(
-      'bg-[color-mix(in_oklab,var(--color-text-muted)_25%,var(--color-surface))]',
+      'bg-[color-mix(in_oklab,var(--color-text)_10%,var(--color-surface))]',
+    );
+  });
+
+  it('carries the same border a button does', () => {
+    const { container } = render(<Switch label="Subtitles" isOn={false} onToggle={vi.fn()} />);
+
+    expect(container.querySelector('[role="switch"] > span:last-child')).toHaveClass(
+      'border',
+      'border-[var(--surface-line)]',
     );
   });
 
