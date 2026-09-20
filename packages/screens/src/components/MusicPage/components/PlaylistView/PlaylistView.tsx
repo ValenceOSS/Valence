@@ -253,6 +253,15 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                       void dropFromPlaylist(playlist.id, entry.id).then(refresh);
                     }
                   },
+                  onReorder: (from: number, to: number) => {
+                    const entry = songs[from]?.entry;
+                    const after =
+                      to > from ? (songs[to]?.entry.id ?? null) : (songs[to - 1]?.entry.id ?? null);
+
+                    if (entry !== undefined && from !== to) {
+                      void moveInPlaylist(playlist.id, entry.id, after).then(refresh);
+                    }
+                  },
                   onMove: (index: number, direction: 'up' | 'down') => {
                     const entry = songs[index]?.entry;
                     const after =
