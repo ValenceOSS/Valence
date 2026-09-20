@@ -352,6 +352,8 @@ const AccountsPanel = () => {
     );
   }, [accounts, search]);
 
+  const roleColours = useMemo(() => new Map(roles.map((role) => [role.name, role.color])), [roles]);
+
   const columns = useMemo<DataTableColumn<Account>[]>(
     () => [
       {
@@ -393,13 +395,7 @@ const AccountsPanel = () => {
           ) : (
             <span className="flex flex-wrap items-center gap-1.5">
               {row.original.roles.map((role) => (
-                <Badge
-                  key={role}
-                  size="sm"
-                  tone={
-                    row.original.isAdministrator && role === 'Administrator' ? 'accent' : 'quiet'
-                  }
-                >
+                <Badge key={role} size="sm" colour={roleColours.get(role) ?? null}>
                   {role}
                 </Badge>
               ))}
@@ -476,7 +472,7 @@ const AccountsPanel = () => {
         ),
       },
     ],
-    [act],
+    [act, roleColours],
   );
 
   const confirm = () => {

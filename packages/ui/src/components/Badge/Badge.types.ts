@@ -8,6 +8,7 @@ type BadgeSize = 'sm' | 'md';
 type BadgeProps = {
   children: ReactNode;
   tone?: BadgeTone;
+  colour?: string | null;
   size?: BadgeSize;
   className?: string;
 };

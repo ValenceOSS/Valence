@@ -1,5 +1,6 @@
 import { cn } from '@ValenceUI/cn';
 import { Spinner } from '@ValenceUI/Spinner';
+import { inkOn } from './inkOn';
 import type { BadgeProps, BadgeSize, BadgeTone } from './Badge.types';
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
@@ -31,21 +32,24 @@ const SIZE_CLASSES: Record<BadgeSize, string> = {
  *
  * @param children - The fact, in as few words as it can be said.
  * @param tone - How much attention it should draw, defaulting to none.
+ * @param colour - A colour of its own, for a badge whose colour is the thing it says, such as a role
+ *   somebody chose one for. It replaces the tone, and the words are set in whichever ink reads on it.
  * @param size - Whether it sits inline with text or stands slightly apart.
  * @param className - Extra classes for the caller's own layout.
  */
-const Badge = ({ children, tone = 'quiet', size = 'sm', className }: BadgeProps) => (
+const Badge = ({ children, tone = 'quiet', colour = null, size = 'sm', className }: BadgeProps) => (
   <span
+    {...(colour === null ? {} : { style: { backgroundColor: colour, color: inkOn(colour) } })}
     className={cn(
       'inline-flex shrink-0 select-none items-center justify-center gap-1.5 rounded-md font-semibold',
       'uppercase tracking-[0.12em] indent-[0.12em] leading-none whitespace-nowrap',
-      TONE_CLASSES[tone],
+      colour === null ? TONE_CLASSES[tone] : '',
       SIZE_CLASSES[size],
       className,
     )}
   >
     {children}
-    {tone === 'busy' ? <Spinner size="xs" label="In progress" /> : null}
+    {colour === null && tone === 'busy' ? <Spinner size="xs" label="In progress" /> : null}
   </span>
 );
 

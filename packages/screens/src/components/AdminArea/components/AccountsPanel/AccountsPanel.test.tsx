@@ -188,6 +188,27 @@ describe('AccountsPanel', () => {
     expect(screen.getByText('Member')).toBeInTheDocument();
   });
 
+  it('draws each role in the colour that role was given, not by whether it is the administrator', async () => {
+    mocks.fetchRoles.mockResolvedValue([
+      { ...ADMINISTRATOR, color: '#E74C3C' },
+      { ...MEMBER, color: '#206694' },
+    ]);
+    accountMocks.fetchAccounts.mockResolvedValue([
+      account({ isAdministrator: true, roles: ['Administrator', 'Member', 'Manager'] }),
+    ]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Administrator')).toHaveStyle({
+        backgroundColor: 'rgb(231, 76, 60)',
+      });
+    });
+
+    expect(screen.getByText('Member')).toHaveStyle({ backgroundColor: 'rgb(32, 102, 148)' });
+    expect(screen.getByText('Manager').getAttribute('style')).toBeNull();
+  });
+
   it('says so plainly when somebody holds none', async () => {
     accountMocks.fetchAccounts.mockResolvedValue([account({ roles: [] })]);
 
