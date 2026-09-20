@@ -516,6 +516,7 @@ const MediaDetailDialog = ({
               : [
                   {
                     id: 'trailer',
+                    isPinned: true,
                     label: 'Watch the trailer',
                     icon: <Icon of={FilmRoll01Icon} size={18} />,
                     onChoose: () => {
@@ -546,6 +547,7 @@ const MediaDetailDialog = ({
               : [
                   {
                     id: 'share',
+                    isPinned: true,
                     label: 'Share',
                     icon: <Icon of={Share08Icon} size={18} />,
                     onChoose: () => {

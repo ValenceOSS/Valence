@@ -127,14 +127,24 @@ afterEach(() => {
   scrubs.areBuilt = true;
 });
 
+const openTheMenu = async (): Promise<void> => {
+  const [menu] = await screen.findAllByRole('button', { name: 'More to do with this' });
+
+  if (menu !== undefined) {
+    await userEvent.setup().click(menu);
+  }
+};
+
 describe('choosing where the preview is cut from', () => {
   it('offers it to somebody allowed to correct media', async () => {
     permissions.mayOverride = true;
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
+    await openTheMenu();
+
     expect(
-      await screen.findByRole('button', { name: 'Choose the preview moment' }),
+      await screen.findByRole('menuitem', { name: 'Choose the preview moment' }),
     ).toBeInTheDocument();
   });
 
@@ -145,9 +155,11 @@ describe('choosing where the preview is cut from', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     await screen.findByRole('heading', { name: 'Arrival' });
+    await openTheMenu();
+    await screen.findByRole('menuitem', { name: /Download/ });
 
     expect(
-      screen.queryByRole('button', { name: 'Choose the preview moment' }),
+      screen.queryByRole('menuitem', { name: 'Choose the preview moment' }),
     ).not.toBeInTheDocument();
   });
 
@@ -155,9 +167,11 @@ describe('choosing where the preview is cut from', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     await screen.findByRole('heading', { name: 'Arrival' });
+    await openTheMenu();
+    await screen.findByRole('menuitem', { name: /Download/ });
 
     expect(
-      screen.queryByRole('button', { name: 'Choose the preview moment' }),
+      screen.queryByRole('menuitem', { name: 'Choose the preview moment' }),
     ).not.toBeInTheDocument();
   });
 
@@ -166,9 +180,10 @@ describe('choosing where the preview is cut from', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
+    await openTheMenu();
     await userEvent
       .setup()
-      .click(await screen.findByRole('button', { name: 'Choose the preview moment' }));
+      .click(await screen.findByRole('menuitem', { name: 'Choose the preview moment' }));
 
     expect(await screen.findByRole('dialog', { name: 'Choose the preview moment' })).toBeVisible();
   });
@@ -181,18 +196,26 @@ describe('MediaDetailDialog', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('offers to download on a client that can keep a file', () => {
+  it('offers to download on a client that can keep a file', async () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: /Download/ })).toBeInTheDocument();
+    await openTheMenu();
+
+    expect(await screen.findByRole('menuitem', { name: /Download/ })).toBeInTheDocument();
   });
 
-  it('offers no download in a browser, which cannot be trusted to keep one', () => {
+  it('offers no download in a browser, which cannot be trusted to keep one', async () => {
     installPlatform(aFakePlatform({ canKeepFiles: () => false }));
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(screen.queryByRole('button', { name: /Download/ })).not.toBeInTheDocument();
+    const [menu] = screen.queryAllByRole('button', { name: 'More to do with this' });
+
+    if (menu !== undefined) {
+      await userEvent.setup().click(menu);
+    }
+
+    expect(screen.queryByRole('menuitem', { name: /Download/ })).not.toBeInTheDocument();
   });
 
   it('draws while one of this viewer’s downloads is still being prepared', async () => {
@@ -217,7 +240,9 @@ describe('MediaDetailDialog', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByRole('button', { name: /Preparing 40%/ })).toBeInTheDocument();
+    await openTheMenu();
+
+    expect(await screen.findByRole('menuitem', { name: /Preparing 40%/ })).toBeInTheDocument();
   });
 
   it('names itself after the item', () => {

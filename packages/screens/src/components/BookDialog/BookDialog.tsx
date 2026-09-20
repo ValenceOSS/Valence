@@ -75,6 +75,7 @@ const BookDialog = ({
       : [
           {
             id: 'keep',
+            isPinned: true,
             label: isKept ? 'Stop keeping' : 'Keep',
             icon: <Icon of={FavouriteIcon} size={18} />,
             onChoose: () => {
@@ -86,6 +87,7 @@ const BookDialog = ({
             : [
                 {
                   id: 'share',
+                  isPinned: true,
                   label: 'Share',
                   icon: <Icon of={Share08Icon} size={18} />,
                   onChoose: () => {

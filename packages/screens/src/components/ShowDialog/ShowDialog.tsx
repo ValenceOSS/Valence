@@ -372,6 +372,7 @@ const ShowDialog = ({
               : [
                   {
                     id: 'trailer',
+                    isPinned: true,
                     label: 'Watch the trailer',
                     icon: <Icon of={FilmRoll01Icon} size={18} />,
                     onChoose: () => {
@@ -414,6 +415,7 @@ const ShowDialog = ({
               : [
                   {
                     id: 'share',
+                    isPinned: true,
                     label: 'Share',
                     icon: <Icon of={Link01Icon} size={18} />,
                     onChoose: () => {
