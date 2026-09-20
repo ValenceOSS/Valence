@@ -3,7 +3,6 @@ import {
   Add01Icon,
   ArrowExpandIcon,
   ArrowShrinkIcon,
-  MirroringScreenIcon,
   Clock01Icon,
   DashboardSpeed01Icon,
   GoBackward10SecIcon,
@@ -11,6 +10,7 @@ import {
   HdIcon,
   HeadphonesIcon,
   MinusSignIcon,
+  MirroringScreenIcon,
   PauseIcon,
   PictureInPictureOnIcon,
   PlayIcon,
@@ -19,6 +19,7 @@ import {
   Settings02Icon,
   SubtitleIcon,
   TextFontIcon,
+  Tv01Icon,
   VolumeHighIcon,
   VolumeOffIcon,
 } from '@hugeicons/core-free-icons';
@@ -76,6 +77,8 @@ const SUBTITLE_STEP_SECONDS = 0.25;
  * @param volume - How loud it is.
  * @param isMuted - Whether it is silenced.
  * @param isFullscreen - Whether the player fills the screen.
+ * @param isGlowing - Whether the picture sits within a glow of its own colours, rather than filling the page.
+ * @param onToggleGlow - Called to go into or out of that view, where this player offers it.
  * @param isShowingStats - Whether the statistics panel is open.
  * @param playbackRate - How fast it is playing.
  * @param subtitleTracks - The subtitle tracks available.
@@ -125,6 +128,8 @@ const PlayerControls = ({
   boost,
   isMuted,
   isFullscreen,
+  isGlowing = false,
+  onToggleGlow,
   isShowingStats,
   playbackRate,
   subtitleTracks,
@@ -523,6 +528,19 @@ const PlayerControls = ({
           ) : (
             <Icon of={PictureInPictureOnIcon} size={20} />
           )}
+        </Button>
+      )}
+
+      {onToggleGlow === undefined ? null : (
+        <Button
+          isIconOnly
+          variant="ghost"
+          label={isGlowing ? 'Leave the immersive view' : 'Immersive view'}
+          isActive={isGlowing}
+          onClick={onToggleGlow}
+          size="md"
+        >
+          <Icon of={Tv01Icon} size={20} />
         </Button>
       )}
 

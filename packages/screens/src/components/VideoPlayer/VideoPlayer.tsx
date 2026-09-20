@@ -80,6 +80,8 @@ import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQ
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { TrickplayPreview } from './components/TrickplayPreview/TrickplayPreview';
+import { AmbientOrbs } from '@ValenceScreens/components/VideoPlayer/components/AmbientOrbs/AmbientOrbs';
+import { useAmbientLights } from '@ValenceScreens/playback/useAmbientLights';
 import { PlayerControls } from './components/PlayerControls/PlayerControls';
 import { StreamStats } from './components/StreamStats/StreamStats';
 import { cn } from '@ValenceUI/cn';
@@ -262,8 +264,10 @@ const VideoPlayer = ({
     () => readPlaybackPreferences().showsRemaining,
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isGlowing, setIsGlowing] = useState(false);
   const [isShowingStats, setIsShowingStats] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const lights = useAmbientLights(videoRef, isGlowing);
   const [health, setHealth] = useState<PlaybackHealth>(EMPTY_HEALTH);
   const [delivered, setDelivered] = useState<DeliveredFormat | null>(null);
   const [isIdle, setIsIdle] = useState(false);
@@ -1722,305 +1726,326 @@ const VideoPlayer = ({
       </header>
 
       <div
-        ref={stageRef}
-        tabIndex={-1}
-        onPointerUp={onTapStage}
-        className={`${
-          isImmersive
-            ? 'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-shade'
-            : 'relative overflow-hidden rounded-lg bg-shade'
-        } ${isIdle && !isShowingStats && !isMenuOpen ? 'cursor-none' : 'cursor-default'} outline-none`}
+        className={
+          isGlowing
+            ? 'relative flex min-h-0 flex-1 items-center justify-center bg-shade p-[clamp(1rem,4vw,4rem)]'
+            : 'contents'
+        }
       >
-        <VideoSurface
-          label={media.title}
-          videoRef={videoRef}
-          className={isImmersive ? 'h-full w-full object-contain' : ''}
-          {...(fetchableTrack === null
-            ? {}
-            : {
-                textTrack: {
-                  id: fetchableTrack.id,
-                  label: fetchableTrack.label,
-                  language: fetchableTrack.language ?? 'und',
-                  src: subtitleTrackUrl(media.id, fetchableTrack.id),
-                },
-              })}
-          isDrawnElsewhere
-          {...asItPlays}
-        />
-
-        {fetchableTrack === null ? null : (
-          <SubtitleCues
-            src={subtitleTrackUrl(media.id, fetchableTrack.id)}
-            cuesSrc={subtitleCuesUrl(media.id, fetchableTrack.id)}
-            atSeconds={position - subtitleOffset}
-            style={captionStyle}
-            isLifted={isBarUp}
-          />
-        )}
-
-        {!isPoppedOut ? null : (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-shade text-center">
-            <Icon of={PictureInPictureOnIcon} size={32} className="text-text-muted" />
-
-            <p className="text-sm text-text-muted">Playing in a floating window</p>
-
-            <Button variant="secondary" size="sm" onClick={popOut}>
-              Bring it back
-            </Button>
-          </div>
-        )}
-
-        <Toaster id={PLAYER_TOASTS} position="top-center" />
-
-        {castState !== 'connected' ? null : (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-shade text-center">
-            <Icon of={MirroringScreenIcon} size={32} className="text-text-muted" />
-
-            <p className="text-sm text-text-muted">Playing on another device</p>
-
-            <p className="max-w-xs text-xs text-text-muted/70">
-              The controls below still work. Stopping the cast from the device brings it back here.
-            </p>
-          </div>
-        )}
-
-        {heldFrame === null ? null : (
-          <div
-            role="presentation"
-            className="pointer-events-none absolute inset-0 bg-shade bg-contain bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${heldFrame.url})` }}
-          />
-        )}
-
-        {!isSayingSo ? null : (
-          <div
-            className={cn(
-              'pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3',
-              'animate-in fade-in-0 duration-[var(--duration-base)] ease-[var(--ease-out)]',
-              'motion-reduce:duration-[var(--duration-instant)]',
-            )}
-          >
-            <Spinner
-              label={
-                party?.isHeld === true
-                  ? waitingWord(party.waitingFor)
-                  : 'Waiting for more of the film'
-              }
-              size="lg"
-            />
-
-            <p className="valence-solid rounded-md px-4 py-1.5 text-sm text-text">
-              {party?.isHeld === true
-                ? waitingWord(party.waitingFor)
-                : 'Waiting for more of the film'}
-            </p>
-          </div>
-        )}
-
-        {state === 'starting' ? (
-          <div
-            className={
-              heldFrame === null
-                ? 'pointer-events-none absolute inset-0 flex items-center justify-center'
-                : 'pointer-events-none absolute right-3 top-3 rounded-full bg-shade/60 p-2 text-text'
-            }
-          >
-            <Spinner
-              label={
-                heldFrame === null
-                  ? 'Preparing playback'
-                  : heldFrame.isItemChange
-                    ? 'Loading the next episode'
-                    : 'Changing the stream'
-              }
-              size={heldFrame === null ? 'lg' : 'sm'}
-            />
-          </div>
-        ) : null}
-
-        {isShowingStats ? (
-          <motion.div
-            drag
-            dragControls={statsDrag}
-            dragListener={false}
-            dragMomentum={false}
-            dragElastic={0}
-            dragConstraints={stageRef}
-            className="pointer-events-none absolute left-3 top-16 w-[min(32rem,calc(100%-1.5rem))]"
-          >
-            <StreamStats
-              onGrab={(event) => {
-                statsDrag.start(event);
-              }}
-              media={media}
-              session={session}
-              detail={detail}
-              health={health}
-              delivered={delivered}
-              sessionStartSeconds={request.startSeconds}
-              {...(party === undefined
-                ? {}
-                : {
-                    party: {
-                      isPlaying: party.isPlaying,
-                      isHeld: party.isHeld,
-                      waitingFor: party.waitingFor,
-                      referenceSeconds: party.referenceSeconds,
-                      jitterMs: party.jitterMs,
-                      members: party.members,
-                    },
-                  })}
-              onClose={() => {
-                setIsShowingStats(false);
-              }}
-            />
-          </motion.div>
-        ) : null}
-
-        {skippable === null ? null : (
-          <div
-            className="absolute right-6 z-10 transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none"
-            style={{
-              bottom: isBarUp
-                ? controlsTall + CLEAR_OF_THE_EDGE + CLEAR_OF_THE_CONTROLS
-                : CLEAR_OF_THE_EDGE,
-            }}
-          >
-            <Button
-              size="lg"
-              variant="secondary"
-              className="px-6 shadow-lg"
-              onClick={() => {
-                seek(skippable.endSeconds);
-              }}
-            >
-              {describeSkip(skippable)}
-              <Icon of={NextIcon} size={18} />
-            </Button>
-          </div>
-        )}
+        {isGlowing ? <AmbientOrbs lights={lights} /> : null}
 
         <div
-          ref={controlsRef}
-          className={`absolute bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] left-[calc(0.75rem+env(safe-area-inset-left,0px))] right-[calc(0.75rem+env(safe-area-inset-right,0px))] transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
-            isBarUp ? 'translate-y-0' : 'pointer-events-none translate-y-[calc(100%_+_1.5rem)]'
-          }`}
+          ref={stageRef}
+          tabIndex={-1}
+          onPointerUp={onTapStage}
+          className={`${
+            isGlowing
+              ? 'relative flex aspect-video max-h-full w-full max-w-[90rem] items-center justify-center overflow-hidden rounded-2xl bg-shade shadow-[var(--shadow-overlay)]'
+              : isImmersive
+                ? 'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-shade'
+                : 'relative overflow-hidden rounded-lg bg-shade'
+          } ${isIdle && !isShowingStats && !isMenuOpen ? 'cursor-none' : 'cursor-default'} outline-none`}
         >
-          <PlayerControls
-            {...(renderPartyMenu === undefined
+          <VideoSurface
+            label={media.title}
+            videoRef={videoRef}
+            className={isImmersive ? 'h-full w-full object-contain' : ''}
+            {...(fetchableTrack === null
               ? {}
               : {
-                  partyMenu: renderPartyMenu({
-                    isHidden: !isBarUp,
-                    onOpenChange: setIsMenuOpen,
-                  }),
+                  textTrack: {
+                    id: fetchableTrack.id,
+                    label: fetchableTrack.label,
+                    language: fetchableTrack.language ?? 'und',
+                    src: subtitleTrackUrl(media.id, fetchableTrack.id),
+                  },
                 })}
-            title={media.title}
-            playingId={media.id}
-            episodes={episodes}
-            {...(onSelectEpisode === undefined ? {} : { onSelectEpisode })}
-            {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
-            isPlaying={isPlaying}
-            position={position}
-            duration={duration}
-            volume={volume}
-            boost={boost}
-            onBoostChange={setBoost}
-            isMuted={isMuted}
-            isFullscreen={isFullscreen}
-            isShowingStats={isShowingStats}
-            playbackRate={playbackRate}
-            subtitleTracks={subtitleTracks}
-            selectedSubtitleId={selectedSubtitleId}
-            audioTracks={audioTracks}
-            selectedAudioIndex={selectedAudioIndex}
-            availableQualitySteps={availableQualitySteps}
-            qualityStepCosts={qualityStepCosts}
-            selectedQuality={request.requestedQuality}
-            isDisabled={state !== 'playing'}
-            onTogglePlay={togglePlay}
-            onSeek={seek}
-            onSkip={skip}
-            onPlaybackRateChange={setPlaybackRate}
-            onSubtitleChange={chooseSubtitle}
-            onAudioChange={changeAudio}
-            onQualityChange={changeQuality}
-            onMenuOpenChange={setIsMenuOpen}
-            isShowingRemaining={isShowingRemaining}
-            onToggleTimeDisplay={() => {
-              setIsShowingRemaining((showing) => {
-                writePlaybackPreferences({ showsRemaining: !showing });
+            isDrawnElsewhere
+            {...asItPlays}
+          />
 
-                return !showing;
-              });
-            }}
-            captionStyle={captionStyle}
-            onCaptionStyleChange={setCaptionStyle}
-            onCaptionStyleReset={() => {
-              setCaptionStyle(DEFAULT_CAPTION_STYLE);
-            }}
-            onVolumeChange={(next) => {
-              setVolume(next);
-              isSilencedByPolicyRef.current = false;
-              setIsMuted(next === 0);
-            }}
-            onToggleMute={() => {
-              isSilencedByPolicyRef.current = false;
-              setIsMuted((muted) => !muted);
-            }}
-            onToggleFullscreen={toggleFullscreen}
-            castState={castState}
-            onCast={() => {
-              const element = videoRef.current;
+          {fetchableTrack === null ? null : (
+            <SubtitleCues
+              src={subtitleTrackUrl(media.id, fetchableTrack.id)}
+              cuesSrc={subtitleCuesUrl(media.id, fetchableTrack.id)}
+              atSeconds={position - subtitleOffset}
+              style={captionStyle}
+              isLifted={isBarUp}
+            />
+          )}
 
-              if (element === null) {
-                return;
+          {!isPoppedOut ? null : (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-shade text-center">
+              <Icon of={PictureInPictureOnIcon} size={32} className="text-text-muted" />
+
+              <p className="text-sm text-text-muted">Playing in a floating window</p>
+
+              <Button variant="secondary" size="sm" onClick={popOut}>
+                Bring it back
+              </Button>
+            </div>
+          )}
+
+          <Toaster id={PLAYER_TOASTS} position="top-center" />
+
+          {castState !== 'connected' ? null : (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-shade text-center">
+              <Icon of={MirroringScreenIcon} size={32} className="text-text-muted" />
+
+              <p className="text-sm text-text-muted">Playing on another device</p>
+
+              <p className="max-w-xs text-xs text-text-muted/70">
+                The controls below still work. Stopping the cast from the device brings it back
+                here.
+              </p>
+            </div>
+          )}
+
+          {heldFrame === null ? null : (
+            <div
+              role="presentation"
+              className="pointer-events-none absolute inset-0 bg-shade bg-contain bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${heldFrame.url})` }}
+            />
+          )}
+
+          {!isSayingSo ? null : (
+            <div
+              className={cn(
+                'pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3',
+                'animate-in fade-in-0 duration-[var(--duration-base)] ease-[var(--ease-out)]',
+                'motion-reduce:duration-[var(--duration-instant)]',
+              )}
+            >
+              <Spinner
+                label={
+                  party?.isHeld === true
+                    ? waitingWord(party.waitingFor)
+                    : 'Waiting for more of the film'
+                }
+                size="lg"
+              />
+
+              <p className="valence-solid rounded-md px-4 py-1.5 text-sm text-text">
+                {party?.isHeld === true
+                  ? waitingWord(party.waitingFor)
+                  : 'Waiting for more of the film'}
+              </p>
+            </div>
+          )}
+
+          {state === 'starting' ? (
+            <div
+              className={
+                heldFrame === null
+                  ? 'pointer-events-none absolute inset-0 flex items-center justify-center'
+                  : 'pointer-events-none absolute right-3 top-3 rounded-full bg-shade/60 p-2 text-text'
               }
+            >
+              <Spinner
+                label={
+                  heldFrame === null
+                    ? 'Preparing playback'
+                    : heldFrame.isItemChange
+                      ? 'Loading the next episode'
+                      : 'Changing the stream'
+                }
+                size={heldFrame === null ? 'lg' : 'sm'}
+              />
+            </div>
+          ) : null}
 
-              if (!isReachableOrigin(window.location.origin)) {
-                notify.failed(
-                  'Open Valence at its address on the network rather than as localhost, so a device has somewhere to fetch from.',
-                  { where: PLAYER_TOASTS, id: CAST_NOTICE },
-                );
+          {isShowingStats ? (
+            <motion.div
+              drag
+              dragControls={statsDrag}
+              dragListener={false}
+              dragMomentum={false}
+              dragElastic={0}
+              dragConstraints={stageRef}
+              className="pointer-events-none absolute left-3 top-16 w-[min(32rem,calc(100%-1.5rem))]"
+            >
+              <StreamStats
+                onGrab={(event) => {
+                  statsDrag.start(event);
+                }}
+                media={media}
+                session={session}
+                detail={detail}
+                health={health}
+                delivered={delivered}
+                sessionStartSeconds={request.startSeconds}
+                {...(party === undefined
+                  ? {}
+                  : {
+                      party: {
+                        isPlaying: party.isPlaying,
+                        isHeld: party.isHeld,
+                        waitingFor: party.waitingFor,
+                        referenceSeconds: party.referenceSeconds,
+                        jitterMs: party.jitterMs,
+                        members: party.members,
+                      },
+                    })}
+                onClose={() => {
+                  setIsShowingStats(false);
+                }}
+              />
+            </motion.div>
+          ) : null}
 
-                return;
-              }
+          {skippable === null ? null : (
+            <div
+              className="absolute right-6 z-10 transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none"
+              style={{
+                bottom: isBarUp
+                  ? controlsTall + CLEAR_OF_THE_EDGE + CLEAR_OF_THE_CONTROLS
+                  : CLEAR_OF_THE_EDGE,
+              }}
+            >
+              <Button
+                size="lg"
+                variant="secondary"
+                className="px-6 shadow-lg"
+                onClick={() => {
+                  seek(skippable.endSeconds);
+                }}
+              >
+                {describeSkip(skippable)}
+                <Icon of={NextIcon} size={18} />
+              </Button>
+            </div>
+          )}
 
-              notify.forget(CAST_NOTICE);
+          <div
+            ref={controlsRef}
+            className={`absolute bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] left-[calc(0.75rem+env(safe-area-inset-left,0px))] right-[calc(0.75rem+env(safe-area-inset-right,0px))] transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
+              isBarUp ? 'translate-y-0' : 'pointer-events-none translate-y-[calc(100%_+_1.5rem)]'
+            }`}
+          >
+            <PlayerControls
+              {...(renderPartyMenu === undefined
+                ? {}
+                : {
+                    partyMenu: renderPartyMenu({
+                      isHidden: !isBarUp,
+                      onOpenChange: setIsMenuOpen,
+                    }),
+                  })}
+              title={media.title}
+              playingId={media.id}
+              episodes={episodes}
+              {...(onSelectEpisode === undefined ? {} : { onSelectEpisode })}
+              {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
+              isPlaying={isPlaying}
+              position={position}
+              duration={duration}
+              volume={volume}
+              boost={boost}
+              onBoostChange={setBoost}
+              isMuted={isMuted}
+              isFullscreen={isFullscreen}
+              isShowingStats={isShowingStats}
+              isGlowing={isGlowing}
+              {...(isImmersive
+                ? {
+                    onToggleGlow: () => {
+                      setIsGlowing((glowing) => !glowing);
+                    },
+                  }
+                : {})}
+              playbackRate={playbackRate}
+              subtitleTracks={subtitleTracks}
+              selectedSubtitleId={selectedSubtitleId}
+              audioTracks={audioTracks}
+              selectedAudioIndex={selectedAudioIndex}
+              availableQualitySteps={availableQualitySteps}
+              qualityStepCosts={qualityStepCosts}
+              selectedQuality={request.requestedQuality}
+              isDisabled={state !== 'playing'}
+              onTogglePlay={togglePlay}
+              onSeek={seek}
+              onSkip={skip}
+              onPlaybackRateChange={setPlaybackRate}
+              onSubtitleChange={chooseSubtitle}
+              onAudioChange={changeAudio}
+              onQualityChange={changeQuality}
+              onMenuOpenChange={setIsMenuOpen}
+              isShowingRemaining={isShowingRemaining}
+              onToggleTimeDisplay={() => {
+                setIsShowingRemaining((showing) => {
+                  writePlaybackPreferences({ showsRemaining: !showing });
 
-              const context = castContextRef.current;
+                  return !showing;
+                });
+              }}
+              captionStyle={captionStyle}
+              onCaptionStyleChange={setCaptionStyle}
+              onCaptionStyleReset={() => {
+                setCaptionStyle(DEFAULT_CAPTION_STYLE);
+              }}
+              onVolumeChange={(next) => {
+                setVolume(next);
+                isSilencedByPolicyRef.current = false;
+                setIsMuted(next === 0);
+              }}
+              onToggleMute={() => {
+                isSilencedByPolicyRef.current = false;
+                setIsMuted((muted) => !muted);
+              }}
+              onToggleFullscreen={toggleFullscreen}
+              castState={castState}
+              onCast={() => {
+                const element = videoRef.current;
 
-              if (context !== null) {
-                void context.requestSession().catch(() => {});
-
-                return;
-              }
-
-              void promptForDevice(element).then((outcome) => {
-                if (outcome === 'shown' || outcome === 'dismissed') {
+                if (element === null) {
                   return;
                 }
 
-                notify.failed(
-                  window.location.protocol === 'https:'
-                    ? 'This browser offered no device. Safari casts to AirPlay receivers; Chrome needs the extension that backs casting.'
-                    : 'This browser only casts over a secure connection. Serve Valence over HTTPS, or use Safari, which will cast from here as it is.',
-                  { where: PLAYER_TOASTS, id: CAST_NOTICE },
-                );
-              });
-            }}
-            {...(canPopOut ? { onPopOut: popOut } : {})}
-            isPoppedOut={isPoppedOut}
-            onToggleStats={() => {
-              setIsShowingStats((showing) => !showing);
-            }}
-            subtitleOffsetSeconds={subtitleOffset}
-            onSubtitleOffsetChange={setSubtitleOffset}
-            renderPreview={(seconds: number) => (
-              <TrickplayPreview trickplay={trickplay} seconds={seconds} />
-            )}
-          />
+                if (!isReachableOrigin(window.location.origin)) {
+                  notify.failed(
+                    'Open Valence at its address on the network rather than as localhost, so a device has somewhere to fetch from.',
+                    { where: PLAYER_TOASTS, id: CAST_NOTICE },
+                  );
+
+                  return;
+                }
+
+                notify.forget(CAST_NOTICE);
+
+                const context = castContextRef.current;
+
+                if (context !== null) {
+                  void context.requestSession().catch(() => {});
+
+                  return;
+                }
+
+                void promptForDevice(element).then((outcome) => {
+                  if (outcome === 'shown' || outcome === 'dismissed') {
+                    return;
+                  }
+
+                  notify.failed(
+                    window.location.protocol === 'https:'
+                      ? 'This browser offered no device. Safari casts to AirPlay receivers; Chrome needs the extension that backs casting.'
+                      : 'This browser only casts over a secure connection. Serve Valence over HTTPS, or use Safari, which will cast from here as it is.',
+                    { where: PLAYER_TOASTS, id: CAST_NOTICE },
+                  );
+                });
+              }}
+              {...(canPopOut ? { onPopOut: popOut } : {})}
+              isPoppedOut={isPoppedOut}
+              onToggleStats={() => {
+                setIsShowingStats((showing) => !showing);
+              }}
+              subtitleOffsetSeconds={subtitleOffset}
+              onSubtitleOffsetChange={setSubtitleOffset}
+              renderPreview={(seconds: number) => (
+                <TrickplayPreview trickplay={trickplay} seconds={seconds} />
+              )}
+            />
+          </div>
         </div>
       </div>
 
