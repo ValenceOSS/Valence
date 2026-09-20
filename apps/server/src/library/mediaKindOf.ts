@@ -10,6 +10,11 @@ import type { MediaKind } from '@ValenceContracts/schemas/MediaKind';
  * at all, so it never reaches here through the same scan; it is admitted because a
  * subscriber filtering on kind has to be able to name one.
  *
+ * A file in a programme library that no series could be read from is a video rather than a film.
+ * Failing to parse a name is not evidence that something is a film — it is evidence of nothing —
+ * and calling it one puts an episode whose name was written out in words, or a double episode the
+ * parser did not recognise, on the films shelf beside the features.
+ *
  * @param item - What was found, so far as the scan knows it.
  * @param libraryKind - What the library it landed in reads.
  * @returns The kind to report.
@@ -30,7 +35,11 @@ const mediaKindOf = (
     return 'song';
   }
 
-  return item.seriesTitle === null ? 'movie' : 'episode';
+  if (item.seriesTitle !== null) {
+    return 'episode';
+  }
+
+  return libraryKind === 'shows' ? 'video' : 'movie';
 };
 
 export { mediaKindOf };

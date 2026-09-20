@@ -2,9 +2,9 @@ import { findYear } from './readTitleFromPath';
 import { readSeasonDirectory } from './readSeasonDirectory';
 
 const EPISODE_PATTERNS = [
-  /\bs(?<season>\d{1,2})[\s._-]*e(?<episode>\d{1,3})\b/i,
+  /\bs(?<season>\d{1,2})[\s._-]*e(?<episode>\d{1,3})(?:[\s._-]*e\d{1,3})*\b/i,
   /\b(?<season>\d{1,2})x(?<episode>\d{1,3})\b/i,
-  /\bseason[\s._-]*(?<season>\d{1,2})[\s._-]*episode[\s._-]*(?<episode>\d{1,3})\b/i,
+  /\b(?:season|series)[\s._-]*(?<season>\d{1,2})[\s._-]*episode[\s._-]*(?<episode>\d{1,3})\b/i,
 ] as const;
 
 const RELEASE_NOISE =
@@ -36,6 +36,14 @@ const tidy = (name: string): string =>
  * Reads which programme, season and episode a file is from its path, using the folders above it as
  * well as its own name — a file called `s02e04.mkv` says nothing about which programme it belongs to,
  * and the folder holding it usually does.
+ *
+ * A run of episodes counts as one, filed under the first of its numbers: `S09E19E20` is a double
+ * episode shown as a single file. Read without allowing for that it matches nothing at all, because
+ * a word boundary cannot sit between the `9` and the `e` that follows it — so a double episode read
+ * as having no episode rather than as having two, and landed on the films shelf.
+ *
+ * "Series" is read as "season", since that is what it means to anybody outside America and it is
+ * how British television is written down.
  *
  * @param filePath - The file's full path inside the library.
  * @returns What could be read: the series, the season and the episode, each absent where the path

@@ -130,3 +130,63 @@ describe('an extra with nothing to belong to', () => {
     });
   });
 });
+
+describe('an extras folder named after the season it sits in', () => {
+  it('reads a folder that says extras among other words', () => {
+    const found = groupExtras([
+      '/shows/School of Comedy/Season 1/School of Comedy S01E01.mkv',
+      '/shows/School of Comedy/Season 1/Season 1 Extras/out takes.mkv',
+    ]);
+
+    expect(found.get('/shows/School of Comedy/Season 1/Season 1 Extras/out takes.mkv')).toEqual({
+      kind: 'other',
+      parentPath: null,
+      seriesFolder: '/shows/School of Comedy',
+    });
+  });
+
+  it('hangs it off the programme rather than off whichever episode sorted first', () => {
+    const found = groupExtras([
+      '/shows/A Show/Season 2/A Show S02E01.mkv',
+      '/shows/A Show/Season 2/A Show S02E02 A Much Longer Name.mkv',
+      '/shows/A Show/Season 2/Season 2 Extras/A featurette.mkv',
+    ]);
+
+    expect(found.get('/shows/A Show/Season 2/Season 2 Extras/A featurette.mkv')?.parentPath).toBe(
+      null,
+    );
+  });
+
+  it('still hangs a film’s extras off the film beside them', () => {
+    const found = groupExtras([
+      '/films/Some Film/Some Film.mkv',
+      '/films/Some Film/Deleted Scenes/A cut bit.mkv',
+    ]);
+
+    expect(found.get('/films/Some Film/Deleted Scenes/A cut bit.mkv')).toEqual({
+      kind: 'deletedScene',
+      parentPath: '/films/Some Film/Some Film.mkv',
+      seriesFolder: null,
+    });
+  });
+
+  it('takes the longest word, so deleted scenes are not merely scenes', () => {
+    const found = groupExtras([
+      '/films/Some Film/Some Film.mkv',
+      '/films/Some Film/Season 1 Deleted Scenes/A cut bit.mkv',
+    ]);
+
+    expect(found.get('/films/Some Film/Season 1 Deleted Scenes/A cut bit.mkv')?.kind).toBe(
+      'deletedScene',
+    );
+  });
+
+  it('leaves a folder that says none of the words alone', () => {
+    const found = groupExtras([
+      '/shows/A Show/Season 1/A Show S01E01.mkv',
+      '/shows/A Show/Season 1/Behind Closed Doors/something.mkv',
+    ]);
+
+    expect(found.has('/shows/A Show/Season 1/Behind Closed Doors/something.mkv')).toBe(false);
+  });
+});

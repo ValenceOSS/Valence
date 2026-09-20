@@ -77,6 +77,7 @@ import {
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type {
   Library,
+  LibraryKind,
   MediaDetail,
   MediaSummary,
   PreviewMoment,
@@ -583,6 +584,30 @@ const createDatabaseLibraryService = ({
    * @param id - The library.
    * @returns Whether to admit it exists.
    */
+  /**
+   * What a library reads, so that asking it for the wrong sort of thing can answer with nothing.
+   *
+   * @param id - The library.
+   * @returns What it holds, or null where there is no such library.
+   */
+  const kindOfLibrary = async (id: string): Promise<LibraryKind | null> => {
+    const rows = await db
+      .select({ kind: library.kind })
+      .from(library)
+      .where(eq(library.id, id))
+      .limit(1);
+
+    const held = rows[0]?.kind;
+
+    if (held === undefined) {
+      return null;
+    }
+
+    const read = LibraryKindSchema.safeParse(held);
+
+    return read.success ? read.data : null;
+  };
+
   const libraryVisible = async (viewer: Viewer, id: string): Promise<boolean> => {
     const rows = await db
       .select({ one: sql<number>`1` })
@@ -958,6 +983,8 @@ const createDatabaseLibraryService = ({
         return null;
       }
 
+      const holds = await kindOfLibrary(libraryId);
+
       const asked = [
         eq(mediaItem.libraryId, libraryId),
         isNotATrack(db),
@@ -967,11 +994,11 @@ const createDatabaseLibraryService = ({
           : [matchesSearch(options.search)]),
         ...(options.kind === undefined
           ? []
-          : [
-              options.kind === 'shows'
-                ? isNotNull(mediaItem.seriesTitle)
-                : isNull(mediaItem.seriesTitle),
-            ]),
+          : options.kind === 'shows'
+            ? [isNotNull(mediaItem.seriesTitle)]
+            : holds === 'shows'
+              ? [sql`false`]
+              : [isNull(mediaItem.seriesTitle)]),
         ...(options.genre === undefined || options.genre === ''
           ? []
           : [sql`${mediaItem.genres} @> ${JSON.stringify([options.genre])}::jsonb`]),

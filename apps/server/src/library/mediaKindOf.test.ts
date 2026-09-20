@@ -10,8 +10,12 @@ describe('mediaKindOf', () => {
     expect(mediaKindOf({ seriesTitle: 'The Bear' }, 'shows')).toBe('episode');
   });
 
-  it('calls a film in a shows library a film, because the library is not the item', () => {
-    expect(mediaKindOf({ seriesTitle: null }, 'shows')).toBe('movie');
+  it('calls a file in a shows library that reads as no episode a video, not a film', () => {
+    expect(mediaKindOf({ seriesTitle: null }, 'shows')).toBe('video');
+  });
+
+  it('still calls something with no series in a film library a film', () => {
+    expect(mediaKindOf({ seriesTitle: null }, 'movies')).toBe('movie');
   });
 
   it('calls anything in a books library a book, series or not', () => {
