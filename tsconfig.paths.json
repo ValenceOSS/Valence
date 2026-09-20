@@ -78,6 +78,10 @@
       "@ValenceUI/DialogTitle.types": [
         "./packages/ui/src/components/DialogTitle/DialogTitle.types.ts"
       ],
+      "@ValenceUI/FilterMenu": ["./packages/ui/src/components/FilterMenu/FilterMenu.tsx"],
+      "@ValenceUI/FilterMenu.types": [
+        "./packages/ui/src/components/FilterMenu/FilterMenu.types.ts"
+      ],
       "@ValenceUI/FormField": ["./packages/ui/src/components/FormField/FormField.tsx"],
       "@ValenceUI/FormField.types": ["./packages/ui/src/components/FormField/FormField.types.ts"],
       "@ValenceUI/DotField": ["./packages/ui/src/components/DotField/DotField.tsx"],
