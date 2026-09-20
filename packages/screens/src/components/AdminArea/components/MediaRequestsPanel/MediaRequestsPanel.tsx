@@ -408,8 +408,8 @@ const MediaRequestsPanel = () => {
                 });
             }}
           >
-            <Icon of={ReloadIcon} size={15} />
             Refetch media
+            <Icon of={ReloadIcon} size={15} />
           </Button>
 
           <Button
@@ -419,8 +419,8 @@ const MediaRequestsPanel = () => {
               setIsAsking(true);
             }}
           >
-            <Icon of={Add01Icon} size={15} />
             Request media
+            <Icon of={Add01Icon} size={15} />
           </Button>
         </>
       }
