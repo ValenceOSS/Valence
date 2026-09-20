@@ -12,7 +12,7 @@ import type { DialogFooterProps } from './DialogFooter.types';
  * buttons is a footer that can disagree with every other one — and they did. Cancel was painted
  * three ways across the application, and the confirming button was white here and blue there, which
  * taught nobody anything about which button does the thing. Declared instead, the rule is one rule:
- * the way out is quiet, the answer is white, and an answer that destroys something is red.
+ * the way out is the default gray, the answer is white, and an answer that destroys something is red.
  *
  * The way out says Cancel where there is an answer to cancel and Close where the dialog is only
  * something to read, which is the difference the two words actually carry.
@@ -35,7 +35,7 @@ import type { DialogFooterProps } from './DialogFooter.types';
  * where stacking only moves the problem down the page.
  *
  * @param children - The buttons answering the dialog, where its answers are its own.
- * @param dismiss - The way out, painted quietly. Says Cancel beside an answer and Close alone.
+ * @param dismiss - The way out, painted in the default gray. Says Cancel beside an answer and Close alone.
  * @param confirm - The answer, painted white, or red where it destroys something.
  * @param note - Why the last attempt was refused, in red above the answers, when it was.
  * @param className - Extra classes for the caller's own layout.
@@ -61,7 +61,7 @@ const DialogFooter = ({ children, dismiss, confirm, note, className }: DialogFoo
 
     {dismiss === undefined ? null : (
       <Button
-        variant="secondary"
+        variant="glossy"
         disabled={dismiss.isDisabled ?? false}
         isLoading={dismiss.isLoading ?? false}
         onClick={dismiss.onChoose}

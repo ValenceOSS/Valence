@@ -164,4 +164,16 @@ describe('DialogFooter', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(DialogFooter.displayName).toBe('DialogFooter');
   });
+
+  it('paints the way out in the default gray rather than black', () => {
+    render(
+      <DialogFooter
+        dismiss={{ onChoose: vi.fn() }}
+        confirm={{ label: 'Save', onChoose: vi.fn() }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveClass('bg-[var(--surface-hover)]');
+    expect(screen.getByRole('button', { name: 'Cancel' })).not.toHaveClass('bg-background');
+  });
 });
