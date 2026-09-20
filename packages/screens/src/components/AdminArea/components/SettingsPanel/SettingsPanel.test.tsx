@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsPanel } from './SettingsPanel';
@@ -6,6 +6,9 @@ import type { AdminOverview } from '@ValenceClient/admin/fetchAdmin';
 
 const saveCatalogueKey = vi.hoisted(() => vi.fn());
 const saveHardwareAccel = vi.hoisted(() => vi.fn(() => Promise.resolve(true)));
+const saveRoundness = vi.hoisted(() =>
+  vi.fn<(roundness: string) => Promise<boolean>>(() => Promise.resolve(true)),
+);
 const savePreviewQuality = vi.hoisted(() =>
   vi.fn<(quality: string) => Promise<boolean>>(() => Promise.resolve(true)),
 );
@@ -39,6 +42,7 @@ vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveCatalogueKey,
   saveHardwareAccel,
   savePreviewQuality,
+  saveRoundness,
   saveShowsProfilesBeforeSignIn,
   saveCertificationRegion,
   saveFetchesCatalogueTrailers,
@@ -61,6 +65,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     fetchesCatalogueTrailers: false,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
+    roundness: 'default' as const,
     certificationRegion: 'GB',
     splashscreen: null,
     ...overrides,
@@ -319,6 +324,35 @@ describe('SettingsPanel', () => {
     expect(presets).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Low' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'High' })).toBeInTheDocument();
+  });
+
+  it('saves the roundness chosen and tells whoever redraws the application', async () => {
+    const saved = vi.fn();
+    const actor = userEvent.setup();
+
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
+        onRoundnessSaved={saved}
+      />,
+    );
+
+    const choices = screen.getByRole('group', { name: 'Roundness' });
+
+    await actor.click(within(choices).getByRole('button', { name: 'Round' }));
+
+    expect(saveRoundness).toHaveBeenCalledWith('round');
+
+    await waitFor(() => {
+      expect(saved).toHaveBeenCalledOnce();
+    });
   });
 
   it('saves the preview preset chosen and tells whoever owns the overview', async () => {

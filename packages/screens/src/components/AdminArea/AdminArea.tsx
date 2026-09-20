@@ -48,6 +48,7 @@ import {
 } from '@ValenceClient/admin/fetchAdmin';
 import { rebuildArtefacts } from '@ValenceClient/library/fetchLibrary';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -858,6 +859,10 @@ const AdminArea = ({
               }}
               onHardwareAccelSaved={() => {
                 void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+              }}
+              onRoundnessSaved={() => {
+                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                void cache.invalidateQueries({ queryKey: appearanceQueries.key });
               }}
               onPreviewQualitySaved={() => {
                 void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });

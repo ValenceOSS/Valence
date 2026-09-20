@@ -15,6 +15,7 @@ import {
   saveCatalogueKey,
   saveHardwareAccel,
   savePreviewQuality,
+  saveRoundness,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,
@@ -23,6 +24,11 @@ import {
   saveSplashscreen,
   removeSplashscreen,
 } from '@ValenceClient/admin/fetchAdmin';
+import {
+  ROUNDNESS_LABELS,
+  ROUNDNESS_LEVELS,
+  RoundnessSchema,
+} from '@ValenceContracts/schemas/Roundness';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import { accelerationOptions } from '@ValenceScreens/components/AdminArea/accelerationOptions';
 import type { SettingsPanelProps } from './SettingsPanel.types';
@@ -39,6 +45,11 @@ import { certificationRegions } from '@ValenceScreens/components/AdminArea/certi
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
 import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 
+const ROUNDNESS_CHOICES = ROUNDNESS_LEVELS.map((level) => ({
+  id: level,
+  label: ROUNDNESS_LABELS[level],
+}));
+
 /**
  * What this server is configured with and who may sign into it: the metadata catalogue key, which
  * encoder transcodes use, how good the hover previews are, and the accounts on the server. Each setting says what it means in
@@ -53,6 +64,7 @@ import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
  * @param onSplashscreenSaved - Called once the picture behind the way in has been chosen or removed.
  * @param onMusicDetailsSaved - Called once looking for music details on the web is turned on or off.
  * @param onReleaseTypesSaved - Called once the kinds of record a request watches have been written.
+ * @param onRoundnessSaved - Called once how round the application is has been written.
  */
 const SettingsPanel = ({
   overview,
@@ -64,12 +76,14 @@ const SettingsPanel = ({
   onCatalogueTrailersSaved,
   onMusicDetailsSaved,
   onReleaseTypesSaved,
+  onRoundnessSaved,
   onSplashscreenSaved,
 }: SettingsPanelProps) => {
   const [catalogueKey, setCatalogueKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [accel, setAccel] = useState(overview?.settings.hardwareAccel ?? '');
   const [quality, setQuality] = useState(overview?.settings.previewQuality ?? 'high');
+  const [roundness, setRoundness] = useState(overview?.settings.roundness ?? 'default');
   const [region, setRegion] = useState(overview?.settings.certificationRegion ?? 'GB');
   const [showsFaces, setShowsFaces] = useState(
     overview?.settings.showsProfilesBeforeSignIn ?? true,
@@ -186,6 +200,34 @@ const SettingsPanel = ({
               void savePreviewQuality(chosen.data).then((saved) => {
                 if (saved) {
                   onPreviewQualitySaved();
+                }
+              });
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title="Roundness"
+          description="How round the corners of everything in Valence are, for everybody who uses this server. Sharp squares them all off; round softens them."
+        >
+          <SegmentedRow
+            label="Roundness"
+            size="sm"
+            tone="accent"
+            items={ROUNDNESS_CHOICES}
+            value={roundness}
+            onSelect={(id) => {
+              const chosen = RoundnessSchema.safeParse(id);
+
+              if (!chosen.success) {
+                return;
+              }
+
+              setRoundness(chosen.data);
+
+              void saveRoundness(chosen.data).then((saved) => {
+                if (saved) {
+                  onRoundnessSaved?.();
                 }
               });
             }}
