@@ -346,12 +346,12 @@ const ShowDialog = ({
           label="More to do with this programme"
           primary={
             carryingOn === null ? (
-              <Button variant="glossy" size="lg" isLoading disabled>
+              <Button variant="confirm" size="lg" isLoading disabled>
                 Reading the episodes
               </Button>
             ) : (
               <Button
-                variant="glossy"
+                variant="confirm"
                 size="lg"
                 onClick={() => {
                   onPlay(carryingOn.episode, carryingOn.startSeconds);

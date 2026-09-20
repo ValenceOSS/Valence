@@ -16,6 +16,7 @@ const buttonStyles = cva(
       variant: {
         primary: `${FLAT} border-white/15 bg-accent text-primary-foreground hover:bg-accent-hover`,
         glossy: `${FLAT} border-[var(--surface-line)] bg-[var(--surface-hover)] text-text hover:bg-[var(--surface-active)]`,
+        confirm: `${FLAT} border-transparent bg-white text-on-white hover:bg-white-hover`,
         secondary: `${FLAT} border-[var(--surface-line)] bg-background text-secondary-foreground hover:bg-muted`,
         soft: `${FLAT} border-transparent bg-accent/15 text-accent hover:bg-accent/25`,
         ghost: 'bg-transparent text-foreground hover:bg-[var(--surface-hover)]',
@@ -44,11 +45,30 @@ const buttonStyles = cva(
     },
     compoundVariants: [
       {
-        variant: ['primary', 'glossy', 'secondary', 'soft', 'ghost', 'danger', 'overlay', 'link'],
+        variant: [
+          'primary',
+          'glossy',
+          'confirm',
+          'secondary',
+          'soft',
+          'ghost',
+          'danger',
+          'overlay',
+          'link',
+        ],
         class: 'shrink-0 items-center justify-center whitespace-nowrap',
       },
       {
-        variant: ['primary', 'glossy', 'secondary', 'soft', 'ghost', 'danger', 'overlay'],
+        variant: [
+          'primary',
+          'glossy',
+          'confirm',
+          'secondary',
+          'soft',
+          'ghost',
+          'danger',
+          'overlay',
+        ],
         class: 'coarse:min-h-11',
       },
       { isIconOnly: true, size: 'xs', class: 'size-7 coarse:size-11' },

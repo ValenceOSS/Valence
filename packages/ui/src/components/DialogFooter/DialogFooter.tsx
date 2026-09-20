@@ -74,7 +74,7 @@ const DialogFooter = ({ children, dismiss, confirm, note, className }: DialogFoo
 
     {confirm === undefined ? null : (
       <Button
-        variant={confirm.isDestructive === true ? 'danger' : 'glossy'}
+        variant={confirm.isDestructive === true ? 'danger' : 'confirm'}
         disabled={confirm.isDisabled ?? false}
         isLoading={confirm.isLoading ?? false}
         onClick={confirm.onChoose}

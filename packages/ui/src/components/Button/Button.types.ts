@@ -1,7 +1,16 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 type ButtonVariant =
-  'primary' | 'glossy' | 'secondary' | 'soft' | 'ghost' | 'danger' | 'overlay' | 'link' | 'bare';
+  | 'primary'
+  | 'glossy'
+  | 'confirm'
+  | 'secondary'
+  | 'soft'
+  | 'ghost'
+  | 'danger'
+  | 'overlay'
+  | 'link'
+  | 'bare';
 
 type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'none';
 

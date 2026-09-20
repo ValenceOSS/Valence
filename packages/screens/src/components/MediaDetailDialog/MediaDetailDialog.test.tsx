@@ -208,13 +208,10 @@ describe('MediaDetailDialog', () => {
     expect(screen.getByRole('dialog', { name: 'Arrival' })).toBeInTheDocument();
   });
 
-  it('offers to play in the same filled button as everywhere, as wide as the actions beside it', () => {
+  it('offers to play in the white button a dialog answers with, as wide as the actions beside it', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Play' })).toHaveClass(
-      'flex-1',
-      'bg-[var(--surface-hover)]',
-    );
+    expect(screen.getByRole('button', { name: 'Play' })).toHaveClass('flex-1', 'bg-white');
   });
 
   it('asks for the full-size lettering, so a logo is not stretched soft across the artwork', () => {

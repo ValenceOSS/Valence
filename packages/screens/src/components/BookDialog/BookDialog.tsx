@@ -204,7 +204,7 @@ const BookDialog = ({
           label="More to do with this book"
           primary={
             <Button
-              variant="glossy"
+              variant="confirm"
               size="lg"
               className="w-full"
               disabled={book === null}

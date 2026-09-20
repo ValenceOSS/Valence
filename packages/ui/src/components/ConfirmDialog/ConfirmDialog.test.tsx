@@ -57,13 +57,13 @@ describe('ConfirmDialog', () => {
     const confirm = screen.getByRole('button', { name: 'Delete' });
 
     expect(confirm).toHaveClass('bg-danger');
-    expect(confirm).not.toHaveClass('bg-[var(--surface-hover)]');
+    expect(confirm).not.toHaveClass('bg-white');
   });
 
   it('paints any other answer white', () => {
     open();
 
-    expect(screen.getByRole('button', { name: 'Delete' })).toHaveClass('bg-[var(--surface-hover)]');
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveClass('bg-white');
   });
 
   it('will not be cancelled while the work is running', () => {

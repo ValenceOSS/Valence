@@ -115,10 +115,8 @@ describe('DialogFooter', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('bg-[var(--surface-hover)]');
-    expect(screen.getByRole('button', { name: 'Cancel' })).not.toHaveClass(
-      'bg-[var(--surface-hover)]',
-    );
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('bg-white');
+    expect(screen.getByRole('button', { name: 'Cancel' })).not.toHaveClass('bg-white');
   });
 
   it('paints an answer that destroys something red', () => {

@@ -67,6 +67,12 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Play' })).toHaveClass('bg-danger');
   });
 
+  it('offers a white treatment for the answer a dialog is asking for', () => {
+    render(<Button variant="confirm">Save</Button>);
+
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('bg-white', 'text-on-white');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(Button.displayName).toBe('Button');
   });

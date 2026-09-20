@@ -494,7 +494,7 @@ const MediaDetailDialog = ({
               )}
 
               <Button
-                variant="glossy"
+                variant="confirm"
                 size="lg"
                 className="min-w-0 flex-1"
                 onClick={() => {
