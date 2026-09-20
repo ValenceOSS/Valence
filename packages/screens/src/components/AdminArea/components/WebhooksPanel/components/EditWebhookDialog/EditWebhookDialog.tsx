@@ -114,7 +114,7 @@ const EditWebhookDialog = ({
           }
         />
 
-        <DialogContent className="flex flex-col gap-5">
+        <DialogContent className="flex min-h-[34rem] flex-col gap-5">
           <WebhookFields
             draft={draft}
             onChange={setDraft}
