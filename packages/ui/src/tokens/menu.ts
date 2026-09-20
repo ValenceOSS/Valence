@@ -16,6 +16,7 @@ const MENU = {
   icon: 'flex size-4 shrink-0 items-center justify-center coarse:size-5',
   itemLabel: 'flex-1 truncate text-left',
   detail: 'shrink-0 text-xs text-text-muted',
+  hint: 'flex shrink-0 items-center text-text-muted',
 } as const;
 
 export { MENU };

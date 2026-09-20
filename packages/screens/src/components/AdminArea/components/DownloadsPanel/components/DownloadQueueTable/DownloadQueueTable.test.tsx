@@ -207,17 +207,23 @@ describe('DownloadQueueTable', () => {
     ]);
 
     await user.click(screen.getByRole('button', { name: 'Actions for Dune' }));
-    expect(screen.getByText('Now, named from the release.')).toBeInTheDocument();
+    expect(screen.queryByText('Now, named from the release.')).not.toBeInTheDocument();
+    await user.hover(document.querySelector('[data-slot="menu-hint"]') ?? document.body);
+    expect((await screen.findAllByText('Now, named from the release.')).length).toBeGreaterThan(0);
     await user.click(screen.getByRole('menuitem', { name: /File into Films/ }));
     expect(onFile).toHaveBeenCalledWith(expect.objectContaining({ title: 'Dune' }), 'films');
 
     await user.click(screen.getByRole('button', { name: 'Actions for Heat' }));
-    expect(screen.getByText('Again, beside what was filed before.')).toBeInTheDocument();
-    await user.keyboard('{Escape}');
+    await user.hover(document.querySelector('[data-slot="menu-hint"]') ?? document.body);
+    expect(
+      (await screen.findAllByText('Again, beside what was filed before.')).length,
+    ).toBeGreaterThan(0);
+    await user.keyboard('{Escape}{Escape}');
 
     await user.click(screen.getByRole('button', { name: 'Actions for Arrival' }));
-    expect(screen.getByText('Once it has downloaded.')).toBeInTheDocument();
-    await user.keyboard('{Escape}');
+    await user.hover(document.querySelector('[data-slot="menu-hint"]') ?? document.body);
+    expect((await screen.findAllByText('Once it has downloaded.')).length).toBeGreaterThan(0);
+    await user.keyboard('{Escape}{Escape}');
 
     await user.click(screen.getByRole('button', { name: 'Actions for Kid A' }));
     expect(screen.queryByRole('menuitem', { name: /File into/ })).not.toBeInTheDocument();

@@ -1,5 +1,8 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
+import { InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { cn } from '@ValenceUI/cn';
+import { Icon } from '@ValenceUI/Icon';
+import { Tooltip } from '@ValenceUI/Tooltip';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { MENU } from '@ValenceUI/tokens/menu';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
@@ -16,6 +19,9 @@ const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
  * A menu of things to do — rename, rescan, delete — rather than a value to pick, which is what an
  * option menu is for. Items can be grouped, marked destructive so they read as dangerous before
  * they are pressed, and disabled with the reason still visible.
+ *
+ * An item that needs explaining carries a hint, drawn as an information mark that says it on hover,
+ * rather than a line of small print that makes every row of the menu taller.
  *
  * An item closes the menu on being chosen, because doing the thing is the end of the errand. An item
  * that sets a value rather than doing a thing can ask to stay open: choosing a theme and having the
@@ -113,6 +119,14 @@ const ActionMenu = ({
 
                     {item.detail === undefined ? null : (
                       <span className={MENU.detail}>{item.detail}</span>
+                    )}
+
+                    {item.hint === undefined ? null : (
+                      <Tooltip label={item.hint} side="left">
+                        <span data-slot="menu-hint" className={MENU.hint}>
+                          <Icon of={InformationCircleIcon} size={15} />
+                        </span>
+                      </Tooltip>
                     )}
                   </RadixMenu.Item>
                 ))}

@@ -66,6 +66,27 @@ describe('ActionMenu', () => {
     );
   });
 
+  it('says what needs explaining behind an information mark rather than as small print', async () => {
+    render(
+      <ActionMenu
+        {...props}
+        groups={[
+          {
+            items: [
+              { id: 'x', label: 'File it', hint: 'Once it has downloaded.', onChoose: vi.fn() },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    await open();
+
+    expect(await screen.findByRole('menuitem', { name: 'File it' })).toBeInTheDocument();
+    expect(screen.queryByText('Once it has downloaded.')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-slot="menu-hint"]')).toBeInTheDocument();
+  });
+
   it('colours a destructive action rather than merely listing it last', async () => {
     render(
       <ActionMenu
