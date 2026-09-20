@@ -87,6 +87,14 @@ describe('MediaCard', () => {
     expect(screen.getByRole('button', { name: /^Arrival\s*2016$/u })).toBeInTheDocument();
   });
 
+  it('draws no play mark over the artwork, since a card no longer plays when it is rested on', () => {
+    const { container } = render(
+      <MediaCard title="Dune" subtitle="2021" imageUrl="/dune.jpg" onSelect={vi.fn()} />,
+    );
+
+    expect(container.querySelector('svg')).not.toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MediaCard.displayName).toBe('MediaCard');
   });
