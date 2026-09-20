@@ -66,7 +66,7 @@ const TrackList = ({
 
   return (
     <div ref={containerRef} className="relative" onPointerMove={follow} onPointerLeave={clear}>
-      <HoverHighlight rect={rect} radius="md" className="bg-[var(--surface-hover)]" />
+      <HoverHighlight rect={rect} radius="md" />
 
       <Reorder.Group
         as="ol"

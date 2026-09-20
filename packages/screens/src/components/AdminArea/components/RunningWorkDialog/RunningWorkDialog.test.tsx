@@ -43,7 +43,7 @@ describe('RunningWorkDialog', () => {
       />,
     );
 
-    expect(screen.getByText('1 running · 2 waiting')).toBeInTheDocument();
+    expect(screen.getByText('1 running').parentElement).toHaveTextContent('1 running · 2 waiting');
   });
 
   it('says so when nothing in the queue is tied to the job', () => {
@@ -108,7 +108,7 @@ describe('RunningWorkDialog', () => {
       />,
     );
 
-    expect(screen.getByText('1 running · 0 waiting')).toBeInTheDocument();
+    expect(screen.getByText('1 running').parentElement).toHaveTextContent('1 running · 0 waiting');
   });
 
   it('draws a task waiting in the queue as a gray waiting badge', () => {
@@ -137,7 +137,7 @@ describe('RunningWorkDialog', () => {
     );
 
     expect(screen.getByText('90 more not started yet')).toBeInTheDocument();
-    expect(screen.getByText('1 running · 90 waiting')).toBeInTheDocument();
+    expect(screen.getByText('1 running').parentElement).toHaveTextContent('1 running · 90 waiting');
   });
 
   it('shows nothing while closed', () => {

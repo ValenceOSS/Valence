@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react';
+
 type ReadoutLinesProps = {
-  lines: readonly string[];
+  lines: readonly ReactNode[];
 };
 
 export type { ReadoutLinesProps };

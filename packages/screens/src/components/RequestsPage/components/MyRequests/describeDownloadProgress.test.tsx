@@ -1,3 +1,4 @@
+import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { describeDownloadProgress } from './describeDownloadProgress';
 
@@ -11,14 +12,28 @@ const GOING = {
   secondsLeft: 720,
 };
 
+const said = (progress: Parameters<typeof describeDownloadProgress>[0]): string =>
+  render(<>{describeDownloadProgress(progress)}</>).container.textContent ?? '';
+
 describe('describeDownloadProgress', () => {
   it('says how much has arrived, how fast, and how long is left', () => {
-    expect(describeDownloadProgress(GOING)).toBe('2.0 GB of 4.0 GB · 3.0 MB/s · 12 min left');
+    expect(said(GOING)).toBe('2.0 GB of 4.0 GB · 3.0 MB/s · 12 min left');
+  });
+
+  it('says nothing where nothing is known', () => {
+    expect(
+      describeDownloadProgress({
+        ...GOING,
+        sizeBytes: null,
+        secondsLeft: null,
+        downloadBytesPerSecond: null,
+      }),
+    ).toBeNull();
   });
 
   it('says only what it knows', () => {
     expect(
-      describeDownloadProgress({
+      said({
         ...GOING,
         doneBytes: null,
         downloadBytesPerSecond: 0,
@@ -26,7 +41,7 @@ describe('describeDownloadProgress', () => {
       }),
     ).toBe('4.0 GB');
     expect(
-      describeDownloadProgress({
+      said({
         ...GOING,
         sizeBytes: null,
         secondsLeft: null,

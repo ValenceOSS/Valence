@@ -1,3 +1,4 @@
+import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { describeGraphics } from './describeGraphics';
 
@@ -14,7 +15,7 @@ describe('describeGraphics', () => {
       measured: 'wholeMachine' as const,
     });
 
-    expect(tile.value).toBe('88%');
+    expect(render(<>{tile.value}</>).container).toHaveTextContent('88%');
     expect(tile.detail).toBe('encoder, not whole card');
   });
 
@@ -26,7 +27,7 @@ describe('describeGraphics', () => {
       measured: 'wholeMachine' as const,
     });
 
-    expect(tile.value).toBe('90%');
+    expect(render(<>{tile.value}</>).container).toHaveTextContent('90%');
   });
 
   it('falls back to the whole card and says that is what it is', () => {
@@ -37,7 +38,7 @@ describe('describeGraphics', () => {
       measured: 'wholeMachine' as const,
     });
 
-    expect(tile.value).toBe('41%');
+    expect(render(<>{tile.value}</>).container).toHaveTextContent('41%');
     expect(tile.detail).toBe('whole card, not encoder');
   });
 
@@ -130,7 +131,7 @@ describe('describeGraphics', () => {
       measured: 'valenceOnly' as const,
     });
 
-    expect(tile.value).toBe('62%');
+    expect(render(<>{tile.value}</>).container).toHaveTextContent('62%');
     expect(tile.detail).toBe('video engine, ours only');
   });
 

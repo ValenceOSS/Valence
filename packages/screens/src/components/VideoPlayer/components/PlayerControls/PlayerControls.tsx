@@ -184,11 +184,11 @@ const PlayerControls = ({
       />
 
       <Button
-        variant="bare"
+        variant="ghost"
         size="none"
         aria-label={isShowingRemaining ? 'Show the time played' : 'Show the time remaining'}
         onClick={onToggleTimeDisplay}
-        className="shrink-0 rounded-md px-1 text-xs tabular-nums hover:bg-[var(--surface-hover)] sm:text-sm"
+        className="shrink-0 px-1 text-xs tabular-nums sm:text-sm"
       >
         {isShowingRemaining
           ? `-${formatDuration(Math.max(duration - position, 0))}`

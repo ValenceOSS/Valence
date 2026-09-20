@@ -80,9 +80,10 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       >
         {profile === null || draft === null ? null : (
           <ProfileFace
+            shape="tile"
             profile={{ ...profile, name: draft.name, colour: draft.colour, avatar: draft.avatar }}
             pending={draft.photo}
-            className="size-8 shrink-0 rounded-lg text-xs"
+            className="size-8 shrink-0 text-xs"
           />
         )}
 

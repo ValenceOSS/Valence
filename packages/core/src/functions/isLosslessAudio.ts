@@ -10,7 +10,6 @@ import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
  * @param stream - The track.
  * @returns Whether nothing has been discarded from it yet.
  */
-const isLosslessAudio = (stream: AudioStream): boolean =>
-  stream.codec in LOSSLESS_KBPS_PER_CHANNEL;
+const isLosslessAudio = (stream: AudioStream): boolean => stream.codec in LOSSLESS_KBPS_PER_CHANNEL;
 
 export { isLosslessAudio };

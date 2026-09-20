@@ -95,7 +95,7 @@ export default tseslint.config(
         },
         {
           selector:
-            'JSXOpeningElement[name.name="Icon"] > JSXAttribute[name.name="className"] > Literal[value=/\\btext-(text|text-muted|danger)\\b/]',
+            'JSXOpeningElement[name.name="Icon"] > JSXAttribute[name.name="className"] > Literal[value=/\\btext-(text|text-muted|danger|on-scrim)\\b/]',
           message:
             'An icon is given its colour by tone, not by className. Use tone="muted" or tone="danger" — see code standards section 10.',
         },
@@ -107,9 +107,27 @@ export default tseslint.config(
         },
         {
           selector:
+            'JSXOpeningElement[name.name="Button"] > JSXAttribute[name.name="className"] > Literal[value=/(hover:bg-|\\bshadow-|\\btext-danger|\\bbg-surface|\\bborder\\b|rounded-full)/]',
+          message:
+            'A button takes its fill, border, corners and shadow from variant, isPill and the component around it, not className. Use variant="row", "glossy", "ghost", "danger" or "overlay" — see code standards section 9.',
+        },
+        {
+          selector:
             'JSXOpeningElement[name.name="Skeleton"] > JSXAttribute[name.name="className"] > Literal[value=/\\brounded\\b/]',
           message:
             'A skeleton takes its corners from shape, not className. Use shape="soft" or shape="round".',
+        },
+        {
+          selector:
+            'JSXOpeningElement[name.name=/^(FaceCircle|ProfileFace|HouseholdFace)$/] > JSXAttribute[name.name="className"] Literal[value=/\\b(rounded|shadow)/]',
+          message:
+            'A face takes its corners and shadow from shape and isLifted, not className. Use shape="tile" or isLifted.',
+        },
+        {
+          selector:
+            'JSXOpeningElement[name.name=/^(MusicArtwork|GlassPanel|ActionMenu|PanelCard)$/] > JSXAttribute[name.name="className"] Literal[value=/(\\brounded|\\bshadow-|\\bring-|\\bborder\\b|\\bhover:bg-|\\bbg-)/]',
+          message:
+            'A component takes its corners, shadow, ring, edge and fill from its own props — shape, isLifted, isHighlighted, radius or look — not className.',
         },
       ],
     },

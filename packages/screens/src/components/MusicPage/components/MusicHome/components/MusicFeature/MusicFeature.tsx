@@ -72,12 +72,12 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
             size="none"
             label={`Open ${album.title}`}
             hasTooltip={false}
-            className="block w-48 shrink-0 shadow-[var(--shadow-overlay)] sm:w-60 lg:w-72"
+            className="block w-48 shrink-0 sm:w-60 lg:w-72"
             onClick={() => {
               open({ kind: 'album', id: album.id });
             }}
           >
-            <MusicArtwork src={cover} label={album.title} className="w-full" />
+            <MusicArtwork src={cover} label={album.title} isLifted className="w-full" />
           </Button>
 
           <motion.div
@@ -171,11 +171,11 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
             {upNext.map(({ at, track }) => (
               <li key={`${track.id}-${at.toString()}`}>
                 <Button
-                  variant="bare"
+                  variant="row"
                   size="none"
                   hasTooltip={false}
                   label={`Play ${track.title} now`}
-                  className="flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)]"
+                  className="items-center gap-3 p-2"
                   onClick={() => {
                     player.jumpTo(at);
                   }}

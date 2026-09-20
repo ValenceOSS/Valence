@@ -22,11 +22,19 @@ const ELEVATION_CLASSES: Record<GlassElevation, string> = {
 const GlassPanel = ({
   children,
   elevation = 'floating',
+  radius = 'default',
   as: Element = 'div',
   className,
   ...rest
 }: GlassPanelProps) => (
-  <Element className={cn('rounded-xl', ELEVATION_CLASSES[elevation], className)} {...rest}>
+  <Element
+    className={cn(
+      radius === 'large' ? 'rounded-3xl' : 'rounded-xl',
+      ELEVATION_CLASSES[elevation],
+      className,
+    )}
+    {...rest}
+  >
     {children}
   </Element>
 );

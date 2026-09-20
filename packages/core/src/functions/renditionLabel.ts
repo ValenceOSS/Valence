@@ -35,9 +35,7 @@ const renditionLabel = ({
   height: number;
   videoCodec: string;
 }): string => {
-  const step = QUALITY_STEPS.find(
-    (one) => width >= one.maxWidth || height >= one.maxHeight,
-  );
+  const step = QUALITY_STEPS.find((one) => width >= one.maxWidth || height >= one.maxHeight);
 
   const codec = CODEC_NAMES[videoCodec] ?? videoCodec.toUpperCase();
 

@@ -166,7 +166,7 @@ const MusicLibrary = () => {
         onPointerMove={follow}
         onPointerLeave={clear}
       >
-        <HoverHighlight rect={rect} radius="md" className="bg-[var(--surface-hover)]" />
+        <HoverHighlight rect={rect} radius="md" />
 
         <ul className="relative flex flex-col">
           {shown.map((entry) => {

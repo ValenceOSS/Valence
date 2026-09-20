@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Cancel01Icon, MusicNote01Icon } from '@hugeicons/core-free-icons';
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
+import { DownloadProgressReadout } from '@ValenceScreens/components/DownloadProgressReadout/DownloadProgressReadout';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -24,7 +25,6 @@ import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonCh
 import { describeAskableFacts } from './describeAskableFacts';
 import { describeStanding } from './describeStanding';
 import { readAsking } from './readAsking';
-import { describeDownloadProgress } from '@ValenceScreens/components/RequestsPage/components/MyRequests/describeDownloadProgress';
 import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
@@ -177,7 +177,8 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                     src={title.posterUrl}
                     label={`The cover of ${title.title}`}
                     shape={title.kind === 'artist' ? 'round' : 'square'}
-                    className="hidden w-32 shadow-[var(--shadow-artwork)] sm:flex"
+                    isLifted
+                    className="hidden w-32 sm:flex"
                   />
                 ) : title.posterUrl === null ? null : (
                   <img
@@ -205,12 +206,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                       value={Math.round(going.progress * 1000) / 10}
                       className="max-w-md"
                       readout={
-                        <span className="text-xs tabular-nums text-on-scrim/75">
-                          {Math.floor(going.progress * 100).toString()}%
-                          {describeDownloadProgress(going) === ''
-                            ? ''
-                            : ` · ${describeDownloadProgress(going)}`}
-                        </span>
+                        <DownloadProgressReadout progress={going} className="text-on-scrim/75" />
                       }
                     />
                   )}

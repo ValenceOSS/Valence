@@ -6,6 +6,8 @@ type FaceCircleProps = {
   avatar: Avatar;
   source: string;
   pending?: File | null;
+  shape?: 'circle' | 'tile';
+  isLifted?: boolean;
   className?: string;
 };
 

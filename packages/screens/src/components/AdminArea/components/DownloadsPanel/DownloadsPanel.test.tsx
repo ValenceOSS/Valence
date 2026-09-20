@@ -180,7 +180,9 @@ describe('DownloadsPanel', () => {
     renderInAnAddress(<DownloadsPanel />);
 
     expect(await screen.findByText('Dune')).toBeInTheDocument();
-    expect(screen.getByText('↓ 3.0 MB/s · ↑ 1.0 KB/s')).toBeInTheDocument();
+    expect(screen.getByText('↓ 3.0 MB/s').parentElement).toHaveTextContent(
+      '↓ 3.0 MB/s · ↑ 1.0 KB/s',
+    );
   });
 
   it('follows the queue live, and stops when it is left', async () => {

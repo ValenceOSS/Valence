@@ -14,9 +14,9 @@ const CatalogueMatchList = ({ matches, busyId = null, onChoose }: CatalogueMatch
     {matches.map((match) => (
       <li key={`${match.kind}-${match.externalId}`}>
         <Button
-          variant="bare"
+          variant="row"
           size="none"
-          className="flex w-full items-start gap-4 rounded-lg p-2 text-left hover:bg-[var(--surface-hover)]"
+          className="items-start gap-4 p-2"
           isLoading={busyId === match.externalId}
           onClick={() => {
             onChoose(match);

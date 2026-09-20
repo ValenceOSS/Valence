@@ -4,6 +4,8 @@ type HouseholdFaceProps = {
   household: Household;
   accountId?: string;
   pending?: File | null;
+  shape?: 'circle' | 'tile';
+  isLifted?: boolean;
   className?: string;
 };
 

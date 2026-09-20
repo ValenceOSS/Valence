@@ -97,7 +97,7 @@ const FileGroup = ({ group, chosen, refusalFor, onToggle }: FileGroupProps) => {
           label={`${isOpen ? 'Hide' : 'Show'} what ${group.title} is made of`}
           isIconOnly
           hasTooltip={false}
-          className="flex size-6 shrink-0 items-center justify-center rounded-md"
+          className="flex size-6 shrink-0 items-center justify-center"
           onClick={() => {
             setIsOpen((was) => !was);
           }}

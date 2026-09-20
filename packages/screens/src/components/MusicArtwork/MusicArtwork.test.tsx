@@ -46,6 +46,16 @@ describe('MusicArtwork', () => {
     expect(container.firstElementChild).toHaveClass('rounded-full');
   });
 
+  it('stands a lifted cover off the page on a shadow, and lays a plain one flat', () => {
+    const { container, rerender } = render(<MusicArtwork src={null} label="Album" />);
+
+    expect(container.firstElementChild).not.toHaveClass('shadow-[var(--shadow-artwork)]');
+
+    rerender(<MusicArtwork src={null} label="Album" isLifted />);
+
+    expect(container.firstElementChild).toHaveClass('shadow-[var(--shadow-artwork)]');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MusicArtwork.displayName).toBe('MusicArtwork');
   });

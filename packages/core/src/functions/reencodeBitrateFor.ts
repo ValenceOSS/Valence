@@ -45,13 +45,14 @@ const reencodeBitrateFor = (
   if (step === undefined) {
     return {
       capKbps: item.bitrateKbps,
-      expectedKbps: Math.max(1, Math.round(Math.min(item.bitrateKbps * relative, item.bitrateKbps))),
+      expectedKbps: Math.max(
+        1,
+        Math.round(Math.min(item.bitrateKbps * relative, item.bitrateKbps)),
+      ),
     };
   }
 
-  const ceiling = Math.round(
-    step.maxVideoBitrateKbps * frameRateAllowance(item.videoFrameRate),
-  );
+  const ceiling = Math.round(step.maxVideoBitrateKbps * frameRateAllowance(item.videoFrameRate));
 
   const capKbps = Math.max(1, Math.min(ceiling, item.bitrateKbps));
 

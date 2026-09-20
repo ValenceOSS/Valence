@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { ReactNode } from 'react';
 import {
   Delete02Icon,
   FolderLibraryIcon,
@@ -8,6 +9,7 @@ import {
   PlayIcon,
 } from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { HoverCard } from '@ValenceUI/HoverCard';
@@ -15,7 +17,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tooltip } from '@ValenceUI/Tooltip';
-import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/AnimatedBytes';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { describeDownloadState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeDownloadState';
 import { ReadoutLines } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/ReadoutLines/ReadoutLines';
@@ -31,16 +33,21 @@ const PAUSABLE = new Set(['queued', 'downloading', 'stalled']);
  * Says how much of a download has arrived, in the size it is going to be.
  *
  * @param download - The download.
- * @returns Such as `2.1 GB of 4.6 GB`, or the size alone before anything has arrived.
+ * @returns Such as `2.1 GB of 4.6 GB`, or the size alone before anything has arrived, with the
+ *   numbers rolling.
  */
-const describeArrived = (download: QueuedDownload): string | null => {
+const describeArrived = (download: QueuedDownload): ReactNode => {
   if (download.sizeBytes === null) {
-    return download.doneBytes === null ? null : formatBytes(download.doneBytes);
+    return download.doneBytes === null ? null : <AnimatedBytes bytes={download.doneBytes} />;
   }
 
-  return download.doneBytes === null || download.state === 'done'
-    ? formatBytes(download.sizeBytes)
-    : `${formatBytes(download.doneBytes)} of ${formatBytes(download.sizeBytes)}`;
+  return download.doneBytes === null || download.state === 'done' ? (
+    <AnimatedBytes bytes={download.sizeBytes} />
+  ) : (
+    <>
+      <AnimatedBytes bytes={download.doneBytes} /> of <AnimatedBytes bytes={download.sizeBytes} />
+    </>
+  );
 };
 
 /**
@@ -133,9 +140,11 @@ const DownloadQueueTable = ({
                 label={`How much of ${row.original.title} has arrived`}
                 value={Math.round(row.original.progress * 1000) / 10}
                 readout={
-                  <span className="text-xs tabular-nums text-text">
-                    {Math.floor(row.original.progress * 100).toString()}%
-                  </span>
+                  <AnimatedNumber
+                    value={Math.floor(row.original.progress * 100)}
+                    suffix="%"
+                    className="text-xs text-text"
+                  />
                 }
               />
 
@@ -176,8 +185,16 @@ const DownloadQueueTable = ({
               row.original.seeds === null && row.original.peers === null
                 ? []
                 : [
-                    `${(row.original.seeds ?? 0).toString()} seeding`,
-                    `${(row.original.peers ?? 0).toString()} fetching`,
+                    <AnimatedNumber
+                      key="seeding"
+                      value={row.original.seeds ?? 0}
+                      suffix=" seeding"
+                    />,
+                    <AnimatedNumber
+                      key="fetching"
+                      value={row.original.peers ?? 0}
+                      suffix=" fetching"
+                    />,
                   ]
             }
           />

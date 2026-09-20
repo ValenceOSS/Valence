@@ -27,7 +27,7 @@ const AppPreview = () => (
 
     <GlassPanel
       elevation="floating"
-      className="relative z-10 w-full max-w-2xl overflow-hidden rounded-2xl lg:max-w-3xl xl:max-w-4xl"
+      className="relative z-10 w-full max-w-2xl overflow-hidden lg:max-w-3xl xl:max-w-4xl"
     >
       <img
         src="/hero.jpeg"

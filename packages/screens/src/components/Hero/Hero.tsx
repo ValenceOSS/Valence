@@ -306,11 +306,7 @@ const Hero = ({
             variants={revealVariants(prefersReducedMotion)}
             transition={revealTransition(prefersReducedMotion)}
           >
-            <MediaFacts
-              media={featured}
-              hasEpisode={false}
-              className="flex flex-wrap items-center gap-2 text-base font-medium text-on-scrim/85"
-            />
+            <MediaFacts media={featured} hasEpisode={false} size="base" tone="scrim" />
           </motion.p>
 
           <AnimatePresence initial={false}>
@@ -348,9 +344,8 @@ const Hero = ({
 
             {onInspect === undefined ? null : (
               <Button
-                variant="bare"
+                variant="overlay"
                 size="xl"
-                className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md border border-on-scrim/25 text-on-scrim hover:bg-on-scrim/10"
                 onClick={() => {
                   onInspect(featured);
                 }}

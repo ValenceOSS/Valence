@@ -292,7 +292,7 @@ const ValenceShell = () => {
       }}
       {...(watcher === null
         ? {}
-        : { avatar: <ProfileFace profile={watcher} className="size-7 rounded-full text-xs" /> })}
+        : { avatar: <ProfileFace profile={watcher} className="size-7 text-xs" /> })}
     >
       <ShowDialog
         show={openShow}

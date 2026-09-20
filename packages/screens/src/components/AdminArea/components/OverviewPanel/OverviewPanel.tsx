@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { cn } from '@ValenceUI/cn';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -160,11 +161,19 @@ const OverviewPanel = ({
               ceiling={100}
               label="Processor use over the last minute"
               caption={
-                resources === null
-                  ? 'Waiting for the first reading.'
-                  : `Now ${Math.round(resources.systemCpuPercent).toString()}% · peak ${Math.round(
-                      Math.max(0, ...history),
-                    ).toString()}% · ${resources.cpuCount.toString()} processors · load ${resources.loadAverage.toFixed(2)}`
+                resources === null ? (
+                  'Waiting for the first reading.'
+                ) : (
+                  <>
+                    Now <AnimatedNumber value={Math.round(resources.systemCpuPercent)} suffix="%" />{' '}
+                    · peak <AnimatedNumber value={Math.round(Math.max(0, ...history))} suffix="%" />{' '}
+                    · <AnimatedNumber value={resources.cpuCount} suffix=" processors" /> · load{' '}
+                    <AnimatedNumber
+                      value={resources.loadAverage}
+                      format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                    />
+                  </>
+                )
               }
             />
           ) : (
@@ -175,9 +184,29 @@ const OverviewPanel = ({
               {...(rangeValues.length === 0
                 ? {}
                 : {
-                    caption: `Peak ${Math.round(Math.max(0, ...rangeValues)).toString()}% · average ${Math.round(
-                      rangeValues.reduce((sum, value) => sum + value, 0) / rangeValues.length,
-                    ).toString()}% · ${latestRangeSample?.cpuCount.toString() ?? '—'} processors`,
+                    caption: (
+                      <>
+                        Peak{' '}
+                        <AnimatedNumber
+                          value={Math.round(Math.max(0, ...rangeValues))}
+                          suffix="%"
+                        />{' '}
+                        · average{' '}
+                        <AnimatedNumber
+                          value={Math.round(
+                            rangeValues.reduce((sum, value) => sum + value, 0) / rangeValues.length,
+                          )}
+                          suffix="%"
+                        />{' '}
+                        ·{' '}
+                        {latestRangeSample === null ? (
+                          '—'
+                        ) : (
+                          <AnimatedNumber value={latestRangeSample.cpuCount} />
+                        )}{' '}
+                        processors
+                      </>
+                    ),
                   })}
             />
           )}
@@ -223,9 +252,13 @@ const OverviewPanel = ({
         >
           {running.length === 0 ? (
             <p className="text-sm text-text-muted">
-              {waiting === 0
-                ? 'Nothing is running.'
-                : `Nothing running, ${waiting.toString()} waiting.`}
+              {waiting === 0 ? (
+                'Nothing is running.'
+              ) : (
+                <>
+                  Nothing running, <AnimatedNumber value={waiting} suffix=" waiting" />.
+                </>
+              )}
             </p>
           ) : (
             <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
@@ -272,7 +305,10 @@ const OverviewPanel = ({
                   </span>
 
                   <span className="shrink-0 text-sm tabular-nums text-text-muted">
-                    {library.itemCount === 1 ? '1 item' : `${library.itemCount.toString()} items`}
+                    <AnimatedNumber
+                      value={library.itemCount}
+                      suffix={library.itemCount === 1 ? ' item' : ' items'}
+                    />
                   </span>
                 </li>
               ))}

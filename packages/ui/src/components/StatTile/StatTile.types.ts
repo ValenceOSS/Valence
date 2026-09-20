@@ -10,7 +10,7 @@ type StatTileTrend = {
 type StatTileProps = {
   label: string;
   value: ReactNode;
-  detail?: string;
+  detail?: ReactNode;
   icon?: ReactNode;
   fraction?: number;
   history?: ReactNode;

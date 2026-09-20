@@ -19,14 +19,17 @@ type ActionMenuGroup = {
 
 type ActionMenuSize = 'sm' | 'md';
 
+type ActionMenuLook = 'plain' | 'face' | 'raised';
+
 type ActionMenuProps = {
   label: string;
   trigger: ReactNode;
   groups: ActionMenuGroup[];
   align?: 'start' | 'center' | 'end';
   size?: ActionMenuSize;
+  look?: ActionMenuLook;
   isDisabled?: boolean;
   className?: string;
 };
 
-export type { ActionMenuGroup, ActionMenuItem, ActionMenuProps, ActionMenuSize };
+export type { ActionMenuGroup, ActionMenuItem, ActionMenuLook, ActionMenuProps, ActionMenuSize };

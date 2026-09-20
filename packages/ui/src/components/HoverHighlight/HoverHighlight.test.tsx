@@ -36,6 +36,12 @@ describe('HoverHighlight', () => {
     expect(container.querySelector('span')).toHaveAttribute('aria-hidden');
   });
 
+  it('is always the same soft fill, whichever menu or table it moves down', () => {
+    const { container } = render(<HoverHighlight rect={SOMEWHERE} />);
+
+    expect(container.querySelector('span')).toHaveClass('bg-[var(--surface-hover)]');
+  });
+
   it('takes no pointer events, so it cannot steal the hover that moves it', () => {
     const { container } = render(<HoverHighlight rect={SOMEWHERE} />);
 

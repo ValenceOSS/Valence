@@ -19,9 +19,8 @@ const RADIUS_CLASSES = {
  *
  * @param rect - Where the highlight should sit, or null to show none at all.
  * @param radius - How round its corners are, which should match the rows it moves between.
- * @param className - Extra classes for the caller's own layout.
  */
-const HoverHighlight = ({ rect, radius = 'md', className }: HoverHighlightProps) => {
+const HoverHighlight = ({ rect, radius = 'md' }: HoverHighlightProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
 
@@ -30,7 +29,10 @@ const HoverHighlight = ({ rect, radius = 'md', className }: HoverHighlightProps)
       {rect === null ? null : (
         <motion.span
           aria-hidden
-          className={cn('pointer-events-none absolute z-0', RADIUS_CLASSES[radius], className)}
+          className={cn(
+            'pointer-events-none absolute z-0 bg-[var(--surface-hover)]',
+            RADIUS_CLASSES[radius],
+          )}
           initial={{ opacity: 0, ...rect }}
           animate={{ opacity: 1, ...rect }}
           exit={{ opacity: 0 }}

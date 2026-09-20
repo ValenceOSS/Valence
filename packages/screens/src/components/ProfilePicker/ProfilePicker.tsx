@@ -69,8 +69,10 @@ const ProfilePicker = ({
               className="flex w-24 flex-col items-center gap-3 sm:w-32"
             >
               <ProfileFace
+                shape="tile"
+                isLifted
                 profile={profile}
-                className="aspect-square w-full rounded-lg text-4xl shadow-lg sm:text-5xl"
+                className="aspect-square w-full text-4xl sm:text-5xl"
               />
 
               <span className="w-full truncate text-center text-sm text-text-muted">
@@ -82,12 +84,11 @@ const ProfilePicker = ({
               <span className="absolute -right-2 -top-2 flex gap-1">
                 <Button
                   isIconOnly
-                  variant="ghost"
+                  variant="glossy"
                   label={`Edit ${profile.name}`}
                   onClick={() => {
                     setEditing(profile);
                   }}
-                  className="bg-surface-raised"
                 >
                   <Icon of={PencilEdit01Icon} size={16} />
                 </Button>
@@ -95,12 +96,11 @@ const ProfilePicker = ({
                 {profiles.length < 2 ? null : (
                   <Button
                     isIconOnly
-                    variant="ghost"
+                    variant="glossy"
                     label={`Remove ${profile.name}`}
                     onClick={() => {
                       setRemoving(profile);
                     }}
-                    className="bg-surface-raised"
                   >
                     <Icon of={Delete02Icon} size={16} />
                   </Button>

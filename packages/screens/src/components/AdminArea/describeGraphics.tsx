@@ -1,3 +1,4 @@
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import type { Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Stat } from '@ValenceScreens/components/AdminArea/components/StatStrip/StatStrip.types';
 
@@ -11,14 +12,16 @@ import type { Stat } from '@ValenceScreens/components/AdminArea/components/StatS
  * @param graphics - What the monitor read from the card, or null where there is nothing readable.
  * @returns The figure, how full the bar should be, and what the figure actually measures.
  */
-const describeGraphics = (graphics: Monitor['resources']['graphics']): Omit<Stat, 'label'> => {
+const describeGraphics = (
+  graphics: Monitor['resources']['graphics'],
+): Omit<Stat, 'label' | 'detail'> & { detail: string } => {
   if (graphics === null) {
     return { value: '—', detail: 'No card Valence can read' };
   }
 
   if (graphics.encoderPercent !== null) {
     return {
-      value: `${graphics.encoderPercent.toFixed(0)}%`,
+      value: <AnimatedNumber value={Math.round(graphics.encoderPercent)} suffix="%" />,
       fraction: graphics.encoderPercent / 100,
       detail:
         graphics.measured === 'valenceOnly' ? 'video engine, ours only' : 'encoder, not whole card',
@@ -27,7 +30,7 @@ const describeGraphics = (graphics: Monitor['resources']['graphics']): Omit<Stat
 
   if (graphics.devicePercent !== null) {
     return {
-      value: `${graphics.devicePercent.toFixed(0)}%`,
+      value: <AnimatedNumber value={Math.round(graphics.devicePercent)} suffix="%" />,
       fraction: graphics.devicePercent / 100,
       detail: 'whole card, not encoder',
     };

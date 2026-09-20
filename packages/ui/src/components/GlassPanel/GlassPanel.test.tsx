@@ -43,6 +43,17 @@ describe('GlassPanel', () => {
     expect(container.firstElementChild).toHaveClass('valence-float', 'p-8');
   });
 
+  it('rounds its corners a step more when asked for a large radius', () => {
+    render(
+      <GlassPanel radius="large" data-testid="panel">
+        x
+      </GlassPanel>,
+    );
+
+    expect(screen.getByTestId('panel')).toHaveClass('rounded-3xl');
+    expect(screen.getByTestId('panel')).not.toHaveClass('rounded-xl');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(GlassPanel.displayName).toBe('GlassPanel');
   });

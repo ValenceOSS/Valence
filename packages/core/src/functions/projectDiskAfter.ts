@@ -25,10 +25,7 @@ type Projection = {
  * @param mode - Whether the encode takes the original's place or sits beside it.
  * @returns The totals before and after.
  */
-const projectDiskAfter = (
-  candidates: readonly Weighable[],
-  mode: ReencodeMode,
-): Projection => {
+const projectDiskAfter = (candidates: readonly Weighable[], mode: ReencodeMode): Projection => {
   const nowBytes = candidates.reduce((total, one) => total + one.sizeBytes, 0);
 
   if (mode === 'keep') {
@@ -43,10 +40,7 @@ const projectDiskAfter = (
 
   return {
     nowBytes,
-    afterBytes: candidates.reduce(
-      (total, one) => total + (one.estimatedBytes ?? one.sizeBytes),
-      0,
-    ),
+    afterBytes: candidates.reduce((total, one) => total + (one.estimatedBytes ?? one.sizeBytes), 0),
   };
 };
 

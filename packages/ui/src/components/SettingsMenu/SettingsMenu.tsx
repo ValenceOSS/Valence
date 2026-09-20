@@ -149,7 +149,7 @@ const SettingsMenu = ({
               onBlurCapture={clear}
               className="relative flex max-h-[66vh] flex-col overflow-y-auto"
             >
-              <HoverHighlight rect={rect} radius="nested" className="bg-[var(--surface-hover)]" />
+              <HoverHighlight rect={rect} radius="nested" />
 
               {opened === null
                 ? rows.map((row) => {

@@ -55,8 +55,7 @@ type RenditionSpec = {
 };
 
 type PlanReencodeSpecOutcome =
-  | { kind: 'ok'; request: RenditionSpec }
-  | { kind: 'unsupported'; reason: string };
+  { kind: 'ok'; request: RenditionSpec } | { kind: 'unsupported'; reason: string };
 
 type PlanReencodeSpecOptions = {
   item: MediaItem;

@@ -99,6 +99,7 @@ const ProfileEditor = ({ profile, onSaved, onCancel }: ProfileEditorProps) => {
           </span>
         ) : (
           <ProfileFace
+            shape="tile"
             profile={{
               id: profile?.id ?? '',
               name: trimmed === '' ? '?' : trimmed,
@@ -110,7 +111,7 @@ const ProfileEditor = ({ profile, onSaved, onCancel }: ProfileEditorProps) => {
               updatedAt: profile?.updatedAt ?? '',
             }}
             pending={photo}
-            className="size-20 shrink-0 rounded-lg text-3xl"
+            className="size-20 shrink-0 text-3xl"
           />
         )}
 

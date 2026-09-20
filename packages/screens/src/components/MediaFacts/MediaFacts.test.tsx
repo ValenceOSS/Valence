@@ -71,6 +71,17 @@ describe('MediaFacts', () => {
     expect(container.textContent).toContain('·');
   });
 
+  it('is set at the size and in the tone it is asked for, and lays its facts in a wrapping row', () => {
+    const { container } = render(<MediaFacts media={media} size="sm" tone="scrim" />);
+
+    expect(container.firstElementChild).toHaveClass(
+      'flex',
+      'flex-wrap',
+      'text-sm',
+      'text-on-scrim/80',
+    );
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MediaFacts.displayName).toBe('MediaFacts');
   });

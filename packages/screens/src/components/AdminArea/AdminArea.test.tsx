@@ -491,7 +491,9 @@ describe('AdminArea', () => {
   it('says how much of the busy processor is Valence itself', async () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(await screen.findByText('10 cores · Valence 19%')).toBeInTheDocument();
+    expect((await screen.findByText('10 cores')).parentElement).toHaveTextContent(
+      '10 cores · Valence 19%',
+    );
   });
 
   it('says the graphics figure is the whole card when the encoder cannot be read', async () => {
@@ -528,7 +530,9 @@ describe('AdminArea', () => {
     renderInAnAddress(<TheAdmin />);
 
     expect(await screen.findByText('2.0 TB free')).toBeInTheDocument();
-    expect(await screen.findByText('of 8.0 TB · /media')).toBeInTheDocument();
+    expect((await screen.findByText('8.0 TB')).parentElement).toHaveTextContent(
+      'of 8.0 TB · /media',
+    );
   });
 
   it('watches over the one socket rather than a stream of its own', async () => {
@@ -553,7 +557,7 @@ describe('AdminArea', () => {
       resources: { ...MONITOR.resources, systemCpuPercent: 91 },
     });
 
-    expect(await screen.findByText('91%')).toBeInTheDocument();
+    expect((await screen.findAllByText('91%')).length).toBeGreaterThan(0);
   });
 
   it('stops watching once the page is left', async () => {
@@ -566,7 +570,7 @@ describe('AdminArea', () => {
     unmount();
     monitorArrives({ ...MONITOR, resources: { ...MONITOR.resources, systemCpuPercent: 91 } });
 
-    expect(screen.queryByText('91%')).not.toBeInTheDocument();
+    expect(screen.queryAllByText('91%')).toHaveLength(0);
   });
 
   it('shows what the media service is working on', async () => {

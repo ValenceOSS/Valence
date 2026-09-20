@@ -49,6 +49,7 @@ import {
 import { rebuildArtefacts } from '@ValenceClient/library/fetchLibrary';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/AnimatedBytes';
 import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -86,7 +87,6 @@ import {
 import { notify } from '@ValenceUI/notify';
 import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
 import { followRunningJobs } from './followRunningJobs';
-import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type {
   Reencode,
@@ -628,18 +628,41 @@ const AdminArea = ({
               ),
               fraction: (resources?.systemCpuPercent ?? 0) / 100,
               detail:
-                resources === null
-                  ? '—'
-                  : `${resources.cpuCount.toString()} cores · Valence ${describeCpuShare(cpuShare)}`,
+                resources === null ? (
+                  '—'
+                ) : (
+                  <>
+                    <AnimatedNumber value={resources.cpuCount} suffix=" cores" /> · Valence{' '}
+                    {cpuShare !== null && cpuShare >= 1 ? (
+                      <AnimatedNumber value={Math.round(cpuShare)} suffix="%" />
+                    ) : (
+                      describeCpuShare(cpuShare)
+                    )}
+                  </>
+                ),
             },
             {
               label: 'Memory',
-              value: memory === null ? '—' : formatBytes(memory.usedBytes),
+              value: memory === null ? '—' : <AnimatedBytes bytes={memory.usedBytes} />,
               fraction: memoryFraction,
               detail:
-                memory === null
-                  ? '—'
-                  : `of ${formatBytes(memory.totalBytes)}${memory.isLimited ? ' allowed' : ''} · Valence ${describeValenceMemory(valenceMemory)}`,
+                memory === null ? (
+                  '—'
+                ) : (
+                  <>
+                    of{' '}
+                    <AnimatedBytes
+                      bytes={memory.totalBytes}
+                      suffix={memory.isLimited ? ' allowed' : ''}
+                    />{' '}
+                    · Valence{' '}
+                    {valenceMemory === null ? (
+                      describeValenceMemory(valenceMemory)
+                    ) : (
+                      <AnimatedBytes bytes={valenceMemory} />
+                    )}
+                  </>
+                ),
             },
             {
               label: 'Graphics',
@@ -648,7 +671,12 @@ const AdminArea = ({
             },
             {
               label: 'Storage',
-              value: mediaDisk === null ? '—' : `${formatBytes(mediaDisk.availableBytes)} free`,
+              value:
+                mediaDisk === null ? (
+                  '—'
+                ) : (
+                  <AnimatedBytes bytes={mediaDisk.availableBytes} suffix=" free" />
+                ),
               ...(mediaDisk === null
                 ? {}
                 : {
@@ -656,9 +684,13 @@ const AdminArea = ({
                       (mediaDisk.totalBytes - mediaDisk.availableBytes) / mediaDisk.totalBytes,
                   }),
               detail:
-                mediaDisk === null
-                  ? 'Not measured'
-                  : `of ${formatBytes(mediaDisk.totalBytes)} · ${mediaDisk.mountPoint}`,
+                mediaDisk === null ? (
+                  'Not measured'
+                ) : (
+                  <>
+                    of <AnimatedBytes bytes={mediaDisk.totalBytes} /> · {mediaDisk.mountPoint}
+                  </>
+                ),
             },
           ]}
         />

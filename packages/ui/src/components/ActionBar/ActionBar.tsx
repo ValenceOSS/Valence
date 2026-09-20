@@ -53,7 +53,8 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
               <ActionMenu
                 label={label}
                 align="end"
-                className="size-10 border border-[var(--surface-line)] bg-[var(--surface-hover)]"
+                look="raised"
+                className="size-10"
                 trigger={<Icon of={MoreHorizontalIcon} size={22} />}
                 groups={[{ items: menuOf(folded) }]}
               />
@@ -63,7 +64,8 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
           <ActionMenu
             label={label}
             align="end"
-            className="size-10 border border-[var(--surface-line)] bg-[var(--surface-hover)] sm:hidden"
+            look="raised"
+            className="size-10 sm:hidden"
             trigger={<Icon of={MoreHorizontalIcon} size={22} />}
             groups={[{ items: menuOf(actions) }]}
           />

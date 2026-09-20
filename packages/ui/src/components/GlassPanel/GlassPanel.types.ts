@@ -5,6 +5,7 @@ type GlassElevation = 'floating' | 'inset' | 'film';
 type GlassPanelProps = Omit<HTMLAttributes<HTMLElement>, 'className' | 'children'> & {
   children: ReactNode;
   elevation?: GlassElevation;
+  radius?: 'default' | 'large';
   as?: ElementType;
   className?: string;
 };
