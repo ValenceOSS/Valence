@@ -406,7 +406,7 @@ body {
   inset: var(--valence-window-bar) 0 0 0;
 }
 
-[data-valence-desktop='true'] body {
+body {
   user-select: none;
   -webkit-user-select: none;
 }
@@ -424,7 +424,7 @@ body {
   height: 0;
 }
 
-[data-valence-desktop='true'] :is(input, textarea, [contenteditable]) {
+body :is(input, textarea, [contenteditable]) {
   user-select: text;
   -webkit-user-select: text;
 }

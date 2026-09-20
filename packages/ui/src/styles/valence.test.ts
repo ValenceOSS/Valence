@@ -36,6 +36,16 @@ describe('the Valence stylesheet', () => {
     expect(locked).toContain('right: var(--removed-body-scroll-bar-size, 0px)');
   });
 
+  it('does not let text be highlighted on any page, except where somebody is typing', () => {
+    const body = /(?:^|\n)body \{([^}]*)\}/g;
+    const rules = [...stylesheet.matchAll(body)].map((match) => match[1] ?? '').join('\n');
+    const typing =
+      /body :is\(input, textarea, \[contenteditable\]\) \{([^}]*)\}/.exec(stylesheet)?.[1] ?? '';
+
+    expect(rules).toContain('user-select: none');
+    expect(typing).toContain('user-select: text');
+  });
+
   it('gives glass over film the scrim palette rather than the page one', () => {
     const film = /\.valence-glass--film \{([^}]*)\}/.exec(stylesheet)?.[1] ?? '';
 
