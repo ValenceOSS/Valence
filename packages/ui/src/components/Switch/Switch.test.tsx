@@ -75,10 +75,11 @@ describe('Switch', () => {
     expect(container.querySelector('.bg-on-scrim')).toBeInTheDocument();
   });
 
-  it('takes its track from the theme where it is not over video', () => {
+  it('takes its track from the theme where it is not over video, in white rather than blue', () => {
     const { container } = render(<Switch label="Subtitles" isOn onToggle={vi.fn()} />);
 
-    expect(container.querySelector('.bg-accent')).toBeInTheDocument();
+    expect(container.querySelector('.bg-text')).toBeInTheDocument();
+    expect(container.querySelector('.bg-accent')).not.toBeInTheDocument();
   });
 
   it('points to text elsewhere that explains it, such as a note beside a hidden label', () => {

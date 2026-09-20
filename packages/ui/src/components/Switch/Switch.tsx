@@ -89,7 +89,7 @@ const Switch = ({
           isOn
             ? isOverlay
               ? 'bg-on-scrim'
-              : 'bg-accent'
+              : 'bg-text'
             : isOverlay
               ? 'bg-on-scrim/25'
               : 'bg-text-muted/25',
@@ -102,7 +102,7 @@ const Switch = ({
             'transition-[translate] duration-[var(--duration-fast)] ease-[var(--ease-out)]',
             'motion-reduce:transition-none',
             isOn ? 'translate-x-[18px]' : 'translate-x-0',
-            isOn && isOverlay ? 'bg-shade' : 'bg-on-scrim',
+            isOn ? (isOverlay ? 'bg-shade' : 'bg-surface') : 'bg-on-scrim',
           )}
         />
       </span>
