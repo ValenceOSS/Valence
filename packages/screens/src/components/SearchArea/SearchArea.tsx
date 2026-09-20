@@ -1,4 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Cancel01Icon, FilterIcon, Search01Icon } from '@hugeicons/core-free-icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
@@ -358,11 +359,11 @@ const SearchArea = ({
             <Spinner isCentered label="Searching" size="sm" />
           ) : (
             <span>
-              {howMany === 0
-                ? 'Nothing here'
-                : howMany === 1
-                  ? '1 result'
-                  : `${howMany.toString()} results`}
+              {howMany === 0 ? (
+                'Nothing here'
+              ) : (
+                <AnimatedNumber value={howMany} suffix={howMany === 1 ? ' result' : ' results'} />
+              )}
             </span>
           )}
 

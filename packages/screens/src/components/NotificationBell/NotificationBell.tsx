@@ -1,4 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import {
   CheckmarkCircle01Icon,
   Delete02Icon,
@@ -57,7 +58,10 @@ const NotificationBell = ({
 
           {unread === 0 ? null : (
             <Badge tone="accent" size="sm" className="absolute -right-1 -top-1">
-              {unread > COUNTED_UP_TO ? `${COUNTED_UP_TO.toString()}+` : unread.toString()}
+              <AnimatedNumber
+                value={Math.min(unread, COUNTED_UP_TO)}
+                {...(unread > COUNTED_UP_TO ? { suffix: '+' } : {})}
+              />
             </Badge>
           )}
         </span>

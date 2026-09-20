@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
@@ -117,11 +118,21 @@ const JobsPanel = ({
           isFlush
           actions={
             <span className="text-xs text-text-muted">
-              {monitor === null
-                ? '—'
-                : `${monitor.queue.running.toString()} running · ${monitor.queue.queued.toString()} waiting · ${monitor.queue.concurrency.toString()} at a time${
-                    failures === 0 ? '' : ` · ${failures.toString()} failed`
-                  }`}
+              {monitor === null ? (
+                '—'
+              ) : (
+                <>
+                  <AnimatedNumber value={monitor.queue.running} suffix=" running" /> ·{' '}
+                  <AnimatedNumber value={monitor.queue.queued} suffix=" waiting" /> ·{' '}
+                  <AnimatedNumber value={monitor.queue.concurrency} suffix=" at a time" />
+                  {failures === 0 ? null : (
+                    <>
+                      {' '}
+                      · <AnimatedNumber value={failures} suffix=" failed" />
+                    </>
+                  )}
+                </>
+              )}
             </span>
           }
           below={

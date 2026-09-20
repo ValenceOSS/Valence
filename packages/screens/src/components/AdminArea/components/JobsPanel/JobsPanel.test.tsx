@@ -104,7 +104,9 @@ describe('JobsPanel', () => {
   it('summarises the queue rather than making somebody count', () => {
     renderPanel(<JobsPanel {...props} monitor={reading([job()], { queued: 3, running: 1 })} />);
 
-    expect(screen.getByText(/1 running · 3 waiting · 2 at a time/)).toBeInTheDocument();
+    expect(screen.getByText('1 running').parentElement).toHaveTextContent(
+      '1 running · 3 waiting · 2 at a time',
+    );
   });
 
   it('mentions failures only when there are some', () => {
