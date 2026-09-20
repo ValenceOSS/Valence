@@ -74,7 +74,7 @@ describe('describeDownloadState', () => {
         filedInto: '/media/Films/The Matrix (1999)',
       }),
     ).toEqual({
-      label: 'Completed',
+      label: 'Done',
       tone: 'success',
       detail: 'Filed into /media/Films/The Matrix (1999).',
     });

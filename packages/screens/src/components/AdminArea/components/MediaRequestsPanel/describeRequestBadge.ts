@@ -1,6 +1,7 @@
 import { describeCalendarDay } from './describeCalendarDay';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { StateBadge } from '@ValenceScreens/components/AdminArea/StateBadge';
+import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
 
 /**
  * The day the next of a series' episodes airs, or an artist's albums comes out, where the
@@ -25,14 +26,14 @@ const nextAirDate = (request: MediaRequest): string | null =>
 const describeRequestBadge = (request: MediaRequest): StateBadge => {
   switch (request.state) {
     case 'awaitingApproval':
-      return { label: 'Awaiting approval', tone: 'highlight', detail: null };
+      return { ...STATUS_LOOK.attention, label: 'Awaiting approval', detail: null };
     case 'refused':
-      return { label: 'Refused', tone: 'danger', detail: request.refusedBecause };
+      return { ...STATUS_LOOK.failed, label: 'Refused', detail: request.refusedBecause };
     case 'waiting': {
       if (request.kind === 'film') {
         return {
+          ...STATUS_LOOK.queued,
           label: 'Not out yet',
-          tone: 'quiet',
           detail:
             request.releaseDate === null
               ? null
@@ -45,8 +46,8 @@ const describeRequestBadge = (request: MediaRequest): StateBadge => {
 
       if (isMusic) {
         return {
+          ...STATUS_LOOK.queued,
           label: 'Not out yet',
-          tone: 'quiet',
           detail:
             next === null
               ? 'Waiting for the next album to be announced.'
@@ -55,8 +56,8 @@ const describeRequestBadge = (request: MediaRequest): StateBadge => {
       }
 
       return {
+        ...STATUS_LOOK.queued,
         label: 'Not out yet',
-        tone: 'quiet',
         detail:
           next === null
             ? 'Waiting for the next episode to be announced.'
@@ -65,8 +66,8 @@ const describeRequestBadge = (request: MediaRequest): StateBadge => {
     }
     case 'wanted':
       return {
+        ...STATUS_LOOK.attention,
         label: 'Wanted',
-        tone: 'warning',
         detail:
           request.problem ??
           (request.isPickedByHand
@@ -74,27 +75,27 @@ const describeRequestBadge = (request: MediaRequest): StateBadge => {
             : 'Searched for again every few hours.'),
       };
     case 'searching':
-      return { label: 'Searching', tone: 'accent', detail: null };
+      return { ...STATUS_LOOK.working, label: 'Searching', detail: null };
     case 'chosen':
-      return { label: 'Release chosen', tone: 'accent', detail: null };
+      return { ...STATUS_LOOK.working, label: 'Release chosen', detail: null };
     case 'downloading':
       return {
+        ...STATUS_LOOK.working,
         label: 'Downloading',
-        tone: 'accent',
         detail: request.items.find((item) => item.state === 'downloading')?.releaseTitle ?? null,
       };
     case 'filing':
-      return { label: 'Filing', tone: 'highlight', detail: request.problem };
+      return { ...STATUS_LOOK.working, label: 'Filing', detail: request.problem };
     case 'filed':
       return {
+        ...STATUS_LOOK.working,
         label: 'Filed',
-        tone: 'highlight',
         detail: 'In its library, waiting for the library to find it.',
       };
     case 'available':
-      return { label: 'Ready', tone: 'success', detail: null };
+      return { ...STATUS_LOOK.done, detail: null };
     case 'failed':
-      return { label: 'Failed', tone: 'danger', detail: request.problem ?? 'It failed.' };
+      return { ...STATUS_LOOK.failed, detail: request.problem ?? 'It failed.' };
   }
 };
 

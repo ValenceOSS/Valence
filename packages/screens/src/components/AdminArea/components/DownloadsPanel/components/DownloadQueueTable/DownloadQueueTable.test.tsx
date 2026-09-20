@@ -116,7 +116,7 @@ describe('DownloadQueueTable', () => {
     );
 
     expect(await screen.findByText('Filed into /media/Films/Dune (2021).')).toBeInTheDocument();
-    expect(within(rowOf('Dune')).getByText('Completed')).toBeInTheDocument();
+    expect(within(rowOf('Dune')).getByText('Done')).toBeInTheDocument();
     expect(within(rowOf('Dune')).queryByRole('status')).not.toBeInTheDocument();
   });
 

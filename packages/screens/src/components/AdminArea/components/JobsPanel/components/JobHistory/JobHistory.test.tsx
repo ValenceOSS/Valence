@@ -100,7 +100,7 @@ describe('JobHistory', () => {
     renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
 
     expect(await screen.findByText('Movies')).toBeInTheDocument();
-    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByText('Done')).toBeInTheDocument();
     expect(screen.getByText('previews 4/10')).toBeInTheDocument();
   });
 

@@ -11,10 +11,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { watchJobs } from '@ValenceClient/admin/fetchAdmin';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
-import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { JobRunPage, JobRunRecord, JobRunStatus } from '@ValenceContracts/schemas/JobRun';
 import type { JobHistoryProps } from './JobHistory.types';
+import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 
 const PAGE = 200;
 
@@ -31,21 +31,7 @@ const STATUSES = [
   'failed',
 ] as const satisfies readonly JobRunStatus[];
 
-const STATUS_LABELS: Readonly<Record<JobRunStatus, string>> = {
-  queued: 'Queued',
-  running: 'Running',
-  completed: 'Completed',
-  failed: 'Failed',
-};
-
-const STATUS_FILTER_OPTIONS = STATUSES.map((id) => ({ id, label: STATUS_LABELS[id] }));
-
-const STATUS_TONES: Readonly<Record<JobRunStatus, BadgeTone>> = {
-  queued: 'warning',
-  running: 'accent',
-  completed: 'success',
-  failed: 'danger',
-};
+const STATUS_FILTER_OPTIONS = STATUSES.map((id) => ({ id, label: describeJobStatus(id).label }));
 
 /**
  * Says when something happened, or that it has not, without the caller working out which.
@@ -180,8 +166,8 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
           filterValue === undefined || row.getValue(columnId) === filterValue,
         meta: { filterOptions: STATUS_FILTER_OPTIONS },
         cell: ({ row }) => (
-          <Badge size="sm" tone={STATUS_TONES[row.original.status]}>
-            {STATUS_LABELS[row.original.status]}
+          <Badge size="sm" tone={describeJobStatus(row.original.status).tone}>
+            {describeJobStatus(row.original.status).label}
           </Badge>
         ),
       },
