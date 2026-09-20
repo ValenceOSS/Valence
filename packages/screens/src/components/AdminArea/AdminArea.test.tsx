@@ -913,7 +913,7 @@ describe('AdminArea', () => {
     expect(screen.getByText(/Playing/)).toBeInTheDocument();
     expect(screen.getByText('Living room TV')).toBeInTheDocument();
     expect(screen.getAllByText('Dan').length).toBeGreaterThan(0);
-    expect(screen.getByText('Direct')).toBeInTheDocument();
+    expect(screen.getByText('DirectPlay')).toBeInTheDocument();
   });
 
   it('stops a stream on request', async () => {

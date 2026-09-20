@@ -379,6 +379,7 @@ const auth = createAuth({
   cookieSecure: persisted.cookieSecure,
   onUserCreated: async (userId) => {
     await db.insert(userProfile).values({ userId }).onConflictDoNothing();
+    await giveDefaultRole(userId);
 
     const [made] = await db
       .select({ name: user.name })
