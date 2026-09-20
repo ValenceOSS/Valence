@@ -182,3 +182,47 @@ describe('a filename that names the year beside the series', () => {
     expect(readEpisodeFromPath('Show - S01E01.mkv').seriesFolder).toBeNull();
   });
 });
+
+describe('names the parser used to read as nothing at all', () => {
+  it('reads a double episode as the first of its numbers', () => {
+    const read = readEpisodeFromPath('/shows/The X Files/The X Files S09e19e20 The Truth GanG.mkv');
+
+    expect(read.seasonNumber).toBe(9);
+    expect(read.episodeNumber).toBe(19);
+    expect(read.seriesTitle).toBe('The X Files');
+  });
+
+  it('keeps the episode title that follows a double episode', () => {
+    const read = readEpisodeFromPath('/shows/The X Files/The X Files S09e19e20 The Truth.mkv');
+
+    expect(read.episodeTitle).toBe('The Truth');
+  });
+
+  it('reads a run of three as the first of them', () => {
+    expect(readEpisodeFromPath('/shows/A Show/A Show S01E01E02E03.mkv').episodeNumber).toBe(1);
+  });
+
+  it('reads a series written out in words, which is how British television says it', () => {
+    const read = readEpisodeFromPath(
+      "/shows/Harry Hill's TV Burp/Harry Hill's TV Burp Series 2 Episode 1.mkv",
+    );
+
+    expect(read.seasonNumber).toBe(2);
+    expect(read.episodeNumber).toBe(1);
+    expect(read.seriesTitle).toBe("Harry Hill's TV Burp");
+  });
+
+  it('still reads a season written out in words', () => {
+    const read = readEpisodeFromPath('/shows/A Show/A Show Season 3 Episode 4.mkv');
+
+    expect(read.seasonNumber).toBe(3);
+    expect(read.episodeNumber).toBe(4);
+  });
+
+  it('leaves something that is no episode at all unread', () => {
+    const read = readEpisodeFromPath('/shows/School of Comedy/School of Comedy out takes.mkv');
+
+    expect(read.episodeNumber).toBeNull();
+    expect(read.seriesTitle).toBeNull();
+  });
+});
