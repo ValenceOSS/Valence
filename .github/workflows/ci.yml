@@ -35,6 +35,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Which parts of the tree a change touches, so the jobs that only answer for one of them can sit
+  # out the changes that cannot affect them. A push to main answers yes to everything: main is what
+  # releases are cut from, and a cheap job skipped there saves a minute and risks the thing every
+  # other rule here exists to prevent.
+  touched:
+    name: What this change touches
+    runs-on: ubuntu-latest
+    outputs:
+      transcoder: ${{ steps.what.outputs.transcoder }}
+    steps:
+      # The list of files comes from the API rather than a clone: this job exists to save minutes,
+      # and fetching the whole history to answer one question would spend them.
+      - id: what
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$NUMBER" ]; then
+            echo 'transcoder=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed=$(gh api "repos/${{ github.repository }}/pulls/$NUMBER/files" --paginate --jq '.[].filename')
+          echo "$changed"
+
+          if echo "$changed" | grep -qE '^(apps/transcoder/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)'; then
+            echo 'transcoder=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'transcoder=false' >> "$GITHUB_OUTPUT"
+          fi
+
   lint:
     name: Lint and schema
     runs-on: ubuntu-latest
@@ -191,6 +222,8 @@ jobs:
   rust:
     name: Transcoder lint and tests
     runs-on: ubuntu-latest
+    needs: touched
+    if: needs.touched.outputs.transcoder == 'true'
     # On pull requests as well, which it did not used to be. The case for skipping them was that the
     # pre-push hook has already run cargo clippy and cargo test on the machine the change was
     # written on — which is true, and the machine is exactly the problem. A test reading a child's
@@ -199,9 +232,10 @@ jobs:
     # then sat on main until somebody looked, because after the merge is the first time anything
     # ran it.
     #
-    # The minutes that bought are worth less than a main that is known to be good. It is one to
-    # three of them, beside screens shards that take longer, so it costs wall clock on almost no
-    # pull request at all.
+    # On the pull requests that touch it, though, rather than on all of them. Pulling a Debian image
+    # and building the crate is minutes, and a change with no Rust in it cannot break Rust — a stack
+    # of web pull requests paid for that over and over and learnt nothing from any of it. A push to
+    # main runs it regardless, so what releases are cut from is still known to be good.
 
     # In Debian, against the FFmpeg Valence ships, because these tests decode rather than merely
     # calling something that does. One of them scribbles over the middle of a clip and requires the
