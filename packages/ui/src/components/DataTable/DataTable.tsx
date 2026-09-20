@@ -168,7 +168,7 @@ const DataTable = <Row extends RowData>({
                               <Icon
                                 of={FilterIcon}
                                 size={13}
-                                className={filterValue === undefined ? 'opacity-40' : 'text-accent'}
+                                className={filterValue === undefined ? 'opacity-40' : 'text-text'}
                               />
                             }
                             groups={[
