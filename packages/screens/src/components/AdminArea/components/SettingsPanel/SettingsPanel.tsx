@@ -260,7 +260,7 @@ const SettingsPanel = ({
 
             {splashscreen === null ? null : (
               <Button
-                variant="soft"
+                variant="secondary"
                 size="sm"
                 disabled={isChangingSplashscreen}
                 onClick={() => {
@@ -369,7 +369,7 @@ const SettingsPanel = ({
           />
 
           <Button
-            variant="soft"
+            variant="glossy"
             size="sm"
             label="Save the TheAudioDB key"
             hasTooltip={false}
@@ -438,7 +438,7 @@ const SettingsPanel = ({
           />
 
           <Button
-            variant="soft"
+            variant="glossy"
             size="sm"
             isLoading={isSaving}
             disabled={catalogueKey === ''}

@@ -112,7 +112,7 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
 
                 {file.state !== 'here' ? null : (
                   <Button
-                    variant="soft"
+                    variant="glossy"
                     size="sm"
                     onClick={() => {
                       onWatch(file);

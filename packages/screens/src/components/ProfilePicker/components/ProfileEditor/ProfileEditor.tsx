@@ -221,6 +221,7 @@ const ProfileEditor = ({ profile, onSaved, onCancel }: ProfileEditorProps) => {
             <FilePicker
               label="Upload a photograph"
               accept={PHOTO_TYPES}
+              variant="secondary"
               size="sm"
               onPick={(file) => {
                 setPhoto(file);

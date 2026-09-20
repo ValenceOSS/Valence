@@ -214,6 +214,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
               <FilePicker
                 label="Choose a picture"
                 accept={PICTURE_TYPES}
+                variant="secondary"
                 size="lg"
                 isLoading={isSaving}
                 isActive={picture !== null}

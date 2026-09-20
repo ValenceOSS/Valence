@@ -110,7 +110,7 @@ const DeviceList = () => {
       actions={
         elsewhere.length === 0 ? undefined : (
           <Button
-            variant="soft"
+            variant="secondary"
             size="xs"
             onClick={() => {
               setIsEndingRest(true);
