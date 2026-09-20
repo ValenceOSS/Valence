@@ -346,11 +346,15 @@ const AccountsPanel = () => {
   const shown = useMemo(() => {
     const looking = search.trim().toLowerCase();
 
-    return accounts.filter(
-      (account) =>
-        account.name.toLowerCase().includes(looking) ||
-        account.email.toLowerCase().includes(looking),
-    );
+    return accounts
+      .filter(
+        (account) =>
+          account.name.toLowerCase().includes(looking) ||
+          account.email.toLowerCase().includes(looking),
+      )
+      .sort((first, second) =>
+        first.name.localeCompare(second.name, undefined, { sensitivity: 'base' }),
+      );
   }, [accounts, search]);
 
   const roleColours = useMemo(() => new Map(roles.map((role) => [role.name, role.color])), [roles]);

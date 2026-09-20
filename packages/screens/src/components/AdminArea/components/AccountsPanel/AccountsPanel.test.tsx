@@ -163,6 +163,22 @@ describe('AccountsPanel', () => {
     expect(screen.getByText('sam@valence.local')).toBeInTheDocument();
   });
 
+  it('lists them alphabetically by name to begin with, whatever order the server sent', async () => {
+    accountMocks.fetchAccounts.mockResolvedValue([
+      account({ id: 'usr_z', name: 'Zed', email: 'zed@valence.local' }),
+      account({ id: 'usr_a', name: 'Ada', email: 'ada@valence.local' }),
+      account({ id: 'usr_m', name: 'moss', email: 'moss@valence.local' }),
+    ]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await screen.findByText('ada@valence.local');
+
+    const emails = screen.getAllByText(/@valence\.local/).map((cell) => cell.textContent ?? '');
+
+    expect(emails).toEqual(['ada@valence.local', 'moss@valence.local', 'zed@valence.local']);
+  });
+
   it('says when nobody has one', async () => {
     accountMocks.fetchAccounts.mockResolvedValue([]);
 
