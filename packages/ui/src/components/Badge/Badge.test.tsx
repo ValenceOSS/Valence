@@ -59,6 +59,12 @@ describe('Badge', () => {
     }
   });
 
+  it('sets its text in semibold', () => {
+    render(<Badge>4K</Badge>);
+
+    expect(badgeOf('4K')).toHaveClass('font-semibold');
+  });
+
   it('is not text anybody drags a cursor through', () => {
     render(<Badge>4K</Badge>);
 
