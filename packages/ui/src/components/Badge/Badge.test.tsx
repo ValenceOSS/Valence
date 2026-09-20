@@ -65,6 +65,19 @@ describe('Badge', () => {
     expect(badgeOf('4K')).toHaveClass('font-semibold');
   });
 
+  it('spins while something is in progress, and not once it has settled', () => {
+    render(
+      <>
+        <Badge tone="busy">Running</Badge>
+        <Badge tone="success">Done</Badge>
+      </>,
+    );
+
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(badgeOf('Running')).toContainElement(screen.getByRole('status'));
+    expect(badgeOf('Running').lastElementChild).toBe(screen.getByRole('status'));
+  });
+
   it('is not text anybody drags a cursor through', () => {
     render(<Badge>4K</Badge>);
 

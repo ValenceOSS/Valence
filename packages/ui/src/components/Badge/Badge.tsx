@@ -1,4 +1,5 @@
 import { cn } from '@ValenceUI/cn';
+import { Spinner } from '@ValenceUI/Spinner';
 import type { BadgeProps, BadgeSize, BadgeTone } from './Badge.types';
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
@@ -22,6 +23,9 @@ const SIZE_CLASSES: Record<BadgeSize, string> = {
  * inline without disturbing the line it is on, and toned so that the ordinary case is quiet and
  * only a warning or a failure asks for attention.
  *
+ * Whatever is in progress carries a spinner after its words, so a status that is still changing does not read the
+ * same as one that has settled.
+ *
  * Every tone is a solid fill rather than glass. A status is read at a glance down a column, and a
  * tint over whatever happens to be behind it reads differently on every row it sits on.
  *
@@ -41,6 +45,7 @@ const Badge = ({ children, tone = 'quiet', size = 'sm', className }: BadgeProps)
     )}
   >
     {children}
+    {tone === 'busy' ? <Spinner size="xs" label="In progress" /> : null}
   </span>
 );
 
