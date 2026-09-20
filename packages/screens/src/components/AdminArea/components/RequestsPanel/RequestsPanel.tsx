@@ -12,6 +12,8 @@ import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { describeRequestsVpn } from './describeRequestsVpn';
 import { RequestsWorkTiles } from './components/RequestsWorkTiles/RequestsWorkTiles';
+import { Icon } from '@ValenceUI/Icon';
+import { RefreshIcon } from '@hugeicons/core-free-icons';
 
 /**
  * The requests service as whoever set it up sees it: what it is doing just now — what waits on
@@ -47,6 +49,7 @@ const RequestsPanel = () => {
       actions={
         <Button variant="ghost" size="xs" isLoading={isChecking} onClick={checkNow}>
           Check now
+          <Icon of={RefreshIcon} size={15} />
         </Button>
       }
     >
