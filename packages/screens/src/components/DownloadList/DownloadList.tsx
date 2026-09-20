@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
-import { Delete02Icon, Download04Icon, PauseIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import { Bin as BinIcon, Download as DownloadIcon } from '@keyline-icons/react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -125,7 +126,7 @@ const DownloadList = () => {
   if (downloads.length === 0) {
     return (
       <p className="flex items-center gap-2 px-5 py-6 font-body text-sm text-text-muted">
-        <Icon of={Download04Icon} size={18} />
+        <Icon of={DownloadIcon} size={18} />
         Nothing prepared yet. Ask for something from its page and it will appear here.
       </p>
     );
@@ -190,9 +191,9 @@ const DownloadList = () => {
                     }}
                   >
                     {download.state === 'paused' ? (
-                      <Icon of={PlayIcon} size={16} />
+                      <Icon of={PlayFilledIcon} size={16} />
                     ) : (
-                      <Icon of={PauseIcon} size={16} />
+                      <Icon of={PauseFilledIcon} size={16} />
                     )}
                   </Button>
                 )}
@@ -208,7 +209,7 @@ const DownloadList = () => {
                     );
                   }}
                 >
-                  <Icon of={Delete02Icon} size={16} />
+                  <Icon of={BinIcon} size={16} />
                 </Button>
               </SettingRow>
             ))}

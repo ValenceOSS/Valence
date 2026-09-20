@@ -33,9 +33,9 @@ describe('reencodePathsFor', () => {
   });
 
   it('keeps an mp4 an mp4', () => {
-    expect(
-      reencodePathsFor(LIBRARY, `${LIBRARY}/X/X.mp4`, 'abc').output.endsWith('.mp4'),
-    ).toBe(true);
+    expect(reencodePathsFor(LIBRARY, `${LIBRARY}/X/X.mp4`, 'abc').output.endsWith('.mp4')).toBe(
+      true,
+    );
   });
 
   it('gives each library its own folder', () => {

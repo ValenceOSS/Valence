@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Cancel01Icon, Copy01Icon } from '@hugeicons/core-free-icons';
+import { Copy as CopyIcon, X as XIcon } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -163,7 +163,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
 
           <div className="absolute right-4 top-4">
             <Button isIconOnly variant="overlay" label="Close" onClick={onClose}>
-              <Icon of={Cancel01Icon} size={20} />
+              <Icon of={XIcon} size={20} />
             </Button>
           </div>
 
@@ -258,7 +258,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
                 });
               }}
             >
-              <Icon of={Copy01Icon} size={16} />
+              <Icon of={CopyIcon} size={16} />
               {isCopied ? 'Copied' : 'Copy the link'}
             </Button>
           </div>

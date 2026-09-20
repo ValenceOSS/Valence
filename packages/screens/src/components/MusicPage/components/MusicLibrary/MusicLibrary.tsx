@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Add01Icon, FavouriteIcon, Search01Icon } from '@hugeicons/core-free-icons';
+import { Plus as PlusIcon, Search as SearchIcon } from '@keyline-icons/react';
+import { Heart as HeartFilledIcon, Search as SearchFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { ContextMenu } from '@ValenceUI/ContextMenu';
 import { Icon } from '@ValenceUI/Icon';
@@ -63,7 +64,7 @@ const MusicLibrary = () => {
       detail: 'Playlist',
       artwork: (
         <span className="flex size-12 items-center justify-center rounded-md bg-text text-surface">
-          <Icon of={FavouriteIcon} size={20} isActive />
+          <Icon of={HeartFilledIcon} size={20} />
         </span>
       ),
       view: { kind: 'liked' },
@@ -132,7 +133,12 @@ const MusicLibrary = () => {
               open({ kind: 'search', query: '' });
             }}
           >
-            <Icon of={Search01Icon} size={16} />
+            <Icon
+              of={SearchIcon}
+              whenActive={SearchFilledIcon}
+              isActive={view.kind === 'search'}
+              size={16}
+            />
           </Button>
           <Button
             variant="ghost"
@@ -143,7 +149,7 @@ const MusicLibrary = () => {
               setIsMaking(true);
             }}
           >
-            <Icon of={Add01Icon} size={16} />
+            <Icon of={PlusIcon} size={16} />
           </Button>
         </div>
       </div>

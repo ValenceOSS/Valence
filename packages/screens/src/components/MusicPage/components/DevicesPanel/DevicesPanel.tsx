@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import {
-  ArrowRight01Icon,
-  ComputerIcon,
-  LaptopIcon,
-  SmartPhone01Icon,
-  Tv01Icon,
-} from '@hugeicons/core-free-icons';
+  ChevronRight as ChevronRightIcon,
+  Laptop as LaptopIcon,
+  Monitor as MonitorIcon,
+  Smartphone as SmartphoneIcon,
+} from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
@@ -25,14 +24,14 @@ const iconFor = (label: string): IconGlyph => {
   const named = label.toLowerCase();
 
   if (/iphone|android|phone|pixel|galaxy/.test(named)) {
-    return SmartPhone01Icon;
+    return SmartphoneIcon;
   }
 
   if (/tv|television|chromecast|shield/.test(named)) {
-    return Tv01Icon;
+    return MonitorIcon;
   }
 
-  return /mac|laptop|book/.test(named) ? LaptopIcon : ComputerIcon;
+  return /mac|laptop|book/.test(named) ? LaptopIcon : MonitorIcon;
 };
 
 /**
@@ -124,7 +123,7 @@ const DevicesPanel = () => {
                           : `${device.nowPlaying.isPlaying ? 'Playing' : 'Paused on'} ${device.nowPlaying.title}`}
                       </span>
                     </span>
-                    <Icon of={ArrowRight01Icon} size={16} />
+                    <Icon of={ChevronRightIcon} size={16} />
                   </Button>
                 </li>
               );

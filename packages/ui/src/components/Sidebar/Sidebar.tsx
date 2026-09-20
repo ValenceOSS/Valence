@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useReducedMotionConfig } from 'motion/react';
-import { SidebarLeftIcon } from '@hugeicons/core-free-icons';
+import { PanelLeft as PanelLeftIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { Button } from '@ValenceUI/Button';
 import { SidebarGroup } from '@ValenceUI/SidebarGroup';
@@ -114,7 +114,7 @@ const Sidebar = ({
               onCollapsedChange(true);
             }}
           >
-            <Icon of={SidebarLeftIcon} size={17} />
+            <Icon of={PanelLeftIcon} size={17} />
           </Button>
         )}
       </div>

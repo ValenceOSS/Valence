@@ -1,6 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
-import { StarIcon } from '@hugeicons/core-free-icons';
+import { Star as StarIcon } from '@keyline-icons/react';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { ReactNode } from 'react';

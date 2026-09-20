@@ -1,11 +1,11 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Copy01Icon,
-  Download04Icon,
-  MoreHorizontalIcon,
-  RefreshIcon,
-  Tick02Icon,
-} from '@hugeicons/core-free-icons';
+  Check as CheckIcon,
+  Copy as CopyIcon,
+  Download as DownloadIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  RefreshCw as RefreshCwIcon,
+} from '@keyline-icons/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -212,7 +212,7 @@ const LogsPanel = ({
                   {
                     id: 'reload',
                     label: 'Read the log again',
-                    icon: <Icon of={RefreshIcon} size={15} />,
+                    icon: <Icon of={RefreshCwIcon} size={15} />,
                     isDisabled: isReading && hasRead.current,
                     onChoose: () => {
                       void load();
@@ -226,9 +226,9 @@ const LogsPanel = ({
                     id: 'copy',
                     label: copied ? 'Copied' : 'Copy what is shown',
                     icon: copied ? (
-                      <Icon of={Tick02Icon} size={15} />
+                      <Icon of={CheckIcon} size={15} />
                     ) : (
-                      <Icon of={Copy01Icon} size={15} />
+                      <Icon of={CopyIcon} size={15} />
                     ),
                     keepsOpen: true,
                     onChoose: () => {
@@ -240,7 +240,7 @@ const LogsPanel = ({
                   {
                     id: 'download',
                     label: 'Download what is shown',
-                    icon: <Icon of={Download04Icon} size={15} />,
+                    icon: <Icon of={DownloadIcon} size={15} />,
                     onChoose: () => {
                       download('valence-log.txt', asText());
                     },

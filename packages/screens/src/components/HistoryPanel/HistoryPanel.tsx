@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Delete02Icon, Tick02Icon } from '@hugeicons/core-free-icons';
+import { Bin as BinIcon, Check as CheckIcon } from '@keyline-icons/react';
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -144,7 +144,7 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
 
                 {isFinished ? (
                   <Badge tone={STATUS_LOOK.done.tone}>
-                    <Icon of={Tick02Icon} size={12} />
+                    <Icon of={CheckIcon} size={12} />
                     Finished
                   </Badge>
                 ) : null}
@@ -160,7 +160,7 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
                       : forgetABook(entry.reading.book.id));
                   }}
                 >
-                  <Icon of={Delete02Icon} size={16} />
+                  <Icon of={BinIcon} size={16} />
                 </Button>
               </motion.li>
             );
@@ -195,7 +195,7 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
             void forgetTheLot();
           }}
         >
-          <Icon of={Delete02Icon} size={16} />
+          <Icon of={BinIcon} size={16} />
           Forget everything
         </Button>
       </div>

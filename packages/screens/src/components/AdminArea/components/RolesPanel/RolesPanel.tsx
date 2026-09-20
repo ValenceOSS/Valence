@@ -1,12 +1,12 @@
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Alert02Icon,
-  Delete02Icon,
-  MoreHorizontalIcon,
-  PencilEdit01Icon,
-  Add01Icon,
-} from '@hugeicons/core-free-icons';
+  Bin as BinIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  PenLine as PenLineIcon,
+  Plus as PlusIcon,
+  TriangleAlert as TriangleAlertIcon,
+} from '@keyline-icons/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -292,7 +292,7 @@ const RolesPanel = () => {
                     {
                       id: 'edit',
                       label: 'Edit role',
-                      icon: <Icon of={PencilEdit01Icon} size={15} />,
+                      icon: <Icon of={PenLineIcon} size={15} />,
                       onChoose: () => {
                         live.current.onEdit(row.original.id);
                       },
@@ -304,7 +304,7 @@ const RolesPanel = () => {
                     {
                       id: 'delete',
                       label: 'Delete role',
-                      icon: <Icon of={Delete02Icon} size={15} />,
+                      icon: <Icon of={BinIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         live.current.onAskDelete(row.original);
@@ -328,7 +328,7 @@ const RolesPanel = () => {
           role="alert"
           className="flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-text"
         >
-          <Icon of={Alert02Icon} size={18} tone="danger" className="mt-0.5 shrink-0" />
+          <Icon of={TriangleAlertIcon} size={18} tone="danger" className="mt-0.5 shrink-0" />
           {refusal.message}
         </p>
       )}
@@ -338,7 +338,7 @@ const RolesPanel = () => {
         isFlush
         actions={
           <PanelCardAction
-            icon={Add01Icon}
+            icon={PlusIcon}
             onClick={() => {
               setIsCreating(true);
             }}
@@ -517,7 +517,12 @@ const RolesPanel = () => {
                   role="alert"
                   className="flex items-start gap-3 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-text"
                 >
-                  <Icon of={Alert02Icon} size={16} tone="danger" className="mt-0.5 shrink-0" />
+                  <Icon
+                    of={TriangleAlertIcon}
+                    size={16}
+                    tone="danger"
+                    className="mt-0.5 shrink-0"
+                  />
                   {refusal.message}
                 </p>
               )}

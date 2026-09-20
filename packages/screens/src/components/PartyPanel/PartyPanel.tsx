@@ -1,14 +1,14 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  CheckmarkCircle01Icon,
-  Clock01Icon,
-  Copy01Icon,
-  Logout01Icon,
-  HeadphonesIcon,
-  PauseCircleIcon,
-  UserAdd01Icon,
-  ViewIcon,
-} from '@hugeicons/core-free-icons';
+  CircleCheck as CircleCheckIcon,
+  CirclePause as CirclePauseIcon,
+  Clock as ClockIcon,
+  Copy as CopyIcon,
+  DoorOpen as DoorOpenIcon,
+  Eye as EyeIcon,
+  Headphones as HeadphonesIcon,
+  UserPlus as UserPlusIcon,
+} from '@keyline-icons/react';
 import { useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -29,7 +29,7 @@ const WORDS = {
     isDoing: 'Watching',
     notDoing: 'Not watching',
     what: 'watching this',
-    icon: ViewIcon,
+    icon: EyeIcon,
   },
   listen: {
     doing: 'listening',
@@ -124,7 +124,7 @@ const PartyPanel = ({
         isFlush
         actions={
           onLeave === undefined ? undefined : (
-            <PanelCardAction icon={Logout01Icon} onClick={onLeave}>
+            <PanelCardAction icon={DoorOpenIcon} onClick={onLeave}>
               Leave
             </PanelCardAction>
           )
@@ -134,7 +134,7 @@ const PartyPanel = ({
           <div className="border-b border-[var(--surface-line)] p-3">
             <Callout
               tone="warning"
-              icon={Clock01Icon}
+              icon={ClockIcon}
               title={
                 waitingFor.length === 1
                   ? `Waiting for ${waitingFor[0] ?? ''} to catch up`
@@ -159,7 +159,7 @@ const PartyPanel = ({
 
                 {member.connectionId === party.timekeeperId && (
                   <Badge size="sm" tone="quiet">
-                    <Icon of={Clock01Icon} size={12} />
+                    <Icon of={ClockIcon} size={12} />
                     Keeping time
                   </Badge>
                 )}
@@ -171,7 +171,7 @@ const PartyPanel = ({
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-xs text-text-muted">
-                    <Icon of={PauseCircleIcon} size={13} />
+                    <Icon of={CirclePauseIcon} size={13} />
                     {words.notDoing}
                   </span>
                 )}
@@ -218,7 +218,7 @@ const PartyPanel = ({
           title="Invite"
           actions={
             <PanelCardAction
-              icon={hasCopied ? CheckmarkCircle01Icon : Copy01Icon}
+              icon={hasCopied ? CircleCheckIcon : CopyIcon}
               onClick={() => {
                 void onCopyInvitation?.(invitation).then(() => {
                   setHasCopied(true);
@@ -263,7 +263,7 @@ const PartyPanel = ({
                     onAsk(person.id);
                   }}
                 >
-                  <Icon of={UserAdd01Icon} size={14} />
+                  <Icon of={UserPlusIcon} size={14} />
                   {asked.includes(person.id) ? 'Asked' : 'Ask'}
                 </Button>
               </li>

@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Alert02Icon } from '@hugeicons/core-free-icons';
+import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -703,7 +703,7 @@ const AdminArea = ({
           transition={revealTransition(prefersReducedMotion)}
           className="flex flex-wrap items-center gap-3 rounded-xl border border-danger/40 bg-danger/10 px-5 py-4 font-body text-sm text-text"
         >
-          <Icon of={Alert02Icon} size={18} tone="danger" className="shrink-0" />
+          <Icon of={TriangleAlertIcon} size={18} tone="danger" className="shrink-0" />
           Some of this could not be read from the server, so parts of the page may be missing rather
           than empty.
           <Button

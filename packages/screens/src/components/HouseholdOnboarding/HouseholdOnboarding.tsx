@@ -5,7 +5,7 @@ import { Button } from '@ValenceUI/Button';
 import { FilePicker } from '@ValenceUI/FilePicker';
 import { GlassPanel } from '@ValenceUI/GlassPanel';
 import { Icon } from '@ValenceUI/Icon';
-import { Image01Icon, Key01Icon } from '@hugeicons/core-free-icons';
+import { Image as ImageIcon, Key as KeyIcon } from '@keyline-icons/react';
 import { Logo } from '@ValenceUI/Logo';
 import { PageDots } from '@ValenceUI/PageDots';
 import { TabPanel } from '@ValenceUI/TabPanel';
@@ -220,7 +220,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
                   void keepThePicture(chosen);
                 }}
               >
-                <Icon of={Image01Icon} size={18} />
+                <Icon of={ImageIcon} size={18} />
                 {picture === null ? 'Choose a picture' : 'Pick another'}
               </FilePicker>
 
@@ -265,7 +265,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
                       void keepAPasskey();
                     }}
                   >
-                    <Icon of={Key01Icon} size={18} />
+                    <Icon of={KeyIcon} size={18} />
                     Add a passkey
                   </Button>
                 </>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
-import { MusicNote01Icon } from '@hugeicons/core-free-icons';
+import { MusicNote as MusicNoteIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
@@ -55,7 +55,7 @@ const MusicArtwork = ({
         className,
       )}
     >
-      {isShown && hasLoaded === src ? null : <Icon of={MusicNote01Icon} size={20} />}
+      {isShown && hasLoaded === src ? null : <Icon of={MusicNoteIcon} size={20} />}
 
       {isShown ? (
         <img

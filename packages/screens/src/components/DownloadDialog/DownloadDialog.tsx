@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
-import { Alert02Icon } from '@hugeicons/core-free-icons';
+import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -166,7 +166,7 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
             }`}
           >
             {verdict === 'fits' ? null : (
-              <Icon of={Alert02Icon} size={18} tone="danger" className="shrink-0" />
+              <Icon of={TriangleAlertIcon} size={18} tone="danger" className="shrink-0" />
             )}
 
             {verdict === 'willNotFit'

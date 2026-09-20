@@ -1,5 +1,5 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
-import { InformationCircleIcon } from '@hugeicons/core-free-icons';
+import { Info as InfoIcon } from '@keyline-icons/react';
 import { cn } from '@ValenceUI/cn';
 import { Icon } from '@ValenceUI/Icon';
 import { Tooltip } from '@ValenceUI/Tooltip';
@@ -137,7 +137,7 @@ const ActionMenu = ({
                     {item.hint === undefined ? null : (
                       <Tooltip label={item.hint} side="left">
                         <span data-slot="menu-hint" className={MENU.hint}>
-                          <Icon of={InformationCircleIcon} size={15} />
+                          <Icon of={InfoIcon} size={15} />
                         </span>
                       </Tooltip>
                     )}

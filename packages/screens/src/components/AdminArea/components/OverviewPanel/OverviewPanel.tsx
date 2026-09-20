@@ -1,7 +1,7 @@
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
-import { ArrowRight01Icon, RefreshIcon } from '@hugeicons/core-free-icons';
+import { ChevronRight as ChevronRightIcon, RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -69,7 +69,7 @@ const Region = ({
         : {
             actions: (
               <PanelCardAction
-                icon={actionIcon ?? ArrowRight01Icon}
+                icon={actionIcon ?? ChevronRightIcon}
                 onClick={onAction}
                 isDisabled={isActionBusy}
                 isLoading={isActionBusy}
@@ -320,7 +320,7 @@ const OverviewPanel = ({
           title="Storage Valence is using"
           className="sm:col-span-2 xl:col-span-4"
           action="Refresh"
-          actionIcon={RefreshIcon}
+          actionIcon={RefreshCwIcon}
           isActionBusy={isCounting}
           onAction={() => {
             void recount();

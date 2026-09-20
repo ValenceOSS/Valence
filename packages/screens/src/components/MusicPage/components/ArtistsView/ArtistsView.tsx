@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { User03Icon } from '@hugeicons/core-free-icons';
+import { User as UserIcon } from '@keyline-icons/react';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Skeleton } from '@ValenceUI/Skeleton';
@@ -51,7 +51,7 @@ const ArtistsView = () => {
         <>
           <div className={`flex justify-end ${MUSIC_LANES.page}`}>{which}</div>
           <NothingHere
-            of={User03Icon}
+            of={UserIcon}
             title={isFollowedOnly ? 'Not following anybody yet' : 'No artists yet'}
             detail={
               isFollowedOnly

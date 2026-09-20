@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Cancel01Icon } from '@hugeicons/core-free-icons';
+import { X as XIcon } from '@keyline-icons/react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
@@ -54,7 +54,7 @@ const LogDetailDialog = ({ record, isOpen, onClose, onOpenJob }: LogDetailDialog
     <DialogCompanion label="Log record" isOpen={isOpen && record !== null} onClose={onClose}>
       <DialogTitle size="compact" title="Log record">
         <Button isIconOnly variant="ghost" label="Close" size="sm" onClick={onClose}>
-          <Icon of={Cancel01Icon} size={16} />
+          <Icon of={XIcon} size={16} />
         </Button>
       </DialogTitle>
 

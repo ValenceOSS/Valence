@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Download04Icon,
-  LinkSquare02Icon,
-  Magnet01Icon,
-  MoreHorizontalIcon,
-  SentIcon,
-  UnfoldMoreIcon,
-} from '@hugeicons/core-free-icons';
+  ChevronsUpDown as ChevronsUpDownIcon,
+  Download as DownloadIcon,
+  Link2 as Link2Icon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Send as SendIcon,
+  SquareArrowUpRight as SquareArrowUpRightIcon,
+} from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -171,7 +171,7 @@ const ReleaseSearchPanel = () => {
                               id: 'send',
                               label: `Send to a ${protocol === 'usenet' ? 'usenet' : 'torrent'} client`,
                               detail: `No ${protocol === 'usenet' ? 'usenet' : 'torrent'} client is switched on. Add one on the Downloads page.`,
-                              icon: <Icon of={SentIcon} size={15} />,
+                              icon: <Icon of={SendIcon} size={15} />,
                               isDisabled: true,
                               onChoose: () => undefined,
                             },
@@ -187,7 +187,7 @@ const ReleaseSearchPanel = () => {
                               libraries.data ?? [],
                               target.categories[sending],
                             ),
-                            icon: <Icon of={SentIcon} size={15} />,
+                            icon: <Icon of={SendIcon} size={15} />,
                             isDisabled: address === null,
                             onChoose: () => {
                               send(sending);
@@ -196,7 +196,7 @@ const ReleaseSearchPanel = () => {
                       {
                         id: 'magnet',
                         label: 'Copy the magnet link',
-                        icon: <Icon of={Magnet01Icon} size={15} />,
+                        icon: <Icon of={Link2Icon} size={15} />,
                         isDisabled: magnetUrl === null,
                         onChoose: () => {
                           void navigator.clipboard.writeText(magnetUrl ?? '').then(() => {
@@ -209,14 +209,14 @@ const ReleaseSearchPanel = () => {
                         label: `Save the ${kind}`,
                         detail:
                           'Fetched through Valence, with whatever the site needs to hand it over.',
-                        icon: <Icon of={Download04Icon} size={15} />,
+                        icon: <Icon of={DownloadIcon} size={15} />,
                         isDisabled: downloadUrl === null,
                         onChoose: save,
                       },
                       {
                         id: 'page',
                         label: 'Open its page',
-                        icon: <Icon of={LinkSquare02Icon} size={15} />,
+                        icon: <Icon of={SquareArrowUpRightIcon} size={15} />,
                         isDisabled: infoUrl === null,
                         onChoose: () => {
                           window.open(infoUrl ?? '', '_blank', 'noopener,noreferrer');
@@ -347,7 +347,7 @@ const ReleaseSearchPanel = () => {
                 <span className="truncate">
                   {profile === null ? 'No profile' : `Judged against ${profile.name}`}
                 </span>
-                <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+                <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
               </>
             }
             triggerShape="field"

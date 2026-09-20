@@ -1,7 +1,8 @@
 import { Icon } from '@ValenceUI/Icon';
 import { titleLogoUrl } from '@ValenceScreens/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
-import { InformationCircleIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import { Info as InfoIcon } from '@keyline-icons/react';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AnimatePresence,
@@ -338,7 +339,7 @@ const Hero = ({
                 onPlay(featured, resume ?? 0);
               }}
             >
-              <Icon of={PlayIcon} size={18} />
+              <Icon of={PlayFilledIcon} size={18} />
               {resume === null ? 'Play' : `Resume from ${formatDuration(resume)}`}
             </Button>
 
@@ -350,7 +351,7 @@ const Hero = ({
                   onInspect(featured);
                 }}
               >
-                <Icon of={InformationCircleIcon} size={18} />
+                <Icon of={InfoIcon} size={18} />
                 More info
               </Button>
             )}

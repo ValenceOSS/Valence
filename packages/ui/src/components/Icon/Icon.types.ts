@@ -1,7 +1,7 @@
-// eslint-disable-next-line no-restricted-imports -- Icon is the one place the set's own types are named, so it stays swappable in one file
-import type { IconSvgElement } from '@hugeicons/react';
+import type { IconProps as GlyphProps } from '@keyline-icons/react';
+import type { ComponentType } from 'react';
 
-type IconGlyph = IconSvgElement;
+type IconGlyph = ComponentType<GlyphProps>;
 
 type IconTone = 'inherit' | 'strong' | 'muted' | 'faint' | 'danger' | 'scrim';
 

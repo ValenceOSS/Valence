@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -143,7 +143,7 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
             trigger={
               <>
                 <span className="truncate">{quality?.label ?? 'The library’s own profile'}</span>
-                <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+                <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
               </>
             }
           />
@@ -166,7 +166,7 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
               trigger={
                 <>
                   <span className="truncate">{place?.label ?? 'Choose a library'}</span>
-                  <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+                  <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
                 </>
               }
             />

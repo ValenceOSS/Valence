@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { SquareLock02Icon, SquareUnlock02Icon } from '@hugeicons/core-free-icons';
+import { Lock as LockIcon, Unlock as UnlockIcon } from '@keyline-icons/react';
 import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
@@ -124,9 +124,9 @@ const SetupWizard = ({ status, onComplete }: SetupWizardProps) => {
 
         <p className="flex items-start gap-2 text-sm text-text-muted">
           {cookieSecure ? (
-            <Icon of={SquareLock02Icon} size={16} className="mt-0.5 shrink-0" />
+            <Icon of={LockIcon} size={16} className="mt-0.5 shrink-0" />
           ) : (
-            <Icon of={SquareUnlock02Icon} size={16} className="mt-0.5 shrink-0" />
+            <Icon of={UnlockIcon} size={16} className="mt-0.5 shrink-0" />
           )}
           {cookieSecure
             ? 'Secure cookies will be used. Login will not work over plain HTTP.'

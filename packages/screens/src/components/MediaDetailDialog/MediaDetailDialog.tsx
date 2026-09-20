@@ -2,20 +2,20 @@ import { Icon } from '@ValenceUI/Icon';
 import { titleLogoUrl } from '@ValenceScreens/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
-  ArrowLeft01Icon,
-  ArrowTurnForwardIcon,
-  Cancel01Icon,
-  ClapperboardIcon,
-  Download04Icon,
-  FavouriteIcon,
-  FilmRoll01Icon,
-  InformationCircleIcon,
-  PlayIcon,
-  Share08Icon,
-  UserGroupIcon,
-  UserSettings01Icon,
-  ViewOffIcon,
-} from '@hugeicons/core-free-icons';
+  ArrowUTurnRight as ArrowUTurnRightIcon,
+  ChevronLeft as ChevronLeftIcon,
+  Download as DownloadIcon,
+  EyeOff as EyeOffIcon,
+  Film as FilmIcon,
+  Heart as HeartIcon,
+  Info as InfoIcon,
+  Share as ShareIcon,
+  Tape as TapeIcon,
+  UserCheck as UserCheckIcon,
+  Users as UsersIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
+import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -193,7 +193,7 @@ const MediaDetailDialog = ({
           isShowing={hasScrolledPast}
         >
           <Button isIconOnly variant="ghost" size="sm" label="Close" onClick={onClose}>
-            <Icon of={Cancel01Icon} size={16} />
+            <Icon of={XIcon} size={16} />
           </Button>
         </ScrolledTitle>
 
@@ -223,11 +223,12 @@ const MediaDetailDialog = ({
                             onToggleKept(shown);
                           }}
                         >
-                          {isKept ? (
-                            <Icon of={FavouriteIcon} size={18} />
-                          ) : (
-                            <Icon of={FavouriteIcon} size={18} />
-                          )}
+                          <Icon
+                            of={HeartIcon}
+                            whenActive={HeartFilledIcon}
+                            isActive={isKept}
+                            size={18}
+                          />
                         </Button>
                       ),
                     })}
@@ -241,7 +242,7 @@ const MediaDetailDialog = ({
             {onBack === undefined ? null : (
               <div className="absolute left-4 top-4">
                 <Button variant="overlay" size="sm" onClick={onBack}>
-                  <Icon of={ArrowLeft01Icon} size={16} />
+                  <Icon of={ChevronLeftIcon} size={16} />
                   {backLabel ?? 'Back'}
                 </Button>
               </div>
@@ -249,7 +250,7 @@ const MediaDetailDialog = ({
 
             <div className="absolute right-4 top-4">
               <Button isIconOnly variant="overlay" label="Close" onClick={onClose}>
-                <Icon of={Cancel01Icon} size={20} />
+                <Icon of={XIcon} size={20} />
               </Button>
             </div>
 
@@ -345,7 +346,7 @@ const MediaDetailDialog = ({
                 <p className="text-[0.95rem] leading-relaxed text-text">{metadata.overview}</p>
               ) : (
                 <p className="flex items-center gap-2 text-sm text-text-muted">
-                  <Icon of={InformationCircleIcon} size={16} />
+                  <Icon of={InfoIcon} size={16} />
                   No synopsis yet. Configure a metadata provider and rescan to fill this in.
                 </p>
               )}
@@ -385,7 +386,7 @@ const MediaDetailDialog = ({
                   </h3>
 
                   <p className="flex items-center gap-2 text-sm text-text-muted">
-                    <Icon of={InformationCircleIcon} size={16} />
+                    <Icon of={InfoIcon} size={16} />
                     Nobody is credited yet. A metadata provider supplies the cast.
                   </p>
                 </>
@@ -491,7 +492,7 @@ const MediaDetailDialog = ({
                   onPlay(chosenVersion ?? shown, chosenVersion === null ? (shownResume ?? 0) : 0);
                 }}
               >
-                <Icon of={PlayIcon} size={18} />
+                <Icon of={PlayFilledIcon} size={18} />
                 {shownResume === undefined || chosenVersion !== null
                   ? 'Play'
                   : `Resume from ${formatDuration(shownResume)}`}
@@ -506,7 +507,7 @@ const MediaDetailDialog = ({
                     id: 'trailer',
                     isPinned: true,
                     label: 'Watch the trailer',
-                    icon: <Icon of={FilmRoll01Icon} size={18} />,
+                    icon: <Icon of={TapeIcon} size={18} />,
                     onChoose: () => {
                       if (trailer === null) {
                         setIsWatchingTrailer(true);
@@ -524,7 +525,7 @@ const MediaDetailDialog = ({
                   {
                     id: 'again',
                     label: 'Start again',
-                    icon: <Icon of={ArrowTurnForwardIcon} size={18} />,
+                    icon: <Icon of={ArrowUTurnRightIcon} size={18} />,
                     onChoose: () => {
                       onPlay(shown, 0);
                     },
@@ -537,7 +538,7 @@ const MediaDetailDialog = ({
                     id: 'share',
                     isPinned: true,
                     label: 'Share',
-                    icon: <Icon of={Share08Icon} size={18} />,
+                    icon: <Icon of={ShareIcon} size={18} />,
                     onChoose: () => {
                       onShare(shown);
                     },
@@ -550,7 +551,7 @@ const MediaDetailDialog = ({
                     label: preparing === undefined ? 'Download' : `Preparing ${percent}`,
                     icon:
                       preparing === undefined ? (
-                        <Icon of={Download04Icon} size={18} />
+                        <Icon of={DownloadIcon} size={18} />
                       ) : (
                         <Spinner size="sm" label="Preparing" />
                       ),
@@ -566,7 +567,7 @@ const MediaDetailDialog = ({
                   {
                     id: 'party',
                     label: 'Watch together',
-                    icon: <Icon of={UserGroupIcon} size={18} />,
+                    icon: <Icon of={UsersIcon} size={18} />,
                     onChoose: () => {
                       onStartParty(shown);
                     },
@@ -578,7 +579,7 @@ const MediaDetailDialog = ({
                   {
                     id: 'hide',
                     label: 'Hide this',
-                    icon: <Icon of={ViewOffIcon} size={18} />,
+                    icon: <Icon of={EyeOffIcon} size={18} />,
                     onChoose: () => {
                       onHide(shown);
                     },
@@ -590,7 +591,7 @@ const MediaDetailDialog = ({
                   {
                     id: 'decide',
                     label: 'Who may watch this',
-                    icon: <Icon of={UserSettings01Icon} size={18} />,
+                    icon: <Icon of={UserCheckIcon} size={18} />,
                     onChoose: () => {
                       onDecideForSomebody(shown);
                     },
@@ -601,7 +602,7 @@ const MediaDetailDialog = ({
                   {
                     id: 'preview-moment',
                     label: 'Choose the preview moment',
-                    icon: <Icon of={ClapperboardIcon} size={18} />,
+                    icon: <Icon of={FilmIcon} size={18} />,
                     onChoose: () => {
                       setIsChoosingMoment(true);
                     },

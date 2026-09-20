@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search01Icon } from '@hugeicons/core-free-icons';
+import { Search as SearchIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { Skeleton } from '@ValenceUI/Skeleton';
@@ -66,7 +66,7 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
           size="lg"
           hasFocusOnMount
           placeholder="What do you want to listen to?"
-          icon={<Icon of={Search01Icon} size={18} />}
+          icon={<Icon of={SearchIcon} size={18} />}
           value={typed}
           onValueChange={setTyped}
           className="max-w-2xl"
@@ -87,7 +87,7 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
         </div>
       ) : isEmpty ? (
         <NothingHere
-          of={Search01Icon}
+          of={SearchIcon}
           title={`Nothing matches “${query}”`}
           detail="Try fewer words."
         />

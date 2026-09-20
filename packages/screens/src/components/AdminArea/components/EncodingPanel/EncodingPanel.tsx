@@ -6,7 +6,7 @@ import { Callout } from '@ValenceUI/Callout';
 import { DataTable } from '@ValenceUI/DataTable';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
-import { FilmRoll01Icon, RefreshIcon } from '@hugeicons/core-free-icons';
+import { RefreshCw as RefreshCwIcon, Tape as TapeIcon } from '@keyline-icons/react';
 import { describeEncodeProgress } from '@ValenceClient/admin/describeEncodeProgress';
 import { describeReencodeState } from '@ValenceClient/admin/describeReencodeState';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
@@ -153,14 +153,14 @@ const EncodingPanel = ({
       <PanelCard
         title="Waiting for you"
         actions={
-          <PanelCardAction icon={RefreshIcon} onClick={onChoose}>
+          <PanelCardAction icon={RefreshCwIcon} onClick={onChoose}>
             Re-encode something
           </PanelCardAction>
         }
       >
         {awaitingReview.length === 0 ? (
           <NothingHere
-            of={FilmRoll01Icon}
+            of={TapeIcon}
             title="Nothing is waiting"
             detail="A replacement keeps both files until you have watched it and said it is fine. Nothing is discarded on a timer."
           />

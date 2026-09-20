@@ -1,4 +1,4 @@
-import { Cancel01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
+import { Check as CheckIcon, X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { TryItButtonProps } from './TryItButton.types';
@@ -17,7 +17,7 @@ const TryItButton = ({ isTrying, verdict, isDisabled = false, onTry }: TryItButt
   <Button variant="secondary" disabled={isDisabled} isLoading={isTrying} onClick={onTry}>
     {verdict === null || isTrying ? null : (
       <Icon
-        of={verdict === 'working' ? Tick02Icon : Cancel01Icon}
+        of={verdict === 'working' ? CheckIcon : XIcon}
         className={verdict === 'working' ? 'text-success' : 'text-danger'}
       />
     )}

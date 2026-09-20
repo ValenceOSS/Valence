@@ -1,10 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  ArrowTurnForwardIcon,
-  FavouriteIcon,
-  PlayIcon,
-  ViewOffIcon,
-} from '@hugeicons/core-free-icons';
+  ArrowUTurnRight as ArrowUTurnRightIcon,
+  EyeOff as EyeOffIcon,
+  Heart as HeartIcon,
+} from '@keyline-icons/react';
+import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
@@ -350,7 +350,7 @@ const RailCard = ({
                       onPlay(media, resumeSeconds ?? 0);
                     }}
                   >
-                    <Icon of={PlayIcon} size={15} />
+                    <Icon of={PlayFilledIcon} size={15} />
                     {resumeSeconds === undefined
                       ? 'Play'
                       : `Resume from ${formatDuration(resumeSeconds)}`}
@@ -367,7 +367,7 @@ const RailCard = ({
                         onPlay(media, 0);
                       }}
                     >
-                      <Icon of={ArrowTurnForwardIcon} size={17} />
+                      <Icon of={ArrowUTurnRightIcon} size={17} />
                     </Button>
                   )}
 
@@ -383,11 +383,12 @@ const RailCard = ({
                         onToggleKept(media);
                       }}
                     >
-                      {isKept ? (
-                        <Icon of={FavouriteIcon} size={17} />
-                      ) : (
-                        <Icon of={FavouriteIcon} size={17} />
-                      )}
+                      <Icon
+                        of={HeartIcon}
+                        whenActive={HeartFilledIcon}
+                        isActive={isKept}
+                        size={17}
+                      />
                     </Button>
                   )}
 
@@ -402,7 +403,7 @@ const RailCard = ({
                         onHide(media);
                       }}
                     >
-                      <Icon of={ViewOffIcon} size={17} />
+                      <Icon of={EyeOffIcon} size={17} />
                     </Button>
                   )}
                 </span>

@@ -1,5 +1,5 @@
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
-import { Add01Icon } from '@hugeicons/core-free-icons';
+import { Plus as PlusIcon } from '@keyline-icons/react';
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -199,7 +199,7 @@ const DownloadsPanel = () => {
             )}
 
             <PanelCardAction
-              icon={Add01Icon}
+              icon={PlusIcon}
               onClick={() => {
                 setIsAdding(true);
               }}

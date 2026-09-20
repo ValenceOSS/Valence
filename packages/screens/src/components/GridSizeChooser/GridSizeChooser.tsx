@@ -1,6 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
 import { SEGMENTED } from '@ValenceUI/tokens/segmented';
-import { Grid2X2Icon, Grid3X3Icon, SquareIcon } from '@hugeicons/core-free-icons';
+import {
+  Grid2x2 as Grid2x2Icon,
+  Grid3x3 as Grid3x3Icon,
+  Square as SquareIcon,
+} from '@keyline-icons/react';
 import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { SlidingMark } from '@ValenceUI/SlidingMark';
@@ -14,8 +18,8 @@ const SIZES: readonly {
   label: string;
   glyph: IconGlyph;
 }[] = [
-  { id: 'small', label: 'Small cards, more of them', glyph: Grid3X3Icon },
-  { id: 'medium', label: 'Medium cards', glyph: Grid2X2Icon },
+  { id: 'small', label: 'Small cards, more of them', glyph: Grid3x3Icon },
+  { id: 'medium', label: 'Medium cards', glyph: Grid2x2Icon },
   { id: 'large', label: 'Large cards, fewer of them', glyph: SquareIcon },
 ];
 

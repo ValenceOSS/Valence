@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Compass01Icon } from '@hugeicons/core-free-icons';
+import { Compass as CompassIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { DownloadProgressReadout } from '@ValenceScreens/components/DownloadProgressReadout/DownloadProgressReadout';
 import { Button } from '@ValenceUI/Button';
@@ -63,7 +63,7 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
   if (mine.length === 0) {
     return (
       <NothingHere
-        of={Compass01Icon}
+        of={CompassIcon}
         title="You have not asked for anything yet"
         detail="Find something on Discover, or search for it, and ask for it from its page."
       />

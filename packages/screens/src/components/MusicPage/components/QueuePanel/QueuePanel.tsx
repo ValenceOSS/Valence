@@ -1,4 +1,4 @@
-import { Cancel01Icon, LeftToRightListNumberIcon } from '@hugeicons/core-free-icons';
+import { ListOrdered as ListOrderedIcon, X as XIcon } from '@keyline-icons/react';
 import { useEffect, useRef, useState } from 'react';
 import { Reorder } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -64,7 +64,7 @@ const QueuePanel = () => {
   if (queue === null || current === null) {
     return (
       <NothingHere
-        of={LeftToRightListNumberIcon}
+        of={ListOrderedIcon}
         title="Nothing queued"
         detail="Play something and what comes next will be here."
       />
@@ -156,7 +156,7 @@ const QueuePanel = () => {
                         player.removeFromQueue(at);
                       }}
                     >
-                      <Icon of={Cancel01Icon} size={14} />
+                      <Icon of={XIcon} size={14} />
                     </Button>
                   </Reorder.Item>
                 );

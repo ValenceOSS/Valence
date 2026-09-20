@@ -1,7 +1,10 @@
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
-import { Logout01Icon, MoreHorizontalIcon } from '@hugeicons/core-free-icons';
+import {
+  DoorOpen as DoorOpenIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+} from '@keyline-icons/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -86,7 +89,7 @@ const DeviceList = () => {
                       {
                         id: 'end',
                         label: 'Sign this out',
-                        icon: <Icon of={Logout01Icon} size={15} />,
+                        icon: <Icon of={DoorOpenIcon} size={15} />,
                         isDestructive: true,
                         onChoose: () => {
                           live.current.onEnd(row.original);
@@ -110,7 +113,7 @@ const DeviceList = () => {
       actions={
         elsewhere.length === 0 ? undefined : (
           <PanelCardAction
-            icon={Logout01Icon}
+            icon={DoorOpenIcon}
             onClick={() => {
               setIsEndingRest(true);
             }}

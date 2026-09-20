@@ -1,75 +1,114 @@
 import {
-  Activity01Icon,
-  DashboardSquare01Icon,
-  Download04Icon,
-  FilmRoll01Icon,
-  FolderLibraryIcon,
-  InboxDownloadIcon,
-  Search01Icon,
-  SlidersHorizontalIcon,
-  Database02Icon,
-  Link01Icon,
-  Ticket01Icon,
-  Settings02Icon,
-  ShieldUserIcon,
-  TaskDaily01Icon,
-  TerminalIcon,
-  UserMultipleIcon,
-  Video01Icon,
-  WebhookIcon,
-} from '@hugeicons/core-free-icons';
+  Activity as ActivityIcon,
+  Coupon as CouponIcon,
+  Database as DatabaseIcon,
+  Download as DownloadIcon,
+  Folders as FoldersIcon,
+  Inbox as InboxIcon,
+  LayoutDashboard as LayoutDashboardIcon,
+  Link as LinkIcon,
+  ListCheck as ListCheckIcon,
+  Route as RouteIcon,
+  Search as SearchIcon,
+  Settings as SettingsIcon,
+  Shield as ShieldIcon,
+  SlidersHorizontal as SlidersHorizontalIcon,
+  Tape as TapeIcon,
+  Terminal as TerminalIcon,
+  Users as UsersIcon,
+  Video as VideoIcon,
+} from '@keyline-icons/react';
+import {
+  Activity as ActivityFilledIcon,
+  Coupon as CouponFilledIcon,
+  Database as DatabaseFilledIcon,
+  Download as DownloadFilledIcon,
+  Folders as FoldersFilledIcon,
+  Inbox as InboxFilledIcon,
+  LayoutDashboard as LayoutDashboardFilledIcon,
+  Link as LinkFilledIcon,
+  ListCheck as ListCheckFilledIcon,
+  Route as RouteFilledIcon,
+  Search as SearchFilledIcon,
+  Settings as SettingsFilledIcon,
+  Shield as ShieldFilledIcon,
+  SlidersHorizontal as SlidersHorizontalFilledIcon,
+  Tape as TapeFilledIcon,
+  Terminal as TerminalFilledIcon,
+  Users as UsersFilledIcon,
+  Video as VideoFilledIcon,
+} from '@keyline-icons/react/fill';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 
 const ADMIN_SECTIONS = [
-  { label: null, items: [{ id: 'overview', label: 'Overview', icon: DashboardSquare01Icon }] },
+  {
+    label: null,
+    items: [
+      {
+        id: 'overview',
+        label: 'Overview',
+        icon: LayoutDashboardIcon,
+        activeIcon: LayoutDashboardFilledIcon,
+      },
+    ],
+  },
   {
     label: 'Activity',
     items: [
-      { id: 'activity', label: 'Sessions', icon: Activity01Icon },
-      { id: 'shares', label: 'Links', icon: Link01Icon },
-      { id: 'jobs', label: 'Jobs', icon: TaskDaily01Icon },
+      { id: 'activity', label: 'Sessions', icon: ActivityIcon, activeIcon: ActivityFilledIcon },
+      { id: 'shares', label: 'Links', icon: LinkIcon, activeIcon: LinkFilledIcon },
+      { id: 'jobs', label: 'Jobs', icon: ListCheckIcon, activeIcon: ListCheckFilledIcon },
     ],
   },
   {
     label: 'Content',
     items: [
-      { id: 'libraries', label: 'Libraries', icon: FolderLibraryIcon },
-      { id: 'media', label: 'Media', icon: Video01Icon },
-      { id: 'encoding', label: 'Encoding', icon: FilmRoll01Icon },
+      { id: 'libraries', label: 'Libraries', icon: FoldersIcon, activeIcon: FoldersFilledIcon },
+      { id: 'media', label: 'Media', icon: VideoIcon, activeIcon: VideoFilledIcon },
+      { id: 'encoding', label: 'Encoding', icon: TapeIcon, activeIcon: TapeFilledIcon },
     ],
   },
   {
     label: 'People',
     items: [
-      { id: 'accounts', label: 'Accounts', icon: UserMultipleIcon },
-      { id: 'roles', label: 'Roles', icon: ShieldUserIcon },
+      { id: 'accounts', label: 'Accounts', icon: UsersIcon, activeIcon: UsersFilledIcon },
+      { id: 'roles', label: 'Roles', icon: ShieldIcon, activeIcon: ShieldFilledIcon },
     ],
   },
   {
     label: 'Requests',
     items: [
-      { id: 'requests', label: 'Overview', icon: InboxDownloadIcon },
-      { id: 'requested', label: 'Requested', icon: Ticket01Icon },
-      { id: 'indexers', label: 'Indexers', icon: Database02Icon },
-      { id: 'search', label: 'Search', icon: Search01Icon },
-      { id: 'profiles', label: 'Profiles', icon: SlidersHorizontalIcon },
-      { id: 'downloads', label: 'Downloads', icon: Download04Icon },
+      { id: 'requests', label: 'Overview', icon: InboxIcon, activeIcon: InboxFilledIcon },
+      { id: 'requested', label: 'Requested', icon: CouponIcon, activeIcon: CouponFilledIcon },
+      { id: 'indexers', label: 'Indexers', icon: DatabaseIcon, activeIcon: DatabaseFilledIcon },
+      { id: 'search', label: 'Search', icon: SearchIcon, activeIcon: SearchFilledIcon },
+      {
+        id: 'profiles',
+        label: 'Profiles',
+        icon: SlidersHorizontalIcon,
+        activeIcon: SlidersHorizontalFilledIcon,
+      },
+      { id: 'downloads', label: 'Downloads', icon: DownloadIcon, activeIcon: DownloadFilledIcon },
     ],
   },
   {
     label: 'System',
     items: [
-      { id: 'settings', label: 'Settings', icon: Settings02Icon },
-      { id: 'webhooks', label: 'Webhooks', icon: WebhookIcon },
-      { id: 'logs', label: 'Logs', icon: TerminalIcon },
+      { id: 'settings', label: 'Settings', icon: SettingsIcon, activeIcon: SettingsFilledIcon },
+      { id: 'webhooks', label: 'Webhooks', icon: RouteIcon, activeIcon: RouteFilledIcon },
+      { id: 'logs', label: 'Logs', icon: TerminalIcon, activeIcon: TerminalFilledIcon },
     ],
   },
 ] as const;
 
 type AdminPanelId = (typeof ADMIN_SECTIONS)[number]['items'][number]['id'];
 
-const ADMIN_PANELS: readonly { id: AdminPanelId; label: string; icon: IconGlyph }[] =
-  ADMIN_SECTIONS.flatMap((section) => [...section.items]);
+const ADMIN_PANELS: readonly {
+  id: AdminPanelId;
+  label: string;
+  icon: IconGlyph;
+  activeIcon?: IconGlyph;
+}[] = ADMIN_SECTIONS.flatMap((section) => [...section.items]);
 
 export type { AdminPanelId };
 

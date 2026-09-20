@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Menu01Icon } from '@hugeicons/core-free-icons';
+import { Menu as MenuIcon } from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedIcon } from '@ValenceUI/AnimatedIcon';
 import { Button } from '@ValenceUI/Button';
@@ -116,7 +116,7 @@ const NavBar = ({
         <ActionMenu
           label="Places"
           className="shrink-0 md:hidden"
-          trigger={<Icon of={Menu01Icon} size={20} />}
+          trigger={<Icon of={MenuIcon} size={20} />}
           groups={[
             {
               items: items.map((item) => ({

@@ -4,6 +4,7 @@ type SidebarItem = {
   id: string;
   label: string;
   icon: IconGlyph;
+  activeIcon?: IconGlyph;
 };
 
 type SidebarGroupProps = {

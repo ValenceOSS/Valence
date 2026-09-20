@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Compass01Icon } from '@hugeicons/core-free-icons';
+import { Compass as CompassIcon } from '@keyline-icons/react';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { NothingHere } from '@ValenceUI/NothingHere';
@@ -78,7 +78,7 @@ const CatalogueGrid = ({ browsing, onAsk }: CatalogueGridProps) => {
   if (titles.length === 0) {
     return (
       <NothingHere
-        of={Compass01Icon}
+        of={CompassIcon}
         title="Nothing to ask for here"
         detail="The catalogue listed nothing."
       />

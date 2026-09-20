@@ -2,14 +2,14 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Delete02Icon,
-  MoreHorizontalIcon,
-  PencilEdit02Icon,
-  PlugSocketIcon,
-  ToggleOffIcon,
-  ToggleOnIcon,
-  Add01Icon,
-} from '@hugeicons/core-free-icons';
+  Bin as BinIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Pen as PenIcon,
+  Plug as PlugIcon,
+  Plus as PlusIcon,
+  ToggleOff as ToggleOffIcon,
+  ToggleOn as ToggleOnIcon,
+} from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -160,7 +160,7 @@ const IndexersPanel = () => {
                     {
                       id: 'edit',
                       label: 'Change',
-                      icon: <Icon of={PencilEdit02Icon} size={15} />,
+                      icon: <Icon of={PenIcon} size={15} />,
                       onChoose: () => {
                         setEditing(row.original);
                       },
@@ -169,7 +169,7 @@ const IndexersPanel = () => {
                       id: 'test',
                       label: 'Test',
                       detail: 'Asks it what it can search, and clears its failures if it answers.',
-                      icon: <Icon of={PlugSocketIcon} size={15} />,
+                      icon: <Icon of={PlugIcon} size={15} />,
                       isDisabled: testingId !== null,
                       onChoose: () => {
                         test(row.original);
@@ -195,7 +195,7 @@ const IndexersPanel = () => {
                     {
                       id: 'remove',
                       label: 'Remove',
-                      icon: <Icon of={Delete02Icon} size={15} />,
+                      icon: <Icon of={BinIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         setRemoving(row.original);
@@ -217,7 +217,7 @@ const IndexersPanel = () => {
       isFlush
       actions={
         <PanelCardAction
-          icon={Add01Icon}
+          icon={PlusIcon}
           onClick={() => {
             setIsChoosing(true);
           }}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -270,7 +270,7 @@ const IndexerDialog = ({
                   trigger={
                     <>
                       <span className="truncate">{url}</span>
-                      <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+                      <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
                     </>
                   }
                 />

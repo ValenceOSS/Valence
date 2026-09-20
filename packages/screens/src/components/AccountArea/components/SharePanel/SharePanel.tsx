@@ -1,6 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
-import { Unlink01Icon } from '@hugeicons/core-free-icons';
+import { Unlink as UnlinkIcon } from '@keyline-icons/react';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -97,7 +97,7 @@ const SharePanel = () => {
                   setWithdrawing(row.original);
                 }}
               >
-                <Icon of={Unlink01Icon} size={16} />
+                <Icon of={UnlinkIcon} size={16} />
               </Button>
             </span>
           ),

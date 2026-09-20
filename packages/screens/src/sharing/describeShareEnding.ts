@@ -1,4 +1,8 @@
-import { Clock01Icon, Unlink01Icon, ViewOffIcon } from '@hugeicons/core-free-icons';
+import {
+  Clock as ClockIcon,
+  EyeOff as EyeOffIcon,
+  Unlink as UnlinkIcon,
+} from '@keyline-icons/react';
 import { SHARE_ENDING_SAID } from '@ValenceContracts/schemas/Share';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 import type { ShareEnding } from '@ValenceContracts/schemas/Share';
@@ -12,17 +16,17 @@ type EndingTold = {
 const TOLD: Record<ShareEnding, { detail: string; icon: IconGlyph }> = {
   withdrawn: {
     detail: 'Somebody stopped it working. Whoever sent it can send another.',
-    icon: Unlink01Icon,
+    icon: UnlinkIcon,
   },
   expired: {
     detail:
       'It was made to last a while, and that while is over. Whoever sent it can send another.',
-    icon: Clock01Icon,
+    icon: ClockIcon,
   },
   spent: {
     detail:
       'It was made to be opened a set number of times, and it has been. Whoever sent it can send another.',
-    icon: ViewOffIcon,
+    icon: EyeOffIcon,
   },
 };
 

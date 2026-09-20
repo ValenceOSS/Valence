@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { FavouriteIcon, PlayIcon, ShuffleIcon } from '@hugeicons/core-free-icons';
+import { Heart as HeartIcon, Shuffle as ShuffleIcon } from '@keyline-icons/react';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
@@ -65,7 +66,7 @@ const LikedView = () => {
                 player.play(tracks, 0, { source: SOURCE });
               }}
             >
-              <Icon of={PlayIcon} size={24} isActive />
+              <Icon of={PlayFilledIcon} size={24} />
             </Button>
             <Button
               variant="ghost"
@@ -91,7 +92,7 @@ const LikedView = () => {
           <Skeleton label="Reading your liked songs" className="h-40 w-full" />
         ) : tracks.length === 0 ? (
           <NothingHere
-            of={FavouriteIcon}
+            of={HeartIcon}
             title="Songs you like will be here"
             detail="Press the heart beside any song to keep it."
           />

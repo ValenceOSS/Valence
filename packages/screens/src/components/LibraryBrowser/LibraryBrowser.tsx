@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { FolderOpenIcon } from '@hugeicons/core-free-icons';
+import { FolderOpen as FolderOpenIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { staggerVariants } from '@ValenceUI/animations/reveal';

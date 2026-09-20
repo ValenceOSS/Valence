@@ -1,4 +1,4 @@
-import { ArrowDown01Icon, ArrowUp01Icon } from '@hugeicons/core-free-icons';
+import { ChevronDown as ChevronDownIcon, ChevronUp as ChevronUpIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { Icon } from '@ValenceUI/Icon';
@@ -59,7 +59,7 @@ const RankedChoices = <Choice extends string>({
               move(place, place - 1);
             }}
           >
-            <Icon of={ArrowUp01Icon} size={14} />
+            <Icon of={ChevronUpIcon} size={14} />
           </Button>
 
           <Button
@@ -72,7 +72,7 @@ const RankedChoices = <Choice extends string>({
               move(place, place + 1);
             }}
           >
-            <Icon of={ArrowDown01Icon} size={14} />
+            <Icon of={ChevronDownIcon} size={14} />
           </Button>
         </li>
       ))}

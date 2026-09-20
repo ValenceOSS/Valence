@@ -1,4 +1,4 @@
-import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { FormField } from '@ValenceUI/FormField';
 import { Icon } from '@ValenceUI/Icon';
@@ -77,7 +77,7 @@ const DefinitionSettingsFields = ({
                     <span className="truncate">
                       {setting.options.find((option) => option.value === chosen)?.label ?? chosen}
                     </span>
-                    <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+                    <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
                   </>
                 }
               />

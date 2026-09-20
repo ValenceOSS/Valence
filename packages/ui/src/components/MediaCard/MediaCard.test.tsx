@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Tick02Icon } from '@hugeicons/core-free-icons';
+import { Check as CheckIcon } from '@keyline-icons/react';
 import { MediaCard } from './MediaCard';
 import type * as MotionReact from 'motion/react';
 
@@ -134,7 +134,7 @@ describe('MediaCard', () => {
         title="Dune"
         subtitle="2021"
         onSelect={vi.fn()}
-        corner={{ icon: Tick02Icon, label: 'In your library' }}
+        corner={{ icon: CheckIcon, label: 'In your library' }}
       />,
     );
 

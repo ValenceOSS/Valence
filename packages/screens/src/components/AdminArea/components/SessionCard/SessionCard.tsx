@@ -1,14 +1,13 @@
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
 import { Icon } from '@ValenceUI/Icon';
 import {
-  InformationCircleIcon,
-  Message01Icon,
-  MusicNote01Icon,
-  PauseIcon,
-  PlayIcon,
-  StopIcon,
-  Tv01Icon,
-} from '@hugeicons/core-free-icons';
+  Info as InfoIcon,
+  MessageSquare as MessageSquareIcon,
+  Monitor as MonitorIcon,
+  MusicNote as MusicNoteIcon,
+  Stop as StopIcon,
+} from '@keyline-icons/react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -72,7 +71,7 @@ const SessionCard = ({
             className="h-full w-full object-cover"
           />
         ) : (
-          <Icon of={listening === null ? Tv01Icon : MusicNote01Icon} size={20} tone="muted" />
+          <Icon of={listening === null ? MonitorIcon : MusicNoteIcon} size={20} tone="muted" />
         )}
       </span>
 
@@ -168,7 +167,7 @@ const SessionCard = ({
                 disabled={isBusy}
                 onClick={onPause}
               >
-                <Icon of={PauseIcon} size={15} />
+                <Icon of={PauseFilledIcon} size={15} />
               </Button>
             ) : (
               <Button
@@ -179,7 +178,7 @@ const SessionCard = ({
                 disabled={isBusy}
                 onClick={onResume}
               >
-                <Icon of={PlayIcon} size={15} />
+                <Icon of={PlayFilledIcon} size={15} />
               </Button>
             )}
 
@@ -202,7 +201,7 @@ const SessionCard = ({
               disabled={isBusy}
               onClick={onMessage}
             >
-              <Icon of={Message01Icon} size={15} />
+              <Icon of={MessageSquareIcon} size={15} />
             </Button>
           </>
         )}
@@ -217,7 +216,7 @@ const SessionCard = ({
               setIsShowingStats(true);
             }}
           >
-            <Icon of={InformationCircleIcon} size={15} />
+            <Icon of={InfoIcon} size={15} />
           </Button>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
-import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import { ChevronRight as ChevronRightIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Logo } from '@ValenceUI/Logo';
@@ -84,7 +84,7 @@ const WelcomeToValence = ({ name, household, onFinished }: WelcomeToValenceProps
           }}
         >
           Start watching
-          <Icon of={ArrowRight01Icon} size={18} />
+          <Icon of={ChevronRightIcon} size={18} />
         </Button>
       </motion.div>
     </div>

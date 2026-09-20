@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { HardDriveIcon } from '@hugeicons/core-free-icons';
+import { HardDrive as HardDriveIcon } from '@keyline-icons/react';
 import { FeatureVisual } from './FeatureVisual';
 import type { FeatureVisualKind } from './FeatureVisual.types';
 

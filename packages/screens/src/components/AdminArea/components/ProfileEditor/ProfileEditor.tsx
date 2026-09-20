@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -118,7 +118,7 @@ const Choosing = <Value extends string>({
           <span className="truncate">
             {options.find((option) => option.id === value)?.label ?? 'The best there is'}
           </span>
-          <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+          <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
         </>
       }
     />

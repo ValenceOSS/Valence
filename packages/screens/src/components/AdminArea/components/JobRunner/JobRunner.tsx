@@ -1,11 +1,11 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Calendar01Icon,
-  InformationCircleIcon,
-  MoreHorizontalIcon,
-  PlayIcon,
-  StopIcon,
-} from '@hugeicons/core-free-icons';
+  Calendar as CalendarIcon,
+  Info as InfoIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Stop as StopIcon,
+} from '@keyline-icons/react';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -179,7 +179,7 @@ const JobRunner = ({
                   setWatching(row.original);
                 }}
               >
-                <Icon of={InformationCircleIcon} size={15} />
+                <Icon of={InfoIcon} size={15} />
               </Button>
             </span>
           );
@@ -200,7 +200,7 @@ const JobRunner = ({
                     {
                       id: 'run',
                       label: 'Run now',
-                      icon: <Icon of={PlayIcon} size={15} />,
+                      icon: <Icon of={PlayFilledIcon} size={15} />,
                       isDestructive: row.original.destructive,
                       isDisabled:
                         row.original.needsLibrary &&
@@ -229,7 +229,7 @@ const JobRunner = ({
                           {
                             id: 'schedule',
                             label: 'Edit schedule',
-                            icon: <Icon of={Calendar01Icon} size={15} />,
+                            icon: <Icon of={CalendarIcon} size={15} />,
                             onChoose: () => {
                               live.current.onOpenSchedule(row.original.kind);
                             },

@@ -1,7 +1,7 @@
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { SidebarLeftIcon } from '@hugeicons/core-free-icons';
+import { PanelLeft as PanelLeftIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -160,7 +160,7 @@ const AdminPage = () => {
                   saveSidebarCollapsed(false);
                 }}
               >
-                <Icon of={SidebarLeftIcon} size={17} />
+                <Icon of={PanelLeftIcon} size={17} />
               </Button>
             </div>
           )}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search01Icon } from '@hugeicons/core-free-icons';
+import { Search as SearchIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
@@ -41,7 +41,7 @@ const RoleMembers = ({ accounts, heldIds, onToggle }: RoleMembersProps) => {
         value={search}
         onValueChange={setSearch}
         placeholder="Find somebody"
-        icon={<Icon of={Search01Icon} size={15} />}
+        icon={<Icon of={SearchIcon} size={15} />}
       />
 
       {shown.length === 0 ? (

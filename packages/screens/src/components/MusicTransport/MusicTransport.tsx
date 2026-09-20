@@ -1,12 +1,17 @@
 import {
-  NextIcon,
-  PauseIcon,
-  PlayIcon,
-  PreviousIcon,
-  RepeatIcon,
-  RepeatOne01Icon,
-  ShuffleIcon,
-} from '@hugeicons/core-free-icons';
+  Repeat as RepeatIcon,
+  Repeat1 as Repeat1Icon,
+  Shuffle as ShuffleIcon,
+} from '@keyline-icons/react';
+import {
+  Pause as PauseFilledIcon,
+  Play as PlayFilledIcon,
+  Repeat as RepeatFilledIcon,
+  Repeat1 as Repeat1FilledIcon,
+  Shuffle as ShuffleFilledIcon,
+  SkipBack as SkipBackFilledIcon,
+  SkipForward as SkipForwardFilledIcon,
+} from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -110,6 +115,7 @@ const MusicTransport = ({
     <BarButton
       label={queue?.isShuffled === true ? 'Stop shuffling' : 'Shuffle'}
       glyph={ShuffleIcon}
+      litGlyph={ShuffleFilledIcon}
       gesture="tumble"
       isLit={queue?.isShuffled === true}
       isDisabled={isIdle || isOrdered || shown.remote !== null || isFollowing}
@@ -123,7 +129,8 @@ const MusicTransport = ({
   const repeating = (
     <BarButton
       label={REPEAT_LABELS[repeat]}
-      glyph={repeat === 'one' ? RepeatOne01Icon : RepeatIcon}
+      glyph={repeat === 'one' ? Repeat1Icon : RepeatIcon}
+      litGlyph={repeat === 'one' ? Repeat1FilledIcon : RepeatFilledIcon}
       gesture="spin"
       isLit={repeat !== 'off'}
       isDisabled={isIdle || isOrdered || shown.remote !== null || isFollowing}
@@ -138,9 +145,8 @@ const MusicTransport = ({
     <>
       <BarButton
         label="Previous"
-        glyph={PreviousIcon}
+        glyph={SkipBackFilledIcon}
         iconSize={iconSize}
-        isSolid
         isDisabled={isIdle || isFollowing}
         onClick={() => {
           player.previous();
@@ -187,9 +193,8 @@ const MusicTransport = ({
               <Spinner size="sm" label="Loading" />
             ) : (
               <Icon
-                of={shown.isPlaying ? PauseIcon : PlayIcon}
+                of={shown.isPlaying ? PauseFilledIcon : PlayFilledIcon}
                 size={isImmersive ? 36 : 18}
-                isActive
               />
             )}
           </motion.span>
@@ -198,9 +203,8 @@ const MusicTransport = ({
 
       <BarButton
         label="Next"
-        glyph={NextIcon}
+        glyph={SkipForwardFilledIcon}
         iconSize={iconSize}
-        isSolid
         isDisabled={isIdle || isFollowing}
         onClick={() => {
           player.next();

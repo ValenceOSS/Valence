@@ -2,13 +2,13 @@ import { Icon } from '@ValenceUI/Icon';
 import { titleLogoUrl } from '@ValenceScreens/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
-  Cancel01Icon,
-  Download04Icon,
-  FilmRoll01Icon,
-  InformationCircleIcon,
-  Link01Icon,
-  PlayIcon,
-} from '@hugeicons/core-free-icons';
+  Download as DownloadIcon,
+  Info as InfoIcon,
+  Link as LinkIcon,
+  Tape as TapeIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -178,7 +178,7 @@ const ShowDialog = ({
           isShowing={hasScrolledPast}
         >
           <Button isIconOnly variant="ghost" size="sm" label="Close" onClick={onClose}>
-            <Icon of={Cancel01Icon} size={16} />
+            <Icon of={XIcon} size={16} />
           </Button>
         </ScrolledTitle>
 
@@ -196,7 +196,7 @@ const ShowDialog = ({
 
           <div className="absolute right-4 top-4">
             <Button isIconOnly variant="overlay" label="Close" onClick={onClose}>
-              <Icon of={Cancel01Icon} size={20} />
+              <Icon of={XIcon} size={20} />
             </Button>
           </div>
 
@@ -357,7 +357,7 @@ const ShowDialog = ({
                   onPlay(carryingOn.episode, carryingOn.startSeconds);
                 }}
               >
-                <Icon of={PlayIcon} size={18} />
+                <Icon of={PlayFilledIcon} size={18} />
                 {carryingOn.isResuming
                   ? `Resume ${formatDuration(carryingOn.startSeconds)}`
                   : `Play ${nameSeason(carryingOn.episode.seasonNumber ?? null)}, episode ${(
@@ -374,7 +374,7 @@ const ShowDialog = ({
                     id: 'trailer',
                     isPinned: true,
                     label: 'Watch the trailer',
-                    icon: <Icon of={FilmRoll01Icon} size={18} />,
+                    icon: <Icon of={TapeIcon} size={18} />,
                     onChoose: () => {
                       if (trailer === null) {
                         setIsWatchingTrailer(true);
@@ -392,7 +392,7 @@ const ShowDialog = ({
                   {
                     id: 'episode',
                     label: 'About this episode',
-                    icon: <Icon of={InformationCircleIcon} size={18} />,
+                    icon: <Icon of={InfoIcon} size={18} />,
                     onChoose: () => {
                       onInspect(carryingOn.episode);
                     },
@@ -404,7 +404,7 @@ const ShowDialog = ({
                   {
                     id: 'download',
                     label: 'Download the programme',
-                    icon: <Icon of={Download04Icon} size={18} />,
+                    icon: <Icon of={DownloadIcon} size={18} />,
                     onChoose: () => {
                       setIsDownloading(true);
                     },
@@ -417,7 +417,7 @@ const ShowDialog = ({
                     id: 'share',
                     isPinned: true,
                     label: 'Share',
-                    icon: <Icon of={Link01Icon} size={18} />,
+                    icon: <Icon of={LinkIcon} size={18} />,
                     onChoose: () => {
                       onShare(shown);
                     },

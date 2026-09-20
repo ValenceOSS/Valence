@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { MusicNote01Icon } from '@hugeicons/core-free-icons';
+import { MusicNote as MusicNoteIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { Skeleton } from '@ValenceUI/Skeleton';
@@ -64,7 +64,7 @@ const MusicHome = () => {
   if (recent.length === 0 && mine.length === 0 && shared.length === 0) {
     return (
       <NothingHere
-        of={MusicNote01Icon}
+        of={MusicNoteIcon}
         title="No music yet"
         detail="Once a music library has been added and scanned, its albums and artists will be here."
         fills

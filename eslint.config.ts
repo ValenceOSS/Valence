@@ -15,10 +15,10 @@ const PARENT_IMPORT_BAN = {
     'Parent-relative imports are banned. Use @ValenceUI/*, @ValenceCore/*, @ValenceContracts/* or @ValenceSDK/*.',
 };
 
-const HUGEICONS_RENDERER_BAN = {
-  group: ['@hugeicons/react'],
+const RETIRED_ICON_SET_BAN = {
+  group: ['@hugeicons/*'],
   message:
-    'Draw an icon with @ValenceUI/Icon rather than HugeiconsIcon, so the set stays swappable in one file.',
+    'Valence draws its icons from @keyline-icons/react, through @ValenceUI/Icon — see code standards section 10.',
 };
 
 const SHARED_IMPORT_BANS = [
@@ -26,9 +26,9 @@ const SHARED_IMPORT_BANS = [
   {
     group: ['@tabler/icons-react', '@remixicon/react', 'lucide-react', '@phosphor-icons/*'],
     message:
-      'Icons come from @hugeicons/core-free-icons, drawn by @ValenceUI/Icon — see code standards section 10.',
+      'Icons come from @keyline-icons/react, drawn by @ValenceUI/Icon — see code standards section 10.',
   },
-  HUGEICONS_RENDERER_BAN,
+  RETIRED_ICON_SET_BAN,
 ];
 
 const LANDING_IMPORT_BANS = [
@@ -36,9 +36,9 @@ const LANDING_IMPORT_BANS = [
   {
     group: ['@remixicon/react', 'lucide-react', '@phosphor-icons/*'],
     message:
-      'getvalence.app draws its icons from @tabler/icons-react — see code standards section 10 for why the product itself uses @hugeicons/core-free-icons instead.',
+      'getvalence.app draws its icons from @tabler/icons-react — see code standards section 10 for why the product itself uses @keyline-icons/react instead.',
   },
-  HUGEICONS_RENDERER_BAN,
+  RETIRED_ICON_SET_BAN,
 ];
 
 export default tseslint.config(
@@ -110,6 +110,11 @@ export default tseslint.config(
             'JSXOpeningElement[name.name="Button"] > JSXAttribute[name.name="className"] > Literal[value=/(hover:bg-|\\bshadow-|\\btext-danger|\\bbg-surface|\\bborder\\b|rounded-full)/]',
           message:
             'A button takes its fill, border, corners and shadow from variant, isPill and the component around it, not className. Use variant="row", "glossy", "ghost", "danger" or "overlay" — see code standards section 9.',
+        },
+        {
+          selector: 'JSXOpeningElement[name.name=/^(?!AnimatedIcon$)[A-Z][A-Za-z0-9]+Icon$/]',
+          message:
+            'An icon is drawn by @ValenceUI/Icon — <Icon of={HomeIcon} /> — not rendered directly, so how it is drawn is decided in one file.',
         },
         {
           selector:

@@ -60,10 +60,7 @@ const refuseReencode = ({
     };
   }
 
-  if (
-    item.subtitleStreams.length > 0 &&
-    CANNOT_CARRY_SUBTITLES.has(item.container.toLowerCase())
-  ) {
+  if (item.subtitleStreams.length > 0 && CANNOT_CARRY_SUBTITLES.has(item.container.toLowerCase())) {
     return {
       code: 'SubtitlesWouldNotSurvive',
       detail: `This file carries subtitles that a ${item.container} file cannot hold, and the container is never changed. Re-encoding it would lose them.`,

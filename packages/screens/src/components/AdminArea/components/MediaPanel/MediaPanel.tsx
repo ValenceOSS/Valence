@@ -1,11 +1,11 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  ClapperboardIcon,
-  FilmRoll01Icon,
-  MoreHorizontalIcon,
-  RefreshIcon,
-  Search01Icon,
-} from '@hugeicons/core-free-icons';
+  Film as FilmIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  RefreshCw as RefreshCwIcon,
+  Search as SearchIcon,
+  Tape as TapeIcon,
+} from '@keyline-icons/react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -174,7 +174,7 @@ const MediaPanel = ({
                           : live.current.rebuilt.has(row.original.id)
                             ? 'Will rebuild'
                             : 'Rebuild previews',
-                      icon: <Icon of={RefreshIcon} size={15} />,
+                      icon: <Icon of={RefreshCwIcon} size={15} />,
                       isDisabled: live.current.rebuilding === row.original.id,
                       onChoose: () => {
                         live.current.ask(row.original);
@@ -183,7 +183,7 @@ const MediaPanel = ({
                     {
                       id: 'wrong-match',
                       label: 'Wrong match?',
-                      icon: <Icon of={Search01Icon} size={15} />,
+                      icon: <Icon of={SearchIcon} size={15} />,
                       onChoose: () => {
                         live.current.onCorrect(row.original);
                       },
@@ -191,7 +191,7 @@ const MediaPanel = ({
                     {
                       id: 'preview-moment',
                       label: 'Choose the preview moment',
-                      icon: <Icon of={ClapperboardIcon} size={15} />,
+                      icon: <Icon of={FilmIcon} size={15} />,
                       onChoose: () => {
                         live.current.onChooseMoment(row.original);
                       },
@@ -202,7 +202,7 @@ const MediaPanel = ({
                           {
                             id: 'reencode',
                             label: 'Re-encode\u2026',
-                            icon: <Icon of={FilmRoll01Icon} size={15} />,
+                            icon: <Icon of={TapeIcon} size={15} />,
                             onChoose: () => {
                               live.current.onReencode?.(row.original);
                             },

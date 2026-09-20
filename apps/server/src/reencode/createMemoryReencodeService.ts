@@ -74,8 +74,7 @@ const createMemoryReencodeService = ({
             settings,
             isAlreadyUnderWay: requests.some(
               (one) =>
-                one.mediaId === mediaId &&
-                REENCODES_UNDER_WAY.some((state) => state === one.state),
+                one.mediaId === mediaId && REENCODES_UNDER_WAY.some((state) => state === one.state),
             ),
             isBeingWatched: isBeingWatched(mediaId),
             isFolderWritable,
@@ -170,17 +169,13 @@ const createMemoryReencodeService = ({
     confirm: (id) => {
       const found = requests.find((one) => one.id === id);
 
-      return Promise.resolve(
-        found?.state === 'awaitingReview' ? settle(id, 'finished') : false,
-      );
+      return Promise.resolve(found?.state === 'awaitingReview' ? settle(id, 'finished') : false);
     },
 
     reject: (id) => {
       const found = requests.find((one) => one.id === id);
 
-      return Promise.resolve(
-        found?.state === 'awaitingReview' ? settle(id, 'rejected') : false,
-      );
+      return Promise.resolve(found?.state === 'awaitingReview' ? settle(id, 'rejected') : false);
     },
 
     sample: (id) => {
@@ -197,12 +192,9 @@ const createMemoryReencodeService = ({
     },
 
     frame: (id) =>
-      Promise.resolve(
-        requests.some((one) => one.id === id) ? new ArrayBuffer(8) : null,
-      ),
+      Promise.resolve(requests.some((one) => one.id === id) ? new ArrayBuffer(8) : null),
 
-    renditionsFor: (mediaId) =>
-      Promise.resolve(kept.filter((one) => one.mediaItemId === mediaId)),
+    renditionsFor: (mediaId) => Promise.resolve(kept.filter((one) => one.mediaItemId === mediaId)),
 
     removeRendition: (id) => {
       const at = kept.findIndex((one) => one.id === id);

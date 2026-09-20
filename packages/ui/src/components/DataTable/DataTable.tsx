@@ -1,12 +1,12 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  ArrowDown01Icon,
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
-  ArrowUp01Icon,
-  FilterIcon,
-  UnfoldMoreIcon,
-} from '@hugeicons/core-free-icons';
+  ChevronDown as ChevronDownIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  ChevronUp as ChevronUpIcon,
+  ChevronsUpDown as ChevronsUpDownIcon,
+  Filter as FilterIcon,
+} from '@keyline-icons/react';
 import { useState } from 'react';
 import { useTable } from '@tanstack/react-table';
 import { Button } from '@ValenceUI/Button';
@@ -149,11 +149,11 @@ const DataTable = <Row extends RowData>({
                             <table.FlexRender header={header} />
 
                             {direction === 'asc' ? (
-                              <Icon of={ArrowUp01Icon} size={13} />
+                              <Icon of={ChevronUpIcon} size={13} />
                             ) : direction === 'desc' ? (
-                              <Icon of={ArrowDown01Icon} size={13} />
+                              <Icon of={ChevronDownIcon} size={13} />
                             ) : (
-                              <Icon of={UnfoldMoreIcon} size={13} className="opacity-40" />
+                              <Icon of={ChevronsUpDownIcon} size={13} className="opacity-40" />
                             )}
                           </Button>
                         ) : (
@@ -250,7 +250,7 @@ const DataTable = <Row extends RowData>({
                 setPage(Math.max(0, page - 1));
               }}
             >
-              <Icon of={ArrowLeft01Icon} size={15} />
+              <Icon of={ChevronLeftIcon} size={15} />
             </Button>
 
             <Button
@@ -263,7 +263,7 @@ const DataTable = <Row extends RowData>({
                 setPage(Math.min(pageCount - 1, page + 1));
               }}
             >
-              <Icon of={ArrowRight01Icon} size={15} />
+              <Icon of={ChevronRightIcon} size={15} />
             </Button>
           </div>
         </div>

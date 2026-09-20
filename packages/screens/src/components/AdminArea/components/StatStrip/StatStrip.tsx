@@ -1,4 +1,4 @@
-import { InformationCircleIcon } from '@hugeicons/core-free-icons';
+import { Info as InfoIcon } from '@keyline-icons/react';
 import { HoverCard } from '@ValenceUI/HoverCard';
 import { Icon } from '@ValenceUI/Icon';
 import { StatTile } from '@ValenceUI/StatTile';
@@ -37,7 +37,7 @@ const StatStrip = ({ stats }: StatStripProps) => (
               icon: (
                 <HoverCard side="bottom" align="start" detail={stat.info}>
                   <span className="text-text-muted hover:text-text">
-                    <Icon of={InformationCircleIcon} size={14} label={`About ${stat.label}`} />
+                    <Icon of={InfoIcon} size={14} label={`About ${stat.label}`} />
                   </span>
                 </HoverCard>
               ),

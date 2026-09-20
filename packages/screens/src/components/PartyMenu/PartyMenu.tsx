@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { UserGroupIcon } from '@hugeicons/core-free-icons';
+import { Users as UsersIcon } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { Button } from '@ValenceUI/Button';
@@ -72,11 +72,7 @@ const PartyMenu = ({
       isOpen={isOpen}
       onOpenChange={show}
       trigger={
-        party === null ? (
-          <Icon of={UserGroupIcon} size={20} />
-        ) : (
-          <Icon of={UserGroupIcon} size={20} />
-        )
+        party === null ? <Icon of={UsersIcon} size={20} /> : <Icon of={UsersIcon} size={20} />
       }
       className="mb-7.5"
     >

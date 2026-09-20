@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Add01Icon } from '@hugeicons/core-free-icons';
+import { Plus as PlusIcon } from '@keyline-icons/react';
 import { describe, expect, it, vi } from 'vitest';
 import { PanelCardAction } from './PanelCardAction';
 
@@ -9,7 +9,7 @@ describe('PanelCardAction', () => {
     const onClick = vi.fn();
 
     render(
-      <PanelCardAction icon={Add01Icon} onClick={onClick}>
+      <PanelCardAction icon={PlusIcon} onClick={onClick}>
         Add user
       </PanelCardAction>,
     );
@@ -21,7 +21,7 @@ describe('PanelCardAction', () => {
 
   it('is transparent and small', () => {
     render(
-      <PanelCardAction icon={Add01Icon} onClick={vi.fn()}>
+      <PanelCardAction icon={PlusIcon} onClick={vi.fn()}>
         Add user
       </PanelCardAction>,
     );
@@ -31,7 +31,7 @@ describe('PanelCardAction', () => {
 
   it('draws its icon after the words', () => {
     render(
-      <PanelCardAction icon={Add01Icon} onClick={vi.fn()}>
+      <PanelCardAction icon={PlusIcon} onClick={vi.fn()}>
         Add user
       </PanelCardAction>,
     );
@@ -41,7 +41,7 @@ describe('PanelCardAction', () => {
 
   it('cannot be pressed while its work is under way', () => {
     render(
-      <PanelCardAction icon={Add01Icon} isLoading onClick={vi.fn()}>
+      <PanelCardAction icon={PlusIcon} isLoading onClick={vi.fn()}>
         Add user
       </PanelCardAction>,
     );
@@ -51,7 +51,7 @@ describe('PanelCardAction', () => {
 
   it('cannot be pressed when disabled', () => {
     render(
-      <PanelCardAction icon={Add01Icon} isDisabled onClick={vi.fn()}>
+      <PanelCardAction icon={PlusIcon} isDisabled onClick={vi.fn()}>
         Add user
       </PanelCardAction>,
     );

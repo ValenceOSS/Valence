@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { RefreshIcon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import {
+  ChevronsUpDown as ChevronsUpDownIcon,
+  RefreshCw as RefreshCwIcon,
+} from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -168,7 +171,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
       trigger={
         <>
           <span className="truncate">{value === '' ? `Any ${label.toLowerCase()}` : value}</span>
-          <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+          <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
         </>
       }
     />
@@ -263,7 +266,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
 
       <DialogFooter note={problem ?? asked.data?.problem} dismiss={{ onChoose: onClose }}>
         <Button variant="secondary" isLoading={isRefreshing} onClick={refresh}>
-          <Icon of={RefreshIcon} size={15} />
+          <Icon of={RefreshCwIcon} size={15} />
           Bring up to date
         </Button>
       </DialogFooter>

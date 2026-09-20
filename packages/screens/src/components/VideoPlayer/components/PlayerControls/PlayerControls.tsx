@@ -1,28 +1,33 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Add01Icon,
-  ArrowExpandIcon,
-  ArrowShrinkIcon,
-  Clock01Icon,
-  DashboardSpeed01Icon,
-  GoBackward10SecIcon,
-  GoForward10SecIcon,
-  HdIcon,
-  HeadphonesIcon,
-  MinusSignIcon,
-  MirroringScreenIcon,
-  PauseIcon,
-  PictureInPictureOnIcon,
-  PlayIcon,
-  Pulse01Icon,
-  RefreshIcon,
-  Settings02Icon,
-  SubtitleIcon,
-  TextFontIcon,
-  Tv01Icon,
-  VolumeHighIcon,
-  VolumeOffIcon,
-} from '@hugeicons/core-free-icons';
+  Cast as CastIcon,
+  CircleActivity as CircleActivityIcon,
+  Clock as ClockIcon,
+  Gauge as GaugeIcon,
+  Headphones as HeadphonesIcon,
+  Maximize as MaximizeIcon,
+  Minimize as MinimizeIcon,
+  Minus as MinusIcon,
+  Monitor as MonitorIcon,
+  PictureInPicture as PictureInPictureIcon,
+  Plus as PlusIcon,
+  RefreshCw as RefreshCwIcon,
+  RotateCcw as RotateCcwIcon,
+  RotateCw as RotateCwIcon,
+  Settings as SettingsIcon,
+  Subtitles as SubtitlesIcon,
+  TypeOutline as TypeOutlineIcon,
+  Volume as VolumeIcon,
+  VolumeOff as VolumeOffIcon,
+} from '@keyline-icons/react';
+import {
+  Cast as CastFilledIcon,
+  Monitor as MonitorFilledIcon,
+  Pause as PauseFilledIcon,
+  PictureInPicture as PictureInPictureFilledIcon,
+  Play as PlayFilledIcon,
+  Subtitles as SubtitlesFilledIcon,
+} from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Slider } from '@ValenceUI/Slider';
 import { SettingsMenu } from '@ValenceUI/SettingsMenu';
@@ -208,7 +213,7 @@ const PlayerControls = ({
         disabled={isDisabled}
         size="md"
       >
-        <Icon of={GoBackward10SecIcon} size={22} />
+        <Icon of={RotateCcwIcon} size={22} />
       </Button>
 
       <Button
@@ -219,7 +224,11 @@ const PlayerControls = ({
         disabled={isDisabled}
         size="md"
       >
-        {isPlaying ? <Icon of={PauseIcon} size={22} /> : <Icon of={PlayIcon} size={22} />}
+        {isPlaying ? (
+          <Icon of={PauseFilledIcon} size={22} />
+        ) : (
+          <Icon of={PlayFilledIcon} size={22} />
+        )}
       </Button>
 
       <Button
@@ -232,7 +241,7 @@ const PlayerControls = ({
         disabled={isDisabled}
         size="md"
       >
-        <Icon of={GoForward10SecIcon} size={22} />
+        <Icon of={RotateCwIcon} size={22} />
       </Button>
 
       <span className="flex-1" />
@@ -248,7 +257,7 @@ const PlayerControls = ({
           {isMuted || volume === 0 ? (
             <Icon of={VolumeOffIcon} size={20} />
           ) : (
-            <Icon of={VolumeHighIcon} size={20} />
+            <Icon of={VolumeIcon} size={20} />
           )}
         </Button>
 
@@ -294,11 +303,12 @@ const PlayerControls = ({
           disabled={isDisabled}
           size="md"
         >
-          {selectedSubtitleId === SUBTITLES_OFF ? (
-            <Icon of={SubtitleIcon} size={20} />
-          ) : (
-            <Icon of={SubtitleIcon} size={20} />
-          )}
+          <Icon
+            of={SubtitlesIcon}
+            whenActive={SubtitlesFilledIcon}
+            isActive={selectedSubtitleId !== SUBTITLES_OFF}
+            size={20}
+          />
         </Button>
       )}
 
@@ -307,8 +317,8 @@ const PlayerControls = ({
         tone="default"
         {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
         isDisabled={isDisabled}
-        trigger={<Icon of={Settings02Icon} size={20} />}
-        triggerWhenOpen={<Icon of={Settings02Icon} size={20} />}
+        trigger={<Icon of={SettingsIcon} size={20} />}
+        triggerWhenOpen={<Icon of={SettingsIcon} size={20} />}
         rows={[
           ...(audioTracks.length < 2
             ? []
@@ -335,7 +345,7 @@ const PlayerControls = ({
                   kind: 'choice' as const,
                   id: 'subtitles',
                   label: 'Subtitles/CC',
-                  icon: <Icon of={SubtitleIcon} size={18} />,
+                  icon: <Icon of={SubtitlesIcon} size={18} />,
                   selectedId: selectedSubtitleId,
                   onSelect: onSubtitleChange,
                   choices: [
@@ -355,7 +365,7 @@ const PlayerControls = ({
                   kind: 'custom' as const,
                   id: 'timing',
                   label: 'Subtitle timing',
-                  icon: <Icon of={Clock01Icon} size={18} />,
+                  icon: <Icon of={ClockIcon} size={18} />,
                   detail:
                     subtitleOffsetSeconds === 0
                       ? 'In time'
@@ -371,7 +381,7 @@ const PlayerControls = ({
                           onSubtitleOffsetChange(subtitleOffsetSeconds - SUBTITLE_STEP_SECONDS);
                         }}
                       >
-                        <Icon of={MinusSignIcon} size={16} />
+                        <Icon of={MinusIcon} size={16} />
                       </Button>
 
                       <Button
@@ -383,7 +393,7 @@ const PlayerControls = ({
                           onSubtitleOffsetChange(0);
                         }}
                       >
-                        <Icon of={RefreshIcon} size={16} />
+                        <Icon of={RefreshCwIcon} size={16} />
                       </Button>
 
                       <Button
@@ -395,7 +405,7 @@ const PlayerControls = ({
                           onSubtitleOffsetChange(subtitleOffsetSeconds + SUBTITLE_STEP_SECONDS);
                         }}
                       >
-                        <Icon of={Add01Icon} size={16} />
+                        <Icon of={PlusIcon} size={16} />
                       </Button>
                     </span>
                   ),
@@ -408,7 +418,7 @@ const PlayerControls = ({
                   kind: 'panel' as const,
                   id: 'appearance',
                   label: 'Caption settings',
-                  icon: <Icon of={TextFontIcon} size={18} />,
+                  icon: <Icon of={TypeOutlineIcon} size={18} />,
                   content: (
                     <CaptionSettings
                       style={captionStyle}
@@ -422,7 +432,7 @@ const PlayerControls = ({
             kind: 'choice' as const,
             id: 'speed',
             label: 'Playback speed',
-            icon: <Icon of={DashboardSpeed01Icon} size={18} />,
+            icon: <Icon of={GaugeIcon} size={18} />,
             selectedId: playbackRate.toString(),
             onSelect: (id: string) => {
               onPlaybackRateChange(Number(id));
@@ -436,7 +446,7 @@ const PlayerControls = ({
             kind: 'choice' as const,
             id: 'boost',
             label: 'Volume boost',
-            icon: <Icon of={VolumeHighIcon} size={18} />,
+            icon: <Icon of={VolumeIcon} size={18} />,
             selectedId: boost.toString(),
             onSelect: (id: string) => {
               onBoostChange(Number(id));
@@ -453,7 +463,7 @@ const PlayerControls = ({
                   kind: 'choice' as const,
                   id: 'quality',
                   label: 'Quality',
-                  icon: <Icon of={HdIcon} size={18} />,
+                  icon: <Icon of={MonitorIcon} size={18} />,
                   selectedId: selectedQuality,
                   onSelect: (id: string) => {
                     onQualityChange(
@@ -489,7 +499,7 @@ const PlayerControls = ({
             kind: 'toggle' as const,
             id: 'stats',
             label: 'Stats for nerds',
-            icon: <Icon of={Pulse01Icon} size={18} />,
+            icon: <Icon of={CircleActivityIcon} size={18} />,
             isOn: isShowingStats,
             onToggle: onToggleStats,
           },
@@ -510,7 +520,12 @@ const PlayerControls = ({
           onClick={onCast}
           size="md"
         >
-          <Icon of={MirroringScreenIcon} size={20} />
+          <Icon
+            of={CastIcon}
+            whenActive={CastFilledIcon}
+            isActive={castState === 'connected'}
+            size={20}
+          />
         </Button>
       )}
 
@@ -523,11 +538,12 @@ const PlayerControls = ({
           isActive={isPoppedOut}
           size="md"
         >
-          {isPoppedOut ? (
-            <Icon of={PictureInPictureOnIcon} size={20} />
-          ) : (
-            <Icon of={PictureInPictureOnIcon} size={20} />
-          )}
+          <Icon
+            of={PictureInPictureIcon}
+            whenActive={PictureInPictureFilledIcon}
+            isActive={isPoppedOut}
+            size={20}
+          />
         </Button>
       )}
 
@@ -540,7 +556,7 @@ const PlayerControls = ({
           onClick={onToggleGlow}
           size="md"
         >
-          <Icon of={Tv01Icon} size={20} />
+          <Icon of={MonitorIcon} whenActive={MonitorFilledIcon} isActive={isGlowing} size={20} />
         </Button>
       )}
 
@@ -551,11 +567,7 @@ const PlayerControls = ({
         onClick={onToggleFullscreen}
         size="md"
       >
-        {isFullscreen ? (
-          <Icon of={ArrowShrinkIcon} size={20} />
-        ) : (
-          <Icon of={ArrowExpandIcon} size={20} />
-        )}
+        {isFullscreen ? <Icon of={MinimizeIcon} size={20} /> : <Icon of={MaximizeIcon} size={20} />}
       </Button>
     </div>
   </div>

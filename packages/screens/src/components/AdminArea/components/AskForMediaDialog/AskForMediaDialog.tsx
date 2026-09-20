@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search01Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import { ChevronsUpDown as ChevronsUpDownIcon, Search as SearchIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -287,7 +287,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 isLoading={isSearching}
                 onClick={look}
               >
-                <Icon of={Search01Icon} size={16} />
+                <Icon of={SearchIcon} size={16} />
                 Search
               </Button>
             </div>
@@ -369,7 +369,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                     <span className="truncate">
                       {quality?.label ?? 'The library’s own profile'}
                     </span>
-                    <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+                    <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
                   </>
                 }
               />

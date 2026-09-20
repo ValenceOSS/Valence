@@ -1,4 +1,4 @@
-import { Tick02Icon } from '@hugeicons/core-free-icons';
+import { Check as CheckIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
@@ -26,7 +26,7 @@ const ColorSwatchPicker = ({ value, onChange, className }: ColorSwatchPickerProp
         onChange(null);
       }}
     >
-      {value === null ? <Icon of={Tick02Icon} size={14} tone="strong" /> : null}
+      {value === null ? <Icon of={CheckIcon} size={14} tone="strong" /> : null}
     </Button>
 
     {ROLE_COLOURS.map((swatch) => (
@@ -43,7 +43,7 @@ const ColorSwatchPicker = ({ value, onChange, className }: ColorSwatchPickerProp
         className="flex size-8 shrink-0 items-center justify-center"
       >
         {value?.toLowerCase() === swatch.toLowerCase() ? (
-          <Icon of={Tick02Icon} size={14} tone="scrim" className="drop-shadow" />
+          <Icon of={CheckIcon} size={14} tone="scrim" className="drop-shadow" />
         ) : null}
       </Button>
     ))}

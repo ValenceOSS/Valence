@@ -1,6 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { SEGMENTED } from '@ValenceUI/tokens/segmented';
-import { ArrowDown01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
+import { Check as CheckIcon, ChevronDown as ChevronDownIcon } from '@keyline-icons/react';
 import { useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
@@ -124,7 +124,7 @@ const SectionBar = ({ label, groups, value, onValueChange, className }: SectionB
 
                   {group.label}
 
-                  <Icon of={ArrowDown01Icon} size={14} />
+                  <Icon of={ChevronDownIcon} size={14} />
                 </RadixMenu.Trigger>
 
                 <RadixMenu.Portal
@@ -164,7 +164,7 @@ const SectionBar = ({ label, groups, value, onValueChange, className }: SectionB
                             {item.label}
 
                             <RadixMenu.ItemIndicator className="flex size-4 shrink-0 items-center justify-center text-accent">
-                              <Icon of={Tick02Icon} size={15} />
+                              <Icon of={CheckIcon} size={15} />
                             </RadixMenu.ItemIndicator>
                           </RadixMenu.RadioItem>
                         ))}

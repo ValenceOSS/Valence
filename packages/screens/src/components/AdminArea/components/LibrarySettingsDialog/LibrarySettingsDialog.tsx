@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
 import { useState } from 'react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -186,7 +186,7 @@ const LibrarySettingsDialog = ({
                 trigger={
                   <>
                     <span className="truncate">{selectedLabel}</span>
-                    <Icon of={UnfoldMoreIcon} size={15} tone="muted" className="shrink-0" />
+                    <Icon of={ChevronsUpDownIcon} size={15} tone="muted" className="shrink-0" />
                   </>
                 }
                 triggerShape="field"
@@ -217,7 +217,7 @@ const LibrarySettingsDialog = ({
                 trigger={
                   <>
                     <span className="truncate">{atOnceLabel}</span>
-                    <Icon of={UnfoldMoreIcon} size={15} tone="muted" className="shrink-0" />
+                    <Icon of={ChevronsUpDownIcon} size={15} tone="muted" className="shrink-0" />
                   </>
                 }
                 triggerShape="field"
@@ -266,7 +266,7 @@ const LibrarySettingsDialog = ({
                     trigger={
                       <>
                         <span className="truncate">{profileLabel}</span>
-                        <Icon of={UnfoldMoreIcon} size={15} tone="muted" className="shrink-0" />
+                        <Icon of={ChevronsUpDownIcon} size={15} tone="muted" className="shrink-0" />
                       </>
                     }
                     triggerShape="field"

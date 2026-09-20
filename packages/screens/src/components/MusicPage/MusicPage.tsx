@@ -1,4 +1,4 @@
-import { Cancel01Icon, Menu01Icon } from '@hugeicons/core-free-icons';
+import { Menu as MenuIcon, X as XIcon } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -129,7 +129,7 @@ const MusicPage = () => {
               }}
             >
               Your library
-              <Icon of={Menu01Icon} size={16} />
+              <Icon of={MenuIcon} size={16} />
             </Button>
           </div>
         )}
@@ -210,7 +210,7 @@ const MusicPage = () => {
                               setMusicPanel(null);
                             }}
                           >
-                            <Icon of={Cancel01Icon} size={16} />
+                            <Icon of={XIcon} size={16} />
                           </Button>
                         </div>
                         <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">

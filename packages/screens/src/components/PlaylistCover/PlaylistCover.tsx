@@ -1,4 +1,4 @@
-import { PlayListIcon } from '@hugeicons/core-free-icons';
+import { ListMusic as ListMusicIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
@@ -27,7 +27,7 @@ const PlaylistCover = ({ name, albumIds, className }: PlaylistCoverProps) => {
     >
       {tiles.length === 0 ? (
         <span className="flex items-center justify-center">
-          <Icon of={PlayListIcon} size={22} />
+          <Icon of={ListMusicIcon} size={22} />
         </span>
       ) : (
         tiles.map((albumId) => (
