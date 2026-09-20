@@ -125,7 +125,10 @@ describe('FilePicker', () => {
       </FilePicker>,
     );
 
-    expect(screen.getByText('Choose').closest('label')).toHaveClass('bg-background', 'h-10');
+    expect(screen.getByText('Choose').closest('label')).toHaveClass(
+      'bg-[var(--surface-hover)]',
+      'h-10',
+    );
   });
 
   it('shows a spinner and refuses another file while one is being handled', () => {
