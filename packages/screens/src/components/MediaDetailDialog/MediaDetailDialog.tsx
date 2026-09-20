@@ -300,7 +300,8 @@ const MediaDetailDialog = ({
                   media={detail === null ? shown : { ...shown, sizeBytes: detail.sizeBytes }}
                   hasRuntime
                   hasSize
-                  className="flex flex-wrap items-center gap-2 text-sm font-medium tracking-[0.14em] text-on-scrim/75"
+                  size="sm"
+                  tone="scrim"
                 />
               </motion.div>
             </motion.div>
@@ -405,13 +406,7 @@ const MediaDetailDialog = ({
                         ? {}
                         : { eyebrow: EXTRA_KIND_LABELS[extra.extraKind] })}
                       title={extra.title}
-                      subtitle={
-                        <MediaFacts
-                          media={extra}
-                          hasRuntime
-                          className="flex flex-wrap items-center gap-2"
-                        />
-                      }
+                      subtitle={<MediaFacts media={extra} hasRuntime />}
                       shape="wide"
                       {...(extra.hasBackdrop ? { imageUrl: artworkUrl(extra.id, 'backdrop') } : {})}
                       onSelect={() => {
@@ -441,14 +436,7 @@ const MediaDetailDialog = ({
                         ? {}
                         : { eyebrow: sibling.title })}
                       title={sibling.seriesTitle ?? sibling.title}
-                      subtitle={
-                        <MediaFacts
-                          media={sibling}
-                          hasRuntime
-                          hasSize
-                          className="flex flex-wrap items-center gap-2"
-                        />
-                      }
+                      subtitle={<MediaFacts media={sibling} hasRuntime hasSize />}
                       shape="wide"
                       {...(watchedFractionFor?.(sibling.id) === undefined
                         ? {}

@@ -306,11 +306,7 @@ const Hero = ({
             variants={revealVariants(prefersReducedMotion)}
             transition={revealTransition(prefersReducedMotion)}
           >
-            <MediaFacts
-              media={featured}
-              hasEpisode={false}
-              className="flex flex-wrap items-center gap-2 text-base font-medium text-on-scrim/85"
-            />
+            <MediaFacts media={featured} hasEpisode={false} size="base" tone="scrim" />
           </motion.p>
 
           <AnimatePresence initial={false}>

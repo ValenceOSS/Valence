@@ -139,7 +139,7 @@ const LandingNav = () => {
 
           <ActionMenu
             label="Navigation"
-            className={cn('rounded-2xl sm:hidden', isFloating ? '' : 'hover:bg-hover')}
+            className="sm:hidden"
             trigger={<IconMenu2 size={18} />}
             groups={[
               {

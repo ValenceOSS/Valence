@@ -369,7 +369,7 @@ const AppShell = ({
                     <ActionMenu
                       label="Choose something at random"
                       align="center"
-                      className="rounded-full hover:bg-transparent"
+                      look="face"
                       trigger={<Icon of={DiceFaces05Icon} size={20} />}
                       groups={[
                         {
@@ -421,7 +421,7 @@ const AppShell = ({
         <ActionMenu
           label="Account"
           align="end"
-          className="rounded-full hover:bg-transparent"
+          look="face"
           trigger={face}
           groups={[
             {

@@ -59,7 +59,7 @@ const EpisodeRow = ({
         )}
 
         <span className="absolute inset-0 flex items-center justify-center bg-shade/40 opacity-0 transition-opacity group-hover/episode:opacity-100">
-          <Icon of={PlayIcon} size={20} className="text-on-scrim" />
+          <Icon of={PlayIcon} size={20} tone="scrim" />
         </span>
 
         {watchedFraction === undefined ? null : (

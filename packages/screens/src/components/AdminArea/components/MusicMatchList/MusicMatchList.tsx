@@ -33,7 +33,7 @@ const MusicMatchList = ({ matches, onChoose }: MusicMatchListProps) => (
               src={match.coverUrl}
               label={`The cover of ${match.title}`}
               shape={match.kind === 'artist' ? 'round' : 'square'}
-              className="w-14 rounded-lg"
+              className="w-14"
             />
 
             <span className="flex min-w-0 flex-col gap-1">

@@ -6,6 +6,7 @@ type PanelCardProps = {
   below?: ReactNode;
   children: ReactNode;
   isFlush?: boolean;
+  isHighlighted?: boolean;
   className?: string;
 };
 

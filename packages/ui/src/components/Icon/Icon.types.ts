@@ -3,7 +3,7 @@ import type { IconSvgElement } from '@hugeicons/react';
 
 type IconGlyph = IconSvgElement;
 
-type IconTone = 'inherit' | 'strong' | 'muted' | 'faint' | 'danger';
+type IconTone = 'inherit' | 'strong' | 'muted' | 'faint' | 'danger' | 'scrim';
 
 type IconProps = {
   of: IconGlyph;

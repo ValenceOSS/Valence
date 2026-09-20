@@ -16,6 +16,12 @@ const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
   md: 'size-9',
 };
 
+const LOOKS = {
+  plain: '',
+  face: 'rounded-full hover:bg-transparent data-[state=open]:bg-transparent',
+  raised: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',
+} as const;
+
 /**
  * A menu of things to do — rename, rescan, delete — rather than a value to pick, which is what an
  * option menu is for. Items can be grouped, marked destructive so they read as dangerous before
@@ -36,6 +42,9 @@ const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
  * @param align - Which edge of the trigger the menu lines up with.
  * @param size - How large the trigger stands — smaller for a row's own action, standing size
  *   elsewhere.
+ * @param look - Plain, lit only when pointed at; a face, which is a circle that is not lit at all,
+ *   for a picture standing in as the control; or raised, with a fill and an edge of its own, for a
+ *   control that has to be found on a busy row.
  * @param className - Extra classes for the caller's own layout.
  */
 const ActionMenu = ({
@@ -44,6 +53,7 @@ const ActionMenu = ({
   groups,
   align = 'end',
   size = 'md',
+  look = 'plain',
   isDisabled = false,
   className,
 }: ActionMenuProps) => {
@@ -63,6 +73,7 @@ const ActionMenu = ({
           'motion-reduce:transition-none focus-visible:ring-[3px] focus-visible:ring-ring',
           'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-hover)]',
           'disabled:cursor-not-allowed disabled:opacity-50',
+          LOOKS[look],
           className,
         )}
       >
@@ -85,7 +96,7 @@ const ActionMenu = ({
             onFocusCapture={follow}
             onBlurCapture={clear}
           >
-            <HoverHighlight rect={rect} radius="nested" className="bg-[var(--surface-hover)]" />
+            <HoverHighlight rect={rect} radius="nested" />
 
             {separateDestructive(groups).map((group, index) => (
               <RadixMenu.Group

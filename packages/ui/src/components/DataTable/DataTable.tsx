@@ -120,7 +120,7 @@ const DataTable = <Row extends RowData>({
           HEIGHT_CLASSES[height],
         )}
       >
-        <HoverHighlight rect={rect} radius="md" className="bg-[var(--surface-hover)]" />
+        <HoverHighlight rect={rect} radius="md" />
 
         <table className="w-full border-collapse text-sm" aria-label={label}>
           <thead>

@@ -1,9 +1,23 @@
 import { Icon } from '@ValenceUI/Icon';
+import { cn } from '@ValenceUI/cn';
 import { StarIcon } from '@hugeicons/core-free-icons';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { ReactNode } from 'react';
 import type { MediaFactsProps } from './MediaFacts.types';
+
+const SIZES = {
+  inherit: '',
+  xs: 'text-xs font-medium tracking-[0.1em]',
+  sm: 'text-sm font-medium tracking-[0.14em]',
+  base: 'text-base font-medium',
+} as const;
+
+const TONES = {
+  inherit: '',
+  muted: 'text-text-muted',
+  scrim: 'text-on-scrim/80',
+} as const;
 
 /**
  * States the facts that place an item — its year, how long it runs, which episode it is, what it is
@@ -14,11 +28,13 @@ import type { MediaFactsProps } from './MediaFacts.types';
  * @param hasRuntime - Whether to say how long it is.
  * @param hasEpisode - Whether to say which episode it is.
  * @param hasSize - Whether to say how much room the file takes, where it is known.
- * @param className - Extra classes for the caller's own layout.
+ * @param size - How large the line is set, where it is not the size of the text around it.
+ * @param tone - Its colour: that of the text around it, muted, or the pale of text over a picture.
  */
 const MediaFacts = ({
   media,
-  className,
+  size = 'inherit',
+  tone = 'inherit',
   hasRuntime = false,
   hasEpisode = true,
   hasSize = false,
@@ -71,7 +87,7 @@ const MediaFacts = ({
   }
 
   return (
-    <span className={className}>
+    <span className={cn('flex flex-wrap items-center gap-2', SIZES[size], TONES[tone])}>
       {facts.map((fact, at) => (
         <span key={fact.key} className="flex items-center gap-2">
           {at === 0 ? null : <span aria-hidden>·</span>}

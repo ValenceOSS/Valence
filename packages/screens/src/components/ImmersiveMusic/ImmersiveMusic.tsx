@@ -143,11 +143,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
                     transition={isStill ? CLOSING : CHANGING}
                     className="absolute inset-0"
                   >
-                    <MusicArtwork
-                      src={cover}
-                      label={shown.title}
-                      className="w-full shadow-[var(--shadow-overlay)]"
-                    />
+                    <MusicArtwork src={cover} label={shown.title} isLifted className="w-full" />
                   </motion.div>
                 </AnimatePresence>
               </div>

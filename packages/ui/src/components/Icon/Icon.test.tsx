@@ -128,6 +128,12 @@ describe('Icon', () => {
     expect(faint).toHaveClass('text-text-muted/60');
   });
 
+  it('draws in the pale of text over a picture when given the scrim tone', () => {
+    const { container } = render(<Icon of={Home01Icon} tone="scrim" />);
+
+    expect(container.firstElementChild).toHaveClass('text-on-scrim');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(Icon.displayName).toBe('Icon');
   });

@@ -20,7 +20,8 @@ const CallToAction = () => {
       >
         <GlassPanel
           elevation="floating"
-          className="mx-auto flex max-w-3xl flex-col items-center gap-4 rounded-3xl px-6 py-16 text-center lg:max-w-4xl lg:py-20"
+          radius="large"
+          className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-6 py-16 text-center lg:max-w-4xl lg:py-20"
         >
           <h2 className="text-3xl font-semibold tracking-tight text-text sm:text-4xl lg:text-5xl">
             Run it on what you already have

@@ -68,6 +68,20 @@ describe('PanelCard', () => {
     expect(container.querySelector('section')).toHaveClass('lg:col-span-4');
   });
 
+  it('rings the block in the accent only when it is highlighted', () => {
+    const { container, rerender } = render(<PanelCard title="Plain">x</PanelCard>);
+
+    expect(container.firstElementChild).not.toHaveClass('ring-1');
+
+    rerender(
+      <PanelCard title="New" isHighlighted>
+        x
+      </PanelCard>,
+    );
+
+    expect(container.firstElementChild).toHaveClass('ring-1', 'ring-accent/40');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(PanelCard.displayName).toBe('PanelCard');
   });

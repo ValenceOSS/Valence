@@ -43,7 +43,7 @@ const ColorSwatchPicker = ({ value, onChange, className }: ColorSwatchPickerProp
         className="flex size-8 shrink-0 items-center justify-center"
       >
         {value?.toLowerCase() === swatch.toLowerCase() ? (
-          <Icon of={Tick02Icon} size={14} className="text-on-scrim drop-shadow" />
+          <Icon of={Tick02Icon} size={14} tone="scrim" className="drop-shadow" />
         ) : null}
       </Button>
     ))}

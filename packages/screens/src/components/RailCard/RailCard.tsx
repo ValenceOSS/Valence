@@ -231,13 +231,7 @@ const RailCard = ({
           ? {}
           : { eyebrow: media.title })}
         title={media.seriesTitle ?? media.title}
-        subtitle={
-          <MediaFacts
-            media={media}
-            hasEpisode={!isSeries}
-            className="flex flex-wrap items-center gap-2"
-          />
-        }
+        subtitle={<MediaFacts media={media} hasEpisode={!isSeries} />}
         shape={shape}
         {...(watchedFraction === undefined ? {} : { watchedFraction })}
         {...(restingUrl === undefined ? {} : { imageUrl: restingUrl })}
@@ -325,7 +319,8 @@ const RailCard = ({
                         : media
                     }
                     hasEpisode={!isSeries}
-                    className="flex flex-wrap items-center gap-2 text-xs font-medium tracking-[0.1em] text-text-muted"
+                    size="xs"
+                    tone="muted"
                   />
 
                   {told === null || told === '' ? null : (

@@ -147,6 +147,19 @@ describe('ActionMenu', () => {
     expect(screen.getByRole('button', { name: 'Actions' })).toHaveClass('size-7');
   });
 
+  it('draws a face as a circle that is not lit when pointed at, and a raised control with an edge', () => {
+    const { rerender } = render(<ActionMenu {...props} look="face" groups={[{ items: [] }]} />);
+
+    expect(screen.getByRole('button', { name: 'Actions' })).toHaveClass(
+      'rounded-full',
+      'hover:bg-transparent',
+    );
+
+    rerender(<ActionMenu {...props} look="raised" groups={[{ items: [] }]} />);
+
+    expect(screen.getByRole('button', { name: 'Actions' })).toHaveClass('border');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(ActionMenu.displayName).toBe('ActionMenu');
   });

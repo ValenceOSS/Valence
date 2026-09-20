@@ -17,6 +17,8 @@ import type { PanelCardProps } from './PanelCard.types';
  * @param children - The block itself.
  * @param isFlush - Whether the content runs to the panel's edges, for a table or a list that
  *   brings its own inner spacing.
+ * @param isHighlighted - Whether the block is ringed in the accent, to say it is the one that is new
+ *   or needs looking at.
  * @param className - Extra classes for the caller's own layout.
  */
 const PanelCard = ({
@@ -25,9 +27,16 @@ const PanelCard = ({
   below,
   children,
   isFlush = false,
+  isHighlighted = false,
   className,
 }: PanelCardProps) => (
-  <section className={cn('valence-card-shell flex flex-col', className)}>
+  <section
+    className={cn(
+      'valence-card-shell flex flex-col',
+      isHighlighted && 'ring-1 ring-accent/40',
+      className,
+    )}
+  >
     <header className="flex flex-col gap-2 px-3 py-1">
       <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
         <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">{title}</h3>

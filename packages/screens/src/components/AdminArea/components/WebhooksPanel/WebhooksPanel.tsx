@@ -127,7 +127,7 @@ const WebhooksPanel = ({
       />
 
       {created === null ? null : (
-        <PanelCard title="New webhook" className="ring-1 ring-accent/40">
+        <PanelCard title="New webhook" isHighlighted>
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <span className="text-sm font-medium text-text">

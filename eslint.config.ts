@@ -95,7 +95,7 @@ export default tseslint.config(
         },
         {
           selector:
-            'JSXOpeningElement[name.name="Icon"] > JSXAttribute[name.name="className"] > Literal[value=/\\btext-(text|text-muted|danger)\\b/]',
+            'JSXOpeningElement[name.name="Icon"] > JSXAttribute[name.name="className"] > Literal[value=/\\btext-(text|text-muted|danger|on-scrim)\\b/]',
           message:
             'An icon is given its colour by tone, not by className. Use tone="muted" or tone="danger" — see code standards section 10.',
         },
@@ -122,6 +122,12 @@ export default tseslint.config(
             'JSXOpeningElement[name.name=/^(FaceCircle|ProfileFace|HouseholdFace)$/] > JSXAttribute[name.name="className"] Literal[value=/\\b(rounded|shadow)/]',
           message:
             'A face takes its corners and shadow from shape and isLifted, not className. Use shape="tile" or isLifted.',
+        },
+        {
+          selector:
+            'JSXOpeningElement[name.name=/^(MusicArtwork|GlassPanel|ActionMenu|PanelCard)$/] > JSXAttribute[name.name="className"] Literal[value=/(\\brounded|\\bshadow-|\\bring-|\\bborder\\b|\\bhover:bg-|\\bbg-)/]',
+          message:
+            'A component takes its corners, shadow, ring, edge and fill from its own props — shape, isLifted, isHighlighted, radius or look — not className.',
         },
       ],
     },

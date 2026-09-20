@@ -54,7 +54,7 @@ const ContextMenu = ({
             onFocusCapture={follow}
             onBlurCapture={clear}
           >
-            <HoverHighlight rect={rect} radius="nested" className="bg-[var(--surface-hover)]" />
+            <HoverHighlight rect={rect} radius="nested" />
 
             {groups.map((group, index) => (
               <RadixContextMenu.Group
