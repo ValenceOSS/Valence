@@ -1,9 +1,15 @@
+import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname } from 'node:path';
 import { isAudioFile } from './isAudioFile';
 import { hasRealWords } from './hasRealWords';
 import { nameKey } from './nameKey';
 import type { ScanResult } from '@ValenceContracts/schemas/Library';
 import type { TrackPicture, TrackTags } from './TrackTags';
+
+type ScanFindings = {
+  files: ScannedFile[];
+  unreadable: string[];
+};
 
 type ScannedFile = {
   path: string;
@@ -18,7 +24,7 @@ type StoredTrack = ScannedFile & {
 type ArtworkSource = { picture: TrackPicture } | { path: string } | { bytes: Uint8Array };
 
 type MusicFileSystem = {
-  listFiles: (root: string) => Promise<ScannedFile[]>;
+  listFiles: (root: string) => Promise<ScanFindings>;
   readTags: (path: string) => Promise<TrackTags | null>;
   readSidecarLyrics: (path: string) => Promise<string | null>;
   findFolderArt: (folder: string) => Promise<string | null>;
@@ -149,7 +155,8 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
     isCancelled,
   } = options;
 
-  const everything = await files.listFiles(root);
+  const walked = await files.listFiles(root);
+  const everything = walked.files;
   const found = everything.filter((file) => isAudioFile(file.path));
   const stored = new Map((await store.listStored(libraryId)).map((row) => [row.path, row]));
   const lyricFiles = new Map(
@@ -306,7 +313,10 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
   const present = new Set(found.map((file) => file.path));
   const within = `${root.replace(/\/+$/, '')}/`;
   const gone = [...stored.keys()].filter(
-    (path) => !present.has(path) && (!isPartial || path.startsWith(within)),
+    (path) =>
+      !present.has(path) &&
+      !isUnderAny(path, walked.unreadable) &&
+      (!isPartial || path.startsWith(within)),
   );
   const removed = gone.length === 0 ? 0 : await store.removeByPaths(libraryId, gone);
 

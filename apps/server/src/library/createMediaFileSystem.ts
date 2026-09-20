@@ -1,43 +1,88 @@
 import { readdir, realpath, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { MediaFileSystem, ScannedFile } from './scanLibrary';
+import type { MediaFileSystem, ScanFindings, ScannedFile } from './scanLibrary';
 
 const MAX_DEPTH = 12;
+
+/**
+ * Whether a failure to look at a path means the path is not there.
+ *
+ * `ENOENT` is a real answer: the file has gone, or the link points at nothing. Anything else —
+ * refused permission, a stale handle from a mount that dropped, an I/O error — is the filesystem
+ * declining to say, and a scan must not read that as absence.
+ *
+ * @param error - What the filesystem threw.
+ * @returns Whether it amounts to "there is nothing here".
+ */
+const meansItIsGone = (error: NodeJS.ErrnoException): boolean => error.code === 'ENOENT';
+
+/**
+ * Nothing found, and nothing that failed.
+ *
+ * @returns An empty walk.
+ */
+const nothing = (): ScanFindings => ({ files: [], unreadable: [] });
 
 /**
  * Walks a library root and everything below it, gathering the files worth considering with their
  * sizes and modification times — the two facts a scan uses to decide what has changed.
  *
+ * Also gathers what it could not see. A directory that will not open, a link that will not resolve,
+ * a file that will not stat: each is a place this walk knows nothing about, and saying so is the
+ * point. A walk that answered "no files here" for a folder it could not read would have the scan
+ * conclude the media was gone.
+ *
  * @param root - Where to start.
  * @param depth - How far down this walk already is.
  * @param seen - The directories already walked, by the real path each resolves to.
- * @returns Every file found, with what the scan needs to know about it.
+ * @returns Every file found, and every path this walk could not read.
  */
-const walk = async (root: string, depth: number, seen: Set<string>): Promise<ScannedFile[]> => {
+const walk = async (root: string, depth: number, seen: Set<string>): Promise<ScanFindings> => {
   if (depth > MAX_DEPTH) {
-    return [];
+    return { files: [], unreadable: [root] };
   }
 
-  const entries = await readdir(root, { withFileTypes: true }).catch(() => []);
+  const entries = await readdir(root, { withFileTypes: true }).catch(() => null);
+
+  if (entries === null) {
+    return { files: [], unreadable: [root] };
+  }
+
   const files: ScannedFile[] = [];
+  const unreadable: string[] = [];
 
   for (const entry of entries) {
     const path = join(root, entry.name);
 
     if (entry.isDirectory()) {
-      files.push(...(await walkInto(path, depth + 1, seen)));
+      const below = await walkInto(path, depth + 1, seen);
+
+      files.push(...below.files);
+      unreadable.push(...below.unreadable);
 
       continue;
     }
 
-    const details = await stat(path).catch(() => null);
+    const looked = await stat(path).then(
+      (details) => ({ details }),
+      (error: NodeJS.ErrnoException) => ({ error }),
+    );
 
-    if (details === null) {
+    if (!('details' in looked)) {
+      if (!meansItIsGone(looked.error)) {
+        unreadable.push(path);
+      }
+
       continue;
     }
+
+    const { details } = looked;
 
     if (details.isDirectory()) {
-      files.push(...(await walkInto(path, depth + 1, seen)));
+      const below = await walkInto(path, depth + 1, seen);
+
+      files.push(...below.files);
+      unreadable.push(...below.unreadable);
 
       continue;
     }
@@ -53,7 +98,7 @@ const walk = async (root: string, depth: number, seen: Set<string>): Promise<Sca
     });
   }
 
-  return files;
+  return { files, unreadable };
 };
 
 /**
@@ -61,16 +106,28 @@ const walk = async (root: string, depth: number, seen: Set<string>): Promise<Sca
  * pointing back up its own tree from being followed round for ever. Two links to one directory read
  * it once, under whichever name was reached first.
  *
+ * A directory already walked is answered with nothing rather than with a failure: it was read, just
+ * not twice.
+ *
  * @param path - The directory to walk, as it was reached.
  * @param depth - How far down the walk this directory sits.
  * @param seen - The directories already walked, by the real path each resolves to.
- * @returns Every file below it, or none where it has been walked already.
+ * @returns Everything below it, or nothing where it has been walked already.
  */
-const walkInto = async (path: string, depth: number, seen: Set<string>): Promise<ScannedFile[]> => {
-  const real = await realpath(path).catch(() => null);
+const walkInto = async (path: string, depth: number, seen: Set<string>): Promise<ScanFindings> => {
+  const resolved = await realpath(path).then(
+    (real) => ({ real }),
+    (error: NodeJS.ErrnoException) => ({ error }),
+  );
 
-  if (real === null || seen.has(real)) {
-    return [];
+  if (!('real' in resolved)) {
+    return meansItIsGone(resolved.error) ? nothing() : { files: [], unreadable: [path] };
+  }
+
+  const { real } = resolved;
+
+  if (seen.has(real)) {
+    return nothing();
   }
 
   seen.add(real);

@@ -106,8 +106,9 @@ const filesWith = (
   found: ScannedFile[],
   tags: Record<string, TrackTags | null>,
   extras: Partial<MusicFileSystem> = {},
+  unreadable: string[] = [],
 ): MusicFileSystem => ({
-  listFiles: () => Promise.resolve(found),
+  listFiles: () => Promise.resolve({ files: found, unreadable }),
   readTags: (path) => Promise.resolve(tags[path] ?? null),
   readSidecarLyrics: () => Promise.resolve(null),
   findFolderArt: () => Promise.resolve(null),
@@ -264,6 +265,21 @@ describe('scanMusicLibrary', () => {
     expect(store.removeByPaths).toHaveBeenCalledWith('lib', ['/music/gone.flac']);
     expect(store.prune).toHaveBeenCalledWith('lib');
     expect(result.removed).toBe(1);
+  });
+
+  it('keeps tracks under a folder the walk could not read', async () => {
+    const { store } = memoryStore([storedAt('/music/Sealed/track.flac')]);
+
+    const result = await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store,
+      artwork: keptArtwork(),
+      files: filesWith([], {}, {}, ['/music/Sealed']),
+    });
+
+    expect(store.removeByPaths).not.toHaveBeenCalled();
+    expect(result.removed).toBe(0);
   });
 
   it('reads one folder, removing only what is gone from it, without calling it a scan', async () => {

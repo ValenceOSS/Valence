@@ -1,3 +1,4 @@
+import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname, relative, sep } from 'node:path';
 import { bookFormatOf, openBookFile } from './openBookFile';
 import { readBookTitleFromPath } from './readBookTitleFromPath';
@@ -5,6 +6,11 @@ import { readChapterNumberFromPath } from './readChapterNumberFromPath';
 import { directionFor } from '@ValenceContracts/schemas/Book';
 import type { BookFormat, BookLayout } from '@ValenceContracts/schemas/Book';
 import type { ScanResult } from '@ValenceContracts/schemas/Library';
+
+type ScanFindings = {
+  files: ScannedFile[];
+  unreadable: string[];
+};
 
 type ScannedFile = {
   path: string;
@@ -41,7 +47,7 @@ type ChapterRow = {
 };
 
 type BookFileSystem = {
-  listFiles: (root: string) => Promise<ScannedFile[]>;
+  listFiles: (root: string) => Promise<ScanFindings>;
 };
 
 type ArrivedBook = {
@@ -121,7 +127,8 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
     isCancelled,
   } = options;
 
-  const found = (await files.listFiles(root)).filter((file) => bookFormatOf(file.path) !== null);
+  const walked = await files.listFiles(root);
+  const found = walked.files.filter((file) => bookFormatOf(file.path) !== null);
   const stored = new Map((await store.listStored(libraryId)).map((row) => [row.path, row]));
 
   const changed = found.filter((file) => {
@@ -219,7 +226,9 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
     }
   }
 
-  const gone = [...stored.keys()].filter((path) => !found.some((file) => file.path === path));
+  const gone = [...stored.keys()].filter(
+    (path) => !found.some((file) => file.path === path) && !isUnderAny(path, walked.unreadable),
+  );
 
   const removed = gone.length === 0 ? 0 : await store.removeByPaths(libraryId, gone);
 
