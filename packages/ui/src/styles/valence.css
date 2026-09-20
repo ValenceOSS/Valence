@@ -560,6 +560,10 @@ body {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+body[data-scroll-locked] .valence-navbar {
+  right: var(--removed-body-scroll-bar-size, 0px);
+}
+
 .valence-shell {
   --nav-clearance: calc(4rem + env(safe-area-inset-top, 0px));
   --floor-clearance: env(safe-area-inset-bottom, 0px);

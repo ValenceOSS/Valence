@@ -29,6 +29,13 @@ describe('the Valence stylesheet', () => {
     expect(stylesheet).toContain('color-scheme: dark');
   });
 
+  it('holds the bar where it was when a dialog takes the page scrollbar away', () => {
+    const locked =
+      /body\[data-scroll-locked\] \.valence-navbar \{([^}]*)\}/.exec(stylesheet)?.[1] ?? '';
+
+    expect(locked).toContain('right: var(--removed-body-scroll-bar-size, 0px)');
+  });
+
   it('gives glass over film the scrim palette rather than the page one', () => {
     const film = /\.valence-glass--film \{([^}]*)\}/.exec(stylesheet)?.[1] ?? '';
 
