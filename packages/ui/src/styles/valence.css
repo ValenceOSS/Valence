@@ -623,6 +623,12 @@ body[data-scroll-locked] .valence-navbar {
     var(--shadow-overlay);
 }
 
+.valence-solid {
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--surface-line);
+  box-shadow: var(--shadow-overlay);
+}
+
 .valence-glass {
   background:
     linear-gradient(

@@ -166,14 +166,14 @@ const PlayerControls = ({
   renderPreview,
   partyMenu,
 }: PlayerControlsProps) => (
-  <div className="valence-glass valence-glass--film flex flex-col gap-1 rounded-lg px-3 py-2 text-on-scrim sm:px-4">
+  <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
     <div className="flex items-center gap-3">
       <Slider
         label={`Seek through ${title}`}
         value={position}
         max={duration}
         onValueChange={onSeek}
-        tone="overlay"
+        tone="glass"
         className="min-w-0 flex-1"
         {...(renderPreview === undefined ? {} : { renderPreview })}
       />
@@ -183,12 +183,12 @@ const PlayerControls = ({
         size="none"
         aria-label={isShowingRemaining ? 'Show the time played' : 'Show the time remaining'}
         onClick={onToggleTimeDisplay}
-        className="shrink-0 rounded-md px-1 text-xs tabular-nums hover:bg-on-scrim/10 sm:text-sm"
+        className="shrink-0 rounded-md px-1 text-xs tabular-nums hover:bg-[var(--surface-hover)] sm:text-sm"
       >
         {isShowingRemaining
           ? `-${formatDuration(Math.max(duration - position, 0))}`
           : formatDuration(position)}{' '}
-        <span className="text-on-scrim/50">/ {formatDuration(duration)}</span>
+        <span className="text-text-muted">/ {formatDuration(duration)}</span>
       </Button>
     </div>
 
@@ -251,7 +251,7 @@ const PlayerControls = ({
           label="Volume"
           value={isMuted ? 0 : Math.round(volume * 100)}
           max={100}
-          tone="overlay"
+          tone="glass"
           onValueChange={(next) => {
             onVolumeChange(next / 100);
           }}
@@ -299,7 +299,7 @@ const PlayerControls = ({
 
       <SettingsMenu
         label="Settings"
-        tone="overlay"
+        tone="default"
         {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
         isDisabled={isDisabled}
         trigger={<Icon of={Settings02Icon} size={20} />}

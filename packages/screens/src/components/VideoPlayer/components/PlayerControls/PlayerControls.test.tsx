@@ -202,7 +202,7 @@ describe('PlayerControls', () => {
       />,
     );
 
-    expect(container.querySelectorAll('[data-tone="overlay"]')).toHaveLength(2);
+    expect(container.querySelectorAll('[data-tone="glass"]')).toHaveLength(2);
     expect(container.querySelector('[data-tone="default"]')).not.toBeInTheDocument();
   });
 

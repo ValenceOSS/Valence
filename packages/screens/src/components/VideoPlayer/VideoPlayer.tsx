@@ -1698,7 +1698,7 @@ const VideoPlayer = ({
       <header
         className={
           isImmersive
-            ? `absolute inset-x-0 top-0 z-10 flex items-center gap-4 bg-gradient-to-b from-shade/70 to-transparent p-4 pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))] text-on-scrim transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
+            ? `absolute inset-x-0 top-0 z-10 flex items-center gap-4 bg-gradient-to-b from-shade/70 to-transparent p-4 pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))] text-text transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
                 isBarUp ? 'translate-y-0' : 'pointer-events-none -translate-y-full'
               }`
             : 'flex items-center gap-4'
@@ -1810,7 +1810,7 @@ const VideoPlayer = ({
               size="lg"
             />
 
-            <p className="valence-glass valence-glass--film rounded-md px-4 py-1.5 text-sm text-on-scrim">
+            <p className="valence-solid rounded-md px-4 py-1.5 text-sm text-text">
               {party?.isHeld === true
                 ? waitingWord(party.waitingFor)
                 : 'Waiting for more of the film'}
@@ -1823,7 +1823,7 @@ const VideoPlayer = ({
             className={
               heldFrame === null
                 ? 'pointer-events-none absolute inset-0 flex items-center justify-center'
-                : 'pointer-events-none absolute right-3 top-3 rounded-full bg-shade/60 p-2 text-on-scrim'
+                : 'pointer-events-none absolute right-3 top-3 rounded-full bg-shade/60 p-2 text-text'
             }
           >
             <Spinner
