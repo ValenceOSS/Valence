@@ -40,18 +40,25 @@ const createWorld = (
     windowMs: 50,
   });
 
-  const presenceCalls: { connected: string[]; disconnected: string[]; labels: string[] } = {
+  const presenceCalls: {
+    connected: string[];
+    disconnected: string[];
+    labels: string[];
+    addresses: (string | null)[];
+  } = {
     connected: [],
     disconnected: [],
     labels: [],
+    addresses: [],
   };
 
   let announce: ((event: PresenceControl) => void) | null = null;
 
   const presence: PresenceBinding = {
-    connect: ({ clientId, deviceLabel, send }) => {
+    connect: ({ clientId, deviceLabel, address, send }) => {
       presenceCalls.connected.push(clientId);
       presenceCalls.labels.push(deviceLabel);
+      presenceCalls.addresses.push(address);
       announce = send;
 
       return true;
@@ -293,6 +300,31 @@ describe('createRealtimeHandler', () => {
     );
 
     expect(world.presenceCalls.labels).toStrictEqual(['Living room']);
+  });
+
+  it('carries where the connection came from down to presence, which the tab cannot claim', async () => {
+    const world = createWorld();
+    const session = world.handler.open(
+      { accountId: 'me', profileId: null, address: '203.0.113.7' },
+      world.socket,
+    );
+
+    await session.receive(
+      JSON.stringify({ kind: 'identify', profileId: null, clientId: 'tab-one' }),
+    );
+
+    expect(world.presenceCalls.addresses).toStrictEqual(['203.0.113.7']);
+  });
+
+  it('says a connection came from nowhere known where the server could not work it out', async () => {
+    const world = createWorld();
+    const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
+
+    await session.receive(
+      JSON.stringify({ kind: 'identify', profileId: null, clientId: 'tab-one' }),
+    );
+
+    expect(world.presenceCalls.addresses).toStrictEqual([null]);
   });
 
   it('marks the tab as gone when the socket closes, without a separate stream to watch', async () => {

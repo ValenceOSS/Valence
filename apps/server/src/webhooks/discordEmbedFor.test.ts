@@ -283,7 +283,10 @@ describe('discordEmbedFor', () => {
             updated: 0,
             removed: 0,
             failed: 0,
-            arrived: ['Dune', 'Arrival'],
+            arrived: [
+              { title: 'Dune', episodes: 1 },
+              { title: 'Arrival', episodes: 1 },
+            ],
             arrivedNotListed: 0,
           },
         ],
@@ -311,7 +314,7 @@ describe('discordEmbedFor', () => {
             updated: 0,
             removed: 0,
             failed: 0,
-            arrived: ['Dune'],
+            arrived: [{ title: 'Dune', episodes: 1 }],
             arrivedNotListed: 29,
           },
         ],
@@ -347,7 +350,10 @@ describe('discordEmbedFor, staying inside what Discord accepts', () => {
             updated: 0,
             removed: 0,
             failed: 0,
-            arrived: Array.from({ length: 25 }, () => 'y'.repeat(400)),
+            arrived: Array.from({ length: 25 }, () => ({
+              title: 'y'.repeat(400),
+              episodes: 1,
+            })),
             arrivedNotListed: 0,
           },
         ],
@@ -428,7 +434,10 @@ describe('discordEmbedFor, a scan of several libraries at once', () => {
           updated: 0,
           removed: 0,
           failed: 0,
-          arrived: ['Dune', 'Sicario'],
+          arrived: [
+            { title: 'Dune', episodes: 1 },
+            { title: 'Sicario', episodes: 1 },
+          ],
           arrivedNotListed: 0,
         },
         {
@@ -438,7 +447,7 @@ describe('discordEmbedFor, a scan of several libraries at once', () => {
           updated: 3,
           removed: 0,
           failed: 0,
-          arrived: ['The Bear S01E01 — System'],
+          arrived: [{ title: 'The Bear', episodes: 8 }],
           arrivedNotListed: 0,
         },
       ],
@@ -473,7 +482,39 @@ describe('discordEmbedFor, a scan of several libraries at once', () => {
 
     expect(drawn.description).toContain('**Movies**');
     expect(drawn.description).toContain('**Shows**');
-    expect(drawn.description).toContain('The Bear S01E01 — System');
+    expect(drawn.description).toContain('The Bear — 8 episodes');
+  });
+
+  it('counts a programme rather than reciting its episodes', () => {
+    const drawn = discordEmbedFor(
+      {
+        ...twoLibraries,
+        data: {
+          ...twoLibraries.data,
+          libraries: [
+            {
+              libraryId: 'library-2',
+              libraryName: 'Shows',
+              added: 2103,
+              updated: 0,
+              removed: 0,
+              failed: 0,
+              arrived: [
+                { title: '24', episodes: 192 },
+                { title: 'The Thick Of It', episodes: 22 },
+              ],
+              arrivedNotListed: 40,
+            },
+          ],
+        },
+      },
+      'a sentence',
+    );
+
+    expect(drawn.description).toContain('24 — 192 episodes');
+    expect(drawn.description).toContain('The Thick Of It — 22 episodes');
+    expect(drawn.description).toContain('…and 40 more');
+    expect(drawn.description).not.toContain('S01E');
   });
 
   it('names the one library where only one was scanned', () => {
@@ -490,5 +531,90 @@ describe('discordEmbedFor, a scan of several libraries at once', () => {
 
     expect(drawn.title).toBe('Movies finished scanning');
     expect(drawn.fields.map((one) => one.name)).not.toContain('Libraries');
+  });
+});
+
+describe('discordEmbedFor, somebody opening and closing Valence', () => {
+  const aSession = {
+    accountId: 'account-1',
+    accountName: 'Dan',
+    profileId: 'profile-1',
+    profileName: 'Connie',
+    clientId: 'tab-1',
+    deviceLabel: "Connie's iPhone",
+    address: '192.168.1.40',
+    guestOf: null,
+    viaShare: null,
+  };
+
+  const fieldsOf = (payload: WebhookPayload) =>
+    Object.fromEntries(embed(payload).fields.map((one) => [one.name, one.value]));
+
+  it('puts whoever arrived in the title rather than burying them in a field', () => {
+    expect(embed({ ...anEnvelope, event: 'session.started', data: aSession }).title).toBe(
+      'Connie opened Valence',
+    );
+  });
+
+  it('names the device, and whose account the profile sits on', () => {
+    expect(fieldsOf({ ...anEnvelope, event: 'session.started', data: aSession })).toStrictEqual({
+      Device: "Connie's iPhone",
+      From: '192.168.1.40',
+      Account: 'Dan',
+    });
+  });
+
+  it('leaves the account out where it would only repeat the title', () => {
+    expect(
+      fieldsOf({
+        ...anEnvelope,
+        event: 'session.started',
+        data: { ...aSession, profileId: null, profileName: null },
+      }),
+    ).toStrictEqual({ Device: "Connie's iPhone", From: '192.168.1.40' });
+  });
+
+  it('names whoever let a guest in', () => {
+    expect(
+      fieldsOf({
+        ...anEnvelope,
+        event: 'session.started',
+        data: {
+          ...aSession,
+          accountId: null,
+          accountName: null,
+          profileId: null,
+          profileName: null,
+          guestOf: 'Dan',
+          viaShare: 'share-1',
+        },
+      })['Guest of'],
+    ).toBe('Dan');
+  });
+
+  it('says how long somebody stayed when they go', () => {
+    const drawn = embed({
+      ...anEnvelope,
+      event: 'session.ended',
+      data: { ...aSession, lastedSeconds: 4_980 },
+    });
+
+    expect(drawn.title).toBe('Connie closed Valence');
+    expect(
+      fieldsOf({
+        ...anEnvelope,
+        event: 'session.ended',
+        data: { ...aSession, lastedSeconds: 4_980 },
+      }),
+    ).toStrictEqual({
+      Device: "Connie's iPhone",
+      Stayed: '1h 23m',
+    });
+  });
+
+  it('hangs no poster on a session, which is about a person rather than a film', () => {
+    expect(
+      embed({ ...anEnvelope, event: 'session.started', data: aSession }).thumbnail,
+    ).toBeUndefined();
   });
 });

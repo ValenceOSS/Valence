@@ -27,7 +27,7 @@ type PresencePlaybackHealth = {
   presentedHeight: number;
 };
 
-type PresenceEntry = {
+type PresenceSession = {
   clientId: string;
   accountId: string | null;
   profileId: string | null;
@@ -35,6 +35,10 @@ type PresenceEntry = {
   guestOf: string | null;
   viaShare: string | null;
   deviceLabel: string;
+  address: string | null;
+};
+
+type PresenceEntry = PresenceSession & {
   connectedAt: number;
   playback: PresencePlayback | null;
 };
@@ -65,6 +69,8 @@ type PresenceStartPlaybackInput = Omit<
 type PresenceWatchers = {
   onPlaybackStarted?: (viewing: PresenceViewing) => void;
   onPlaybackStopped?: (viewing: PresenceViewing) => void;
+  onSessionOpened?: (session: PresenceSession) => void;
+  onSessionClosed?: (clientId: string) => void;
 };
 
 type PresenceArrival = {
@@ -76,6 +82,7 @@ type PresenceArrival = {
   guestOf?: string | null;
   viaShare?: string | null;
   deviceLabel: string;
+  address?: string | null;
   send: (event: PresenceControlEvent) => void;
 };
 
@@ -170,6 +177,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
       guestOf = null,
       viaShare = null,
       deviceLabel,
+      address = null,
       send,
     }) => {
       const already = connections.get(clientId);
@@ -183,22 +191,28 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
         endPlayback(already);
       }
 
+      const session: PresenceSession = {
+        clientId,
+        accountId,
+        profileId,
+        profileName,
+        guestOf,
+        viaShare,
+        deviceLabel,
+        address,
+      };
+
       connections.set(clientId, {
         socketId,
         entry: {
-          clientId,
-          accountId,
-          profileId,
-          profileName,
-          guestOf,
-          viaShare,
-          deviceLabel,
+          ...session,
           connectedAt: isTheSamePerson ? already.entry.connectedAt : Date.now(),
           playback: isTheSamePerson ? already.entry.playback : null,
         },
         send,
       });
 
+      watchers.onSessionOpened?.(session);
       announce();
 
       return true;
@@ -219,6 +233,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
 
       endPlayback(connection);
       connections.delete(clientId);
+      watchers.onSessionClosed?.(clientId);
       announce();
     },
 
@@ -370,6 +385,7 @@ export type {
   PresenceControlEvent,
   PresenceEntry,
   PresenceService,
+  PresenceSession,
   PresenceViewing,
   PresenceWatchers,
 };

@@ -35,6 +35,8 @@ const WEBHOOK_EVENTS = [
   'account.created',
   'account.deleted',
   'account.roleChanged',
+  'session.started',
+  'session.ended',
   'media.added',
   'media.removed',
   'playback.started',
@@ -94,6 +96,8 @@ const WEBHOOK_EVENT_LABELS: Record<WebhookEvent, string> = {
   'account.created': 'Account made',
   'account.deleted': 'Account deleted',
   'account.roleChanged': 'Role changed',
+  'session.started': 'Opened Valence',
+  'session.ended': 'Left Valence',
   'media.added': 'Something arrived',
   'media.removed': 'Something left',
   'playback.started': 'Started watching',
@@ -107,6 +111,9 @@ const WEBHOOK_EVENT_NOTES: Partial<Record<WebhookEvent, string>> = {
   'requests.available': 'Sent once the library has found what was filed.',
   'playback.started': 'Names the person and what they are watching.',
   'playback.stopped': 'Names the person and what they were watching.',
+  'session.started':
+    'Sent when somebody opens Valence, not when they sign in, and says where from.',
+  'session.ended': 'Sent a minute after the tab goes, so a reload is not a leaving.',
 };
 
 type WebhookEventGroup = {
@@ -162,6 +169,8 @@ const WEBHOOK_EVENT_GROUPS: readonly WebhookEventGroup[] = [
       'account.created',
       'account.deleted',
       'account.roleChanged',
+      'session.started',
+      'session.ended',
     ],
   },
   {
@@ -246,7 +255,22 @@ const WebhookPlaybackSchema = WebhookViewerSchema.extend({
   mode: z.enum(PLAYBACK_MODES),
 });
 
+const WebhookSessionSchema = WebhookViewerSchema.extend({
+  clientId: z.string(),
+  deviceLabel: z.string(),
+  address: z.string().nullable().default(null),
+  guestOf: z.string().nullable().default(null),
+  viaShare: z.string().nullable().default(null),
+});
+
 const ARRIVED_TITLES_KEPT = 25;
+
+const ArrivedTitleSchema = z.object({
+  title: z.string(),
+  episodes: z.number().int().positive(),
+});
+
+type ArrivedTitle = z.infer<typeof ArrivedTitleSchema>;
 
 const ScannedLibrarySchema = z.object({
   libraryId: z.string(),
@@ -255,7 +279,7 @@ const ScannedLibrarySchema = z.object({
   updated: z.number().int().nonnegative(),
   removed: z.number().int().nonnegative(),
   failed: z.number().int().nonnegative(),
-  arrived: z.array(z.string()).max(ARRIVED_TITLES_KEPT).default([]),
+  arrived: z.array(ArrivedTitleSchema).max(ARRIVED_TITLES_KEPT).default([]),
   arrivedNotListed: z.number().int().nonnegative().default(0),
 });
 
@@ -471,6 +495,18 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
       durationSeconds: z.number().nonnegative().nullable(),
     }),
   }),
+  z.object({
+    ...WebhookEnvelopeSchema,
+    event: z.literal('session.started'),
+    data: WebhookSessionSchema,
+  }),
+  z.object({
+    ...WebhookEnvelopeSchema,
+    event: z.literal('session.ended'),
+    data: WebhookSessionSchema.extend({
+      lastedSeconds: z.number().nonnegative(),
+    }),
+  }),
 ]);
 
 type WebhookPayload = z.infer<typeof WebhookPayloadSchema>;
@@ -538,12 +574,15 @@ export {
   WebhookFiltersSchema,
   WebhookJobDataSchema,
   WebhookPayloadSchema,
+  WebhookSessionSchema,
+  ArrivedTitleSchema,
   ScannedLibrarySchema,
   WebhookPresetSchema,
   WebhookSubscriptionSchema,
 };
 
 export type {
+  ArrivedTitle,
   MediaAddedGranularity,
   ScannedLibrary,
   WebhookSubscribableEvent,

@@ -206,7 +206,7 @@ describe('subscriptionWants, the mistake that would stop every delivery', () => 
               updated: 0,
               removed: 0,
               failed: 0,
-              arrived: ['Dune'],
+              arrived: [{ title: 'Dune', episodes: 1 }],
               arrivedNotListed: 0,
             },
           ],
@@ -226,5 +226,58 @@ describe('subscriptionWants, the mistake that would stop every delivery', () => 
         aViewing(),
       ),
     ).toBe(false);
+  });
+});
+
+describe('subscriptionWants, somebody opening Valence', () => {
+  const aSession = (
+    overrides: Partial<{ accountId: string | null; profileId: string | null }> = {},
+  ): WebhookOccurrence => ({
+    event: 'session.started',
+    data: {
+      accountId: 'account-1',
+      accountName: 'Dan',
+      profileId: 'profile-1',
+      profileName: 'Connie',
+      clientId: 'tab-1',
+      deviceLabel: 'A phone',
+      address: null,
+      guestOf: null,
+      viaShare: null,
+      ...overrides,
+    },
+  });
+
+  it('keeps a session opened by the account somebody asked about', () => {
+    expect(
+      subscriptionWants(asking(['session.started'], { accounts: ['account-1'] }), aSession()),
+    ).toBe(true);
+  });
+
+  it('drops a session opened by somebody else', () => {
+    expect(
+      subscriptionWants(asking(['session.started'], { accounts: ['account-2'] }), aSession()),
+    ).toBe(false);
+  });
+
+  it('reads the profile off a session, so a filter on one is not simply ignored', () => {
+    expect(
+      subscriptionWants(asking(['session.started'], { profiles: ['profile-2'] }), aSession()),
+    ).toBe(false);
+  });
+
+  it('lets a guest through a profile filter, having no profile to judge', () => {
+    expect(
+      subscriptionWants(
+        asking(['session.started'], { profiles: ['profile-2'] }),
+        aSession({ accountId: null, profileId: null }),
+      ),
+    ).toBe(true);
+  });
+
+  it('does not let a filter on kinds of media quietly stop every session', () => {
+    expect(
+      subscriptionWants(asking(['session.started'], { itemTypes: ['movie'] }), aSession()),
+    ).toBe(true);
   });
 });

@@ -417,3 +417,110 @@ describe('isSubscribableEvent', () => {
     }
   });
 });
+
+describe('WebhookPayloadSchema, somebody opening and closing Valence', () => {
+  const aSession = {
+    accountId: 'account-1',
+    accountName: 'Dan',
+    profileId: 'profile-1',
+    profileName: 'Connie',
+    clientId: 'tab-1',
+    deviceLabel: "Connie's iPhone",
+  };
+
+  it('reads who opened it, on what, and which tab it was', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'session.started',
+      data: { ...aSession, guestOf: null, viaShare: 'share-1' },
+    });
+
+    expect(payload.data).toMatchObject({ clientId: 'tab-1', viaShare: 'share-1' });
+  });
+
+  it('takes a session that says nothing about share links as one that came in by neither', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'session.started',
+      data: aSession,
+    });
+
+    expect(payload.data).toMatchObject({ guestOf: null, viaShare: null });
+  });
+
+  it('carries how long somebody stayed when they leave', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'session.ended',
+      data: { ...aSession, lastedSeconds: 4_980 },
+    });
+
+    expect(payload.data).toMatchObject({ lastedSeconds: 4_980 });
+  });
+
+  it('refuses a visit that lasted less than no time', () => {
+    expect(
+      WebhookPayloadSchema.safeParse({
+        ...anEnvelope,
+        event: 'session.ended',
+        data: { ...aSession, lastedSeconds: -1 },
+      }).success,
+    ).toBe(false);
+  });
+
+  it('refuses a leaving that does not say how long it was', () => {
+    expect(
+      WebhookPayloadSchema.safeParse({
+        ...anEnvelope,
+        event: 'session.ended',
+        data: aSession,
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe('WebhookPayloadSchema, where somebody came from', () => {
+  const aSession = {
+    accountId: 'account-1',
+    accountName: 'Dan',
+    profileId: null,
+    profileName: null,
+    clientId: 'tab-1',
+    deviceLabel: "Connie's iPhone",
+  };
+
+  it('carries the address a session was opened from', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'session.started',
+      data: { ...aSession, address: '192.168.1.40' },
+    });
+
+    expect(payload.data).toMatchObject({ address: '192.168.1.40' });
+  });
+
+  it('takes a session that names no address as one that came from nowhere known', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'session.started',
+      data: aSession,
+    });
+
+    expect(payload.data).toMatchObject({ address: null });
+  });
+
+  it('keeps the address a refused sign-in came from, which is why anybody is told', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'auth.failed',
+      data: {
+        identifier: 'ada@example.com',
+        deviceLabel: 'Chrome on macOS',
+        address: '192.168.1.40',
+        reason: 'those details were not accepted.',
+      },
+    });
+
+    expect(payload.data).toMatchObject({ address: '192.168.1.40' });
+  });
+});

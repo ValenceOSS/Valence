@@ -14,6 +14,7 @@ const entry = (
   profileName: 'Marques',
   guestOf: null,
   viaShare: null,
+  address: null,
   deviceLabel,
   connectedAt: 0,
   playback: null,

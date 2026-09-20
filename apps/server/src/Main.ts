@@ -79,6 +79,7 @@ import { mediaKindOf } from '@ValenceServer/library/mediaKindOf';
 import { describeQuality } from '@ValenceServer/library/describeQuality';
 import { describeSignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
 import { ARRIVED_TITLES_KEPT } from '@ValenceContracts/schemas/Webhook';
+import { summariseArrivals } from '@ValenceServer/events/summariseArrivals';
 import type { ScannedItem } from '@ValenceServer/library/scanLibrary';
 import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
@@ -101,11 +102,17 @@ import type {
   RequestCatalogue,
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
-import type { PresenceViewing } from '@ValenceServer/presence/PresenceService';
+import { getConnInfo } from '@hono/node-server/conninfo';
+import type { Context } from 'hono';
+import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
+import { createSessionWatch } from '@ValenceServer/presence/createSessionWatch';
+import type { PresenceSession, PresenceViewing } from '@ValenceServer/presence/PresenceService';
 import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 type ViewingData = Extract<WebhookPayload, { event: 'playback.started' }>['data'];
+
+type SessionData = Extract<WebhookPayload, { event: 'session.started' }>['data'];
 import { runScanPhases } from '@ValenceServer/library/runScanPhases';
 import { createCatalogueMetadataProvider } from '@ValenceServer/library/createCatalogueMetadataProvider';
 import { createFilenameMetadataProvider } from '@ValenceServer/library/createFilenameMetadataProvider';
@@ -353,6 +360,8 @@ const REALTIME_ENTITLEMENT_TTL_MS = 5000;
 
 const REALTIME_HEARTBEAT_MS = 20000;
 
+const SESSION_LINGER_MS = 60_000;
+
 const MONITOR_RETRY_MS = 5000;
 
 const LOG_WINDOW_MS = 250;
@@ -492,6 +501,26 @@ const log = createLogger({
 });
 
 /**
+ * Reads what an account is called, for the events that say who they are about.
+ *
+ * @param accountId - Whose name to read, or null where nobody is signed in.
+ * @returns The name, or null where nobody is signed in or the account has since gone.
+ */
+const nameOfAccount = async (accountId: string | null): Promise<string | null> => {
+  if (accountId === null) {
+    return null;
+  }
+
+  const named = await db
+    .select({ name: user.name })
+    .from(user)
+    .where(eq(user.id, accountId))
+    .limit(1);
+
+  return named[0]?.name ?? null;
+};
+
+/**
  * Fills out what a viewing was of, which presence does not hold.
  *
  * Presence knows who is connected and which item they asked for; the poster, the library it sits in
@@ -509,18 +538,10 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
   }
 
   const shelf = (await libraryService.list(asTheServer)).find((one) => one.id === item.libraryId);
-  const named =
-    viewing.accountId === null
-      ? []
-      : await db
-          .select({ name: user.name })
-          .from(user)
-          .where(eq(user.id, viewing.accountId))
-          .limit(1);
 
   return {
     accountId: viewing.accountId,
-    accountName: named[0]?.name ?? null,
+    accountName: await nameOfAccount(viewing.accountId),
     profileId: viewing.profileId,
     profileName: viewing.profileName,
     item: {
@@ -548,6 +569,40 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
   };
 };
 
+/**
+ * Fills out whose session it is, which presence holds by id rather than by name.
+ *
+ * @param session - The session, as presence saw it.
+ * @returns The session as a subscriber reads it.
+ */
+const describeSession = async (session: PresenceSession): Promise<SessionData> => ({
+  accountId: session.accountId,
+  accountName: await nameOfAccount(session.accountId),
+  profileId: session.profileId,
+  profileName: session.profileName,
+  clientId: session.clientId,
+  deviceLabel: session.deviceLabel,
+  address: session.address,
+  guestOf: session.guestOf,
+  viaShare: session.viaShare,
+});
+
+const sessions = createSessionWatch({
+  lingerMs: SESSION_LINGER_MS,
+  schedule: createRealtimeClock(),
+  now: () => Date.now(),
+  onStarted: (session) => {
+    void describeSession(session).then((described) => {
+      void events.publish({ event: 'session.started', data: described });
+    });
+  },
+  onEnded: ({ lastedSeconds, ...session }) => {
+    void describeSession(session).then((described) => {
+      void events.publish({ event: 'session.ended', data: { ...described, lastedSeconds } });
+    });
+  },
+});
+
 const presence = createPresenceService({
   onPlaybackStarted: (viewing) => {
     void describeViewing(viewing).then((described) => {
@@ -569,6 +624,12 @@ const presence = createPresenceService({
         });
       }
     });
+  },
+  onSessionOpened: (session) => {
+    sessions.opened(session);
+  },
+  onSessionClosed: (clientId) => {
+    sessions.closed(clientId);
   },
 });
 
@@ -1152,12 +1213,14 @@ const jobs = await createJobQueue({
                 result,
               );
 
+              const summarised = summariseArrivals(arrived, ARRIVED_TITLES_KEPT);
+
               scanRuns.record(runId ?? `${LONE_SCAN}:${jobId}`, runOf ?? 1, {
                 libraryId,
                 libraryName,
                 ...result,
-                arrived: arrived.slice(0, ARRIVED_TITLES_KEPT).map((item) => item.title),
-                arrivedNotListed: Math.max(arrived.length - ARRIVED_TITLES_KEPT, 0),
+                arrived: summarised.listed,
+                arrivedNotListed: summarised.notListed,
               });
             },
           });
@@ -2978,10 +3041,58 @@ const WEB_ROOT = './apps/web/dist';
 
 const nodeWebSocket = createNodeWebSocket({ app });
 
+/**
+ * Where a connection came from as Node sees it, for the case where nothing sits in front of this
+ * server to forward it on.
+ *
+ * Asked of the adapter rather than of a header, and guarded, because the adapter answers only while
+ * it is the thing serving the request — it knows nothing about a request that reached Hono some
+ * other way.
+ *
+ * @param context - The request.
+ * @returns The address the socket came from, or null where the adapter cannot say.
+ */
+const socketAddressOf = (context: Context): string | null => {
+  try {
+    return getConnInfo(context).remote.address ?? null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Keeps the address a session was last seen at.
+ *
+ * better-auth writes it once, when somebody signs in, and never touches it again — a refresh moves
+ * only the expiry. So a phone that signed in on the sofa and has spent the fortnight since on
+ * cellular is still listed at the address it was at a fortnight ago, which is the one address it is
+ * certainly not at now.
+ *
+ * A client opening its connection is the moment its network could have changed, so that is when
+ * this is asked, and only a changed address is written — the ordinary case costs a comparison
+ * rather than a round trip.
+ *
+ * @param sessionId - The session to remember it against.
+ * @param remembered - The address already stored against it.
+ * @param seen - Where it has just been seen, where that is known.
+ */
+const rememberWhereTheyAre = async (
+  sessionId: string,
+  remembered: string | null,
+  seen: string | null,
+): Promise<void> => {
+  if (seen === null || seen === remembered) {
+    return;
+  }
+
+  await db.update(session).set({ ipAddress: seen }).where(eq(session.id, sessionId));
+};
+
 app.get(
   '/api/realtime',
   nodeWebSocket.upgradeWebSocket(async (context) => {
-    const account = (await readSessionOnce(auth, context.req.raw.headers))?.user ?? null;
+    const signedIn = await readSessionOnce(auth, context.req.raw.headers);
+    const account = signedIn?.user ?? null;
     const who =
       account === null
         ? await guestAtTheDoor(getCookie(context, SHARE_COOKIE), shareService)
@@ -2992,6 +3103,14 @@ app.get(
     }
 
     const accountId = account?.id ?? null;
+    const address = readCallerAddress({
+      headers: context.req.raw.headers,
+      socketAddress: socketAddressOf(context),
+    });
+
+    if (signedIn !== null) {
+      void rememberWhereTheyAre(signedIn.session.id, signedIn.session.ipAddress ?? null, address);
+    }
     let session: RealtimeSession | null = null;
     let heartbeat: ReturnType<typeof setInterval> | null = null;
 
@@ -3003,6 +3122,7 @@ app.get(
             profileId: null,
             guestOf: who?.guestOf ?? null,
             viaShare: who?.shareId ?? null,
+            address,
           },
           {
             send: (raw) => {

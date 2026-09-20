@@ -518,3 +518,136 @@ describe('formatWebhookBody', () => {
     ).toBe('Dune is ready to watch, as Sam asked.');
   });
 });
+
+describe('formatWebhookBody, somebody opening and closing Valence', () => {
+  const aSession = {
+    accountId: 'account-1',
+    accountName: 'Dan',
+    profileId: 'profile-1',
+    profileName: 'Connie',
+    clientId: 'tab-1',
+    deviceLabel: "Connie's iPhone",
+    address: null,
+    guestOf: null,
+    viaShare: null,
+  };
+
+  const said = (payload: WebhookPayload) => formatWebhookBody('ntfy', payload).body;
+
+  it('names whoever opened it by their profile, and the device they opened it on', () => {
+    expect(said({ ...anEnvelope, event: 'session.started', data: aSession })).toBe(
+      "Connie opened Valence on Connie's iPhone.",
+    );
+  });
+
+  it('falls back to the account where nobody picked a profile', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'session.started',
+        data: { ...aSession, profileId: null, profileName: null },
+      }),
+    ).toBe("Dan opened Valence on Connie's iPhone.");
+  });
+
+  it('names whoever shared the link a guest came in on', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'session.started',
+        data: {
+          ...aSession,
+          accountId: null,
+          accountName: null,
+          profileId: null,
+          profileName: null,
+          guestOf: 'Dan',
+          viaShare: 'share-1',
+        },
+      }),
+    ).toBe("A guest of Dan opened Valence on Connie's iPhone.");
+  });
+
+  it('says where somebody opened it from, where the server could work that out', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'session.started',
+        data: { ...aSession, address: '192.168.1.40' },
+      }),
+    ).toBe("Connie opened Valence on Connie's iPhone from 192.168.1.40.");
+  });
+
+  it('leaves the address out rather than saying somebody came from nowhere', () => {
+    expect(said({ ...anEnvelope, event: 'session.started', data: aSession })).toBe(
+      "Connie opened Valence on Connie's iPhone.",
+    );
+  });
+
+  it('says how long somebody stayed', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'session.ended',
+        data: { ...aSession, lastedSeconds: 4_980 },
+      }),
+    ).toBe("Connie closed Valence on Connie's iPhone after 1h 23m.");
+  });
+
+  it('leaves the length out rather than saying somebody stayed no time at all', () => {
+    expect(
+      said({ ...anEnvelope, event: 'session.ended', data: { ...aSession, lastedSeconds: 0 } }),
+    ).toBe("Connie closed Valence on Connie's iPhone.");
+  });
+});
+
+describe('formatWebhookBody, a sign-in', () => {
+  const said = (payload: WebhookPayload) => formatWebhookBody('ntfy', payload).body;
+
+  it('names the person, the device and where they signed in from', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'auth.succeeded',
+        data: {
+          accountId: 'account-1',
+          name: 'Ada',
+          deviceLabel: 'Chrome on macOS',
+          address: '203.0.113.7',
+        },
+      }),
+    ).toBe('Ada signed in on Chrome on macOS from 203.0.113.7.');
+  });
+
+  it('says where a refused sign-in came from, which is the point of being told about one', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'auth.failed',
+        data: {
+          identifier: 'ada@example.com',
+          deviceLabel: 'Chrome on macOS',
+          address: '203.0.113.7',
+          reason: 'those details were not accepted.',
+        },
+      }),
+    ).toBe(
+      'A sign-in as ada@example.com was refused on Chrome on macOS from 203.0.113.7 — those details were not accepted.',
+    );
+  });
+
+  it('leaves the origin out where nothing could work it out', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'auth.succeeded',
+        data: {
+          accountId: 'account-1',
+          name: 'Ada',
+          deviceLabel: 'Chrome on macOS',
+          address: null,
+        },
+      }),
+    ).toBe('Ada signed in on Chrome on macOS.');
+  });
+});

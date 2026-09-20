@@ -1,4 +1,8 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { describeArrival } from './describeArrival';
+import { describeSpan } from './describeSpan';
+import { nameOfItem } from './nameOfItem';
+import { nameOfViewer } from './nameOfViewer';
 import { MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
 import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
 
@@ -55,31 +59,6 @@ type DiscordEmbed = {
 const clip = (text: string, limit: number): string =>
   text.length <= limit ? text : `${text.slice(0, limit - ELLIPSIS.length)}${ELLIPSIS}`;
 
-type NamedItem = {
-  title: string;
-  seriesTitle: string | null;
-  seasonNumber: number | null;
-  episodeNumber: number | null;
-  year: number | null;
-};
-
-/**
- * Names one thing in a library, an episode by its place in its series and anything else by title.
- *
- * @param item - What it is about.
- * @returns The name to show.
- */
-const nameOf = (item: NamedItem): string => {
-  if (item.seriesTitle !== null && item.seasonNumber !== null && item.episodeNumber !== null) {
-    const season = item.seasonNumber.toString().padStart(2, '0');
-    const episode = item.episodeNumber.toString().padStart(2, '0');
-
-    return `${item.seriesTitle} S${season}E${episode} — ${item.title}`;
-  }
-
-  return item.year === null ? item.title : `${item.title} (${item.year.toString()})`;
-};
-
 /**
  * Says how far through something somebody got.
  *
@@ -109,44 +88,7 @@ const progressOf = (
   return `${minutes.toString()}:${seconds} (${through.toString()}%)`;
 };
 
-/**
- * Whoever was watching, preferring the profile because that is who picked it.
- *
- * @param viewer - Who was watching.
- * @returns What to call them.
- */
-const viewerOf = (viewer: { accountName: string | null; profileName: string | null }): string =>
-  viewer.profileName ?? viewer.accountName ?? 'Somebody with a share link';
-
 const GENRES_SHOWN = 4;
-
-const SECONDS_IN_HOUR = 3600;
-
-const SECONDS_IN_MINUTE = 60;
-
-/**
- * Says how long something runs the way a person says it.
- *
- * Anything under a minute is said in seconds rather than rounded to "0m", which is what a clip or a
- * sample would otherwise report.
- *
- * @param durationSeconds - How long it runs.
- * @returns The runtime, or null where nothing is known.
- */
-const runtimeOf = (durationSeconds: number | null): string | null => {
-  if (durationSeconds === null || durationSeconds <= 0) {
-    return null;
-  }
-
-  if (durationSeconds < SECONDS_IN_MINUTE) {
-    return `${Math.round(durationSeconds).toString()}s`;
-  }
-
-  const hours = Math.floor(durationSeconds / SECONDS_IN_HOUR);
-  const minutes = Math.round((durationSeconds % SECONDS_IN_HOUR) / SECONDS_IN_MINUTE);
-
-  return hours === 0 ? `${minutes.toString()}m` : `${hours.toString()}h ${minutes.toString()}m`;
-};
 
 /**
  * Says what a catalogue thought of something, out of ten.
@@ -186,14 +128,14 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         : `No longer in ${payload.data.libraryName}`;
 
       return {
-        title: nameOf(payload.data),
+        title: nameOfItem(payload.data),
         description: payload.data.overview ?? where,
         colour: arriving ? COLOURS.arrival : COLOURS.quiet,
         posterUrl: payload.data.posterUrl,
         fields: [
           field('Kind', MEDIA_KIND_LABELS[payload.data.kind]),
           field('Library', payload.data.libraryName),
-          field('Runtime', runtimeOf(payload.data.durationSeconds)),
+          field('Runtime', describeSpan(payload.data.durationSeconds)),
           field('Quality', payload.data.quality),
           field('Rating', ratingOf(payload.data.rating)),
           field('Genres', payload.data.genres.slice(0, GENRES_SHOWN).join(', ')),
@@ -203,23 +145,23 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
 
     case 'playback.started': {
       return {
-        title: nameOf(payload.data.item),
-        description: `${viewerOf(payload.data)} started watching`,
+        title: nameOfItem(payload.data.item),
+        description: `${nameOfViewer(payload.data)} started watching`,
         colour: COLOURS.viewing,
         posterUrl: payload.data.item.posterUrl,
         fields: [
           field('Device', payload.data.deviceLabel),
           field('Playing', payload.data.mode),
           field('Quality', payload.data.item.quality),
-          field('Runtime', runtimeOf(payload.data.item.durationSeconds)),
+          field('Runtime', describeSpan(payload.data.item.durationSeconds)),
         ],
       };
     }
 
     case 'playback.stopped': {
       return {
-        title: nameOf(payload.data.item),
-        description: `${viewerOf(payload.data)} stopped watching`,
+        title: nameOfItem(payload.data.item),
+        description: `${nameOfViewer(payload.data)} stopped watching`,
         colour: COLOURS.viewing,
         posterUrl: payload.data.item.posterUrl,
         fields: [
@@ -232,12 +174,38 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
       };
     }
 
+    case 'session.started': {
+      return {
+        title: `${nameOfViewer(payload.data)} opened Valence`,
+        description: '',
+        colour: COLOURS.viewing,
+        fields: [
+          field('Device', payload.data.deviceLabel),
+          field('From', payload.data.address),
+          field('Account', payload.data.profileName === null ? null : payload.data.accountName),
+          field('Guest of', payload.data.guestOf),
+        ],
+      };
+    }
+
+    case 'session.ended': {
+      return {
+        title: `${nameOfViewer(payload.data)} closed Valence`,
+        description: '',
+        colour: COLOURS.quiet,
+        fields: [
+          field('Device', payload.data.deviceLabel),
+          field('Stayed', describeSpan(payload.data.lastedSeconds)),
+        ],
+      };
+    }
+
     case 'auth.succeeded': {
       return {
         title: `${payload.data.name} signed in`,
         description: '',
         colour: COLOURS.auth,
-        fields: [field('Device', payload.data.deviceLabel), field('Address', payload.data.address)],
+        fields: [field('Device', payload.data.deviceLabel), field('From', payload.data.address)],
       };
     }
 
@@ -249,7 +217,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         fields: [
           field('Tried', payload.data.identifier),
           field('Device', payload.data.deviceLabel),
-          field('Address', payload.data.address),
+          field('From', payload.data.address),
         ],
       };
     }
@@ -294,7 +262,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
 
         return one.arrived.length === 0
           ? null
-          : `**${one.libraryName}**\n${one.arrived.join('\n')}${andMore}`;
+          : `**${one.libraryName}**\n${one.arrived.map(describeArrival).join('\n')}${andMore}`;
       });
 
       return {
