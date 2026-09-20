@@ -49,6 +49,20 @@ describe('ImmersiveMusic', () => {
     );
   });
 
+  it('gives the words a screen of their own to scroll in on a phone, where they sit below the cover', async () => {
+    renderInAnAddress(<ImmersiveMusic player={playing().player} />);
+
+    act(() => {
+      setMusicImmersive(true);
+    });
+
+    const line = await screen.findByText('Would you believe me, yeah?');
+    const words = line.closest('.overflow-y-auto');
+
+    expect(words).toHaveClass('h-[75svh]', 'lg:h-full');
+    expect(words?.parentElement).toHaveClass('overflow-y-auto', 'lg:overflow-y-visible');
+  });
+
   it('carries its own quiet controls beneath the cover', async () => {
     const { player } = playing();
 
