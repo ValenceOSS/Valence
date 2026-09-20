@@ -3,7 +3,7 @@ import { cn } from '@ValenceUI/cn';
 import type { RangeSliderProps } from './RangeSlider.types';
 
 const HANDLE = cn(
-  'block size-4 rounded-full bg-primary shadow outline-none select-none',
+  'block size-3.5 w-5 rounded-full bg-text shadow outline-none select-none',
   'transition-[scale] duration-[var(--duration-instant)] ease-[var(--ease-out)] motion-reduce:transition-none',
   'hover-hover:hover:scale-110 focus-visible:ring-[3px] focus-visible:ring-ring',
 );
@@ -48,7 +48,7 @@ const RangeSlider = ({
     }}
   >
     <RadixSlider.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-surface-raised">
-      <RadixSlider.Range className="absolute h-full rounded-full bg-primary" />
+      <RadixSlider.Range className="absolute h-full rounded-full bg-text" />
     </RadixSlider.Track>
 
     <RadixSlider.Thumb aria-label={thumbLabels[0]} className={HANDLE} />

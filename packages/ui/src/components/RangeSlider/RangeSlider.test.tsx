@@ -29,6 +29,23 @@ describe('RangeSlider', () => {
     expect(onValuesChange).toHaveBeenCalledWith([10, 89]);
   });
 
+  it('draws its handles the way the main slider does, in white rather than blue', () => {
+    render(
+      <RangeSlider
+        label="WEB-DL 1080p"
+        thumbLabels={['Smallest', 'Largest']}
+        values={[10, 90]}
+        max={100}
+        onValuesChange={vi.fn()}
+      />,
+    );
+
+    const [lower] = screen.getAllByRole('slider');
+
+    expect(lower).toHaveClass('bg-text', 'rounded-full');
+    expect(lower?.className).not.toContain('bg-primary');
+  });
+
   it('can be turned off', () => {
     render(
       <RangeSlider

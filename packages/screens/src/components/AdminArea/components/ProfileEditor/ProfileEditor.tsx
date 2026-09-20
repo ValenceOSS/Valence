@@ -1,9 +1,11 @@
-import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft01Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
-import { Button } from '@ValenceUI/Button';
+import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import { Dialog } from '@ValenceUI/Dialog';
+import { DialogContent } from '@ValenceUI/DialogContent';
+import { DialogFooter } from '@ValenceUI/DialogFooter';
+import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { FormField } from '@ValenceUI/FormField';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
@@ -17,7 +19,6 @@ import {
 } from '@ValenceContracts/schemas/ParsedRelease';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { addProfile, changeProfile } from '@ValenceClient/requests/fetchProfiles';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { QualitySizes } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/components/QualitySizes/QualitySizes';
 import { LibraryPicker } from '@ValenceScreens/components/AdminArea/components/LibraryPicker/LibraryPicker';
 import { RankedChoices } from '@ValenceScreens/components/AdminArea/components/RankedChoices/RankedChoices';
@@ -127,17 +128,18 @@ const Choosing = <Value extends string>({
 Choosing.displayName = 'Choosing';
 
 /**
- * The page for adding a quality profile, or changing one already kept: for films and series, which
+ * The dialog for adding a quality profile, or changing one already kept: for films and series, which
  * resolutions and sources may be taken, best first, how large a release of each quality may be an
  * hour, and whether a film is held until it is out digitally or on disc; for music, which formats,
  * and how large an album. Words can be preferred, required or banned, it can say whether to
  * upgrade later and up to what, and which libraries it is for.
  *
+ * @param isOpen - Whether the dialog is showing.
  * @param profile - The profile being changed, or null to add one.
- * @param onClose - Called to go back to every profile.
+ * @param onClose - Called when the dialog is dismissed.
  * @param onSaved - Called with the profile as kept.
  */
-const ProfileEditor = ({ profile, onClose, onSaved }: ProfileEditorProps) => {
+const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps) => {
   const libraries = useQuery(libraryQueries.all());
   const [form, setForm] = useState<ProfileForm>(() => formFor(profile));
   const [shownFor, setShownFor] = useState(profile);
@@ -190,267 +192,259 @@ const ProfileEditor = ({ profile, onClose, onSaved }: ProfileEditorProps) => {
   const title = profile === null ? 'Add media profile' : `Change ${profile.name}`;
 
   return (
-    <PanelCard
-      title={title}
-      actions={
-        <PanelCardAction icon={ArrowLeft01Icon} onClick={onClose}>
-          Every profile
-        </PanelCardAction>
-      }
-    >
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-        <p className="font-body text-sm text-text-muted">
-          Every release a search finds is judged against a profile: what it may not be is refused,
-          and the rest are ranked by how well they fit.
-        </p>
+    <Dialog label={title} isOpen={isOpen} onClose={onClose} size="stage">
+      <DialogTitle
+        title={title}
+        detail="Every release a search finds is judged against a profile: what it may not be is refused, and the rest are ranked by how well they fit."
+      />
 
-        <Section title="Profile">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField
-              label="Name"
-              value={form.name}
-              onValueChange={(name) => {
-                change({ name });
-              }}
-              placeholder={isVideo ? 'HD' : 'Lossless'}
-              required
-            />
-
-            <FormField label="For">
-              <SegmentedRow
-                label="For"
-                size="sm"
-                items={KINDS}
-                value={form.kind}
-                onSelect={(next) => {
-                  const kind = KINDS.find((one) => one.id === next)?.id;
-
-                  if (kind !== undefined) {
-                    change({ kind, libraryIds: [] });
-                  }
-                }}
-              />
-            </FormField>
-          </div>
-        </Section>
-
-        <Section
-          title="What it takes"
-          detail="Tick what may be taken, best first. The order is what ranks releases before anything else."
-        >
-          {isVideo ? (
+      <DialogContent>
+        <div className="flex w-full flex-col gap-6">
+          <Section title="Profile">
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Resolutions">
-                <RankedChoices
-                  label="Resolutions"
-                  options={optionsOf(RESOLUTIONS)}
-                  chosen={form.resolutions}
-                  onChange={(resolutions) => {
-                    change({ resolutions });
-                  }}
-                />
-              </FormField>
+              <TextField
+                label="Name"
+                value={form.name}
+                onValueChange={(name) => {
+                  change({ name });
+                }}
+                placeholder={isVideo ? 'HD' : 'Lossless'}
+                required
+              />
 
-              <FormField label="Sources" description="A release that does not say is let through.">
-                <RankedChoices
-                  label="Sources"
-                  options={optionsOf(RELEASE_SOURCES)}
-                  chosen={form.sources}
-                  onChange={(sources) => {
-                    change({ sources });
+              <FormField label="For">
+                <SegmentedRow
+                  label="For"
+                  size="sm"
+                  items={KINDS}
+                  value={form.kind}
+                  onSelect={(next) => {
+                    const kind = KINDS.find((one) => one.id === next)?.id;
+
+                    if (kind !== undefined) {
+                      change({ kind, libraryIds: [] });
+                    }
                   }}
                 />
               </FormField>
             </div>
-          ) : (
-            <FormField label="Formats">
-              <RankedChoices
-                label="Formats"
-                options={optionsOf(MUSIC_QUALITIES)}
-                chosen={form.musicQualities}
-                onChange={(musicQualities) => {
-                  change({ musicQualities });
-                }}
-              />
-            </FormField>
-          )}
-        </Section>
-
-        <Section
-          title="Sizes"
-          detail={
-            isVideo
-              ? 'How large a release of each quality may be, an hour of it, so a whole season is judged by its episodes. A handle at either end is no limit.'
-              : 'How large an album may be.'
-          }
-        >
-          {isVideo ? (
-            <QualitySizes
-              resolutions={form.resolutions}
-              sources={form.sources}
-              sizes={form.sizes}
-              onChange={(sizes) => {
-                change({ sizes });
-              }}
-            />
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextField
-                label="Smallest (MB an album)"
-                type="number"
-                min={0}
-                value={form.smallestMb}
-                onValueChange={(smallestMb) => {
-                  change({ smallestMb });
-                }}
-                placeholder="No limit"
-              />
-
-              <TextField
-                label="Largest (MB an album)"
-                type="number"
-                min={1}
-                value={form.largestMb}
-                onValueChange={(largestMb) => {
-                  change({ largestMb });
-                }}
-                placeholder="No limit"
-              />
-            </div>
-          )}
-        </Section>
-
-        {isVideo ? (
-          <Section
-            title="Films"
-            detail="A film is held until then before it is searched for, so nothing is fetched from cinemas."
-          >
-            <FormField label="Search films once they are">
-              <SegmentedRow
-                label="Search films once they are"
-                size="sm"
-                items={WAITS}
-                value={form.releaseWait}
-                onSelect={(next) => {
-                  const releaseWait = WAITS.find((one) => one.id === next)?.id;
-
-                  if (releaseWait !== undefined) {
-                    change({ releaseWait });
-                  }
-                }}
-              />
-            </FormField>
           </Section>
-        ) : null}
 
-        <Section title="Words">
-          <TextField
-            label="Preferred words"
-            value={form.preferredWords}
-            onValueChange={(preferredWords) => {
-              change({ preferredWords });
-            }}
-            description="Each one a release has adds to its score. Separate them with commas; a word between slashes, such as /hdr10\+?/, is a pattern."
-          />
+          <Section
+            title="What it takes"
+            detail="Tick what may be taken, best first. The order is what ranks releases before anything else."
+          >
+            {isVideo ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField label="Resolutions">
+                  <RankedChoices
+                    label="Resolutions"
+                    options={optionsOf(RESOLUTIONS)}
+                    chosen={form.resolutions}
+                    onChange={(resolutions) => {
+                      change({ resolutions });
+                    }}
+                  />
+                </FormField>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField
-              label="Required words"
-              value={form.requiredWords}
-              onValueChange={(requiredWords) => {
-                change({ requiredWords });
-              }}
-              description="A release needs at least one."
-            />
+                <FormField
+                  label="Sources"
+                  description="A release that does not say is let through."
+                >
+                  <RankedChoices
+                    label="Sources"
+                    options={optionsOf(RELEASE_SOURCES)}
+                    chosen={form.sources}
+                    onChange={(sources) => {
+                      change({ sources });
+                    }}
+                  />
+                </FormField>
+              </div>
+            ) : (
+              <FormField label="Formats">
+                <RankedChoices
+                  label="Formats"
+                  options={optionsOf(MUSIC_QUALITIES)}
+                  chosen={form.musicQualities}
+                  onChange={(musicQualities) => {
+                    change({ musicQualities });
+                  }}
+                />
+              </FormField>
+            )}
+          </Section>
 
-            <TextField
-              label="Banned words"
-              value={form.bannedWords}
-              onValueChange={(bannedWords) => {
-                change({ bannedWords });
-              }}
-              description="A release with any is refused."
-            />
-          </div>
-        </Section>
-
-        <Section title="Upgrades">
-          <Switch
-            label="Upgrade to a better release later"
-            isOn={form.isUpgrading}
-            onToggle={() => {
-              change({ isUpgrading: !form.isUpgrading });
-            }}
-          />
-
-          {!form.isUpgrading ? null : isVideo ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Choosing
-                label="Until the resolution is"
-                value={form.upgradeUntilResolution}
-                options={optionsOf(form.resolutions)}
-                onChoose={(upgradeUntilResolution) => {
-                  change({ upgradeUntilResolution });
+          <Section
+            title="Sizes"
+            detail={
+              isVideo
+                ? 'How large a release of each quality may be, an hour of it, so a whole season is judged by its episodes. A handle at either end is no limit.'
+                : 'How large an album may be.'
+            }
+          >
+            {isVideo ? (
+              <QualitySizes
+                resolutions={form.resolutions}
+                sources={form.sources}
+                sizes={form.sizes}
+                onChange={(sizes) => {
+                  change({ sizes });
                 }}
               />
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextField
+                  label="Smallest (MB an album)"
+                  type="number"
+                  min={0}
+                  value={form.smallestMb}
+                  onValueChange={(smallestMb) => {
+                    change({ smallestMb });
+                  }}
+                  placeholder="No limit"
+                />
 
-              <Choosing
-                label="And the source is"
-                value={form.upgradeUntilSource}
-                options={optionsOf(form.sources)}
-                onChoose={(upgradeUntilSource) => {
-                  change({ upgradeUntilSource });
+                <TextField
+                  label="Largest (MB an album)"
+                  type="number"
+                  min={1}
+                  value={form.largestMb}
+                  onValueChange={(largestMb) => {
+                    change({ largestMb });
+                  }}
+                  placeholder="No limit"
+                />
+              </div>
+            )}
+          </Section>
+
+          {isVideo ? (
+            <Section
+              title="Films"
+              detail="A film is held until then before it is searched for, so nothing is fetched from cinemas."
+            >
+              <FormField label="Search films once they are">
+                <SegmentedRow
+                  label="Search films once they are"
+                  size="sm"
+                  items={WAITS}
+                  value={form.releaseWait}
+                  onSelect={(next) => {
+                    const releaseWait = WAITS.find((one) => one.id === next)?.id;
+
+                    if (releaseWait !== undefined) {
+                      change({ releaseWait });
+                    }
+                  }}
+                />
+              </FormField>
+            </Section>
+          ) : null}
+
+          <Section title="Words">
+            <TextField
+              label="Preferred words"
+              value={form.preferredWords}
+              onValueChange={(preferredWords) => {
+                change({ preferredWords });
+              }}
+              description="Each one a release has adds to its score. Separate them with commas; a word between slashes, such as /hdr10\+?/, is a pattern."
+            />
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField
+                label="Required words"
+                value={form.requiredWords}
+                onValueChange={(requiredWords) => {
+                  change({ requiredWords });
                 }}
+                description="A release needs at least one."
+              />
+
+              <TextField
+                label="Banned words"
+                value={form.bannedWords}
+                onValueChange={(bannedWords) => {
+                  change({ bannedWords });
+                }}
+                description="A release with any is refused."
               />
             </div>
-          ) : (
-            <Choosing
-              label="Until the format is"
-              value={form.upgradeUntilMusicQuality}
-              options={optionsOf(form.musicQualities)}
-              onChoose={(upgradeUntilMusicQuality) => {
-                change({ upgradeUntilMusicQuality });
+          </Section>
+
+          <Section title="Upgrades">
+            <Switch
+              label="Upgrade to a better release later"
+              isOn={form.isUpgrading}
+              onToggle={() => {
+                change({ isUpgrading: !form.isUpgrading });
               }}
             />
-          )}
-        </Section>
 
-        <Section
-          title="Used for"
-          detail={
-            forKind.length === 0
-              ? `There are no ${isVideo ? 'film or series' : 'music'} libraries yet.`
-              : 'The libraries whose requests are judged against this profile, unless a request names another.'
-          }
-        >
-          {forKind.length === 0 ? null : (
-            <LibraryPicker
-              libraries={forKind}
-              chosen={new Set(form.libraryIds)}
-              onChange={(chosen) => {
-                change({ libraryIds: [...chosen] });
-              }}
-            />
-          )}
-        </Section>
+            {!form.isUpgrading ? null : isVideo ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Choosing
+                  label="Until the resolution is"
+                  value={form.upgradeUntilResolution}
+                  options={optionsOf(form.resolutions)}
+                  onChoose={(upgradeUntilResolution) => {
+                    change({ upgradeUntilResolution });
+                  }}
+                />
 
-        <footer className="flex flex-wrap items-center justify-end gap-3 border-t border-border pt-6">
-          {problem === null ? null : (
-            <span role="alert" className="mr-auto text-sm text-danger">
-              {problem}
-            </span>
-          )}
+                <Choosing
+                  label="And the source is"
+                  value={form.upgradeUntilSource}
+                  options={optionsOf(form.sources)}
+                  onChoose={(upgradeUntilSource) => {
+                    change({ upgradeUntilSource });
+                  }}
+                />
+              </div>
+            ) : (
+              <Choosing
+                label="Until the format is"
+                value={form.upgradeUntilMusicQuality}
+                options={optionsOf(form.musicQualities)}
+                onChoose={(upgradeUntilMusicQuality) => {
+                  change({ upgradeUntilMusicQuality });
+                }}
+              />
+            )}
+          </Section>
 
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
+          <Section
+            title="Used for"
+            detail={
+              forKind.length === 0
+                ? `There are no ${isVideo ? 'film or series' : 'music'} libraries yet.`
+                : 'The libraries whose requests are judged against this profile, unless a request names another.'
+            }
+          >
+            {forKind.length === 0 ? null : (
+              <LibraryPicker
+                libraries={forKind}
+                chosen={new Set(form.libraryIds)}
+                onChange={(chosen) => {
+                  change({ libraryIds: [...chosen] });
+                }}
+              />
+            )}
+          </Section>
+        </div>
+      </DialogContent>
 
-          <Button variant="glossy" isLoading={isSaving} onClick={save}>
-            {profile === null ? 'Add profile' : 'Save'}
-          </Button>
-        </footer>
-      </div>
-    </PanelCard>
+      <DialogFooter
+        note={problem}
+        dismiss={{ onChoose: onClose }}
+        confirm={{
+          label: profile === null ? 'Add profile' : 'Save',
+          onChoose: save,
+          isLoading: isSaving,
+        }}
+      />
+    </Dialog>
   );
 };
 

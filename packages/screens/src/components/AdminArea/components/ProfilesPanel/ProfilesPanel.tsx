@@ -133,21 +133,6 @@ const ProfilesPanel = () => {
     [named],
   );
 
-  if (isAdding || editing !== null) {
-    return (
-      <ProfileEditor
-        profile={editing}
-        onClose={() => {
-          setIsAdding(false);
-          setEditing(null);
-        }}
-        onSaved={() => {
-          void reread();
-        }}
-      />
-    );
-  }
-
   return (
     <PanelCard
       title="Profiles"
@@ -163,6 +148,18 @@ const ProfilesPanel = () => {
         </PanelCardAction>
       }
     >
+      <ProfileEditor
+        isOpen={isAdding || editing !== null}
+        profile={editing}
+        onClose={() => {
+          setIsAdding(false);
+          setEditing(null);
+        }}
+        onSaved={() => {
+          void reread();
+        }}
+      />
+
       <ConfirmDialog
         title={`Remove ${removing?.name ?? 'this profile'}?`}
         detail="Searches can no longer be judged against it, and the libraries it was for will have none."
