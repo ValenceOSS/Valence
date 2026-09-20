@@ -43,7 +43,7 @@ describe('DialogFooter', () => {
     expect(foot.className).not.toMatch(/(^|\s)\[grid-auto-columns:1fr\]/);
   });
 
-  it('is the same shade as the head and the panel, set apart by its rule alone', () => {
+  it('is the shade of the sidebar, like the head', () => {
     render(
       <DialogFooter>
         <span>Save</span>
@@ -52,7 +52,7 @@ describe('DialogFooter', () => {
 
     const foot = screen.getByRole('contentinfo');
 
-    expect(foot).toHaveClass('border-t', 'bg-[var(--card-face)]');
+    expect(foot).toHaveClass('border-t', 'bg-[var(--color-surface-raised)]');
   });
 
   it('keeps the classes a caller gave it', () => {

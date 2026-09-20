@@ -63,9 +63,12 @@ describe('DialogTitle', () => {
     expect(DialogTitle.displayName).toBe('DialogTitle');
   });
 
-  it('is the same shade as the panel, set apart by its rule alone, so it never reads as a dark strip', () => {
+  it('is drawn in the shade of the admin sidebar, a step apart from the panel it heads', () => {
     const { container } = render(<DialogTitle title="Add a webhook" />);
 
-    expect(container.querySelector('header')).toHaveClass('border-b', 'bg-[var(--card-face)]');
+    expect(container.querySelector('header')).toHaveClass(
+      'border-b',
+      'bg-[var(--color-surface-raised)]',
+    );
   });
 });

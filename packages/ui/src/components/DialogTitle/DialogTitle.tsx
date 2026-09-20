@@ -39,7 +39,7 @@ const DialogTitle = ({
   return (
     <header
       className={cn(
-        'flex shrink-0 flex-col border-b border-[var(--surface-line)] bg-[var(--card-face)]',
+        'flex shrink-0 flex-col border-b border-[var(--surface-line)] bg-[var(--color-surface-raised)]',
         isCompact ? 'gap-1 px-5 py-3' : 'gap-4 px-6 py-5',
         className,
       )}

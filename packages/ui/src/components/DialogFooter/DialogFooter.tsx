@@ -45,7 +45,7 @@ const DialogFooter = ({ children, dismiss, confirm, note, className }: DialogFoo
     className={cn(
       'grid shrink-0 gap-3',
       'sm:grid-flow-col sm:[grid-auto-columns:1fr]',
-      'border-t border-[var(--surface-line)] bg-[var(--card-face)] p-4',
+      'border-t border-[var(--surface-line)] bg-[var(--color-surface-raised)] p-4',
       '[&>*]:w-full',
       className,
     )}
