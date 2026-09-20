@@ -59,7 +59,6 @@ const DEFAULT_ROLES: readonly DefaultRole[] = [
       'download.media',
       'requests.ask',
       'requests.askMusic',
-      'account.keys',
     ],
   },
   {
