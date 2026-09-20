@@ -107,8 +107,8 @@ describe('JobHistory', () => {
 
     expect(await screen.findByText('Movies')).toBeInTheDocument();
     expect(screen.getByText('Done')).toBeInTheDocument();
-    expect(screen.getByText('4', { selector: '.sr-only' })).toBeInTheDocument();
-    expect(screen.getByText('10', { selector: '.sr-only' })).toBeInTheDocument();
+    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.getByText('10')).toBeInTheDocument();
   });
 
   it('shows why a run failed alongside its subject', async () => {

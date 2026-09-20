@@ -27,8 +27,8 @@ describe('ScanProgressBar', () => {
 
     expect(bar).toHaveAttribute('aria-valuenow', '4');
     expect(bar).toHaveAttribute('aria-valuemax', '10');
-    expect(within(bar).getByText('4', { selector: '.sr-only' })).toBeInTheDocument();
-    expect(within(bar).getByText('10', { selector: '.sr-only' })).toBeInTheDocument();
+    expect(within(bar).getByText('4')).toBeInTheDocument();
+    expect(within(bar).getByText('10')).toBeInTheDocument();
   });
 
   it('reads an unrecognised phase name as-is, rather than hiding it', () => {

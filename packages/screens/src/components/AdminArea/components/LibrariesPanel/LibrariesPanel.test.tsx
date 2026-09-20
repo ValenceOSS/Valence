@@ -77,13 +77,13 @@ describe('LibrariesPanel', () => {
 
     expect(screen.getByText('Films')).toBeInTheDocument();
     expect(screen.getByText('/media/films')).toBeInTheDocument();
-    expect(screen.getByText('4 items', { selector: '.sr-only' })).toBeInTheDocument();
+    expect(screen.getByText('4 items')).toBeInTheDocument();
   });
 
   it('counts one item without saying "1 items"', () => {
     render(<LibrariesPanel {...props} libraries={[library({ itemCount: 1 })]} />);
 
-    expect(screen.getByText('1 item', { selector: '.sr-only' })).toBeInTheDocument();
+    expect(screen.getByText('1 item')).toBeInTheDocument();
   });
 
   it('scans one library on request', async () => {

@@ -1,8 +1,20 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type * as NumberFlowLibrary from '@number-flow/react';
 import { AnimatedNumber } from './AnimatedNumber';
 
+const library = vi.hoisted(() => ({ isSupported: true }));
+
+vi.mock('@number-flow/react', async (importOriginal) => ({
+  ...(await importOriginal<typeof NumberFlowLibrary>()),
+  useIsSupported: () => library.isSupported,
+}));
+
 describe('AnimatedNumber', () => {
+  afterEach(() => {
+    library.isSupported = true;
+  });
+
   it('writes the number it is given', () => {
     render(<AnimatedNumber value={1234} />);
 
@@ -25,6 +37,15 @@ describe('AnimatedNumber', () => {
     const { container } = render(<AnimatedNumber value={7} />);
 
     expect(container.querySelector('[aria-hidden]')).toBeInTheDocument();
+  });
+
+  it('simply writes the number where the browser cannot roll its digits', () => {
+    library.isSupported = false;
+
+    const { container } = render(<AnimatedNumber value={1234} suffix="%" />);
+
+    expect(container).toHaveTextContent('1,234%');
+    expect(container.querySelector('[aria-hidden]')).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

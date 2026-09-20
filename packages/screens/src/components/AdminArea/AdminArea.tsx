@@ -48,6 +48,7 @@ import {
 } from '@ValenceClient/admin/fetchAdmin';
 import { rebuildArtefacts } from '@ValenceClient/library/fetchLibrary';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -622,7 +623,9 @@ const AdminArea = ({
           stats={[
             {
               label: 'Processor',
-              value: `${(resources?.systemCpuPercent ?? 0).toFixed(0)}%`,
+              value: (
+                <AnimatedNumber value={Math.round(resources?.systemCpuPercent ?? 0)} suffix="%" />
+              ),
               fraction: (resources?.systemCpuPercent ?? 0) / 100,
               detail:
                 resources === null

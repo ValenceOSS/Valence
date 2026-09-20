@@ -1,4 +1,4 @@
-import NumberFlow from '@number-flow/react';
+import NumberFlow, { useIsSupported } from '@number-flow/react';
 import { cn } from '@ValenceUI/cn';
 import type { AnimatedNumberProps } from './AnimatedNumber.types';
 
@@ -10,7 +10,8 @@ import type { AnimatedNumberProps } from './AnimatedNumber.types';
  *
  * Digits are set to the same width, so the number does not shudder sideways while it rolls. The
  * rolling digits are hidden from a screen reader and the number is said once, in plain text, beside
- * them — which is also what anything that reads the page as text sees.
+ * them — which is also what anything that reads the page as text sees. Where the browser cannot roll
+ * digits, the number is simply written.
  *
  * @param value - The number.
  * @param format - How to write it, in the terms `Intl.NumberFormat` takes, of the kinds a rolling
@@ -19,24 +20,29 @@ import type { AnimatedNumberProps } from './AnimatedNumber.types';
  * @param suffix - Text written straight after it.
  * @param className - Extra classes for the caller's own layout.
  */
-const AnimatedNumber = ({ value, format, prefix, suffix, className }: AnimatedNumberProps) => (
-  <span className={cn('tabular-nums', className)}>
-    <span aria-hidden>
-      <NumberFlow
-        value={value}
-        {...(format === undefined ? {} : { format })}
-        {...(prefix === undefined ? {} : { prefix })}
-        {...(suffix === undefined ? {} : { suffix })}
-      />
-    </span>
+const AnimatedNumber = ({ value, format, prefix, suffix, className }: AnimatedNumberProps) => {
+  const isSupported = useIsSupported();
+  const written = `${prefix ?? ''}${new Intl.NumberFormat(undefined, format).format(value)}${suffix ?? ''}`;
 
-    <span className="sr-only">
-      {prefix}
-      {new Intl.NumberFormat(undefined, format).format(value)}
-      {suffix}
+  if (!isSupported) {
+    return <span className={cn('tabular-nums', className)}>{written}</span>;
+  }
+
+  return (
+    <span className={cn('tabular-nums', className)}>
+      <span aria-hidden>
+        <NumberFlow
+          value={value}
+          {...(format === undefined ? {} : { format })}
+          {...(prefix === undefined ? {} : { prefix })}
+          {...(suffix === undefined ? {} : { suffix })}
+        />
+      </span>
+
+      <span className="sr-only">{written}</span>
     </span>
-  </span>
-);
+  );
+};
 
 AnimatedNumber.displayName = 'AnimatedNumber';
 
