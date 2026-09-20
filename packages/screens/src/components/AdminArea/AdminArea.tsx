@@ -69,7 +69,6 @@ import { describeAcceleration } from './describeAcceleration';
 import { describeChains } from './describeChains';
 import { describeToneMapping } from './describeToneMapping';
 import {
-  resumeRunning,
   watchJob,
   subscribe as subscribeToScans,
   getSnapshot as getScanSnapshot,
@@ -82,6 +81,7 @@ import {
   clearPartsOfAll,
   stopJobs,
 } from './scanCoordinator';
+import { followRunningJobs } from './followRunningJobs';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type {
@@ -171,9 +171,7 @@ const AdminArea = ({
   const libraries = useMemo(() => askedLibraries.data ?? [], [askedLibraries.data]);
 
   const askedMedia = useQuery(adminQueries.everything(libraries.map((library) => library.id)));
-  const askedEveryFile = useQuery(
-    adminQueries.everyFile(libraries.map((library) => library.id)),
-  );
+  const askedEveryFile = useQuery(adminQueries.everyFile(libraries.map((library) => library.id)));
   const askedReencodes = useQuery(adminQueries.reencodes());
 
   const media = askedMedia.data ?? [];
@@ -480,9 +478,7 @@ const AdminArea = ({
     }
   };
 
-  useEffect(() => {
-    void resumeRunning();
-  }, []);
+  useEffect(() => followRunningJobs(), []);
 
   const reloadWebhooks = useCallback(
     async () => cache.invalidateQueries({ queryKey: adminQueries.webhooks().queryKey }),
