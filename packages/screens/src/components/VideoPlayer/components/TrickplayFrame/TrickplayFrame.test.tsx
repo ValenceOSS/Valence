@@ -41,6 +41,21 @@ describe('TrickplayFrame', () => {
     expect(container.firstElementChild).toHaveStyle({ width: '320px', height: '180px' });
   });
 
+  it('fills the width it is given where asked to, keeping the shape of a frame', () => {
+    const { container } = render(<TrickplayFrame isFluid trickplay={trickplay} seconds={12} />);
+
+    expect(container.firstElementChild).toHaveClass('w-full');
+    expect(container.firstElementChild).toHaveStyle({ aspectRatio: '320 / 180' });
+    expect(screen.getByRole('img', { name: 'Preview at 0:12' })).toBeInTheDocument();
+  });
+
+  it('holds the shape of a frame that is not built yet, where it fills the width', () => {
+    const { container } = render(<TrickplayFrame isFluid trickplay={null} seconds={12} />);
+
+    expect(container.firstElementChild).toHaveStyle({ aspectRatio: '320 / 180' });
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(TrickplayFrame.displayName).toBe('TrickplayFrame');
   });

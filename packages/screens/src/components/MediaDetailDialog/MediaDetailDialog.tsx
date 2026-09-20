@@ -39,6 +39,7 @@ import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/an
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useHasScrubPreviews } from '@ValenceScreens/playback/useHasScrubPreviews';
 import { useHeldWhileLeaving } from '@ValenceClient/shell/useHeldWhileLeaving';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -128,6 +129,7 @@ const MediaDetailDialog = ({
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
   const [isChoosingMoment, setIsChoosingMoment] = useState(false);
   const { may } = useWhatIMayDo();
+  const hasScrubPreviews = useHasScrubPreviews(media?.id ?? null, may('media.override'));
   const cache = useQueryClient();
 
   const prepared = useQuery({ ...downloadQueries.all(), enabled: canKeepFiles() });
@@ -604,7 +606,7 @@ const MediaDetailDialog = ({
                     },
                   },
                 ]),
-            ...(may('media.override')
+            ...(may('media.override') && hasScrubPreviews
               ? [
                   {
                     id: 'preview-moment',

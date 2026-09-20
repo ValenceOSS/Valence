@@ -46,6 +46,46 @@ describe('RangeSlider', () => {
     expect(lower?.className).not.toContain('bg-primary');
   });
 
+  it('says both times above the handles while the pointer is over it', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <RangeSlider
+        label="Clip"
+        thumbLabels={['Starts', 'Ends']}
+        values={[10, 90]}
+        max={100}
+        valueLabel={(value) => `at ${value.toString()}s`}
+        onValuesChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('at 10s')).not.toBeInTheDocument();
+
+    await user.hover(screen.getByRole('slider', { name: 'Starts' }));
+
+    expect((await screen.findAllByText('at 10s')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('at 90s')).length).toBeGreaterThan(0);
+  });
+
+  it('says nothing above the handles where it was given no way to say a time', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <RangeSlider
+        label="Clip"
+        thumbLabels={['Starts', 'Ends']}
+        values={[10, 90]}
+        max={100}
+        onValuesChange={vi.fn()}
+      />,
+    );
+
+    await user.hover(screen.getByRole('slider', { name: 'Starts' }));
+
+    expect(screen.queryByText('at 10s')).not.toBeInTheDocument();
+  });
+
   it('can be turned off', () => {
     render(
       <RangeSlider

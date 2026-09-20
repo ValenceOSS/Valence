@@ -4,8 +4,10 @@ import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
+import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { RangeSlider } from '@ValenceUI/RangeSlider';
 import { clipEnd } from './clipEnd';
+import { limitClip } from './limitClip';
 import { clearPreviewMoment, setPreviewMoment } from '@ValenceClient/library/fetchLibrary';
 import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
 import { TrickplayFrame } from '@ValenceScreens/components/VideoPlayer/components/TrickplayFrame/TrickplayFrame';
@@ -15,6 +17,10 @@ import type { PreviewMomentPickerProps } from './PreviewMomentPicker.types';
 const AUTOMATIC_POSITION = 0.2;
 
 const DEFAULT_CLIP_SECONDS = 24;
+
+const LONGEST_CLIP_SECONDS = 300;
+
+const OPENING_CLIP_SECONDS = 300;
 
 /**
  * Where the clip is cut from when nobody has chosen: a fifth of the way in, the same fraction the
@@ -56,7 +62,7 @@ const PreviewMomentPicker = ({
   const currentAt = current?.atSeconds ?? null;
   const currentLength = current?.durationSeconds ?? null;
   const [atSeconds, setAtSeconds] = useState(currentAt ?? automaticMoment(durationSeconds));
-  const [lengthSeconds, setLengthSeconds] = useState(currentLength ?? DEFAULT_CLIP_SECONDS);
+  const [lengthSeconds, setLengthSeconds] = useState(currentLength ?? OPENING_CLIP_SECONDS);
   const [trickplay, setTrickplay] = useState<Trickplay | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -67,7 +73,7 @@ const PreviewMomentPicker = ({
     }
 
     setAtSeconds(currentAt ?? automaticMoment(durationSeconds));
-    setLengthSeconds(currentLength ?? DEFAULT_CLIP_SECONDS);
+    setLengthSeconds(currentLength ?? OPENING_CLIP_SECONDS);
     setProblem(null);
   }, [isOpen, currentAt, currentLength, durationSeconds]);
 
@@ -141,9 +147,9 @@ const PreviewMomentPicker = ({
 
       <DialogContent>
         <div className="flex flex-col gap-5">
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <TrickplayFrame trickplay={trickplay} seconds={atSeconds} />
-            <TrickplayFrame trickplay={trickplay} seconds={endsAt} />
+          <div className="grid grid-cols-2 gap-4">
+            <TrickplayFrame isFluid trickplay={trickplay} seconds={atSeconds} />
+            <TrickplayFrame isFluid trickplay={trickplay} seconds={endsAt} />
           </div>
 
           <RangeSlider
@@ -151,9 +157,17 @@ const PreviewMomentPicker = ({
             thumbLabels={['Where the clip starts', 'Where the clip ends']}
             values={[atSeconds, endsAt]}
             max={lastSecond}
+            valueLabel={formatDuration}
             onValuesChange={([lower, upper]) => {
-              setAtSeconds(Math.floor(lower));
-              setLengthSeconds(Math.floor(upper) - Math.floor(lower));
+              const [start, end] = limitClip(
+                Math.floor(lower),
+                Math.floor(upper),
+                endsAt,
+                LONGEST_CLIP_SECONDS,
+              );
+
+              setAtSeconds(start);
+              setLengthSeconds(end - start);
             }}
           />
 

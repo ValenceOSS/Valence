@@ -81,6 +81,8 @@ import {
   clearPartsOfAll,
   stopJobs,
 } from './scanCoordinator';
+import { notify } from '@ValenceUI/notify';
+import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
 import { followRunningJobs } from './followRunningJobs';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -768,7 +770,19 @@ const AdminArea = ({
               isUnreachable={unreachable.has('media')}
               media={media}
               onCorrect={setCorrecting}
-              onChooseMoment={setChoosingMoment}
+              onChooseMoment={(item) => {
+                void fetchTrickplay(item.id).then((found) => {
+                  if (found === null) {
+                    notify.say(`Scrub previews for ${item.title} have not finished yet.`, {
+                      description: 'A preview moment can be chosen once they have.',
+                    });
+
+                    return;
+                  }
+
+                  setChoosingMoment(item);
+                });
+              }}
               onRebuildArtefacts={async (item) => (await rebuildArtefacts(item.id)) !== null}
               onReencode={(item) => {
                 setIsChoosingReencode(true);

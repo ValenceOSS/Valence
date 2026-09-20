@@ -40,9 +40,13 @@ vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
   }),
 }));
 
+const scrubs = vi.hoisted(() => ({ areBuilt: true }));
+
 vi.mock('@ValenceScreens/playback/fetchTrickplay', async (importOriginal) => ({
   ...(await importOriginal<typeof FetchTrickplay>()),
-  fetchTrickplay: vi.fn(() => Promise.resolve(null)),
+  fetchTrickplay: vi.fn(() =>
+    Promise.resolve(scrubs.areBuilt ? { thumbnails: [], width: 320, height: 180 } : null),
+  ),
 }));
 
 const preview = vi.hoisted(() => ({
@@ -120,6 +124,7 @@ beforeEach(() => {
 afterEach(() => {
   motion.isReduced = false;
   permissions.mayOverride = false;
+  scrubs.areBuilt = true;
 });
 
 describe('choosing where the preview is cut from', () => {
@@ -131,6 +136,19 @@ describe('choosing where the preview is cut from', () => {
     expect(
       await screen.findByRole('button', { name: 'Choose the preview moment' }),
     ).toBeInTheDocument();
+  });
+
+  it('keeps it away until the scrub previews have been built', async () => {
+    permissions.mayOverride = true;
+    scrubs.areBuilt = false;
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await screen.findByRole('heading', { name: 'Arrival' });
+
+    expect(
+      screen.queryByRole('button', { name: 'Choose the preview moment' }),
+    ).not.toBeInTheDocument();
   });
 
   it('keeps it from every other viewer', async () => {
