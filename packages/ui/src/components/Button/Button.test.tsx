@@ -91,8 +91,22 @@ describe('Button', () => {
 
     const share = screen.getByRole('button', { name: 'Share' });
 
-    expect(share).toHaveClass('border', 'bg-background');
+    expect(share).toHaveClass('border', 'bg-[var(--surface-hover)]');
     expect(share).not.toHaveClass('valence-raise');
+  });
+
+  it('paints no filled control black, so a secondary button is the same gray as the default', () => {
+    render(
+      <>
+        <Button variant="secondary">Share</Button>
+        <Button variant="glossy">Play</Button>
+      </>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Share' }).className).not.toContain('bg-background');
+    expect(screen.getByRole('button', { name: 'Share' }).className).toContain(
+      'bg-[var(--surface-hover)]',
+    );
   });
 
   it('fills the main action and the dangerous one with their own colour, and nothing more', () => {

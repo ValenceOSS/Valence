@@ -17,7 +17,7 @@ const buttonStyles = cva(
         primary: `${FLAT} border-white/15 bg-accent text-primary-foreground hover:bg-accent-hover`,
         glossy: `${FLAT} border-[var(--surface-line)] bg-[var(--surface-hover)] text-text hover:bg-[var(--surface-active)]`,
         confirm: `${FLAT} border-transparent bg-white text-on-white hover:bg-white-hover`,
-        secondary: `${FLAT} border-[var(--surface-line)] bg-background text-secondary-foreground hover:bg-muted`,
+        secondary: `${FLAT} border-[var(--surface-line)] bg-[var(--surface-hover)] text-text hover:bg-[var(--surface-active)]`,
         soft: `${FLAT} border-transparent bg-accent/15 text-accent hover:bg-accent/25`,
         ghost: 'bg-transparent text-foreground hover:bg-[var(--surface-hover)]',
         danger: `${FLAT} border-transparent bg-danger text-destructive-foreground hover:brightness-110`,
