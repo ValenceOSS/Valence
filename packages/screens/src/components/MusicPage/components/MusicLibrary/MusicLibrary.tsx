@@ -4,8 +4,6 @@ import { Add01Icon, FavouriteIcon, Search01Icon } from '@hugeicons/core-free-ico
 import { Button } from '@ValenceUI/Button';
 import { ContextMenu } from '@ValenceUI/ContextMenu';
 import { Icon } from '@ValenceUI/Icon';
-import { TabRow } from '@ValenceUI/TabRow';
-import { Tabs } from '@ValenceUI/Tabs';
 import { TextField } from '@ValenceUI/TextField';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { cn } from '@ValenceUI/cn';
@@ -25,22 +23,13 @@ import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import type { ReactNode } from 'react';
 import type { MusicView } from '@ValenceScreens/music/musicView';
 
-type Shelf = 'playlists' | 'albums' | 'artists';
-
 type Entry = {
   key: string;
-  shelf: Shelf | 'liked';
   name: string;
   detail: string;
   artwork: ReactNode;
   view: MusicView;
 };
-
-const SHELVES: readonly { id: Shelf; label: string }[] = [
-  { id: 'playlists', label: 'Playlists' },
-  { id: 'albums', label: 'Albums' },
-  { id: 'artists', label: 'Artists' },
-];
 
 /**
  * Whether two views of the music section are the same page, so the one showing can be marked.
@@ -61,7 +50,6 @@ const MusicLibrary = () => {
   const { view, open } = useMusicNavigation();
   const { state, player } = useMusicPlayer();
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
-  const [shelf, setShelf] = useState<Shelf | null>(null);
   const [filter, setFilter] = useState('');
   const [isMaking, setIsMaking] = useState(false);
   const playlists = useQuery(musicQueries.playlists());
@@ -71,7 +59,6 @@ const MusicLibrary = () => {
   const entries = useMemo((): Entry[] => {
     const liked: Entry = {
       key: 'liked',
-      shelf: 'liked',
       name: 'Liked Songs',
       detail: 'Playlist',
       artwork: (
@@ -86,7 +73,6 @@ const MusicLibrary = () => {
       liked,
       ...(playlists.data ?? []).map((playlist): Entry => ({
         key: `playlist-${playlist.id}`,
-        shelf: 'playlists',
         name: playlist.name,
         detail: `Playlist · ${nameOfOwner(playlist.owner)}`,
         artwork: (
@@ -100,7 +86,6 @@ const MusicLibrary = () => {
       })),
       ...(followed.data ?? []).map((artist): Entry => ({
         key: `artist-${artist.id}`,
-        shelf: 'artists',
         name: artist.name,
         detail: 'Artist',
         artwork: (
@@ -115,7 +100,6 @@ const MusicLibrary = () => {
       })),
       ...(albums.data ?? []).map((album): Entry => ({
         key: `album-${album.id}`,
-        shelf: 'albums',
         name: album.title,
         detail: `Album · ${album.artist.name}`,
         artwork: (
@@ -131,13 +115,7 @@ const MusicLibrary = () => {
   }, [playlists.data, followed.data, albums.data]);
 
   const typed = filter.trim().toLowerCase();
-  const shown = entries.filter(
-    (entry) =>
-      (shelf === null ||
-        entry.shelf === shelf ||
-        (shelf === 'playlists' && entry.shelf === 'liked')) &&
-      (typed === '' || entry.name.toLowerCase().includes(typed)),
-  );
+  const shown = entries.filter((entry) => typed === '' || entry.name.toLowerCase().includes(typed));
 
   return (
     <nav aria-label="Your library" className="flex h-full min-h-0 flex-col gap-3">
@@ -168,22 +146,6 @@ const MusicLibrary = () => {
             <Icon of={Add01Icon} size={16} />
           </Button>
         </div>
-      </div>
-
-      <div className="px-3">
-        <Tabs
-          value={shelf ?? 'all'}
-          onValueChange={(id) => {
-            setShelf(SHELVES.find((one) => one.id === id)?.id ?? null);
-          }}
-        >
-          <TabRow
-            label="Show only"
-            size="sm"
-            groups={[{ items: [{ id: 'all', label: 'All' }, ...SHELVES] }]}
-            value={shelf ?? 'all'}
-          />
-        </Tabs>
       </div>
 
       <div className="px-3">
