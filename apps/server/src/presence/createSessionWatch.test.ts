@@ -13,6 +13,7 @@ const aSession: PresenceSession = {
   guestOf: null,
   viaShare: null,
   deviceLabel: 'A phone',
+  address: '192.168.1.40',
 };
 
 const aFakeClock = () => {

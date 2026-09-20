@@ -111,7 +111,8 @@ const WEBHOOK_EVENT_NOTES: Partial<Record<WebhookEvent, string>> = {
   'requests.available': 'Sent once the library has found what was filed.',
   'playback.started': 'Names the person and what they are watching.',
   'playback.stopped': 'Names the person and what they were watching.',
-  'session.started': 'Sent when somebody opens Valence, which is not the same as signing in.',
+  'session.started':
+    'Sent when somebody opens Valence, not when they sign in, and says where from.',
   'session.ended': 'Sent a minute after the tab goes, so a reload is not a leaving.',
 };
 
@@ -257,6 +258,7 @@ const WebhookPlaybackSchema = WebhookViewerSchema.extend({
 const WebhookSessionSchema = WebhookViewerSchema.extend({
   clientId: z.string(),
   deviceLabel: z.string(),
+  address: z.string().nullable().default(null),
   guestOf: z.string().nullable().default(null),
   viaShare: z.string().nullable().default(null),
 });
@@ -430,7 +432,6 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
       accountId: z.string(),
       name: z.string(),
       deviceLabel: z.string(),
-      address: z.string().nullable(),
     }),
   }),
   z.object({
@@ -439,7 +440,6 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
     data: z.object({
       identifier: z.string(),
       deviceLabel: z.string(),
-      address: z.string().nullable(),
       reason: z.string(),
     }),
   }),

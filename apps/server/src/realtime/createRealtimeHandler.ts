@@ -16,6 +16,7 @@ type Who = {
   profileId: string | null;
   guestOf?: string | null;
   viaShare?: string | null;
+  address?: string | null;
 };
 
 type RealtimeSession = {
@@ -35,6 +36,7 @@ type PresenceBinding = {
     guestOf: string | null;
     viaShare: string | null;
     deviceLabel: string;
+    address: string | null;
     send: (event: PresenceControl) => void;
   }) => void;
   disconnect: (clientId: string, socketId: string) => void;
@@ -231,6 +233,7 @@ const createRealtimeHandler = ({
           guestOf: who.guestOf ?? null,
           viaShare: who.viaShare ?? null,
           deviceLabel: deviceLabel ?? 'Unknown device',
+          address: who.address ?? null,
           send: (event) => {
             write({
               kind: 'event',

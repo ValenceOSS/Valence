@@ -527,6 +527,7 @@ describe('formatWebhookBody, somebody opening and closing Valence', () => {
     profileName: 'Connie',
     clientId: 'tab-1',
     deviceLabel: "Connie's iPhone",
+    address: null,
     guestOf: null,
     viaShare: null,
   };
@@ -567,6 +568,22 @@ describe('formatWebhookBody, somebody opening and closing Valence', () => {
     ).toBe("A guest of Dan opened Valence on Connie's iPhone.");
   });
 
+  it('says where somebody opened it from, where the server could work that out', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'session.started',
+        data: { ...aSession, address: '192.168.1.40' },
+      }),
+    ).toBe("Connie opened Valence on Connie's iPhone from 192.168.1.40.");
+  });
+
+  it('leaves the address out rather than saying somebody came from nowhere', () => {
+    expect(said({ ...anEnvelope, event: 'session.started', data: aSession })).toBe(
+      "Connie opened Valence on Connie's iPhone.",
+    );
+  });
+
   it('says how long somebody stayed', () => {
     expect(
       said({
@@ -581,5 +598,35 @@ describe('formatWebhookBody, somebody opening and closing Valence', () => {
     expect(
       said({ ...anEnvelope, event: 'session.ended', data: { ...aSession, lastedSeconds: 0 } }),
     ).toBe("Connie closed Valence on Connie's iPhone.");
+  });
+});
+
+describe('formatWebhookBody, a sign-in', () => {
+  const said = (payload: WebhookPayload) => formatWebhookBody('ntfy', payload).body;
+
+  it('names the person and the device, and no longer says where from', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'auth.succeeded',
+        data: { accountId: 'account-1', name: 'Ada', deviceLabel: 'Chrome on macOS' },
+      }),
+    ).toBe('Ada signed in on Chrome on macOS.');
+  });
+
+  it('says a refusal without an origin, which the session events carry instead', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'auth.failed',
+        data: {
+          identifier: 'ada@example.com',
+          deviceLabel: 'Chrome on macOS',
+          reason: 'those details were not accepted.',
+        },
+      }),
+    ).toBe(
+      'A sign-in as ada@example.com was refused on Chrome on macOS — those details were not accepted.',
+    );
   });
 });

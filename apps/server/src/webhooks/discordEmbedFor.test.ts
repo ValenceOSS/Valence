@@ -80,7 +80,6 @@ describe('discordEmbedFor', () => {
       data: {
         identifier: 'ada@example.com',
         deviceLabel: 'Chrome on macOS',
-        address: null,
         reason: 'those details were not accepted.',
       },
     }).color;
@@ -261,7 +260,6 @@ describe('discordEmbedFor', () => {
       data: {
         identifier: 'ada@example.com',
         deviceLabel: 'Chrome on macOS',
-        address: null,
         reason: 'those details were not accepted.',
       },
     });
@@ -501,6 +499,7 @@ describe('discordEmbedFor, somebody opening and closing Valence', () => {
     profileName: 'Connie',
     clientId: 'tab-1',
     deviceLabel: "Connie's iPhone",
+    address: '192.168.1.40',
     guestOf: null,
     viaShare: null,
   };
@@ -517,6 +516,7 @@ describe('discordEmbedFor, somebody opening and closing Valence', () => {
   it('names the device, and whose account the profile sits on', () => {
     expect(fieldsOf({ ...anEnvelope, event: 'session.started', data: aSession })).toStrictEqual({
       Device: "Connie's iPhone",
+      From: '192.168.1.40',
       Account: 'Dan',
     });
   });
@@ -528,7 +528,7 @@ describe('discordEmbedFor, somebody opening and closing Valence', () => {
         event: 'session.started',
         data: { ...aSession, profileId: null, profileName: null },
       }),
-    ).toStrictEqual({ Device: "Connie's iPhone" });
+    ).toStrictEqual({ Device: "Connie's iPhone", From: '192.168.1.40' });
   });
 
   it('names whoever let a guest in', () => {

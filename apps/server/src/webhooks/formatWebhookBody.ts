@@ -162,15 +162,11 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'auth.succeeded': {
-      const from = payload.data.address === null ? '' : ` from ${payload.data.address}`;
-
-      return `${payload.data.name} signed in on ${payload.data.deviceLabel}${from}.`;
+      return `${payload.data.name} signed in on ${payload.data.deviceLabel}.`;
     }
 
     case 'auth.failed': {
-      const from = payload.data.address === null ? '' : ` from ${payload.data.address}`;
-
-      return `A sign-in as ${payload.data.identifier} was refused on ${payload.data.deviceLabel}${from} — ${payload.data.reason}`;
+      return `A sign-in as ${payload.data.identifier} was refused on ${payload.data.deviceLabel} — ${payload.data.reason}`;
     }
 
     case 'account.created': {
@@ -210,7 +206,9 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'session.started': {
-      return `${nameOfViewer(payload.data)} opened Valence on ${payload.data.deviceLabel}.`;
+      const from = payload.data.address === null ? '' : ` from ${payload.data.address}`;
+
+      return `${nameOfViewer(payload.data)} opened Valence on ${payload.data.deviceLabel}${from}.`;
     }
 
     case 'session.ended': {

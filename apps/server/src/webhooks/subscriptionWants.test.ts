@@ -39,7 +39,7 @@ const aFailure: WebhookOccurrence = {
 
 const aSignIn: WebhookOccurrence = {
   event: 'auth.succeeded',
-  data: { accountId: 'account-1', name: 'Ada', deviceLabel: 'Chrome on macOS', address: null },
+  data: { accountId: 'account-1', name: 'Ada', deviceLabel: 'Chrome on macOS' },
 };
 
 const aRefusal: WebhookOccurrence = {
@@ -47,7 +47,6 @@ const aRefusal: WebhookOccurrence = {
   data: {
     identifier: 'ada@example.com',
     deviceLabel: 'Chrome on macOS',
-    address: null,
     reason: 'those details were not accepted.',
   },
 };
@@ -241,6 +240,7 @@ describe('subscriptionWants, somebody opening Valence', () => {
       profileName: 'Connie',
       clientId: 'tab-1',
       deviceLabel: 'A phone',
+      address: null,
       guestOf: null,
       viaShare: null,
       ...overrides,

@@ -120,7 +120,6 @@ const createAuth = ({
             ? (identifier.data.email ?? identifier.data.username ?? null)
             : null,
           userAgent: context.headers?.get('user-agent') ?? null,
-          address: context.headers?.get('x-forwarded-for') ?? null,
         });
 
         await Promise.resolve();

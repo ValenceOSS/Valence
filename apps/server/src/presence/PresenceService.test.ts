@@ -769,6 +769,7 @@ describe('createPresenceService, telling somebody who is here', () => {
     guestOf: null,
     viaShare: null,
     deviceLabel: 'Chrome on Mac',
+    address: '203.0.113.7',
   };
 
   const connecting = () => {
@@ -792,6 +793,7 @@ describe('createPresenceService, telling somebody who is here', () => {
       guestOf: null,
       viaShare: null,
       deviceLabel: 'Chrome on Mac',
+      address: '203.0.113.7',
     });
   });
 

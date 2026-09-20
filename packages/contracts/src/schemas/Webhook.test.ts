@@ -478,3 +478,64 @@ describe('WebhookPayloadSchema, somebody opening and closing Valence', () => {
     ).toBe(false);
   });
 });
+
+describe('WebhookPayloadSchema, where somebody came from', () => {
+  const aSession = {
+    accountId: 'account-1',
+    accountName: 'Dan',
+    profileId: null,
+    profileName: null,
+    clientId: 'tab-1',
+    deviceLabel: "Connie's iPhone",
+  };
+
+  it('carries the address a session was opened from', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'session.started',
+      data: { ...aSession, address: '192.168.1.40' },
+    });
+
+    expect(payload.data).toMatchObject({ address: '192.168.1.40' });
+  });
+
+  it('takes a session that names no address as one that came from nowhere known', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'session.started',
+      data: aSession,
+    });
+
+    expect(payload.data).toMatchObject({ address: null });
+  });
+
+  it('keeps an address off a sign-in, so it is said in one place rather than two', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'auth.succeeded',
+      data: {
+        accountId: 'account-1',
+        name: 'Ada',
+        deviceLabel: 'Chrome on macOS',
+        address: '192.168.1.40',
+      },
+    });
+
+    expect(payload.data).not.toHaveProperty('address');
+  });
+
+  it('keeps an address off a refused sign-in too', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'auth.failed',
+      data: {
+        identifier: 'ada@example.com',
+        deviceLabel: 'Chrome on macOS',
+        address: '192.168.1.40',
+        reason: 'those details were not accepted.',
+      },
+    });
+
+    expect(payload.data).not.toHaveProperty('address');
+  });
+});

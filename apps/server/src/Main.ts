@@ -101,6 +101,9 @@ import type {
   RequestCatalogue,
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
+import { getConnInfo } from '@hono/node-server/conninfo';
+import type { Context } from 'hono';
+import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
 import { createSessionWatch } from '@ValenceServer/presence/createSessionWatch';
 import type { PresenceSession, PresenceViewing } from '@ValenceServer/presence/PresenceService';
 import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
@@ -578,6 +581,7 @@ const describeSession = async (session: PresenceSession): Promise<SessionData> =
   profileName: session.profileName,
   clientId: session.clientId,
   deviceLabel: session.deviceLabel,
+  address: session.address,
   guestOf: session.guestOf,
   viaShare: session.viaShare,
 });
@@ -3034,6 +3038,25 @@ const WEB_ROOT = './apps/web/dist';
 
 const nodeWebSocket = createNodeWebSocket({ app });
 
+/**
+ * Where a connection came from as Node sees it, for the case where nothing sits in front of this
+ * server to forward it on.
+ *
+ * Asked of the adapter rather than of a header, and guarded, because the adapter answers only while
+ * it is the thing serving the request — it knows nothing about a request that reached Hono some
+ * other way.
+ *
+ * @param context - The request.
+ * @returns The address the socket came from, or null where the adapter cannot say.
+ */
+const socketAddressOf = (context: Context): string | null => {
+  try {
+    return getConnInfo(context).remote.address ?? null;
+  } catch {
+    return null;
+  }
+};
+
 app.get(
   '/api/realtime',
   nodeWebSocket.upgradeWebSocket(async (context) => {
@@ -3048,6 +3071,10 @@ app.get(
     }
 
     const accountId = account?.id ?? null;
+    const address = readCallerAddress({
+      headers: context.req.raw.headers,
+      socketAddress: socketAddressOf(context),
+    });
     let session: RealtimeSession | null = null;
     let heartbeat: ReturnType<typeof setInterval> | null = null;
 
@@ -3059,6 +3086,7 @@ app.get(
             profileId: null,
             guestOf: who?.guestOf ?? null,
             viaShare: who?.shareId ?? null,
+            address,
           },
           {
             send: (raw) => {

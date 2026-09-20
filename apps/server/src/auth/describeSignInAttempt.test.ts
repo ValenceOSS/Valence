@@ -10,7 +10,6 @@ const attempted = (attempt: Partial<SignInAttempt>): SignInAttempt => ({
   account: null,
   identifier: 'ada@example.com',
   userAgent: CHROME,
-  address: '203.0.113.7',
   ...attempt,
 });
 
@@ -26,7 +25,6 @@ describe('describeSignInAttempt', () => {
         accountId: 'account-1',
         name: 'Ada',
         deviceLabel: 'Chrome on macOS',
-        address: '203.0.113.7',
       },
     });
   });
@@ -70,10 +68,10 @@ describe('describeSignInAttempt', () => {
     expect(occurrence?.data).toMatchObject({ deviceLabel: 'Unknown device' });
   });
 
-  it('carries no address where the server could not work one out', () => {
-    const occurrence = describeSignInAttempt(attempted({ statusCode: 401, address: null }));
+  it('says nothing about where a sign-in came from, which the session events carry instead', () => {
+    const occurrence = describeSignInAttempt(attempted({ statusCode: 401 }));
 
-    expect(occurrence?.data).toMatchObject({ address: null });
+    expect(occurrence?.data).not.toHaveProperty('address');
   });
 
   it('still reports a refusal that gave no identifier at all', () => {

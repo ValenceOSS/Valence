@@ -180,6 +180,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         colour: COLOURS.viewing,
         fields: [
           field('Device', payload.data.deviceLabel),
+          field('From', payload.data.address),
           field('Account', payload.data.profileName === null ? null : payload.data.accountName),
           field('Guest of', payload.data.guestOf),
         ],
@@ -203,7 +204,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         title: `${payload.data.name} signed in`,
         description: '',
         colour: COLOURS.auth,
-        fields: [field('Device', payload.data.deviceLabel), field('Address', payload.data.address)],
+        fields: [field('Device', payload.data.deviceLabel)],
       };
     }
 
@@ -215,7 +216,6 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         fields: [
           field('Tried', payload.data.identifier),
           field('Device', payload.data.deviceLabel),
-          field('Address', payload.data.address),
         ],
       };
     }
