@@ -20,6 +20,7 @@ import { summariseProgress } from './summariseProgress';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { JobDefinition } from '@ValenceClient/admin/fetchAdmin';
 import type { JobRunnerProps } from './JobRunner.types';
+import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 
 const WORKING_SHOWN = 4;
 
@@ -149,9 +150,7 @@ const JobRunner = ({
         header: 'Scope',
         accessorFn: (definition) => (definition.needsLibrary ? 'Libraries' : 'Server'),
         cell: ({ row }) => (
-          <Badge size="sm" tone={row.original.needsLibrary ? 'quiet' : 'accent'}>
-            {row.original.needsLibrary ? 'Libraries' : 'Server'}
-          </Badge>
+          <Badge size="sm">{row.original.needsLibrary ? 'Libraries' : 'Server'}</Badge>
         ),
       },
       {
@@ -222,8 +221,8 @@ const JobRunner = ({
                 </div>
               }
             >
-              <Badge size="sm" tone="accent">
-                Running
+              <Badge size="sm" tone={describeJobStatus('running').tone}>
+                {describeJobStatus('running').label}
               </Badge>
 
               <Icon of={InformationCircleIcon} size={15} className="shrink-0 text-text-muted" />

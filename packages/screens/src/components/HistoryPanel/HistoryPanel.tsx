@@ -18,6 +18,7 @@ import type { BookReading } from '@ValenceContracts/schemas/Book';
 import type { Viewing } from '@ValenceContracts/schemas/Viewing';
 import type { HistoryPanelProps } from './HistoryPanel.types';
 import type { InfiniteData } from '@tanstack/react-query';
+import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
 
 /**
  * Names something in the history that has since left the library, since a viewing outlives the file
@@ -146,7 +147,7 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
                 </div>
 
                 {isFinished ? (
-                  <Badge tone="accent">
+                  <Badge tone={STATUS_LOOK.done.tone}>
                     <Icon of={Tick02Icon} size={12} />
                     Finished
                   </Badge>

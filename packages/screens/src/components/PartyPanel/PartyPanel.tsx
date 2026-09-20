@@ -203,9 +203,7 @@ const PartyPanel = ({
                 {member.connectionId === meConnectionId ? ' (you)' : ''}
               </span>
 
-              <Badge size="sm" tone={member.role === 'guest' ? 'quiet' : 'accent'}>
-                {ROLE_LABELS[member.role]}
-              </Badge>
+              <Badge size="sm">{ROLE_LABELS[member.role]}</Badge>
 
               {member.connectionId === party.timekeeperId && (
                 <Badge size="sm" tone="quiet">

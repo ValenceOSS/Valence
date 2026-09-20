@@ -121,11 +121,7 @@ const MediaPanel = ({
             { id: 'Series', label: 'Series' },
           ],
         },
-        cell: ({ row }) => (
-          <Badge size="sm" tone={isSeries(row.original) ? 'accent' : 'quiet'}>
-            {isSeries(row.original) ? 'Series' : 'Film'}
-          </Badge>
-        ),
+        cell: ({ row }) => <Badge size="sm">{isSeries(row.original) ? 'Series' : 'Film'}</Badge>,
       },
       {
         id: 'year',

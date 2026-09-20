@@ -29,6 +29,7 @@ import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskableDialogProps } from './AskableDialog.types';
+import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
 
 const FOLLOWED_EVERY_MS = 5000;
 
@@ -275,7 +276,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                             </span>
                           </span>
                           {askedAlbums.has(album.id) ? (
-                            <Badge size="sm" tone="accent">
+                            <Badge size="sm" tone={STATUS_LOOK.queued.tone}>
                               Requested
                             </Badge>
                           ) : (

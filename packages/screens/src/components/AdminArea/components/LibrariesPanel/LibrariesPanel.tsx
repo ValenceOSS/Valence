@@ -30,6 +30,7 @@ import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibrariesPanelProps } from './LibrariesPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { readingOf } from '@ValenceScreens/components/AdminArea/readingOf';
+import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
 
 /**
  * The folders Valence reads and what it is doing to them: adding one, scanning one or all of them,
@@ -180,7 +181,7 @@ const LibrariesPanel = ({
                 </div>
               }
             >
-              <Badge size="sm" tone="accent">
+              <Badge size="sm" tone={STATUS_LOOK.working.tone}>
                 Reading
               </Badge>
 

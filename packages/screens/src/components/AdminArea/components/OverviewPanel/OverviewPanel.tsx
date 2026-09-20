@@ -19,6 +19,7 @@ import { measureStorage } from '@ValenceClient/admin/fetchAdmin';
 import type { StorageCount } from '@ValenceClient/admin/fetchAdmin';
 import type { LoadRange } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle.types';
 import type { OverviewPanelProps } from './OverviewPanel.types';
+import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 
 /**
  * One region of the dashboard: a heading, an optional action in its corner, and whatever the region
@@ -207,7 +208,7 @@ const OverviewPanel = ({
                     </span>
                   </span>
 
-                  <Badge size="sm" tone={session.playback?.mode === 'direct' ? 'quiet' : 'accent'}>
+                  <Badge size="sm">
                     {session.playback?.mode === 'direct' ? 'Direct' : 'Transcode'}
                   </Badge>
                 </li>
@@ -240,8 +241,8 @@ const OverviewPanel = ({
                     </span>
                   </span>
 
-                  <Badge size="sm" tone="accent">
-                    running
+                  <Badge size="sm" tone={describeJobStatus('running').tone}>
+                    {describeJobStatus('running').label}
                   </Badge>
                 </li>
               ))}
