@@ -1,7 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
-import { Filter as FilterIcon, Search as SearchIcon, X as XIcon } from '@keyline-icons/react';
-import { Filter as FilterFilledIcon } from '@keyline-icons/react/fill';
+import { Search as SearchIcon, X as XIcon } from '@keyline-icons/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -26,6 +25,7 @@ import { ArtistShelf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf'
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { AskableResults } from './components/AskableResults/AskableResults';
 import { BackToTop } from '@ValenceUI/BackToTop';
+import { FilterMenu } from '@ValenceUI/FilterMenu';
 
 const SETTLE_MILLISECONDS = 250;
 
@@ -95,7 +95,6 @@ const SearchArea = ({
   const [decade, setDecade] = useState<string | null>(null);
   const [minRating, setMinRating] = useState<string | null>(null);
   const [minYourStars, setMinYourStars] = useState<string | null>(null);
-  const [isShowingFilters, setIsShowingFilters] = useState(false);
   const [size, setSize] = useState(readGridSize);
   const [liveSearch, setLiveSearch] = useState(search);
   const prefersReducedMotion = useReducedMotionConfig();
@@ -226,6 +225,39 @@ const SearchArea = ({
   const clearFilters = () => {
     setDecade(null);
     setMinRating(null);
+    setMinYourStars(null);
+  };
+
+  const filterGroups = [
+    { name: 'Decade', prefix: 'decade:', options: options.decades },
+    { name: 'Rating', prefix: 'rating:', options: options.ratings },
+    { name: 'Your rating', prefix: 'yours:', options: options.yourStars },
+  ]
+    .map((group) => ({
+      name: group.name,
+      isSingle: true,
+      options: group.options.map((option) => ({
+        id: `${group.prefix}${option.value}`,
+        label: option.label,
+      })),
+    }))
+    .filter((group) => group.options.length > 0);
+
+  const filterSelected = new Set(
+    [
+      decade === null ? null : `decade:${decade}`,
+      minRating === null ? null : `rating:${minRating}`,
+      minYourStars === null ? null : `yours:${minYourStars}`,
+    ].filter((id) => id !== null),
+  );
+
+  const changeFilters = (next: ReadonlySet<string>) => {
+    const pick = (prefix: string): string | null =>
+      [...next].find((id) => id.startsWith(prefix))?.slice(prefix.length) ?? null;
+
+    setDecade(pick('decade:'));
+    setMinRating(pick('rating:'));
+    setMinYourStars(pick('yours:'));
   };
 
   return (
@@ -276,22 +308,14 @@ const SearchArea = ({
               </Button>
             ))}
 
-            <Button
-              size="sm"
-              variant={isShowingFilters ? 'glossy' : 'secondary'}
-              isActive={isShowingFilters}
-              onClick={() => {
-                setIsShowingFilters(!isShowingFilters);
-              }}
-            >
-              <Icon
-                of={FilterIcon}
-                whenActive={FilterFilledIcon}
-                isActive={isShowingFilters}
-                size={16}
+            {filterGroups.length === 0 ? null : (
+              <FilterMenu
+                label="Filter the library"
+                groups={filterGroups}
+                selected={filterSelected}
+                onChange={changeFilters}
               />
-              {narrowed === 0 ? 'Filters' : `Filters (${narrowed.toString()})`}
-            </Button>
+            )}
 
             {!isNarrowed ? null : (
               <Button
@@ -317,40 +341,6 @@ const SearchArea = ({
             value={genre}
             onValueChange={onGenreChange}
           />
-
-          <AnimatePresence initial={false}>
-            {!isShowingFilters ? null : (
-              <motion.div
-                key="filters"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={revealTransition(prefersReducedMotion)}
-                className="overflow-hidden"
-              >
-                <div className="flex flex-col gap-5 pt-2">
-                  <FilterChips
-                    legend="Decade"
-                    options={options.decades}
-                    value={decade}
-                    onValueChange={setDecade}
-                  />
-                  <FilterChips
-                    legend="Rating"
-                    options={options.ratings}
-                    value={minRating}
-                    onValueChange={setMinRating}
-                  />
-                  <FilterChips
-                    legend="Your rating"
-                    options={options.yourStars}
-                    value={minYourStars}
-                    onValueChange={setMinYourStars}
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
       </div>
 

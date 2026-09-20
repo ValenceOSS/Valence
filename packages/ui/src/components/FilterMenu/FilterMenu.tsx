@@ -15,7 +15,9 @@ import type { FilterMenuProps } from './FilterMenu.types';
  * the whole of it.
  *
  * @param label - What is being filtered, read out on opening.
- * @param groups - The choices, in named groups.
+ * @param groups - The choices, in named groups. A group that is single allows one at a time —
+ *   ticking another takes the first off — for a choice such as a decade, where two at once would
+ *   mean nothing.
  * @param selected - The ids of the choices that are ticked.
  * @param onChange - Told the ids that are ticked after each change.
  */
@@ -58,6 +60,12 @@ const FilterMenu = ({ label, groups, selected, onChange }: FilterMenuProps) => (
                 const next = new Set(selected);
 
                 if (isChecked) {
+                  if (group.isSingle === true) {
+                    group.options.forEach((other) => {
+                      next.delete(other.id);
+                    });
+                  }
+
                   next.add(option.id);
                 } else {
                   next.delete(option.id);

@@ -6,6 +6,7 @@ type FilterOption = {
 type FilterGroup = {
   name: string;
   options: readonly FilterOption[];
+  isSingle?: boolean;
 };
 
 type FilterMenuProps = {

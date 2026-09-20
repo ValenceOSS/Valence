@@ -112,6 +112,34 @@ describe('FilterMenu', () => {
     expect(onChange).toHaveBeenCalledWith(new Set());
   });
 
+  it('lets a single group hold one choice at a time, taking the first off for the second', async () => {
+    const onChange = vi.fn();
+
+    render(
+      <FilterMenu
+        label="Filter requests"
+        groups={[
+          {
+            name: 'Decade',
+            isSingle: true,
+            options: [
+              { id: 'decade:1990', label: '1990s' },
+              { id: 'decade:2000', label: '2000s' },
+            ],
+          },
+        ]}
+        selected={new Set(['decade:1990'])}
+        onChange={onChange}
+      />,
+    );
+
+    const user = await open();
+
+    await user.click(screen.getByRole('checkbox', { name: '2000s' }));
+
+    expect(onChange).toHaveBeenCalledWith(new Set(['decade:2000']));
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(FilterMenu.displayName).toBe('FilterMenu');
   });

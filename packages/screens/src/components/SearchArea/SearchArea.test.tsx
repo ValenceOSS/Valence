@@ -300,7 +300,7 @@ describe('SearchArea', () => {
     });
   });
 
-  it('keeps the narrower filters folded away until they are asked for', async () => {
+  it('keeps the narrower filters in a panel until they are asked for', async () => {
     renderInAnAddress(
       <SearchArea
         search=""
@@ -312,9 +312,9 @@ describe('SearchArea', () => {
       />,
     );
 
-    await screen.findByRole('button', { name: 'Filters' });
+    await screen.findByRole('button', { name: 'Filter the library' });
 
-    expect(screen.queryByRole('button', { name: '1990s' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: '1990s' })).not.toBeInTheDocument();
   });
 
   it('asks for a decade as the years either side of it', async () => {
@@ -330,8 +330,8 @@ describe('SearchArea', () => {
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filters' }));
-    await user.click(await screen.findByRole('button', { name: '1990s' }));
+    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith(
@@ -354,8 +354,8 @@ describe('SearchArea', () => {
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filters' }));
-    await user.click(await screen.findByRole('button', { name: '8+' }));
+    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await user.click(await screen.findByRole('checkbox', { name: '8+' }));
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith(
@@ -365,7 +365,7 @@ describe('SearchArea', () => {
     });
   });
 
-  it('says how many filters are on, since they are folded away', async () => {
+  it('says how many filters are on, since they are in a panel', async () => {
     const user = userEvent.setup();
 
     renderInAnAddress(
@@ -378,10 +378,12 @@ describe('SearchArea', () => {
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filters' }));
-    await user.click(await screen.findByRole('button', { name: '1990s' }));
+    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
 
-    expect(await screen.findByRole('button', { name: 'Filters (1)' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Filter the library' })).toHaveTextContent(
+      '1',
+    );
   });
 
   it('takes every filter off at once when asked to clear', async () => {
@@ -397,11 +399,14 @@ describe('SearchArea', () => {
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filters' }));
-    await user.click(await screen.findByRole('button', { name: '1990s' }));
-    await user.click(await screen.findByRole('button', { name: /Clear/ }));
+    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
+    await user.keyboard('{Escape}');
+    await user.click(await screen.findByRole('button', { name: /^Clear$/ }));
 
-    expect(await screen.findByRole('button', { name: 'Filters' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Filter the library' })).not.toHaveTextContent(
+      '1',
+    );
   });
 
   it('offers nothing that would only lead to an empty page', async () => {
@@ -419,7 +424,7 @@ describe('SearchArea', () => {
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filters' }));
+    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
 
     expect(screen.queryByRole('group', { name: 'Rating' })).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Genre' })).not.toBeInTheDocument();
