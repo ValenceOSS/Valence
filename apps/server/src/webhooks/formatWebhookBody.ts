@@ -115,6 +115,28 @@ const sentenceFor = (payload: WebhookPayload): string => {
       return 'The transcoder is answering again. Nothing needs doing.';
     }
 
+    case 'requests.unreachable': {
+      return `The requests service could not be reached — ${payload.data.reason}`;
+    }
+
+    case 'requests.reachable': {
+      return 'The requests service is answering again. Nothing needs doing.';
+    }
+
+    case 'requests.vpnDown': {
+      return `The VPN the requests service downloads through is down — ${payload.data.reason}`;
+    }
+
+    case 'requests.vpnUp': {
+      const where = [payload.data.publicAddress, payload.data.country].filter(
+        (part) => part !== null,
+      );
+
+      return where.length === 0
+        ? 'The VPN the requests service downloads through is up.'
+        : `The VPN the requests service downloads through is up, leaving from ${where.join(', ')}.`;
+    }
+
     case 'job.stalled': {
       return payload.data.everSucceeded
         ? `${payload.data.label} has failed every time it has run since it last worked — ${payload.data.failures.toString()} attempts, most recently: ${payload.data.reason}`

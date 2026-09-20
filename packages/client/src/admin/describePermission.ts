@@ -29,6 +29,13 @@ const LABELS: Record<Permission, string> = {
 
   'download.media': 'Download media',
 
+  'requests.ask': 'Request films and series',
+  'requests.askMusic': 'Request music',
+  'requests.autoApprove': 'Have requests go straight through',
+  'requests.viewAll': 'See everybody’s requests',
+  'requests.approve': 'Approve or turn down requests',
+  'requests.manage': 'Set up indexers, download clients and profiles',
+
   'account.invite': 'Invite somebody',
   'account.manage': 'Manage accounts',
   'account.ban': 'Ban an account',

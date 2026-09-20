@@ -88,6 +88,40 @@ describe('discordEmbedFor', () => {
     expect(arrival).not.toBe(refusal);
   });
 
+  it('colours the VPN dropping as bad news and it coming back as good', () => {
+    const down = embed({
+      ...anEnvelope,
+      event: 'requests.vpnDown',
+      data: { reason: 'The tunnel is stopped' },
+    });
+    const up = embed({
+      ...anEnvelope,
+      event: 'requests.vpnUp',
+      data: { publicAddress: null, country: null },
+    });
+
+    expect(down.title).toBe('a sentence');
+    expect(down.color).not.toBe(up.color);
+    expect(up.color).toBe(embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color);
+  });
+
+  it('colours the requests service going quiet like the transcoder going quiet', () => {
+    const quiet = embed({
+      ...anEnvelope,
+      event: 'requests.unreachable',
+      data: { reason: 'no answer' },
+    });
+    const back = embed({ ...anEnvelope, event: 'requests.reachable', data: {} });
+    const transcoder = embed({
+      ...anEnvelope,
+      event: 'transcoder.unreachable',
+      data: { reason: 'no answer' },
+    });
+
+    expect(quiet.color).toBe(transcoder.color);
+    expect(back.color).not.toBe(quiet.color);
+  });
+
   it('says who was watching and on what', () => {
     const drawn = embed({
       ...anEnvelope,

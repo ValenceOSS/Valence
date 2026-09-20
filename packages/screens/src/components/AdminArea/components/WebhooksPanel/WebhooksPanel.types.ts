@@ -14,6 +14,7 @@ type WebhooksPanelProps = {
   onEdit: (id: string, change: WebhookChange) => Promise<Refusal>;
   accounts: WebhookFilterChoice[];
   profiles: WebhookFilterChoice[];
+  hasRequests?: boolean;
   onDismissCreated: () => void;
   onSetEnabled: (id: string, enabled: boolean) => void;
   onDelete: (id: string) => void;

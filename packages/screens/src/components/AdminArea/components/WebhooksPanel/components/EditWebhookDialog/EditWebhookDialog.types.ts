@@ -8,6 +8,7 @@ type EditWebhookDialogProps = {
   onSave: (id: string, change: WebhookChange) => Promise<Refusal>;
   accounts: WebhookFilterChoice[];
   profiles: WebhookFilterChoice[];
+  hasRequests?: boolean;
 };
 
 export type { EditWebhookDialogProps };

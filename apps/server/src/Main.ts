@@ -137,6 +137,7 @@ import {
   PRUNE_HISTORY_JOB,
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
   CHECK_TRANSCODER_JOB,
+  CHECK_REQUESTS_JOB,
   CHECK_DISK_SPACE_JOB,
   SEND_MEDIA_DIGEST_JOB,
   DELIVER_WEBHOOK_JOB,
@@ -159,6 +160,9 @@ import { runWebhookDelivery } from '@ValenceServer/webhooks/runWebhookDelivery';
 import { createWebhookEventBus } from '@ValenceServer/events/createWebhookEventBus';
 import { collectScanRuns } from '@ValenceServer/events/collectScanRuns';
 import { createReachabilityWatch } from '@ValenceServer/events/createReachabilityWatch';
+import { readRequestsSetup } from '@ValenceServer/requests/readRequestsSetup';
+import { createRequestsClient } from '@ValenceServer/requests/createRequestsClient';
+import { createRequestsMonitor } from '@ValenceServer/requests/createRequestsMonitor';
 import { createDiskPressureWatch } from '@ValenceServer/events/createDiskPressureWatch';
 import { MonitorDisksSchema } from '@ValenceServer/maintenance/DiskUse';
 import {
@@ -187,7 +191,11 @@ import {
 } from '@ValenceServer/playback/PlaybackService';
 import { cleanupSessions } from '@ValenceServer/maintenance/cleanupSessions';
 import { checkCatalogueConnectivity } from '@ValenceServer/maintenance/checkCatalogueConnectivity';
-import { RESET_LIBRARY_JOB, scheduleQueueNameFor } from '@ValenceServer/jobs/jobDefinitions';
+import {
+  RESET_LIBRARY_JOB,
+  jobDefinitionsFor,
+  scheduleQueueNameFor,
+} from '@ValenceServer/jobs/jobDefinitions';
 import { createJobScheduleService } from '@ValenceServer/jobs/createJobScheduleService';
 import { resolveJobsTimezone } from '@ValenceServer/jobs/resolveJobsTimezone';
 import { createDatabaseJobTriggerStore } from '@ValenceServer/jobs/createDatabaseJobTriggerStore';
@@ -879,6 +887,52 @@ const transcoderWatch = createReachabilityWatch({
   },
 });
 
+const requestsSetup = readRequestsSetup(env.REQUESTS_URL, env.REQUESTS_SECRET);
+
+if (requestsSetup.kind === 'incomplete') {
+  log.warn(
+    'requests',
+    `requesting is left off, since ${requestsSetup.missing} is missing or too short; it needs REQUESTS_URL and a REQUESTS_SECRET of at least 32 characters`,
+  );
+}
+
+const requests =
+  requestsSetup.kind === 'on'
+    ? createRequestsMonitor({
+        address: requestsSetup.address,
+        client: createRequestsClient({
+          address: requestsSetup.address,
+          secret: requestsSetup.secret,
+          fetch,
+        }),
+        onLost: (reason) => {
+          log.warn('requests', `the requests service stopped answering — ${reason}`);
+
+          void events.publish({ event: 'requests.unreachable', data: { reason } });
+        },
+        onRegained: () => {
+          log.info('requests', 'the requests service is answering again');
+
+          void events.publish({ event: 'requests.reachable', data: {} });
+        },
+        onVpnDown: (reason) => {
+          log.warn('requests', `the VPN is down — ${reason}`);
+
+          void events.publish({ event: 'requests.vpnDown', data: { reason } });
+        },
+        onVpnUp: (vpn) => {
+          log.info('requests', 'the VPN is up');
+
+          void events.publish({
+            event: 'requests.vpnUp',
+            data: { publicAddress: vpn.publicAddress, country: vpn.country },
+          });
+        },
+      })
+    : null;
+
+const jobDefinitions = jobDefinitionsFor(requests !== null);
+
 const diskWatch = createDiskPressureWatch({
   onLow: (disk) => {
     log.warn('server', `disk: ${disk.mountPoint} is running out of room`);
@@ -1392,6 +1446,17 @@ const jobs = await createJobQueue({
 
         transcoderWatch.record(reachable);
       },
+      [CHECK_REQUESTS_JOB]: async (jobId) => {
+        if (requests === null) {
+          return;
+        }
+
+        jobs.reportProgress(jobId, 'checking', 0, 1);
+
+        const reachable = await requests.check();
+
+        jobs.reportProgress(jobId, reachable ? 'reachable' : 'unreachable', 1, 1);
+      },
       [CHECK_DISK_SPACE_JOB]: async (jobId) => {
         jobs.reportProgress(jobId, 'reading', 0, 1);
 
@@ -1598,6 +1663,7 @@ const maintenance = createDatabaseMaintenanceService({ jobs });
 const schedules = createJobScheduleService({
   store: createDatabaseJobTriggerStore(db),
   jobs,
+  definitions: jobDefinitions,
   readTimezone: async () =>
     resolveJobsTimezone({
       configured: (await settings.read()).jobsTimezone,
@@ -2246,6 +2312,8 @@ const app = createApp({
   isTranscoderReachable: () => transcoder.isReachable(),
   transcoderAddress: env.TRANSCODER_URL,
   listRunningJobs: () => jobs.listRunning(),
+  jobDefinitions,
+  requests,
   cancelJob: (jobId) => jobs.cancel(jobId),
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
 });

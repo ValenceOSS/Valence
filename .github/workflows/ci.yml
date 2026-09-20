@@ -130,6 +130,7 @@ jobs:
           - '@valence/ui'
           - '@valence/client'
           - '@valence/server'
+          - '@valence/requests'
           - '@valence/web'
           - '@valence/desktop'
           - '@valence/landing'

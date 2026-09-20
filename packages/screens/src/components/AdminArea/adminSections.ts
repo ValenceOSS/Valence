@@ -3,6 +3,7 @@ import {
   DashboardSquare01Icon,
   FilmRoll01Icon,
   FolderLibraryIcon,
+  InboxDownloadIcon,
   Link01Icon,
   Settings02Icon,
   ShieldUserIcon,
@@ -31,6 +32,10 @@ const ADMIN_SECTIONS = [
       { id: 'media', label: 'Media', icon: Video01Icon },
       { id: 'encoding', label: 'Encoding', icon: FilmRoll01Icon },
     ],
+  },
+  {
+    label: 'Requests',
+    items: [{ id: 'requests', label: 'Overview', icon: InboxDownloadIcon }],
   },
   {
     label: 'People',

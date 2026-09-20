@@ -1,4 +1,5 @@
 import { JOB_DEFINITIONS, scheduleQueueNameFor } from './jobDefinitions';
+import type { JobDefinition } from './jobDefinitions';
 import { toCron } from './scheduleTrigger';
 import type { JobQueue } from './JobQueue';
 import type { JobScheduleService } from './JobScheduleService';
@@ -8,26 +9,29 @@ type CreateJobScheduleServiceOptions = {
   store: JobTriggerStore;
   jobs: JobQueue;
   readTimezone: () => Promise<string>;
+  definitions?: readonly JobDefinition[];
 };
 
 /**
  * Keeps each job kind's schedule in step with what an operator has configured: registering what
  * should run on a clock, removing what should not, and answering what is currently set.
  *
- * @param options - The queue to schedule on, and the store the triggers are kept in.
+ * @param options - The queue to schedule on, the store the triggers are kept in, and the jobs this
+ * server offers.
  * @returns The schedule service.
  */
 const createJobScheduleService = ({
   store,
   jobs,
   readTimezone,
+  definitions = JOB_DEFINITIONS,
 }: CreateJobScheduleServiceOptions): JobScheduleService => {
   const ownedQueueNames = new Set(
     JOB_DEFINITIONS.map((definition) => scheduleQueueNameFor(definition.kind)),
   );
 
   const isKnownKind = (kind: string): boolean =>
-    JOB_DEFINITIONS.some((definition) => definition.kind === kind);
+    definitions.some((definition) => definition.kind === kind);
 
   const reconcile = async (): Promise<void> => {
     const timezone = await readTimezone();
@@ -61,7 +65,7 @@ const createJobScheduleService = ({
     list: async () => {
       const stored = await store.list();
 
-      return JOB_DEFINITIONS.map((definition) => ({
+      return definitions.map((definition) => ({
         kind: definition.kind,
         triggers: stored
           .filter((row) => row.kind === definition.kind)
@@ -99,9 +103,9 @@ const createJobScheduleService = ({
         stored.filter((row) => row.trigger.kind === 'startup').map((row) => row.kind),
       );
 
-      return JOB_DEFINITIONS.filter((definition) => startupKinds.has(definition.kind)).map(
-        (definition) => definition.kind,
-      );
+      return definitions
+        .filter((definition) => startupKinds.has(definition.kind))
+        .map((definition) => definition.kind);
     },
   };
 };

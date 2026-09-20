@@ -48,6 +48,7 @@ const describeLastAttempt = (
  * @param onEdit - Called with a subscription to change, answering with any refusal.
  * @param accounts - The accounts a new subscription can be narrowed to.
  * @param profiles - The profiles a new subscription can be narrowed to.
+ * @param hasRequests - Whether requesting is on, without which its events are not offered.
  * @param onDismissCreated - Called once the secret has been taken down.
  * @param onSetEnabled - Called with a subscription and whether it should be delivering.
  * @param onDelete - Called with the subscription to remove.
@@ -65,6 +66,7 @@ const WebhooksPanel = ({
   onEdit,
   accounts,
   profiles,
+  hasRequests = false,
   onDismissCreated,
   onSetEnabled,
   onDelete,
@@ -86,6 +88,7 @@ const WebhooksPanel = ({
         webhook={editing}
         accounts={accounts}
         profiles={profiles}
+        hasRequests={hasRequests}
         onClose={() => {
           setEditing(null);
         }}
@@ -95,6 +98,7 @@ const WebhooksPanel = ({
       <AddWebhookDialog
         accounts={accounts}
         profiles={profiles}
+        hasRequests={hasRequests}
         isOpen={isAdding}
         onClose={() => {
           setIsAdding(false);
