@@ -62,4 +62,10 @@ describe('DialogTitle', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(DialogTitle.displayName).toBe('DialogTitle');
   });
+
+  it('is the same shade as the panel, set apart by its rule alone, so it never reads as a dark strip', () => {
+    const { container } = render(<DialogTitle title="Add a webhook" />);
+
+    expect(container.querySelector('header')).toHaveClass('border-b', 'bg-[var(--card-face)]');
+  });
 });
