@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -15,7 +15,7 @@ let root = '';
 const namesUnder = async (): Promise<string[]> => {
   const found = await createMediaFileSystem().listFiles(root);
 
-  return found.map((file) => file.path.slice(root.length + 1)).sort();
+  return found.files.map((file) => file.path.slice(root.length + 1)).sort();
 };
 
 beforeAll(async () => {
@@ -50,7 +50,7 @@ describe('createMediaFileSystem', () => {
 
   it('reads the size of what a link points at rather than the size of the link', async () => {
     const found = await createMediaFileSystem().listFiles(root);
-    const linked = found.find((file) => file.path.endsWith('Linked.mkv'));
+    const linked = found.files.find((file) => file.path.endsWith('Linked.mkv'));
 
     expect(linked?.sizeBytes).toBe(ACTUAL.length);
   });
@@ -71,5 +71,43 @@ describe('createMediaFileSystem', () => {
 
     expect(names.filter((name) => name === 'Real.mkv')).toHaveLength(1);
     expect(names).toEqual(['Linked.mkv', 'Real.mkv', join('shelf', 'Deeper.mkv')]);
+  });
+});
+
+describe('a folder the walk cannot read', () => {
+  let shut = '';
+  let sealed = '';
+
+  beforeAll(async () => {
+    shut = await mkdtemp(join(tmpdir(), 'valence-shut-'));
+    sealed = join(shut, 'Sealed');
+
+    await mkdir(sealed, { recursive: true });
+    await writeFile(join(shut, 'Open.mkv'), REAL);
+    await writeFile(join(sealed, 'Hidden.mkv'), REAL);
+    await chmod(sealed, 0o000);
+  });
+
+  afterAll(async () => {
+    await chmod(sealed, 0o755).catch(() => {});
+    await rm(shut, { recursive: true, force: true });
+  });
+
+  it('says it could not read the folder, rather than reporting it as empty', async () => {
+    const found = await createMediaFileSystem().listFiles(shut);
+
+    expect(found.unreadable).toContain(sealed);
+  });
+
+  it('still returns everything it could read', async () => {
+    const found = await createMediaFileSystem().listFiles(shut);
+
+    expect(found.files.map((file) => file.path)).toContain(join(shut, 'Open.mkv'));
+  });
+
+  it('reports nothing unreadable where every folder opens', async () => {
+    const found = await createMediaFileSystem().listFiles(root);
+
+    expect(found.unreadable).toStrictEqual([]);
   });
 });

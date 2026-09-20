@@ -534,7 +534,7 @@ const createDatabaseLibraryService = ({
     await scanLibrary({
       libraryId,
       root: '',
-      files: { listFiles: () => Promise.resolve(rows) },
+      files: { listFiles: () => Promise.resolve({ files: rows, unreadable: [] }) },
       store,
       transcoder,
       providers: providers ?? [],
