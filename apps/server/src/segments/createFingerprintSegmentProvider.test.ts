@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createFingerprintSegmentProvider } from './createFingerprintSegmentProvider';
+import {
+  createFingerprintSegmentProvider,
+  referencesIn,
+  windowFor,
+} from './createFingerprintSegmentProvider';
 import type { SegmentCandidate } from './SegmentProvider';
 import type {
   Fingerprint,
@@ -36,11 +40,12 @@ const probe: MediaProbe = {
   chapters: [],
 };
 
-const candidate = (index: number): SegmentCandidate => ({
+const candidate = (index: number, isComplete = false): SegmentCandidate => ({
   mediaId: `media-${index.toString()}`,
   path: `/media/Some Show/Season 1/S01E0${index.toString()}.mkv`,
   probe,
   durationSeconds: 1440,
+  isComplete,
 });
 
 /**
@@ -261,9 +266,39 @@ describe('createFingerprintSegmentProvider', () => {
     expect(onItemDone).not.toHaveBeenCalled();
   });
 
-  it('never compares more episodes than it needs to', async () => {
+  it('finds the intro in every episode of a long season, not just the first few', async () => {
+    const answers = season({ episodes: 9 });
+    const provider = createFingerprintSegmentProvider({
+      transcoder: transcoderThat(answers),
+    });
+
+    const found = await provider.detect(
+      Array.from({ length: 9 }, (_unused, index) => candidate(index + 1)),
+    );
+
+    expect(found.size).toBe(9);
+    expect(found.has('media-9')).toBe(true);
+  });
+
+  it('measures each episode against a few others rather than against all of them', async () => {
+    const answers = season({ episodes: 9 });
+    let compared = 0;
+    const provider = createFingerprintSegmentProvider({
+      transcoder: transcoderThat((path) => {
+        compared += 1;
+
+        return answers(path);
+      }),
+    });
+
+    await provider.detect(Array.from({ length: 9 }, (_unused, index) => candidate(index + 1)));
+
+    expect(compared).toBe(9);
+  });
+
+  it('listens only to the new episode and a few settled ones when a season grows', async () => {
     const seen: string[] = [];
-    const answers = season({ episodes: 12 });
+    const answers = season({ episodes: 9 });
     const provider = createFingerprintSegmentProvider({
       transcoder: transcoderThat((path) => {
         seen.push(path);
@@ -272,9 +307,13 @@ describe('createFingerprintSegmentProvider', () => {
       }),
     });
 
-    await provider.detect(Array.from({ length: 12 }, (_, index) => candidate(index + 1)));
+    const settled = Array.from({ length: 8 }, (_unused, index) => candidate(index + 1, true));
 
-    expect(seen.length).toBeLessThanOrEqual(8);
+    const found = await provider.detect([...settled, candidate(9)]);
+
+    expect(seen).toHaveLength(4);
+    expect(found.size).toBe(1);
+    expect(found.has('media-9')).toBe(true);
   });
 });
 
@@ -362,5 +401,60 @@ describe('when too little can be listened to', () => {
     const found = await provider.detect([candidate(1), candidate(2), candidate(3)]);
 
     expect(found.has('media-3')).toBe(false);
+  });
+});
+
+describe('windowFor', () => {
+  it('listens to ten minutes of a drama, which is past where its titles start', () => {
+    expect(windowFor(45 * 60)).toBe(600);
+  });
+
+  it('listens to a third of a short comedy rather than half the episode', () => {
+    expect(windowFor(22 * 60)).toBe(461);
+  });
+
+  it('never drops below three minutes, which is where an intro still might be', () => {
+    expect(windowFor(7 * 60)).toBe(180);
+  });
+
+  it('never listens past the end of a very short file', () => {
+    expect(windowFor(90)).toBe(90);
+  });
+
+  it('asks for nothing of a file that says it runs for no time', () => {
+    expect(windowFor(0)).toBe(0);
+  });
+});
+
+describe('referencesIn', () => {
+  it('measures against episodes that have already been through this', () => {
+    const group = [candidate(1), candidate(2, true), candidate(3, true), candidate(4, true)];
+
+    expect(referencesIn(group).map((one) => one.mediaId)).toEqual([
+      'media-2',
+      'media-3',
+      'media-4',
+    ]);
+  });
+
+  it('takes the first few where nothing in the season has been done yet', () => {
+    const group = [candidate(1), candidate(2), candidate(3), candidate(4)];
+
+    expect(referencesIn(group).map((one) => one.mediaId)).toEqual([
+      'media-1',
+      'media-2',
+      'media-3',
+    ]);
+  });
+
+  it('does not lean on one or two settled episodes, which cannot outvote each other', () => {
+    const group = [candidate(1), candidate(2), candidate(3, true), candidate(4)];
+
+    expect(referencesIn(group)).toHaveLength(3);
+    expect(referencesIn(group).map((one) => one.mediaId)).toEqual([
+      'media-1',
+      'media-2',
+      'media-3',
+    ]);
   });
 });

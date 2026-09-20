@@ -97,6 +97,7 @@ describe('asking each provider in turn', () => {
     mediaId,
     path: `/media/${mediaId}.mkv`,
     durationSeconds: EPISODE_SECONDS,
+    isComplete: false,
     probe: {
       container: 'mkv',
       durationSeconds: EPISODE_SECONDS,

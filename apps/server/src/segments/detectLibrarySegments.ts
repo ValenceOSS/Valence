@@ -5,7 +5,6 @@ import type { SegmentService } from './SegmentService';
 type GroupedCandidate = SegmentCandidate & {
   seriesId: string | null;
   seasonNumber: number | null;
-  isComplete: boolean;
 };
 
 type DetectLibrarySegmentsOptions = {

@@ -2212,7 +2212,6 @@ const segmentService = createDatabaseSegmentService(db);
 const segmentProviders = [
   createFingerprintSegmentProvider({
     transcoder,
-    atOnce: env.MEDIA_JOBS,
     onProblem: (path, reason) => {
       log.warn('scanner', `segments ${path}: ${reason}`);
 

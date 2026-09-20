@@ -208,11 +208,11 @@ pub fn band_edges() -> Vec<usize> {
         .collect()
 }
 
-/// The magnitude spectrum of one frame.
+/// Collapses one frame's spectrum into the bands a hash is built from.
 ///
-/// A direct transform rather than a fast one: a frame is 2048 samples and the
-/// bands only need magnitudes at 33 frequencies, so the fast algorithm's
-/// bookkeeping would cost more than it saves.
+/// Each band is the mean magnitude of the bins it spans, so a band covering an
+/// octave at the top of the range is not louder than one covering a few
+/// hertz at the bottom simply for holding more bins.
 fn band_energies(spectrum: &[Complex<f32>], edges: &[usize]) -> Vec<f32> {
     let mut energies = vec![0.0; BAND_COUNT];
 
@@ -292,11 +292,12 @@ pub fn fingerprint_samples(samples: &[f32]) -> Vec<u32> {
 
 /// Fingerprints a window of a file's audio.
 ///
-/// The arithmetic runs on a blocking thread rather than here. Reducing ten
-/// minutes of audio to hashes is minutes of solid computation, and doing it on
-/// an executor thread holds that thread for every one of them — the service
-/// stops answering anything at all, including whether it is still alive, which
-/// is indistinguishable from having died.
+/// The arithmetic runs on a blocking thread rather than here. Ten minutes of
+/// audio is some thousands of transforms, and while that is a fraction of what
+/// the decode ahead of it costs, it is uninterrupted arithmetic with no await
+/// in it — on an executor thread it holds that thread from start to finish
+/// rather than yielding, and an executor with its threads held answers nothing
+/// at all, including whether it is still alive.
 ///
 /// # Errors
 ///

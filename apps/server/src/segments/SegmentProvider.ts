@@ -6,6 +6,7 @@ type SegmentCandidate = {
   path: string;
   probe: MediaProbe;
   durationSeconds: number;
+  isComplete: boolean;
 };
 
 type SegmentProvider = {
