@@ -21,6 +21,28 @@ describe('PageProblem', () => {
     expect(screen.getByText(/rest of Valence is still running/)).toBeInTheDocument();
   });
 
+  it('says why, by what kind of failure it was, and shows what the failure said', () => {
+    render(<PageProblem error={new Error('TypeError: Failed to fetch')} />);
+
+    expect(
+      screen.getByRole('heading', { name: 'Valence could not be reached' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('TypeError: Failed to fetch')).toBeInTheDocument();
+  });
+
+  it('offers a way out to the start', async () => {
+    const assign = vi.fn();
+    const actor = userEvent.setup();
+
+    vi.stubGlobal('location', { ...window.location, assign });
+
+    render(<PageProblem />);
+
+    await actor.click(screen.getByRole('button', { name: 'Go to the start' }));
+
+    expect(assign).toHaveBeenCalledWith('/');
+  });
+
   it('offers a way to try again', async () => {
     const reload = vi.fn();
     const actor = userEvent.setup();
