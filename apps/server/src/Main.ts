@@ -79,6 +79,7 @@ import { mediaKindOf } from '@ValenceServer/library/mediaKindOf';
 import { describeQuality } from '@ValenceServer/library/describeQuality';
 import { describeSignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
 import { ARRIVED_TITLES_KEPT } from '@ValenceContracts/schemas/Webhook';
+import { summariseArrivals } from '@ValenceServer/events/summariseArrivals';
 import type { ScannedItem } from '@ValenceServer/library/scanLibrary';
 import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
@@ -1212,12 +1213,14 @@ const jobs = await createJobQueue({
                 result,
               );
 
+              const summarised = summariseArrivals(arrived, ARRIVED_TITLES_KEPT);
+
               scanRuns.record(runId ?? `${LONE_SCAN}:${jobId}`, runOf ?? 1, {
                 libraryId,
                 libraryName,
                 ...result,
-                arrived: arrived.slice(0, ARRIVED_TITLES_KEPT).map((item) => item.title),
-                arrivedNotListed: Math.max(arrived.length - ARRIVED_TITLES_KEPT, 0),
+                arrived: summarised.listed,
+                arrivedNotListed: summarised.notListed,
               });
             },
           });

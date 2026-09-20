@@ -1,4 +1,5 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { describeArrival } from './describeArrival';
 import { describeSpan } from './describeSpan';
 import { nameOfItem } from './nameOfItem';
 import { nameOfViewer } from './nameOfViewer';
@@ -261,7 +262,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
 
         return one.arrived.length === 0
           ? null
-          : `**${one.libraryName}**\n${one.arrived.join('\n')}${andMore}`;
+          : `**${one.libraryName}**\n${one.arrived.map(describeArrival).join('\n')}${andMore}`;
       });
 
       return {

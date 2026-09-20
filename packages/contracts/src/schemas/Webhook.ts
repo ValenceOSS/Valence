@@ -265,6 +265,13 @@ const WebhookSessionSchema = WebhookViewerSchema.extend({
 
 const ARRIVED_TITLES_KEPT = 25;
 
+const ArrivedTitleSchema = z.object({
+  title: z.string(),
+  episodes: z.number().int().positive(),
+});
+
+type ArrivedTitle = z.infer<typeof ArrivedTitleSchema>;
+
 const ScannedLibrarySchema = z.object({
   libraryId: z.string(),
   libraryName: z.string(),
@@ -272,7 +279,7 @@ const ScannedLibrarySchema = z.object({
   updated: z.number().int().nonnegative(),
   removed: z.number().int().nonnegative(),
   failed: z.number().int().nonnegative(),
-  arrived: z.array(z.string()).max(ARRIVED_TITLES_KEPT).default([]),
+  arrived: z.array(ArrivedTitleSchema).max(ARRIVED_TITLES_KEPT).default([]),
   arrivedNotListed: z.number().int().nonnegative().default(0),
 });
 
@@ -568,12 +575,14 @@ export {
   WebhookJobDataSchema,
   WebhookPayloadSchema,
   WebhookSessionSchema,
+  ArrivedTitleSchema,
   ScannedLibrarySchema,
   WebhookPresetSchema,
   WebhookSubscriptionSchema,
 };
 
 export type {
+  ArrivedTitle,
   MediaAddedGranularity,
   ScannedLibrary,
   WebhookSubscribableEvent,

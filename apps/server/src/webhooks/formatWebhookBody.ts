@@ -1,4 +1,5 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { describeArrival } from './describeArrival';
 import { describeSpan } from './describeSpan';
 import { discordEmbedFor } from './discordEmbedFor';
 import { nameOfItem } from './nameOfItem';
@@ -53,7 +54,8 @@ const sentenceFor = (payload: WebhookPayload): string => {
         ];
         const andMore =
           one.arrivedNotListed === 0 ? '' : ` and ${one.arrivedNotListed.toString()} more`;
-        const titles = one.arrived.length === 0 ? '' : `\n${one.arrived.join(', ')}${andMore}`;
+        const named = one.arrived.map(describeArrival).join(', ');
+        const titles = one.arrived.length === 0 ? '' : `\n${named}${andMore}`;
 
         return `${one.libraryName}: ${counts.join(', ')}${titles}`;
       });

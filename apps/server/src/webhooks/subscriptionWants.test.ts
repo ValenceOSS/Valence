@@ -206,7 +206,7 @@ describe('subscriptionWants, the mistake that would stop every delivery', () => 
               updated: 0,
               removed: 0,
               failed: 0,
-              arrived: ['Dune'],
+              arrived: [{ title: 'Dune', episodes: 1 }],
               arrivedNotListed: 0,
             },
           ],

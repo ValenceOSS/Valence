@@ -10,7 +10,7 @@ const aLibrary = (overrides: Partial<ScannedLibrary> = {}): ScannedLibrary => ({
   updated: 0,
   removed: 0,
   failed: 0,
-  arrived: ['Dune'],
+  arrived: [{ title: 'Dune', episodes: 1 }],
   arrivedNotListed: 0,
   ...overrides,
 });

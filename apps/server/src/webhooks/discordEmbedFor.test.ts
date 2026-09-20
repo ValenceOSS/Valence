@@ -283,7 +283,10 @@ describe('discordEmbedFor', () => {
             updated: 0,
             removed: 0,
             failed: 0,
-            arrived: ['Dune', 'Arrival'],
+            arrived: [
+              { title: 'Dune', episodes: 1 },
+              { title: 'Arrival', episodes: 1 },
+            ],
             arrivedNotListed: 0,
           },
         ],
@@ -311,7 +314,7 @@ describe('discordEmbedFor', () => {
             updated: 0,
             removed: 0,
             failed: 0,
-            arrived: ['Dune'],
+            arrived: [{ title: 'Dune', episodes: 1 }],
             arrivedNotListed: 29,
           },
         ],
@@ -347,7 +350,10 @@ describe('discordEmbedFor, staying inside what Discord accepts', () => {
             updated: 0,
             removed: 0,
             failed: 0,
-            arrived: Array.from({ length: 25 }, () => 'y'.repeat(400)),
+            arrived: Array.from({ length: 25 }, () => ({
+              title: 'y'.repeat(400),
+              episodes: 1,
+            })),
             arrivedNotListed: 0,
           },
         ],
@@ -428,7 +434,10 @@ describe('discordEmbedFor, a scan of several libraries at once', () => {
           updated: 0,
           removed: 0,
           failed: 0,
-          arrived: ['Dune', 'Sicario'],
+          arrived: [
+            { title: 'Dune', episodes: 1 },
+            { title: 'Sicario', episodes: 1 },
+          ],
           arrivedNotListed: 0,
         },
         {
@@ -438,7 +447,7 @@ describe('discordEmbedFor, a scan of several libraries at once', () => {
           updated: 3,
           removed: 0,
           failed: 0,
-          arrived: ['The Bear S01E01 — System'],
+          arrived: [{ title: 'The Bear', episodes: 8 }],
           arrivedNotListed: 0,
         },
       ],
@@ -473,7 +482,39 @@ describe('discordEmbedFor, a scan of several libraries at once', () => {
 
     expect(drawn.description).toContain('**Movies**');
     expect(drawn.description).toContain('**Shows**');
-    expect(drawn.description).toContain('The Bear S01E01 — System');
+    expect(drawn.description).toContain('The Bear — 8 episodes');
+  });
+
+  it('counts a programme rather than reciting its episodes', () => {
+    const drawn = discordEmbedFor(
+      {
+        ...twoLibraries,
+        data: {
+          ...twoLibraries.data,
+          libraries: [
+            {
+              libraryId: 'library-2',
+              libraryName: 'Shows',
+              added: 2103,
+              updated: 0,
+              removed: 0,
+              failed: 0,
+              arrived: [
+                { title: '24', episodes: 192 },
+                { title: 'The Thick Of It', episodes: 22 },
+              ],
+              arrivedNotListed: 40,
+            },
+          ],
+        },
+      },
+      'a sentence',
+    );
+
+    expect(drawn.description).toContain('24 — 192 episodes');
+    expect(drawn.description).toContain('The Thick Of It — 22 episodes');
+    expect(drawn.description).toContain('…and 40 more');
+    expect(drawn.description).not.toContain('S01E');
   });
 
   it('names the one library where only one was scanned', () => {
