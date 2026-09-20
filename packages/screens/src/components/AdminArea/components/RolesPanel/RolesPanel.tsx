@@ -1,6 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Add01Icon,
   Alert02Icon,
   Delete02Icon,
   MoreHorizontalIcon,
@@ -345,7 +344,6 @@ const RolesPanel = () => {
             }}
           >
             Create role
-            <Icon of={Add01Icon} size={15} />
           </Button>
         }
       >

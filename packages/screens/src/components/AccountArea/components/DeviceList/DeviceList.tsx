@@ -116,7 +116,6 @@ const DeviceList = () => {
               setIsEndingRest(true);
             }}
           >
-            <Icon of={Logout01Icon} size={14} />
             Sign out everywhere else
           </Button>
         )

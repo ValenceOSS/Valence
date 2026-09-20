@@ -31,8 +31,6 @@ import { describeSpeeds } from './describeSpeeds';
 import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
-import { Icon } from '@ValenceUI/Icon';
-import { Add01Icon } from '@hugeicons/core-free-icons';
 
 const DOWNLOADS_TABS = ['queue', 'clients'] as const;
 
@@ -207,7 +205,6 @@ const DownloadsPanel = () => {
               }}
             >
               Add a download client
-              <Icon of={Add01Icon} size={15} />
             </Button>
           </>
         }

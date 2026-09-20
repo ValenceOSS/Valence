@@ -11,8 +11,6 @@ import { DeliveryHistory } from './components/DeliveryHistory/DeliveryHistory';
 import type { WebhookSubscription } from '@ValenceContracts/schemas/Webhook';
 import type { WebhooksPanelProps } from './WebhooksPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
-import { Icon } from '@ValenceUI/Icon';
-import { Add01Icon } from '@hugeicons/core-free-icons';
 
 /**
  * Says how a subscription's last delivery went, in a word and a colour: never used, when it last
@@ -166,7 +164,6 @@ const WebhooksPanel = ({
             }}
           >
             Create webhook
-            <Icon of={Add01Icon} size={15} />
           </Button>
         }
       >
