@@ -58,6 +58,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     fetchesMusicDetails: false,
+    requestReleaseTypes: ['album'],
     certificationRegion: 'GB',
     trustedOrigins: [],
   },
@@ -112,6 +113,9 @@ const library = (overrides: Partial<Library> = {}): Library => ({
   ...overrides,
   defaultAudioLanguage: null,
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
 });
 
 const job = (overrides: Partial<Job> = {}): Job => ({

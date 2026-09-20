@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { ListeningSessionSchema } from '@ValenceContracts/schemas/MusicRemote';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { PREVIEW_QUALITIES } from '@ValenceContracts/schemas/PreviewQuality';
@@ -42,6 +43,7 @@ const AdminSettingsSchema = z
     showsProfilesBeforeSignIn: z.boolean(),
     fetchesCatalogueTrailers: z.boolean(),
     fetchesMusicDetails: z.boolean(),
+    requestReleaseTypes: ReleaseTypesSchema,
     splashscreen: z.string().nullable(),
   })
   .openapi('AdminSettings');
@@ -123,6 +125,7 @@ const AdminSettingsRequestSchema = z
     showsProfilesBeforeSignIn: z.boolean().optional(),
     fetchesCatalogueTrailers: z.boolean().optional(),
     fetchesMusicDetails: z.boolean().optional(),
+    requestReleaseTypes: ReleaseTypesSchema.optional(),
   })
   .openapi('AdminSettingsRequest');
 

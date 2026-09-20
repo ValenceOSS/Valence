@@ -19,6 +19,9 @@ const films = (overrides: Partial<Library> = {}): Library => ({
   lastScannedAt: null,
   defaultAudioLanguage: null,
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
   ...overrides,
 });
 
@@ -114,6 +117,9 @@ describe('LibrarySettingsDialog', () => {
       expect(updateLibraryMock).toHaveBeenCalledWith(films().id, {
         defaultAudioLanguage: 'de',
         filesAtOnce: null,
+        takesRequests: true,
+        requestProfileId: null,
+        requestPath: null,
       });
     });
 
@@ -310,5 +316,68 @@ describe('LibrarySettingsDialog', () => {
     expect(screen.getByRole('button', { name: /Files at once/ })).toHaveTextContent(
       'One at a time',
     );
+  });
+
+  it('says whether a library takes requests, and where they are filed', async () => {
+    const user = userEvent.setup();
+
+    updateLibraryMock.mockResolvedValue(films());
+
+    render(
+      <LibrarySettingsDialog
+        library={films({ itemCount: 0 })}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Where requests are filed' }),
+      '/media/asked-for',
+    );
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(updateLibraryMock).toHaveBeenCalledWith(films().id, {
+        defaultAudioLanguage: null,
+        filesAtOnce: null,
+        takesRequests: true,
+        requestProfileId: null,
+        requestPath: '/media/asked-for',
+      });
+    });
+  });
+
+  it('puts the request settings away for a library that takes none', async () => {
+    const user = userEvent.setup();
+
+    updateLibraryMock.mockResolvedValue(films());
+
+    render(
+      <LibrarySettingsDialog
+        library={films({ itemCount: 0 })}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('switch', { name: 'Takes requests' }));
+
+    expect(
+      screen.queryByRole('textbox', { name: 'Where requests are filed' }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(updateLibraryMock).toHaveBeenCalledWith(
+        films().id,
+        expect.objectContaining({ takesRequests: false }),
+      );
+    });
   });
 });

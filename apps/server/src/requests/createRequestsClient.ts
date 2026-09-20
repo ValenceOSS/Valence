@@ -52,14 +52,8 @@ import type {
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
-import {
-  FollowedRequestSchema,
-  MediaRequestAddedSchema,
-  MediaRequestSchema,
-  MissingSearchSchema,
-  RequestLogEntrySchema,
-} from '@ValenceContracts/schemas/MediaRequest';
 import type {
+  BlockedRelease,
   FollowedRequest,
   MediaRequest,
   MediaRequestAdded,
@@ -68,6 +62,14 @@ import type {
   MissingSearch,
   RequestCatalogueUpdate,
   RequestLogEntry,
+} from '@ValenceContracts/schemas/MediaRequest';
+import {
+  FollowedRequestSchema,
+  BlockedReleaseSchema,
+  MediaRequestAddedSchema,
+  MediaRequestSchema,
+  MissingSearchSchema,
+  RequestLogEntrySchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
 
@@ -484,6 +486,12 @@ const createRequestsClient = ({
 
     requestLog: (id: string): Promise<RequestsAnswer<RequestLogEntry[]>> =>
       call(`${withRequest(id)}/log`, (body) => z.array(RequestLogEntrySchema).parse(body)),
+
+    requestBlocklist: (id: string): Promise<RequestsAnswer<BlockedRelease[]>> =>
+      call(`${withRequest(id)}/blocklist`, (body) => z.array(BlockedReleaseSchema).parse(body)),
+
+    liftBlock: (id: string, blockId: string): Promise<RequestsAnswer<null>> =>
+      call(`${withRequest(id)}/blocklist/${blockId}`, () => null, { method: 'DELETE' }),
 
     requestReleases: (id: string): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
       call(`${withRequest(id)}/releases`, (body) => ReleaseSearchOutcomeSchema.parse(body), {

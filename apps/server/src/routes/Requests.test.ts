@@ -16,6 +16,7 @@ import { createRequestsClient } from '@ValenceServer/requests/createRequestsClie
 import { jobDefinitionsFor } from '@ValenceServer/jobs/jobDefinitions';
 import {
   RequestsAvailabilitySchema,
+  NO_WORK,
   RequestsOverviewSchema,
 } from '@ValenceContracts/schemas/Requests';
 import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
@@ -138,6 +139,9 @@ const FILMS: Library = {
   lastScannedAt: null,
   defaultAudioLanguage: null,
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
 };
 
 const MUSIC: Library = {
@@ -149,6 +153,9 @@ const MUSIC: Library = {
   lastScannedAt: null,
   defaultAudioLanguage: null,
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
 };
 
 const build = async ({
@@ -287,6 +294,7 @@ describe('GET /api/admin/requests', () => {
       isReachable: false,
       checkedAt: null,
       status: null,
+      work: NO_WORK,
     });
   });
 
@@ -995,6 +1003,8 @@ describe('requests for films and series, through the server', () => {
     albums: [],
   };
 
+  const SECOND_ID = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
+
   const sent: Array<{ method: string; url: string; body: string | undefined }> = [];
 
   /**
@@ -1011,6 +1021,19 @@ describe('requests for films and series, through the server', () => {
 
     if (url.endsWith('/api/requests/missing')) {
       return Response.json({ searched: 1, startedAt: '2026-09-19T00:00:00.000Z' });
+    }
+
+    if (url.includes('/blocklist')) {
+      return Response.json([
+        {
+          id: '9f2504e0-4f89-41d3-9a0c-0305e82c3309',
+          requestId: REQUEST.id,
+          title: 'Dune.2021.2160p',
+          indexerId: null,
+          reason: 'It stalled',
+          at: '2026-09-19T00:00:00.000Z',
+        },
+      ]);
     }
 
     if (url.endsWith('/log')) {
@@ -1359,6 +1382,68 @@ describe('requests for films and series, through the server', () => {
       data: { title: 'Dune', reason: 'No room' },
     });
     expect((await ask(`/api/requests/media/${REQUEST.id}/retry`, 'POST')).status).toBe(403);
+  });
+
+  it('decides several at once, saying which could not be', async () => {
+    const stubborn = (url: string, init: { method?: string; body?: string }): Response =>
+      url.includes(`${SECOND_ID}/approve`)
+        ? Response.json({ error: 'No such request.' }, { status: 404 })
+        : aWillingKeeper(url, init);
+
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.approve'],
+      service: stubborn,
+    });
+
+    const decided = await ask('/api/requests/media/decide', 'POST', {
+      ids: [REQUEST.id, SECOND_ID],
+      decision: 'approve',
+    });
+
+    expect(decided.status).toBe(200);
+    expect(await decided.json()).toMatchObject({
+      decided: [{ id: REQUEST.id }],
+      refused: [{ id: SECOND_ID }],
+    });
+
+    const asker = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
+
+    expect(
+      (
+        await asker.ask('/api/requests/media/decide', 'POST', {
+          ids: [REQUEST.id],
+          decision: 'refuse',
+          reason: 'No room',
+        })
+      ).status,
+    ).toBe(403);
+  });
+
+  it('lists what a request will not try again, and lets it be tried again', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.approve'],
+      service: aWillingKeeper,
+    });
+
+    expect(await (await ask(`/api/requests/media/${REQUEST.id}/blocklist`)).json()).toMatchObject([
+      { title: 'Dune.2021.2160p', reason: 'It stalled' },
+    ]);
+
+    sent.length = 0;
+
+    const lifted = await ask(
+      `/api/requests/media/${REQUEST.id}/blocklist/9f2504e0-4f89-41d3-9a0c-0305e82c3309`,
+      'DELETE',
+    );
+
+    expect(lifted.status).toBe(204);
+    expect(sent.at(-1)?.method).toBe('DELETE');
+
+    const asker = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
+
+    expect((await asker.ask(`/api/requests/media/${REQUEST.id}/blocklist`)).status).toBe(403);
   });
 
   it('changes the seasons asked for with what the catalogue says now', async () => {

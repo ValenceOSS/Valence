@@ -81,4 +81,19 @@ describe('MyRequests', () => {
 
     expect(await screen.findByText('You have not asked for anything yet')).toBeInTheDocument();
   });
+
+  it('says why a request of yours was refused', async () => {
+    fetchMediaRequests.mockResolvedValue([
+      {
+        ...MINE,
+        approval: 'refused',
+        state: 'awaitingApproval',
+        refusedBecause: 'There is no room for it',
+      },
+    ]);
+
+    renderInAnAddress(<MyRequests onAsk={vi.fn()} onOpen={vi.fn()} />);
+
+    expect(await screen.findByText('Refused: There is no room for it')).toBeInTheDocument();
+  });
 });

@@ -140,6 +140,9 @@ const aLibraryWithArrival = {
       defaultAudioLanguage: null,
 
       filesAtOnce: null,
+      takesRequests: true,
+      requestProfileId: null,
+      requestPath: null,
     },
   ],
   items: {

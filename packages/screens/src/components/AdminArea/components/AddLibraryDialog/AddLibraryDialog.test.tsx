@@ -25,6 +25,9 @@ const films: Library = {
   defaultAudioLanguage: null,
 
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
 };
 
 beforeEach(() => {

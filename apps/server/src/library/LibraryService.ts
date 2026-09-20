@@ -55,6 +55,9 @@ type CreateLibraryInput = {
 type UpdateLibraryInput = {
   defaultAudioLanguage: string | null;
   filesAtOnce?: number | null;
+  takesRequests?: boolean;
+  requestProfileId?: string | null;
+  requestPath?: string | null;
 };
 
 type Correction = {

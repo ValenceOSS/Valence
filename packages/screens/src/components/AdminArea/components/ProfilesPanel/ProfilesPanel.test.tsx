@@ -68,6 +68,9 @@ beforeEach(() => {
       lastScannedAt: null,
       defaultAudioLanguage: null,
       filesAtOnce: null,
+      takesRequests: true,
+      requestProfileId: null,
+      requestPath: null,
     },
   ]);
 });

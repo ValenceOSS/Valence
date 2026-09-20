@@ -796,6 +796,9 @@ const createDatabaseLibraryService = ({
           lastScanFailed: library.lastScanFailed,
           defaultAudioLanguage: library.defaultAudioLanguage,
           filesAtOnce: library.filesAtOnce,
+          takesRequests: library.takesRequests,
+          requestProfileId: library.requestProfileId,
+          requestPath: library.requestPath,
           itemCount: sql<number>`(case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct ${mediaItem.id}) end)::int`,
         })
         .from(library)
@@ -816,6 +819,9 @@ const createDatabaseLibraryService = ({
         ...readLastScan(row),
         defaultAudioLanguage: row.defaultAudioLanguage,
         filesAtOnce: row.filesAtOnce,
+        takesRequests: row.takesRequests,
+        requestProfileId: row.requestProfileId,
+        requestPath: row.requestPath,
       })) satisfies Library[];
     },
 
@@ -841,6 +847,9 @@ const createDatabaseLibraryService = ({
         lastScannedAt: null,
         defaultAudioLanguage: null,
         filesAtOnce: null,
+        takesRequests: true,
+        requestProfileId: null,
+        requestPath: null,
       };
     },
 
@@ -856,6 +865,11 @@ const createDatabaseLibraryService = ({
         .set({
           defaultAudioLanguage: input.defaultAudioLanguage,
           ...(input.filesAtOnce === undefined ? {} : { filesAtOnce: input.filesAtOnce }),
+          ...(input.takesRequests === undefined ? {} : { takesRequests: input.takesRequests }),
+          ...(input.requestProfileId === undefined
+            ? {}
+            : { requestProfileId: input.requestProfileId }),
+          ...(input.requestPath === undefined ? {} : { requestPath: input.requestPath }),
         })
         .where(eq(library.id, libraryId));
 
@@ -872,6 +886,9 @@ const createDatabaseLibraryService = ({
           lastScannedAt: library.lastScannedAt,
           defaultAudioLanguage: library.defaultAudioLanguage,
           filesAtOnce: library.filesAtOnce,
+          takesRequests: library.takesRequests,
+          requestProfileId: library.requestProfileId,
+          requestPath: library.requestPath,
           itemCount: sql<number>`(case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct ${mediaItem.id}) end)::int`,
         })
         .from(library)
@@ -894,6 +911,9 @@ const createDatabaseLibraryService = ({
         lastScannedAt: toIso(row.lastScannedAt),
         defaultAudioLanguage: row.defaultAudioLanguage,
         filesAtOnce: row.filesAtOnce,
+        takesRequests: row.takesRequests,
+        requestProfileId: row.requestProfileId,
+        requestPath: row.requestPath,
       };
     },
 

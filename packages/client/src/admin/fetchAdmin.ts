@@ -1,3 +1,5 @@
+import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
+import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { ListeningSessionSchema } from '@ValenceContracts/schemas/MusicRemote';
 import { z } from 'zod';
@@ -42,6 +44,7 @@ const AdminOverviewSchema = z.object({
     showsProfilesBeforeSignIn: z.boolean().default(false),
     fetchesCatalogueTrailers: z.boolean().default(false),
     fetchesMusicDetails: z.boolean().default(false),
+    requestReleaseTypes: ReleaseTypesSchema.default(['album']),
     certificationRegion: z.string().default('GB'),
     splashscreen: z.string().nullish(),
   }),
@@ -778,6 +781,26 @@ const saveFetchesMusicDetails = async (fetchesMusicDetails: boolean): Promise<bo
   return response !== null && response.ok;
 };
 
+/**
+ * Sets which kinds of record a request to watch an artist asks for where nobody says otherwise —
+ * their albums, and whatever else this household cares to keep.
+ *
+ * @param requestReleaseTypes - The kinds to watch for.
+ * @returns Whether the setting was written.
+ */
+const saveRequestReleaseTypes = async (
+  requestReleaseTypes: readonly ReleaseType[],
+): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ requestReleaseTypes }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 const SplashscreenAnswerSchema = z.union([
   z.object({ splashscreen: z.string() }),
   z.object({ error: z.string() }),
@@ -939,6 +962,7 @@ export {
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,
+  saveRequestReleaseTypes,
   saveAudioDbKey,
   saveSplashscreen,
   removeSplashscreen,

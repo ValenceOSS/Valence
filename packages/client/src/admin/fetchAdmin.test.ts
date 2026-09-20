@@ -58,6 +58,7 @@ const OVERVIEW = {
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     fetchesMusicDetails: false,
+    requestReleaseTypes: ['album'],
     certificationRegion: 'GB',
   },
   transcoder: {

@@ -1,7 +1,9 @@
+import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { ScanEntry } from '@ValenceScreens/components/AdminArea/scanCoordinator';
 
 type LibrariesPanelProps = {
+  profiles?: readonly QualityProfile[];
   isUnreachable?: boolean;
   libraries: Library[];
   progress: ReadonlyMap<string, ScanEntry>;

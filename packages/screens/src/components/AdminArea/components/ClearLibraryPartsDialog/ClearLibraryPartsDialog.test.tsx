@@ -23,6 +23,9 @@ const MOVIES: Library = {
   lastScannedAt: null,
   defaultAudioLanguage: null,
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
 };
 
 const MUSIC: Library = { ...MOVIES, id: 'lib-music', name: 'Music', kind: 'music' };

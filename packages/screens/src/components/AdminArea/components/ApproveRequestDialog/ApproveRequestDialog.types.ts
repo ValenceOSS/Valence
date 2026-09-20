@@ -1,9 +1,9 @@
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 
-type RequestReleasesDialogProps = {
+type ApproveRequestDialogProps = {
   request: MediaRequest | null;
   onClose: () => void;
-  onPicked: (request: MediaRequest) => void;
+  onApproved: (request: MediaRequest) => void;
 };
 
-export type { RequestReleasesDialogProps };
+export type { ApproveRequestDialogProps };

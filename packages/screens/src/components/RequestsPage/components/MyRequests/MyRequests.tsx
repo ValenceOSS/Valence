@@ -24,9 +24,9 @@ import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { MyRequestsProps } from './MyRequests.types';
 
 /**
- * Every request of your own, newest first, with where each has got to — waiting on approval, not
- * out yet, being searched for, arriving — and, while any is downloading, how far it has got, how
- * fast and how long is left, read again every couple of seconds. A request can be cancelled until
+ * Every request of your own, newest first, with where each has got to — waiting on approval,
+ * refused and why, not out yet, being searched for, arriving — and, while any is downloading, how
+ * far it has got, how fast and how long is left, read again every couple of seconds. A request can be cancelled until
  * it is in the library, which deletes whatever it had started downloading. Choosing one opens it: in the library once it is there, and its page
  * until then.
  *
@@ -119,6 +119,11 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
                 </span>
 
                 {said === null ? null : <span className="text-xs text-text-muted">{said}</span>}
+                {request.refusedBecause === null ? null : (
+                  <span className="break-words text-xs text-text-muted">
+                    Refused: {request.refusedBecause}
+                  </span>
+                )}
                 {badge.detail === null ? null : (
                   <span className="break-words text-xs text-text-muted">{badge.detail}</span>
                 )}

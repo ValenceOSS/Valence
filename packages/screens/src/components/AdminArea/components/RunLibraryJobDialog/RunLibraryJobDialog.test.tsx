@@ -32,6 +32,9 @@ const MOVIES: Library = {
   lastScannedAt: null,
   defaultAudioLanguage: null,
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
 };
 
 const SHOWS: Library = { ...MOVIES, id: 'lib-shows', name: 'Shows', kind: 'shows' };

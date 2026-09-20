@@ -53,6 +53,7 @@ import { readingOf } from '@ValenceScreens/components/AdminArea/readingOf';
 const LibrariesPanel = ({
   isUnreachable = false,
   libraries,
+  profiles = [],
   progress,
   isScanningAll,
   isResettingAll,
@@ -371,6 +372,7 @@ const LibrariesPanel = ({
 
       <LibrarySettingsDialog
         key={settingsLibraryId ?? 'none'}
+        profiles={profiles}
         library={libraries.find((entry) => entry.id === settingsLibraryId) ?? null}
         isOpen={settingsLibraryId !== null}
         onClose={() => {

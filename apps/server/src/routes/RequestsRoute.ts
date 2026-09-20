@@ -30,6 +30,9 @@ import {
   CatalogueSeasonSchema,
   MediaRequestAskSchema,
   MediaRequestChangeSchema,
+  BlockedReleaseSchema,
+  MediaRequestDecidedSchema,
+  MediaRequestDecisionSchema,
   MediaRequestPickSchema,
   MediaRequestRefusalSchema,
   MediaRequestSchema,
@@ -907,6 +910,52 @@ const mediaRequestLogRoute = createRoute({
   }),
 });
 
+const mediaRequestBlocklistRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/media/{id}/blocklist',
+  tags: ['Requests'],
+  summary: 'List the releases a request will not try again, and why',
+  request: { params: RecordIdParameter },
+  responses: requestFailures({
+    200: {
+      description: 'What it will not try again, newest first',
+      content: { 'application/json': { schema: z.array(BlockedReleaseSchema) } },
+    },
+  }),
+});
+
+const liftMediaBlockRoute = createRoute({
+  method: 'delete',
+  path: '/api/requests/media/{id}/blocklist/{blockId}',
+  tags: ['Requests'],
+  summary: 'Let a request try a release it had given up on again',
+  request: {
+    params: RecordIdParameter.extend({
+      blockId: z
+        .string()
+        .uuid()
+        .openapi({ param: { name: 'blockId', in: 'path' } }),
+    }),
+  },
+  responses: requestFailures({ 204: { description: 'It may be tried again' } }),
+});
+
+const decideMediaRequestsRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/decide',
+  tags: ['Requests'],
+  summary: 'Approve or refuse several requests at once',
+  request: {
+    body: { content: { 'application/json': { schema: MediaRequestDecisionSchema } } },
+  },
+  responses: requestFailures({
+    200: {
+      description: 'What was decided, and what could not be',
+      content: { 'application/json': { schema: MediaRequestDecidedSchema } },
+    },
+  }),
+});
+
 const pickMediaReleaseRoute = createRoute({
   method: 'post',
   path: '/api/requests/media/{id}/pick',
@@ -923,6 +972,9 @@ export {
   approveMediaRequestRoute,
   askForMediaRoute,
   changeMediaRequestRoute,
+  decideMediaRequestsRoute,
+  liftMediaBlockRoute,
+  mediaRequestBlocklistRoute,
   listMediaRequestsRoute,
   mediaRequestLogRoute,
   mediaRequestReleasesRoute,

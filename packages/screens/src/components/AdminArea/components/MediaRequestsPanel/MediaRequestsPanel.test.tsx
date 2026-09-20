@@ -14,6 +14,7 @@ const searchMissing = vi.fn<typeof Requests.searchMissing>();
 const fetchMediaRequestReleases = vi.fn<typeof Requests.fetchMediaRequestReleases>();
 const fetchMediaRequestLog = vi.fn<typeof Requests.fetchMediaRequestLog>();
 const changeMediaRequest = vi.fn<typeof Requests.changeMediaRequest>();
+const decideMediaRequests = vi.fn<typeof Requests.decideMediaRequests>();
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   fetchMediaRequests: () => fetchMediaRequests(),
@@ -28,6 +29,10 @@ vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   askForMedia: vi.fn(),
   refuseMediaRequest: vi.fn(),
   pickMediaRelease: vi.fn(),
+  decideMediaRequests: (...given: Parameters<typeof Requests.decideMediaRequests>) =>
+    decideMediaRequests(...given),
+  fetchRequestBlocklist: () => Promise.resolve([]),
+  liftRequestBlock: vi.fn(),
 }));
 
 const DUNE = aMediaRequest({ approval: 'awaiting', state: 'awaitingApproval' });
@@ -72,6 +77,9 @@ beforeEach(() => {
   fetchMediaRequestReleases
     .mockReset()
     .mockResolvedValue({ releases: [], indexers: [], judgements: [], pickedId: null });
+  decideMediaRequests
+    .mockReset()
+    .mockResolvedValue({ value: { decided: [DUNE], refused: [] }, refusal: null });
 });
 
 /**
@@ -105,18 +113,68 @@ describe('MediaRequestsPanel', () => {
     ).toBeInTheDocument();
   });
 
-  it('approves a request waiting on approval', async () => {
+  it('approves a request waiting on approval, having looked it over', async () => {
     const user = userEvent.setup();
 
     renderInAnAddress(<MediaRequestsPanel />);
 
     await choose(user, 'Dune', /Approve/);
 
+    expect(await screen.findByText('Approve Dune?')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Approve' }));
+
     await waitFor(() => {
       expect(approveMediaRequest).toHaveBeenCalledWith(DUNE.id);
     });
     await waitFor(() => {
       expect(fetchMediaRequests).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('approves everything chosen in one go', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Choose Dune' }));
+
+    expect(screen.getByText('1 chosen')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Approve them' }));
+
+    await waitFor(() => {
+      expect(decideMediaRequests).toHaveBeenCalledWith([DUNE.id], 'approve', '');
+    });
+    expect(await screen.findByText('1 approved.')).toBeInTheDocument();
+  });
+
+  it('refuses everything chosen with one reason between them', async () => {
+    const user = userEvent.setup();
+
+    fetchMediaRequests.mockResolvedValue([
+      DUNE,
+      { ...SEVERANCE, approval: 'awaiting', state: 'awaitingApproval' },
+    ]);
+
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Choose all 2 waiting on approval' }),
+    );
+
+    expect(screen.getByText('2 chosen')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Refuse them' }));
+    await user.type(await screen.findByRole('textbox', { name: 'Why' }), 'No room');
+    await user.click(screen.getByRole('button', { name: 'Refuse' }));
+
+    await waitFor(() => {
+      expect(decideMediaRequests).toHaveBeenCalledWith(
+        [DUNE.id, SEVERANCE.id],
+        'refuse',
+        'No room',
+      );
     });
   });
 
@@ -159,8 +217,13 @@ describe('MediaRequestsPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     await choose(user, 'Severance', /Pick a release/);
-    expect(await screen.findByText('Releases for Severance')).toBeInTheDocument();
-    expect(fetchMediaRequestReleases).toHaveBeenCalledWith(SEVERANCE.id);
+    expect(await screen.findByRole('tab', { name: 'Releases' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await waitFor(() => {
+      expect(fetchMediaRequestReleases).toHaveBeenCalledWith(SEVERANCE.id);
+    });
     await user.click(screen.getByRole('button', { name: 'Close' }));
 
     fetchMediaRequestLog.mockResolvedValue([
