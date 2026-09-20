@@ -234,7 +234,8 @@ const SettingsPanel = ({
             <FilePicker
               label={splashscreen === null ? 'Choose a picture' : 'Replace the picture'}
               accept={SPLASHSCREEN_TYPES}
-              disabled={isChangingSplashscreen}
+              size="sm"
+              isLoading={isChangingSplashscreen}
               onPick={(file) => {
                 setIsChangingSplashscreen(true);
                 setSplashscreenProblem(null);
@@ -253,10 +254,8 @@ const SettingsPanel = ({
                 });
               }}
             >
-              <span className="inline-flex h-8 items-center gap-1.5 rounded-pill border border-accent/30 bg-accent/15 px-3.5 text-[0.8125rem] font-medium text-accent transition-colors hover:bg-accent/25">
-                <Icon of={Image01Icon} size={15} />
-                {splashscreen === null ? 'Choose' : 'Replace'}
-              </span>
+              <Icon of={Image01Icon} size={15} />
+              {splashscreen === null ? 'Choose' : 'Replace'}
             </FilePicker>
 
             {splashscreen === null ? null : (

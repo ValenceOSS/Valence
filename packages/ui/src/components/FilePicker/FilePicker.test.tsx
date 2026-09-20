@@ -98,4 +98,44 @@ describe('FilePicker', () => {
 
     expect(onPick).not.toHaveBeenCalled();
   });
+
+  it('is painted as a Button is, secondary unless told otherwise', () => {
+    render(
+      <FilePicker label="Upload a photograph" accept="image/webp" onPick={vi.fn()}>
+        <span>Choose</span>
+      </FilePicker>,
+    );
+
+    const label = screen.getByText('Choose').closest('label');
+
+    expect(label).toHaveClass('rounded-md', 'border', 'bg-background', 'h-9');
+    expect(label?.className).not.toMatch(/rounded-(full|pill)/);
+  });
+
+  it('takes the size and variant a Button would', () => {
+    render(
+      <FilePicker
+        label="Upload a photograph"
+        accept="image/webp"
+        onPick={vi.fn()}
+        variant="glossy"
+        size="lg"
+      >
+        <span>Choose</span>
+      </FilePicker>,
+    );
+
+    expect(screen.getByText('Choose').closest('label')).toHaveClass('bg-white', 'h-10');
+  });
+
+  it('shows a spinner and refuses another file while one is being handled', () => {
+    render(
+      <FilePicker label="Upload a photograph" accept="image/webp" onPick={vi.fn()} isLoading>
+        <span>Choose</span>
+      </FilePicker>,
+    );
+
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(inputOf()).toBeDisabled();
+  });
 });
