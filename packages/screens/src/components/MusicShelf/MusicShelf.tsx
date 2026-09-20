@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Rail } from '@ValenceUI/Rail';
 import { groupVariants } from '@ValenceUI/animations/reveal';
 import type { MusicShelfProps } from './MusicShelf.types';
@@ -38,7 +39,7 @@ const MusicShelf = ({ heading, layout = 'rail', count, action, children }: Music
         <h2 className="flex items-baseline gap-2 text-lg font-semibold tracking-tight text-text">
           {heading}
           {count === undefined ? null : (
-            <span className="text-sm font-normal tabular-nums text-text-muted/70">{count}</span>
+            <AnimatedNumber value={count} className="text-sm font-normal text-text-muted/70" />
           )}
         </h2>
         {action}

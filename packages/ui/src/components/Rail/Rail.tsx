@@ -4,6 +4,7 @@ import { cn } from '@ValenceUI/cn';
 import { RAIL } from '@ValenceUI/tokens/rail';
 import { groupVariants } from '@ValenceUI/animations/reveal';
 import { usePagedScroller } from '@ValenceUI/usePagedScroller';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { RailProps } from './Rail.types';
@@ -96,7 +97,7 @@ const Rail = ({
           {count === undefined ? null : (
             <>
               {' '}
-              <span className="text-sm font-normal tabular-nums text-text-muted/70">{count}</span>
+              <AnimatedNumber value={count} className="text-sm font-normal text-text-muted/70" />
             </>
           )}
         </h2>
