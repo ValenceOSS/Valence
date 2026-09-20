@@ -85,7 +85,7 @@ const AddWebhookDialog = ({
   };
 
   return (
-    <DialogCompanion label="Add a webhook" isOpen={isOpen} onClose={close}>
+    <DialogCompanion label="Create webhook" isOpen={isOpen} onClose={close}>
       <Tabs
         value={pane}
         onValueChange={(next) => {
@@ -96,7 +96,7 @@ const AddWebhookDialog = ({
       >
         <DialogTitle
           size="compact"
-          title="Add a webhook"
+          title="Create webhook"
           detail="Valence will post to this address when something you have chosen happens."
           below={
             <TabRow
@@ -124,7 +124,7 @@ const AddWebhookDialog = ({
           note={refusal}
           dismiss={{ onChoose: close }}
           confirm={{
-            label: isSaving ? 'Adding…' : 'Add webhook',
+            label: isSaving ? 'Creating…' : 'Create webhook',
             onChoose: save,
             isDisabled: !isReady || isSaving,
           }}

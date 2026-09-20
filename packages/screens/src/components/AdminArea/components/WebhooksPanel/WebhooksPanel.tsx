@@ -11,6 +11,8 @@ import { DeliveryHistory } from './components/DeliveryHistory/DeliveryHistory';
 import type { WebhookSubscription } from '@ValenceContracts/schemas/Webhook';
 import type { WebhooksPanelProps } from './WebhooksPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { Icon } from '@ValenceUI/Icon';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 
 /**
  * Says how a subscription's last delivery went, in a word and a colour: never used, when it last
@@ -164,13 +166,14 @@ const WebhooksPanel = ({
               setIsAdding(true);
             }}
           >
-            Add a webhook
+            Create webhook
+            <Icon of={Add01Icon} size={15} />
           </Button>
         }
       >
         {webhooks.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-text-muted">
-            Nothing is being told about anything. Add a webhook to have Valence post to Discord,
+            Nothing is being told about anything. Create a webhook to have Valence post to Discord,
             ntfy or anywhere else when a job fails.
           </p>
         ) : (
