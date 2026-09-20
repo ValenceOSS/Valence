@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -121,21 +120,15 @@ const AddWebhookDialog = ({
           />
         </DialogContent>
 
-        <DialogFooter>
-          {refusal === null ? null : (
-            <span role="alert" className="mr-auto text-sm text-danger">
-              {refusal}
-            </span>
-          )}
-
-          <Button variant="secondary" onClick={close}>
-            Cancel
-          </Button>
-
-          <Button variant="glossy" disabled={!isReady || isSaving} onClick={save}>
-            {isSaving ? 'Adding…' : 'Add webhook'}
-          </Button>
-        </DialogFooter>
+        <DialogFooter
+          note={refusal}
+          dismiss={{ onChoose: close }}
+          confirm={{
+            label: isSaving ? 'Adding…' : 'Add webhook',
+            onChoose: save,
+            isDisabled: !isReady || isSaving,
+          }}
+        />
       </Tabs>
     </DialogCompanion>
   );

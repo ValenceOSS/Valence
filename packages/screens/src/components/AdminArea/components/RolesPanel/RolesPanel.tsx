@@ -420,20 +420,15 @@ const RolesPanel = () => {
           />
         </DialogContent>
 
-        <DialogFooter>
-          <Button
-            variant="secondary"
-            onClick={() => {
+        <DialogFooter
+          dismiss={{
+            onChoose: () => {
               setIsCreating(false);
-            }}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            variant="glossy"
-            disabled={newRoleName === ''}
-            onClick={() => {
+            },
+          }}
+          confirm={{
+            label: 'Create role',
+            onChoose: () => {
               const position = Number.parseInt(newRolePosition, 10);
 
               void act(() =>
@@ -450,11 +445,10 @@ const RolesPanel = () => {
                 setNewRoleColor(null);
                 setIsCreating(false);
               });
-            }}
-          >
-            Create role
-          </Button>
-        </DialogFooter>
+            },
+            isDisabled: newRoleName === '',
+          }}
+        />
       </DialogCompanion>
 
       <ConfirmDialog
@@ -595,26 +589,21 @@ const RolesPanel = () => {
               </TabPanel>
             </DialogContent>
 
-            <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => {
+            <DialogFooter
+              dismiss={{
+                label: 'Close',
+                onChoose: () => {
                   setSelectedRoleId(null);
-                }}
-              >
-                Close
-              </Button>
-
-              <Button
-                variant="glossy"
-                disabled={draftName === '' || !hasUnsavedChanges}
-                onClick={() => {
+                },
+              }}
+              confirm={{
+                label: 'Save changes',
+                onChoose: () => {
                   void saveChanges();
-                }}
-              >
-                Save changes
-              </Button>
-            </DialogFooter>
+                },
+                isDisabled: draftName === '' || !hasUnsavedChanges,
+              }}
+            />
           </Tabs>
         )}
       </DialogCompanion>

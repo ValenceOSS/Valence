@@ -81,7 +81,11 @@ const ReencodeReview = ({
   return (
     <Dialog label="Review a re-encode" isOpen onClose={onClose} size="stage">
       <DialogTitle
-        title={reencode.seriesTitle === null ? reencode.title : `${reencode.seriesTitle} — ${reencode.title}`}
+        title={
+          reencode.seriesTitle === null
+            ? reencode.title
+            : `${reencode.seriesTitle} — ${reencode.title}`
+        }
         detail="Both files are still here. Nothing is discarded until you say so."
       />
 
@@ -136,7 +140,15 @@ const ReencodeReview = ({
         </div>
       </DialogContent>
 
-      <DialogFooter>
+      <DialogFooter
+        confirm={{
+          label: freed === null ? 'Confirm' : `Confirm and free ${formatBytes(freed)}`,
+          isDisabled: isDeciding,
+          onChoose: () => {
+            setIsConfirming(true);
+          },
+        }}
+      >
         {onWatch === undefined ? null : (
           <Button
             variant="ghost"
@@ -157,16 +169,6 @@ const ReencodeReview = ({
         >
           Reject and put the original back
         </Button>
-
-        <Button
-          variant="primary"
-          disabled={isDeciding}
-          onClick={() => {
-            setIsConfirming(true);
-          }}
-        >
-          {freed === null ? 'Confirm' : `Confirm and free ${formatBytes(freed)}`}
-        </Button>
       </DialogFooter>
 
       <ConfirmDialog
@@ -175,7 +177,9 @@ const ReencodeReview = ({
         isBusy={isDeciding}
         title="Dispose of the original?"
         detail="The original file is deleted. What the encoder discarded cannot be recovered, and if this was the only copy, nothing brings it back."
-        confirmLabel={freed === null ? 'Dispose of it' : `Dispose of it and free ${formatBytes(freed)}`}
+        confirmLabel={
+          freed === null ? 'Dispose of it' : `Dispose of it and free ${formatBytes(freed)}`
+        }
         onClose={() => {
           setIsConfirming(false);
         }}

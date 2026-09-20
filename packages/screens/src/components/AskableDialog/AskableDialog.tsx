@@ -302,13 +302,31 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
         )}
       </DialogContent>
 
-      <DialogFooter>
-        {problem === null ? null : (
-          <span role="alert" className="mr-auto text-sm text-danger">
-            {problem}
-          </span>
-        )}
-
+      <DialogFooter
+        note={problem}
+        dismiss={{ onChoose: onClose }}
+        confirm={
+          title === null
+            ? undefined
+            : title.standing.status === 'library' && title.standing.mediaId !== null
+              ? {
+                  label: 'Open',
+                  onChoose: () => {
+                    onOpen(title.kind, title.standing.mediaId ?? '');
+                  },
+                }
+              : title.standing.status === 'askable'
+                ? {
+                    label: title.kind === 'artist' ? 'Watch this artist' : 'Request',
+                    isDisabled: !isReady,
+                    isLoading: isAsking,
+                    onChoose: () => {
+                      send(askingFor(title, seasons, releaseTypes));
+                    },
+                  }
+                : undefined
+        }
+      >
         {mayCancel ? (
           <Button
             variant="ghost"
@@ -317,33 +335,6 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             }}
           >
             Cancel request
-          </Button>
-        ) : null}
-
-        <Button variant="secondary" onClick={onClose}>
-          Close
-        </Button>
-
-        {title === null ? null : title.standing.status === 'library' &&
-          title.standing.mediaId !== null ? (
-          <Button
-            variant="glossy"
-            onClick={() => {
-              onOpen(title.kind, title.standing.mediaId ?? '');
-            }}
-          >
-            Open
-          </Button>
-        ) : title.standing.status === 'askable' ? (
-          <Button
-            variant="glossy"
-            disabled={!isReady}
-            isLoading={isAsking}
-            onClick={() => {
-              send(askingFor(title, seasons, releaseTypes));
-            }}
-          >
-            {title.kind === 'artist' ? 'Watch this artist' : 'Request'}
           </Button>
         ) : null}
       </DialogFooter>

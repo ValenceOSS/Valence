@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -48,21 +47,16 @@ const PartyPasswordDialog = ({ isOpen, wasWrong, onJoin, onClose }: PartyPasswor
         </div>
       </DialogContent>
 
-      <DialogFooter>
-        <Button variant="secondary" onClick={onClose}>
-          Not now
-        </Button>
-
-        <Button
-          variant="glossy"
-          disabled={password.length === 0}
-          onClick={() => {
+      <DialogFooter
+        dismiss={{ label: 'Not now', onChoose: onClose }}
+        confirm={{
+          label: 'Join',
+          onChoose: () => {
             onJoin(password);
-          }}
-        >
-          Join
-        </Button>
-      </DialogFooter>
+          },
+          isDisabled: password.length === 0,
+        }}
+      />
     </Dialog>
   );
 };

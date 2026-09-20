@@ -1,4 +1,3 @@
-import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -30,15 +29,10 @@ const ResetLibrariesDialog = ({
       </p>
     </DialogContent>
 
-    <DialogFooter>
-      <Button variant="secondary" onClick={onClose} disabled={isResetting}>
-        Cancel
-      </Button>
-
-      <Button variant="primary" isLoading={isResetting} onClick={onConfirm}>
-        Reset and rebuild
-      </Button>
-    </DialogFooter>
+    <DialogFooter
+      dismiss={{ onChoose: onClose, isDisabled: isResetting }}
+      confirm={{ label: 'Reset and rebuild', onChoose: onConfirm, isLoading: isResetting }}
+    />
   </Dialog>
 );
 

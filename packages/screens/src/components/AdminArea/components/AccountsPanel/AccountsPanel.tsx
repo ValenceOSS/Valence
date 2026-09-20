@@ -550,20 +550,15 @@ const AccountsPanel = () => {
           </p>
         </DialogContent>
 
-        <DialogFooter>
-          <Button
-            variant="secondary"
-            onClick={() => {
+        <DialogFooter
+          dismiss={{
+            onChoose: () => {
               setIsInviting(false);
-            }}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            variant="glossy"
-            disabled={inviteName === '' || inviteEmail === '' || invitePassword.length < 8}
-            onClick={() => {
+            },
+          }}
+          confirm={{
+            label: 'Add',
+            onChoose: () => {
               void act(() =>
                 inviteAccount({
                   name: inviteName,
@@ -576,11 +571,10 @@ const AccountsPanel = () => {
                 setInvitePassword('');
                 setIsInviting(false);
               });
-            }}
-          >
-            Add
-          </Button>
-        </DialogFooter>
+            },
+            isDisabled: inviteName === '' || inviteEmail === '' || invitePassword.length < 8,
+          }}
+        />
       </DialogCompanion>
 
       {refusal === null || picked !== null ? null : (
@@ -937,26 +931,21 @@ const AccountsPanel = () => {
               </TabPanel>
             </DialogContent>
 
-            <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => {
+            <DialogFooter
+              dismiss={{
+                label: 'Close',
+                onChoose: () => {
                   setAccountId(null);
-                }}
-              >
-                Close
-              </Button>
-
-              <Button
-                variant="glossy"
-                disabled={draftName === '' || !hasUnsavedChanges}
-                onClick={() => {
+                },
+              }}
+              confirm={{
+                label: 'Save changes',
+                onChoose: () => {
                   void saveChanges();
-                }}
-              >
-                Save changes
-              </Button>
-            </DialogFooter>
+                },
+                isDisabled: draftName === '' || !hasUnsavedChanges,
+              }}
+            />
           </Tabs>
         )}
       </DialogCompanion>

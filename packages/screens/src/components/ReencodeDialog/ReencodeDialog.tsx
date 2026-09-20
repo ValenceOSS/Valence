@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -375,16 +374,18 @@ const ReencodeDialog = ({
         )}
       </DialogContent>
 
-      <DialogFooter>
-        <Button variant="ghost" onClick={onClose}>
-          Cancel
-        </Button>
-
-        <Button
-          variant="primary"
-          isLoading={isWeighing || isStarting}
-          disabled={acceptedCount <= 0 || room === 'willNotFit'}
-          onClick={() => {
+      <DialogFooter
+        dismiss={{ onChoose: onClose }}
+        confirm={{
+          label:
+            acceptedCount <= 0
+              ? 'Choose something first'
+              : mode === 'keep'
+                ? `Keep ${acceptedCount.toString()} alongside`
+                : `Re-encode ${acceptedCount.toString()}`,
+          isLoading: isWeighing || isStarting,
+          isDisabled: acceptedCount <= 0 || room === 'willNotFit',
+          onChoose: () => {
             if (mode === 'keep') {
               void start();
 
@@ -392,15 +393,9 @@ const ReencodeDialog = ({
             }
 
             setIsConfirming(true);
-          }}
-        >
-          {acceptedCount <= 0
-            ? 'Choose something first'
-            : mode === 'keep'
-              ? `Keep ${acceptedCount.toString()} alongside`
-              : `Re-encode ${acceptedCount.toString()}`}
-        </Button>
-      </DialogFooter>
+          },
+        }}
+      />
 
       <ConfirmDialog
         isOpen={isConfirming}

@@ -1,7 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -186,24 +185,19 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
         ) : null}
       </DialogContent>
 
-      <DialogFooter>
-        <Button variant="secondary" onClick={onClose} disabled={isSaving}>
-          Cancel
-        </Button>
-
-        <Button
-          variant="glossy"
-          isLoading={isSaving}
-          disabled={built === null || isSaving}
-          onClick={() => {
+      <DialogFooter
+        dismiss={{ onChoose: onClose, isDisabled: isSaving }}
+        confirm={{
+          label: 'Add',
+          onChoose: () => {
             if (built !== null) {
               onAdd(built);
             }
-          }}
-        >
-          Add
-        </Button>
-      </DialogFooter>
+          },
+          isDisabled: built === null || isSaving,
+          isLoading: isSaving,
+        }}
+      />
     </DialogCompanion>
   );
 };

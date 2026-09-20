@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
-import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -414,26 +413,19 @@ const IndexerDialog = ({
         </p>
       </DialogContent>
 
-      <DialogFooter>
-        {problem === null ? null : (
-          <span role="alert" className="mr-auto text-sm text-danger">
-            {problem}
-          </span>
-        )}
-
-        <Button variant="secondary" onClick={onBack ?? onClose}>
-          {onBack === undefined ? 'Cancel' : 'Back'}
-        </Button>
-
+      <DialogFooter
+        note={problem}
+        dismiss={{
+          label: onBack === undefined ? undefined : 'Back',
+          onChoose: onBack ?? onClose,
+        }}
+        confirm={{
+          label: indexer === null ? 'Add indexer' : 'Save',
+          onChoose: save,
+          isDisabled: isWorking || (isSite && definition === null),
+        }}
+      >
         <TryItButton isTrying={isTrying} verdict={verdict} isDisabled={isWorking} onTry={tryIt} />
-
-        <Button
-          variant="glossy"
-          disabled={isWorking || (isSite && definition === null)}
-          onClick={save}
-        >
-          {indexer === null ? 'Add indexer' : 'Save'}
-        </Button>
       </DialogFooter>
     </DialogCompanion>
   );

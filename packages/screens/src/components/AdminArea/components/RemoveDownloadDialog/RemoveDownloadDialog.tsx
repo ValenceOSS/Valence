@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -61,20 +60,15 @@ const RemoveDownloadDialog = ({
         )}
       </DialogContent>
 
-      <DialogFooter>
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-
-        <Button
-          variant="primary"
-          onClick={() => {
+      <DialogFooter
+        dismiss={{ onChoose: onClose }}
+        confirm={{
+          label: 'Remove',
+          onChoose: () => {
             onConfirm(deleteData && !keepsFinishedFiles);
-          }}
-        >
-          Remove
-        </Button>
-      </DialogFooter>
+          },
+        }}
+      />
     </Dialog>
   );
 };

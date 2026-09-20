@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -57,23 +56,19 @@ const RunLibraryJobDialog = ({
             <LibraryPicker libraries={libraries} chosen={chosen} onChange={setChosen} />
           </DialogContent>
 
-          <DialogFooter>
-            <Button variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
-
-            <Button
-              variant="primary"
-              disabled={picked.length === 0}
-              onClick={() => {
+          <DialogFooter
+            dismiss={{ onChoose: onClose }}
+            confirm={{
+              label:
+                picked.length === libraries.length
+                  ? `${definition.destructive ? definition.label : 'Run'} on every library`
+                  : `${definition.destructive ? definition.label : 'Run'} on ${picked.length.toString()} ${picked.length === 1 ? 'library' : 'libraries'}`,
+              onChoose: () => {
                 onRun(definition.kind, picked);
-              }}
-            >
-              {picked.length === libraries.length
-                ? `${definition.destructive ? definition.label : 'Run'} on every library`
-                : `${definition.destructive ? definition.label : 'Run'} on ${picked.length.toString()} ${picked.length === 1 ? 'library' : 'libraries'}`}
-            </Button>
-          </DialogFooter>
+              },
+              isDisabled: picked.length === 0,
+            }}
+          />
         </>
       )}
     </Dialog>

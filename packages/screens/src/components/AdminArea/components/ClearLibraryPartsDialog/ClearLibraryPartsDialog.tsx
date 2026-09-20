@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -125,25 +124,20 @@ const ClearLibraryPartsDialog = ({
             ) : null}
           </DialogContent>
 
-          <DialogFooter>
-            <Button variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
-
-            <Button
-              variant="primary"
-              disabled={picked.length === 0 || parts.length === 0}
-              onClick={() => {
+          <DialogFooter
+            dismiss={{ onChoose: onClose }}
+            confirm={{
+              label: parts.length === 1 ? 'Clear 1 part' : `Clear ${parts.length.toString()} parts`,
+              onChoose: () => {
                 onClear(
                   definition.kind,
                   picked.map((library) => library.id),
                   parts,
                 );
-              }}
-            >
-              {parts.length === 1 ? 'Clear 1 part' : `Clear ${parts.length.toString()} parts`}
-            </Button>
-          </DialogFooter>
+              },
+              isDisabled: picked.length === 0 || parts.length === 0,
+            }}
+          />
         </>
       )}
     </Dialog>

@@ -9,7 +9,6 @@ import {
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
 import { HoverCard } from '@ValenceUI/HoverCard';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -336,26 +335,20 @@ const JobRunner = ({
               </p>
             </DialogContent>
 
-            <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => {
+            <DialogFooter
+              dismiss={{
+                onChoose: () => {
                   setConfirming(null);
-                }}
-              >
-                Cancel
-              </Button>
-
-              <Button
-                variant="primary"
-                onClick={() => {
+                },
+              }}
+              confirm={{
+                label: confirming.label,
+                onChoose: () => {
                   onRun(confirming.kind);
                   setConfirming(null);
-                }}
-              >
-                {confirming.label}
-              </Button>
-            </DialogFooter>
+                },
+              }}
+            />
           </>
         )}
       </Dialog>

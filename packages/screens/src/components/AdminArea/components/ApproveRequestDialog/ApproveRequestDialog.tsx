@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -183,21 +182,11 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
         )}
       </DialogContent>
 
-      <DialogFooter>
-        {problem === null ? null : (
-          <span role="alert" className="mr-auto text-sm text-danger">
-            {problem}
-          </span>
-        )}
-
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-
-        <Button isLoading={isApproving} onClick={approve}>
-          Approve
-        </Button>
-      </DialogFooter>
+      <DialogFooter
+        note={problem}
+        dismiss={{ onChoose: onClose }}
+        confirm={{ label: 'Approve', onChoose: approve, isLoading: isApproving }}
+      />
     </DialogCompanion>
   );
 };

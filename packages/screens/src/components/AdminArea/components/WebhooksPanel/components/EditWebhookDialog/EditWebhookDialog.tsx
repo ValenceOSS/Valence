@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -124,21 +123,15 @@ const EditWebhookDialog = ({
           />
         </DialogContent>
 
-        <DialogFooter>
-          {refusal === null ? null : (
-            <span role="alert" className="mr-auto text-sm text-danger">
-              {refusal}
-            </span>
-          )}
-
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-
-          <Button variant="glossy" disabled={!isReady || isSaving} onClick={save}>
-            {isSaving ? 'Saving…' : 'Save changes'}
-          </Button>
-        </DialogFooter>
+        <DialogFooter
+          note={refusal}
+          dismiss={{ onChoose: onClose }}
+          confirm={{
+            label: isSaving ? 'Saving…' : 'Save changes',
+            onChoose: save,
+            isDisabled: !isReady || isSaving,
+          }}
+        />
       </Tabs>
     </DialogCompanion>
   );

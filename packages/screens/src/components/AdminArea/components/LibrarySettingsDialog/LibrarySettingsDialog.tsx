@@ -1,7 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -291,21 +290,16 @@ const LibrarySettingsDialog = ({
             )}
           </DialogContent>
 
-          <DialogFooter>
-            <Button variant="secondary" onClick={close} disabled={isSaving}>
-              Cancel
-            </Button>
-
-            <Button
-              variant="glossy"
-              isLoading={isSaving}
-              onClick={() => {
+          <DialogFooter
+            dismiss={{ onChoose: close, isDisabled: isSaving }}
+            confirm={{
+              label: 'Save',
+              onChoose: () => {
                 void save();
-              }}
-            >
-              Save
-            </Button>
-          </DialogFooter>
+              },
+              isLoading: isSaving,
+            }}
+          />
         </>
       ) : (
         <>
@@ -317,20 +311,15 @@ const LibrarySettingsDialog = ({
             </p>
           </DialogContent>
 
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => {
+          <DialogFooter
+            dismiss={{
+              label: 'Not now',
+              onChoose: () => {
                 finish(confirming.saved);
-              }}
-            >
-              Not now
-            </Button>
-
-            <Button variant="glossy" onClick={regenerate}>
-              Regenerate previews
-            </Button>
-          </DialogFooter>
+              },
+            }}
+            confirm={{ label: 'Regenerate previews', onChoose: regenerate }}
+          />
         </>
       )}
     </DialogCompanion>

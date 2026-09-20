@@ -200,11 +200,16 @@ const PreviewMomentPicker = ({
         </div>
       </DialogContent>
 
-      <DialogFooter>
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-
+      <DialogFooter
+        dismiss={{ onChoose: onClose }}
+        confirm={{
+          label: 'Use this moment',
+          isDisabled: isSaving || isLengthWrong,
+          onChoose: () => {
+            void keep();
+          },
+        }}
+      >
         {current === null ? null : (
           <Button
             variant="secondary"
@@ -216,16 +221,6 @@ const PreviewMomentPicker = ({
             Back to automatic
           </Button>
         )}
-
-        <Button
-          variant="glossy"
-          disabled={isSaving || isLengthWrong}
-          onClick={() => {
-            void keep();
-          }}
-        >
-          Use this moment
-        </Button>
       </DialogFooter>
     </Dialog>
   );
