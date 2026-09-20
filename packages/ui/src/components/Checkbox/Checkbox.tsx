@@ -43,7 +43,11 @@ const Checkbox = ({
       )}
     >
       <RadixCheckbox.Root
-        {...(isMixed ? { checked: 'indeterminate' as const } : checked === undefined ? {} : { checked })}
+        {...(isMixed
+          ? { checked: 'indeterminate' as const }
+          : checked === undefined
+            ? {}
+            : { checked })}
         {...(defaultChecked === undefined ? {} : { defaultChecked })}
         {...(onCheckedChange === undefined ? {} : { onCheckedChange })}
         disabled={disabled}

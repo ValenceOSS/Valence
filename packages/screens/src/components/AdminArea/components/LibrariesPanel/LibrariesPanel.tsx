@@ -183,11 +183,10 @@ const LibrariesPanel = ({
               </Badge>
 
               <Button
-                variant="bare"
+                variant="subtle"
                 size="none"
                 isIconOnly
                 label={`What ${row.original.name} is doing`}
-                className="text-text-muted hover:text-text"
                 onClick={() => {
                   live.current.setWatching(row.original);
                 }}

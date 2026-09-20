@@ -668,7 +668,7 @@ const AdminArea = ({
           transition={revealTransition(prefersReducedMotion)}
           className="flex flex-wrap items-center gap-3 rounded-xl border border-danger/40 bg-danger/10 px-5 py-4 font-body text-sm text-text"
         >
-          <Icon of={Alert02Icon} size={18} className="shrink-0 text-danger" />
+          <Icon of={Alert02Icon} size={18} tone="danger" className="shrink-0" />
           Some of this could not be read from the server, so parts of the page may be missing rather
           than empty.
           <Button

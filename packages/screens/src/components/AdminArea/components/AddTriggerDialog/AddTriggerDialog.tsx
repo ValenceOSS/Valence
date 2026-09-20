@@ -115,7 +115,7 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
         trigger={
           <>
             <span className="truncate">{selectedLabel}</span>
-            <Icon of={UnfoldMoreIcon} size={15} className="shrink-0 text-text-muted" />
+            <Icon of={UnfoldMoreIcon} size={15} tone="muted" className="shrink-0" />
           </>
         }
         triggerShape="field"

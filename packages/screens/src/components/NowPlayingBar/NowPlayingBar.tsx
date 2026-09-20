@@ -186,10 +186,9 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                                 artist.name
                               ) : (
                                 <Button
-                                  variant="link"
+                                  variant="subtle"
                                   size="none"
                                   hasTooltip={false}
-                                  className="text-text-muted hover:text-text"
                                   onClick={() => {
                                     open({ kind: 'artist', id });
                                   }}

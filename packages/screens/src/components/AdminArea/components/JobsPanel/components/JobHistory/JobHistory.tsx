@@ -192,11 +192,10 @@ const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHis
 
             {row.original.status === 'running' ? (
               <Button
-                variant="bare"
+                variant="subtle"
                 size="none"
                 isIconOnly
                 label={`What ${describeRunKind(row.original.kind, labels)} is doing`}
-                className="text-text-muted hover:text-text"
                 onClick={() => {
                   setOpenWorkFor(row.original.id);
                 }}
@@ -265,11 +264,7 @@ const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHis
                       </dl>
                     }
                   >
-                    <Icon
-                      of={InformationCircleIcon}
-                      size={15}
-                      className="shrink-0 text-text-muted"
-                    />
+                    <Icon of={InformationCircleIcon} size={15} tone="muted" className="shrink-0" />
                   </HoverCard>
                 )}
               </span>

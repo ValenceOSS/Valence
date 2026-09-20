@@ -33,7 +33,7 @@ const Choice = ({ label, options, value, onSelect }: ChoiceProps) => (
       trigger={
         <>
           <span className="truncate">{options.find((one) => one.id === value)?.label ?? ''}</span>
-          <Icon of={UnfoldMoreIcon} size={15} className="shrink-0 text-text-muted" />
+          <Icon of={UnfoldMoreIcon} size={15} tone="muted" className="shrink-0" />
         </>
       }
       triggerShape="field"

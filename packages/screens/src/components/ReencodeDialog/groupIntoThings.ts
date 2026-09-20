@@ -26,8 +26,7 @@ const inOrder = (left: MediaSummary, right: MediaSummary): number =>
  * @param item - The file.
  * @returns The key of the thing it belongs to.
  */
-const thingOf = (item: MediaSummary): string =>
-  item.seriesTitle ?? item.parentId ?? item.id;
+const thingOf = (item: MediaSummary): string => item.seriesTitle ?? item.parentId ?? item.id;
 
 /**
  * What to call a group, which is the thing rather than whichever of its files came first.

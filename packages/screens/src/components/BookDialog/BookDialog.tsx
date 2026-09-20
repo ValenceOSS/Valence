@@ -137,7 +137,7 @@ const BookDialog = ({
                   aria-hidden
                   className="flex aspect-[2/3] w-32 shrink-0 items-center justify-center rounded-lg bg-surface-raised sm:w-40"
                 >
-                  <Icon of={BookOpen01Icon} size={32} className="text-text-muted" />
+                  <Icon of={BookOpen01Icon} size={32} tone="muted" />
                 </div>
               )}
 

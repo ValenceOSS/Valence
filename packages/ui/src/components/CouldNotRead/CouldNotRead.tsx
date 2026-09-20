@@ -32,7 +32,7 @@ const CouldNotRead = ({
     role="alert"
     className={cn('flex flex-col items-center gap-3 px-6 py-10 text-center', className)}
   >
-    <Icon of={Alert02Icon} size={24} className="text-danger" />
+    <Icon of={Alert02Icon} size={24} tone="danger" />
 
     <p className="text-sm text-text-muted">
       {what} could not be read. The server may be unreachable, or this session may have ended.

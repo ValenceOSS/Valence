@@ -188,10 +188,9 @@ const TrackList = ({
                     {track.artists.map((artist, at) => (
                       <span key={artist.id} className="truncate">
                         <Button
-                          variant="link"
+                          variant="subtle"
                           size="none"
                           hasTooltip={false}
-                          className="text-text-muted hover:text-text"
                           onClick={() => {
                             open({ kind: 'artist', id: artist.id });
                           }}
@@ -208,10 +207,10 @@ const TrackList = ({
               {showsAlbum ? (
                 <span className="hidden min-w-0 truncate text-[0.8125rem] text-text-muted md:block">
                   <Button
-                    variant="link"
+                    variant="subtle"
                     size="none"
                     hasTooltip={false}
-                    className="truncate text-text-muted hover:text-text"
+                    className="truncate"
                     onClick={() => {
                       open({ kind: 'album', id: track.album.id });
                     }}

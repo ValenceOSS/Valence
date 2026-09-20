@@ -56,7 +56,7 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
                 <span className="truncate text-xs text-text-muted">{concern.detail}</span>
               </span>
 
-              <Icon of={ArrowRight01Icon} size={14} className="shrink-0 text-text-muted" />
+              <Icon of={ArrowRight01Icon} size={14} tone="muted" className="shrink-0" />
             </Button>
 
             <Button

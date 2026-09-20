@@ -77,7 +77,7 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
             ? null
             : pathSegments(at).map((segment) => (
                 <span key={segment.path} className="flex shrink-0 items-center gap-0.5">
-                  <Icon of={ArrowRight01Icon} size={12} className="text-text-muted" />
+                  <Icon of={ArrowRight01Icon} size={12} tone="muted" />
 
                   <Button
                     variant="ghost"

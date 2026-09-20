@@ -10,6 +10,7 @@ type ButtonVariant =
   | 'danger'
   | 'overlay'
   | 'link'
+  | 'subtle'
   | 'bare';
 
 type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'none';

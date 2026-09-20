@@ -333,7 +333,7 @@ const SettingsPanel = ({
               role="alert"
               className="mx-5 mb-4 flex items-start gap-3 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-text"
             >
-              <Icon of={Alert02Icon} size={18} className="mt-0.5 shrink-0 text-danger" />
+              <Icon of={Alert02Icon} size={18} tone="danger" className="mt-0.5 shrink-0" />
               {splashscreenProblem}
             </p>
           )}

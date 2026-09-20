@@ -166,7 +166,7 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
             }`}
           >
             {verdict === 'fits' ? null : (
-              <Icon of={Alert02Icon} size={18} className="shrink-0 text-danger" />
+              <Icon of={Alert02Icon} size={18} tone="danger" className="shrink-0" />
             )}
 
             {verdict === 'willNotFit'

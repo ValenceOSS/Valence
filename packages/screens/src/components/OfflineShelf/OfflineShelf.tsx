@@ -51,7 +51,7 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
   if (held.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-        <Icon of={CloudOffIcon} size={32} className="text-text-muted" />
+        <Icon of={CloudOffIcon} size={32} tone="muted" />
 
         <h2 className="font-body text-base text-text">Nothing is on this device</h2>
 

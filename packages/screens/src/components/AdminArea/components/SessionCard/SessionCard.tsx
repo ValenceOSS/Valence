@@ -71,11 +71,7 @@ const SessionCard = ({
             className="h-full w-full object-cover"
           />
         ) : (
-          <Icon
-            of={listening === null ? Tv01Icon : MusicNote01Icon}
-            size={20}
-            className="text-text-muted"
-          />
+          <Icon of={listening === null ? Tv01Icon : MusicNote01Icon} size={20} tone="muted" />
         )}
       </span>
 

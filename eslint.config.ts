@@ -93,6 +93,12 @@ export default tseslint.config(
           message:
             'Type assertions are banned. Parse untrusted input through a Zod schema instead.',
         },
+        {
+          selector:
+            'JSXOpeningElement[name.name="Icon"] > JSXAttribute[name.name="className"] > Literal[value=/\\btext-(text|text-muted|danger)\\b/]',
+          message:
+            'An icon is given its colour by tone, not by className. Use tone="muted" or tone="danger" — see code standards section 9.',
+        },
       ],
     },
   },

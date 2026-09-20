@@ -573,7 +573,7 @@ const AccountsPanel = () => {
           role="alert"
           className="flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-text"
         >
-          <Icon of={Alert02Icon} size={18} className="mt-0.5 shrink-0 text-danger" />
+          <Icon of={Alert02Icon} size={18} tone="danger" className="mt-0.5 shrink-0" />
           {refusal.message}
         </p>
       )}
@@ -676,7 +676,7 @@ const AccountsPanel = () => {
                   role="alert"
                   className="flex items-start gap-3 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-text"
                 >
-                  <Icon of={Alert02Icon} size={16} className="mt-0.5 shrink-0 text-danger" />
+                  <Icon of={Alert02Icon} size={16} tone="danger" className="mt-0.5 shrink-0" />
                   {refusal.message}
                 </p>
               )}

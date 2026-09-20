@@ -171,11 +171,10 @@ const JobRunner = ({
               </Badge>
 
               <Button
-                variant="bare"
+                variant="subtle"
                 size="none"
                 isIconOnly
                 label={`What ${row.original.label} is doing`}
-                className="text-text-muted hover:text-text"
                 onClick={() => {
                   setWatching(row.original);
                 }}

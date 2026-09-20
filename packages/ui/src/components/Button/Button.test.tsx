@@ -109,6 +109,14 @@ describe('Button', () => {
     );
   });
 
+  it('draws a subtle button muted until it is pointed at, with nothing behind it', () => {
+    render(<Button variant="subtle">Artist</Button>);
+
+    const button = screen.getByRole('button', { name: 'Artist' });
+
+    expect(button).toHaveClass('bg-transparent', 'text-text-muted', 'hover:text-text');
+  });
+
   it('fills the main action and the dangerous one with their own colour, and nothing more', () => {
     render(
       <>
