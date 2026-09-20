@@ -308,8 +308,7 @@ const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHis
           <span className="flex justify-end">
             <ActionMenu
               label={`Actions for ${describeRunKind(row.original.kind, labels)}`}
-              trigger={<Icon of={MoreHorizontalIcon} size={14} />}
-              size="sm"
+              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
