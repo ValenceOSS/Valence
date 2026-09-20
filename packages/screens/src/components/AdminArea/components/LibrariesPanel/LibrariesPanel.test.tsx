@@ -27,6 +27,7 @@ const scanning = (overrides: Partial<ScanEntry> = {}): ScanEntry =>
     phase: 'probing',
     processed: 1,
     total: 10,
+    item: null,
     jobId: 'job-1',
     ...overrides,
   }) satisfies ScanEntry;

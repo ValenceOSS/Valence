@@ -141,6 +141,7 @@ const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHis
                         phase: event.phase,
                         processed: event.processed,
                         total: event.total,
+                        item: event.item,
                       },
                     }
                   : record,

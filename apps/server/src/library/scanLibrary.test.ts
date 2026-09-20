@@ -793,8 +793,17 @@ describe('scanLibrary', () => {
     await run();
 
     expect(onProgress).toHaveBeenCalledWith('probing', 0, 1);
-    expect(onProgress).toHaveBeenCalledWith('probing', 1, 1);
+    expect(onProgress).toHaveBeenCalledWith('probing', 1, 1, 'b');
     expect(onProgress).toHaveBeenCalledTimes(2);
+  });
+
+  it('names the file it is on, so a count that only ticks says what it is doing', async () => {
+    const onProgress = vi.fn();
+    const { run } = harness({ found: [file('/Arrival (2016).mkv')], onProgress });
+
+    await run();
+
+    expect(onProgress).toHaveBeenLastCalledWith('probing', 1, 1, 'Arrival 2016');
   });
 
   it('still counts a failed probe toward progress', async () => {
@@ -808,7 +817,7 @@ describe('scanLibrary', () => {
 
     await run();
 
-    expect(onProgress).toHaveBeenLastCalledWith('probing', 2, 2);
+    expect(onProgress).toHaveBeenLastCalledWith('probing', 2, 2, expect.any(String));
   });
 });
 

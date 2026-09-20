@@ -56,6 +56,7 @@ describe('followRunningJobs', () => {
       phase: 'previews',
       processed: 1,
       total: 4,
+      item: null,
     });
     onEvent({
       event: 'completed',

@@ -186,6 +186,7 @@ const ScanState = z
     phase: z.string().nullable(),
     processed: z.number().int().nonnegative().nullable(),
     total: z.number().int().nonnegative().nullable(),
+    item: z.string().nullable().default(null),
   })
   .openapi('ScanState');
 
@@ -371,6 +372,7 @@ const runningScansRoute = createRoute({
                   phase: z.string().nullable(),
                   processed: z.number().nullable(),
                   total: z.number().nullable(),
+                  item: z.string().nullable().default(null),
                 }),
               ),
             })

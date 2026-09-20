@@ -196,6 +196,7 @@ describe('createJobQueue', () => {
       phase: 'checking',
       processed: 1,
       total: 2,
+      item: null,
     });
   });
 

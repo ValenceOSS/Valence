@@ -12,6 +12,7 @@ const entry = (
   phase,
   processed,
   total,
+  item: null,
   jobId: 'job-1',
 });
 
@@ -25,6 +26,7 @@ describe('summariseProgress', () => {
       phase: 'probing',
       processed: 3,
       total: 10,
+      item: null,
     });
   });
 
@@ -33,6 +35,7 @@ describe('summariseProgress', () => {
       phase: 'previews',
       processed: 7,
       total: 16,
+      item: null,
     });
   });
 
@@ -41,6 +44,7 @@ describe('summariseProgress', () => {
       phase: 'probing',
       processed: 1,
       total: 40,
+      item: null,
     });
   });
 
@@ -55,6 +59,7 @@ describe('summariseProgress', () => {
       phase: null,
       processed: null,
       total: null,
+      item: null,
     });
   });
 
@@ -63,6 +68,7 @@ describe('summariseProgress', () => {
       phase: 'previews',
       processed: 3,
       total: 4,
+      item: null,
     });
   });
 
@@ -71,6 +77,7 @@ describe('summariseProgress', () => {
       phase: 'segments',
       processed: null,
       total: null,
+      item: null,
     });
   });
 
@@ -79,6 +86,28 @@ describe('summariseProgress', () => {
       phase: 'previews',
       processed: 2,
       total: 4,
+      item: null,
     });
+  });
+});
+
+describe('summariseProgress, naming what is being worked on', () => {
+  const on = (phase: string, item: string | null): ScanEntry => ({
+    ...entry(phase, 1, 10),
+    item,
+  });
+
+  it('names the file where one library is on this stage', () => {
+    expect(summariseProgress([on('probing', 'Arrival')])?.item).toBe('Arrival');
+  });
+
+  it('names nothing where several libraries are on it, since there is no one answer', () => {
+    expect(summariseProgress([on('probing', 'Arrival'), on('probing', 'Dune')])?.item).toBeNull();
+  });
+
+  it('names the file of the library that is furthest behind, not the one ahead of it', () => {
+    const summary = summariseProgress([on('segments', 'Dune'), on('probing', 'Arrival')]);
+
+    expect(summary?.item).toBe('Arrival');
   });
 });

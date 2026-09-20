@@ -5,6 +5,7 @@ type RunningProgress = {
   phase: string | null;
   processed: number | null;
   total: number | null;
+  item?: string | null;
 };
 
 type RunningWorkDialogProps = {

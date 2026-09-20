@@ -58,3 +58,36 @@ describe('ScanProgressBar', () => {
     expect(screen.queryByText(/\//)).not.toBeInTheDocument();
   });
 });
+
+describe('ScanProgressBar, naming what it is on', () => {
+  it('names the file it is working through', () => {
+    render(
+      <ScanProgressBar
+        label="Movies"
+        phase="probing"
+        processed={4101}
+        total={6277}
+        item="Arrival (2016)"
+      />,
+    );
+
+    expect(screen.getByText('Arrival (2016)')).toBeInTheDocument();
+  });
+
+  it('says nothing where the scan does not name one', () => {
+    const { container } = render(
+      <ScanProgressBar label="Movies" phase="probing" processed={1} total={2} item={null} />,
+    );
+
+    expect(container.textContent).not.toContain('undefined');
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+
+  it('keeps the whole name reachable for one that is too long to show', () => {
+    const long = 'Some Very Long Release Name 2160p WEB-DL DDP5 1 HDR HEVC';
+
+    render(<ScanProgressBar label="Movies" phase="probing" processed={1} total={2} item={long} />);
+
+    expect(screen.getByTitle(long)).toBeInTheDocument();
+  });
+});

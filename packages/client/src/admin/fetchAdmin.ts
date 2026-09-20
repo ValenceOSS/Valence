@@ -298,6 +298,7 @@ const RunningScansSchema = z.object({
       phase: z.string().nullable(),
       processed: z.number().nullable(),
       total: z.number().nullable(),
+      item: z.string().nullable().default(null),
     }),
   ),
 });

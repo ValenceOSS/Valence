@@ -85,6 +85,7 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
                 phase={entry.phase}
                 processed={entry.processed}
                 total={entry.total}
+                item={entry.item ?? null}
               />
             </div>
           ))}
