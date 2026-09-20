@@ -106,6 +106,8 @@ const JobRunner = ({
     setStopping(definition);
   }, []);
 
+  const watchedSummary = watching === null ? null : summaryFor(watching.kind);
+
   const isBusyWithALibrary = definitions.some(
     (definition) => definition.needsLibrary && summaryFor(definition.kind) !== null,
   );
@@ -276,7 +278,9 @@ const JobRunner = ({
       <RunningWorkDialog
         title={watching?.label ?? ''}
         isOpen={watching !== null}
-        progress={watching === null ? null : summaryFor(watching.kind)}
+        progress={
+          watchedSummary === null ? [] : [{ label: watching?.label ?? '', ...watchedSummary }]
+        }
         tasks={
           watching === null
             ? []

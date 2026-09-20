@@ -22,7 +22,7 @@ describe('RunningWorkDialog', () => {
       <RunningWorkDialog
         title="Generate missing previews"
         isOpen
-        progress={null}
+        progress={[]}
         tasks={[task(), task({ id: 2, subject: 'Other.mkv', state: 'queued' })]}
         onClose={vi.fn()}
       />,
@@ -37,7 +37,7 @@ describe('RunningWorkDialog', () => {
       <RunningWorkDialog
         title="Generate missing previews"
         isOpen
-        progress={null}
+        progress={[]}
         tasks={[task(), task({ id: 2, state: 'queued' }), task({ id: 3, state: 'queued' })]}
         onClose={vi.fn()}
       />,
@@ -51,7 +51,7 @@ describe('RunningWorkDialog', () => {
       <RunningWorkDialog
         title="Generate missing previews"
         isOpen
-        progress={null}
+        progress={[]}
         tasks={[]}
         onClose={vi.fn()}
       />,
@@ -65,7 +65,7 @@ describe('RunningWorkDialog', () => {
       <RunningWorkDialog
         title="Generate missing previews"
         isOpen
-        progress={{ phase: 'previews', processed: 13, total: 107 }}
+        progress={[{ label: 'Previews', phase: 'previews', processed: 13, total: 107 }]}
         tasks={[]}
         onClose={vi.fn()}
       />,
@@ -74,12 +74,78 @@ describe('RunningWorkDialog', () => {
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '13');
   });
 
+  it('shows a bar for each piece of work, named, when there is more than one', () => {
+    render(
+      <RunningWorkDialog
+        title="Movies"
+        isOpen
+        progress={[
+          { label: 'Regenerating previews for Movies', phase: 'previews', processed: 1, total: 4 },
+          {
+            label: 'Regenerating thumbnails for Movies',
+            phase: 'trickplay',
+            processed: 2,
+            total: 4,
+          },
+        ]}
+        tasks={[]}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByRole('progressbar')).toHaveLength(2);
+    expect(screen.getByText('Regenerating thumbnails for Movies')).toBeInTheDocument();
+  });
+
+  it('does not count finished tasks as waiting', () => {
+    render(
+      <RunningWorkDialog
+        title="Scrubs"
+        isOpen
+        progress={[]}
+        tasks={[task(), task({ id: 2, state: 'finished' }), task({ id: 3, state: 'finished' })]}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('1 running · 0 waiting')).toBeInTheDocument();
+  });
+
+  it('draws a task waiting in the queue as a gray waiting badge', () => {
+    render(
+      <RunningWorkDialog
+        title="Scrubs"
+        isOpen
+        progress={[]}
+        tasks={[task({ id: 2, subject: 'Later.mkv', state: 'queued' })]}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Waiting')).toHaveClass('bg-[var(--surface-hover)]');
+  });
+
+  it('says how many are still to come that the queue has not been given yet', () => {
+    render(
+      <RunningWorkDialog
+        title="Scrubs"
+        isOpen
+        progress={[{ label: 'Scrubs', phase: 'trickplay', processed: 16, total: 107 }]}
+        tasks={[task()]}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('90 more not started yet')).toBeInTheDocument();
+    expect(screen.getByText('1 running · 90 waiting')).toBeInTheDocument();
+  });
+
   it('shows nothing while closed', () => {
     render(
       <RunningWorkDialog
         title="Generate missing previews"
         isOpen={false}
-        progress={null}
+        progress={[]}
         tasks={[task()]}
         onClose={vi.fn()}
       />,

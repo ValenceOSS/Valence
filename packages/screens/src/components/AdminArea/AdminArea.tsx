@@ -742,6 +742,7 @@ const AdminArea = ({
               libraries={libraries}
               profiles={askedProfiles.data ?? []}
               progress={scanProgress}
+              working={monitor?.queue.jobs ?? []}
               isScanningAll={isScanningAll}
               isResettingAll={isResettingAll}
               onScan={(libraryId, force) => {

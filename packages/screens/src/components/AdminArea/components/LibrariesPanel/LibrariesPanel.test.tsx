@@ -34,6 +34,7 @@ const scanning = (overrides: Partial<ScanEntry> = {}): ScanEntry =>
 const props = {
   libraries: [],
   progress: new Map<string, ScanEntry>(),
+  working: [],
   isScanningAll: false,
   isResettingAll: false,
   onScan: vi.fn(),

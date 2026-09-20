@@ -70,7 +70,9 @@ describe('EncodingPanel', () => {
   });
 
   it('does not warn while there is room to carry on', () => {
-    render(<EncodingPanel {...props} awaitingReviewCap={5} reencodes={[at('a', 'awaitingReview')]} />);
+    render(
+      <EncodingPanel {...props} awaitingReviewCap={5} reencodes={[at('a', 'awaitingReview')]} />,
+    );
 
     expect(screen.queryByRole('alert')).toBeNull();
   });

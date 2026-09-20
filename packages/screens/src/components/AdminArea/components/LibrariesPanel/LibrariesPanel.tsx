@@ -16,13 +16,13 @@ import { notify } from '@ValenceUI/notify';
 import { deleteLibrary } from '@ValenceClient/library/fetchLibrary';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
-import { HoverCard } from '@ValenceUI/HoverCard';
+import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { describeScanResult } from '@ValenceClient/admin/describeScanResult';
 import { AddLibraryDialog } from '@ValenceScreens/components/AdminArea/components/AddLibraryDialog/AddLibraryDialog';
 import { LibrarySettingsDialog } from '@ValenceScreens/components/AdminArea/components/LibrarySettingsDialog/LibrarySettingsDialog';
 import { ResetLibrariesDialog } from '@ValenceScreens/components/AdminArea/components/ResetLibrariesDialog/ResetLibrariesDialog';
-import { ScanProgressBar } from '@ValenceScreens/components/AdminArea/components/ScanProgressBar/ScanProgressBar';
+import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
 import { describeScanKind } from '@ValenceScreens/components/AdminArea/describeScanKind';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
@@ -30,6 +30,7 @@ import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibrariesPanelProps } from './LibrariesPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { readingOf } from '@ValenceScreens/components/AdminArea/readingOf';
+import { workOf } from '@ValenceScreens/components/AdminArea/workOf';
 import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
 
 /**
@@ -41,6 +42,7 @@ import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
  * @param isUnreachable - Whether the service is not answering.
  * @param libraries - The libraries configured.
  * @param progress - What is running now, by library.
+ * @param working - What the queue is working on, for showing what a library's work is made of.
  * @param isScanningAll - Whether a scan of every library is under way.
  * @param isResettingAll - Whether a rebuild of every library is under way.
  * @param onScan - Called with the library to scan, and whether to re-probe every file.
@@ -56,6 +58,7 @@ const LibrariesPanel = ({
   libraries,
   profiles = [],
   progress,
+  working,
   isScanningAll,
   isResettingAll,
   onScan,
@@ -72,6 +75,9 @@ const LibrariesPanel = ({
   const [deleting, setDeleting] = useState<Library | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [rereading, setRereading] = useState<Library | null>(null);
+  const [watching, setWatching] = useState<Library | null>(null);
+
+  const watchedWork = watching === null ? [] : workOf(progress, watching.id);
 
   const isBusy =
     libraries.length === 0 ||
@@ -84,6 +90,7 @@ const LibrariesPanel = ({
     setSettingsLibraryId,
     setDeleting,
     setRereading,
+    setWatching,
   });
 
   live.current = {
@@ -93,6 +100,7 @@ const LibrariesPanel = ({
     setSettingsLibraryId,
     setDeleting,
     setRereading,
+    setWatching,
   };
 
   const columns = useMemo<DataTableColumn<Library>[]>(
@@ -152,9 +160,9 @@ const LibrariesPanel = ({
         header: 'State',
         enableSorting: false,
         cell: ({ row }) => {
-          const scanning = readingOf(live.current.progress, row.original.id);
+          const busy = workOf(live.current.progress, row.original.id);
 
-          if (scanning === undefined) {
+          if (busy.length === 0) {
             return (
               <Badge size="sm" tone="accent">
                 Idle
@@ -163,30 +171,26 @@ const LibrariesPanel = ({
           }
 
           return (
-            <HoverCard
-              side="left"
-              align="center"
-              detail={
-                <div className="flex flex-col gap-3">
-                  <span className="text-xs uppercase tracking-[0.14em] text-text-muted">
-                    {describeScanKind(scanning.kind, row.original.name)}
-                  </span>
-
-                  <ScanProgressBar
-                    label={describeScanKind(scanning.kind, row.original.name)}
-                    phase={scanning.phase}
-                    processed={scanning.processed}
-                    total={scanning.total}
-                  />
-                </div>
-              }
-            >
+            <span className="flex items-center gap-1.5">
               <Badge size="sm" tone={STATUS_LOOK.working.tone}>
-                Reading
+                {readingOf(live.current.progress, row.original.id) === undefined
+                  ? STATUS_LOOK.working.label
+                  : 'Reading'}
               </Badge>
 
-              <Icon of={InformationCircleIcon} size={15} className="shrink-0 text-text-muted" />
-            </HoverCard>
+              <Button
+                variant="bare"
+                size="none"
+                isIconOnly
+                label={`What ${row.original.name} is doing`}
+                className="text-text-muted hover:text-text"
+                onClick={() => {
+                  live.current.setWatching(row.original);
+                }}
+              >
+                <Icon of={InformationCircleIcon} size={15} />
+              </Button>
+            </span>
           );
         },
       },
@@ -323,6 +327,25 @@ const LibrariesPanel = ({
       ) : (
         <DataTable label="Library roots" columns={columns} rows={libraries} />
       )}
+
+      <RunningWorkDialog
+        title={watching?.name ?? ''}
+        isOpen={watching !== null && watchedWork.length > 0}
+        progress={watchedWork.map((entry) => ({
+          label: describeScanKind(entry.kind, watching?.name ?? ''),
+          phase: entry.phase,
+          processed: entry.processed,
+          total: entry.total,
+        }))}
+        tasks={working.filter(
+          (job) =>
+            job.correlationId !== null &&
+            watchedWork.some((entry) => entry.jobId === job.correlationId),
+        )}
+        onClose={() => {
+          setWatching(null);
+        }}
+      />
 
       <ConfirmDialog
         title={deleting === null ? 'Delete this library?' : `Delete ${deleting.name}?`}

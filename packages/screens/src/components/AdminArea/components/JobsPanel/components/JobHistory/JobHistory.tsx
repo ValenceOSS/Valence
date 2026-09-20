@@ -359,7 +359,11 @@ const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHis
       <RunningWorkDialog
         title={openWork === undefined ? '' : describeRunKind(openWork.kind, labels)}
         isOpen={openWork !== undefined}
-        progress={openWork?.progress ?? null}
+        progress={
+          openWork === undefined || openWork.progress === null
+            ? []
+            : [{ label: describeRunKind(openWork.kind, labels), ...openWork.progress }]
+        }
         tasks={working.filter((task) => task.correlationId === openWorkFor)}
         onClose={() => {
           setOpenWorkFor(null);

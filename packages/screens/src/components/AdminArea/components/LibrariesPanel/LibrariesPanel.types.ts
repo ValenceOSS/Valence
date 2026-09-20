@@ -1,4 +1,5 @@
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import type { Job } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { ScanEntry } from '@ValenceScreens/components/AdminArea/scanCoordinator';
 
@@ -7,6 +8,7 @@ type LibrariesPanelProps = {
   isUnreachable?: boolean;
   libraries: Library[];
   progress: ReadonlyMap<string, ScanEntry>;
+  working: Job[];
   isScanningAll: boolean;
   isResettingAll: boolean;
   onScan: (libraryId: string, force?: boolean) => void;
