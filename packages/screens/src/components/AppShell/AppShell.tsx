@@ -499,6 +499,7 @@ const AppShell = ({
                         id: 'sign-out',
                         label: 'Sign out',
                         icon: <Icon of={Logout01Icon} size={16} />,
+                        isDestructive: true,
                         onChoose: onSignOut,
                       },
                     ],
