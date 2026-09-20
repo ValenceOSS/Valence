@@ -8,6 +8,7 @@ import { MENU } from '@ValenceUI/tokens/menu';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
+import { separateDestructive } from './separateDestructive';
 import type { ActionMenuProps, ActionMenuSize } from './ActionMenu.types';
 
 const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
@@ -30,7 +31,8 @@ const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
  *
  * @param label - What the menu is, read out to anybody who cannot see it.
  * @param trigger - The control that opens it.
- * @param groups - The items, in groups separated by a rule.
+ * @param groups - The items, in groups separated by a rule. Destructive items are gathered into a
+ *   group of their own at the bottom whatever order they were written in.
  * @param align - Which edge of the trigger the menu lines up with.
  * @param size - How large the trigger stands — smaller for a row's own action, standing size
  *   elsewhere.
@@ -85,7 +87,7 @@ const ActionMenu = ({
           >
             <HoverHighlight rect={rect} radius="nested" className="bg-[var(--surface-hover)]" />
 
-            {groups.map((group, index) => (
+            {separateDestructive(groups).map((group, index) => (
               <RadixMenu.Group
                 key={group.name ?? `group-${index.toString()}`}
                 className={cn(MENU.group, index === 0 ? '' : MENU.groupAfterFirst)}
