@@ -32,7 +32,7 @@ describe('Badge', () => {
   it('stays readable on artwork rather than dissolving into it', () => {
     render(<Badge tone="solid">TV-14</Badge>);
 
-    expect(badgeOf('TV-14')).toHaveClass('bg-shade/60');
+    expect(badgeOf('TV-14')).toHaveClass('bg-shade');
   });
 
   it('sets a display name so devtools can identify it', () => {
@@ -42,7 +42,21 @@ describe('Badge', () => {
   it('paints a fact that is wrong differently from one that is merely notable', () => {
     render(<Badge tone="danger">NVENC</Badge>);
 
-    expect(badgeOf('NVENC')).toHaveClass('border-danger/50');
+    expect(badgeOf('NVENC')).toHaveClass('bg-danger');
+  });
+
+  it('is a solid fill rather than glass over whatever is behind it', () => {
+    render(
+      <>
+        <Badge tone="quiet">One</Badge>
+        <Badge tone="accent">Two</Badge>
+        <Badge tone="danger">Three</Badge>
+      </>,
+    );
+
+    for (const text of ['One', 'Two', 'Three']) {
+      expect(badgeOf(text).className).not.toMatch(/backdrop-blur|bg-[a-z]+\/\d+/);
+    }
   });
 
   it('is not text anybody drags a cursor through', () => {
@@ -54,20 +68,20 @@ describe('Badge', () => {
   it('paints a costly choice differently from a broken one', () => {
     render(<Badge tone="warning">Software only</Badge>);
 
-    expect(badgeOf('Software only')).toHaveClass('border-highlight/50');
+    expect(badgeOf('Software only')).toHaveClass('bg-highlight');
   });
 
   it('paints a good outcome in its own colour rather than borrowing the one for attention', () => {
     render(<Badge tone="success">Finished</Badge>);
 
-    expect(badgeOf('Finished')).toHaveClass('border-success/35');
-    expect(badgeOf('Finished')).not.toHaveClass('border-accent/40');
+    expect(badgeOf('Finished')).toHaveClass('bg-success');
+    expect(badgeOf('Finished')).not.toHaveClass('bg-accent');
   });
 
   it('paints something under way in its own colour, apart from a warning', () => {
     render(<Badge tone="busy">Downloading</Badge>);
 
-    expect(badgeOf('Downloading')).toHaveClass('border-busy/45');
-    expect(badgeOf('Downloading')).not.toHaveClass('border-highlight/50');
+    expect(badgeOf('Downloading')).toHaveClass('bg-busy');
+    expect(badgeOf('Downloading')).not.toHaveClass('bg-highlight');
   });
 });

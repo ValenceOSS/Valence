@@ -2,14 +2,14 @@ import { cn } from '@ValenceUI/cn';
 import type { BadgeProps, BadgeSize, BadgeTone } from './Badge.types';
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
-  quiet: 'border border-line bg-subtle text-text-muted backdrop-blur-md',
-  accent: 'border border-accent/40 bg-accent/15 text-text backdrop-blur-md',
-  success: 'border border-success/35 bg-success/15 text-success backdrop-blur-md',
-  highlight: 'border border-highlight/40 bg-highlight/15 text-highlight backdrop-blur-md',
-  solid: 'bg-shade/60 text-on-scrim backdrop-blur-md',
-  busy: 'border border-busy/45 bg-busy/15 text-busy backdrop-blur-md',
-  warning: 'border border-highlight/50 bg-highlight/15 text-highlight backdrop-blur-md',
-  danger: 'border border-danger/50 bg-danger/15 text-text backdrop-blur-md',
+  quiet: 'border border-line bg-muted text-text-muted',
+  accent: 'bg-accent text-accent-contrast',
+  success: 'bg-success text-surface',
+  highlight: 'bg-highlight text-highlight-contrast',
+  solid: 'bg-shade text-on-scrim',
+  busy: 'bg-busy text-surface',
+  warning: 'bg-highlight text-highlight-contrast',
+  danger: 'bg-danger text-surface',
 };
 
 const SIZE_CLASSES: Record<BadgeSize, string> = {
@@ -21,6 +21,9 @@ const SIZE_CLASSES: Record<BadgeSize, string> = {
  * States one small fact beside the thing it is about — a count, a status, a format. Sized to sit
  * inline without disturbing the line it is on, and toned so that the ordinary case is quiet and
  * only a warning or a failure asks for attention.
+ *
+ * Every tone is a solid fill rather than glass. A status is read at a glance down a column, and a
+ * tint over whatever happens to be behind it reads differently on every row it sits on.
  *
  * @param children - The fact, in as few words as it can be said.
  * @param tone - How much attention it should draw, defaulting to none.
