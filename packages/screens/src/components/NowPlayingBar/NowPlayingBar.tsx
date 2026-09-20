@@ -34,6 +34,7 @@ import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import { useMusicSession } from '@ValenceScreens/music/useMusicSession';
+import { idleWhatIsPlaying } from '@ValenceScreens/music/idleWhatIsPlaying';
 import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
 import { describeAudioQuality } from '@ValenceScreens/music/describeAudioQuality';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
@@ -78,7 +79,7 @@ const ROOM: Variants = {
  */
 const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
   const { state, player } = useMusicPlayer(given ?? theMusicPlayer(), { followsPosition: true });
-  const shown = useWhatIsPlaying(state);
+  const playing = useWhatIsPlaying(state);
   const { view, open } = useMusicNavigation();
   const { place, go } = usePlace();
   const panel = useMusicPanel();
@@ -91,9 +92,13 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
   useMusicSession(state, player);
 
-  if (shown === null || isImmersive) {
+  const isIdle = playing === null;
+
+  if (isImmersive || (isIdle && place.section !== 'music')) {
     return <AnimatePresence>{null}</AnimatePresence>;
   }
+
+  const shown = playing ?? idleWhatIsPlaying(state.volume);
 
   const isFollowing = listening !== null && !listening.mayChoose;
   const isLiked = favourites.isKept(shown.trackId);
@@ -154,6 +159,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                     size="none"
                     label="Open the immersive view"
                     hasTooltip={false}
+                    disabled={isIdle}
                     className="shrink-0"
                     onClick={() => {
                       setMusicImmersive(true);
@@ -205,6 +211,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 glyph={FavouriteIcon}
                 gesture="fill"
                 isLit={isLiked}
+                isDisabled={isIdle}
                 className="hidden shrink-0 sm:inline-flex"
                 onClick={() => {
                   favourites.toggle(shown.trackId);
@@ -212,7 +219,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
               />
             </div>
 
-            <MusicTransport state={state} shown={shown} player={player} />
+            <MusicTransport state={state} shown={shown} player={player} isIdle={isIdle} />
 
             <div className="hidden min-w-0 items-center justify-end gap-1 md:flex">
               <BarButton
@@ -220,6 +227,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 glyph={Mic01Icon}
                 gesture="ring"
                 isLit={view.kind === 'lyrics' && place.section === 'music'}
+                isDisabled={isIdle}
                 onClick={() => {
                   open(
                     view.kind === 'lyrics' && place.section === 'music'

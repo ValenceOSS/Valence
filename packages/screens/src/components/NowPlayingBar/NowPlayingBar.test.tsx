@@ -68,6 +68,20 @@ describe('NowPlayingBar', () => {
     expect(screen.queryByRole('region', { name: 'Now playing' })).not.toBeInTheDocument();
   });
 
+  it('is there on the music page even while nothing is playing, with every control at rest', () => {
+    window.history.pushState(null, '', '/music');
+
+    renderInAnAddress(<NowPlayingBar player={aFakeMusicPlayer().player} />);
+
+    expect(screen.getByRole('region', { name: 'Now playing' })).toBeInTheDocument();
+    expect(screen.getAllByText('Nothing is playing').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Play' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+
+    window.history.pushState(null, '', '/');
+  });
+
   it('says what is playing, who it is by, and how far through it is', () => {
     renderInAnAddress(<NowPlayingBar player={playing().player} />);
 

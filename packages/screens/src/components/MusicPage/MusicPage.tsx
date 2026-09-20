@@ -32,7 +32,7 @@ const PANEL_TITLES = {
   party: 'Listening party',
 } as const;
 
-const PANEL_WIDTH = '21rem';
+const PANEL_WIDTH = '20.5rem';
 
 const OPENING = { duration: VALENCE_TOKENS.duration.slow, ease: VALENCE_TOKENS.ease.soft };
 
