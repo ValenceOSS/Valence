@@ -68,13 +68,14 @@ describe('MusicPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('wraps the library in a card like every other panel on the page', () => {
+  it('draws the library and the page in a glass-edged card the colour of the admin sidebar', () => {
     renderInAnAddress(<MusicPage />);
 
     const aside = document.querySelector('aside');
 
     expect(aside).toHaveClass('valence-card-shell');
-    expect(aside?.firstElementChild).toHaveClass('valence-card-face');
+    expect(aside?.firstElementChild).toHaveClass('valence-card-face--raised');
+    expect(screen.getByRole('region', { name: 'Music' })).toHaveClass('valence-card-shell');
   });
 
   it('sets a display name so devtools can identify it', () => {

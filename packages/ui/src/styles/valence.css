@@ -605,6 +605,10 @@ body[data-scroll-locked] .valence-navbar {
   background-color: var(--card-face);
 }
 
+.valence-card-face--raised {
+  background-color: color-mix(in oklab, var(--color-surface-raised) 88%, transparent);
+}
+
 .valence-mark-ink {
   filter: var(--mark-ink);
 }

@@ -3,7 +3,12 @@ import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
-import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
+import {
+  fadeVariants,
+  revealTransition,
+  revealVariants,
+  stillTransition,
+} from '@ValenceUI/animations/reveal';
 import { VALENCE_TOKENS } from '@ValenceUI/tokens';
 import { setMusicPanel, useMusicPanel } from '@ValenceScreens/music/musicPanel';
 import { writeMusicView } from '@ValenceScreens/music/musicView';
@@ -112,23 +117,23 @@ const MusicPage = () => {
           )}
         >
           <aside className="valence-card-shell mr-2 flex min-h-0 w-[17rem] shrink-0 xl:w-[19rem]">
-            <div className="valence-card-face flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="valence-card-face valence-card-face--raised flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               <MusicLibrary />
             </div>
           </aside>
         </div>
 
         <section aria-label="Music" className="valence-card-shell flex min-h-0 min-w-0 flex-1">
-          <div className="valence-card-face relative min-h-0 flex-1 overflow-y-auto overscroll-contain [container-type:size] [--music-lane:1.25rem] sm:[--music-lane:2rem]">
+          <div className="valence-card-face valence-card-face--raised relative min-h-0 flex-1 overflow-y-auto overscroll-contain [container-type:size] [--music-lane:1.25rem] sm:[--music-lane:2rem]">
             <MusicWash />
 
             <div className="relative flex flex-col pt-2">
               <motion.div
                 key={writeMusicView(view) ?? 'home'}
-                variants={fadeVariants}
+                variants={revealVariants(prefersReducedMotion)}
                 initial="hidden"
                 animate="shown"
-                transition={stillTransition}
+                transition={revealTransition(prefersReducedMotion, 'heavy')}
                 className="min-w-0"
               >
                 <MusicViewShown view={view} />
@@ -159,7 +164,7 @@ const MusicPage = () => {
                     animate="shown"
                     exit="gone"
                     transition={stillTransition}
-                    className="valence-card-face flex min-h-0 min-w-0 flex-1 flex-col"
+                    className="valence-card-face valence-card-face--raised flex min-h-0 min-w-0 flex-1 flex-col"
                   >
                     <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
                       <h2 className="text-base font-semibold tracking-tight text-text">

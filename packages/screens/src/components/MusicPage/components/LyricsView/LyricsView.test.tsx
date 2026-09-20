@@ -56,6 +56,16 @@ describe('LyricsView', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
   });
 
+  it('keeps every line in focus, since blurring is for the immersive view', async () => {
+    renderInAnAddress(<LyricsView />);
+
+    await screen.findByRole('region', { name: 'Lyrics for Track 1' });
+
+    for (const line of screen.getAllByRole('listitem')) {
+      expect(line.style.filter).not.toMatch(/blur\([1-9]/);
+    }
+  });
+
   it('marks the line being sung', async () => {
     renderInAnAddress(<LyricsView />);
 
