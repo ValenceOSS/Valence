@@ -256,7 +256,23 @@ describe('readScanState', () => {
       phase: 'probing',
       processed: 4,
       total: 10,
+      item: null,
     });
+  });
+
+  it('carries the file a scan is on, so a count that only ticks says what it is doing', async () => {
+    fetchMock.mockResolvedValue(
+      ok({
+        jobId: 'job-1',
+        state: 'running',
+        phase: 'probing',
+        processed: 4,
+        total: 10,
+        item: 'Arrival',
+      }),
+    );
+
+    await expect(readScanState('job-1')).resolves.toMatchObject({ item: 'Arrival' });
   });
 
   it('reports unknown rather than throwing when the server errors', async () => {
@@ -268,6 +284,7 @@ describe('readScanState', () => {
       phase: null,
       processed: null,
       total: null,
+      item: null,
     });
   });
 });

@@ -1302,6 +1302,7 @@ const createApp = ({
           phase: job.progress?.phase ?? null,
           processed: job.progress?.processed ?? null,
           total: job.progress?.total ?? null,
+          item: job.progress?.item ?? null,
         })),
       },
       200,
@@ -1314,9 +1315,9 @@ const createApp = ({
     }
 
     const { jobId } = context.req.valid('param');
-    const { state, phase, processed, total } = await library.readScanState(jobId);
+    const { state, phase, processed, total, item } = await library.readScanState(jobId);
 
-    return context.json({ jobId, state, phase, processed, total }, 200);
+    return context.json({ jobId, state, phase, processed, total, item }, 200);
   });
 
   app.openapi(resetLibraryRoute, async (context) => {

@@ -25,6 +25,7 @@ const ScanProgressSchema = z.object({
   phase: z.string().nullable(),
   processed: z.number().int().nonnegative().nullable(),
   total: z.number().int().nonnegative().nullable(),
+  item: z.string().nullable().default(null),
 });
 
 type ScanState = z.infer<typeof ScanStateSchema>;
@@ -417,7 +418,7 @@ const readScanState = async (jobId: string): Promise<ScanProgress> => {
   });
 
   if (!response.ok) {
-    return { jobId, state: 'unknown', phase: null, processed: null, total: null };
+    return { jobId, state: 'unknown', phase: null, processed: null, total: null, item: null };
   }
 
   return ScanProgressSchema.parse(await response.json());

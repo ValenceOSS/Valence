@@ -19,7 +19,13 @@ type CreateJobQueueOptions = {
   handlers: Record<string, JobHandler>;
   onProblem?: (message: string) => void;
   onStarted?: (entry: { kind: string; jobId: string; subject: string | null }) => Promise<void>;
-  onProgress?: (entry: { jobId: string; phase: string; processed: number; total: number }) => void;
+  onProgress?: (entry: {
+    jobId: string;
+    phase: string;
+    processed: number;
+    total: number;
+    item: string | null;
+  }) => void;
   onFinished?: (finished: FinishedJob) => void;
 };
 
@@ -269,9 +275,9 @@ const createJobQueue = async ({
 
     isCancelled: (jobId) => cancelled.has(jobId),
 
-    reportProgress: (jobId, phase, processed, total) => {
-      progressByJobId.set(jobId, { phase, processed, total });
-      onProgress?.({ jobId, phase, processed, total });
+    reportProgress: (jobId, phase, processed, total, item = null) => {
+      progressByJobId.set(jobId, { phase, processed, total, item });
+      onProgress?.({ jobId, phase, processed, total, item });
     },
 
     setSchedule: async (queueName, key, cron, timezone) => {

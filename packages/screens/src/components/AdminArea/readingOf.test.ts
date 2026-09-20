@@ -6,6 +6,7 @@ const entry = (libraryId: string, kind: string): ScanEntry => ({
   libraryId,
   kind,
   phase: null,
+  item: null,
   processed: null,
   total: null,
   jobId: 'job-1',

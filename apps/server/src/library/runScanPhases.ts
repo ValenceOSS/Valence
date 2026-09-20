@@ -2,8 +2,7 @@ import type { ScanResult } from '@ValenceContracts/schemas/Library';
 
 type ScanPhaseWork = {
   scan: () => Promise<ScanResult | null>;
-  fetchLogos: () => Promise<void>;
-  detectSegments: () => Promise<void>;
+  lookUp: () => Promise<void>;
 };
 
 type ScanPhaseOptions = {
@@ -13,36 +12,38 @@ type ScanPhaseOptions = {
   onRead: () => Promise<void>;
 };
 
-const PHASES = ['scan', 'fetchLogos', 'detectSegments'] as const;
+const PHASES = ['scan', 'lookUp'] as const;
 
 /**
- * Reads a library: the files, then the lettering, then the intros.
+ * Reads a library, and no more than that.
  *
- * Reading only. The clips and the scrub thumbnails used to be phases four and five of this, and a
- * scan was not finished until they were — which on a real library is days, and for all of those days
- * no new film could be picked up, because a library will not read twice at once. Adding one film
- * meant waiting for every thumbnail in the collection.
+ * Everything that enriches what was read — the lettering, the intros, the clips and the scrub
+ * thumbnails — is asked for rather than done. `onRead` runs once the reading is finished, queues
+ * each of them as work of its own, and this returns.
  *
- * So the renders are asked for instead. `onRead` runs once the reading is done and queues them as
- * work of their own, and this returns. That is what Jellyfin calls a non-blocking scan, and it is
- * the only behaviour here: media is in the library before its thumbnails are drawn.
+ * Which matters most when there is more than one library. Reading is one queue, so libraries are
+ * read one after another, and anything a library does before it lets go of that queue is time every
+ * other library spends unread. Finding the intros in a film library is hours; doing it inside the
+ * scan meant nobody could watch a programme until it finished, because the programmes had not been
+ * read yet. Now each library is read, the next library is read, and the enriching happens on its
+ * own queues beside them.
  *
- * Every phase works from what is outstanding rather than from what this scan happened to import, so
- * running one over a library that is already complete costs a query and nothing else. That is what
- * makes it safe to run all of them every time rather than remembering which ones a file still needs,
- * and it is why the renders can be queued unconditionally.
+ * Music is the exception and looks its titles up here: what it asks the catalogue is part of
+ * reading a track rather than something added to it afterwards, and there is no queue of its own to
+ * ask.
  *
- * Lettering comes before the intros because it is the cheaper of the two and a scan is usually being
- * watched, so a page shows the right thing sooner for the ordering costing nothing.
+ * Every piece of that work reads what is outstanding rather than what this scan happened to import,
+ * so asking for it over a library that is already complete costs a query and nothing else. That is
+ * what makes it safe to ask every time rather than remembering what each file still needs.
  *
  * Cancellation is checked between phases rather than within them, so a cancelled scan stops at the
- * next boundary rather than abandoning work half-written — and a cancelled scan asks for no renders,
+ * next boundary rather than abandoning work half-written — and a cancelled scan asks for nothing,
  * since stopping a scan should not start the longest work in the system.
  *
- * @param work - What each phase does.
+ * @param work - Reading the library, and the looking up that only music does here.
  * @param isCancelled - Whether the job has been asked to stop.
  * @param onScanned - Told what the reading phase changed, where it reported anything.
- * @param onRead - Asks for the artefacts the library is still missing, once it has been read.
+ * @param onRead - Asks for everything the library is still missing, once it has been read.
  */
 const runScanPhases = async ({
   work,

@@ -14,6 +14,7 @@ type ScanEntry = {
   libraryId: string;
   kind: string;
   phase: string | null;
+  item: string | null;
   processed: number | null;
   total: number | null;
   jobId: string | null;
@@ -126,7 +127,15 @@ const runAndTrack = async (
 ): Promise<void> => {
   const key = keyOf(libraryId, kind);
 
-  track(key, { libraryId, kind, phase: null, processed: null, total: null, jobId: null });
+  track(key, {
+    libraryId,
+    kind,
+    phase: null,
+    processed: null,
+    total: null,
+    item: null,
+    jobId: null,
+  });
 
   try {
     const job = await enqueue();
@@ -136,6 +145,7 @@ const runAndTrack = async (
         libraryId,
         kind,
         phase: null,
+        item: null,
         processed: null,
         total: null,
         jobId: job.jobId,
@@ -146,6 +156,7 @@ const runAndTrack = async (
           libraryId,
           kind,
           phase: found.phase,
+          item: found.item,
           processed: found.processed,
           total: found.total,
           jobId: job.jobId,
@@ -182,6 +193,7 @@ const resumeRunning = async (): Promise<void> => {
           libraryId,
           kind: scan.kind,
           phase: scan.phase,
+          item: scan.item,
           processed: scan.processed,
           total: scan.total,
           jobId: scan.jobId,
@@ -193,6 +205,7 @@ const resumeRunning = async (): Promise<void> => {
               libraryId,
               kind: scan.kind,
               phase: found.phase,
+              item: found.item,
               processed: found.processed,
               total: found.total,
               jobId: scan.jobId,

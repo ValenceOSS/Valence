@@ -142,6 +142,7 @@ type LibraryService = ShowService & {
     phase: string | null;
     processed: number | null;
     total: number | null;
+    item: string | null;
   }>;
   readArtworkUrl: (mediaId: string, kind: 'poster' | 'backdrop' | 'logo') => Promise<string | null>;
 };

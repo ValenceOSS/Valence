@@ -58,6 +58,7 @@ const JobProgressEventSchema = z.object({
   phase: z.string(),
   processed: z.number().int().nonnegative(),
   total: z.number().int().nonnegative(),
+  item: z.string().nullable().default(null),
 });
 
 const JobCompletedEventSchema = z.object({

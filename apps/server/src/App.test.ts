@@ -130,7 +130,7 @@ describe('what the server says it is working on', () => {
         jobId: 'job-1',
         kind: 'library.scan',
         subject: 'library-1',
-        progress: { phase: 'probing', processed: 3, total: 10 },
+        progress: { phase: 'probing', processed: 3, total: 10, item: 'Arrival' },
       },
     ]);
 

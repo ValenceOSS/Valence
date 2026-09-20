@@ -339,6 +339,7 @@ const LibrariesPanel = ({
           phase: entry.phase,
           processed: entry.processed,
           total: entry.total,
+          item: entry.item,
         }))}
         tasks={working.filter(
           (job) =>

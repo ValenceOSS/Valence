@@ -833,7 +833,7 @@ const createMemoryLibraryService = (
     ),
 
   readScanState: () =>
-    Promise.resolve({ state: 'completed', phase: null, processed: null, total: null }),
+    Promise.resolve({ state: 'completed', phase: null, processed: null, total: null, item: null }),
 
   readArtworkUrl: (mediaId, kind) =>
     Promise.resolve(

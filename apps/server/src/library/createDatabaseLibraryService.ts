@@ -646,8 +646,8 @@ const createDatabaseLibraryService = ({
       ...(jobId === undefined
         ? {}
         : {
-            onProgress: (phase, processed, total) =>
-              jobs.reportProgress(jobId, phase, processed, total),
+            onProgress: (phase, processed, total, item) =>
+              jobs.reportProgress(jobId, phase, processed, total, item ?? null),
             isCancelled: () => jobs.isCancelled(jobId),
           }),
     });
@@ -1792,6 +1792,7 @@ const createDatabaseLibraryService = ({
         phase: progress?.phase ?? null,
         processed: progress?.processed ?? null,
         total: progress?.total ?? null,
+        item: progress?.item ?? null,
       };
     },
 

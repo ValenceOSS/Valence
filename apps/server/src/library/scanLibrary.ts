@@ -4,6 +4,7 @@ import { resolveMetadata } from './MetadataProvider';
 import { createFilenameMetadataProvider } from './createFilenameMetadataProvider';
 import { describeQuality } from './describeQuality';
 import { readEpisodeFromPath, tidy } from './readEpisodeFromPath';
+import { nameOfFile } from './nameOfFile';
 import { groupBareNumberedEpisodes } from './groupBareNumberedEpisodes';
 import { groupExtras } from './groupExtras';
 import { groupVersions } from './groupVersions';
@@ -97,7 +98,7 @@ type ScanLibraryOptions = {
   isPartial?: boolean;
   atOnce?: number;
   onProblem?: (path: string, reason: string) => void;
-  onProgress?: (phase: ScanPhase, processed: number, total: number) => void;
+  onProgress?: (phase: ScanPhase, processed: number, total: number, item?: string) => void;
   onAdded?: (item: ScannedItem) => void;
   onRemoved?: (items: ScannedItem[]) => void;
   isCancelled?: () => boolean;
@@ -433,7 +434,7 @@ const scanLibrary = async ({
       }
     } finally {
       probed += 1;
-      onProgress?.('probing', probed, changed.length);
+      onProgress?.('probing', probed, changed.length, nameOfFile(file.path));
     }
 
     return false;
