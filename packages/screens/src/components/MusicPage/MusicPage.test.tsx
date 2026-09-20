@@ -11,7 +11,17 @@ vi.mock('@ValenceScreens/music/theMusicPlayer', () => ({
   theMusicPlayer: () => aFakeMusicPlayer().player,
 }));
 
+const atWidth = (isWide: boolean) => {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: isWide,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+};
+
 beforeEach(() => {
+  atWidth(true);
   vi.stubGlobal(
     'fetch',
     answerMusicRequests({
@@ -24,6 +34,33 @@ beforeEach(() => {
 
 afterEach(() => {
   setMusicPanel(null);
+});
+
+describe('MusicPage on a narrow screen', () => {
+  it('keeps the library away until it is asked for, then draws it as a drawer', async () => {
+    atWidth(false);
+
+    renderInAnAddress(<MusicPage />);
+
+    expect(screen.queryByRole('navigation', { name: 'Your library' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Your library' }));
+
+    expect(await screen.findByRole('navigation', { name: 'Your library' })).toBeInTheDocument();
+  });
+
+  it('draws the queue as a drawer rather than a column beside the page', async () => {
+    atWidth(false);
+
+    renderInAnAddress(<MusicPage />);
+
+    act(() => {
+      setMusicPanel('queue');
+    });
+
+    expect(await screen.findByRole('dialog', { name: 'Queue' })).toBeInTheDocument();
+    expect(screen.queryByRole('complementary', { name: 'Queue' })).not.toBeInTheDocument();
+  });
 });
 
 describe('MusicPage', () => {

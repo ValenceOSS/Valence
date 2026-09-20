@@ -237,7 +237,7 @@ const MusicTransport = ({
         {repeating}
       </div>
 
-      <div className="hidden w-full items-center gap-2 md:flex">
+      <div className="flex w-full items-center gap-2">
         <span className="w-10 text-right text-xs tabular-nums text-text-muted">
           {formatDuration(position)}
         </span>

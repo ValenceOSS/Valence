@@ -1,6 +1,10 @@
-import { Cancel01Icon } from '@hugeicons/core-free-icons';
+import { Cancel01Icon, Menu01Icon } from '@hugeicons/core-free-icons';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
+import { Dialog } from '@ValenceUI/Dialog';
+import { DialogContent } from '@ValenceUI/DialogContent';
+import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import {
@@ -12,6 +16,7 @@ import {
 import { VALENCE_TOKENS } from '@ValenceUI/tokens';
 import { setMusicPanel, useMusicPanel } from '@ValenceScreens/music/musicPanel';
 import { writeMusicView } from '@ValenceScreens/music/musicView';
+import { useRoomForThePanels } from '@ValenceScreens/music/useRoomForThePanels';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { AlbumView } from './components/AlbumView/AlbumView';
 import { AlbumsView } from './components/AlbumsView/AlbumsView';
@@ -101,103 +106,169 @@ const MusicPage = () => {
   const panel = useMusicPanel();
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
+  const isWide = useRoomForThePanels();
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const viewKey = writeMusicView(view) ?? 'home';
+
+  useEffect(() => {
+    setIsLibraryOpen(false);
+  }, [viewKey]);
 
   return (
     <main className="px-2 pt-2 sm:px-3 sm:pt-3">
       <h1 className="sr-only">Music</h1>
 
-      <div className="flex h-[calc(100svh-var(--nav-clearance)-var(--valence-window-bar,0px)-var(--music-bar-room,0px)-1rem)] min-h-[28rem] sm:h-[calc(100svh-var(--nav-clearance)-var(--valence-window-bar,0px)-var(--music-bar-room,0px)-1.5rem)]">
-        <div
-          className={cn(
-            'hidden min-h-0 shrink-0 overflow-hidden lg:flex',
-            'transition-[width,opacity] duration-[var(--duration-slow)] ease-[var(--ease-out)] motion-reduce:transition-none',
-            panel === null
-              ? 'lg:w-[17.5rem] xl:w-[19.5rem]'
-              : 'lg:w-0 lg:opacity-0 xl:w-[19.5rem] xl:opacity-100',
-          )}
-        >
-          <aside className="valence-card-shell mr-2 flex min-h-0 w-[17rem] shrink-0 xl:w-[19rem]">
-            <div className="valence-card-face valence-card-face--raised flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-              <MusicLibrary />
-            </div>
-          </aside>
-        </div>
-
-        <section aria-label="Music" className="valence-card-shell flex min-h-0 min-w-0 flex-1">
-          <div className="valence-card-face valence-card-face--raised relative min-h-0 flex-1 overflow-y-auto overscroll-contain [container-type:size] [--music-lane:1.25rem] sm:[--music-lane:2rem]">
-            <MusicWash />
-
-            <div className={cn('relative flex flex-col', view.kind === 'lyrics' ? '' : 'pt-2')}>
-              <motion.div
-                key={writeMusicView(view) ?? 'home'}
-                variants={revealVariants(prefersReducedMotion)}
-                initial="hidden"
-                animate="shown"
-                transition={revealTransition(prefersReducedMotion, 'heavy')}
-                className="min-w-0"
-              >
-                <MusicViewShown view={view} />
-              </motion.div>
-            </div>
-          </div>
-        </section>
-
-        <AnimatePresence initial={false}>
-          {panel === null ? null : (
-            <motion.div
-              key="panel"
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: PANEL_WIDTH, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={isStill ? stillTransition : OPENING}
-              className="hidden min-h-0 shrink-0 justify-end overflow-hidden lg:flex"
+      <div className="flex flex-col h-[calc(100svh-var(--nav-clearance)-var(--valence-window-bar,0px)-var(--music-bar-room,0px)-1rem)] min-h-[28rem] sm:h-[calc(100svh-var(--nav-clearance)-var(--valence-window-bar,0px)-var(--music-bar-room,0px)-1.5rem)]">
+        {isWide ? null : (
+          <div className="flex shrink-0 justify-start pb-2">
+            <Button
+              variant="glossy"
+              size="sm"
+              onClick={() => {
+                setIsLibraryOpen(true);
+              }}
             >
-              <aside
-                aria-label={PANEL_TITLES[panel]}
-                className="valence-card-shell ml-2 flex min-h-0 w-[20rem] shrink-0"
-              >
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={panel}
-                    variants={fadeVariants}
-                    initial="hidden"
-                    animate="shown"
-                    exit="gone"
-                    transition={stillTransition}
-                    className="valence-card-face valence-card-face--raised flex min-h-0 min-w-0 flex-1 flex-col"
-                  >
-                    <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
-                      <h2 className="text-base font-semibold tracking-tight text-text">
-                        {PANEL_TITLES[panel]}
-                      </h2>
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        isIconOnly
-                        label={`Close ${PANEL_TITLES[panel].toLowerCase()}`}
-                        onClick={() => {
-                          setMusicPanel(null);
-                        }}
-                      >
-                        <Icon of={Cancel01Icon} size={16} />
-                      </Button>
-                    </div>
-                    <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
-                      {panel === 'queue' ? (
-                        <QueuePanel />
-                      ) : panel === 'devices' ? (
-                        <DevicesPanel />
-                      ) : (
-                        <ListeningPartyPanel />
-                      )}
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+              Your library
+              <Icon of={Menu01Icon} size={16} />
+            </Button>
+          </div>
+        )}
+
+        <div className="flex min-h-0 flex-1">
+          {isWide ? (
+            <div
+              className={cn(
+                'hidden min-h-0 shrink-0 overflow-hidden lg:flex',
+                'transition-[width,opacity] duration-[var(--duration-slow)] ease-[var(--ease-out)] motion-reduce:transition-none',
+                panel === null
+                  ? 'lg:w-[17.5rem] xl:w-[19.5rem]'
+                  : 'lg:w-0 lg:opacity-0 xl:w-[19.5rem] xl:opacity-100',
+              )}
+            >
+              <aside className="valence-card-shell mr-2 flex min-h-0 w-[17rem] shrink-0 xl:w-[19rem]">
+                <div className="valence-card-face valence-card-face--raised flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                  <MusicLibrary />
+                </div>
               </aside>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          ) : null}
+
+          <section aria-label="Music" className="valence-card-shell flex min-h-0 min-w-0 flex-1">
+            <div className="valence-card-face valence-card-face--raised relative min-h-0 flex-1 overflow-y-auto overscroll-contain [container-type:size] [--music-lane:1.25rem] sm:[--music-lane:2rem]">
+              <MusicWash />
+
+              <div className={cn('relative flex flex-col', view.kind === 'lyrics' ? '' : 'pt-2')}>
+                <motion.div
+                  key={writeMusicView(view) ?? 'home'}
+                  variants={revealVariants(prefersReducedMotion)}
+                  initial="hidden"
+                  animate="shown"
+                  transition={revealTransition(prefersReducedMotion, 'heavy')}
+                  className="min-w-0"
+                >
+                  <MusicViewShown view={view} />
+                </motion.div>
+              </div>
+            </div>
+          </section>
+
+          {isWide ? (
+            <AnimatePresence initial={false}>
+              {panel === null ? null : (
+                <motion.div
+                  key="panel"
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: PANEL_WIDTH, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={isStill ? stillTransition : OPENING}
+                  className="hidden min-h-0 shrink-0 justify-end overflow-hidden lg:flex"
+                >
+                  <aside
+                    aria-label={PANEL_TITLES[panel]}
+                    className="valence-card-shell ml-2 flex min-h-0 w-[20rem] shrink-0"
+                  >
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.div
+                        key={panel}
+                        variants={fadeVariants}
+                        initial="hidden"
+                        animate="shown"
+                        exit="gone"
+                        transition={stillTransition}
+                        className="valence-card-face valence-card-face--raised flex min-h-0 min-w-0 flex-1 flex-col"
+                      >
+                        <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
+                          <h2 className="text-base font-semibold tracking-tight text-text">
+                            {PANEL_TITLES[panel]}
+                          </h2>
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            isIconOnly
+                            label={`Close ${PANEL_TITLES[panel].toLowerCase()}`}
+                            onClick={() => {
+                              setMusicPanel(null);
+                            }}
+                          >
+                            <Icon of={Cancel01Icon} size={16} />
+                          </Button>
+                        </div>
+                        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
+                          {panel === 'queue' ? (
+                            <QueuePanel />
+                          ) : panel === 'devices' ? (
+                            <DevicesPanel />
+                          ) : (
+                            <ListeningPartyPanel />
+                          )}
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
+                  </aside>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          ) : null}
+        </div>
       </div>
+
+      <Dialog
+        label="Your library"
+        isOpen={!isWide && isLibraryOpen}
+        onClose={() => {
+          setIsLibraryOpen(false);
+        }}
+        size="drawer"
+      >
+        <DialogContent className="p-0">
+          <MusicLibrary />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        label={panel === null ? 'Music' : PANEL_TITLES[panel]}
+        isOpen={!isWide && panel !== null}
+        onClose={() => {
+          setMusicPanel(null);
+        }}
+        size="drawer"
+      >
+        {panel === null ? null : (
+          <>
+            <DialogTitle title={PANEL_TITLES[panel]} />
+
+            <DialogContent>
+              {panel === 'queue' ? (
+                <QueuePanel />
+              ) : panel === 'devices' ? (
+                <DevicesPanel />
+              ) : (
+                <ListeningPartyPanel />
+              )}
+            </DialogContent>
+          </>
+        )}
+      </Dialog>
 
       <MusicVideoDialog />
     </main>

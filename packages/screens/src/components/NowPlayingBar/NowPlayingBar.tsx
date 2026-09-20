@@ -2,6 +2,7 @@ import {
   FavouriteIcon,
   LaptopIcon,
   LeftToRightListNumberIcon,
+  MoreHorizontalIcon,
   Mic01Icon,
   UserGroupIcon,
   VolumeHighIcon,
@@ -9,6 +10,7 @@ import {
   VolumeMute01Icon,
 } from '@hugeicons/core-free-icons';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
@@ -217,7 +219,69 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 />
               </div>
 
-              <MusicTransport state={state} shown={shown} player={player} isIdle={isIdle} />
+              <ActionMenu
+                label="More music controls"
+                className="md:hidden"
+                trigger={<Icon of={MoreHorizontalIcon} size={20} />}
+                groups={[
+                  {
+                    items: [
+                      {
+                        id: 'lyrics',
+                        label: 'Lyrics',
+                        icon: <Icon of={Mic01Icon} size={16} />,
+                        isDisabled: isIdle,
+                        onChoose: () => {
+                          open(
+                            view.kind === 'lyrics' && place.section === 'music'
+                              ? { kind: 'album', id: shown.albumId }
+                              : { kind: 'lyrics' },
+                          );
+                        },
+                      },
+                      {
+                        id: 'queue',
+                        label: 'Queue',
+                        icon: <Icon of={LeftToRightListNumberIcon} size={16} />,
+                        onChoose: () => {
+                          togglePanel('queue');
+                        },
+                      },
+                      {
+                        id: 'party',
+                        label: 'Listening party',
+                        icon: <Icon of={UserGroupIcon} size={16} />,
+                        onChoose: () => {
+                          togglePanel('party');
+                        },
+                      },
+                      {
+                        id: 'devices',
+                        label: 'Play on another device',
+                        icon: <Icon of={LaptopIcon} size={16} />,
+                        onChoose: () => {
+                          togglePanel('devices');
+                        },
+                      },
+                      {
+                        id: 'mute',
+                        label: state.isMuted ? 'Unmute' : 'Mute',
+                        icon: (
+                          <Icon of={volume === 0 ? VolumeMute01Icon : VolumeHighIcon} size={16} />
+                        ),
+                        keepsOpen: true,
+                        onChoose: () => {
+                          player.toggleMute();
+                        },
+                      },
+                    ],
+                  },
+                ]}
+              />
+
+              <div className="col-span-2 md:col-span-1">
+                <MusicTransport state={state} shown={shown} player={player} isIdle={isIdle} />
+              </div>
 
               <div className="hidden min-w-0 items-center justify-end gap-1 md:flex">
                 <BarButton

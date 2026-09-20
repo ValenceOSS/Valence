@@ -82,6 +82,15 @@ describe('NowPlayingBar', () => {
     window.history.pushState(null, '', '/');
   });
 
+  it('carries the lyrics, queue and devices in a menu for a screen with no room for their buttons', async () => {
+    renderInAnAddress(<NowPlayingBar player={playing().player} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'More music controls' }));
+
+    expect(await screen.findByRole('menuitem', { name: /Queue/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Play on another device/ })).toBeInTheDocument();
+  });
+
   it('says what is playing, who it is by, and how far through it is', () => {
     renderInAnAddress(<NowPlayingBar player={playing().player} />);
 
