@@ -14,6 +14,7 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { notify } from '@ValenceUI/notify';
 import { deleteLibrary } from '@ValenceClient/library/fetchLibrary';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Button } from '@ValenceUI/Button';
@@ -128,7 +129,10 @@ const LibrariesPanel = ({
         accessorFn: (library) => library.itemCount,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
-            {row.original.itemCount === 1 ? '1 item' : `${row.original.itemCount.toString()} items`}
+            <AnimatedNumber
+              value={row.original.itemCount}
+              suffix={row.original.itemCount === 1 ? ' item' : ' items'}
+            />
           </span>
         ),
       },

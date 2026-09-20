@@ -644,6 +644,9 @@ importers:
       '@hugeicons/react':
         specifier: ^1.1.10
         version: 1.1.10(react@19.3.0)
+      '@number-flow/react':
+        specifier: ^0.6.2
+        version: 0.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@radix-ui/react-avatar':
         specifier: ^1.2.6
         version: 1.2.6(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -2901,6 +2904,15 @@ packages:
       {
         integrity: sha512-8L9xFeTYKhm49xfIypoe2W5wV1m/3Z58kT+7kR9A8OyFxcPduI4VmxaUMQyKYrRjUoLLSXv6EKKID5Tvj9cUVw==,
       }
+
+  '@number-flow/react@0.6.2':
+    resolution:
+      {
+        integrity: sha512-WjZuV4aA+vhRCgCF+adGLgFVVAJ8vdvq6EchRT2FiBIgElTXtDOA3YgkcMr9UHpvpS9v4H70AB5wZv0D9jc3QA==,
+      }
+    peerDependencies:
+      react: ^18 || ^19
+      react-dom: ^18 || ^19
 
   '@opentelemetry/semantic-conventions@1.43.0':
     resolution:
@@ -6507,6 +6519,12 @@ packages:
       jiti:
         optional: true
 
+  esm-env@1.2.2:
+    resolution:
+      {
+        integrity: sha512-Epxrv+Nr/CaL4ZcFGPJIYLWFom+YeV1DqMLHJoEd9SYRxNbaFruBwfEX/kkHUJf55j2+TUbmDcmuilbP1TmXHA==,
+      }
+
   espree@11.2.0:
     resolution:
       {
@@ -8465,6 +8483,12 @@ packages:
     resolution:
       {
         integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==,
+      }
+
+  number-flow@0.6.2:
+    resolution:
+      {
+        integrity: sha512-MCnImG4Q5vPwhSXnov56nOuyyKn6LC+Qd7II1UiKc+ACRtug5iAtn0+CwXNxM38AC5lSowEY+oYEtZX2qMnUyw==,
       }
 
   object-keys@1.1.1:
@@ -11679,6 +11703,13 @@ snapshots:
 
   '@nodable/entities@3.0.0': {}
 
+  '@number-flow/react@0.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+    dependencies:
+      esm-env: 1.2.2
+      number-flow: 0.6.2
+      react: 19.3.0
+      react-dom: 19.3.0(react@19.3.0)
+
   '@opentelemetry/semantic-conventions@1.43.0': {}
 
   '@oxc-project/types@0.149.0': {}
@@ -13991,6 +14022,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  esm-env@1.2.2: {}
+
   espree@11.2.0:
     dependencies:
       acorn: 8.18.0
@@ -15244,6 +15277,10 @@ snapshots:
   nth-check@2.1.1:
     dependencies:
       boolbase: 1.0.0
+
+  number-flow@0.6.2:
+    dependencies:
+      esm-env: 1.2.2
 
   object-keys@1.1.1:
     optional: true

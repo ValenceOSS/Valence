@@ -2,6 +2,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { MoreHorizontalIcon, InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -291,9 +292,12 @@ const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHis
 
           return (
             <span className="whitespace-nowrap tabular-nums text-text-muted">
-              {progress === null
-                ? ''
-                : `${progress.phase} ${progress.processed.toString()}/${progress.total.toString()}`}
+              {progress === null ? null : (
+                <>
+                  {progress.phase} <AnimatedNumber value={progress.processed} />/
+                  <AnimatedNumber value={progress.total} />
+                </>
+              )}
             </span>
           );
         },

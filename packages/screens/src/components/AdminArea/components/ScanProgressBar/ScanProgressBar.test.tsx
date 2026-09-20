@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ScanProgressBar } from './ScanProgressBar';
 
@@ -27,7 +27,8 @@ describe('ScanProgressBar', () => {
 
     expect(bar).toHaveAttribute('aria-valuenow', '4');
     expect(bar).toHaveAttribute('aria-valuemax', '10');
-    expect(screen.getByText('4/10')).toBeInTheDocument();
+    expect(within(bar).getByText('4', { selector: '.sr-only' })).toBeInTheDocument();
+    expect(within(bar).getByText('10', { selector: '.sr-only' })).toBeInTheDocument();
   });
 
   it('reads an unrecognised phase name as-is, rather than hiding it', () => {
