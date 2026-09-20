@@ -127,7 +127,7 @@ const MusicPage = () => {
           <div className="valence-card-face valence-card-face--raised relative min-h-0 flex-1 overflow-y-auto overscroll-contain [container-type:size] [--music-lane:1.25rem] sm:[--music-lane:2rem]">
             <MusicWash />
 
-            <div className="relative flex flex-col pt-2">
+            <div className={cn('relative flex flex-col', view.kind === 'lyrics' ? '' : 'pt-2')}>
               <motion.div
                 key={writeMusicView(view) ?? 'home'}
                 variants={revealVariants(prefersReducedMotion)}

@@ -78,6 +78,16 @@ describe('MusicPage', () => {
     expect(screen.getByRole('region', { name: 'Music' })).toHaveClass('valence-card-shell');
   });
 
+  it('gives the lyrics the whole height of the page, so their glow reaches its top edge', () => {
+    window.history.pushState(null, '', '/music?listen=lyrics');
+
+    renderInAnAddress(<MusicPage />);
+
+    expect(document.querySelector('.relative.flex.flex-col')).not.toHaveClass('pt-2');
+
+    window.history.pushState(null, '', '/');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MusicPage.displayName).toBe('MusicPage');
   });
