@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { createDatabase } from '@ValenceServer/db/Database';
 import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
 import { migrateToLatest } from '@ValenceServer/db/migrateToLatest';
+import { createMissedMigrationApplier } from '@ValenceServer/db/createMissedMigrationApplier';
 import { readEnv } from '@ValenceServer/env/Env';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
@@ -43,6 +44,7 @@ const run = async (): Promise<void> => {
           },
         }),
       apply: () => migrate(db, { migrationsFolder: MIGRATIONS_FOLDER }),
+      applyMissed: createMissedMigrationApplier(db, MIGRATIONS_FOLDER),
       isAllowed: true,
       say: (_level, line) => {
         process.stdout.write(`${line}\n`);
