@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().positive().default(8421),
+  REQUESTS_PORT: z.coerce.number().int().positive().default(8421),
   DATABASE_URL: z.string().url().default('postgres://valence:valence@localhost:5432/valence'),
   REQUESTS_SECRET: z.string().min(32),
   VPN_URL: z
@@ -12,6 +12,13 @@ const EnvSchema = z.object({
   VPN_API_KEY: z.string().default(''),
   VPN_CHECK_SECONDS: z.coerce.number().int().positive().default(30),
   VALENCE_VERSION: z.string().default('0.0.0'),
+  DEFINITIONS_REPOSITORY: z.string().default('Prowlarr/Indexers'),
+  DEFINITIONS_BRANCH: z.string().default('master'),
+  DEFINITIONS_PATH: z.string().default('definitions/v11'),
+  FLARESOLVERR_URL: z
+    .string()
+    .default('')
+    .transform((value) => value.trim().replace(/\/+$/, '')),
 });
 
 type Env = z.infer<typeof EnvSchema>;

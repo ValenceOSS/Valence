@@ -3,6 +3,9 @@ import {
   fetchRequestsAvailability,
   fetchRequestsOverview,
 } from '@ValenceClient/requests/fetchRequests';
+import { fetchIndexers, searchReleases } from '@ValenceClient/requests/fetchIndexers';
+import { fetchCatalogue, fetchDefinition } from '@ValenceClient/requests/fetchDefinitions';
+import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 
 const REQUESTS = ['requests'] as const;
 
@@ -36,6 +39,67 @@ const overview = (isEnabled = true) =>
     enabled: isEnabled,
   });
 
-const requestsQueries = { key: REQUESTS, availability, overview };
+/**
+ * The indexers requesting searches.
+ *
+ * @returns The query.
+ */
+const indexers = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'indexers'],
+    queryFn: () => fetchIndexers(),
+  });
+
+/**
+ * What every indexer found for a search, asked once and kept for as long as the page is open, so
+ * going back to the same search does not ask every indexer again.
+ *
+ * @param asked - What to look for, or nothing before anything has been searched for.
+ * @returns The query.
+ */
+const search = (asked: ReleaseSearch | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'search', asked],
+    queryFn: () => searchReleases(asked ?? {}),
+    enabled: asked !== null,
+    staleTime: Infinity,
+    retry: false,
+  });
+
+/**
+ * The catalogue of sites Valence has definitions for.
+ *
+ * @returns The query.
+ */
+const catalogue = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'catalogue'],
+    queryFn: () => fetchCatalogue(),
+    staleTime: 60_000,
+  });
+
+/**
+ * One definition, with the settings it asks for, which only changes when the catalogue does.
+ *
+ * @param id - Which, or nothing before one is chosen.
+ * @returns The query.
+ */
+const definition = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'definition', id],
+    queryFn: () => fetchDefinition(id ?? ''),
+    enabled: id !== null,
+    staleTime: Infinity,
+  });
+
+const requestsQueries = {
+  key: REQUESTS,
+  availability,
+  overview,
+  indexers,
+  search,
+  catalogue,
+  definition,
+};
 
 export { requestsQueries };

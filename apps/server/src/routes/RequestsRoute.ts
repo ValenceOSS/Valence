@@ -3,6 +3,18 @@ import {
   RequestsAvailabilitySchema,
   RequestsOverviewSchema,
 } from '@ValenceContracts/schemas/Requests';
+import {
+  IndexerCatalogueSchema,
+  IndexerDefinitionDetailSchema,
+} from '@ValenceContracts/schemas/IndexerDefinition';
+import {
+  IndexerChangeSchema,
+  IndexerDraftSchema,
+  IndexerSchema,
+  IndexerTestSchema,
+  ReleaseSearchOutcomeSchema,
+  ReleaseSearchSchema,
+} from '@ValenceContracts/schemas/Indexer';
 
 const RequestsError = z.object({ error: z.string() }).openapi('RequestsError');
 
@@ -69,4 +81,231 @@ const adminCheckRequestsRoute = createRoute({
   },
 });
 
-export { adminCheckRequestsRoute, adminRequestsOverviewRoute, requestsAvailabilityRoute };
+const IndexerAnswer = IndexerSchema.openapi('Indexer');
+
+const DefinitionIdParameter = z.object({
+  id: z
+    .string()
+    .min(1)
+    .openapi({ param: { name: 'id', in: 'path' } }),
+});
+
+const IndexerTestAnswer = IndexerTestSchema.openapi('IndexerTest');
+
+const IndexerIdParameter = z.object({
+  id: z
+    .string()
+    .uuid()
+    .openapi({ param: { name: 'id', in: 'path' } }),
+});
+
+/**
+ * The failures every route onto the requests service can answer with, beside its own.
+ *
+ * @param extra - What else this route can answer.
+ * @returns The responses.
+ */
+const failures = <Extra extends object>(extra: Extra) => ({
+  ...extra,
+  403: {
+    description: 'Not allowed to manage requesting',
+    content: { 'application/json': { schema: RequestsError } },
+  },
+  404: {
+    description: 'Requesting is off, or there is no such indexer',
+    content: { 'application/json': { schema: RequestsError } },
+  },
+  502: {
+    description: 'The requests service could not be heard',
+    content: { 'application/json': { schema: RequestsError } },
+  },
+});
+
+const REFUSED_BODY = {
+  400: {
+    description: 'That is not what this takes',
+    content: { 'application/json': { schema: RequestsError } },
+  },
+};
+
+const listIndexersRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/indexers',
+  tags: ['Admin'],
+  summary: 'List the indexers requesting searches',
+  responses: failures({
+    200: {
+      description: 'Every indexer, without its key',
+      content: { 'application/json': { schema: z.array(IndexerAnswer) } },
+    },
+  }),
+});
+
+const addIndexerRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/indexers',
+  tags: ['Admin'],
+  summary: 'Add a Torznab or Newznab indexer',
+  request: { body: { content: { 'application/json': { schema: IndexerDraftSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    201: {
+      description: 'The indexer, as kept',
+      content: { 'application/json': { schema: IndexerAnswer } },
+    },
+  }),
+});
+
+const tryIndexerRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/indexers/try',
+  tags: ['Admin'],
+  summary: 'Try an indexer before keeping it',
+  request: { body: { content: { 'application/json': { schema: IndexerDraftSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Whether it answered, and what it can search',
+      content: { 'application/json': { schema: IndexerTestAnswer } },
+    },
+  }),
+});
+
+const changeIndexerRoute = createRoute({
+  method: 'patch',
+  path: '/api/admin/requests/indexers/{id}',
+  tags: ['Admin'],
+  summary: 'Change an indexer',
+  request: {
+    params: IndexerIdParameter,
+    body: { content: { 'application/json': { schema: IndexerChangeSchema } } },
+  },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'The indexer, as changed',
+      content: { 'application/json': { schema: IndexerAnswer } },
+    },
+  }),
+});
+
+const removeIndexerRoute = createRoute({
+  method: 'delete',
+  path: '/api/admin/requests/indexers/{id}',
+  tags: ['Admin'],
+  summary: 'Remove an indexer',
+  request: { params: IndexerIdParameter },
+  responses: failures({ 204: { description: 'Removed' } }),
+});
+
+const testIndexerRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/indexers/{id}/test',
+  tags: ['Admin'],
+  summary: 'Test a kept indexer, reading what it can search again',
+  request: { params: IndexerIdParameter },
+  responses: failures({
+    200: {
+      description: 'Whether it answered, and what it can search',
+      content: { 'application/json': { schema: IndexerTestAnswer } },
+    },
+  }),
+});
+
+const tryIndexerChangeRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/indexers/{id}/try',
+  tags: ['Admin'],
+  summary: 'Try a change to a kept indexer before saving it, with the key it already has',
+  request: {
+    params: IndexerIdParameter,
+    body: { content: { 'application/json': { schema: IndexerDraftSchema } } },
+  },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Whether it answered, and what it can search',
+      content: { 'application/json': { schema: IndexerTestAnswer } },
+    },
+  }),
+});
+
+const searchReleasesRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/search',
+  tags: ['Admin'],
+  summary: 'Search every enabled indexer at once',
+  request: { body: { content: { 'application/json': { schema: ReleaseSearchSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'What every indexer found, and what each said',
+      content: {
+        'application/json': { schema: ReleaseSearchOutcomeSchema.openapi('ReleaseSearchOutcome') },
+      },
+    },
+  }),
+});
+
+const listDefinitionsRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/definitions',
+  tags: ['Admin'],
+  summary: 'List the sites Valence has definitions for',
+  responses: failures({
+    200: {
+      description: 'Every definition in the catalogue, and how the catalogue last fared',
+      content: {
+        'application/json': { schema: IndexerCatalogueSchema.openapi('IndexerCatalogue') },
+      },
+    },
+  }),
+});
+
+const refreshDefinitionsRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/definitions/refresh',
+  tags: ['Admin'],
+  summary: 'Fetch the definitions that changed since the catalogue was last brought up to date',
+  responses: failures({
+    200: {
+      description: 'The catalogue, brought up to date where it could be',
+      content: { 'application/json': { schema: IndexerCatalogueSchema } },
+    },
+  }),
+});
+
+const readDefinitionRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/definitions/{id}',
+  tags: ['Admin'],
+  summary: 'Describe one definition, with the settings it asks for',
+  request: { params: DefinitionIdParameter },
+  responses: failures({
+    200: {
+      description: 'The definition',
+      content: {
+        'application/json': {
+          schema: IndexerDefinitionDetailSchema.openapi('IndexerDefinitionDetail'),
+        },
+      },
+    },
+  }),
+});
+
+export {
+  listDefinitionsRoute,
+  readDefinitionRoute,
+  refreshDefinitionsRoute,
+  addIndexerRoute,
+  adminCheckRequestsRoute,
+  adminRequestsOverviewRoute,
+  changeIndexerRoute,
+  listIndexersRoute,
+  removeIndexerRoute,
+  requestsAvailabilityRoute,
+  searchReleasesRoute,
+  testIndexerRoute,
+  tryIndexerChangeRoute,
+  tryIndexerRoute,
+};

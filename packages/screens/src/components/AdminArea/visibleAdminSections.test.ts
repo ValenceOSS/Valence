@@ -13,9 +13,11 @@ describe('visibleAdminSections', () => {
     const shown = visibleAdminSections(false);
 
     expect(shown.map((section) => section.label)).not.toContain('Requests');
-    expect(shown.flatMap((section) => section.items.map((item) => item.id))).not.toContain(
-      'requests',
-    );
+    const ids = shown.flatMap((section) => section.items.map((item) => item.id));
+
+    expect(ids).not.toContain('requests');
+    expect(ids).not.toContain('indexers');
+    expect(ids).not.toContain('search');
   });
 
   it('leaves everything else as it was', () => {

@@ -4,6 +4,8 @@ import {
   FilmRoll01Icon,
   FolderLibraryIcon,
   InboxDownloadIcon,
+  Search01Icon,
+  Database02Icon,
   Link01Icon,
   Settings02Icon,
   ShieldUserIcon,
@@ -35,7 +37,11 @@ const ADMIN_SECTIONS = [
   },
   {
     label: 'Requests',
-    items: [{ id: 'requests', label: 'Overview', icon: InboxDownloadIcon }],
+    items: [
+      { id: 'requests', label: 'Overview', icon: InboxDownloadIcon },
+      { id: 'indexers', label: 'Indexers', icon: Database02Icon },
+      { id: 'search', label: 'Search', icon: Search01Icon },
+    ],
   },
   {
     label: 'People',
