@@ -23,6 +23,7 @@ import { AlbumShelf } from '@ValenceScreens/components/AlbumShelf/AlbumShelf';
 import { ArtistShelf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { AskableResults } from './components/AskableResults/AskableResults';
+import { BackToTop } from '@ValenceUI/BackToTop';
 
 const SETTLE_MILLISECONDS = 250;
 
@@ -233,6 +234,8 @@ const SearchArea = ({
       exit="gone"
       className="flex flex-col gap-6"
     >
+      <BackToTop />
+
       <div className="flex flex-col gap-6">
         <motion.div
           variants={revealVariants(prefersReducedMotion)}

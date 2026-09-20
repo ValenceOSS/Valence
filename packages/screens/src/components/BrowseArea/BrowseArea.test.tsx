@@ -65,11 +65,21 @@ beforeEach(() => {
   fetchLibraryItems.mockReset().mockResolvedValue({ items: [item('a', 'Arrival')], total: 1 });
 });
 
+vi.mock('@ValenceUI/useHasScrolledPast', () => ({
+  useHasScrolledPast: () => ({ mark: () => undefined, hasPassed: true }),
+}));
+
 describe('BrowseArea', () => {
   it('names the page it is', async () => {
     renderInAnAddress(<BrowseArea kind="shows" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
     expect(await screen.findByRole('heading', { name: 'Shows' })).toBeInTheDocument();
+  });
+
+  it('offers the way back to the top once the top has been left', async () => {
+    renderInAnAddress(<BrowseArea kind="shows" onPlay={vi.fn()} onInspect={vi.fn()} />);
+
+    expect(await screen.findByRole('button', { name: 'Back to top' })).toBeInTheDocument();
   });
 
   it('asks the server for what comes in episodes', async () => {

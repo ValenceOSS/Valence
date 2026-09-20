@@ -11,6 +11,7 @@ import { describeStanding } from '@ValenceScreens/components/AskableDialog/descr
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import type { CatalogueGridProps } from './CatalogueGrid.types';
+import { BackToTop } from '@ValenceUI/BackToTop';
 
 const LEAST_CARD_WIDTH = 170;
 
@@ -87,6 +88,8 @@ const CatalogueGrid = ({ browsing, onAsk }: CatalogueGridProps) => {
 
   return (
     <div className="flex flex-col gap-8">
+      <BackToTop />
+
       <VirtualGrid
         count={titles.length}
         label="What there is to ask for"
