@@ -123,7 +123,23 @@ describe('LibrariesPanel', () => {
 
     await choose(user, 'Films', /Read every file again/);
 
+    expect(onScan).not.toHaveBeenCalled();
+
+    await user.click(await screen.findByRole('button', { name: 'Read every file again' }));
+
     expect(onScan).toHaveBeenCalledWith(library().id, true);
+  });
+
+  it('leaves the library alone when reading every file again is cancelled', async () => {
+    const onScan = vi.fn();
+    const user = userEvent.setup();
+
+    render(<LibrariesPanel {...props} libraries={[library()]} onScan={onScan} />);
+
+    await choose(user, 'Films', /Read every file again/);
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    expect(onScan).not.toHaveBeenCalled();
   });
 
   it('generates missing previews for one library', async () => {

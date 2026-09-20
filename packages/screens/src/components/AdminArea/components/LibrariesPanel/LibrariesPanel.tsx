@@ -70,6 +70,7 @@ const LibrariesPanel = ({
   const [settingsLibraryId, setSettingsLibraryId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Library | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [rereading, setRereading] = useState<Library | null>(null);
 
   const isBusy =
     libraries.length === 0 ||
@@ -81,9 +82,17 @@ const LibrariesPanel = ({
     onRegeneratePreviews,
     setSettingsLibraryId,
     setDeleting,
+    setRereading,
   });
 
-  live.current = { progress, onScan, onRegeneratePreviews, setSettingsLibraryId, setDeleting };
+  live.current = {
+    progress,
+    onScan,
+    onRegeneratePreviews,
+    setSettingsLibraryId,
+    setDeleting,
+    setRereading,
+  };
 
   const columns = useMemo<DataTableColumn<Library>[]>(
     () => [
@@ -207,7 +216,7 @@ const LibrariesPanel = ({
                       icon: <Icon of={ReloadIcon} size={15} />,
                       isDisabled: readingOf(live.current.progress, row.original.id) !== undefined,
                       onChoose: () => {
-                        live.current.onScan(row.original.id, true);
+                        live.current.setRereading(row.original);
                       },
                     },
                     {
@@ -344,6 +353,28 @@ const LibrariesPanel = ({
               setIsDeleting(false);
               setDeleting(null);
             });
+        }}
+      />
+
+      <ConfirmDialog
+        title={
+          rereading === null
+            ? 'Read every file again?'
+            : `Read every file in ${rereading.name} again?`
+        }
+        detail="Every file is probed again rather than only the ones that changed. Nothing is deleted, but on a large library it can take a long while and keeps the server busy."
+        confirmLabel="Read every file again"
+        isOpen={rereading !== null}
+        onClose={() => {
+          setRereading(null);
+        }}
+        onConfirm={() => {
+          if (rereading === null) {
+            return;
+          }
+
+          onScan(rereading.id, true);
+          setRereading(null);
         }}
       />
 
