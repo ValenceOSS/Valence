@@ -19,7 +19,7 @@ import type { RequestsWorkTilesProps } from './RequestsWorkTiles.types';
  * @param work - What the server last counted.
  */
 const RequestsWorkTiles = ({ work }: RequestsWorkTilesProps) => (
-  <div className="grid gap-3 px-4 pb-1 sm:grid-cols-2 xl:grid-cols-4">
+  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
     <StatTile
       label="Waiting on approval"
       value={work.awaitingApproval.toString()}

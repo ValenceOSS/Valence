@@ -12,8 +12,6 @@ import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { describeRequestsVpn } from './describeRequestsVpn';
 import { RequestsWorkTiles } from './components/RequestsWorkTiles/RequestsWorkTiles';
-import { Icon } from '@ValenceUI/Icon';
-import { RefreshIcon } from '@hugeicons/core-free-icons';
 
 /**
  * The requests service as whoever set it up sees it: what it is doing just now — what waits on
@@ -43,95 +41,96 @@ const RequestsPanel = () => {
   const vpn = overview === null ? null : describeRequestsVpn(overview);
 
   return (
-    <PanelCard
-      title="Requests"
-      isFlush
-      actions={
-        <Button variant="secondary" size="xs" isLoading={isChecking} onClick={checkNow}>
-          Check now
-          <Icon of={RefreshIcon} size={15} />
-        </Button>
-      }
-    >
-      {asked.isError ? (
-        <CouldNotRead
-          what="The requests service"
-          isTryingAgain={asked.isFetching}
-          onTryAgain={() => {
-            void asked.refetch();
-          }}
-        />
-      ) : overview === null || vpn === null ? (
-        <div className="p-4">
-          <Spinner label="Reading the requests service" size="sm" />
-        </div>
-      ) : (
-        <>
-          <RequestsWorkTiles work={overview.work} />
+    <div className="flex flex-col gap-5">
+      {overview === null || asked.isError ? null : <RequestsWorkTiles work={overview.work} />}
 
-          <SettingList>
-            <SettingRow
-              title="Requests service"
-              description={
-                overview.checkedAt === null
-                  ? `Not checked yet. Looking for it at ${overview.address}.`
-                  : `At ${overview.address}. Last checked ${saidWhen(overview.checkedAt)}.`
-              }
-            >
-              {overview.checkedAt === null ? (
-                <Badge size="sm">Not checked</Badge>
-              ) : overview.isReachable ? (
-                <Badge size="sm" tone="success">
-                  Answering
-                </Badge>
-              ) : (
-                <Badge size="sm" tone="danger">
-                  Unreachable
-                </Badge>
-              )}
-            </SettingRow>
-
-            {overview.status === null ? null : (
+      <PanelCard
+        title="Requests"
+        isFlush
+        actions={
+          <Button variant="secondary" size="xs" isLoading={isChecking} onClick={checkNow}>
+            Check now
+          </Button>
+        }
+      >
+        {asked.isError ? (
+          <CouldNotRead
+            what="The requests service"
+            isTryingAgain={asked.isFetching}
+            onTryAgain={() => {
+              void asked.refetch();
+            }}
+          />
+        ) : overview === null || vpn === null ? (
+          <div className="p-4">
+            <Spinner label="Reading the requests service" size="sm" />
+          </div>
+        ) : (
+          <>
+            <SettingList>
               <SettingRow
-                title="Release"
-                description="Which version of the requests service is running."
-              >
-                <Badge size="sm">{overview.status.version}</Badge>
-              </SettingRow>
-            )}
-
-            <SettingRow title="VPN" description={vpn.detail}>
-              <Badge size="sm" tone={vpn.tone}>
-                {vpn.label}
-              </Badge>
-            </SettingRow>
-
-            {overview.status === null ? null : (
-              <SettingRow
-                title="Indexers"
+                title="Requests service"
                 description={
-                  overview.status.indexers.total === 0
-                    ? 'None yet. Add one on the Indexers page to have something to search.'
-                    : `${overview.status.indexers.enabled.toString()} of ${overview.status.indexers.total.toString()} switched on.${overview.status.indexers.failing.map((one) => ` ${one.name}: ${one.problem}`).join('')}`
+                  overview.checkedAt === null
+                    ? `Not checked yet. Looking for it at ${overview.address}.`
+                    : `At ${overview.address}. Last checked ${saidWhen(overview.checkedAt)}.`
                 }
               >
-                {overview.status.indexers.failing.length > 0 ? (
-                  <Badge size="sm" tone="warning">
-                    {`${overview.status.indexers.failing.length.toString()} failing`}
-                  </Badge>
-                ) : overview.status.indexers.total === 0 ? (
-                  <Badge size="sm">None</Badge>
-                ) : (
+                {overview.checkedAt === null ? (
+                  <Badge size="sm">Not checked</Badge>
+                ) : overview.isReachable ? (
                   <Badge size="sm" tone="success">
-                    Working
+                    Answering
+                  </Badge>
+                ) : (
+                  <Badge size="sm" tone="danger">
+                    Unreachable
                   </Badge>
                 )}
               </SettingRow>
-            )}
-          </SettingList>
-        </>
-      )}
-    </PanelCard>
+
+              {overview.status === null ? null : (
+                <SettingRow
+                  title="Release"
+                  description="Which version of the requests service is running."
+                >
+                  <Badge size="sm">{overview.status.version}</Badge>
+                </SettingRow>
+              )}
+
+              <SettingRow title="VPN" description={vpn.detail}>
+                <Badge size="sm" tone={vpn.tone}>
+                  {vpn.label}
+                </Badge>
+              </SettingRow>
+
+              {overview.status === null ? null : (
+                <SettingRow
+                  title="Indexers"
+                  description={
+                    overview.status.indexers.total === 0
+                      ? 'None yet. Add one on the Indexers page to have something to search.'
+                      : `${overview.status.indexers.enabled.toString()} of ${overview.status.indexers.total.toString()} switched on.${overview.status.indexers.failing.map((one) => ` ${one.name}: ${one.problem}`).join('')}`
+                  }
+                >
+                  {overview.status.indexers.failing.length > 0 ? (
+                    <Badge size="sm" tone="warning">
+                      {`${overview.status.indexers.failing.length.toString()} failing`}
+                    </Badge>
+                  ) : overview.status.indexers.total === 0 ? (
+                    <Badge size="sm">None</Badge>
+                  ) : (
+                    <Badge size="sm" tone="success">
+                      Working
+                    </Badge>
+                  )}
+                </SettingRow>
+              )}
+            </SettingList>
+          </>
+        )}
+      </PanelCard>
+    </div>
   );
 };
 
