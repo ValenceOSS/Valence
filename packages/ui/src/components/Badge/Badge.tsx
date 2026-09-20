@@ -4,7 +4,7 @@ import { inkOn } from './inkOn';
 import type { BadgeProps, BadgeSize, BadgeTone } from './Badge.types';
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
-  quiet: 'border border-line bg-muted text-text-muted',
+  quiet: 'bg-[var(--surface-hover)] text-text-muted',
   accent: 'bg-accent text-accent-contrast',
   success: 'bg-success text-surface',
   highlight: 'bg-highlight text-highlight-contrast',

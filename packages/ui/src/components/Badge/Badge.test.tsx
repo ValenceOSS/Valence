@@ -5,6 +5,12 @@ import { Badge } from './Badge';
 const badgeOf = (text: string): HTMLElement => screen.getByText(text);
 
 describe('Badge', () => {
+  it('draws a quiet badge in the same gray as a selector track', () => {
+    render(<Badge>Books</Badge>);
+
+    expect(badgeOf('Books')).toHaveClass('bg-[var(--surface-hover)]');
+  });
+
   it('states what it was given', () => {
     render(<Badge>4K</Badge>);
 
