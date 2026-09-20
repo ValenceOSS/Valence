@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Mic01Icon, MusicNote01Icon } from '@hugeicons/core-free-icons';
+import { Mic as MicIcon, MusicNote as MusicNoteIcon } from '@keyline-icons/react';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
@@ -38,7 +38,7 @@ const LyricsView = () => {
   if (shown === null) {
     return (
       <NothingHere
-        of={MusicNote01Icon}
+        of={MusicNoteIcon}
         title="Nothing is playing"
         detail="Play a song to follow its words here."
         fills
@@ -57,7 +57,7 @@ const LyricsView = () => {
   }
 
   if (lyrics === null || lyrics.lines.length === 0) {
-    return <NothingHere of={Mic01Icon} title="No lyrics found" fills />;
+    return <NothingHere of={MicIcon} title="No lyrics found" fills />;
   }
 
   return (

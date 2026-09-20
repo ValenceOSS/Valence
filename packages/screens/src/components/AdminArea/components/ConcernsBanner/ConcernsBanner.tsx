@@ -1,10 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Alert02Icon,
-  ArrowRight01Icon,
-  Cancel01Icon,
-  InformationCircleIcon,
-} from '@hugeicons/core-free-icons';
+  ChevronRight as ChevronRightIcon,
+  Info as InfoIcon,
+  TriangleAlert as TriangleAlertIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Card } from '@ValenceUI/Card';
 import type { ConcernTone } from '@ValenceScreens/components/AdminArea/collectConcerns';
@@ -45,9 +45,9 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
             >
               <span className={`mt-0.5 shrink-0 ${TONE_CLASSES[concern.tone]}`}>
                 {concern.tone === 'setup' ? (
-                  <Icon of={InformationCircleIcon} size={16} />
+                  <Icon of={InfoIcon} size={16} />
                 ) : (
-                  <Icon of={Alert02Icon} size={16} />
+                  <Icon of={TriangleAlertIcon} size={16} />
                 )}
               </span>
 
@@ -56,7 +56,7 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
                 <span className="truncate text-xs text-text-muted">{concern.detail}</span>
               </span>
 
-              <Icon of={ArrowRight01Icon} size={14} tone="muted" className="shrink-0" />
+              <Icon of={ChevronRightIcon} size={14} tone="muted" className="shrink-0" />
             </Button>
 
             <Button
@@ -68,7 +68,7 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
                 onDismiss(concern);
               }}
             >
-              <Icon of={Cancel01Icon} size={14} />
+              <Icon of={XIcon} size={14} />
             </Button>
           </li>
         ))}

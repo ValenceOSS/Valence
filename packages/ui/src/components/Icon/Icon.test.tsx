@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { Home01Icon, PauseIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import { Home as HomeIcon, Pause as PauseIcon, Play as PlayIcon } from '@keyline-icons/react';
+import { Home as HomeFilledIcon } from '@keyline-icons/react/fill';
 import { Icon } from './Icon';
 
 /**
@@ -21,58 +22,58 @@ const glyphOf = (container: HTMLElement): SVGSVGElement => {
 
 describe('Icon', () => {
   it('draws the icon it was given', () => {
-    const { container } = render(<Icon of={Home01Icon} />);
+    const { container } = render(<Icon of={HomeIcon} />);
 
     expect(container.querySelector('svg')).toBeInTheDocument();
   });
 
   it('is hidden from anything reading the page, since a glyph beside a label says nothing', () => {
-    const { container } = render(<Icon of={Home01Icon} />);
+    const { container } = render(<Icon of={HomeIcon} />);
 
     expect(glyphOf(container)).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('says what it means where it stands on its own', () => {
-    render(<Icon of={Home01Icon} label="Home" />);
+    render(<Icon of={HomeIcon} label="Home" />);
 
     expect(screen.getByRole('img', { name: 'Home' })).toBeInTheDocument();
   });
 
   it('takes the size it is asked for, in rem, so it grows with the text on a large screen', () => {
-    const { container } = render(<Icon of={Home01Icon} size={32} />);
+    const { container } = render(<Icon of={HomeIcon} size={32} />);
 
     expect(glyphOf(container)).toHaveAttribute('width', '2rem');
     expect(glyphOf(container)).toHaveAttribute('height', '2rem');
   });
 
   it('draws at the size of body text where no size is asked for', () => {
-    const { container } = render(<Icon of={Home01Icon} />);
+    const { container } = render(<Icon of={HomeIcon} />);
 
     expect(glyphOf(container)).toHaveAttribute('width', '1.125rem');
   });
 
-  it("draws its line a little heavier than the set's own, so it holds over artwork", () => {
-    const { container } = render(<Icon of={Home01Icon} />);
+  it('draws a filled twin while a thing is in force', () => {
+    const { container: quiet } = render(<Icon of={HomeIcon} whenActive={HomeFilledIcon} />);
+    const { container: loud } = render(<Icon of={HomeIcon} whenActive={HomeFilledIcon} isActive />);
 
-    expect(container.innerHTML).toContain('stroke-width="1.75"');
-  });
-
-  it('draws a thing in force with a heavier line, as a second cue beside its control', () => {
-    const { container: quiet } = render(<Icon of={Home01Icon} />);
-    const { container: loud } = render(<Icon of={Home01Icon} isActive />);
-
-    expect(loud.innerHTML).toContain('stroke-width="2.25"');
     expect(quiet.innerHTML).not.toBe(loud.innerHTML);
   });
 
+  it('draws the same line in force as at rest where it was given no twin', () => {
+    const { container: quiet } = render(<Icon of={HomeIcon} />);
+    const { container: loud } = render(<Icon of={HomeIcon} isActive />);
+
+    expect(quiet.innerHTML).toBe(loud.innerHTML);
+  });
+
   it('carries the class the stylesheet knows every glyph by', () => {
-    const { container } = render(<Icon of={Home01Icon} />);
+    const { container } = render(<Icon of={HomeIcon} />);
 
     expect(glyphOf(container)).toHaveClass('valence-icon');
   });
 
   it('keeps the classes a caller gave it as well', () => {
-    const { container } = render(<Icon of={Home01Icon} className="text-red-500" />);
+    const { container } = render(<Icon of={HomeIcon} className="text-red-500" />);
 
     expect(glyphOf(container)).toHaveClass('valence-icon', 'text-red-500');
   });
@@ -95,7 +96,7 @@ describe('Icon', () => {
   });
 
   it('takes the colour of the text around it unless it is given a tone', () => {
-    const { container } = render(<Icon of={Home01Icon} />);
+    const { container } = render(<Icon of={HomeIcon} />);
 
     expect(glyphOf(container)).not.toHaveClass('text-text-muted', 'text-danger');
   });
@@ -103,7 +104,7 @@ describe('Icon', () => {
   it('draws in the muted or the danger colour when given that tone', () => {
     const { container } = render(
       <>
-        <Icon of={Home01Icon} tone="muted" />
+        <Icon of={HomeIcon} tone="muted" />
         <Icon of={PlayIcon} tone="danger" />
       </>,
     );
@@ -117,7 +118,7 @@ describe('Icon', () => {
   it('draws in the strong or the faint colour when given those tones', () => {
     const { container } = render(
       <>
-        <Icon of={Home01Icon} tone="strong" />
+        <Icon of={HomeIcon} tone="strong" />
         <Icon of={PlayIcon} tone="faint" />
       </>,
     );
@@ -129,7 +130,7 @@ describe('Icon', () => {
   });
 
   it('draws in the pale of text over a picture when given the scrim tone', () => {
-    const { container } = render(<Icon of={Home01Icon} tone="scrim" />);
+    const { container } = render(<Icon of={HomeIcon} tone="scrim" />);
 
     expect(container.firstElementChild).toHaveClass('text-on-scrim');
   });

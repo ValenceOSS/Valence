@@ -1,4 +1,4 @@
-import { FolderOpenIcon, Search01Icon } from '@hugeicons/core-free-icons';
+import { FolderOpen as FolderOpenIcon, Search as SearchIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import type { EmptyLibraryProps } from './EmptyLibrary.types';
@@ -24,7 +24,7 @@ const EmptyLibrary = ({
   if (search !== '') {
     return (
       <NothingHere
-        of={Search01Icon}
+        of={SearchIcon}
         title={`Nothing matches “${search}”`}
         detail="Try fewer words, or a different spelling."
       />

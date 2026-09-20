@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { InformationCircleIcon } from '@hugeicons/core-free-icons';
+import { Info as InfoIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { HoverCard } from '@ValenceUI/HoverCard';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
@@ -54,7 +54,7 @@ const CacheBreakdown = ({
                     label={`What ${row.label.toLowerCase()} means`}
                     hasTooltip={false}
                   >
-                    <Icon of={InformationCircleIcon} size={14} />
+                    <Icon of={InfoIcon} size={14} />
                   </Button>
                 </HoverCard>
               )}

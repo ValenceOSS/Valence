@@ -1,7 +1,7 @@
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { Icon } from '@ValenceUI/Icon';
-import { Cancel01Icon } from '@hugeicons/core-free-icons';
+import { X as XIcon } from '@keyline-icons/react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
@@ -51,7 +51,7 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
     <DialogCompanion label="Stream stats" isOpen={isOpen} onClose={onClose}>
       <DialogTitle size="compact" title="Stream stats">
         <Button isIconOnly variant="ghost" label="Close" size="sm" onClick={onClose}>
-          <Icon of={Cancel01Icon} size={16} />
+          <Icon of={XIcon} size={16} />
         </Button>
       </DialogTitle>
 

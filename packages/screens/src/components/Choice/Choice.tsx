@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import type { ChoiceProps } from './Choice.types';
 
@@ -33,7 +33,7 @@ const Choice = ({ label, options, value, onSelect }: ChoiceProps) => (
       trigger={
         <>
           <span className="truncate">{options.find((one) => one.id === value)?.label ?? ''}</span>
-          <Icon of={UnfoldMoreIcon} size={15} tone="muted" className="shrink-0" />
+          <Icon of={ChevronsUpDownIcon} size={15} tone="muted" className="shrink-0" />
         </>
       }
       triggerShape="field"

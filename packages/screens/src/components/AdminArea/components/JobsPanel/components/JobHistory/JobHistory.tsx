@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { MoreHorizontalIcon, InformationCircleIcon } from '@hugeicons/core-free-icons';
+import { Info as InfoIcon, MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
@@ -200,7 +200,7 @@ const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHis
                   setOpenWorkFor(row.original.id);
                 }}
               >
-                <Icon of={InformationCircleIcon} size={15} />
+                <Icon of={InfoIcon} size={15} />
               </Button>
             ) : null}
           </span>
@@ -264,7 +264,7 @@ const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHis
                       </dl>
                     }
                   >
-                    <Icon of={InformationCircleIcon} size={15} tone="muted" className="shrink-0" />
+                    <Icon of={InfoIcon} size={15} tone="muted" className="shrink-0" />
                   </HoverCard>
                 )}
               </span>

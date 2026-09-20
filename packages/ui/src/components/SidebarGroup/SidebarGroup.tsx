@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
+import { ChevronDown as ChevronDownIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { Button } from '@ValenceUI/Button';
 import { SlidingMark } from '@ValenceUI/SlidingMark';
@@ -63,7 +63,7 @@ const SidebarGroup = ({
           {label}
 
           <Icon
-            of={ArrowDown01Icon}
+            of={ChevronDownIcon}
             size={13}
             className={cn(
               'transition-transform duration-[var(--duration-fast)]',
@@ -127,7 +127,12 @@ const SidebarGroup = ({
                         isCurrent ? 'ml-0 w-[17px] opacity-100' : '-ml-2.5 w-0 opacity-0',
                       )}
                     >
-                      <Icon of={item.icon} size={17} isActive={isCurrent} />
+                      <Icon
+                        of={item.icon}
+                        {...(item.activeIcon === undefined ? {} : { whenActive: item.activeIcon })}
+                        size={17}
+                        isActive={isCurrent}
+                      />
                     </span>
 
                     <span className="relative z-10 truncate">{item.label}</span>

@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Image01Icon, RefreshIcon } from '@hugeicons/core-free-icons';
+import { Image as ImageIcon, RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { FilePicker } from '@ValenceUI/FilePicker';
 import { FormField } from '@ValenceUI/FormField';
@@ -56,7 +56,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
               });
             }}
           >
-            <Icon of={Image01Icon} size={15} />
+            <Icon of={ImageIcon} size={15} />
             Upload
           </FilePicker>
         </div>
@@ -101,7 +101,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
               onDraft({ avatar: { kind: 'initial' }, photo: null });
             }}
           >
-            <Icon of={RefreshIcon} size={16} />
+            <Icon of={RefreshCwIcon} size={16} />
           </Button>
         </div>
       </FormField>

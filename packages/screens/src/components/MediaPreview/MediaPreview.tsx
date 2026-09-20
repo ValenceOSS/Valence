@@ -1,5 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
-import { PauseIcon, PlayIcon, VolumeHighIcon, VolumeOffIcon } from '@hugeicons/core-free-icons';
+import {
+  Pause as PauseIcon,
+  Play as PlayIcon,
+  Volume as VolumeIcon,
+  VolumeOff as VolumeOffIcon,
+} from '@keyline-icons/react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
@@ -401,7 +406,7 @@ const MediaPreview = ({
                 {isMuted ? (
                   <Icon of={VolumeOffIcon} size={18} />
                 ) : (
-                  <Icon of={VolumeHighIcon} size={18} />
+                  <Icon of={VolumeIcon} size={18} />
                 )}
               </Button>
             </>

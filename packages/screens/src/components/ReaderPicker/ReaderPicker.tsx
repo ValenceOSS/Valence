@@ -1,4 +1,8 @@
-import { ArrowLeft01Icon, ArrowRight01Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import {
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  ChevronsUpDown as ChevronsUpDownIcon,
+} from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
@@ -43,7 +47,7 @@ const ReaderPicker = ({
       className="h-auto shrink-0"
       onClick={onPrevious}
     >
-      <Icon of={ArrowLeft01Icon} size={16} />
+      <Icon of={ChevronLeftIcon} size={16} />
     </Button>
 
     <OptionMenu
@@ -58,7 +62,7 @@ const ReaderPicker = ({
             <span className="text-xs font-normal text-text-muted">{label}</span>
             <span className="max-w-full truncate text-sm text-text">{value}</span>
           </span>
-          <Icon of={UnfoldMoreIcon} size={15} tone="muted" className="shrink-0" />
+          <Icon of={ChevronsUpDownIcon} size={15} tone="muted" className="shrink-0" />
         </>
       }
       groups={[{ name: label, selectedId, onSelect, options }]}
@@ -72,7 +76,7 @@ const ReaderPicker = ({
       className="h-auto shrink-0"
       onClick={onNext}
     >
-      <Icon of={ArrowRight01Icon} size={16} />
+      <Icon of={ChevronRightIcon} size={16} />
     </Button>
   </div>
 );

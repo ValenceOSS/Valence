@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Image01Icon, RefreshIcon } from '@hugeicons/core-free-icons';
+import { Image as ImageIcon, RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { FilePicker } from '@ValenceUI/FilePicker';
 import { SettingRow } from '@ValenceUI/SettingRow';
@@ -99,7 +99,7 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
             });
           }}
         >
-          <Icon of={Image01Icon} size={15} />
+          <Icon of={ImageIcon} size={15} />
           Upload
         </FilePicker>
       </SettingRow>
@@ -144,7 +144,7 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
             onDraft({ avatar: { kind: 'initial' }, photo: null });
           }}
         >
-          <Icon of={RefreshIcon} size={16} />
+          <Icon of={RefreshCwIcon} size={16} />
         </Button>
       </SettingRow>
 

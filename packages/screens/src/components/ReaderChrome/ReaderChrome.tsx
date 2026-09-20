@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { Cancel01Icon, SidebarRight01Icon } from '@hugeicons/core-free-icons';
+import { PanelRight as PanelRightIcon, X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
@@ -68,7 +68,7 @@ const ReaderChrome = ({
           )}
         >
           <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close the reader">
-            <Icon of={Cancel01Icon} size={18} />
+            <Icon of={XIcon} size={18} />
           </Button>
 
           <span className="min-w-0 flex-1 truncate text-sm text-on-scrim">{title}</span>
@@ -82,7 +82,7 @@ const ReaderChrome = ({
               onPanelOpenChange(!isPanelOpen);
             }}
           >
-            <Icon of={SidebarRight01Icon} size={18} />
+            <Icon of={PanelRightIcon} size={18} />
           </Button>
         </header>
 

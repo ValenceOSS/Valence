@@ -7,7 +7,7 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TextField } from '@ValenceUI/TextField';
 import { Icon } from '@ValenceUI/Icon';
-import { Folder01Icon } from '@hugeicons/core-free-icons';
+import { Folder as FolderIcon } from '@keyline-icons/react';
 import { FolderBrowser } from '@ValenceScreens/components/AdminArea/components/FolderBrowser/FolderBrowser';
 import { SELECTABLE_LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
 import { createLibrary } from '@ValenceClient/library/fetchLibrary';
@@ -130,7 +130,7 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
                   setIsBrowsing(true);
                 }}
               >
-                <Icon of={Folder01Icon} size={14} />
+                <Icon of={FolderIcon} size={14} />
                 Browse
               </Button>
             )}

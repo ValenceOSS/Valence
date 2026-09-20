@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ViewIcon } from '@hugeicons/core-free-icons';
+import { Eye as EyeIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -80,7 +80,7 @@ const HiddenPanel = () => {
                 hiding.show({ kind: row.original.kind, subjectId: row.original.subjectId });
               }}
             >
-              <Icon of={ViewIcon} size={16} />
+              <Icon of={EyeIcon} size={16} />
             </Button>
           </span>
         ),

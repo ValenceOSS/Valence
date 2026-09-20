@@ -1,27 +1,39 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  BookOpen01Icon,
-  MusicNote01Icon,
-  Compass01Icon,
-  Cancel01Icon,
-  ComputerIcon,
-  DiceFaces05Icon,
-  Download04Icon,
-  FavouriteIcon,
-  Film01Icon,
-  FireIcon,
-  FlashIcon,
-  FlashOffIcon,
-  Home01Icon,
-  Logout01Icon,
-  Moon02Icon,
-  Notification01Icon,
-  Search01Icon,
-  Settings02Icon,
-  Sun01Icon,
-  Tv01Icon,
-  UserCircleIcon,
-} from '@hugeicons/core-free-icons';
+  Bell as BellIcon,
+  BookOpen as BookOpenIcon,
+  CircleUser as CircleUserIcon,
+  Compass as CompassIcon,
+  Dice5 as Dice5Icon,
+  DoorOpen as DoorOpenIcon,
+  Download as DownloadIcon,
+  Film as FilmIcon,
+  Flame as FlameIcon,
+  Heart as HeartIcon,
+  Home as HomeIcon,
+  Monitor as MonitorIcon,
+  Moon as MoonIcon,
+  MusicNote as MusicNoteIcon,
+  Search as SearchIcon,
+  Settings as SettingsIcon,
+  Sun as SunIcon,
+  X as XIcon,
+  Zap as ZapIcon,
+  ZapOff as ZapOffIcon,
+} from '@keyline-icons/react';
+import {
+  BookOpen as BookOpenFilledIcon,
+  CircleUser as CircleUserFilledIcon,
+  Compass as CompassFilledIcon,
+  Download as DownloadFilledIcon,
+  Film as FilmFilledIcon,
+  Flame as FlameFilledIcon,
+  Heart as HeartFilledIcon,
+  Home as HomeFilledIcon,
+  Monitor as MonitorFilledIcon,
+  MusicNote as MusicNoteFilledIcon,
+  Search as SearchFilledIcon,
+} from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AnimatePresence,
@@ -95,15 +107,15 @@ const howSolid = (travelled: number): number => {
 };
 
 const THEME_ICONS: Record<Theme, ReactNode> = {
-  system: <Icon of={ComputerIcon} size={16} />,
-  light: <Icon of={Sun01Icon} size={16} />,
-  dark: <Icon of={Moon02Icon} size={16} />,
+  system: <Icon of={MonitorIcon} size={16} />,
+  light: <Icon of={SunIcon} size={16} />,
+  dark: <Icon of={MoonIcon} size={16} />,
 };
 
 const MOTION_ICONS: Record<Motion, ReactNode> = {
-  system: <Icon of={ComputerIcon} size={16} />,
-  full: <Icon of={FlashIcon} size={16} />,
-  reduced: <Icon of={FlashOffIcon} size={16} />,
+  system: <Icon of={MonitorIcon} size={16} />,
+  full: <Icon of={ZapIcon} size={16} />,
+  reduced: <Icon of={ZapOffIcon} size={16} />,
 };
 
 const STOCKED_ONLY: ReadonlySet<ShellSection> = new Set(['shows', 'films', 'read', 'music']);
@@ -116,29 +128,29 @@ const SURPRISE_LABELS: Record<LibraryKind, string> = {
 };
 
 const SECTION_ICONS: Record<ShellSection, ReactNode> = {
-  home: <Icon of={Home01Icon} size={18} />,
-  shows: <Icon of={Tv01Icon} size={18} />,
-  films: <Icon of={Film01Icon} size={18} />,
-  new: <Icon of={FireIcon} size={18} />,
-  favourites: <Icon of={FavouriteIcon} size={18} />,
-  read: <Icon of={BookOpen01Icon} size={18} />,
-  music: <Icon of={MusicNote01Icon} size={18} />,
-  requests: <Icon of={Compass01Icon} size={18} />,
-  search: <Icon of={Search01Icon} size={18} />,
-  account: <Icon of={UserCircleIcon} size={18} />,
+  home: <Icon of={HomeIcon} size={18} />,
+  shows: <Icon of={MonitorIcon} size={18} />,
+  films: <Icon of={FilmIcon} size={18} />,
+  new: <Icon of={FlameIcon} size={18} />,
+  favourites: <Icon of={HeartIcon} size={18} />,
+  read: <Icon of={BookOpenIcon} size={18} />,
+  music: <Icon of={MusicNoteIcon} size={18} />,
+  requests: <Icon of={CompassIcon} size={18} />,
+  search: <Icon of={SearchIcon} size={18} />,
+  account: <Icon of={CircleUserIcon} size={18} />,
 };
 
 const ACTIVE_SECTION_ICONS: Record<ShellSection, ReactNode> = {
-  home: <Icon of={Home01Icon} size={18} isActive />,
-  shows: <Icon of={Tv01Icon} size={18} isActive />,
-  films: <Icon of={Film01Icon} size={18} isActive />,
-  new: <Icon of={FireIcon} size={18} isActive />,
-  favourites: <Icon of={FavouriteIcon} size={18} isActive />,
-  read: <Icon of={BookOpen01Icon} size={18} isActive />,
-  music: <Icon of={MusicNote01Icon} size={18} isActive />,
-  requests: <Icon of={Compass01Icon} size={18} isActive />,
-  search: <Icon of={Search01Icon} size={18} isActive />,
-  account: <Icon of={UserCircleIcon} size={18} isActive />,
+  home: <Icon of={HomeFilledIcon} size={18} />,
+  shows: <Icon of={MonitorFilledIcon} size={18} />,
+  films: <Icon of={FilmFilledIcon} size={18} />,
+  new: <Icon of={FlameFilledIcon} size={18} />,
+  favourites: <Icon of={HeartFilledIcon} size={18} />,
+  read: <Icon of={BookOpenFilledIcon} size={18} />,
+  music: <Icon of={MusicNoteFilledIcon} size={18} />,
+  requests: <Icon of={CompassFilledIcon} size={18} />,
+  search: <Icon of={SearchFilledIcon} size={18} />,
+  account: <Icon of={CircleUserFilledIcon} size={18} />,
 };
 
 const SECTION_GESTURES: Record<ShellSection, IconGesture> = {
@@ -330,7 +342,7 @@ const AppShell = ({
     gesture: SECTION_GESTURES[id],
   }));
 
-  const face = avatar ?? <Icon of={UserCircleIcon} size={22} />;
+  const face = avatar ?? <Icon of={CircleUserIcon} size={22} />;
 
   const actions: NavBarAction[] = [
     ...(canKeepFiles()
@@ -338,8 +350,8 @@ const AppShell = ({
           {
             id: 'downloads',
             label: 'Downloads',
-            icon: <Icon of={Download04Icon} size={20} />,
-            activeIcon: <Icon of={Download04Icon} size={20} isActive />,
+            icon: <Icon of={DownloadIcon} size={20} />,
+            activeIcon: <Icon of={DownloadFilledIcon} size={20} />,
             gesture: 'settle' as const,
             isCurrent: isDownloadsOpen,
             onSelect: onOpenDownloads,
@@ -349,8 +361,8 @@ const AppShell = ({
     {
       id: 'search',
       label: 'Search',
-      icon: <Icon of={Search01Icon} size={20} />,
-      activeIcon: <Icon of={Search01Icon} size={20} />,
+      icon: <Icon of={SearchIcon} size={20} />,
+      activeIcon: <Icon of={SearchIcon} size={20} />,
       gesture: 'settle' as const,
       isCurrent: isSearchOpen,
       onSelect: onOpenSearch,
@@ -361,7 +373,7 @@ const AppShell = ({
           {
             id: 'surprise',
             label: 'Randomiser',
-            icon: <Icon of={DiceFaces05Icon} size={20} />,
+            icon: <Icon of={Dice5Icon} size={20} />,
             gesture: 'tumble' as const,
             ...(kinds.length > 1
               ? {
@@ -370,7 +382,7 @@ const AppShell = ({
                       label="Choose something at random"
                       align="center"
                       look="face"
-                      trigger={<Icon of={DiceFaces05Icon} size={20} />}
+                      trigger={<Icon of={Dice5Icon} size={20} />}
                       groups={[
                         {
                           items: [
@@ -407,7 +419,7 @@ const AppShell = ({
           {
             id: 'notifications',
             label: 'Notifications',
-            icon: <Icon of={Notification01Icon} size={20} />,
+            icon: <Icon of={BellIcon} size={20} />,
             control: notifications,
           },
         ]),
@@ -429,7 +441,7 @@ const AppShell = ({
                 {
                   id: 'account',
                   label: 'Account',
-                  icon: <Icon of={UserCircleIcon} size={16} />,
+                  icon: <Icon of={CircleUserIcon} size={16} />,
                   onChoose: onOpenAccount,
                 },
                 ...(onOpenFavourites === undefined
@@ -438,7 +450,7 @@ const AppShell = ({
                       {
                         id: 'favourites',
                         label: 'Favourites',
-                        icon: <Icon of={FavouriteIcon} size={16} />,
+                        icon: <Icon of={HeartIcon} size={16} />,
                         onChoose: onOpenFavourites,
                       },
                     ]),
@@ -447,7 +459,7 @@ const AppShell = ({
                       {
                         id: 'my-requests',
                         label: 'My requests',
-                        icon: <Icon of={Compass01Icon} size={16} />,
+                        icon: <Icon of={CompassIcon} size={16} />,
                         onChoose: onOpenMyRequests,
                       },
                     ]
@@ -457,7 +469,7 @@ const AppShell = ({
                       {
                         id: 'admin',
                         label: 'Admin',
-                        icon: <Icon of={Settings02Icon} size={16} />,
+                        icon: <Icon of={SettingsIcon} size={16} />,
                         onChoose: onOpenAdmin,
                       },
                     ]
@@ -498,7 +510,7 @@ const AppShell = ({
                       {
                         id: 'sign-out',
                         label: 'Sign out',
-                        icon: <Icon of={Logout01Icon} size={16} />,
+                        icon: <Icon of={DoorOpenIcon} size={16} />,
                         isDestructive: true,
                         onChoose: onSignOut,
                       },
@@ -535,7 +547,7 @@ const AppShell = ({
             className="fixed top-[calc(1rem+var(--nav-clearance))] right-4 z-50"
           >
             <Button isIconOnly variant="overlay" label="Stop the film" onClick={endFilm}>
-              <Icon of={Cancel01Icon} size={20} />
+              <Icon of={XIcon} size={20} />
             </Button>
           </motion.div>
         ) : null}

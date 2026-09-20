@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Delete02Icon,
-  Edit02Icon,
-  MoreHorizontalIcon,
-  PlayIcon,
-  PlayListIcon,
-  Share08Icon,
-  ShuffleIcon,
-} from '@hugeicons/core-free-icons';
+  Bin as BinIcon,
+  ListMusic as ListMusicIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Share as ShareIcon,
+  Shuffle as ShuffleIcon,
+  SquarePen as SquarePenIcon,
+} from '@keyline-icons/react';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -151,7 +151,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                 player.play(tracks, 0, options);
               }}
             >
-              <Icon of={PlayIcon} size={24} isActive />
+              <Icon of={PlayFilledIcon} size={24} />
             </Button>
 
             <Button
@@ -184,7 +184,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                               label: playlist.isShared
                                 ? 'Stop sharing'
                                 : 'Share with the household',
-                              icon: <Icon of={Share08Icon} size={16} />,
+                              icon: <Icon of={ShareIcon} size={16} />,
                               onChoose: () => {
                                 void updatePlaylist(playlist.id, {
                                   isShared: !playlist.isShared,
@@ -204,7 +204,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                             {
                               id: 'edit',
                               label: 'Edit details',
-                              icon: <Icon of={Edit02Icon} size={16} />,
+                              icon: <Icon of={SquarePenIcon} size={16} />,
                               onChoose: () => {
                                 setIsEditing(true);
                               },
@@ -214,7 +214,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                       {
                         id: 'delete',
                         label: 'Delete playlist',
-                        icon: <Icon of={Delete02Icon} size={16} />,
+                        icon: <Icon of={BinIcon} size={16} />,
                         isDestructive: true,
                         onChoose: () => {
                           setIsRemoving(true);
@@ -232,7 +232,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
       <div className={`flex flex-col gap-8 pb-10 ${MUSIC_LANES.tracks}`}>
         {entries.length === 0 ? (
           <NothingHere
-            of={PlayListIcon}
+            of={ListMusicIcon}
             title="Nothing in this playlist yet"
             detail="Add songs to it from the menu beside any song."
           />

@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { UserIcon } from '@hugeicons/core-free-icons';
+import { User as UserIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Rail } from '@ValenceUI/Rail';
 import { cn } from '@ValenceUI/cn';

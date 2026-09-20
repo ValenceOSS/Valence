@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { Album02Icon, PlayIcon, ShuffleIcon } from '@hugeicons/core-free-icons';
+import { Record as RecordIcon, Shuffle as ShuffleIcon } from '@keyline-icons/react';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
@@ -111,7 +112,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
                 player.play(tracks, 0, { source });
               }}
             >
-              <Icon of={PlayIcon} size={24} isActive />
+              <Icon of={PlayFilledIcon} size={24} />
             </Button>
             <Button
               variant="ghost"
@@ -134,7 +135,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
 
       <div className={`pb-8 ${MUSIC_LANES.tracks}`}>
         {tracks.length === 0 ? (
-          <NothingHere of={Album02Icon} title="Nothing on this album you can hear" />
+          <NothingHere of={RecordIcon} title="Nothing on this album you can hear" />
         ) : (
           <TrackList
             label={album.title}

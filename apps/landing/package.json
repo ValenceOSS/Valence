@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hugeicons/core-free-icons": "^4.3.2",
+    "@keyline-icons/react": "^1.0.0",
     "@paper-design/shaders-react": "^0.0.80",
     "@tabler/icons-react": "^3.46.0",
     "@tanstack/react-router": "^1.170.35",

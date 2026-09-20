@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Reorder } from 'motion/react';
-import { FavouriteIcon, PauseIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import { Heart as HeartIcon, Pause as PauseIcon, Play as PlayIcon } from '@keyline-icons/react';
+import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { Icon } from '@ValenceUI/Icon';
@@ -237,7 +238,7 @@ const TrackList = ({
                   favourites.toggle(track.id);
                 }}
               >
-                <Icon of={FavouriteIcon} size={16} isActive={isLiked} />
+                <Icon of={HeartIcon} whenActive={HeartFilledIcon} size={16} isActive={isLiked} />
               </Button>
 
               <span className="text-right text-sm tabular-nums text-text-muted">

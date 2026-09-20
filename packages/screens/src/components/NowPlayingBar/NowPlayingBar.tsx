@@ -1,14 +1,14 @@
 import {
-  FavouriteIcon,
-  LaptopIcon,
-  LeftToRightListNumberIcon,
-  MoreHorizontalIcon,
-  Mic01Icon,
-  UserGroupIcon,
-  VolumeHighIcon,
-  VolumeLowIcon,
-  VolumeMute01Icon,
-} from '@hugeicons/core-free-icons';
+  Heart as HeartIcon,
+  Laptop as LaptopIcon,
+  ListOrdered as ListOrderedIcon,
+  Mic as MicIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Users as UsersIcon,
+  Volume as VolumeIcon,
+  VolumeLow as VolumeLowIcon,
+  VolumeX as VolumeXIcon,
+} from '@keyline-icons/react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
@@ -207,7 +207,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
                 <BarButton
                   label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
-                  glyph={FavouriteIcon}
+                  glyph={HeartIcon}
                   gesture="fill"
                   isLit={isLiked}
                   isDisabled={isIdle}
@@ -228,7 +228,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       {
                         id: 'lyrics',
                         label: 'Lyrics',
-                        icon: <Icon of={Mic01Icon} size={16} />,
+                        icon: <Icon of={MicIcon} size={16} />,
                         isDisabled: isIdle,
                         onChoose: () => {
                           open(
@@ -241,7 +241,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       {
                         id: 'queue',
                         label: 'Queue',
-                        icon: <Icon of={LeftToRightListNumberIcon} size={16} />,
+                        icon: <Icon of={ListOrderedIcon} size={16} />,
                         onChoose: () => {
                           togglePanel('queue');
                         },
@@ -249,7 +249,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       {
                         id: 'party',
                         label: 'Listening party',
-                        icon: <Icon of={UserGroupIcon} size={16} />,
+                        icon: <Icon of={UsersIcon} size={16} />,
                         onChoose: () => {
                           togglePanel('party');
                         },
@@ -265,9 +265,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       {
                         id: 'mute',
                         label: state.isMuted ? 'Unmute' : 'Mute',
-                        icon: (
-                          <Icon of={volume === 0 ? VolumeMute01Icon : VolumeHighIcon} size={16} />
-                        ),
+                        icon: <Icon of={volume === 0 ? VolumeXIcon : VolumeIcon} size={16} />,
                         keepsOpen: true,
                         onChoose: () => {
                           player.toggleMute();
@@ -285,7 +283,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
               <div className="hidden min-w-0 items-center justify-end gap-1 md:flex">
                 <BarButton
                   label="Lyrics"
-                  glyph={Mic01Icon}
+                  glyph={MicIcon}
                   gesture="ring"
                   isLit={view.kind === 'lyrics' && place.section === 'music'}
                   isDisabled={isIdle}
@@ -300,7 +298,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
                 <BarButton
                   label="Queue"
-                  glyph={LeftToRightListNumberIcon}
+                  glyph={ListOrderedIcon}
                   isLit={panel === 'queue'}
                   onClick={() => {
                     togglePanel('queue');
@@ -309,7 +307,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
                 <BarButton
                   label="Listening party"
-                  glyph={UserGroupIcon}
+                  glyph={UsersIcon}
                   isLit={panel === 'party' || listening !== null}
                   onClick={() => {
                     togglePanel('party');
@@ -359,9 +357,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
                 <BarButton
                   label={state.isMuted ? 'Unmute' : 'Mute'}
-                  glyph={
-                    volume === 0 ? VolumeMute01Icon : volume < 0.5 ? VolumeLowIcon : VolumeHighIcon
-                  }
+                  glyph={volume === 0 ? VolumeXIcon : volume < 0.5 ? VolumeLowIcon : VolumeIcon}
                   gesture="ring"
                   onClick={() => {
                     player.toggleMute();
@@ -394,7 +390,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   className="overflow-hidden"
                 >
                   <div className="flex items-center justify-end gap-2 bg-on-scrim px-4 py-1 text-xs font-semibold text-shade">
-                    <Icon of={UserGroupIcon} size={14} />
+                    <Icon of={UsersIcon} size={14} />
                     {isFollowing
                       ? `Listening along with ${listening.hostName}`
                       : `Hosting a listening party · ${listening.party.members.length.toString()} here`}

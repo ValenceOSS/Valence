@@ -1,7 +1,11 @@
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { Icon } from '@ValenceUI/Icon';
-import { Alert02Icon, Copy01Icon, Delete02Icon } from '@hugeicons/core-free-icons';
+import {
+  Bin as BinIcon,
+  Copy as CopyIcon,
+  TriangleAlert as TriangleAlertIcon,
+} from '@keyline-icons/react';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
@@ -122,7 +126,7 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
       {made === null ? null : (
         <div className="flex flex-col gap-2 rounded-lg border border-accent/40 bg-accent/10 p-3">
           <span className="flex items-center gap-2 text-sm font-medium text-text">
-            <Icon of={Alert02Icon} size={16} />
+            <Icon of={TriangleAlertIcon} size={16} />
             Copy {made.name} now — it will not be shown again.
           </span>
 
@@ -140,7 +144,7 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
                 });
               }}
             >
-              <Icon of={Copy01Icon} size={15} />
+              <Icon of={CopyIcon} size={15} />
               {hasCopied ? 'Copied' : 'Copy'}
             </Button>
           </span>
@@ -239,7 +243,7 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
                   void revokeApiKey(key.id).then(read);
                 }}
               >
-                <Icon of={Delete02Icon} size={16} />
+                <Icon of={BinIcon} size={16} />
               </Button>
             </li>
           ))}

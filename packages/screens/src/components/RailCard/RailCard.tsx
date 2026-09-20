@@ -1,10 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  ArrowTurnForwardIcon,
-  FavouriteIcon,
-  PlayIcon,
-  ViewOffIcon,
-} from '@hugeicons/core-free-icons';
+  ArrowUTurnRight as ArrowUTurnRightIcon,
+  EyeOff as EyeOffIcon,
+  Heart as HeartIcon,
+  Play as PlayIcon,
+} from '@keyline-icons/react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
@@ -367,7 +367,7 @@ const RailCard = ({
                         onPlay(media, 0);
                       }}
                     >
-                      <Icon of={ArrowTurnForwardIcon} size={17} />
+                      <Icon of={ArrowUTurnRightIcon} size={17} />
                     </Button>
                   )}
 
@@ -384,9 +384,9 @@ const RailCard = ({
                       }}
                     >
                       {isKept ? (
-                        <Icon of={FavouriteIcon} size={17} />
+                        <Icon of={HeartIcon} size={17} />
                       ) : (
-                        <Icon of={FavouriteIcon} size={17} />
+                        <Icon of={HeartIcon} size={17} />
                       )}
                     </Button>
                   )}
@@ -402,7 +402,7 @@ const RailCard = ({
                         onHide(media);
                       }}
                     >
-                      <Icon of={ViewOffIcon} size={17} />
+                      <Icon of={EyeOffIcon} size={17} />
                     </Button>
                   )}
                 </span>

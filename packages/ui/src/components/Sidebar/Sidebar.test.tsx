@@ -1,13 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Home as HomeIcon } from '@keyline-icons/react';
 import { Sidebar } from './Sidebar';
 
 const GROUPS = [
   {
     label: 'Activity',
     items: [
-      { id: 'sessions', label: 'Sessions', icon: [] },
-      { id: 'jobs', label: 'Jobs', icon: [] },
+      { id: 'sessions', label: 'Sessions', icon: HomeIcon },
+      { id: 'jobs', label: 'Jobs', icon: HomeIcon },
     ],
   },
 ];

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
-import { Cancel01Icon, Logout01Icon } from '@hugeicons/core-free-icons';
+import { DoorOpen as DoorOpenIcon, X as XIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -161,7 +161,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
           {mayAdminister ? <Badge size="sm">admin</Badge> : null}
 
           <Button variant="ghost" size="sm" isIconOnly label="Close" onClick={onClose}>
-            <Icon of={Cancel01Icon} size={16} />
+            <Icon of={XIcon} size={16} />
           </Button>
         </DialogTitle>
 
@@ -187,7 +187,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
               void leave();
             }}
           >
-            <Icon of={Logout01Icon} size={16} />
+            <Icon of={DoorOpenIcon} size={16} />
             Sign out
           </Button>
 

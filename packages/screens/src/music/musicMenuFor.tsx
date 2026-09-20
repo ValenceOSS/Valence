@@ -1,10 +1,10 @@
 import {
-  NextIcon,
-  PlayIcon,
-  PlayListAddIcon,
-  ShuffleIcon,
-  ViewIcon,
-} from '@hugeicons/core-free-icons';
+  Eye as EyeIcon,
+  ListPlus as ListPlusIcon,
+  Play as PlayIcon,
+  Shuffle as ShuffleIcon,
+  SkipForward as SkipForwardIcon,
+} from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { tracksFor } from './tracksFor';
 import type { ActionMenuGroup } from '@ValenceUI/ActionMenu.types';
@@ -68,7 +68,7 @@ const musicMenuFor = (
         {
           id: 'next',
           label: 'Play next',
-          icon: <Icon of={NextIcon} size={16} />,
+          icon: <Icon of={SkipForwardIcon} size={16} />,
           onChoose: () => {
             withSongs(({ tracks }) => {
               player.playNext(tracks);
@@ -78,7 +78,7 @@ const musicMenuFor = (
         {
           id: 'queue',
           label: 'Add to queue',
-          icon: <Icon of={PlayListAddIcon} size={16} />,
+          icon: <Icon of={ListPlusIcon} size={16} />,
           onChoose: () => {
             withSongs(({ tracks }) => {
               player.addToQueue(tracks);
@@ -92,7 +92,7 @@ const musicMenuFor = (
         {
           id: 'open',
           label: `Open ${name}`,
-          icon: <Icon of={ViewIcon} size={16} />,
+          icon: <Icon of={EyeIcon} size={16} />,
           onChoose: () => {
             open(view);
           },

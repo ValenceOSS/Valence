@@ -1,10 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import {
-  CheckmarkCircle01Icon,
-  Delete02Icon,
-  Notification01Icon,
-} from '@hugeicons/core-free-icons';
+  Bell as BellIcon,
+  Bin as BinIcon,
+  CircleCheck as CircleCheckIcon,
+} from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
@@ -54,7 +54,7 @@ const NotificationBell = ({
       }}
       trigger={
         <span className="relative flex size-9 items-center justify-center">
-          <Icon of={Notification01Icon} size={20} />
+          <Icon of={BellIcon} size={20} />
 
           {unread === 0 ? null : (
             <Badge tone="accent" size="sm" className="absolute -right-1 -top-1">
@@ -74,13 +74,13 @@ const NotificationBell = ({
         actions={
           <>
             {unread === 0 ? null : (
-              <PanelCardAction icon={CheckmarkCircle01Icon} onClick={onReadAll}>
+              <PanelCardAction icon={CircleCheckIcon} onClick={onReadAll}>
                 Mark all read
               </PanelCardAction>
             )}
 
             {notifications.length === 0 ? null : (
-              <PanelCardAction icon={Delete02Icon} onClick={onClearAll}>
+              <PanelCardAction icon={BinIcon} onClick={onClearAll}>
                 Clear all
               </PanelCardAction>
             )}

@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { ArrowUp01Icon } from '@hugeicons/core-free-icons';
+import { ChevronUp as ChevronUpIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
@@ -59,7 +59,7 @@ const BackToTop = ({ label = 'Back to top', className }: BackToTopProps) => {
               });
             }}
           >
-            <Icon of={ArrowUp01Icon} size={20} className="size-5" />
+            <Icon of={ChevronUpIcon} size={20} className="size-5" />
           </Button>
         </motion.div>
       ) : null}

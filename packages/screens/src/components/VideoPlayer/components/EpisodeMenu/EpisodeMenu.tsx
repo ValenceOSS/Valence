@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Playlist01Icon } from '@hugeicons/core-free-icons';
+import { ListMusic as ListMusicIcon } from '@keyline-icons/react';
 import { useState } from 'react';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { MediaCard } from '@ValenceUI/MediaCard';
@@ -67,7 +67,7 @@ const EpisodeMenu = ({
       isOpen={isOpen}
       onOpenChange={show}
       trigger={
-        isOpen ? <Icon of={Playlist01Icon} size={20} /> : <Icon of={Playlist01Icon} size={20} />
+        isOpen ? <Icon of={ListMusicIcon} size={20} /> : <Icon of={ListMusicIcon} size={20} />
       }
       className="w-80 sm:w-96 mb-7.5"
     >

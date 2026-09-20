@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
+import { ChevronDown as ChevronDownIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { Icon } from '@ValenceUI/Icon';
@@ -103,7 +103,7 @@ const FileGroup = ({ group, chosen, refusalFor, onToggle }: FileGroupProps) => {
           }}
         >
           <Icon
-            of={ArrowDown01Icon}
+            of={ChevronDownIcon}
             size={16}
             className={cn(
               'transition-transform duration-[var(--duration-fast)] motion-reduce:transition-none',

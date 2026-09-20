@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Alert02Icon, InformationCircleIcon } from '@hugeicons/core-free-icons';
+import { Info as InfoIcon, TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react';
 import { cn } from '@ValenceUI/cn';
 import type { CalloutProps, CalloutTone } from './Callout.types';
 
@@ -15,10 +15,10 @@ const TONE_ICON_CLASSES: Record<CalloutTone, string> = {
   danger: 'text-danger',
 };
 
-const DEFAULT_ICONS: Record<CalloutTone, typeof InformationCircleIcon> = {
-  quiet: InformationCircleIcon,
-  warning: Alert02Icon,
-  danger: Alert02Icon,
+const DEFAULT_ICONS: Record<CalloutTone, typeof InfoIcon> = {
+  quiet: InfoIcon,
+  warning: TriangleAlertIcon,
+  danger: TriangleAlertIcon,
 };
 
 /**

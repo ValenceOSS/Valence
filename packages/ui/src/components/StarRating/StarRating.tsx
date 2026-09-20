@@ -1,5 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
-import { StarIcon } from '@hugeicons/core-free-icons';
+import { Star as StarIcon } from '@keyline-icons/react';
+import { Star as StarFilledIcon } from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { cn } from '@ValenceUI/cn';
 import { Button } from '@ValenceUI/Button';
@@ -119,7 +120,7 @@ const StarRating = ({
               onRate(step);
             }}
           >
-            <Icon of={StarIcon} size={glyph} isActive={isLit} />
+            <Icon of={StarIcon} whenActive={StarFilledIcon} size={glyph} isActive={isLit} />
           </Button>
         );
       })}

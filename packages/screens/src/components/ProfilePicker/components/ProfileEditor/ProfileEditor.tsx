@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Image01Icon, RefreshIcon } from '@hugeicons/core-free-icons';
+import { Image as ImageIcon, RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
 import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
@@ -214,7 +214,7 @@ const ProfileEditor = ({ profile, onSaved, onCancel }: ProfileEditorProps) => {
               }
             }}
           >
-            <Icon of={RefreshIcon} size={16} />
+            <Icon of={RefreshCwIcon} size={16} />
             Different faces
           </Button>
 
@@ -228,7 +228,7 @@ const ProfileEditor = ({ profile, onSaved, onCancel }: ProfileEditorProps) => {
                 setPhoto(file);
               }}
             >
-              <Icon of={Image01Icon} size={16} />
+              <Icon of={ImageIcon} size={16} />
               {photo === null ? 'Upload a photo' : photo.name}
             </FilePicker>
           )}

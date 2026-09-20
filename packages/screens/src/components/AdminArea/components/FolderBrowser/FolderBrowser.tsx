@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight01Icon, ArrowUp01Icon, Folder01Icon } from '@hugeicons/core-free-icons';
+import {
+  ChevronRight as ChevronRightIcon,
+  ChevronUp as ChevronUpIcon,
+  Folder as FolderIcon,
+} from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
@@ -56,7 +60,7 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
             setAt(listing?.parent ?? null);
           }}
         >
-          <Icon of={ArrowUp01Icon} size={14} />
+          <Icon of={ChevronUpIcon} size={14} />
         </Button>
 
         <nav
@@ -77,7 +81,7 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
             ? null
             : pathSegments(at).map((segment) => (
                 <span key={segment.path} className="flex shrink-0 items-center gap-0.5">
-                  <Icon of={ArrowRight01Icon} size={12} tone="muted" />
+                  <Icon of={ChevronRightIcon} size={12} tone="muted" />
 
                   <Button
                     variant="ghost"
@@ -122,7 +126,7 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
                     setAt(folder.path);
                   }}
                 >
-                  <Icon of={Folder01Icon} size={16} />
+                  <Icon of={FolderIcon} size={16} />
                   <span className="truncate">{folder.name}</span>
                 </Button>
               </li>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Add01Icon } from '@hugeicons/core-free-icons';
+import { Plus as PlusIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Skeleton } from '@ValenceUI/Skeleton';
@@ -47,7 +47,7 @@ const PlaylistsView = () => {
                   setIsMaking(true);
                 }}
               >
-                <Icon of={Add01Icon} size={16} />
+                <Icon of={PlusIcon} size={16} />
                 New playlist
               </Button>
             }

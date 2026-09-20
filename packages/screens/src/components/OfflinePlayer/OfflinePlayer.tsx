@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft02Icon, PauseIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import {
+  ArrowLeft as ArrowLeftIcon,
+  Pause as PauseIcon,
+  Play as PlayIcon,
+} from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Slider } from '@ValenceUI/Slider';
@@ -46,7 +50,7 @@ const OfflinePlayer = ({ file, startAtSeconds = 0, onLeave, onProgress }: Offlin
     <main className="flex h-full min-h-screen flex-col bg-shade">
       <header className="flex items-center gap-3 px-4 py-3">
         <Button variant="ghost" size="sm" isIconOnly label="Back to downloads" onClick={onLeave}>
-          <Icon of={ArrowLeft02Icon} size={18} />
+          <Icon of={ArrowLeftIcon} size={18} />
         </Button>
 
         <div className="flex min-w-0 flex-col">

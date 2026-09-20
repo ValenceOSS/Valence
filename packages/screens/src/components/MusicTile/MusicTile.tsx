@@ -1,4 +1,4 @@
-import { PlayIcon } from '@hugeicons/core-free-icons';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { ContextMenu } from '@ValenceUI/ContextMenu';
 import { Icon } from '@ValenceUI/Icon';
@@ -78,7 +78,7 @@ const MusicTile = ({
             className={PLAY}
             onClick={onPlay}
           >
-            <Icon of={PlayIcon} size={18} isActive />
+            <Icon of={PlayFilledIcon} size={18} />
           </Button>
         </span>
       )}

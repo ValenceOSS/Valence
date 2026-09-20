@@ -1,4 +1,4 @@
-import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import { ChevronRight as ChevronRightIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
@@ -55,7 +55,7 @@ const ShelfMoreCard = ({ label, posterUrls, onOpen }: ShelfMoreCardProps) => (
             'motion-reduce:transition-none hover-hover:group-hover/more:scale-110',
           )}
         >
-          <Icon of={ArrowRight01Icon} size={26} />
+          <Icon of={ChevronRightIcon} size={26} />
         </span>
 
         <span className="text-base font-semibold text-on-scrim">See more</span>

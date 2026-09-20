@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { FolderOpenIcon } from '@hugeicons/core-free-icons';
+import { FolderOpen as FolderOpenIcon } from '@keyline-icons/react';
 import { describe, expect, it } from 'vitest';
 import { NothingHere } from './NothingHere';
 

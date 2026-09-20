@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { CloudOffIcon, HardDriveIcon, Wifi01Icon } from '@hugeicons/core-free-icons';
+import {
+  CloudOff as CloudOffIcon,
+  HardDrive as HardDriveIcon,
+  Wifi as WifiIcon,
+} from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -103,7 +107,7 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
                 goOffline(false);
               }}
             >
-              <Icon of={Wifi01Icon} size={15} />
+              <Icon of={WifiIcon} size={15} />
               {isByChoice ? 'Go back online' : 'Reconnect'}
             </Button>
           )}

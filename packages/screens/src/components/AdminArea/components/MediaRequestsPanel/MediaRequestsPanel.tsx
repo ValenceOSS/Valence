@@ -2,18 +2,18 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowRight01Icon,
-  Cancel01Icon,
-  Clock01Icon,
-  Delete02Icon,
-  HandPointingRight01Icon,
-  MoreHorizontalIcon,
-  ReloadIcon,
-  Search01Icon,
-  Tick02Icon,
-  RefreshIcon,
-  Add01Icon,
-} from '@hugeicons/core-free-icons';
+  Bin as BinIcon,
+  Check as CheckIcon,
+  ChevronRight as ChevronRightIcon,
+  Clock as ClockIcon,
+  HandPointerRight as HandPointerRightIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Plus as PlusIcon,
+  RefreshCw as RefreshCwIcon,
+  RotateCw as RotateCwIcon,
+  Search as SearchIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -274,7 +274,7 @@ const MediaRequestsPanel = () => {
                                 id: 'approve',
                                 label: 'Approve',
                                 detail: 'Look it over, and change it first if you like.',
-                                icon: <Icon of={Tick02Icon} size={15} />,
+                                icon: <Icon of={CheckIcon} size={15} />,
                                 onChoose: () => {
                                   setApproving(request);
                                 },
@@ -286,7 +286,7 @@ const MediaRequestsPanel = () => {
                               {
                                 id: 'refuse',
                                 label: 'Refuse',
-                                icon: <Icon of={Cancel01Icon} size={15} />,
+                                icon: <Icon of={XIcon} size={15} />,
                                 onChoose: () => {
                                   setRefusing(request);
                                 },
@@ -300,7 +300,7 @@ const MediaRequestsPanel = () => {
                           id: 'open',
                           label: 'Open',
                           detail: 'How it is going, what it found, and what it will not try.',
-                          icon: <Icon of={ArrowRight01Icon} size={15} />,
+                          icon: <Icon of={ChevronRightIcon} size={15} />,
                           onChoose: () => {
                             setReading({ request, tab: 'going' });
                           },
@@ -309,7 +309,7 @@ const MediaRequestsPanel = () => {
                           id: 'log',
                           label: 'See what it has done',
                           detail: 'Every search, what it found, and why.',
-                          icon: <Icon of={Clock01Icon} size={15} />,
+                          icon: <Icon of={ClockIcon} size={15} />,
                           onChoose: () => {
                             setReading({ request, tab: 'history' });
                           },
@@ -318,7 +318,7 @@ const MediaRequestsPanel = () => {
                           id: 'retry',
                           label: 'Search again now',
                           detail: 'Tries again whatever failed, too.',
-                          icon: <Icon of={ReloadIcon} size={15} />,
+                          icon: <Icon of={RotateCwIcon} size={15} />,
                           isDisabled: !isApproved || IN_HAND.has(request.state),
                           onChoose: () => {
                             act(request, () => retryMediaRequest(request.id));
@@ -328,7 +328,7 @@ const MediaRequestsPanel = () => {
                           id: 'releases',
                           label: 'Pick a release',
                           detail: 'Search every indexer and choose what to fetch.',
-                          icon: <Icon of={Search01Icon} size={15} />,
+                          icon: <Icon of={SearchIcon} size={15} />,
                           onChoose: () => {
                             setReading({ request, tab: 'releases' });
                           },
@@ -341,7 +341,7 @@ const MediaRequestsPanel = () => {
                           detail: request.isPickedByHand
                             ? 'Searches for it, and fetches the best by its quality.'
                             : 'Stops searching for it by itself.',
-                          icon: <Icon of={HandPointingRight01Icon} size={15} />,
+                          icon: <Icon of={HandPointerRightIcon} size={15} />,
                           onChoose: () => {
                             act(request, () =>
                               changeMediaRequest(request.id, {
@@ -357,7 +357,7 @@ const MediaRequestsPanel = () => {
                         {
                           id: 'remove',
                           label: 'Forget',
-                          icon: <Icon of={Delete02Icon} size={15} />,
+                          icon: <Icon of={BinIcon} size={15} />,
                           isDestructive: true,
                           onChoose: () => {
                             setRemoving(request);
@@ -383,7 +383,7 @@ const MediaRequestsPanel = () => {
       actions={
         <>
           <PanelCardAction
-            icon={RefreshIcon}
+            icon={RefreshCwIcon}
             isLoading={isSearchingMissing}
             onClick={() => {
               setIsSearchingMissing(true);
@@ -413,7 +413,7 @@ const MediaRequestsPanel = () => {
           </PanelCardAction>
 
           <PanelCardAction
-            icon={Add01Icon}
+            icon={PlusIcon}
             onClick={() => {
               setIsAsking(true);
             }}

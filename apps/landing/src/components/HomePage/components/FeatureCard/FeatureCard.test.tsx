@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { HardDriveIcon } from '@hugeicons/core-free-icons';
+import { HardDrive as HardDriveIcon } from '@keyline-icons/react';
 import { FeatureCard } from './FeatureCard';
 
 describe('FeatureCard', () => {

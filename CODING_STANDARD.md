@@ -436,10 +436,10 @@ only when a new primitive gets an owner.
 
 ## 10. Icons
 
-**All icons come from `@hugeicons/core-free-icons`, and are drawn by
-`@ValenceUI/Icon`.** Phosphor, Remix Icon, Tabler and Lucide are all banned in ESLint, so a
-second set cannot come back a file at a time. The renderer, `HugeiconsIcon`, is
-banned too: a call site names the icon it wants and `Icon` decides how it is
+**All icons come from `@keyline-icons/react`, and are drawn by
+`@ValenceUI/Icon`.** Phosphor, Remix Icon, Tabler, Lucide and Hugeicons are all banned in ESLint, so a
+second set cannot come back a file at a time. A call site names the icon it wants, aliased with
+an `Icon` suffix so it never shadows anything else in the file, and `Icon` decides how it is
 drawn, which is what keeps the set swappable in one file.
 
 An icon that is not the colour of the text around it is given a `tone` (`strong`, `muted`,
@@ -448,25 +448,23 @@ it sits. ESLint fails the build on a text colour in an icon's `className`.
 
 ```tsx
 import { Icon } from '@ValenceUI/Icon';
-import { Home01Icon } from '@hugeicons/core-free-icons';
+import { Home as HomeIcon } from '@keyline-icons/react';
+import { Home as HomeFilledIcon } from '@keyline-icons/react/fill';
 
-<Icon of={Home01Icon} size={18} />;
+<Icon of={HomeIcon} whenActive={HomeFilledIcon} isActive={isCurrent} size={18} />;
 ```
 
 **`apps/landing` is the one exception, and draws from `@tabler/icons-react`
 directly instead.** getvalence.app is a marketing page rather than the
-product, and wants the filled icons the free Hugeicons set doesn't have.
-`@ValenceUI/Icon` is built around Hugeicons' own icon shape, so it isn't used
-there either — a landing component imports a Tabler icon and renders it
-itself. `eslint.config.ts` scopes the ban accordingly: `apps/landing/src`
+product, and wants brand icons no product set has. A landing component imports
+a Tabler icon and renders it itself where it needs one. `eslint.config.ts` scopes the ban accordingly: `apps/landing/src`
 keeps every other rule in this section, Tabler included, everywhere else
 still refuses it.
 
-**Say "this one is selected" with `isActive`, not with a different glyph.** The
-free set is one style, so today an active icon is the same drawing stroked
-heavier; a licensed set has filled twins, and `whenActive` is where they go.
-Reaching for a different glyph to mean selected is how a section turns into a
-camcorder.
+**Say "this one is selected" with the filled twin, not with a different glyph.** Every
+icon has a fill drawing under the same name in `@keyline-icons/react/fill`, and `whenActive`
+is where it goes: `isActive` swaps it in place. Reaching for a different glyph to mean selected
+is how a section turns into a camcorder.
 
 **No raw SVG anywhere in the codebase.** No inline `<svg>` elements, no
 `.svg` imported as a component, no SVG strings.

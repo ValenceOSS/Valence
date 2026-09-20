@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { ShuffleIcon } from '@hugeicons/core-free-icons';
+import { Shuffle as ShuffleIcon } from '@keyline-icons/react';
 import { BarButton } from './BarButton';
 
 describe('BarButton', () => {

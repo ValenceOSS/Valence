@@ -18,9 +18,7 @@ const ENCODING_EVERY_MS = 2000;
  * @returns The wait in milliseconds, or false to stop asking.
  */
 const whenToAskAgain = (reencodes: readonly Reencode[]): number | false =>
-  reencodes.some((one) =>
-    REENCODES_STILL_TO_BE_WRITTEN.some((waiting) => waiting === one.state),
-  )
+  reencodes.some((one) => REENCODES_STILL_TO_BE_WRITTEN.some((waiting) => waiting === one.state))
     ? ENCODING_EVERY_MS
     : false;
 

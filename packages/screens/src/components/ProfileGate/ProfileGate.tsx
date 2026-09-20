@@ -3,11 +3,11 @@ import { Logo } from '@ValenceUI/Logo';
 import { TelevisionHandoff } from '@ValenceScreens/components/TelevisionHandoff/TelevisionHandoff';
 import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
 import {
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
-  Key01Icon,
-  SmartPhone01Icon,
-} from '@hugeicons/core-free-icons';
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  Key as KeyIcon,
+  Smartphone as SmartphoneIcon,
+} from '@keyline-icons/react';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import type { Variants } from 'motion/react';
@@ -383,7 +383,7 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
                 disabled={email === '' || password === ''}
               >
                 Watch
-                <Icon of={ArrowRight01Icon} size={18} />
+                <Icon of={ChevronRightIcon} size={18} />
               </Button>
 
               {!isPasskeySupported() ? null : (
@@ -395,7 +395,7 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
                     void signInWithPasskey();
                   }}
                 >
-                  <Icon of={Key01Icon} size={16} />
+                  <Icon of={KeyIcon} size={16} />
                   Use a passkey instead
                 </Button>
               )}
@@ -438,7 +438,7 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
                       setPage((current) => Math.max(current - 1, 0));
                     }}
                   >
-                    <Icon of={ArrowLeft01Icon} size={20} />
+                    <Icon of={ChevronLeftIcon} size={20} />
                   </Button>
                 </span>
 
@@ -499,7 +499,7 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
                       setPage((current) => Math.min(current + 1, pages - 1));
                     }}
                   >
-                    <Icon of={ArrowRight01Icon} size={20} />
+                    <Icon of={ChevronRightIcon} size={20} />
                   </Button>
                 </span>
               </motion.div>
@@ -584,7 +584,7 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
                     disabled={password === ''}
                   >
                     Watch
-                    <Icon of={ArrowRight01Icon} size={18} />
+                    <Icon of={ChevronRightIcon} size={18} />
                   </Button>
 
                   {!isPasskeySupported() ? null : (
@@ -596,7 +596,7 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
                         void signInWithPasskey();
                       }}
                     >
-                      <Icon of={Key01Icon} size={16} />
+                      <Icon of={KeyIcon} size={16} />
                       Use a passkey instead
                     </Button>
                   )}
@@ -620,7 +620,7 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
                     setNeedsCode(false);
                   }}
                 >
-                  <Icon of={ArrowLeft01Icon} size={18} />
+                  <Icon of={ChevronLeftIcon} size={18} />
                 </Button>
               </motion.div>
             </div>
@@ -643,7 +643,7 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
                 setIsHandingOver(true);
               }}
             >
-              <Icon of={SmartPhone01Icon} size={16} />
+              <Icon of={SmartphoneIcon} size={16} />
               Sign in with your phone
             </Button>
           )}

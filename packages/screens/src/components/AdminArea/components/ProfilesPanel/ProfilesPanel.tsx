@@ -2,11 +2,11 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Delete02Icon,
-  MoreHorizontalIcon,
-  PencilEdit02Icon,
-  Add01Icon,
-} from '@hugeicons/core-free-icons';
+  Bin as BinIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Pen as PenIcon,
+  Plus as PlusIcon,
+} from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -104,7 +104,7 @@ const ProfilesPanel = () => {
                     {
                       id: 'change',
                       label: 'Change',
-                      icon: <Icon of={PencilEdit02Icon} size={15} />,
+                      icon: <Icon of={PenIcon} size={15} />,
                       onChoose: () => {
                         setEditing(row.original);
                       },
@@ -116,7 +116,7 @@ const ProfilesPanel = () => {
                     {
                       id: 'remove',
                       label: 'Remove',
-                      icon: <Icon of={Delete02Icon} size={15} />,
+                      icon: <Icon of={BinIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         setRemoving(row.original);
@@ -139,7 +139,7 @@ const ProfilesPanel = () => {
       isFlush
       actions={
         <PanelCardAction
-          icon={Add01Icon}
+          icon={PlusIcon}
           onClick={() => {
             setIsAdding(true);
           }}

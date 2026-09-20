@@ -1,7 +1,7 @@
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { Icon } from '@ValenceUI/Icon';
 import { Button } from '@ValenceUI/Button';
-import { BookOpen01Icon } from '@hugeicons/core-free-icons';
+import { BookOpen as BookOpenIcon } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
 import { Spinner } from '@ValenceUI/Spinner';
 import { openShare } from '@ValenceClient/sharing/fetchShares';
@@ -152,7 +152,7 @@ const ShareArea = ({
               onRead(book);
             }}
           >
-            <Icon of={BookOpen01Icon} size={18} />
+            <Icon of={BookOpenIcon} size={18} />
             Read
           </Button>
         )}

@@ -1,12 +1,11 @@
 import {
-  NextIcon,
-  PauseIcon,
-  PlayIcon,
-  PreviousIcon,
-  RepeatIcon,
-  RepeatOne01Icon,
-  ShuffleIcon,
-} from '@hugeicons/core-free-icons';
+  Repeat as RepeatIcon,
+  Repeat1 as Repeat1Icon,
+  Shuffle as ShuffleIcon,
+  SkipBack as SkipBackIcon,
+  SkipForward as SkipForwardIcon,
+} from '@keyline-icons/react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -123,7 +122,7 @@ const MusicTransport = ({
   const repeating = (
     <BarButton
       label={REPEAT_LABELS[repeat]}
-      glyph={repeat === 'one' ? RepeatOne01Icon : RepeatIcon}
+      glyph={repeat === 'one' ? Repeat1Icon : RepeatIcon}
       gesture="spin"
       isLit={repeat !== 'off'}
       isDisabled={isIdle || isOrdered || shown.remote !== null || isFollowing}
@@ -138,7 +137,7 @@ const MusicTransport = ({
     <>
       <BarButton
         label="Previous"
-        glyph={PreviousIcon}
+        glyph={SkipBackIcon}
         iconSize={iconSize}
         isSolid
         isDisabled={isIdle || isFollowing}
@@ -187,9 +186,8 @@ const MusicTransport = ({
               <Spinner size="sm" label="Loading" />
             ) : (
               <Icon
-                of={shown.isPlaying ? PauseIcon : PlayIcon}
+                of={shown.isPlaying ? PauseFilledIcon : PlayFilledIcon}
                 size={isImmersive ? 36 : 18}
-                isActive
               />
             )}
           </motion.span>
@@ -198,7 +196,7 @@ const MusicTransport = ({
 
       <BarButton
         label="Next"
-        glyph={NextIcon}
+        glyph={SkipForwardIcon}
         iconSize={iconSize}
         isSolid
         isDisabled={isIdle || isFollowing}

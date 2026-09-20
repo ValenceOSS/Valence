@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { MinusSignIcon, Tick02Icon } from '@hugeicons/core-free-icons';
+import { Check as CheckIcon, Minus as MinusIcon } from '@keyline-icons/react';
 import { useId } from 'react';
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import { cn } from '@ValenceUI/cn';
@@ -66,7 +66,7 @@ const Checkbox = ({
         )}
       >
         <RadixCheckbox.Indicator className="flex text-primary-foreground animate-in zoom-in-75 duration-[var(--duration-instant)] motion-reduce:animate-none">
-          <Icon of={isMixed ? MinusSignIcon : Tick02Icon} size={14} />
+          <Icon of={isMixed ? MinusIcon : CheckIcon} size={14} />
         </RadixCheckbox.Indicator>
       </RadixCheckbox.Root>
       {description === undefined ? (

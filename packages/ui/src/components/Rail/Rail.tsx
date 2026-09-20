@@ -1,5 +1,8 @@
 import { motion } from 'motion/react';
-import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import {
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+} from '@keyline-icons/react';
 import { cn } from '@ValenceUI/cn';
 import { RAIL } from '@ValenceUI/tokens/rail';
 import { groupVariants } from '@ValenceUI/animations/reveal';
@@ -118,7 +121,7 @@ const Rail = ({
                   scrollTo(pages.at - 1);
                 }}
               >
-                <Icon of={ArrowLeft01Icon} size={16} />
+                <Icon of={ChevronLeftIcon} size={16} />
               </Button>
 
               <Button
@@ -132,7 +135,7 @@ const Rail = ({
                   scrollTo(pages.at + 1);
                 }}
               >
-                <Icon of={ArrowRight01Icon} size={16} />
+                <Icon of={ChevronRightIcon} size={16} />
               </Button>
             </>
           )}

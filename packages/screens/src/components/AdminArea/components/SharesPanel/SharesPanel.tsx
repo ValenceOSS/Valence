@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { InformationCircleIcon, Unlink01Icon } from '@hugeicons/core-free-icons';
+import { Info as InfoIcon, Unlink as UnlinkIcon } from '@keyline-icons/react';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -107,7 +107,7 @@ const SharesPanel = () => {
                   setWithdrawing(row.original);
                 }}
               >
-                <Icon of={Unlink01Icon} size={16} />
+                <Icon of={UnlinkIcon} size={16} />
               </Button>
             </span>
           ),
@@ -132,7 +132,7 @@ const SharesPanel = () => {
           }
         >
           <span className="text-text-muted hover:text-text">
-            <Icon of={InformationCircleIcon} size={14} label="About shared links" />
+            <Icon of={InfoIcon} size={14} label="About shared links" />
           </span>
         </HoverCard>
       }

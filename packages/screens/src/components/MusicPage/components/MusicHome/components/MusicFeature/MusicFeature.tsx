@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { PauseIcon, PlayIcon, Video01Icon } from '@hugeicons/core-free-icons';
+import { Video as VideoIcon } from '@keyline-icons/react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
@@ -135,9 +136,8 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
                 }}
               >
                 <Icon
-                  of={song !== null && state.isPlaying ? PauseIcon : PlayIcon}
+                  of={song !== null && state.isPlaying ? PauseFilledIcon : PlayFilledIcon}
                   size={18}
-                  isActive
                 />
                 {song === null ? 'Play' : state.isPlaying ? 'Pause' : 'Resume'}
               </Button>
@@ -153,7 +153,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
                     }
                   }}
                 >
-                  <Icon of={Video01Icon} size={18} />
+                  <Icon of={VideoIcon} size={18} />
                   Watch the video
                 </Button>
               )}

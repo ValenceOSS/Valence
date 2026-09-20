@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Album02Icon } from '@hugeicons/core-free-icons';
+import { Record as RecordIcon } from '@keyline-icons/react';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Skeleton } from '@ValenceUI/Skeleton';
@@ -46,7 +46,7 @@ const AlbumsView = () => {
   if (found.length === 0) {
     return (
       <NothingHere
-        of={Album02Icon}
+        of={RecordIcon}
         title="No albums yet"
         detail="Once a music library has been scanned, its albums will be here."
         fills

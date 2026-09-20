@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 import {
-  Delete02Icon,
-  FolderLibraryIcon,
-  InformationCircleIcon,
-  MoreHorizontalIcon,
-  PauseIcon,
-  PlayIcon,
-} from '@hugeicons/core-free-icons';
+  Bin as BinIcon,
+  Folders as FoldersIcon,
+  Info as InfoIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Pause as PauseIcon,
+  Play as PlayIcon,
+} from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
@@ -119,7 +119,7 @@ const DownloadQueueTable = ({
                   detail={<span className="break-words text-text-muted">{state.detail}</span>}
                 >
                   <span className="text-text-muted hover:text-text">
-                    <Icon of={InformationCircleIcon} size={14} label={state.detail} />
+                    <Icon of={InfoIcon} size={14} label={state.detail} />
                   </span>
                 </HoverCard>
               )}
@@ -244,7 +244,7 @@ const DownloadQueueTable = ({
                       {
                         id: 'remove',
                         label: 'Remove',
-                        icon: <Icon of={Delete02Icon} size={15} />,
+                        icon: <Icon of={BinIcon} size={15} />,
                         isDestructive: true,
                         onChoose: () => {
                           onRemove(row.original);
@@ -268,7 +268,7 @@ const DownloadQueueTable = ({
                             : row.original.filedInto === null
                               ? 'Now, named from the release.'
                               : 'Again, beside what was filed before.',
-                        icon: <Icon of={FolderLibraryIcon} size={15} />,
+                        icon: <Icon of={FoldersIcon} size={15} />,
                         onChoose: () => {
                           onFile(row.original, library.id);
                         },

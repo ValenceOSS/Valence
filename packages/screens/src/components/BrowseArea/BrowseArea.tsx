@@ -5,12 +5,12 @@ import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/an
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery } from '@tanstack/react-query';
 import {
-  FavouriteIcon,
-  Film01Icon,
-  FireIcon,
-  FolderOpenIcon,
-  Tv01Icon,
-} from '@hugeicons/core-free-icons';
+  Film as FilmIcon,
+  Flame as FlameIcon,
+  FolderOpen as FolderOpenIcon,
+  Heart as HeartIcon,
+  Monitor as MonitorIcon,
+} from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -39,25 +39,25 @@ const PAGES: Record<
     title: 'Shows',
     empty: 'No shows yet',
     emptyIsAbout: 'one library',
-    of: Tv01Icon,
+    of: MonitorIcon,
   },
   films: {
     title: 'Films',
     empty: 'No films yet',
     emptyIsAbout: 'one library',
-    of: Film01Icon,
+    of: FilmIcon,
   },
   new: {
     title: 'New & Popular',
     empty: 'Nothing new yet',
     emptyIsAbout: 'every library',
-    of: FireIcon,
+    of: FlameIcon,
   },
   favourites: {
     title: 'Favourites',
     empty: 'Nothing has been favourited yet',
     emptyIsAbout: 'nothing anybody scanned',
-    of: FavouriteIcon,
+    of: HeartIcon,
   },
 };
 

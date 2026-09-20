@@ -1,4 +1,4 @@
-import { MoreHorizontalIcon } from '@hugeicons/core-free-icons';
+import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';

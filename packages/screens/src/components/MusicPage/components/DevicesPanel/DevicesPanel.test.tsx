@@ -1,7 +1,11 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LaptopIcon, SmartPhone01Icon, Tv01Icon } from '@hugeicons/core-free-icons';
+import {
+  Laptop as LaptopIcon,
+  Monitor as MonitorIcon,
+  Smartphone as SmartphoneIcon,
+} from '@keyline-icons/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceScreens/testing/aTrack';
@@ -68,8 +72,8 @@ describe('DevicesPanel', () => {
   });
 
   it('draws a device by what it calls itself', () => {
-    expect(iconFor('iPhone')).toBe(SmartPhone01Icon);
-    expect(iconFor('Living room TV')).toBe(Tv01Icon);
+    expect(iconFor('iPhone')).toBe(SmartphoneIcon);
+    expect(iconFor('Living room TV')).toBe(MonitorIcon);
     expect(iconFor('MacBook Pro')).toBe(LaptopIcon);
   });
 

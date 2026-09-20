@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Cancel01Icon, MusicNote01Icon } from '@hugeicons/core-free-icons';
+import { MusicNote as MusicNoteIcon, X as XIcon } from '@keyline-icons/react';
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { DownloadProgressReadout } from '@ValenceScreens/components/DownloadProgressReadout/DownloadProgressReadout';
 import { Badge } from '@ValenceUI/Badge';
@@ -167,7 +167,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
               <div className="absolute right-4 top-4">
                 <Button isIconOnly variant="overlay" label="Close" onClick={onClose}>
-                  <Icon of={Cancel01Icon} size={20} />
+                  <Icon of={XIcon} size={20} />
                 </Button>
               </div>
 
@@ -253,7 +253,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                           key={album.id}
                           className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[var(--surface-hover)]"
                         >
-                          <Icon of={MusicNote01Icon} size={16} tone="muted" className="shrink-0" />
+                          <Icon of={MusicNoteIcon} size={16} tone="muted" className="shrink-0" />
                           <span className="flex min-w-0 flex-1 flex-col">
                             <span className="truncate text-sm text-text">{album.title}</span>
                             <span className="text-xs text-text-muted">

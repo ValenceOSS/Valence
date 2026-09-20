@@ -7,9 +7,9 @@ describe('isInRenditionDirectory', () => {
   });
 
   it('knows one wherever in a tree the folder turns up', () => {
-    expect(
-      isInRenditionDirectory('/media/Shows/Fringe/Season 1/.valence/s01e01-720p.mkv'),
-    ).toBe(true);
+    expect(isInRenditionDirectory('/media/Shows/Fringe/Season 1/.valence/s01e01-720p.mkv')).toBe(
+      true,
+    );
   });
 
   it('leaves the library alone', () => {

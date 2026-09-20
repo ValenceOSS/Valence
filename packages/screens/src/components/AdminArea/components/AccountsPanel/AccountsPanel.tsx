@@ -2,14 +2,14 @@ import { AccountFace } from '@ValenceScreens/components/AdminArea/components/Acc
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Add01Icon,
-  Alert02Icon,
-  CancelCircleIcon,
-  Delete02Icon,
-  MoreHorizontalIcon,
-  UnfoldMoreIcon,
-  UserSettings01Icon,
-} from '@hugeicons/core-free-icons';
+  Bin as BinIcon,
+  ChevronsUpDown as ChevronsUpDownIcon,
+  CircleX as CircleXIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Plus as PlusIcon,
+  TriangleAlert as TriangleAlertIcon,
+  UserCheck as UserCheckIcon,
+} from '@keyline-icons/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -425,7 +425,7 @@ const AccountsPanel = () => {
                     {
                       id: 'edit',
                       label: 'Edit account',
-                      icon: <Icon of={UserSettings01Icon} size={15} />,
+                      icon: <Icon of={UserCheckIcon} size={15} />,
                       onChoose: () => {
                         setAccountId(row.original.id);
                         setEditTab('display');
@@ -435,7 +435,7 @@ const AccountsPanel = () => {
                     {
                       id: 'ban',
                       label: row.original.isBanned ? 'Let back in' : 'Ban',
-                      icon: <Icon of={CancelCircleIcon} size={15} />,
+                      icon: <Icon of={CircleXIcon} size={15} />,
                       onChoose: () => {
                         if (row.original.isBanned) {
                           void act(() => unbanAccount(row.original.id));
@@ -453,7 +453,7 @@ const AccountsPanel = () => {
                     {
                       id: 'remove',
                       label: 'Delete account',
-                      icon: <Icon of={Delete02Icon} size={15} />,
+                      icon: <Icon of={BinIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         setAsking({ kind: 'remove', account: row.original });
@@ -573,7 +573,7 @@ const AccountsPanel = () => {
           role="alert"
           className="flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-text"
         >
-          <Icon of={Alert02Icon} size={18} tone="danger" className="mt-0.5 shrink-0" />
+          <Icon of={TriangleAlertIcon} size={18} tone="danger" className="mt-0.5 shrink-0" />
           {refusal.message}
         </p>
       )}
@@ -595,7 +595,7 @@ const AccountsPanel = () => {
             />
 
             <PanelCardAction
-              icon={Add01Icon}
+              icon={PlusIcon}
               onClick={() => {
                 setIsInviting(true);
               }}
@@ -676,7 +676,12 @@ const AccountsPanel = () => {
                   role="alert"
                   className="flex items-start gap-3 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-text"
                 >
-                  <Icon of={Alert02Icon} size={16} tone="danger" className="mt-0.5 shrink-0" />
+                  <Icon
+                    of={TriangleAlertIcon}
+                    size={16}
+                    tone="danger"
+                    className="mt-0.5 shrink-0"
+                  />
                   {refusal.message}
                 </p>
               )}
@@ -869,7 +874,7 @@ const AccountsPanel = () => {
                                     {describeCeiling(shelf.maximumAge)}
                                   </span>
 
-                                  <Icon of={UnfoldMoreIcon} size={14} className="shrink-0" />
+                                  <Icon of={ChevronsUpDownIcon} size={14} className="shrink-0" />
                                 </>
                               }
                               triggerShape="field"

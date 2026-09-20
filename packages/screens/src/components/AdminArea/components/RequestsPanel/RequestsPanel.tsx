@@ -1,5 +1,5 @@
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
-import { RefreshIcon } from '@hugeicons/core-free-icons';
+import { RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
@@ -45,7 +45,7 @@ const RequestsPanel = () => {
       title="Requests"
       isFlush
       actions={
-        <PanelCardAction icon={RefreshIcon} isLoading={isChecking} onClick={checkNow}>
+        <PanelCardAction icon={RefreshCwIcon} isLoading={isChecking} onClick={checkNow}>
           Check now
         </PanelCardAction>
       }

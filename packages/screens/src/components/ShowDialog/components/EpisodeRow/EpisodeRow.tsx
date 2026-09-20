@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { InformationCircleIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import { Info as InfoIcon, Play as PlayIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { EpisodeRowProps } from './EpisodeRow.types';
@@ -91,7 +91,7 @@ const EpisodeRow = ({
           onInspect(episode);
         }}
       >
-        <Icon of={InformationCircleIcon} size={18} />
+        <Icon of={InfoIcon} size={18} />
       </Button>
     )}
   </div>

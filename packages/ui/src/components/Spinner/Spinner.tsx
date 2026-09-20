@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Loading03Icon } from '@hugeicons/core-free-icons';
+import { Loader as LoaderIcon } from '@keyline-icons/react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import { spinVariants, spinTransition, reducedSpinTransition } from '@ValenceUI/animations/spin';
@@ -37,7 +37,7 @@ const Spinner = ({ size = 'md', label, isCentered = false, className }: SpinnerP
       animate={prefersReducedMotion === true ? 'idle' : 'spinning'}
       transition={prefersReducedMotion === true ? reducedSpinTransition : spinTransition}
     >
-      <Icon of={Loading03Icon} size={SIZE_PIXELS[size]} />
+      <Icon of={LoaderIcon} size={SIZE_PIXELS[size]} />
     </motion.span>
   );
 

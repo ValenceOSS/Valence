@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { PlayIcon, User03Icon } from '@hugeicons/core-free-icons';
+import { User as UserIcon } from '@keyline-icons/react';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
@@ -102,7 +103,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
                 player.play(popular, 0, { source });
               }}
             >
-              <Icon of={PlayIcon} size={24} isActive />
+              <Icon of={PlayFilledIcon} size={24} />
             </Button>
             <Button
               variant={isFollowed ? 'secondary' : 'ghost'}
@@ -130,7 +131,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
 
       <div className="flex flex-col gap-12 pb-10">
         {popular.length === 0 ? (
-          <NothingHere of={User03Icon} title="Nothing of theirs you can hear" />
+          <NothingHere of={UserIcon} title="Nothing of theirs you can hear" />
         ) : (
           <section aria-label="Songs" className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}>
             <h2 className="px-3 text-lg font-semibold tracking-tight text-text">Songs</h2>

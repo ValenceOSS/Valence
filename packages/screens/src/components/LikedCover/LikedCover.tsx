@@ -1,4 +1,4 @@
-import { FavouriteIcon } from '@hugeicons/core-free-icons';
+import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import type { LikedCoverProps } from './LikedCover.types';
@@ -17,7 +17,7 @@ const LikedCover = ({ iconSize = 40, className }: LikedCoverProps) => (
       className,
     )}
   >
-    <Icon of={FavouriteIcon} size={iconSize} isActive />
+    <Icon of={HeartFilledIcon} size={iconSize} />
   </span>
 );
 

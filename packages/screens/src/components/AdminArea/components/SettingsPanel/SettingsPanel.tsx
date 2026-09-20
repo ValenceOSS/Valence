@@ -1,5 +1,9 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Alert02Icon, Image01Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+import {
+  ChevronsUpDown as ChevronsUpDownIcon,
+  Image as ImageIcon,
+  TriangleAlert as TriangleAlertIcon,
+} from '@keyline-icons/react';
 import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Badge } from '@ValenceUI/Badge';
@@ -132,7 +136,7 @@ const SettingsPanel = ({
                   {accelerationOptions.find((option) => option.id === accel)?.label ?? 'Automatic'}
                 </span>
 
-                <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+                <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
               </>
             }
             triggerShape="field"
@@ -169,7 +173,7 @@ const SettingsPanel = ({
                   {certificationRegions.find((option) => option.id === region)?.label ?? region}
                 </span>
 
-                <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
+                <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
               </>
             }
             triggerShape="field"
@@ -296,7 +300,7 @@ const SettingsPanel = ({
                 });
               }}
             >
-              <Icon of={Image01Icon} size={15} />
+              <Icon of={ImageIcon} size={15} />
               {splashscreen === null ? 'Choose' : 'Replace'}
             </FilePicker>
 
@@ -333,7 +337,7 @@ const SettingsPanel = ({
               role="alert"
               className="mx-5 mb-4 flex items-start gap-3 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-text"
             >
-              <Icon of={Alert02Icon} size={18} tone="danger" className="mt-0.5 shrink-0" />
+              <Icon of={TriangleAlertIcon} size={18} tone="danger" className="mt-0.5 shrink-0" />
               {splashscreenProblem}
             </p>
           )}

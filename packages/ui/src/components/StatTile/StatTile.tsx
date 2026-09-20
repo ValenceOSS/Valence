@@ -1,4 +1,4 @@
-import { ArrowUp01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
+import { ChevronDown as ChevronDownIcon, ChevronUp as ChevronUpIcon } from '@keyline-icons/react';
 import { cn } from '@ValenceUI/cn';
 import { Badge } from '@ValenceUI/Badge';
 import { Icon } from '@ValenceUI/Icon';
@@ -73,7 +73,7 @@ const StatTile = ({
               size="sm"
               className="gap-1"
             >
-              <Icon of={trend.direction === 'up' ? ArrowUp01Icon : ArrowDown01Icon} size={12} />
+              <Icon of={trend.direction === 'up' ? ChevronUpIcon : ChevronDownIcon} size={12} />
               {trend.label}
             </Badge>
           )}

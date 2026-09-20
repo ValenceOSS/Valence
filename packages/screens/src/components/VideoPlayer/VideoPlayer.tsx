@@ -2,11 +2,11 @@ import { Icon } from '@ValenceUI/Icon';
 import { motion, useDragControls } from 'motion/react';
 import { gainFor } from '@ValenceCore/functions/gainFor';
 import {
-  Cancel01Icon,
-  MirroringScreenIcon,
-  NextIcon,
-  PictureInPictureOnIcon,
-} from '@hugeicons/core-free-icons';
+  Cast as CastIcon,
+  PictureInPicture as PictureInPictureIcon,
+  SkipForward as SkipForwardIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -1720,7 +1720,7 @@ const VideoPlayer = ({
 
         <div className="flex w-24 shrink-0 justify-end">
           <Button isIconOnly variant="overlay" label="Close" onClick={onClose} size="md">
-            <Icon of={Cancel01Icon} size={20} />
+            <Icon of={XIcon} size={20} />
           </Button>
         </div>
       </header>
@@ -1776,7 +1776,7 @@ const VideoPlayer = ({
 
           {!isPoppedOut ? null : (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-shade text-center">
-              <Icon of={PictureInPictureOnIcon} size={32} tone="muted" />
+              <Icon of={PictureInPictureIcon} size={32} tone="muted" />
 
               <p className="text-sm text-text-muted">Playing in a floating window</p>
 
@@ -1790,7 +1790,7 @@ const VideoPlayer = ({
 
           {castState !== 'connected' ? null : (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-shade text-center">
-              <Icon of={MirroringScreenIcon} size={32} tone="muted" />
+              <Icon of={CastIcon} size={32} tone="muted" />
 
               <p className="text-sm text-text-muted">Playing on another device</p>
 
@@ -1912,7 +1912,7 @@ const VideoPlayer = ({
                 }}
               >
                 {describeSkip(skippable)}
-                <Icon of={NextIcon} size={18} />
+                <Icon of={SkipForwardIcon} size={18} />
               </Button>
             </div>
           )}

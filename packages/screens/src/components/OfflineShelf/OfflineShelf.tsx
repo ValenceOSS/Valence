@@ -1,4 +1,9 @@
-import { CloudOffIcon, Delete02Icon, PauseIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import {
+  Bin as BinIcon,
+  CloudOff as CloudOffIcon,
+  Pause as PauseIcon,
+  Play as PlayIcon,
+} from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -150,7 +155,7 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
                     onDrop(file);
                   }}
                 >
-                  <Icon of={Delete02Icon} size={16} />
+                  <Icon of={BinIcon} size={16} />
                 </Button>
               </SettingRow>
             ))}

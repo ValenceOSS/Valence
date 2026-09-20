@@ -1,4 +1,8 @@
-import { Compass01Icon, Globe02Icon, Tv01Icon } from '@hugeicons/core-free-icons';
+import {
+  Compass as CompassIcon,
+  Globe as GlobeIcon,
+  Monitor as MonitorIcon,
+} from '@keyline-icons/react';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 
 const BROWSERS = ['Edge', 'Opera', 'Chromium', 'Chrome', 'Firefox'] as const;
@@ -17,10 +21,10 @@ const BROWSERS = ['Edge', 'Opera', 'Chromium', 'Chrome', 'Firefox'] as const;
  */
 const deviceIconFor = (deviceLabel: string): IconGlyph => {
   if (deviceLabel.startsWith('Safari')) {
-    return Compass01Icon;
+    return CompassIcon;
   }
 
-  return BROWSERS.some((name) => deviceLabel.startsWith(name)) ? Globe02Icon : Tv01Icon;
+  return BROWSERS.some((name) => deviceLabel.startsWith(name)) ? GlobeIcon : MonitorIcon;
 };
 
 export { deviceIconFor };

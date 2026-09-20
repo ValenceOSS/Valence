@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import {
-  Cancel01Icon,
-  FavouriteIcon,
-  VolumeHighIcon,
-  VolumeLowIcon,
-} from '@hugeicons/core-free-icons';
+  Heart as HeartIcon,
+  Volume as VolumeIcon,
+  VolumeLow as VolumeLowIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Slider } from '@ValenceUI/Slider';
@@ -122,7 +122,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
               setMusicImmersive(false);
             }}
           >
-            <Icon of={Cancel01Icon} size={20} />
+            <Icon of={XIcon} size={20} />
           </Button>
 
           <div className="relative mx-auto grid h-full max-w-[88rem] grid-cols-1 items-start gap-10 overflow-y-auto overscroll-contain px-6 py-16 sm:px-12 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:items-center lg:gap-20 lg:overflow-y-visible lg:px-20">
@@ -171,7 +171,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
 
                 <BarButton
                   label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
-                  glyph={FavouriteIcon}
+                  glyph={HeartIcon}
                   gesture="fill"
                   isLit={isLiked}
                   onClick={() => {
@@ -196,7 +196,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
                     player.setVolume(value / 100);
                   }}
                 />
-                <Icon of={VolumeHighIcon} size={16} />
+                <Icon of={VolumeIcon} size={16} />
               </div>
             </div>
 

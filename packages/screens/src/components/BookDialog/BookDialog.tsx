@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import {
-  BookOpen01Icon,
-  Cancel01Icon,
-  FavouriteIcon,
-  Share08Icon,
-} from '@hugeicons/core-free-icons';
+  BookOpen as BookOpenIcon,
+  Heart as HeartIcon,
+  Share as ShareIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
 import { ActionBar } from '@ValenceUI/ActionBar';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -77,7 +77,7 @@ const BookDialog = ({
             id: 'keep',
             isPinned: true,
             label: isKept ? 'Stop keeping' : 'Keep',
-            icon: <Icon of={FavouriteIcon} size={18} />,
+            icon: <Icon of={HeartIcon} size={18} />,
             onChoose: () => {
               onToggleKept(book);
             },
@@ -89,7 +89,7 @@ const BookDialog = ({
                   id: 'share',
                   isPinned: true,
                   label: 'Share',
-                  icon: <Icon of={Share08Icon} size={18} />,
+                  icon: <Icon of={ShareIcon} size={18} />,
                   onChoose: () => {
                     onShare(book);
                   },
@@ -102,7 +102,7 @@ const BookDialog = ({
       <DialogContent className="flex flex-col gap-7 p-4 sm:p-6">
         <div className="flex justify-end">
           <Button isIconOnly variant="ghost" size="sm" label="Close" onClick={onClose}>
-            <Icon of={Cancel01Icon} size={18} />
+            <Icon of={XIcon} size={18} />
           </Button>
         </div>
 
@@ -137,7 +137,7 @@ const BookDialog = ({
                   aria-hidden
                   className="flex aspect-[2/3] w-32 shrink-0 items-center justify-center rounded-lg bg-surface-raised sm:w-40"
                 >
-                  <Icon of={BookOpen01Icon} size={32} tone="muted" />
+                  <Icon of={BookOpenIcon} size={32} tone="muted" />
                 </div>
               )}
 
@@ -216,7 +216,7 @@ const BookDialog = ({
                 }
               }}
             >
-              <Icon of={BookOpen01Icon} size={18} />
+              <Icon of={BookOpenIcon} size={18} />
               {isStarted ? 'Continue reading' : where?.isFinished === true ? 'Read again' : 'Read'}
             </Button>
           }

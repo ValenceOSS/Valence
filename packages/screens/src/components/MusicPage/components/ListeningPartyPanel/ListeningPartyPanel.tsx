@@ -1,4 +1,4 @@
-import { HeadphonesIcon, UserGroupIcon } from '@hugeicons/core-free-icons';
+import { Headphones as HeadphonesIcon, Users as UsersIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
@@ -55,7 +55,7 @@ const ListeningPartyPanel = ({ player: given }: ListeningPartyPanelProps) => {
   if (watchParty.party !== null) {
     return (
       <NothingHere
-        of={UserGroupIcon}
+        of={UsersIcon}
         title="You are in a watch party"
         detail="Leave it before starting a party to listen together."
       />
@@ -84,7 +84,7 @@ const ListeningPartyPanel = ({ player: given }: ListeningPartyPanelProps) => {
             }
           }}
         >
-          <Icon of={UserGroupIcon} size={16} />
+          <Icon of={UsersIcon} size={16} />
           Start a listening party
         </Button>
       }

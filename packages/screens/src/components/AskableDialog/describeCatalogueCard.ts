@@ -1,4 +1,4 @@
-import { Tick02Icon } from '@hugeicons/core-free-icons';
+import { Check as CheckIcon } from '@keyline-icons/react';
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { describeStanding } from './describeStanding';
 import type { MediaCardCorner } from '@ValenceUI/MediaCard.types';
@@ -18,7 +18,7 @@ const describeCatalogueCard = (
   if (title.standing.status === 'library') {
     return {
       badges: [REQUEST_KIND_NAMES[title.kind]],
-      corner: { icon: Tick02Icon, label: 'In your library' },
+      corner: { icon: CheckIcon, label: 'In your library' },
     };
   }
 

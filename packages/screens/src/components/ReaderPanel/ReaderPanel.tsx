@@ -1,10 +1,10 @@
 import {
-  Book02Icon,
-  Cancel01Icon,
-  File01Icon,
-  PinIcon,
-  PinOffIcon,
-} from '@hugeicons/core-free-icons';
+  Book as BookIcon,
+  File as FileIcon,
+  MapPin as MapPinIcon,
+  MapPinOff as MapPinOffIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { ReaderPanelProps } from './ReaderPanel.types';
@@ -41,7 +41,7 @@ const ReaderPanel = ({
     <div className="valence-card-face flex min-h-0 min-w-0 flex-1 flex-col">
       <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
         <Button variant="ghost" size="xs" isIconOnly label="Put the panel away" onClick={onClose}>
-          <Icon of={Cancel01Icon} size={16} />
+          <Icon of={XIcon} size={16} />
         </Button>
 
         <Button
@@ -54,20 +54,20 @@ const ReaderPanel = ({
             onPinnedChange(!isPinned);
           }}
         >
-          <Icon of={isPinned ? PinOffIcon : PinIcon} size={16} />
+          <Icon of={isPinned ? MapPinOffIcon : MapPinIcon} size={16} />
         </Button>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pb-5">
         <div className="flex flex-col gap-2">
           <span className="flex items-start gap-2.5 text-base font-semibold tracking-tight text-text">
-            <Icon of={Book02Icon} size={18} tone="muted" className="mt-0.5 shrink-0" />
+            <Icon of={BookIcon} size={18} tone="muted" className="mt-0.5 shrink-0" />
             <span className="min-w-0">{bookTitle}</span>
           </span>
 
           {placeTitle === null ? null : (
             <span className="flex items-start gap-2.5 text-sm text-text-muted">
-              <Icon of={File01Icon} size={18} className="mt-0.5 shrink-0" />
+              <Icon of={FileIcon} size={18} className="mt-0.5 shrink-0" />
               <span className="min-w-0">{placeTitle}</span>
             </span>
           )}
