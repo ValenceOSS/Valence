@@ -1472,3 +1472,105 @@ describe('what a scan costs a catalogue', () => {
     expect(problems.some((reason) => reason.includes('429'))).toBe(true);
   });
 });
+
+describe('two films that share a title and a year', () => {
+  const TIED = {
+    results: [
+      { id: 1381027, title: 'Good Boy', release_date: '2026-03-27' },
+      { id: 1487650, title: 'Good Boy', release_date: '2026-10-03' },
+    ],
+  };
+
+  const entry = (id: number, runtime: number | null) => ({
+    id,
+    title: 'Good Boy',
+    overview: `The one that runs ${String(runtime)} minutes.`,
+    release_date: '2026-03-27',
+    genres: [],
+    ...(runtime === null ? {} : { runtime }),
+  });
+
+  const aFileOf = (durationSeconds: number): MediaFacts => ({
+    path: '/media/Good Boy (2026).mkv',
+    probe: { ...probe, durationSeconds },
+  });
+
+  const bothTimed = {
+    '/search/movie': TIED,
+    '/movie/1381027': entry(1381027, 110),
+    '/movie/1487650': entry(1487650, 73),
+  };
+
+  it('takes the one whose runtime fits the file, not whichever was listed first', async () => {
+    const { instance } = provider(bothTimed);
+
+    const found = await instance.describe(aFileOf(73 * 60));
+
+    expect(found).toMatchObject({ externalId: '1487650' });
+  });
+
+  it('takes the other one for the file that actually is the other one', async () => {
+    const { instance } = provider(bothTimed);
+
+    const found = await instance.describe(aFileOf(110 * 60));
+
+    expect(found).toMatchObject({ externalId: '1381027' });
+  });
+
+  it('does not hand two different files the same identity', async () => {
+    const { instance } = provider(bothTimed);
+
+    const shorter = await instance.describe(aFileOf(73 * 60));
+    const longer = await instance.describe(aFileOf(110 * 60));
+
+    expect(shorter?.externalId).not.toBe(longer?.externalId);
+  });
+
+  it('settles on the nearest runtime rather than insisting on an exact one', async () => {
+    const { instance } = provider(bothTimed);
+
+    const found = await instance.describe(aFileOf(76 * 60 + 22));
+
+    expect(found).toMatchObject({ externalId: '1487650' });
+  });
+
+  it('falls back to the first where the catalogue times neither of them', async () => {
+    const { instance } = provider({
+      '/search/movie': TIED,
+      '/movie/1381027': entry(1381027, null),
+      '/movie/1487650': entry(1487650, null),
+    });
+
+    const found = await instance.describe(aFileOf(73 * 60));
+
+    expect(found).toMatchObject({ externalId: '1381027' });
+  });
+
+  it('takes the only one it has a runtime for rather than guessing', async () => {
+    const { instance } = provider({
+      '/search/movie': TIED,
+      '/movie/1381027': entry(1381027, null),
+      '/movie/1487650': entry(1487650, 73),
+    });
+
+    const found = await instance.describe(aFileOf(73 * 60));
+
+    expect(found).toMatchObject({ externalId: '1487650' });
+  });
+
+  it('asks the catalogue nothing extra where only one title matched', async () => {
+    const { instance, calls } = provider({ '/search/movie': SEARCH, '/movie/329': DETAIL });
+
+    await instance.describe(facts('/media/Arrival (2016).mkv'));
+
+    expect(calls.filter((url) => url.includes('/movie/'))).toHaveLength(1);
+  });
+
+  it('reads the winner once, having already asked how long it was', async () => {
+    const { instance, calls } = provider(bothTimed);
+
+    await instance.describe(aFileOf(73 * 60));
+
+    expect(calls.filter((url) => url.includes('/movie/1487650'))).toHaveLength(1);
+  });
+});

@@ -332,21 +332,49 @@ const similarity = (left: string, right: string): number => {
 
 const YEAR_BONUS = 0.15;
 
+const TIE = 0.001;
+
+const SECONDS_IN_MINUTE = 60;
+
+type Shortlist = {
+  entries: SearchResult[];
+  wasExact: boolean;
+};
+
 /**
- * Picks the likeliest of the entries a catalogue answered a search with, scoring each on its title
- * and its year and refusing everything below a threshold. A wrong match is worse than no match: it
- * fills a library with confident nonsense, where no match leaves the filename showing.
+ * Every entry a catalogue offered that is equally the likeliest answer, scoring each on its title
+ * and its year. A wrong match is worse than no match: it fills a library with confident nonsense,
+ * where no match leaves the filename showing.
+ *
+ * All of the joint best rather than one of them, because a title and a year do not always name one
+ * film. Two films called Good Boy came out in 2026, so both score exactly alike, and picking one of
+ * them is picking whichever the catalogue happened to list first — which is how two different files
+ * ended up sharing an identity. Handing back the tie lets something that can actually tell them
+ * apart settle it.
  *
  * @param candidates - What the catalogue offered.
  * @param wanted - The title read from the file.
  * @param year - The year read from the file, where it had one.
- * @returns The entry to use, or null where none were likely enough.
+ * @returns The joint best entries, and whether they matched the title exactly.
  */
-const pickBestMatch = (
+const bestMatches = (
   candidates: readonly SearchResult[],
   wanted: string,
   year: number | null,
-): SearchResult | undefined => {
+): Shortlist => {
+  const normalised = normalizeTitle(wanted);
+
+  const exact =
+    normalised === ''
+      ? []
+      : candidates.filter(
+          (entry) => normalizeTitle(entry.title ?? entry.name ?? '') === normalised,
+        );
+
+  if (exact.length > 0) {
+    return { entries: exact, wasExact: true };
+  }
+
   const scored = candidates
     .map((entry) => {
       const found = readYear(entry.release_date ?? entry.first_air_date);
@@ -364,7 +392,46 @@ const pickBestMatch = (
     })
     .sort((left, right) => right.score - left.score);
 
-  return scored[0]?.entry ?? candidates[0];
+  const best = scored[0];
+
+  if (best === undefined) {
+    return { entries: candidates[0] === undefined ? [] : [candidates[0]], wasExact: false };
+  }
+
+  return {
+    entries: scored.filter((one) => best.score - one.score <= TIE).map((one) => one.entry),
+    wasExact: false,
+  };
+};
+
+/**
+ * Settles a tie by how long the film runs.
+ *
+ * Two films sharing a title and a year are told apart by almost anything else, and the length is
+ * the one thing already known about the file without asking anybody. A seventy-three minute file is
+ * not the hundred and ten minute film of the same name, however alike their titles read.
+ *
+ * Left unsettled where nothing offered a runtime, since guessing here is what the tie was about.
+ *
+ * @param candidates - The tied entries, each with the runtime the catalogue gives it.
+ * @param minutes - How long the file actually runs.
+ * @returns The closest entry, or nothing where no runtime was known.
+ */
+const closestToRuntime = (
+  candidates: readonly { entry: SearchResult; runtimeMinutes: number | null }[],
+  minutes: number,
+): SearchResult | undefined => {
+  const known = candidates.filter(
+    (one): one is { entry: SearchResult; runtimeMinutes: number } =>
+      one.runtimeMinutes !== null && one.runtimeMinutes > 0,
+  );
+
+  const [closest] = known.sort(
+    (left, right) =>
+      Math.abs(left.runtimeMinutes - minutes) - Math.abs(right.runtimeMinutes - minutes),
+  );
+
+  return closest?.entry;
 };
 
 /**
@@ -676,13 +743,46 @@ const createCatalogueMetadataProvider = ({
       const results = SearchResponseSchema.safeParse(searched);
       const candidates = results.success ? results.data.results : [];
 
-      const wanted = normalizeTitle(searchTitle);
-      const exact =
-        wanted === ''
-          ? undefined
-          : candidates.find((entry) => normalizeTitle(entry.title ?? entry.name ?? '') === wanted);
+      const shortlist = bestMatches(
+        candidates,
+        searchTitle,
+        seriesYear ?? fromFilename.year ?? null,
+      );
+
+      /**
+       * Asks the catalogue how long each tied entry runs, so the file's own length can settle which
+       * of them it is.
+       *
+       * Asked with the same extras the chosen entry is read with, so the one that wins is already
+       * remembered by the time it is read in full.
+       *
+       * @param entries - The entries that tied.
+       * @returns The one whose runtime is closest, or nothing where none gave one.
+       */
+      const settleByRuntime = async (
+        entries: readonly SearchResult[],
+      ): Promise<SearchResult | undefined> => {
+        const timed = await Promise.all(
+          entries.map(async (entry) => {
+            const asked = await request(`/movie/${entry.id.toString()}`, key, {
+              append_to_response: appended,
+            });
+            const parsed = TitleResponseSchema.safeParse(asked);
+
+            return {
+              entry,
+              runtimeMinutes: parsed.success ? (parsed.data.runtime ?? null) : null,
+            };
+          }),
+        );
+
+        return closestToRuntime(timed, facts.probe.durationSeconds / SECONDS_IN_MINUTE);
+      };
+
       const first =
-        exact ?? pickBestMatch(candidates, searchTitle, seriesYear ?? fromFilename.year ?? null);
+        shortlist.entries.length > 1 && !isEpisode
+          ? ((await settleByRuntime(shortlist.entries)) ?? shortlist.entries[0])
+          : shortlist.entries[0];
 
       if (first === undefined) {
         return null;
@@ -704,7 +804,7 @@ const createCatalogueMetadataProvider = ({
         };
       }
 
-      return describeFrom(detail.data, exact !== undefined);
+      return describeFrom(detail.data, shortlist.wasExact);
     },
 
     readPerson: async (personId) => {
