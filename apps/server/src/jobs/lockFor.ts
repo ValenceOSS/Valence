@@ -1,10 +1,15 @@
-import { READ_AGAIN_JOB, SCAN_LIBRARY_JOB } from '@ValenceServer/jobs/JobQueue';
+import {
+  READ_AGAIN_JOB,
+  SCAN_LIBRARY_JOB,
+  SCAN_REQUEST_FOLDER_JOB,
+} from '@ValenceServer/jobs/JobQueue';
 
 /**
  * Names the lock a piece of work takes out on a library.
  *
- * Reading and re-reading share one, because they are the two things that decide which items a
- * library has and two of them at once would fight over that. Everything else — clips, thumbnails,
+ * Reading, re-reading and reading the one folder a request was filed into share one, because they
+ * are the things that decide which items a library has and two of them at once would fight over
+ * that. Everything else — clips, thumbnails,
  * lettering, intros — makes artefacts for items that already exist, works from what is outstanding
  * rather than from a list it was handed, and so has a lock of its own.
  *
@@ -16,7 +21,7 @@ import { READ_AGAIN_JOB, SCAN_LIBRARY_JOB } from '@ValenceServer/jobs/JobQueue';
  * @returns The key to serialise it under.
  */
 const lockFor = (kind: string, libraryId: string): string =>
-  kind === SCAN_LIBRARY_JOB || kind === READ_AGAIN_JOB
+  kind === SCAN_LIBRARY_JOB || kind === READ_AGAIN_JOB || kind === SCAN_REQUEST_FOLDER_JOB
     ? `reading:${libraryId}`
     : `${kind}:${libraryId}`;
 

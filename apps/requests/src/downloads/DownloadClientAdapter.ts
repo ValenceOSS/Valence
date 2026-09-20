@@ -14,6 +14,7 @@ type ClientItem = {
   secondsLeft: number | null;
   seeds: number | null;
   peers: number | null;
+  path: string | null;
 };
 
 type ClientSpeeds = {

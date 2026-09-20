@@ -5,6 +5,7 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { DownloadsPanel } from './DownloadsPanel';
 import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
 import type { DownloadQueue, QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
+import type { Library } from '@ValenceContracts/schemas/Library';
 import type * as Clients from '@ValenceClient/requests/fetchDownloadClients';
 import type * as Queue from '@ValenceClient/requests/fetchDownloadQueue';
 
@@ -17,6 +18,13 @@ const fetchDownloadQueue = vi.fn<typeof Queue.fetchDownloadQueue>();
 const pauseQueuedDownload = vi.fn<typeof Queue.pauseQueuedDownload>();
 const resumeQueuedDownload = vi.fn<typeof Queue.resumeQueuedDownload>();
 const removeQueuedDownload = vi.fn<typeof Queue.removeQueuedDownload>();
+const fileQueuedDownload = vi.fn<typeof Queue.fileQueuedDownload>();
+const fetchLibraries = vi.fn<() => Promise<Library[]>>();
+
+vi.mock('@ValenceClient/library/fetchLibrary', async (actual) => ({
+  ...(await actual<object>()),
+  fetchLibraries: () => fetchLibraries(),
+}));
 const stopWatching = vi.fn();
 const heard: { onQueue: ((queue: DownloadQueue) => void) | null } = { onQueue: null };
 
@@ -35,6 +43,7 @@ vi.mock('@ValenceClient/requests/fetchDownloadQueue', () => ({
   pauseQueuedDownload: (id: string) => pauseQueuedDownload(id),
   resumeQueuedDownload: (id: string) => resumeQueuedDownload(id),
   removeQueuedDownload: (id: string, deleteData: boolean) => removeQueuedDownload(id, deleteData),
+  fileQueuedDownload: (id: string, libraryId: string) => fileQueuedDownload(id, libraryId),
   watchDownloadQueue: (onQueue: (queue: DownloadQueue) => void) => {
     heard.onQueue = onQueue;
 
@@ -50,6 +59,8 @@ const CLIENT: DownloadClient = {
   username: 'admin',
   hasPassword: true,
   hasApiKey: false,
+  remotePath: '',
+  localPath: '',
   categories: {
     movies: 'valence-films',
     shows: 'valence-series',
@@ -90,6 +101,8 @@ const DOWNLOAD: QueuedDownload = {
   peers: 2,
   sentAt: '2026-09-19T00:00:00.000Z',
   finishedAt: null,
+  filedInto: null,
+  filingProblem: null,
 };
 
 const QUEUE: DownloadQueue = {
@@ -122,6 +135,21 @@ const QUEUE: DownloadQueue = {
 };
 
 beforeEach(() => {
+  fileQueuedDownload
+    .mockReset()
+    .mockResolvedValue({ value: null, refusal: { message: 'Not yet' } });
+  fetchLibraries.mockReset().mockResolvedValue([
+    {
+      id: 'films',
+      name: 'Films',
+      kind: 'movies',
+      path: '/media/Films',
+      itemCount: 0,
+      lastScannedAt: null,
+      defaultAudioLanguage: null,
+      filesAtOnce: null,
+    },
+  ]);
   heard.onQueue = null;
   stopWatching.mockReset();
   fetchDownloadClients.mockReset().mockResolvedValue([CLIENT, NZBGET]);
@@ -180,6 +208,23 @@ describe('DownloadsPanel', () => {
     await screen.findByText('Dune');
 
     expect(screen.queryByText(/MB\/s/)).not.toBeInTheDocument();
+  });
+
+  it('files a download into a library, saying why where it could not', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<DownloadsPanel />);
+
+    await screen.findByText('Dune');
+    await waitFor(() => {
+      expect(fetchLibraries).toHaveBeenCalled();
+    });
+    await choose(user, 'Dune', /File into Films/);
+
+    await waitFor(() => {
+      expect(fileQueuedDownload).toHaveBeenCalledWith(DOWNLOAD.id, 'films');
+    });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Not yet');
   });
 
   it('pauses and resumes a download, saying why where it could not', async () => {

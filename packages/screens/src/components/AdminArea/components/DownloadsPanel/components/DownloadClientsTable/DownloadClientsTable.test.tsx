@@ -14,6 +14,8 @@ const QBITTORRENT: DownloadClient = {
   username: 'admin',
   hasPassword: true,
   hasApiKey: false,
+  remotePath: '',
+  localPath: '',
   categories: {
     movies: 'valence-films',
     shows: 'valence-series',
@@ -79,7 +81,8 @@ describe('DownloadClientsTable', () => {
     expect(seedbox.getByText('qBittorrent')).toBeInTheDocument();
     expect(seedbox.getByText('http://seedbox:8080')).toBeInTheDocument();
     expect(seedbox.getByText('Answering')).toBeInTheDocument();
-    expect(seedbox.getByText('↓ 1.0 MB/s · ↑ 1.0 KB/s')).toBeInTheDocument();
+    expect(seedbox.getByText('↓ 1.0 MB/s')).toBeInTheDocument();
+    expect(seedbox.getByText('↑ 1.0 KB/s')).toBeInTheDocument();
     expect(within(rowOf('Usenet')).getByText('Off')).toBeInTheDocument();
     expect(within(rowOf('Usenet')).getByText('SABnzbd')).toBeInTheDocument();
   });

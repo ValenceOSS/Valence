@@ -7,6 +7,7 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   success: 'border border-success/35 bg-success/15 text-success backdrop-blur-md',
   highlight: 'border border-highlight/40 bg-highlight/15 text-highlight backdrop-blur-md',
   solid: 'bg-shade/60 text-on-scrim backdrop-blur-md',
+  busy: 'border border-busy/45 bg-busy/15 text-busy backdrop-blur-md',
   warning: 'border border-highlight/50 bg-highlight/15 text-highlight backdrop-blur-md',
   danger: 'border border-danger/50 bg-danger/15 text-text backdrop-blur-md',
 };
@@ -29,7 +30,7 @@ const SIZE_CLASSES: Record<BadgeSize, string> = {
 const Badge = ({ children, tone = 'quiet', size = 'sm', className }: BadgeProps) => (
   <span
     className={cn(
-      'inline-flex shrink-0 select-none items-center justify-center rounded-md font-medium',
+      'inline-flex shrink-0 select-none items-center justify-center gap-1.5 rounded-md font-medium',
       'uppercase tracking-[0.12em] indent-[0.12em] leading-none whitespace-nowrap',
       TONE_CLASSES[tone],
       SIZE_CLASSES[size],

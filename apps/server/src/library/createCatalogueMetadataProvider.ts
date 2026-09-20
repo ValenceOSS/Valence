@@ -9,6 +9,7 @@ import { pickLogo } from './pickLogo';
 import { createCatalogueGate } from './createCatalogueGate';
 import type { CastMember, Metadata, MetadataProvider } from './MetadataProvider';
 import { readCertifications } from '@ValenceServer/library/readCertifications';
+import { readRequestCatalogue } from '@ValenceServer/library/readRequestCatalogue';
 
 const DEFAULT_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -740,6 +741,32 @@ const createCatalogueMetadataProvider = ({
         overview: entry.overview === undefined || entry.overview === '' ? null : entry.overview,
         posterUrl: imageUrl(imageBaseUrl, entry.poster_path, 'w342'),
       }));
+    },
+
+    describeForRequest: async (externalId, kind) => {
+      const key = await readApiKey();
+
+      if (key === null || key === '') {
+        return null;
+      }
+
+      const detail = await request(`/${kind}/${externalId}`, key, {
+        append_to_response:
+          kind === 'movie' ? 'release_dates,alternative_titles' : 'alternative_titles',
+      });
+      const listed =
+        kind === 'movie'
+          ? { seasons: [] }
+          : (DetailResponseSchema.pick({ seasons: true }).safeParse(detail).data ?? {
+              seasons: [],
+            });
+      const seasons = await Promise.all(
+        listed.seasons.map((season) =>
+          request(`/tv/${externalId}/season/${season.season_number.toString()}`, key, {}),
+        ),
+      );
+
+      return readRequestCatalogue(detail, seasons, (path) => imageUrl(imageBaseUrl, path, 'w342'));
     },
 
     describeSeries: async (externalId) => {

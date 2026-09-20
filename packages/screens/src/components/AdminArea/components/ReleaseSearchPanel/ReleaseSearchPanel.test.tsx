@@ -42,6 +42,8 @@ const HD: QualityProfile = {
   requiredWords: [],
   bannedWords: [],
   isUpgrading: false,
+  releaseWait: 'digital',
+  sizes: [],
   upgradeUntilResolution: null,
   upgradeUntilSource: null,
   upgradeUntilMusicQuality: null,
@@ -106,6 +108,8 @@ const aClient = (overrides: Partial<DownloadClient> = {}): DownloadClient => ({
   username: '',
   hasPassword: false,
   hasApiKey: false,
+  remotePath: '',
+  localPath: '',
   categories: {
     movies: 'valence-films',
     shows: 'valence-series',
@@ -223,6 +227,8 @@ beforeEach(() => {
       peers: null,
       sentAt: '2026-09-19T00:00:00.000Z',
       finishedAt: null,
+      filedInto: null,
+      filingProblem: null,
     },
     refusal: null,
   });

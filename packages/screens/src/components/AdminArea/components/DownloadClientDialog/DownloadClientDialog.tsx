@@ -240,6 +240,31 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
           </div>
         </FormField>
 
+        <FormField
+          label="Where it saves downloads"
+          description="Only where the client and Valence see the downloads folder by different names, as two containers mounting it in different places do. Valence files each finished download from here into its library."
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TextField
+              label="As the client sees it"
+              value={form.remotePath}
+              onValueChange={(remotePath) => {
+                change({ remotePath });
+              }}
+              placeholder="/downloads"
+            />
+
+            <TextField
+              label="As Valence sees it"
+              value={form.localPath}
+              onValueChange={(localPath) => {
+                change({ localPath });
+              }}
+              placeholder="/downloads"
+            />
+          </div>
+        </FormField>
+
         <TextField
           label="Priority"
           type="number"

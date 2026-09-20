@@ -122,9 +122,24 @@ describe('createNzbgetAdapter', () => {
         { ...GROUP, NZBID: 10, Status: 'PAUSED', FileSizeMB: 0, RemainingSizeMB: 0 },
       ],
       history: [
-        { NZBID: 1, Name: 'Heat', Category: 'valence', Status: 'SUCCESS/UNPACK', FileSizeMB: 2 },
+        {
+          NZBID: 1,
+          Name: 'Heat',
+          Category: 'valence',
+          Status: 'SUCCESS/UNPACK',
+          FileSizeMB: 2,
+          DestDir: '/downloads/valence/Heat.1995',
+        },
         { NZBID: 2, Name: 'Alien', Category: 'valence', Status: 'FAILURE/PAR', FileSizeMB: 2 },
-        { NZBID: 3, Name: 'Up', Category: 'valence', Status: 'WARNING/SCRIPT', FileSizeMB: 2 },
+        {
+          NZBID: 3,
+          Name: 'Up',
+          Category: 'valence',
+          Status: 'WARNING/SCRIPT',
+          FileSizeMB: 2,
+          DestDir: '/downloads/intermediate/Up',
+          FinalDir: '/downloads/valence/Up',
+        },
         { NZBID: 4, Name: 'Big', Category: 'valence', Status: 'DELETED/MANUAL', FileSizeMB: 2 },
         { NZBID: 5, Name: 'Twice', Category: 'valence', Status: 'DELETED/DUPE', FileSizeMB: 2 },
         { NZBID: 6, Name: 'Other', Category: 'tv', Status: 'SUCCESS/ALL', FileSizeMB: 2 },
@@ -147,7 +162,18 @@ describe('createNzbgetAdapter', () => {
       secondsLeft: 20,
       seeds: null,
       peers: null,
+      path: null,
     });
+    expect(listed.map((job) => job.path)).toEqual([
+      null,
+      null,
+      null,
+      '/downloads/valence/Heat.1995',
+      null,
+      '/downloads/valence/Up',
+      null,
+      null,
+    ]);
     expect(listed.map((job) => [job.remoteId, job.state, job.problem])).toEqual([
       ['7', 'downloading', null],
       ['8', 'processing', null],

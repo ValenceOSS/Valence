@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "is_picked_by_hand" boolean DEFAULT false NOT NULL;

@@ -16,7 +16,7 @@ import { createDatabaseDefinitionStore } from '@ValenceRequests/definitions/crea
 import { createDefinitionCatalogue } from '@ValenceRequests/definitions/createDefinitionCatalogue';
 import { createAdapterFor } from '@ValenceRequests/downloads/createAdapterFor';
 import { createDatabaseDownloadClientStore } from '@ValenceRequests/downloads/createDatabaseDownloadClientStore';
-import { createDatabaseDownloadEventStore } from '@ValenceRequests/downloads/createDatabaseDownloadEventStore';
+import { createDatabaseEventStore } from '@ValenceRequests/events/createDatabaseEventStore';
 import { createDatabaseSentDownloadStore } from '@ValenceRequests/downloads/createDatabaseSentDownloadStore';
 import { createDownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import { createDownloadQueue } from '@ValenceRequests/downloads/createDownloadQueue';
@@ -24,6 +24,13 @@ import { createDownloadRoutes } from '@ValenceRequests/downloads/createDownloadR
 import { createDatabaseProfileStore } from '@ValenceRequests/profiles/createDatabaseProfileStore';
 import { createProfileRoutes } from '@ValenceRequests/profiles/createProfileRoutes';
 import { createProfileService } from '@ValenceRequests/profiles/createProfileService';
+import { createDatabaseBlockedReleaseStore } from '@ValenceRequests/mediaRequests/createDatabaseBlockedReleaseStore';
+import { createDatabaseMediaRequestStore } from '@ValenceRequests/mediaRequests/createDatabaseMediaRequestStore';
+import { createDatabaseRequestItemStore } from '@ValenceRequests/mediaRequests/createDatabaseRequestItemStore';
+import { createDatabaseRequestLogStore } from '@ValenceRequests/mediaRequests/createDatabaseRequestLogStore';
+import { createRequestRoutes } from '@ValenceRequests/mediaRequests/createRequestRoutes';
+import { createRequestService } from '@ValenceRequests/mediaRequests/createRequestService';
+import { createRequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
 
@@ -94,14 +101,47 @@ const downloadClients = createDownloadClientService({
 
 const profiles = createProfileService({ store: createDatabaseProfileStore(db) });
 
+const sentDownloads = createDatabaseSentDownloadStore(db);
+
+const events = createDatabaseEventStore(db);
+
 const downloadQueue = createDownloadQueue({
   clients: downloadClients,
-  downloads: createDatabaseSentDownloadStore(db),
-  events: createDatabaseDownloadEventStore(db),
+  downloads: sentDownloads,
+  events,
   fetchRelease: (indexerId, url) => indexers.download(indexerId, url),
 });
 
 downloadQueue.start();
+
+const requestStore = createDatabaseMediaRequestStore(db);
+
+const requestItems = createDatabaseRequestItemStore(db);
+
+const requestLog = createDatabaseRequestLogStore(db);
+
+const requestWorker = createRequestWorker({
+  requests: requestStore,
+  items: requestItems,
+  blocked: createDatabaseBlockedReleaseStore(db),
+  downloads: sentDownloads,
+  clients: downloadClients,
+  queue: downloadQueue,
+  indexers,
+  profiles,
+  events,
+  log: requestLog,
+  say,
+});
+
+const mediaRequests = createRequestService({
+  requests: requestStore,
+  items: requestItems,
+  profiles,
+  onChange: requestWorker.nudge,
+});
+
+await requestWorker.start();
 
 /**
  * Brings the catalogue of definitions up to date where it is a day old or has never been fetched,
@@ -129,8 +169,9 @@ const app = createApp({
   definitions,
   profiles,
   routes: [
-    createDownloadRoutes({ clients: downloadClients, queue: downloadQueue }),
+    createDownloadRoutes({ clients: downloadClients, queue: downloadQueue, filing: requestWorker }),
     createProfileRoutes(profiles),
+    createRequestRoutes({ service: mediaRequests, log: requestLog, worker: requestWorker }),
   ],
   secret: env.REQUESTS_SECRET,
   version: env.VALENCE_VERSION,
@@ -157,6 +198,7 @@ const server = serve({ fetch: app.fetch, port: env.REQUESTS_PORT }, (info) => {
 const leave = (): void => {
   vpn.stop();
   downloadQueue.stop();
+  requestWorker.stop();
   clearInterval(definitionTimer);
   server.close();
   void pool.end().then(() => process.exit(0));

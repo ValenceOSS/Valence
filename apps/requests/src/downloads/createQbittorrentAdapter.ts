@@ -25,6 +25,7 @@ const TorrentSchema = z.object({
   eta: z.number().optional(),
   num_seeds: z.number().optional(),
   num_leechs: z.number().optional(),
+  content_path: z.string().optional(),
 });
 
 const TransferSchema = z.object({ dl_info_speed: z.number(), up_info_speed: z.number() });
@@ -86,6 +87,10 @@ const readTorrent = (torrent: z.infer<typeof TorrentSchema>): ClientItem => {
         : null,
     seeds: torrent.num_seeds ?? null,
     peers: torrent.num_leechs ?? null,
+    path:
+      torrent.content_path === undefined || torrent.content_path === ''
+        ? null
+        : torrent.content_path,
   };
 };
 

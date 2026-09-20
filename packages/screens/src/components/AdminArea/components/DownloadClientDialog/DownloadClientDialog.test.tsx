@@ -27,6 +27,8 @@ const KEPT: DownloadClient = {
   username: 'admin',
   hasPassword: true,
   hasApiKey: false,
+  remotePath: '',
+  localPath: '',
   categories: {
     movies: 'valence-films',
     shows: 'valence-series',
@@ -75,6 +77,11 @@ describe('DownloadClientDialog', () => {
     await fillIn(user);
     await user.type(screen.getByRole('textbox', { name: /Username/ }), 'admin');
     await user.type(screen.getByLabelText(/Password/), 'secret');
+    await user.type(screen.getByRole('textbox', { name: 'As the client sees it' }), '/downloads');
+    await user.type(
+      screen.getByRole('textbox', { name: 'As Valence sees it' }),
+      '/Users/marques/Downloads/Valence',
+    );
     await user.click(screen.getByRole('button', { name: 'Add client' }));
 
     await waitFor(() => {
@@ -94,6 +101,8 @@ describe('DownloadClientDialog', () => {
         music: 'valence-music',
         books: 'valence-books',
       },
+      remotePath: '/downloads',
+      localPath: '/Users/marques/Downloads/Valence',
       priority: 25,
       isEnabled: true,
     });

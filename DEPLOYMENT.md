@@ -112,9 +112,8 @@ indexers, and hand them to a download client of your own. It is a second
 service, `requests`, and nothing about it shows in Valence until it is set up:
 no sidebar group, no permissions, no webhook events.
 
-It is arriving in stages. For now the service runs, reports whether its VPN is
-up, is watched by Valence, searches your indexers, and hands releases to your
-download client; requests themselves follow.
+It is arriving in stages. Films and series can be requested, fetched and filed
+into their libraries now; music follows.
 
 To switch it on:
 
@@ -188,8 +187,59 @@ clients are asked every couple of seconds while that page is open, and every hal
 a minute otherwise, which is how Valence notices a download finishing or failing.
 The `requests.downloadStarted` and `requests.downloadFailed` webhooks follow.
 
-Valence files what arrives into your libraries in a later stage, so point each
-category's folder somewhere under `DOWNLOADS_PATH` now.
+Point each category's folder somewhere under `DOWNLOADS_PATH`. Where the client
+and the requests service see that folder by different names — the client
+mounting it at `/downloads` and the requests service somewhere else, say — tell
+the client's dialog both, under **Where it saves downloads**, so a finished
+download can be found.
+
+### Films and series
+
+The admin area's **Requested** page asks for a film or series from the
+catalogue, which needs `CATALOGUE_API_KEY`. Somebody allowed to ask
+(`requests.ask`) makes a request; it waits for somebody who approves
+(`requests.approve`) unless the asker's role has `requests.autoApprove`. The
+page shows every request as it moves along, and approves, refuses, searches
+again, or searches by hand to pick any release.
+
+Once a request is approved:
+
+- **Not out yet.** A film is held until it is out at home — digitally or on
+  disc, as chosen when it was asked for — and an episode until it airs. The
+  catalogue is read again every night, so new episodes of a series asked for in
+  full, and changed release dates, are picked up.
+- **Picking.** Everything wanted is searched for at once — a season that has
+  finished airing as a whole — and the best release is sent to a download
+  client, judged by the quality profile chosen when it was asked for, or else
+  the library's own. With neither, 1080p or 720p from any good source is taken. Where the profile upgrades, a better
+  release replaces what was fetched until the profile's limit is reached.
+- **Wanted, not failed.** A request that finds nothing acceptable stays wanted.
+  Everything wanted is searched for again every six hours, and on demand with
+  **Search for what is missing**; the indexers' newest releases are read every
+  quarter of an hour for anything wanted.
+- **Failure.** A download that fails, or stalls for six hours, blocklists that
+  release for the request, and the next best is fetched straight away.
+- **Filing.** A finished download is filed into the library the request is for,
+  as `Title (Year)/Title (Year).mkv` for a film and
+  `Title (Year)/Season 01/Title (Year) - S01E01 - Episode.mkv` for an episode,
+  with any subtitles beside it. Valence then reads just that folder, ties the
+  request to what it found, and tells whoever asked — in the app, and by push
+  where they chose.
+
+Filing hard-links where it can, so a film takes no extra room and a torrent goes
+on seeding. A hard link only works within one filesystem as a container sees it,
+and `MEDIA_PATH` and `DOWNLOADS_PATH` are mounted separately, so as the compose
+file stands a torrent's files are copied and a usenet download's are moved. To
+hard-link instead, keep both on one disk and mount their common parent into the
+download client and the requests service at the same place, then point your
+libraries and the client's folders inside it.
+
+Libraries are filed into at the path Valence has for them, so the requests
+service must see each library at the same path Valence does — both mount
+`MEDIA_PATH` at `/media` in the compose file, which is what makes that so.
+
+The `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`,
+`requests.filed` and `requests.available` webhooks follow a request along.
 
 ### A VPN for the download client
 

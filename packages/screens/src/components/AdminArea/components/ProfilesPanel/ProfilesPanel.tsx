@@ -13,14 +13,14 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { removeProfile } from '@ValenceClient/requests/fetchProfiles';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
-import { ProfileDialog } from '@ValenceScreens/components/AdminArea/components/ProfileDialog/ProfileDialog';
+import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/ProfileEditor';
 import { describeProfile } from './describeProfile';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 
 /**
  * The Profiles page: every quality profile, what each takes and how far it upgrades, the libraries
- * it is for, and changing or removing it. Search can be run against any of them.
+ * it is for, and changing or removing it — a profile opening as a page of its own. Search can be run against any of them.
  */
 const ProfilesPanel = () => {
   const cache = useQueryClient();
@@ -128,6 +128,21 @@ const ProfilesPanel = () => {
     [named],
   );
 
+  if (isAdding || editing !== null) {
+    return (
+      <ProfileEditor
+        profile={editing}
+        onClose={() => {
+          setIsAdding(false);
+          setEditing(null);
+        }}
+        onSaved={() => {
+          void reread();
+        }}
+      />
+    );
+  }
+
   return (
     <PanelCard
       title="Profiles"
@@ -144,18 +159,6 @@ const ProfilesPanel = () => {
         </Button>
       }
     >
-      <ProfileDialog
-        isOpen={isAdding || editing !== null}
-        profile={editing}
-        onClose={() => {
-          setIsAdding(false);
-          setEditing(null);
-        }}
-        onSaved={() => {
-          void reread();
-        }}
-      />
-
       <ConfirmDialog
         title={`Remove ${removing?.name ?? 'this profile'}?`}
         detail="Searches can no longer be judged against it, and the libraries it was for will have none."

@@ -50,6 +50,7 @@ const HistorySchema = z.object({
         status: z.string(),
         fail_message: z.string().default(''),
         bytes: z.coerce.number(),
+        storage: z.string().nullable().default(null),
       }),
     ),
   }),
@@ -215,6 +216,7 @@ const createSabnzbdAdapter = (
           secondsLeft: state === 'downloading' ? readTimeLeft(slot.timeleft) : null,
           seeds: null,
           peers: null,
+          path: null,
         };
       });
 
@@ -241,6 +243,7 @@ const createSabnzbdAdapter = (
             secondsLeft: null,
             seeds: null,
             peers: null,
+            path: slot.storage === null || slot.storage === '' ? null : slot.storage,
           };
         });
 

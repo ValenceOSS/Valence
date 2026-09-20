@@ -60,6 +60,7 @@ const HISTORY = {
         category: 'valence',
         status: 'Completed',
         bytes: 2048,
+        storage: '/downloads/valence/Heat',
       },
       {
         nzo_id: 'SABnzbd_nzo_5',
@@ -226,7 +227,10 @@ describe('createSabnzbdAdapter', () => {
       secondsLeft: 65,
       seeds: null,
       peers: null,
+      path: null,
     });
+    expect(listed[2]?.path).toBe('/downloads/valence/Heat');
+    expect(listed[3]?.path).toBeNull();
     expect(listed.map((job) => [job.remoteId, job.state, job.problem])).toEqual([
       ['SABnzbd_nzo_1', 'downloading', null],
       ['SABnzbd_nzo_2', 'processing', null],

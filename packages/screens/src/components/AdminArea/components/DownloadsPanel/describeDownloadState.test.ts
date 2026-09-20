@@ -22,12 +22,14 @@ const A_DOWNLOAD: QueuedDownload = {
   peers: null,
   sentAt: '2026-09-19T00:00:00.000Z',
   finishedAt: null,
+  filedInto: null,
+  filingProblem: null,
 };
 
 describe('describeDownloadState', () => {
   it.each([
     ['queued', 'Queued', 'quiet'],
-    ['downloading', 'Downloading', 'accent'],
+    ['downloading', 'Downloading', 'busy'],
     ['paused', 'Paused', 'quiet'],
     ['done', 'Done', 'success'],
   ] as const)('says a %s download is %s', (state, label, tone) => {
@@ -62,5 +64,30 @@ describe('describeDownloadState', () => {
       detail: 'Out of retention',
     });
     expect(describeDownloadState({ ...A_DOWNLOAD, state: 'failed' }).detail).toBe('It failed.');
+  });
+
+  it('says where a finished download was filed, or why it could not be', () => {
+    expect(
+      describeDownloadState({
+        ...A_DOWNLOAD,
+        state: 'done',
+        filedInto: '/media/Films/The Matrix (1999)',
+      }),
+    ).toEqual({
+      label: 'Completed',
+      tone: 'success',
+      detail: 'Filed into /media/Films/The Matrix (1999).',
+    });
+    expect(
+      describeDownloadState({
+        ...A_DOWNLOAD,
+        state: 'done',
+        filingProblem: 'qBittorrent has not said where it put the download',
+      }),
+    ).toEqual({
+      label: 'Not filed',
+      tone: 'warning',
+      detail: 'qBittorrent has not said where it put the download',
+    });
   });
 });

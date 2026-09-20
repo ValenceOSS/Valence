@@ -373,6 +373,8 @@ describe('createRequestsClient with download clients', () => {
     username: 'admin',
     hasPassword: true,
     hasApiKey: false,
+    remotePath: '',
+    localPath: '',
     categories: {
       movies: 'valence-films',
       shows: 'valence-series',
@@ -405,6 +407,8 @@ describe('createRequestsClient with download clients', () => {
     peers: null,
     sentAt: '2026-09-19T00:00:00.000Z',
     finishedAt: null,
+    filedInto: null,
+    filingProblem: null,
   };
 
   const A_QUEUE = { clients: [], downloads: [A_DOWNLOAD], checkedAt: null };
@@ -519,6 +523,17 @@ describe('createRequestsClient with download clients', () => {
     ]);
   });
 
+  it('files a download into the library given', async () => {
+    const { client, fetch } = aClient(200, A_DOWNLOAD);
+
+    expect(
+      (await client.fileDownload(A_DOWNLOAD.id, { id: 'films', path: '/media/Films' })).kind,
+    ).toBe('answered');
+    expect(fetch.mock.calls[0]?.[0]).toBe(
+      `http://requests:8421/api/downloads/${A_DOWNLOAD.id}/file`,
+    );
+  });
+
   it('passes on why a release was not sent', async () => {
     expect(
       await aClient(400, {
@@ -619,6 +634,8 @@ describe('createRequestsClient with quality profiles', () => {
     requiredWords: [],
     bannedWords: [],
     isUpgrading: false,
+    releaseWait: 'digital',
+    sizes: [],
     upgradeUntilResolution: null,
     upgradeUntilSource: null,
     upgradeUntilMusicQuality: null,
@@ -664,5 +681,168 @@ describe('createRequestsClient with quality profiles', () => {
         `PATCH http://requests:8421/api/profiles/${PROFILE.id}`,
       ],
     );
+  });
+});
+
+describe('createRequestsClient with requests for films and series', () => {
+  const REQUEST = {
+    id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    kind: 'film' as const,
+    tmdbId: 438631,
+    title: 'Dune',
+    year: 2021,
+    overview: null,
+    posterUrl: null,
+    libraryId: 'films',
+    profileId: null,
+    isPickedByHand: false,
+    state: 'wanted' as const,
+    problem: null,
+    approval: 'approved' as const,
+    refusedBecause: null,
+    requestedBy: { id: 'someone', name: 'Someone' },
+    seasons: null,
+    releaseDate: '2021-12-03',
+    items: [],
+    mediaId: null,
+    createdAt: '2026-09-19T00:00:00.000Z',
+    updatedAt: '2026-09-19T00:00:00.000Z',
+  };
+
+  /**
+   * A client over a service that answers every call the one way.
+   */
+  const aClient = (status: number, body: object | null) => {
+    const fetch = vi.fn((url: string, init: { method?: string; body?: string }) => {
+      void url;
+      void init;
+
+      return Promise.resolve(new Response(body === null ? null : JSON.stringify(body), { status }));
+    });
+
+    return {
+      fetch,
+      client: createRequestsClient({ address: 'http://requests:8421', secret: A_SECRET, fetch }),
+    };
+  };
+
+  it('makes, reads and acts on requests, reading each answer as a request', async () => {
+    const one = aClient(200, REQUEST);
+
+    expect(await aClient(200, [REQUEST]).client.listRequests()).toEqual({
+      kind: 'answered',
+      value: [REQUEST],
+    });
+    expect(
+      await aClient(201, { request: REQUEST, isNew: true }).client.addRequest({
+        kind: 'film',
+        tmdbId: 438631,
+        libraryId: 'films',
+        libraryPath: '/media/Films',
+        requestedBy: { id: 'someone', name: 'Someone' },
+        isApproved: true,
+        catalogue: { title: 'Dune', year: 2021 },
+      }),
+    ).toEqual({ kind: 'answered', value: { request: REQUEST, isNew: true } });
+
+    for (const asked of [
+      one.client.findRequest(REQUEST.id),
+      one.client.changeRequest(REQUEST.id, { change: { isPickedByHand: true } }),
+      one.client.approveRequest(REQUEST.id),
+      one.client.refuseRequest(REQUEST.id, 'No room'),
+      one.client.retryRequest(REQUEST.id),
+      one.client.requestArrived(REQUEST.id, 'media-1'),
+      one.client.updateRequestCatalogue(REQUEST.id, { catalogue: { title: 'Dune', year: 2021 } }),
+    ]) {
+      expect((await asked).kind).toBe('answered');
+    }
+
+    expect(one.fetch.mock.calls.map(([url, init]) => `${init.method ?? 'GET'} ${url}`)).toEqual([
+      `GET http://requests:8421/api/requests/${REQUEST.id}`,
+      `PATCH http://requests:8421/api/requests/${REQUEST.id}`,
+      `POST http://requests:8421/api/requests/${REQUEST.id}/approve`,
+      `POST http://requests:8421/api/requests/${REQUEST.id}/refuse`,
+      `POST http://requests:8421/api/requests/${REQUEST.id}/retry`,
+      `POST http://requests:8421/api/requests/${REQUEST.id}/arrived`,
+      `PUT http://requests:8421/api/requests/${REQUEST.id}/catalogue`,
+    ]);
+  });
+
+  it('searches by hand for a request not yet made', async () => {
+    const outcome = { releases: [], indexers: [], judgements: [], pickedId: null };
+    const { client, fetch } = aClient(200, outcome);
+
+    expect(
+      await client.releasesForDraft({
+        kind: 'film',
+        tmdbId: 438631,
+        libraryId: 'films',
+        libraryPath: '/media/Films',
+        requestedBy: { id: 'someone', name: 'Someone' },
+        isApproved: true,
+        catalogue: { title: 'Dune', year: 2021 },
+      }),
+    ).toEqual({ kind: 'answered', value: outcome });
+    expect(fetch.mock.calls[0]?.[0]).toBe('http://requests:8421/api/requests/releases');
+  });
+
+  it('reads what a request has done', async () => {
+    expect(
+      await aClient(200, [
+        { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.' },
+      ]).client.requestLog(REQUEST.id),
+    ).toMatchObject({ kind: 'answered', value: [{ message: 'Searched for it.' }] });
+  });
+
+  it('searches for a request by hand, sends a pick, and removes one', async () => {
+    const outcome = { releases: [], indexers: [], judgements: [], pickedId: null };
+
+    expect(await aClient(200, outcome).client.requestReleases(REQUEST.id)).toEqual({
+      kind: 'answered',
+      value: outcome,
+    });
+    expect(
+      (
+        await aClient(400, { error: 'The film is on its way already' }).client.pickRelease(
+          REQUEST.id,
+          {
+            id: 'x',
+            title: 'Dune.2021.1080p.WEB-DL',
+            indexerId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+            indexerName: 'Jackett',
+            protocol: 'torrent',
+            sizeBytes: null,
+            seeders: 1,
+            leechers: 0,
+            grabs: null,
+            publishedAt: null,
+            categories: [],
+            downloadUrl: null,
+            magnetUrl: 'magnet:?xt=urn:btih:abc',
+            infoUrl: null,
+            infoHash: null,
+            downloadFactor: null,
+            uploadFactor: null,
+            minimumRatio: null,
+            minimumSeedSeconds: null,
+          },
+        )
+      ).kind,
+    ).toBe('refused');
+    expect((await aClient(204, null).client.removeRequest(REQUEST.id)).kind).toBe('answered');
+  });
+
+  it('lists what is followed, and searches for everything missing', async () => {
+    expect(
+      await aClient(200, [
+        { id: REQUEST.id, kind: 'film', tmdbId: 438631, libraryId: 'films' },
+      ]).client.followedRequests(),
+    ).toMatchObject({ kind: 'answered', value: [{ tmdbId: 438631 }] });
+    expect(
+      await aClient(200, {
+        searched: 3,
+        startedAt: '2026-09-19T00:00:00.000Z',
+      }).client.searchMissing(),
+    ).toMatchObject({ kind: 'answered', value: { searched: 3 } });
   });
 });

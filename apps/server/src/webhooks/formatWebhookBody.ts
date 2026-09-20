@@ -143,6 +143,34 @@ const sentenceFor = (payload: WebhookPayload): string => {
       return `${payload.data.title} failed in ${payload.data.client} — ${payload.data.problem}`;
     }
 
+    case 'requests.made': {
+      return `${payload.data.requestedBy} asked for the ${payload.data.kind} ${payload.data.title}.`;
+    }
+
+    case 'requests.approved': {
+      return payload.data.approvedBy === null
+        ? `${payload.data.title} was approved as it was asked for.`
+        : `${payload.data.approvedBy} approved ${payload.data.title}.`;
+    }
+
+    case 'requests.refused': {
+      return payload.data.reason === null
+        ? `${payload.data.title} was refused.`
+        : `${payload.data.title} was refused — ${payload.data.reason}`;
+    }
+
+    case 'requests.chosen': {
+      return `${payload.data.release} was chosen for ${payload.data.title}.`;
+    }
+
+    case 'requests.filed': {
+      return `${payload.data.title} was filed into ${payload.data.folder}.`;
+    }
+
+    case 'requests.available': {
+      return `${payload.data.title} is ready to watch, as ${payload.data.requestedBy} asked.`;
+    }
+
     case 'requests.vpnUp': {
       const where = [payload.data.publicAddress, payload.data.country].filter(
         (part) => part !== null,

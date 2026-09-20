@@ -16,6 +16,8 @@ const A_CLIENT = {
   username: 'admin',
   hasPassword: true,
   hasApiKey: false,
+  remotePath: '',
+  localPath: '',
   categories: {
     movies: 'valence-films',
     shows: 'valence-series',

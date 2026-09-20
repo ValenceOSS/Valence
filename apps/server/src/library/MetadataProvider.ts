@@ -1,6 +1,7 @@
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import type { Person } from '@ValenceContracts/schemas/Person';
+import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 
 type MediaFacts = {
   path: string;
@@ -70,6 +71,10 @@ type MetadataProvider = {
   readLogoUrl?: (options: { externalId: string; isSeries: boolean }) => Promise<string | null>;
   readPerson?: (personId: number) => Promise<Person | null>;
   search?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
+  describeForRequest?: (
+    externalId: string,
+    kind: 'tv' | 'movie',
+  ) => Promise<RequestCatalogue | null>;
   forgetAnswers?: () => void;
 };
 

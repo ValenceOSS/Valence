@@ -3,6 +3,7 @@ import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import { ReleaseSendSchema } from '@ValenceContracts/schemas/DownloadQueue';
 import { DownloadClientFailure } from '@ValenceRequests/downloads/DownloadClientFailure';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
+import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
 import type {
   DownloadQueue,
   DownloadStreamFrame,
@@ -12,19 +13,18 @@ import type {
 import type { ClientItem } from '@ValenceRequests/downloads/DownloadClientAdapter';
 import type { DownloadClientRecord } from '@ValenceRequests/downloads/DownloadClientRecord';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
-import type { DownloadEventStore } from '@ValenceRequests/downloads/DownloadEventStore';
+import type { EventStore } from '@ValenceRequests/events/EventStore';
 import type {
   SentDownloadRecord,
   SentDownloadStore,
 } from '@ValenceRequests/downloads/SentDownloadRecord';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
-
-type Schedule = (run: () => void, afterMs: number) => () => void;
+import type { Schedule } from '@ValenceRequests/timing/Schedule';
 
 type CreateDownloadQueueOptions = {
   clients: Pick<DownloadClientService, 'records' | 'adapterOf'>;
   downloads: SentDownloadStore;
-  events: DownloadEventStore;
+  events: EventStore;
   fetchRelease: (indexerId: string, url: string) => Promise<ReleaseFile | null>;
   now?: () => Date;
   schedule?: Schedule;
@@ -67,21 +67,6 @@ const NOTHING_LIVE: Omit<Live, 'progress' | 'doneBytes'> = {
   secondsLeft: null,
   seeds: null,
   peers: null,
-};
-
-/**
- * Waits with the clock this process has.
- *
- * @param run - What to do.
- * @param afterMs - How long to wait first.
- * @returns How to stop waiting.
- */
-const waitThenRun: Schedule = (run, afterMs) => {
-  const timer = setTimeout(run, afterMs);
-
-  return () => {
-    clearTimeout(timer);
-  };
 };
 
 /**
@@ -154,6 +139,8 @@ const createDownloadQueue = ({
       sizeBytes: record.sizeBytes,
       sentAt: record.sentAt,
       finishedAt: record.finishedAt,
+      filedInto: record.filedInto,
+      filingProblem: record.filingProblem,
     };
   };
 
@@ -241,11 +228,13 @@ const createDownloadQueue = ({
             progress: item.progress,
             doneBytes: item.doneBytes,
             sizeBytes: item.sizeBytes ?? record.sizeBytes,
+            contentPath: item.path ?? record.contentPath,
           };
     const hasMoved =
       'progress' in next &&
       (Math.abs(next.progress - record.progress) >= PROGRESS_WORTH_KEEPING ||
-        next.sizeBytes !== record.sizeBytes);
+        next.sizeBytes !== record.sizeBytes ||
+        next.contentPath !== record.contentPath);
 
     if (next.state === record.state && next.problem === record.problem && !hasMoved) {
       return;
@@ -411,12 +400,28 @@ const createDownloadQueue = ({
       const already = (await downloads.list()).find(
         (record) => record.clientId === client.id && record.remoteId === remoteId,
       );
+      const refiled =
+        already === undefined || read.library === null || already.filedInto !== null
+          ? already
+          : ((await downloads.update(already.id, {
+              libraryId: read.library.id,
+              libraryPath: read.library.path,
+              filingProblem: null,
+              filingAttempts: 0,
+              updatedAt: at,
+            })) ?? already);
       const record =
-        already ??
+        refiled ??
         (await downloads.insert({
           id: randomUUID(),
           clientId: client.id,
           remoteId,
+          contentPath: null,
+          libraryId: read.library?.id ?? null,
+          libraryPath: read.library?.path ?? null,
+          filedInto: null,
+          filingProblem: null,
+          filingAttempts: 0,
           protocol: read.protocol,
           libraryKind: read.libraryKind,
           title: read.title,
@@ -436,7 +441,6 @@ const createDownloadQueue = ({
           kind: 'started',
           title: read.title,
           clientName: client.name,
-          problem: null,
         });
       }
 

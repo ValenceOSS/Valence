@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."media_request" DROP COLUMN "is_watching_future";

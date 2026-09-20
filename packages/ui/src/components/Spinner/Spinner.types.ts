@@ -1,4 +1,4 @@
-type SpinnerSize = 'sm' | 'md' | 'lg';
+type SpinnerSize = 'xs' | 'sm' | 'md' | 'lg';
 
 type SpinnerProps = {
   size?: SpinnerSize;

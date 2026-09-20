@@ -31,6 +31,18 @@ const fetchProfiles = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/requests/fetchProfiles', () => ({ fetchProfiles }));
 
+const fetchMediaRequests = vi.hoisted(() => vi.fn());
+const fetchMediaRequestReleases = vi.hoisted(() => vi.fn());
+const fetchMediaRequestLog = vi.hoisted(() => vi.fn());
+const fetchSeriesSeasons = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
+  fetchMediaRequests,
+  fetchMediaRequestReleases,
+  fetchMediaRequestLog,
+  fetchSeriesSeasons,
+}));
+
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
 
@@ -123,5 +135,28 @@ describe('requestsQueries', () => {
     fetchProfiles.mockResolvedValue([]);
 
     await expect(aCache().fetchQuery(requestsQueries.profiles())).resolves.toEqual([]);
+  });
+
+  it('asks for the requests, and what a search by hand found for one', async () => {
+    fetchMediaRequests.mockResolvedValue([]);
+    fetchMediaRequestReleases.mockResolvedValue({ releases: [] });
+
+    await expect(aCache().fetchQuery(requestsQueries.mediaRequests())).resolves.toEqual([]);
+    expect(requestsQueries.mediaRequestReleases(null).enabled).toBe(false);
+    await expect(
+      aCache().fetchQuery(requestsQueries.mediaRequestReleases('dune')),
+    ).resolves.toEqual({ releases: [] });
+    expect(fetchMediaRequestReleases).toHaveBeenCalledWith('dune');
+
+    fetchSeriesSeasons.mockResolvedValue([]);
+
+    expect(requestsQueries.seriesSeasons(null).enabled).toBe(false);
+    await expect(aCache().fetchQuery(requestsQueries.seriesSeasons(95396))).resolves.toEqual([]);
+    expect(fetchSeriesSeasons).toHaveBeenCalledWith(95396);
+
+    fetchMediaRequestLog.mockResolvedValue([]);
+
+    expect(requestsQueries.mediaRequestLog(null).enabled).toBe(false);
+    await expect(aCache().fetchQuery(requestsQueries.mediaRequestLog('dune'))).resolves.toEqual([]);
   });
 });

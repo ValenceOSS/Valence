@@ -183,6 +183,12 @@ const readGenres = (stored: JsonValue): string[] | null => {
 type DatabaseLibraryService = LibraryService & {
   runScan: (libraryId: string, force?: boolean, jobId?: string) => Promise<ScanResult | null>;
   runReadAgain: (libraryId: string, paths: string[], jobId?: string) => Promise<void>;
+  runScanFolder: (libraryId: string, folder: string, jobId?: string) => Promise<ScanResult | null>;
+  findByCatalogueId: (
+    libraryId: string,
+    kind: 'film' | 'series',
+    externalId: string,
+  ) => Promise<string | null>;
   runRegeneratePreviews: (
     libraryId: string,
     defaultAudioLanguage: string | null,
@@ -1747,6 +1753,60 @@ const createDatabaseLibraryService = ({
           ? undefined
           : (phase, processed, total) => jobs.reportProgress(jobId, phase, processed, total),
       );
+    },
+
+    runScanFolder: async (libraryId, folder, jobId) => {
+      const found = await findLibrary(libraryId);
+
+      if (found === null || (found.kind !== 'movies' && found.kind !== 'shows')) {
+        return null;
+      }
+
+      return scanLibrary({
+        libraryId,
+        root: folder,
+        files,
+        store,
+        transcoder,
+        isPartial: true,
+        atOnce: await filesAtOnceFor(libraryId),
+        ...(providers === undefined ? {} : { providers }),
+        ...(onProblem === undefined ? {} : { onProblem }),
+        ...(onArrived === undefined ? {} : { onAdded: (item) => onArrived(libraryId, item) }),
+        ...(jobId === undefined
+          ? {}
+          : {
+              onProgress: (phase, processed, total) =>
+                jobs.reportProgress(jobId, phase, processed, total),
+            }),
+      });
+    },
+
+    findByCatalogueId: async (libraryId, kind, externalId) => {
+      if (kind === 'series') {
+        const [found] = await db
+          .select({ id: series.id })
+          .from(series)
+          .where(and(eq(series.libraryId, libraryId), eq(series.externalId, externalId)))
+          .limit(1);
+
+        return found?.id ?? null;
+      }
+
+      const [found] = await db
+        .select({ id: mediaItem.id })
+        .from(mediaItem)
+        .where(
+          and(
+            eq(mediaItem.libraryId, libraryId),
+            eq(mediaItem.externalId, externalId),
+            isNull(mediaItem.seriesId),
+            isNull(mediaItem.parentId),
+          ),
+        )
+        .limit(1);
+
+      return found?.id ?? null;
     },
 
     runScan: async (libraryId, force = false, jobId) => {

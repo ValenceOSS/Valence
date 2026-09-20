@@ -121,6 +121,10 @@
       "@ValenceUI/NothingHere.types": [
         "./packages/ui/src/components/NothingHere/NothingHere.types.ts"
       ],
+      "@ValenceUI/RangeSlider": ["./packages/ui/src/components/RangeSlider/RangeSlider.tsx"],
+      "@ValenceUI/RangeSlider.types": [
+        "./packages/ui/src/components/RangeSlider/RangeSlider.types.ts"
+      ],
       "@ValenceUI/Rail": ["./packages/ui/src/components/Rail/Rail.tsx"],
       "@ValenceUI/ReadMore": ["./packages/ui/src/components/ReadMore/ReadMore.tsx"],
       "@ValenceUI/ReadMore.types": ["./packages/ui/src/components/ReadMore/ReadMore.types.ts"],

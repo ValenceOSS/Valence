@@ -69,6 +69,12 @@
   initial-value: oklch(0.99 0 0);
 }
 
+@property --color-busy {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.6 0.16 50);
+}
+
 @property --color-danger {
   syntax: '<color>';
   inherits: true;
@@ -199,6 +205,7 @@
   --color-white-hover: oklch(0.9765 0.0054 275);
   --color-highlight: oklch(0.54 0.115 85);
   --color-highlight-contrast: oklch(0.99 0 0);
+  --color-busy: oklch(0.6 0.16 50);
   --color-danger: oklch(0.55 0.17 25);
   --color-success: oklch(0.55 0.15 145);
 
@@ -308,6 +315,7 @@
       --color-accent-contrast: oklch(0.99 0 0);
       --color-highlight: oklch(0.8834 0.1013 87);
       --color-highlight-contrast: oklch(0.14 0.012 265);
+      --color-busy: oklch(0.76 0.15 55);
       --color-danger: oklch(0.68 0.16 25);
       --color-success: oklch(0.72 0.17 145);
       color-scheme: dark;
@@ -342,6 +350,7 @@
     --color-accent-contrast: oklch(0.99 0 0);
     --color-highlight: oklch(0.8834 0.1013 87);
     --color-highlight-contrast: oklch(0.14 0.012 265);
+    --color-busy: oklch(0.76 0.15 55);
     --color-danger: oklch(0.68 0.16 25);
     --color-success: oklch(0.72 0.17 145);
     color-scheme: dark;
@@ -502,6 +511,7 @@ body {
     --color-accent-contrast var(--duration-theme) var(--ease-out),
     --color-highlight var(--duration-theme) var(--ease-out),
     --color-highlight-contrast var(--duration-theme) var(--ease-out),
+    --color-busy var(--duration-theme) var(--ease-out),
     --color-danger var(--duration-theme) var(--ease-out),
     --color-success var(--duration-theme) var(--ease-out);
 }

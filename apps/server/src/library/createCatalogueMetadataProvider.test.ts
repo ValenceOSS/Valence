@@ -687,6 +687,59 @@ describe('reading the shape of a series', () => {
   });
 });
 
+describe('describing a film or series for a request', () => {
+  it('reads a film with its release dates and the other titles it goes by', async () => {
+    const { instance, calls } = provider({
+      '/movie/438631': {
+        title: 'Dune',
+        original_title: 'Dune',
+        release_date: '2021-09-15',
+        runtime: 155,
+        release_dates: {
+          results: [{ release_dates: [{ type: 4, release_date: '2021-12-03T00:00:00.000Z' }] }],
+        },
+        alternative_titles: { titles: [{ title: 'Dune: Part One' }] },
+      },
+    });
+
+    await expect(instance.describeForRequest?.('438631', 'movie')).resolves.toMatchObject({
+      title: 'Dune',
+      year: 2021,
+      aliases: ['Dune: Part One'],
+      runtimeMinutes: 155,
+      releaseDates: { digital: '2021-12-03' },
+    });
+    expect(calls[0]).toContain('append_to_response=release_dates%2Calternative_titles');
+  });
+
+  it('reads a series with every episode and the day it aired', async () => {
+    const { instance } = provider({
+      '/tv/95396/season/1': {
+        episodes: [{ season_number: 1, episode_number: 1, name: 'Pilot', air_date: '2022-02-18' }],
+      },
+      '/tv/95396': {
+        name: 'Severance',
+        first_air_date: '2022-02-18',
+        seasons: [{ season_number: 1, episode_count: 1 }],
+        status: 'Returning Series',
+      },
+    });
+
+    await expect(instance.describeForRequest?.('95396', 'tv')).resolves.toMatchObject({
+      title: 'Severance',
+      episodes: [{ season: 1, episode: 1, title: 'Pilot', airDate: '2022-02-18' }],
+      isEnded: false,
+    });
+  });
+
+  it('has nothing to say without a key, or about what it does not know', async () => {
+    await expect(
+      provider({}, { key: null }).instance.describeForRequest?.('1', 'movie'),
+    ).resolves.toBeNull();
+    await expect(provider({}).instance.describeForRequest?.('1', 'tv')).resolves.toBeNull();
+  });
+});
+
 describe('the two ways a catalogue key can be presented', () => {
   const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJmbHV4In0.signature';
 

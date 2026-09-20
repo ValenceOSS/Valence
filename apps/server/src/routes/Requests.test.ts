@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { signUpForTest, makeAdministrator, TEST_ORIGIN } from '@ValenceServer/auth/signUpForTest';
@@ -19,6 +20,9 @@ import {
 } from '@ValenceContracts/schemas/Requests';
 import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { Library } from '@ValenceContracts/schemas/Library';
+import type { MediaRequestKind, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
+import type { EventBus } from '@ValenceServer/events/EventBus';
 
 const A_STATUS: RequestsStatus = {
   version: '0.4.0',
@@ -118,16 +122,31 @@ const aWillingService = (url: string, init: { method?: string }): Response => {
   return answer(200, url.endsWith('/api/indexers') ? [AN_INDEXER] : AN_INDEXER);
 };
 
+const FILMS: Library = {
+  id: '9b2d4f6e-1a3c-4e5f-8a7b-0c1d2e3f4a5b',
+  name: 'Films',
+  kind: 'movies',
+  path: '/media/Films',
+  itemCount: 0,
+  lastScannedAt: null,
+  defaultAudioLanguage: null,
+  filesAtOnce: null,
+};
+
 const build = async ({
   isOn,
   granted = [],
   isAdministrator = false,
   service = aWillingService,
+  events,
+  describeForRequest,
 }: {
   isOn: boolean;
   granted?: readonly Permission[];
   isAdministrator?: boolean;
-  service?: (url: string, init: { method?: string }) => Response;
+  service?: (url: string, init: { method?: string; body?: string }) => Response;
+  events?: EventBus;
+  describeForRequest?: (tmdbId: number, kind: MediaRequestKind) => Promise<RequestCatalogue | null>;
 }) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
@@ -158,7 +177,9 @@ const build = async ({
     jobDefinitions: jobDefinitionsFor(isOn),
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
-    library: createMemoryLibraryService(),
+    library: createMemoryLibraryService({ libraries: [FILMS], media: [] }),
+    ...(events === undefined ? {} : { events }),
+    ...(describeForRequest === undefined ? {} : { describeForRequest }),
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),
     subtitles: createMemorySubtitleService({}),
@@ -194,7 +215,7 @@ const build = async ({
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
 
-  return { app, ask, readStatus };
+  return { app, ask, readStatus, accountId };
 };
 
 describe('GET /api/requests/availability', () => {
@@ -318,6 +339,22 @@ describe('indexers and searching, through the server', () => {
     expect((await ask(`/api/admin/requests/indexers/${ID}/try`, 'POST', DRAFT)).status).toBe(200);
     expect((await ask(`/api/admin/requests/indexers/${ID}`, 'DELETE')).status).toBe(204);
     expect((await ask('/api/admin/requests/search', 'POST', { query: 'dune' })).status).toBe(200);
+  });
+
+  it('asks the service how it is again once an indexer is added, changed, tested or removed', async () => {
+    const { ask, readStatus } = await build({ isOn: true, granted: ['requests.manage'] });
+
+    await ask('/api/admin/requests/indexers', 'POST', DRAFT);
+    await ask(`/api/admin/requests/indexers/${ID}`, 'PATCH', { priority: 3 });
+    await ask(`/api/admin/requests/indexers/${ID}/test`, 'POST');
+    await ask(`/api/admin/requests/indexers/${ID}`, 'DELETE');
+
+    expect(readStatus).toHaveBeenCalledTimes(4);
+
+    await ask('/api/admin/requests/indexers');
+    await ask('/api/admin/requests/indexers/try', 'POST', DRAFT);
+
+    expect(readStatus).toHaveBeenCalledTimes(4);
   });
 
   it('never hands an indexer’s key back', async () => {
@@ -528,6 +565,8 @@ describe('download clients and the queue, through the server', () => {
     username: 'admin',
     hasPassword: true,
     hasApiKey: false,
+    remotePath: '',
+    localPath: '',
     categories: {
       movies: 'valence-films',
       shows: 'valence-series',
@@ -560,6 +599,8 @@ describe('download clients and the queue, through the server', () => {
     peers: 2,
     sentAt: '2026-09-19T00:00:00.000Z',
     finishedAt: null,
+    filedInto: null,
+    filingProblem: null,
   };
 
   const DRAFT = { name: 'qBittorrent', kind: 'qbittorrent', url: 'http://qbittorrent:8080' };
@@ -711,6 +752,69 @@ describe('download clients and the queue, through the server', () => {
     ).toBe(404);
   });
 
+  it('files a download into a library of films or series, and no other', async () => {
+    const libraries: Array<{ id: string; path: string }> = [];
+    const { ask } = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: (url, init) => {
+        if (url.endsWith('/file')) {
+          libraries.push(
+            z
+              .object({ library: z.object({ id: z.string(), path: z.string() }) })
+              .parse(JSON.parse(init.body ?? '{}')).library,
+          );
+
+          return new Response(JSON.stringify(DOWNLOAD), { status: 200 });
+        }
+
+        return aWillingQueue(url, init);
+      },
+    });
+
+    const filed = await ask(`/api/admin/requests/downloads/${DOWNLOAD.id}/file`, 'POST', {
+      libraryId: FILMS.id,
+    });
+
+    expect(filed.status).toBe(200);
+    expect(libraries).toEqual([{ id: FILMS.id, path: '/media/Films' }]);
+    expect(
+      await (
+        await ask(`/api/admin/requests/downloads/${DOWNLOAD.id}/file`, 'POST', {
+          libraryId: 'elsewhere',
+        })
+      ).json(),
+    ).toEqual({ error: 'That is not a library of films or series.' });
+  });
+
+  it('sends a film or series for the library it will be filed into, and anything else for none', async () => {
+    const libraries: Array<{ id: string; path: string } | null> = [];
+    const { ask } = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: (url, init) => {
+        libraries.push(
+          z
+            .object({ library: z.object({ id: z.string(), path: z.string() }).nullable() })
+            .parse(JSON.parse(init.body ?? '{}')).library,
+        );
+
+        return aWillingQueue(url, init);
+      },
+    });
+
+    await ask('/api/admin/requests/downloads', 'POST', SEND);
+    await ask('/api/admin/requests/downloads', 'POST', { ...SEND, libraryId: 'elsewhere' });
+    await ask('/api/admin/requests/downloads', 'POST', { ...SEND, libraryKind: 'shows' });
+    await ask('/api/admin/requests/downloads', 'POST', {
+      ...SEND,
+      libraryKind: 'music',
+      library: { id: 'x', path: '/etc' },
+    });
+
+    expect(libraries).toEqual([{ id: FILMS.id, path: '/media/Films' }, null, null, null]);
+  });
+
   it('refuses a release that is not one before asking the service', async () => {
     const { ask } = await build({ isOn: true, isAdministrator: true, service: aWillingQueue });
 
@@ -737,6 +841,8 @@ describe('quality profiles, through the server', () => {
     requiredWords: [],
     bannedWords: [],
     isUpgrading: false,
+    releaseWait: 'digital',
+    sizes: [],
     upgradeUntilResolution: null,
     upgradeUntilSource: null,
     upgradeUntilMusicQuality: null,
@@ -812,5 +918,378 @@ describe('quality profiles, through the server', () => {
     expect((await missing.ask('/api/admin/requests/profiles', 'POST', { name: 'x' })).status).toBe(
       400,
     );
+  });
+});
+
+describe('requests for films and series, through the server', () => {
+  const REQUEST = {
+    id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    kind: 'film',
+    tmdbId: 438631,
+    title: 'Dune',
+    year: 2021,
+    overview: null,
+    posterUrl: null,
+    libraryId: FILMS.id,
+    profileId: null,
+    isPickedByHand: false,
+    state: 'wanted',
+    problem: null,
+    approval: 'approved',
+    refusedBecause: 'No room',
+    requestedBy: { id: 'someone-else', name: 'Someone' },
+    seasons: null,
+    releaseDate: '2021-12-03',
+    items: [],
+    mediaId: null,
+    createdAt: '2026-09-19T00:00:00.000Z',
+    updatedAt: '2026-09-19T00:00:00.000Z',
+  };
+
+  const DUNE: RequestCatalogue = {
+    title: 'Dune',
+    year: 2021,
+    aliases: [],
+    overview: null,
+    posterUrl: null,
+    runtimeMinutes: 155,
+    releaseDates: { theatrical: null, digital: '2021-12-03', physical: null },
+    episodes: [],
+    isEnded: false,
+  };
+
+  const sent: Array<{ method: string; url: string; body: string | undefined }> = [];
+
+  /**
+   * The requests service as it answers questions about requests when everything goes well.
+   */
+  const aWillingKeeper = (url: string, init: { method?: string; body?: string }): Response => {
+    const method = init.method ?? 'GET';
+
+    sent.push({ method, url, body: init.body });
+
+    if (method === 'DELETE') {
+      return new Response(null, { status: 204 });
+    }
+
+    if (url.endsWith('/api/requests/missing')) {
+      return Response.json({ searched: 1, startedAt: '2026-09-19T00:00:00.000Z' });
+    }
+
+    if (url.endsWith('/log')) {
+      return Response.json([{ id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched.' }]);
+    }
+
+    if (url.endsWith('/releases')) {
+      return Response.json({ releases: [], indexers: [], judgements: [], pickedId: null });
+    }
+
+    if (url.endsWith('/api/requests')) {
+      return method === 'POST'
+        ? Response.json({ request: REQUEST, isNew: true }, { status: 201 })
+        : Response.json([REQUEST, { ...REQUEST, requestedBy: { id: 'x', name: 'X' } }]);
+    }
+
+    return Response.json(REQUEST);
+  };
+
+  const RELEASE = {
+    id: 'x',
+    title: 'Dune.2021.1080p.WEB-DL',
+    indexerId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    indexerName: 'Jackett',
+    protocol: 'torrent',
+    sizeBytes: null,
+    seeders: 1,
+    leechers: 0,
+    grabs: null,
+    publishedAt: null,
+    categories: [],
+    downloadUrl: null,
+    magnetUrl: 'magnet:?xt=urn:btih:abc',
+    infoUrl: null,
+    infoHash: null,
+  };
+
+  it('asks for a film in the films library, as whoever is signed in, approved where they may', async () => {
+    const published = vi.fn(() => Promise.resolve());
+    const { ask, accountId } = await build({
+      isOn: true,
+      granted: ['requests.ask', 'requests.autoApprove'],
+      service: aWillingKeeper,
+      events: { publish: published },
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    sent.length = 0;
+
+    const made = await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 });
+
+    expect(made.status).toBe(201);
+    expect(JSON.parse(sent[0]?.body ?? '{}')).toMatchObject({
+      libraryId: FILMS.id,
+      libraryPath: '/media/Films',
+      isApproved: true,
+      requestedBy: { id: accountId },
+      catalogue: { title: 'Dune' },
+    });
+    expect(published).toHaveBeenCalledWith({
+      event: 'requests.made',
+      data: { title: 'Dune', kind: 'film', requestedBy: 'Someone' },
+    });
+    expect(published).toHaveBeenCalledWith({
+      event: 'requests.approved',
+      data: { title: 'Dune', approvedBy: null },
+    });
+  });
+
+  it('refuses to ask for what the catalogue does not know, or where there is no library for it', async () => {
+    const unknown = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+    });
+
+    expect(
+      await (await unknown.ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 1 })).json(),
+    ).toEqual({ error: 'The catalogue does not know that, or cannot be asked just now.' });
+
+    const nowhere = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    expect(
+      await (
+        await nowhere.ask('/api/requests/media', 'POST', { kind: 'series', tmdbId: 1 })
+      ).json(),
+    ).toEqual({ error: 'There is no library of series to put it in.' });
+    expect(
+      (await nowhere.ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 1 })).status,
+    ).toBe(201);
+  });
+
+  it('lists the seasons a series has for whoever may ask', async () => {
+    const asking = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      describeForRequest: () =>
+        Promise.resolve({
+          ...DUNE,
+          episodes: [
+            { season: 1, episode: 1, title: '', airDate: '2022-02-18' },
+            { season: 0, episode: 1, title: '', airDate: null },
+          ],
+        }),
+    });
+
+    expect(await (await asking.ask('/api/requests/catalogue/series/95396/seasons')).json()).toEqual(
+      [
+        { season: 0, episodeCount: 1, firstAired: null },
+        { season: 1, episodeCount: 1, firstAired: '2022-02-18' },
+      ],
+    );
+
+    const unknown = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
+
+    expect((await unknown.ask('/api/requests/catalogue/series/1/seasons')).status).toBe(404);
+
+    const nobody = await build({ isOn: true, service: aWillingKeeper });
+
+    expect((await nobody.ask('/api/requests/catalogue/series/1/seasons')).status).toBe(403);
+  });
+
+  it('searches by hand before asking, and asks with the release picked, for whoever manages', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.manage', 'requests.ask'],
+      service: aWillingKeeper,
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    sent.length = 0;
+
+    expect(
+      (await ask('/api/requests/media/releases', 'POST', { kind: 'film', tmdbId: 1 })).status,
+    ).toBe(200);
+    expect(sent.map(({ method, url }) => `${method} ${url}`)).toEqual([
+      'POST http://requests:8421/api/requests/releases',
+    ]);
+
+    sent.length = 0;
+
+    const made = await ask('/api/requests/media', 'POST', {
+      kind: 'film',
+      tmdbId: 438631,
+      isPickedByHand: true,
+      release: RELEASE,
+    });
+
+    expect(made.status).toBe(201);
+    expect(sent.map(({ method, url }) => `${method} ${url}`)).toEqual([
+      'POST http://requests:8421/api/requests',
+      `POST http://requests:8421/api/requests/${REQUEST.id}/pick`,
+    ]);
+    expect(JSON.parse(sent[0]?.body ?? '{}')).not.toHaveProperty('release');
+  });
+
+  it('says a release picked on asking could not be fetched, and keeps picking to managers', async () => {
+    const picking = await build({
+      isOn: true,
+      granted: ['requests.manage', 'requests.ask'],
+      service: (url, init) =>
+        url.endsWith('/pick')
+          ? new Response(JSON.stringify({ error: 'No torrent client is set up' }), { status: 400 })
+          : aWillingKeeper(url, init),
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    expect(
+      await (
+        await picking.ask('/api/requests/media', 'POST', {
+          kind: 'film',
+          tmdbId: 438631,
+          release: RELEASE,
+        })
+      ).json(),
+    ).toEqual({
+      error: 'It was asked for, but that release could not be fetched: No torrent client is set up',
+    });
+
+    const asking = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
+
+    expect(
+      (
+        await asking.ask('/api/requests/media', 'POST', {
+          kind: 'film',
+          tmdbId: 1,
+          isPickedByHand: true,
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (await asking.ask('/api/requests/media/releases', 'POST', { kind: 'film', tmdbId: 1 }))
+        .status,
+    ).toBe(403);
+  });
+
+  it('refuses asking to somebody who may not ask', async () => {
+    const { ask } = await build({ isOn: true, service: aWillingKeeper });
+
+    expect((await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 1 })).status).toBe(
+      403,
+    );
+  });
+
+  it('shows somebody who asks only their own requests, and an approver every one', async () => {
+    const asker = await build({ isOn: true, granted: ['requests.ask'], service: aWillingKeeper });
+    const approver = await build({
+      isOn: true,
+      granted: ['requests.approve'],
+      service: aWillingKeeper,
+    });
+
+    expect(await (await asker.ask('/api/requests/media')).json()).toEqual([]);
+    expect(await (await approver.ask('/api/requests/media')).json()).toHaveLength(2);
+  });
+
+  it('approves and refuses for whoever approves, saying so', async () => {
+    const published = vi.fn(() => Promise.resolve());
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.approve'],
+      service: aWillingKeeper,
+      events: { publish: published },
+    });
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}/approve`, 'POST')).status).toBe(200);
+    expect(
+      (await ask(`/api/requests/media/${REQUEST.id}/refuse`, 'POST', { reason: 'No room' })).status,
+    ).toBe(200);
+    expect(published).toHaveBeenCalledWith({
+      event: 'requests.approved',
+      data: { title: 'Dune', approvedBy: 'Marques' },
+    });
+    expect(published).toHaveBeenCalledWith({
+      event: 'requests.refused',
+      data: { title: 'Dune', reason: 'No room' },
+    });
+    expect((await ask(`/api/requests/media/${REQUEST.id}/retry`, 'POST')).status).toBe(403);
+  });
+
+  it('changes the seasons asked for with what the catalogue says now', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.approve'],
+      service: aWillingKeeper,
+      describeForRequest: () => Promise.resolve(DUNE),
+    });
+
+    sent.length = 0;
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'PATCH', { seasons: [1] })).status).toBe(
+      200,
+    );
+    expect(JSON.parse(sent.at(-1)?.body ?? '{}')).toMatchObject({
+      change: { seasons: [1] },
+      catalogue: { title: 'Dune' },
+    });
+    expect(
+      (await ask(`/api/requests/media/${REQUEST.id}`, 'PATCH', { isPickedByHand: true })).status,
+    ).toBe(200);
+  });
+
+  it('passes on a request the service does not have when changing its seasons', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.approve'],
+      service: () => new Response(JSON.stringify({ error: 'No such request.' }), { status: 404 }),
+    });
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'PATCH', { seasons: [1] })).status).toBe(
+      404,
+    );
+  });
+
+  it('retries, searches by hand, picks, removes, and searches for everything missing, for whoever manages requesting', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.manage'],
+      service: aWillingKeeper,
+    });
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}/retry`, 'POST')).status).toBe(200);
+    expect((await ask(`/api/requests/media/${REQUEST.id}/releases`)).status).toBe(200);
+    expect(await (await ask(`/api/requests/media/${REQUEST.id}/log`)).json()).toMatchObject([
+      { message: 'Searched.' },
+    ]);
+    expect(
+      (await ask(`/api/requests/media/${REQUEST.id}/pick`, 'POST', { release: RELEASE })).status,
+    ).toBe(200);
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(204);
+    expect(await (await ask('/api/requests/media/missing', 'POST')).json()).toEqual({
+      searched: 1,
+      startedAt: '2026-09-19T00:00:00.000Z',
+    });
+  });
+
+  it('passes on why the service would not do something', async () => {
+    const refusing = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: () =>
+        new Response(JSON.stringify({ error: 'The film is on its way already' }), { status: 400 }),
+    });
+
+    for (const [method, path, body] of [
+      ['GET', '/api/requests/media', undefined],
+      ['POST', `/api/requests/media/${REQUEST.id}/approve`, undefined],
+      ['POST', `/api/requests/media/${REQUEST.id}/refuse`, { reason: '' }],
+    ] as const) {
+      expect((await refusing.ask(path, method, body)).status).toBe(400);
+    }
   });
 });

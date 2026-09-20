@@ -23,6 +23,12 @@ const CategorySchema = z
   .max(60)
   .regex(/^[\w .-]+$/, 'Letters, numbers, spaces, dots, dashes and underscores only');
 
+const PathSchema = z
+  .string()
+  .trim()
+  .max(500)
+  .transform((path) => (path.length > 1 ? path.replace(/\/+$/, '') : path));
+
 const DEFAULT_DOWNLOAD_CATEGORIES: Readonly<Record<LibraryKind, string>> = {
   movies: 'valence-films',
   shows: 'valence-series',
@@ -58,6 +64,8 @@ const DownloadClientSchema = z.object({
     music: z.string(),
     books: z.string(),
   }),
+  remotePath: z.string(),
+  localPath: z.string(),
   priority: z.number().int().min(1).max(50),
   isEnabled: z.boolean(),
   createdAt: z.string().datetime(),
@@ -72,6 +80,8 @@ const DownloadClientDraftSchema = z.object({
   password: z.string().max(200).default(''),
   apiKey: z.string().trim().max(200).default(''),
   categories: DownloadCategoriesSchema.default(DEFAULT_DOWNLOAD_CATEGORIES),
+  remotePath: PathSchema.default(''),
+  localPath: PathSchema.default(''),
   priority: z.number().int().min(1).max(50).default(25),
   isEnabled: z.boolean().default(true),
 });
@@ -84,6 +94,8 @@ const DownloadClientChangeSchema = z.object({
   password: z.string().max(200).optional(),
   apiKey: z.string().trim().max(200).optional(),
   categories: DownloadCategoriesSchema.optional(),
+  remotePath: PathSchema.optional(),
+  localPath: PathSchema.optional(),
   priority: z.number().int().min(1).max(50).optional(),
   isEnabled: z.boolean().optional(),
 });

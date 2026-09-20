@@ -1,15 +1,25 @@
 import { useMemo } from 'react';
-import { Delete02Icon, MoreHorizontalIcon, PauseIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import {
+  Delete02Icon,
+  FolderLibraryIcon,
+  InformationCircleIcon,
+  MoreHorizontalIcon,
+  PauseIcon,
+  PlayIcon,
+} from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
+import { HoverCard } from '@ValenceUI/HoverCard';
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
+import { Tooltip } from '@ValenceUI/Tooltip';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { describeDownloadState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeDownloadState';
-import { describeSpeeds } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeSpeeds';
+import { ReadoutLines } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/ReadoutLines/ReadoutLines';
+import { speedsOf } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/speedsOf';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
@@ -39,14 +49,18 @@ const describeArrived = (download: QueuedDownload): string | null => {
  * it — pausing, resuming and removing.
  *
  * @param downloads - The downloads.
+ * @param libraries - The libraries a film or series can be filed into.
  * @param busyId - The download being acted on, whose actions wait until it is done.
+ * @param onFile - Called to file a download into a library.
  * @param onPause - Called to pause a download.
  * @param onResume - Called to resume one.
  * @param onRemove - Called to remove one.
  */
 const DownloadQueueTable = ({
   downloads,
+  libraries,
   busyId,
+  onFile,
   onPause,
   onResume,
   onRemove,
@@ -58,10 +72,10 @@ const DownloadQueueTable = ({
         header: 'Release',
         accessorFn: (download) => download.title,
         cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate font-medium text-text" title={row.original.title}>
-              {row.original.title}
-            </span>
+          <span className="flex max-w-[32rem] min-w-0 flex-col gap-0.5">
+            <Tooltip label={row.original.title}>
+              <span className="truncate font-medium text-text">{row.original.title}</span>
+            </Tooltip>
 
             <span className="truncate text-xs text-text-muted">
               {[
@@ -83,13 +97,24 @@ const DownloadQueueTable = ({
           const state = describeDownloadState(row.original);
 
           return (
-            <span className="flex min-w-0 flex-col items-start gap-1">
+            <span className="flex items-center gap-1.5">
               <Badge size="sm" tone={state.tone}>
+                {row.original.state === 'downloading' ? (
+                  <Spinner size="xs" label={`Downloading ${row.original.title}`} />
+                ) : null}
                 {state.label}
               </Badge>
 
               {state.detail === null ? null : (
-                <span className="text-xs text-text-muted">{state.detail}</span>
+                <HoverCard
+                  side="bottom"
+                  align="start"
+                  detail={<span className="break-words text-text-muted">{state.detail}</span>}
+                >
+                  <span className="text-text-muted hover:text-text">
+                    <Icon of={InformationCircleIcon} size={14} label={state.detail} />
+                  </span>
+                </HoverCard>
               )}
             </span>
           );
@@ -126,12 +151,9 @@ const DownloadQueueTable = ({
         header: 'Speed',
         accessorFn: (download) => download.downloadBytesPerSecond ?? -1,
         cell: ({ row }) => (
-          <span className="text-xs tabular-nums text-text-muted">
-            {describeSpeeds(
-              row.original.downloadBytesPerSecond,
-              row.original.uploadBytesPerSecond,
-            ) ?? '—'}
-          </span>
+          <ReadoutLines
+            lines={speedsOf(row.original.downloadBytesPerSecond, row.original.uploadBytesPerSecond)}
+          />
         ),
       },
       {
@@ -149,11 +171,16 @@ const DownloadQueueTable = ({
         header: 'Peers',
         accessorFn: (download) => download.seeds ?? -1,
         cell: ({ row }) => (
-          <span className="text-xs tabular-nums text-text-muted">
-            {row.original.seeds === null && row.original.peers === null
-              ? '—'
-              : `${(row.original.seeds ?? 0).toString()} seeding · ${(row.original.peers ?? 0).toString()} fetching`}
-          </span>
+          <ReadoutLines
+            lines={
+              row.original.seeds === null && row.original.peers === null
+                ? []
+                : [
+                    `${(row.original.seeds ?? 0).toString()} seeding`,
+                    `${(row.original.peers ?? 0).toString()} fetching`,
+                  ]
+            }
+          />
         ),
       },
       {
@@ -208,13 +235,35 @@ const DownloadQueueTable = ({
                       },
                     ],
                   },
+                  {
+                    items: libraries
+                      .filter(
+                        (library) =>
+                          library.kind === row.original.libraryKind &&
+                          (library.kind === 'movies' || library.kind === 'shows'),
+                      )
+                      .map((library) => ({
+                        id: `file-${library.id}`,
+                        label: `File into ${library.name}`,
+                        detail:
+                          row.original.state !== 'done'
+                            ? 'Once it has downloaded.'
+                            : row.original.filedInto === null
+                              ? 'Now, named from the release.'
+                              : 'Again, beside what was filed before.',
+                        icon: <Icon of={FolderLibraryIcon} size={15} />,
+                        onChoose: () => {
+                          onFile(row.original, library.id);
+                        },
+                      })),
+                  },
                 ]}
               />
             </span>
           ),
       },
     ],
-    [busyId, onPause, onResume, onRemove],
+    [busyId, libraries, onFile, onPause, onResume, onRemove],
   );
 
   return (

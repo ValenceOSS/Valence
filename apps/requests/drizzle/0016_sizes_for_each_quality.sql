@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."quality_profile" ADD COLUMN "sizes" jsonb DEFAULT '[]'::jsonb NOT NULL;

@@ -8,11 +8,19 @@ import { fetchCatalogue, fetchDefinition } from '@ValenceClient/requests/fetchDe
 import { fetchDownloadClients } from '@ValenceClient/requests/fetchDownloadClients';
 import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
 import { fetchProfiles } from '@ValenceClient/requests/fetchProfiles';
+import {
+  fetchMediaRequestLog,
+  fetchMediaRequestReleases,
+  fetchMediaRequests,
+  fetchSeriesSeasons,
+} from '@ValenceClient/requests/fetchMediaRequests';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 
 const REQUESTS = ['requests'] as const;
 
 const OVERVIEW_EVERY_MS = 30_000;
+
+const MEDIA_REQUESTS_EVERY_MS = 5000;
 
 /**
  * Whether this server takes requests, which only changes when the server is restarted with or
@@ -129,6 +137,64 @@ const profiles = () =>
     queryFn: () => fetchProfiles(),
   });
 
+/**
+ * The requests for films and series somebody may see, asked again every few seconds while they are
+ * on screen, so a request can be watched moving from being searched for to being ready.
+ *
+ * @returns The query.
+ */
+const mediaRequests = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media'],
+    queryFn: () => fetchMediaRequests(),
+    refetchInterval: MEDIA_REQUESTS_EVERY_MS,
+  });
+
+/**
+ * What a search by hand found for one request, asked once and kept while the page is open.
+ *
+ * @param id - Which request, or nothing before one is chosen.
+ * @returns The query.
+ */
+const mediaRequestReleases = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media', id, 'releases'],
+    queryFn: () => fetchMediaRequestReleases(id ?? ''),
+    enabled: id !== null,
+    staleTime: Infinity,
+    retry: false,
+  });
+
+/**
+ * What one request has done, read again every few seconds while it is open, so a search can be
+ * followed as it goes.
+ *
+ * @param id - Which request, or nothing before one is chosen.
+ * @returns The query.
+ */
+const mediaRequestLog = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media', id, 'log'],
+    queryFn: () => fetchMediaRequestLog(id ?? ''),
+    enabled: id !== null,
+    refetchInterval: MEDIA_REQUESTS_EVERY_MS,
+  });
+
+/**
+ * The seasons a series has, which only change when a new one is announced, so they are kept for
+ * an hour.
+ *
+ * @param tmdbId - The series' catalogue id, or nothing before one is chosen.
+ * @returns The query.
+ */
+const seriesSeasons = (tmdbId: number | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'seasons', tmdbId],
+    queryFn: () => fetchSeriesSeasons(tmdbId ?? 0),
+    enabled: tmdbId !== null,
+    staleTime: 60 * 60 * 1000,
+  });
+
 const requestsQueries = {
   key: REQUESTS,
   availability,
@@ -140,6 +206,10 @@ const requestsQueries = {
   downloadClients,
   downloadQueue,
   profiles,
+  mediaRequests,
+  mediaRequestReleases,
+  mediaRequestLog,
+  seriesSeasons,
 };
 
 export { requestsQueries };

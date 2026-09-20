@@ -28,6 +28,8 @@ const aDownload = (overrides: Partial<QueuedDownload> = {}): QueuedDownload => (
   peers: 2,
   sentAt: '2026-09-19T00:00:00.000Z',
   finishedAt: null,
+  filedInto: null,
+  filingProblem: null,
   ...overrides,
 });
 
@@ -35,9 +37,19 @@ const aDownload = (overrides: Partial<QueuedDownload> = {}): QueuedDownload => (
  * The table over the downloads given.
  */
 const show = (downloads: QueuedDownload[], busyId: string | null = null) => {
-  const handlers = { onPause: vi.fn(), onResume: vi.fn(), onRemove: vi.fn() };
+  const handlers = { onPause: vi.fn(), onResume: vi.fn(), onRemove: vi.fn(), onFile: vi.fn() };
 
-  renderInAnAddress(<DownloadQueueTable downloads={downloads} busyId={busyId} {...handlers} />);
+  renderInAnAddress(
+    <DownloadQueueTable
+      downloads={downloads}
+      libraries={[
+        { id: 'films', name: 'Films', kind: 'movies' },
+        { id: 'albums', name: 'Albums', kind: 'music' },
+      ]}
+      busyId={busyId}
+      {...handlers}
+    />,
+  );
 
   return handlers;
 };
@@ -56,11 +68,14 @@ describe('DownloadQueueTable', () => {
 
     expect(row.getByText('Films · qBittorrent · Jackett')).toBeInTheDocument();
     expect(row.getByText('Downloading')).toBeInTheDocument();
+    expect(row.getByRole('status', { name: 'Downloading Dune' })).toBeInTheDocument();
     expect(row.getByText('45%')).toBeInTheDocument();
     expect(row.getByText('2.0 GB of 4.0 GB')).toBeInTheDocument();
-    expect(row.getByText('↓ 1.0 MB/s · ↑ 40 KB/s')).toBeInTheDocument();
+    expect(row.getByText('↓ 1.0 MB/s')).toBeInTheDocument();
+    expect(row.getByText('↑ 40 KB/s')).toBeInTheDocument();
     expect(row.getByText('12 min')).toBeInTheDocument();
-    expect(row.getByText('9 seeding · 2 fetching')).toBeInTheDocument();
+    expect(row.getByText('9 seeding')).toBeInTheDocument();
+    expect(row.getByText('2 fetching')).toBeInTheDocument();
     expect(
       row.getByRole('progressbar', { name: 'How much of Dune has arrived' }),
     ).toBeInTheDocument();
@@ -88,8 +103,21 @@ describe('DownloadQueueTable', () => {
 
     expect(row.getByText('Series · SABnzbd')).toBeInTheDocument();
     expect(row.getByText('4.0 GB')).toBeInTheDocument();
-    expect(row.getByText(/finished it with a warning/)).toBeInTheDocument();
+    expect(row.getByRole('img', { name: /finished it with a warning/ })).toBeInTheDocument();
+    expect(row.queryByText(/finished it with a warning/)).not.toBeInTheDocument();
     expect(row.getAllByText('—')).toHaveLength(3);
+  });
+
+  it('keeps where a download was filed behind an icon beside its state, until hovered', async () => {
+    show([aDownload({ state: 'done', progress: 1, filedInto: '/media/Films/Dune (2021)' })]);
+
+    await userEvent.hover(
+      within(rowOf('Dune')).getByRole('img', { name: 'Filed into /media/Films/Dune (2021).' }),
+    );
+
+    expect(await screen.findByText('Filed into /media/Films/Dune (2021).')).toBeInTheDocument();
+    expect(within(rowOf('Dune')).getByText('Completed')).toBeInTheDocument();
+    expect(within(rowOf('Dune')).queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('shows what has arrived where the size is not known yet, or nothing has', () => {
@@ -117,7 +145,8 @@ describe('DownloadQueueTable', () => {
 
     expect(within(rowOf('Part')).getByText('1.0 KB')).toBeInTheDocument();
     expect(within(rowOf('Sized')).getByText('4.0 GB')).toBeInTheDocument();
-    expect(within(rowOf('Lonely')).getByText('0 seeding · 3 fetching')).toBeInTheDocument();
+    expect(within(rowOf('Lonely')).getByText('0 seeding')).toBeInTheDocument();
+    expect(within(rowOf('Lonely')).getByText('3 fetching')).toBeInTheDocument();
   });
 
   it('pauses a download that is going, and resumes one that is paused', async () => {
@@ -166,5 +195,31 @@ describe('DownloadQueueTable', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(DownloadQueueTable.displayName).toBe('DownloadQueueTable');
+  });
+
+  it('files a film into a library of films, saying when', async () => {
+    const user = userEvent.setup();
+    const { onFile } = show([
+      aDownload({ state: 'done' }),
+      aDownload({ id: 'filed', title: 'Heat', state: 'done', filedInto: '/media/Films/Heat' }),
+      aDownload({ id: 'coming', title: 'Arrival' }),
+      aDownload({ id: 'album', title: 'Kid A', libraryKind: 'music', state: 'done' }),
+    ]);
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Dune' }));
+    expect(screen.getByText('Now, named from the release.')).toBeInTheDocument();
+    await user.click(screen.getByRole('menuitem', { name: /File into Films/ }));
+    expect(onFile).toHaveBeenCalledWith(expect.objectContaining({ title: 'Dune' }), 'films');
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Heat' }));
+    expect(screen.getByText('Again, beside what was filed before.')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Arrival' }));
+    expect(screen.getByText('Once it has downloaded.')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Kid A' }));
+    expect(screen.queryByRole('menuitem', { name: /File into/ })).not.toBeInTheDocument();
   });
 });

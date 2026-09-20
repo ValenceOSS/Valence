@@ -14,12 +14,16 @@ describe('aScratchDatabase', () => {
       z.object({ rows: z.array(z.object({ table_name: z.string() })) }).parse(tables).rows,
     ).toEqual([
       { table_name: '__migrations' },
+      { table_name: 'blocklisted_release' },
       { table_name: 'download' },
       { table_name: 'download_client' },
       { table_name: 'download_event' },
       { table_name: 'indexer' },
       { table_name: 'indexer_definition' },
+      { table_name: 'media_request' },
       { table_name: 'quality_profile' },
+      { table_name: 'request_item' },
+      { table_name: 'request_log' },
       { table_name: 'setting' },
     ]);
   });

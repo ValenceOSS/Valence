@@ -1,46 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
+import { aProfile } from '@ValenceRequests/testing/aProfile';
+import { aRelease } from '@ValenceRequests/testing/aRelease';
 import { judgeRelease } from './judgeRelease';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
-
-/**
- * A profile with anything the test cares about changed.
- */
-const aProfile = (overrides: Partial<QualityProfile> = {}): QualityProfile => ({
-  ...QualityProfileDraftSchema.parse({ name: 'HD', kind: 'video' }),
-  id: '0f8fad5b-d9cb-469f-a165-70867728950e',
-  createdAt: '2026-09-19T00:00:00.000Z',
-  updatedAt: '2026-09-19T00:00:00.000Z',
-  ...overrides,
-});
-
-/**
- * A release of the name given.
- */
-const aRelease = (title: string, overrides: Partial<Release> = {}): Release => ({
-  id: title,
-  title,
-  indexerId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
-  indexerName: 'Jackett',
-  protocol: 'torrent',
-  sizeBytes: null,
-  seeders: 10,
-  leechers: 1,
-  grabs: null,
-  publishedAt: null,
-  categories: [2000],
-  downloadUrl: null,
-  magnetUrl: null,
-  infoUrl: null,
-  infoHash: null,
-  downloadFactor: null,
-  uploadFactor: null,
-  minimumRatio: null,
-  minimumSeedSeconds: null,
-  ...overrides,
-});
 
 /**
  * Judges a release of the name given.
@@ -145,6 +109,27 @@ describe('judgeRelease', () => {
     expect(judge(film, profile, { sizeBytes: 1 * GB }, 120).rejections).toEqual([
       'At 512 MB an hour it is smaller than this profile takes, 1,000',
     ]);
+  });
+
+  it('judges a release by the limits for its own quality before the profile’s own', () => {
+    const profile = aProfile({
+      largestMb: 100_000,
+      sizes: [{ source: 'webdl', resolution: '1080p', minMb: 750, maxMb: 4000 }],
+    });
+
+    expect(
+      judge('Dune.2021.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 10 * GB }, 120).rejections,
+    ).toEqual([
+      'At 5,120 MB an hour it is larger than this profile takes for 1080p from a web download, 4,000',
+    ]);
+    expect(
+      judge('Dune.2021.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 1 * GB }, 120).rejections,
+    ).toEqual([
+      'At 512 MB an hour it is smaller than this profile takes for 1080p from a web download, 750',
+    ]);
+    expect(
+      judge('Dune.2021.1080p.BluRay.x264-GRP', profile, { sizeBytes: 10 * GB }, 120).isRejected,
+    ).toBe(false);
   });
 
   it('judges several episodes by their time together, and leaves a whole season be', () => {

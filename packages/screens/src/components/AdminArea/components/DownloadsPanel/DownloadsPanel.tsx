@@ -8,6 +8,7 @@ import { TabPanel } from '@ValenceUI/TabPanel';
 import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
+import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import {
   changeDownloadClient,
@@ -15,6 +16,7 @@ import {
   testDownloadClient,
 } from '@ValenceClient/requests/fetchDownloadClients';
 import {
+  fileQueuedDownload,
   pauseQueuedDownload,
   removeQueuedDownload,
   resumeQueuedDownload,
@@ -27,9 +29,12 @@ import { DownloadClientsTable } from './components/DownloadClientsTable/Download
 import { DownloadQueueTable } from './components/DownloadQueueTable/DownloadQueueTable';
 import { describeSpeeds } from './describeSpeeds';
 import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
+import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 
 const DOWNLOADS_TABS = ['queue', 'clients'] as const;
+
+const NO_LIBRARIES: readonly Library[] = [];
 
 type DownloadsTab = (typeof DOWNLOADS_TABS)[number];
 
@@ -65,6 +70,7 @@ const DownloadsPanel = () => {
   const [removingDownload, setRemovingDownload] = useState<QueuedDownload | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const libraries = useQuery(libraryQueries.all());
   const [problem, setProblem] = useState<string | null>(null);
 
   useEffect(
@@ -107,6 +113,13 @@ const DownloadsPanel = () => {
   const pause = useCallback(
     (download: QueuedDownload) => {
       act(download, pauseQueuedDownload);
+    },
+    [act],
+  );
+
+  const file = useCallback(
+    (download: QueuedDownload, libraryId: string) => {
+      act(download, (id) => fileQueuedDownload(id, libraryId));
     },
     [act],
   );
@@ -287,7 +300,9 @@ const DownloadsPanel = () => {
           ) : (
             <DownloadQueueTable
               downloads={queue.data.downloads}
+              libraries={libraries.data ?? NO_LIBRARIES}
               busyId={busyId}
+              onFile={file}
               onPause={pause}
               onResume={resume}
               onRemove={setRemovingDownload}

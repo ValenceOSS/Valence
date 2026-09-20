@@ -58,7 +58,8 @@ const judgeChoice = <Quality extends Resolution | ReleaseSource | MusicQuality>(
 
 /**
  * Judges a release's size against the profile's limits: per album for music, and per hour for
- * video, which needs its running time — a whole season's cannot be judged without knowing how many
+ * video — the limits for its own source and resolution, where the profile sets them, and otherwise
+ * the profile's own — which needs its running time — a whole season's cannot be judged without knowing how many
  * episodes it holds.
  *
  * @param release - The release.
@@ -74,13 +75,20 @@ const judgeSize = (
   runtimeMinutes: number | undefined,
 ): Verdict => {
   const nothing: Verdict = { score: 0, rejections: [], reasons: [] };
+  const isVideo = profile.kind === 'video';
+  const ownSize = isVideo
+    ? profile.sizes.find(
+        (size) => size.source === parsed.source && size.resolution === parsed.resolution,
+      )
+    : undefined;
+  const smallest = ownSize?.minMb ?? profile.smallestMb;
+  const largest = ownSize?.maxMb ?? profile.largestMb;
 
-  if (release.sizeBytes === null || (profile.smallestMb === null && profile.largestMb === null)) {
+  if (release.sizeBytes === null || (smallest === null && largest === null)) {
     return nothing;
   }
 
   const megabytes = release.sizeBytes / MEGABYTE;
-  const isVideo = profile.kind === 'video';
 
   if (isVideo && runtimeMinutes === undefined) {
     return { ...nothing, reasons: ['Its size is not judged without a running time'] };
@@ -94,20 +102,25 @@ const judgeSize = (
   const measured = isVideo ? megabytes / hours : megabytes;
   const said = `${Math.round(measured).toLocaleString('en-GB')} MB${isVideo ? ' an hour' : ''}`;
 
-  if (profile.largestMb !== null && measured > profile.largestMb) {
+  const quality =
+    ownSize === undefined
+      ? ''
+      : ` for ${QUALITY_LABELS[ownSize.resolution]} from ${QUALITY_LABELS[ownSize.source]}`;
+
+  if (largest !== null && measured > largest) {
     return {
       ...nothing,
       rejections: [
-        `At ${said} it is larger than this profile takes, ${profile.largestMb.toLocaleString('en-GB')}`,
+        `At ${said} it is larger than this profile takes${quality}, ${largest.toLocaleString('en-GB')}`,
       ],
     };
   }
 
-  if (profile.smallestMb !== null && measured < profile.smallestMb) {
+  if (smallest !== null && measured < smallest) {
     return {
       ...nothing,
       rejections: [
-        `At ${said} it is smaller than this profile takes, ${profile.smallestMb.toLocaleString('en-GB')}`,
+        `At ${said} it is smaller than this profile takes${quality}, ${smallest.toLocaleString('en-GB')}`,
       ],
     };
   }

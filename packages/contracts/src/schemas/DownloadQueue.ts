@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { DownloadClientKindSchema } from './DownloadClient';
 import { ReleaseProtocolSchema } from './Indexer';
 import { LibraryKindSchema } from './Library';
+import { MediaRequestKindSchema } from './MediaRequest';
 
 const QUEUED_DOWNLOAD_STATES = [
   'queued',
@@ -35,6 +36,8 @@ const QueuedDownloadSchema = z.object({
   peers: z.number().int().nonnegative().nullable(),
   sentAt: z.string().datetime(),
   finishedAt: z.string().datetime().nullable(),
+  filedInto: z.string().nullable().default(null),
+  filingProblem: z.string().nullable().default(null),
 });
 
 const DownloadClientStateSchema = z.object({
@@ -55,6 +58,8 @@ const DownloadQueueSchema = z.object({
   checkedAt: z.string().datetime().nullable(),
 });
 
+const FilingLibrarySchema = z.object({ id: z.string().min(1), path: z.string().min(1) });
+
 const ReleaseSendSchema = z.object({
   indexerId: z.string().uuid(),
   url: z.string().min(1),
@@ -64,27 +69,58 @@ const ReleaseSendSchema = z.object({
   sizeBytes: z.number().nonnegative().nullable().default(null),
   indexerName: z.string().max(200).nullable().default(null),
   clientId: z.string().uuid().optional(),
+  libraryId: z.string().min(1).optional(),
+  library: FilingLibrarySchema.nullable().default(null),
 });
+
+const DownloadFilingSchema = z.object({ libraryId: z.string().min(1) });
+
+const DownloadFilingOrderSchema = z.object({ library: FilingLibrarySchema });
 
 const DownloadRemovalSchema = z.object({ deleteData: z.boolean().default(false) });
 
-const DownloadEventSchema = z.object({
+const EventBaseSchema = z.object({
   id: z.number().int().positive(),
-  kind: z.enum(['started', 'failed']),
   title: z.string(),
-  clientName: z.string(),
-  problem: z.string().nullable(),
   at: z.string().datetime(),
 });
 
+const RequestEventBaseSchema = EventBaseSchema.extend({
+  requestId: z.string().uuid(),
+  requestedById: z.string(),
+});
+
+const ServiceEventSchema = z.discriminatedUnion('kind', [
+  EventBaseSchema.extend({ kind: z.literal('started'), clientName: z.string() }),
+  EventBaseSchema.extend({
+    kind: z.literal('failed'),
+    clientName: z.string(),
+    problem: z.string(),
+  }),
+  RequestEventBaseSchema.extend({ kind: z.literal('chosen'), releaseTitle: z.string() }),
+  RequestEventBaseSchema.extend({
+    kind: z.literal('filed'),
+    requestKind: MediaRequestKindSchema,
+    tmdbId: z.number().int().positive(),
+    libraryId: z.string(),
+    folder: z.string(),
+  }),
+  RequestEventBaseSchema.extend({ kind: z.literal('stuck'), problem: z.string() }),
+  EventBaseSchema.extend({
+    kind: z.literal('imported'),
+    libraryId: z.string(),
+    folder: z.string(),
+  }),
+]);
+
 const DownloadStreamFrameSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('queue'), queue: DownloadQueueSchema }),
-  z.object({ kind: z.literal('events'), events: z.array(DownloadEventSchema) }),
+  z.object({ kind: z.literal('events'), events: z.array(ServiceEventSchema) }),
 ]);
 
 const DownloadWatchSchema = z.object({ isWatching: z.boolean() });
 
-const DownloadEventAckSchema = z.object({ ids: z.array(z.number().int().positive()).max(500) });
+const ServiceEventAckSchema = z.object({ ids: z.array(z.number().int().positive()).max(500) });
 
 type QueuedDownloadState = z.infer<typeof QueuedDownloadStateSchema>;
 type QueuedDownload = z.infer<typeof QueuedDownloadSchema>;
@@ -92,30 +128,38 @@ type DownloadClientState = z.infer<typeof DownloadClientStateSchema>;
 type DownloadQueue = z.infer<typeof DownloadQueueSchema>;
 type ReleaseSend = z.input<typeof ReleaseSendSchema>;
 type DownloadRemoval = z.input<typeof DownloadRemovalSchema>;
-type DownloadEvent = z.infer<typeof DownloadEventSchema>;
+type DownloadFiling = z.infer<typeof DownloadFilingSchema>;
+type DownloadFilingOrder = z.infer<typeof DownloadFilingOrderSchema>;
+type ServiceEvent = z.infer<typeof ServiceEventSchema>;
+type ServiceEventKind = ServiceEvent['kind'];
 type DownloadStreamFrame = z.infer<typeof DownloadStreamFrameSchema>;
 
 export type {
   DownloadClientState,
-  DownloadEvent,
   DownloadQueue,
+  DownloadFiling,
+  DownloadFilingOrder,
   DownloadRemoval,
   DownloadStreamFrame,
   QueuedDownload,
   QueuedDownloadState,
   ReleaseSend,
+  ServiceEvent,
+  ServiceEventKind,
 };
 
 export {
   QUEUED_DOWNLOAD_STATES,
   DownloadClientStateSchema,
-  DownloadEventAckSchema,
-  DownloadEventSchema,
   DownloadQueueSchema,
+  DownloadFilingOrderSchema,
+  DownloadFilingSchema,
   DownloadRemovalSchema,
   DownloadStreamFrameSchema,
   DownloadWatchSchema,
   QueuedDownloadSchema,
   QueuedDownloadStateSchema,
   ReleaseSendSchema,
+  ServiceEventAckSchema,
+  ServiceEventSchema,
 };

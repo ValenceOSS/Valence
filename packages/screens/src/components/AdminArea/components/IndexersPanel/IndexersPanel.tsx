@@ -54,7 +54,11 @@ const IndexersPanel = () => {
   const [problem, setProblem] = useState<string | null>(null);
 
   const reread = useCallback(
-    () => cache.invalidateQueries({ queryKey: requestsQueries.indexers().queryKey }),
+    () =>
+      Promise.all([
+        cache.invalidateQueries({ queryKey: requestsQueries.indexers().queryKey }),
+        cache.invalidateQueries({ queryKey: requestsQueries.overview().queryKey }),
+      ]),
     [cache],
   );
 

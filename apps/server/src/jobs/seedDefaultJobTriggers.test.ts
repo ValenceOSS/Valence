@@ -137,7 +137,7 @@ describe('seedDefaultJobTriggers', () => {
     ]);
   });
 
-  it('leaves the requests check unseeded while requesting is off, and seeds it once it is on', async () => {
+  it('leaves the requests jobs unseeded while requesting is off, and seeds them once it is on', async () => {
     const settings = createMemorySettingsStore(SETTINGS);
     const off = createMemoryJobScheduleService(jobDefinitionsFor(false));
 
@@ -150,6 +150,7 @@ describe('seedDefaultJobTriggers', () => {
 
     expect(await seedDefaultJobTriggers({ schedules: on, settings })).toEqual([
       'server.checkRequests',
+      'requests.refreshCatalogue',
     ]);
   });
 });

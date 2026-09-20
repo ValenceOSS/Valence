@@ -22,6 +22,14 @@ describe('Spinner', () => {
     expect(screen.getByRole('status', { name: 'Loading library' })).toBeInTheDocument();
   });
 
+  it('draws small enough to sit inside a badge', () => {
+    render(<Spinner label="Downloading" size="xs" />);
+
+    expect(
+      screen.getByRole('status', { name: 'Downloading' }).querySelector('svg'),
+    ).toHaveAttribute('width', '0.75rem');
+  });
+
   it('accepts a custom class', () => {
     render(<Spinner label="Loading" className="text-danger" />);
 

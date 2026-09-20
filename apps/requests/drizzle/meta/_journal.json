@@ -50,6 +50,76 @@
       "when": 1789795612634,
       "tag": "0006_quality_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789798056969,
+      "tag": "0007_requests_and_items",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789798384751,
+      "tag": "0008_seasons_say_what_is_followed",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789798491175,
+      "tag": "0009_titles_by_other_names",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789799119480,
+      "tag": "0010_what_is_filed_already",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789834190167,
+      "tag": "0011_file_what_was_sent_by_hand",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789836179731,
+      "tag": "0012_a_quality_of_its_own",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789836758439,
+      "tag": "0013_what_each_request_did",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789837583219,
+      "tag": "0014_picked_by_hand",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1789838873946,
+      "tag": "0015_held_until_by_the_profile",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1789839060807,
+      "tag": "0016_sizes_for_each_quality",
+      "breakpoints": true
     }
   ]
 }
