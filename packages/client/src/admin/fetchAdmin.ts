@@ -198,6 +198,7 @@ const MonitorSchema = z.object({
 
 const ActiveSessionSchema = z.object({
   clientId: z.string(),
+  accountId: z.string().nullable().default(null),
   profileId: z.string().nullable(),
   profileName: z.string().nullable(),
   isGuest: z.boolean().default(false),

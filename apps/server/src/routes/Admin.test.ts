@@ -258,6 +258,45 @@ describe('administration over HTTP', () => {
     expect(response.status).toBe(403);
   });
 
+  it('says whose account each open tab belongs to, so two people are not listed as one', async () => {
+    const context = build();
+    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+
+    context.presence.connect({
+      clientId: 'tab-1',
+      socketId: 'socket-1',
+      accountId: 'account-1',
+      profileId: null,
+      profileName: 'Dan',
+      deviceLabel: 'Chromium on macOS',
+      send: vi.fn(),
+    });
+
+    context.presence.connect({
+      clientId: 'tab-2',
+      socketId: 'socket-2',
+      accountId: 'account-2',
+      profileId: null,
+      profileName: 'Marques',
+      deviceLabel: 'Firefox on Windows',
+      send: vi.fn(),
+    });
+
+    const response = await context.app.request(`${BASE}/api/admin/sessions`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toStrictEqual([
+      expect.objectContaining({ clientId: 'tab-1', accountId: 'account-1', profileName: 'Dan' }),
+      expect.objectContaining({
+        clientId: 'tab-2',
+        accountId: 'account-2',
+        profileName: 'Marques',
+      }),
+    ]);
+  });
+
   it('delivers a message to a tab that is open', async () => {
     const context = build();
     const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);

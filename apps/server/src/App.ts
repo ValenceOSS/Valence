@@ -2537,6 +2537,7 @@ const createApp = ({
       await Promise.all(
         presence.list().map(async (entry) => ({
           clientId: entry.clientId,
+          accountId: entry.accountId,
           profileId: entry.profileId,
           profileName: entry.profileName,
           isGuest: entry.viaShare !== null,
