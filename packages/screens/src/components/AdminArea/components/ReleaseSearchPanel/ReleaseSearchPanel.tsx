@@ -350,6 +350,8 @@ const ReleaseSearchPanel = () => {
                 <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
               </>
             }
+            triggerShape="field"
+            align="start"
           />
 
           {profile?.kind !== 'video' ? null : (
