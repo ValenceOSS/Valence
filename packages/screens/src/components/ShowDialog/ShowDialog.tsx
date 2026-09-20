@@ -303,7 +303,7 @@ const ShowDialog = ({
                 }}
               />
             ) : isLoading ? (
-              <Spinner label="Reading the episodes" size="sm" />
+              <Spinner isCentered label="Reading the episodes" size="sm" />
             ) : inOrder.length === 0 ? (
               <p className="text-sm text-text-muted">
                 Nothing here yet. Episodes appear as they are scanned.

@@ -198,9 +198,7 @@ const ProfilesPanel = () => {
           }}
         />
       ) : profiles.isPending ? (
-        <div className="p-4">
-          <Spinner label="Reading the profiles" size="sm" />
-        </div>
+        <Spinner isCentered label="Reading the profiles" size="sm" />
       ) : (
         <DataTable
           label="Profiles"

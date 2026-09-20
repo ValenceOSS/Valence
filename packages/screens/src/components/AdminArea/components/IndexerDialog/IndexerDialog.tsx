@@ -242,7 +242,7 @@ const IndexerDialog = ({
 
         {isSite ? (
           detail.isPending ? (
-            <Spinner label="Reading what this site needs" size="sm" />
+            <Spinner isCentered label="Reading what this site needs" size="sm" />
           ) : definition === null ? (
             <p role="alert" className="text-sm text-danger">
               This site’s definition is no longer in the catalogue.

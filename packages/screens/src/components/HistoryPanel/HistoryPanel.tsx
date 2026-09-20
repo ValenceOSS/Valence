@@ -92,11 +92,7 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
   };
 
   if (isReading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Spinner label="Reading your history" />
-      </div>
-    );
+    return <Spinner isCentered label="Reading your history" />;
   }
 
   if (entries.length === 0) {

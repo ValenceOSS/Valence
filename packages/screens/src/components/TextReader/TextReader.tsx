@@ -538,9 +538,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         >
           <div ref={viewport} className="relative min-h-0 flex-1 overflow-hidden">
             {text.data === undefined || part === null ? (
-              <div className="flex h-full items-center justify-center">
-                <Spinner label="Opening the book" />
-              </div>
+              <Spinner isCentered label="Opening the book" />
             ) : (
               <div
                 ref={flow}

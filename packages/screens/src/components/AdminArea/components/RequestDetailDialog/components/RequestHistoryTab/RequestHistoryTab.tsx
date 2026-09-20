@@ -36,7 +36,7 @@ const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
   }
 
   if (said.data === undefined) {
-    return <Spinner label="Reading what it has done" size="sm" />;
+    return <Spinner isCentered label="Reading what it has done" size="sm" />;
   }
 
   if (said.data.length === 0) {

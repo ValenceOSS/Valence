@@ -355,7 +355,7 @@ const SearchArea = ({
       >
         <header className="flex flex-wrap items-center justify-between gap-3 text-sm text-text-muted">
           {isReading ? (
-            <Spinner label="Searching" size="sm" />
+            <Spinner isCentered label="Searching" size="sm" />
           ) : (
             <span>
               {howMany === 0

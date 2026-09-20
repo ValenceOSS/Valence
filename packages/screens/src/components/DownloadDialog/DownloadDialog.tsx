@@ -109,9 +109,7 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
 
       <DialogContent className="px-0">
         {asked.isPending ? (
-          <div className="px-6 py-8">
-            <Spinner label="Working out what this would cost" size="sm" />
-          </div>
+          <Spinner isCentered label="Working out what this would cost" size="sm" />
         ) : options.length === 0 ? (
           <p className="px-6 py-8 font-body text-sm text-text-muted">
             Nothing can be prepared for this yet.

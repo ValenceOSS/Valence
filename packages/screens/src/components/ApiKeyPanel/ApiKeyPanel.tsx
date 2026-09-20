@@ -89,11 +89,7 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
   }, [made, showKeyForMilliseconds]);
 
   if (isReading) {
-    return (
-      <div className="p-4">
-        <Spinner label="Reading your keys" size="sm" />
-      </div>
-    );
+    return <Spinner isCentered label="Reading your keys" size="sm" />;
   }
 
   if (couldNotRead) {

@@ -184,7 +184,7 @@ const BrowseArea = ({
             }}
           />
         ) : isReading ? (
-          <Spinner label={`Reading ${page.title.toLowerCase()}`} size="sm" />
+          <Spinner isCentered label={`Reading ${page.title.toLowerCase()}`} size="sm" />
         ) : items.length === 0 && books.length === 0 ? (
           hasNoLibraries ? (
             <NothingHere

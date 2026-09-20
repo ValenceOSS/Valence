@@ -516,9 +516,7 @@ const MediaRequestsPanel = () => {
           }}
         />
       ) : requests.isPending ? (
-        <div className="p-4">
-          <Spinner label="Reading the requests" size="sm" />
-        </div>
+        <Spinner isCentered label="Reading the requests" size="sm" />
       ) : (
         <DataTable
           label="Requests"

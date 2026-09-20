@@ -297,9 +297,7 @@ const IndexersPanel = () => {
           }}
         />
       ) : asked.isPending ? (
-        <div className="p-4">
-          <Spinner label="Reading the indexers" size="sm" />
-        </div>
+        <Spinner isCentered label="Reading the indexers" size="sm" />
       ) : (
         <DataTable
           label="Indexers"

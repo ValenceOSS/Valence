@@ -169,9 +169,7 @@ const DeviceList = () => {
       />
 
       {devices === null ? (
-        <div className="p-4">
-          <Spinner label="Reading your devices" size="sm" />
-        </div>
+        <Spinner isCentered label="Reading your devices" size="sm" />
       ) : (
         <DataTable
           label="Where you are signed in"

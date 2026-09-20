@@ -237,7 +237,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
             }}
           />
         ) : asked.isPending ? (
-          <Spinner label="Reading the catalogue" size="sm" />
+          <Spinner isCentered label="Reading the catalogue" size="sm" />
         ) : (
           <Card padding="none" className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <DataTable

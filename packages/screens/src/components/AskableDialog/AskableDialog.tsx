@@ -140,9 +140,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             }}
           />
         ) : title === null ? (
-          <div className="grid h-full place-items-center">
-            <Spinner label="Reading the catalogue" />
-          </div>
+          <Spinner isCentered label="Reading the catalogue" />
         ) : (
           <div className="flex flex-col gap-8">
             <div className="relative overflow-hidden rounded-2xl">

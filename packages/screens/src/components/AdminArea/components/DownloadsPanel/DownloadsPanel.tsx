@@ -294,9 +294,7 @@ const DownloadsPanel = () => {
               }}
             />
           ) : queue.isPending ? (
-            <div className="p-4">
-              <Spinner label="Reading the downloads" size="sm" />
-            </div>
+            <Spinner isCentered label="Reading the downloads" size="sm" />
           ) : (
             <DownloadQueueTable
               downloads={queue.data.downloads}
@@ -320,9 +318,7 @@ const DownloadsPanel = () => {
               }}
             />
           ) : clients.isPending ? (
-            <div className="p-4">
-              <Spinner label="Reading the download clients" size="sm" />
-            </div>
+            <Spinner isCentered label="Reading the download clients" size="sm" />
           ) : (
             <DownloadClientsTable
               clients={clients.data}

@@ -95,9 +95,7 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
 
       <div className="valence-rail max-h-64 min-h-32 overflow-y-auto">
         {asked.isPending ? (
-          <div className="flex justify-center p-6">
-            <Spinner size="sm" label="Reading the folders" />
-          </div>
+          <Spinner isCentered size="sm" label="Reading the folders" />
         ) : status === 403 ? (
           <p className="p-4 text-sm text-text-muted">Valence is not allowed to read that folder.</p>
         ) : isGone ? (

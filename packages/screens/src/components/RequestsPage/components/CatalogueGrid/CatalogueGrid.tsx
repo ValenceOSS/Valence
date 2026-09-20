@@ -70,7 +70,7 @@ const CatalogueGrid = ({ browsing, onAsk }: CatalogueGridProps) => {
   }
 
   if (pages.data === undefined) {
-    return <Spinner label="Reading what there is to ask for" />;
+    return <Spinner isCentered label="Reading what there is to ask for" />;
   }
 
   const titles = pages.data.pages.flatMap((page) => page.titles);
