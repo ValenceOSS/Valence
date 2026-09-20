@@ -233,7 +233,7 @@ describe('MediaRequestsPanel', () => {
     expect(await screen.findByText('Searched for it.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Close' }));
 
-    await user.click(screen.getByRole('button', { name: 'Ask for something' }));
+    await user.click(screen.getByRole('button', { name: 'Request media' }));
     expect(await screen.findByRole('textbox', { name: 'Search for a film' })).toBeInTheDocument();
   });
 

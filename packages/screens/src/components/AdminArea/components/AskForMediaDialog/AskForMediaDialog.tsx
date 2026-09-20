@@ -229,10 +229,10 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   };
 
   return (
-    <DialogCompanion label="Ask for something" isOpen={isOpen} onClose={onClose} size="stage">
+    <DialogCompanion label="Request media" isOpen={isOpen} onClose={onClose} size="stage">
       <DialogTitle
         size="compact"
-        title="Ask for something"
+        title="Request media"
         detail="Find a film, a series, an artist or an album in the catalogue. Once it is approved, it is searched for, downloaded and filed into its library."
       />
 

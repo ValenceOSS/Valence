@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Add01Icon,
   ArrowRight01Icon,
   Cancel01Icon,
   Clock01Icon,
@@ -417,7 +418,8 @@ const MediaRequestsPanel = () => {
               setIsAsking(true);
             }}
           >
-            Ask for something
+            <Icon of={Add01Icon} size={15} />
+            Request media
           </Button>
         </>
       }
