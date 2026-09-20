@@ -22,6 +22,11 @@ import {
   DownloadClientTestSchema,
 } from '@ValenceContracts/schemas/DownloadClient';
 import {
+  QualityProfileChangeSchema,
+  QualityProfileDraftSchema,
+  QualityProfileSchema,
+} from '@ValenceContracts/schemas/QualityProfile';
+import {
   DownloadQueueSchema,
   QueuedDownloadSchema,
   ReleaseSendSchema,
@@ -499,7 +504,69 @@ const removeQueuedDownloadRoute = createRoute({
   responses: failures({ ...REFUSED_BODY, 204: { description: 'Removed' } }),
 });
 
+const QualityProfileAnswer = QualityProfileSchema.openapi('QualityProfile');
+
+const listQualityProfilesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/profiles',
+  tags: ['Admin'],
+  summary: 'List the quality profiles searches are judged against',
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Every profile',
+      content: { 'application/json': { schema: z.array(QualityProfileAnswer) } },
+    },
+  }),
+});
+
+const addQualityProfileRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/profiles',
+  tags: ['Admin'],
+  summary: 'Add a quality profile',
+  request: { body: { content: { 'application/json': { schema: QualityProfileDraftSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    201: {
+      description: 'The profile, as kept',
+      content: { 'application/json': { schema: QualityProfileAnswer } },
+    },
+  }),
+});
+
+const changeQualityProfileRoute = createRoute({
+  method: 'patch',
+  path: '/api/admin/requests/profiles/{id}',
+  tags: ['Admin'],
+  summary: 'Change a quality profile',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: QualityProfileChangeSchema } } },
+  },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'The profile, as changed',
+      content: { 'application/json': { schema: QualityProfileAnswer } },
+    },
+  }),
+});
+
+const removeQualityProfileRoute = createRoute({
+  method: 'delete',
+  path: '/api/admin/requests/profiles/{id}',
+  tags: ['Admin'],
+  summary: 'Remove a quality profile',
+  request: { params: RecordIdParameter },
+  responses: failures({ ...REFUSED_BODY, 204: { description: 'Removed' } }),
+});
+
 export {
+  addQualityProfileRoute,
+  changeQualityProfileRoute,
+  listQualityProfilesRoute,
+  removeQualityProfileRoute,
   addDownloadClientRoute,
   changeDownloadClientRoute,
   listDownloadClientsRoute,

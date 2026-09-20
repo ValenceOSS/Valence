@@ -93,6 +93,7 @@ import { ADMIN_PANELS } from '@ValenceScreens/components/AdminArea/adminSections
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { RequestsPanel } from './components/RequestsPanel/RequestsPanel';
 import { IndexersPanel } from './components/IndexersPanel/IndexersPanel';
+import { ProfilesPanel } from '@ValenceScreens/components/AdminArea/components/ProfilesPanel/ProfilesPanel';
 import { DownloadsPanel } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/DownloadsPanel';
 import { ReleaseSearchPanel } from './components/ReleaseSearchPanel/ReleaseSearchPanel';
 import type { AdminAreaProps } from './AdminArea.types';
@@ -781,6 +782,10 @@ const AdminArea = ({
 
               <TabPanel value="search" travel={travel}>
                 <ReleaseSearchPanel />
+              </TabPanel>
+
+              <TabPanel value="profiles" travel={travel}>
+                <ProfilesPanel />
               </TabPanel>
 
               <TabPanel value="downloads" travel={travel}>

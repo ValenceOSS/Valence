@@ -4,6 +4,9 @@ import { settingsOf } from '@ValenceRequests/cardigann/settingsOf';
 import { isSecretSetting } from '@ValenceRequests/definitions/isSecretSetting';
 import { CaptchaNeeded } from '@ValenceRequests/indexers/CaptchaNeeded';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
+import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
+import { rankReleases } from '@ValenceRequests/profiles/rankReleases';
+import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
 import type {
   Indexer,
   IndexerChange,
@@ -14,6 +17,7 @@ import type {
   ReleaseSearch,
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
+import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { CardigannDefinition } from '@ValenceRequests/cardigann/CardigannDefinitionSchema';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 import type { IndexerClient } from '@ValenceRequests/indexers/createIndexerClient';
@@ -82,7 +86,8 @@ const mergeSettings = (
 
 /**
  * Keeps the indexers, tries them, searches every one that is on at once, and fetches what they
- * found.
+ * found. A search against a quality profile judges every release it found by it, and puts them in
+ * the order they would be chosen.
  *
  * An indexer that keeps failing is turned off rather than asked forever, with the reason kept beside
  * it: after a few failures in a row it counts as failing, which the server hears about, and after a
@@ -347,7 +352,10 @@ const createIndexerService = ({
       return outcome;
     },
 
-    search: async (asked: ReleaseSearch): Promise<ReleaseSearchOutcome> => {
+    search: async (
+      asked: ReleaseSearch,
+      profile: QualityProfile | null = null,
+    ): Promise<ReleaseSearchOutcome> => {
       const search = ReleaseSearchSchema.parse(asked);
       const asking = (await store.list())
         .filter(
@@ -395,10 +403,22 @@ const createIndexerService = ({
         }),
       );
 
-      return {
-        releases: answers.flatMap((answer) => answer.releases),
-        indexers: answers.map((answer) => answer.report),
-      };
+      const releases = answers.flatMap((answer) => answer.releases);
+      const indexers = answers.map((answer) => answer.report);
+
+      if (profile === null) {
+        return { releases, indexers, judgements: [], pickedId: null };
+      }
+
+      const ranked = rankReleases(
+        releases,
+        releases.map((release) =>
+          judgeRelease(release, parseReleaseName(release.title), profile, search.runtimeMinutes),
+        ),
+        new Map(asking.map((record) => [record.id, record.priority])),
+      );
+
+      return { ...ranked, indexers };
     },
 
     download: async (id: string, url: string): Promise<ReleaseFile | null> => {

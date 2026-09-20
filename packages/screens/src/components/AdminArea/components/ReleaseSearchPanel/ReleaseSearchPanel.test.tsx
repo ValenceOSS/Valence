@@ -8,6 +8,7 @@ import type * as Indexers from '@ValenceClient/requests/fetchIndexers';
 import type * as Queue from '@ValenceClient/requests/fetchDownloadQueue';
 import type * as Clients from '@ValenceClient/requests/fetchDownloadClients';
 import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
+import type { Judgement, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 
 const searchReleases = vi.fn<typeof Indexers.searchReleases>();
 
@@ -22,6 +23,68 @@ vi.mock('@ValenceClient/requests/fetchIndexers', () => ({
 }));
 
 const fetchDownloadClients = vi.fn<typeof Clients.fetchDownloadClients>();
+const fetchProfiles = vi.fn<() => Promise<QualityProfile[]>>();
+
+vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
+  fetchProfiles: () => fetchProfiles(),
+}));
+
+const HD: QualityProfile = {
+  id: '9b2e1f5a-8d4c-4e2a-9f6b-1c3d5e7f9a0b',
+  name: 'HD',
+  kind: 'video',
+  resolutions: ['1080p'],
+  sources: ['bluray'],
+  musicQualities: [],
+  smallestMb: null,
+  largestMb: null,
+  preferredWords: [],
+  requiredWords: [],
+  bannedWords: [],
+  isUpgrading: false,
+  upgradeUntilResolution: null,
+  upgradeUntilSource: null,
+  upgradeUntilMusicQuality: null,
+  libraryIds: [],
+  createdAt: '2026-09-19T00:00:00.000Z',
+  updatedAt: '2026-09-19T00:00:00.000Z',
+};
+
+/**
+ * A judgement of the release named.
+ */
+const aJudgement = (
+  releaseId: string,
+  score: number,
+  rejections: string[],
+  reasons: string[],
+): Judgement => ({
+  releaseId,
+  parsed: {
+    title: 'Dune Part Two',
+    year: 2024,
+    seasons: [],
+    episodes: [],
+    absoluteEpisodes: [],
+    airDate: null,
+    isCompleteSeries: false,
+    resolution: null,
+    source: null,
+    codec: null,
+    hdr: [],
+    audio: [],
+    audioChannels: null,
+    musicQuality: null,
+    edition: null,
+    group: null,
+    isProper: false,
+    isRepack: false,
+  },
+  score,
+  isRejected: rejections.length > 0,
+  rejections,
+  reasons,
+});
 const sendRelease = vi.fn<typeof Queue.sendRelease>();
 
 vi.mock('@ValenceClient/requests/fetchDownloadClients', () => ({
@@ -116,6 +179,8 @@ const FOUND: ReleaseSearchOutcome = {
       problem: 'The indexer did not answer within 30 seconds',
     },
   ],
+  judgements: [],
+  pickedId: null,
 };
 
 beforeEach(() => {
@@ -125,6 +190,12 @@ beforeEach(() => {
     refusal: null,
   });
   downloadFile.mockReset();
+  fetchProfiles
+    .mockReset()
+    .mockResolvedValue([
+      HD,
+      { ...HD, id: '1b4e28ba-2fa1-11d2-883f-0016d3cca427', name: 'Lossless', kind: 'music' },
+    ]);
   fetchDownloadClients
     .mockReset()
     .mockResolvedValue([
@@ -368,6 +439,8 @@ describe('ReleaseSearchPanel', () => {
     searchReleases.mockResolvedValue({
       releases: [aRelease('Mystery.Box', { categories: [8000] })],
       indexers: FOUND.indexers,
+      judgements: [],
+      pickedId: null,
     });
 
     const user = userEvent.setup();
@@ -402,6 +475,81 @@ describe('ReleaseSearchPanel', () => {
     await waitFor(() => {
       expect(sendRelease).toHaveBeenCalledWith(expect.objectContaining({ libraryKind: 'shows' }));
     });
+  });
+
+  it('judges a search against a profile, in the order it would choose, marking the pick', async () => {
+    searchReleases.mockResolvedValue({
+      releases: [
+        aRelease('Dune.Part.Two.2024.1080p.BluRay'),
+        aRelease('Dune.Part.Two.2024.720p.WEB'),
+        aRelease('Dune.Part.Two.2024.2160p'),
+      ],
+      indexers: FOUND.indexers,
+      judgements: [
+        aJudgement(
+          'Dune.Part.Two.2024.1080p.BluRay',
+          1100,
+          [],
+          ['1080p, the first choice', 'Blu-ray, the first choice'],
+        ),
+        aJudgement('Dune.Part.Two.2024.720p.WEB', 900, [], ['720p, the second choice']),
+        aJudgement('Dune.Part.Two.2024.2160p', 0, ['2160p is not one this profile takes'], []),
+      ],
+      pickedId: 'Dune.Part.Two.2024.1080p.BluRay',
+    });
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'HD' }));
+    await user.type(screen.getByRole('spinbutton', { name: /Running time/ }), '166');
+    await searchFor(user, 'dune');
+
+    await screen.findByText('Picked · 1100');
+
+    const rows = screen.getAllByRole('row').map((row) => row.textContent);
+
+    expect(rows[1]).toContain('Dune.Part.Two.2024.1080p.BluRay');
+    expect(rows[1]).toContain('1080p, the first choice. Blu-ray, the first choice');
+    expect(rows[2]).toContain('Scores 900');
+    expect(rows[3]).toContain('Refused');
+    expect(rows[3]).toContain('2160p is not one this profile takes');
+    expect(searchReleases).toHaveBeenCalledWith({
+      query: 'dune',
+      mode: 'search',
+      profileId: HD.id,
+      runtimeMinutes: 166,
+    });
+  });
+
+  it('asks no running time of a music profile, and leaves out an empty one', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'HD' }));
+    await searchFor(user, 'dune');
+
+    await waitFor(() => {
+      expect(searchReleases).toHaveBeenLastCalledWith({
+        query: 'dune',
+        mode: 'search',
+        profileId: HD.id,
+      });
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Lossless' }));
+
+    expect(screen.queryByRole('spinbutton', { name: /Running time/ })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'No profile' }));
+
+    expect(screen.getByRole('button', { name: 'Judge against' })).toHaveTextContent('No profile');
   });
 
   it('says why a release could not be sent', async () => {
@@ -468,7 +616,12 @@ describe('ReleaseSearchPanel', () => {
   });
 
   it('says so when no indexer is switched on', async () => {
-    searchReleases.mockResolvedValue({ releases: [], indexers: [] });
+    searchReleases.mockResolvedValue({
+      releases: [],
+      indexers: [],
+      judgements: [],
+      pickedId: null,
+    });
 
     const user = userEvent.setup();
 
@@ -480,7 +633,12 @@ describe('ReleaseSearchPanel', () => {
   });
 
   it('says so when nothing was found', async () => {
-    searchReleases.mockResolvedValue({ releases: [], indexers: FOUND.indexers });
+    searchReleases.mockResolvedValue({
+      releases: [],
+      indexers: FOUND.indexers,
+      judgements: [],
+      pickedId: null,
+    });
 
     const user = userEvent.setup();
 

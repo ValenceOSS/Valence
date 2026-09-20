@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { JudgementSchema } from './QualityProfile';
 
 const INDEXER_KINDS = ['torznab', 'newznab', 'cardigann'] as const;
 
@@ -104,6 +105,8 @@ const ReleaseSearchSchema = z.object({
   album: z.string().trim().max(200).optional(),
   categories: z.array(z.number().int()).optional(),
   indexerIds: z.array(z.string().uuid()).optional(),
+  profileId: z.string().uuid().optional(),
+  runtimeMinutes: z.number().int().positive().max(1000).optional(),
 });
 
 const ReleaseSchema = z.object({
@@ -139,6 +142,8 @@ const IndexerSearchReportSchema = z.object({
 const ReleaseSearchOutcomeSchema = z.object({
   releases: z.array(ReleaseSchema),
   indexers: z.array(IndexerSearchReportSchema),
+  judgements: z.array(JudgementSchema).default([]),
+  pickedId: z.string().nullable().default(null),
 });
 
 const IndexerHealthSchema = z.object({

@@ -195,7 +195,7 @@ describe('createRequestsClient', () => {
 
       expect(await client.search({ query: 'dune' })).toEqual({
         kind: 'answered',
-        value: { releases: [], indexers: [] },
+        value: { releases: [], indexers: [], judgements: [], pickedId: null },
       });
     });
 
@@ -602,5 +602,67 @@ describe('createRequestsClient with download clients', () => {
         'http://requests:8421 stopped streaming the downloads',
       );
     });
+  });
+});
+
+describe('createRequestsClient with quality profiles', () => {
+  const PROFILE = {
+    id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    name: 'HD',
+    kind: 'video' as const,
+    resolutions: ['1080p' as const],
+    sources: ['bluray' as const],
+    musicQualities: [],
+    smallestMb: null,
+    largestMb: null,
+    preferredWords: [],
+    requiredWords: [],
+    bannedWords: [],
+    isUpgrading: false,
+    upgradeUntilResolution: null,
+    upgradeUntilSource: null,
+    upgradeUntilMusicQuality: null,
+    libraryIds: [],
+    createdAt: '2026-09-19T00:00:00.000Z',
+    updatedAt: '2026-09-19T00:00:00.000Z',
+  };
+
+  /**
+   * A client over a service that answers every call the one way.
+   */
+  const aClient = (status: number, body: object | null) => {
+    const fetch = vi.fn((url: string, init: { method?: string }) => {
+      void url;
+      void init;
+
+      return Promise.resolve(new Response(body === null ? null : JSON.stringify(body), { status }));
+    });
+
+    return {
+      fetch,
+      client: createRequestsClient({ address: 'http://requests:8421', secret: A_SECRET, fetch }),
+    };
+  };
+
+  it('lists, adds, changes and removes profiles', async () => {
+    expect(await aClient(200, [PROFILE]).client.listProfiles()).toEqual({
+      kind: 'answered',
+      value: [PROFILE],
+    });
+
+    const keeping = aClient(200, PROFILE);
+
+    expect((await keeping.client.addProfile({ name: 'HD', kind: 'video' })).kind).toBe('answered');
+    expect((await keeping.client.changeProfile(PROFILE.id, { name: 'UHD' })).kind).toBe('answered');
+    expect(await aClient(204, null).client.removeProfile(PROFILE.id)).toEqual({
+      kind: 'answered',
+      value: null,
+    });
+    expect(keeping.fetch.mock.calls.map(([url, init]) => `${init.method ?? 'GET'} ${url}`)).toEqual(
+      [
+        'POST http://requests:8421/api/profiles',
+        `PATCH http://requests:8421/api/profiles/${PROFILE.id}`,
+      ],
+    );
   });
 });

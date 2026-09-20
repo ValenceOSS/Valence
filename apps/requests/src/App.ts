@@ -11,6 +11,7 @@ import type { DefinitionCatalogue } from '@ValenceRequests/definitions/createDef
 import { readBody } from '@ValenceRequests/readBody';
 import type { RequestsStatus, RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import type { IndexerService } from '@ValenceRequests/indexers/createIndexerService';
+import type { ProfileService } from '@ValenceRequests/profiles/createProfileService';
 
 type CreateAppOptions = {
   secret: string;
@@ -19,7 +20,8 @@ type CreateAppOptions = {
   isDatabaseUp: () => Promise<boolean>;
   indexers: IndexerService;
   definitions: Pick<DefinitionCatalogue, 'catalogue' | 'detail' | 'refresh'>;
-  downloads?: Hono;
+  routes?: readonly Hono[];
+  profiles?: Pick<ProfileService, 'find'>;
 };
 
 const NO_SUCH_INDEXER = { error: 'No such indexer.' };
@@ -34,7 +36,8 @@ const NO_SUCH_INDEXER = { error: 'No such indexer.' };
  * @param isDatabaseUp - Whether the database answers.
  * @param indexers - The indexers, and searching them.
  * @param definitions - The catalogue of sites a definition describes.
- * @param downloads - The download clients and the queue, mounted under `/api`.
+ * @param routes - Everything else the service offers, mounted under `/api`.
+ * @param profiles - The quality profiles a search can be judged against.
  * @returns The app.
  */
 const createApp = ({
@@ -44,7 +47,8 @@ const createApp = ({
   isDatabaseUp,
   indexers,
   definitions,
-  downloads = new Hono(),
+  routes = [],
+  profiles = { find: () => Promise.resolve(null) },
 }: CreateAppOptions) => {
   const app = new Hono();
 
@@ -56,7 +60,9 @@ const createApp = ({
 
   app.use('/api/*', bearerAuth({ token: secret }));
 
-  app.route('/api', downloads);
+  for (const mounted of routes) {
+    app.route('/api', mounted);
+  }
 
   app.get('/api/status', async (context) =>
     context.json({
@@ -169,9 +175,17 @@ const createApp = ({
   app.post('/api/search', async (context) => {
     const search = await readBody(context.req.raw, ReleaseSearchSchema);
 
-    return search === null
-      ? context.json({ error: 'That is not a search.' }, 400)
-      : context.json(await indexers.search(search));
+    if (search === null) {
+      return context.json({ error: 'That is not a search.' }, 400);
+    }
+
+    const profile = search.profileId === undefined ? null : await profiles.find(search.profileId);
+
+    if (search.profileId !== undefined && profile === null) {
+      return context.json({ error: 'No such profile.' }, 400);
+    }
+
+    return context.json(await indexers.search(search, profile));
   });
 
   return app;

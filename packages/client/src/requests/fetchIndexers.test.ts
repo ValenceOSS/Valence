@@ -141,6 +141,8 @@ describe('searchReleases', () => {
     await expect(searchReleases({ query: 'dune' })).resolves.toEqual({
       releases: [],
       indexers: [],
+      judgements: [],
+      pickedId: null,
     });
   });
 

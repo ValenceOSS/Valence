@@ -19,6 +19,7 @@ describe('aScratchDatabase', () => {
       { table_name: 'download_event' },
       { table_name: 'indexer' },
       { table_name: 'indexer_definition' },
+      { table_name: 'quality_profile' },
       { table_name: 'setting' },
     ]);
   });
