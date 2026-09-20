@@ -10,24 +10,21 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
-import { HoverCard } from '@ValenceUI/HoverCard';
+import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { ClearLibraryPartsDialog } from '@ValenceScreens/components/AdminArea/components/ClearLibraryPartsDialog/ClearLibraryPartsDialog';
 import { RunLibraryJobDialog } from '@ValenceScreens/components/AdminArea/components/RunLibraryJobDialog/RunLibraryJobDialog';
-import { ScanProgressBar } from '@ValenceScreens/components/AdminArea/components/ScanProgressBar/ScanProgressBar';
-import { describeQueueKind } from '@ValenceScreens/components/AdminArea/describeQueueKind';
+import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
 import { summariseProgress } from './summariseProgress';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { JobDefinition } from '@ValenceClient/admin/fetchAdmin';
 import type { JobRunnerProps } from './JobRunner.types';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 
-const WORKING_SHOWN = 4;
-
 /**
  * Every job the server knows how to do, each with what it is for, whether it is running now and how
- * far along, and a way to start or stop it by hand. Pressing into a job opens what makes it run on
- * its own, so the list stays a list rather than becoming a page of settings.
+ * far along, and a way to start or stop it by hand. Pressing the i beside a running job opens what it is
+ * doing, and pressing into a job opens what makes it run on its own, so the list stays a list rather than becoming a page of settings.
  *
  * Work against a library waits for work against a library, and nothing else waits for anything. The
  * rule was that one running job disabled Run now on every other, which is right for the thing it was
@@ -62,6 +59,7 @@ const JobRunner = ({
   const [choosing, setChoosing] = useState<JobDefinition | null>(null);
   const [clearing, setClearing] = useState<JobDefinition | null>(null);
   const [stopping, setStopping] = useState<JobDefinition | null>(null);
+  const [watching, setWatching] = useState<JobDefinition | null>(null);
 
   const summaryFor = useCallback(
     (kind: string) =>
@@ -114,8 +112,6 @@ const JobRunner = ({
 
   const live = useRef({
     summaryFor,
-    jobIdsFor,
-    working,
     askOrRun,
     ask,
     onOpenSchedule,
@@ -124,8 +120,6 @@ const JobRunner = ({
 
   live.current = {
     summaryFor,
-    jobIdsFor,
-    working,
     askOrRun,
     ask,
     onOpenSchedule,
@@ -168,65 +162,25 @@ const JobRunner = ({
             );
           }
 
-          const jobIds = live.current.jobIdsFor(row.original.kind);
-
-          const onNow = live.current.working.filter(
-            (job) =>
-              job.state === 'running' &&
-              job.correlationId !== null &&
-              jobIds.has(job.correlationId),
-          );
-
           return (
-            <HoverCard
-              side="left"
-              align="center"
-              detail={
-                <div className="flex flex-col gap-3">
-                  <span className="text-xs uppercase tracking-[0.14em] text-text-muted">
-                    {row.original.label}
-                  </span>
-
-                  <ScanProgressBar
-                    label={row.original.label}
-                    phase={summary.phase}
-                    processed={summary.processed}
-                    total={summary.total}
-                  />
-
-                  {onNow.length === 0 ? (
-                    <p className="font-body text-xs text-text-muted">
-                      Nothing in the transcoder's own queue is tied to this yet.
-                    </p>
-                  ) : (
-                    <ul className="flex flex-col gap-1.5">
-                      {onNow.slice(0, WORKING_SHOWN).map((job) => (
-                        <li key={job.id} className="flex min-w-0 flex-col">
-                          <span className="truncate text-xs text-text" title={job.subject}>
-                            {job.subject}
-                          </span>
-                          <span className="text-xs text-text-muted">
-                            {describeQueueKind(job.kind)}
-                          </span>
-                        </li>
-                      ))}
-
-                      {onNow.length <= WORKING_SHOWN ? null : (
-                        <li className="font-body text-xs text-text-muted">
-                          and {(onNow.length - WORKING_SHOWN).toString()} more
-                        </li>
-                      )}
-                    </ul>
-                  )}
-                </div>
-              }
-            >
+            <span className="flex items-center gap-1.5">
               <Badge size="sm" tone={describeJobStatus('running').tone}>
                 {describeJobStatus('running').label}
               </Badge>
 
-              <Icon of={InformationCircleIcon} size={15} className="shrink-0 text-text-muted" />
-            </HoverCard>
+              <Button
+                variant="bare"
+                size="none"
+                isIconOnly
+                label={`What ${row.original.label} is doing`}
+                className="text-text-muted hover:text-text"
+                onClick={() => {
+                  setWatching(row.original);
+                }}
+              >
+                <Icon of={InformationCircleIcon} size={15} />
+              </Button>
+            </span>
           );
         },
       },
@@ -316,6 +270,23 @@ const JobRunner = ({
         onRun={(kind, libraryIds) => {
           onRun(kind, libraryIds);
           setChoosing(null);
+        }}
+      />
+
+      <RunningWorkDialog
+        title={watching?.label ?? ''}
+        isOpen={watching !== null}
+        progress={watching === null ? null : summaryFor(watching.kind)}
+        tasks={
+          watching === null
+            ? []
+            : working.filter(
+                (job) =>
+                  job.correlationId !== null && jobIdsFor(watching.kind).has(job.correlationId),
+              )
+        }
+        onClose={() => {
+          setWatching(null);
         }}
       />
 

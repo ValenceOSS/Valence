@@ -689,9 +689,9 @@ describe('JobRunner', () => {
       />,
     );
 
-    await user.hover(screen.getByText('Running'));
+    await user.click(screen.getByRole('button', { name: /is doing/ }));
 
-    expect(await screen.findByText('Movie.mkv', {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText('Movie.mkv')).toBeInTheDocument();
   });
 
   it('does not guess a match from the queue kind alone, only from the correlation id', async () => {
@@ -734,15 +734,9 @@ describe('JobRunner', () => {
       />,
     );
 
-    await user.hover(screen.getByText('Running'));
+    await user.click(screen.getByRole('button', { name: /is doing/ }));
 
-    expect(
-      await screen.findByText(
-        "Nothing in the transcoder's own queue is tied to this yet.",
-        {},
-        { timeout: 3000 },
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Nothing in the queue is tied to it yet.')).toBeInTheDocument();
     expect(screen.queryByText('Unrelated.mkv')).not.toBeInTheDocument();
   });
 

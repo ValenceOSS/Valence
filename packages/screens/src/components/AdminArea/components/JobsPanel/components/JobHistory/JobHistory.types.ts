@@ -1,7 +1,8 @@
-import type { JobDefinition } from '@ValenceClient/admin/fetchAdmin';
+import type { Job, JobDefinition } from '@ValenceClient/admin/fetchAdmin';
 
 type JobHistoryProps = {
   definitions: JobDefinition[];
+  working: Job[];
   onViewLogs: (jobId: string) => void;
 };
 

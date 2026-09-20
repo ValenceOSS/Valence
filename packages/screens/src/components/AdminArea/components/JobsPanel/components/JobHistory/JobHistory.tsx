@@ -1,13 +1,15 @@
 import { Icon } from '@ValenceUI/Icon';
-import { MoreHorizontalIcon, Alert02Icon } from '@hugeicons/core-free-icons';
+import { MoreHorizontalIcon, Alert02Icon, InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
+import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { watchJobs } from '@ValenceClient/admin/fetchAdmin';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
@@ -75,11 +77,13 @@ const describeRunKind = (kind: string, labels: ReadonlyMap<string, string>): str
  * showed the last moment, and this shows the history behind it.
  *
  * @param definitions - The jobs the server offers, for naming a run's kind in words.
+ * @param working - What the queue is working on, for showing what a running run is made of.
  * @param onViewLogs - Called with a run's id, to open the log filtered to it.
  */
-const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
+const JobHistoryPanel = ({ definitions, working, onViewLogs }: JobHistoryProps) => {
   const cache = useQueryClient();
   const [openIssuesFor, setOpenIssuesFor] = useState<string | null>(null);
+  const [openWorkFor, setOpenWorkFor] = useState<string | null>(null);
 
   const labels = useMemo(
     () => new Map(definitions.map((definition) => [definition.kind, definition.label])),
@@ -93,6 +97,7 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
   const issues = askedIssues.data ?? [];
   const openRun = records.find((record) => record.id === openIssuesFor);
   const failure = openRun?.errorMessage ?? null;
+  const openWork = records.find((record) => record.id === openWorkFor);
 
   useEffect(() => {
     let pending: ReturnType<typeof setTimeout> | null = null;
@@ -168,9 +173,26 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
           filterValue === undefined || row.getValue(columnId) === filterValue,
         meta: { filterOptions: STATUS_FILTER_OPTIONS },
         cell: ({ row }) => (
-          <Badge size="sm" tone={describeJobStatus(row.original.status).tone}>
-            {describeJobStatus(row.original.status).label}
-          </Badge>
+          <span className="flex items-center gap-1.5">
+            <Badge size="sm" tone={describeJobStatus(row.original.status).tone}>
+              {describeJobStatus(row.original.status).label}
+            </Badge>
+
+            {row.original.status === 'running' ? (
+              <Button
+                variant="bare"
+                size="none"
+                isIconOnly
+                label={`What ${describeRunKind(row.original.kind, labels)} is doing`}
+                className="text-text-muted hover:text-text"
+                onClick={() => {
+                  setOpenWorkFor(row.original.id);
+                }}
+              >
+                <Icon of={InformationCircleIcon} size={15} />
+              </Button>
+            ) : null}
+          </span>
         ),
       },
       {
@@ -271,6 +293,16 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
               ? 'Reading job history…'
               : 'No job runs match this.'
         }
+      />
+
+      <RunningWorkDialog
+        title={openWork === undefined ? '' : describeRunKind(openWork.kind, labels)}
+        isOpen={openWork !== undefined}
+        progress={openWork?.progress ?? null}
+        tasks={working.filter((task) => task.correlationId === openWorkFor)}
+        onClose={() => {
+          setOpenWorkFor(null);
+        }}
       />
 
       <Dialog
