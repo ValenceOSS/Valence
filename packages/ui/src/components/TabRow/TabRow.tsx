@@ -60,8 +60,8 @@ const TabRow = ({ label, groups, value, size = 'md', tone = 'track', className }
                 isUnderlined
                   ? 'data-[state=active]:font-semibold data-[state=active]:text-text'
                   : cn(
-                      'data-[state=active]:font-semibold data-[state=active]:text-surface',
-                      'data-[state=active]:hover:text-surface data-[state=active]:focus-visible:text-surface',
+                      'data-[state=active]:font-semibold data-[state=active]:text-text',
+                      'data-[state=active]:hover:text-text data-[state=active]:focus-visible:text-text',
                     ),
               )}
             >
