@@ -408,7 +408,8 @@ const MediaRequestsPanel = () => {
                 });
             }}
           >
-            Search for what is missing
+            <Icon of={ReloadIcon} size={15} />
+            Refetch media
           </Button>
 
           <Button
