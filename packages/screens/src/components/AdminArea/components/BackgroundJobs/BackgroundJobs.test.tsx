@@ -100,7 +100,7 @@ describe('BackgroundJobs', () => {
       />,
     );
 
-    expect(screen.getByText('Queued')).toHaveClass('bg-muted');
+    expect(screen.getByText('Queued')).toHaveClass('bg-busy');
     expect(screen.getAllByText('Running')[0]).toHaveClass('bg-busy');
     expect(screen.getByText('Done')).toHaveClass('bg-success');
     expect(screen.getByText('Failed')).toHaveClass('bg-danger');

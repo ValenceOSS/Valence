@@ -132,4 +132,11 @@ describe('Badge', () => {
 
     expect(badgeOf('Down')).toHaveClass('bg-danger');
   });
+
+  it('paints something waiting in the colour of work under way, without the spinner', () => {
+    render(<Badge tone="waiting">Queued</Badge>);
+
+    expect(badgeOf('Queued')).toHaveClass('bg-busy');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
 });

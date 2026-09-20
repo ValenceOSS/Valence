@@ -1,7 +1,7 @@
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 
 const STATUS_LOOK = {
-  queued: { label: 'Queued', tone: 'quiet' },
+  queued: { label: 'Queued', tone: 'waiting' },
   working: { label: 'In progress', tone: 'busy' },
   attention: { label: 'Needs attention', tone: 'warning' },
   done: { label: 'Done', tone: 'success' },

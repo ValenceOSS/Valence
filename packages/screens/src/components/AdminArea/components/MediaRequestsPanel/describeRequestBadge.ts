@@ -33,6 +33,7 @@ const describeRequestBadge = (request: MediaRequest): StateBadge => {
       if (request.kind === 'film') {
         return {
           ...STATUS_LOOK.queued,
+          tone: 'quiet',
           label: 'Not out yet',
           detail:
             request.releaseDate === null
@@ -47,6 +48,7 @@ const describeRequestBadge = (request: MediaRequest): StateBadge => {
       if (isMusic) {
         return {
           ...STATUS_LOOK.queued,
+          tone: 'quiet',
           label: 'Not out yet',
           detail:
             next === null
@@ -57,6 +59,7 @@ const describeRequestBadge = (request: MediaRequest): StateBadge => {
 
       return {
         ...STATUS_LOOK.queued,
+        tone: 'quiet',
         label: 'Not out yet',
         detail:
           next === null

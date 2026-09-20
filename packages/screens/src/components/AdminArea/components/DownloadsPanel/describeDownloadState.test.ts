@@ -28,7 +28,7 @@ const A_DOWNLOAD: QueuedDownload = {
 
 describe('describeDownloadState', () => {
   it.each([
-    ['queued', 'Queued', 'quiet'],
+    ['queued', 'Queued', 'waiting'],
     ['downloading', 'Downloading', 'busy'],
     ['paused', 'Paused', 'quiet'],
     ['done', 'Done', 'success'],

@@ -10,6 +10,7 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   highlight: 'bg-highlight text-highlight-contrast',
   solid: 'bg-shade text-on-scrim',
   busy: 'bg-busy text-surface',
+  waiting: 'bg-busy text-surface',
   warning: 'bg-highlight text-highlight-contrast',
   danger: 'bg-danger text-surface',
 };
@@ -24,7 +25,8 @@ const SIZE_CLASSES: Record<BadgeSize, string> = {
  * inline without disturbing the line it is on, and toned so that the ordinary case is quiet and
  * only a warning or a failure asks for attention.
  *
- * Whatever is in progress carries a spinner after its words, so a status that is still changing does not read the
+ * Whatever is waiting is the colour of what is in progress, since it is about to be, and only what
+ * is actually in progress carries a spinner after its words, so a status that is still changing does not read the
  * same as one that has settled.
  *
  * Every tone is a solid fill rather than glass. A status is read at a glance down a column, and a

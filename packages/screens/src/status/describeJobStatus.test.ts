@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { describeJobStatus } from './describeJobStatus';
 
 describe('describeJobStatus', () => {
-  it('waits quietly while queued', () => {
-    expect(describeJobStatus('queued')).toEqual({ label: 'Queued', tone: 'quiet' });
+  it('waits in orange while queued', () => {
+    expect(describeJobStatus('queued')).toEqual({ label: 'Queued', tone: 'waiting' });
   });
 
   it('says running for work under way, in the colour of work under way', () => {
