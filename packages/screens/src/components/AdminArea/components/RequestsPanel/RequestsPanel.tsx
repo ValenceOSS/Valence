@@ -1,7 +1,8 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import { RefreshIcon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
@@ -11,7 +12,6 @@ import { checkRequestsNow } from '@ValenceClient/requests/fetchRequests';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { describeRequestsVpn } from './describeRequestsVpn';
-import { RequestsWorkTiles } from './components/RequestsWorkTiles/RequestsWorkTiles';
 
 /**
  * The requests service as whoever set it up sees it: what it is doing just now — what waits on
@@ -45,9 +45,9 @@ const RequestsPanel = () => {
       title="Requests"
       isFlush
       actions={
-        <Button variant="ghost" size="xs" isLoading={isChecking} onClick={checkNow}>
+        <PanelCardAction icon={RefreshIcon} isLoading={isChecking} onClick={checkNow}>
           Check now
-        </Button>
+        </PanelCardAction>
       }
     >
       {asked.isError ? (
@@ -59,13 +59,9 @@ const RequestsPanel = () => {
           }}
         />
       ) : overview === null || vpn === null ? (
-        <div className="p-4">
-          <Spinner label="Reading the requests service" size="sm" />
-        </div>
+        <Spinner isCentered label="Reading the requests service" size="sm" />
       ) : (
         <>
-          <RequestsWorkTiles work={overview.work} />
-
           <SettingList>
             <SettingRow
               title="Requests service"

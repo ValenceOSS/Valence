@@ -137,8 +137,8 @@ describe('the size of a SegmentedRow', () => {
   });
 });
 
-it('keeps the chosen label readable under a pointer, where the mark behind it is light', () => {
+it('keeps the chosen label readable under a pointer, ', () => {
   render(<SegmentedRow label="Which library" items={ITEMS} value="books" onSelect={() => {}} />);
 
-  expect(screen.getByRole('button', { name: 'Books' })).toHaveClass('hover:text-surface');
+  expect(screen.getByRole('button', { name: 'Books' })).toHaveClass('hover:text-text');
 });

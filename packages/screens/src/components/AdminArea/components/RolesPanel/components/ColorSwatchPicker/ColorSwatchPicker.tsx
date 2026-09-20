@@ -26,7 +26,7 @@ const ColorSwatchPicker = ({ value, onChange, className }: ColorSwatchPickerProp
       }}
       className="flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[var(--surface-line)] bg-subtle"
     >
-      {value === null ? <Icon of={Tick02Icon} size={14} className="text-text" /> : null}
+      {value === null ? <Icon of={Tick02Icon} size={14} tone="strong" /> : null}
     </Button>
 
     {ROLE_COLOURS.map((swatch) => (

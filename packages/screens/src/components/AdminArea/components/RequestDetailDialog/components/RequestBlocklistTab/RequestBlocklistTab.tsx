@@ -41,7 +41,7 @@ const RequestBlocklistTab = ({ request, onLifted }: RequestBlocklistTabProps) =>
   }
 
   if (blocked.data === undefined) {
-    return <Spinner label="Reading what it will not try again" size="sm" />;
+    return <Spinner isCentered label="Reading what it will not try again" size="sm" />;
   }
 
   if (blocked.data.length === 0) {

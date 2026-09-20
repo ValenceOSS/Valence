@@ -53,8 +53,16 @@ const REPEAT_LABELS = {
  * @param shown - What the bar shows as playing, which is another device's song while controlling it.
  * @param player - The player to drive.
  * @param look - On the bar, or in the immersive view.
+ * @param isIdle - Whether nothing is playing, which leaves every control drawn and none of them
+ *   pressable.
  */
-const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportProps) => {
+const MusicTransport = ({
+  state,
+  shown,
+  player,
+  look = 'bar',
+  isIdle = false,
+}: MusicTransportProps) => {
   const listening = useListeningParty();
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
@@ -64,8 +72,8 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
   const repeat = queue?.repeat ?? 'off';
   const isFollowing = listening !== null && !listening.mayChoose;
   const mayJoinIn = isFollowing && !shown.isPlaying && listening.party.isPlaying;
-  const mayPlayPause = !isFollowing || listening.mayPlayPause || mayJoinIn;
-  const maySeek = !isFollowing || listening.maySeek;
+  const mayPlayPause = !isIdle && (!isFollowing || listening.mayPlayPause || mayJoinIn);
+  const maySeek = !isIdle && (!isFollowing || listening.maySeek);
   const iconSize = isImmersive ? 24 : 20;
   const [scrubbedTo, setScrubbedTo] = useState<number | null>(null);
   const position = scrubbedTo ?? shown.positionSeconds;
@@ -104,7 +112,7 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
       glyph={ShuffleIcon}
       gesture="tumble"
       isLit={queue?.isShuffled === true}
-      isDisabled={isOrdered || shown.remote !== null || isFollowing}
+      isDisabled={isIdle || isOrdered || shown.remote !== null || isFollowing}
       className={isImmersive ? '' : 'hidden md:inline-flex'}
       onClick={() => {
         player.toggleShuffle();
@@ -118,7 +126,7 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
       glyph={repeat === 'one' ? RepeatOne01Icon : RepeatIcon}
       gesture="spin"
       isLit={repeat !== 'off'}
-      isDisabled={isOrdered || shown.remote !== null || isFollowing}
+      isDisabled={isIdle || isOrdered || shown.remote !== null || isFollowing}
       className={isImmersive ? '' : 'hidden md:inline-flex'}
       onClick={() => {
         player.cycleRepeat();
@@ -133,14 +141,14 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
         glyph={PreviousIcon}
         iconSize={iconSize}
         isSolid
-        isDisabled={isFollowing}
+        isDisabled={isIdle || isFollowing}
         onClick={() => {
           player.previous();
         }}
       />
 
       <Button
-        variant={isImmersive ? 'ghost' : 'glossy'}
+        variant={isImmersive ? 'ghost' : 'confirm'}
         size={isImmersive ? 'md' : 'sm'}
         isIconOnly
         label={shown.isPlaying ? 'Pause' : 'Play'}
@@ -193,7 +201,7 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
         glyph={NextIcon}
         iconSize={iconSize}
         isSolid
-        isDisabled={isFollowing}
+        isDisabled={isIdle || isFollowing}
         onClick={() => {
           player.next();
         }}
@@ -229,7 +237,7 @@ const MusicTransport = ({ state, shown, player, look = 'bar' }: MusicTransportPr
         {repeating}
       </div>
 
-      <div className="hidden w-full items-center gap-2 md:flex">
+      <div className="flex w-full items-center gap-2">
         <span className="w-10 text-right text-xs tabular-nums text-text-muted">
           {formatDuration(position)}
         </span>

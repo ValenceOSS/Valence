@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { HouseholdSchema } from './Household';
+import { ViewerProfileSchema } from './ViewerProfile';
 
 const AccountSchema = z.object({
   id: z.string(),
@@ -11,6 +12,7 @@ const AccountSchema = z.object({
   position: z.number().nullable(),
   isAdministrator: z.boolean(),
   face: HouseholdSchema.nullable(),
+  profile: ViewerProfileSchema.nullish(),
   roles: z.array(z.string()),
 });
 

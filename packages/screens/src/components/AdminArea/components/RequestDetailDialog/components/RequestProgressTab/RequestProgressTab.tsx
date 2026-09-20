@@ -84,7 +84,7 @@ const RequestProgressTab = ({
         <h4 className="text-xs uppercase tracking-[0.16em] text-text-muted">What is coming down</h4>
 
         {queue.isPending ? (
-          <Spinner label="Reading the downloads" size="sm" />
+          <Spinner isCentered label="Reading the downloads" size="sm" />
         ) : downloads.length === 0 ? (
           <p className="font-body text-sm text-text-muted">
             Nothing is downloading for this just now.

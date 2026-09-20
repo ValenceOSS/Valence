@@ -48,12 +48,11 @@ const CacheBreakdown = ({
                   detail={<p className="text-xs leading-relaxed normal-case">{row.hint}</p>}
                 >
                   <Button
-                    variant="bare"
+                    variant="subtle"
                     size="none"
                     isIconOnly
                     label={`What ${row.label.toLowerCase()} means`}
                     hasTooltip={false}
-                    className="text-text-muted transition-colors hover:text-text"
                   >
                     <Icon of={InformationCircleIcon} size={14} />
                   </Button>

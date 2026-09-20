@@ -52,6 +52,7 @@ const aFakeMusicPlayer = (
     addToQueue: vi.fn(),
     jumpTo: vi.fn(),
     removeFromQueue: vi.fn(),
+    moveInQueue: vi.fn(),
     setQuality: vi.fn(),
     stop: vi.fn(),
     playOn: vi.fn(),

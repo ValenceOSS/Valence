@@ -3,7 +3,6 @@ import {
   Add01Icon,
   ArrowExpandIcon,
   ArrowShrinkIcon,
-  MirroringScreenIcon,
   Clock01Icon,
   DashboardSpeed01Icon,
   GoBackward10SecIcon,
@@ -11,6 +10,7 @@ import {
   HdIcon,
   HeadphonesIcon,
   MinusSignIcon,
+  MirroringScreenIcon,
   PauseIcon,
   PictureInPictureOnIcon,
   PlayIcon,
@@ -19,6 +19,7 @@ import {
   Settings02Icon,
   SubtitleIcon,
   TextFontIcon,
+  Tv01Icon,
   VolumeHighIcon,
   VolumeOffIcon,
 } from '@hugeicons/core-free-icons';
@@ -76,6 +77,8 @@ const SUBTITLE_STEP_SECONDS = 0.25;
  * @param volume - How loud it is.
  * @param isMuted - Whether it is silenced.
  * @param isFullscreen - Whether the player fills the screen.
+ * @param isGlowing - Whether the picture sits within a glow of its own colours, rather than filling the page.
+ * @param onToggleGlow - Called to go into or out of that view, where this player offers it.
  * @param isShowingStats - Whether the statistics panel is open.
  * @param playbackRate - How fast it is playing.
  * @param subtitleTracks - The subtitle tracks available.
@@ -125,6 +128,8 @@ const PlayerControls = ({
   boost,
   isMuted,
   isFullscreen,
+  isGlowing = false,
+  onToggleGlow,
   isShowingStats,
   playbackRate,
   subtitleTracks,
@@ -166,14 +171,14 @@ const PlayerControls = ({
   renderPreview,
   partyMenu,
 }: PlayerControlsProps) => (
-  <div className="valence-glass valence-glass--film flex flex-col gap-1 rounded-lg px-3 py-2 text-on-scrim sm:px-4">
+  <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
     <div className="flex items-center gap-3">
       <Slider
         label={`Seek through ${title}`}
         value={position}
         max={duration}
         onValueChange={onSeek}
-        tone="overlay"
+        tone="glass"
         className="min-w-0 flex-1"
         {...(renderPreview === undefined ? {} : { renderPreview })}
       />
@@ -183,12 +188,12 @@ const PlayerControls = ({
         size="none"
         aria-label={isShowingRemaining ? 'Show the time played' : 'Show the time remaining'}
         onClick={onToggleTimeDisplay}
-        className="shrink-0 rounded-md px-1 text-xs tabular-nums hover:bg-on-scrim/10 sm:text-sm"
+        className="shrink-0 rounded-md px-1 text-xs tabular-nums hover:bg-[var(--surface-hover)] sm:text-sm"
       >
         {isShowingRemaining
           ? `-${formatDuration(Math.max(duration - position, 0))}`
           : formatDuration(position)}{' '}
-        <span className="text-on-scrim/50">/ {formatDuration(duration)}</span>
+        <span className="text-text-muted">/ {formatDuration(duration)}</span>
       </Button>
     </div>
 
@@ -251,7 +256,7 @@ const PlayerControls = ({
           label="Volume"
           value={isMuted ? 0 : Math.round(volume * 100)}
           max={100}
-          tone="overlay"
+          tone="glass"
           onValueChange={(next) => {
             onVolumeChange(next / 100);
           }}
@@ -299,7 +304,7 @@ const PlayerControls = ({
 
       <SettingsMenu
         label="Settings"
-        tone="overlay"
+        tone="default"
         {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
         isDisabled={isDisabled}
         trigger={<Icon of={Settings02Icon} size={20} />}
@@ -523,6 +528,19 @@ const PlayerControls = ({
           ) : (
             <Icon of={PictureInPictureOnIcon} size={20} />
           )}
+        </Button>
+      )}
+
+      {onToggleGlow === undefined ? null : (
+        <Button
+          isIconOnly
+          variant="ghost"
+          label={isGlowing ? 'Leave the immersive view' : 'Immersive view'}
+          isActive={isGlowing}
+          onClick={onToggleGlow}
+          size="md"
+        >
+          <Icon of={Tv01Icon} size={20} />
         </Button>
       )}
 

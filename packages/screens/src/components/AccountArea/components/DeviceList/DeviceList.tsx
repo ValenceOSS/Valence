@@ -1,10 +1,10 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { Logout01Icon, MoreHorizontalIcon } from '@hugeicons/core-free-icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -109,16 +109,14 @@ const DeviceList = () => {
       isFlush
       actions={
         elsewhere.length === 0 ? undefined : (
-          <Button
-            variant="soft"
-            size="xs"
+          <PanelCardAction
+            icon={Logout01Icon}
             onClick={() => {
               setIsEndingRest(true);
             }}
           >
-            <Icon of={Logout01Icon} size={14} />
             Sign out everywhere else
-          </Button>
+          </PanelCardAction>
         )
       }
     >
@@ -170,9 +168,7 @@ const DeviceList = () => {
       />
 
       {devices === null ? (
-        <div className="p-4">
-          <Spinner label="Reading your devices" size="sm" />
-        </div>
+        <Spinner isCentered label="Reading your devices" size="sm" />
       ) : (
         <DataTable
           label="Where you are signed in"

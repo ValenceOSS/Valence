@@ -66,6 +66,27 @@ describe('ActionMenu', () => {
     );
   });
 
+  it('says what needs explaining behind an information mark rather than as small print', async () => {
+    render(
+      <ActionMenu
+        {...props}
+        groups={[
+          {
+            items: [
+              { id: 'x', label: 'File it', hint: 'Once it has downloaded.', onChoose: vi.fn() },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    await open();
+
+    expect(await screen.findByRole('menuitem', { name: 'File it' })).toBeInTheDocument();
+    expect(screen.queryByText('Once it has downloaded.')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-slot="menu-hint"]')).toBeInTheDocument();
+  });
+
   it('colours a destructive action rather than merely listing it last', async () => {
     render(
       <ActionMenu
@@ -78,7 +99,10 @@ describe('ActionMenu', () => {
 
     await open();
 
-    expect(await screen.findByRole('menuitem', { name: 'Disconnect' })).toHaveClass('text-danger');
+    expect(await screen.findByRole('menuitem', { name: 'Disconnect' })).toHaveClass(
+      'bg-danger',
+      'text-destructive-foreground',
+    );
   });
 
   it('refuses an action that cannot be taken', async () => {
@@ -125,5 +149,21 @@ describe('ActionMenu', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(ActionMenu.displayName).toBe('ActionMenu');
+  });
+
+  it('is opaque, so the rows behind it do not show through', async () => {
+    render(
+      <ActionMenu
+        {...props}
+        groups={[{ items: [{ id: 'x', label: 'Run now', onChoose: vi.fn() }] }]}
+      />,
+    );
+
+    await open();
+
+    const menu = await screen.findByRole('menu');
+
+    expect(menu).toHaveClass('valence-float');
+    expect(menu).not.toHaveClass('valence-surface');
   });
 });

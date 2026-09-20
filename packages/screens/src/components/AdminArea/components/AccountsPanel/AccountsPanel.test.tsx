@@ -163,6 +163,22 @@ describe('AccountsPanel', () => {
     expect(screen.getByText('sam@valence.local')).toBeInTheDocument();
   });
 
+  it('lists them alphabetically by name to begin with, whatever order the server sent', async () => {
+    accountMocks.fetchAccounts.mockResolvedValue([
+      account({ id: 'usr_z', name: 'Zed', email: 'zed@valence.local' }),
+      account({ id: 'usr_a', name: 'Ada', email: 'ada@valence.local' }),
+      account({ id: 'usr_m', name: 'moss', email: 'moss@valence.local' }),
+    ]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await screen.findByText('ada@valence.local');
+
+    const emails = screen.getAllByText(/@valence\.local/).map((cell) => cell.textContent ?? '');
+
+    expect(emails).toEqual(['ada@valence.local', 'moss@valence.local', 'zed@valence.local']);
+  });
+
   it('says when nobody has one', async () => {
     accountMocks.fetchAccounts.mockResolvedValue([]);
 
@@ -186,6 +202,27 @@ describe('AccountsPanel', () => {
 
     expect(await screen.findByText('Manager')).toBeInTheDocument();
     expect(screen.getByText('Member')).toBeInTheDocument();
+  });
+
+  it('draws each role in the colour that role was given, not by whether it is the administrator', async () => {
+    mocks.fetchRoles.mockResolvedValue([
+      { ...ADMINISTRATOR, color: '#E74C3C' },
+      { ...MEMBER, color: '#206694' },
+    ]);
+    accountMocks.fetchAccounts.mockResolvedValue([
+      account({ isAdministrator: true, roles: ['Administrator', 'Member', 'Manager'] }),
+    ]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Administrator')).toHaveStyle({
+        backgroundColor: 'rgb(231, 76, 60)',
+      });
+    });
+
+    expect(screen.getByText('Member')).toHaveStyle({ backgroundColor: 'rgb(32, 102, 148)' });
+    expect(screen.getByText('Manager').getAttribute('style')).toBeNull();
   });
 
   it('says so plainly when somebody holds none', async () => {

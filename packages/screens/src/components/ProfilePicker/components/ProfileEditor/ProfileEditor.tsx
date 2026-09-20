@@ -221,14 +221,14 @@ const ProfileEditor = ({ profile, onSaved, onCancel }: ProfileEditorProps) => {
             <FilePicker
               label="Upload a photograph"
               accept={PHOTO_TYPES}
+              variant="secondary"
+              size="sm"
               onPick={(file) => {
                 setPhoto(file);
               }}
             >
-              <span className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm text-text-muted transition-colors hover:bg-hover hover:text-text">
-                <Icon of={Image01Icon} size={16} />
-                {photo === null ? 'Upload a photo' : photo.name}
-              </span>
+              <Icon of={Image01Icon} size={16} />
+              {photo === null ? 'Upload a photo' : photo.name}
             </FilePicker>
           )}
         </div>

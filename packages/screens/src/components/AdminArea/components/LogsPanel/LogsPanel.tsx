@@ -1,6 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Cancel01Icon,
   Copy01Icon,
   Download04Icon,
   MoreHorizontalIcon,
@@ -10,7 +9,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
 import { TextField } from '@ValenceUI/TextField';
 import { LOG_LEVELS } from '@ValenceContracts/schemas/Log';
@@ -34,7 +32,7 @@ const KEPT_WHILE_FOLLOWING = 500;
 
 const TONE_BY_LEVEL: Readonly<Record<LogLevel, BadgeTone>> = {
   debug: 'quiet',
-  info: 'quiet',
+  info: 'accent',
   warn: 'warning',
   error: 'danger',
 };
@@ -179,33 +177,29 @@ const LogsPanel = ({
       actions={
         <>
           <TextField
-            label="Search the messages"
+            label="Search the logs"
             isLabelHidden
             size="sm"
             type="search"
-            placeholder="skipped, ffmpeg, timed out"
+            placeholder="skipped, ffmpeg, a job or session id"
             value={search}
             onValueChange={setSearch}
             className="w-64 max-w-full"
           />
 
           {jobIdFilter === null ? null : (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-subtle px-2.5 py-1 text-xs text-text-muted">
-              {`Job: ${jobIdFilter}`}
-
-              <Button
-                isIconOnly
-                variant="ghost"
-                size="xs"
-                label="Clear the job filter"
-                hasTooltip
-                onClick={() => {
-                  setJobIdFilter(null);
-                }}
-              >
-                <Icon of={Cancel01Icon} size={12} />
-              </Button>
-            </span>
+            <TextField
+              label="Filter to a job"
+              isLabelHidden
+              size="sm"
+              type="search"
+              placeholder="a job id"
+              value={jobIdFilter}
+              onValueChange={(next) => {
+                setJobIdFilter(next.trim() === '' ? null : next.trim());
+              }}
+              className="w-80 max-w-full"
+            />
           )}
 
           <ActionMenu
@@ -267,7 +261,9 @@ const LogsPanel = ({
         emptyMessage={
           isReading && !hasRead.current
             ? 'Reading the log…'
-            : 'Nothing has been reported that matches this.'
+            : jobIdFilter === null
+              ? 'Nothing has been reported that matches this.'
+              : 'Nothing was logged while this job ran. Only a job that warned, failed or was written about leaves records here.'
         }
       />
 

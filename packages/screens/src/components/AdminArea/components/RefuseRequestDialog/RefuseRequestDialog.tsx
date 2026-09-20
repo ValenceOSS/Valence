@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -88,21 +87,11 @@ const RefuseRequestDialog = ({
         />
       </DialogContent>
 
-      <DialogFooter>
-        {problem === null ? null : (
-          <span role="alert" className="mr-auto text-sm text-danger">
-            {problem}
-          </span>
-        )}
-
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-
-        <Button variant="danger" isLoading={isRefusing} onClick={refuse}>
-          Refuse
-        </Button>
-      </DialogFooter>
+      <DialogFooter
+        note={problem}
+        dismiss={{ onChoose: onClose }}
+        confirm={{ label: 'Refuse', onChoose: refuse, isLoading: isRefusing, isDestructive: true }}
+      />
     </DialogCompanion>
   );
 };

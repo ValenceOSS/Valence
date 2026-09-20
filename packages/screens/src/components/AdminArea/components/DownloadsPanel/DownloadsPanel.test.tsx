@@ -379,9 +379,11 @@ describe('DownloadsPanel', () => {
 
     renderInAnAddress(<DownloadsPanel />);
 
-    await user.click(screen.getByRole('button', { name: 'Add a client' }));
+    await user.click(screen.getByRole('button', { name: 'Add a download client' }));
 
-    expect(await screen.findByText('Add a download client')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Add a download client' }),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     await user.click(screen.getByRole('tab', { name: 'Clients' }));

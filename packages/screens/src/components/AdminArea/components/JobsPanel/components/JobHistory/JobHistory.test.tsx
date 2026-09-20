@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { JobHistory } from './JobHistory';
@@ -80,7 +80,9 @@ describe('JobHistory', () => {
   it('names a run by the label the server offers, not its raw kind', async () => {
     askedHistory.mockResolvedValue(page([record()]));
 
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
 
     expect(await screen.findByText('Generate missing previews')).toBeInTheDocument();
     expect(screen.queryByText('library.regeneratePreviews')).not.toBeInTheDocument();
@@ -89,7 +91,9 @@ describe('JobHistory', () => {
   it('falls back to the raw kind for a run this page has no label for', async () => {
     askedHistory.mockResolvedValue(page([record({ kind: 'catalogue.rematch' })]));
 
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
 
     expect(await screen.findByText('catalogue.rematch')).toBeInTheDocument();
   });
@@ -97,11 +101,14 @@ describe('JobHistory', () => {
   it('shows the subject, status and progress of a run', async () => {
     askedHistory.mockResolvedValue(page([record()]));
 
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
 
     expect(await screen.findByText('Movies')).toBeInTheDocument();
-    expect(screen.getByText('Completed')).toBeInTheDocument();
-    expect(screen.getByText('previews 4/10')).toBeInTheDocument();
+    expect(screen.getByText('Done')).toBeInTheDocument();
+    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.getByText('10')).toBeInTheDocument();
   });
 
   it('shows why a run failed alongside its subject', async () => {
@@ -109,7 +116,9 @@ describe('JobHistory', () => {
       page([record({ status: 'failed', errorMessage: 'no such path' })]),
     );
 
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
 
     expect(await screen.findByText('no such path')).toBeInTheDocument();
   });
@@ -117,7 +126,9 @@ describe('JobHistory', () => {
   it('says it is reading before the first page arrives', () => {
     askedHistory.mockReturnValue(new Promise(() => undefined));
 
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
 
     expect(screen.getByText('Reading job history…')).toBeInTheDocument();
   });
@@ -125,7 +136,9 @@ describe('JobHistory', () => {
   it('says nothing matches once a confirmed-empty page arrives', async () => {
     askedHistory.mockResolvedValue(page([]));
 
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
 
     expect(await screen.findByText('No job runs match this.')).toBeInTheDocument();
   });
@@ -133,7 +146,9 @@ describe('JobHistory', () => {
   it('says history could not be read when the request fails', async () => {
     askedHistory.mockRejectedValue(new Error('offline'));
 
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
 
     expect(
       await screen.findByText('Job history could not be read from the server.'),
@@ -154,7 +169,9 @@ describe('JobHistory', () => {
 
       askedHistory.mockResolvedValue(page([record()]));
 
-      renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+      renderHistory(
+        <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      );
 
       await screen.findByText('Movies');
       askedHistory.mockClear();
@@ -178,7 +195,9 @@ describe('JobHistory', () => {
       page([record(), record({ id: 'run-2', status: 'failed', subject: 'Shows' })]),
     );
 
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
 
     await screen.findByText('Movies');
     await screen.findByText('Shows');
@@ -199,7 +218,9 @@ describe('JobHistory', () => {
 
     askedHistory.mockResolvedValue(page([record()]));
 
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={onViewLogs} />);
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={onViewLogs} />,
+    );
 
     await actor.click(
       await screen.findByRole('button', { name: 'Actions for Generate missing previews' }),
@@ -215,7 +236,9 @@ describe('JobHistory', () => {
     askedHistory.mockResolvedValue(page([record()]));
     askedIssues.mockResolvedValue([issue()]);
 
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
 
     expect(askedIssues).not.toHaveBeenCalled();
 
@@ -224,8 +247,9 @@ describe('JobHistory', () => {
     );
     await actor.click(await screen.findByRole('menuitem', { name: 'View issues' }));
 
-    expect(await screen.findByText('/media/movies/broken.mkv')).toBeInTheDocument();
-    expect(screen.getByText('ffmpeg exited with a non-zero status')).toBeInTheDocument();
+    expect(
+      await screen.findByText(/\/media\/movies\/broken\.mkv: ffmpeg exited with a non-zero status/),
+    ).toBeInTheDocument();
     expect(askedIssues).toHaveBeenCalledWith('run-1');
   });
 
@@ -235,7 +259,9 @@ describe('JobHistory', () => {
     askedHistory.mockResolvedValue(page([record()]));
     askedIssues.mockResolvedValue([]);
 
-    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
 
     await actor.click(
       await screen.findByRole('button', { name: 'Actions for Generate missing previews' }),
@@ -243,6 +269,173 @@ describe('JobHistory', () => {
     await actor.click(await screen.findByRole('menuitem', { name: 'View issues' }));
 
     expect(await screen.findByText('No issues were recorded for this run.')).toBeInTheDocument();
+  });
+
+  it('shows the whole failure of a run that failed outright, rather than saying it has no issues', async () => {
+    const actor = userEvent.setup();
+    const message =
+      'Failed query: select "path", "sizeBytes" from "media_item" where "libraryId" = $1';
+
+    askedHistory.mockResolvedValue(page([record({ status: 'failed', errorMessage: message })]));
+    askedIssues.mockResolvedValue([]);
+
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
+
+    await actor.click(
+      await screen.findByRole('button', { name: 'Actions for Generate missing previews' }),
+    );
+    await actor.click(await screen.findByRole('menuitem', { name: 'View issues' }));
+
+    const dialog = await screen.findByRole('dialog');
+
+    expect(within(dialog).getByText(message)).toBeInTheDocument();
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByText('No issues were recorded for this run.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('lists the failure first and the itemised issues after it, where a run has both', async () => {
+    const actor = userEvent.setup();
+
+    askedHistory.mockResolvedValue(
+      page([record({ status: 'failed', errorMessage: 'It stopped.' })]),
+    );
+    askedIssues.mockResolvedValue([issue()]);
+
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
+
+    await actor.click(
+      await screen.findByRole('button', { name: 'Actions for Generate missing previews' }),
+    );
+    await actor.click(await screen.findByRole('menuitem', { name: 'View issues' }));
+
+    const dialog = await screen.findByRole('dialog');
+
+    expect(await within(dialog).findByText(/It stopped\./)).toBeInTheDocument();
+    expect(within(dialog).getByText(/\/media\/movies\/broken\.mkv/)).toBeInTheDocument();
+  });
+
+  it('opens what a running run is made of from the i beside its status', async () => {
+    const actor = userEvent.setup();
+
+    askedHistory.mockResolvedValue(page([record({ status: 'running', finishedAtMs: null })]));
+
+    renderHistory(
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[
+          {
+            id: 1,
+            kind: 'preview',
+            subject: 'Movie.mkv',
+            state: 'running',
+            queuedAtMs: 0,
+            startedAtMs: 0,
+            finishedAtMs: null,
+            correlationId: 'run-1',
+            failure: null,
+          },
+          {
+            id: 2,
+            kind: 'preview',
+            subject: 'Unrelated.mkv',
+            state: 'running',
+            queuedAtMs: 0,
+            startedAtMs: 0,
+            finishedAtMs: null,
+            correlationId: 'run-2',
+            failure: null,
+          },
+        ]}
+        onViewLogs={vi.fn()}
+      />,
+    );
+
+    await actor.click(
+      await screen.findByRole('button', { name: 'What Generate missing previews is doing' }),
+    );
+
+    expect(await screen.findByText('Movie.mkv')).toBeInTheDocument();
+    expect(screen.queryByText('Unrelated.mkv')).not.toBeInTheDocument();
+  });
+
+  it('offers no i beside a run that is not running', async () => {
+    askedHistory.mockResolvedValue(page([record()]));
+
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
+
+    await screen.findByText('Done');
+
+    expect(screen.queryByRole('button', { name: /is doing/ })).not.toBeInTheDocument();
+  });
+
+  it('shows a run against a library by the library name, not its identifier', async () => {
+    const id = 'd3ecbc24-d083-4945-b2ab-000000000000';
+
+    askedHistory.mockResolvedValue(page([record({ subject: id })]));
+
+    renderHistory(
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[
+          {
+            id,
+            name: 'Movies',
+            kind: 'movies',
+            path: '/media/movies',
+            itemCount: 107,
+            lastScannedAt: null,
+            defaultAudioLanguage: null,
+            filesAtOnce: null,
+            takesRequests: true,
+            requestProfileId: null,
+            requestPath: null,
+          },
+        ]}
+        working={[]}
+        onViewLogs={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Movies')).toBeInTheDocument();
+    expect(screen.queryByText(id)).not.toBeInTheDocument();
+  });
+
+  it('copies everything that went wrong as plain text', async () => {
+    const actor = userEvent.setup();
+    const copied = vi.fn(() => Promise.resolve());
+
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText: copied } });
+
+    askedHistory.mockResolvedValue(
+      page([record({ status: 'failed', errorMessage: 'It stopped.' })]),
+    );
+    askedIssues.mockResolvedValue([issue()]);
+
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
+
+    await actor.click(
+      await screen.findByRole('button', { name: 'Actions for Generate missing previews' }),
+    );
+    await actor.click(await screen.findByRole('menuitem', { name: 'View issues' }));
+    await screen.findByText(/broken\.mkv/);
+    await actor.click(screen.getByRole('button', { name: 'Copy' }));
+
+    expect(copied).toHaveBeenCalledWith(
+      'It stopped.\n/media/movies/broken.mkv: ffmpeg exited with a non-zero status',
+    );
+
+    vi.unstubAllGlobals();
   });
 
   it('sets a display name so devtools can identify it', () => {

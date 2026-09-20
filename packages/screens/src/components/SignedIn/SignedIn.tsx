@@ -4,6 +4,7 @@ import { Outlet } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FinishOnAnotherDevice } from '@ValenceScreens/components/FinishOnAnotherDevice/FinishOnAnotherDevice';
 import { HouseholdOnboarding } from '@ValenceScreens/components/HouseholdOnboarding/HouseholdOnboarding';
+import { WelcomeTourHost } from '@ValenceScreens/components/WelcomeTourHost/WelcomeTourHost';
 import { ProfileGate } from '@ValenceScreens/components/ProfileGate/ProfileGate';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { shellContext } from '@ValenceClient/shell/shellContext';
@@ -328,7 +329,11 @@ const SignedIn = ({ title }: SignedInProps) => {
       {shell !== null ? (
         <shellContext.Provider value={shell}>
           {unfinished === null ? (
-            <Outlet />
+            <>
+              <Outlet />
+
+              {isTelevision ? null : <WelcomeTourHost accountId={shell.user.id} name={title} />}
+            </>
           ) : isTelevision ? (
             <FinishOnAnotherDevice name={title} address={window.location.origin} />
           ) : (

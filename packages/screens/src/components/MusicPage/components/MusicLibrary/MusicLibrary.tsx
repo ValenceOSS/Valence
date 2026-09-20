@@ -23,22 +23,13 @@ import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import type { ReactNode } from 'react';
 import type { MusicView } from '@ValenceScreens/music/musicView';
 
-type Shelf = 'playlists' | 'albums' | 'artists';
-
 type Entry = {
   key: string;
-  shelf: Shelf | 'liked';
   name: string;
   detail: string;
   artwork: ReactNode;
   view: MusicView;
 };
-
-const SHELVES: readonly { id: Shelf; label: string }[] = [
-  { id: 'playlists', label: 'Playlists' },
-  { id: 'albums', label: 'Albums' },
-  { id: 'artists', label: 'Artists' },
-];
 
 /**
  * Whether two views of the music section are the same page, so the one showing can be marked.
@@ -59,7 +50,6 @@ const MusicLibrary = () => {
   const { view, open } = useMusicNavigation();
   const { state, player } = useMusicPlayer();
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
-  const [shelf, setShelf] = useState<Shelf | null>(null);
   const [filter, setFilter] = useState('');
   const [isMaking, setIsMaking] = useState(false);
   const playlists = useQuery(musicQueries.playlists());
@@ -69,7 +59,6 @@ const MusicLibrary = () => {
   const entries = useMemo((): Entry[] => {
     const liked: Entry = {
       key: 'liked',
-      shelf: 'liked',
       name: 'Liked Songs',
       detail: 'Playlist',
       artwork: (
@@ -84,7 +73,6 @@ const MusicLibrary = () => {
       liked,
       ...(playlists.data ?? []).map((playlist): Entry => ({
         key: `playlist-${playlist.id}`,
-        shelf: 'playlists',
         name: playlist.name,
         detail: `Playlist · ${nameOfOwner(playlist.owner)}`,
         artwork: (
@@ -98,7 +86,6 @@ const MusicLibrary = () => {
       })),
       ...(followed.data ?? []).map((artist): Entry => ({
         key: `artist-${artist.id}`,
-        shelf: 'artists',
         name: artist.name,
         detail: 'Artist',
         artwork: (
@@ -113,7 +100,6 @@ const MusicLibrary = () => {
       })),
       ...(albums.data ?? []).map((album): Entry => ({
         key: `album-${album.id}`,
-        shelf: 'albums',
         name: album.title,
         detail: `Album · ${album.artist.name}`,
         artwork: (
@@ -129,13 +115,7 @@ const MusicLibrary = () => {
   }, [playlists.data, followed.data, albums.data]);
 
   const typed = filter.trim().toLowerCase();
-  const shown = entries.filter(
-    (entry) =>
-      (shelf === null ||
-        entry.shelf === shelf ||
-        (shelf === 'playlists' && entry.shelf === 'liked')) &&
-      (typed === '' || entry.name.toLowerCase().includes(typed)),
-  );
+  const shown = entries.filter((entry) => typed === '' || entry.name.toLowerCase().includes(typed));
 
   return (
     <nav aria-label="Your library" className="flex h-full min-h-0 flex-col gap-3">
@@ -155,33 +135,17 @@ const MusicLibrary = () => {
             <Icon of={Search01Icon} size={16} />
           </Button>
           <Button
-            variant="secondary"
+            variant="ghost"
             size="sm"
+            isIconOnly
+            label="Create"
             onClick={() => {
               setIsMaking(true);
             }}
           >
             <Icon of={Add01Icon} size={16} />
-            Create
           </Button>
         </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2 px-3" role="group" aria-label="Show only">
-        {SHELVES.map((chip) => (
-          <Button
-            key={chip.id}
-            variant={shelf === chip.id ? 'glossy' : 'secondary'}
-            size="xs"
-            isActive={shelf === chip.id}
-            aria-pressed={shelf === chip.id}
-            onClick={() => {
-              setShelf((was) => (was === chip.id ? null : chip.id));
-            }}
-          >
-            {chip.label}
-          </Button>
-        ))}
       </div>
 
       <div className="px-3">
@@ -190,7 +154,6 @@ const MusicLibrary = () => {
           isLabelHidden
           type="search"
           size="sm"
-          icon={<Icon of={Search01Icon} size={14} />}
           placeholder="Find in your library"
           value={filter}
           onValueChange={setFilter}

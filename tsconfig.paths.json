@@ -16,6 +16,9 @@
       "@ValenceUI/ActionMenu.types": [
         "./packages/ui/src/components/ActionMenu/ActionMenu.types.ts"
       ],
+      "@ValenceUI/AnimatedNumber": [
+        "./packages/ui/src/components/AnimatedNumber/AnimatedNumber.tsx"
+      ],
       "@ValenceUI/AnimatedIcon": ["./packages/ui/src/components/AnimatedIcon/AnimatedIcon.tsx"],
       "@ValenceUI/AnimatedIcon.types": [
         "./packages/ui/src/components/AnimatedIcon/AnimatedIcon.types.ts"
@@ -26,6 +29,7 @@
       "@ValenceUI/Badge.types": ["./packages/ui/src/components/Badge/Badge.types.ts"],
       "@ValenceUI/Button": ["./packages/ui/src/components/Button/Button.tsx"],
       "@ValenceUI/Button/buttonStyles": ["./packages/ui/src/components/Button/buttonStyles.ts"],
+      "@ValenceUI/Button.types": ["./packages/ui/src/components/Button/Button.types.ts"],
       "@ValenceUI/Callout": ["./packages/ui/src/components/Callout/Callout.tsx"],
       "@ValenceUI/Callout.types": ["./packages/ui/src/components/Callout/Callout.types.ts"],
       "@ValenceUI/Card": ["./packages/ui/src/components/Card/Card.tsx"],
@@ -52,6 +56,9 @@
       "@ValenceUI/Dialog": ["./packages/ui/src/components/Dialog/Dialog.tsx"],
       "@ValenceUI/Dialog.companionContext": [
         "./packages/ui/src/components/Dialog/companionContext.ts"
+      ],
+      "@ValenceUI/Dialog.useHeldWhileClosing": [
+        "./packages/ui/src/components/Dialog/useHeldWhileClosing.ts"
       ],
       "@ValenceUI/DialogCompanion": [
         "./packages/ui/src/components/DialogCompanion/DialogCompanion.tsx"
@@ -97,6 +104,7 @@
       "@ValenceUI/Logo.types": ["./packages/ui/src/components/Logo/Logo.types.ts"],
       "@ValenceUI/MaskFrames.types": ["./packages/ui/src/functions/MaskFrames.types.ts"],
       "@ValenceUI/MediaCard": ["./packages/ui/src/components/MediaCard/MediaCard.tsx"],
+      "@ValenceUI/MediaCard.types": ["./packages/ui/src/components/MediaCard/MediaCard.types.ts"],
       "@ValenceUI/Meter": ["./packages/ui/src/components/Meter/Meter.tsx"],
       "@ValenceUI/MoodBackground": [
         "./packages/ui/src/components/MoodBackground/MoodBackground.tsx"

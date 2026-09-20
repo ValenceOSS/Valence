@@ -94,6 +94,40 @@ describe('Icon', () => {
     expect(container.querySelectorAll('svg')).toHaveLength(1);
   });
 
+  it('takes the colour of the text around it unless it is given a tone', () => {
+    const { container } = render(<Icon of={Home01Icon} />);
+
+    expect(glyphOf(container)).not.toHaveClass('text-text-muted', 'text-danger');
+  });
+
+  it('draws in the muted or the danger colour when given that tone', () => {
+    const { container } = render(
+      <>
+        <Icon of={Home01Icon} tone="muted" />
+        <Icon of={PlayIcon} tone="danger" />
+      </>,
+    );
+
+    const [muted, danger] = container.querySelectorAll('svg');
+
+    expect(muted).toHaveClass('text-text-muted');
+    expect(danger).toHaveClass('text-danger');
+  });
+
+  it('draws in the strong or the faint colour when given those tones', () => {
+    const { container } = render(
+      <>
+        <Icon of={Home01Icon} tone="strong" />
+        <Icon of={PlayIcon} tone="faint" />
+      </>,
+    );
+
+    const [strong, faint] = container.querySelectorAll('svg');
+
+    expect(strong).toHaveClass('text-text');
+    expect(faint).toHaveClass('text-text-muted/60');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(Icon.displayName).toBe('Icon');
   });

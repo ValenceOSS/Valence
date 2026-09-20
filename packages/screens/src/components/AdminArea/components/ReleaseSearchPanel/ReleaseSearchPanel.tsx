@@ -350,6 +350,8 @@ const ReleaseSearchPanel = () => {
                 <Icon of={UnfoldMoreIcon} size={15} className="shrink-0" />
               </>
             }
+            triggerShape="field"
+            align="start"
           />
 
           {profile?.kind !== 'video' ? null : (
@@ -389,9 +391,7 @@ const ReleaseSearchPanel = () => {
           }}
         />
       ) : found.isPending ? (
-        <div className="p-4">
-          <Spinner label="Asking every indexer" size="sm" />
-        </div>
+        <Spinner isCentered label="Asking every indexer" size="sm" />
       ) : (
         <div className="flex flex-col gap-3">
           <IndexerReportList reports={found.data.indexers} />

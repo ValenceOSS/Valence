@@ -1,3 +1,4 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -10,6 +11,8 @@ import {
   ReloadIcon,
   Search01Icon,
   Tick02Icon,
+  RefreshIcon,
+  Add01Icon,
 } from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -379,9 +382,8 @@ const MediaRequestsPanel = () => {
       isFlush
       actions={
         <>
-          <Button
-            variant="ghost"
-            size="xs"
+          <PanelCardAction
+            icon={RefreshIcon}
             isLoading={isSearchingMissing}
             onClick={() => {
               setIsSearchingMissing(true);
@@ -407,18 +409,17 @@ const MediaRequestsPanel = () => {
                 });
             }}
           >
-            Search for what is missing
-          </Button>
+            Refetch media
+          </PanelCardAction>
 
-          <Button
-            variant="ghost"
-            size="xs"
+          <PanelCardAction
+            icon={Add01Icon}
             onClick={() => {
               setIsAsking(true);
             }}
           >
-            Ask for something
-          </Button>
+            Request media
+          </PanelCardAction>
         </>
       }
     >
@@ -516,9 +517,7 @@ const MediaRequestsPanel = () => {
           }}
         />
       ) : requests.isPending ? (
-        <div className="p-4">
-          <Spinner label="Reading the requests" size="sm" />
-        </div>
+        <Spinner isCentered label="Reading the requests" size="sm" />
       ) : (
         <DataTable
           label="Requests"

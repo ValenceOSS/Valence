@@ -1,3 +1,5 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -156,21 +158,19 @@ const WebhooksPanel = ({
         title="Webhooks"
         isFlush
         actions={
-          <Button
-            variant="ghost"
-            size="xs"
-            className="shrink-0 text-xs text-text-muted hover:text-text"
+          <PanelCardAction
+            icon={Add01Icon}
             onClick={() => {
               setIsAdding(true);
             }}
           >
-            Add a webhook
-          </Button>
+            Create webhook
+          </PanelCardAction>
         }
       >
         {webhooks.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-text-muted">
-            Nothing is being told about anything. Add a webhook to have Valence post to Discord,
+            Nothing is being told about anything. Create a webhook to have Valence post to Discord,
             ntfy or anywhere else when a job fails.
           </p>
         ) : (

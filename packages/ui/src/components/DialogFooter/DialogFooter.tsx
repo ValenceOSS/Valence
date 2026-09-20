@@ -1,3 +1,4 @@
+import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import type { DialogFooterProps } from './DialogFooter.types';
 
@@ -6,6 +7,18 @@ import type { DialogFooterProps } from './DialogFooter.types';
  * out of a dialog is always visible however long its content runs. Tinted the same shade as the
  * head, a step from the panel behind it, so the two read as the frame around the content rather than
  * more of it.
+ *
+ * A dialog says what its answers are rather than drawing them, because a footer that draws its own
+ * buttons is a footer that can disagree with every other one — and they did. Cancel was painted
+ * three ways across the application, and the confirming button was white here and blue there, which
+ * taught nobody anything about which button does the thing. Declared instead, the rule is one rule:
+ * the way out is the default gray, the answer is white, and an answer that destroys something is red.
+ *
+ * The way out says Cancel where there is an answer to cancel and Close where the dialog is only
+ * something to read, which is the difference the two words actually carry.
+ *
+ * A footer with answers that do not fit this shape — three of them, or a control that is not a
+ * button — passes children instead and lays them out itself.
  *
  * The buttons share the bar as equal columns. A question with two answers should not suggest which
  * one to give by making it wider, and a bar of actions with three buttons huddled at one end reads
@@ -21,20 +34,54 @@ import type { DialogFooterProps } from './DialogFooter.types';
  * inside it rather than this: folding the lesser actions into a menu keeps the main one readable,
  * where stacking only moves the problem down the page.
  *
- * @param children - The buttons answering the dialog.
+ * @param children - The buttons answering the dialog, where its answers are its own.
+ * @param dismiss - The way out, painted in the default gray. Says Cancel beside an answer and Close alone.
+ * @param confirm - The answer, painted white, or red where it destroys something.
+ * @param note - Why the last attempt was refused, in red above the answers, when it was.
  * @param className - Extra classes for the caller's own layout.
  */
-const DialogFooter = ({ children, className }: DialogFooterProps) => (
+const DialogFooter = ({ children, dismiss, confirm, note, className }: DialogFooterProps) => (
   <footer
     className={cn(
       'grid shrink-0 gap-3',
       'sm:grid-flow-col sm:[grid-auto-columns:1fr]',
-      'border-t border-[var(--surface-line)] bg-[var(--color-surface)] p-4',
+      'border-t border-[var(--surface-line)] bg-[var(--color-surface-raised)] p-4',
       '[&>*]:w-full',
       className,
     )}
   >
+    {note === undefined || note === null || note === '' ? null : (
+      <span
+        role="alert"
+        className="self-center text-sm text-danger sm:[grid-column:1/-1] sm:justify-self-start"
+      >
+        {note}
+      </span>
+    )}
+
+    {dismiss === undefined ? null : (
+      <Button
+        variant="glossy"
+        disabled={dismiss.isDisabled ?? false}
+        isLoading={dismiss.isLoading ?? false}
+        onClick={dismiss.onChoose}
+      >
+        {dismiss.label ?? (confirm === undefined ? 'Close' : 'Cancel')}
+      </Button>
+    )}
+
     {children}
+
+    {confirm === undefined ? null : (
+      <Button
+        variant={confirm.isDestructive === true ? 'danger' : 'confirm'}
+        disabled={confirm.isDisabled ?? false}
+        isLoading={confirm.isLoading ?? false}
+        onClick={confirm.onChoose}
+      >
+        {confirm.label}
+      </Button>
+    )}
   </footer>
 );
 

@@ -23,6 +23,7 @@ import {
   cancelJob,
   saveHardwareAccel,
   savePreviewQuality,
+  saveRoundness,
   watchActiveSessions,
   measureStorage,
   saveSplashscreen,
@@ -878,6 +879,23 @@ describe('stopping a job and choosing a backend', () => {
     expect(url).toBe('/api/admin/settings');
     expect(init?.method).toBe('PATCH');
     expect(init?.body).toBe(JSON.stringify({ previewQuality: 'low' }));
+  });
+
+  it('sends the chosen roundness to the server', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}) });
+
+    await expect(saveRoundness('round')).resolves.toBe(true);
+
+    const [url, init] = fetchMock.mock.calls.at(-1) ?? [];
+
+    expect(url).toBe('/api/admin/settings');
+    expect(init?.body).toBe(JSON.stringify({ roundness: 'round' }));
+  });
+
+  it('reports a roundness the server did not take', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 403, json: () => Promise.resolve({}) });
+
+    await expect(saveRoundness('sharp')).resolves.toBe(false);
   });
 
   it('reports a preview preset the server did not take', async () => {

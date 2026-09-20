@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Tick02Icon } from '@hugeicons/core-free-icons';
 import { MediaCard } from './MediaCard';
 import type * as MotionReact from 'motion/react';
 
@@ -87,6 +88,14 @@ describe('MediaCard', () => {
     expect(screen.getByRole('button', { name: /^Arrival\s*2016$/u })).toBeInTheDocument();
   });
 
+  it('draws no play mark over the artwork, since a card no longer plays when it is rested on', () => {
+    const { container } = render(
+      <MediaCard title="Dune" subtitle="2021" imageUrl="/dune.jpg" onSelect={vi.fn()} />,
+    );
+
+    expect(container.querySelector('svg')).not.toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MediaCard.displayName).toBe('MediaCard');
   });
@@ -108,7 +117,7 @@ describe('MediaCard', () => {
       <MediaCard title="Arrival" subtitle="2016" badges={['4K', 'HDR10']} onSelect={vi.fn()} />,
     );
 
-    expect(screen.getByText('4K')).toHaveClass('bg-shade/60');
+    expect(screen.getByText('4K')).toHaveClass('bg-shade');
   });
 
   it('draws the card without its motion for somebody who asked for less', () => {
@@ -117,5 +126,24 @@ describe('MediaCard', () => {
     render(<MediaCard title="Arrival" subtitle="2016" onSelect={vi.fn()} />);
 
     expect(screen.getByText('Arrival')).toBeInTheDocument();
+  });
+
+  it('marks the corner of the artwork with an icon for one fact worth a glance', () => {
+    render(
+      <MediaCard
+        title="Dune"
+        subtitle="2021"
+        onSelect={vi.fn()}
+        corner={{ icon: Tick02Icon, label: 'In your library' }}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'In your library' })).toBeInTheDocument();
+  });
+
+  it('draws no corner mark unless asked', () => {
+    render(<MediaCard title="Dune" subtitle="2021" onSelect={vi.fn()} />);
+
+    expect(screen.queryByRole('img', { name: 'In your library' })).not.toBeInTheDocument();
   });
 });

@@ -18,6 +18,34 @@ const ROWS: Library[] = [
 ];
 
 describe('DataTable', () => {
+  it('draws the filter mark white rather than blue once a filter is applied', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <DataTable
+        label="Library roots"
+        columns={[
+          {
+            id: 'name',
+            header: 'Name',
+            accessorFn: (library: Library) => library.name,
+            filterFn: (row, columnId, filterValue) => row.getValue(columnId) === filterValue,
+            meta: { filterOptions: [{ id: 'Films', label: 'Films' }] },
+          },
+        ]}
+        rows={ROWS}
+      />,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Filter by name' });
+
+    await user.click(trigger);
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Films' }));
+
+    expect(trigger.querySelector('svg')).toHaveClass('text-text');
+    expect(trigger.querySelector('svg')).not.toHaveClass('text-accent');
+  });
+
   it('names the table, for anybody who cannot see what it lists', () => {
     render(<DataTable label="Library roots" columns={COLUMNS} rows={ROWS} />);
 

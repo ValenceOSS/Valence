@@ -68,6 +68,8 @@ const draw = (overrides: Partial<Parameters<typeof PreviewMomentPicker>[0]> = {}
 
 const slider = () => screen.getByRole('slider', { name: 'Where the clip starts' });
 
+const endSlider = () => screen.getByRole('slider', { name: 'Where the clip ends' });
+
 beforeEach(() => {
   asked.setPreviewMoment.mockReset();
   asked.clearPreviewMoment.mockReset();
@@ -93,7 +95,51 @@ describe('PreviewMomentPicker', () => {
     expect(await screen.findByRole('img', { name: 'Preview at 0:15' })).toBeInTheDocument();
   });
 
-  it('still says where the handle is when the item has no thumbnails yet', async () => {
+  it('puts the end handle the chosen length after the start', () => {
+    draw({ current: { atSeconds: 15, durationSeconds: 30 } });
+
+    expect(endSlider()).toHaveAttribute('aria-valuenow', '45');
+  });
+
+  it('opens with the handles five minutes apart where no length was chosen, not on top of each other', () => {
+    draw({ current: { atSeconds: 15, durationSeconds: null } });
+
+    expect(endSlider()).toHaveAttribute('aria-valuenow', '315');
+  });
+
+  it('carries the start along when the end is pulled more than five minutes away', async () => {
+    const user = userEvent.setup();
+
+    draw({ current: { atSeconds: 15, durationSeconds: 300 } });
+
+    endSlider().focus();
+    await user.keyboard('{ArrowRight}');
+
+    expect(endSlider()).toHaveAttribute('aria-valuenow', '316');
+    expect(slider()).toHaveAttribute('aria-valuenow', '16');
+  });
+
+  it('carries the end along when the start is pulled more than five minutes away', async () => {
+    const user = userEvent.setup();
+
+    draw({ current: { atSeconds: 15, durationSeconds: 300 } });
+
+    slider().focus();
+    await user.keyboard('{ArrowLeft}');
+
+    expect(slider()).toHaveAttribute('aria-valuenow', '14');
+    expect(endSlider()).toHaveAttribute('aria-valuenow', '314');
+  });
+
+  it('shows the frames the clip starts and ends on with no time drawn over them', async () => {
+    draw({ current: { atSeconds: 5, durationSeconds: 10 } });
+
+    expect(await screen.findByRole('img', { name: 'Preview at 0:05' })).toBeInTheDocument();
+    expect(await screen.findByRole('img', { name: 'Preview at 0:15' })).toBeInTheDocument();
+    expect(screen.queryByText('0:05')).not.toBeInTheDocument();
+  });
+
+  it('holds the space of the frames when the item has no thumbnails yet', async () => {
     asked.fetchTrickplay.mockResolvedValue(null);
 
     draw({ current: { atSeconds: 15, durationSeconds: null } });
@@ -102,39 +148,37 @@ describe('PreviewMomentPicker', () => {
       expect(asked.fetchTrickplay).toHaveBeenCalledWith('media-1');
     });
 
-    expect(screen.getByText('0:15')).toBeInTheDocument();
     expect(screen.queryByRole('img', { name: /Preview at/ })).not.toBeInTheDocument();
   });
 
-  it('keeps the moment under the handle and the length that was typed', async () => {
+  it('keeps the moment under the start handle and the length between the handles', async () => {
     const user = userEvent.setup();
-    const kept = { atSeconds: 91, durationSeconds: 10 };
+    const kept = { atSeconds: 90, durationSeconds: 25 };
 
     asked.setPreviewMoment.mockResolvedValue(kept);
 
-    const { onChanged, onClose } = draw({ current: { atSeconds: 90, durationSeconds: null } });
+    const { onChanged, onClose } = draw({ current: { atSeconds: 90, durationSeconds: 24 } });
 
-    slider().focus();
+    endSlider().focus();
     await user.keyboard('{ArrowRight}');
-    await user.type(screen.getByRole('spinbutton', { name: 'Clip length, in seconds' }), '10');
     await user.click(screen.getByRole('button', { name: 'Use this moment' }));
 
     await waitFor(() => {
       expect(asked.setPreviewMoment).toHaveBeenCalledWith('media-1', {
-        atSeconds: 91,
-        durationSeconds: 10,
+        atSeconds: 90,
+        durationSeconds: 25,
       });
     });
     expect(onChanged).toHaveBeenCalledWith(kept);
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('sends no length when the field is left blank, so the usual one applies', async () => {
+  it('sends no length when the clip is the usual length, so the usual one applies', async () => {
     const user = userEvent.setup();
 
     asked.setPreviewMoment.mockResolvedValue({ atSeconds: 1440, durationSeconds: null });
 
-    draw();
+    draw({ current: { atSeconds: 1440, durationSeconds: 24 } });
 
     await user.click(screen.getByRole('button', { name: 'Use this moment' }));
 
@@ -144,17 +188,6 @@ describe('PreviewMomentPicker', () => {
         durationSeconds: null,
       });
     });
-  });
-
-  it('will not keep a length that is not one', async () => {
-    const user = userEvent.setup();
-
-    draw();
-
-    await user.type(screen.getByRole('spinbutton', { name: 'Clip length, in seconds' }), '0');
-
-    expect(screen.getByRole('button', { name: 'Use this moment' })).toBeDisabled();
-    expect(screen.getByText('Say how many seconds, or leave it blank.')).toBeInTheDocument();
   });
 
   it('goes back to automatic, forgetting the chosen moment', async () => {

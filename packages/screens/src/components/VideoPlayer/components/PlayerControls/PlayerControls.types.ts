@@ -26,6 +26,8 @@ type PlayerControlsProps = {
   boost: number;
   isMuted: boolean;
   isFullscreen: boolean;
+  isGlowing?: boolean;
+  onToggleGlow?: () => void;
   isShowingStats: boolean;
   playbackRate: number;
   subtitleTracks: SubtitleTrack[];

@@ -11,8 +11,8 @@ import type { PanelCardProps } from './PanelCard.types';
  *
  * @param title - What the block is called. Every block says, even where the tab above already
  *   does — the shell's heading is what makes the block read as one piece rather than a loose panel.
- * @param actions - Controls for the whole block, set at the right of the shell. Draw buttons here
- *   at the extra-small size: they sit in a strip of heading, not on the page.
+ * @param actions - Controls for the whole block, set at the right of the shell. Draw them with
+ *   PanelCardAction, which is transparent and small: they sit in a strip of heading, not on the page.
  * @param below - A row beneath the heading, such as the block's own tabs.
  * @param children - The block itself.
  * @param isFlush - Whether the content runs to the panel's edges, for a table or a list that

@@ -4,6 +4,7 @@ import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { signUpForTest, makeAdministrator, TEST_ORIGIN } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
+import { createMemoryProfileService } from '@ValenceServer/profiles/createMemoryProfileService';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
 import { createMemoryWatchProgressService } from '@ValenceServer/progress/createMemoryWatchProgressService';
@@ -24,6 +25,7 @@ const AccountsSchema = z.object({
       position: z.number().nullable(),
       isAdministrator: z.boolean(),
       roles: z.array(z.string()),
+      profile: z.object({ name: z.string() }).nullish(),
     }),
   ),
 });
@@ -61,8 +63,11 @@ const build = () => {
   unbanAccount.mockResolvedValue(true);
   removeAccount.mockResolvedValue(true);
 
+  const profiles = createMemoryProfileService();
+
   const app = createApp({
     auth,
+    profiles,
     settings,
     permissions,
     banAccount,
@@ -100,6 +105,7 @@ const build = () => {
 
   return {
     app,
+    profiles,
     store,
     permissions,
     banAccount,
@@ -206,6 +212,18 @@ describe('account administration', () => {
       expect(response.status).toBe(200);
       expect(body.accounts.map((account) => account.email)).toContain('sam@valence.local');
       expect(body.accounts.every((account) => account.isBanned === false)).toBe(true);
+    });
+
+    it('carries the profile each account made, so the list can show its photo', async () => {
+      const context = await signedInWith(['administrator']);
+
+      await context.profiles.create(OTHER, { name: 'Sam', colour: '#e8503a' });
+
+      const body = AccountsSchema.parse(
+        await (await context.request('/api/admin/accounts')).json(),
+      );
+
+      expect(body.accounts.find((account) => account.id === OTHER)?.profile?.name).toBe('Sam');
     });
 
     it('says who is an administrator by what they resolve to, not by a column', async () => {

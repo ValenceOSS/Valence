@@ -82,7 +82,7 @@ const OfflinePlayer = ({ file, startAtSeconds = 0, onLeave, onProgress }: Offlin
 
       <footer className="flex items-center gap-4 px-4 py-4">
         <Button
-          variant="soft"
+          variant="glossy"
           size="sm"
           isIconOnly
           label={isPlaying ? `Pause ${file.title}` : `Play ${file.title}`}

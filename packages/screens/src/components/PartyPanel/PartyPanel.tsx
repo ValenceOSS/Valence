@@ -1,6 +1,9 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
+  CheckmarkCircle01Icon,
   Clock01Icon,
+  Copy01Icon,
+  Logout01Icon,
   HeadphonesIcon,
   PauseCircleIcon,
   UserAdd01Icon,
@@ -9,6 +12,9 @@ import {
 import { useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
+import { Callout } from '@ValenceUI/Callout';
+import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { whereTheRoomIs } from '@ValenceCore/functions/whereTheRoomIs';
@@ -112,43 +118,107 @@ const PartyPanel = ({
   );
 
   return (
-    <section className="flex w-80 max-w-full flex-col text-text">
-      <div className="flex items-center justify-between gap-2 px-1 pb-2">
-        <p className="text-xs uppercase tracking-wide text-text-muted">
-          {watching.toString()} {words.doing}
-        </p>
-
-        {onLeave === undefined ? null : (
-          <Button variant="ghost" size="sm" onClick={onLeave}>
-            Leave
-          </Button>
+    <section className="flex w-96 max-w-[calc(100vw-3rem)] flex-col gap-2 text-text">
+      <PanelCard
+        title={`${watching.toString()} ${words.doing}`}
+        isFlush
+        actions={
+          onLeave === undefined ? undefined : (
+            <PanelCardAction icon={Logout01Icon} onClick={onLeave}>
+              Leave
+            </PanelCardAction>
+          )
+        }
+      >
+        {!party.isHeld || waitingFor.length === 0 ? null : (
+          <div className="border-b border-[var(--surface-line)] p-3">
+            <Callout
+              tone="warning"
+              icon={Clock01Icon}
+              title={
+                waitingFor.length === 1
+                  ? `Waiting for ${waitingFor[0] ?? ''} to catch up`
+                  : `Waiting for ${waitingFor.length.toString()} people to catch up`
+              }
+            />
+          </div>
         )}
-      </div>
 
-      {!party.isHeld || waitingFor.length === 0 ? null : (
-        <p className="flex items-center gap-2 rounded-lg bg-amber-400/10 px-3 py-2 text-xs leading-relaxed text-amber-200">
-          <Icon of={Clock01Icon} size={14} />
-          {waitingFor.length === 1
-            ? `Waiting for ${waitingFor[0] ?? ''} to catch up`
-            : `Waiting for ${waitingFor.length.toString()} people to catch up`}
-        </p>
-      )}
+        <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
+          {party.members.map((member) => {
+            const drift = timekeeper === undefined ? null : describeDrift(member, timekeeper);
+
+            return (
+              <li key={member.connectionId} className="flex flex-wrap items-center gap-2 px-4 py-3">
+                <span className="text-sm font-medium">
+                  {member.name}
+                  {member.connectionId === meConnectionId ? ' (you)' : ''}
+                </span>
+
+                <Badge size="sm">{ROLE_LABELS[member.role]}</Badge>
+
+                {member.connectionId === party.timekeeperId && (
+                  <Badge size="sm" tone="quiet">
+                    <Icon of={Clock01Icon} size={12} />
+                    Keeping time
+                  </Badge>
+                )}
+
+                {member.isWatching ? (
+                  <span className="flex items-center gap-1 text-xs text-text-muted">
+                    <Icon of={words.icon} size={13} />
+                    {words.isDoing}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-text-muted">
+                    <Icon of={PauseCircleIcon} size={13} />
+                    {words.notDoing}
+                  </span>
+                )}
+
+                {drift !== null && <span className="text-xs text-text-muted">{drift}</span>}
+
+                {me?.role === 'host' && member.connectionId !== meConnectionId && (
+                  <span className="ml-auto flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        onSetRole?.(
+                          member.connectionId,
+                          member.role === 'coHost' ? 'guest' : 'coHost',
+                        );
+                      }}
+                    >
+                      {member.role === 'coHost' ? 'Make a guest' : 'Make a co-host'}
+                    </Button>
+
+                    {onRemove === undefined ? null : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        label={`Remove ${member.name} from the party`}
+                        onClick={() => {
+                          onRemove(member.connectionId);
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </PanelCard>
 
       {invitation === undefined ? null : (
-        <div className="flex flex-col gap-2 rounded-lg bg-subtle p-3">
-          <p className="text-xs leading-relaxed text-text-muted">
-            Send this to anybody with an account here. It puts them in this party, {words.what}.
-          </p>
-
-          <div className="flex items-center gap-2">
-            <code className="min-w-0 flex-1 select-all truncate rounded-lg bg-shade/30 px-3 py-2 font-mono text-xs">
-              {invitation}
-            </code>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              className="shrink-0"
+        <PanelCard
+          title="Invite"
+          actions={
+            <PanelCardAction
+              icon={hasCopied ? CheckmarkCircle01Icon : Copy01Icon}
               onClick={() => {
                 void onCopyInvitation?.(invitation).then(() => {
                   setHasCopied(true);
@@ -156,21 +226,31 @@ const PartyPanel = ({
               }}
             >
               {hasCopied ? 'Copied' : 'Copy'}
-            </Button>
+            </PanelCardAction>
+          }
+        >
+          <div className="flex flex-col gap-2">
+            <p className="text-xs leading-relaxed text-text-muted">
+              Send this to anybody with an account here. It puts them in this party, {words.what}.
+            </p>
+
+            <code className="min-w-0 select-all truncate rounded-md bg-[var(--surface-hover)] px-3 py-2 font-mono text-xs">
+              {invitation}
+            </code>
           </div>
-        </div>
+        </PanelCard>
       )}
 
       {!mayAsk || onAsk === undefined || elsewhere.length === 0 ? null : (
-        <div className="mt-2 flex flex-col gap-2 rounded-lg bg-subtle p-3">
-          <p className="text-xs leading-relaxed text-text-muted">
+        <PanelCard title="Ask along" isFlush>
+          <p className="px-4 pt-3 text-xs leading-relaxed text-text-muted">
             Ask somebody along. They are told wherever they asked to be told things, and the message
             carries this same link.
           </p>
 
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
             {elsewhere.map((person) => (
-              <li key={person.id} className="flex items-center justify-between gap-2">
+              <li key={person.id} className="flex items-center justify-between gap-2 px-4 py-2">
                 <span className="min-w-0 truncate text-sm">{person.name}</span>
 
                 <Button
@@ -189,150 +269,82 @@ const PartyPanel = ({
               </li>
             ))}
           </ul>
-        </div>
+        </PanelCard>
       )}
 
-      <ul className="flex flex-col divide-y divide-divider">
-        {party.members.map((member) => {
-          const drift = timekeeper === undefined ? null : describeDrift(member, timekeeper);
+      {me?.role !== 'host' ? null : (
+        <PanelCard title="Controls">
+          <div className="flex flex-col gap-3">
+            <Switch
+              label="Everyone can play and pause"
+              isOn={party.everyoneMayPlayPause}
+              onToggle={() => {
+                onLoosen?.({ everyoneMayPlayPause: !party.everyoneMayPlayPause });
+              }}
+            />
 
-          return (
-            <li key={member.connectionId} className="flex flex-wrap items-center gap-2 px-1 py-3">
-              <span className="text-sm font-medium">
-                {member.name}
-                {member.connectionId === meConnectionId ? ' (you)' : ''}
-              </span>
+            <Switch
+              label="Everyone can skip around"
+              isOn={party.everyoneMaySeek}
+              onToggle={() => {
+                onLoosen?.({ everyoneMaySeek: !party.everyoneMaySeek });
+              }}
+            />
 
-              <Badge size="sm" tone={member.role === 'guest' ? 'quiet' : 'accent'}>
-                {ROLE_LABELS[member.role]}
-              </Badge>
+            <p className="text-xs leading-relaxed text-text-muted">
+              Skipping is the disruptive one — a stray scrub throws everybody across the film, which
+              is why it can be withheld while pausing stays shared.
+            </p>
 
-              {member.connectionId === party.timekeeperId && (
-                <Badge size="sm" tone="quiet">
-                  <Icon of={Clock01Icon} size={12} />
-                  Keeping time
-                </Badge>
-              )}
+            {onSetPassword === undefined ? null : (
+              <div className="flex flex-col gap-2 border-t border-[var(--surface-line)] pt-3">
+                <p className="text-xs leading-relaxed text-text-muted">
+                  {party.hasPassword
+                    ? 'This party has a password. Anybody opening the link is asked for it.'
+                    : 'A password asks anybody opening the link for it, for a link that may travel further than you meant.'}
+                </p>
 
-              {member.isWatching ? (
-                <span className="flex items-center gap-1 text-xs text-text-muted">
-                  <Icon of={words.icon} size={13} />
-                  {words.isDoing}
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-xs text-text-muted">
-                  <Icon of={PauseCircleIcon} size={13} />
-                  {words.notDoing}
-                </span>
-              )}
-
-              {drift !== null && <span className="text-xs text-text-muted">{drift}</span>}
-
-              {me?.role === 'host' && member.connectionId !== meConnectionId && (
-                <span className="ml-auto flex gap-1">
-                  <Button
-                    variant="ghost"
+                <div className="flex items-end gap-2">
+                  <TextField
+                    label="Party password"
+                    type="password"
                     size="sm"
-                    onClick={() => {
-                      onSetRole?.(
-                        member.connectionId,
-                        member.role === 'coHost' ? 'guest' : 'coHost',
-                      );
-                    }}
-                  >
-                    {member.role === 'coHost' ? 'Make a guest' : 'Make a co-host'}
-                  </Button>
+                    value={password}
+                    placeholder={party.hasPassword ? 'Set a new one' : 'No password'}
+                    autoComplete="off"
+                    className="min-w-0 flex-1"
+                    onValueChange={setPassword}
+                  />
 
-                  {onRemove === undefined ? null : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      label={`Remove ${member.name} from the party`}
-                      onClick={() => {
-                        onRemove(member.connectionId);
-                      }}
-                    >
-                      Remove
-                    </Button>
-                  )}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-
-      {me?.role === 'host' && (
-        <div className="flex flex-col gap-3 border-t border-line px-1 pt-3">
-          <Switch
-            label="Everyone can play and pause"
-            isOn={party.everyoneMayPlayPause}
-            onToggle={() => {
-              onLoosen?.({ everyoneMayPlayPause: !party.everyoneMayPlayPause });
-            }}
-          />
-
-          <Switch
-            label="Everyone can skip around"
-            isOn={party.everyoneMaySeek}
-            onToggle={() => {
-              onLoosen?.({ everyoneMaySeek: !party.everyoneMaySeek });
-            }}
-          />
-
-          <p className="text-xs leading-relaxed text-text-muted">
-            Skipping is the disruptive one — a stray scrub throws everybody across the film, which
-            is why it can be withheld while pausing stays shared.
-          </p>
-
-          {onSetPassword === undefined ? null : (
-            <div className="flex flex-col gap-2 border-t border-line pt-3">
-              <p className="text-xs leading-relaxed text-text-muted">
-                {party.hasPassword
-                  ? 'This party has a password. Anybody opening the link is asked for it.'
-                  : 'A password asks anybody opening the link for it, for a link that may travel further than you meant.'}
-              </p>
-
-              <div className="flex items-end gap-2">
-                <TextField
-                  label="Party password"
-                  type="password"
-                  size="sm"
-                  value={password}
-                  placeholder={party.hasPassword ? 'Set a new one' : 'No password'}
-                  autoComplete="off"
-                  className="min-w-0 flex-1"
-                  onValueChange={setPassword}
-                />
-
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={password.length === 0}
-                  onClick={() => {
-                    onSetPassword(password);
-                    setPassword('');
-                  }}
-                >
-                  Set
-                </Button>
-
-                {party.hasPassword && (
                   <Button
-                    variant="ghost"
+                    variant="glossy"
                     size="sm"
+                    disabled={password.length === 0}
                     onClick={() => {
-                      onSetPassword(null);
+                      onSetPassword(password);
                       setPassword('');
                     }}
                   >
-                    Clear
+                    Set
                   </Button>
-                )}
+
+                  {party.hasPassword && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        onSetPassword(null);
+                        setPassword('');
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </PanelCard>
       )}
     </section>
   );

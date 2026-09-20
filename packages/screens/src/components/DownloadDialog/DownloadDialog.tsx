@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
-import { Alert02Icon, Download04Icon } from '@hugeicons/core-free-icons';
+import { Alert02Icon } from '@hugeicons/core-free-icons';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -109,9 +109,7 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
 
       <DialogContent className="px-0">
         {asked.isPending ? (
-          <div className="px-6 py-8">
-            <Spinner label="Working out what this would cost" size="sm" />
-          </div>
+          <Spinner isCentered label="Working out what this would cost" size="sm" />
         ) : options.length === 0 ? (
           <p className="px-6 py-8 font-body text-sm text-text-muted">
             Nothing can be prepared for this yet.
@@ -168,7 +166,7 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
             }`}
           >
             {verdict === 'fits' ? null : (
-              <Icon of={Alert02Icon} size={18} className="shrink-0 text-danger" />
+              <Icon of={Alert02Icon} size={18} tone="danger" className="shrink-0" />
             )}
 
             {verdict === 'willNotFit'
@@ -180,16 +178,13 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
         )}
       </DialogContent>
 
-      <DialogFooter>
-        <Button variant="secondary" onClick={onClose}>
-          Not now
-        </Button>
-
-        <Button
-          variant="glossy"
-          isLoading={isAsking}
-          disabled={picked === null || verdict === 'willNotFit'}
-          onClick={() => {
+      <DialogFooter
+        dismiss={{ onChoose: onClose }}
+        confirm={{
+          label: series === null ? 'Prepare it' : `Queue ${episodes.toString()} episodes`,
+          isLoading: isAsking,
+          isDisabled: picked === null || verdict === 'willNotFit',
+          onChoose: () => {
             if (picked === null || (media === null && series === null)) {
               return;
             }
@@ -219,12 +214,9 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
               .finally(() => {
                 setIsAsking(false);
               });
-          }}
-        >
-          <Icon of={Download04Icon} size={18} />
-          {series === null ? 'Prepare it' : `Queue ${episodes.toString()} episodes`}
-        </Button>
-      </DialogFooter>
+          },
+        }}
+      />
     </Dialog>
   );
 };

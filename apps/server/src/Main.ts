@@ -50,6 +50,7 @@ import { createDatabase } from '@ValenceServer/db/Database';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
 import { migrateToLatest } from '@ValenceServer/db/migrateToLatest';
+import { createMissedMigrationApplier } from '@ValenceServer/db/createMissedMigrationApplier';
 import { settleTheOwner } from '@ValenceServer/auth/settleTheOwner';
 import { movePhotographsOnce } from '@ValenceServer/profiles/movePhotographsOnce';
 import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlaylistsOf';
@@ -290,6 +291,7 @@ await migrateToLatest({
       readAppliedAt: readAppliedStamps,
     }),
   apply: () => migrate(db, { migrationsFolder: MIGRATIONS_FOLDER }),
+  applyMissed: createMissedMigrationApplier(db, MIGRATIONS_FOLDER),
   isAllowed: env.MIGRATE_ON_START,
   say: (_level, line) => {
     process.stdout.write(`${line}\n`);
@@ -320,6 +322,7 @@ const settings = createDatabaseSettingsStore({
     ownerAccountId: '',
     splashscreenFile: null,
     reencodesAwaitingReviewCap: 5,
+    roundness: 'default',
   },
 });
 

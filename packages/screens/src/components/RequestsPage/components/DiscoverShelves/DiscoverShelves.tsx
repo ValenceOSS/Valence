@@ -45,7 +45,7 @@ const DiscoverShelves = ({ onAsk, onBrowse, onBrowseStudio }: DiscoverShelvesPro
   }
 
   if (discovered.data === undefined) {
-    return <Spinner label="Reading what there is to ask for" />;
+    return <Spinner isCentered label="Reading what there is to ask for" />;
   }
 
   const { shelves, studios } = discovered.data;

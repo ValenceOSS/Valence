@@ -154,9 +154,7 @@ const SharePanel = () => {
           }}
         />
       ) : asked.isPending ? (
-        <div className="p-4">
-          <Spinner label="Reading your links" size="sm" />
-        </div>
+        <Spinner isCentered label="Reading your links" size="sm" />
       ) : (
         <DataTable
           label="Links you have handed out"

@@ -62,4 +62,13 @@ describe('DialogTitle', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(DialogTitle.displayName).toBe('DialogTitle');
   });
+
+  it('is drawn in the shade of the admin sidebar, a step apart from the panel it heads', () => {
+    const { container } = render(<DialogTitle title="Add a webhook" />);
+
+    expect(container.querySelector('header')).toHaveClass(
+      'border-b',
+      'bg-[var(--color-surface-raised)]',
+    );
+  });
 });

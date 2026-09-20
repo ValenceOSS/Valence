@@ -1,11 +1,11 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import type { IconGlyph } from '@ValenceUI/Icon.types';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
-import { Icon } from '@ValenceUI/Icon';
 import { ArrowRight01Icon, RefreshIcon } from '@hugeicons/core-free-icons';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { cn } from '@ValenceUI/cn';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -19,6 +19,7 @@ import { measureStorage } from '@ValenceClient/admin/fetchAdmin';
 import type { StorageCount } from '@ValenceClient/admin/fetchAdmin';
 import type { LoadRange } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle.types';
 import type { OverviewPanelProps } from './OverviewPanel.types';
+import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 
 /**
  * One region of the dashboard: a heading, an optional action in its corner, and whatever the region
@@ -49,7 +50,7 @@ const Region = ({
   title: string;
   action?: string;
   onAction?: () => void;
-  actionIcon?: ReactNode;
+  actionIcon?: IconGlyph;
   isActionBusy?: boolean;
   actions?: ReactNode;
   isFlush?: boolean;
@@ -66,17 +67,14 @@ const Region = ({
         ? {}
         : {
             actions: (
-              <Button
-                variant="ghost"
-                size="xs"
-                className="shrink-0 text-xs text-text-muted hover:text-text"
+              <PanelCardAction
+                icon={actionIcon ?? ArrowRight01Icon}
                 onClick={onAction}
-                disabled={isActionBusy}
+                isDisabled={isActionBusy}
                 isLoading={isActionBusy}
               >
                 {action}
-                {actionIcon ?? <Icon of={ArrowRight01Icon} size={14} />}
-              </Button>
+              </PanelCardAction>
             ),
           })}
   >
@@ -207,7 +205,7 @@ const OverviewPanel = ({
                     </span>
                   </span>
 
-                  <Badge size="sm" tone={session.playback?.mode === 'direct' ? 'quiet' : 'accent'}>
+                  <Badge size="sm">
                     {session.playback?.mode === 'direct' ? 'Direct' : 'Transcode'}
                   </Badge>
                 </li>
@@ -240,8 +238,8 @@ const OverviewPanel = ({
                     </span>
                   </span>
 
-                  <Badge size="sm" tone="accent">
-                    running
+                  <Badge size="sm" tone={describeJobStatus('running').tone}>
+                    {describeJobStatus('running').label}
                   </Badge>
                 </li>
               ))}
@@ -286,7 +284,7 @@ const OverviewPanel = ({
           title="Storage Valence is using"
           className="sm:col-span-2 xl:col-span-4"
           action="Refresh"
-          actionIcon={<Icon of={RefreshIcon} size={14} />}
+          actionIcon={RefreshIcon}
           isActionBusy={isCounting}
           onAction={() => {
             void recount();

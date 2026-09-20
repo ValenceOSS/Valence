@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useReducedMotionConfig } from 'motion/react';
 import { SidebarLeftIcon } from '@hugeicons/core-free-icons';
 import { Icon } from '@ValenceUI/Icon';
 import { Button } from '@ValenceUI/Button';
 import { SidebarGroup } from '@ValenceUI/SidebarGroup';
 import { cn } from '@ValenceUI/cn';
+import { scrollDeltaToReveal } from './scrollDeltaToReveal';
 import type { SidebarProps } from './Sidebar.types';
+
+const REVEAL_MARGIN = 16;
 
 /**
  * The one column of destinations standing against the left edge of a full page — an admin area, an
@@ -16,6 +20,10 @@ import type { SidebarProps } from './Sidebar.types';
  * in the bar across the top of the browsing pages — one name for the mark shared across every group,
  * so moving the pointer from one group into the next still reads as one thing sliding rather than two
  * marks taking turns.
+ *
+ * Choosing a destination, or arriving at one from somewhere else in the page, brings its name into
+ * view by scrolling the list smoothly to it, rather than leaving the current one somewhere below the
+ * fold or snapping there.
  *
  * Closes flush rather than to a rail of icons: a destination nobody can read the name of is not
  * worth the width it still spends, so the toggle takes the whole thing away and a trigger of the
@@ -46,8 +54,34 @@ const Sidebar = ({
   className,
 }: SidebarProps) => {
   const [pointedAt, setPointedAt] = useState<string | null>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotionConfig();
   const markGroup = `sidebar-mark-${label}`;
   const isFloating = variant === 'floating';
+
+  useEffect(() => {
+    const list = scroller.current;
+
+    if (list === null || list.clientHeight === 0) {
+      return;
+    }
+
+    const current = list.querySelector('[aria-current="page"]');
+
+    if (current === null) {
+      return;
+    }
+
+    const delta = scrollDeltaToReveal(
+      list.getBoundingClientRect(),
+      current.getBoundingClientRect(),
+      REVEAL_MARGIN,
+    );
+
+    if (delta !== 0) {
+      list.scrollBy({ top: delta, behavior: prefersReducedMotion === true ? 'auto' : 'smooth' });
+    }
+  }, [value, prefersReducedMotion]);
 
   return (
     <nav
@@ -86,6 +120,7 @@ const Sidebar = ({
       </div>
 
       <div
+        ref={scroller}
         onPointerLeave={() => {
           setPointedAt(null);
         }}

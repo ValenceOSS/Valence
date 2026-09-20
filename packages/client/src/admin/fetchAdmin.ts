@@ -1,3 +1,5 @@
+import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
+import type { Roundness } from '@ValenceContracts/schemas/Roundness';
 import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
 import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
@@ -45,6 +47,7 @@ const AdminOverviewSchema = z.object({
     fetchesCatalogueTrailers: z.boolean().default(false),
     fetchesMusicDetails: z.boolean().default(false),
     requestReleaseTypes: ReleaseTypesSchema.default(['album']),
+    roundness: RoundnessSchema.optional(),
     certificationRegion: z.string().default('GB'),
     splashscreen: z.string().nullish(),
   }),
@@ -788,6 +791,23 @@ const saveFetchesMusicDetails = async (fetchesMusicDetails: boolean): Promise<bo
  * @param requestReleaseTypes - The kinds to watch for.
  * @returns Whether the setting was written.
  */
+/**
+ * Sets how round every corner in the application is, for everybody who uses this server.
+ *
+ * @param roundness - The level.
+ * @returns Whether the setting was written.
+ */
+const saveRoundness = async (roundness: Roundness): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ roundness }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 const saveRequestReleaseTypes = async (
   requestReleaseTypes: readonly ReleaseType[],
 ): Promise<boolean> => {
@@ -958,6 +978,7 @@ export {
   saveCatalogueKey,
   saveHardwareAccel,
   savePreviewQuality,
+  saveRoundness,
   saveCertificationRegion,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,

@@ -1,3 +1,5 @@
+import { AccountFace } from '@ValenceScreens/components/AdminArea/components/AccountsPanel/components/AccountFace/AccountFace';
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
   Add01Icon,
@@ -17,7 +19,6 @@ import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { FormField } from '@ValenceUI/FormField';
 import { DialogContent } from '@ValenceUI/DialogContent';
-import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
@@ -345,12 +346,18 @@ const AccountsPanel = () => {
   const shown = useMemo(() => {
     const looking = search.trim().toLowerCase();
 
-    return accounts.filter(
-      (account) =>
-        account.name.toLowerCase().includes(looking) ||
-        account.email.toLowerCase().includes(looking),
-    );
+    return accounts
+      .filter(
+        (account) =>
+          account.name.toLowerCase().includes(looking) ||
+          account.email.toLowerCase().includes(looking),
+      )
+      .sort((first, second) =>
+        first.name.localeCompare(second.name, undefined, { sensitivity: 'base' }),
+      );
   }, [accounts, search]);
+
+  const roleColours = useMemo(() => new Map(roles.map((role) => [role.name, role.color])), [roles]);
 
   const columns = useMemo<DataTableColumn<Account>[]>(
     () => [
@@ -360,17 +367,7 @@ const AccountsPanel = () => {
         accessorFn: (account) => account.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-3">
-            {row.original.face === null ? (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-subtle text-sm font-semibold text-text">
-                {(row.original.name.trim()[0] ?? '?').toUpperCase()}
-              </span>
-            ) : (
-              <HouseholdFace
-                household={row.original.face}
-                accountId={row.original.id}
-                className="size-8 shrink-0 rounded-full"
-              />
-            )}
+            <AccountFace account={row.original} />
 
             <span className="flex min-w-0 flex-col">
               <span className="truncate font-medium text-text">{row.original.name}</span>
@@ -393,13 +390,7 @@ const AccountsPanel = () => {
           ) : (
             <span className="flex flex-wrap items-center gap-1.5">
               {row.original.roles.map((role) => (
-                <Badge
-                  key={role}
-                  size="sm"
-                  tone={
-                    row.original.isAdministrator && role === 'Administrator' ? 'accent' : 'quiet'
-                  }
-                >
+                <Badge key={role} size="sm" colour={roleColours.get(role) ?? null}>
                   {role}
                 </Badge>
               ))}
@@ -476,7 +467,7 @@ const AccountsPanel = () => {
         ),
       },
     ],
-    [act],
+    [act, roleColours],
   );
 
   const confirm = () => {
@@ -550,20 +541,15 @@ const AccountsPanel = () => {
           </p>
         </DialogContent>
 
-        <DialogFooter>
-          <Button
-            variant="secondary"
-            onClick={() => {
+        <DialogFooter
+          dismiss={{
+            onChoose: () => {
               setIsInviting(false);
-            }}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            variant="glossy"
-            disabled={inviteName === '' || inviteEmail === '' || invitePassword.length < 8}
-            onClick={() => {
+            },
+          }}
+          confirm={{
+            label: 'Add',
+            onChoose: () => {
               void act(() =>
                 inviteAccount({
                   name: inviteName,
@@ -576,11 +562,10 @@ const AccountsPanel = () => {
                 setInvitePassword('');
                 setIsInviting(false);
               });
-            }}
-          >
-            Add
-          </Button>
-        </DialogFooter>
+            },
+            isDisabled: inviteName === '' || inviteEmail === '' || invitePassword.length < 8,
+          }}
+        />
       </DialogCompanion>
 
       {refusal === null || picked !== null ? null : (
@@ -588,7 +573,7 @@ const AccountsPanel = () => {
           role="alert"
           className="flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-text"
         >
-          <Icon of={Alert02Icon} size={18} className="mt-0.5 shrink-0 text-danger" />
+          <Icon of={Alert02Icon} size={18} tone="danger" className="mt-0.5 shrink-0" />
           {refusal.message}
         </p>
       )}
@@ -609,17 +594,14 @@ const AccountsPanel = () => {
               className="w-56 max-w-full"
             />
 
-            <Button
-              variant="ghost"
-              size="xs"
-              className="shrink-0 text-xs text-text-muted hover:text-text"
+            <PanelCardAction
+              icon={Add01Icon}
               onClick={() => {
                 setIsInviting(true);
               }}
             >
-              <Icon of={Add01Icon} size={14} />
               Add user
-            </Button>
+            </PanelCardAction>
           </>
         }
       >
@@ -694,7 +676,7 @@ const AccountsPanel = () => {
                   role="alert"
                   className="flex items-start gap-3 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-text"
                 >
-                  <Icon of={Alert02Icon} size={16} className="mt-0.5 shrink-0 text-danger" />
+                  <Icon of={Alert02Icon} size={16} tone="danger" className="mt-0.5 shrink-0" />
                   {refusal.message}
                 </p>
               )}
@@ -937,26 +919,21 @@ const AccountsPanel = () => {
               </TabPanel>
             </DialogContent>
 
-            <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => {
+            <DialogFooter
+              dismiss={{
+                label: 'Close',
+                onChoose: () => {
                   setAccountId(null);
-                }}
-              >
-                Close
-              </Button>
-
-              <Button
-                variant="glossy"
-                disabled={draftName === '' || !hasUnsavedChanges}
-                onClick={() => {
+                },
+              }}
+              confirm={{
+                label: 'Save changes',
+                onChoose: () => {
                   void saveChanges();
-                }}
-              >
-                Save changes
-              </Button>
-            </DialogFooter>
+                },
+                isDisabled: draftName === '' || !hasUnsavedChanges,
+              }}
+            />
           </Tabs>
         )}
       </DialogCompanion>

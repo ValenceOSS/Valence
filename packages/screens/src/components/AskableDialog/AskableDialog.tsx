@@ -29,6 +29,7 @@ import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskableDialogProps } from './AskableDialog.types';
+import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
 
 const FOLLOWED_EVERY_MS = 5000;
 
@@ -139,9 +140,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             }}
           />
         ) : title === null ? (
-          <div className="grid h-full place-items-center">
-            <Spinner label="Reading the catalogue" />
-          </div>
+          <Spinner isCentered label="Reading the catalogue" />
         ) : (
           <div className="flex flex-col gap-8">
             <div className="relative overflow-hidden rounded-2xl">
@@ -258,11 +257,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                           key={album.id}
                           className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[var(--surface-hover)]"
                         >
-                          <Icon
-                            of={MusicNote01Icon}
-                            size={16}
-                            className="shrink-0 text-text-muted"
-                          />
+                          <Icon of={MusicNote01Icon} size={16} tone="muted" className="shrink-0" />
                           <span className="flex min-w-0 flex-1 flex-col">
                             <span className="truncate text-sm text-text">{album.title}</span>
                             <span className="text-xs text-text-muted">
@@ -275,7 +270,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                             </span>
                           </span>
                           {askedAlbums.has(album.id) ? (
-                            <Badge size="sm" tone="accent">
+                            <Badge size="sm" tone={STATUS_LOOK.queued.tone}>
                               Requested
                             </Badge>
                           ) : (
@@ -302,13 +297,31 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
         )}
       </DialogContent>
 
-      <DialogFooter>
-        {problem === null ? null : (
-          <span role="alert" className="mr-auto text-sm text-danger">
-            {problem}
-          </span>
-        )}
-
+      <DialogFooter
+        note={problem}
+        dismiss={{ onChoose: onClose }}
+        confirm={
+          title === null
+            ? undefined
+            : title.standing.status === 'library' && title.standing.mediaId !== null
+              ? {
+                  label: 'Open',
+                  onChoose: () => {
+                    onOpen(title.kind, title.standing.mediaId ?? '');
+                  },
+                }
+              : title.standing.status === 'askable'
+                ? {
+                    label: title.kind === 'artist' ? 'Watch this artist' : 'Request',
+                    isDisabled: !isReady,
+                    isLoading: isAsking,
+                    onChoose: () => {
+                      send(askingFor(title, seasons, releaseTypes));
+                    },
+                  }
+                : undefined
+        }
+      >
         {mayCancel ? (
           <Button
             variant="ghost"
@@ -317,33 +330,6 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             }}
           >
             Cancel request
-          </Button>
-        ) : null}
-
-        <Button variant="secondary" onClick={onClose}>
-          Close
-        </Button>
-
-        {title === null ? null : title.standing.status === 'library' &&
-          title.standing.mediaId !== null ? (
-          <Button
-            variant="glossy"
-            onClick={() => {
-              onOpen(title.kind, title.standing.mediaId ?? '');
-            }}
-          >
-            Open
-          </Button>
-        ) : title.standing.status === 'askable' ? (
-          <Button
-            variant="glossy"
-            disabled={!isReady}
-            isLoading={isAsking}
-            onClick={() => {
-              send(askingFor(title, seasons, releaseTypes));
-            }}
-          >
-            {title.kind === 'artist' ? 'Watch this artist' : 'Request'}
           </Button>
         ) : null}
       </DialogFooter>

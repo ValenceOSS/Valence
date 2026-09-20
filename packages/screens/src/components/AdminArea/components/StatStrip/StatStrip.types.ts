@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 type Stat = {
   label: string;
-  value: string;
+  value: ReactNode;
   detail?: string;
   fraction?: number;
   info?: ReactNode;

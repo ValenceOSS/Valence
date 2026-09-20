@@ -37,6 +37,15 @@ const open = async (user: ReturnType<typeof userEvent.setup>) => {
 };
 
 describe('NotificationBell', () => {
+  it('lays the list out as a card headed by what it is, with its actions in the header', async () => {
+    const user = userEvent.setup();
+
+    draw();
+    await open(user);
+
+    expect(await screen.findByRole('heading', { name: 'Notifications' })).toBeInTheDocument();
+  });
+
   it('shows no count when there is nothing unread', () => {
     draw({ notifications: [aNotification({ readAt: new Date().toISOString() })] });
 

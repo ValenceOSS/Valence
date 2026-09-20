@@ -68,6 +68,29 @@ describe('NowPlayingBar', () => {
     expect(screen.queryByRole('region', { name: 'Now playing' })).not.toBeInTheDocument();
   });
 
+  it('is there on the music page even while nothing is playing, with every control at rest', () => {
+    window.history.pushState(null, '', '/music');
+
+    renderInAnAddress(<NowPlayingBar player={aFakeMusicPlayer().player} />);
+
+    expect(screen.getByRole('region', { name: 'Now playing' })).toBeInTheDocument();
+    expect(screen.getAllByText('Nothing is playing').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Play' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+
+    window.history.pushState(null, '', '/');
+  });
+
+  it('carries the lyrics, queue and devices in a menu for a screen with no room for their buttons', async () => {
+    renderInAnAddress(<NowPlayingBar player={playing().player} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'More music controls' }));
+
+    expect(await screen.findByRole('menuitem', { name: /Queue/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Play on another device/ })).toBeInTheDocument();
+  });
+
   it('says what is playing, who it is by, and how far through it is', () => {
     renderInAnAddress(<NowPlayingBar player={playing().player} />);
 

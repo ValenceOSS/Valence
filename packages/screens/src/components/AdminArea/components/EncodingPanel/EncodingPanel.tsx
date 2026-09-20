@@ -1,3 +1,4 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -5,7 +6,7 @@ import { Callout } from '@ValenceUI/Callout';
 import { DataTable } from '@ValenceUI/DataTable';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
-import { FilmRoll01Icon } from '@hugeicons/core-free-icons';
+import { FilmRoll01Icon, RefreshIcon } from '@hugeicons/core-free-icons';
 import { describeEncodeProgress } from '@ValenceClient/admin/describeEncodeProgress';
 import { describeReencodeState } from '@ValenceClient/admin/describeReencodeState';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
@@ -152,9 +153,9 @@ const EncodingPanel = ({
       <PanelCard
         title="Waiting for you"
         actions={
-          <Button variant="primary" size="sm" onClick={onChoose}>
+          <PanelCardAction icon={RefreshIcon} onClick={onChoose}>
             Re-encode something
-          </Button>
+          </PanelCardAction>
         }
       >
         {awaitingReview.length === 0 ? (

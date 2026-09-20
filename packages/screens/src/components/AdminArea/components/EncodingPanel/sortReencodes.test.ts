@@ -35,11 +35,7 @@ describe('sortReencodes', () => {
   });
 
   it('counts everything still being worked on as under way', () => {
-    const sorted = sortReencodes([
-      at('a', 'queued'),
-      at('b', 'encoding'),
-      at('c', 'verifying'),
-    ]);
+    const sorted = sortReencodes([at('a', 'queued'), at('b', 'encoding'), at('c', 'verifying')]);
 
     expect(sorted.underWay).toHaveLength(3);
   });
@@ -59,9 +55,9 @@ describe('sortReencodes', () => {
     const all = [at('a', 'awaitingReview'), at('b', 'encoding'), at('c', 'finished')];
     const sorted = sortReencodes(all);
 
-    expect(
-      sorted.awaitingReview.length + sorted.underWay.length + sorted.settled.length,
-    ).toBe(all.length);
+    expect(sorted.awaitingReview.length + sorted.underWay.length + sorted.settled.length).toBe(
+      all.length,
+    );
   });
 
   it('answers with three empty groups for nothing at all', () => {

@@ -22,6 +22,7 @@ import type { IconGlyph } from '@ValenceUI/Icon.types';
 import type { BrowseAreaProps, BrowseKind } from './BrowseArea.types';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
+import { BackToTop } from '@ValenceUI/BackToTop';
 
 const PAGE_SIZE = 120;
 
@@ -147,6 +148,8 @@ const BrowseArea = ({
       exit="gone"
       className="flex flex-col gap-6 px-5 pb-16 pt-6 sm:px-10"
     >
+      <BackToTop />
+
       <motion.header
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'heavy')}
@@ -181,7 +184,7 @@ const BrowseArea = ({
             }}
           />
         ) : isReading ? (
-          <Spinner label={`Reading ${page.title.toLowerCase()}`} size="sm" />
+          <Spinner isCentered label={`Reading ${page.title.toLowerCase()}`} size="sm" />
         ) : items.length === 0 && books.length === 0 ? (
           hasNoLibraries ? (
             <NothingHere

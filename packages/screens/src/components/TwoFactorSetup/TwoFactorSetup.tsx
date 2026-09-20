@@ -128,7 +128,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
       >
         {stage !== 'idle' ? null : isEnabled ? (
           <Button
-            variant="soft"
+            variant="secondary"
             size="sm"
             onClick={() => {
               setStage('disable');
@@ -138,7 +138,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
           </Button>
         ) : (
           <Button
-            variant="soft"
+            variant="glossy"
             size="sm"
             onClick={() => {
               setStage('confirmPassword');

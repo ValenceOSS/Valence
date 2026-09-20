@@ -91,4 +91,4 @@ describe('useWeighing', () => {
 
     expect(onWeigh).toHaveBeenCalledTimes(1);
   });
-})
+});

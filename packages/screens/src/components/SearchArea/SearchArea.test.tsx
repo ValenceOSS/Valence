@@ -108,7 +108,26 @@ const searchFor = (search: string, onOpenBook = vi.fn()) => {
   return onOpenBook;
 };
 
+vi.mock('@ValenceUI/useHasScrolledPast', () => ({
+  useHasScrolledPast: () => ({ mark: () => undefined, hasPassed: true }),
+}));
+
 describe('SearchArea', () => {
+  it('offers the way back to the top once the top has been left', async () => {
+    renderInAnAddress(
+      <SearchArea
+        search=""
+        onSearchChange={vi.fn()}
+        genre={null}
+        onGenreChange={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole('button', { name: 'Back to top' })).toBeInTheDocument();
+  });
+
   it('offers somewhere to type', async () => {
     renderInAnAddress(
       <SearchArea

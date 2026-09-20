@@ -115,4 +115,56 @@ describe('migrateToLatest', () => {
 
     expect(reporter.lines.some((one) => one.line.includes('up to date'))).toBe(false);
   });
+
+  it('applies what drizzle skipped, once drizzle has run and left something pending', async () => {
+    const reporter = said();
+    const pending = vi
+      .fn<() => Promise<readonly string[]>>()
+      .mockResolvedValueOnce(['0069_a', '0070_b'])
+      .mockResolvedValueOnce(['0070_b'])
+      .mockResolvedValueOnce([]);
+    const applyMissed = vi.fn(() => Promise.resolve(['0070_b']));
+
+    await migrateToLatest({
+      pending,
+      apply: () => Promise.resolve(),
+      applyMissed,
+      isAllowed: true,
+      say: reporter.say,
+    });
+
+    expect(applyMissed).toHaveBeenCalledTimes(1);
+    expect(reporter.lines.map((one) => one.line).join('\n')).toContain('Drizzle skipped 1');
+    expect(reporter.lines.at(-1)?.line).toBe('The database is up to date with this release.');
+  });
+
+  it('leaves the skipped ones alone when drizzle ran everything', async () => {
+    const applyMissed = vi.fn(() => Promise.resolve([]));
+    const pending = vi
+      .fn<() => Promise<readonly string[]>>()
+      .mockResolvedValueOnce(['0049_jwks'])
+      .mockResolvedValueOnce([]);
+
+    await migrateToLatest({
+      pending,
+      apply: () => Promise.resolve(),
+      applyMissed,
+      isAllowed: true,
+      say: said().say,
+    });
+
+    expect(applyMissed).not.toHaveBeenCalled();
+  });
+
+  it('refuses to come up while migrations are still missing after everything has been tried', async () => {
+    await expect(
+      migrateToLatest({
+        pending: () => Promise.resolve(['0070_b']),
+        apply: () => Promise.resolve(),
+        applyMissed: () => Promise.resolve([]),
+        isAllowed: true,
+        say: said().say,
+      }),
+    ).rejects.toThrow('0070_b');
+  });
 });

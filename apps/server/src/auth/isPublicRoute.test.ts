@@ -11,6 +11,11 @@ describe('isPublicRoute', () => {
     expect(isPublicRoute('POST', '/api/setup')).toBe(true);
   });
 
+  it('lets a browser ask how the application should look before anybody has signed in', () => {
+    expect(isPublicRoute('GET', '/api/appearance')).toBe(true);
+    expect(isPublicRoute('PATCH', '/api/appearance')).toBe(false);
+  });
+
   it('leaves better-auth to answer for its own routes', () => {
     expect(isPublicRoute('GET', '/api/auth/get-session')).toBe(true);
     expect(isPublicRoute('POST', '/api/auth/sign-in/email')).toBe(true);

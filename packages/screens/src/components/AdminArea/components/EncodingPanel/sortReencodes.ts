@@ -24,7 +24,9 @@ const sortReencodes = (reencodes: readonly Reencode[]): SortedReencodes => ({
     REENCODES_STILL_TO_BE_WRITTEN.some((state) => state === one.state),
   ),
   settled: reencodes.filter(
-    (one) => one.state !== 'awaitingReview' && !REENCODES_STILL_TO_BE_WRITTEN.some((state) => state === one.state),
+    (one) =>
+      one.state !== 'awaitingReview' &&
+      !REENCODES_STILL_TO_BE_WRITTEN.some((state) => state === one.state),
   ),
 });
 

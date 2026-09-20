@@ -336,7 +336,7 @@ const Hero = ({
             className="flex flex-wrap items-center gap-3 pt-3"
           >
             <Button
-              variant="glossy"
+              variant="confirm"
               size="xl"
               onClick={() => {
                 onPlay(featured, resume ?? 0);

@@ -24,11 +24,7 @@ const DeliveryHistory = ({
   const now = Date.now();
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-4">
-        <Spinner label="Reading what has been sent" />
-      </div>
-    );
+    return <Spinner isCentered label="Reading what has been sent" />;
   }
 
   if (deliveries.length === 0) {

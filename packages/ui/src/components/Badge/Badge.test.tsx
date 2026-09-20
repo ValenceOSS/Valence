@@ -5,6 +5,12 @@ import { Badge } from './Badge';
 const badgeOf = (text: string): HTMLElement => screen.getByText(text);
 
 describe('Badge', () => {
+  it('draws a quiet badge in the same gray as a selector track', () => {
+    render(<Badge>Books</Badge>);
+
+    expect(badgeOf('Books')).toHaveClass('bg-[var(--surface-hover)]');
+  });
+
   it('states what it was given', () => {
     render(<Badge>4K</Badge>);
 
@@ -32,7 +38,7 @@ describe('Badge', () => {
   it('stays readable on artwork rather than dissolving into it', () => {
     render(<Badge tone="solid">TV-14</Badge>);
 
-    expect(badgeOf('TV-14')).toHaveClass('bg-shade/60');
+    expect(badgeOf('TV-14')).toHaveClass('bg-shade');
   });
 
   it('sets a display name so devtools can identify it', () => {
@@ -42,7 +48,40 @@ describe('Badge', () => {
   it('paints a fact that is wrong differently from one that is merely notable', () => {
     render(<Badge tone="danger">NVENC</Badge>);
 
-    expect(badgeOf('NVENC')).toHaveClass('border-danger/50');
+    expect(badgeOf('NVENC')).toHaveClass('bg-danger');
+  });
+
+  it('is a solid fill rather than glass over whatever is behind it', () => {
+    render(
+      <>
+        <Badge tone="quiet">One</Badge>
+        <Badge tone="accent">Two</Badge>
+        <Badge tone="danger">Three</Badge>
+      </>,
+    );
+
+    for (const text of ['One', 'Two', 'Three']) {
+      expect(badgeOf(text).className).not.toMatch(/backdrop-blur|bg-[a-z]+\/\d+/);
+    }
+  });
+
+  it('sets its text in semibold', () => {
+    render(<Badge>4K</Badge>);
+
+    expect(badgeOf('4K')).toHaveClass('font-semibold');
+  });
+
+  it('spins while something is in progress, and not once it has settled', () => {
+    render(
+      <>
+        <Badge tone="busy">Running</Badge>
+        <Badge tone="success">Done</Badge>
+      </>,
+    );
+
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(badgeOf('Running')).toContainElement(screen.getByRole('status'));
+    expect(badgeOf('Running').lastElementChild).toBe(screen.getByRole('status'));
   });
 
   it('is not text anybody drags a cursor through', () => {
@@ -54,20 +93,56 @@ describe('Badge', () => {
   it('paints a costly choice differently from a broken one', () => {
     render(<Badge tone="warning">Software only</Badge>);
 
-    expect(badgeOf('Software only')).toHaveClass('border-highlight/50');
+    expect(badgeOf('Software only')).toHaveClass('bg-highlight');
   });
 
   it('paints a good outcome in its own colour rather than borrowing the one for attention', () => {
     render(<Badge tone="success">Finished</Badge>);
 
-    expect(badgeOf('Finished')).toHaveClass('border-success/35');
-    expect(badgeOf('Finished')).not.toHaveClass('border-accent/40');
+    expect(badgeOf('Finished')).toHaveClass('bg-success');
+    expect(badgeOf('Finished')).not.toHaveClass('bg-accent');
   });
 
   it('paints something under way in its own colour, apart from a warning', () => {
     render(<Badge tone="busy">Downloading</Badge>);
 
-    expect(badgeOf('Downloading')).toHaveClass('border-busy/45');
-    expect(badgeOf('Downloading')).not.toHaveClass('border-highlight/50');
+    expect(badgeOf('Downloading')).toHaveClass('bg-busy');
+    expect(badgeOf('Downloading')).not.toHaveClass('bg-highlight');
+  });
+
+  it('takes a colour of its own in place of a tone', () => {
+    render(<Badge colour="#F1C40F">Manager</Badge>);
+
+    expect(badgeOf('Manager')).toHaveStyle({ backgroundColor: 'rgb(241, 196, 15)' });
+    expect(badgeOf('Manager').className).not.toContain('bg-muted');
+  });
+
+  it('sets its words in an ink that reads on the colour it was given', () => {
+    render(
+      <>
+        <Badge colour="#F1C40F">Light</Badge>
+        <Badge colour="#206694">Dark</Badge>
+      </>,
+    );
+
+    expect(badgeOf('Light')).toHaveStyle({ color: 'rgb(17, 17, 17)' });
+    expect(badgeOf('Dark')).toHaveStyle({ color: 'rgb(255, 255, 255)' });
+  });
+
+  it('keeps its tone where it has no colour of its own', () => {
+    render(
+      <Badge colour={null} tone="danger">
+        Down
+      </Badge>,
+    );
+
+    expect(badgeOf('Down')).toHaveClass('bg-danger');
+  });
+
+  it('paints something waiting in the colour of work under way, without the spinner', () => {
+    render(<Badge tone="waiting">Queued</Badge>);
+
+    expect(badgeOf('Queued')).toHaveClass('bg-busy');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

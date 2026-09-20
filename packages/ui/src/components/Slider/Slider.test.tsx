@@ -375,3 +375,14 @@ describe('the preview that follows the pointer', () => {
     expect(onValueCommit).toHaveBeenCalledWith(11);
   });
 });
+
+describe('Slider fill', () => {
+  it('is white rather than blue on the page', () => {
+    const { container } = render(
+      <Slider label="Volume" value={30} max={100} onValueChange={() => {}} />,
+    );
+
+    expect(container.querySelector('.bg-text')).toBeInTheDocument();
+    expect(container.querySelector('.bg-primary')).not.toBeInTheDocument();
+  });
+});

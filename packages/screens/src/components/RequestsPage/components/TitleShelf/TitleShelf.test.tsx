@@ -35,12 +35,13 @@ const SHELF: CatalogueShelf = {
 };
 
 describe('TitleShelf', () => {
-  it('marks what is in the library already, and opens what is chosen', async () => {
+  it('marks what is in the library already with an icon, and opens what is chosen', async () => {
     const onAsk = vi.fn();
 
     render(<TitleShelf shelf={SHELF} onAsk={onAsk} onBrowse={vi.fn()} />);
 
-    expect(screen.getByText('In your library')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'In your library' })).toBeInTheDocument();
+    expect(screen.queryByText('In your library')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /Dune/ }));
 

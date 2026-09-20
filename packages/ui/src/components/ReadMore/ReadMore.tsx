@@ -74,9 +74,9 @@ const ReadMore = ({
 
       {!hasMore && !isWhole ? null : (
         <Button
-          variant="link"
+          variant="subtle"
           size="none"
-          className="text-sm text-text-muted hover:text-text"
+          className="text-sm"
           onClick={() => {
             setIsWhole((was) => !was);
           }}

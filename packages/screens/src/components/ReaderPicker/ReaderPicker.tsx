@@ -58,7 +58,7 @@ const ReaderPicker = ({
             <span className="text-xs font-normal text-text-muted">{label}</span>
             <span className="max-w-full truncate text-sm text-text">{value}</span>
           </span>
-          <Icon of={UnfoldMoreIcon} size={15} className="shrink-0 text-text-muted" />
+          <Icon of={UnfoldMoreIcon} size={15} tone="muted" className="shrink-0" />
         </>
       }
       groups={[{ name: label, selectedId, onSelect, options }]}

@@ -14,7 +14,6 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
-import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { refreshCatalogue } from '@ValenceClient/requests/fetchDefinitions';
 import { filterCatalogue } from './filterCatalogue';
@@ -25,6 +24,7 @@ import type {
   IndexerPrivacy,
 } from '@ValenceContracts/schemas/IndexerDefinition';
 import type { IndexerCatalogueDialogProps } from './IndexerCatalogueDialog.types';
+import { Card } from '@ValenceUI/Card';
 
 const PRIVACIES = [
   { id: 'any', label: 'Any' },
@@ -237,44 +237,34 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
             }}
           />
         ) : asked.isPending ? (
-          <Spinner label="Reading the catalogue" size="sm" />
+          <Spinner isCentered label="Reading the catalogue" size="sm" />
         ) : (
-          <DataTable
-            label="Sites"
-            columns={columns}
-            rows={shown}
-            height="parent"
-            growsOnScroll
-            className="min-h-0 flex-1"
-            getRowId={(definition) => definition.id}
-            onChooseRow={(definition) => {
-              onChoose({ kind: 'cardigann', definitionId: definition.id, name: definition.name });
-            }}
-            emptyMessage={
-              asked.data.definitions.length === 0
-                ? 'The catalogue is empty. Bring it up to date to fetch the sites Valence can search.'
-                : 'No site matches. Try fewer words, or another category.'
-            }
-          />
+          <Card padding="none" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <DataTable
+              label="Sites"
+              columns={columns}
+              rows={shown}
+              height="parent"
+              growsOnScroll
+              className="min-h-0 flex-1"
+              getRowId={(definition) => definition.id}
+              onChooseRow={(definition) => {
+                onChoose({ kind: 'cardigann', definitionId: definition.id, name: definition.name });
+              }}
+              emptyMessage={
+                asked.data.definitions.length === 0
+                  ? 'The catalogue is empty. Bring it up to date to fetch the sites Valence can search.'
+                  : 'No site matches. Try fewer words, or another category.'
+              }
+            />
+          </Card>
         )}
       </DialogContent>
 
-      <DialogFooter>
-        <span role="status" className="mr-auto line-clamp-2 min-w-0 flex-1 text-xs text-text-muted">
-          {problem ??
-            asked.data?.problem ??
-            (asked.data === undefined
-              ? ''
-              : `${asked.data.definitions.length.toString()} sites${asked.data.updatedAt === null ? '' : `, brought up to date ${saidWhen(asked.data.updatedAt)}`} from ${asked.data.source}.`)}
-        </span>
-
+      <DialogFooter note={problem ?? asked.data?.problem} dismiss={{ onChoose: onClose }}>
         <Button variant="secondary" isLoading={isRefreshing} onClick={refresh}>
           <Icon of={RefreshIcon} size={15} />
           Bring up to date
-        </Button>
-
-        <Button variant="secondary" onClick={onClose}>
-          Close
         </Button>
       </DialogFooter>
     </DialogCompanion>

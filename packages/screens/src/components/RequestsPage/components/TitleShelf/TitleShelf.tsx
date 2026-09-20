@@ -1,27 +1,12 @@
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { Rail } from '@ValenceUI/Rail';
 import { RevealItem } from '@ValenceUI/RevealItem';
-import { describeStanding } from '@ValenceScreens/components/AskableDialog/describeStanding';
-import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import { ShelfMoreCard } from '@ValenceScreens/components/RequestsPage/components/ShelfMoreCard/ShelfMoreCard';
-import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { TitleShelfProps } from './TitleShelf.types';
+import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
 
 const BEHIND_MORE = 4;
-
-/**
- * The badges on a title's card: what kind of thing it is, and where it stands where it is not
- * simply there to be asked for.
- *
- * @param title - The title.
- * @returns The badges.
- */
-const badgesOf = (title: CatalogueTitle): string[] => {
-  const standing = describeStanding(title.standing);
-
-  return [REQUEST_KIND_NAMES[title.kind], ...(standing === null ? [] : [standing.label])];
-};
 
 /**
  * One shelf of films or series to ask for, ending in the card that opens the whole list it was
@@ -52,7 +37,7 @@ const TitleShelf = ({ shelf, onAsk, onBrowse }: TitleShelfProps) => {
           <MediaCard
             title={title.title}
             subtitle={title.year?.toString() ?? ''}
-            badges={badgesOf(title)}
+            {...describeCatalogueCard(title)}
             {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
             onSelect={() => {
               onAsk(askingOf(title));

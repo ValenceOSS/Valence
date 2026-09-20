@@ -81,6 +81,6 @@ describe('describeRequestBadge', () => {
       (['searching', 'chosen', 'filing', 'filed', 'available'] as const).map(
         (state) => describeRequestBadge(aMediaRequest({ state })).label,
       ),
-    ).toEqual(['Searching', 'Release chosen', 'Filing', 'Filed', 'Ready']);
+    ).toEqual(['Searching', 'Release chosen', 'Filing', 'Filed', 'Done']);
   });
 });

@@ -229,10 +229,10 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   };
 
   return (
-    <DialogCompanion label="Ask for something" isOpen={isOpen} onClose={onClose} size="stage">
+    <DialogCompanion label="Request media" isOpen={isOpen} onClose={onClose} size="stage">
       <DialogTitle
         size="compact"
-        title="Ask for something"
+        title="Request media"
         detail="Find a film, a series, an artist or an album in the catalogue. Once it is approved, it is searched for, downloaded and filed into its library."
       />
 
@@ -405,13 +405,29 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
         )}
       </DialogContent>
 
-      <DialogFooter>
-        {problem === null ? null : (
-          <span role="alert" className="mr-auto text-sm text-danger">
-            {problem}
-          </span>
-        )}
-
+      <DialogFooter
+        note={problem}
+        dismiss={{ onChoose: onClose }}
+        confirm={
+          found !== null
+            ? undefined
+            : isPickedByHand
+              ? {
+                  label: 'Find releases',
+                  isDisabled: !isReady,
+                  isLoading: isFinding,
+                  onChoose: findReleases,
+                }
+              : {
+                  label: 'Ask for it',
+                  isDisabled: !isReady,
+                  isLoading: isAsking,
+                  onChoose: () => {
+                    ask();
+                  },
+                }
+        }
+      >
         {found === null ? null : (
           <Button
             variant="secondary"
@@ -420,27 +436,6 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             }}
           >
             Back
-          </Button>
-        )}
-
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-
-        {found !== null ? null : isPickedByHand ? (
-          <Button variant="glossy" disabled={!isReady} isLoading={isFinding} onClick={findReleases}>
-            Find releases
-          </Button>
-        ) : (
-          <Button
-            variant="glossy"
-            disabled={!isReady}
-            isLoading={isAsking}
-            onClick={() => {
-              ask();
-            }}
-          >
-            Ask for it
           </Button>
         )}
       </DialogFooter>

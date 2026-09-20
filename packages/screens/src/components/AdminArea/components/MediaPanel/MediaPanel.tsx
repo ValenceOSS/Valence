@@ -9,6 +9,7 @@ import {
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
 import { TextField } from '@ValenceUI/TextField';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
@@ -59,6 +60,7 @@ const MediaPanel = ({
 }: MediaPanelProps) => {
   const [search, setSearch] = useState('');
   const [rebuilding, setRebuilding] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<MediaSummary | null>(null);
   const [rebuilt, setRebuilt] = useState<ReadonlySet<string>>(new Set());
 
   const rebuild = useCallback(
@@ -76,14 +78,18 @@ const MediaPanel = ({
     [onRebuildArtefacts],
   );
 
+  const ask = useCallback((item: MediaSummary) => {
+    setConfirming(item);
+  }, []);
+
   const shown = useMemo(
     () => media.filter((item) => nameOf(item).toLowerCase().includes(search.trim().toLowerCase())),
     [media, search],
   );
 
-  const live = useRef({ rebuilding, rebuilt, onCorrect, onChooseMoment, onReencode, rebuild });
+  const live = useRef({ rebuilding, rebuilt, onCorrect, onChooseMoment, onReencode, ask });
 
-  live.current = { rebuilding, rebuilt, onCorrect, onChooseMoment, onReencode, rebuild };
+  live.current = { rebuilding, rebuilt, onCorrect, onChooseMoment, onReencode, ask };
 
   const columns = useMemo<DataTableColumn<MediaSummary>[]>(
     () => [
@@ -107,11 +113,15 @@ const MediaPanel = ({
         id: 'kind',
         header: 'Kind',
         accessorFn: (item) => (isSeries(item) ? 'Series' : 'Film'),
-        cell: ({ row }) => (
-          <Badge size="sm" tone={isSeries(row.original) ? 'accent' : 'quiet'}>
-            {isSeries(row.original) ? 'Series' : 'Film'}
-          </Badge>
-        ),
+        filterFn: (row, columnId, filterValue) =>
+          filterValue === undefined || row.getValue(columnId) === filterValue,
+        meta: {
+          filterOptions: [
+            { id: 'Film', label: 'Films' },
+            { id: 'Series', label: 'Series' },
+          ],
+        },
+        cell: ({ row }) => <Badge size="sm">{isSeries(row.original) ? 'Series' : 'Film'}</Badge>,
       },
       {
         id: 'year',
@@ -167,7 +177,7 @@ const MediaPanel = ({
                       icon: <Icon of={RefreshIcon} size={15} />,
                       isDisabled: live.current.rebuilding === row.original.id,
                       onChoose: () => {
-                        void live.current.rebuild(row.original);
+                        live.current.ask(row.original);
                       },
                     },
                     {
@@ -241,6 +251,26 @@ const MediaPanel = ({
           }
         />
       )}
+      <ConfirmDialog
+        isOpen={confirming !== null}
+        title={`Rebuild the previews for ${confirming === null ? 'this title' : nameOf(confirming)}?`}
+        detail="Its previews and thumbnails are thrown away and made again from the file, which takes a while and uses the server's encoder."
+        confirmLabel="Rebuild previews"
+        isDestructive
+        isBusy={rebuilding !== null}
+        onClose={() => {
+          setConfirming(null);
+        }}
+        onConfirm={() => {
+          if (confirming === null) {
+            return;
+          }
+
+          void rebuild(confirming).then(() => {
+            setConfirming(null);
+          });
+        }}
+      />
     </PanelCard>
   );
 };

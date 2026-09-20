@@ -65,7 +65,7 @@ const RequestReleasesTab = ({ request, onPicked }: RequestReleasesTabProps) => {
       )}
 
       {found.data === undefined ? (
-        <Spinner label="Asking every indexer" size="sm" />
+        <Spinner isCentered label="Asking every indexer" size="sm" />
       ) : (
         <ReleasePickTable
           found={found.data}

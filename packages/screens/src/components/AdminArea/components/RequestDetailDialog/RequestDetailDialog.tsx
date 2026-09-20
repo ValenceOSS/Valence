@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -154,11 +153,7 @@ const RequestDetailDialog = ({
           )}
         </DialogContent>
 
-        <DialogFooter>
-          <Button variant="secondary" onClick={onClose}>
-            Close
-          </Button>
-        </DialogFooter>
+        <DialogFooter dismiss={{ onChoose: onClose }} />
       </Tabs>
     </DialogCompanion>
   );

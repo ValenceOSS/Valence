@@ -6,6 +6,8 @@ const SCROLL_FRACTION = 0.85;
 type PagedScroller<Element extends HTMLElement> = {
   trackRef: RefObject<Element | null>;
   pages: { count: number; at: number };
+  isAtStart: boolean;
+  isAtEnd: boolean;
   peek: number;
   behind: number;
   measure: () => void;
@@ -71,14 +73,17 @@ const measureOf = (track: HTMLElement): Measured => {
  * the item count, since what fits depends on the window rather than on the data.
  *
  * @param watching - What the contents depend on, so the measurement is taken again when they change.
- * @returns A ref for the track, the pages found, how much of the next card shows, and ways to
- *   measure and move it.
+ * @returns A ref for the track, the pages found, whether the row is at either end of itself, how
+ *   much of the next card shows, and ways to measure and move it. The ends are read from where the
+ *   row actually is rather than from the page number, since a row rarely ends on a whole page and a
+ *   rounded page number there says the wrong thing about which way is left to go.
  */
 const usePagedScroller = <Element extends HTMLElement>(
   watching: DependencyList = [],
 ): PagedScroller<Element> => {
   const trackRef = useRef<Element>(null);
   const [pages, setPages] = useState({ count: 1, at: 0 });
+  const [edges, setEdges] = useState({ isAtStart: true, isAtEnd: true });
   const [peek, setPeek] = useState(0);
   const [behind, setBehind] = useState(0);
 
@@ -99,6 +104,16 @@ const usePagedScroller = <Element extends HTMLElement>(
 
     setPages((current) =>
       current.count === found.count && current.at === found.at ? current : found,
+    );
+    const reached = {
+      isAtStart: track.scrollLeft <= 1,
+      isAtEnd: track.scrollLeft >= beyond - 1,
+    };
+
+    setEdges((current) =>
+      current.isAtStart === reached.isAtStart && current.isAtEnd === reached.isAtEnd
+        ? current
+        : reached,
     );
     setPeek((current) => (current === showing ? current : showing));
     setBehind((current) => (current === trailing ? current : trailing));
@@ -132,7 +147,7 @@ const usePagedScroller = <Element extends HTMLElement>(
     track.scrollTo({ left: Math.max(0, page * measureOf(track).step), behavior: 'smooth' });
   };
 
-  return { trackRef, pages, peek, behind, measure, scrollTo };
+  return { trackRef, pages, ...edges, peek, behind, measure, scrollTo };
 };
 
 export { usePagedScroller };

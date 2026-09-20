@@ -9,6 +9,7 @@ type TrackListProps = {
   numbering?: 'track' | 'position';
   onRemove?: (index: number) => void;
   onMove?: (index: number, direction: 'up' | 'down') => void;
+  onReorder?: (from: number, to: number) => void;
 };
 
 export type { TrackListProps };

@@ -71,11 +71,7 @@ const SessionCard = ({
             className="h-full w-full object-cover"
           />
         ) : (
-          <Icon
-            of={listening === null ? Tv01Icon : MusicNote01Icon}
-            size={20}
-            className="text-text-muted"
-          />
+          <Icon of={listening === null ? Tv01Icon : MusicNote01Icon} size={20} tone="muted" />
         )}
       </span>
 
@@ -89,22 +85,16 @@ const SessionCard = ({
           </span>
 
           {listening === null || playback !== null ? null : (
-            <Badge size="sm" tone={listening.delivery === 'encoded' ? 'accent' : 'quiet'}>
-              {listening.delivery === 'encoded' ? 'Encoding' : 'Direct'}
-            </Badge>
+            <Badge size="sm">{listening.delivery === 'encoded' ? 'Encoding' : 'Direct'}</Badge>
           )}
 
           {playback === null ? null : (
-            <Badge size="sm" tone={playback.mode === 'transcode' ? 'accent' : 'quiet'}>
-              {playback.mode === 'transcode' ? 'Transcoding' : 'Direct'}
-            </Badge>
+            <Badge size="sm">{playback.mode === 'transcode' ? 'Transcoding' : 'Direct'}</Badge>
           )}
 
           {playback === null ||
           (playback.reuse !== 'whole' && playback.reuse !== 'shared') ? null : (
-            <Badge size="sm" tone="success">
-              {playback.reuse === 'whole' ? 'Cached' : 'Shared'}
-            </Badge>
+            <Badge size="sm">{playback.reuse === 'whole' ? 'Cached' : 'Shared'}</Badge>
           )}
         </span>
 

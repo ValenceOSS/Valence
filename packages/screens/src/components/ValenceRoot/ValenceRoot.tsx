@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { MotionConfig } from 'motion/react';
 import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
 import { useAppliedTheme } from '@ValenceScreens/theme/useAppliedTheme';
+import { useAppliedRoundness } from '@ValenceScreens/roundness/useAppliedRoundness';
 import { useAppliedMotion } from '@ValenceScreens/motion/useAppliedMotion';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { App } from '@ValenceScreens/components/App/App';
@@ -32,6 +33,7 @@ const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
   const wasOffline = useRef(isOffline);
 
   useAppliedTheme();
+  useAppliedRoundness();
 
   const howMuchMovement = useAppliedMotion();
 

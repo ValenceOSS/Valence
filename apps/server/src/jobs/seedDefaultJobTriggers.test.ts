@@ -27,6 +27,7 @@ const SETTINGS: ServerSettings = {
   ownerAccountId: '',
   splashscreenFile: null,
   reencodesAwaitingReviewCap: 5,
+  roundness: 'default',
 };
 
 const build = (seededJobTriggerKinds: string[] = []) => ({

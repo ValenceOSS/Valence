@@ -70,7 +70,7 @@ const MusicTile = ({
       {onPlay === undefined ? null : (
         <span className={`pointer-events-none absolute inset-x-0 top-0 aspect-square ${LIFTS}`}>
           <Button
-            variant="glossy"
+            variant="confirm"
             size="none"
             isIconOnly
             label={`Play ${title}`}

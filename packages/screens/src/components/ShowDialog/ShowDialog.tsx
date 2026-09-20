@@ -303,7 +303,7 @@ const ShowDialog = ({
                 }}
               />
             ) : isLoading ? (
-              <Spinner label="Reading the episodes" size="sm" />
+              <Spinner isCentered label="Reading the episodes" size="sm" />
             ) : inOrder.length === 0 ? (
               <p className="text-sm text-text-muted">
                 Nothing here yet. Episodes appear as they are scanned.
@@ -346,12 +346,12 @@ const ShowDialog = ({
           label="More to do with this programme"
           primary={
             carryingOn === null ? (
-              <Button variant="glossy" size="lg" isLoading disabled>
+              <Button variant="confirm" size="lg" isLoading disabled>
                 Reading the episodes
               </Button>
             ) : (
               <Button
-                variant="glossy"
+                variant="confirm"
                 size="lg"
                 onClick={() => {
                   onPlay(carryingOn.episode, carryingOn.startSeconds);
@@ -372,6 +372,7 @@ const ShowDialog = ({
               : [
                   {
                     id: 'trailer',
+                    isPinned: true,
                     label: 'Watch the trailer',
                     icon: <Icon of={FilmRoll01Icon} size={18} />,
                     onChoose: () => {
@@ -414,6 +415,7 @@ const ShowDialog = ({
               : [
                   {
                     id: 'share',
+                    isPinned: true,
                     label: 'Share',
                     icon: <Icon of={Link01Icon} size={18} />,
                     onChoose: () => {

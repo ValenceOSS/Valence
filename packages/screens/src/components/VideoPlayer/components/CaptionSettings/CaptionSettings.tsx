@@ -31,10 +31,7 @@ const EDGES = [
  * @param onReset - Called to put every choice back to its default.
  */
 const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => (
-  <section
-    aria-label="Caption settings"
-    className="flex w-full flex-col gap-4 text-sm text-on-scrim"
-  >
+  <section aria-label="Caption settings" className="flex w-full flex-col gap-4 text-sm text-text">
     <p
       aria-label="Caption preview"
       className="rounded-md px-3 py-2 text-center"
@@ -57,7 +54,7 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
 
       <Slider
         label="Caption size"
-        tone="overlay"
+        tone="default"
         value={style.fontScale}
         max={300}
         step={10}
@@ -90,7 +87,7 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
 
       <Slider
         label="Caption background opacity"
-        tone="overlay"
+        tone="default"
         value={Math.round(style.backgroundOpacity * 100)}
         max={100}
         step={5}

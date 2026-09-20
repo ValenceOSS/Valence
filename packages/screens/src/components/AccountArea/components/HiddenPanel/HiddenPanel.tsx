@@ -150,9 +150,7 @@ const HiddenPanel = () => {
           }}
         />
       ) : asked.isPending ? (
-        <div className="p-4">
-          <Spinner label="Reading what you have hidden" size="sm" />
-        </div>
+        <Spinner isCentered label="Reading what you have hidden" size="sm" />
       ) : (
         <DataTable
           label="Things you have hidden"

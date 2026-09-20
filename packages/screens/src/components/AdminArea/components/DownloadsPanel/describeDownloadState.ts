@@ -1,5 +1,6 @@
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 import type { StateBadge } from '@ValenceScreens/components/AdminArea/StateBadge';
+import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
 
 /**
  * Says how a download is, as a badge and the line beneath it, with the client's own reason
@@ -11,13 +12,13 @@ import type { StateBadge } from '@ValenceScreens/components/AdminArea/StateBadge
 const describeDownloadState = (download: QueuedDownload): StateBadge => {
   switch (download.state) {
     case 'queued':
-      return { label: 'Queued', tone: 'quiet', detail: download.problem };
+      return { ...STATUS_LOOK.queued, detail: download.problem };
     case 'downloading':
-      return { label: 'Downloading', tone: 'busy', detail: download.problem };
+      return { ...STATUS_LOOK.working, label: 'Downloading', detail: download.problem };
     case 'stalled':
       return {
+        ...STATUS_LOOK.attention,
         label: 'Stalled',
-        tone: 'warning',
         detail:
           download.problem ??
           (download.protocol === 'torrent' ? 'Nobody is sending it.' : 'Nothing is arriving.'),
@@ -26,24 +27,23 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
       return { label: 'Paused', tone: 'quiet', detail: download.problem };
     case 'processing':
       return {
+        ...STATUS_LOOK.working,
         label: 'Finishing',
-        tone: 'highlight',
         detail: download.protocol === 'usenet' ? 'Checking and unpacking.' : 'Checking.',
       };
     case 'done':
       if (download.filedInto !== null) {
         return {
-          label: 'Completed',
-          tone: 'success',
+          ...STATUS_LOOK.done,
           detail: `Filed into ${download.filedInto}.`,
         };
       }
 
       return download.filingProblem === null
-        ? { label: 'Done', tone: 'success', detail: download.problem }
-        : { label: 'Not filed', tone: 'warning', detail: download.filingProblem };
+        ? { ...STATUS_LOOK.done, detail: download.problem }
+        : { ...STATUS_LOOK.attention, label: 'Not filed', detail: download.filingProblem };
     case 'failed':
-      return { label: 'Failed', tone: 'danger', detail: download.problem ?? 'It failed.' };
+      return { ...STATUS_LOOK.failed, detail: download.problem ?? 'It failed.' };
   }
 };
 

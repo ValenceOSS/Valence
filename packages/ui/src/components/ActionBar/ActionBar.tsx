@@ -3,68 +3,75 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
-import type { ActionBarProps } from './ActionBar.types';
+import type { ActionBarAction, ActionBarProps } from './ActionBar.types';
 
 /**
- * The things a dialog is for: the one worth pressing, and the rest beside it.
+ * The things a dialog is for: the one worth pressing, the few worth having beside it, and the rest
+ * one press away.
  *
- * On anything wide they are laid out as equal columns, which is what a row of actions should look
- * like when there is room for it. On a phone there is not: three of them either run off the side or
- * wrap into a grid with a hole in it, and a fourth makes every label unreadable. So the main action
- * keeps the bar and the rest fold into a menu — the same actions, in the same order, reached by one
- * more press.
+ * A dialog for a film can do a dozen things, and a row of a dozen buttons is a wall nobody reads. So
+ * the main action keeps the bar, the actions that ask to be pinned sit beside it, and everything
+ * else folds into a menu at the end — the same actions, in the same order. On a phone there is no
+ * room for the pinned ones either, so they fold in as well.
  *
- * The two arrangements are both drawn and one is hidden, rather than measured and chosen. What to
- * show is a question about width, which CSS already knows the answer to; asking JavaScript means
- * asking again on every resize and being wrong until the first one.
+ * Both arrangements are drawn and one is hidden, rather than measured and chosen. What to show is a
+ * question about width, which CSS already knows the answer to; asking JavaScript means asking again
+ * on every resize and being wrong until the first one.
  *
  * @param label - What the folded menu is, read out to anybody who cannot see it.
  * @param primary - The action worth pressing, which keeps the bar at every width.
- * @param actions - Everything else, shown beside it or folded into the menu.
+ * @param actions - Everything else. Those marked pinned sit beside the main one where there is room.
  * @param className - Extra classes for the caller's own layout.
  */
-const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => (
-  <div
-    className={cn(
-      'grid w-full gap-3',
-      actions.length === 0 ? 'grid-cols-1' : 'grid-cols-[1fr_auto]',
-      'sm:grid-flow-col sm:grid-cols-none sm:[grid-auto-columns:1fr]',
-      className,
-    )}
-  >
-    {primary}
+const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
+  const pinned = actions.filter((action) => action.isPinned === true);
+  const folded = actions.filter((action) => action.isPinned !== true);
 
-    {actions.length === 0 ? null : (
-      <>
-        <span className="hidden sm:contents">
-          {actions.map((action) => (
-            <Button key={action.id} variant="secondary" size="lg" onClick={action.onChoose}>
-              {action.icon}
-              {action.label}
-            </Button>
-          ))}
-        </span>
+  const menuOf = (items: readonly ActionBarAction[]) =>
+    items.map((action) => ({
+      id: action.id,
+      label: action.label,
+      ...(action.icon === undefined ? {} : { icon: action.icon }),
+      onChoose: action.onChoose,
+    }));
 
-        <ActionMenu
-          label={label}
-          align="end"
-          className="size-12 border border-[var(--surface-line)] bg-secondary sm:hidden"
-          trigger={<Icon of={MoreHorizontalIcon} size={22} />}
-          groups={[
-            {
-              items: actions.map((action) => ({
-                id: action.id,
-                label: action.label,
-                ...(action.icon === undefined ? {} : { icon: action.icon }),
-                onChoose: action.onChoose,
-              })),
-            },
-          ]}
-        />
-      </>
-    )}
-  </div>
-);
+  return (
+    <div className={cn('flex w-full items-center justify-between gap-3', className)}>
+      {primary}
+
+      {actions.length === 0 ? null : (
+        <>
+          <span className="hidden items-center gap-3 sm:flex">
+            {pinned.map((action) => (
+              <Button key={action.id} variant="glossy" size="lg" onClick={action.onChoose}>
+                {action.icon}
+                {action.label}
+              </Button>
+            ))}
+
+            {folded.length === 0 ? null : (
+              <ActionMenu
+                label={label}
+                align="end"
+                className="size-10 border border-[var(--surface-line)] bg-[var(--surface-hover)]"
+                trigger={<Icon of={MoreHorizontalIcon} size={22} />}
+                groups={[{ items: menuOf(folded) }]}
+              />
+            )}
+          </span>
+
+          <ActionMenu
+            label={label}
+            align="end"
+            className="size-10 border border-[var(--surface-line)] bg-[var(--surface-hover)] sm:hidden"
+            trigger={<Icon of={MoreHorizontalIcon} size={22} />}
+            groups={[{ items: menuOf(actions) }]}
+          />
+        </>
+      )}
+    </div>
+  );
+};
 
 ActionBar.displayName = 'ActionBar';
 

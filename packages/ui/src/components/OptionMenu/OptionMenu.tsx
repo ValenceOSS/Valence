@@ -2,6 +2,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { Tick02Icon } from '@hugeicons/core-free-icons';
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import { cn } from '@ValenceUI/cn';
+import { MENU } from '@ValenceUI/tokens/menu';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
 import type { OptionMenuProps } from './OptionMenu.types';
@@ -64,7 +65,7 @@ const OptionMenu = ({
             ? { style: { minWidth: 'var(--radix-dropdown-menu-trigger-width)' } }
             : {})}
           className={cn(
-            'valence-float z-50 flex max-h-80 flex-col overflow-hidden rounded-lg p-1.5 text-sm text-text',
+            'valence-float z-50 flex max-h-80 flex-col overflow-hidden rounded-xl p-1.5 text-sm text-text',
             POPUP_MOTION,
           )}
         >
@@ -72,11 +73,9 @@ const OptionMenu = ({
             {groups.map((group) => (
               <RadixMenu.Group
                 key={group.name}
-                className="flex min-w-44 flex-1 flex-col overflow-y-auto border-l border-[var(--surface-line)] pl-1.5 first:border-l-0 first:pl-0"
+                className="flex min-w-44 flex-1 flex-col overflow-y-auto rounded-lg border-l border-[var(--surface-line)] pl-1.5 first:border-l-0 first:pl-0"
               >
-                <RadixMenu.Label className="px-3 py-1.5 text-xs uppercase tracking-[0.14em] text-text-muted">
-                  {group.name}
-                </RadixMenu.Label>
+                <RadixMenu.Label className={MENU.stickyLabel}>{group.name}</RadixMenu.Label>
 
                 <RadixMenu.RadioGroup
                   value={group.selectedId}

@@ -1,9 +1,14 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Delete02Icon, MoreHorizontalIcon, PencilEdit02Icon } from '@hugeicons/core-free-icons';
+import {
+  Delete02Icon,
+  MoreHorizontalIcon,
+  PencilEdit02Icon,
+  Add01Icon,
+} from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -128,9 +133,23 @@ const ProfilesPanel = () => {
     [named],
   );
 
-  if (isAdding || editing !== null) {
-    return (
+  return (
+    <PanelCard
+      title="Profiles"
+      isFlush
+      actions={
+        <PanelCardAction
+          icon={Add01Icon}
+          onClick={() => {
+            setIsAdding(true);
+          }}
+        >
+          Add media profile
+        </PanelCardAction>
+      }
+    >
       <ProfileEditor
+        isOpen={isAdding || editing !== null}
         profile={editing}
         onClose={() => {
           setIsAdding(false);
@@ -140,25 +159,7 @@ const ProfilesPanel = () => {
           void reread();
         }}
       />
-    );
-  }
 
-  return (
-    <PanelCard
-      title="Profiles"
-      isFlush
-      actions={
-        <Button
-          variant="ghost"
-          size="xs"
-          onClick={() => {
-            setIsAdding(true);
-          }}
-        >
-          Add a profile
-        </Button>
-      }
-    >
       <ConfirmDialog
         title={`Remove ${removing?.name ?? 'this profile'}?`}
         detail="Searches can no longer be judged against it, and the libraries it was for will have none."
@@ -198,9 +199,7 @@ const ProfilesPanel = () => {
           }}
         />
       ) : profiles.isPending ? (
-        <div className="p-4">
-          <Spinner label="Reading the profiles" size="sm" />
-        </div>
+        <Spinner isCentered label="Reading the profiles" size="sm" />
       ) : (
         <DataTable
           label="Profiles"

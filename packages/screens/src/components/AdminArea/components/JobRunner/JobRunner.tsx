@@ -9,28 +9,22 @@ import {
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
-import { HoverCard } from '@ValenceUI/HoverCard';
-import { Dialog } from '@ValenceUI/Dialog';
-import { DialogContent } from '@ValenceUI/DialogContent';
-import { DialogFooter } from '@ValenceUI/DialogFooter';
-import { DialogTitle } from '@ValenceUI/DialogTitle';
+import { Button } from '@ValenceUI/Button';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { ClearLibraryPartsDialog } from '@ValenceScreens/components/AdminArea/components/ClearLibraryPartsDialog/ClearLibraryPartsDialog';
 import { RunLibraryJobDialog } from '@ValenceScreens/components/AdminArea/components/RunLibraryJobDialog/RunLibraryJobDialog';
-import { ScanProgressBar } from '@ValenceScreens/components/AdminArea/components/ScanProgressBar/ScanProgressBar';
-import { describeQueueKind } from '@ValenceScreens/components/AdminArea/describeQueueKind';
+import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
 import { summariseProgress } from './summariseProgress';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { JobDefinition } from '@ValenceClient/admin/fetchAdmin';
 import type { JobRunnerProps } from './JobRunner.types';
-
-const WORKING_SHOWN = 4;
+import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 
 /**
  * Every job the server knows how to do, each with what it is for, whether it is running now and how
- * far along, and a way to start or stop it by hand. Pressing into a job opens what makes it run on
- * its own, so the list stays a list rather than becoming a page of settings.
+ * far along, and a way to start or stop it by hand. Pressing the i beside a running job opens what it is
+ * doing, and pressing into a job opens what makes it run on its own, so the list stays a list rather than becoming a page of settings.
  *
  * Work against a library waits for work against a library, and nothing else waits for anything. The
  * rule was that one running job disabled Run now on every other, which is right for the thing it was
@@ -64,6 +58,8 @@ const JobRunner = ({
   const [confirming, setConfirming] = useState<JobDefinition | null>(null);
   const [choosing, setChoosing] = useState<JobDefinition | null>(null);
   const [clearing, setClearing] = useState<JobDefinition | null>(null);
+  const [stopping, setStopping] = useState<JobDefinition | null>(null);
+  const [watching, setWatching] = useState<JobDefinition | null>(null);
 
   const summaryFor = useCallback(
     (kind: string) =>
@@ -106,26 +102,28 @@ const JobRunner = ({
     [onRun],
   );
 
+  const ask = useCallback((definition: JobDefinition) => {
+    setStopping(definition);
+  }, []);
+
+  const watchedSummary = watching === null ? null : summaryFor(watching.kind);
+
   const isBusyWithALibrary = definitions.some(
     (definition) => definition.needsLibrary && summaryFor(definition.kind) !== null,
   );
 
   const live = useRef({
     summaryFor,
-    jobIdsFor,
-    working,
     askOrRun,
-    onStop,
+    ask,
     onOpenSchedule,
     isBusyWithALibrary,
   });
 
   live.current = {
     summaryFor,
-    jobIdsFor,
-    working,
     askOrRun,
-    onStop,
+    ask,
     onOpenSchedule,
     isBusyWithALibrary,
   };
@@ -148,9 +146,7 @@ const JobRunner = ({
         header: 'Scope',
         accessorFn: (definition) => (definition.needsLibrary ? 'Libraries' : 'Server'),
         cell: ({ row }) => (
-          <Badge size="sm" tone={row.original.needsLibrary ? 'quiet' : 'accent'}>
-            {row.original.needsLibrary ? 'Libraries' : 'Server'}
-          </Badge>
+          <Badge size="sm">{row.original.needsLibrary ? 'Libraries' : 'Server'}</Badge>
         ),
       },
       {
@@ -162,71 +158,30 @@ const JobRunner = ({
 
           if (summary === null) {
             return (
-              <Badge size="sm" tone="quiet">
+              <Badge size="sm" tone="accent">
                 Idle
               </Badge>
             );
           }
 
-          const jobIds = live.current.jobIdsFor(row.original.kind);
-
-          const onNow = live.current.working.filter(
-            (job) =>
-              job.state === 'running' &&
-              job.correlationId !== null &&
-              jobIds.has(job.correlationId),
-          );
-
           return (
-            <HoverCard
-              side="left"
-              align="center"
-              detail={
-                <div className="flex flex-col gap-3">
-                  <span className="text-xs uppercase tracking-[0.14em] text-text-muted">
-                    {row.original.label}
-                  </span>
-
-                  <ScanProgressBar
-                    label={row.original.label}
-                    phase={summary.phase}
-                    processed={summary.processed}
-                    total={summary.total}
-                  />
-
-                  {onNow.length === 0 ? (
-                    <p className="font-body text-xs text-text-muted">
-                      Nothing in the transcoder's own queue is tied to this yet.
-                    </p>
-                  ) : (
-                    <ul className="flex flex-col gap-1.5">
-                      {onNow.slice(0, WORKING_SHOWN).map((job) => (
-                        <li key={job.id} className="flex min-w-0 flex-col">
-                          <span className="truncate text-xs text-text" title={job.subject}>
-                            {job.subject}
-                          </span>
-                          <span className="text-xs text-text-muted">
-                            {describeQueueKind(job.kind)}
-                          </span>
-                        </li>
-                      ))}
-
-                      {onNow.length <= WORKING_SHOWN ? null : (
-                        <li className="font-body text-xs text-text-muted">
-                          and {(onNow.length - WORKING_SHOWN).toString()} more
-                        </li>
-                      )}
-                    </ul>
-                  )}
-                </div>
-              }
-            >
-              <Badge size="sm" tone="accent">
-                Running
+            <span className="flex items-center gap-1.5">
+              <Badge size="sm" tone={describeJobStatus('running').tone}>
+                {describeJobStatus('running').label}
               </Badge>
 
-              <Icon of={InformationCircleIcon} size={15} className="shrink-0 text-text-muted" />
-            </HoverCard>
+              <Button
+                variant="subtle"
+                size="none"
+                isIconOnly
+                label={`What ${row.original.label} is doing`}
+                onClick={() => {
+                  setWatching(row.original);
+                }}
+              >
+                <Icon of={InformationCircleIcon} size={15} />
+              </Button>
+            </span>
           );
         },
       },
@@ -264,7 +219,7 @@ const JobRunner = ({
                             icon: <Icon of={StopIcon} size={15} />,
                             isDestructive: true,
                             onChoose: () => {
-                              live.current.onStop(row.original.kind);
+                              live.current.ask(row.original);
                             },
                           },
                         ]),
@@ -319,46 +274,62 @@ const JobRunner = ({
         }}
       />
 
-      <Dialog
-        label={confirming === null ? 'Run this job?' : `Run ${confirming.label}?`}
+      <RunningWorkDialog
+        title={watching?.label ?? ''}
+        isOpen={watching !== null}
+        progress={
+          watchedSummary === null ? [] : [{ label: watching?.label ?? '', ...watchedSummary }]
+        }
+        tasks={
+          watching === null
+            ? []
+            : working.filter(
+                (job) =>
+                  job.correlationId !== null && jobIdsFor(watching.kind).has(job.correlationId),
+              )
+        }
+        onClose={() => {
+          setWatching(null);
+        }}
+      />
+
+      <ConfirmDialog
         isOpen={confirming !== null}
+        title={confirming === null ? 'Run this job?' : `${confirming.label}?`}
+        detail={confirming === null ? '' : `${confirming.description} This cannot be undone.`}
+        confirmLabel={confirming?.label ?? 'Run'}
+        isDestructive
         onClose={() => {
           setConfirming(null);
         }}
-      >
-        {confirming === null ? null : (
-          <>
-            <DialogTitle title={`${confirming.label}?`} />
+        onConfirm={() => {
+          if (confirming === null) {
+            return;
+          }
 
-            <DialogContent>
-              <p className="text-sm text-text-muted">
-                {confirming.description} This cannot be undone.
-              </p>
-            </DialogContent>
+          onRun(confirming.kind);
+          setConfirming(null);
+        }}
+      />
 
-            <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setConfirming(null);
-                }}
-              >
-                Cancel
-              </Button>
+      <ConfirmDialog
+        isOpen={stopping !== null}
+        title={stopping === null ? 'Stop this job?' : `Stop ${stopping.label}?`}
+        detail="What it has done so far is kept, and the rest is left undone until it is run again."
+        confirmLabel="Stop it"
+        isDestructive
+        onClose={() => {
+          setStopping(null);
+        }}
+        onConfirm={() => {
+          if (stopping === null) {
+            return;
+          }
 
-              <Button
-                variant="primary"
-                onClick={() => {
-                  onRun(confirming.kind);
-                  setConfirming(null);
-                }}
-              >
-                {confirming.label}
-              </Button>
-            </DialogFooter>
-          </>
-        )}
-      </Dialog>
+          onStop(stopping.kind);
+          setStopping(null);
+        }}
+      />
     </>
   );
 };

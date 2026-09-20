@@ -6,6 +6,7 @@ import { describeQueueKind } from '@ValenceScreens/components/AdminArea/describe
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Job } from '@ValenceClient/admin/fetchAdmin';
 import type { BackgroundJobsProps } from './BackgroundJobs.types';
+import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 
 /**
  * Sums up what the queue is doing in one line, so the heading says whether anything is happening
@@ -23,13 +24,6 @@ const describeQueue = (jobs: Job[]): string =>
     .join('|');
 
 const NOTHING_QUEUED: Job[] = [];
-
-const JOB_TONES: Record<Job['state'], 'warning' | 'accent' | 'success' | 'danger'> = {
-  queued: 'warning',
-  running: 'accent',
-  finished: 'success',
-  failed: 'danger',
-};
 
 /**
  * What the queue has been doing, as one paged table: what ran, how it ended, how long it took, and
@@ -72,8 +66,8 @@ const BackgroundJobsTable = ({
         header: 'State',
         accessorFn: (job) => job.state,
         cell: ({ row }) => (
-          <Badge size="sm" tone={JOB_TONES[row.original.state]}>
-            {row.original.state}
+          <Badge size="sm" tone={describeJobStatus(row.original.state).tone}>
+            {describeJobStatus(row.original.state).label}
           </Badge>
         ),
       },

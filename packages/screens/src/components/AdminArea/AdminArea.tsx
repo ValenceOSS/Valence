@@ -48,6 +48,8 @@ import {
 } from '@ValenceClient/admin/fetchAdmin';
 import { rebuildArtefacts } from '@ValenceClient/library/fetchLibrary';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
+import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -69,7 +71,6 @@ import { describeAcceleration } from './describeAcceleration';
 import { describeChains } from './describeChains';
 import { describeToneMapping } from './describeToneMapping';
 import {
-  resumeRunning,
   watchJob,
   subscribe as subscribeToScans,
   getSnapshot as getScanSnapshot,
@@ -82,6 +83,9 @@ import {
   clearPartsOfAll,
   stopJobs,
 } from './scanCoordinator';
+import { notify } from '@ValenceUI/notify';
+import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
+import { followRunningJobs } from './followRunningJobs';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type {
@@ -171,9 +175,7 @@ const AdminArea = ({
   const libraries = useMemo(() => askedLibraries.data ?? [], [askedLibraries.data]);
 
   const askedMedia = useQuery(adminQueries.everything(libraries.map((library) => library.id)));
-  const askedEveryFile = useQuery(
-    adminQueries.everyFile(libraries.map((library) => library.id)),
-  );
+  const askedEveryFile = useQuery(adminQueries.everyFile(libraries.map((library) => library.id)));
   const askedReencodes = useQuery(adminQueries.reencodes());
 
   const media = askedMedia.data ?? [];
@@ -480,9 +482,7 @@ const AdminArea = ({
     }
   };
 
-  useEffect(() => {
-    void resumeRunning();
-  }, []);
+  useEffect(() => followRunningJobs(), []);
 
   const reloadWebhooks = useCallback(
     async () => cache.invalidateQueries({ queryKey: adminQueries.webhooks().queryKey }),
@@ -623,7 +623,9 @@ const AdminArea = ({
           stats={[
             {
               label: 'Processor',
-              value: `${(resources?.systemCpuPercent ?? 0).toFixed(0)}%`,
+              value: (
+                <AnimatedNumber value={Math.round(resources?.systemCpuPercent ?? 0)} suffix="%" />
+              ),
               fraction: (resources?.systemCpuPercent ?? 0) / 100,
               detail:
                 resources === null
@@ -669,7 +671,7 @@ const AdminArea = ({
           transition={revealTransition(prefersReducedMotion)}
           className="flex flex-wrap items-center gap-3 rounded-xl border border-danger/40 bg-danger/10 px-5 py-4 font-body text-sm text-text"
         >
-          <Icon of={Alert02Icon} size={18} className="shrink-0 text-danger" />
+          <Icon of={Alert02Icon} size={18} tone="danger" className="shrink-0" />
           Some of this could not be read from the server, so parts of the page may be missing rather
           than empty.
           <Button
@@ -746,6 +748,7 @@ const AdminArea = ({
               libraries={libraries}
               profiles={askedProfiles.data ?? []}
               progress={scanProgress}
+              working={monitor?.queue.jobs ?? []}
               isScanningAll={isScanningAll}
               isResettingAll={isResettingAll}
               onScan={(libraryId, force) => {
@@ -771,7 +774,19 @@ const AdminArea = ({
               isUnreachable={unreachable.has('media')}
               media={media}
               onCorrect={setCorrecting}
-              onChooseMoment={setChoosingMoment}
+              onChooseMoment={(item) => {
+                void fetchTrickplay(item.id).then((found) => {
+                  if (found === null) {
+                    notify.say(`Scrub previews for ${item.title} have not finished yet.`, {
+                      description: 'A preview moment can be chosen once they have.',
+                    });
+
+                    return;
+                  }
+
+                  setChoosingMoment(item);
+                });
+              }}
               onRebuildArtefacts={async (item) => (await rebuildArtefacts(item.id)) !== null}
               onReencode={(item) => {
                 setIsChoosingReencode(true);
@@ -847,6 +862,10 @@ const AdminArea = ({
               }}
               onHardwareAccelSaved={() => {
                 void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+              }}
+              onRoundnessSaved={() => {
+                void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                void cache.invalidateQueries({ queryKey: appearanceQueries.key });
               }}
               onPreviewQualitySaved={() => {
                 void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });

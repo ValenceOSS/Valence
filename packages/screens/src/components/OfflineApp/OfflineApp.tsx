@@ -97,7 +97,7 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
 
           {!isReachable ? null : (
             <Button
-              variant="soft"
+              variant="glossy"
               size="sm"
               onClick={() => {
                 goOffline(false);

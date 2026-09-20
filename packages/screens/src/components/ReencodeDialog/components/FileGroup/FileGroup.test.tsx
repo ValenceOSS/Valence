@@ -31,14 +31,25 @@ const file = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
 const programme = {
   key: 'Pluribus',
   title: 'Pluribus',
-  items: [file(), file({ id: 'item-2', title: 'Grace', episodeNumber: 2, sizeBytes: 2 * GIGABYTE })],
+  items: [
+    file(),
+    file({ id: 'item-2', title: 'Grace', episodeNumber: 2, sizeBytes: 2 * GIGABYTE }),
+  ],
   sizeBytes: 6 * GIGABYTE,
 };
 
 const alone = {
   key: 'item-9',
   title: 'Azkaban',
-  items: [file({ id: 'item-9', title: 'Azkaban', seriesTitle: null, seasonNumber: null, episodeNumber: null })],
+  items: [
+    file({
+      id: 'item-9',
+      title: 'Azkaban',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
+    }),
+  ],
   sizeBytes: 4 * GIGABYTE,
 };
 
@@ -99,9 +110,7 @@ describe('FileGroup', () => {
   });
 
   it('says it is taken when all of it is', () => {
-    render(
-      <FileGroup {...props} group={programme} chosen={new Set(['item-1', 'item-2'])} />,
-    );
+    render(<FileGroup {...props} group={programme} chosen={new Set(['item-1', 'item-2'])} />);
 
     expect(screen.getByRole('checkbox', { name: /Pluribus/ })).toHaveAttribute(
       'aria-checked',
