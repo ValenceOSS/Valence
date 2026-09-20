@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Tick02Icon } from '@hugeicons/core-free-icons';
 import { MediaCard } from './MediaCard';
 import type * as MotionReact from 'motion/react';
 
@@ -125,5 +126,24 @@ describe('MediaCard', () => {
     render(<MediaCard title="Arrival" subtitle="2016" onSelect={vi.fn()} />);
 
     expect(screen.getByText('Arrival')).toBeInTheDocument();
+  });
+
+  it('marks the corner of the artwork with an icon for one fact worth a glance', () => {
+    render(
+      <MediaCard
+        title="Dune"
+        subtitle="2021"
+        onSelect={vi.fn()}
+        corner={{ icon: Tick02Icon, label: 'In your library' }}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'In your library' })).toBeInTheDocument();
+  });
+
+  it('draws no corner mark unless asked', () => {
+    render(<MediaCard title="Dune" subtitle="2021" onSelect={vi.fn()} />);
+
+    expect(screen.queryByRole('img', { name: 'In your library' })).not.toBeInTheDocument();
   });
 });

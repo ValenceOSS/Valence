@@ -101,6 +101,7 @@
       "@ValenceUI/Logo.types": ["./packages/ui/src/components/Logo/Logo.types.ts"],
       "@ValenceUI/MaskFrames.types": ["./packages/ui/src/functions/MaskFrames.types.ts"],
       "@ValenceUI/MediaCard": ["./packages/ui/src/components/MediaCard/MediaCard.tsx"],
+      "@ValenceUI/MediaCard.types": ["./packages/ui/src/components/MediaCard/MediaCard.types.ts"],
       "@ValenceUI/Meter": ["./packages/ui/src/components/Meter/Meter.tsx"],
       "@ValenceUI/MoodBackground": [
         "./packages/ui/src/components/MoodBackground/MoodBackground.tsx"
