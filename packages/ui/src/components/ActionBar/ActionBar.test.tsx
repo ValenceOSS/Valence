@@ -39,10 +39,10 @@ describe('ActionBar', () => {
     expect(onChoose).toHaveBeenCalledOnce();
   });
 
-  it('draws the rest as flat secondary buttons, the same as every other', () => {
+  it('draws the rest as the default gray button, the same as every other', () => {
     render(<ActionBar label="More" primary={<span>Play</span>} actions={ACTIONS} />);
 
-    expect(screen.getByRole('button', { name: 'Share' })).toHaveClass('bg-background');
+    expect(screen.getByRole('button', { name: 'Share' })).toHaveClass('bg-[var(--surface-hover)]');
   });
 
   it('folds them into a menu for a phone, named for anybody who cannot see the dots', () => {
@@ -61,5 +61,30 @@ describe('ActionBar', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(ActionBar.displayName).toBe('ActionBar');
+  });
+
+  it('paints the actions beside the main one in the default gray rather than black', () => {
+    render(
+      <ActionBar
+        label="More"
+        primary={<button type="button">Play</button>}
+        actions={[{ id: 'share', label: 'Share', onChoose: vi.fn() }]}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Share' })).toHaveClass('bg-[var(--surface-hover)]');
+    expect(screen.getByRole('button', { name: 'Share' })).not.toHaveClass('bg-background');
+  });
+
+  it('centres the actions on one another vertically', () => {
+    const { container } = render(
+      <ActionBar
+        label="More"
+        primary={<button type="button">Play</button>}
+        actions={[{ id: 'share', label: 'Share', onChoose: vi.fn() }]}
+      />,
+    );
+
+    expect(container.firstElementChild).toHaveClass('items-center', 'justify-between');
   });
 });

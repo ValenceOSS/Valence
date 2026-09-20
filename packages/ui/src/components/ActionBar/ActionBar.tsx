@@ -26,7 +26,7 @@ import type { ActionBarProps } from './ActionBar.types';
 const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => (
   <div
     className={cn(
-      'grid w-full gap-3',
+      'grid w-full items-center justify-between gap-3',
       actions.length === 0 ? 'grid-cols-1' : 'grid-cols-[1fr_auto]',
       'sm:grid-flow-col sm:grid-cols-none sm:[grid-auto-columns:1fr]',
       className,
@@ -38,7 +38,7 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => (
       <>
         <span className="hidden sm:contents">
           {actions.map((action) => (
-            <Button key={action.id} variant="secondary" size="lg" onClick={action.onChoose}>
+            <Button key={action.id} variant="glossy" size="lg" onClick={action.onChoose}>
               {action.icon}
               {action.label}
             </Button>
@@ -48,7 +48,7 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => (
         <ActionMenu
           label={label}
           align="end"
-          className="size-12 border border-[var(--surface-line)] bg-secondary sm:hidden"
+          className="size-12 border border-[var(--surface-line)] bg-[var(--surface-hover)] sm:hidden"
           trigger={<Icon of={MoreHorizontalIcon} size={22} />}
           groups={[
             {
