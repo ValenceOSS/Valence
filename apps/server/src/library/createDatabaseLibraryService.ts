@@ -1917,8 +1917,8 @@ const createDatabaseLibraryService = ({
                   ],
             );
           },
-          save: async (mediaItemId, logoUrl) => {
-            await db.update(mediaItem).set({ logoUrl }).where(eq(mediaItem.id, mediaItemId));
+          save: async (mediaItemIds, logoUrl) => {
+            await db.update(mediaItem).set({ logoUrl }).where(inArray(mediaItem.id, mediaItemIds));
           },
         },
         ...(readLogoUrl === undefined ? {} : { readLogoUrl }),

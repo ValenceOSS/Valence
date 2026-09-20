@@ -15,8 +15,10 @@ const storeOf = (items: LogolessItem[]) => {
   return {
     saved,
     listMissing: vi.fn(() => Promise.resolve(items)),
-    save: vi.fn((mediaItemId: string, logoUrl: string) => {
-      saved.set(mediaItemId, logoUrl);
+    save: vi.fn((mediaItemIds: string[], logoUrl: string) => {
+      for (const mediaItemId of mediaItemIds) {
+        saved.set(mediaItemId, logoUrl);
+      }
 
       return Promise.resolve();
     }),
@@ -146,5 +148,117 @@ describe('fetchLogos', () => {
     });
 
     expect(result).toEqual({ found: 0, missing: 1 });
+  });
+});
+
+describe('fetchLogos, a series of many episodes', () => {
+  const episodesOf = (externalId: string, count: number): LogolessItem[] =>
+    Array.from({ length: count }, (_unused, at) => ({
+      id: `${externalId}-episode-${at.toString()}`,
+      externalId,
+      isSeries: true,
+    }));
+
+  it('asks the catalogue once for the series, not once for every episode', async () => {
+    const store = storeOf(episodesOf('tmdb-1', 90));
+    const readLogoUrl = vi.fn(() => Promise.resolve('https://art/series.png'));
+
+    await fetchLogos({ libraryId: 'lib', store, readLogoUrl });
+
+    expect(readLogoUrl).toHaveBeenCalledTimes(1);
+    expect(readLogoUrl).toHaveBeenCalledWith({ externalId: 'tmdb-1', isSeries: true });
+  });
+
+  it('writes the one logo against every episode in a single go', async () => {
+    const store = storeOf(episodesOf('tmdb-1', 90));
+
+    await fetchLogos({
+      libraryId: 'lib',
+      store,
+      readLogoUrl: () => Promise.resolve('https://art/series.png'),
+    });
+
+    expect(store.save).toHaveBeenCalledTimes(1);
+    expect(store.saved.size).toBe(90);
+    expect(store.saved.get('tmdb-1-episode-89')).toBe('https://art/series.png');
+  });
+
+  it('counts a series as one title found rather than ninety', async () => {
+    const store = storeOf(episodesOf('tmdb-1', 90));
+
+    const result = await fetchLogos({
+      libraryId: 'lib',
+      store,
+      readLogoUrl: () => Promise.resolve('https://art/series.png'),
+    });
+
+    expect(result).toEqual({ found: 1, missing: 0 });
+  });
+
+  it('reports progress in titles, so a library of three shows is three steps', async () => {
+    const store = storeOf([
+      ...episodesOf('tmdb-1', 40),
+      ...episodesOf('tmdb-2', 12),
+      ...episodesOf('tmdb-3', 6),
+    ]);
+    const onProgress = vi.fn();
+
+    await fetchLogos({
+      libraryId: 'lib',
+      store,
+      readLogoUrl: () => Promise.resolve(null),
+      onProgress,
+    });
+
+    expect(onProgress.mock.calls).toEqual([
+      [0, 3],
+      [1, 3],
+      [2, 3],
+      [3, 3],
+    ]);
+  });
+
+  it('keeps one series apart from another', async () => {
+    const store = storeOf([...episodesOf('tmdb-1', 3), ...episodesOf('tmdb-2', 2)]);
+
+    await fetchLogos({
+      libraryId: 'lib',
+      store,
+      readLogoUrl: ({ externalId }) => Promise.resolve(`https://art/${externalId}.png`),
+    });
+
+    expect(store.saved.get('tmdb-1-episode-0')).toBe('https://art/tmdb-1.png');
+    expect(store.saved.get('tmdb-2-episode-0')).toBe('https://art/tmdb-2.png');
+  });
+
+  it('keeps a film apart from a series the catalogue numbered the same', async () => {
+    const store = storeOf([
+      { id: 'film', externalId: '1399', isSeries: false },
+      { id: 'episode', externalId: '1399', isSeries: true },
+    ]);
+    const readLogoUrl = vi.fn(({ isSeries }: { externalId: string; isSeries: boolean }) =>
+      Promise.resolve(isSeries ? 'https://art/series.png' : 'https://art/film.png'),
+    );
+
+    await fetchLogos({ libraryId: 'lib', store, readLogoUrl });
+
+    expect(readLogoUrl).toHaveBeenCalledTimes(2);
+    expect(store.saved.get('film')).toBe('https://art/film.png');
+    expect(store.saved.get('episode')).toBe('https://art/series.png');
+  });
+
+  it('names an episode of the series when the catalogue refuses its logo', async () => {
+    const store = storeOf(episodesOf('tmdb-1', 5));
+    const onProblem = vi.fn();
+
+    await fetchLogos({
+      libraryId: 'lib',
+      store,
+      readLogoUrl: () => Promise.reject(new Error('Too many requests.')),
+      onProblem,
+    });
+
+    expect(onProblem).toHaveBeenCalledTimes(1);
+    expect(onProblem).toHaveBeenCalledWith('tmdb-1-episode-0', 'Too many requests.');
   });
 });
