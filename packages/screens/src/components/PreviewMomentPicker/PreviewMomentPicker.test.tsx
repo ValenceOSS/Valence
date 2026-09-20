@@ -93,6 +93,19 @@ describe('PreviewMomentPicker', () => {
     expect(await screen.findByRole('img', { name: 'Preview at 0:15' })).toBeInTheDocument();
   });
 
+  it('shows the frame the clip ends on beside the one it starts on', () => {
+    draw({ current: { atSeconds: 15, durationSeconds: 30 } });
+
+    expect(screen.getByText('Starts at 0:15')).toBeInTheDocument();
+    expect(screen.getByText('Ends at 0:45')).toBeInTheDocument();
+  });
+
+  it('ends the usual length after it starts when no length was given', () => {
+    draw({ current: { atSeconds: 15, durationSeconds: null } });
+
+    expect(screen.getByText('Ends at 0:39')).toBeInTheDocument();
+  });
+
   it('still says where the handle is when the item has no thumbnails yet', async () => {
     asked.fetchTrickplay.mockResolvedValue(null);
 

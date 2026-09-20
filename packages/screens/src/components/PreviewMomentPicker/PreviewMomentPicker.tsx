@@ -6,6 +6,7 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Slider } from '@ValenceUI/Slider';
 import { TextField } from '@ValenceUI/TextField';
+import { clipEnd } from './clipEnd';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { clearPreviewMoment, setPreviewMoment } from '@ValenceClient/library/fetchLibrary';
 import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
@@ -51,8 +52,8 @@ const readClipLength = (typed: string): number | null | undefined => {
  * somebody who knows the film wants to point at the shot that sells it — so this is a scrub across
  * the film with the thumbnail at each moment, and one press to keep the one under the handle.
  *
- * The frame under the handle is drawn on its own as well as under the pointer, since a chosen moment
- * that is only visible while hovering is not much of a choice to look at. Going back to automatic is
+ * The frames the clip starts and ends on are drawn side by side as well as under the pointer, since a
+ * chosen moment that is only visible while hovering is not much of a choice to look at. Going back to automatic is
  * offered only where a moment was chosen, so the dialog never offers to undo what nobody did.
  *
  * @param mediaId - The item whose preview is being chosen.
@@ -111,6 +112,7 @@ const PreviewMomentPicker = ({
   const lengthSeconds = readClipLength(clipLength);
   const isLengthWrong = lengthSeconds === undefined;
   const lastSecond = Math.max(Math.floor(durationSeconds) - 1, 0);
+  const endsAt = clipEnd(atSeconds, lengthSeconds ?? DEFAULT_CLIP_SECONDS, lastSecond);
 
   const keep = async () => {
     if (isLengthWrong) {
@@ -164,8 +166,16 @@ const PreviewMomentPicker = ({
 
       <DialogContent>
         <div className="flex flex-col gap-5">
-          <div className="flex justify-center">
-            <TrickplayPreview trickplay={trickplay} seconds={atSeconds} />
+          <div className="grid grid-cols-2 justify-items-center gap-4">
+            <div className="flex flex-col items-center gap-2">
+              <TrickplayPreview trickplay={trickplay} seconds={atSeconds} />
+              <span className="text-xs text-text-muted">Starts at {formatDuration(atSeconds)}</span>
+            </div>
+
+            <div className="flex flex-col items-center gap-2">
+              <TrickplayPreview trickplay={trickplay} seconds={endsAt} />
+              <span className="text-xs text-text-muted">Ends at {formatDuration(endsAt)}</span>
+            </div>
           </div>
 
           <Slider
