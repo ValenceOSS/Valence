@@ -53,6 +53,7 @@ import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.
 import type { Inbox } from '@ValenceClient/notifications/fetchNotifications';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { BookDialog } from '@ValenceScreens/components/BookDialog/BookDialog';
+import { useSurprise } from '@ValenceScreens/library/useSurprise';
 
 const NOTHING_WAITING = { notifications: [], unread: 0 };
 
@@ -63,7 +64,7 @@ const NOTHING_WAITING = { notifications: [], unread: 0 };
  */
 const ValenceShell = () => {
   const cache = useQueryClient();
-  const { place, go } = usePlace();
+  const { place, go, replace } = usePlace();
   const musicLights = useMusicLights();
   const navigate = useNavigate();
 
@@ -79,6 +80,19 @@ const ValenceShell = () => {
     watchParty,
     isHoldingTheScreen,
   } = useShell();
+
+  const surprise = useSurprise(pickAnything, (found) => {
+    const move = place.inspecting !== null || place.show !== null ? replace : go;
+
+    if (found.kind === 'show') {
+      move({ show: found.showId, inspecting: null });
+
+      return;
+    }
+
+    rememberItems([found.item]);
+    move({ inspecting: found.item.id, show: null });
+  });
 
   const watching = useWatchingProfile();
   const favourites = useFavourites(watching);
@@ -272,22 +286,7 @@ const ValenceShell = () => {
           }}
         />
       }
-      onSurprise={(only) => {
-        void pickAnything(only).then((found) => {
-          if (found === null) {
-            return;
-          }
-
-          if (found.kind === 'show') {
-            go({ show: found.showId });
-
-            return;
-          }
-
-          rememberItems([found.item]);
-          go({ inspecting: found.item.id });
-        });
-      }}
+      onSurprise={surprise}
       onSignOut={() => {
         void leave();
       }}
