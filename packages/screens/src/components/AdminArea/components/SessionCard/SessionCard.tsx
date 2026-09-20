@@ -5,10 +5,9 @@ import {
   MessageSquare as MessageSquareIcon,
   Monitor as MonitorIcon,
   MusicNote as MusicNoteIcon,
-  Pause as PauseIcon,
-  Play as PlayIcon,
   Stop as StopIcon,
 } from '@keyline-icons/react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -168,7 +167,7 @@ const SessionCard = ({
                 disabled={isBusy}
                 onClick={onPause}
               >
-                <Icon of={PauseIcon} size={15} />
+                <Icon of={PauseFilledIcon} size={15} />
               </Button>
             ) : (
               <Button
@@ -179,7 +178,7 @@ const SessionCard = ({
                 disabled={isBusy}
                 onClick={onResume}
               >
-                <Icon of={PlayIcon} size={15} />
+                <Icon of={PlayFilledIcon} size={15} />
               </Button>
             )}
 

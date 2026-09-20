@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Filter as FilterIcon, Search as SearchIcon, X as XIcon } from '@keyline-icons/react';
+import { Filter as FilterFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -283,7 +284,12 @@ const SearchArea = ({
                 setIsShowingFilters(!isShowingFilters);
               }}
             >
-              <Icon of={FilterIcon} size={16} />
+              <Icon
+                of={FilterIcon}
+                whenActive={FilterFilledIcon}
+                isActive={isShowingFilters}
+                size={16}
+              />
               {narrowed === 0 ? 'Filters' : `Filters (${narrowed.toString()})`}
             </Button>
 

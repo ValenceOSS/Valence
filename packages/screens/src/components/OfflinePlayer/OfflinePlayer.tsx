@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  ArrowLeft as ArrowLeftIcon,
-  Pause as PauseIcon,
-  Play as PlayIcon,
-} from '@keyline-icons/react';
+import { ArrowLeft as ArrowLeftIcon } from '@keyline-icons/react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Slider } from '@ValenceUI/Slider';
@@ -106,7 +103,7 @@ const OfflinePlayer = ({ file, startAtSeconds = 0, onLeave, onProgress }: Offlin
             element.pause();
           }}
         >
-          <Icon of={isPlaying ? PauseIcon : PlayIcon} size={18} />
+          <Icon of={isPlaying ? PauseFilledIcon : PlayFilledIcon} size={18} />
         </Button>
 
         <span className="font-body text-xs tabular-nums text-text-muted">

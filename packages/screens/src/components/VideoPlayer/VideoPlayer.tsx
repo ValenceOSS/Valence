@@ -4,9 +4,9 @@ import { gainFor } from '@ValenceCore/functions/gainFor';
 import {
   Cast as CastIcon,
   PictureInPicture as PictureInPictureIcon,
-  SkipForward as SkipForwardIcon,
   X as XIcon,
 } from '@keyline-icons/react';
+import { SkipForward as SkipForwardFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -1912,7 +1912,7 @@ const VideoPlayer = ({
                 }}
               >
                 {describeSkip(skippable)}
-                <Icon of={SkipForwardIcon} size={18} />
+                <Icon of={SkipForwardFilledIcon} size={18} />
               </Button>
             </div>
           )}

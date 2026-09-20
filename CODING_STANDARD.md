@@ -466,6 +466,11 @@ icon has a fill drawing under the same name in `@keyline-icons/react/fill`, and 
 is where it goes: `isActive` swaps it in place. Reaching for a different glyph to mean selected
 is how a section turns into a camcorder.
 
+**Every active item is solid, and so is the main action.** A nav item, sidebar item, favourite,
+toggle or any button in its on state draws the filled twin, through `whenActive` (or `litGlyph`
+on a `BarButton`). Play, pause and skip always draw solid, and so does any icon inside a primary
+or confirm button, so the action that matters reads heavier than the ones around it.
+
 **No raw SVG anywhere in the codebase.** No inline `<svg>` elements, no
 `.svg` imported as a component, no SVG strings.
 

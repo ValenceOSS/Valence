@@ -1,4 +1,4 @@
-import { AudioLines as AudioLinesIcon } from '@keyline-icons/react';
+import { AudioLines as AudioLinesFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -223,7 +223,7 @@ const LyricLines = ({ lyrics, at, onSeek, look = 'page' }: LyricLinesProps) => {
             }}
           >
             Sync
-            <Icon of={AudioLinesIcon} size={16} />
+            <Icon of={AudioLinesFilledIcon} size={16} />
           </Button>
         </div>
       ) : null}

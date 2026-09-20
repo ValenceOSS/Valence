@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { PanelRight as PanelRightIcon, X as XIcon } from '@keyline-icons/react';
+import { PanelRight as PanelRightFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
@@ -82,7 +83,12 @@ const ReaderChrome = ({
               onPanelOpenChange(!isPanelOpen);
             }}
           >
-            <Icon of={PanelRightIcon} size={18} />
+            <Icon
+              of={PanelRightIcon}
+              whenActive={PanelRightFilledIcon}
+              isActive={isPanelOpen}
+              size={18}
+            />
           </Button>
         </header>
 

@@ -9,9 +9,7 @@ import {
   Minimize as MinimizeIcon,
   Minus as MinusIcon,
   Monitor as MonitorIcon,
-  Pause as PauseIcon,
   PictureInPicture as PictureInPictureIcon,
-  Play as PlayIcon,
   Plus as PlusIcon,
   RefreshCw as RefreshCwIcon,
   RotateCcw as RotateCcwIcon,
@@ -22,6 +20,14 @@ import {
   Volume as VolumeIcon,
   VolumeOff as VolumeOffIcon,
 } from '@keyline-icons/react';
+import {
+  Cast as CastFilledIcon,
+  Monitor as MonitorFilledIcon,
+  Pause as PauseFilledIcon,
+  PictureInPicture as PictureInPictureFilledIcon,
+  Play as PlayFilledIcon,
+  Subtitles as SubtitlesFilledIcon,
+} from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Slider } from '@ValenceUI/Slider';
 import { SettingsMenu } from '@ValenceUI/SettingsMenu';
@@ -218,7 +224,11 @@ const PlayerControls = ({
         disabled={isDisabled}
         size="md"
       >
-        {isPlaying ? <Icon of={PauseIcon} size={22} /> : <Icon of={PlayIcon} size={22} />}
+        {isPlaying ? (
+          <Icon of={PauseFilledIcon} size={22} />
+        ) : (
+          <Icon of={PlayFilledIcon} size={22} />
+        )}
       </Button>
 
       <Button
@@ -293,11 +303,12 @@ const PlayerControls = ({
           disabled={isDisabled}
           size="md"
         >
-          {selectedSubtitleId === SUBTITLES_OFF ? (
-            <Icon of={SubtitlesIcon} size={20} />
-          ) : (
-            <Icon of={SubtitlesIcon} size={20} />
-          )}
+          <Icon
+            of={SubtitlesIcon}
+            whenActive={SubtitlesFilledIcon}
+            isActive={selectedSubtitleId !== SUBTITLES_OFF}
+            size={20}
+          />
         </Button>
       )}
 
@@ -509,7 +520,12 @@ const PlayerControls = ({
           onClick={onCast}
           size="md"
         >
-          <Icon of={CastIcon} size={20} />
+          <Icon
+            of={CastIcon}
+            whenActive={CastFilledIcon}
+            isActive={castState === 'connected'}
+            size={20}
+          />
         </Button>
       )}
 
@@ -522,11 +538,12 @@ const PlayerControls = ({
           isActive={isPoppedOut}
           size="md"
         >
-          {isPoppedOut ? (
-            <Icon of={PictureInPictureIcon} size={20} />
-          ) : (
-            <Icon of={PictureInPictureIcon} size={20} />
-          )}
+          <Icon
+            of={PictureInPictureIcon}
+            whenActive={PictureInPictureFilledIcon}
+            isActive={isPoppedOut}
+            size={20}
+          />
         </Button>
       )}
 
@@ -539,7 +556,7 @@ const PlayerControls = ({
           onClick={onToggleGlow}
           size="md"
         >
-          <Icon of={MonitorIcon} size={20} />
+          <Icon of={MonitorIcon} whenActive={MonitorFilledIcon} isActive={isGlowing} size={20} />
         </Button>
       )}
 

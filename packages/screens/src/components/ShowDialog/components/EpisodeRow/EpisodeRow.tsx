@@ -1,5 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Info as InfoIcon, Play as PlayIcon } from '@keyline-icons/react';
+import { Info as InfoIcon } from '@keyline-icons/react';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { EpisodeRowProps } from './EpisodeRow.types';
@@ -59,7 +60,7 @@ const EpisodeRow = ({
         )}
 
         <span className="absolute inset-0 flex items-center justify-center bg-shade/40 opacity-0 transition-opacity group-hover/episode:opacity-100">
-          <Icon of={PlayIcon} size={20} tone="scrim" />
+          <Icon of={PlayFilledIcon} size={20} tone="scrim" />
         </span>
 
         {watchedFraction === undefined ? null : (

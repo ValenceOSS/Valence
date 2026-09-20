@@ -1,10 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
-import {
-  Bin as BinIcon,
-  Check as CheckIcon,
-  Key as KeyIcon,
-  PenLine as PenLineIcon,
-} from '@keyline-icons/react';
+import { Bin as BinIcon, Key as KeyIcon, PenLine as PenLineIcon } from '@keyline-icons/react';
+import { Check as CheckFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { SettingRow } from '@ValenceUI/SettingRow';
@@ -162,7 +158,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
                     />
 
                     <Button type="submit" size="sm">
-                      <Icon of={CheckIcon} size={16} />
+                      <Icon of={CheckFilledIcon} size={16} />
                       Save
                     </Button>
 

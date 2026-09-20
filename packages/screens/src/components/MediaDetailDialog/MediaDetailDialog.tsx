@@ -9,13 +9,13 @@ import {
   Film as FilmIcon,
   Heart as HeartIcon,
   Info as InfoIcon,
-  Play as PlayIcon,
   Share as ShareIcon,
   Tape as TapeIcon,
   UserCheck as UserCheckIcon,
   Users as UsersIcon,
   X as XIcon,
 } from '@keyline-icons/react';
+import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -223,11 +223,12 @@ const MediaDetailDialog = ({
                             onToggleKept(shown);
                           }}
                         >
-                          {isKept ? (
-                            <Icon of={HeartIcon} size={18} />
-                          ) : (
-                            <Icon of={HeartIcon} size={18} />
-                          )}
+                          <Icon
+                            of={HeartIcon}
+                            whenActive={HeartFilledIcon}
+                            isActive={isKept}
+                            size={18}
+                          />
                         </Button>
                       ),
                     })}
@@ -491,7 +492,7 @@ const MediaDetailDialog = ({
                   onPlay(chosenVersion ?? shown, chosenVersion === null ? (shownResume ?? 0) : 0);
                 }}
               >
-                <Icon of={PlayIcon} size={18} />
+                <Icon of={PlayFilledIcon} size={18} />
                 {shownResume === undefined || chosenVersion !== null
                   ? 'Play'
                   : `Resume from ${formatDuration(shownResume)}`}

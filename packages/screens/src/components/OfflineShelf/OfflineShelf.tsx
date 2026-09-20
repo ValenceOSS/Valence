@@ -1,9 +1,5 @@
-import {
-  Bin as BinIcon,
-  CloudOff as CloudOffIcon,
-  Pause as PauseIcon,
-  Play as PlayIcon,
-} from '@keyline-icons/react';
+import { Bin as BinIcon, CloudOff as CloudOffIcon } from '@keyline-icons/react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -123,7 +119,7 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
                       onWatch(file);
                     }}
                   >
-                    <Icon of={PlayIcon} size={15} />
+                    <Icon of={PlayFilledIcon} size={15} />
                     Watch
                   </Button>
                 )}
@@ -142,7 +138,10 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
                       onPause(file, file.state !== 'paused');
                     }}
                   >
-                    <Icon of={file.state === 'paused' ? PlayIcon : PauseIcon} size={16} />
+                    <Icon
+                      of={file.state === 'paused' ? PlayFilledIcon : PauseFilledIcon}
+                      size={16}
+                    />
                   </Button>
                 )}
 

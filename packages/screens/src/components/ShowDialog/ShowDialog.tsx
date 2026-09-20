@@ -5,10 +5,10 @@ import {
   Download as DownloadIcon,
   Info as InfoIcon,
   Link as LinkIcon,
-  Play as PlayIcon,
   Tape as TapeIcon,
   X as XIcon,
 } from '@keyline-icons/react';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -357,7 +357,7 @@ const ShowDialog = ({
                   onPlay(carryingOn.episode, carryingOn.startSeconds);
                 }}
               >
-                <Icon of={PlayIcon} size={18} />
+                <Icon of={PlayFilledIcon} size={18} />
                 {carryingOn.isResuming
                   ? `Resume ${formatDuration(carryingOn.startSeconds)}`
                   : `Play ${nameSeason(carryingOn.episode.seasonNumber ?? null)}, episode ${(

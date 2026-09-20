@@ -1,11 +1,10 @@
 import {
   Bin as BinIcon,
   CircleCheck as CircleCheckIcon,
-  Pause as PauseIcon,
-  Play as PlayIcon,
   RotateCw as RotateCwIcon,
   Smartphone as SmartphoneIcon,
 } from '@keyline-icons/react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -103,7 +102,7 @@ const KeepingControls = ({ download, held }: KeepingControlsProps) => {
           void pauseAFile(download.id, held.state !== 'paused');
         }}
       >
-        <Icon of={held.state === 'paused' ? PlayIcon : PauseIcon} size={16} />
+        <Icon of={held.state === 'paused' ? PlayFilledIcon : PauseFilledIcon} size={16} />
       </Button>
     </>
   );

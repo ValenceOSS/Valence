@@ -5,9 +5,8 @@ import {
   Folders as FoldersIcon,
   Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
-  Pause as PauseIcon,
-  Play as PlayIcon,
 } from '@keyline-icons/react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
@@ -222,7 +221,7 @@ const DownloadQueueTable = ({
                             {
                               id: 'pause',
                               label: 'Pause',
-                              icon: <Icon of={PauseIcon} size={15} />,
+                              icon: <Icon of={PauseFilledIcon} size={15} />,
                               onChoose: () => {
                                 onPause(row.original);
                               },
@@ -234,7 +233,7 @@ const DownloadQueueTable = ({
                             {
                               id: 'resume',
                               label: 'Resume',
-                              icon: <Icon of={PlayIcon} size={15} />,
+                              icon: <Icon of={PlayFilledIcon} size={15} />,
                               onChoose: () => {
                                 onResume(row.original);
                               },

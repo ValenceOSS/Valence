@@ -9,6 +9,13 @@ import {
   VolumeLow as VolumeLowIcon,
   VolumeX as VolumeXIcon,
 } from '@keyline-icons/react';
+import {
+  Heart as HeartFilledIcon,
+  Laptop as LaptopFilledIcon,
+  ListOrdered as ListOrderedFilledIcon,
+  Mic as MicFilledIcon,
+  Users as UsersFilledIcon,
+} from '@keyline-icons/react/fill';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
@@ -208,6 +215,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 <BarButton
                   label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
                   glyph={HeartIcon}
+                  litGlyph={HeartFilledIcon}
                   gesture="fill"
                   isLit={isLiked}
                   isDisabled={isIdle}
@@ -284,6 +292,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 <BarButton
                   label="Lyrics"
                   glyph={MicIcon}
+                  litGlyph={MicFilledIcon}
                   gesture="ring"
                   isLit={view.kind === 'lyrics' && place.section === 'music'}
                   isDisabled={isIdle}
@@ -299,6 +308,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 <BarButton
                   label="Queue"
                   glyph={ListOrderedIcon}
+                  litGlyph={ListOrderedFilledIcon}
                   isLit={panel === 'queue'}
                   onClick={() => {
                     togglePanel('queue');
@@ -308,6 +318,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 <BarButton
                   label="Listening party"
                   glyph={UsersIcon}
+                  litGlyph={UsersFilledIcon}
                   isLit={panel === 'party' || listening !== null}
                   onClick={() => {
                     togglePanel('party');
@@ -317,6 +328,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 <BarButton
                   label="Play on another device"
                   glyph={LaptopIcon}
+                  litGlyph={LaptopFilledIcon}
                   isLit={panel === 'devices' || shown.remote !== null}
                   onClick={() => {
                     togglePanel('devices');

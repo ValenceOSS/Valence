@@ -15,12 +15,11 @@ const SWELL = [1, 1.25, 1];
  * shuffling — is seen to happen rather than simply being the case the next time somebody looks.
  *
  * @param label - What pressing it does, which is also its tooltip.
+ * @param litGlyph - The filled drawing to show while it is lit.
  * @param glyph - The icon.
  * @param gesture - How the icon moves when pointed at.
  * @param iconSize - How large the icon is.
  * @param isLit - Whether the thing it stands for is on, which colours it and swells it as it comes on.
- * @param isSolid - Whether to draw the icon heavier whether or not anything is on, for the controls
- *   at the heart of the bar.
  * @param isDisabled - Whether it can be pressed at all.
  * @param className - Extra classes for the caller's own layout.
  * @param onClick - Told it was pressed.
@@ -28,10 +27,10 @@ const SWELL = [1, 1.25, 1];
 const BarButton = ({
   label,
   glyph,
+  litGlyph,
   gesture = 'settle',
   iconSize = 18,
   isLit = false,
-  isSolid = false,
   isDisabled = false,
   className,
   onClick,
@@ -65,7 +64,14 @@ const BarButton = ({
         <AnimatedIcon
           gesture={gesture}
           isPlaying={isPointedAt && !isDisabled}
-          icon={<Icon of={glyph} size={iconSize} isActive={isLit || isSolid} />}
+          icon={
+            <Icon
+              of={glyph}
+              {...(litGlyph === undefined ? {} : { whenActive: litGlyph })}
+              size={iconSize}
+              isActive={isLit}
+            />
+          }
         />
       </motion.span>
     </Button>

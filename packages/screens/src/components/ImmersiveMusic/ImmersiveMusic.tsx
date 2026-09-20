@@ -7,6 +7,7 @@ import {
   VolumeLow as VolumeLowIcon,
   X as XIcon,
 } from '@keyline-icons/react';
+import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Slider } from '@ValenceUI/Slider';
@@ -172,6 +173,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
                 <BarButton
                   label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
                   glyph={HeartIcon}
+                  litGlyph={HeartFilledIcon}
                   gesture="fill"
                   isLit={isLiked}
                   onClick={() => {

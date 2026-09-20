@@ -8,10 +8,10 @@ import {
   MoreHorizontal as MoreHorizontalIcon,
   Plus as PlusIcon,
   Record as RecordIcon,
-  SkipForward as SkipForwardIcon,
   User as UserIcon,
   Video as VideoIcon,
 } from '@keyline-icons/react';
+import { SkipForward as SkipForwardFilledIcon } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Icon } from '@ValenceUI/Icon';
 import { notify } from '@ValenceUI/notify';
@@ -60,7 +60,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
             {
               id: 'next',
               label: 'Play next',
-              icon: <Icon of={SkipForwardIcon} size={16} />,
+              icon: <Icon of={SkipForwardFilledIcon} size={16} />,
               onChoose: () => {
                 player.playNext([track]);
                 notify.say(`${track.title} plays next`);

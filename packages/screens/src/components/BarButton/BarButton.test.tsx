@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { Shuffle as ShuffleIcon } from '@keyline-icons/react';
+import { Heart as HeartIcon, Shuffle as ShuffleIcon } from '@keyline-icons/react';
+import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
 import { BarButton } from './BarButton';
 
 describe('BarButton', () => {
@@ -19,6 +20,25 @@ describe('BarButton', () => {
     render(<BarButton label="Stop shuffling" glyph={ShuffleIcon} isLit onClick={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Stop shuffling' })).toHaveClass('text-text');
+  });
+
+  it('draws its solid twin while lit, and the outline otherwise', () => {
+    const { container, rerender } = render(
+      <BarButton label="Like" glyph={HeartIcon} litGlyph={HeartFilledIcon} onClick={vi.fn()} />,
+    );
+    const outline = container.innerHTML;
+
+    rerender(
+      <BarButton
+        label="Like"
+        glyph={HeartIcon}
+        litGlyph={HeartFilledIcon}
+        isLit
+        onClick={vi.fn()}
+      />,
+    );
+
+    expect(container.innerHTML).not.toBe(outline);
   });
 
   it('cannot be pressed while it does not apply', async () => {

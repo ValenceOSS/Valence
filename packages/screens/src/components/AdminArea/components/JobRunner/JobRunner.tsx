@@ -3,9 +3,9 @@ import {
   Calendar as CalendarIcon,
   Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
-  Play as PlayIcon,
   Stop as StopIcon,
 } from '@keyline-icons/react';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -200,7 +200,7 @@ const JobRunner = ({
                     {
                       id: 'run',
                       label: 'Run now',
-                      icon: <Icon of={PlayIcon} size={15} />,
+                      icon: <Icon of={PlayFilledIcon} size={15} />,
                       isDestructive: row.original.destructive,
                       isDisabled:
                         row.original.needsLibrary &&

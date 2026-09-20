@@ -5,6 +5,7 @@ import {
   Share as ShareIcon,
   X as XIcon,
 } from '@keyline-icons/react';
+import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
 import { ActionBar } from '@ValenceUI/ActionBar';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -77,7 +78,7 @@ const BookDialog = ({
             id: 'keep',
             isPinned: true,
             label: isKept ? 'Stop keeping' : 'Keep',
-            icon: <Icon of={HeartIcon} size={18} />,
+            icon: <Icon of={HeartIcon} whenActive={HeartFilledIcon} isActive={isKept} size={18} />,
             onChoose: () => {
               onToggleKept(book);
             },

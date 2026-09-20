@@ -1,10 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
-import {
-  Pause as PauseIcon,
-  Play as PlayIcon,
-  Volume as VolumeIcon,
-  VolumeOff as VolumeOffIcon,
-} from '@keyline-icons/react';
+import { Volume as VolumeIcon, VolumeOff as VolumeOffIcon } from '@keyline-icons/react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
@@ -378,7 +374,11 @@ const MediaPreview = ({
               }}
               className="bg-shade/50 text-on-scrim backdrop-blur"
             >
-              {isPaused ? <Icon of={PlayIcon} size={18} /> : <Icon of={PauseIcon} size={18} />}
+              {isPaused ? (
+                <Icon of={PlayFilledIcon} size={18} />
+              ) : (
+                <Icon of={PauseFilledIcon} size={18} />
+              )}
             </Button>
           )}
 

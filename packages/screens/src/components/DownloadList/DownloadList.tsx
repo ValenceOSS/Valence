@@ -1,11 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
-import {
-  Bin as BinIcon,
-  Download as DownloadIcon,
-  Pause as PauseIcon,
-  Play as PlayIcon,
-} from '@keyline-icons/react';
+import { Bin as BinIcon, Download as DownloadIcon } from '@keyline-icons/react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -195,9 +191,9 @@ const DownloadList = () => {
                     }}
                   >
                     {download.state === 'paused' ? (
-                      <Icon of={PlayIcon} size={16} />
+                      <Icon of={PlayFilledIcon} size={16} />
                     ) : (
-                      <Icon of={PauseIcon} size={16} />
+                      <Icon of={PauseFilledIcon} size={16} />
                     )}
                   </Button>
                 )}
