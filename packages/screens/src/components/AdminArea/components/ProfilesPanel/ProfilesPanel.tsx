@@ -1,6 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Delete02Icon, MoreHorizontalIcon, PencilEdit02Icon } from '@hugeicons/core-free-icons';
+import {
+  Add01Icon,
+  Delete02Icon,
+  MoreHorizontalIcon,
+  PencilEdit02Icon,
+} from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -155,7 +160,8 @@ const ProfilesPanel = () => {
             setIsAdding(true);
           }}
         >
-          Add a profile
+          Add media profile
+          <Icon of={Add01Icon} size={15} />
         </Button>
       }
     >

@@ -101,7 +101,7 @@ describe('ProfilesPanel', () => {
 
     renderInAnAddress(<ProfilesPanel />);
 
-    await user.click(screen.getByRole('button', { name: 'Add a profile' }));
+    await user.click(screen.getByRole('button', { name: 'Add media profile' }));
 
     expect(await screen.findByText(/Every release a search finds is judged/)).toBeInTheDocument();
 

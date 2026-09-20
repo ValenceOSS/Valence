@@ -186,7 +186,7 @@ const ProfileEditor = ({ profile, onClose, onSaved }: ProfileEditorProps) => {
       });
   };
 
-  const title = profile === null ? 'Add a profile' : `Change ${profile.name}`;
+  const title = profile === null ? 'Add media profile' : `Change ${profile.name}`;
 
   return (
     <PanelCard
