@@ -1,3 +1,4 @@
+import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
 import { Icon } from '@ValenceUI/Icon';
 import {
   InformationCircleIcon,
@@ -89,7 +90,7 @@ const SessionCard = ({
           )}
 
           {playback === null ? null : (
-            <Badge size="sm">{playback.mode === 'transcode' ? 'Transcoding' : 'Direct'}</Badge>
+            <Badge size="sm">{describeSessionDelivery(playback).label}</Badge>
           )}
 
           {playback === null ||

@@ -194,7 +194,34 @@ describe('SessionCard', () => {
     );
 
     expect(screen.getByText(/Arrival/)).toBeInTheDocument();
-    expect(screen.getByText(/Transcoding/)).toBeInTheDocument();
+    expect(screen.getByText('DirectPlay')).toBeInTheDocument();
+  });
+
+  it('says a remux is a remux, rather than badging it as a transcode', () => {
+    const remuxing: ActiveSession = {
+      ...WATCHING_SESSION,
+      playback:
+        WATCHING_SESSION.playback === null
+          ? null
+          : {
+              ...WATCHING_SESSION.playback,
+              plan: { ...PLAN, container: { kind: 'remux', target: 'mp4', reason } },
+            },
+    };
+
+    render(
+      <SessionCard
+        session={remuxing}
+        isBusy={false}
+        onStop={vi.fn()}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Remux')).toBeInTheDocument();
+    expect(screen.queryByText('Transcoding')).not.toBeInTheDocument();
   });
 
   it('stops a stream on request', async () => {

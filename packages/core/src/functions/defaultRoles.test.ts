@@ -111,6 +111,17 @@ describe('DEFAULT_ROLES', () => {
       expect(resolved.has('requests.manage')).toBe(false);
     });
 
+    it('does not let a Member hold an API key, which outlives a password and skips two factor', () => {
+      expect(resolvePermissions({ roles: [roleNamed('Member')] }).has('account.keys')).toBe(false);
+    });
+
+    it('leaves API keys with the two roles already trusted with the server', () => {
+      expect(resolvePermissions({ roles: [roleNamed('Manager')] }).has('account.keys')).toBe(true);
+      expect(resolvePermissions({ roles: [roleNamed('Administrator')] }).has('account.keys')).toBe(
+        true,
+      );
+    });
+
     it('gives Restricted no capability at all', () => {
       expect(resolvePermissions({ roles: [roleNamed('Restricted')] }).size).toBe(0);
     });
