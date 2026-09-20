@@ -22,6 +22,23 @@ describe('FaceCircle', () => {
     expect(screen.getByText('M')).toBeInTheDocument();
   });
 
+  it('is a circle unless it is asked to be a tile, and stands off the page only when lifted', () => {
+    const face = {
+      name: 'Marques',
+      colour: '#3a8ee8',
+      avatar: { kind: 'initial' },
+      source: '/x',
+    } as const;
+    const { container, rerender } = render(<FaceCircle {...face} />);
+
+    expect(container.firstElementChild).toHaveClass('rounded-full');
+    expect(container.firstElementChild).not.toHaveClass('shadow-lg');
+
+    rerender(<FaceCircle {...face} shape="tile" isLifted />);
+
+    expect(container.firstElementChild).toHaveClass('rounded-lg', 'shadow-lg');
+  });
+
   it('loads from wherever it was told to, rather than working an address out', () => {
     const { container } = render(
       <FaceCircle

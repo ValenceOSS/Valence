@@ -144,10 +144,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
             profile === null ? (
               <span className="size-6 shrink-0 rounded-full bg-subtle" />
             ) : (
-              <ProfileFace
-                profile={profile}
-                className="size-6 shrink-0 rounded-full text-[0.625rem]"
-              />
+              <ProfileFace profile={profile} className="size-6 shrink-0 text-[0.625rem]" />
             )
           }
           below={

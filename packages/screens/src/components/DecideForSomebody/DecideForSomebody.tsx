@@ -91,7 +91,7 @@ const DecideForSomebody = ({ about, onClose }: DecideForSomebodyProps) => {
                 <HouseholdFace
                   household={account.face}
                   accountId={account.id}
-                  className="size-9 shrink-0 rounded-full"
+                  className="size-9 shrink-0"
                 />
               )}
 

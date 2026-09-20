@@ -117,6 +117,12 @@ export default tseslint.config(
           message:
             'A skeleton takes its corners from shape, not className. Use shape="soft" or shape="round".',
         },
+        {
+          selector:
+            'JSXOpeningElement[name.name=/^(FaceCircle|ProfileFace|HouseholdFace)$/] > JSXAttribute[name.name="className"] Literal[value=/\\b(rounded|shadow)/]',
+          message:
+            'A face takes its corners and shadow from shape and isLifted, not className. Use shape="tile" or isLifted.',
+        },
       ],
     },
   },

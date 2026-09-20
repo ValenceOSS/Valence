@@ -199,11 +199,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
 
           <TabPanel value="picture" travel={travel}>
             <div className="flex flex-col items-center gap-5">
-              <HouseholdFace
-                household={household}
-                pending={picture}
-                className="size-24 rounded-full text-3xl"
-              />
+              <HouseholdFace household={household} pending={picture} className="size-24 text-3xl" />
 
               {wrong === null ? null : (
                 <p role="alert" className="text-center text-sm text-danger">

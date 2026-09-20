@@ -29,6 +29,8 @@ const FaceCircle = ({
   avatar,
   source,
   pending = null,
+  shape = 'circle',
+  isLifted = false,
   className,
 }: FaceCircleProps) => {
   const [chosen, setChosen] = useState<string | null>(null);
@@ -66,6 +68,8 @@ const FaceCircle = ({
       style={{ backgroundColor: showsPicture ? undefined : colour }}
       className={cn(
         'flex items-center justify-center overflow-hidden bg-subtle font-semibold text-text',
+        shape === 'circle' ? 'rounded-full' : 'rounded-lg',
+        isLifted && 'shadow-lg',
         className,
       )}
     >

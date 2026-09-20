@@ -9,13 +9,21 @@ import type { ProfileFaceProps } from './ProfileFace.types';
  * @param pending - A photograph being uploaded, drawn in place of the stored one.
  * @param className - Extra classes for the caller's own layout.
  */
-const ProfileFace = ({ profile, pending = null, className }: ProfileFaceProps) => (
+const ProfileFace = ({
+  profile,
+  pending = null,
+  shape = 'circle',
+  isLifted = false,
+  className,
+}: ProfileFaceProps) => (
   <FaceCircle
     name={profile.name}
     colour={profile.colour}
     avatar={profile.avatar}
     source={profileAvatarUrl(profile)}
     pending={pending}
+    shape={shape}
+    isLifted={isLifted}
     {...(className === undefined ? {} : { className })}
   />
 );

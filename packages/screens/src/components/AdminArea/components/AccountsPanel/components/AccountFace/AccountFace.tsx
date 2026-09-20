@@ -22,7 +22,7 @@ const AccountFace = ({ account }: AccountFaceProps) => {
         colour={profile.colour}
         avatar={profile.avatar}
         source={profileAvatarUrl(profile)}
-        className="size-8 shrink-0 rounded-full"
+        className="size-8 shrink-0"
       />
     );
   }
@@ -35,13 +35,7 @@ const AccountFace = ({ account }: AccountFaceProps) => {
     );
   }
 
-  return (
-    <HouseholdFace
-      household={face}
-      accountId={account.id}
-      className="size-8 shrink-0 rounded-full"
-    />
-  );
+  return <HouseholdFace household={face} accountId={account.id} className="size-8 shrink-0" />;
 };
 
 AccountFace.displayName = 'AccountFace';

@@ -33,6 +33,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
       >
         <div className="flex items-center gap-3">
           <HouseholdFace
+            shape="tile"
             household={{
               name: face?.name ?? '',
               colour: draft.colour,
@@ -41,7 +42,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
             }}
             accountId={accountId}
             pending={draft.photo}
-            className="size-9 shrink-0 rounded-lg text-xs"
+            className="size-9 shrink-0 text-xs"
           />
 
           <FilePicker

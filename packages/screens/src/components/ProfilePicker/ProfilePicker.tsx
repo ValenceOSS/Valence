@@ -69,8 +69,10 @@ const ProfilePicker = ({
               className="flex w-24 flex-col items-center gap-3 sm:w-32"
             >
               <ProfileFace
+                shape="tile"
+                isLifted
                 profile={profile}
-                className="aspect-square w-full rounded-lg text-4xl shadow-lg sm:text-5xl"
+                className="aspect-square w-full text-4xl sm:text-5xl"
               />
 
               <span className="w-full truncate text-center text-sm text-text-muted">

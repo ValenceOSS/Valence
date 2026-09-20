@@ -74,9 +74,11 @@ const FACE: Variants = {
 const Portrait = ({ profile, isLarge = false }: { profile: ViewerProfile; isLarge?: boolean }) => (
   <ProfileFace
     profile={profile}
-    className={`rounded-lg shadow-xl ${
+    shape="tile"
+    isLifted
+    className={
       isLarge ? 'size-32 text-5xl sm:size-36' : 'aspect-square w-full text-4xl sm:text-5xl'
-    }`}
+    }
   />
 );
 

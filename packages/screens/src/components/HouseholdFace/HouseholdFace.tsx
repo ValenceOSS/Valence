@@ -10,7 +10,14 @@ import type { HouseholdFaceProps } from './HouseholdFace.types';
  * @param pending - A picture being uploaded, drawn in place of the stored one.
  * @param className - Extra classes for the caller's own layout.
  */
-const HouseholdFace = ({ household, accountId, pending = null, className }: HouseholdFaceProps) => (
+const HouseholdFace = ({
+  household,
+  accountId,
+  pending = null,
+  shape = 'circle',
+  isLifted = false,
+  className,
+}: HouseholdFaceProps) => (
   <FaceCircle
     name={household.name}
     colour={household.colour}
@@ -21,6 +28,8 @@ const HouseholdFace = ({ household, accountId, pending = null, className }: Hous
         : accountAvatarUrl(accountId, household)
     }
     pending={pending}
+    shape={shape}
+    isLifted={isLifted}
     {...(className === undefined ? {} : { className })}
   />
 );
