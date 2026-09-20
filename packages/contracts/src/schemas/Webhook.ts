@@ -432,6 +432,7 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
       accountId: z.string(),
       name: z.string(),
       deviceLabel: z.string(),
+      address: z.string().nullable(),
     }),
   }),
   z.object({
@@ -440,6 +441,7 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
     data: z.object({
       identifier: z.string(),
       deviceLabel: z.string(),
+      address: z.string().nullable(),
       reason: z.string(),
     }),
   }),

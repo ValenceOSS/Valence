@@ -204,7 +204,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         title: `${payload.data.name} signed in`,
         description: '',
         colour: COLOURS.auth,
-        fields: [field('Device', payload.data.deviceLabel)],
+        fields: [field('Device', payload.data.deviceLabel), field('From', payload.data.address)],
       };
     }
 
@@ -216,6 +216,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         fields: [
           field('Tried', payload.data.identifier),
           field('Device', payload.data.deviceLabel),
+          field('From', payload.data.address),
         ],
       };
     }

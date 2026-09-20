@@ -39,7 +39,7 @@ const aFailure: WebhookOccurrence = {
 
 const aSignIn: WebhookOccurrence = {
   event: 'auth.succeeded',
-  data: { accountId: 'account-1', name: 'Ada', deviceLabel: 'Chrome on macOS' },
+  data: { accountId: 'account-1', name: 'Ada', deviceLabel: 'Chrome on macOS', address: null },
 };
 
 const aRefusal: WebhookOccurrence = {
@@ -47,6 +47,7 @@ const aRefusal: WebhookOccurrence = {
   data: {
     identifier: 'ada@example.com',
     deviceLabel: 'Chrome on macOS',
+    address: null,
     reason: 'those details were not accepted.',
   },
 };

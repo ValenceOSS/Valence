@@ -3,6 +3,7 @@ import { createAuthMiddleware, APIError } from 'better-auth/api';
 import { z } from 'zod';
 import type { DBAdapter, DBAdapterInstance } from 'better-auth';
 import type { SignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
+import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
 import {
   admin,
   deviceAuthorization,
@@ -120,6 +121,10 @@ const createAuth = ({
             ? (identifier.data.email ?? identifier.data.username ?? null)
             : null,
           userAgent: context.headers?.get('user-agent') ?? null,
+          address:
+            context.headers === undefined
+              ? null
+              : readCallerAddress({ headers: context.headers, socketAddress: null }),
         });
 
         await Promise.resolve();

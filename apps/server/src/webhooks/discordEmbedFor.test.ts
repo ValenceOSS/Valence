@@ -80,6 +80,7 @@ describe('discordEmbedFor', () => {
       data: {
         identifier: 'ada@example.com',
         deviceLabel: 'Chrome on macOS',
+        address: null,
         reason: 'those details were not accepted.',
       },
     }).color;
@@ -260,6 +261,7 @@ describe('discordEmbedFor', () => {
       data: {
         identifier: 'ada@example.com',
         deviceLabel: 'Chrome on macOS',
+        address: null,
         reason: 'those details were not accepted.',
       },
     });

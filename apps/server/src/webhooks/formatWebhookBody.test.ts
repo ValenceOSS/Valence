@@ -604,17 +604,22 @@ describe('formatWebhookBody, somebody opening and closing Valence', () => {
 describe('formatWebhookBody, a sign-in', () => {
   const said = (payload: WebhookPayload) => formatWebhookBody('ntfy', payload).body;
 
-  it('names the person and the device, and no longer says where from', () => {
+  it('names the person, the device and where they signed in from', () => {
     expect(
       said({
         ...anEnvelope,
         event: 'auth.succeeded',
-        data: { accountId: 'account-1', name: 'Ada', deviceLabel: 'Chrome on macOS' },
+        data: {
+          accountId: 'account-1',
+          name: 'Ada',
+          deviceLabel: 'Chrome on macOS',
+          address: '203.0.113.7',
+        },
       }),
-    ).toBe('Ada signed in on Chrome on macOS.');
+    ).toBe('Ada signed in on Chrome on macOS from 203.0.113.7.');
   });
 
-  it('says a refusal without an origin, which the session events carry instead', () => {
+  it('says where a refused sign-in came from, which is the point of being told about one', () => {
     expect(
       said({
         ...anEnvelope,
@@ -622,11 +627,27 @@ describe('formatWebhookBody, a sign-in', () => {
         data: {
           identifier: 'ada@example.com',
           deviceLabel: 'Chrome on macOS',
+          address: '203.0.113.7',
           reason: 'those details were not accepted.',
         },
       }),
     ).toBe(
-      'A sign-in as ada@example.com was refused on Chrome on macOS — those details were not accepted.',
+      'A sign-in as ada@example.com was refused on Chrome on macOS from 203.0.113.7 — those details were not accepted.',
     );
+  });
+
+  it('leaves the origin out where nothing could work it out', () => {
+    expect(
+      said({
+        ...anEnvelope,
+        event: 'auth.succeeded',
+        data: {
+          accountId: 'account-1',
+          name: 'Ada',
+          deviceLabel: 'Chrome on macOS',
+          address: null,
+        },
+      }),
+    ).toBe('Ada signed in on Chrome on macOS.');
   });
 });

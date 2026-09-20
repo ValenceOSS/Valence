@@ -11,6 +11,7 @@ type SignInAttempt = {
   account: { id: string; name: string } | null;
   identifier: string | null;
   userAgent: string | null;
+  address: string | null;
 };
 
 /**
@@ -37,6 +38,7 @@ const describeSignInAttempt = (attempt: SignInAttempt): WebhookOccurrence | null
         accountId: attempt.account.id,
         name: attempt.account.name,
         deviceLabel,
+        address: attempt.address,
       },
     };
   }
@@ -50,6 +52,7 @@ const describeSignInAttempt = (attempt: SignInAttempt): WebhookOccurrence | null
     data: {
       identifier: attempt.identifier ?? 'somebody who gave no address',
       deviceLabel,
+      address: attempt.address,
       reason: REFUSED,
     },
   };

@@ -162,11 +162,15 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'auth.succeeded': {
-      return `${payload.data.name} signed in on ${payload.data.deviceLabel}.`;
+      const from = payload.data.address === null ? '' : ` from ${payload.data.address}`;
+
+      return `${payload.data.name} signed in on ${payload.data.deviceLabel}${from}.`;
     }
 
     case 'auth.failed': {
-      return `A sign-in as ${payload.data.identifier} was refused on ${payload.data.deviceLabel} — ${payload.data.reason}`;
+      const from = payload.data.address === null ? '' : ` from ${payload.data.address}`;
+
+      return `A sign-in as ${payload.data.identifier} was refused on ${payload.data.deviceLabel}${from} — ${payload.data.reason}`;
     }
 
     case 'account.created': {

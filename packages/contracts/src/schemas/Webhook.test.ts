@@ -509,22 +509,7 @@ describe('WebhookPayloadSchema, where somebody came from', () => {
     expect(payload.data).toMatchObject({ address: null });
   });
 
-  it('keeps an address off a sign-in, so it is said in one place rather than two', () => {
-    const payload = WebhookPayloadSchema.parse({
-      ...anEnvelope,
-      event: 'auth.succeeded',
-      data: {
-        accountId: 'account-1',
-        name: 'Ada',
-        deviceLabel: 'Chrome on macOS',
-        address: '192.168.1.40',
-      },
-    });
-
-    expect(payload.data).not.toHaveProperty('address');
-  });
-
-  it('keeps an address off a refused sign-in too', () => {
+  it('keeps the address a refused sign-in came from, which is why anybody is told', () => {
     const payload = WebhookPayloadSchema.parse({
       ...anEnvelope,
       event: 'auth.failed',
@@ -536,6 +521,6 @@ describe('WebhookPayloadSchema, where somebody came from', () => {
       },
     });
 
-    expect(payload.data).not.toHaveProperty('address');
+    expect(payload.data).toMatchObject({ address: '192.168.1.40' });
   });
 });

@@ -3057,10 +3057,39 @@ const socketAddressOf = (context: Context): string | null => {
   }
 };
 
+/**
+ * Keeps the address a session was last seen at.
+ *
+ * better-auth writes it once, when somebody signs in, and never touches it again — a refresh moves
+ * only the expiry. So a phone that signed in on the sofa and has spent the fortnight since on
+ * cellular is still listed at the address it was at a fortnight ago, which is the one address it is
+ * certainly not at now.
+ *
+ * A client opening its connection is the moment its network could have changed, so that is when
+ * this is asked, and only a changed address is written — the ordinary case costs a comparison
+ * rather than a round trip.
+ *
+ * @param sessionId - The session to remember it against.
+ * @param remembered - The address already stored against it.
+ * @param seen - Where it has just been seen, where that is known.
+ */
+const rememberWhereTheyAre = async (
+  sessionId: string,
+  remembered: string | null,
+  seen: string | null,
+): Promise<void> => {
+  if (seen === null || seen === remembered) {
+    return;
+  }
+
+  await db.update(session).set({ ipAddress: seen }).where(eq(session.id, sessionId));
+};
+
 app.get(
   '/api/realtime',
   nodeWebSocket.upgradeWebSocket(async (context) => {
-    const account = (await readSessionOnce(auth, context.req.raw.headers))?.user ?? null;
+    const signedIn = await readSessionOnce(auth, context.req.raw.headers);
+    const account = signedIn?.user ?? null;
     const who =
       account === null
         ? await guestAtTheDoor(getCookie(context, SHARE_COOKIE), shareService)
@@ -3075,6 +3104,10 @@ app.get(
       headers: context.req.raw.headers,
       socketAddress: socketAddressOf(context),
     });
+
+    if (signedIn !== null) {
+      void rememberWhereTheyAre(signedIn.session.id, signedIn.session.ipAddress ?? null, address);
+    }
     let session: RealtimeSession | null = null;
     let heartbeat: ReturnType<typeof setInterval> | null = null;
 
