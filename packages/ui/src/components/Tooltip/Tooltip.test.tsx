@@ -65,7 +65,7 @@ describe('Tooltip', () => {
       .map((found) => found.closest('[data-slot="tooltip-content"]'))
       .find((found) => found !== null);
 
-    expect(chip).toHaveClass('bg-text', 'text-surface', 'rounded-sm');
+    expect(chip).toHaveClass('valence-float', 'text-text', 'rounded-sm');
     expect(chip?.className).not.toContain('valence-glass');
   });
 
