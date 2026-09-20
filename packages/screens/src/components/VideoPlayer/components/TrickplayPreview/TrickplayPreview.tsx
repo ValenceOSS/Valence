@@ -1,4 +1,5 @@
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
+import { TrickplayFrame } from '@ValenceScreens/components/VideoPlayer/components/TrickplayFrame/TrickplayFrame';
 import { thumbnailAt } from '@ValenceScreens/playback/fetchTrickplay';
 import type { TrickplayPreviewProps } from './TrickplayPreview.types';
 
@@ -21,19 +22,7 @@ const TrickplayPreview = ({ trickplay, seconds }: TrickplayPreviewProps) => {
 
   return (
     <figure className="valence-glass valence-glass--film mb-2 flex flex-col gap-1 rounded-lg px-2 py-2 text-on-scrim">
-      {thumbnail === null ? null : (
-        <div
-          role="img"
-          aria-label={`Preview at ${formatDuration(seconds)}`}
-          className="rounded-lg bg-surface bg-no-repeat"
-          style={{
-            width: `${thumbnail.width.toString()}px`,
-            height: `${thumbnail.height.toString()}px`,
-            backgroundImage: `url(${thumbnail.sheetUrl})`,
-            backgroundPosition: `-${thumbnail.x.toString()}px -${thumbnail.y.toString()}px`,
-          }}
-        />
-      )}
+      {thumbnail === null ? null : <TrickplayFrame trickplay={trickplay} seconds={seconds} />}
 
       <figcaption className="text-center text-md mt-2">{formatDuration(seconds)}</figcaption>
     </figure>
