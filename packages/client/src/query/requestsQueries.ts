@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import {
   fetchRequestsAvailability,
   fetchRequestsOverview,
@@ -14,13 +14,26 @@ import {
   fetchMediaRequests,
   fetchSeriesSeasons,
 } from '@ValenceClient/requests/fetchMediaRequests';
+import {
+  fetchAskable,
+  fetchCatalogueBrowse,
+  fetchDiscover,
+  fetchRequestProgress,
+  searchAskable,
+} from '@ValenceClient/requests/fetchAskable';
+import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
+import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 
 const REQUESTS = ['requests'] as const;
 
 const OVERVIEW_EVERY_MS = 30_000;
 
 const MEDIA_REQUESTS_EVERY_MS = 5000;
+
+const PROGRESS_EVERY_MS = 2000;
+
+const DISCOVER_KEPT_MS = 10 * 60 * 1000;
 
 /**
  * Whether this server takes requests, which only changes when the server is restarted with or
@@ -195,6 +208,83 @@ const seriesSeasons = (tmdbId: number | null) =>
     staleTime: 60 * 60 * 1000,
   });
 
+/**
+ * The shelves of things to ask for, kept for a few minutes, since what is trending changes by the
+ * day rather than the second.
+ *
+ * @param isEnabled - Whether to ask at all, which only makes sense once asking is allowed.
+ * @returns The query.
+ */
+const discover = (isEnabled = true) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'discover'],
+    queryFn: () => fetchDiscover(),
+    staleTime: DISCOVER_KEPT_MS,
+    enabled: isEnabled,
+  });
+
+/**
+ * A whole list of films or series to ask for, a page at a time, so a page of them can be scrolled
+ * through without end. Kept for a few minutes, as the shelves are.
+ *
+ * @param browsing - Which list, of which kind, and whose studio where one was chosen.
+ * @param isEnabled - Whether to ask at all.
+ * @returns The query.
+ */
+const catalogueBrowse = (browsing: CatalogueBrowse, isEnabled = true) =>
+  infiniteQueryOptions({
+    queryKey: [...REQUESTS, 'browse', browsing.kind, browsing.list, browsing.studio],
+    queryFn: ({ pageParam }) => fetchCatalogueBrowse(browsing, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
+    staleTime: DISCOVER_KEPT_MS,
+    enabled: isEnabled,
+  });
+
+/**
+ * What the catalogue has of a kind under a name, to ask for.
+ *
+ * @param query - What was typed, or nothing where nothing has been.
+ * @param kind - Which kind is looked for.
+ * @param isEnabled - Whether to ask at all.
+ * @returns The query.
+ */
+const askableSearch = (query: string, kind: MediaRequestKind, isEnabled = true) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'askable', 'search', kind, query],
+    queryFn: () => searchAskable(query, kind),
+    staleTime: DISCOVER_KEPT_MS,
+    enabled: isEnabled && query.trim() !== '',
+  });
+
+/**
+ * One title that can be asked for, as its page shows it.
+ *
+ * @param kind - What kind of title it is.
+ * @param id - The id it was listed under, or nothing before one is chosen.
+ * @returns The query.
+ */
+const askable = (kind: MediaRequestKind, id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'askable', kind, id],
+    queryFn: () => fetchAskable(kind, id ?? ''),
+    enabled: id !== null,
+  });
+
+/**
+ * How your downloads are going, asked every couple of seconds while they are on screen.
+ *
+ * @param isEnabled - Whether to ask at all.
+ * @returns The query.
+ */
+const requestProgress = (isEnabled = true) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'progress'],
+    queryFn: () => fetchRequestProgress(),
+    refetchInterval: PROGRESS_EVERY_MS,
+    enabled: isEnabled,
+  });
+
 const requestsQueries = {
   key: REQUESTS,
   availability,
@@ -210,6 +300,11 @@ const requestsQueries = {
   mediaRequestReleases,
   mediaRequestLog,
   seriesSeasons,
+  discover,
+  catalogueBrowse,
+  askableSearch,
+  askable,
+  requestProgress,
 };
 
 export { requestsQueries };

@@ -32,9 +32,12 @@ describe('buildRouter', () => {
     expect(matched('/favourites')).toBe('/signed-in/shell/favourites');
   });
 
-  it('has no route for the account or search, which are dialogs raised over whatever is showing', () => {
+  it('has no route for the account, which is a dialog raised over whatever is showing', () => {
     expect(matched('/account')).toBe('/signed-in/shell/$');
-    expect(matched('/search')).toBe('/signed-in/shell/$');
+  });
+
+  it('gives search a page of its own, so what is typed filters nothing underneath', () => {
+    expect(matched('/search')).toBe('/signed-in/shell/search');
   });
 
   it('gives the server its own route, a real page rather than a dialog', () => {

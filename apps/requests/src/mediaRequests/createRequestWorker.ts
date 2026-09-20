@@ -999,6 +999,27 @@ const createRequestWorker = ({
 
     pollFeeds,
 
+    dropDownloads: (id: string): Promise<number> =>
+      serially(async () => {
+        const unfinished = [
+          ...new Set(
+            (await items.list()).flatMap((item) =>
+              item.requestId === id &&
+              item.downloadId !== null &&
+              (item.state === 'chosen' || item.state === 'downloading' || item.state === 'filing')
+                ? [item.downloadId]
+                : [],
+            ),
+          ),
+        ];
+
+        for (const downloadId of unfinished) {
+          await queue.remove(downloadId, true).catch(() => false);
+        }
+
+        return unfinished.length;
+      }),
+
     releasesFor: async (id: string): Promise<ReleaseSearchOutcome | null> => {
       const found = await find(id);
 

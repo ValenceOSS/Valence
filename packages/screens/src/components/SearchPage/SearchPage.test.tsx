@@ -1,8 +1,7 @@
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
-import { SearchDrawer } from './SearchDrawer';
+import { SearchPage } from './SearchPage';
 import type { SearchAreaProps } from '@ValenceScreens/components/SearchArea/SearchArea.types';
 
 const drawn = vi.hoisted((): { props: SearchAreaProps | null } => ({ props: null }));
@@ -17,44 +16,28 @@ vi.mock('@ValenceScreens/components/SearchArea/SearchArea', () => ({
 
 beforeEach(() => {
   drawn.props = null;
-  window.history.replaceState(null, '', '/');
+  window.history.replaceState(null, '', '/search');
 });
 
-describe('SearchDrawer', () => {
-  it('shows nothing while shut', () => {
-    renderInAShell(<SearchDrawer isOpen={false} onClose={vi.fn()} />);
+describe('SearchPage', () => {
+  it('is a page rather than a sheet over whatever was underneath', () => {
+    renderInAShell(<SearchPage />);
 
-    expect(screen.queryByText('searching')).not.toBeInTheDocument();
-  });
-
-  it('raises itself over the page rather than going to one of its own', () => {
-    renderInAShell(<SearchDrawer isOpen onClose={vi.fn()} />);
-
-    expect(screen.getByRole('dialog', { name: 'Search' })).toBeInTheDocument();
-  });
-
-  it('closes from its own button', async () => {
-    const actor = userEvent.setup();
-    const onClose = vi.fn();
-
-    renderInAShell(<SearchDrawer isOpen onClose={onClose} />);
-
-    await actor.click(screen.getByRole('button', { name: 'Close' }));
-
-    expect(onClose).toHaveBeenCalledOnce();
+    expect(screen.getByText('searching')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('searches for what the address says', () => {
-    window.history.replaceState(null, '', '/?search=open&q=blade&genre=drama');
+    window.history.replaceState(null, '', '/search?q=blade&genre=drama');
 
-    renderInAShell(<SearchDrawer isOpen onClose={vi.fn()} />);
+    renderInAShell(<SearchPage />);
 
     expect(drawn.props?.search).toBe('blade');
     expect(drawn.props?.genre).toBe('drama');
   });
 
   it('puts what was typed in the address without leaving a history behind', async () => {
-    renderInAShell(<SearchDrawer isOpen onClose={vi.fn()} />);
+    renderInAShell(<SearchPage />);
 
     drawn.props?.onSearchChange?.('dune');
 
@@ -64,7 +47,7 @@ describe('SearchDrawer', () => {
   });
 
   it('puts a chosen genre in the address', async () => {
-    renderInAShell(<SearchDrawer isOpen onClose={vi.fn()} />);
+    renderInAShell(<SearchPage />);
 
     drawn.props?.onGenreChange?.('thriller');
 
@@ -74,7 +57,7 @@ describe('SearchDrawer', () => {
   });
 
   it('says how far through each result this viewer is', () => {
-    renderInAShell(<SearchDrawer isOpen onClose={vi.fn()} />, {
+    renderInAShell(<SearchPage />, {
       progress: new Map([
         [
           'media-1',
@@ -94,6 +77,6 @@ describe('SearchDrawer', () => {
   });
 
   it('sets a display name so devtools can identify it', () => {
-    expect(SearchDrawer.displayName).toBe('SearchDrawer');
+    expect(SearchPage.displayName).toBe('SearchPage');
   });
 });

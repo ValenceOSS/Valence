@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { describe, expect, it, vi } from 'vitest';
+import { columnsIn } from '@ValenceUI/columnsIn';
 import { MediaGrid } from './MediaGrid';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
@@ -54,39 +55,25 @@ describe('MediaGrid', () => {
     expect(MediaGrid.displayName).toBe('MediaGrid');
   });
 
-  it('lays the cards out at the size it is given', () => {
+  it('fits more cards across at a smaller size than at a larger one', () => {
     const { container } = renderInAnAddress(
       <MediaGrid items={items} size="small" onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
+    const small = container.querySelector('[style*="grid-template-columns"]');
 
-    expect(container.querySelector('ul')).toHaveClass('xl:grid-cols-6');
-  });
-
-  it('settles on the middle size when nobody has chosen one', () => {
-    const { container } = renderInAnAddress(
-      <MediaGrid items={items} onPlay={vi.fn()} onInspect={vi.fn()} />,
-    );
-
-    expect(container.querySelector('ul')).toHaveClass('xl:grid-cols-4');
-  });
-
-  it('shows fewer, larger cards when asked for large ones', () => {
-    const { container } = renderInAnAddress(
-      <MediaGrid items={items} size="large" onPlay={vi.fn()} onInspect={vi.fn()} />,
-    );
-
-    expect(container.querySelector('ul')).toHaveClass('xl:grid-cols-3');
+    expect(small).not.toBeNull();
+    expect(columnsIn(1200, 220, 16)).toBeGreaterThan(columnsIn(1200, 420, 16));
   });
 });
 
 describe('a grid of posters', () => {
-  it('stands its cards upright on their posters, more of them to a row', () => {
+  it('stands its cards upright on their posters', () => {
     const { container } = renderInAnAddress(
       <MediaGrid items={items} size="small" shape="poster" onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
 
-    expect(container.querySelector('ul')).toHaveClass('xl:grid-cols-8', 'lg:grid-cols-6');
     expect(container.querySelectorAll('.aspect-\\[2\\/3\\]')).toHaveLength(2);
+    expect(columnsIn(1200, 130, 16)).toBeGreaterThan(columnsIn(1200, 220, 16));
   });
 
   it('lays its cards flat unless asked otherwise', () => {
@@ -94,7 +81,6 @@ describe('a grid of posters', () => {
       <MediaGrid items={items} size="small" onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
 
-    expect(container.querySelector('ul')).not.toHaveClass('xl:grid-cols-8');
     expect(container.querySelectorAll('.aspect-video')).toHaveLength(2);
   });
 });

@@ -2,6 +2,7 @@ import { Icon } from '@ValenceUI/Icon';
 import {
   BookOpen01Icon,
   MusicNote01Icon,
+  Compass01Icon,
   Cancel01Icon,
   ComputerIcon,
   DiceFaces05Icon,
@@ -122,6 +123,7 @@ const SECTION_ICONS: Record<ShellSection, ReactNode> = {
   favourites: <Icon of={FavouriteIcon} size={18} />,
   read: <Icon of={BookOpen01Icon} size={18} />,
   music: <Icon of={MusicNote01Icon} size={18} />,
+  requests: <Icon of={Compass01Icon} size={18} />,
   search: <Icon of={Search01Icon} size={18} />,
   account: <Icon of={UserCircleIcon} size={18} />,
 };
@@ -134,6 +136,7 @@ const ACTIVE_SECTION_ICONS: Record<ShellSection, ReactNode> = {
   favourites: <Icon of={FavouriteIcon} size={18} isActive />,
   read: <Icon of={BookOpen01Icon} size={18} isActive />,
   music: <Icon of={MusicNote01Icon} size={18} isActive />,
+  requests: <Icon of={Compass01Icon} size={18} isActive />,
   search: <Icon of={Search01Icon} size={18} isActive />,
   account: <Icon of={UserCircleIcon} size={18} isActive />,
 };
@@ -146,6 +149,7 @@ const SECTION_GESTURES: Record<ShellSection, IconGesture> = {
   favourites: 'fill',
   read: 'settle',
   music: 'settle',
+  requests: 'settle',
   search: 'settle',
   account: 'settle',
 };
@@ -158,6 +162,7 @@ const SECTION_LABELS: Record<ShellSection, string> = {
   favourites: 'Favourites',
   read: 'Books',
   music: 'Music',
+  requests: 'Discover',
   search: 'Search',
   account: 'Account',
 };
@@ -194,6 +199,10 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  *   in the bar is offered only where there is something to find there — an empty library is not a
  *   place to go — and every place is offered until the answer arrives, rather than places
  *   appearing one by one as it does.
+ * @param mayRequest - Whether this viewer may ask for things, which is when Discover is offered at
+ *   all.
+ * @param onOpenFavourites - Told to show what this viewer has kept, from the account menu.
+ * @param onOpenMyRequests - Told to show what this viewer has asked for, from the account menu.
  * @param notifications - The bell and what is behind it.
  * @param hasMark - Whether the bar draws the mark itself. It does not while a screen held over the
  *   page is still showing it: the mark is one thing moving from there to here, and two of them on
@@ -220,6 +229,9 @@ const AppShell = ({
   onSurprise,
   libraryKinds,
   stocked,
+  mayRequest = false,
+  onOpenFavourites,
+  onOpenMyRequests,
   notifications,
 }: AppShellProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -305,7 +317,9 @@ const AppShell = ({
   const kinds = libraryKinds ?? [];
 
   const places = BROWSE_SECTIONS.filter(
-    (id) => stocked === undefined || !STOCKED_ONLY.has(id) || stocked.includes(id),
+    (id) =>
+      (stocked === undefined || !STOCKED_ONLY.has(id) || stocked.includes(id)) &&
+      (id !== 'requests' || mayRequest),
   );
 
   const items: NavBarItem[] = places.map((id) => ({
@@ -418,6 +432,26 @@ const AppShell = ({
                   icon: <Icon of={UserCircleIcon} size={16} />,
                   onChoose: onOpenAccount,
                 },
+                ...(onOpenFavourites === undefined
+                  ? []
+                  : [
+                      {
+                        id: 'favourites',
+                        label: 'Favourites',
+                        icon: <Icon of={FavouriteIcon} size={16} />,
+                        onChoose: onOpenFavourites,
+                      },
+                    ]),
+                ...(mayRequest && onOpenMyRequests !== undefined
+                  ? [
+                      {
+                        id: 'my-requests',
+                        label: 'My requests',
+                        icon: <Icon of={Compass01Icon} size={16} />,
+                        onChoose: onOpenMyRequests,
+                      },
+                    ]
+                  : []),
                 ...(isAdministrator
                   ? [
                       {

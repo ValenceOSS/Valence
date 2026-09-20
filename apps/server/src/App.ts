@@ -255,6 +255,11 @@ import {
   searchMissingRoute,
   seriesSeasonsRoute,
   musicCatalogueRoute,
+  discoverRoute,
+  catalogueBrowseRoute,
+  catalogueSearchRoute,
+  catalogueTitleRoute,
+  requestProgressRoute,
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,
@@ -399,9 +404,18 @@ import type {
   RequestCatalogue,
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
+import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
+import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
+import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
+import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
+import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
+import { progressOf } from '@ValenceServer/requests/progressOf';
+import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
+import type { UnstoodTitle } from '@ValenceServer/requests/catalogue/UnstoodTitle';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
+import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { LogStore } from '@ValenceServer/logging/Logger';
 import type { JobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
 import type { ResourceHistoryStore } from '@ValenceServer/logging/createResourceHistoryStore';
@@ -473,6 +487,13 @@ const REQUEST_LIBRARY_KINDS: Record<MediaRequestKind, LibraryKind> = {
   series: 'shows',
   artist: 'music',
   album: 'music',
+};
+
+const NOT_STOOD: CatalogueStanding = {
+  status: 'askable',
+  mediaId: null,
+  requestId: null,
+  requestState: null,
 };
 
 const LIBRARY_KIND_WORDS: Record<LibraryKind, string> = {
@@ -639,6 +660,7 @@ type CreateAppOptions = {
     kind: MusicRequestKind,
   ) => Promise<RequestCatalogue | null>;
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
+  discovery?: Discovery;
   realtime?: RealtimePublisher;
   logs?: LogStore;
   jobHistory?: JobHistoryStore;
@@ -705,6 +727,7 @@ const createApp = ({
   describeForRequest = () => Promise.resolve(null),
   describeMusicForRequest = () => Promise.resolve(null),
   searchMusicCatalogue = () => Promise.resolve([]),
+  discovery = NO_DISCOVERY,
   permissions = createMemoryPermissionService(),
   history,
   apiKeys = createBetterAuthApiKeyService(auth),
@@ -3834,6 +3857,8 @@ const createApp = ({
 
   const APPROVERS: readonly Permission[] = ['requests.approve', 'requests.manage'];
 
+  const ASKERS: readonly Permission[] = ['requests.ask', 'requests.askMusic'];
+
   const SEES_EVERY_REQUEST: readonly Permission[] = [
     'requests.viewAll',
     'requests.approve',
@@ -3853,7 +3878,7 @@ const createApp = ({
     const { headers } = context.req.raw;
     const session = await readSessionOnce(auth, headers);
     const answer = await throughRequests(headers, (client) => client.listRequests(), [
-      'requests.ask',
+      ...ASKERS,
       ...SEES_EVERY_REQUEST,
     ]);
 
@@ -3949,7 +3974,7 @@ const createApp = ({
       headers,
       (client) =>
         drafted.kind === 'refused' ? Promise.resolve(drafted) : client.addRequest(drafted.draft),
-      ['requests.ask'],
+      [isMusicRequest(asked.kind) ? 'requests.askMusic' : 'requests.ask'],
     );
 
     if (answer.kind !== 'answered') {
@@ -4028,7 +4053,9 @@ const createApp = ({
     const { headers } = context.req.raw;
     const may = (
       await Promise.all(
-        ['requests.ask' as const, ...APPROVERS].map((permission) => requires(headers, permission)),
+        ['requests.askMusic' as const, ...APPROVERS].map((permission) =>
+          requires(headers, permission),
+        ),
       )
     ).some(Boolean);
 
@@ -4039,6 +4066,196 @@ const createApp = ({
     const { query, kind } = context.req.valid('query');
 
     return context.json(await searchMusicCatalogue(query, kind), 200);
+  });
+
+  /**
+   * What somebody may ask for: films and series, music, both or neither.
+   *
+   * @param headers - Who is asking.
+   * @returns Whether they may ask for each.
+   */
+  const whatMayBeAsked = async (headers: Headers) => {
+    const [video, music] = await Promise.all([
+      requires(headers, 'requests.ask'),
+      requires(headers, 'requests.askMusic'),
+    ]);
+
+    return { video, music };
+  };
+
+  /**
+   * Every request anybody has made, for saying what has been asked for already — or none where the
+   * requests service cannot say.
+   *
+   * @returns The requests.
+   */
+  const everyRequest = async () => {
+    const answer = await requestsClient?.listRequests();
+
+    return answer?.kind === 'answered' ? answer.value : [];
+  };
+
+  app.openapi(discoverRoute, async (context) => {
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video && !may.music) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const [discovered, requested] = await Promise.all([
+      discoverShelves(discovery, may),
+      everyRequest(),
+    ]);
+
+    return context.json(
+      {
+        shelves: await Promise.all(
+          discovered.shelves.map(async (shelf) => ({
+            ...shelf,
+            titles: await standTitles(shelf.titles, discovery.lookup, requested),
+          })),
+        ),
+        studios: discovered.studios,
+      },
+      200,
+    );
+  });
+
+  app.openapi(catalogueBrowseRoute, async (context) => {
+    const { kind, list, studio, page } = context.req.valid('query');
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const browsed = await discovery.browse({
+      list,
+      kind: kind === 'film' ? 'movie' : 'tv',
+      page,
+      studio: studio ?? null,
+    });
+
+    const titles = browsed.matches.map((match) => ({
+      kind,
+      id: match.externalId,
+      title: match.title,
+      subtitle: null,
+      year: match.year,
+      overview: match.overview,
+      posterUrl: match.posterUrl,
+    }));
+
+    return context.json(
+      {
+        titles: await standTitles(titles, discovery.lookup, await everyRequest()),
+        page,
+        hasMore: browsed.hasMore,
+      },
+      200,
+    );
+  });
+
+  app.openapi(catalogueSearchRoute, async (context) => {
+    const { query, kind } = context.req.valid('query');
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!(isMusicRequest(kind) ? may.music : may.video)) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const found: UnstoodTitle[] = isMusicRequest(kind)
+      ? (await searchMusicCatalogue(query, kind)).map((hit) => ({
+          kind: hit.kind,
+          id: hit.musicBrainzId,
+          title: hit.title,
+          subtitle: hit.artist ?? hit.disambiguation,
+          year: hit.year,
+          overview: null,
+          posterUrl: hit.coverUrl,
+        }))
+      : (await searchCatalogue(query, kind === 'film' ? 'movie' : 'tv')).map((match) => ({
+          kind,
+          id: match.externalId,
+          title: match.title,
+          subtitle: null,
+          year: match.year,
+          overview: match.overview,
+          posterUrl: match.posterUrl,
+        }));
+
+    return context.json(await standTitles(found, discovery.lookup, await everyRequest()), 200);
+  });
+
+  app.openapi(catalogueTitleRoute, async (context) => {
+    const { kind, id } = context.req.valid('param');
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!(isMusicRequest(kind) ? may.music : may.video)) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const described = await describeCatalogueTitle(discovery, kind, id);
+
+    if (described === null) {
+      return context.json(
+        { error: 'The catalogue does not know that, or cannot be asked just now.' },
+        404,
+      );
+    }
+
+    const [stood] = await standTitles([described], discovery.lookup, await everyRequest());
+
+    return context.json({ ...described, standing: stood?.standing ?? NOT_STOOD }, 200);
+  });
+
+  app.openapi(requestProgressRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const session = await readSessionOnce(auth, headers);
+    const answer = await throughRequests(
+      headers,
+      async (client) => {
+        const listed = await client.listRequests();
+
+        if (listed.kind !== 'answered') {
+          return listed;
+        }
+
+        const queue = await client.downloads();
+
+        return {
+          kind: 'answered' as const,
+          value: progressOf(
+            listed.value.filter((request) => request.requestedBy.id === session?.user.id),
+            queue.kind === 'answered' ? queue.value.downloads : [],
+          ),
+        };
+      },
+      [...ASKERS, ...SEES_EVERY_REQUEST],
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
   });
 
   app.openapi(searchMissingRoute, async (context) => {
@@ -4078,8 +4295,37 @@ const createApp = ({
   });
 
   app.openapi(removeMediaRequestRoute, async (context) => {
-    const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.removeRequest(context.req.valid('param').id),
+    const { headers } = context.req.raw;
+    const { id } = context.req.valid('param');
+    const isDeletingDownloads = context.req.valid('query').deleteDownloads === 'true';
+    const isManager = await requires(headers, 'requests.manage');
+    const session = await readSessionOnce(auth, headers);
+    const answer = await throughRequests(
+      headers,
+      async (client) => {
+        if (isManager) {
+          return client.removeRequest(id, isDeletingDownloads);
+        }
+
+        const found = await client.findRequest(id);
+
+        if (found.kind !== 'answered') {
+          return found;
+        }
+
+        if (found.value.requestedBy.id !== session?.user.id) {
+          return { kind: 'refused', status: 404, error: 'There is no such request.' };
+        }
+
+        return found.value.state === 'filed' || found.value.state === 'available'
+          ? {
+              kind: 'refused',
+              status: 400,
+              error: 'It is in the library already, so there is nothing left to cancel.',
+            }
+          : client.removeRequest(id, true);
+      },
+      ['requests.manage', ...ASKERS],
     );
 
     return answer.kind === 'answered'

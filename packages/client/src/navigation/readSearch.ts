@@ -14,6 +14,8 @@ type PlaceSearch = {
   account?: string;
   downloads?: string;
   listen?: string;
+  ask?: string;
+  view?: string;
 };
 
 const NOTHING: PlaceSearch = {};
@@ -34,6 +36,8 @@ const SearchSchema = z.object({
   account: said,
   downloads: said,
   listen: said,
+  ask: said,
+  view: said,
 });
 
 /**

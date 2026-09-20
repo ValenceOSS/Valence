@@ -1,20 +1,16 @@
-import { motion } from 'motion/react';
-import { RevealItem } from '@ValenceUI/RevealItem';
-import { groupVariants } from '@ValenceUI/animations/reveal';
+import { VirtualGrid } from '@ValenceUI/VirtualGrid';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
 import type { MediaGridProps, MediaGridSize } from './MediaGrid.types';
 
-const POSTER_COLUMNS: Record<MediaGridSize, string> = {
-  small: 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8',
-  medium: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6',
-  large: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5',
-};
+const POSTER_WIDTHS: Record<MediaGridSize, number> = { small: 130, medium: 170, large: 220 };
 
-const COLUMNS: Record<MediaGridSize, string> = {
-  small: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6',
-  medium: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
-  large: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3',
-};
+const WIDE_WIDTHS: Record<MediaGridSize, number> = { small: 220, medium: 300, large: 420 };
+
+const POSTER_TO_WIDTH = 1.5;
+
+const WIDE_TO_WIDTH = 0.5625;
+
+const UNDER_A_CARD = 64;
 
 /**
  * Lays a page of items out as a grid of cards, at whichever size a viewer chose. Each card carries
@@ -46,15 +42,26 @@ const MediaGrid = ({
   onOpenShow,
   shape = 'wide',
 }: MediaGridProps) => (
-  <motion.ul
-    variants={groupVariants}
-    initial="hidden"
-    animate="shown"
-    className={`grid gap-x-4 gap-y-8 ${(shape === 'poster' ? POSTER_COLUMNS : COLUMNS)[size]}`}
+  <VirtualGrid
+    count={items.length}
+    label="What is here"
+    leastCardWidth={(shape === 'poster' ? POSTER_WIDTHS : WIDE_WIDTHS)[size]}
+    rowHeight={
+      (shape === 'poster'
+        ? POSTER_WIDTHS[size] * POSTER_TO_WIDTH
+        : WIDE_WIDTHS[size] * WIDE_TO_WIDTH) + UNDER_A_CARD
+    }
   >
-    {items.map((media, at) => (
-      <RevealItem key={media.id} index={at}>
+    {(at) => {
+      const media = items[at];
+
+      if (media === undefined) {
+        return null;
+      }
+
+      return (
         <RailCard
+          key={media.id}
           media={media}
           {...(watchedFractionFor?.(media.id) === undefined
             ? {}
@@ -71,9 +78,9 @@ const MediaGrid = ({
           {...(onToggleKept === undefined ? {} : { onToggleKept })}
           {...(onHide === undefined ? {} : { onHide })}
         />
-      </RevealItem>
-    ))}
-  </motion.ul>
+      );
+    }}
+  </VirtualGrid>
 );
 
 MediaGrid.displayName = 'MediaGrid';

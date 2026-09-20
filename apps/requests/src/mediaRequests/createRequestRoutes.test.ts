@@ -36,6 +36,7 @@ const theRoutes = (picked: MediaRequest | string | null = null) => {
     releasesForDraft: vi.fn(() =>
       Promise.resolve({ releases: [], indexers: [], judgements: [], pickedId: null }),
     ),
+    dropDownloads: vi.fn(() => Promise.resolve(1)),
   };
   const log = createMemoryRequestLogStore();
   const routes = createRequestRoutes({
@@ -136,14 +137,25 @@ describe('createRequestRoutes', () => {
   });
 
   it('lists what is followed, finds one, and removes one', async () => {
-    const { ask } = theRoutes();
+    const { ask, worker } = theRoutes();
     const id = await madeDune(ask);
 
     expect(await (await ask('/requests/following')).json()).toHaveLength(1);
     expect((await ask(`/requests/${id}`)).status).toBe(200);
     expect((await ask(`/requests/${id}`, 'DELETE')).status).toBe(204);
+    expect(worker.dropDownloads).not.toHaveBeenCalled();
     expect((await ask(`/requests/${id}`, 'DELETE')).status).toBe(404);
     expect((await ask(`/requests/${id}`)).status).toBe(404);
+  });
+
+  it('cancels a request with the downloads it had not finished, files and all', async () => {
+    const { ask, worker } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect((await ask(`/requests/${id}?deleteDownloads=true`, 'DELETE')).status).toBe(204);
+    expect(worker.dropDownloads).toHaveBeenCalledWith(id);
+    expect((await ask('/requests/missing?deleteDownloads=true', 'DELETE')).status).toBe(404);
+    expect(worker.dropDownloads).toHaveBeenCalledTimes(1);
   });
 
   it('searches for what is missing, and by hand, and sends a pick', async () => {

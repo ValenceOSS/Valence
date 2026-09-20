@@ -1,0 +1,132 @@
+import { useEffect, useState } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { Compass01Icon } from '@hugeicons/core-free-icons';
+import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+import { MediaCard } from '@ValenceUI/MediaCard';
+import { NothingHere } from '@ValenceUI/NothingHere';
+import { Spinner } from '@ValenceUI/Spinner';
+import { VirtualGrid } from '@ValenceUI/VirtualGrid';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { describeStanding } from '@ValenceScreens/components/AskableDialog/describeStanding';
+import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
+import { askingOf } from '@ValenceScreens/requests/askingOf';
+import type { CatalogueGridProps } from './CatalogueGrid.types';
+
+const LEAST_CARD_WIDTH = 170;
+
+const POSTER_ROW_HEIGHT = 330;
+
+const BEFORE_THE_END = '0px 0px 800px 0px';
+
+/**
+ * A whole list of films or series to ask for, laid out as a grid that goes on as far as it is
+ * scrolled: the next page is read when the foot of the one showing comes near, so there is no
+ * button to press and no page to turn.
+ *
+ * @param browsing - Which list, of which kind, and whose studio where one was chosen.
+ * @param onAsk - Called with the title to open, as its address names it.
+ */
+const CatalogueGrid = ({ browsing, onAsk }: CatalogueGridProps) => {
+  const pages = useInfiniteQuery(requestsQueries.catalogueBrowse(browsing));
+  const [end, setEnd] = useState<HTMLDivElement | null>(null);
+
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = pages;
+
+  useEffect(() => {
+    if (end === null || !hasNextPage || isFetchingNextPage) {
+      return;
+    }
+
+    if (typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+
+    const watching = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting === true) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: BEFORE_THE_END },
+    );
+
+    watching.observe(end);
+
+    return () => {
+      watching.disconnect();
+    };
+  }, [end, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  if (pages.isError) {
+    return (
+      <CouldNotRead
+        what="What there is to ask for"
+        isTryingAgain={pages.isFetching}
+        onTryAgain={() => {
+          void pages.refetch();
+        }}
+      />
+    );
+  }
+
+  if (pages.data === undefined) {
+    return <Spinner label="Reading what there is to ask for" />;
+  }
+
+  const titles = pages.data.pages.flatMap((page) => page.titles);
+
+  if (titles.length === 0) {
+    return (
+      <NothingHere
+        of={Compass01Icon}
+        title="Nothing to ask for here"
+        detail="The catalogue listed nothing."
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-8">
+      <VirtualGrid
+        count={titles.length}
+        label="What there is to ask for"
+        leastCardWidth={LEAST_CARD_WIDTH}
+        rowHeight={POSTER_ROW_HEIGHT}
+      >
+        {(at) => {
+          const title = titles[at];
+
+          if (title === undefined) {
+            return null;
+          }
+
+          const standing = describeStanding(title.standing);
+
+          return (
+            <MediaCard
+              key={`${title.kind}:${title.id}`}
+              title={title.title}
+              subtitle={title.year?.toString() ?? ''}
+              badges={[
+                REQUEST_KIND_NAMES[title.kind],
+                ...(standing === null ? [] : [standing.label]),
+              ]}
+              {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
+              onSelect={() => {
+                onAsk(askingOf(title));
+              }}
+            />
+          );
+        }}
+      </VirtualGrid>
+
+      <div ref={setEnd} className="flex justify-center">
+        {isFetchingNextPage ? <Spinner label="Reading more" /> : null}
+      </div>
+    </div>
+  );
+};
+
+CatalogueGrid.displayName = 'CatalogueGrid';
+
+export { CatalogueGrid };

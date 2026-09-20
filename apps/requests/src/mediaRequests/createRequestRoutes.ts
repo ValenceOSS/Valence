@@ -16,7 +16,10 @@ import type { RequestLogStore } from '@ValenceRequests/mediaRequests/RequestLogS
 type CreateRequestRoutesOptions = {
   service: RequestService;
   log: Pick<RequestLogStore, 'list'>;
-  worker: Pick<RequestWorker, 'searchMissing' | 'releasesFor' | 'releasesForDraft' | 'pick'>;
+  worker: Pick<
+    RequestWorker,
+    'searchMissing' | 'releasesFor' | 'releasesForDraft' | 'pick' | 'dropDownloads'
+  >;
 };
 
 const NO_SUCH_REQUEST = { error: 'No such request.' };
@@ -25,7 +28,8 @@ const NO_SUCH_REQUEST = { error: 'No such request.' };
  * Requests for films and series, as routes under `/api`: making and listing them, approving and
  * refusing them, changing what they ask for, keeping them up to date with the catalogue, trying
  * again, searching by hand and picking a release — for a request not yet made, too — searching for
- * everything still missing, and reading what each has done.
+ * everything still missing, and reading what each has done. A request cancelled can take the
+ * downloads it had not yet finished filing with it, files and all.
  *
  * @param service - The requests.
  * @param log - What each request has done.
@@ -76,11 +80,17 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
       : answer(await service.change(context.req.param('id'), revision.change, revision.catalogue));
   });
 
-  routes.delete('/requests/:id', async (context) =>
-    (await service.remove(context.req.param('id')))
+  routes.delete('/requests/:id', async (context) => {
+    const id = context.req.param('id');
+
+    if (context.req.query('deleteDownloads') === 'true' && (await service.find(id)) !== null) {
+      await worker.dropDownloads(id);
+    }
+
+    return (await service.remove(id))
       ? context.body(null, 204)
-      : context.json(NO_SUCH_REQUEST, 404),
-  );
+      : context.json(NO_SUCH_REQUEST, 404);
+  });
 
   routes.post('/requests/:id/approve', async (context) =>
     answer(await service.approve(context.req.param('id'))),

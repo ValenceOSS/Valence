@@ -82,8 +82,15 @@ import type { ScannedItem } from '@ValenceServer/library/scanLibrary';
 import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
+import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
 import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/albums/createDatabaseRequestedAlbumStore';
 import { tieRequestedAlbum } from '@ValenceServer/requests/albums/tieRequestedAlbum';
+import { createDatabaseCatalogueLookup } from '@ValenceServer/requests/catalogue/createDatabaseCatalogueLookup';
+import { findOnMusicBrainz } from '@ValenceServer/requests/deezer/findOnMusicBrainz';
+import { readDeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
+import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
+import type { DeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
+import type { CatalogueStudio } from '@ValenceContracts/schemas/CatalogueTitle';
 import { describeAlbumForRequest } from '@ValenceServer/requests/musicBrainz/describeAlbumForRequest';
 import { describeArtistForRequest } from '@ValenceServer/requests/musicBrainz/describeArtistForRequest';
 import { searchMusicCatalogue } from '@ValenceServer/requests/musicBrainz/searchMusicCatalogue';
@@ -693,6 +700,7 @@ const musicWeb = createMusicWeb({
     'coverartarchive.org': 250,
     'www.theaudiodb.com': 2100,
     'lrclib.net': 250,
+    'api.deezer.com': 250,
   },
 });
 
@@ -1930,15 +1938,98 @@ const describeForRequest = async (
 const describeMusicForRequest = (
   musicBrainzId: string,
   kind: MusicRequestKind,
+  mostPages?: number,
 ): Promise<RequestCatalogue | null> =>
   kind === 'artist'
-    ? describeArtistForRequest(musicWeb, musicBrainzId)
+    ? describeArtistForRequest(musicWeb, musicBrainzId, mostPages)
     : describeAlbumForRequest(musicWeb, musicBrainzId);
 
 const requestedAlbums = createDatabaseRequestedAlbumStore(db);
 
+const CHARTS_LIVE_FOR_MS = 6 * 60 * 60 * 1000;
+
+const charted = createExpiringCache<Promise<DeezerCharts>>(CHARTS_LIVE_FOR_MS);
+
+const studioed = createExpiringCache<Promise<CatalogueStudio[]>>(CHARTS_LIVE_FOR_MS);
+
+const ALBUM_PAGES_SHOWN = 3;
+
+const described = createExpiringCache<Promise<RequestCatalogue | null>>(CHARTS_LIVE_FOR_MS);
+
+const foundOnMusicBrainz = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
+
+/**
+ * Keeps an answer for as long as the charts are kept, so opening the same album twice asks
+ * MusicBrainz once. MusicBrainz answers a request a second, and a page somebody is waiting on is
+ * the worst place to spend that.
+ *
+ * @param kept - The cache to keep it in.
+ * @param key - What it is kept under.
+ * @param read - How to read it where it is not kept yet.
+ * @returns The answer.
+ */
+const keeping = <T>(
+  kept: ReturnType<typeof createExpiringCache<Promise<T>>>,
+  key: string,
+  read: () => Promise<T>,
+): Promise<T> => {
+  const already = kept.get(key);
+
+  if (already !== undefined) {
+    return already;
+  }
+
+  const reading = read();
+
+  kept.set(key, reading);
+
+  return reading;
+};
+
+const discovery: Discovery = {
+  browse: (browsing) =>
+    catalogueProvider.browse?.(browsing) ?? Promise.resolve({ matches: [], hasMore: false }),
+  studios: () => {
+    const kept = studioed.get('studios');
+
+    if (kept !== undefined) {
+      return kept;
+    }
+
+    const reading = catalogueProvider.studios?.() ?? Promise.resolve([]);
+
+    studioed.set('studios', reading);
+
+    return reading;
+  },
+  charts: () => {
+    const kept = charted.get('charts');
+
+    if (kept !== undefined) {
+      return kept;
+    }
+
+    const reading = readDeezerCharts(musicWeb);
+
+    charted.set('charts', reading);
+
+    return reading;
+  },
+  describeTitle: (tmdbId, kind) =>
+    catalogueProvider.describeTitle?.(tmdbId, kind) ?? Promise.resolve(null),
+  describeMusic: (musicBrainzId, kind) =>
+    keeping(described, `${kind}:${musicBrainzId}`, () =>
+      describeMusicForRequest(musicBrainzId, kind, ALBUM_PAGES_SHOWN),
+    ),
+  findOnMusicBrainz: (kind, deezerId) =>
+    keeping(foundOnMusicBrainz, `${kind}:${deezerId.toString()}`, () =>
+      findOnMusicBrainz(musicWeb, kind, deezerId),
+    ),
+  lookup: createDatabaseCatalogueLookup(db),
+};
+
 const LINKS_TO_ARRIVALS: Record<MediaRequestKind, (mediaId: string) => string> = {
-  film: (mediaId) => `/?inspecting=${mediaId}`,
+  film: (mediaId) => `/?item=${mediaId}`,
   series: (mediaId) => `/?show=${mediaId}`,
   artist: (mediaId) => `/music?listen=album:${mediaId}`,
   album: (mediaId) => `/music?listen=album:${mediaId}`,
@@ -2575,6 +2666,7 @@ const app = createApp({
   describeForRequest,
   describeMusicForRequest,
   searchMusicCatalogue: (query, kind) => searchMusicCatalogue(musicWeb, query, kind),
+  discovery,
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
 });
 

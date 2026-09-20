@@ -104,9 +104,8 @@ describe('writeLocation', () => {
 
   it('writes what it can read back', () => {
     const place = {
-      section: 'films',
+      section: 'search',
       search: 'blade',
-      isSearchOpen: true,
       inspecting: 'abc',
       book: 'def',
       show: null,
@@ -119,6 +118,8 @@ describe('writeLocation', () => {
       account: null,
       downloads: false,
       listen: null,
+      asking: null,
+      requestsView: null,
     } as const;
 
     expect(readLocation(`http://valence.local${writeLocation(place)}`)).toEqual(place);
@@ -129,6 +130,17 @@ describe('writeLocation', () => {
 
     expect(writeLocation(place)).toBe('/music?listen=album%3Aabc');
     expect(readLocation(`http://valence.local${writeLocation(place)}`)).toEqual(place);
+  });
+
+  it('carries a title to ask for over any section, and which view of the requests page is open', () => {
+    const asking = { ...HOME, section: 'films', asking: 'film:438631' } as const;
+    const mine = { ...HOME, section: 'requests', requestsView: 'mine' } as const;
+
+    expect(writeLocation(asking)).toBe('/films?ask=film%3A438631');
+    expect(readLocation(`http://valence.local${writeLocation(asking)}`)).toEqual(asking);
+    expect(writeLocation(mine)).toBe('/requests?view=mine');
+    expect(readLocation(`http://valence.local${writeLocation(mine)}`)).toEqual(mine);
+    expect(placeIn('/films', { view: 'mine' }).requestsView).toBeNull();
   });
 
   it('carries a listening party in the music section', () => {
@@ -305,28 +317,24 @@ describe('downloads, which are a dialog rather than a page', () => {
   });
 });
 
-describe('search, which is a dialog rather than a page', () => {
-  it('opens over whichever section it was opened from', () => {
-    expect(writeLocation({ ...HOME, section: 'films', isSearchOpen: true })).toBe(
-      '/films?search=open',
-    );
+describe('search, which is a page of its own', () => {
+  it('is written as its own address, carrying what was typed', () => {
+    expect(writeLocation({ ...HOME, section: 'search', search: 'blade' })).toBe('/search?q=blade');
   });
 
-  it('is shut when nothing in the address says otherwise', () => {
-    expect(placeIn('/films', {}).isSearchOpen).toBe(false);
+  it('leaves what was typed behind when somewhere else is written, so no page filters by it', () => {
+    expect(writeLocation({ ...HOME, section: 'films', search: 'blade' })).toBe('/films');
   });
 
-  it('still answers the address it used to be a page at, so held links keep working', () => {
-    const place = placeIn('/search', {});
-
-    expect(place.section).toBe('home');
-    expect(place.isSearchOpen).toBe(true);
-  });
-
-  it('lets a held search link still open with what was typed', () => {
+  it('reads the page and what was typed back out of the address', () => {
     const place = placeIn('/search', { q: 'blade' });
 
-    expect(place.isSearchOpen).toBe(true);
+    expect(place.section).toBe('search');
     expect(place.search).toBe('blade');
+  });
+
+  it('still answers the addresses held from when it was a sheet', () => {
+    expect(placeIn('/films', { search: 'open' }).section).toBe('search');
+    expect(placeIn('/films', {}).section).toBe('films');
   });
 });

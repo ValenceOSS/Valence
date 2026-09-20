@@ -1,7 +1,7 @@
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
-type SearchKind = 'everything' | 'films' | 'shows' | 'books';
+type SearchKind = 'everything' | 'films' | 'shows' | 'music' | 'books';
 
 type SearchAreaProps = {
   search: string;
@@ -17,6 +17,7 @@ type SearchAreaProps = {
   onToggleKept?: (media: MediaSummary) => void;
   onHide?: (media: MediaSummary) => void;
   onOpenBook?: (book: Book) => void;
+  onAsk?: (asking: string) => void;
 };
 
 export type { SearchAreaProps, SearchKind };

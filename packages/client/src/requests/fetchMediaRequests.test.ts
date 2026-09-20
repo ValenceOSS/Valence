@@ -176,4 +176,11 @@ describe('fetchMediaRequests', () => {
 
     expect(await removeMediaRequest(REQUEST.id)).toEqual({ message: 'Not yours' });
   });
+
+  it('cancels a request, deleting what it had started downloading', async () => {
+    const asked = answering(null, 204);
+
+    expect(await removeMediaRequest(REQUEST.id, true)).toBeNull();
+    expect(asked.mock.calls[0]?.[0]).toBe(`/api/requests/media/${REQUEST.id}?deleteDownloads=true`);
+  });
 });

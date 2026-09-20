@@ -192,12 +192,18 @@
       "@ValenceUI/animations/motion": ["./packages/ui/src/animations/motion.ts"],
       "@ValenceUI/tokens/menu": ["./packages/ui/src/tokens/menu.ts"],
       "@ValenceUI/tokens/roleColours": ["./packages/ui/src/tokens/roleColours.ts"],
+      "@ValenceUI/tokens/rail": ["./packages/ui/src/tokens/rail.ts"],
       "@ValenceUI/tokens/segmented": ["./packages/ui/src/tokens/segmented.ts"],
       "@ValenceUI/tokens/underlined": ["./packages/ui/src/tokens/underlined.ts"],
       "@ValenceUI/animations/reveal": ["./packages/ui/src/animations/reveal.ts"],
       "@ValenceUI/animations/spin": ["./packages/ui/src/animations/spin.ts"],
       "@ValenceUI/badAppleFilm": ["./packages/ui/src/functions/badAppleFilm.ts"],
       "@ValenceUI/blendLights": ["./packages/ui/src/functions/blendLights.ts"],
+      "@ValenceUI/VirtualGrid": ["./packages/ui/src/components/VirtualGrid/VirtualGrid.tsx"],
+      "@ValenceUI/VirtualGrid.types": [
+        "./packages/ui/src/components/VirtualGrid/VirtualGrid.types.ts"
+      ],
+      "@ValenceUI/columnsIn": ["./packages/ui/src/components/VirtualGrid/columnsIn.ts"],
       "@ValenceUI/cn": ["./packages/ui/src/functions/cn.ts"],
       "@ValenceUI/useHasScrolledPast": ["./packages/ui/src/functions/useHasScrolledPast.ts"],
       "@ValenceUI/useTravelDirection": ["./packages/ui/src/functions/useTravelDirection.ts"],

@@ -97,7 +97,7 @@ describe('summariseNewMedia', () => {
   });
 
   it('points at the one film it is about', () => {
-    expect(summariseNewMedia([film('f1', 'Heat')])?.link).toBe('/?inspecting=f1');
+    expect(summariseNewMedia([film('f1', 'Heat')])?.link).toBe('/?item=f1');
   });
 
   it('points at the one programme it is about', () => {

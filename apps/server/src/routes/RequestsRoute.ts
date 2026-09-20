@@ -39,6 +39,16 @@ import {
   RequestLogEntrySchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import {
+  CATALOGUE_SEARCH_KINDS,
+  CATALOGUE_BROWSE_KINDS,
+  CATALOGUE_LISTS,
+  CatalogueDiscoverySchema,
+  CataloguePageSchema,
+  CatalogueTitleDetailSchema,
+  CatalogueTitleSchema,
+  RequestProgressSchema,
+} from '@ValenceContracts/schemas/CatalogueTitle';
+import {
   DownloadFilingSchema,
   DownloadQueueSchema,
   QueuedDownloadSchema,
@@ -679,6 +689,95 @@ const seriesSeasonsRoute = createRoute({
   }),
 });
 
+const discoverRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/discover',
+  tags: ['Requests'],
+  summary: 'List shelves of things to ask for, each saying where it stands',
+  responses: requestFailures({
+    200: {
+      description: 'Trending, popular and coming films and series, popular music, and the studios',
+      content: { 'application/json': { schema: CatalogueDiscoverySchema } },
+    },
+  }),
+});
+
+const catalogueBrowseRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/browse',
+  tags: ['Requests'],
+  summary: 'List a page of films or series to ask for, whole rather than a shelf of them',
+  request: {
+    query: z.object({
+      kind: z.enum(CATALOGUE_BROWSE_KINDS),
+      list: z.enum(CATALOGUE_LISTS),
+      studio: z.string().max(32).optional(),
+      page: z.coerce.number().int().positive().max(500).default(1),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'The page, each title saying where it stands, and whether there is more',
+      content: { 'application/json': { schema: CataloguePageSchema } },
+    },
+  }),
+});
+
+const catalogueSearchRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/search',
+  tags: ['Requests'],
+  summary: 'Search the catalogue for a film, series, artist or album to ask for',
+  request: {
+    query: z.object({
+      query: z.string().trim().min(1).max(200),
+      kind: z.enum(CATALOGUE_SEARCH_KINDS),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'What was found, each saying where it stands',
+      content: { 'application/json': { schema: z.array(CatalogueTitleSchema) } },
+    },
+  }),
+});
+
+const catalogueTitleRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/title/{kind}/{id}',
+  tags: ['Requests'],
+  summary: 'Describe a title that can be asked for, and say where it stands',
+  request: {
+    params: z.object({
+      kind: z.enum(CATALOGUE_SEARCH_KINDS).openapi({ param: { name: 'kind', in: 'path' } }),
+      id: z
+        .string()
+        .min(1)
+        .max(64)
+        .openapi({ param: { name: 'id', in: 'path' } }),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'The title, with its artwork, cast or albums',
+      content: { 'application/json': { schema: CatalogueTitleDetailSchema } },
+    },
+  }),
+});
+
+const requestProgressRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/progress',
+  tags: ['Requests'],
+  summary: 'Say how the downloads your own requests are waiting on are going',
+  responses: requestFailures({
+    200: {
+      description: 'Each of your downloads, how far it has got and how long is left',
+      content: { 'application/json': { schema: z.array(RequestProgressSchema) } },
+    },
+  }),
+});
+
 const musicCatalogueRoute = createRoute({
   method: 'get',
   path: '/api/requests/catalogue/music',
@@ -741,8 +840,12 @@ const removeMediaRequestRoute = createRoute({
   method: 'delete',
   path: '/api/requests/media/{id}',
   tags: ['Requests'],
-  summary: 'Forget a request, leaving whatever it fetched where it is',
-  request: { params: RecordIdParameter },
+  summary:
+    'Forget a request, leaving whatever it fetched where it is — or cancel one of your own not yet in the library, deleting what it had started downloading',
+  request: {
+    params: RecordIdParameter,
+    query: z.object({ deleteDownloads: z.enum(['true', 'false']).optional() }),
+  },
   responses: requestFailures({ 204: { description: 'Forgotten' } }),
 });
 
@@ -831,6 +934,11 @@ export {
   searchMissingRoute,
   seriesSeasonsRoute,
   musicCatalogueRoute,
+  discoverRoute,
+  catalogueBrowseRoute,
+  catalogueSearchRoute,
+  catalogueTitleRoute,
+  requestProgressRoute,
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,

@@ -28,6 +28,8 @@ import type {
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { EventBus } from '@ValenceServer/events/EventBus';
+import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
+import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
 
 const A_STATUS: RequestsStatus = {
   version: '0.4.0',
@@ -158,6 +160,7 @@ const build = async ({
   describeForRequest,
   describeMusicForRequest,
   searchMusicCatalogue,
+  discovery,
   libraries = [FILMS],
 }: {
   isOn: boolean;
@@ -171,6 +174,7 @@ const build = async ({
     kind: MusicRequestKind,
   ) => Promise<RequestCatalogue | null>;
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
+  discovery?: Discovery;
   libraries?: Library[];
 }) => {
   const { auth, settings, store } = createMemoryAuth();
@@ -207,6 +211,7 @@ const build = async ({
     ...(describeForRequest === undefined ? {} : { describeForRequest }),
     ...(describeMusicForRequest === undefined ? {} : { describeMusicForRequest }),
     ...(searchMusicCatalogue === undefined ? {} : { searchMusicCatalogue }),
+    ...(discovery === undefined ? {} : { discovery }),
     playback: createMemoryPlaybackService(),
     segments: createMemorySegmentService(),
     subtitles: createMemorySubtitleService({}),
@@ -1109,13 +1114,17 @@ describe('requests for films and series, through the server', () => {
     );
     const { ask } = await build({
       isOn: true,
-      granted: ['requests.ask'],
+      granted: ['requests.askMusic'],
       service: aWillingKeeper,
       describeMusicForRequest,
       libraries: [FILMS, MUSIC],
     });
 
     sent.length = 0;
+
+    expect(
+      (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 })).status,
+    ).toBe(403);
 
     const made = await ask('/api/requests/media', 'POST', {
       kind: 'artist',
@@ -1138,9 +1147,26 @@ describe('requests for films and series, through the server', () => {
       catalogue: { title: 'Pink Floyd', artist: 'Pink Floyd' },
     });
 
-    const nowhere = await build({
+    const filmsOnly = await build({
       isOn: true,
       granted: ['requests.ask'],
+      service: aWillingKeeper,
+      describeMusicForRequest,
+      libraries: [FILMS, MUSIC],
+    });
+
+    expect(
+      (
+        await filmsOnly.ask('/api/requests/media', 'POST', {
+          kind: 'artist',
+          musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+        })
+      ).status,
+    ).toBe(403);
+
+    const nowhere = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
       service: aWillingKeeper,
       describeMusicForRequest,
     });
@@ -1167,7 +1193,11 @@ describe('requests for films and series, through the server', () => {
       coverUrl: null,
     };
     const searchMusicCatalogue = vi.fn(() => Promise.resolve([hit]));
-    const asking = await build({ isOn: true, granted: ['requests.ask'], searchMusicCatalogue });
+    const asking = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
+      searchMusicCatalogue,
+    });
 
     const found = await asking.ask('/api/requests/catalogue/music?query=pink%20floyd&kind=artist');
 
@@ -1385,6 +1415,265 @@ describe('requests for films and series, through the server', () => {
       searched: 1,
       startedAt: '2026-09-19T00:00:00.000Z',
     });
+  });
+
+  const DISCOVERY: Discovery = {
+    ...NO_DISCOVERY,
+    browse: ({ list, kind }) =>
+      Promise.resolve({
+        matches:
+          list === 'trending' && kind === 'movie'
+            ? [
+                {
+                  externalId: '438631',
+                  kind,
+                  title: 'Dune',
+                  year: 2021,
+                  overview: null,
+                  posterUrl: null,
+                },
+              ]
+            : [],
+        hasMore: list === 'trending',
+      }),
+    studios: () =>
+      Promise.resolve([{ id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://p/d.png' }]),
+    charts: () =>
+      Promise.resolve({
+        albums: [{ deezerId: 7, title: 'Pylon', artist: 'Band', coverUrl: null }],
+        artists: [],
+      }),
+    describeTitle: (tmdbId) =>
+      Promise.resolve(
+        tmdbId === '438631'
+          ? {
+              title: 'Dune',
+              year: 2021,
+              overview: 'Spice.',
+              posterUrl: null,
+              backdropUrl: null,
+              genres: ['Science Fiction'],
+              runtimeMinutes: 155,
+              cast: [],
+            }
+          : null,
+      ),
+    lookup: {
+      ...NO_DISCOVERY.lookup,
+      films: (ids) => Promise.resolve(new Map(ids.includes('1') ? [['1', 'media-1']] : [])),
+    },
+  };
+
+  it('shelves what a viewer may ask for, saying where each title stands', async () => {
+    const films = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+    const discovered = z
+      .object({
+        shelves: z.array(
+          z.object({
+            id: z.string(),
+            titles: z.array(z.object({ standing: z.object({ status: z.string() }) })),
+          }),
+        ),
+        studios: z.array(z.object({ id: z.string() })),
+      })
+      .parse(await (await films.ask('/api/requests/discover')).json());
+
+    expect(discovered.shelves.map((shelf) => shelf.id)).toEqual(['trending-films']);
+    expect(discovered.shelves[0]?.titles[0]?.standing.status).toBe('requested');
+    expect(discovered.studios).toEqual([{ id: '2' }]);
+
+    const music = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect(await (await music.ask('/api/requests/discover')).json()).toMatchObject({
+      shelves: [
+        { id: 'popular-albums', titles: [{ id: 'deezer-7', standing: { status: 'askable' } }] },
+      ],
+      studios: [],
+    });
+
+    const nobody = await build({ isOn: true, service: aWillingKeeper, discovery: DISCOVERY });
+
+    expect((await nobody.ask('/api/requests/discover')).status).toBe(403);
+  });
+
+  it('browses a whole list a page at a time, saying whether there is more', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect(
+      await (await ask('/api/requests/catalogue/browse?kind=film&list=trending&page=1')).json(),
+    ).toMatchObject({
+      titles: [{ id: '438631', standing: { status: 'requested' } }],
+      page: 1,
+      hasMore: true,
+    });
+    expect(
+      await (await ask('/api/requests/catalogue/browse?kind=series&list=popular')).json(),
+    ).toMatchObject({ titles: [], hasMore: false });
+
+    const music = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect((await music.ask('/api/requests/catalogue/browse?kind=film&list=popular')).status).toBe(
+      403,
+    );
+  });
+
+  it('searches and describes titles to ask for, by what a viewer may ask for', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect(await (await ask('/api/requests/catalogue/title/film/438631')).json()).toMatchObject({
+      title: 'Dune',
+      genres: ['Science Fiction'],
+      standing: { status: 'requested' },
+    });
+    expect((await ask('/api/requests/catalogue/title/film/2')).status).toBe(404);
+    expect((await ask('/api/requests/catalogue/title/artist/deezer-2')).status).toBe(403);
+    expect(
+      (await ask('/api/requests/catalogue/search?query=pink%20floyd&kind=artist')).status,
+    ).toBe(403);
+    expect(await (await ask('/api/requests/catalogue/search?query=dune&kind=film')).json()).toEqual(
+      [],
+    );
+  });
+
+  it('says how the downloads a viewer’s own requests wait on are going', async () => {
+    const DOWNLOAD = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
+    let owner = '';
+    const { ask, accountId } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: (url) =>
+        url.endsWith('/api/downloads')
+          ? Response.json({
+              clients: [],
+              checkedAt: null,
+              downloads: [
+                {
+                  id: DOWNLOAD,
+                  clientId: '0f8fad5b-d9cb-469f-a165-70867728950e',
+                  clientName: 'qBittorrent',
+                  protocol: 'torrent',
+                  libraryKind: 'movies',
+                  title: 'Dune',
+                  indexerName: null,
+                  state: 'downloading',
+                  problem: null,
+                  progress: 0.5,
+                  sizeBytes: 100,
+                  doneBytes: 50,
+                  downloadBytesPerSecond: 10,
+                  uploadBytesPerSecond: null,
+                  secondsLeft: 5,
+                  seeds: null,
+                  peers: null,
+                  sentAt: '2026-09-19T00:00:00.000Z',
+                  finishedAt: null,
+                },
+              ],
+            })
+          : Response.json([
+              {
+                ...REQUEST,
+                requestedBy: { id: owner, name: 'Me' },
+                items: [
+                  {
+                    id: '1c6a7e2b-3d4f-4a5b-9c8d-7e6f5a4b3c2d',
+                    musicBrainzId: null,
+                    season: null,
+                    episode: null,
+                    title: 'Dune',
+                    airDate: null,
+                    state: 'downloading',
+                    problem: null,
+                    releaseTitle: 'Dune',
+                    downloadId: DOWNLOAD,
+                    filePath: null,
+                    score: null,
+                    lastSearchedAt: null,
+                    updatedAt: '2026-09-19T00:00:00.000Z',
+                  },
+                ],
+              },
+            ]),
+    });
+
+    owner = accountId;
+
+    expect(await (await ask('/api/requests/progress')).json()).toEqual([
+      {
+        downloadId: DOWNLOAD,
+        state: 'downloading',
+        progress: 0.5,
+        sizeBytes: 100,
+        doneBytes: 50,
+        downloadBytesPerSecond: 10,
+        secondsLeft: 5,
+      },
+    ]);
+
+    owner = 'someone-else';
+
+    expect(await (await ask('/api/requests/progress')).json()).toEqual([]);
+  });
+
+  it('lets somebody cancel their own request until it is in the library, with its downloads', async () => {
+    let owner = '';
+    let state = 'downloading';
+    const deleted: string[] = [];
+    const { ask, accountId } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: (url, init) => {
+        if (init.method === 'DELETE') {
+          deleted.push(url);
+
+          return new Response(null, { status: 204 });
+        }
+
+        return Response.json({ ...REQUEST, requestedBy: { id: owner, name: 'Me' }, state });
+      },
+    });
+
+    owner = accountId;
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(204);
+    expect(deleted[0]).toMatch(/\?deleteDownloads=true$/);
+
+    state = 'available';
+
+    expect(await (await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).json()).toEqual({
+      error: 'It is in the library already, so there is nothing left to cancel.',
+    });
+
+    owner = 'someone-else';
+    state = 'wanted';
+
+    expect((await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).status).toBe(404);
+    expect(deleted).toHaveLength(1);
   });
 
   it('passes on why the service would not do something', async () => {
