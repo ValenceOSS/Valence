@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -94,7 +94,7 @@ describe('DialogCompanion', () => {
     expect(beside?.contains(screen.getByText('Accounts'))).toBe(false);
   });
 
-  it('takes the column away again once it is shut', () => {
+  it('takes the column away again once it is shut and has finished leaving', async () => {
     const { rerender } = render(
       <Dialog label="The server" isOpen onClose={vi.fn()}>
         <p>Accounts</p>
@@ -117,7 +117,34 @@ describe('DialogCompanion', () => {
       </Dialog>,
     );
 
-    expect(screen.queryByText('Their roles decide everything')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('Their roles decide everything')).not.toBeInTheDocument();
+    });
+  });
+
+  it('keeps showing what it held while the column is still leaving', () => {
+    const { rerender } = render(
+      <Dialog label="The server" isOpen onClose={vi.fn()}>
+        <p>Accounts</p>
+
+        <DialogCompanion label="What Sam may do" isOpen onClose={vi.fn()}>
+          <p>Their roles decide everything</p>
+        </DialogCompanion>
+      </Dialog>,
+    );
+
+    rerender(
+      <Dialog label="The server" isOpen onClose={vi.fn()}>
+        <p>Accounts</p>
+
+        <DialogCompanion label="What Sam may do" isOpen={false} onClose={vi.fn()}>
+          <p>Nothing to show</p>
+        </DialogCompanion>
+      </Dialog>,
+    );
+
+    expect(screen.getByText('Their roles decide everything')).toBeInTheDocument();
+    expect(screen.queryByText('Nothing to show')).not.toBeInTheDocument();
   });
 
   it('lies over the dialog it came from where there is no room to stand beside it', () => {

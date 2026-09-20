@@ -5,6 +5,7 @@ type CompanionSlot = {
   release: (id: string) => void;
   current: string | null;
   column: HTMLElement | null;
+  departures: number;
 };
 
 const companionContext = createContext<CompanionSlot | null>(null);

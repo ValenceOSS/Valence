@@ -7,6 +7,7 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Slider } from '@ValenceUI/Slider';
+import { useHeldWhileClosing } from '@ValenceUI/Dialog.useHeldWhileClosing';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { frameAt } from './frameAt';
@@ -38,12 +39,13 @@ const A_SCENE_WITH_MOTION = 0.4;
  * @param onClose - Called to put the dialog away without deciding.
  */
 const ReencodeReview = ({
-  reencode,
+  reencode: requested,
   onConfirm,
   onReject,
   onWatch,
   onClose,
 }: ReencodeReviewProps) => {
+  const reencode = useHeldWhileClosing(requested, requested !== null);
   const [atSeconds, setAtSeconds] = useState(0);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isDeciding, setIsDeciding] = useState(false);
@@ -79,7 +81,7 @@ const ReencodeReview = ({
   };
 
   return (
-    <Dialog label="Review a re-encode" isOpen onClose={onClose} size="stage">
+    <Dialog label="Review a re-encode" isOpen={requested !== null} onClose={onClose} size="stage">
       <DialogTitle
         title={
           reencode.seriesTitle === null

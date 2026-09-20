@@ -8,6 +8,7 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
+import { useHeldWhileClosing } from '@ValenceUI/Dialog.useHeldWhileClosing';
 import { readLanguage, LANGUAGE_NAMES } from '@ValenceCore/functions/describeTrack';
 import { updateLibrary } from '@ValenceClient/library/fetchLibrary';
 import type { Library } from '@ValenceContracts/schemas/Library';
@@ -63,13 +64,14 @@ const buildLanguageOptions = (): LanguageOption[] => {
  * @param onRegenerate - Called with the library whose previews are to be remade.
  */
 const LibrarySettingsDialog = ({
-  library,
+  library: requested,
   isOpen,
   profiles = [],
   onClose,
   onUpdated,
   onRegenerate,
 }: LibrarySettingsDialogProps) => {
+  const library = useHeldWhileClosing(requested, isOpen);
   const languageOptions = buildLanguageOptions();
 
   const [selected, setSelected] = useState(library?.defaultAudioLanguage ?? NONE_ID);

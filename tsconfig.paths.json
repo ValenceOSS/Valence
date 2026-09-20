@@ -53,6 +53,9 @@
       "@ValenceUI/Dialog.companionContext": [
         "./packages/ui/src/components/Dialog/companionContext.ts"
       ],
+      "@ValenceUI/Dialog.useHeldWhileClosing": [
+        "./packages/ui/src/components/Dialog/useHeldWhileClosing.ts"
+      ],
       "@ValenceUI/DialogCompanion": [
         "./packages/ui/src/components/DialogCompanion/DialogCompanion.tsx"
       ],

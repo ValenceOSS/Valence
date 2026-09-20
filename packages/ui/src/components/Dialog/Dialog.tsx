@@ -7,6 +7,7 @@ import { useRoomBeside } from '@ValenceUI/useRoomBeside';
 import { coverPage } from '@ValenceUI/pageCover';
 import { companionContext } from './companionContext';
 import type { CompanionSlot } from './companionContext';
+import { useHeldWhileClosing } from './useHeldWhileClosing';
 import type { DialogProps, DialogSize } from './Dialog.types';
 
 const OVERLAY_MOTION = [
@@ -129,6 +130,10 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
  * that no breakpoint reaches — left as a fixed `min(26rem, 40vw)`, the stacked column is 156px of
  * sliver on a phone, which is the arrangement reading as broken rather than as narrow.
  *
+ * What it holds is kept as it was when it last stood open, for as long as it takes to leave. A
+ * caller that clears what it was showing the moment it closes would otherwise empty the panel a
+ * beat before it fades, which reads as the dialog flinching rather than as it going.
+ *
  * Opening puts focus on the panel rather than on the first control inside it. Landing on a control
  * draws a focus ring around whatever happens to be first — the favourite button, an icon — which
  * reads as though the dialog has already chosen something on the viewer's behalf. The panel takes
@@ -154,8 +159,10 @@ const Dialog = ({ label, isOpen, onClose, children, size = 'default', className 
   const panelRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotionConfig();
   const hasRoomBeside = useRoomBeside();
+  const shown = useHeldWhileClosing(children, isOpen);
   const [claimed, setClaimed] = useState<string[]>([]);
   const [column, setColumn] = useState<HTMLElement | null>(null);
+  const [departures, setDepartures] = useState(0);
 
   useEffect(() => {
     if (!isOpen) {
@@ -188,8 +195,8 @@ const Dialog = ({ label, isOpen, onClose, children, size = 'default', className 
   }, [current]);
 
   const slot = useMemo<CompanionSlot>(
-    () => ({ claim, release, current, column }),
-    [claim, release, current, column],
+    () => ({ claim, release, current, column, departures }),
+    [claim, release, current, column, departures],
   );
 
   return (
@@ -238,11 +245,17 @@ const Dialog = ({ label, isOpen, onClose, children, size = 'default', className 
               <div
                 className={cn(FACE, size === 'drawer' ? 'sm:rounded-b-none sm:rounded-t-xl' : '')}
               >
-                {children}
+                {shown}
               </div>
             </div>
 
-            <AnimatePresence initial={false} mode="wait">
+            <AnimatePresence
+              initial={false}
+              mode="wait"
+              onExitComplete={() => {
+                setDepartures((count) => count + 1);
+              }}
+            >
               {current === null ? null : (
                 <motion.div
                   key={current}
