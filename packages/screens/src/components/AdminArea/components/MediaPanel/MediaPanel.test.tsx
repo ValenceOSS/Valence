@@ -146,8 +146,28 @@ describe('MediaPanel', () => {
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: /Rebuild previews/ }));
+    await user.click(await screen.findByRole('button', { name: 'Rebuild previews' }));
 
     expect(onRebuildArtefacts).toHaveBeenCalledWith(expect.objectContaining({ id: 'item-1' }));
+  });
+
+  it('asks before throwing the previews away, and does nothing if told not to', async () => {
+    const onRebuildArtefacts = vi.fn().mockResolvedValue(true);
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item()]} onRebuildArtefacts={onRebuildArtefacts} />);
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Rebuild previews/ }));
+
+    expect(onRebuildArtefacts).not.toHaveBeenCalled();
+    expect(await screen.findByRole('button', { name: 'Rebuild previews' })).toHaveClass(
+      'bg-danger',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onRebuildArtefacts).not.toHaveBeenCalled();
   });
 
   it('says it will rebuild rather than that it has, because nothing is made yet', async () => {
@@ -157,6 +177,7 @@ describe('MediaPanel', () => {
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: /Rebuild previews/ }));
+    await user.click(await screen.findByRole('button', { name: 'Rebuild previews' }));
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
 
     expect(await screen.findByRole('menuitem', { name: /Will rebuild/ })).toBeInTheDocument();
@@ -175,6 +196,7 @@ describe('MediaPanel', () => {
 
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
     await user.click(screen.getByRole('menuitem', { name: /Rebuild previews/ }));
+    await user.click(await screen.findByRole('button', { name: 'Rebuild previews' }));
     await user.click(screen.getByRole('button', { name: /Actions for/ }));
 
     expect(await screen.findByRole('menuitem', { name: /Rebuild previews/ })).toBeInTheDocument();
