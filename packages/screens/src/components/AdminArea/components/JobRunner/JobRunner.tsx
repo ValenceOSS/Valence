@@ -156,7 +156,7 @@ const JobRunner = ({
 
           if (summary === null) {
             return (
-              <Badge size="sm" tone="quiet">
+              <Badge size="sm" tone="accent">
                 Idle
               </Badge>
             );

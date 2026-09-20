@@ -156,7 +156,7 @@ const LibrariesPanel = ({
 
           if (scanning === undefined) {
             return (
-              <Badge size="sm" tone="quiet">
+              <Badge size="sm" tone="accent">
                 Idle
               </Badge>
             );

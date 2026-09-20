@@ -32,7 +32,7 @@ const KEPT_WHILE_FOLLOWING = 500;
 
 const TONE_BY_LEVEL: Readonly<Record<LogLevel, BadgeTone>> = {
   debug: 'quiet',
-  info: 'quiet',
+  info: 'accent',
   warn: 'warning',
   error: 'danger',
 };
