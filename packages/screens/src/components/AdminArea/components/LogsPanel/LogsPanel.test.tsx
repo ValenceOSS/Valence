@@ -258,7 +258,26 @@ describe('LogsPanel', () => {
       expect(world.asked[0]?.jobId).toBe('job-9');
     });
 
-    expect(screen.getByText(/Job: job-9/)).toBeInTheDocument();
+    expect(screen.getByDisplayValue('job-9')).toBeInTheDocument();
+  });
+
+  it('says a job left no records rather than that nothing matches', async () => {
+    const world = build([]);
+
+    render(<LogsPanel {...world.props} initialJobId="job-9" />);
+
+    expect(await screen.findByText(/Nothing was logged while this job ran/)).toBeInTheDocument();
+    expect(
+      screen.queryByText('Nothing has been reported that matches this.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('draws the job filter as a field like the search, not as a pill', () => {
+    const world = build([]);
+
+    render(<LogsPanel {...world.props} initialJobId="job-9" />);
+
+    expect(screen.getByRole('searchbox', { name: 'Filter to a job' })).toBeInTheDocument();
   });
 
   it('says once the initial job filter has been picked up', async () => {
@@ -283,11 +302,11 @@ describe('LogsPanel', () => {
     const world = build();
 
     render(<LogsPanel {...world.props} initialJobId="job-9" />);
-    await screen.findByText(/Job: job-9/);
+    await screen.findByDisplayValue('job-9');
 
-    await actor.click(screen.getByRole('button', { name: 'Clear the job filter' }));
+    await actor.clear(screen.getByRole('searchbox', { name: 'Filter to a job' }));
 
-    expect(screen.queryByText(/Job: job-9/)).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('job-9')).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(world.asked.at(-1)?.jobId).toBeNull();
@@ -302,7 +321,7 @@ describe('LogsPanel', () => {
     await actor.click(await screen.findByText('could not read the file'));
     await actor.click(await screen.findByRole('button', { name: 'job-1' }));
 
-    expect(screen.getByText(/Job: job-1/)).toBeInTheDocument();
+    expect(screen.getByDisplayValue('job-1')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(world.asked.at(-1)?.jobId).toBe('job-1');
