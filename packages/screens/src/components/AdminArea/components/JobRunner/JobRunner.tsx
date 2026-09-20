@@ -11,10 +11,7 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { HoverCard } from '@ValenceUI/HoverCard';
-import { Dialog } from '@ValenceUI/Dialog';
-import { DialogContent } from '@ValenceUI/DialogContent';
-import { DialogFooter } from '@ValenceUI/DialogFooter';
-import { DialogTitle } from '@ValenceUI/DialogTitle';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { ClearLibraryPartsDialog } from '@ValenceScreens/components/AdminArea/components/ClearLibraryPartsDialog/ClearLibraryPartsDialog';
 import { RunLibraryJobDialog } from '@ValenceScreens/components/AdminArea/components/RunLibraryJobDialog/RunLibraryJobDialog';
 import { ScanProgressBar } from '@ValenceScreens/components/AdminArea/components/ScanProgressBar/ScanProgressBar';
@@ -63,6 +60,7 @@ const JobRunner = ({
   const [confirming, setConfirming] = useState<JobDefinition | null>(null);
   const [choosing, setChoosing] = useState<JobDefinition | null>(null);
   const [clearing, setClearing] = useState<JobDefinition | null>(null);
+  const [stopping, setStopping] = useState<JobDefinition | null>(null);
 
   const summaryFor = useCallback(
     (kind: string) =>
@@ -105,6 +103,10 @@ const JobRunner = ({
     [onRun],
   );
 
+  const ask = useCallback((definition: JobDefinition) => {
+    setStopping(definition);
+  }, []);
+
   const isBusyWithALibrary = definitions.some(
     (definition) => definition.needsLibrary && summaryFor(definition.kind) !== null,
   );
@@ -114,7 +116,7 @@ const JobRunner = ({
     jobIdsFor,
     working,
     askOrRun,
-    onStop,
+    ask,
     onOpenSchedule,
     isBusyWithALibrary,
   });
@@ -124,7 +126,7 @@ const JobRunner = ({
     jobIdsFor,
     working,
     askOrRun,
-    onStop,
+    ask,
     onOpenSchedule,
     isBusyWithALibrary,
   };
@@ -263,7 +265,7 @@ const JobRunner = ({
                             icon: <Icon of={StopIcon} size={15} />,
                             isDestructive: true,
                             onChoose: () => {
-                              live.current.onStop(row.original.kind);
+                              live.current.ask(row.original);
                             },
                           },
                         ]),
@@ -318,40 +320,43 @@ const JobRunner = ({
         }}
       />
 
-      <Dialog
-        label={confirming === null ? 'Run this job?' : `Run ${confirming.label}?`}
+      <ConfirmDialog
         isOpen={confirming !== null}
+        title={confirming === null ? 'Run this job?' : `${confirming.label}?`}
+        detail={confirming === null ? '' : `${confirming.description} This cannot be undone.`}
+        confirmLabel={confirming?.label ?? 'Run'}
+        isDestructive
         onClose={() => {
           setConfirming(null);
         }}
-      >
-        {confirming === null ? null : (
-          <>
-            <DialogTitle title={`${confirming.label}?`} />
+        onConfirm={() => {
+          if (confirming === null) {
+            return;
+          }
 
-            <DialogContent>
-              <p className="text-sm text-text-muted">
-                {confirming.description} This cannot be undone.
-              </p>
-            </DialogContent>
+          onRun(confirming.kind);
+          setConfirming(null);
+        }}
+      />
 
-            <DialogFooter
-              dismiss={{
-                onChoose: () => {
-                  setConfirming(null);
-                },
-              }}
-              confirm={{
-                label: confirming.label,
-                onChoose: () => {
-                  onRun(confirming.kind);
-                  setConfirming(null);
-                },
-              }}
-            />
-          </>
-        )}
-      </Dialog>
+      <ConfirmDialog
+        isOpen={stopping !== null}
+        title={stopping === null ? 'Stop this job?' : `Stop ${stopping.label}?`}
+        detail="What it has done so far is kept, and the rest is left undone until it is run again."
+        confirmLabel="Stop it"
+        isDestructive
+        onClose={() => {
+          setStopping(null);
+        }}
+        onConfirm={() => {
+          if (stopping === null) {
+            return;
+          }
+
+          onStop(stopping.kind);
+          setStopping(null);
+        }}
+      />
     </>
   );
 };

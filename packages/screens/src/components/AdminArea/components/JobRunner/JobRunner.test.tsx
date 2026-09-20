@@ -388,7 +388,69 @@ describe('JobRunner', () => {
 
     await choose(user, 'Scan for changes', /Stop it/);
 
+    expect(onStop).not.toHaveBeenCalled();
+
+    await user.click(await screen.findByRole('button', { name: 'Stop it' }));
+
     expect(onStop).toHaveBeenCalledWith('library.scan');
+  });
+
+  it('leaves a running job alone when stopping it is cancelled', async () => {
+    const onStop = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <JobRunner
+        definitions={DEFINITIONS}
+        libraries={[MOVIES]}
+        progress={
+          new Map<string, ScanEntry>([
+            [
+              'lib-movies',
+              {
+                libraryId: 'lib-movies',
+                kind: 'library.scan',
+                phase: 'probing',
+                processed: 1,
+                total: 4,
+                jobId: 'job-1',
+              },
+            ],
+          ])
+        }
+        working={[]}
+        onRun={vi.fn()}
+        onStop={onStop}
+        onOpenSchedule={vi.fn()}
+      />,
+    );
+
+    await choose(user, 'Scan for changes', /Stop it/);
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    expect(onStop).not.toHaveBeenCalled();
+  });
+
+  it('paints the answer to choosing libraries for a destructive job red', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <JobRunner
+        definitions={DEFINITIONS}
+        libraries={[MOVIES]}
+        progress={new Map()}
+        working={[]}
+        onRun={vi.fn()}
+        onStop={vi.fn()}
+        onOpenSchedule={vi.fn()}
+      />,
+    );
+
+    await choose(user, 'Reset and rebuild', /Run now/);
+
+    expect(screen.getByRole('button', { name: 'Reset and rebuild on every library' })).toHaveClass(
+      'bg-danger',
+    );
   });
 
   it('does not offer to stop a job that is not running', async () => {

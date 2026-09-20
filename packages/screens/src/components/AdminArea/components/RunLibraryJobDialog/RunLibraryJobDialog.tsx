@@ -67,6 +67,7 @@ const RunLibraryJobDialog = ({
                 onRun(definition.kind, picked);
               },
               isDisabled: picked.length === 0,
+              isDestructive: definition.destructive,
             }}
           />
         </>
