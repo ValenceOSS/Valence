@@ -7,7 +7,56 @@ const CHANGELOG_VIRTUAL_ID = 'virtual:changelog';
 
 const RESOLVED_CHANGELOG_VIRTUAL_ID = `\0${CHANGELOG_VIRTUAL_ID}`;
 
-const RELEASES_URL = 'https://api.github.com/repos/MarquesCoding/Valence/releases?per_page=100';
+const REPOSITORY = 'ValenceOSS/Valence';
+
+const RELEASES_URL = `https://api.github.com/repos/${REPOSITORY}/releases?per_page=100`;
+
+const NO_RELEASES = '[]';
+
+const NO_STARS = '{"stargazers_count":0}';
+
+/**
+ * Asks GitHub for something once, and settles for a stand-in where it cannot have it.
+ *
+ * Never throws. An unauthenticated caller gets sixty requests an hour per address, and a CI runner
+ * shares its address with every other job on the machine — so this comes back 403 often enough
+ * that treating it as fatal made the landing tests fail at random, because the config is loaded to
+ * run them and a plugin that throws takes every suite importing it down with it.
+ *
+ * A token lifts the limit where one is going, which is what makes a real build reliable rather
+ * than merely survivable.
+ *
+ * Nothing is fetched under a test runner at all. A test that reaches the network is a test that
+ * can fail for reasons that have nothing to do with the code.
+ *
+ * @param url - What to ask for.
+ * @param insteadOf - What to answer with where it cannot be had, as JSON.
+ * @returns The response body, or the stand-in.
+ */
+const fetchFromGitHub = async (url: string, insteadOf: string): Promise<string> => {
+  if (process.env.VITEST !== undefined) {
+    return insteadOf;
+  }
+
+  const token = process.env.GITHUB_TOKEN ?? '';
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      ...(token === '' ? {} : { Authorization: `Bearer ${token}` }),
+    },
+  }).catch(() => null);
+
+  if (response === null || !response.ok) {
+    process.stderr.write(
+      `Could not read ${url} from GitHub${response === null ? '' : `: ${response.status.toString()}`}. Carrying on without it.\n`,
+    );
+
+    return insteadOf;
+  }
+
+  return response.text();
+};
 
 let cachedReleases: Promise<string> | null = null;
 
@@ -19,17 +68,7 @@ let cachedReleases: Promise<string> | null = null;
  * @returns The releases, exactly as GitHub's API returns them.
  */
 const fetchReleases = async (): Promise<string> => {
-  cachedReleases ??= (async () => {
-    const response = await fetch(RELEASES_URL, {
-      headers: { Accept: 'application/vnd.github+json' },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch releases from GitHub: ${response.status.toString()}`);
-    }
-
-    return response.text();
-  })();
+  cachedReleases ??= fetchFromGitHub(RELEASES_URL, NO_RELEASES);
 
   return cachedReleases;
 };
@@ -62,7 +101,7 @@ const STARS_VIRTUAL_ID = 'virtual:github-stars';
 
 const RESOLVED_STARS_VIRTUAL_ID = `\0${STARS_VIRTUAL_ID}`;
 
-const REPOSITORY_URL = 'https://api.github.com/repos/MarquesCoding/Valence';
+const REPOSITORY_URL = `https://api.github.com/repos/${REPOSITORY}`;
 
 let cachedRepository: Promise<string> | null = null;
 
@@ -72,17 +111,7 @@ let cachedRepository: Promise<string> | null = null;
  * @returns The repository, exactly as GitHub's API returns it.
  */
 const fetchRepository = async (): Promise<string> => {
-  cachedRepository ??= (async () => {
-    const response = await fetch(REPOSITORY_URL, {
-      headers: { Accept: 'application/vnd.github+json' },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch the repository from GitHub: ${response.status.toString()}`);
-    }
-
-    return response.text();
-  })();
+  cachedRepository ??= fetchFromGitHub(REPOSITORY_URL, NO_STARS);
 
   return cachedRepository;
 };
