@@ -1,3 +1,4 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -10,6 +11,8 @@ import {
   ReloadIcon,
   Search01Icon,
   Tick02Icon,
+  RefreshIcon,
+  Add01Icon,
 } from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -379,9 +382,8 @@ const MediaRequestsPanel = () => {
       isFlush
       actions={
         <>
-          <Button
-            variant="secondary"
-            size="xs"
+          <PanelCardAction
+            icon={RefreshIcon}
             isLoading={isSearchingMissing}
             onClick={() => {
               setIsSearchingMissing(true);
@@ -408,17 +410,16 @@ const MediaRequestsPanel = () => {
             }}
           >
             Refetch media
-          </Button>
+          </PanelCardAction>
 
-          <Button
-            variant="secondary"
-            size="xs"
+          <PanelCardAction
+            icon={Add01Icon}
             onClick={() => {
               setIsAsking(true);
             }}
           >
             Request media
-          </Button>
+          </PanelCardAction>
         </>
       }
     >

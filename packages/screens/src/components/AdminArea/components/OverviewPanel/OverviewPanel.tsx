@@ -1,11 +1,11 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import type { IconGlyph } from '@ValenceUI/Icon.types';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
-import { Icon } from '@ValenceUI/Icon';
 import { ArrowRight01Icon, RefreshIcon } from '@hugeicons/core-free-icons';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { cn } from '@ValenceUI/cn';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -50,7 +50,7 @@ const Region = ({
   title: string;
   action?: string;
   onAction?: () => void;
-  actionIcon?: ReactNode;
+  actionIcon?: IconGlyph;
   isActionBusy?: boolean;
   actions?: ReactNode;
   isFlush?: boolean;
@@ -67,17 +67,14 @@ const Region = ({
         ? {}
         : {
             actions: (
-              <Button
-                variant="ghost"
-                size="xs"
-                className="shrink-0 text-xs text-text-muted hover:text-text"
+              <PanelCardAction
+                icon={actionIcon ?? ArrowRight01Icon}
                 onClick={onAction}
-                disabled={isActionBusy}
+                isDisabled={isActionBusy}
                 isLoading={isActionBusy}
               >
                 {action}
-                {actionIcon ?? <Icon of={ArrowRight01Icon} size={14} />}
-              </Button>
+              </PanelCardAction>
             ),
           })}
   >
@@ -287,7 +284,7 @@ const OverviewPanel = ({
           title="Storage Valence is using"
           className="sm:col-span-2 xl:col-span-4"
           action="Refresh"
-          actionIcon={<Icon of={RefreshIcon} size={14} />}
+          actionIcon={RefreshIcon}
           isActionBusy={isCounting}
           onAction={() => {
             void recount();

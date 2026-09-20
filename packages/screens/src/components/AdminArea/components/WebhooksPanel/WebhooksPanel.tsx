@@ -1,3 +1,5 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -156,15 +158,14 @@ const WebhooksPanel = ({
         title="Webhooks"
         isFlush
         actions={
-          <Button
-            variant="secondary"
-            size="xs"
+          <PanelCardAction
+            icon={Add01Icon}
             onClick={() => {
               setIsAdding(true);
             }}
           >
             Create webhook
-          </Button>
+          </PanelCardAction>
         }
       >
         {webhooks.length === 0 ? (

@@ -1,7 +1,8 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import { RefreshIcon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
@@ -44,9 +45,9 @@ const RequestsPanel = () => {
       title="Requests"
       isFlush
       actions={
-        <Button variant="secondary" size="xs" isLoading={isChecking} onClick={checkNow}>
+        <PanelCardAction icon={RefreshIcon} isLoading={isChecking} onClick={checkNow}>
           Check now
-        </Button>
+        </PanelCardAction>
       }
     >
       {asked.isError ? (

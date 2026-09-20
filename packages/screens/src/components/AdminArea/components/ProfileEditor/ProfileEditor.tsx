@@ -1,3 +1,4 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -192,10 +193,9 @@ const ProfileEditor = ({ profile, onClose, onSaved }: ProfileEditorProps) => {
     <PanelCard
       title={title}
       actions={
-        <Button variant="secondary" size="xs" onClick={onClose}>
-          <Icon of={ArrowLeft01Icon} size={14} />
+        <PanelCardAction icon={ArrowLeft01Icon} onClick={onClose}>
           Every profile
-        </Button>
+        </PanelCardAction>
       }
     >
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">

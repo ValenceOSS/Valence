@@ -1,9 +1,11 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
   Alert02Icon,
   Delete02Icon,
   MoreHorizontalIcon,
   PencilEdit01Icon,
+  Add01Icon,
 } from '@hugeicons/core-free-icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
@@ -14,7 +16,6 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { DataTable } from '@ValenceUI/DataTable';
-import { Button } from '@ValenceUI/Button';
 import { FormField } from '@ValenceUI/FormField';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { TabRow } from '@ValenceUI/TabRow';
@@ -336,15 +337,14 @@ const RolesPanel = () => {
         title="Roles"
         isFlush
         actions={
-          <Button
-            variant="secondary"
-            size="xs"
+          <PanelCardAction
+            icon={Add01Icon}
             onClick={() => {
               setIsCreating(true);
             }}
           >
             Create role
-          </Button>
+          </PanelCardAction>
         }
       >
         {couldNotRead ? (

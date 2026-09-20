@@ -1,10 +1,10 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { Logout01Icon, MoreHorizontalIcon } from '@hugeicons/core-free-icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -109,15 +109,14 @@ const DeviceList = () => {
       isFlush
       actions={
         elsewhere.length === 0 ? undefined : (
-          <Button
-            variant="secondary"
-            size="xs"
+          <PanelCardAction
+            icon={Logout01Icon}
             onClick={() => {
               setIsEndingRest(true);
             }}
           >
             Sign out everywhere else
-          </Button>
+          </PanelCardAction>
         )
       }
     >

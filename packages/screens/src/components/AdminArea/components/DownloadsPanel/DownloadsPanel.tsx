@@ -1,6 +1,7 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -197,15 +198,14 @@ const DownloadsPanel = () => {
               <span className="text-xs tabular-nums text-text-muted">{total}</span>
             )}
 
-            <Button
-              variant="secondary"
-              size="xs"
+            <PanelCardAction
+              icon={Add01Icon}
               onClick={() => {
                 setIsAdding(true);
               }}
             >
               Add a download client
-            </Button>
+            </PanelCardAction>
           </>
         }
         below={

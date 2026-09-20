@@ -1,3 +1,4 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
   Add01Icon,
@@ -599,17 +600,14 @@ const AccountsPanel = () => {
               className="w-56 max-w-full"
             />
 
-            <Button
-              variant="ghost"
-              size="xs"
-              className="shrink-0 text-xs text-text-muted hover:text-text"
+            <PanelCardAction
+              icon={Add01Icon}
               onClick={() => {
                 setIsInviting(true);
               }}
             >
-              <Icon of={Add01Icon} size={14} />
               Add user
-            </Button>
+            </PanelCardAction>
           </>
         }
       >
