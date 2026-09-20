@@ -5,8 +5,7 @@ import type { ScanResult } from '@ValenceContracts/schemas/Library';
 
 type SpyingWork = {
   scan: Mock<() => Promise<ScanResult | null>>;
-  fetchLogos: Mock<() => Promise<void>>;
-  detectSegments: Mock<() => Promise<void>>;
+  lookUp: Mock<() => Promise<void>>;
 };
 
 const NOTHING_CHANGED: ScanResult = { added: 0, updated: 0, removed: 0, failed: 0 };
@@ -21,20 +20,15 @@ const spying = (ran: string[]): SpyingWork => ({
 
     return Promise.resolve(NOTHING_CHANGED);
   }),
-  fetchLogos: vi.fn(() => {
-    ran.push('fetchLogos');
-
-    return Promise.resolve();
-  }),
-  detectSegments: vi.fn(() => {
-    ran.push('detectSegments');
+  lookUp: vi.fn(() => {
+    ran.push('lookUp');
 
     return Promise.resolve();
   }),
 });
 
 describe('runScanPhases', () => {
-  it('reads the library, letters it, and finds the intros', async () => {
+  it('reads the library and looks up what only music looks up here', async () => {
     const ran: string[] = [];
 
     await runScanPhases({
@@ -44,7 +38,21 @@ describe('runScanPhases', () => {
       onRead: () => Promise.resolve(),
     });
 
-    expect(ran).toEqual(['scan', 'fetchLogos', 'detectSegments']);
+    expect(ran).toEqual(['scan', 'lookUp']);
+  });
+
+  it('letters nothing and finds no intros itself, so the next library is read sooner', async () => {
+    const ran: string[] = [];
+
+    await runScanPhases({
+      work: spying(ran),
+      isCancelled: () => false,
+      onScanned: () => Promise.resolve(),
+      onRead: () => Promise.resolve(),
+    });
+
+    expect(ran).not.toContain('fetchLogos');
+    expect(ran).not.toContain('detectSegments');
   });
 
   it('draws nothing itself, which is what a scan waited days for', async () => {
@@ -77,20 +85,7 @@ describe('runScanPhases', () => {
     });
 
     expect(onRead).toHaveBeenCalledOnce();
-    expect(ran).toEqual(['scan', 'fetchLogos', 'detectSegments', 'onRead']);
-  });
-
-  it('fetches lettering before it looks for intros, being the cheaper of the two', async () => {
-    const ran: string[] = [];
-
-    await runScanPhases({
-      work: spying(ran),
-      isCancelled: () => false,
-      onScanned: () => Promise.resolve(),
-      onRead: () => Promise.resolve(),
-    });
-
-    expect(ran.indexOf('fetchLogos')).toBeLessThan(ran.indexOf('detectSegments'));
+    expect(ran).toEqual(['scan', 'lookUp', 'onRead']);
   });
 
   it('reports what the reading phase changed', async () => {
@@ -161,12 +156,12 @@ describe('runScanPhases', () => {
 
     await runScanPhases({
       work: spying(ran),
-      isCancelled: () => ran.length >= 2,
+      isCancelled: () => ran.length >= 1,
       onScanned: () => Promise.resolve(),
       onRead: () => Promise.resolve(),
     });
 
-    expect(ran).toEqual(['scan', 'fetchLogos']);
+    expect(ran).toEqual(['scan']);
   });
 
   it('asks for no renders when it was stopped, so stopping starts nothing', async () => {
@@ -175,12 +170,12 @@ describe('runScanPhases', () => {
 
     await runScanPhases({
       work: spying(ran),
-      isCancelled: () => ran.length >= 3,
+      isCancelled: () => ran.length >= 2,
       onScanned: () => Promise.resolve(),
       onRead,
     });
 
-    expect(ran).toEqual(['scan', 'fetchLogos', 'detectSegments']);
+    expect(ran).toEqual(['scan', 'lookUp']);
     expect(onRead).not.toHaveBeenCalled();
   });
 });

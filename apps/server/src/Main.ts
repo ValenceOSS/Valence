@@ -1182,12 +1182,8 @@ const jobs = await createJobQueue({
           await runScanPhases({
             work: {
               scan: () => libraryService.runScan(libraryId, force, jobId),
-              fetchLogos: () =>
-                isMusic
-                  ? lookUpMusic(libraryId, jobId, force === true)
-                  : libraryService.runFetchLogos(libraryId, jobId),
-              detectSegments: () =>
-                isMusic ? Promise.resolve() : runDetectSegments(libraryId, jobId),
+              lookUp: () =>
+                isMusic ? lookUpMusic(libraryId, jobId, force === true) : Promise.resolve(),
             },
             isCancelled: () => jobs.isCancelled(jobId),
             onRead: async () => {
@@ -1195,6 +1191,8 @@ const jobs = await createJobQueue({
                 return;
               }
 
+              await libraryService.fetchLogos(libraryId);
+              await libraryService.detectSegments(libraryId);
               await libraryService.regeneratePreviews(libraryId);
               await libraryService.regenerateTrickplay(libraryId);
             },
