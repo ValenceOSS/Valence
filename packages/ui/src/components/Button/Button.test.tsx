@@ -117,6 +117,23 @@ describe('Button', () => {
     expect(button).toHaveClass('bg-transparent', 'text-text-muted', 'hover:text-text');
   });
 
+  it("draws the Discord button in Discord's own blue", () => {
+    render(<Button variant="discord">Join us</Button>);
+
+    expect(screen.getByRole('button', { name: 'Join us' })).toHaveClass('bg-[#5865f2]');
+  });
+
+  it('draws a row button the full width of its list, lit only when pointed at', () => {
+    render(<Button variant="row">Open the album</Button>);
+
+    expect(screen.getByRole('button', { name: 'Open the album' })).toHaveClass(
+      'w-full',
+      'text-left',
+      'bg-transparent',
+      'hover:bg-[var(--surface-hover)]',
+    );
+  });
+
   it('fills the main action and the dangerous one with their own colour, and nothing more', () => {
     render(
       <>

@@ -1906,7 +1906,7 @@ const VideoPlayer = ({
               <Button
                 size="lg"
                 variant="secondary"
-                className="px-6 shadow-lg"
+                className="px-6"
                 onClick={() => {
                   seek(skippable.endSeconds);
                 }}

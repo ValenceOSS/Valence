@@ -17,14 +17,14 @@ import type { ColorSwatchPickerProps } from './ColorSwatchPicker.types';
 const ColorSwatchPicker = ({ value, onChange, className }: ColorSwatchPickerProps) => (
   <div className={cn('flex flex-wrap gap-2', className)}>
     <Button
-      variant="bare"
-      size="none"
+      variant="glossy"
+      size="sm"
+      isIconOnly
       isPill
       label="No colour"
       onClick={() => {
         onChange(null);
       }}
-      className="flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[var(--surface-line)] bg-subtle"
     >
       {value === null ? <Icon of={Tick02Icon} size={14} tone="strong" /> : null}
     </Button>
@@ -40,7 +40,7 @@ const ColorSwatchPicker = ({ value, onChange, className }: ColorSwatchPickerProp
           onChange(swatch);
         }}
         style={{ backgroundColor: swatch }}
-        className="flex size-8 shrink-0 items-center justify-center rounded-full"
+        className="flex size-8 shrink-0 items-center justify-center"
       >
         {value?.toLowerCase() === swatch.toLowerCase() ? (
           <Icon of={Tick02Icon} size={14} className="text-on-scrim drop-shadow" />

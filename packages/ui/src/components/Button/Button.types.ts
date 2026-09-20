@@ -11,6 +11,8 @@ type ButtonVariant =
   | 'overlay'
   | 'link'
   | 'subtle'
+  | 'discord'
+  | 'row'
   | 'bare';
 
 type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'none';

@@ -23,7 +23,9 @@ const buttonStyles = cva(
         danger: `${FLAT} border-transparent bg-danger text-destructive-foreground hover:brightness-110`,
         overlay: 'bg-scrim text-on-scrim backdrop-blur-md hover:brightness-125',
         link: 'bg-transparent text-foreground underline-offset-4 hover:underline',
+        discord: `${FLAT} border-transparent bg-[#5865f2] text-accent-contrast hover:brightness-110`,
         subtle: 'bg-transparent text-text-muted hover:text-text',
+        row: 'flex w-full rounded-md bg-transparent text-left text-foreground transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)]',
         bare: '',
       },
       size: {

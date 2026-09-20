@@ -20,6 +20,7 @@ import type { MusicArtworkProps } from './MusicArtwork.types';
  * @param src - Where the picture is, or nothing where there is none.
  * @param label - What it is a picture of, for anybody not looking at it.
  * @param shape - Square for an album, round for a person.
+ * @param isLifted - Whether it stands off the page on a shadow, as a cover shown large does.
  * @param travelsAs - The name the picture travels between places as, where it should.
  * @param className - Its size and anything else the caller's layout needs.
  */
@@ -27,6 +28,7 @@ const MusicArtwork = ({
   src,
   label,
   shape = 'square',
+  isLifted = false,
   travelsAs,
   className,
 }: MusicArtworkProps) => {
@@ -49,6 +51,7 @@ const MusicArtwork = ({
       className={cn(
         'relative flex aspect-square shrink-0 items-center justify-center overflow-hidden bg-hover text-text-muted',
         shape === 'round' ? 'rounded-full' : 'rounded-md',
+        isLifted && 'shadow-[var(--shadow-artwork)]',
         className,
       )}
     >

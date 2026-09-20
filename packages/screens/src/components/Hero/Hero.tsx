@@ -348,9 +348,8 @@ const Hero = ({
 
             {onInspect === undefined ? null : (
               <Button
-                variant="bare"
+                variant="overlay"
                 size="xl"
-                className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md border border-on-scrim/25 text-on-scrim hover:bg-on-scrim/10"
                 onClick={() => {
                   onInspect(featured);
                 }}

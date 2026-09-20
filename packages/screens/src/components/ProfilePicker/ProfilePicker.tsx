@@ -82,12 +82,11 @@ const ProfilePicker = ({
               <span className="absolute -right-2 -top-2 flex gap-1">
                 <Button
                   isIconOnly
-                  variant="ghost"
+                  variant="glossy"
                   label={`Edit ${profile.name}`}
                   onClick={() => {
                     setEditing(profile);
                   }}
-                  className="bg-surface-raised"
                 >
                   <Icon of={PencilEdit01Icon} size={16} />
                 </Button>
@@ -95,12 +94,11 @@ const ProfilePicker = ({
                 {profiles.length < 2 ? null : (
                   <Button
                     isIconOnly
-                    variant="ghost"
+                    variant="glossy"
                     label={`Remove ${profile.name}`}
                     onClick={() => {
                       setRemoving(profile);
                     }}
-                    className="bg-surface-raised"
                   >
                     <Icon of={Delete02Icon} size={16} />
                   </Button>

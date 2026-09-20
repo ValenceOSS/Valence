@@ -92,9 +92,9 @@ const NotificationBell = ({
             {notifications.map((notification) => (
               <li key={notification.id}>
                 <Button
-                  variant="bare"
+                  variant="row"
                   size="none"
-                  className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-[var(--surface-hover)]"
+                  className="items-start gap-3 px-4 py-3"
                   onClick={() => {
                     onRead(notification.id);
 

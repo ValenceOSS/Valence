@@ -107,6 +107,12 @@ export default tseslint.config(
         },
         {
           selector:
+            'JSXOpeningElement[name.name="Button"] > JSXAttribute[name.name="className"] > Literal[value=/(hover:bg-|\\bshadow-|\\btext-danger|\\bbg-surface|\\bborder\\b|rounded-full)/]',
+          message:
+            'A button takes its fill, border, corners and shadow from variant, isPill and the component around it, not className. Use variant="row", "glossy", "ghost", "danger" or "overlay" — see code standards section 9.',
+        },
+        {
+          selector:
             'JSXOpeningElement[name.name="Skeleton"] > JSXAttribute[name.name="className"] > Literal[value=/\\brounded\\b/]',
           message:
             'A skeleton takes its corners from shape, not className. Use shape="soft" or shape="round".',

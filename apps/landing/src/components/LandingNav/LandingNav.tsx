@@ -125,10 +125,10 @@ const LandingNav = () => {
           </Button>
 
           <Button
-            variant="primary"
+            variant="discord"
             size="sm"
             label="Join the Discord"
-            className="hidden items-center gap-2 rounded-2xl border-transparent bg-[var(--color-discord)] text-accent-contrast hover:bg-[var(--color-discord)] hover:brightness-110 sm:inline-flex"
+            className="hidden items-center gap-2 sm:inline-flex"
             onClick={() => {
               window.open(DISCORD_URL, '_blank', 'noopener,noreferrer');
             }}

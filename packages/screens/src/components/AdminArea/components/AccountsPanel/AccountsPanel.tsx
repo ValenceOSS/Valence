@@ -748,8 +748,7 @@ const AccountsPanel = () => {
                       description="Ends every session this account holds, without changing its password."
                     >
                       <Button
-                        variant="secondary"
-                        className="text-danger hover:text-danger hover:brightness-125"
+                        variant="danger"
                         onClick={() => {
                           setConfirmingSignOutEverywhere(true);
                         }}

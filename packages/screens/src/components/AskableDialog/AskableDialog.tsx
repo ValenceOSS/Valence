@@ -177,7 +177,8 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                     src={title.posterUrl}
                     label={`The cover of ${title.title}`}
                     shape={title.kind === 'artist' ? 'round' : 'square'}
-                    className="hidden w-32 shadow-[var(--shadow-artwork)] sm:flex"
+                    isLifted
+                    className="hidden w-32 sm:flex"
                   />
                 ) : title.posterUrl === null ? null : (
                   <img

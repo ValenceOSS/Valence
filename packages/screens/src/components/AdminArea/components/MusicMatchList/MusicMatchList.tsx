@@ -22,9 +22,9 @@ const MusicMatchList = ({ matches, onChoose }: MusicMatchListProps) => (
       return (
         <li key={match.musicBrainzId}>
           <Button
-            variant="bare"
+            variant="row"
             size="none"
-            className="flex w-full items-center gap-4 rounded-lg p-2 text-left hover:bg-[var(--surface-hover)]"
+            className="items-center gap-4 p-2"
             onClick={() => {
               onChoose(match);
             }}
