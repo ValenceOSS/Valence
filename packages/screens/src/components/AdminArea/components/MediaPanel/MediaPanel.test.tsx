@@ -54,6 +54,26 @@ describe('MediaPanel', () => {
     expect(screen.getByText(/Film/)).toBeInTheDocument();
   });
 
+  it('narrows by kind, so films and series can be looked at apart', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[
+          item(),
+          item({ id: 'item-2', title: 'Long Day', seriesId: 's', seriesTitle: 'From' }),
+        ]}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Filter by kind' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Series' }));
+
+    expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
+    expect(screen.getByText('From')).toBeInTheDocument();
+  });
+
   it('narrows to what was searched for', async () => {
     const user = userEvent.setup();
 

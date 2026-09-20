@@ -113,6 +113,14 @@ const MediaPanel = ({
         id: 'kind',
         header: 'Kind',
         accessorFn: (item) => (isSeries(item) ? 'Series' : 'Film'),
+        filterFn: (row, columnId, filterValue) =>
+          filterValue === undefined || row.getValue(columnId) === filterValue,
+        meta: {
+          filterOptions: [
+            { id: 'Film', label: 'Films' },
+            { id: 'Series', label: 'Series' },
+          ],
+        },
         cell: ({ row }) => (
           <Badge size="sm" tone={isSeries(row.original) ? 'accent' : 'quiet'}>
             {isSeries(row.original) ? 'Series' : 'Film'}
