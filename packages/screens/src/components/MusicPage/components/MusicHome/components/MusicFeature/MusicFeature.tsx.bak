@@ -1,5 +1,11 @@
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { PauseIcon, PlayIcon, Video01Icon } from '@hugeicons/core-free-icons';
+import {
+  Album02Icon,
+  Mic01Icon,
+  PauseIcon,
+  PlayIcon,
+  Video01Icon,
+} from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
@@ -157,6 +163,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
                   Watch the video
                 </Button>
               )}
+
             </motion.div>
           </motion.div>
         </motion.div>

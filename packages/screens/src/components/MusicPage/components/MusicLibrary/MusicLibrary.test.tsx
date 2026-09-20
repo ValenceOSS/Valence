@@ -75,16 +75,16 @@ describe('MusicLibrary', () => {
     expect(await screen.findByRole('button', { name: /Even In Arcadia/ })).toBeInTheDocument();
   });
 
-  it('shows only one kind when a chip is chosen, and all again when it is pressed again', async () => {
+  it('shows only one kind when its tab is chosen, and all again on the All tab', async () => {
     renderInAnAddress(<MusicLibrary />);
 
     await screen.findByRole('button', { name: /Even In Arcadia/ });
-    await userEvent.click(screen.getByRole('button', { name: 'Albums' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Albums' }));
 
     expect(screen.queryByRole('button', { name: /Sunday morning/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Even In Arcadia/ })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Albums' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'All' }));
 
     expect(screen.getByRole('button', { name: /Sunday morning/ })).toBeInTheDocument();
   });

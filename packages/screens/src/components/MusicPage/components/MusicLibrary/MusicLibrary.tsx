@@ -4,6 +4,8 @@ import { Add01Icon, FavouriteIcon, Search01Icon } from '@hugeicons/core-free-ico
 import { Button } from '@ValenceUI/Button';
 import { ContextMenu } from '@ValenceUI/ContextMenu';
 import { Icon } from '@ValenceUI/Icon';
+import { TabRow } from '@ValenceUI/TabRow';
+import { Tabs } from '@ValenceUI/Tabs';
 import { TextField } from '@ValenceUI/TextField';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { cn } from '@ValenceUI/cn';
@@ -155,33 +157,33 @@ const MusicLibrary = () => {
             <Icon of={Search01Icon} size={16} />
           </Button>
           <Button
-            variant="secondary"
+            variant="ghost"
             size="sm"
+            isIconOnly
+            label="Create"
             onClick={() => {
               setIsMaking(true);
             }}
           >
             <Icon of={Add01Icon} size={16} />
-            Create
           </Button>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 px-3" role="group" aria-label="Show only">
-        {SHELVES.map((chip) => (
-          <Button
-            key={chip.id}
-            variant={shelf === chip.id ? 'glossy' : 'secondary'}
-            size="xs"
-            isActive={shelf === chip.id}
-            aria-pressed={shelf === chip.id}
-            onClick={() => {
-              setShelf((was) => (was === chip.id ? null : chip.id));
-            }}
-          >
-            {chip.label}
-          </Button>
-        ))}
+      <div className="px-3">
+        <Tabs
+          value={shelf ?? 'all'}
+          onValueChange={(id) => {
+            setShelf(SHELVES.find((one) => one.id === id)?.id ?? null);
+          }}
+        >
+          <TabRow
+            label="Show only"
+            size="sm"
+            groups={[{ items: [{ id: 'all', label: 'All' }, ...SHELVES] }]}
+            value={shelf ?? 'all'}
+          />
+        </Tabs>
       </div>
 
       <div className="px-3">
@@ -190,7 +192,6 @@ const MusicLibrary = () => {
           isLabelHidden
           type="search"
           size="sm"
-          icon={<Icon of={Search01Icon} size={14} />}
           placeholder="Find in your library"
           value={filter}
           onValueChange={setFilter}
