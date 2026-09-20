@@ -141,10 +141,10 @@ const DataTable = <Row extends RowData>({
                       <div className="flex items-center gap-1">
                         {header.isPlaceholder ? null : canSort ? (
                           <Button
-                            variant="bare"
+                            variant="subtle"
                             size="none"
                             onClick={header.column.getToggleSortingHandler()}
-                            className="inline-flex items-center gap-1.5 text-current uppercase tracking-[0.14em] transition-colors hover:text-text"
+                            className="inline-flex items-center gap-1.5 uppercase tracking-[0.14em]"
                           >
                             <table.FlexRender header={header} />
 
