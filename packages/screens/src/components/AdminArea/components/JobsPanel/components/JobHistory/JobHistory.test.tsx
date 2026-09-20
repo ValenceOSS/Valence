@@ -246,8 +246,9 @@ describe('JobHistory', () => {
     );
     await actor.click(await screen.findByRole('menuitem', { name: 'View issues' }));
 
-    expect(await screen.findByText('/media/movies/broken.mkv')).toBeInTheDocument();
-    expect(screen.getByText('ffmpeg exited with a non-zero status')).toBeInTheDocument();
+    expect(
+      await screen.findByText(/\/media\/movies\/broken\.mkv: ffmpeg exited with a non-zero status/),
+    ).toBeInTheDocument();
     expect(askedIssues).toHaveBeenCalledWith('run-1');
   });
 
@@ -288,7 +289,8 @@ describe('JobHistory', () => {
 
     const dialog = await screen.findByRole('dialog');
 
-    expect(within(dialog).getByRole('alert')).toHaveTextContent(message);
+    expect(within(dialog).getByText(message)).toBeInTheDocument();
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
     expect(
       within(dialog).queryByText('No issues were recorded for this run.'),
     ).not.toBeInTheDocument();
@@ -313,8 +315,8 @@ describe('JobHistory', () => {
 
     const dialog = await screen.findByRole('dialog');
 
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('It stopped.');
-    expect(await within(dialog).findByText('/media/movies/broken.mkv')).toBeInTheDocument();
+    expect(await within(dialog).findByText(/It stopped\./)).toBeInTheDocument();
+    expect(within(dialog).getByText(/\/media\/movies\/broken\.mkv/)).toBeInTheDocument();
   });
 
   it('opens what a running run is made of from the i beside its status', async () => {
@@ -404,6 +406,35 @@ describe('JobHistory', () => {
 
     expect(await screen.findByText('Movies')).toBeInTheDocument();
     expect(screen.queryByText(id)).not.toBeInTheDocument();
+  });
+
+  it('copies everything that went wrong as plain text', async () => {
+    const actor = userEvent.setup();
+    const copied = vi.fn(() => Promise.resolve());
+
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText: copied } });
+
+    askedHistory.mockResolvedValue(
+      page([record({ status: 'failed', errorMessage: 'It stopped.' })]),
+    );
+    askedIssues.mockResolvedValue([issue()]);
+
+    renderHistory(
+      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+    );
+
+    await actor.click(
+      await screen.findByRole('button', { name: 'Actions for Generate missing previews' }),
+    );
+    await actor.click(await screen.findByRole('menuitem', { name: 'View issues' }));
+    await screen.findByText(/broken\.mkv/);
+    await actor.click(screen.getByRole('button', { name: 'Copy' }));
+
+    expect(copied).toHaveBeenCalledWith(
+      'It stopped.\n/media/movies/broken.mkv: ffmpeg exited with a non-zero status',
+    );
+
+    vi.unstubAllGlobals();
   });
 
   it('sets a display name so devtools can identify it', () => {

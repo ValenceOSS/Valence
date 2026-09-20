@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { MoreHorizontalIcon, Alert02Icon, InformationCircleIcon } from '@hugeicons/core-free-icons';
+import { MoreHorizontalIcon, InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -8,9 +8,12 @@ import { DataTable } from '@ValenceUI/DataTable';
 import { HoverCard } from '@ValenceUI/HoverCard';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
+import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
+import { notify } from '@ValenceUI/notify';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
+import { describeRunIssues } from './describeRunIssues';
 import { describeRunSubject } from './describeRunSubject';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { watchJobs } from '@ValenceClient/admin/fetchAdmin';
@@ -100,6 +103,7 @@ const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHis
   const issues = askedIssues.data ?? [];
   const openRun = records.find((record) => record.id === openIssuesFor);
   const failure = openRun?.errorMessage ?? null;
+  const issuesText = describeRunIssues(failure, issues);
   const openWork = records.find((record) => record.id === openWorkFor);
 
   useEffect(() => {
@@ -152,6 +156,10 @@ const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHis
       unwatch();
     };
   }, [cache]);
+
+  const closeIssues = () => {
+    setOpenIssuesFor(null);
+  };
 
   const columns = useMemo<DataTableColumn<JobRunRecord>[]>(
     () => [
@@ -369,57 +377,35 @@ const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHis
         }}
       />
 
-      <Dialog
-        label="Job run issues"
-        isOpen={openIssuesFor !== null}
-        onClose={() => {
-          setOpenIssuesFor(null);
-        }}
-      >
+      <Dialog label="Job run issues" isOpen={openIssuesFor !== null} onClose={closeIssues}>
         {openIssuesFor === null ? null : (
           <>
             <DialogTitle title="Issues from this run" />
 
             <DialogContent>
-              {failure === null ? null : (
-                <div
-                  role="alert"
-                  className="mb-4 flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 p-3"
-                >
-                  <Icon of={Alert02Icon} size={16} className="mt-0.5 shrink-0 text-danger" />
-
-                  <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-sm font-medium text-text">The run failed</span>
-                    <span className="whitespace-pre-wrap break-words text-xs text-text-muted">
-                      {failure}
-                    </span>
-                  </span>
-                </div>
-              )}
-
               {askedIssues.isPending ? (
                 <p className="text-sm text-text-muted">Reading issues…</p>
-              ) : issues.length === 0 ? (
-                failure !== null ? null : (
-                  <p className="text-sm text-text-muted">No issues were recorded for this run.</p>
-                )
+              ) : issuesText === '' ? (
+                <p className="text-sm text-text-muted">No issues were recorded for this run.</p>
               ) : (
-                <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-                  {issues.map((issue) => (
-                    <li key={issue.id} className="flex items-start gap-3 py-3 first:pt-0">
-                      <Icon of={Alert02Icon} size={16} className="mt-0.5 shrink-0 text-danger" />
-
-                      <span className="flex min-w-0 flex-col gap-0.5">
-                        <span className="truncate text-sm text-text" title={issue.path}>
-                          {issue.path}
-                        </span>
-                        <span className="text-xs text-text-muted">{issue.reason}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <pre className="whitespace-pre-wrap break-words font-mono text-xs text-text">
+                  {issuesText}
+                </pre>
               )}
             </DialogContent>
+
+            <DialogFooter
+              dismiss={{ label: 'Close', onChoose: closeIssues }}
+              confirm={{
+                label: 'Copy',
+                isDisabled: issuesText === '',
+                onChoose: () => {
+                  void navigator.clipboard.writeText(issuesText).then(() => {
+                    notify.worked('Copied to the clipboard.');
+                  });
+                },
+              }}
+            />
           </>
         )}
       </Dialog>
