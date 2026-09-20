@@ -24,6 +24,7 @@ import type {
   IndexerPrivacy,
 } from '@ValenceContracts/schemas/IndexerDefinition';
 import type { IndexerCatalogueDialogProps } from './IndexerCatalogueDialog.types';
+import { Card } from '@ValenceUI/Card';
 
 const PRIVACIES = [
   { id: 'any', label: 'Any' },
@@ -238,23 +239,25 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
         ) : asked.isPending ? (
           <Spinner label="Reading the catalogue" size="sm" />
         ) : (
-          <DataTable
-            label="Sites"
-            columns={columns}
-            rows={shown}
-            height="parent"
-            growsOnScroll
-            className="min-h-0 flex-1"
-            getRowId={(definition) => definition.id}
-            onChooseRow={(definition) => {
-              onChoose({ kind: 'cardigann', definitionId: definition.id, name: definition.name });
-            }}
-            emptyMessage={
-              asked.data.definitions.length === 0
-                ? 'The catalogue is empty. Bring it up to date to fetch the sites Valence can search.'
-                : 'No site matches. Try fewer words, or another category.'
-            }
-          />
+          <Card padding="none" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <DataTable
+              label="Sites"
+              columns={columns}
+              rows={shown}
+              height="parent"
+              growsOnScroll
+              className="min-h-0 flex-1"
+              getRowId={(definition) => definition.id}
+              onChooseRow={(definition) => {
+                onChoose({ kind: 'cardigann', definitionId: definition.id, name: definition.name });
+              }}
+              emptyMessage={
+                asked.data.definitions.length === 0
+                  ? 'The catalogue is empty. Bring it up to date to fetch the sites Valence can search.'
+                  : 'No site matches. Try fewer words, or another category.'
+              }
+            />
+          </Card>
         )}
       </DialogContent>
 

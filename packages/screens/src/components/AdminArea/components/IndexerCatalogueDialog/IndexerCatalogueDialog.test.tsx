@@ -195,4 +195,12 @@ describe('IndexerCatalogueDialog', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(IndexerCatalogueDialog.displayName).toBe('IndexerCatalogueDialog');
   });
+
+  it('sets the table of sites in a card, so it does not float in the dialog', async () => {
+    open();
+
+    const table = await screen.findByRole('table', { name: 'Sites' });
+
+    expect(table.closest('.valence-surface')).not.toBeNull();
+  });
 });
