@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { speedsOf } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/speedsOf';
 
 /**
@@ -6,12 +7,22 @@ import { speedsOf } from '@ValenceScreens/components/AdminArea/components/Downlo
  *
  * @param down - Bytes a second coming down, where known.
  * @param up - Bytes a second going up, where known.
- * @returns Such as `↓ 1.2 MB/s · ↑ 40 KB/s`, or null.
+ * @returns Such as `↓ 1.2 MB/s · ↑ 40 KB/s`, with the numbers rolling, or null.
  */
-const describeSpeeds = (down: number | null, up: number | null): string | null => {
-  const parts = speedsOf(down, up);
+const describeSpeeds = (down: number | null, up: number | null): ReactNode => {
+  const [first, second] = speedsOf(down, up);
 
-  return parts.length === 0 ? null : parts.join(' · ');
+  if (first === undefined) {
+    return null;
+  }
+
+  return second === undefined ? (
+    first
+  ) : (
+    <>
+      {first} · {second}
+    </>
+  );
 };
 
 export { describeSpeeds };

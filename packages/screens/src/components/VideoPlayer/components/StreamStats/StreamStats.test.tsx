@@ -168,7 +168,7 @@ describe('StreamStats', () => {
   it('reports how many frames the browser is dropping', () => {
     draw();
 
-    expect(screen.getByText('4 of 900')).toBeInTheDocument();
+    expect(screen.getByText('4').parentElement).toHaveTextContent('4 of 900');
   });
 
   it('says frames are not counted rather than claiming none were dropped', () => {

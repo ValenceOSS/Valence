@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Icon } from '@ValenceUI/Icon';
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
@@ -18,11 +20,17 @@ import type { StreamStatsProps } from './StreamStats.types';
  * @param value - The number of seconds.
  * @returns It, rounded, with its unit.
  */
-const seconds = (value: number): string => `${value.toFixed(1)}s`;
+const seconds = (value: number): ReactNode => (
+  <AnimatedNumber
+    value={value}
+    format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+    suffix="s"
+  />
+);
 
 type RowProps = {
   name: string;
-  children: string;
+  children: ReactNode;
 };
 
 /**
@@ -201,9 +209,11 @@ const StreamStats = ({
           </Row>
           <Row name="Container">{delivered?.mimeType ?? 'nothing selected yet'}</Row>
           <Row name="Bitrate">
-            {delivered?.bitrateKbps === null || delivered === null
-              ? 'not reported'
-              : `${delivered.bitrateKbps.toString()}kbps`}
+            {delivered?.bitrateKbps === null || delivered === null ? (
+              'not reported'
+            ) : (
+              <AnimatedNumber value={delivered.bitrateKbps} suffix="kbps" />
+            )}
           </Row>
           <Row name="Presented size">{size(health.presentedWidth, health.presentedHeight)}</Row>
         </Group>
@@ -226,15 +236,22 @@ const StreamStats = ({
           <Row name="Buffered ahead">{seconds(health.bufferedAheadSeconds)}</Row>
           <Row name="Encoded so far">{seconds(health.encodedSeconds)}</Row>
           <Row name="Frames dropped">
-            {health.droppedFrames === null || health.decodedFrames === null
-              ? 'not reported'
-              : `${health.droppedFrames.toString()} of ${health.decodedFrames.toString()}`}
+            {health.droppedFrames === null || health.decodedFrames === null ? (
+              'not reported'
+            ) : (
+              <>
+                <AnimatedNumber value={health.droppedFrames} /> of{' '}
+                <AnimatedNumber value={health.decodedFrames} />
+              </>
+            )}
           </Row>
         </Group>
 
         {party === undefined ? null : (
           <Group name="Watch party">
-            <Row name="Watching together">{party.members.toString()}</Row>
+            <Row name="Watching together">
+              <AnimatedNumber value={party.members} />
+            </Row>
             <Row name="Room state">
               {party.isHeld ? 'held' : party.isPlaying ? 'playing' : 'paused'}
             </Row>
@@ -251,7 +268,9 @@ const StreamStats = ({
                 ? 'n/a'
                 : seconds(party.referenceSeconds - health.positionSeconds)}
             </Row>
-            <Row name="Clock jitter">{`${Math.round(party.jitterMs).toString()}ms`}</Row>
+            <Row name="Clock jitter">
+              <AnimatedNumber value={Math.round(party.jitterMs)} suffix="ms" />
+            </Row>
           </Group>
         )}
 

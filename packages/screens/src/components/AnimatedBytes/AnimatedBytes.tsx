@@ -7,10 +7,11 @@ import type { AnimatedBytesProps } from './AnimatedBytes.types';
  * `356 MB` — with the number rolling and its unit standing still beside it.
  *
  * @param bytes - The size.
+ * @param prefix - Text written straight before the number, such as an arrow.
  * @param suffix - Text written straight after the unit, such as ` free`.
  * @param className - Extra classes for the caller's own layout.
  */
-const AnimatedBytes = ({ bytes, suffix = '', className }: AnimatedBytesProps) => {
+const AnimatedBytes = ({ bytes, prefix, suffix = '', className }: AnimatedBytesProps) => {
   const { value, unit, decimals } = sizeOfBytes(bytes);
 
   return (
@@ -18,6 +19,7 @@ const AnimatedBytes = ({ bytes, suffix = '', className }: AnimatedBytesProps) =>
       value={value}
       format={{ minimumFractionDigits: decimals, maximumFractionDigits: decimals }}
       suffix={` ${unit}${suffix}`}
+      {...(prefix === undefined ? {} : { prefix })}
       {...(className === undefined ? {} : { className })}
     />
   );

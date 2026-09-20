@@ -1,3 +1,4 @@
+import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { describeTimeLeft } from './describeTimeLeft';
 
@@ -12,6 +13,6 @@ describe('describeTimeLeft', () => {
     [86_400, '1 day'],
     [3 * 86_400, '3 days'],
   ])('says %i seconds as %s', (seconds, said) => {
-    expect(describeTimeLeft(seconds)).toBe(said);
+    expect(render(<>{describeTimeLeft(seconds)}</>).container).toHaveTextContent(said);
   });
 });

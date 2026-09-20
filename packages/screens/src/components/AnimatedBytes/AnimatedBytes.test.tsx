@@ -21,6 +21,12 @@ describe('AnimatedBytes', () => {
     expect(container).toHaveTextContent('157 GB free');
   });
 
+  it('writes what comes before the number straight against it', () => {
+    const { container } = render(<AnimatedBytes bytes={2048} prefix="↓ " suffix="/s" />);
+
+    expect(container).toHaveTextContent('↓ 2.0 KB/s');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(AnimatedBytes.displayName).toBe('AnimatedBytes');
   });

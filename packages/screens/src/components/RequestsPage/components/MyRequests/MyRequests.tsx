@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Compass01Icon } from '@hugeicons/core-free-icons';
 import { Badge } from '@ValenceUI/Badge';
+import { DownloadProgressReadout } from '@ValenceScreens/components/DownloadProgressReadout/DownloadProgressReadout';
 import { Button } from '@ValenceUI/Button';
 import { Card } from '@ValenceUI/Card';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -19,7 +20,6 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
-import { describeDownloadProgress } from './describeDownloadProgress';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { MyRequestsProps } from './MyRequests.types';
 
@@ -133,12 +133,7 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
                     label={`How much of ${request.title} has arrived`}
                     value={Math.round(going.progress * 1000) / 10}
                     readout={
-                      <span className="text-xs tabular-nums text-text-muted">
-                        {Math.floor(going.progress * 100).toString()}%
-                        {describeDownloadProgress(going) === ''
-                          ? ''
-                          : ` · ${describeDownloadProgress(going)}`}
-                      </span>
+                      <DownloadProgressReadout progress={going} className="text-text-muted" />
                     }
                   />
                 )}

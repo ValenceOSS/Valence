@@ -238,7 +238,9 @@ describe('OverviewPanel', () => {
     it('mentions a queue that has not started yet', () => {
       renderPanel(<OverviewPanel {...props} monitor={monitor([], 3)} />);
 
-      expect(screen.getByText('Nothing running, 3 waiting.')).toBeInTheDocument();
+      expect(screen.getByText('3 waiting').parentElement).toHaveTextContent(
+        'Nothing running, 3 waiting.',
+      );
     });
 
     it('names what is running', () => {
@@ -382,7 +384,9 @@ describe('OverviewPanel', () => {
 
       await actor.click(screen.getByRole('button', { name: '24h' }));
 
-      expect(await screen.findByText(/Peak 80%/)).toBeInTheDocument();
+      expect(
+        (await screen.findByText('80%', { exact: false })).closest('figcaption'),
+      ).toHaveTextContent(/Peak 80%/);
       expect(askedResourceHistory).toHaveBeenCalledWith('24h');
     });
 

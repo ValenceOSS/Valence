@@ -1,8 +1,10 @@
+import type { ReactNode } from 'react';
+
 type TrendChartProps = {
   values: number[];
   ceiling: number;
   label: string;
-  caption?: string;
+  caption?: ReactNode;
   className?: string;
 };
 

@@ -1,5 +1,6 @@
 type AnimatedBytesProps = {
   bytes: number;
+  prefix?: string;
   suffix?: string;
   className?: string;
 };

@@ -1,4 +1,5 @@
 import { Badge } from '@ValenceUI/Badge';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
@@ -60,9 +61,14 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
       <DialogTitle
         title={title}
         detail={
-          tasks.length === 0
-            ? 'Nothing in the queue is tied to it yet.'
-            : `${running.toString()} running · ${(waiting + notYetQueued).toString()} waiting`
+          tasks.length === 0 ? (
+            'Nothing in the queue is tied to it yet.'
+          ) : (
+            <>
+              <AnimatedNumber value={running} suffix=" running" /> ·{' '}
+              <AnimatedNumber value={waiting + notYetQueued} suffix=" waiting" />
+            </>
+          )
         }
       />
 
@@ -90,7 +96,7 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
               {notYetQueued === 0 ? null : (
                 <li className="flex items-center gap-3 py-3">
                   <span className="min-w-0 flex-1 text-sm text-text-muted">
-                    {notYetQueued.toString()} more not started yet
+                    <AnimatedNumber value={notYetQueued} suffix=" more not started yet" />
                   </span>
 
                   <Badge size="sm" tone="quiet">

@@ -557,7 +557,7 @@ describe('AdminArea', () => {
       resources: { ...MONITOR.resources, systemCpuPercent: 91 },
     });
 
-    expect(await screen.findByText('91%')).toBeInTheDocument();
+    expect((await screen.findAllByText('91%')).length).toBeGreaterThan(0);
   });
 
   it('stops watching once the page is left', async () => {
@@ -570,7 +570,7 @@ describe('AdminArea', () => {
     unmount();
     monitorArrives({ ...MONITOR, resources: { ...MONITOR.resources, systemCpuPercent: 91 } });
 
-    expect(screen.queryByText('91%')).not.toBeInTheDocument();
+    expect(screen.queryAllByText('91%')).toHaveLength(0);
   });
 
   it('shows what the media service is working on', async () => {
