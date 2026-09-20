@@ -55,7 +55,7 @@ const LikedView = () => {
         actions={
           <>
             <Button
-              variant="glossy"
+              variant="confirm"
               size="lg"
               isIconOnly
               label="Play Liked Songs"

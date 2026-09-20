@@ -115,7 +115,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
               className="mt-3 flex flex-wrap items-center gap-3"
             >
               <Button
-                variant="glossy"
+                variant="confirm"
                 size="lg"
                 onClick={() => {
                   if (song !== null) {

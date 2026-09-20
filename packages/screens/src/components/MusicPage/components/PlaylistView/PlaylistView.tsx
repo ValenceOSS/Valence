@@ -141,7 +141,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
         actions={
           <>
             <Button
-              variant="glossy"
+              variant="confirm"
               size="lg"
               isIconOnly
               label={`Play ${playlist.name}`}

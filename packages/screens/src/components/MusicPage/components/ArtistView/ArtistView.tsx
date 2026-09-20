@@ -92,7 +92,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
         actions={
           <>
             <Button
-              variant="glossy"
+              variant="confirm"
               size="lg"
               isIconOnly
               label={`Play ${artist.name}`}
