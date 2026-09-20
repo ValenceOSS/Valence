@@ -643,7 +643,7 @@ describe('the extras a film carries', () => {
     expect(screen.getByText('Scoring the film')).toBeInTheDocument();
   });
 
-  it('offers no arrow to turn the extras by, since the dialog around them already scrolls', async () => {
+  it('offers the arrows to turn the extras by, since a mouse cannot scroll a row sideways', async () => {
     Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
       configurable: true,
       value: 1100,
@@ -666,7 +666,7 @@ describe('the extras a film carries', () => {
       expect(screen.getByText('Extras')).toBeInTheDocument();
     });
 
-    expect(screen.queryByRole('button', { name: /a page of/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /a page of/ })).toHaveLength(2);
   });
 
   it('says what sort of extra each one is, so a trailer is not mistaken for the film', async () => {

@@ -53,14 +53,14 @@ describe('CastGrid', () => {
     expect(track).toHaveClass('scroll-smooth');
   });
 
-  it('offers no arrow to turn by, since it already sits inside something that scrolls', () => {
+  it('offers arrows to turn by, since a mouse cannot scroll a row sideways', () => {
     rowOf(1100, 2400);
     render(<CastGrid members={members} />);
 
-    expect(screen.queryByRole('button', { name: /a page of/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /a page of/ })).toHaveLength(2);
   });
 
-  it('takes a marker as a request to scroll there', async () => {
+  it('takes the arrow as a request to scroll there', async () => {
     const scrollTo = vi.fn();
 
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
@@ -72,7 +72,7 @@ describe('CastGrid', () => {
     const user = userEvent.setup();
     render(<CastGrid members={members} />);
 
-    await user.click(screen.getByRole('button', { name: 'Show page 2' }));
+    await user.click(screen.getByRole('button', { name: /Forward a page of/ }));
 
     expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth' }));
   });
@@ -88,7 +88,7 @@ describe('CastGrid', () => {
     rowOf(1100, 1100);
     render(<CastGrid members={members.slice(0, 4)} />);
 
-    expect(screen.queryByRole('button', { name: /Show page/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /a page of/ })).not.toBeInTheDocument();
   });
 
   it('draws a figure for a performer the catalogue has no photograph of', () => {

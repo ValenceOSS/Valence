@@ -42,55 +42,7 @@ describe('Rail', () => {
   it('offers nowhere to go before anything overflows', () => {
     render(<Rail title="Recently added">{items}</Rail>);
 
-    expect(screen.queryByRole('button', { name: /Show page/ })).not.toBeInTheDocument();
-  });
-
-  it('offers a marker per screenful once there is more to see', () => {
-    const { container } = render(<Rail title="Recently added">{items}</Rail>);
-    const track = container.querySelector('ul');
-
-    if (track !== null) {
-      overflowing(track, {});
-      fireEvent.scroll(track);
-    }
-
-    expect(screen.getAllByRole('button', { name: /Show page/ })).toHaveLength(4);
-    expect(screen.getByRole('button', { name: 'Show page 1' })).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
-  });
-
-  it('says which screenful is showing once it has moved', () => {
-    const { container } = render(<Rail title="Recently added">{items}</Rail>);
-    const track = container.querySelector('ul');
-
-    if (track !== null) {
-      overflowing(track, { scrollLeft: 850 });
-      fireEvent.scroll(track);
-    }
-
-    expect(screen.getByRole('button', { name: 'Show page 2' })).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
-  });
-
-  it('turns by whole cards, so the row never settles on half of one', async () => {
-    const user = userEvent.setup();
-    const { container } = render(<Rail title="Recently added">{items}</Rail>);
-    const track = container.querySelector('ul');
-    const scrollTo = vi.fn();
-
-    if (track !== null) {
-      overflowing(track, {});
-      track.scrollTo = scrollTo;
-      fireEvent.scroll(track);
-    }
-
-    await user.click(screen.getByRole('button', { name: 'Show page 2' }));
-
-    expect(scrollTo).toHaveBeenCalledWith({ left: 3 * 316, behavior: 'smooth' });
+    expect(screen.queryByRole('button', { name: /a page of/ })).not.toBeInTheDocument();
   });
 
   it('offers no arrow before the row runs off the edge', () => {
@@ -99,7 +51,7 @@ describe('Rail', () => {
     expect(screen.queryByRole('button', { name: /a page of/ })).not.toBeInTheDocument();
   });
 
-  it('offers a way on, but not back, while the row is at its start', () => {
+  it('offers a way on, and dims the way back, while the row is at its start', () => {
     const { container } = render(<Rail title="Recently added">{items}</Rail>);
     const track = container.querySelector('ul');
 
@@ -108,12 +60,8 @@ describe('Rail', () => {
       fireEvent.scroll(track);
     }
 
-    expect(
-      screen.getByRole('button', { name: 'Forward a page of Recently added' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Back a page of Recently added' }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Forward a page of Recently added' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Back a page of Recently added' })).toBeDisabled();
   });
 
   it('offers a way back once the row has been moved on', () => {
@@ -125,12 +73,10 @@ describe('Rail', () => {
       fireEvent.scroll(track);
     }
 
-    expect(
-      screen.getByRole('button', { name: 'Back a page of Recently added' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back a page of Recently added' })).toBeEnabled();
   });
 
-  it('turns the page by whole cards, as the markers above it do', async () => {
+  it('turns the page by whole cards', async () => {
     const user = userEvent.setup();
     const { container } = render(<Rail title="Recently added">{items}</Rail>);
     const track = container.querySelector('ul');
@@ -145,20 +91,6 @@ describe('Rail', () => {
     await user.click(screen.getByRole('button', { name: 'Forward a page of Recently added' }));
 
     expect(scrollTo).toHaveBeenCalledWith({ left: 3 * 316, behavior: 'smooth' });
-  });
-
-  it('stands on the card hanging over the edge, and is exactly as wide as the part that shows', () => {
-    const { container } = render(<Rail title="Recently added">{items}</Rail>);
-    const track = container.querySelector('ul');
-
-    if (track !== null) {
-      overflowing(track, {});
-      fireEvent.scroll(track);
-    }
-
-    expect(screen.getByRole('button', { name: 'Forward a page of Recently added' })).toHaveStyle({
-      width: '52px',
-    });
   });
 
   it('sizes a row of cards standing tall the same as one lying wide', () => {
@@ -179,35 +111,6 @@ describe('Rail', () => {
     );
 
     expect(container.querySelector('section')).toHaveClass('[--rail-per:2]');
-  });
-
-  it('stands the way back on what hangs over behind, which is a different measure', () => {
-    const { container } = render(<Rail title="Recently added">{items}</Rail>);
-    const track = container.querySelector('ul');
-
-    if (track !== null) {
-      overflowing(track, { scrollLeft: 3 * 316 });
-      fireEvent.scroll(track);
-    }
-
-    expect(screen.getByRole('button', { name: 'Back a page of Recently added' })).toHaveStyle({
-      width: '44px',
-    });
-  });
-
-  it('takes the hover off the card beneath it, so the two do not answer at once', () => {
-    const { container } = render(<Rail title="Recently added">{items}</Rail>);
-    const track = container.querySelector('ul');
-
-    if (track !== null) {
-      overflowing(track, {});
-      fireEvent.scroll(track);
-    }
-
-    const onward = screen.getByRole('button', { name: 'Forward a page of Recently added' });
-
-    expect(onward).toHaveClass('hover-hover:pointer-events-auto');
-    expect(onward).toHaveClass('pointer-events-none');
   });
 
   it('shows an action beside the heading when one is given', () => {
@@ -272,7 +175,7 @@ describe('Rail', () => {
     expect(screen.getByRole('heading', { name: 'Recently added' })).toBeInTheDocument();
   });
 
-  it('offers no arrow at all where the row is told not to turn by one', () => {
+  it('still offers the arrows where the row keeps clear of the page gutters, since it has no other way to turn', () => {
     const { container } = render(
       <Rail title="Cast" hasArrows={false}>
         {items}
@@ -285,10 +188,10 @@ describe('Rail', () => {
       fireEvent.scroll(track);
     }
 
-    expect(screen.queryByRole('button', { name: /a page of/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Forward a page of Cast' })).toBeInTheDocument();
   });
 
-  it('holds no lane open for an arrow it was told not to show', () => {
+  it('holds no lane open where it was told to keep clear of the gutters', () => {
     const { container } = render(
       <Rail title="Cast" sizesCards hasArrows={false} className="px-0">
         {items}
@@ -300,5 +203,103 @@ describe('Rail', () => {
 
     expect(header?.className).not.toContain('rail-lane');
     expect(track?.className).not.toContain('rail-lane');
+  });
+
+  it('draws the arrows in the header rather than over the cards', () => {
+    const { container } = render(<Rail title="Recently added">{items}</Rail>);
+    const track = container.querySelector('ul');
+
+    if (track !== null) {
+      overflowing(track, {});
+      fireEvent.scroll(track);
+    }
+
+    const forward = screen.getByRole('button', { name: 'Forward a page of Recently added' });
+
+    expect(container.querySelector('header')).toContainElement(forward);
+    expect(forward.className).not.toMatch(/absolute/);
+  });
+
+  it('offers no dots, since the arrows are the way through', () => {
+    const { container } = render(<Rail title="Recently added">{items}</Rail>);
+    const track = container.querySelector('ul');
+
+    if (track !== null) {
+      overflowing(track, {});
+      fireEvent.scroll(track);
+    }
+
+    expect(screen.queryByRole('button', { name: /Show page/ })).not.toBeInTheDocument();
+  });
+
+  it('dims the way on once the row has reached its end', () => {
+    const { container } = render(<Rail title="Recently added">{items}</Rail>);
+    const track = container.querySelector('ul');
+
+    if (track !== null) {
+      overflowing(track, { scrollLeft: 3000 });
+      fireEvent.scroll(track);
+    }
+
+    expect(screen.getByRole('button', { name: 'Forward a page of Recently added' })).toBeDisabled();
+  });
+
+  it('stands its cards larger, showing fewer to a row at every size', () => {
+    const { container } = render(
+      <Rail title="Recently added" sizesCards>
+        {items}
+      </Rail>,
+    );
+
+    expect(container.querySelector('section')).toHaveClass(
+      'xl:[--rail-per:5]',
+      'lg:[--rail-per:4]',
+    );
+  });
+
+  it('lines the row up with the page gutter rather than a lane held open for arrows', () => {
+    const { container } = render(
+      <Rail title="Recently added" sizesCards>
+        {items}
+      </Rail>,
+    );
+
+    expect(container.querySelector('section')).toHaveClass(
+      '[--rail-lane:1.25rem]',
+      'sm:[--rail-lane:2.5rem]',
+    );
+  });
+
+  it('lets the row be turned back at its end, even where the end falls partway through a page', () => {
+    const { container } = render(<Rail title="Recently added">{items}</Rail>);
+    const track = container.querySelector('ul');
+
+    if (track !== null) {
+      overflowing(track, { scrollLeft: 2000 });
+      fireEvent.scroll(track);
+    }
+
+    expect(screen.getByRole('button', { name: 'Back a page of Recently added' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Forward a page of Recently added' })).toBeDisabled();
+  });
+
+  it('stands the header above the row, so the whole of an arrow can be pressed', () => {
+    const { container } = render(<Rail title="Recently added">{items}</Rail>);
+
+    expect(container.querySelector('header')).toHaveClass('relative', 'z-10');
+  });
+
+  it('paints the arrows as every other default button is painted', () => {
+    const { container } = render(<Rail title="Recently added">{items}</Rail>);
+    const track = container.querySelector('ul');
+
+    if (track !== null) {
+      overflowing(track, {});
+      fireEvent.scroll(track);
+    }
+
+    expect(screen.getByRole('button', { name: 'Forward a page of Recently added' })).toHaveClass(
+      'bg-[var(--surface-hover)]',
+    );
   });
 });
