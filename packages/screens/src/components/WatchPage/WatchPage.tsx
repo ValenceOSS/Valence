@@ -11,6 +11,7 @@ import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
 import { findSiblings, nextEpisode } from '@ValenceClient/library/pickFeatured';
 import { watchedFraction, FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
+import { HOME } from '@ValenceClient/navigation/readLocation';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useQuietMusic } from '@ValenceScreens/music/useQuietMusic';
@@ -162,6 +163,9 @@ const WatchPage = () => {
         startSeconds={beginning.atSeconds}
         partyNotice={watchParty.notice}
         isImmersive
+        onStopped={() => {
+          go(HOME);
+        }}
         renderPartyMenu={({ isHidden, onOpenChange }) => (
           <PartyMenu
             party={filmParty}

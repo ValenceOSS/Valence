@@ -31,6 +31,7 @@ type VideoPlayerProps = {
   onClose: () => void;
   onProgress?: (positionSeconds: number, durationSeconds: number) => void;
   onEnded?: () => void;
+  onStopped?: () => void;
   episodes?: MediaSummary[];
   onSelectEpisode?: (episode: MediaSummary) => void;
   watchedFractionFor?: (mediaId: string) => number | undefined;

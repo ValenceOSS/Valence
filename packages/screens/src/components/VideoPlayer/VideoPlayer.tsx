@@ -211,6 +211,8 @@ const EMPTY_HEALTH: PlaybackHealth = {
  * @param isImmersive - Whether the player fills the screen or sits within the page.
  * @param startSeconds - Where to begin, for somebody picking up where they left off.
  * @param onClose - Called when the viewer leaves the player.
+ * @param onStopped - Called when an administrator stops the stream, where that should leave somewhere
+ *   other than where closing the player does; the reason is shown as a toast wherever it lands.
  * @param onProgress - Called as the viewer moves through it, with where they are and how long it is.
  * @param onEnded - Called when it reaches the end of its own accord.
  * @param episodes - The rest of the season, where this is one episode of a programme.
@@ -225,6 +227,7 @@ const VideoPlayer = ({
   isImmersive = false,
   startSeconds = 0,
   onClose,
+  onStopped,
   onProgress,
   onEnded,
   episodes = [],
@@ -962,12 +965,9 @@ const VideoPlayer = ({
         if (event.kind === 'stopped') {
           element?.pause();
 
-          notify.failed(event.reason, {
-            id: ADMIN_NOTICE,
-            where: PLAYER_TOASTS,
-            staysUntilDismissed: true,
-            action: { label: 'Close', onPress: onClose },
-          });
+          notify.failed(event.reason, { id: ADMIN_NOTICE });
+
+          (onStopped ?? onClose)();
 
           return;
         }
@@ -1002,7 +1002,7 @@ const VideoPlayer = ({
         notify.forget(ADMIN_NOTICE);
         void element?.play();
       }),
-    [onClose],
+    [onClose, onStopped],
   );
 
   useEffect(() => {
