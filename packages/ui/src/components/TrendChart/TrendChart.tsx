@@ -52,12 +52,15 @@ const TrendChart = ({ values, ceiling, label, caption, className }: TrendChartPr
             <Tooltip
               cursor={{ stroke: 'var(--surface-divider)', strokeWidth: 1 }}
               contentStyle={{
-                background: 'var(--color-surface-raised)',
-                border: '1px solid var(--surface-line)',
+                background: 'var(--color-text)',
+                border: 'none',
                 borderRadius: 'var(--radius-sm)',
+                color: 'var(--color-surface)',
                 fontSize: '0.75rem',
+                fontWeight: 500,
                 padding: '0.25rem 0.5rem',
               }}
+              itemStyle={{ color: 'var(--color-surface)' }}
               labelFormatter={() => ''}
               formatter={(value) => [typeof value === 'number' ? Math.round(value) : '', '']}
               separator=""

@@ -347,7 +347,7 @@ const RailCard = ({
 
                 <span className="relative z-10 flex shrink-0 items-center gap-2 pt-1">
                   <Button
-                    variant="glossy"
+                    variant="confirm"
                     size="md"
                     className="flex-1"
                     onClick={(event) => {

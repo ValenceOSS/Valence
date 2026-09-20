@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, inArray, lt, lte, sql } from 'drizzle-orm';
 import { logRecord } from '@ValenceServer/db/Schema';
+import { logSearchFilter } from './logSearchFilter';
 import { LogLevelSchema, LogSourceSchema } from '@ValenceContracts/schemas/Log';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { LogQuery, LogRecord } from '@ValenceContracts/schemas/Log';
@@ -86,9 +87,7 @@ const createDatabaseLogStore = (db: ValenceDatabase): LogStore => ({
     const wheres = [
       query.levels.length === 0 ? undefined : inArray(logRecord.level, [...query.levels]),
       query.sources.length === 0 ? undefined : inArray(logRecord.source, [...query.sources]),
-      query.search === ''
-        ? undefined
-        : sql`${logRecord.message} ILIKE ${`%${query.search}%`} OR ${logRecord.detail} ILIKE ${`%${query.search}%`}`,
+      logSearchFilter(query.search),
       query.sinceMs === null ? undefined : gte(logRecord.at, new Date(query.sinceMs)),
       query.untilMs === null ? undefined : lte(logRecord.at, new Date(query.untilMs)),
       query.jobId === null ? undefined : eq(logRecord.jobId, query.jobId),

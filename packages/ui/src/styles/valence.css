@@ -245,14 +245,15 @@
   --color-input: var(--color-border);
   --color-ring: transparent;
 
-  --radius: 0.375rem;
-  --radius-xs: 0.25rem;
-  --radius-sm: 0.3125rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.625rem;
-  --radius-2xl: 0.75rem;
-  --radius-3xl: 1rem;
+  --radius-scale: 1;
+  --radius: calc(0.375rem * var(--radius-scale));
+  --radius-xs: calc(0.25rem * var(--radius-scale));
+  --radius-sm: calc(0.3125rem * var(--radius-scale));
+  --radius-md: calc(0.375rem * var(--radius-scale));
+  --radius-lg: calc(0.5rem * var(--radius-scale));
+  --radius-xl: calc(0.625rem * var(--radius-scale));
+  --radius-2xl: calc(0.75rem * var(--radius-scale));
+  --radius-3xl: calc(1rem * var(--radius-scale));
   --radius-pill: 999px;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -406,7 +407,7 @@ body {
   inset: var(--valence-window-bar) 0 0 0;
 }
 
-[data-valence-desktop='true'] body {
+body {
   user-select: none;
   -webkit-user-select: none;
 }
@@ -424,7 +425,7 @@ body {
   height: 0;
 }
 
-[data-valence-desktop='true'] :is(input, textarea, [contenteditable]) {
+body :is(input, textarea, [contenteditable]) {
   user-select: text;
   -webkit-user-select: text;
 }
@@ -560,6 +561,10 @@ body {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+body[data-scroll-locked] .valence-navbar {
+  right: var(--removed-body-scroll-bar-size, 0px);
+}
+
 .valence-shell {
   --nav-clearance: calc(4rem + env(safe-area-inset-top, 0px));
   --floor-clearance: env(safe-area-inset-bottom, 0px);
@@ -601,6 +606,10 @@ body {
   background-color: var(--card-face);
 }
 
+.valence-card-face--raised {
+  background-color: color-mix(in oklab, var(--color-surface-raised) 88%, transparent);
+}
+
 .valence-mark-ink {
   filter: var(--mark-ink);
 }
@@ -613,6 +622,12 @@ body {
   box-shadow:
     0 0 0 1px var(--surface-line),
     var(--shadow-overlay);
+}
+
+.valence-solid {
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--surface-line);
+  box-shadow: var(--shadow-overlay);
 }
 
 .valence-glass {

@@ -67,9 +67,7 @@ describe('ReencodeReview', () => {
 
     render(<ReencodeReview {...props} onReject={onReject} />);
 
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Reject and put the original back' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Reject and put the original back' }));
 
     expect(onReject).toHaveBeenCalledWith('reencode-1');
   });

@@ -117,9 +117,9 @@ describe('RunLibraryJobDialog', () => {
 
     expect(screen.getByRole('heading', { name: 'Reset and rebuild?' })).toBeInTheDocument();
     expect(screen.getByText(/cannot be undone/)).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Reset and rebuild on every library' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reset and rebuild on every library' })).toHaveClass(
+      'bg-danger',
+    );
   });
 
   it('lets the operator back out', async () => {

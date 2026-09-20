@@ -5,6 +5,7 @@ type ActionMenuItem = {
   label: string;
   icon?: ReactNode;
   detail?: string;
+  hint?: string;
   isDestructive?: boolean;
   isDisabled?: boolean;
   keepsOpen?: boolean;

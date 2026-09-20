@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { gainFor } from '@ValenceCore/functions/gainFor';
+import { notify } from '@ValenceUI/notify';
 import { VideoPlayer } from './VideoPlayer';
 import { fakeMediaElement } from '@ValenceScreens/testing/fakeMediaElement';
 import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
@@ -2029,10 +2030,10 @@ describe('what the player does as the stream behaves', () => {
 });
 
 describe('when an administrator reaches into the stream', () => {
-  const watching = async () => {
+  const watching = async (extra: Partial<Parameters<typeof VideoPlayer>[0]> = {}) => {
     const actor = userEvent.setup();
 
-    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive {...extra} />);
     await settled();
 
     const element = await screen.findByLabelText('Arrival');
@@ -2043,15 +2044,34 @@ describe('when an administrator reaches into the stream', () => {
     return { actor, element, stream };
   };
 
-  it('stops the picture and says who stopped it', async () => {
-    const { element } = await watching();
+  it('stops the picture, says who stopped it, and leaves for where it was told to', async () => {
+    const onStopped = vi.fn();
+    const onClose = vi.fn();
+    const said = vi.spyOn(notify, 'failed');
+    const { element } = await watching({ onStopped, onClose });
 
     act(() => {
       emitPresenceEvent({ kind: 'stopped', reason: 'An administrator stopped this stream.' });
     });
 
-    expect(await screen.findByText(/An administrator stopped this stream./)).toBeInTheDocument();
+    expect(said.mock.calls[0]?.[0]).toBe('An administrator stopped this stream.');
+    expect(onStopped).toHaveBeenCalledOnce();
+    expect(onClose).not.toHaveBeenCalled();
     expect(element instanceof HTMLVideoElement ? element.paused : true).toBe(true);
+
+    said.mockRestore();
+  });
+
+  it('closes the player as usual when it was told nowhere else to go', async () => {
+    const onClose = vi.fn();
+
+    await watching({ onClose });
+
+    act(() => {
+      emitPresenceEvent({ kind: 'stopped', reason: 'An administrator stopped this stream.' });
+    });
+
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('pauses and says why, without ending the stream', async () => {
@@ -2089,23 +2109,6 @@ describe('when an administrator reaches into the stream', () => {
     });
   });
 
-  it('keeps a stop on screen when a message arrives beside it', async () => {
-    await watching();
-
-    act(() => {
-      emitPresenceEvent({ kind: 'stopped', reason: 'An administrator stopped this stream.' });
-    });
-
-    await screen.findByText(/An administrator stopped this stream./);
-
-    act(() => {
-      emitPresenceEvent({ kind: 'message', text: 'Tea is ready' });
-    });
-
-    expect(await screen.findByText(/Tea is ready/)).toBeInTheDocument();
-    expect(screen.getByText(/An administrator stopped this stream./)).toBeInTheDocument();
-  });
-
   it('takes the note away again when the stream is let go', async () => {
     await watching();
 
@@ -2122,22 +2125,6 @@ describe('when an administrator reaches into the stream', () => {
     await waitFor(() => {
       expect(screen.queryByText(/Dinner./)).not.toBeInTheDocument();
     });
-  });
-
-  it('leaves a stop on screen even when play is asked for again', async () => {
-    await watching();
-
-    act(() => {
-      emitPresenceEvent({ kind: 'stopped', reason: 'An administrator stopped this stream.' });
-    });
-
-    await screen.findByText(/An administrator stopped this stream./);
-
-    act(() => {
-      emitPresenceEvent({ kind: 'resumed' });
-    });
-
-    expect(screen.getByText(/An administrator stopped this stream./)).toBeInTheDocument();
   });
 });
 
@@ -2598,5 +2585,43 @@ describe('the skip button', () => {
     const stood = Number.parseInt(skip.parentElement?.style.bottom ?? '0', 10);
 
     expect(stood).toBeGreaterThanOrEqual(36);
+  });
+});
+
+describe('the immersive view', () => {
+  const watching = async (isImmersive: boolean) => {
+    const actor = userEvent.setup();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive={isImmersive} />);
+    await settled();
+
+    const element = await screen.findByLabelText('Arrival');
+
+    fakeMediaElement(element).loaded({ duration: 7200, seekableTo: 7200 });
+
+    return { actor };
+  };
+
+  it('is offered where the player fills the page, and puts the picture in a glow when chosen', async () => {
+    const { actor } = await watching(true);
+
+    await actor.click(screen.getByRole('button', { name: 'Immersive view' }));
+
+    expect(screen.getByRole('button', { name: 'Leave the immersive view' })).toBeInTheDocument();
+  });
+
+  it('goes back to filling the page when it is left', async () => {
+    const { actor } = await watching(true);
+
+    await actor.click(screen.getByRole('button', { name: 'Immersive view' }));
+    await actor.click(screen.getByRole('button', { name: 'Leave the immersive view' }));
+
+    expect(screen.getByRole('button', { name: 'Immersive view' })).toBeInTheDocument();
+  });
+
+  it('is not offered where the player sits within a page', async () => {
+    await watching(false);
+
+    expect(screen.queryByRole('button', { name: 'Immersive view' })).not.toBeInTheDocument();
   });
 });

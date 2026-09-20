@@ -1,10 +1,14 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
+import { InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { cn } from '@ValenceUI/cn';
+import { Icon } from '@ValenceUI/Icon';
+import { Tooltip } from '@ValenceUI/Tooltip';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { MENU } from '@ValenceUI/tokens/menu';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
+import { separateDestructive } from './separateDestructive';
 import type { ActionMenuProps, ActionMenuSize } from './ActionMenu.types';
 
 const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
@@ -17,6 +21,9 @@ const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
  * option menu is for. Items can be grouped, marked destructive so they read as dangerous before
  * they are pressed, and disabled with the reason still visible.
  *
+ * An item that needs explaining carries a hint, drawn as an information mark that says it on hover,
+ * rather than a line of small print that makes every row of the menu taller.
+ *
  * An item closes the menu on being chosen, because doing the thing is the end of the errand. An item
  * that sets a value rather than doing a thing can ask to stay open: choosing a theme and having the
  * menu vanish means anybody comparing two of them has to reopen it between each, and the menu is
@@ -24,7 +31,8 @@ const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
  *
  * @param label - What the menu is, read out to anybody who cannot see it.
  * @param trigger - The control that opens it.
- * @param groups - The items, in groups separated by a rule.
+ * @param groups - The items, in groups separated by a rule. Destructive items are gathered into a
+ *   group of their own at the bottom whatever order they were written in.
  * @param align - Which edge of the trigger the menu lines up with.
  * @param size - How large the trigger stands — smaller for a row's own action, standing size
  *   elsewhere.
@@ -79,7 +87,7 @@ const ActionMenu = ({
           >
             <HoverHighlight rect={rect} radius="nested" className="bg-[var(--surface-hover)]" />
 
-            {groups.map((group, index) => (
+            {separateDestructive(groups).map((group, index) => (
               <RadixMenu.Group
                 key={group.name ?? `group-${index.toString()}`}
                 className={cn(MENU.group, index === 0 ? '' : MENU.groupAfterFirst)}
@@ -102,7 +110,7 @@ const ActionMenu = ({
                     }}
                     className={cn(
                       MENU.item,
-                      item.isDestructive === true ? 'text-danger' : 'text-text',
+                      item.isDestructive === true ? MENU.itemDestructive : MENU.itemPlain,
                     )}
                   >
                     {item.icon === undefined ? null : (
@@ -113,6 +121,14 @@ const ActionMenu = ({
 
                     {item.detail === undefined ? null : (
                       <span className={MENU.detail}>{item.detail}</span>
+                    )}
+
+                    {item.hint === undefined ? null : (
+                      <Tooltip label={item.hint} side="left">
+                        <span data-slot="menu-hint" className={MENU.hint}>
+                          <Icon of={InformationCircleIcon} size={15} />
+                        </span>
+                      </Tooltip>
                     )}
                   </RadixMenu.Item>
                 ))}

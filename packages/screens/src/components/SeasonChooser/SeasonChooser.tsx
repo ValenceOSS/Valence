@@ -38,7 +38,7 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
       </FormField>
 
       {seasons === null ? null : listed.data === undefined ? (
-        <Spinner label="Asking the catalogue for its seasons" size="sm" />
+        <Spinner isCentered label="Asking the catalogue for its seasons" size="sm" />
       ) : (
         <ul aria-label="Which seasons" className="grid gap-2 sm:grid-cols-2">
           {listed.data.map((one) => (

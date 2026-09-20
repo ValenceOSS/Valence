@@ -73,15 +73,13 @@ beforeEach(() => {
 });
 
 describe('IndexerCatalogueDialog', () => {
-  it('lists every site, with how many there are and where they came from', async () => {
+  it('lists every site, and keeps its footer for what has gone wrong', async () => {
     open();
 
     expect(await screen.findByText('RuTor')).toBeInTheDocument();
     expect(screen.getByText('HDBits')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('3 sites, brought up to date');
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'from Prowlarr/Indexers@master/definitions/v11',
-    );
+    expect(screen.queryByText(/3 sites/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('finds a site by name, and narrows by privacy, category and language', async () => {
@@ -163,7 +161,7 @@ describe('IndexerCatalogueDialog', () => {
     await user.click(screen.getByRole('button', { name: /Bring up to date/ }));
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(
+      expect(screen.getByRole('alert')).toHaveTextContent(
         'The catalogue could not be brought up to date.',
       );
     });
@@ -175,7 +173,6 @@ describe('IndexerCatalogueDialog', () => {
     open();
 
     expect(await screen.findByText(/The catalogue is empty/)).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('0 sites from');
   });
 
   it('says it could not read the catalogue, and offers to try again', async () => {
@@ -197,5 +194,13 @@ describe('IndexerCatalogueDialog', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(IndexerCatalogueDialog.displayName).toBe('IndexerCatalogueDialog');
+  });
+
+  it('sets the table of sites in a card, so it does not float in the dialog', async () => {
+    open();
+
+    const table = await screen.findByRole('table', { name: 'Sites' });
+
+    expect(table.closest('.valence-surface')).not.toBeNull();
   });
 });

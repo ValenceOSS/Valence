@@ -70,23 +70,17 @@ const SessionMessageDialog = ({ watcher, isOpen, onSend, onClose }: SessionMessa
         </div>
       </DialogContent>
 
-      <DialogFooter>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          Cancel
-        </Button>
-
-        <Button
-          variant="glossy"
-          size="sm"
-          disabled={!canSend}
-          isLoading={isSending}
-          onClick={() => {
+      <DialogFooter
+        dismiss={{ onChoose: onClose }}
+        confirm={{
+          label: 'Send',
+          onChoose: () => {
             void send();
-          }}
-        >
-          Send
-        </Button>
-      </DialogFooter>
+          },
+          isDisabled: !canSend,
+          isLoading: isSending,
+        }}
+      />
     </Dialog>
   );
 };

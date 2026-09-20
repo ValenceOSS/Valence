@@ -245,7 +245,7 @@ const DownloadQueueTable = ({
                       .map((library) => ({
                         id: `file-${library.id}`,
                         label: `File into ${library.name}`,
-                        detail:
+                        hint:
                           row.original.state !== 'done'
                             ? 'Once it has downloaded.'
                             : row.original.filedInto === null

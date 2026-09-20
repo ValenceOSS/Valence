@@ -442,6 +442,10 @@ second set cannot come back a file at a time. The renderer, `HugeiconsIcon`, is
 banned too: a call site names the icon it wants and `Icon` decides how it is
 drawn, which is what keeps the set swappable in one file.
 
+An icon that is not the colour of the text around it is given a `tone` (`strong`, `muted`,
+`faint` or `danger`) rather than a colour in `className`. `className` on an icon is for where
+it sits. ESLint fails the build on a text colour in an icon's `className`.
+
 ```tsx
 import { Icon } from '@ValenceUI/Icon';
 import { Home01Icon } from '@hugeicons/core-free-icons';

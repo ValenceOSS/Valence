@@ -1,7 +1,8 @@
-import { useContext, useEffect, useId } from 'react';
+import { useContext, useEffect, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Dialog } from '@ValenceUI/Dialog';
 import { companionContext } from '@ValenceUI/Dialog.companionContext';
+import { useHeldWhileClosing } from '@ValenceUI/Dialog.useHeldWhileClosing';
 import { useRoomBeside } from '@ValenceUI/useRoomBeside';
 import type { DialogCompanionProps } from './DialogCompanion.types';
 
@@ -14,6 +15,10 @@ import type { DialogCompanionProps } from './DialogCompanion.types';
  * changed — a role granted, a name typed — went on showing what it held at the moment it opened.
  * Sent through a portal, what is drawn beside the dialog is the same thing the panel is rendering,
  * so it answers to its own state as it always did and simply appears somewhere else.
+ *
+ * Closing, it stays in the column until the column has finished leaving, showing what it showed
+ * when it was open. Drawn only while open, the content would be gone before the column had begun to
+ * narrow, and an empty panel would spend the rest of the animation shrinking.
  *
  * Opened from somewhere with no dialog above it, it is an ordinary dialog. A panel is only a
  * companion to something — there is nothing for it to stand beside on a bare page — and a control
@@ -50,6 +55,13 @@ const DialogCompanion = ({
   const hasRoomBeside = useRoomBeside();
   const id = useId();
   const standsAlone = slot === null || !hasRoomBeside;
+  const shown = useHeldWhileClosing(children, isOpen);
+  const [lastColumn, setLastColumn] = useState<HTMLElement | null>(null);
+  const column = slot !== null && isOpen && slot.current === id ? slot.column : null;
+
+  if (column !== null && column !== lastColumn) {
+    setLastColumn(column);
+  }
 
   useEffect(() => {
     if (slot === null || !hasRoomBeside) {
@@ -77,13 +89,15 @@ const DialogCompanion = ({
     );
   }
 
-  if (!isOpen || slot.current !== id || slot.column === null) {
+  const target = column ?? (lastColumn !== null && lastColumn.isConnected ? lastColumn : null);
+
+  if (target === null) {
     return null;
   }
 
   return createPortal(
-    <companionContext.Provider value={null}>{children}</companionContext.Provider>,
-    slot.column,
+    <companionContext.Provider value={null}>{shown}</companionContext.Provider>,
+    target,
   );
 };
 

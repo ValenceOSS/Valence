@@ -6,14 +6,21 @@ const MENU = {
   group: 'relative z-10 flex flex-col',
   groupAfterFirst: 'mt-1.5 border-t border-[var(--surface-line)] pt-1.5',
   label: 'px-3 py-1.5 text-xs uppercase tracking-[0.14em] text-text-muted',
+  stickyLabel: [
+    'sticky top-0 z-10 rounded-md bg-[var(--color-surface-raised)] px-3 py-1.5',
+    'text-xs uppercase tracking-[0.14em] text-text-muted',
+  ].join(' '),
   item: [
     'flex cursor-default items-center gap-3 rounded-sm px-3 py-2.5 outline-none',
     'coarse:gap-4 coarse:px-4 coarse:py-3.5',
     'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40',
   ].join(' '),
+  itemDestructive: 'bg-danger text-destructive-foreground hover:brightness-110',
+  itemPlain: 'text-text',
   icon: 'flex size-4 shrink-0 items-center justify-center coarse:size-5',
   itemLabel: 'flex-1 truncate text-left',
   detail: 'shrink-0 text-xs text-text-muted',
+  hint: 'flex shrink-0 items-center text-text-muted',
 } as const;
 
 export { MENU };

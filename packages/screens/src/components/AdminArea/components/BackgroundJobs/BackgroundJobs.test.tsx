@@ -100,9 +100,9 @@ describe('BackgroundJobs', () => {
       />,
     );
 
-    expect(screen.getByText('queued')).toHaveClass('border-highlight/50');
-    expect(screen.getAllByText('running')[0]).toHaveClass('border-accent/40');
-    expect(screen.getByText('finished')).toHaveClass('border-success/35');
-    expect(screen.getByText('failed')).toHaveClass('border-danger/50');
+    expect(screen.getByText('Queued')).toHaveClass('bg-busy');
+    expect(screen.getAllByText('Running')[0]).toHaveClass('bg-busy');
+    expect(screen.getByText('Done')).toHaveClass('bg-success');
+    expect(screen.getByText('Failed')).toHaveClass('bg-danger');
   });
 });

@@ -1,7 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -9,6 +8,7 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
+import { useHeldWhileClosing } from '@ValenceUI/Dialog.useHeldWhileClosing';
 import { readLanguage, LANGUAGE_NAMES } from '@ValenceCore/functions/describeTrack';
 import { updateLibrary } from '@ValenceClient/library/fetchLibrary';
 import type { Library } from '@ValenceContracts/schemas/Library';
@@ -64,13 +64,14 @@ const buildLanguageOptions = (): LanguageOption[] => {
  * @param onRegenerate - Called with the library whose previews are to be remade.
  */
 const LibrarySettingsDialog = ({
-  library,
+  library: requested,
   isOpen,
   profiles = [],
   onClose,
   onUpdated,
   onRegenerate,
 }: LibrarySettingsDialogProps) => {
+  const library = useHeldWhileClosing(requested, isOpen);
   const languageOptions = buildLanguageOptions();
 
   const [selected, setSelected] = useState(library?.defaultAudioLanguage ?? NONE_ID);
@@ -185,7 +186,7 @@ const LibrarySettingsDialog = ({
                 trigger={
                   <>
                     <span className="truncate">{selectedLabel}</span>
-                    <Icon of={UnfoldMoreIcon} size={15} className="shrink-0 text-text-muted" />
+                    <Icon of={UnfoldMoreIcon} size={15} tone="muted" className="shrink-0" />
                   </>
                 }
                 triggerShape="field"
@@ -216,7 +217,7 @@ const LibrarySettingsDialog = ({
                 trigger={
                   <>
                     <span className="truncate">{atOnceLabel}</span>
-                    <Icon of={UnfoldMoreIcon} size={15} className="shrink-0 text-text-muted" />
+                    <Icon of={UnfoldMoreIcon} size={15} tone="muted" className="shrink-0" />
                   </>
                 }
                 triggerShape="field"
@@ -265,7 +266,7 @@ const LibrarySettingsDialog = ({
                     trigger={
                       <>
                         <span className="truncate">{profileLabel}</span>
-                        <Icon of={UnfoldMoreIcon} size={15} className="shrink-0 text-text-muted" />
+                        <Icon of={UnfoldMoreIcon} size={15} tone="muted" className="shrink-0" />
                       </>
                     }
                     triggerShape="field"
@@ -291,21 +292,16 @@ const LibrarySettingsDialog = ({
             )}
           </DialogContent>
 
-          <DialogFooter>
-            <Button variant="secondary" onClick={close} disabled={isSaving}>
-              Cancel
-            </Button>
-
-            <Button
-              variant="glossy"
-              isLoading={isSaving}
-              onClick={() => {
+          <DialogFooter
+            dismiss={{ onChoose: close, isDisabled: isSaving }}
+            confirm={{
+              label: 'Save',
+              onChoose: () => {
                 void save();
-              }}
-            >
-              Save
-            </Button>
-          </DialogFooter>
+              },
+              isLoading: isSaving,
+            }}
+          />
         </>
       ) : (
         <>
@@ -317,20 +313,15 @@ const LibrarySettingsDialog = ({
             </p>
           </DialogContent>
 
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => {
+          <DialogFooter
+            dismiss={{
+              label: 'Not now',
+              onChoose: () => {
                 finish(confirming.saved);
-              }}
-            >
-              Not now
-            </Button>
-
-            <Button variant="glossy" onClick={regenerate}>
-              Regenerate previews
-            </Button>
-          </DialogFooter>
+              },
+            }}
+            confirm={{ label: 'Regenerate previews', onChoose: regenerate }}
+          />
         </>
       )}
     </DialogCompanion>

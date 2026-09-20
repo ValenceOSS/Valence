@@ -147,7 +147,7 @@ const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
         )}
       </DialogContent>
 
-      <DialogFooter>
+      <DialogFooter dismiss={{ onChoose: onClose }}>
         <Button
           variant="secondary"
           isLoading={isForgetting}
@@ -157,10 +157,6 @@ const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
         >
           <Icon of={ArrowTurnBackwardIcon} size={16} />
           Forget the correction
-        </Button>
-
-        <Button variant="secondary" onClick={onClose}>
-          Close
         </Button>
       </DialogFooter>
     </DialogCompanion>

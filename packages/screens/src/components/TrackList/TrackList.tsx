@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
+import { Reorder } from 'motion/react';
 import { FavouriteIcon, PauseIcon, PlayIcon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
@@ -34,6 +36,8 @@ import type { TrackListProps } from './TrackList.types';
  * @param numbering - Each song's number on its album, or where it sits in this list.
  * @param onRemove - Takes a song out, where this is a playlist of yours.
  * @param onMove - Moves a song one place up or down, where this is a playlist of yours.
+ * @param onReorder - Told a song was dragged from one place to another, where this is a playlist of
+ *   yours; the rows can only be dragged where it is given.
  */
 const TrackList = ({
   label,
@@ -44,29 +48,68 @@ const TrackList = ({
   numbering = 'position',
   onRemove,
   onMove,
+  onReorder,
 }: TrackListProps) => {
   const { state, player } = useMusicPlayer();
   const { open } = useMusicNavigation();
   const favourites = useFavourites(useWatchingProfile());
   const playingId = state.current?.id ?? null;
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
+  const [order, setOrder] = useState<number[]>(() => tracks.map((_, index) => index));
+  const draggedRef = useRef<number | null>(null);
+
+  const tracksKey = tracks.map((track) => track.id).join(',');
+
+  useEffect(() => {
+    setOrder(tracksKey === '' ? [] : tracksKey.split(',').map((_, index) => index));
+  }, [tracksKey]);
 
   return (
     <div ref={containerRef} className="relative" onPointerMove={follow} onPointerLeave={clear}>
       <HoverHighlight rect={rect} radius="md" className="bg-[var(--surface-hover)]" />
 
-      <ol aria-label={label} className="flex flex-col">
-        {tracks.map((track, index) => {
+      <Reorder.Group
+        as="ol"
+        axis="y"
+        aria-label={label}
+        values={order}
+        onReorder={setOrder}
+        className="flex flex-col"
+      >
+        {order.map((index) => {
+          const track = tracks[index];
+
+          if (track === undefined) {
+            return null;
+          }
+
+          const position = order.indexOf(index);
           const isCurrent = track.id === playingId;
           const isLiked = favourites.isKept(track.id);
-          const number = numbering === 'track' ? (track.trackNumber ?? index + 1) : index + 1;
+          const number = numbering === 'track' ? (track.trackNumber ?? position + 1) : position + 1;
 
           return (
-            <li
-              key={`${track.id}-${index.toString()}`}
+            <Reorder.Item
+              key={index}
+              as="li"
+              value={index}
+              dragListener={onReorder !== undefined}
               data-highlight
+              onDragStart={() => {
+                draggedRef.current = index;
+              }}
+              onDragEnd={() => {
+                const from = draggedRef.current;
+
+                draggedRef.current = null;
+
+                if (from !== null && onReorder !== undefined) {
+                  onReorder(from, order.indexOf(from));
+                }
+              }}
               className={cn(
                 'group relative grid items-center gap-3 rounded-md px-3 py-1.5',
+                onReorder === undefined ? '' : 'cursor-grab active:cursor-grabbing',
                 showsAlbum
                   ? 'grid-cols-[2rem_minmax(0,1fr)_auto_3rem_auto] md:grid-cols-[2rem_minmax(0,1.4fr)_minmax(0,1fr)_auto_3rem_auto]'
                   : 'grid-cols-[2rem_minmax(0,1fr)_auto_3rem_auto]',
@@ -145,10 +188,9 @@ const TrackList = ({
                     {track.artists.map((artist, at) => (
                       <span key={artist.id} className="truncate">
                         <Button
-                          variant="link"
+                          variant="subtle"
                           size="none"
                           hasTooltip={false}
-                          className="text-text-muted hover:text-text"
                           onClick={() => {
                             open({ kind: 'artist', id: artist.id });
                           }}
@@ -165,10 +207,10 @@ const TrackList = ({
               {showsAlbum ? (
                 <span className="hidden min-w-0 truncate text-[0.8125rem] text-text-muted md:block">
                   <Button
-                    variant="link"
+                    variant="subtle"
                     size="none"
                     hasTooltip={false}
-                    className="truncate text-text-muted hover:text-text"
+                    className="truncate"
                     onClick={() => {
                       open({ kind: 'album', id: track.album.id });
                     }}
@@ -212,14 +254,14 @@ const TrackList = ({
                         onRemove(index);
                       },
                     })}
-                {...(onMove === undefined || index === 0
+                {...(onMove === undefined || position === 0
                   ? {}
                   : {
                       onMoveUp: () => {
                         onMove(index, 'up');
                       },
                     })}
-                {...(onMove === undefined || index === tracks.length - 1
+                {...(onMove === undefined || position === tracks.length - 1
                   ? {}
                   : {
                       onMoveDown: () => {
@@ -227,10 +269,10 @@ const TrackList = ({
                       },
                     })}
               />
-            </li>
+            </Reorder.Item>
           );
         })}
-      </ol>
+      </Reorder.Group>
     </div>
   );
 };

@@ -40,9 +40,13 @@ vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
   }),
 }));
 
+const scrubs = vi.hoisted(() => ({ areBuilt: true }));
+
 vi.mock('@ValenceScreens/playback/fetchTrickplay', async (importOriginal) => ({
   ...(await importOriginal<typeof FetchTrickplay>()),
-  fetchTrickplay: vi.fn(() => Promise.resolve(null)),
+  fetchTrickplay: vi.fn(() =>
+    Promise.resolve(scrubs.areBuilt ? { thumbnails: [], width: 320, height: 180 } : null),
+  ),
 }));
 
 const preview = vi.hoisted(() => ({
@@ -120,7 +124,16 @@ beforeEach(() => {
 afterEach(() => {
   motion.isReduced = false;
   permissions.mayOverride = false;
+  scrubs.areBuilt = true;
 });
+
+const openTheMenu = async (): Promise<void> => {
+  const [menu] = await screen.findAllByRole('button', { name: 'More to do with this' });
+
+  if (menu !== undefined) {
+    await userEvent.setup().click(menu);
+  }
+};
 
 describe('choosing where the preview is cut from', () => {
   it('offers it to somebody allowed to correct media', async () => {
@@ -128,18 +141,37 @@ describe('choosing where the preview is cut from', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
+    await openTheMenu();
+
     expect(
-      await screen.findByRole('button', { name: 'Choose the preview moment' }),
+      await screen.findByRole('menuitem', { name: 'Choose the preview moment' }),
     ).toBeInTheDocument();
+  });
+
+  it('keeps it away until the scrub previews have been built', async () => {
+    permissions.mayOverride = true;
+    scrubs.areBuilt = false;
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await screen.findByRole('heading', { name: 'Arrival' });
+    await openTheMenu();
+    await screen.findByRole('menuitem', { name: /Download/ });
+
+    expect(
+      screen.queryByRole('menuitem', { name: 'Choose the preview moment' }),
+    ).not.toBeInTheDocument();
   });
 
   it('keeps it from every other viewer', async () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     await screen.findByRole('heading', { name: 'Arrival' });
+    await openTheMenu();
+    await screen.findByRole('menuitem', { name: /Download/ });
 
     expect(
-      screen.queryByRole('button', { name: 'Choose the preview moment' }),
+      screen.queryByRole('menuitem', { name: 'Choose the preview moment' }),
     ).not.toBeInTheDocument();
   });
 
@@ -148,9 +180,10 @@ describe('choosing where the preview is cut from', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
+    await openTheMenu();
     await userEvent
       .setup()
-      .click(await screen.findByRole('button', { name: 'Choose the preview moment' }));
+      .click(await screen.findByRole('menuitem', { name: 'Choose the preview moment' }));
 
     expect(await screen.findByRole('dialog', { name: 'Choose the preview moment' })).toBeVisible();
   });
@@ -163,18 +196,26 @@ describe('MediaDetailDialog', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('offers to download on a client that can keep a file', () => {
+  it('offers to download on a client that can keep a file', async () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: /Download/ })).toBeInTheDocument();
+    await openTheMenu();
+
+    expect(await screen.findByRole('menuitem', { name: /Download/ })).toBeInTheDocument();
   });
 
-  it('offers no download in a browser, which cannot be trusted to keep one', () => {
+  it('offers no download in a browser, which cannot be trusted to keep one', async () => {
     installPlatform(aFakePlatform({ canKeepFiles: () => false }));
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(screen.queryByRole('button', { name: /Download/ })).not.toBeInTheDocument();
+    const [menu] = screen.queryAllByRole('button', { name: 'More to do with this' });
+
+    if (menu !== undefined) {
+      await userEvent.setup().click(menu);
+    }
+
+    expect(screen.queryByRole('menuitem', { name: /Download/ })).not.toBeInTheDocument();
   });
 
   it('draws while one of this viewer’s downloads is still being prepared', async () => {
@@ -199,7 +240,9 @@ describe('MediaDetailDialog', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    expect(await screen.findByRole('button', { name: /Preparing 40%/ })).toBeInTheDocument();
+    await openTheMenu();
+
+    expect(await screen.findByRole('menuitem', { name: /Preparing 40%/ })).toBeInTheDocument();
   });
 
   it('names itself after the item', () => {
@@ -208,7 +251,7 @@ describe('MediaDetailDialog', () => {
     expect(screen.getByRole('dialog', { name: 'Arrival' })).toBeInTheDocument();
   });
 
-  it('offers to play in the same bright button as everywhere, as wide as the actions beside it', () => {
+  it('offers to play in the white button a dialog answers with, as wide as the actions beside it', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Play' })).toHaveClass('flex-1', 'bg-white');
@@ -643,7 +686,7 @@ describe('the extras a film carries', () => {
     expect(screen.getByText('Scoring the film')).toBeInTheDocument();
   });
 
-  it('offers no arrow to turn the extras by, since the dialog around them already scrolls', async () => {
+  it('offers the arrows to turn the extras by, since a mouse cannot scroll a row sideways', async () => {
     Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
       configurable: true,
       value: 1100,
@@ -666,7 +709,7 @@ describe('the extras a film carries', () => {
       expect(screen.getByText('Extras')).toBeInTheDocument();
     });
 
-    expect(screen.queryByRole('button', { name: /a page of/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /a page of/ })).toHaveLength(2);
   });
 
   it('says what sort of extra each one is, so a trailer is not mistaken for the film', async () => {

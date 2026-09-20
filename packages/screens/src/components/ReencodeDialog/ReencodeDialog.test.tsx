@@ -302,7 +302,10 @@ describe('ReencodeDialog', () => {
     await userEvent.click(theFilm());
 
     await waitFor(() => {
-      expect(onWeigh).toHaveBeenCalledWith(['item-1'], expect.objectContaining({ mode: 'replace' }));
+      expect(onWeigh).toHaveBeenCalledWith(
+        ['item-1'],
+        expect.objectContaining({ mode: 'replace' }),
+      );
     });
   });
 
@@ -384,7 +387,10 @@ describe('ReencodeDialog', () => {
 
   it('says the queue is paused when too many are already waiting', async () => {
     render(
-      <ReencodeDialog {...props} estimate={estimate({ awaitingReview: 5, awaitingReviewCap: 5 })} />,
+      <ReencodeDialog
+        {...props}
+        estimate={estimate({ awaitingReview: 5, awaitingReviewCap: 5 })}
+      />,
     );
 
     await userEvent.click(theFilm());

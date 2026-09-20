@@ -7,10 +7,10 @@ import { NothingHere } from '@ValenceUI/NothingHere';
 import { Spinner } from '@ValenceUI/Spinner';
 import { VirtualGrid } from '@ValenceUI/VirtualGrid';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { describeStanding } from '@ValenceScreens/components/AskableDialog/describeStanding';
-import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import type { CatalogueGridProps } from './CatalogueGrid.types';
+import { BackToTop } from '@ValenceUI/BackToTop';
+import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
 
 const LEAST_CARD_WIDTH = 170;
 
@@ -70,7 +70,7 @@ const CatalogueGrid = ({ browsing, onAsk }: CatalogueGridProps) => {
   }
 
   if (pages.data === undefined) {
-    return <Spinner label="Reading what there is to ask for" />;
+    return <Spinner isCentered label="Reading what there is to ask for" />;
   }
 
   const titles = pages.data.pages.flatMap((page) => page.titles);
@@ -87,6 +87,8 @@ const CatalogueGrid = ({ browsing, onAsk }: CatalogueGridProps) => {
 
   return (
     <div className="flex flex-col gap-8">
+      <BackToTop />
+
       <VirtualGrid
         count={titles.length}
         label="What there is to ask for"
@@ -100,17 +102,12 @@ const CatalogueGrid = ({ browsing, onAsk }: CatalogueGridProps) => {
             return null;
           }
 
-          const standing = describeStanding(title.standing);
-
           return (
             <MediaCard
               key={`${title.kind}:${title.id}`}
               title={title.title}
               subtitle={title.year?.toString() ?? ''}
-              badges={[
-                REQUEST_KIND_NAMES[title.kind],
-                ...(standing === null ? [] : [standing.label]),
-              ]}
+              {...describeCatalogueCard(title)}
               {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
               onSelect={() => {
                 onAsk(askingOf(title));

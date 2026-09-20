@@ -247,6 +247,33 @@ const removeFromQueue = (queue: PlayQueue, at: number): PlayQueue => {
 };
 
 /**
+ * Moves a song that is still to come to another place among those still to come.
+ *
+ * @param queue - The queue.
+ * @param from - Where the song is in the play order.
+ * @param to - Where it should be in the play order.
+ * @returns The queue with it moved, unchanged where either place is not still to come.
+ */
+const moveInQueue = (queue: PlayQueue, from: number, to: number): PlayQueue => {
+  const last = queue.order.length - 1;
+
+  if (from === to || from <= queue.at || to <= queue.at || from > last || to > last) {
+    return queue;
+  }
+
+  const order = [...queue.order];
+  const [moved] = order.splice(from, 1);
+
+  if (moved === undefined) {
+    return queue;
+  }
+
+  order.splice(to, 0, moved);
+
+  return { ...queue, order };
+};
+
+/**
  * What is still to come after the song playing, in the order it will play.
  *
  * @param queue - The queue.
@@ -266,6 +293,7 @@ export {
   currentOf,
   cycleRepeat,
   jumpTo,
+  moveInQueue,
   nextIn,
   playNext,
   previousIn,

@@ -1,11 +1,5 @@
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import {
-  Album02Icon,
-  Mic01Icon,
-  PauseIcon,
-  PlayIcon,
-  Video01Icon,
-} from '@hugeicons/core-free-icons';
+import { PauseIcon, PlayIcon, Video01Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
@@ -73,9 +67,18 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
           transition={SETTLING}
           className="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-8"
         >
-          <div className="w-48 shrink-0 shadow-[var(--shadow-overlay)] sm:w-60 lg:w-72">
+          <Button
+            variant="bare"
+            size="none"
+            label={`Open ${album.title}`}
+            hasTooltip={false}
+            className="block w-48 shrink-0 shadow-[var(--shadow-overlay)] sm:w-60 lg:w-72"
+            onClick={() => {
+              open({ kind: 'album', id: album.id });
+            }}
+          >
             <MusicArtwork src={cover} label={album.title} className="w-full" />
-          </div>
+          </Button>
 
           <motion.div
             variants={staggerVariants}
@@ -115,7 +118,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
               className="mt-3 flex flex-wrap items-center gap-3"
             >
               <Button
-                variant="glossy"
+                variant="confirm"
                 size="lg"
                 onClick={() => {
                   if (song !== null) {
@@ -139,17 +142,6 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
                 {song === null ? 'Play' : state.isPlaying ? 'Pause' : 'Resume'}
               </Button>
 
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={() => {
-                  open({ kind: 'album', id: album.id });
-                }}
-              >
-                <Icon of={Album02Icon} size={18} />
-                Open album
-              </Button>
-
               {song === null || song.videoKey === null ? null : (
                 <Button
                   variant="secondary"
@@ -165,19 +157,6 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
                   Watch the video
                 </Button>
               )}
-
-              {song?.hasLyrics === true ? (
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  onClick={() => {
-                    open({ kind: 'lyrics' });
-                  }}
-                >
-                  <Icon of={Mic01Icon} size={18} />
-                  Lyrics
-                </Button>
-              ) : null}
             </motion.div>
           </motion.div>
         </motion.div>

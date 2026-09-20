@@ -94,7 +94,7 @@ const ShareArea = ({
 
     return (
       <main className="flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
-        {told === null ? null : <Icon of={told.icon} size={40} className="text-text-muted" />}
+        {told === null ? null : <Icon of={told.icon} size={40} tone="muted" />}
 
         <h1 className="text-2xl font-semibold tracking-[-0.02em] text-text">
           {told?.said ?? 'This link does not work.'}

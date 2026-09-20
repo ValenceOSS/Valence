@@ -39,6 +39,7 @@ import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/an
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useHasScrubPreviews } from '@ValenceScreens/playback/useHasScrubPreviews';
 import { useHeldWhileLeaving } from '@ValenceClient/shell/useHeldWhileLeaving';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -128,6 +129,7 @@ const MediaDetailDialog = ({
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
   const [isChoosingMoment, setIsChoosingMoment] = useState(false);
   const { may } = useWhatIMayDo();
+  const hasScrubPreviews = useHasScrubPreviews(media?.id ?? null, may('media.override'));
   const cache = useQueryClient();
 
   const prepared = useQuery({ ...downloadQueries.all(), enabled: canKeepFiles() });
@@ -368,7 +370,7 @@ const MediaDetailDialog = ({
                   <ul aria-hidden className="flex gap-4">
                     {Array.from({ length: CAST_PLACEHOLDERS }, (_, index) => index).map((index) => (
                       <li key={index} className="flex min-w-0 flex-1 flex-col items-center gap-3">
-                        <Skeleton className="aspect-[2/3] w-full rounded-lg" />
+                        <Skeleton className="aspect-[2/3] w-full" />
                         <Skeleton className="h-3 w-16" />
                         <Skeleton className="h-3 w-12" />
                       </li>
@@ -494,7 +496,7 @@ const MediaDetailDialog = ({
               )}
 
               <Button
-                variant="glossy"
+                variant="confirm"
                 size="lg"
                 className="min-w-0 flex-1"
                 onClick={() => {
@@ -514,6 +516,7 @@ const MediaDetailDialog = ({
               : [
                   {
                     id: 'trailer',
+                    isPinned: true,
                     label: 'Watch the trailer',
                     icon: <Icon of={FilmRoll01Icon} size={18} />,
                     onChoose: () => {
@@ -544,6 +547,7 @@ const MediaDetailDialog = ({
               : [
                   {
                     id: 'share',
+                    isPinned: true,
                     label: 'Share',
                     icon: <Icon of={Share08Icon} size={18} />,
                     onChoose: () => {
@@ -604,7 +608,7 @@ const MediaDetailDialog = ({
                     },
                   },
                 ]),
-            ...(may('media.override')
+            ...(may('media.override') && hasScrubPreviews
               ? [
                   {
                     id: 'preview-moment',

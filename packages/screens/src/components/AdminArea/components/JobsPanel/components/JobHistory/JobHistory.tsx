@@ -1,20 +1,28 @@
 import { Icon } from '@ValenceUI/Icon';
-import { MoreHorizontalIcon, Alert02Icon } from '@hugeicons/core-free-icons';
+import { MoreHorizontalIcon, InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
+import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
+import { HoverCard } from '@ValenceUI/HoverCard';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
+import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
+import { notify } from '@ValenceUI/notify';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
+import { describeRunIssues } from './describeRunIssues';
+import { describeRunSubject } from './describeRunSubject';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { watchJobs } from '@ValenceClient/admin/fetchAdmin';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
-import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { JobRunPage, JobRunRecord, JobRunStatus } from '@ValenceContracts/schemas/JobRun';
 import type { JobHistoryProps } from './JobHistory.types';
+import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 
 const PAGE = 200;
 
@@ -31,21 +39,7 @@ const STATUSES = [
   'failed',
 ] as const satisfies readonly JobRunStatus[];
 
-const STATUS_LABELS: Readonly<Record<JobRunStatus, string>> = {
-  queued: 'Queued',
-  running: 'Running',
-  completed: 'Completed',
-  failed: 'Failed',
-};
-
-const STATUS_FILTER_OPTIONS = STATUSES.map((id) => ({ id, label: STATUS_LABELS[id] }));
-
-const STATUS_TONES: Readonly<Record<JobRunStatus, BadgeTone>> = {
-  queued: 'warning',
-  running: 'accent',
-  completed: 'success',
-  failed: 'danger',
-};
+const STATUS_FILTER_OPTIONS = STATUSES.map((id) => ({ id, label: describeJobStatus(id).label }));
 
 /**
  * Says when something happened, or that it has not, without the caller working out which.
@@ -89,11 +83,14 @@ const describeRunKind = (kind: string, labels: ReadonlyMap<string, string>): str
  * showed the last moment, and this shows the history behind it.
  *
  * @param definitions - The jobs the server offers, for naming a run's kind in words.
+ * @param libraries - The libraries a run's subject can name, so it is shown by name.
+ * @param working - What the queue is working on, for showing what a running run is made of.
  * @param onViewLogs - Called with a run's id, to open the log filtered to it.
  */
-const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
+const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHistoryProps) => {
   const cache = useQueryClient();
   const [openIssuesFor, setOpenIssuesFor] = useState<string | null>(null);
+  const [openWorkFor, setOpenWorkFor] = useState<string | null>(null);
 
   const labels = useMemo(
     () => new Map(definitions.map((definition) => [definition.kind, definition.label])),
@@ -105,6 +102,10 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
 
   const records = askedHistory.data?.records ?? NOTHING_RUN;
   const issues = askedIssues.data ?? [];
+  const openRun = records.find((record) => record.id === openIssuesFor);
+  const failure = openRun?.errorMessage ?? null;
+  const issuesText = describeRunIssues(failure, issues);
+  const openWork = records.find((record) => record.id === openWorkFor);
 
   useEffect(() => {
     let pending: ReturnType<typeof setTimeout> | null = null;
@@ -157,6 +158,10 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
     };
   }, [cache]);
 
+  const closeIssues = () => {
+    setOpenIssuesFor(null);
+  };
+
   const columns = useMemo<DataTableColumn<JobRunRecord>[]>(
     () => [
       {
@@ -180,28 +185,98 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
           filterValue === undefined || row.getValue(columnId) === filterValue,
         meta: { filterOptions: STATUS_FILTER_OPTIONS },
         cell: ({ row }) => (
-          <Badge size="sm" tone={STATUS_TONES[row.original.status]}>
-            {STATUS_LABELS[row.original.status]}
-          </Badge>
+          <span className="flex items-center gap-1.5">
+            <Badge size="sm" tone={describeJobStatus(row.original.status).tone}>
+              {describeJobStatus(row.original.status).label}
+            </Badge>
+
+            {row.original.status === 'running' ? (
+              <Button
+                variant="subtle"
+                size="none"
+                isIconOnly
+                label={`What ${describeRunKind(row.original.kind, labels)} is doing`}
+                onClick={() => {
+                  setOpenWorkFor(row.original.id);
+                }}
+              >
+                <Icon of={InformationCircleIcon} size={15} />
+              </Button>
+            ) : null}
+          </span>
         ),
       },
       {
         id: 'subject',
         header: 'Subject',
-        accessorFn: (record) => record.subject ?? '',
-        cell: ({ row }) => (
-          <span className="flex max-w-[12rem] min-w-0 flex-col">
-            <span className="truncate text-text" title={row.original.subject ?? undefined}>
-              {row.original.subject ?? '—'}
-            </span>
+        accessorFn: (record) => describeRunSubject(record.subject, libraries).name,
+        cell: ({ row }) => {
+          const { name, library } = describeRunSubject(row.original.subject, libraries);
 
-            {row.original.errorMessage === null ? null : (
-              <span className="truncate text-xs text-danger" title={row.original.errorMessage}>
-                {row.original.errorMessage}
+          return (
+            <span className="flex max-w-[12rem] min-w-0 flex-col">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-text" title={name}>
+                  {name}
+                </span>
+
+                {row.original.subject === null ? null : (
+                  <HoverCard
+                    side="top"
+                    align="start"
+                    detail={
+                      <dl className="flex flex-col gap-1.5 text-xs">
+                        {library === null ? null : (
+                          <>
+                            <div className="flex flex-col">
+                              <dt className="text-text-muted">Library</dt>
+                              <dd className="text-text">{library.name}</dd>
+                            </div>
+
+                            <div className="flex flex-col">
+                              <dt className="text-text-muted">Kind</dt>
+                              <dd className="text-text">{library.kind}</dd>
+                            </div>
+
+                            <div className="flex flex-col">
+                              <dt className="text-text-muted">Folder</dt>
+                              <dd className="break-all text-text">{library.path}</dd>
+                            </div>
+
+                            <div className="flex flex-col">
+                              <dt className="text-text-muted">Items</dt>
+                              <dd className="tabular-nums text-text">
+                                {library.itemCount.toString()}
+                              </dd>
+                            </div>
+                          </>
+                        )}
+
+                        <div className="flex flex-col">
+                          <dt className="text-text-muted">{library === null ? 'Subject' : 'ID'}</dt>
+                          <dd className="break-all text-text">{row.original.subject}</dd>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <dt className="text-text-muted">Run</dt>
+                          <dd className="break-all text-text">{row.original.id}</dd>
+                        </div>
+                      </dl>
+                    }
+                  >
+                    <Icon of={InformationCircleIcon} size={15} tone="muted" className="shrink-0" />
+                  </HoverCard>
+                )}
               </span>
-            )}
-          </span>
-        ),
+
+              {row.original.errorMessage === null ? null : (
+                <span className="truncate text-xs text-danger" title={row.original.errorMessage}>
+                  {row.original.errorMessage}
+                </span>
+              )}
+            </span>
+          );
+        },
       },
       {
         id: 'progress',
@@ -212,9 +287,12 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
 
           return (
             <span className="whitespace-nowrap tabular-nums text-text-muted">
-              {progress === null
-                ? ''
-                : `${progress.phase} ${progress.processed.toString()}/${progress.total.toString()}`}
+              {progress === null ? null : (
+                <>
+                  {progress.phase} <AnimatedNumber value={progress.processed} />/
+                  <AnimatedNumber value={progress.total} />
+                </>
+              )}
             </span>
           );
         },
@@ -237,8 +315,7 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
           <span className="flex justify-end">
             <ActionMenu
               label={`Actions for ${describeRunKind(row.original.kind, labels)}`}
-              trigger={<Icon of={MoreHorizontalIcon} size={14} />}
-              size="sm"
+              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
@@ -264,7 +341,7 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
         ),
       },
     ],
-    [labels, onViewLogs],
+    [labels, libraries, onViewLogs],
   );
 
   return (
@@ -285,13 +362,21 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
         }
       />
 
-      <Dialog
-        label="Job run issues"
-        isOpen={openIssuesFor !== null}
+      <RunningWorkDialog
+        title={openWork === undefined ? '' : describeRunKind(openWork.kind, labels)}
+        isOpen={openWork !== undefined}
+        progress={
+          openWork === undefined || openWork.progress === null
+            ? []
+            : [{ label: describeRunKind(openWork.kind, labels), ...openWork.progress }]
+        }
+        tasks={working.filter((task) => task.correlationId === openWorkFor)}
         onClose={() => {
-          setOpenIssuesFor(null);
+          setOpenWorkFor(null);
         }}
-      >
+      />
+
+      <Dialog label="Job run issues" isOpen={openIssuesFor !== null} onClose={closeIssues}>
         {openIssuesFor === null ? null : (
           <>
             <DialogTitle title="Issues from this run" />
@@ -299,25 +384,27 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
             <DialogContent>
               {askedIssues.isPending ? (
                 <p className="text-sm text-text-muted">Reading issues…</p>
-              ) : issues.length === 0 ? (
+              ) : issuesText === '' ? (
                 <p className="text-sm text-text-muted">No issues were recorded for this run.</p>
               ) : (
-                <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-                  {issues.map((issue) => (
-                    <li key={issue.id} className="flex items-start gap-3 py-3 first:pt-0">
-                      <Icon of={Alert02Icon} size={16} className="mt-0.5 shrink-0 text-danger" />
-
-                      <span className="flex min-w-0 flex-col gap-0.5">
-                        <span className="truncate text-sm text-text" title={issue.path}>
-                          {issue.path}
-                        </span>
-                        <span className="text-xs text-text-muted">{issue.reason}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <pre className="whitespace-pre-wrap break-words font-mono text-xs text-text">
+                  {issuesText}
+                </pre>
               )}
             </DialogContent>
+
+            <DialogFooter
+              dismiss={{ label: 'Close', onChoose: closeIssues }}
+              confirm={{
+                label: 'Copy',
+                isDisabled: issuesText === '',
+                onChoose: () => {
+                  void navigator.clipboard.writeText(issuesText).then(() => {
+                    notify.worked('Copied to the clipboard.');
+                  });
+                },
+              }}
+            />
           </>
         )}
       </Dialog>

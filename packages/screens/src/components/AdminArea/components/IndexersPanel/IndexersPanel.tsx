@@ -1,3 +1,4 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -7,10 +8,10 @@ import {
   PlugSocketIcon,
   ToggleOffIcon,
   ToggleOnIcon,
+  Add01Icon,
 } from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -215,15 +216,14 @@ const IndexersPanel = () => {
       title="Indexers"
       isFlush
       actions={
-        <Button
-          variant="ghost"
-          size="xs"
+        <PanelCardAction
+          icon={Add01Icon}
           onClick={() => {
             setIsChoosing(true);
           }}
         >
           Add an indexer
-        </Button>
+        </PanelCardAction>
       }
     >
       <IndexerCatalogueDialog
@@ -297,9 +297,7 @@ const IndexersPanel = () => {
           }}
         />
       ) : asked.isPending ? (
-        <div className="p-4">
-          <Spinner label="Reading the indexers" size="sm" />
-        </div>
+        <Spinner isCentered label="Reading the indexers" size="sm" />
       ) : (
         <DataTable
           label="Indexers"

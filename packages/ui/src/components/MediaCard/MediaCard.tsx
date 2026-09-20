@@ -1,10 +1,10 @@
-import { Icon } from '@ValenceUI/Icon';
-import { PlayIcon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { Badge } from '@ValenceUI/Badge';
+import { Icon } from '@ValenceUI/Icon';
+import { Tooltip } from '@ValenceUI/Tooltip';
 import { revealTransition } from '@ValenceUI/animations/reveal';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
 
@@ -22,6 +22,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  * @param eyebrow - A line above the title, such as which episode this is.
  * @param subtitle - A line beneath it, such as the year or the length.
  * @param badges - Short facts to show over the artwork, such as the format.
+ * @param corner - A mark in the top right corner of the artwork, for one fact that is better shown as an
+ *   icon than said, such as that it is already in the library.
  * @param imageUrl - The artwork, where any has been fetched.
  * @param shape - Whether the artwork stands upright or lies flat.
  * @param emphasis - How much the card should draw the eye.
@@ -35,6 +37,7 @@ const MediaCard = ({
   eyebrow,
   subtitle,
   badges = [],
+  corner,
   imageUrl,
   shape = 'poster',
   emphasis = 'standard',
@@ -91,12 +94,6 @@ const MediaCard = ({
 
         <span className="absolute inset-0 bg-linear-to-t from-shade/80 via-shade/10 to-transparent opacity-70 transition-opacity duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none hover-hover:group-hover:opacity-90" />
 
-        <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none hover-hover:group-hover:opacity-100">
-          <span className="valence-glass valence-glass--film flex size-14 items-center justify-center rounded-full transition-transform duration-[var(--duration-base)] ease-[var(--ease-spring)] motion-reduce:transition-none hover-hover:group-hover:scale-100 scale-90">
-            <Icon of={PlayIcon} size={22} className="text-on-scrim" />
-          </span>
-        </span>
-
         {badges.length === 0 ? null : (
           <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
             {badges.map((badge) => (
@@ -104,6 +101,20 @@ const MediaCard = ({
                 {badge}
               </Badge>
             ))}
+          </span>
+        )}
+
+        {corner === undefined ? null : (
+          <span className="absolute right-3 top-3">
+            <Tooltip label={corner.label}>
+              <span
+                role="img"
+                aria-label={corner.label}
+                className="flex size-7 items-center justify-center rounded-full bg-success text-surface"
+              >
+                <Icon of={corner.icon} size={16} />
+              </span>
+            </Tooltip>
           </span>
         )}
 

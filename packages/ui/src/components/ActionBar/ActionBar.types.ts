@@ -4,6 +4,7 @@ type ActionBarAction = {
   id: string;
   label: string;
   icon?: ReactNode;
+  isPinned?: boolean;
   onChoose: () => void;
 };
 

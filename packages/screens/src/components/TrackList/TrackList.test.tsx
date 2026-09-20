@@ -83,6 +83,22 @@ describe('TrackList', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(3);
   });
 
+  it('lets the rows be dragged only where it was given a way to hear of the move', () => {
+    const { unmount } = renderInAnAddress(
+      <TrackList label="Album" tracks={TRACKS} onPlay={vi.fn()} />,
+    );
+
+    expect(screen.getAllByRole('listitem')[0]).not.toHaveClass('cursor-grab');
+
+    unmount();
+
+    renderInAnAddress(
+      <TrackList label="Album" tracks={TRACKS} onPlay={vi.fn()} onReorder={vi.fn()} />,
+    );
+
+    expect(screen.getAllByRole('listitem')[0]).toHaveClass('cursor-grab');
+  });
+
   it('plays the list from the song whose title was pressed', async () => {
     const onPlay = vi.fn();
 

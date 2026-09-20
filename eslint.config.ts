@@ -93,6 +93,24 @@ export default tseslint.config(
           message:
             'Type assertions are banned. Parse untrusted input through a Zod schema instead.',
         },
+        {
+          selector:
+            'JSXOpeningElement[name.name="Icon"] > JSXAttribute[name.name="className"] > Literal[value=/\\btext-(text|text-muted|danger)\\b/]',
+          message:
+            'An icon is given its colour by tone, not by className. Use tone="muted" or tone="danger" — see code standards section 10.',
+        },
+        {
+          selector:
+            'JSXOpeningElement[name.name="Button"] > JSXAttribute[name.name="className"] > Literal[value=/\\bhover:text-text\\b/]',
+          message:
+            'A button that is muted until it is pointed at is variant="subtle", not a look in className — see code standards section 9.',
+        },
+        {
+          selector:
+            'JSXOpeningElement[name.name="Skeleton"] > JSXAttribute[name.name="className"] > Literal[value=/\\brounded\\b/]',
+          message:
+            'A skeleton takes its corners from shape, not className. Use shape="soft" or shape="round".',
+        },
       ],
     },
   },

@@ -47,4 +47,22 @@ describe('Spinner', () => {
 
     expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
   });
+
+  it('stands in the middle of the space it was given when asked to be centred', () => {
+    const { container } = render(<Spinner label="Reading" isCentered />);
+
+    expect(container.firstElementChild).toHaveClass(
+      'flex',
+      'items-center',
+      'justify-center',
+      'w-full',
+    );
+    expect(container.firstElementChild).toContainElement(screen.getByRole('status'));
+  });
+
+  it('sits where it falls unless asked to be centred', () => {
+    const { container } = render(<Spinner label="Reading" />);
+
+    expect(container.firstElementChild).toBe(screen.getByRole('status'));
+  });
 });

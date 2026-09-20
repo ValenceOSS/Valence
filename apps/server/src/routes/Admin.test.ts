@@ -1457,6 +1457,39 @@ describe('changing one setting without disturbing the others', () => {
     expect((await settings.read()).previewQuality).toBe('high');
   });
 
+  it('lets an administrator change how round the application is, and tells anybody the level', async () => {
+    const { app, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const changed = await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ roundness: 'round' }),
+    });
+
+    expect(changed.status).toBe(200);
+    expect((await settings.read()).roundness).toBe('round');
+
+    const told = await app.request(`${BASE}/api/appearance`);
+
+    expect(told.status).toBe(200);
+    expect(await told.json()).toEqual({ roundness: 'round' });
+  });
+
+  it('refuses a level of roundness it does not know', async () => {
+    const { app, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ roundness: 'square' }),
+    });
+
+    expect(response.status).toBe(400);
+    expect((await settings.read()).roundness).toBe('default');
+  });
+
   it('shuts the faces away from the way in, and opens them again', async () => {
     const { app, store, permissions, settings } = build();
     const cookie = await signedInAsAdmin(app, store, permissions);

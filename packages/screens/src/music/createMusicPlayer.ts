@@ -6,6 +6,7 @@ import {
   nextIn,
   playNext,
   previousIn,
+  moveInQueue,
   removeFromQueue,
   startQueue,
   toggleShuffle,
@@ -89,6 +90,7 @@ type MusicPlayer = {
   addToQueue: (tracks: readonly MusicTrack[]) => void;
   jumpTo: (at: number) => void;
   removeFromQueue: (at: number) => void;
+  moveInQueue: (from: number, to: number) => void;
   setQuality: (quality: AudioQuality) => void;
   stop: () => void;
   playOn: (device: RemoteDevice) => void;
@@ -554,6 +556,17 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       }
 
       load(jumpTo(queue, at), 0, true);
+    },
+
+    moveInQueue: (from, to) => {
+      const { queue } = state;
+
+      if (queue === null || state.remote !== null) {
+        return;
+      }
+
+      change({ queue: moveInQueue(queue, from, to) });
+      tell(true);
     },
 
     removeFromQueue: (at) => {

@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -100,11 +99,7 @@ const JobsPanel = ({
               />
             </DialogContent>
 
-            <DialogFooter>
-              <Button variant="secondary" onClick={onCloseSchedule}>
-                Done
-              </Button>
-            </DialogFooter>
+            <DialogFooter dismiss={{ onChoose: onCloseSchedule }} />
           </>
         )}
       </DialogCompanion>
@@ -147,7 +142,12 @@ const JobsPanel = ({
           }
         >
           <TabPanel value="history" travel={travel}>
-            <JobHistory definitions={definitions} onViewLogs={onViewLogs} />
+            <JobHistory
+              definitions={definitions}
+              libraries={libraries}
+              working={working}
+              onViewLogs={onViewLogs}
+            />
           </TabPanel>
 
           <TabPanel value="run" travel={travel}>

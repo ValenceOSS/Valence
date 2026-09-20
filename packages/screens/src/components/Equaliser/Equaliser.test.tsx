@@ -32,4 +32,31 @@ describe('Equaliser', () => {
 
     Reflect.deleteProperty(HTMLElement.prototype, 'animate');
   });
+
+  it('stops every bar the moment it is told to stop moving', () => {
+    const cancel = vi.fn();
+    const animate = vi.fn(() => ({ cancel }));
+
+    Object.defineProperty(HTMLElement.prototype, 'animate', { value: animate, configurable: true });
+
+    const { rerender } = render(<Equaliser label="Playing" isMoving />);
+
+    rerender(<Equaliser label="Playing" isMoving={false} />);
+
+    expect(cancel).toHaveBeenCalledTimes(4);
+
+    Reflect.deleteProperty(HTMLElement.prototype, 'animate');
+  });
+
+  it('does not move at all when it starts out stopped', () => {
+    const animate = vi.fn(() => ({ cancel: vi.fn() }));
+
+    Object.defineProperty(HTMLElement.prototype, 'animate', { value: animate, configurable: true });
+
+    render(<Equaliser label="Playing" isMoving={false} />);
+
+    expect(animate).not.toHaveBeenCalled();
+
+    Reflect.deleteProperty(HTMLElement.prototype, 'animate');
+  });
 });

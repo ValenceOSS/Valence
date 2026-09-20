@@ -61,6 +61,17 @@ describe('QueuePanel', () => {
     expect(fake.player.removeFromQueue).toHaveBeenCalledWith(1);
   });
 
+  it('lists what comes next in the order it plays, each row one that can be dragged', () => {
+    queued();
+
+    render(<QueuePanel />);
+
+    expect(screen.getAllByRole('listitem').map((row) => row.textContent ?? '')).toEqual([
+      expect.stringContaining('Track 2'),
+      expect.stringContaining('Track 3'),
+    ]);
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(QueuePanel.displayName).toBe('QueuePanel');
   });

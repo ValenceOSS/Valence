@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -85,15 +84,10 @@ const StillWatchingDialog = ({
         </div>
       </DialogContent>
 
-      <DialogFooter>
-        <Button variant="ghost" size="sm" onClick={onGiveUp}>
-          Stop
-        </Button>
-
-        <Button variant="glossy" size="sm" onClick={onCarryOn}>
-          Still watching
-        </Button>
-      </DialogFooter>
+      <DialogFooter
+        dismiss={{ label: 'Stop', onChoose: onGiveUp }}
+        confirm={{ label: 'Still watching', onChoose: onCarryOn }}
+      />
     </Dialog>
   );
 };

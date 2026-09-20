@@ -39,6 +39,13 @@ const ADMIN_SECTIONS = [
     ],
   },
   {
+    label: 'People',
+    items: [
+      { id: 'accounts', label: 'Accounts', icon: UserMultipleIcon },
+      { id: 'roles', label: 'Roles', icon: ShieldUserIcon },
+    ],
+  },
+  {
     label: 'Requests',
     items: [
       { id: 'requests', label: 'Overview', icon: InboxDownloadIcon },
@@ -47,13 +54,6 @@ const ADMIN_SECTIONS = [
       { id: 'search', label: 'Search', icon: Search01Icon },
       { id: 'profiles', label: 'Profiles', icon: SlidersHorizontalIcon },
       { id: 'downloads', label: 'Downloads', icon: Download04Icon },
-    ],
-  },
-  {
-    label: 'People',
-    items: [
-      { id: 'accounts', label: 'Accounts', icon: UserMultipleIcon },
-      { id: 'roles', label: 'Roles', icon: ShieldUserIcon },
     ],
   },
   {

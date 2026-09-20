@@ -8,6 +8,7 @@ type MusicTransportProps = {
   shown: WhatIsPlaying;
   player: MusicPlayer;
   look?: MusicTransportLook;
+  isIdle?: boolean;
 };
 
 export type { MusicTransportLook, MusicTransportProps };

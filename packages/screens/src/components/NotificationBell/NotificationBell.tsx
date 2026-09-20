@@ -1,9 +1,15 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Notification01Icon } from '@hugeicons/core-free-icons';
+import {
+  CheckmarkCircle01Icon,
+  Delete02Icon,
+  Notification01Icon,
+} from '@hugeicons/core-free-icons';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { Switch } from '@ValenceUI/Switch';
+import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import type { NotificationBellProps } from './NotificationBell.types';
 
@@ -57,45 +63,38 @@ const NotificationBell = ({
         </span>
       }
     >
-      <div className="flex w-80 flex-col gap-2 p-1">
-        <div className="flex items-center justify-between gap-2 px-2 pt-1">
-          <span className="text-sm font-medium text-text">Notifications</span>
+      <PanelCard
+        title="Notifications"
+        isFlush
+        className="w-96 max-w-[calc(100vw-2rem)]"
+        actions={
+          <>
+            {unread === 0 ? null : (
+              <PanelCardAction icon={CheckmarkCircle01Icon} onClick={onReadAll}>
+                Mark all read
+              </PanelCardAction>
+            )}
 
-          {unread === 0 ? null : (
-            <Button
-              variant="bare"
-              size="none"
-              className="text-xs text-text-muted"
-              onClick={onReadAll}
-            >
-              Mark all read
-            </Button>
-          )}
-
-          {notifications.length === 0 ? null : (
-            <Button
-              variant="bare"
-              size="none"
-              className="text-xs text-text-muted"
-              onClick={onClearAll}
-            >
-              Clear all
-            </Button>
-          )}
-        </div>
-
+            {notifications.length === 0 ? null : (
+              <PanelCardAction icon={Delete02Icon} onClick={onClearAll}>
+                Clear all
+              </PanelCardAction>
+            )}
+          </>
+        }
+      >
         {notifications.length === 0 ? (
-          <p className="px-2 pb-2 text-xs text-text-muted">
+          <p className="px-4 py-6 text-center text-sm text-text-muted">
             Nothing yet. New films and episodes will show up here.
           </p>
         ) : (
-          <ul className="flex max-h-80 flex-col overflow-y-auto">
+          <ul className="flex max-h-96 flex-col divide-y divide-[var(--surface-line)] overflow-y-auto">
             {notifications.map((notification) => (
               <li key={notification.id}>
                 <Button
                   variant="bare"
                   size="none"
-                  className="flex w-full flex-col items-start gap-0.5 rounded-lg px-2 py-2 text-left hover:bg-[var(--surface-hover)]"
+                  className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-[var(--surface-hover)]"
                   onClick={() => {
                     onRead(notification.id);
 
@@ -104,23 +103,34 @@ const NotificationBell = ({
                     }
                   }}
                 >
-                  <span className="flex w-full items-center gap-2">
-                    <span
-                      className={
-                        notification.readAt === null
-                          ? 'text-sm font-medium text-text'
-                          : 'text-sm text-text-muted'
-                      }
-                    >
-                      {notification.title}
+                  <span
+                    aria-hidden
+                    className={
+                      notification.readAt === null
+                        ? 'mt-1.5 size-2 shrink-0 rounded-full bg-accent'
+                        : 'mt-1.5 size-2 shrink-0'
+                    }
+                  />
+
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="flex w-full items-baseline gap-2">
+                      <span
+                        className={
+                          notification.readAt === null
+                            ? 'truncate text-sm font-medium text-text'
+                            : 'truncate text-sm text-text-muted'
+                        }
+                      >
+                        {notification.title}
+                      </span>
+
+                      <span className="ml-auto shrink-0 text-xs tabular-nums text-text-muted">
+                        {describeSince(notification.createdAt, now)}
+                      </span>
                     </span>
 
-                    <span className="ml-auto shrink-0 text-xs text-text-muted">
-                      {describeSince(notification.createdAt, now)}
-                    </span>
+                    <span className="text-xs text-text-muted">{notification.body}</span>
                   </span>
-
-                  <span className="text-xs text-text-muted">{notification.body}</span>
                 </Button>
               </li>
             ))}
@@ -128,7 +138,7 @@ const NotificationBell = ({
         )}
 
         {push === undefined ? null : (
-          <div className="border-t border-[var(--surface-line)] px-2 py-2">
+          <div className="border-t border-[var(--surface-line)] px-4 py-3">
             <Switch
               label="Also send these to this device"
               isOn={push.isOn}
@@ -136,7 +146,7 @@ const NotificationBell = ({
             />
           </div>
         )}
-      </div>
+      </PanelCard>
     </PopoverPanel>
   );
 };

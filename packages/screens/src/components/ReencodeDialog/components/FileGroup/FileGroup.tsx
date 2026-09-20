@@ -91,13 +91,13 @@ const FileGroup = ({ group, chosen, refusalFor, onToggle }: FileGroupProps) => {
     <li className="rounded-md">
       <div className="flex items-center gap-1 px-2 py-1.5 hover:bg-shade/20">
         <Button
-          variant="bare"
+          variant="subtle"
           size="none"
           aria-expanded={isOpen}
           label={`${isOpen ? 'Hide' : 'Show'} what ${group.title} is made of`}
           isIconOnly
           hasTooltip={false}
-          className="flex size-6 shrink-0 items-center justify-center rounded-md text-text-muted hover:text-text"
+          className="flex size-6 shrink-0 items-center justify-center rounded-md"
           onClick={() => {
             setIsOpen((was) => !was);
           }}

@@ -41,6 +41,10 @@ beforeEach(() => {
   fetchCatalogueBrowse.mockReset().mockResolvedValue(aPage('Dune', 1, true));
 });
 
+vi.mock('@ValenceUI/useHasScrolledPast', () => ({
+  useHasScrolledPast: () => ({ mark: () => undefined, hasPassed: true }),
+}));
+
 describe('CatalogueGrid', () => {
   it('lays out what the catalogue listed, and opens what is chosen', async () => {
     const onAsk = vi.fn();
@@ -51,6 +55,12 @@ describe('CatalogueGrid', () => {
 
     expect(onAsk).toHaveBeenCalledWith('film:Dune');
     expect(fetchCatalogueBrowse).toHaveBeenCalledWith(BROWSING, 1);
+  });
+
+  it('offers the way back to the top once the top has been left', async () => {
+    renderInAnAddress(<CatalogueGrid browsing={BROWSING} onAsk={vi.fn()} />);
+
+    expect(await screen.findByRole('button', { name: 'Back to top' })).toBeInTheDocument();
   });
 
   it('says there is nothing where the catalogue listed nothing', async () => {

@@ -233,7 +233,7 @@ describe('MediaRequestsPanel', () => {
     expect(await screen.findByText('Searched for it.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Close' }));
 
-    await user.click(screen.getByRole('button', { name: 'Ask for something' }));
+    await user.click(screen.getByRole('button', { name: 'Request media' }));
     expect(await screen.findByRole('textbox', { name: 'Search for a film' })).toBeInTheDocument();
   });
 
@@ -255,18 +255,18 @@ describe('MediaRequestsPanel', () => {
 
     renderInAnAddress(<MediaRequestsPanel />);
 
-    await user.click(screen.getByRole('button', { name: 'Search for what is missing' }));
+    await user.click(screen.getByRole('button', { name: 'Refetch media' }));
 
     expect(await screen.findByRole('status', { name: '' })).toHaveTextContent(
       'Searched again for 2 requests.',
     );
 
     searchMissing.mockResolvedValue({ value: { searched: 0, startedAt: '' }, refusal: null });
-    await user.click(screen.getByRole('button', { name: 'Search for what is missing' }));
+    await user.click(screen.getByRole('button', { name: 'Refetch media' }));
     expect(await screen.findByText('Nothing is missing.')).toBeInTheDocument();
 
     searchMissing.mockResolvedValue({ value: null, refusal: { message: 'Requesting is off.' } });
-    await user.click(screen.getByRole('button', { name: 'Search for what is missing' }));
+    await user.click(screen.getByRole('button', { name: 'Refetch media' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Requesting is off.');
   });
 

@@ -1,11 +1,23 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { describeOutOfOrderMigrations } from './describeOutOfOrderMigrations';
 import { describeSnapshotDrift } from './describeSnapshotDrift';
+import { findOutOfOrderMigrations } from './findOutOfOrderMigrations';
+import { z } from 'zod';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 
 const APPS = ['server', 'requests'] as const;
+
+const ALREADY_OUT_OF_ORDER: Readonly<Record<string, readonly string[]>> = {
+  server: ['0071_grant_requests', '0072_albums_known_by_their_release_group'],
+  requests: [],
+};
+
+const JournalSchema = z.object({
+  entries: z.array(z.object({ tag: z.string(), when: z.number() })),
+});
 
 const say = (line: string): void => {
   process.stdout.write(`${line}\n`);
@@ -76,6 +88,19 @@ const checkDrizzleSnapshot = (name: string): void => {
   }
 
   writeFileSync(journalPath, journal);
+
+  const disorder = describeOutOfOrderMigrations(
+    name,
+    findOutOfOrderMigrations(
+      JournalSchema.parse(JSON.parse(journal)).entries,
+      ALREADY_OUT_OF_ORDER[name] ?? [],
+    ),
+  );
+
+  if (disorder !== null) {
+    process.exitCode = 1;
+    process.stderr.write(`${disorder}\n`);
+  }
 
   const drift = describeSnapshotDrift(produced);
 

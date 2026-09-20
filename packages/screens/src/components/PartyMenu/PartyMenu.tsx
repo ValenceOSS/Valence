@@ -65,7 +65,7 @@ const PartyMenu = ({
 
   return (
     <PopoverPanel
-      tone="overlay"
+      tone="default"
       label={party === null ? 'Watch party' : `Watch party · ${watching.toString()} watching`}
       heading="Watch party"
       isDisabled={isDisabled}
@@ -81,8 +81,8 @@ const PartyMenu = ({
       className="mb-7.5"
     >
       {party === null ? (
-        <div className="flex w-72 max-w-full flex-col gap-3 text-on-scrim">
-          <p className="text-xs leading-relaxed text-on-scrim/70">
+        <div className="flex w-72 max-w-full flex-col gap-3 text-text">
+          <p className="text-xs leading-relaxed text-text-muted">
             Watch this with other people here, in step. You get a link to send them, and whatever
             anybody plays, pauses or skips happens for everybody.
           </p>

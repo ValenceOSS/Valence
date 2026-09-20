@@ -7,6 +7,7 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Slider } from '@ValenceUI/Slider';
+import { useHeldWhileClosing } from '@ValenceUI/Dialog.useHeldWhileClosing';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { frameAt } from './frameAt';
@@ -38,12 +39,13 @@ const A_SCENE_WITH_MOTION = 0.4;
  * @param onClose - Called to put the dialog away without deciding.
  */
 const ReencodeReview = ({
-  reencode,
+  reencode: requested,
   onConfirm,
   onReject,
   onWatch,
   onClose,
 }: ReencodeReviewProps) => {
+  const reencode = useHeldWhileClosing(requested, requested !== null);
   const [atSeconds, setAtSeconds] = useState(0);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isDeciding, setIsDeciding] = useState(false);
@@ -79,9 +81,13 @@ const ReencodeReview = ({
   };
 
   return (
-    <Dialog label="Review a re-encode" isOpen onClose={onClose} size="stage">
+    <Dialog label="Review a re-encode" isOpen={requested !== null} onClose={onClose} size="stage">
       <DialogTitle
-        title={reencode.seriesTitle === null ? reencode.title : `${reencode.seriesTitle} — ${reencode.title}`}
+        title={
+          reencode.seriesTitle === null
+            ? reencode.title
+            : `${reencode.seriesTitle} — ${reencode.title}`
+        }
         detail="Both files are still here. Nothing is discarded until you say so."
       />
 
@@ -136,7 +142,15 @@ const ReencodeReview = ({
         </div>
       </DialogContent>
 
-      <DialogFooter>
+      <DialogFooter
+        confirm={{
+          label: freed === null ? 'Confirm' : `Confirm and free ${formatBytes(freed)}`,
+          isDisabled: isDeciding,
+          onChoose: () => {
+            setIsConfirming(true);
+          },
+        }}
+      >
         {onWatch === undefined ? null : (
           <Button
             variant="ghost"
@@ -157,16 +171,6 @@ const ReencodeReview = ({
         >
           Reject and put the original back
         </Button>
-
-        <Button
-          variant="primary"
-          disabled={isDeciding}
-          onClick={() => {
-            setIsConfirming(true);
-          }}
-        >
-          {freed === null ? 'Confirm' : `Confirm and free ${formatBytes(freed)}`}
-        </Button>
       </DialogFooter>
 
       <ConfirmDialog
@@ -175,7 +179,9 @@ const ReencodeReview = ({
         isBusy={isDeciding}
         title="Dispose of the original?"
         detail="The original file is deleted. What the encoder discarded cannot be recovered, and if this was the only copy, nothing brings it back."
-        confirmLabel={freed === null ? 'Dispose of it' : `Dispose of it and free ${formatBytes(freed)}`}
+        confirmLabel={
+          freed === null ? 'Dispose of it' : `Dispose of it and free ${formatBytes(freed)}`
+        }
         onClose={() => {
           setIsConfirming(false);
         }}

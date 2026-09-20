@@ -4,6 +4,7 @@ import {
   currentOf,
   cycleRepeat,
   jumpTo,
+  moveInQueue,
   nextIn,
   playNext,
   previousIn,
@@ -159,6 +160,33 @@ describe('playQueue', () => {
 
   it('will not take out the song playing', () => {
     expect(removeFromQueue(startQueue(FIVE, 2), 2).order).toHaveLength(5);
+  });
+
+  it('moves a track still to come to another place among those to come', () => {
+    const queue = moveInQueue(startQueue(FIVE, 0), 4, 1);
+
+    expect(titleOf(queue)).toBe('Track 1');
+    expect(upcomingIn(queue).map((entry) => entry.track.title)).toEqual([
+      'Track 5',
+      'Track 2',
+      'Track 3',
+      'Track 4',
+    ]);
+  });
+
+  it('will not move the song playing or anything already played', () => {
+    const queue = startQueue(FIVE, 2);
+
+    expect(moveInQueue(queue, 2, 4)).toBe(queue);
+    expect(moveInQueue(queue, 0, 4)).toBe(queue);
+    expect(moveInQueue(queue, 4, 1)).toBe(queue);
+  });
+
+  it('leaves the queue as it was for a move to the same place or off the end', () => {
+    const queue = startQueue(FIVE, 0);
+
+    expect(moveInQueue(queue, 3, 3)).toBe(queue);
+    expect(moveInQueue(queue, 3, 9)).toBe(queue);
   });
 
   it('lists what is still to come, with where each sits in the order', () => {

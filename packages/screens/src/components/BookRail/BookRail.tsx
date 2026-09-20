@@ -37,7 +37,7 @@ const BookRail = ({ libraryId, title, onOpen }: BookRailProps) => {
     return (
       <Rail title={title}>
         {Array.from({ length: WAITING }, (_, at) => (
-          <Skeleton key={at} className="aspect-[2/3] w-40 shrink-0 rounded-lg" />
+          <Skeleton key={at} className="aspect-[2/3] w-40 shrink-0" />
         ))}
       </Rail>
     );

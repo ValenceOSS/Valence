@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -7,6 +6,7 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
+import { useHeldWhileClosing } from '@ValenceUI/Dialog.useHeldWhileClosing';
 import { isSubscribableEvent } from '@ValenceContracts/schemas/Webhook';
 import { WebhookFields } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields';
 import {
@@ -33,33 +33,34 @@ import type { EditWebhookDialogProps } from './EditWebhookDialog.types';
  * @param hasRequests - Whether requesting is on, without which its events are not offered.
  */
 const EditWebhookDialog = ({
-  webhook,
+  webhook: requested,
   onClose,
   onSave,
   accounts,
   profiles,
   hasRequests = false,
 }: EditWebhookDialogProps) => {
+  const webhook = useHeldWhileClosing(requested, requested !== null);
   const [draft, setDraft] = useState<WebhookDraft | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [pane, setPane] = useState<(typeof WEBHOOK_PANES)[number]>('where');
 
   useEffect(() => {
-    setDraft(
-      webhook === null
-        ? null
-        : {
-            name: webhook.name,
-            url: webhook.url,
-            preset: webhook.preset,
-            events: webhook.events.filter(isSubscribableEvent),
-            filters: webhook.filters,
-          },
-    );
+    if (requested === null) {
+      return;
+    }
+
+    setDraft({
+      name: requested.name,
+      url: requested.url,
+      preset: requested.preset,
+      events: requested.events.filter(isSubscribableEvent),
+      filters: requested.filters,
+    });
     setRefusal(null);
     setPane('where');
-  }, [webhook]);
+  }, [requested]);
 
   const travel = useTravelDirection([...WEBHOOK_PANES], pane);
 
@@ -89,7 +90,7 @@ const EditWebhookDialog = ({
   };
 
   return (
-    <DialogCompanion label={`Edit ${webhook.name}`} isOpen onClose={onClose}>
+    <DialogCompanion label={`Edit ${webhook.name}`} isOpen={requested !== null} onClose={onClose}>
       <Tabs
         value={pane}
         onValueChange={(next) => {
@@ -113,7 +114,7 @@ const EditWebhookDialog = ({
           }
         />
 
-        <DialogContent className="flex flex-col gap-5">
+        <DialogContent className="flex min-h-[34rem] flex-col gap-5">
           <WebhookFields
             draft={draft}
             onChange={setDraft}
@@ -124,21 +125,15 @@ const EditWebhookDialog = ({
           />
         </DialogContent>
 
-        <DialogFooter>
-          {refusal === null ? null : (
-            <span role="alert" className="mr-auto text-sm text-danger">
-              {refusal}
-            </span>
-          )}
-
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-
-          <Button variant="glossy" disabled={!isReady || isSaving} onClick={save}>
-            {isSaving ? 'Saving…' : 'Save changes'}
-          </Button>
-        </DialogFooter>
+        <DialogFooter
+          note={refusal}
+          dismiss={{ onChoose: onClose }}
+          confirm={{
+            label: isSaving ? 'Saving…' : 'Save changes',
+            onChoose: save,
+            isDisabled: !isReady || isSaving,
+          }}
+        />
       </Tabs>
     </DialogCompanion>
   );

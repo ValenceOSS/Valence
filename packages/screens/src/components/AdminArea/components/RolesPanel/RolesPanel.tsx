@@ -1,10 +1,11 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Add01Icon,
   Alert02Icon,
   Delete02Icon,
   MoreHorizontalIcon,
   PencilEdit01Icon,
+  Add01Icon,
 } from '@hugeicons/core-free-icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
@@ -15,7 +16,6 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { DataTable } from '@ValenceUI/DataTable';
-import { Button } from '@ValenceUI/Button';
 import { FormField } from '@ValenceUI/FormField';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { TabRow } from '@ValenceUI/TabRow';
@@ -328,7 +328,7 @@ const RolesPanel = () => {
           role="alert"
           className="flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-text"
         >
-          <Icon of={Alert02Icon} size={18} className="mt-0.5 shrink-0 text-danger" />
+          <Icon of={Alert02Icon} size={18} tone="danger" className="mt-0.5 shrink-0" />
           {refusal.message}
         </p>
       )}
@@ -337,17 +337,14 @@ const RolesPanel = () => {
         title="Roles"
         isFlush
         actions={
-          <Button
-            variant="ghost"
-            size="xs"
-            className="shrink-0 text-xs text-text-muted hover:text-text"
+          <PanelCardAction
+            icon={Add01Icon}
             onClick={() => {
               setIsCreating(true);
             }}
           >
-            <Icon of={Add01Icon} size={14} />
             Create role
-          </Button>
+          </PanelCardAction>
         }
       >
         {couldNotRead ? (
@@ -420,20 +417,15 @@ const RolesPanel = () => {
           />
         </DialogContent>
 
-        <DialogFooter>
-          <Button
-            variant="secondary"
-            onClick={() => {
+        <DialogFooter
+          dismiss={{
+            onChoose: () => {
               setIsCreating(false);
-            }}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            variant="glossy"
-            disabled={newRoleName === ''}
-            onClick={() => {
+            },
+          }}
+          confirm={{
+            label: 'Create role',
+            onChoose: () => {
               const position = Number.parseInt(newRolePosition, 10);
 
               void act(() =>
@@ -450,11 +442,10 @@ const RolesPanel = () => {
                 setNewRoleColor(null);
                 setIsCreating(false);
               });
-            }}
-          >
-            Create role
-          </Button>
-        </DialogFooter>
+            },
+            isDisabled: newRoleName === '',
+          }}
+        />
       </DialogCompanion>
 
       <ConfirmDialog
@@ -526,7 +517,7 @@ const RolesPanel = () => {
                   role="alert"
                   className="flex items-start gap-3 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-text"
                 >
-                  <Icon of={Alert02Icon} size={16} className="mt-0.5 shrink-0 text-danger" />
+                  <Icon of={Alert02Icon} size={16} tone="danger" className="mt-0.5 shrink-0" />
                   {refusal.message}
                 </p>
               )}
@@ -595,26 +586,21 @@ const RolesPanel = () => {
               </TabPanel>
             </DialogContent>
 
-            <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => {
+            <DialogFooter
+              dismiss={{
+                label: 'Close',
+                onChoose: () => {
                   setSelectedRoleId(null);
-                }}
-              >
-                Close
-              </Button>
-
-              <Button
-                variant="glossy"
-                disabled={draftName === '' || !hasUnsavedChanges}
-                onClick={() => {
+                },
+              }}
+              confirm={{
+                label: 'Save changes',
+                onChoose: () => {
                   void saveChanges();
-                }}
-              >
-                Save changes
-              </Button>
-            </DialogFooter>
+                },
+                isDisabled: draftName === '' || !hasUnsavedChanges,
+              }}
+            />
           </Tabs>
         )}
       </DialogCompanion>

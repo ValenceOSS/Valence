@@ -55,7 +55,7 @@ describe('AddWebhookDialog', () => {
   it('will not add one before it has been told where to send', () => {
     draw();
 
-    expect(screen.getByRole('button', { name: 'Add webhook' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Create webhook' })).toBeDisabled();
   });
 
   it('starts listening for failures rather than for everything', async () => {
@@ -73,7 +73,7 @@ describe('AddWebhookDialog', () => {
     const { onCreate } = draw();
 
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Add webhook' }));
+    await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
     expect(onCreate).toHaveBeenCalledWith({
       name: 'Discord',
@@ -89,7 +89,7 @@ describe('AddWebhookDialog', () => {
     const { onCreate } = draw();
 
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Add webhook' }));
+    await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
     expect(filtersSent(onCreate)).toMatchObject({ accounts: [], profiles: [], itemTypes: [] });
   });
@@ -111,7 +111,7 @@ describe('AddWebhookDialog', () => {
     const accounts = within(screen.getByRole('group', { name: 'Accounts' }));
 
     await user.click(accounts.getByRole('switch', { name: 'Ada' }));
-    await user.click(screen.getByRole('button', { name: 'Add webhook' }));
+    await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
     expect(filtersSent(onCreate)).toMatchObject({ accounts: ['account-1'], profiles: [] });
   });
@@ -123,7 +123,7 @@ describe('AddWebhookDialog', () => {
     await fillIn(user);
     await openPane(user, 'Who');
     await user.click(screen.getByRole('button', { name: 'One for each thing' }));
-    await user.click(screen.getByRole('button', { name: 'Add webhook' }));
+    await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
     expect(filtersSent(onCreate)).toMatchObject({ mediaAdded: 'perItem' });
   });
@@ -134,7 +134,7 @@ describe('AddWebhookDialog', () => {
 
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: /ntfy/ }));
-    await user.click(screen.getByRole('button', { name: 'Add webhook' }));
+    await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ preset: 'ntfy' }));
   });
@@ -148,7 +148,7 @@ describe('AddWebhookDialog', () => {
     await openPane(user, 'Events');
     await user.click(screen.getByRole('switch', { name: 'Job failed' }));
 
-    expect(screen.getByRole('button', { name: 'Add webhook' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Create webhook' })).toBeDisabled();
   });
 
   it('shows why an address was refused, against the address', async () => {
@@ -161,7 +161,7 @@ describe('AddWebhookDialog', () => {
     });
 
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Add webhook' }));
+    await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
     expect(
       await screen.findByText('Valence will not send deliveries to that address.'),
@@ -175,7 +175,7 @@ describe('AddWebhookDialog', () => {
     });
 
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Add webhook' }));
+    await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole('textbox', { name: /Name/ })).toHaveValue('Discord');
@@ -186,7 +186,7 @@ describe('AddWebhookDialog', () => {
     const { onClose } = draw();
 
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Add webhook' }));
+    await user.click(screen.getByRole('button', { name: 'Create webhook' }));
 
     expect(onClose).toHaveBeenCalled();
   });

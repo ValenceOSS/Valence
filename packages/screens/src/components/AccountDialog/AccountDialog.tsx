@@ -196,7 +196,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
 
           {showing !== 'profile' ? null : (
             <Button
-              variant="glossy"
+              variant="confirm"
               isLoading={isSaving}
               disabled={!isChanged}
               onClick={() => {

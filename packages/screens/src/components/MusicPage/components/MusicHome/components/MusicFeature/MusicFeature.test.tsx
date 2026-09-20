@@ -48,7 +48,18 @@ describe('MusicFeature', () => {
     expect(screen.getByRole('heading', { name: 'Track 1' })).toBeInTheDocument();
     expect(screen.getByText('Now playing')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Play Track 2 now' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Lyrics' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lyrics' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open album' })).not.toBeInTheDocument();
+  });
+
+  it('opens the album when its artwork is pressed', async () => {
+    const { player } = aFakeMusicPlayer({ current: PLAYING, isPlaying: true });
+
+    renderInAnAddress(<MusicFeature newest={NEWEST} player={player} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /^Open / }));
+
+    expect(window.location.search).toContain('listen=');
   });
 
   it('pauses the song playing from the front of the page', async () => {

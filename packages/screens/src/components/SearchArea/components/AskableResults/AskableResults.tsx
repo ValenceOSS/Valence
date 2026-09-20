@@ -7,10 +7,10 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { describeStanding } from '@ValenceScreens/components/AskableDialog/describeStanding';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
-import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { AskableResultsProps } from './AskableResults.types';
+import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
 
 /**
  * What a search found that is not in the library yet, as a group of its own under what is: films
@@ -63,8 +63,6 @@ const AskableResults = ({ query, kind, onAsk }: AskableResultsProps) => {
       {video.length === 0 ? null : (
         <Rail title="Not in your library yet" sizesCards className="-mx-[var(--rail-lane)]">
           {video.map((title, at) => {
-            const standing = describeStanding(title.standing);
-
             return (
               <RevealItem
                 key={`${title.kind}-${title.id}`}
@@ -74,10 +72,7 @@ const AskableResults = ({ query, kind, onAsk }: AskableResultsProps) => {
                 <MediaCard
                   title={title.title}
                   subtitle={title.year?.toString() ?? ''}
-                  badges={[
-                    REQUEST_KIND_NAMES[title.kind],
-                    ...(standing === null ? [] : [standing.label]),
-                  ]}
+                  {...describeCatalogueCard(title)}
                   {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
                   onSelect={() => {
                     onAsk(askingOf(title));

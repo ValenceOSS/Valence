@@ -839,7 +839,7 @@ describe('AdminArea', () => {
     await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Edit schedule/);
     await actor.click(
-      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Done' }),
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Close' }),
     );
 
     expect(

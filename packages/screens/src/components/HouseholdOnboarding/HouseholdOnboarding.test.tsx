@@ -93,7 +93,7 @@ describe('setting a household up', () => {
     await screen.findByRole('button', { name: 'Not now' });
 
     await userEvent.upload(
-      screen.getByLabelText('Choose a picture'),
+      screen.getByLabelText(/Choose a picture/),
       new File(['bytes'], 'face.png', { type: 'image/png' }),
     );
 

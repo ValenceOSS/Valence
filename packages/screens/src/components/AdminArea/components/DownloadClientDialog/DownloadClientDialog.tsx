@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -290,22 +289,16 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         </p>
       </DialogContent>
 
-      <DialogFooter>
-        {problem === null ? null : (
-          <span role="alert" className="mr-auto text-sm text-danger">
-            {problem}
-          </span>
-        )}
-
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-
+      <DialogFooter
+        note={problem}
+        dismiss={{ onChoose: onClose }}
+        confirm={{
+          label: client === null ? 'Add client' : 'Save',
+          onChoose: save,
+          isDisabled: isWorking,
+        }}
+      >
         <TryItButton isTrying={isTrying} verdict={verdict} isDisabled={isWorking} onTry={tryIt} />
-
-        <Button variant="glossy" disabled={isWorking} onClick={save}>
-          {client === null ? 'Add client' : 'Save'}
-        </Button>
       </DialogFooter>
     </DialogCompanion>
   );

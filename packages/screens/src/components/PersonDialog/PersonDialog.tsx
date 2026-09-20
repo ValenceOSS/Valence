@@ -109,7 +109,7 @@ const PersonDialog = ({
           <header className="flex flex-wrap items-start gap-5">
             <span className="flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-raised ring-1 ring-line">
               {person?.portraitUrl === null || person?.portraitUrl === undefined ? (
-                <Icon of={UserIcon} size={36} className="text-text-muted" />
+                <Icon of={UserIcon} size={36} tone="muted" />
               ) : (
                 <img
                   src={person.portraitUrl}

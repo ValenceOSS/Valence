@@ -48,4 +48,13 @@ describe('Choice', () => {
 
     expect(screen.getByRole('button', { name: 'Codec' })).toBeVisible();
   });
+
+  it('draws its selector in the colour of an input field, like every other dropdown', () => {
+    render(<Choice label="Codec" options={options} value="hevc" onSelect={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Codec' })).toHaveClass(
+      'border',
+      'bg-[var(--surface-hover)]',
+    );
+  });
 });

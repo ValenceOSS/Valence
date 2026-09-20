@@ -202,8 +202,29 @@ describe('PlayerControls', () => {
       />,
     );
 
-    expect(container.querySelectorAll('[data-tone="overlay"]')).toHaveLength(2);
+    expect(container.querySelectorAll('[data-tone="glass"]')).toHaveLength(2);
     expect(container.querySelector('[data-tone="default"]')).not.toBeInTheDocument();
+  });
+
+  it('offers the immersive view only where the player has one to offer', () => {
+    draw();
+
+    expect(screen.queryByRole('button', { name: 'Immersive view' })).not.toBeInTheDocument();
+  });
+
+  it('turns the immersive view on and off from the bar', async () => {
+    const user = userEvent.setup();
+    const props = draw({ onToggleGlow: vi.fn() });
+
+    await user.click(screen.getByRole('button', { name: 'Immersive view' }));
+
+    expect(props.onToggleGlow).toHaveBeenCalledOnce();
+  });
+
+  it('says how to leave the immersive view while in it', () => {
+    draw({ onToggleGlow: vi.fn(), isGlowing: true });
+
+    expect(screen.getByRole('button', { name: 'Leave the immersive view' })).toBeInTheDocument();
   });
 
   it('offers a jump back and a jump forward', async () => {

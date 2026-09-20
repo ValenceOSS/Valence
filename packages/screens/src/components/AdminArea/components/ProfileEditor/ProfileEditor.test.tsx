@@ -78,12 +78,18 @@ beforeEach(() => {
  */
 const open = (profile: QualityProfile | null = null) => {
   const handlers = { onClose: vi.fn(), onSaved: vi.fn() };
-  const shown = renderInAnAddress(<ProfileEditor profile={profile} {...handlers} />);
+  const shown = renderInAnAddress(<ProfileEditor isOpen profile={profile} {...handlers} />);
 
   return { ...handlers, ...shown };
 };
 
 describe('ProfileEditor', () => {
+  it('opens as a dialog over the profiles rather than replacing them', () => {
+    open();
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
   it('adds a video profile, ranking what it takes and sizing each quality, for the libraries chosen', async () => {
     const user = userEvent.setup();
     const { onSaved, onClose } = open();
@@ -219,6 +225,7 @@ describe('ProfileEditor', () => {
 
     rerender(
       <ProfileEditor
+        isOpen
         profile={{ ...KEPT, id: 'b', name: 'Other' }}
         onClose={onClose}
         onSaved={onSaved}

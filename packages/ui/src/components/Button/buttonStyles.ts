@@ -15,13 +15,15 @@ const buttonStyles = cva(
     variants: {
       variant: {
         primary: `${FLAT} border-white/15 bg-accent text-primary-foreground hover:bg-accent-hover`,
-        glossy: `${FLAT} border-transparent bg-white text-on-white hover:bg-white-hover`,
-        secondary: `${FLAT} border-[var(--surface-line)] bg-background text-secondary-foreground hover:bg-muted`,
+        glossy: `${FLAT} border-[var(--surface-line)] bg-[var(--surface-hover)] text-text hover:bg-[var(--surface-active)]`,
+        confirm: `${FLAT} border-transparent bg-white text-on-white hover:bg-white-hover`,
+        secondary: `${FLAT} border-[var(--surface-line)] bg-[var(--surface-hover)] text-text hover:bg-[var(--surface-active)]`,
         soft: `${FLAT} border-transparent bg-accent/15 text-accent hover:bg-accent/25`,
         ghost: 'bg-transparent text-foreground hover:bg-[var(--surface-hover)]',
         danger: `${FLAT} border-transparent bg-danger text-destructive-foreground hover:brightness-110`,
         overlay: 'bg-scrim text-on-scrim backdrop-blur-md hover:brightness-125',
         link: 'bg-transparent text-foreground underline-offset-4 hover:underline',
+        subtle: 'bg-transparent text-text-muted hover:text-text',
         bare: '',
       },
       size: {
@@ -44,11 +46,30 @@ const buttonStyles = cva(
     },
     compoundVariants: [
       {
-        variant: ['primary', 'glossy', 'secondary', 'soft', 'ghost', 'danger', 'overlay', 'link'],
+        variant: [
+          'primary',
+          'glossy',
+          'confirm',
+          'secondary',
+          'soft',
+          'ghost',
+          'danger',
+          'overlay',
+          'link',
+        ],
         class: 'shrink-0 items-center justify-center whitespace-nowrap',
       },
       {
-        variant: ['primary', 'glossy', 'secondary', 'soft', 'ghost', 'danger', 'overlay'],
+        variant: [
+          'primary',
+          'glossy',
+          'confirm',
+          'secondary',
+          'soft',
+          'ghost',
+          'danger',
+          'overlay',
+        ],
         class: 'coarse:min-h-11',
       },
       { isIconOnly: true, size: 'xs', class: 'size-7 coarse:size-11' },

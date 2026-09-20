@@ -214,22 +214,17 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
               <FilePicker
                 label="Choose a picture"
                 accept={PICTURE_TYPES}
-                disabled={isSaving}
+                variant="secondary"
+                size="lg"
+                isLoading={isSaving}
+                isActive={picture !== null}
                 className="w-full"
                 onPick={(chosen) => {
                   void keepThePicture(chosen);
                 }}
               >
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="w-full"
-                  isLoading={isSaving}
-                  {...(picture === null ? {} : { isActive: true })}
-                >
-                  <Icon of={Image01Icon} size={18} />
-                  {picture === null ? 'Choose a picture' : 'Pick another'}
-                </Button>
+                <Icon of={Image01Icon} size={18} />
+                {picture === null ? 'Choose a picture' : 'Pick another'}
               </FilePicker>
 
               <Button

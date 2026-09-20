@@ -157,21 +157,16 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
         )}
       </DialogContent>
 
-      <DialogFooter>
-        <Button variant="secondary" onClick={close} disabled={isSubmitting}>
-          Cancel
-        </Button>
-
-        <Button
-          variant="glossy"
-          isLoading={isSubmitting}
-          onClick={() => {
+      <DialogFooter
+        dismiss={{ onChoose: close, isDisabled: isSubmitting }}
+        confirm={{
+          label: 'Add library',
+          onChoose: () => {
             void submit();
-          }}
-        >
-          Add library
-        </Button>
-      </DialogFooter>
+          },
+          isLoading: isSubmitting,
+        }}
+      />
     </DialogCompanion>
   );
 };

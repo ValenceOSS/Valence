@@ -19,12 +19,15 @@ const SIZE_PIXELS: Record<SpinnerSize, number> = {
  *
  * @param size - How large to draw it, from inside a badge to the middle of a page.
  * @param label - What is being waited for, read out and shown to anybody hovering.
+ * @param isCentered - Whether it stands in the middle of the space it was given, for a spinner that is
+ *   all an area shows while it loads. Left to sit where it falls, it lands in the top corner of a panel
+ *   that is otherwise empty, which reads as a fault rather than as something arriving.
  * @param className - Extra classes for the caller's own layout.
  */
-const Spinner = ({ size = 'md', label, className }: SpinnerProps) => {
+const Spinner = ({ size = 'md', label, isCentered = false, className }: SpinnerProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
 
-  return (
+  const spinner = (
     <motion.span
       role="status"
       aria-label={label}
@@ -36,6 +39,12 @@ const Spinner = ({ size = 'md', label, className }: SpinnerProps) => {
     >
       <Icon of={Loading03Icon} size={SIZE_PIXELS[size]} />
     </motion.span>
+  );
+
+  return isCentered ? (
+    <div className="flex h-full min-h-16 w-full items-center justify-center p-6">{spinner}</div>
+  ) : (
+    spinner
   );
 };
 

@@ -67,16 +67,22 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Play' })).toHaveClass('bg-danger');
   });
 
+  it('offers a white treatment for the answer a dialog is asking for', () => {
+    render(<Button variant="confirm">Save</Button>);
+
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('bg-white', 'text-on-white');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(Button.displayName).toBe('Button');
   });
 
-  it('offers a white treatment for the controls that matter most', () => {
+  it('offers a filled treatment for the controls that matter most', () => {
     render(<Button variant="glossy">Play</Button>);
 
     const play = screen.getByRole('button', { name: 'Play' });
 
-    expect(play).toHaveClass('bg-white', 'text-on-white');
+    expect(play).toHaveClass('bg-[var(--surface-hover)]', 'text-text');
     expect(play).not.toHaveClass('valence-raise');
   });
 
@@ -85,8 +91,30 @@ describe('Button', () => {
 
     const share = screen.getByRole('button', { name: 'Share' });
 
-    expect(share).toHaveClass('border', 'bg-background');
+    expect(share).toHaveClass('border', 'bg-[var(--surface-hover)]');
     expect(share).not.toHaveClass('valence-raise');
+  });
+
+  it('paints no filled control black, so a secondary button is the same gray as the default', () => {
+    render(
+      <>
+        <Button variant="secondary">Share</Button>
+        <Button variant="glossy">Play</Button>
+      </>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Share' }).className).not.toContain('bg-background');
+    expect(screen.getByRole('button', { name: 'Share' }).className).toContain(
+      'bg-[var(--surface-hover)]',
+    );
+  });
+
+  it('draws a subtle button muted until it is pointed at, with nothing behind it', () => {
+    render(<Button variant="subtle">Artist</Button>);
+
+    const button = screen.getByRole('button', { name: 'Artist' });
+
+    expect(button).toHaveClass('bg-transparent', 'text-text-muted', 'hover:text-text');
   });
 
   it('fills the main action and the dangerous one with their own colour, and nothing more', () => {

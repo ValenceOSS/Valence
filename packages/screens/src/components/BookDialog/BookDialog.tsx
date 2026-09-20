@@ -75,6 +75,7 @@ const BookDialog = ({
       : [
           {
             id: 'keep',
+            isPinned: true,
             label: isKept ? 'Stop keeping' : 'Keep',
             icon: <Icon of={FavouriteIcon} size={18} />,
             onChoose: () => {
@@ -86,6 +87,7 @@ const BookDialog = ({
             : [
                 {
                   id: 'share',
+                  isPinned: true,
                   label: 'Share',
                   icon: <Icon of={Share08Icon} size={18} />,
                   onChoose: () => {
@@ -114,7 +116,7 @@ const BookDialog = ({
           />
         ) : book === null ? (
           <div className="flex gap-5">
-            <Skeleton className="aspect-[2/3] w-32 shrink-0 rounded-lg sm:w-40" />
+            <Skeleton className="aspect-[2/3] w-32 shrink-0 sm:w-40" />
             <div className="flex flex-1 flex-col gap-3">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-8 w-3/4" />
@@ -135,7 +137,7 @@ const BookDialog = ({
                   aria-hidden
                   className="flex aspect-[2/3] w-32 shrink-0 items-center justify-center rounded-lg bg-surface-raised sm:w-40"
                 >
-                  <Icon of={BookOpen01Icon} size={32} className="text-text-muted" />
+                  <Icon of={BookOpen01Icon} size={32} tone="muted" />
                 </div>
               )}
 
@@ -204,7 +206,7 @@ const BookDialog = ({
           label="More to do with this book"
           primary={
             <Button
-              variant="glossy"
+              variant="confirm"
               size="lg"
               className="w-full"
               disabled={book === null}

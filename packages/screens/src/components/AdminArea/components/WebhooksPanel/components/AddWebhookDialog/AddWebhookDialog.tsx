@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -86,7 +85,7 @@ const AddWebhookDialog = ({
   };
 
   return (
-    <DialogCompanion label="Add a webhook" isOpen={isOpen} onClose={close}>
+    <DialogCompanion label="Create webhook" isOpen={isOpen} onClose={close}>
       <Tabs
         value={pane}
         onValueChange={(next) => {
@@ -97,7 +96,7 @@ const AddWebhookDialog = ({
       >
         <DialogTitle
           size="compact"
-          title="Add a webhook"
+          title="Create webhook"
           detail="Valence will post to this address when something you have chosen happens."
           below={
             <TabRow
@@ -110,7 +109,7 @@ const AddWebhookDialog = ({
           }
         />
 
-        <DialogContent className="flex flex-col gap-5">
+        <DialogContent className="flex min-h-[34rem] flex-col gap-5">
           <WebhookFields
             draft={draft}
             onChange={setDraft}
@@ -121,21 +120,15 @@ const AddWebhookDialog = ({
           />
         </DialogContent>
 
-        <DialogFooter>
-          {refusal === null ? null : (
-            <span role="alert" className="mr-auto text-sm text-danger">
-              {refusal}
-            </span>
-          )}
-
-          <Button variant="secondary" onClick={close}>
-            Cancel
-          </Button>
-
-          <Button variant="glossy" disabled={!isReady || isSaving} onClick={save}>
-            {isSaving ? 'Adding…' : 'Add webhook'}
-          </Button>
-        </DialogFooter>
+        <DialogFooter
+          note={refusal}
+          dismiss={{ onChoose: close }}
+          confirm={{
+            label: isSaving ? 'Creating…' : 'Create webhook',
+            onChoose: save,
+            isDisabled: !isReady || isSaving,
+          }}
+        />
       </Tabs>
     </DialogCompanion>
   );

@@ -47,6 +47,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
           <FilePicker
             label="Upload a picture"
             accept={PHOTO_TYPES}
+            size="sm"
             onPick={(file) => {
               onDraft({
                 photo: file,
@@ -54,10 +55,8 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
               });
             }}
           >
-            <span className="inline-flex h-8 items-center gap-1.5 rounded-pill border border-accent/30 bg-accent/15 px-3.5 text-[0.8125rem] font-medium text-accent transition-colors hover:bg-accent/25">
-              <Icon of={Image01Icon} size={15} />
-              Upload
-            </span>
+            <Icon of={Image01Icon} size={15} />
+            Upload
           </FilePicker>
         </div>
       </FormField>

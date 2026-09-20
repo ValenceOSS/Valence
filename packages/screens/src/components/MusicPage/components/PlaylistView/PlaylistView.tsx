@@ -91,7 +91,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
   if (detail === undefined) {
     return (
       <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading the playlist" className="size-48 rounded-md" />
+        <Skeleton label="Reading the playlist" shape="soft" className="size-48" />
         <Skeleton className="h-12 w-2/3" />
       </div>
     );
@@ -141,7 +141,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
         actions={
           <>
             <Button
-              variant="glossy"
+              variant="confirm"
               size="lg"
               isIconOnly
               label={`Play ${playlist.name}`}
@@ -251,6 +251,15 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
 
                     if (entry !== undefined) {
                       void dropFromPlaylist(playlist.id, entry.id).then(refresh);
+                    }
+                  },
+                  onReorder: (from: number, to: number) => {
+                    const entry = songs[from]?.entry;
+                    const after =
+                      to > from ? (songs[to]?.entry.id ?? null) : (songs[to - 1]?.entry.id ?? null);
+
+                    if (entry !== undefined && from !== to) {
+                      void moveInPlaylist(playlist.id, entry.id, after).then(refresh);
                     }
                   },
                   onMove: (index: number, direction: 'up' | 'down') => {

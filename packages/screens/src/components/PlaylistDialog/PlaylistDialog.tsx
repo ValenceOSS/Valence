@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -117,20 +116,16 @@ const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogPr
         </p>
       </DialogContent>
 
-      <DialogFooter>
-        <Button variant="ghost" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          isLoading={isSaving}
-          onClick={() => {
+      <DialogFooter
+        dismiss={{ onChoose: onClose }}
+        confirm={{
+          label: isNew ? 'Make it' : 'Save',
+          onChoose: () => {
             void save();
-          }}
-        >
-          {isNew ? 'Make it' : 'Save'}
-        </Button>
-      </DialogFooter>
+          },
+          isLoading: isSaving,
+        }}
+      />
     </Dialog>
   );
 };

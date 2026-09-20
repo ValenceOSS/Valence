@@ -1,3 +1,4 @@
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { cn } from '@ValenceUI/cn';
 import type { ScanProgressBarProps } from './ScanProgressBar.types';
 
@@ -51,7 +52,7 @@ const ScanProgressBar = ({ label, phase, processed, total }: ScanProgressBarProp
 
       {isKnown && !isEmpty ? (
         <span className="shrink-0 text-xs tabular-nums text-text-muted">
-          {processed}/{total}
+          <AnimatedNumber value={processed} />/<AnimatedNumber value={total} />
         </span>
       ) : null}
     </div>

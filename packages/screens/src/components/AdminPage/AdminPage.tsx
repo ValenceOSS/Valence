@@ -165,7 +165,7 @@ const AdminPage = () => {
             </div>
           )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-4">
             <AdminArea
               panel={showing}
               onPanel={(next) => {

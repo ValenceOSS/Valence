@@ -1,5 +1,6 @@
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
+import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
 
 /**
  * Says where a title stands, as a badge: in the library already, somewhere along being fetched, or
@@ -12,7 +13,7 @@ const describeStanding = (
   standing: CatalogueStanding,
 ): { label: string; tone: BadgeTone } | null => {
   if (standing.status === 'library') {
-    return { label: 'In your library', tone: 'success' };
+    return { ...STATUS_LOOK.done, label: 'In your library' };
   }
 
   if (standing.status === 'askable') {
@@ -21,23 +22,23 @@ const describeStanding = (
 
   switch (standing.requestState) {
     case 'awaitingApproval':
-      return { label: 'Waiting for approval', tone: 'highlight' };
+      return { ...STATUS_LOOK.attention, label: 'Waiting for approval' };
     case 'refused':
-      return { label: 'Refused', tone: 'danger' };
+      return { ...STATUS_LOOK.failed, label: 'Refused' };
     case 'downloading':
     case 'chosen':
-      return { label: 'Downloading', tone: 'busy' };
+      return { ...STATUS_LOOK.working, label: 'Downloading' };
     case 'filing':
     case 'filed':
     case 'available':
-      return { label: 'Arriving', tone: 'success' };
+      return { ...STATUS_LOOK.working, label: 'Arriving' };
     case 'failed':
-      return { label: 'Stuck', tone: 'danger' };
+      return { ...STATUS_LOOK.failed, label: 'Stuck' };
     case 'waiting':
     case 'wanted':
     case 'searching':
     case null:
-      return { label: 'Requested', tone: 'accent' };
+      return { ...STATUS_LOOK.queued, label: 'Requested' };
   }
 };
 

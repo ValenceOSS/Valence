@@ -51,13 +51,19 @@ describe('ConfirmDialog', () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
-  it('paints a destructive answer white, not red', () => {
+  it('paints a destructive answer red, so it never looks like one that can be taken back', () => {
     open({ isDestructive: true });
 
     const confirm = screen.getByRole('button', { name: 'Delete' });
 
-    expect(confirm).toHaveClass('bg-accent');
-    expect(confirm).not.toHaveClass('bg-danger');
+    expect(confirm).toHaveClass('bg-danger');
+    expect(confirm).not.toHaveClass('bg-white');
+  });
+
+  it('paints any other answer white', () => {
+    open();
+
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveClass('bg-white');
   });
 
   it('will not be cancelled while the work is running', () => {

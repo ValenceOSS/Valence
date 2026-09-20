@@ -198,4 +198,40 @@ describe('usePagedScroller', () => {
 
     expect(result.current.pages.at).toBe(1);
   });
+
+  it('says a row is at its start until it has been moved', () => {
+    rowOf(1000, 3000);
+
+    const { result, track } = attached();
+
+    act(() => {
+      result.current.measure();
+    });
+
+    expect(result.current.isAtStart).toBe(true);
+    expect(result.current.isAtEnd).toBe(false);
+
+    track.scrollLeft = 400;
+
+    act(() => {
+      result.current.measure();
+    });
+
+    expect(result.current.isAtStart).toBe(false);
+  });
+
+  it('says a row is at its end from where it is, even where that is partway through a page', () => {
+    rowOf(1000, 3000);
+
+    const { result, track } = attached();
+
+    track.scrollLeft = 2000;
+
+    act(() => {
+      result.current.measure();
+    });
+
+    expect(result.current.isAtEnd).toBe(true);
+    expect(result.current.isAtStart).toBe(false);
+  });
 });

@@ -21,6 +21,21 @@ describe('Skeleton', () => {
     expect(container.firstElementChild).toHaveClass('h-16', 'w-16');
   });
 
+  it('rounds its corners like a card unless told otherwise', () => {
+    const { container } = render(<Skeleton />);
+
+    expect(container.firstElementChild).toHaveClass('rounded-lg');
+  });
+
+  it.each([
+    ['soft', 'rounded-md'],
+    ['round', 'rounded-full'],
+  ] as const)('holds a %s shape', (shape, corners) => {
+    const { container } = render(<Skeleton shape={shape} />);
+
+    expect(container.firstElementChild).toHaveClass(corners);
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(Skeleton.displayName).toBe('Skeleton');
   });

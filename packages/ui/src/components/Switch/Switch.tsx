@@ -83,13 +83,13 @@ const Switch = ({
 
       <span
         className={cn(
-          'flex h-[26px] w-14 shrink-0 items-center rounded-pill p-[3px]',
+          'flex h-[26px] w-14 shrink-0 items-center rounded-pill border border-[var(--surface-line)] p-[2px]',
           'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)]',
           'motion-reduce:transition-none',
           isOn
             ? isOverlay
               ? 'bg-on-scrim'
-              : 'bg-accent'
+              : 'bg-text'
             : isOverlay
               ? 'bg-on-scrim/25'
               : 'bg-text-muted/25',
@@ -102,7 +102,11 @@ const Switch = ({
             'transition-[translate] duration-[var(--duration-fast)] ease-[var(--ease-out)]',
             'motion-reduce:transition-none',
             isOn ? 'translate-x-[18px]' : 'translate-x-0',
-            isOn && isOverlay ? 'bg-shade' : 'bg-on-scrim',
+            isOn
+              ? isOverlay
+                ? 'bg-shade'
+                : 'bg-[color-mix(in_oklab,var(--color-text)_10%,var(--card-face))]'
+              : 'bg-on-scrim',
           )}
         />
       </span>

@@ -34,11 +34,11 @@ const MusicHome = () => {
 
   const seeAll = (view: MusicView, what: string) => (
     <Button
-      variant="link"
+      variant="subtle"
       size="none"
       label={`See all ${what}`}
       hasTooltip={false}
-      className="text-sm text-text-muted hover:text-text"
+      className="text-sm"
       onClick={() => {
         open(view);
       }}

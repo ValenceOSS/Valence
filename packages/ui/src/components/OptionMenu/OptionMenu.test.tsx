@@ -169,4 +169,22 @@ describe('OptionMenu', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(OptionMenu.displayName).toBe('OptionMenu');
   });
+
+  it('is drawn in the sidebar colour but fully opaque, so nothing shows through it', async () => {
+    await open([speed()]);
+
+    const menu = await screen.findByRole('menu', { name: 'Playback speed' });
+
+    expect(menu).toHaveClass('valence-float');
+    expect(menu).not.toHaveClass('valence-surface');
+  });
+
+  it('holds a group header at the top of its group as the choices scroll beneath it', async () => {
+    await open([speed()]);
+
+    const header = await screen.findByText('Playback Speed');
+
+    expect(header).toHaveClass('sticky', 'top-0');
+    expect(header.className).toContain('bg-[var(--color-surface-raised)]');
+  });
 });

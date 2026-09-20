@@ -57,7 +57,7 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
   }
 
   if (requests.data === undefined || me.data === undefined) {
-    return <Spinner label="Reading your requests" />;
+    return <Spinner isCentered label="Reading your requests" />;
   }
 
   if (mine.length === 0) {

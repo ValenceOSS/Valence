@@ -66,11 +66,10 @@ const LyricsView = () => {
         <CoverGlow src={cover} className="absolute inset-0" />
       </div>
 
-      <div className={`relative py-[30cqh] ${MUSIC_LANES.page}`}>
+      <div className={`relative pt-6 pb-[30cqh] ${MUSIC_LANES.page}`}>
         <LyricLines
           lyrics={lyrics}
           at={at}
-          look="immersive"
           onSeek={(seconds) => {
             player.seek(seconds);
           }}

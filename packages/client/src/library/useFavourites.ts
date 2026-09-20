@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { setBookFavourite, setFavourite } from '@ValenceClient/library/fetchFavourites';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 
 type Favourites = {
@@ -19,6 +20,9 @@ type Favourites = {
  * than the whole list, since somebody keeping two things quickly should not have the first undone
  * by the second being refused. Any read still in flight is called off first, so a list that arrives
  * a moment later does not report the heart as empty again.
+ *
+ * The liked songs page reads its own list, so it is read again after every change; without that it
+ * stays as it was when it was last opened, empty for somebody who has only just started liking songs.
  *
  * Books are kept the same way, in a list of their own, so a book's heart and a film's are one
  * gesture with one behaviour.
@@ -53,6 +57,8 @@ const useFavourites = (watcherId: string | null, what: 'media' | 'books' = 'medi
       if (!agreed) {
         write(mediaId, !wants);
       }
+
+      void cache.invalidateQueries({ queryKey: musicQueries.liked().queryKey });
     });
   };
 

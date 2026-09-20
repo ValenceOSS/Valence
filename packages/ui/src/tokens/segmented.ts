@@ -21,8 +21,8 @@ const SEGMENTED = {
   tones: {
     inverted: {
       track: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',
-      mark: 'rounded-md bg-text',
-      chosen: 'font-semibold text-surface hover:text-surface focus-visible:text-surface',
+      mark: 'rounded-md border border-[var(--surface-line)] bg-[var(--surface-active)]',
+      chosen: 'font-semibold text-text hover:text-text focus-visible:text-text',
     },
     accent: {
       track: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',

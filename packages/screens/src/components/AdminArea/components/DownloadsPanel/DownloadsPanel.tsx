@@ -1,6 +1,7 @@
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -197,15 +198,14 @@ const DownloadsPanel = () => {
               <span className="text-xs tabular-nums text-text-muted">{total}</span>
             )}
 
-            <Button
-              variant="ghost"
-              size="xs"
+            <PanelCardAction
+              icon={Add01Icon}
               onClick={() => {
                 setIsAdding(true);
               }}
             >
-              Add a client
-            </Button>
+              Add a download client
+            </PanelCardAction>
           </>
         }
         below={
@@ -294,9 +294,7 @@ const DownloadsPanel = () => {
               }}
             />
           ) : queue.isPending ? (
-            <div className="p-4">
-              <Spinner label="Reading the downloads" size="sm" />
-            </div>
+            <Spinner isCentered label="Reading the downloads" size="sm" />
           ) : (
             <DownloadQueueTable
               downloads={queue.data.downloads}
@@ -320,9 +318,7 @@ const DownloadsPanel = () => {
               }}
             />
           ) : clients.isPending ? (
-            <div className="p-4">
-              <Spinner label="Reading the download clients" size="sm" />
-            </div>
+            <Spinner isCentered label="Reading the download clients" size="sm" />
           ) : (
             <DownloadClientsTable
               clients={clients.data}

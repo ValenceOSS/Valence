@@ -1,7 +1,11 @@
 import { Cancel01Icon, LeftToRightListNumberIcon } from '@hugeicons/core-free-icons';
+import { useEffect, useRef, useState } from 'react';
+import { Reorder } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
+import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { NothingHere } from '@ValenceUI/NothingHere';
+import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { upcomingIn } from '@ValenceClient/music/playQueue';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
@@ -40,11 +44,22 @@ QueuedSong.displayName = 'QueuedSong';
 
 /**
  * What is playing and what plays after it, in the order it will play — shuffled order where the
- * queue is shuffled. Pressing a song further down plays it now; the cross beside one takes it out.
+ * queue is shuffled. Pressing a song further down plays it now; the cross beside one takes it out,
+ * and dragging one to another place changes the order it plays in.
  */
 const QueuePanel = () => {
   const { state, player } = useMusicPlayer();
   const { queue, current } = state;
+  const { containerRef, rect, follow, clear } = useSlidingHighlight();
+  const upcoming = queue === null ? [] : upcomingIn(queue);
+  const places = upcoming.map((entry) => entry.at);
+  const placesKey = places.join(',');
+  const [order, setOrder] = useState<number[]>(places);
+  const draggedRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setOrder(placesKey === '' ? [] : placesKey.split(',').map(Number));
+  }, [placesKey]);
 
   if (queue === null || current === null) {
     return (
@@ -55,8 +70,6 @@ const QueuePanel = () => {
       />
     );
   }
-
-  const upcoming = upcomingIn(queue);
 
   return (
     <div className="flex flex-col gap-5">
@@ -77,39 +90,79 @@ const QueuePanel = () => {
             {queue.repeat === 'all' ? 'The queue starts again after this.' : 'Nothing after this.'}
           </p>
         ) : (
-          <ol className="flex flex-col">
-            {upcoming.map(({ at, track }) => (
-              <li
-                key={`${track.id}-${at.toString()}`}
-                className="group flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-hover"
-              >
-                <Button
-                  variant="bare"
-                  size="none"
-                  label={`Play ${track.title} now`}
-                  hasTooltip={false}
-                  className="min-w-0 flex-1"
-                  onClick={() => {
-                    player.jumpTo(at);
-                  }}
-                >
-                  <QueuedSong track={track} isCurrent={false} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  isIconOnly
-                  label={`Take ${track.title} out of the queue`}
-                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-                  onClick={() => {
-                    player.removeFromQueue(at);
-                  }}
-                >
-                  <Icon of={Cancel01Icon} size={14} />
-                </Button>
-              </li>
-            ))}
-          </ol>
+          <div
+            ref={containerRef}
+            className="relative"
+            onPointerMove={follow}
+            onPointerLeave={clear}
+          >
+            <HoverHighlight rect={rect} radius="md" className="bg-[var(--surface-hover)]" />
+
+            <Reorder.Group
+              as="ol"
+              axis="y"
+              values={order}
+              onReorder={setOrder}
+              className="relative flex flex-col"
+            >
+              {order.map((at) => {
+                const track = upcoming.find((entry) => entry.at === at)?.track;
+
+                if (track === undefined) {
+                  return null;
+                }
+
+                return (
+                  <Reorder.Item
+                    key={at}
+                    as="li"
+                    value={at}
+                    data-highlight
+                    className="group flex cursor-grab items-center justify-between gap-2 rounded-md px-2 py-1.5 active:cursor-grabbing"
+                    onDragStart={() => {
+                      draggedRef.current = at;
+                    }}
+                    onDragEnd={() => {
+                      const from = draggedRef.current;
+
+                      draggedRef.current = null;
+
+                      if (from === null) {
+                        return;
+                      }
+
+                      player.moveInQueue(from, queue.at + 1 + order.indexOf(from));
+                    }}
+                  >
+                    <Button
+                      variant="bare"
+                      size="none"
+                      label={`Play ${track.title} now`}
+                      hasTooltip={false}
+                      className="min-w-0 flex-1"
+                      onClick={() => {
+                        player.jumpTo(at);
+                      }}
+                    >
+                      <QueuedSong track={track} isCurrent={false} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      isIconOnly
+                      label={`Take ${track.title} out of the queue`}
+                      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                      onClick={() => {
+                        player.removeFromQueue(at);
+                      }}
+                    >
+                      <Icon of={Cancel01Icon} size={14} />
+                    </Button>
+                  </Reorder.Item>
+                );
+              })}
+            </Reorder.Group>
+          </div>
         )}
       </section>
     </div>

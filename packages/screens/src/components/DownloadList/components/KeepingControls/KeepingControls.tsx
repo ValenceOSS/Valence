@@ -29,7 +29,7 @@ const KeepingControls = ({ download, held }: KeepingControlsProps) => {
   if (held === null) {
     return (
       <Button
-        variant="soft"
+        variant="glossy"
         size="sm"
         onClick={() => {
           void keepAFile(download);
@@ -67,7 +67,7 @@ const KeepingControls = ({ download, held }: KeepingControlsProps) => {
   if (held.state === 'failed') {
     return (
       <Button
-        variant="soft"
+        variant="secondary"
         size="sm"
         onClick={() => {
           void pauseAFile(download.id, false);

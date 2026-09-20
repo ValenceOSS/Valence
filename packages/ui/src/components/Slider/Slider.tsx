@@ -26,7 +26,7 @@ const STRETCH_MOST = 1;
 const SETTLES_AFTER_MS = 120;
 
 const FILL_CLASSES: Record<SliderTone, string> = {
-  default: 'bg-primary',
+  default: 'bg-text',
   overlay: 'bg-on-scrim',
   glass: 'bg-text',
 };
