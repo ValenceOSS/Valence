@@ -135,6 +135,14 @@ const sentenceFor = (payload: WebhookPayload): string => {
       return `The indexer ${payload.data.name} is answering again. Nothing needs doing.`;
     }
 
+    case 'requests.downloadStarted': {
+      return `${payload.data.title} was sent to ${payload.data.client}.`;
+    }
+
+    case 'requests.downloadFailed': {
+      return `${payload.data.title} failed in ${payload.data.client} — ${payload.data.problem}`;
+    }
+
     case 'requests.vpnUp': {
       const where = [payload.data.publicAddress, payload.data.country].filter(
         (part) => part !== null,

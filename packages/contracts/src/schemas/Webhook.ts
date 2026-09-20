@@ -21,6 +21,8 @@ const WEBHOOK_EVENTS = [
   'requests.vpnUp',
   'requests.indexerFailing',
   'requests.indexerWorking',
+  'requests.downloadStarted',
+  'requests.downloadFailed',
   'auth.succeeded',
   'auth.failed',
   'account.created',
@@ -72,6 +74,8 @@ const WEBHOOK_EVENT_LABELS: Record<WebhookEvent, string> = {
   'requests.vpnUp': 'VPN up',
   'requests.indexerFailing': 'Indexer failing',
   'requests.indexerWorking': 'Indexer working again',
+  'requests.downloadStarted': 'Download started',
+  'requests.downloadFailed': 'Download failed',
   'auth.succeeded': 'Signed in',
   'auth.failed': 'Sign-in refused',
   'account.created': 'Account made',
@@ -86,6 +90,7 @@ const WEBHOOK_EVENT_LABELS: Record<WebhookEvent, string> = {
 const WEBHOOK_EVENT_NOTES: Partial<Record<WebhookEvent, string>> = {
   'auth.failed': 'Rate-limited attempts are refused before Valence sees them.',
   'requests.indexerFailing': 'Sent after three failures in a row. Five turn the indexer off.',
+  'requests.downloadStarted': 'Sent when a release is handed to a download client.',
   'playback.started': 'Names the person and what they are watching.',
   'playback.stopped': 'Names the person and what they were watching.',
 };
@@ -124,6 +129,8 @@ const WEBHOOK_EVENT_GROUPS: readonly WebhookEventGroup[] = [
       'requests.vpnUp',
       'requests.indexerFailing',
       'requests.indexerWorking',
+      'requests.downloadStarted',
+      'requests.downloadFailed',
     ],
   },
   {
@@ -326,6 +333,16 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
     ...WebhookEnvelopeSchema,
     event: z.literal('requests.indexerWorking'),
     data: z.object({ name: z.string() }),
+  }),
+  z.object({
+    ...WebhookEnvelopeSchema,
+    event: z.literal('requests.downloadStarted'),
+    data: z.object({ title: z.string(), client: z.string() }),
+  }),
+  z.object({
+    ...WebhookEnvelopeSchema,
+    event: z.literal('requests.downloadFailed'),
+    data: z.object({ title: z.string(), client: z.string(), problem: z.string() }),
   }),
   z.object({
     ...WebhookEnvelopeSchema,

@@ -1,7 +1,5 @@
-import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
-
-type IndexerState = { label: string; tone: BadgeTone; detail: string | null };
+import type { StateBadge } from '@ValenceScreens/components/AdminArea/StateBadge';
 
 /**
  * Says how an indexer is, as a badge and the line beneath it: turned off by Valence and why,
@@ -10,7 +8,7 @@ type IndexerState = { label: string; tone: BadgeTone; detail: string | null };
  * @param indexer - The indexer.
  * @returns The badge's words and tone, and the reason where there is one.
  */
-const describeIndexerState = (indexer: Indexer): IndexerState => {
+const describeIndexerState = (indexer: Indexer): StateBadge => {
   if (indexer.turnedOffBecause !== null) {
     return { label: 'Turned off', tone: 'danger', detail: indexer.turnedOffBecause };
   }
@@ -31,7 +29,5 @@ const describeIndexerState = (indexer: Indexer): IndexerState => {
     ? { label: 'Not tried', tone: 'quiet', detail: null }
     : { label: 'Working', tone: 'success', detail: null };
 };
-
-export type { IndexerState };
 
 export { describeIndexerState };

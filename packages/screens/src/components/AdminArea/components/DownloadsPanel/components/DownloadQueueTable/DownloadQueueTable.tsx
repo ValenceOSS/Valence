@@ -1,0 +1,233 @@
+import { useMemo } from 'react';
+import { Delete02Icon, MoreHorizontalIcon, PauseIcon, PlayIcon } from '@hugeicons/core-free-icons';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { Badge } from '@ValenceUI/Badge';
+import { DataTable } from '@ValenceUI/DataTable';
+import { Icon } from '@ValenceUI/Icon';
+import { ProgressBar } from '@ValenceUI/ProgressBar';
+import { Spinner } from '@ValenceUI/Spinner';
+import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
+import { describeDownloadState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeDownloadState';
+import { describeSpeeds } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeSpeeds';
+import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
+import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
+import type { DownloadQueueTableProps } from './DownloadQueueTable.types';
+
+const PAUSABLE = new Set(['queued', 'downloading', 'stalled']);
+
+/**
+ * Says how much of a download has arrived, in the size it is going to be.
+ *
+ * @param download - The download.
+ * @returns Such as `2.1 GB of 4.6 GB`, or the size alone before anything has arrived.
+ */
+const describeArrived = (download: QueuedDownload): string | null => {
+  if (download.sizeBytes === null) {
+    return download.doneBytes === null ? null : formatBytes(download.doneBytes);
+  }
+
+  return download.doneBytes === null || download.state === 'done'
+    ? formatBytes(download.sizeBytes)
+    : `${formatBytes(download.doneBytes)} of ${formatBytes(download.sizeBytes)}`;
+};
+
+/**
+ * Every download Valence has sent, newest first: what it is and where it went, how it is doing, how
+ * much has arrived and how fast, how long is left, who it is coming from, and what can be done to
+ * it — pausing, resuming and removing.
+ *
+ * @param downloads - The downloads.
+ * @param busyId - The download being acted on, whose actions wait until it is done.
+ * @param onPause - Called to pause a download.
+ * @param onResume - Called to resume one.
+ * @param onRemove - Called to remove one.
+ */
+const DownloadQueueTable = ({
+  downloads,
+  busyId,
+  onPause,
+  onResume,
+  onRemove,
+}: DownloadQueueTableProps) => {
+  const columns = useMemo<DataTableColumn<QueuedDownload>[]>(
+    () => [
+      {
+        id: 'title',
+        header: 'Release',
+        accessorFn: (download) => download.title,
+        cell: ({ row }) => (
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate font-medium text-text" title={row.original.title}>
+              {row.original.title}
+            </span>
+
+            <span className="truncate text-xs text-text-muted">
+              {[
+                LIBRARY_KIND_NAMES[row.original.libraryKind].label,
+                row.original.clientName,
+                row.original.indexerName,
+              ]
+                .filter((part) => part !== null)
+                .join(' · ')}
+            </span>
+          </span>
+        ),
+      },
+      {
+        id: 'state',
+        header: 'State',
+        accessorFn: (download) => describeDownloadState(download).label,
+        cell: ({ row }) => {
+          const state = describeDownloadState(row.original);
+
+          return (
+            <span className="flex min-w-0 flex-col items-start gap-1">
+              <Badge size="sm" tone={state.tone}>
+                {state.label}
+              </Badge>
+
+              {state.detail === null ? null : (
+                <span className="text-xs text-text-muted">{state.detail}</span>
+              )}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'progress',
+        header: 'Progress',
+        accessorFn: (download) => download.progress,
+        cell: ({ row }) => {
+          const arrived = describeArrived(row.original);
+
+          return (
+            <span className="flex flex-col gap-1">
+              <ProgressBar
+                label={`How much of ${row.original.title} has arrived`}
+                value={Math.round(row.original.progress * 1000) / 10}
+                readout={
+                  <span className="text-xs tabular-nums text-text">
+                    {Math.floor(row.original.progress * 100).toString()}%
+                  </span>
+                }
+              />
+
+              {arrived === null ? null : (
+                <span className="text-xs tabular-nums text-text-muted">{arrived}</span>
+              )}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'speed',
+        header: 'Speed',
+        accessorFn: (download) => download.downloadBytesPerSecond ?? -1,
+        cell: ({ row }) => (
+          <span className="text-xs tabular-nums text-text-muted">
+            {describeSpeeds(
+              row.original.downloadBytesPerSecond,
+              row.original.uploadBytesPerSecond,
+            ) ?? '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'left',
+        header: 'Time left',
+        accessorFn: (download) => download.secondsLeft ?? Number.MAX_SAFE_INTEGER,
+        cell: ({ row }) => (
+          <span className="text-xs tabular-nums text-text-muted">
+            {row.original.secondsLeft === null ? '—' : describeTimeLeft(row.original.secondsLeft)}
+          </span>
+        ),
+      },
+      {
+        id: 'peers',
+        header: 'Peers',
+        accessorFn: (download) => download.seeds ?? -1,
+        cell: ({ row }) => (
+          <span className="text-xs tabular-nums text-text-muted">
+            {row.original.seeds === null && row.original.peers === null
+              ? '—'
+              : `${(row.original.seeds ?? 0).toString()} seeding · ${(row.original.peers ?? 0).toString()} fetching`}
+          </span>
+        ),
+      },
+      {
+        id: 'act',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) =>
+          busyId === row.original.id ? (
+            <span className="flex justify-end">
+              <Spinner size="sm" label={`Working on ${row.original.title}`} />
+            </span>
+          ) : (
+            <span className="flex justify-end">
+              <ActionMenu
+                label={`Actions for ${row.original.title}`}
+                trigger={<Icon of={MoreHorizontalIcon} size={16} />}
+                groups={[
+                  {
+                    items: [
+                      ...(PAUSABLE.has(row.original.state)
+                        ? [
+                            {
+                              id: 'pause',
+                              label: 'Pause',
+                              icon: <Icon of={PauseIcon} size={15} />,
+                              onChoose: () => {
+                                onPause(row.original);
+                              },
+                            },
+                          ]
+                        : []),
+                      ...(row.original.state === 'paused'
+                        ? [
+                            {
+                              id: 'resume',
+                              label: 'Resume',
+                              icon: <Icon of={PlayIcon} size={15} />,
+                              onChoose: () => {
+                                onResume(row.original);
+                              },
+                            },
+                          ]
+                        : []),
+                      {
+                        id: 'remove',
+                        label: 'Remove',
+                        icon: <Icon of={Delete02Icon} size={15} />,
+                        isDestructive: true,
+                        onChoose: () => {
+                          onRemove(row.original);
+                        },
+                      },
+                    ],
+                  },
+                ]}
+              />
+            </span>
+          ),
+      },
+    ],
+    [busyId, onPause, onResume, onRemove],
+  );
+
+  return (
+    <DataTable
+      label="Downloads"
+      columns={columns}
+      rows={[...downloads]}
+      getRowId={(download) => download.id}
+      emptyMessage="Nothing has been sent to a download client yet. Send a release from Search to see it here."
+    />
+  );
+};
+
+DownloadQueueTable.displayName = 'DownloadQueueTable';
+
+export { DownloadQueueTable };

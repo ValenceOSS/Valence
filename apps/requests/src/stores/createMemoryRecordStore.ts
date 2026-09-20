@@ -1,12 +1,14 @@
-import type { IndexerRecord, IndexerStore } from '@ValenceRequests/indexers/IndexerRecord';
+import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 
 /**
- * Indexers held in memory, for tests of everything that keeps them without a database.
+ * Records held in memory, for tests of everything that keeps them without a database.
  *
- * @param given - The indexers to start with.
+ * @param given - The records to start with.
  * @returns The store.
  */
-const createMemoryIndexerStore = (given: readonly IndexerRecord[] = []): IndexerStore => {
+const createMemoryRecordStore = <Kept extends { id: string }>(
+  given: readonly Kept[] = [],
+): RecordStore<Kept> => {
   const held = new Map(given.map((record) => [record.id, record]));
 
   return {
@@ -34,4 +36,4 @@ const createMemoryIndexerStore = (given: readonly IndexerRecord[] = []): Indexer
   };
 };
 
-export { createMemoryIndexerStore };
+export { createMemoryRecordStore };

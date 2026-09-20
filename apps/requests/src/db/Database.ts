@@ -1,9 +1,16 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
-import { indexer, indexerDefinition, setting } from '@ValenceRequests/db/Schema';
+import {
+  downloadClient,
+  downloadEvent,
+  indexer,
+  indexerDefinition,
+  sentDownload,
+  setting,
+} from '@ValenceRequests/db/Schema';
 
-const schema = { indexer, indexerDefinition, setting };
+const schema = { downloadClient, downloadEvent, indexer, indexerDefinition, sentDownload, setting };
 
 type RequestsDatabase = PgDatabase<PgQueryResultHKT, typeof schema>;
 

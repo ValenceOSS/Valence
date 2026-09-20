@@ -1,4 +1,21 @@
-import { boolean, integer, jsonb, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  doublePrecision,
+  integer,
+  jsonb,
+  pgSchema,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
+import {
+  DEFAULT_DOWNLOAD_CATEGORIES,
+  DOWNLOAD_CLIENT_KINDS,
+} from '@ValenceContracts/schemas/DownloadClient';
+import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
+import type { DownloadCategories } from '@ValenceContracts/schemas/DownloadClient';
+import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue';
 import type { IndexerCapabilities, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 
@@ -45,4 +62,63 @@ const indexerDefinition = requestsSchema.table('indexer_definition', {
   fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-export { indexer, indexerDefinition, requestsSchema, setting };
+const downloadClient = requestsSchema.table('download_client', {
+  id: uuid('id').primaryKey(),
+  name: text('name').notNull(),
+  kind: text('kind', { enum: DOWNLOAD_CLIENT_KINDS }).notNull(),
+  url: text('url').notNull(),
+  username: text('username').notNull().default(''),
+  password: text('password').notNull().default(''),
+  apiKey: text('api_key').notNull().default(''),
+  categories: jsonb('categories')
+    .$type<DownloadCategories>()
+    .notNull()
+    .default(DEFAULT_DOWNLOAD_CATEGORIES),
+  priority: integer('priority').notNull().default(25),
+  isEnabled: boolean('is_enabled').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+const sentDownload = requestsSchema.table(
+  'download',
+  {
+    id: uuid('id').primaryKey(),
+    clientId: uuid('client_id')
+      .notNull()
+      .references(() => downloadClient.id, { onDelete: 'cascade' }),
+    remoteId: text('remote_id').notNull(),
+    protocol: text('protocol', { enum: ['torrent', 'usenet'] }).notNull(),
+    libraryKind: text('library_kind', { enum: LIBRARY_KINDS }).notNull().default('movies'),
+    title: text('title').notNull(),
+    indexerName: text('indexer_name'),
+    state: text('state', { enum: QUEUED_DOWNLOAD_STATES }).notNull().default('queued'),
+    problem: text('problem'),
+    progress: doublePrecision('progress').notNull().default(0),
+    sizeBytes: doublePrecision('size_bytes'),
+    doneBytes: doublePrecision('done_bytes'),
+    sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique('download_client_remote').on(table.clientId, table.remoteId)],
+);
+
+const downloadEvent = requestsSchema.table('download_event', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  kind: text('kind', { enum: ['started', 'failed'] }).notNull(),
+  title: text('title').notNull(),
+  clientName: text('client_name').notNull(),
+  problem: text('problem'),
+  at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export {
+  downloadClient,
+  downloadEvent,
+  indexer,
+  indexerDefinition,
+  requestsSchema,
+  sentDownload,
+  setting,
+};

@@ -1,3 +1,4 @@
+import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import {
   IndexerSchema,
@@ -8,7 +9,8 @@ import { RequestsStatusSchema } from '@ValenceContracts/schemas/Requests';
 import type { IndexerCapabilities } from '@ValenceContracts/schemas/Indexer';
 import type { RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import { createIndexerService } from '@ValenceRequests/indexers/createIndexerService';
-import { createMemoryIndexerStore } from '@ValenceRequests/indexers/createMemoryIndexerStore';
+import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
+import type { IndexerRecord } from '@ValenceRequests/indexers/IndexerRecord';
 import { createApp } from './App';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import {
@@ -86,22 +88,35 @@ const fetchRelease = (url: string) => {
   );
 };
 
+const THE_REST = {
+  definitions: {
+    catalogue: () => Promise.resolve(CATALOGUE),
+    refresh: () => Promise.resolve(CATALOGUE),
+    detail: (id: string) => Promise.resolve(id === 'alpha' ? DETAIL : null),
+  },
+  secret: A_SECRET,
+  version: '0.4.0',
+  readVpn: () => A_VPN,
+  isDatabaseUp: () => Promise.resolve(true),
+  indexers: createIndexerService({
+    store: createMemoryRecordStore<IndexerRecord>(),
+    client: {
+      capabilities: () => Promise.resolve(CAPS),
+      search: () => Promise.resolve([]),
+      download: () => Promise.resolve({ kind: 'magnet' as const, url: 'magnet:?' }),
+    },
+  }),
+};
+
 /**
  * The service, with its database answering or not, and indexers that answer everything.
  */
 const aService = (isDatabaseUp = true) => {
   const app = createApp({
-    definitions: {
-      catalogue: () => Promise.resolve(CATALOGUE),
-      refresh: () => Promise.resolve(CATALOGUE),
-      detail: (id) => Promise.resolve(id === 'alpha' ? DETAIL : null),
-    },
-    secret: A_SECRET,
-    version: '0.4.0',
-    readVpn: () => A_VPN,
+    ...THE_REST,
     isDatabaseUp: () => Promise.resolve(isDatabaseUp),
     indexers: createIndexerService({
-      store: createMemoryIndexerStore(),
+      store: createMemoryRecordStore<IndexerRecord>(),
       client: {
         capabilities: () => Promise.resolve(CAPS),
         search: () => Promise.resolve([]),
@@ -150,6 +165,20 @@ describe('createApp', () => {
 
   it('turns away anybody without the secret', async () => {
     expect((await aService().app.request('/api/status')).status).toBe(401);
+  });
+
+  it('keeps what it was given for downloads behind the secret too', async () => {
+    const downloads = new Hono();
+
+    downloads.get('/downloads', (context) => context.json({ clients: [] }));
+
+    const app = createApp({ ...THE_REST, downloads });
+
+    expect((await app.request('/api/downloads')).status).toBe(401);
+    expect(
+      (await app.request('/api/downloads', { headers: { Authorization: `Bearer ${A_SECRET}` } }))
+        .status,
+    ).toBe(200);
   });
 
   it('turns away the wrong secret', async () => {

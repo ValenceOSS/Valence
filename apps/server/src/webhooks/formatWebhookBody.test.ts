@@ -439,4 +439,24 @@ describe('formatWebhookBody', () => {
 
     expect(written.body).toContain('Nothing needs doing');
   });
+
+  it('says which client a download was sent to', () => {
+    const written = formatWebhookBody('ntfy', {
+      ...anEnvelope,
+      event: 'requests.downloadStarted',
+      data: { title: 'Dune', client: 'qBittorrent' },
+    });
+
+    expect(written.body).toBe('Dune was sent to qBittorrent.');
+  });
+
+  it('says where a download failed, and why', () => {
+    const written = formatWebhookBody('ntfy', {
+      ...anEnvelope,
+      event: 'requests.downloadFailed',
+      data: { title: 'Dune', client: 'SABnzbd', problem: 'Out of retention' },
+    });
+
+    expect(written.body).toBe('Dune failed in SABnzbd — Out of retention');
+  });
 });

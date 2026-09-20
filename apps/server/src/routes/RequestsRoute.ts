@@ -15,6 +15,17 @@ import {
   ReleaseSearchOutcomeSchema,
   ReleaseSearchSchema,
 } from '@ValenceContracts/schemas/Indexer';
+import {
+  DownloadClientChangeSchema,
+  DownloadClientDraftSchema,
+  DownloadClientSchema,
+  DownloadClientTestSchema,
+} from '@ValenceContracts/schemas/DownloadClient';
+import {
+  DownloadQueueSchema,
+  QueuedDownloadSchema,
+  ReleaseSendSchema,
+} from '@ValenceContracts/schemas/DownloadQueue';
 
 const RequestsError = z.object({ error: z.string() }).openapi('RequestsError');
 
@@ -293,7 +304,214 @@ const readDefinitionRoute = createRoute({
   }),
 });
 
+const DownloadClientAnswer = DownloadClientSchema.openapi('DownloadClient');
+
+const DownloadClientTestAnswer = DownloadClientTestSchema.openapi('DownloadClientTest');
+
+const QueuedDownloadAnswer = QueuedDownloadSchema.openapi('QueuedDownload');
+
+const RecordIdParameter = z.object({
+  id: z
+    .string()
+    .uuid()
+    .openapi({ param: { name: 'id', in: 'path' } }),
+});
+
+const listDownloadClientsRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/clients',
+  tags: ['Admin'],
+  summary: 'List the download clients releases are sent to',
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Every download client, without its password or key',
+      content: { 'application/json': { schema: z.array(DownloadClientAnswer) } },
+    },
+  }),
+});
+
+const addDownloadClientRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/clients',
+  tags: ['Admin'],
+  summary: 'Add a qBittorrent, Transmission, SABnzbd or NZBGet client',
+  request: { body: { content: { 'application/json': { schema: DownloadClientDraftSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    201: {
+      description: 'The client, as kept',
+      content: { 'application/json': { schema: DownloadClientAnswer } },
+    },
+  }),
+});
+
+const tryDownloadClientRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/clients/try',
+  tags: ['Admin'],
+  summary: 'Try a download client before keeping it',
+  request: { body: { content: { 'application/json': { schema: DownloadClientDraftSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Whether it answered, and which version it is',
+      content: { 'application/json': { schema: DownloadClientTestAnswer } },
+    },
+  }),
+});
+
+const changeDownloadClientRoute = createRoute({
+  method: 'patch',
+  path: '/api/admin/requests/clients/{id}',
+  tags: ['Admin'],
+  summary: 'Change a download client',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: DownloadClientChangeSchema } } },
+  },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'The client, as changed',
+      content: { 'application/json': { schema: DownloadClientAnswer } },
+    },
+  }),
+});
+
+const removeDownloadClientRoute = createRoute({
+  method: 'delete',
+  path: '/api/admin/requests/clients/{id}',
+  tags: ['Admin'],
+  summary: 'Remove a download client, and stop following what was sent to it',
+  request: { params: RecordIdParameter },
+  responses: failures({ ...REFUSED_BODY, 204: { description: 'Removed' } }),
+});
+
+const testDownloadClientRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/clients/{id}/test',
+  tags: ['Admin'],
+  summary: 'Test a kept download client',
+  request: { params: RecordIdParameter },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Whether it answered, and which version it is',
+      content: { 'application/json': { schema: DownloadClientTestAnswer } },
+    },
+  }),
+});
+
+const tryDownloadClientChangeRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/clients/{id}/try',
+  tags: ['Admin'],
+  summary: 'Try a change to a kept download client, with the password it already has',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: DownloadClientDraftSchema } } },
+  },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Whether it answered, and which version it is',
+      content: { 'application/json': { schema: DownloadClientTestAnswer } },
+    },
+  }),
+});
+
+const readDownloadQueueRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/downloads',
+  tags: ['Admin'],
+  summary: 'Read every download Valence has sent, and how each client is',
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'The queue',
+      content: {
+        'application/json': { schema: DownloadQueueSchema.openapi('DownloadQueue') },
+      },
+    },
+  }),
+});
+
+const sendReleaseRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/downloads',
+  tags: ['Admin'],
+  summary: 'Send a release to a download client',
+  request: { body: { content: { 'application/json': { schema: ReleaseSendSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    201: {
+      description: 'The download, as sent',
+      content: { 'application/json': { schema: QueuedDownloadAnswer } },
+    },
+  }),
+});
+
+const pauseQueuedDownloadRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/downloads/{id}/pause',
+  tags: ['Admin'],
+  summary: 'Pause a download in its client',
+  request: { params: RecordIdParameter },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'The download, as its client now has it',
+      content: { 'application/json': { schema: QueuedDownloadAnswer } },
+    },
+  }),
+});
+
+const resumeQueuedDownloadRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/downloads/{id}/resume',
+  tags: ['Admin'],
+  summary: 'Resume a download in its client',
+  request: { params: RecordIdParameter },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'The download, as its client now has it',
+      content: { 'application/json': { schema: QueuedDownloadAnswer } },
+    },
+  }),
+});
+
+const removeQueuedDownloadRoute = createRoute({
+  method: 'delete',
+  path: '/api/admin/requests/downloads/{id}',
+  tags: ['Admin'],
+  summary: 'Remove a download from its client, deleting what it downloaded where asked',
+  request: {
+    params: RecordIdParameter,
+    query: z.object({
+      deleteData: z
+        .enum(['true', 'false'])
+        .default('false')
+        .openapi({ param: { name: 'deleteData', in: 'query' } }),
+    }),
+  },
+  responses: failures({ ...REFUSED_BODY, 204: { description: 'Removed' } }),
+});
+
 export {
+  addDownloadClientRoute,
+  changeDownloadClientRoute,
+  listDownloadClientsRoute,
+  pauseQueuedDownloadRoute,
+  readDownloadQueueRoute,
+  removeDownloadClientRoute,
+  removeQueuedDownloadRoute,
+  resumeQueuedDownloadRoute,
+  sendReleaseRoute,
+  testDownloadClientRoute,
+  tryDownloadClientChangeRoute,
+  tryDownloadClientRoute,
   listDefinitionsRoute,
   readDefinitionRoute,
   refreshDefinitionsRoute,

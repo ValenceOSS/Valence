@@ -5,6 +5,7 @@ import {
   LinkSquare02Icon,
   Magnet01Icon,
   MoreHorizontalIcon,
+  SentIcon,
 } from '@hugeicons/core-free-icons';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -19,9 +20,15 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeAge } from '@ValenceCore/functions/describeAge';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { fetchRelease } from '@ValenceClient/requests/fetchIndexers';
+import { sendRelease } from '@ValenceClient/requests/fetchDownloadQueue';
+import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
+import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
+import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
+import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import { downloadFile } from '@ValenceScreens/admin/downloadFile';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { inReleaseOrder } from './inReleaseOrder';
+import { libraryKindOf } from './libraryKindOf';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { IndexerSearchMode, Release, ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 
@@ -61,6 +68,7 @@ const ReleaseSearchPanel = () => {
   const [episode, setEpisode] = useState('');
   const [asked, setAsked] = useState<ReleaseSearch | null>(null);
   const found = useQuery(requestsQueries.search(asked));
+  const clients = useQuery(requestsQueries.downloadClients());
   const now = found.dataUpdatedAt;
   const [said, setSaid] = useState<{ text: string; isProblem: boolean } | null>(null);
 
@@ -125,6 +133,36 @@ const ReleaseSearchPanel = () => {
         cell: ({ row }) => {
           const { magnetUrl, downloadUrl, infoUrl, title, indexerId, protocol } = row.original;
           const kind = protocol === 'usenet' ? 'NZB' : 'torrent';
+          const target = (clients.data ?? []).find(
+            (client) => client.isEnabled && PROTOCOL_OF_CLIENT[client.kind] === protocol,
+          );
+          const address = downloadUrl ?? magnetUrl;
+          const libraryKind = libraryKindOf(row.original, asked?.mode ?? 'search');
+
+          const send = (sending: LibraryKind) => {
+            if (target === undefined || address === null) {
+              return;
+            }
+
+            setSaid({ text: `Sending ${title} to ${target.name}…`, isProblem: false });
+
+            void sendRelease({
+              indexerId,
+              url: address,
+              title,
+              protocol,
+              libraryKind: sending,
+              sizeBytes: row.original.sizeBytes,
+              indexerName: row.original.indexerName,
+              clientId: target.id,
+            }).then(({ value, refusal }) => {
+              setSaid(
+                value === null
+                  ? { text: refusal?.message ?? `${title} could not be sent.`, isProblem: true }
+                  : { text: `Sent ${title} to ${value.clientName}.`, isProblem: false },
+              );
+            });
+          };
 
           const save = () => {
             setSaid({ text: `Fetching the ${kind}…`, isProblem: false });
@@ -162,6 +200,30 @@ const ReleaseSearchPanel = () => {
                 groups={[
                   {
                     items: [
+                      ...(target === undefined
+                        ? [
+                            {
+                              id: 'send',
+                              label: `Send to a ${protocol === 'usenet' ? 'usenet' : 'torrent'} client`,
+                              detail: `No ${protocol === 'usenet' ? 'usenet' : 'torrent'} client is switched on. Add one on the Downloads page.`,
+                              icon: <Icon of={SentIcon} size={15} />,
+                              isDisabled: true,
+                              onChoose: () => undefined,
+                            },
+                          ]
+                        : (libraryKind === null ? LIBRARY_KINDS : [libraryKind]).map((sending) => ({
+                            id: `send-${sending}`,
+                            label:
+                              libraryKind === null
+                                ? `Send to ${target.name} as ${LIBRARY_KIND_NAMES[sending].one}`
+                                : `Send to ${target.name}`,
+                            detail: `As ${LIBRARY_KIND_NAMES[sending].one}, filed under ${target.categories[sending]} and followed on the Downloads page.`,
+                            icon: <Icon of={SentIcon} size={15} />,
+                            isDisabled: address === null,
+                            onChoose: () => {
+                              send(sending);
+                            },
+                          }))),
                       {
                         id: 'magnet',
                         label: 'Copy the magnet link',
@@ -200,7 +262,7 @@ const ReleaseSearchPanel = () => {
         },
       },
     ],
-    [now],
+    [now, clients.data, asked],
   );
 
   const search = () => {
