@@ -102,7 +102,7 @@ const ActionMenu = ({
                     }}
                     className={cn(
                       MENU.item,
-                      item.isDestructive === true ? 'text-danger' : 'text-text',
+                      item.isDestructive === true ? MENU.itemDestructive : MENU.itemPlain,
                     )}
                   >
                     {item.icon === undefined ? null : (

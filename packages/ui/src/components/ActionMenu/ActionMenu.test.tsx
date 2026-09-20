@@ -78,7 +78,10 @@ describe('ActionMenu', () => {
 
     await open();
 
-    expect(await screen.findByRole('menuitem', { name: 'Disconnect' })).toHaveClass('text-danger');
+    expect(await screen.findByRole('menuitem', { name: 'Disconnect' })).toHaveClass(
+      'bg-danger',
+      'text-destructive-foreground',
+    );
   });
 
   it('refuses an action that cannot be taken', async () => {

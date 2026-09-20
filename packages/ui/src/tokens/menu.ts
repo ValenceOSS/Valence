@@ -11,6 +11,8 @@ const MENU = {
     'coarse:gap-4 coarse:px-4 coarse:py-3.5',
     'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40',
   ].join(' '),
+  itemDestructive: 'bg-danger text-destructive-foreground hover:brightness-110',
+  itemPlain: 'text-text',
   icon: 'flex size-4 shrink-0 items-center justify-center coarse:size-5',
   itemLabel: 'flex-1 truncate text-left',
   detail: 'shrink-0 text-xs text-text-muted',
