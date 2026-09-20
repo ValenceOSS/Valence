@@ -36,6 +36,9 @@ const library = {
   defaultAudioLanguage: null,
 
   filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
 };
 
 const summary = {
@@ -126,6 +129,9 @@ describe('updateLibrary', () => {
     await expect(updateLibrary(library.id, { defaultAudioLanguage: 'de' })).resolves.toMatchObject({
       defaultAudioLanguage: 'de',
       filesAtOnce: null,
+      takesRequests: true,
+      requestProfileId: null,
+      requestPath: null,
     });
   });
 

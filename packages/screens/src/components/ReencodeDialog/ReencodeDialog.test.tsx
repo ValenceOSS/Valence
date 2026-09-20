@@ -66,6 +66,9 @@ const LIBRARIES = [
     lastScannedAt: null,
     defaultAudioLanguage: null,
     filesAtOnce: null,
+    takesRequests: true,
+    requestProfileId: null,
+    requestPath: null,
   },
   {
     id: 'library-2',
@@ -76,6 +79,9 @@ const LIBRARIES = [
     lastScannedAt: null,
     defaultAudioLanguage: null,
     filesAtOnce: null,
+    takesRequests: true,
+    requestProfileId: null,
+    requestPath: null,
   },
 ];
 
