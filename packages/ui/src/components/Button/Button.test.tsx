@@ -71,12 +71,12 @@ describe('Button', () => {
     expect(Button.displayName).toBe('Button');
   });
 
-  it('offers a white treatment for the controls that matter most', () => {
+  it('offers a filled treatment for the controls that matter most', () => {
     render(<Button variant="glossy">Play</Button>);
 
     const play = screen.getByRole('button', { name: 'Play' });
 
-    expect(play).toHaveClass('bg-white', 'text-on-white');
+    expect(play).toHaveClass('bg-[var(--surface-hover)]', 'text-text');
     expect(play).not.toHaveClass('valence-raise');
   });
 

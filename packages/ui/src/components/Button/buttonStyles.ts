@@ -15,7 +15,7 @@ const buttonStyles = cva(
     variants: {
       variant: {
         primary: `${FLAT} border-white/15 bg-accent text-primary-foreground hover:bg-accent-hover`,
-        glossy: `${FLAT} border-transparent bg-white text-on-white hover:bg-white-hover`,
+        glossy: `${FLAT} border-[var(--surface-line)] bg-[var(--surface-hover)] text-text hover:bg-[var(--surface-active)]`,
         secondary: `${FLAT} border-[var(--surface-line)] bg-background text-secondary-foreground hover:bg-muted`,
         soft: `${FLAT} border-transparent bg-accent/15 text-accent hover:bg-accent/25`,
         ghost: 'bg-transparent text-foreground hover:bg-[var(--surface-hover)]',

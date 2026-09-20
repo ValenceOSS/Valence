@@ -108,7 +108,7 @@ describe('FilePicker', () => {
 
     const label = screen.getByText('Choose').closest('label');
 
-    expect(label).toHaveClass('rounded-md', 'border', 'bg-white', 'h-9');
+    expect(label).toHaveClass('rounded-md', 'border', 'bg-[var(--surface-hover)]', 'h-9');
     expect(label?.className).not.toMatch(/rounded-(full|pill)/);
   });
 
