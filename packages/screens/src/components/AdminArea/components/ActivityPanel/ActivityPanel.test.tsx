@@ -5,6 +5,7 @@ import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
 
 const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   clientId: 'cli_1',
+  accountId: 'acc_1',
   profileId: 'prf_1',
   profileName: 'Dan',
   isGuest: false,

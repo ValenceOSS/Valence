@@ -17,6 +17,7 @@ const PLAN: PlaybackPlan = {
 
 const IDLE_SESSION: ActiveSession = {
   clientId: 'tab-1',
+  accountId: 'account-1',
   profileId: 'profile-1',
   profileName: 'Dan',
   isGuest: false,

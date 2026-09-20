@@ -133,6 +133,7 @@ const job = (overrides: Partial<Job> = {}): Job => ({
 
 const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   clientId: 'cli_1',
+  accountId: 'acc_1',
   profileId: 'prf_1',
   profileName: 'Dan',
   isGuest: false,

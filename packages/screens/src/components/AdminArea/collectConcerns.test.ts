@@ -103,6 +103,7 @@ const PLAN: PlaybackPlan = {
 
 const streaming = (bufferedAheadSeconds: number, isPlaying = true): ActiveSession => ({
   clientId: 'cli_1',
+  accountId: 'acc_1',
   profileId: 'prf_1',
   profileName: 'Dan',
   isGuest: false,

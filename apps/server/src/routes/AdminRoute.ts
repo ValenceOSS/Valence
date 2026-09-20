@@ -187,6 +187,7 @@ const adminOverviewRoute = createRoute({
 const AdminSessionSchema = z
   .object({
     clientId: z.string(),
+    accountId: z.string().nullable(),
     profileId: z.string().nullable(),
     profileName: z.string().nullable(),
     isGuest: z.boolean(),

@@ -263,8 +263,24 @@ describe('fetchActiveSessions', () => {
     answerWith([SESSION]);
 
     await expect(fetchActiveSessions()).resolves.toEqual([
-      { ...SESSION, listening: null, isGuest: false, guestOf: null },
+      { ...SESSION, listening: null, isGuest: false, guestOf: null, accountId: null },
     ]);
+  });
+
+  it('reads whose account a tab belongs to, which is what groups it under one person', async () => {
+    answerWith([{ ...SESSION, accountId: 'account-1' }]);
+
+    const [session] = await fetchActiveSessions();
+
+    expect(session?.accountId).toBe('account-1');
+  });
+
+  it('reads a tab as nobody\u2019s where an older server says nothing about the account', async () => {
+    answerWith([SESSION]);
+
+    const [session] = await fetchActiveSessions();
+
+    expect(session?.accountId).toBeNull();
   });
 
   it('reads a tab as somebody\u2019s guest where the server says whose link it came in on', async () => {
