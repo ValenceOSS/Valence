@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 type Stat = {
   label: string;
   value: ReactNode;
-  detail?: string;
+  detail?: ReactNode;
   fraction?: number;
   info?: ReactNode;
 };

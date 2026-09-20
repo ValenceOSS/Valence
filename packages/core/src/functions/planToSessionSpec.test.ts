@@ -576,7 +576,9 @@ describe('telling the media service what the source is, so it can undo it', () =
       ...over,
     });
 
-    return outcome.kind === 'ok' && outcome.spec.video.kind === 'encode' ? outcome.spec.video : null;
+    return outcome.kind === 'ok' && outcome.spec.video.kind === 'encode'
+      ? outcome.spec.video
+      : null;
   };
 
   it('asks for the fields to be woven where the source was shot as fields', () => {
@@ -604,4 +606,3 @@ describe('telling the media service what the source is, so it can undo it', () =
     expect(video?.squarePixels).toBe(true);
   });
 });
-

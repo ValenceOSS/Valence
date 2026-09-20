@@ -58,7 +58,10 @@ const estimateReencodeBytes = (item: MediaItem, settings: ReencodeSettings): num
 
     return (
       total +
-      bytesFor(track.kind === 'encode' ? track.maxBitrateKbps : audioKbpsOf(stream), durationSeconds)
+      bytesFor(
+        track.kind === 'encode' ? track.maxBitrateKbps : audioKbpsOf(stream),
+        durationSeconds,
+      )
     );
   }, 0);
 
