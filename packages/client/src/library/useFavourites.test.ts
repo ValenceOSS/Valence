@@ -1,7 +1,10 @@
 import { act, waitFor } from '@testing-library/react';
 import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useQuery } from '@tanstack/react-query';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { useFavourites } from './useFavourites';
+import type * as FetchMusic from '@ValenceClient/music/fetchMusic';
 
 const fetchFavourites = vi.fn<() => Promise<string[]>>();
 const setFavourite = vi.fn<(mediaId: string, isKept: boolean) => Promise<boolean>>();
@@ -15,7 +18,15 @@ vi.mock('@ValenceClient/library/fetchFavourites', () => ({
   setBookFavourite: (bookId: string, isKept: boolean) => setBookFavourite(bookId, isKept),
 }));
 
+const fetchLiked = vi.fn<() => Promise<never[]>>();
+
+vi.mock('@ValenceClient/music/fetchMusic', async (importOriginal) => ({
+  ...(await importOriginal<typeof FetchMusic>()),
+  fetchLiked: () => fetchLiked(),
+}));
+
 beforeEach(() => {
+  fetchLiked.mockReset().mockResolvedValue([]);
   fetchFavourites.mockReset().mockResolvedValue([]);
   setFavourite.mockReset().mockResolvedValue(true);
   fetchKeptBooks.mockReset().mockResolvedValue([]);
@@ -23,6 +34,26 @@ beforeEach(() => {
 });
 
 describe('useFavourites', () => {
+  it('reads the liked songs again after a heart, so their page is never left as it was', async () => {
+    const { result } = renderHookInACache(() => ({
+      kept: useFavourites('watcher-1'),
+      liked: useQuery(musicQueries.liked()),
+    }));
+
+    await waitFor(() => {
+      expect(fetchLiked).toHaveBeenCalledTimes(1);
+    });
+
+    await act(async () => {
+      result.current.kept.toggle('media-1');
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(fetchLiked).toHaveBeenCalledTimes(2);
+    });
+  });
+
   it('reads the whole list once rather than asking per item', async () => {
     fetchFavourites.mockResolvedValue(['media-1']);
 

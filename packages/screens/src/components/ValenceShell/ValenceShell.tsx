@@ -203,7 +203,7 @@ const ValenceShell = () => {
       }
       isFitted={place.section === 'music'}
       onSectionChange={(next) => {
-        go({ section: next });
+        go(next === 'music' ? { section: next, listen: null } : { section: next });
       }}
       isAccountOpen={place.account !== null}
       onOpenAccount={() => {
