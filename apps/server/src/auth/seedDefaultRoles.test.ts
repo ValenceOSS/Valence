@@ -27,6 +27,7 @@ const emptySettings = () =>
     ownerAccountId: '',
     splashscreenFile: null,
     reencodesAwaitingReviewCap: 5,
+    roundness: 'default',
   });
 
 /**

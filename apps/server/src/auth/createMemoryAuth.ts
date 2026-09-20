@@ -92,6 +92,7 @@ const createMemoryAuth = (
     ownerAccountId: '',
     splashscreenFile: null,
     reencodesAwaitingReviewCap: 5,
+    roundness: 'default',
   });
 
   const auth = createAuth({

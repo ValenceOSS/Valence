@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
+import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
 import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
 
 const ServerSettingsSchema = z.object({
@@ -24,6 +25,7 @@ const ServerSettingsSchema = z.object({
   splashscreenFile: z.string().nullable().default(null),
   reencodesAwaitingReviewCap: z.number().int().positive().max(50).default(5),
   requestReleaseTypes: ReleaseTypesSchema.default(['album']),
+  roundness: RoundnessSchema.default('default'),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;

@@ -2239,6 +2239,12 @@ const createApp = ({
     });
   });
 
+  app.get('/api/appearance', async (context) => {
+    const { roundness } = await settings.read();
+
+    return context.json({ roundness }, 200);
+  });
+
   app.get('/api/profiles/everyone', async (context) => {
     const everyone = await profiles?.listEveryone();
 
@@ -2415,6 +2421,7 @@ const createApp = ({
           fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
           fetchesMusicDetails: current.fetchesMusicDetails,
           requestReleaseTypes: current.requestReleaseTypes,
+          roundness: current.roundness,
           splashscreen: await splashscreen.address(),
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
@@ -2471,6 +2478,7 @@ const createApp = ({
       ...(patch.requestReleaseTypes === undefined
         ? {}
         : { requestReleaseTypes: patch.requestReleaseTypes }),
+      ...(patch.roundness === undefined ? {} : { roundness: patch.roundness }),
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {
@@ -2500,6 +2508,7 @@ const createApp = ({
         fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
         fetchesMusicDetails: updated.fetchesMusicDetails,
         requestReleaseTypes: updated.requestReleaseTypes,
+        roundness: updated.roundness,
         splashscreen: await splashscreen.address(),
       },
       200,

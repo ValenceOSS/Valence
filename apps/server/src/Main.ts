@@ -322,6 +322,7 @@ const settings = createDatabaseSettingsStore({
     ownerAccountId: '',
     splashscreenFile: null,
     reencodesAwaitingReviewCap: 5,
+    roundness: 'default',
   },
 });
 
