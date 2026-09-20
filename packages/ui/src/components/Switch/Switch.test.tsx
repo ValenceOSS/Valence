@@ -86,7 +86,7 @@ describe('Switch', () => {
     const { container } = render(<Switch label="Subtitles" isOn onToggle={vi.fn()} />);
 
     expect(container.querySelector('[role="switch"] [data-state="checked"]')).toHaveClass(
-      'bg-[color-mix(in_oklab,var(--color-text)_10%,var(--color-surface))]',
+      'bg-[color-mix(in_oklab,var(--color-text)_10%,var(--card-face))]',
     );
   });
 

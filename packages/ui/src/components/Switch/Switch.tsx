@@ -105,7 +105,7 @@ const Switch = ({
             isOn
               ? isOverlay
                 ? 'bg-shade'
-                : 'bg-[color-mix(in_oklab,var(--color-text)_10%,var(--color-surface))]'
+                : 'bg-[color-mix(in_oklab,var(--color-text)_10%,var(--card-face))]'
               : 'bg-on-scrim',
           )}
         />
