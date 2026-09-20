@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { JobHistory } from './JobHistory';
@@ -243,6 +243,50 @@ describe('JobHistory', () => {
     await actor.click(await screen.findByRole('menuitem', { name: 'View issues' }));
 
     expect(await screen.findByText('No issues were recorded for this run.')).toBeInTheDocument();
+  });
+
+  it('shows the whole failure of a run that failed outright, rather than saying it has no issues', async () => {
+    const actor = userEvent.setup();
+    const message =
+      'Failed query: select "path", "sizeBytes" from "media_item" where "libraryId" = $1';
+
+    askedHistory.mockResolvedValue(page([record({ status: 'failed', errorMessage: message })]));
+    askedIssues.mockResolvedValue([]);
+
+    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+
+    await actor.click(
+      await screen.findByRole('button', { name: 'Actions for Generate missing previews' }),
+    );
+    await actor.click(await screen.findByRole('menuitem', { name: 'View issues' }));
+
+    const dialog = await screen.findByRole('dialog');
+
+    expect(within(dialog).getByRole('alert')).toHaveTextContent(message);
+    expect(
+      within(dialog).queryByText('No issues were recorded for this run.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('lists the failure first and the itemised issues after it, where a run has both', async () => {
+    const actor = userEvent.setup();
+
+    askedHistory.mockResolvedValue(
+      page([record({ status: 'failed', errorMessage: 'It stopped.' })]),
+    );
+    askedIssues.mockResolvedValue([issue()]);
+
+    renderHistory(<JobHistory definitions={DEFINITIONS} onViewLogs={vi.fn()} />);
+
+    await actor.click(
+      await screen.findByRole('button', { name: 'Actions for Generate missing previews' }),
+    );
+    await actor.click(await screen.findByRole('menuitem', { name: 'View issues' }));
+
+    const dialog = await screen.findByRole('dialog');
+
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('It stopped.');
+    expect(await within(dialog).findByText('/media/movies/broken.mkv')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

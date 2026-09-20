@@ -91,6 +91,8 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
 
   const records = askedHistory.data?.records ?? NOTHING_RUN;
   const issues = askedIssues.data ?? [];
+  const openRun = records.find((record) => record.id === openIssuesFor);
+  const failure = openRun?.errorMessage ?? null;
 
   useEffect(() => {
     let pending: ReturnType<typeof setTimeout> | null = null;
@@ -283,10 +285,28 @@ const JobHistoryPanel = ({ definitions, onViewLogs }: JobHistoryProps) => {
             <DialogTitle title="Issues from this run" />
 
             <DialogContent>
+              {failure === null ? null : (
+                <div
+                  role="alert"
+                  className="mb-4 flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 p-3"
+                >
+                  <Icon of={Alert02Icon} size={16} className="mt-0.5 shrink-0 text-danger" />
+
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-sm font-medium text-text">The run failed</span>
+                    <span className="whitespace-pre-wrap break-words text-xs text-text-muted">
+                      {failure}
+                    </span>
+                  </span>
+                </div>
+              )}
+
               {askedIssues.isPending ? (
                 <p className="text-sm text-text-muted">Reading issues…</p>
               ) : issues.length === 0 ? (
-                <p className="text-sm text-text-muted">No issues were recorded for this run.</p>
+                failure !== null ? null : (
+                  <p className="text-sm text-text-muted">No issues were recorded for this run.</p>
+                )
               ) : (
                 <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
                   {issues.map((issue) => (
