@@ -99,7 +99,7 @@ describe('FilePicker', () => {
     expect(onPick).not.toHaveBeenCalled();
   });
 
-  it('is painted as a Button is, secondary unless told otherwise', () => {
+  it('is painted as a Button is, white unless told otherwise', () => {
     render(
       <FilePicker label="Upload a photograph" accept="image/webp" onPick={vi.fn()}>
         <span>Choose</span>
@@ -108,7 +108,7 @@ describe('FilePicker', () => {
 
     const label = screen.getByText('Choose').closest('label');
 
-    expect(label).toHaveClass('rounded-md', 'border', 'bg-background', 'h-9');
+    expect(label).toHaveClass('rounded-md', 'border', 'bg-white', 'h-9');
     expect(label?.className).not.toMatch(/rounded-(full|pill)/);
   });
 
@@ -118,14 +118,14 @@ describe('FilePicker', () => {
         label="Upload a photograph"
         accept="image/webp"
         onPick={vi.fn()}
-        variant="glossy"
+        variant="secondary"
         size="lg"
       >
         <span>Choose</span>
       </FilePicker>,
     );
 
-    expect(screen.getByText('Choose').closest('label')).toHaveClass('bg-white', 'h-10');
+    expect(screen.getByText('Choose').closest('label')).toHaveClass('bg-background', 'h-10');
   });
 
   it('shows a spinner and refuses another file while one is being handled', () => {

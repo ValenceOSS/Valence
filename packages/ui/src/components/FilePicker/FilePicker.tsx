@@ -29,7 +29,7 @@ const FilePicker = ({
   accept,
   onPick,
   children,
-  variant = 'secondary',
+  variant = 'glossy',
   size = 'md',
   isLoading = false,
   isActive = false,
