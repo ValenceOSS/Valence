@@ -81,6 +81,7 @@ const stored = (path: string, overrides: Partial<StoredItem> = {}): StoredItem =
 
 const harness = (options: {
   found?: ScannedFile[];
+  unreadable?: string[];
   existing?: StoredItem[];
   probeImpl?: (path: string) => Promise<MediaProbe>;
   providers?: MetadataProvider[];
@@ -173,7 +174,13 @@ const harness = (options: {
     scanLibrary({
       libraryId: LIBRARY_ID,
       root: '/media/films',
-      files: { listFiles: () => Promise.resolve(options.found ?? []) },
+      files: {
+        listFiles: () =>
+          Promise.resolve({
+            files: options.found ?? [],
+            unreadable: options.unreadable ?? [],
+          }),
+      },
       store: {
         listStored: () => Promise.resolve(options.existing ?? []),
         upsert: (row) => {
@@ -454,6 +461,32 @@ describe('scanLibrary', () => {
     expect(removedPaths).toEqual(['/gone.mkv']);
   });
 
+  it('keeps rows for files under a folder the walk could not read', async () => {
+    const { run, removedPaths } = harness({
+      found: [file('/media/films/Kept.mkv')],
+      unreadable: ['/media/films/4K'],
+      existing: [stored('/media/films/Kept.mkv'), stored('/media/films/4K/Dune.mkv')],
+    });
+
+    expect(await run()).toMatchObject({ removed: 0 });
+    expect(removedPaths).toEqual([]);
+  });
+
+  it('still removes what really went, from the folders it could read', async () => {
+    const { run, removedPaths } = harness({
+      found: [file('/media/films/Kept.mkv')],
+      unreadable: ['/media/films/4K'],
+      existing: [
+        stored('/media/films/Kept.mkv'),
+        stored('/media/films/4K/Dune.mkv'),
+        stored('/media/films/Gone.mkv'),
+      ],
+    });
+
+    expect(await run()).toMatchObject({ removed: 1 });
+    expect(removedPaths).toEqual(['/media/films/Gone.mkv']);
+  });
+
   it('keeps scanning after a file fails to probe', async () => {
     const probeImpl = vi.fn((path: string) =>
       path.includes('broken')
@@ -478,7 +511,7 @@ describe('scanLibrary', () => {
     await scanLibrary({
       libraryId: LIBRARY_ID,
       root: '/media',
-      files: { listFiles: () => Promise.resolve([file('/broken.mkv')]) },
+      files: { listFiles: () => Promise.resolve({ files: [file('/broken.mkv')], unreadable: [] }) },
       store: {
         listStored: () => Promise.resolve([]),
         upsert: () => Promise.resolve('item-1'),

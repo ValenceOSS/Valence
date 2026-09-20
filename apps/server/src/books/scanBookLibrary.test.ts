@@ -99,7 +99,7 @@ const scan = async (paths: string[], force = false) =>
   scanBookLibrary({
     libraryId: 'a-library',
     root: where,
-    files: { listFiles: () => Promise.resolve(listing(paths)) },
+    files: { listFiles: () => Promise.resolve({ files: listing(paths), unreadable: [] }) },
     store: store(),
     force,
   });
@@ -108,7 +108,7 @@ const scanReporting = async (paths: string[], onAdded: (book: ArrivedBook) => vo
   scanBookLibrary({
     libraryId: 'a-library',
     root: where,
-    files: { listFiles: () => Promise.resolve(listing(paths)) },
+    files: { listFiles: () => Promise.resolve({ files: listing(paths), unreadable: [] }) },
     store: store(),
     onAdded,
   });
@@ -192,6 +192,28 @@ describe('scanBookLibrary', () => {
     expect(removeByPaths).toHaveBeenCalledWith('a-library', [join(where, 'Gone.cbz')]);
   });
 
+  it('keeps a book under a folder the walk could not read', async () => {
+    const sealed = join(where, 'Sealed');
+
+    held = [{ path: join(sealed, 'Hidden.cbz'), sizeBytes: 10, modifiedAtMs: 100 }];
+
+    const result = await scanBookLibrary({
+      libraryId: 'a-library',
+      root: where,
+      files: {
+        listFiles: () =>
+          Promise.resolve({
+            files: listing([join(where, 'Loose Volume.cbz')]),
+            unreadable: [sealed],
+          }),
+      },
+      store: store(),
+    });
+
+    expect(result.removed).toBe(0);
+    expect(removeByPaths).not.toHaveBeenCalled();
+  });
+
   it('reports a file that will not open, and carries on with the rest', async () => {
     const broken = join(where, 'Broken.cbz');
     await writeFile(broken, 'not an archive');
@@ -201,7 +223,11 @@ describe('scanBookLibrary', () => {
       libraryId: 'a-library',
       root: where,
       files: {
-        listFiles: () => Promise.resolve(listing([broken, join(where, 'Loose Volume.cbz')])),
+        listFiles: () =>
+          Promise.resolve({
+            files: listing([broken, join(where, 'Loose Volume.cbz')]),
+            unreadable: [],
+          }),
       },
       store: store(),
       onProblem: (path) => problems.push(path),
@@ -232,12 +258,13 @@ describe('scanBookLibrary', () => {
       root: where,
       files: {
         listFiles: () =>
-          Promise.resolve(
-            listing([
+          Promise.resolve({
+            files: listing([
               join(folder, 'Rent-A-Girlfriend v01 (2020).cbz'),
               join(folder, 'Rent-A-Girlfriend v02 (2020).cbz'),
             ]),
-          ),
+            unreadable: [],
+          }),
       },
       store: store(),
       isCancelled: () => chapters.length >= 1,

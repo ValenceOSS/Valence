@@ -1,3 +1,4 @@
+import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { isMediaFile } from './readTitleFromPath';
 import { resolveMetadata } from './MetadataProvider';
 import { createFilenameMetadataProvider } from './createFilenameMetadataProvider';
@@ -17,6 +18,11 @@ type ScannedFile = {
   path: string;
   sizeBytes: number;
   modifiedAtMs: number;
+};
+
+type ScanFindings = {
+  files: ScannedFile[];
+  unreadable: string[];
 };
 
 type StoredItem = {
@@ -47,7 +53,7 @@ type MediaRow = {
 };
 
 type MediaFileSystem = {
-  listFiles: (root: string) => Promise<ScannedFile[]>;
+  listFiles: (root: string) => Promise<ScanFindings>;
 };
 
 type MediaOverride = {
@@ -267,7 +273,8 @@ const scanLibrary = async ({
   onRemoved,
   isCancelled,
 }: ScanLibraryOptions): Promise<ScanResult> => {
-  const found = (await files.listFiles(root)).filter((file) => isMediaFile(file.path));
+  const walked = await files.listFiles(root);
+  const found = walked.files.filter((file) => isMediaFile(file.path));
   const stored = await store.listStored(libraryId);
   const probeVersion = await readProbeVersion(transcoder);
 
@@ -284,7 +291,10 @@ const scanLibrary = async ({
   const { changed } = seen;
 
   const hasVanished = found.length === 0 && stored.length > 0;
-  const missing = isPartial || hasVanished ? [] : seen.missing;
+  const missing =
+    isPartial || hasVanished
+      ? []
+      : seen.missing.filter((path) => !isUnderAny(path, walked.unreadable));
   const knownPaths = new Set(stored.map((item) => item.path));
   const storedByPath = new Map(stored.map((item) => [item.path, item]));
   const corrections = (await store.listOverrides?.(libraryId)) ?? [];
@@ -483,6 +493,7 @@ export type {
   MediaRow,
   MediaStore,
   ScanPhase,
+  ScanFindings,
   ScannedFile,
   ScannedItem,
   StoredItem,
