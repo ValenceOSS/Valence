@@ -108,7 +108,7 @@ describe('MediaCard', () => {
       <MediaCard title="Arrival" subtitle="2016" badges={['4K', 'HDR10']} onSelect={vi.fn()} />,
     );
 
-    expect(screen.getByText('4K')).toHaveClass('bg-shade/60');
+    expect(screen.getByText('4K')).toHaveClass('bg-shade');
   });
 
   it('draws the card without its motion for somebody who asked for less', () => {
