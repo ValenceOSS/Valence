@@ -111,8 +111,8 @@ const MusicPage = () => {
               : 'lg:w-0 lg:opacity-0 xl:w-[19.5rem] xl:opacity-100',
           )}
         >
-          <aside className="valence-surface valence-surface--flat mr-2 flex min-h-0 w-[17rem] shrink-0 overflow-hidden rounded-2xl xl:w-[19rem]">
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <aside className="valence-card-shell mr-2 flex min-h-0 w-[17rem] shrink-0 xl:w-[19rem]">
+            <div className="valence-card-face flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               <MusicLibrary />
             </div>
           </aside>

@@ -68,6 +68,15 @@ describe('MusicPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('wraps the library in a card like every other panel on the page', () => {
+    renderInAnAddress(<MusicPage />);
+
+    const aside = document.querySelector('aside');
+
+    expect(aside).toHaveClass('valence-card-shell');
+    expect(aside?.firstElementChild).toHaveClass('valence-card-face');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MusicPage.displayName).toBe('MusicPage');
   });
