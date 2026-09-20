@@ -179,11 +179,11 @@ const LogsPanel = ({
       actions={
         <>
           <TextField
-            label="Search the messages"
+            label="Search the logs"
             isLabelHidden
             size="sm"
             type="search"
-            placeholder="skipped, ffmpeg, timed out"
+            placeholder="skipped, ffmpeg, a job or session id"
             value={search}
             onValueChange={setSearch}
             className="w-64 max-w-full"

@@ -94,7 +94,7 @@ describe('LogsPanel', () => {
 
     render(<LogsPanel {...world.props} />);
     await screen.findByText('could not read the file');
-    await actor.type(screen.getByLabelText('Search the messages'), 'ffmpeg');
+    await actor.type(screen.getByLabelText('Search the logs'), 'ffmpeg');
 
     await waitFor(() => {
       expect(world.asked.at(-1)?.search).toBe('ffmpeg');
