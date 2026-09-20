@@ -5,11 +5,13 @@ import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { DataTable } from '@ValenceUI/DataTable';
+import { HoverCard } from '@ValenceUI/HoverCard';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
+import { describeRunSubject } from './describeRunSubject';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { watchJobs } from '@ValenceClient/admin/fetchAdmin';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
@@ -77,10 +79,11 @@ const describeRunKind = (kind: string, labels: ReadonlyMap<string, string>): str
  * showed the last moment, and this shows the history behind it.
  *
  * @param definitions - The jobs the server offers, for naming a run's kind in words.
+ * @param libraries - The libraries a run's subject can name, so it is shown by name.
  * @param working - What the queue is working on, for showing what a running run is made of.
  * @param onViewLogs - Called with a run's id, to open the log filtered to it.
  */
-const JobHistoryPanel = ({ definitions, working, onViewLogs }: JobHistoryProps) => {
+const JobHistoryPanel = ({ definitions, libraries, working, onViewLogs }: JobHistoryProps) => {
   const cache = useQueryClient();
   const [openIssuesFor, setOpenIssuesFor] = useState<string | null>(null);
   const [openWorkFor, setOpenWorkFor] = useState<string | null>(null);
@@ -198,20 +201,78 @@ const JobHistoryPanel = ({ definitions, working, onViewLogs }: JobHistoryProps) 
       {
         id: 'subject',
         header: 'Subject',
-        accessorFn: (record) => record.subject ?? '',
-        cell: ({ row }) => (
-          <span className="flex max-w-[12rem] min-w-0 flex-col">
-            <span className="truncate text-text" title={row.original.subject ?? undefined}>
-              {row.original.subject ?? '—'}
-            </span>
+        accessorFn: (record) => describeRunSubject(record.subject, libraries).name,
+        cell: ({ row }) => {
+          const { name, library } = describeRunSubject(row.original.subject, libraries);
 
-            {row.original.errorMessage === null ? null : (
-              <span className="truncate text-xs text-danger" title={row.original.errorMessage}>
-                {row.original.errorMessage}
+          return (
+            <span className="flex max-w-[12rem] min-w-0 flex-col">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-text" title={name}>
+                  {name}
+                </span>
+
+                {row.original.subject === null ? null : (
+                  <HoverCard
+                    side="top"
+                    align="start"
+                    detail={
+                      <dl className="flex flex-col gap-1.5 text-xs">
+                        {library === null ? null : (
+                          <>
+                            <div className="flex flex-col">
+                              <dt className="text-text-muted">Library</dt>
+                              <dd className="text-text">{library.name}</dd>
+                            </div>
+
+                            <div className="flex flex-col">
+                              <dt className="text-text-muted">Kind</dt>
+                              <dd className="text-text">{library.kind}</dd>
+                            </div>
+
+                            <div className="flex flex-col">
+                              <dt className="text-text-muted">Folder</dt>
+                              <dd className="break-all text-text">{library.path}</dd>
+                            </div>
+
+                            <div className="flex flex-col">
+                              <dt className="text-text-muted">Items</dt>
+                              <dd className="tabular-nums text-text">
+                                {library.itemCount.toString()}
+                              </dd>
+                            </div>
+                          </>
+                        )}
+
+                        <div className="flex flex-col">
+                          <dt className="text-text-muted">{library === null ? 'Subject' : 'ID'}</dt>
+                          <dd className="break-all text-text">{row.original.subject}</dd>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <dt className="text-text-muted">Run</dt>
+                          <dd className="break-all text-text">{row.original.id}</dd>
+                        </div>
+                      </dl>
+                    }
+                  >
+                    <Icon
+                      of={InformationCircleIcon}
+                      size={15}
+                      className="shrink-0 text-text-muted"
+                    />
+                  </HoverCard>
+                )}
               </span>
-            )}
-          </span>
-        ),
+
+              {row.original.errorMessage === null ? null : (
+                <span className="truncate text-xs text-danger" title={row.original.errorMessage}>
+                  {row.original.errorMessage}
+                </span>
+              )}
+            </span>
+          );
+        },
       },
       {
         id: 'progress',
@@ -274,7 +335,7 @@ const JobHistoryPanel = ({ definitions, working, onViewLogs }: JobHistoryProps) 
         ),
       },
     ],
-    [labels, onViewLogs],
+    [labels, libraries, onViewLogs],
   );
 
   return (

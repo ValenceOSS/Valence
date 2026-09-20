@@ -142,7 +142,12 @@ const JobsPanel = ({
           }
         >
           <TabPanel value="history" travel={travel}>
-            <JobHistory definitions={definitions} working={working} onViewLogs={onViewLogs} />
+            <JobHistory
+              definitions={definitions}
+              libraries={libraries}
+              working={working}
+              onViewLogs={onViewLogs}
+            />
           </TabPanel>
 
           <TabPanel value="run" travel={travel}>
