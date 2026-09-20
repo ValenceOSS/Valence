@@ -1,3 +1,4 @@
+import { readSeasonDirectory } from './readSeasonDirectory';
 import type { ExtraKind } from '@ValenceContracts/schemas/Library';
 
 const BY_FOLDER = new Map<string, ExtraKind>([
@@ -29,6 +30,8 @@ const BY_SUFFIX = new Map<string, ExtraKind>([
   ['other', 'other'],
 ]);
 
+const FOLDER_WORDS = [...BY_FOLDER.keys()].sort((left, right) => right.length - left.length);
+
 const WORDS = [...BY_SUFFIX.keys()].join('|');
 
 const SUFFIX = new RegExp(`[-._ ](${WORDS})\\d*$`, 'i');
@@ -39,6 +42,29 @@ type FoundExtra = {
   kind: ExtraKind;
   parentPath: string | null;
   seriesFolder: string | null;
+};
+
+/**
+ * Reads what a folder says its contents are.
+ *
+ * Named rather than exactly named, because a folder of a programme's extras is as often called
+ * `Season 1 Extras` as `Extras`, and reading only the exact word left those files as nothing in
+ * particular — which put a set of out-takes on the films shelf. The longest word wins, so `Deleted
+ * Scenes` is deleted scenes rather than scenes.
+ *
+ * @param folderName - The folder's own name, lowercased.
+ * @returns What it holds, or nothing where it does not say.
+ */
+const kindOfFolder = (folderName: string): ExtraKind | undefined => {
+  const exact = BY_FOLDER.get(folderName);
+
+  if (exact !== undefined) {
+    return exact;
+  }
+
+  const named = FOLDER_WORDS.find((word) => new RegExp(`\\b${word}\\b`, 'i').test(folderName));
+
+  return named === undefined ? undefined : BY_FOLDER.get(named);
 };
 
 /**
@@ -155,12 +181,19 @@ const groupExtras = (paths: readonly string[]): Map<string, FoundExtra> => {
     const { folder, name } = partsOf(path);
     const stem = stripExtension(name);
     const folderName = folder.slice(folder.lastIndexOf('/') + 1).toLowerCase();
-    const byFolder = BY_FOLDER.get(folderName);
+    const byFolder = kindOfFolder(folderName);
 
     if (byFolder !== undefined) {
       const above = folder.slice(0, Math.max(0, folder.lastIndexOf('/')));
+      const seasonAbove = readSeasonDirectory(above.slice(above.lastIndexOf('/') + 1));
+      const seriesFolder = above.slice(0, Math.max(0, above.lastIndexOf('/')));
 
-      found.set(path, { kind: byFolder, ...whatItBelongsTo(above, videos, path) });
+      found.set(path, {
+        kind: byFolder,
+        ...(seasonAbove === null
+          ? whatItBelongsTo(above, videos, path)
+          : { parentPath: null, seriesFolder: seriesFolder === '' ? null : seriesFolder }),
+      });
 
       continue;
     }
