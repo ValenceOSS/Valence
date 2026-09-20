@@ -154,7 +154,7 @@ const ProfilesPanel = () => {
       isFlush
       actions={
         <Button
-          variant="ghost"
+          variant="secondary"
           size="xs"
           onClick={() => {
             setIsAdding(true);

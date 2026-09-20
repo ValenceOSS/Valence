@@ -338,15 +338,14 @@ const RolesPanel = () => {
         isFlush
         actions={
           <Button
-            variant="ghost"
+            variant="secondary"
             size="xs"
-            className="shrink-0 text-xs text-text-muted hover:text-text"
             onClick={() => {
               setIsCreating(true);
             }}
           >
-            <Icon of={Add01Icon} size={14} />
             Create role
+            <Icon of={Add01Icon} size={15} />
           </Button>
         }
       >

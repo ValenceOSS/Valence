@@ -216,7 +216,7 @@ const IndexersPanel = () => {
       isFlush
       actions={
         <Button
-          variant="ghost"
+          variant="secondary"
           size="xs"
           onClick={() => {
             setIsChoosing(true);

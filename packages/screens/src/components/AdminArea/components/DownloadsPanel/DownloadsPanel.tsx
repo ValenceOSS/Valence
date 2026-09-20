@@ -200,7 +200,7 @@ const DownloadsPanel = () => {
             )}
 
             <Button
-              variant="ghost"
+              variant="secondary"
               size="xs"
               onClick={() => {
                 setIsAdding(true);

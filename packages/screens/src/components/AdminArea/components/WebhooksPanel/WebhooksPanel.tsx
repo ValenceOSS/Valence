@@ -159,9 +159,8 @@ const WebhooksPanel = ({
         isFlush
         actions={
           <Button
-            variant="ghost"
+            variant="secondary"
             size="xs"
-            className="shrink-0 text-xs text-text-muted hover:text-text"
             onClick={() => {
               setIsAdding(true);
             }}

@@ -192,7 +192,7 @@ const ProfileEditor = ({ profile, onClose, onSaved }: ProfileEditorProps) => {
     <PanelCard
       title={title}
       actions={
-        <Button variant="ghost" size="xs" onClick={onClose}>
+        <Button variant="secondary" size="xs" onClick={onClose}>
           <Icon of={ArrowLeft01Icon} size={14} />
           Every profile
         </Button>

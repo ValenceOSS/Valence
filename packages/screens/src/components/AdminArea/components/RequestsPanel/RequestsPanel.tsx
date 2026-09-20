@@ -47,7 +47,7 @@ const RequestsPanel = () => {
       title="Requests"
       isFlush
       actions={
-        <Button variant="ghost" size="xs" isLoading={isChecking} onClick={checkNow}>
+        <Button variant="secondary" size="xs" isLoading={isChecking} onClick={checkNow}>
           Check now
           <Icon of={RefreshIcon} size={15} />
         </Button>

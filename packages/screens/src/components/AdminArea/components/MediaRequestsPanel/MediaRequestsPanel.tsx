@@ -381,7 +381,7 @@ const MediaRequestsPanel = () => {
       actions={
         <>
           <Button
-            variant="ghost"
+            variant="secondary"
             size="xs"
             isLoading={isSearchingMissing}
             onClick={() => {
@@ -413,7 +413,7 @@ const MediaRequestsPanel = () => {
           </Button>
 
           <Button
-            variant="ghost"
+            variant="secondary"
             size="xs"
             onClick={() => {
               setIsAsking(true);
