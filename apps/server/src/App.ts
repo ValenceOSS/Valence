@@ -3370,6 +3370,7 @@ const createApp = ({
           position: held.length === 0 ? null : Math.max(...held.map((role) => role.position)),
           isAdministrator: resolved.has('administrator'),
           face: (await households?.read(account.id, account.name)) ?? null,
+          profile: ((await profiles?.list(account.id)) ?? [])[0] ?? null,
           roles: held.map((role) => role.name),
         };
       }),

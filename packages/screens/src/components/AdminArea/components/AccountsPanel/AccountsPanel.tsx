@@ -1,3 +1,4 @@
+import { AccountFace } from '@ValenceScreens/components/AdminArea/components/AccountsPanel/components/AccountFace/AccountFace';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
@@ -18,7 +19,6 @@ import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { FormField } from '@ValenceUI/FormField';
 import { DialogContent } from '@ValenceUI/DialogContent';
-import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
@@ -363,17 +363,7 @@ const AccountsPanel = () => {
         accessorFn: (account) => account.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-3">
-            {row.original.face === null ? (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-subtle text-sm font-semibold text-text">
-                {(row.original.name.trim()[0] ?? '?').toUpperCase()}
-              </span>
-            ) : (
-              <HouseholdFace
-                household={row.original.face}
-                accountId={row.original.id}
-                className="size-8 shrink-0 rounded-full"
-              />
-            )}
+            <AccountFace account={row.original} />
 
             <span className="flex min-w-0 flex-col">
               <span className="truncate font-medium text-text">{row.original.name}</span>
