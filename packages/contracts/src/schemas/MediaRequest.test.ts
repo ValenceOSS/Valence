@@ -15,8 +15,37 @@ describe('MediaRequestAskSchema', () => {
     });
   });
 
-  it('refuses something that is not a film or a series', () => {
-    expect(() => MediaRequestAskSchema.parse({ kind: 'album', tmdbId: 1 })).toThrow();
+  it('refuses something that is not a film, a series, an artist or an album', () => {
+    expect(() => MediaRequestAskSchema.parse({ kind: 'book', tmdbId: 1 })).toThrow();
+  });
+
+  it('asks for music by its MusicBrainz id, and films and series by their TMDB one', () => {
+    expect(
+      MediaRequestAskSchema.parse({
+        kind: 'artist',
+        musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+        releaseTypes: ['album', 'ep'],
+      }),
+    ).toMatchObject({ kind: 'artist', releaseTypes: ['album', 'ep'] });
+    expect(() => MediaRequestAskSchema.parse({ kind: 'album', tmdbId: 1 })).toThrow(
+      /MusicBrainz id/,
+    );
+    expect(() =>
+      MediaRequestAskSchema.parse({
+        kind: 'film',
+        musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+      }),
+    ).toThrow(/TMDB id/);
+  });
+
+  it('refuses an artist watched for no kind of release', () => {
+    expect(() =>
+      MediaRequestAskSchema.parse({
+        kind: 'artist',
+        musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+        releaseTypes: [],
+      }),
+    ).toThrow();
   });
 });
 
@@ -32,6 +61,8 @@ describe('RequestCatalogueSchema', () => {
       releaseDates: { theatrical: null, digital: null, physical: null },
       episodes: [],
       isEnded: false,
+      artist: null,
+      albums: [],
     });
   });
 

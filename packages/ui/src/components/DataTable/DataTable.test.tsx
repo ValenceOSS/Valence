@@ -38,6 +38,17 @@ describe('DataTable', () => {
     expect(screen.getByRole('columnheader', { name: /Name/ })).toHaveClass('sticky');
   });
 
+  it('caps its height, or takes the room its parent gives it', () => {
+    const { rerender } = render(<DataTable label="Library roots" columns={COLUMNS} rows={ROWS} />);
+    const scroller = () => screen.getByRole('table').parentElement;
+
+    expect(scroller()).toHaveClass('max-h-[28rem]');
+
+    rerender(<DataTable label="Library roots" columns={COLUMNS} rows={ROWS} height="parent" />);
+
+    expect(scroller()).toHaveClass('min-h-0', 'flex-1');
+  });
+
   it('says so where there is nothing to list', () => {
     render(
       <DataTable

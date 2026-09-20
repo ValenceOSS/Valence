@@ -3,7 +3,8 @@ import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { StateBadge } from '@ValenceScreens/components/AdminArea/StateBadge';
 
 /**
- * The day the next of a series' episodes airs, where the catalogue has said.
+ * The day the next of a series' episodes airs, or an artist's albums comes out, where the
+ * catalogue has said.
  *
  * @param request - The request.
  * @returns The day, or null.
@@ -40,6 +41,18 @@ const describeRequestBadge = (request: MediaRequest): StateBadge => {
       }
 
       const next = nextAirDate(request);
+      const isMusic = request.kind === 'artist' || request.kind === 'album';
+
+      if (isMusic) {
+        return {
+          label: 'Not out yet',
+          tone: 'quiet',
+          detail:
+            next === null
+              ? 'Waiting for the next album to be announced.'
+              : `Out ${describeCalendarDay(next)}.`,
+        };
+      }
 
       return {
         label: 'Not out yet',

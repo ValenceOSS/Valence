@@ -12,6 +12,19 @@ describe('MusicArtwork', () => {
     );
   });
 
+  it('shows the note until the picture has loaded, then only the picture', () => {
+    const { container } = render(<MusicArtwork src="/slow.webp" label="Slow" />);
+    const picture = screen.getByRole('img', { name: 'Slow' });
+
+    expect(picture).toHaveClass('opacity-0');
+    expect(container.querySelector('svg')).not.toBeNull();
+
+    fireEvent.load(picture);
+
+    expect(picture).toHaveClass('opacity-100');
+    expect(container.querySelector('svg')).toBeNull();
+  });
+
   it('stands a note in where there is no picture, still saying what it is', () => {
     render(<MusicArtwork src={null} label="Untitled" />);
 

@@ -57,14 +57,14 @@ const RequestReleasesDialog = ({ request, onClose, onPicked }: RequestReleasesDi
   const title = request === null ? 'Releases' : `Releases for ${request.title}`;
 
   return (
-    <DialogCompanion label={title} isOpen={request !== null} onClose={onClose}>
+    <DialogCompanion label={title} isOpen={request !== null} onClose={onClose} size="stage">
       <DialogTitle
         size="compact"
         title={title}
         detail="Every release the indexers found for it, judged against its quality profile, best first."
       />
 
-      <DialogContent>
+      <DialogContent className="flex min-h-0 flex-col overflow-hidden">
         {found.isError ? (
           <CouldNotRead
             what="The releases"

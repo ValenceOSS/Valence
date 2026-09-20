@@ -1,9 +1,20 @@
 import { z } from 'zod';
+import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { ReleaseSchema } from './Indexer';
 
-const MEDIA_REQUEST_KINDS = ['film', 'series'] as const;
+const MEDIA_REQUEST_KINDS = ['film', 'series', 'artist', 'album'] as const;
 
 const MediaRequestKindSchema = z.enum(MEDIA_REQUEST_KINDS);
+
+const MUSIC_REQUEST_KINDS = ['artist', 'album'] as const;
+
+const RELEASE_TYPES = ['album', 'ep', 'single', 'live', 'compilation'] as const;
+
+const ReleaseTypeSchema = z.enum(RELEASE_TYPES);
+
+const ReleaseTypesSchema = z.array(ReleaseTypeSchema).min(1).max(RELEASE_TYPES.length);
+
+const MusicBrainzIdSchema = z.string().uuid();
 
 const REQUEST_ITEM_STATES = [
   'waiting',
@@ -36,6 +47,13 @@ const CatalogueEpisodeSchema = z.object({
   airDate: CalendarDateSchema.nullable(),
 });
 
+const CatalogueAlbumSchema = z.object({
+  id: MusicBrainzIdSchema,
+  title: z.string(),
+  type: ReleaseTypeSchema.nullable(),
+  firstReleased: CalendarDateSchema.nullable(),
+});
+
 const RequestCatalogueSchema = z.object({
   title: z.string().min(1),
   year: z.number().int().nullable(),
@@ -52,37 +70,77 @@ const RequestCatalogueSchema = z.object({
     .default({ theatrical: null, digital: null, physical: null }),
   episodes: z.array(CatalogueEpisodeSchema).max(5000).default([]),
   isEnded: z.boolean().default(false),
+  artist: z.string().nullable().default(null),
+  albums: z.array(CatalogueAlbumSchema).max(2000).default([]),
 });
 
 const RequesterSchema = z.object({ id: z.string().min(1), name: z.string() });
 
 const SeasonsSchema = z.array(z.number().int().nonnegative()).max(200).nullable();
 
-const MediaRequestAskSchema = z.object({
-  kind: MediaRequestKindSchema,
-  tmdbId: z.number().int().positive(),
-  seasons: SeasonsSchema.default(null),
-  libraryId: z.string().uuid().optional(),
-  profileId: z.string().uuid().optional(),
-  isPickedByHand: z.boolean().default(false),
-  release: ReleaseSchema.optional(),
-});
+/**
+ * Says where a request lacks the id its kind is found by: a TMDB id for a film or a series, a
+ * MusicBrainz id for an artist or an album.
+ *
+ * @param asked - The request.
+ * @param context - Where to say so.
+ */
+const needsItsId = (
+  asked: {
+    kind: MediaRequestKind;
+    tmdbId?: number | null | undefined;
+    musicBrainzId?: string | null | undefined;
+  },
+  context: z.RefinementCtx,
+): void => {
+  const isMusic = isMusicRequest(asked.kind);
+  const id = isMusic ? asked.musicBrainzId : asked.tmdbId;
 
-const MediaRequestDraftSchema = z.object({
-  kind: MediaRequestKindSchema,
-  tmdbId: z.number().int().positive(),
-  libraryId: z.string().min(1),
-  libraryPath: z.string().min(1),
-  profileId: z.string().uuid().nullable().default(null),
-  isPickedByHand: z.boolean().default(false),
-  seasons: SeasonsSchema.default(null),
-  requestedBy: RequesterSchema,
-  isApproved: z.boolean(),
-  catalogue: RequestCatalogueSchema,
-});
+  if (id === undefined || id === null) {
+    context.addIssue({
+      code: 'custom',
+      path: [isMusic ? 'musicBrainzId' : 'tmdbId'],
+      message: isMusic
+        ? 'Music is asked for by its MusicBrainz id.'
+        : 'A film or series is asked for by its TMDB id.',
+    });
+  }
+};
+
+const MediaRequestAskSchema = z
+  .object({
+    kind: MediaRequestKindSchema,
+    tmdbId: z.number().int().positive().optional(),
+    musicBrainzId: MusicBrainzIdSchema.optional(),
+    seasons: SeasonsSchema.default(null),
+    releaseTypes: ReleaseTypesSchema.optional(),
+    libraryId: z.string().uuid().optional(),
+    profileId: z.string().uuid().optional(),
+    isPickedByHand: z.boolean().default(false),
+    release: ReleaseSchema.optional(),
+  })
+  .superRefine(needsItsId);
+
+const MediaRequestDraftSchema = z
+  .object({
+    kind: MediaRequestKindSchema,
+    tmdbId: z.number().int().positive().nullable().default(null),
+    musicBrainzId: MusicBrainzIdSchema.nullable().default(null),
+    libraryId: z.string().min(1),
+    libraryPath: z.string().min(1),
+    profileId: z.string().uuid().nullable().default(null),
+    isPickedByHand: z.boolean().default(false),
+    seasons: SeasonsSchema.default(null),
+    releaseTypes: ReleaseTypesSchema.nullable().default(null),
+    requestedBy: RequesterSchema,
+    isApproved: z.boolean(),
+    catalogue: RequestCatalogueSchema,
+  })
+  .superRefine(needsItsId);
 
 const RequestItemSchema = z.object({
   id: z.string().uuid(),
+  musicBrainzId: MusicBrainzIdSchema.nullable(),
   season: z.number().int().nonnegative().nullable(),
   episode: z.number().int().nonnegative().nullable(),
   title: z.string(),
@@ -100,8 +158,10 @@ const RequestItemSchema = z.object({
 const MediaRequestSchema = z.object({
   id: z.string().uuid(),
   kind: MediaRequestKindSchema,
-  tmdbId: z.number().int().positive(),
+  tmdbId: z.number().int().positive().nullable(),
+  musicBrainzId: MusicBrainzIdSchema.nullable(),
   title: z.string(),
+  artistName: z.string().nullable(),
   year: z.number().int().nullable(),
   overview: z.string().nullable(),
   posterUrl: z.string().nullable(),
@@ -114,6 +174,7 @@ const MediaRequestSchema = z.object({
   refusedBecause: z.string().nullable(),
   requestedBy: RequesterSchema,
   seasons: SeasonsSchema,
+  releaseTypes: ReleaseTypesSchema.nullable(),
   releaseDate: CalendarDateSchema.nullable(),
   items: z.array(RequestItemSchema),
   mediaId: z.string().nullable(),
@@ -125,6 +186,7 @@ const MediaRequestChangeSchema = z.object({
   profileId: z.string().uuid().nullable().optional(),
   isPickedByHand: z.boolean().optional(),
   seasons: SeasonsSchema.optional(),
+  releaseTypes: ReleaseTypesSchema.optional(),
 });
 
 const MediaRequestRevisionSchema = z.object({
@@ -150,7 +212,8 @@ const MediaRequestArrivalSchema = z.object({ mediaId: z.string().min(1) });
 const FollowedRequestSchema = z.object({
   id: z.string().uuid(),
   kind: MediaRequestKindSchema,
-  tmdbId: z.number().int().positive(),
+  tmdbId: z.number().int().positive().nullable(),
+  musicBrainzId: MusicBrainzIdSchema.nullable(),
   libraryId: z.string(),
 });
 
@@ -158,6 +221,17 @@ const CatalogueSeasonSchema = z.object({
   season: z.number().int().nonnegative(),
   episodeCount: z.number().int().nonnegative(),
   firstAired: CalendarDateSchema.nullable(),
+});
+
+const MusicCatalogueHitSchema = z.object({
+  kind: z.enum(MUSIC_REQUEST_KINDS),
+  musicBrainzId: MusicBrainzIdSchema,
+  title: z.string(),
+  artist: z.string().nullable(),
+  disambiguation: z.string().nullable(),
+  type: ReleaseTypeSchema.nullable(),
+  year: z.number().int().nullable(),
+  coverUrl: z.string().nullable(),
 });
 
 const RequestLogEntrySchema = z.object({
@@ -172,6 +246,11 @@ const MissingSearchSchema = z.object({
 });
 
 type MediaRequestKind = (typeof MEDIA_REQUEST_KINDS)[number];
+type MusicRequestKind = (typeof MUSIC_REQUEST_KINDS)[number];
+type VideoRequestKind = Exclude<MediaRequestKind, MusicRequestKind>;
+type ReleaseType = (typeof RELEASE_TYPES)[number];
+type CatalogueAlbum = z.infer<typeof CatalogueAlbumSchema>;
+type MusicCatalogueHit = z.infer<typeof MusicCatalogueHitSchema>;
 type RequestItemState = (typeof REQUEST_ITEM_STATES)[number];
 type MediaRequestState = (typeof MEDIA_REQUEST_STATES)[number];
 type RequestApproval = (typeof REQUEST_APPROVALS)[number];
@@ -196,6 +275,7 @@ type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;
 type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
 
 export type {
+  CatalogueAlbum,
   CatalogueEpisode,
   CatalogueSeason,
   FollowedRequest,
@@ -211,6 +291,9 @@ export type {
   MediaRequestRevision,
   MediaRequestState,
   MissingSearch,
+  MusicCatalogueHit,
+  MusicRequestKind,
+  ReleaseType,
   RequestApproval,
   RequestCatalogue,
   RequestCatalogueDraft,
@@ -219,14 +302,18 @@ export type {
   RequestItem,
   RequestItemState,
   RequestLogEntry,
+  VideoRequestKind,
 };
 
 export {
   MEDIA_REQUEST_KINDS,
   MEDIA_REQUEST_STATES,
+  MUSIC_REQUEST_KINDS,
+  RELEASE_TYPES,
   REQUEST_APPROVALS,
   REQUEST_ITEM_STATES,
   CalendarDateSchema,
+  CatalogueAlbumSchema,
   CatalogueEpisodeSchema,
   CatalogueSeasonSchema,
   FollowedRequestSchema,
@@ -242,6 +329,10 @@ export {
   MediaRequestSchema,
   MediaRequestStateSchema,
   MissingSearchSchema,
+  MusicBrainzIdSchema,
+  MusicCatalogueHitSchema,
+  ReleaseTypeSchema,
+  ReleaseTypesSchema,
   RequestApprovalSchema,
   RequestCatalogueSchema,
   RequestCatalogueUpdateSchema,

@@ -5,6 +5,7 @@ import type { RequestItem } from '@ValenceContracts/schemas/MediaRequest';
 
 const EPISODE: RequestItem = {
   id: '6ba7b810-9dad-11d1-80b4-000000000001',
+  musicBrainzId: null,
   season: 1,
   episode: 1,
   title: '',
@@ -39,6 +40,15 @@ describe('describeRequestBadge', () => {
         aMediaRequest({ state: 'waiting', kind: 'series', items: [{ ...EPISODE, airDate: null }] }),
       ).detail,
     ).toBe('Waiting for the next episode to be announced.');
+    expect(
+      describeRequestBadge(aMediaRequest({ state: 'waiting', kind: 'artist', items: [EPISODE] }))
+        .detail,
+    ).toBe('Out 2 Oct 2026.');
+    expect(
+      describeRequestBadge(
+        aMediaRequest({ state: 'waiting', kind: 'album', items: [{ ...EPISODE, airDate: null }] }),
+      ).detail,
+    ).toBe('Waiting for the next album to be announced.');
   });
 
   it('says what went wrong, or what is on its way', () => {

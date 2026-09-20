@@ -689,7 +689,9 @@ describe('createRequestsClient with requests for films and series', () => {
     id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
     kind: 'film' as const,
     tmdbId: 438631,
+    musicBrainzId: null,
     title: 'Dune',
+    artistName: null,
     year: 2021,
     overview: null,
     posterUrl: null,
@@ -702,6 +704,7 @@ describe('createRequestsClient with requests for films and series', () => {
     refusedBecause: null,
     requestedBy: { id: 'someone', name: 'Someone' },
     seasons: null,
+    releaseTypes: null,
     releaseDate: '2021-12-03',
     items: [],
     mediaId: null,
@@ -835,7 +838,13 @@ describe('createRequestsClient with requests for films and series', () => {
   it('lists what is followed, and searches for everything missing', async () => {
     expect(
       await aClient(200, [
-        { id: REQUEST.id, kind: 'film', tmdbId: 438631, libraryId: 'films' },
+        {
+          id: REQUEST.id,
+          kind: 'film',
+          tmdbId: 438631,
+          musicBrainzId: null,
+          libraryId: 'films',
+        },
       ]).client.followedRequests(),
     ).toMatchObject({ kind: 'answered', value: [{ tmdbId: 438631 }] });
     expect(

@@ -36,6 +36,10 @@ const TorrentSchema = z.object({
   downloadDir: z.string().default(''),
 });
 
+const FilesSchema = z.array(
+  z.object({ files: z.array(z.object({ name: z.string() })).default([]) }),
+);
+
 const StatsSchema = z.object({ downloadSpeed: z.number(), uploadSpeed: z.number() });
 
 const FIELDS = [
@@ -245,6 +249,23 @@ const createTransmissionAdapter = (
 
     remove: async (hash, deleteData) => {
       await rpc('torrent-remove', { ...each(hash), 'delete-local-data': deleteData });
+    },
+
+    files: async (hash) => {
+      const found = FilesSchema.parse(
+        (await rpc('torrent-get', { ...each(hash), fields: ['files'] }))['torrents'],
+      );
+      const files = found[0]?.files ?? [];
+
+      return files.length === 0 ? null : files.map((file, index) => ({ index, name: file.name }));
+    },
+
+    skip: async (hash, indices) => {
+      if (indices.length === 0) {
+        return;
+      }
+
+      await rpc('torrent-set', { ...each(hash), 'files-unwanted': [...indices] });
     },
   };
 };

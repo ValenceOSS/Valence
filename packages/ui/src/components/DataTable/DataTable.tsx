@@ -25,6 +25,7 @@ const NEAR_THE_END = 200;
 const HEIGHT_CLASSES = {
   compact: 'max-h-[28rem]',
   fill: 'max-h-[calc(100dvh-16rem)]',
+  parent: 'min-h-0 flex-1',
 } as const;
 
 /**
@@ -42,8 +43,9 @@ const HEIGHT_CLASSES = {
  * @param toolbar - Controls to sit above the table, such as a search box.
  * @param pageSize - How many rows to show at once.
  * @param growsOnScroll - Whether reaching the bottom loads more rather than paging.
- * @param height - Whether the table caps at a modest height or reaches for the bottom of the
- *   viewport, for a page that is otherwise this table alone.
+ * @param height - Whether the table caps at a modest height, reaches for the bottom of the
+ *   viewport, for a page that is otherwise this table alone, or takes whatever room its parent
+ *   gives it, as in a dialog whose table is the part that scrolls.
  * @param className - Extra classes for the caller's own layout.
  */
 const DataTable = <Row extends RowData>({

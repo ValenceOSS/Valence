@@ -43,6 +43,7 @@ const SEVERANCE = aMediaRequest({
   items: [
     {
       id: '1c6a7e2b-3d4f-4a5b-9c8d-7e6f5a4b3c2d',
+      musicBrainzId: null,
       season: 1,
       episode: 1,
       title: 'Good News About Hell',

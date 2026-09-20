@@ -1,3 +1,5 @@
+import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { albumsInRelease } from '@ValenceRequests/mediaRequests/albumsInRelease';
 import { matchRelease } from '@ValenceRequests/mediaRequests/matchRelease';
 import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
 import { rankReleases } from '@ValenceRequests/profiles/rankReleases';
@@ -9,7 +11,10 @@ import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaReq
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
 type JudgeForRequestOptions = {
-  request: Pick<MediaRequestRecord, 'kind' | 'title' | 'aliases' | 'year' | 'runtimeMinutes'>;
+  request: Pick<
+    MediaRequestRecord,
+    'kind' | 'title' | 'artistName' | 'aliases' | 'year' | 'runtimeMinutes'
+  >;
   items: readonly RequestItemRecord[];
   releases: readonly Release[];
   profile: QualityProfile;
@@ -32,8 +37,8 @@ type JudgedForRequest = {
  * on its way already, or where it is no better than what an upgrade would replace. They come back
  * in the order they would be chosen, with the pick, and what each would fetch.
  *
- * A release picked by hand is matched by its numbers alone, since whoever picked it knows what it
- * is better than its name does.
+ * A release picked by hand is matched by its numbers alone, or an album by its title alone, since
+ * whoever picked it knows what it is better than its name does.
  *
  * @param request - What was asked for.
  * @param items - Its films or episodes.
@@ -59,11 +64,13 @@ const judgeForRequest = ({
   const blockedBecause = new Map(blocked.map((block) => [block.title, block.reason]));
   const judged = releases.flatMap((release) => {
     const parsed = parseReleaseName(release.title);
-    const covered = matchRelease(
-      isTitleChecked ? request : { ...request, title: parsed.title, aliases: [] },
-      items,
-      isTitleChecked ? parsed : { ...parsed, year: null },
-    );
+    const covered = isMusicRequest(request.kind)
+      ? albumsInRelease(request, items, parsed.title, isTitleChecked)
+      : matchRelease(
+          isTitleChecked ? request : { ...request, title: parsed.title, aliases: [] },
+          items,
+          isTitleChecked ? parsed : { ...parsed, year: null },
+        );
 
     if (covered.length === 0) {
       return [];

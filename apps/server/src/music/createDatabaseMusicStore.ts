@@ -149,6 +149,9 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
           ...(row.year === null ? {} : { year: row.year }),
           ...(row.genres.length === 0 ? {} : { genres: row.genres }),
           ...(row.musicbrainzId === null ? {} : { musicbrainzId: row.musicbrainzId }),
+          ...(row.releaseGroupMusicbrainzId === null
+            ? {}
+            : { releaseGroupMusicbrainzId: row.releaseGroupMusicbrainzId }),
           ...(row.isCompilation ? { isCompilation: true } : {}),
         })
         .where(eq(musicAlbum.id, known.id));
@@ -168,6 +171,7 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
         genres: row.genres,
         isCompilation: row.isCompilation,
         musicbrainzId: row.musicbrainzId,
+        releaseGroupMusicbrainzId: row.releaseGroupMusicbrainzId,
       })
       .onConflictDoNothing();
 

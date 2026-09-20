@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MediaRequestKindSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { MediaKindSchema } from './MediaKind';
 import { PLAYBACK_MODES } from '@ValenceContracts/functions/describePlaybackMode';
 
@@ -87,7 +88,7 @@ const WEBHOOK_EVENT_LABELS: Record<WebhookEvent, string> = {
   'requests.refused': 'Request refused',
   'requests.chosen': 'Release chosen',
   'requests.filed': 'Request filed',
-  'requests.available': 'Request ready to watch',
+  'requests.available': 'Request ready',
   'auth.succeeded': 'Signed in',
   'auth.failed': 'Sign-in refused',
   'account.created': 'Account made',
@@ -368,7 +369,7 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
     event: z.literal('requests.made'),
     data: z.object({
       title: z.string(),
-      kind: z.enum(['film', 'series']),
+      kind: MediaRequestKindSchema,
       requestedBy: z.string(),
     }),
   }),

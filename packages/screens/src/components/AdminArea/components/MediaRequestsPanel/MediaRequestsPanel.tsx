@@ -26,6 +26,8 @@ import {
   retryMediaRequest,
   searchMissing,
 } from '@ValenceClient/requests/fetchMediaRequests';
+import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { AskForMediaDialog } from '@ValenceScreens/components/AdminArea/components/AskForMediaDialog/AskForMediaDialog';
 import { RefuseRequestDialog } from '@ValenceScreens/components/AdminArea/components/RefuseRequestDialog/RefuseRequestDialog';
@@ -37,6 +39,13 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 
+const KIND_NAMES: Readonly<Record<MediaRequest['kind'], string>> = {
+  film: 'Film',
+  series: 'Series',
+  artist: 'Artist',
+  album: 'Album',
+};
+
 const IN_HAND = new Set<MediaRequest['state']>([
   'searching',
   'chosen',
@@ -46,11 +55,11 @@ const IN_HAND = new Set<MediaRequest['state']>([
 ]);
 
 /**
- * The Requested page: every film and series asked for, where each has got to — waiting on
- * approval, not out yet, wanted, downloading, filed or ready — and what can be done with it:
- * approving or refusing it, seeing every search it made and why, trying again what failed,
- * searching by hand to pick a release, and forgetting it. It is read again every few seconds, so a request can be watched all the way into
- * the library.
+ * The Requested page: every film, series, artist and album asked for, where each has got to —
+ * waiting on approval, not out yet, wanted, downloading, filed or ready — and what can be done
+ * with it: approving or refusing it, seeing every search it made and why, trying again what
+ * failed, searching by hand to pick a release, and forgetting it. It is read again every few
+ * seconds, so a request can be watched all the way into the library.
  *
  * Everything still wanted is searched for again every few hours by itself, and can be searched for
  * now from here.
@@ -102,16 +111,25 @@ const MediaRequestsPanel = () => {
 
           return (
             <span className="flex min-w-0 items-start gap-3">
-              <span className="aspect-[2/3] w-9 shrink-0 overflow-hidden rounded-md bg-surface-raised">
-                {row.original.posterUrl === null ? null : (
-                  <img
-                    src={row.original.posterUrl}
-                    alt=""
-                    loading="lazy"
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </span>
+              {isMusicRequest(row.original.kind) ? (
+                <MusicArtwork
+                  src={row.original.posterUrl}
+                  label={`The cover of ${row.original.title}`}
+                  shape={row.original.kind === 'artist' ? 'round' : 'square'}
+                  className="w-9"
+                />
+              ) : (
+                <span className="aspect-[2/3] w-9 shrink-0 overflow-hidden rounded-md bg-surface-raised">
+                  {row.original.posterUrl === null ? null : (
+                    <img
+                      src={row.original.posterUrl}
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </span>
+              )}
 
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-2">
@@ -119,7 +137,7 @@ const MediaRequestsPanel = () => {
                     {row.original.title}
                     {row.original.year === null ? '' : ` (${row.original.year.toString()})`}
                   </span>
-                  <Badge size="sm">{row.original.kind === 'film' ? 'Film' : 'Series'}</Badge>
+                  <Badge size="sm">{KIND_NAMES[row.original.kind]}</Badge>
                 </span>
 
                 {progress === null ? null : (
@@ -405,7 +423,7 @@ const MediaRequestsPanel = () => {
           columns={columns}
           rows={requests.data}
           getRowId={(request) => request.id}
-          emptyMessage="Nothing has been asked for yet. Ask for a film or series to have it fetched and filed into its library."
+          emptyMessage="Nothing has been asked for yet. Ask for a film, a series, an artist or an album to have it fetched and filed into its library."
         />
       )}
     </PanelCard>

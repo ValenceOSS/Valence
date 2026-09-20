@@ -6,6 +6,7 @@ import {
   CatalogueSeasonSchema,
   MediaRequestSchema,
   MissingSearchSchema,
+  MusicCatalogueHitSchema,
   RequestLogEntrySchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
@@ -17,6 +18,8 @@ import type {
   MediaRequestAsk,
   MediaRequestChange,
   MissingSearch,
+  MusicCatalogueHit,
+  MusicRequestKind,
   RequestLogEntry,
 } from '@ValenceContracts/schemas/MediaRequest';
 
@@ -120,6 +123,22 @@ const fetchSeriesSeasons = (tmdbId: number): Promise<CatalogueSeason[]> =>
   );
 
 /**
+ * Searches MusicBrainz for an artist or an album to ask for.
+ *
+ * @param query - What was typed.
+ * @param kind - Whether artists or albums are looked for.
+ * @returns What was found, best matches first.
+ */
+const searchMusicCatalogue = (
+  query: string,
+  kind: MusicRequestKind,
+): Promise<MusicCatalogueHit[]> =>
+  readFromServer(
+    `/api/requests/catalogue/music?${new URLSearchParams({ query, kind }).toString()}`,
+    z.array(MusicCatalogueHitSchema),
+  );
+
+/**
  * Reads what a request has done: every search, what it found, and what became of it.
  *
  * @param id - Which.
@@ -172,4 +191,5 @@ export {
   removeMediaRequest,
   retryMediaRequest,
   searchMissing,
+  searchMusicCatalogue,
 };

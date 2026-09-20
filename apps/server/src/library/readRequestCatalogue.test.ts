@@ -47,6 +47,8 @@ describe('readRequestCatalogue', () => {
       releaseDates: { theatrical: '2021-09-15', digital: '2021-12-03', physical: '2022-01-11' },
       episodes: [],
       isEnded: false,
+      artist: null,
+      albums: [],
     });
   });
 

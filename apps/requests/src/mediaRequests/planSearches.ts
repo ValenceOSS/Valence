@@ -5,13 +5,13 @@ import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestIt
 
 type PlannedSearch = { search: ReleaseSearch; itemIds: string[] };
 
-type Plannable = Pick<RequestItemRecord, 'id' | 'season' | 'episode' | 'airDate'>;
+type Plannable = Pick<RequestItemRecord, 'id' | 'season' | 'episode' | 'airDate' | 'title'>;
 
 /**
  * What to ask the indexers for a request's films or episodes that are wanted, by a title safe to
  * search with: a film by its title and catalogue id; a season that has finished airing, with more
  * than one episode of it wanted, as a whole, since a season is usually released as one; and any
- * other episode on its own.
+ * other episode on its own. An album is searched among the indexers' music, by its artist and title.
  *
  * @param request - What was asked for.
  * @param items - All its films or episodes, so a season is only searched whole once all of it aired.
@@ -20,7 +20,7 @@ type Plannable = Pick<RequestItemRecord, 'id' | 'season' | 'episode' | 'airDate'
  * @returns The searches, each with what it is for.
  */
 const planSearches = (
-  request: Pick<MediaRequestRecord, 'kind' | 'title' | 'tmdbId'>,
+  request: Pick<MediaRequestRecord, 'kind' | 'title' | 'tmdbId' | 'artistName'>,
   items: readonly Plannable[],
   wanted: readonly Plannable[],
   today: string,
@@ -34,10 +34,27 @@ const planSearches = (
   if (request.kind === 'film') {
     return [
       {
-        search: { query, mode: 'movie', tmdbId: request.tmdbId },
+        search: {
+          query,
+          mode: 'movie',
+          ...(request.tmdbId === null ? {} : { tmdbId: request.tmdbId }),
+        },
         itemIds: wanted.map((item) => item.id),
       },
     ];
+  }
+
+  if (request.kind === 'artist' || request.kind === 'album') {
+    const artist = queryTitleOf(request.artistName ?? request.title);
+
+    return wanted.map((item) => {
+      const album = queryTitleOf(item.title);
+
+      return {
+        search: { query: `${artist} ${album}`, mode: 'music', artist, album },
+        itemIds: [item.id],
+      };
+    });
   }
 
   const seasons = [

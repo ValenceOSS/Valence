@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."download" ADD COLUMN "files_checked" boolean DEFAULT false NOT NULL;

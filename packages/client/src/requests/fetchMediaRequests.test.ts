@@ -7,6 +7,7 @@ import {
   fetchMediaRequestReleases,
   fetchMediaRequests,
   fetchSeriesSeasons,
+  searchMusicCatalogue,
   findReleasesFor,
   pickMediaRelease,
   refuseMediaRequest,
@@ -19,7 +20,9 @@ const REQUEST = {
   id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
   kind: 'film',
   tmdbId: 438631,
+  musicBrainzId: null,
   title: 'Dune',
+  artistName: null,
   year: 2021,
   overview: null,
   posterUrl: null,
@@ -32,6 +35,7 @@ const REQUEST = {
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Someone' },
   seasons: null,
+  releaseTypes: null,
   releaseDate: '2021-12-03',
   items: [],
   mediaId: null,
@@ -115,6 +119,27 @@ describe('fetchMediaRequests', () => {
 
     expect(await fetchSeriesSeasons(95396)).toEqual(seasons);
     expect(asked.mock.calls[0]?.[0]).toBe('/api/requests/catalogue/series/95396/seasons');
+  });
+
+  it('searches MusicBrainz for an artist or an album', async () => {
+    const found = [
+      {
+        kind: 'album',
+        musicBrainzId: 'f5093c06-23e3-404f-aeaa-40f72885ee3a',
+        title: 'The Dark Side of the Moon',
+        artist: 'Pink Floyd',
+        disambiguation: null,
+        type: 'album',
+        year: 1973,
+        coverUrl: null,
+      },
+    ];
+    const asked = answering(found);
+
+    expect(await searchMusicCatalogue('dark side & moon', 'album')).toEqual(found);
+    expect(asked.mock.calls[0]?.[0]).toBe(
+      '/api/requests/catalogue/music?query=dark+side+%26+moon&kind=album',
+    );
   });
 
   it('reads what a request has done', async () => {

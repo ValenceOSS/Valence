@@ -174,4 +174,13 @@ describe('judgeRelease', () => {
       judge('Daft Punk - Discovery (2001) [FLAC]', profile, { sizeBytes: 3 * GB }).rejections,
     ).toEqual(['At 3,072 MB it is larger than this profile takes, 2,000']);
   });
+
+  it('refuses a video for music, whatever its sound', () => {
+    const profile = aProfile({ kind: 'music', musicQualities: ['flac'] });
+
+    expect(
+      judge('[MCLR] Porter Robinson & Madeon - Shelter (1080p Hi10 BD FLAC2.0)', profile)
+        .rejections,
+    ).toEqual(['It is a video, not music']);
+  });
 });

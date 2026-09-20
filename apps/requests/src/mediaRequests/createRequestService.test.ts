@@ -40,6 +40,35 @@ const SEVERANCE: MediaRequestDraft = {
   },
 };
 
+const PINK_FLOYD: MediaRequestDraft = {
+  kind: 'artist',
+  musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+  libraryId: 'music',
+  libraryPath: '/media/Music',
+  releaseTypes: ['album'],
+  requestedBy: { id: 'someone', name: 'Someone' },
+  isApproved: true,
+  catalogue: {
+    title: 'Pink Floyd',
+    year: null,
+    artist: 'Pink Floyd',
+    albums: [
+      {
+        id: 'a4c2e8f0-9d1b-3c5e-8f7a-2b4d6e8f0a1c',
+        title: 'The Wall',
+        type: 'album',
+        firstReleased: '1979-11-30',
+      },
+      {
+        id: 'b3c6d2f6-1f0b-3a5d-8c2e-6e0f5b1a2c3d',
+        title: 'Pulse',
+        type: 'live',
+        firstReleased: '1995-05-29',
+      },
+    ],
+  },
+};
+
 /**
  * A service over stores in memory.
  */
@@ -186,8 +215,64 @@ describe('createRequestService', () => {
     await service.refuse(film.request.id, '');
 
     expect(await service.following()).toEqual([
-      { id: series.request.id, kind: 'series', tmdbId: 95396, libraryId: 'series' },
+      {
+        id: series.request.id,
+        kind: 'series',
+        tmdbId: 95396,
+        musicBrainzId: null,
+        libraryId: 'series',
+      },
     ]);
+  });
+
+  it('watches an artist for albums of the kinds asked for, adding kinds asked for again', async () => {
+    const { service } = aService();
+
+    const first = await service.add(PINK_FLOYD);
+
+    expect(first.request).toMatchObject({
+      kind: 'artist',
+      title: 'Pink Floyd',
+      artistName: 'Pink Floyd',
+      musicBrainzId: PINK_FLOYD.musicBrainzId,
+      tmdbId: null,
+      releaseTypes: ['album'],
+      state: 'waiting',
+    });
+    expect(first.request.items.map((item) => item.title)).toEqual(['The Wall']);
+
+    const again = await service.add({ ...PINK_FLOYD, releaseTypes: ['live'] });
+
+    expect(again.isNew).toBe(false);
+    expect(again.request.releaseTypes).toEqual(['album', 'live']);
+    expect(again.request.items.map((item) => item.title)).toEqual(['The Wall', 'Pulse']);
+    expect(await service.following()).toEqual([
+      {
+        id: first.request.id,
+        kind: 'artist',
+        tmdbId: null,
+        musicBrainzId: PINK_FLOYD.musicBrainzId,
+        libraryId: 'music',
+      },
+    ]);
+  });
+
+  it('asks for one album on its own, apart from its artist', async () => {
+    const { service } = aService();
+
+    await service.add(PINK_FLOYD);
+
+    const { request, isNew } = await service.add({
+      ...PINK_FLOYD,
+      kind: 'album',
+      musicBrainzId: 'b3c6d2f6-1f0b-3a5d-8c2e-6e0f5b1a2c3d',
+      releaseTypes: null,
+      catalogue: { ...PINK_FLOYD.catalogue, title: 'Pulse' },
+    });
+
+    expect(isNew).toBe(true);
+    expect(request).toMatchObject({ kind: 'album', title: 'Pulse', releaseDate: '1995-05-29' });
+    expect(request.items.map((item) => item.title)).toEqual(['Pulse']);
   });
 
   it('tries again what failed, and marks what was filed arrived', async () => {

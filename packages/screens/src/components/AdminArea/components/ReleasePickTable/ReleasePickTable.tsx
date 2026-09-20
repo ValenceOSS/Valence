@@ -57,13 +57,15 @@ const ReleasePickTable = ({
   );
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       <IndexerReportList reports={found.indexers} />
 
       <DataTable
         label="Releases found"
         columns={columns}
         rows={found.releases}
+        height="parent"
+        className="min-h-0 flex-1"
         getRowId={(release) => release.id}
         emptyMessage={emptyMessage}
       />

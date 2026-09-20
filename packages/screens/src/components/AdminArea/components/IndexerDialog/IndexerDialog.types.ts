@@ -6,6 +6,7 @@ type IndexerDialogProps = {
   indexer: Indexer | null;
   start?: IndexerStart | null;
   onClose: () => void;
+  onBack?: () => void;
   onSaved: (indexer: Indexer) => void;
 };
 

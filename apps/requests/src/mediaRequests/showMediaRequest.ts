@@ -4,8 +4,8 @@ import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaReq
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
 /**
- * A request as it is shown: where it has got to as a whole, who asked, the day a film is held
- * until by its profile, and each film or episode in the order it comes.
+ * A request as it is shown: where it has got to as a whole, who asked, the day a film or an album is
+ * held until, and each film, episode or album in the order it comes.
  *
  * @param record - The request as kept.
  * @param items - Its films or episodes.
@@ -18,7 +18,9 @@ const showMediaRequest = (
   id: record.id,
   kind: record.kind,
   tmdbId: record.tmdbId,
+  musicBrainzId: record.musicBrainzId,
   title: record.title,
+  artistName: record.artistName,
   year: record.year,
   overview: record.overview,
   posterUrl: record.posterUrl,
@@ -30,14 +32,21 @@ const showMediaRequest = (
   refusedBecause: record.refusedBecause,
   requestedBy: { id: record.requestedById, name: record.requestedByName },
   seasons: record.seasons,
-  releaseDate: items.find((item) => item.season === null)?.airDate ?? null,
+  releaseTypes: record.releaseTypes,
+  releaseDate:
+    record.kind === 'film' || record.kind === 'album'
+      ? (items.find((item) => item.season === null)?.airDate ?? null)
+      : null,
   items: items
     .toSorted(
       (left, right) =>
-        (left.season ?? 0) - (right.season ?? 0) || (left.episode ?? 0) - (right.episode ?? 0),
+        (left.season ?? 0) - (right.season ?? 0) ||
+        (left.episode ?? 0) - (right.episode ?? 0) ||
+        (left.airDate ?? '').localeCompare(right.airDate ?? ''),
     )
     .map((item) => ({
       id: item.id,
+      musicBrainzId: item.musicBrainzId,
       season: item.season,
       episode: item.episode,
       title: item.title,

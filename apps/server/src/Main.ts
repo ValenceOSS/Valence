@@ -80,7 +80,19 @@ import { describeSignInAttempt } from '@ValenceServer/auth/describeSignInAttempt
 import { ARRIVED_TITLES_KEPT } from '@ValenceContracts/schemas/Webhook';
 import type { ScannedItem } from '@ValenceServer/library/scanLibrary';
 import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library';
-import type { MediaRequestKind, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
+import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
+import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/albums/createDatabaseRequestedAlbumStore';
+import { tieRequestedAlbum } from '@ValenceServer/requests/albums/tieRequestedAlbum';
+import { describeAlbumForRequest } from '@ValenceServer/requests/musicBrainz/describeAlbumForRequest';
+import { describeArtistForRequest } from '@ValenceServer/requests/musicBrainz/describeArtistForRequest';
+import { searchMusicCatalogue } from '@ValenceServer/requests/musicBrainz/searchMusicCatalogue';
+import type {
+  MediaRequestKind,
+  MusicRequestKind,
+  RequestCatalogue,
+  VideoRequestKind,
+} from '@ValenceContracts/schemas/MediaRequest';
 import type { PresenceViewing } from '@ValenceServer/presence/PresenceService';
 import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -1165,8 +1177,11 @@ const jobs = await createJobQueue({
           }
 
           await sayWhatAScanChanged(filed.libraryId, scanned, result);
-          await libraryService.regeneratePreviews(filed.libraryId);
-          await libraryService.regenerateTrickplay(filed.libraryId);
+
+          if (scanned.kind !== 'music') {
+            await libraryService.regeneratePreviews(filed.libraryId);
+            await libraryService.regenerateTrickplay(filed.libraryId);
+          }
 
           const { request } = filed;
 
@@ -1176,18 +1191,30 @@ const jobs = await createJobQueue({
             return;
           }
 
-          const mediaId = await libraryService.findByCatalogueId(
-            filed.libraryId,
-            request.kind,
-            request.tmdbId.toString(),
-          );
+          const catalogueId = request.musicBrainzId ?? request.tmdbId?.toString() ?? '';
+          const mediaId = isMusicRequest(request.kind)
+            ? request.musicBrainzId === null
+              ? null
+              : await tieRequestedAlbum(
+                  requestedAlbums,
+                  filed.libraryId,
+                  request.musicBrainzId,
+                  filed.folder,
+                )
+            : request.tmdbId === null
+              ? null
+              : await libraryService.findByCatalogueId(
+                  filed.libraryId,
+                  request.kind,
+                  request.tmdbId.toString(),
+                );
 
           jobs.reportProgress(jobId, mediaId === null ? 'not found' : 'found', 1, 1);
 
           if (mediaId === null) {
             log.warn(
               'requests',
-              `${filed.title} was filed, but reading ${filed.folder} did not find it as the catalogue’s ${request.tmdbId.toString()}`,
+              `${filed.title} was filed, but reading ${filed.folder} did not find it as the catalogue’s ${catalogueId}`,
             );
 
             return;
@@ -1218,7 +1245,10 @@ const jobs = await createJobQueue({
         for (const request of followed.value) {
           jobs.reportProgress(jobId, 'asking the catalogue', done, followed.value.length);
 
-          const catalogue = await describeForRequest(request.tmdbId, request.kind);
+          const catalogue = await catalogueForRequest(
+            { describeForRequest, describeMusicForRequest },
+            request,
+          );
           const libraryPath = libraries.find((entry) => entry.id === request.libraryId)?.path;
 
           if (catalogue !== null) {
@@ -1883,7 +1913,7 @@ const sayWhatAScanChanged = async (
  */
 const describeForRequest = async (
   tmdbId: number,
-  kind: MediaRequestKind,
+  kind: VideoRequestKind,
 ): Promise<RequestCatalogue | null> =>
   (await catalogueProvider.describeForRequest?.(
     tmdbId.toString(),
@@ -1891,11 +1921,35 @@ const describeForRequest = async (
   )) ?? null;
 
 /**
+ * What MusicBrainz knows of an artist or an album asked for.
+ *
+ * @param musicBrainzId - The artist, or the album's release group.
+ * @param kind - Whether it is an artist or an album.
+ * @returns What a request keeps of it, or null where MusicBrainz does not know it.
+ */
+const describeMusicForRequest = (
+  musicBrainzId: string,
+  kind: MusicRequestKind,
+): Promise<RequestCatalogue | null> =>
+  kind === 'artist'
+    ? describeArtistForRequest(musicWeb, musicBrainzId)
+    : describeAlbumForRequest(musicWeb, musicBrainzId);
+
+const requestedAlbums = createDatabaseRequestedAlbumStore(db);
+
+const LINKS_TO_ARRIVALS: Record<MediaRequestKind, (mediaId: string) => string> = {
+  film: (mediaId) => `/?inspecting=${mediaId}`,
+  series: (mediaId) => `/?show=${mediaId}`,
+  artist: (mediaId) => `/music?listen=album:${mediaId}`,
+  album: (mediaId) => `/music?listen=album:${mediaId}`,
+};
+
+/**
  * Ties a request to the item the library found it as, and tells whoever asked that it is ready —
  * in the app, and by push where they chose — and anything subscribed.
  *
  * @param filed - The request, as it was filed.
- * @param mediaId - The film, or the series, the library found.
+ * @param mediaId - The film, the series, or the album the library found.
  */
 const sayARequestArrived = async (
   filed: { id: string; kind: MediaRequestKind; title: string },
@@ -1926,7 +1980,7 @@ const sayARequestArrived = async (
     event: 'requests.available',
     title: `${filed.title} is ready`,
     body: `${filed.title}, which you asked for, is in the library now.`,
-    link: filed.kind === 'film' ? `/?inspecting=${mediaId}` : `/?show=${mediaId}`,
+    link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
     vapid: await readPushKeys(),
     only: [requestedBy.id],
     onProblem: (reason) => {
@@ -2519,6 +2573,8 @@ const app = createApp({
   requestsClient,
   cancelJob: (jobId) => jobs.cancel(jobId),
   describeForRequest,
+  describeMusicForRequest,
+  searchMusicCatalogue: (query, kind) => searchMusicCatalogue(musicWeb, query, kind),
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
 });
 
@@ -2775,7 +2831,12 @@ if (requestsClient !== null) {
             libraryId: event.libraryId,
             folder: event.folder,
             title: event.title,
-            request: { id: event.requestId, kind: event.requestKind, tmdbId: event.tmdbId },
+            request: {
+              id: event.requestId,
+              kind: event.requestKind,
+              tmdbId: event.tmdbId,
+              musicBrainzId: event.musicBrainzId,
+            },
           });
 
           return;

@@ -10,6 +10,7 @@ import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestIt
 const aRequestItem = (overrides: Partial<RequestItemRecord> = {}): RequestItemRecord => ({
   id: '1c6a7e2b-3d4f-4a5b-9c8d-7e6f5a4b3c2d',
   requestId: '9b2d4f6e-1a3c-4e5f-8a7b-0c1d2e3f4a5b',
+  musicBrainzId: null,
   season: null,
   episode: null,
   title: 'Dune',

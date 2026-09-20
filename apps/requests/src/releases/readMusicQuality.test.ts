@@ -16,6 +16,8 @@ describe('readMusicQuality', () => {
     ['Album Opus', 'opus'],
     ['Album MP3 V2', 'mp3-v2'],
     ['Album MP3', 'mp3'],
+    ['Album (BD FLAC2 0)', 'flac'],
+    ['Album AAC2 0', 'aac'],
   ] as const)('reads %s as %s', (name, quality) => {
     expect(readMusicQuality(name)).toBe(quality);
   });

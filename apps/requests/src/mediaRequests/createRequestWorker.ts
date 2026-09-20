@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
+import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
+import { fileAlbum } from '@ValenceRequests/mediaRequests/fileAlbum';
 import { fileDownload } from '@ValenceRequests/mediaRequests/fileDownload';
 import { judgeForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest';
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
@@ -27,6 +29,7 @@ import type {
   MediaRequestDraft,
   MissingSearch,
 } from '@ValenceContracts/schemas/MediaRequest';
+import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import type { DownloadQueueService } from '@ValenceRequests/downloads/createDownloadQueue';
@@ -64,6 +67,7 @@ type CreateRequestWorkerOptions = {
   events: EventStore;
   log: RequestLogStore;
   file?: typeof fileDownload;
+  fileMusic?: typeof fileAlbum;
   now?: () => Date;
   schedule?: Schedule;
   tickEveryMs?: number;
@@ -94,6 +98,13 @@ const MOST_ALIASES_SEARCHED = 2;
 
 const NOTHING_FOUND = 'Nothing acceptable has been found yet';
 
+const LIBRARY_KINDS_OF: Record<MediaRequestRecord['kind'], LibraryKind> = {
+  film: 'movies',
+  series: 'shows',
+  artist: 'music',
+  album: 'music',
+};
+
 const IN_FLIGHT = new Set<RequestItemRecord['state']>([
   'searching',
   'chosen',
@@ -101,11 +112,19 @@ const IN_FLIGHT = new Set<RequestItemRecord['state']>([
   'filing',
 ]);
 
-const DEFAULT_PROFILE: QualityProfile = {
-  ...QualityProfileDraftSchema.parse({ name: 'Default', kind: 'video' }),
-  id: '00000000-0000-4000-8000-000000000000',
-  createdAt: '1970-01-01T00:00:00.000Z',
-  updatedAt: '1970-01-01T00:00:00.000Z',
+const DEFAULT_PROFILES: Record<QualityProfile['kind'], QualityProfile> = {
+  video: {
+    ...QualityProfileDraftSchema.parse({ name: 'Default', kind: 'video' }),
+    id: '00000000-0000-4000-8000-000000000000',
+    createdAt: '1970-01-01T00:00:00.000Z',
+    updatedAt: '1970-01-01T00:00:00.000Z',
+  },
+  music: {
+    ...QualityProfileDraftSchema.parse({ name: 'Default', kind: 'music' }),
+    id: '00000000-0000-4000-8000-000000000001',
+    createdAt: '1970-01-01T00:00:00.000Z',
+    updatedAt: '1970-01-01T00:00:00.000Z',
+  },
 };
 
 /**
@@ -182,6 +201,7 @@ const groupedByDownload = (
  * @param events - Where events wait for the server.
  * @param log - Where what each request did is kept, for whoever wants to see why.
  * @param file - How a finished download is filed.
+ * @param fileMusic - How a finished download of music is filed.
  * @param now - The clock.
  * @param schedule - How to wait.
  * @param tickEveryMs - How often to move everything along.
@@ -204,6 +224,7 @@ const createRequestWorker = ({
   events,
   log,
   file = fileDownload,
+  fileMusic = fileAlbum,
   now = () => new Date(),
   schedule = waitThenRun,
   tickEveryMs = TICK_EVERY_MS,
@@ -257,7 +278,8 @@ const createRequestWorker = ({
     (await approved()).filter((found) => !found.request.isPickedByHand);
 
   const profileFor = async (request: MediaRequestRecord): Promise<QualityProfile> =>
-    chooseProfile(request, await profiles.list()) ?? DEFAULT_PROFILE;
+    chooseProfile(request, await profiles.list()) ??
+    DEFAULT_PROFILES[isMusicRequest(request.kind) ? 'music' : 'video'];
 
   const priorities = async () =>
     new Map((await indexers.list()).map((indexer) => [indexer.id, indexer.priority]));
@@ -302,7 +324,7 @@ const createRequestWorker = ({
       url,
       title: release.title,
       protocol: release.protocol,
-      libraryKind: request.kind === 'film' ? 'movies' : 'shows',
+      libraryKind: LIBRARY_KINDS_OF[request.kind],
       sizeBytes: release.sizeBytes,
       indexerName: release.indexerName,
     });
@@ -381,17 +403,26 @@ const createRequestWorker = ({
       : { isSent: false, said: `chose ${picked.title}, but could not send it: ${problem}` };
   };
 
-  const describeSearch = (search: ReleaseSearch): string =>
-    search.season === undefined
+  const describeSearch = (search: ReleaseSearch): string => {
+    if (search.album !== undefined) {
+      return `“${search.album}”`;
+    }
+
+    return search.season === undefined
       ? 'it'
       : search.episode === undefined
         ? `season ${search.season.toString()}`
         : `S${search.season.toString().padStart(2, '0')}E${search.episode.toString().padStart(2, '0')}`;
+  };
 
   const searchFor = async (found: Found, fetching: readonly RequestItemRecord[]) => {
     const pending = new Set(fetching.map((item) => item.id));
     const queries = [
-      ...new Set([found.request.title, ...found.request.aliases.slice(0, MOST_ALIASES_SEARCHED)]),
+      ...new Set(
+        [found.request.title, ...found.request.aliases.slice(0, MOST_ALIASES_SEARCHED)].map(
+          queryTitleOf,
+        ),
+      ),
     ];
     const plans = planSearches(found.request, found.items, fetching, today());
 
@@ -417,7 +448,7 @@ const createRequestWorker = ({
         await note(
           found.request,
           [
-            `Searched for ${describeSearch(search)}${query === found.request.title ? '' : ` as “${query}”`}`,
+            `Searched for ${describeSearch(search)}${query === search.query || query === queries[0] ? '' : ` as “${query}”`}`,
             outcome.indexers.length === 0
               ? ': no indexer is switched on'
               : `: ${outcome.releases.length.toString()} found by ${outcome.indexers.length.toString()} indexer${outcome.indexers.length === 1 ? '' : 's'}, ${fetched.said}`,
@@ -441,12 +472,16 @@ const createRequestWorker = ({
     };
 
     for (const plan of plans) {
-      const isFetched = await run(plan.search, plan.itemIds);
+      const isFetched = await run(
+        plan.search,
+        plan.itemIds,
+        isMusicRequest(found.request.kind) ? [plan.search.query ?? ''] : queries,
+      );
 
       if (!isFetched && plan.search.episode === undefined && found.request.kind === 'series') {
         for (const item of fetching.filter((one) => plan.itemIds.includes(one.id))) {
           if (pending.has(item.id) && item.episode !== null) {
-            await run({ ...plan.search, episode: item.episode }, [item.id], [found.request.title]);
+            await run({ ...plan.search, episode: item.episode }, [item.id], queries.slice(0, 1));
           }
         }
       }
@@ -475,9 +510,9 @@ const createRequestWorker = ({
     if (out.length > 0) {
       await note(
         request,
-        request.kind === 'film'
+        request.kind === 'film' || request.kind === 'album'
           ? 'It is out, and wanted.'
-          : `${out.length.toString()} episode${out.length === 1 ? ' is' : 's are'} out, and wanted.`,
+          : `${out.length.toString()} ${request.kind === 'artist' ? 'album' : 'episode'}${out.length === 1 ? ' is' : 's are'} out, and wanted.`,
       );
     }
   };
@@ -604,12 +639,9 @@ const createRequestWorker = ({
       const path = mapClientPath(download.contentPath, client);
 
       try {
-        const { filed, missing } = await file(
-          request,
-          filing,
-          path,
-          download.protocol === 'torrent',
-        );
+        const { filed, missing } = await (isMusicRequest(request.kind)
+          ? fileMusic(request, filing, path, download.protocol === 'torrent')
+          : file(request, filing, path, download.protocol === 'torrent'));
 
         for (const item of filing) {
           const path = filed.get(item.id);
@@ -635,6 +667,9 @@ const createRequestWorker = ({
           );
         }
 
+        const album = filing.find((item) => filed.has(item.id) && item.musicBrainzId !== null);
+        const folder = album === undefined ? libraryFolderOf(request) : (filed.get(album.id) ?? '');
+
         if (filed.size > 0) {
           await events.add({
             kind: 'filed',
@@ -643,12 +678,13 @@ const createRequestWorker = ({
             requestedById: request.requestedById,
             requestKind: request.kind,
             tmdbId: request.tmdbId,
+            musicBrainzId: album?.musicBrainzId ?? null,
             libraryId: request.libraryId,
-            folder: libraryFolderOf(request),
+            folder,
           });
           await note(
             request,
-            `Filed ${filed.size.toString()} from ${download.title} into ${libraryFolderOf(request)}.`,
+            `Filed ${filed.size.toString()} from ${download.title} into ${folder}.`,
           );
         }
       } catch (error) {
@@ -657,6 +693,44 @@ const createRequestWorker = ({
         await retryOrFail(why.problem, why.isATry);
       }
     }
+  };
+
+  const fileSentVideo = async (
+    into: { libraryPath: string; title: string; year: number | null },
+    libraryKind: LibraryKind,
+    parsed: ReturnType<typeof parseReleaseName>,
+    path: string,
+    protocol: Release['protocol'],
+  ): Promise<string | null> => {
+    const wanted =
+      libraryKind === 'movies'
+        ? [{ id: 'film', season: null, episode: null }]
+        : await episodesInDownload(path, parsed);
+    const { filed } = await file(
+      into,
+      wanted.map((one) => ({ ...one, title: '', airDate: null, filePath: null })),
+      path,
+      protocol === 'torrent',
+    );
+
+    return filed.size === 0 ? null : libraryFolderOf(into);
+  };
+
+  const fileSentAlbum = async (
+    title: string,
+    libraryPath: string,
+    path: string,
+    protocol: Release['protocol'],
+  ): Promise<string | null> => {
+    const [artist = title, album = title] = title.split(/\s+-\s+/);
+    const { filed } = await fileMusic(
+      { libraryPath, title: artist, artistName: artist },
+      [{ id: 'album', title: album, airDate: null, filePath: null }],
+      path,
+      protocol === 'torrent',
+    );
+
+    return filed.get('album') ?? null;
   };
 
   const fileSentByHand = async () => {
@@ -670,7 +744,9 @@ const createRequestWorker = ({
         download.libraryPath !== null &&
         download.filedInto === null &&
         download.filingAttempts < MOST_FILING_ATTEMPTS &&
-        (download.libraryKind === 'movies' || download.libraryKind === 'shows') &&
+        (download.libraryKind === 'movies' ||
+          download.libraryKind === 'shows' ||
+          download.libraryKind === 'music') &&
         !claimed.has(download.id),
     );
 
@@ -704,23 +780,19 @@ const createRequestWorker = ({
       const path = mapClientPath(download.contentPath, client);
 
       try {
-        const wanted =
-          download.libraryKind === 'movies'
-            ? [{ id: 'film', season: null, episode: null }]
-            : await episodesInDownload(path, parsed);
-        const { filed } = await file(
-          into,
-          wanted.map((one) => ({ ...one, title: '', airDate: null, filePath: null })),
-          path,
-          download.protocol === 'torrent',
-        );
+        const folder =
+          download.libraryKind === 'music'
+            ? await fileSentAlbum(parsed.title, into.libraryPath, path, download.protocol)
+            : await fileSentVideo(into, download.libraryKind, parsed, path, download.protocol);
 
-        if (filed.size === 0) {
-          await couldNot('No video in it could be filed');
+        if (folder === null) {
+          await couldNot(
+            download.libraryKind === 'music'
+              ? 'No track in it could be filed'
+              : 'No video in it could be filed',
+          );
           continue;
         }
-
-        const folder = libraryFolderOf(into);
 
         await downloads.update(download.id, {
           filedInto: folder,
@@ -829,6 +901,34 @@ const createRequestWorker = ({
       () => undefined,
     );
 
+  const searchesByHand = (
+    request: MediaRequestRecord,
+    seasons: readonly number[],
+  ): ReleaseSearch[] => {
+    const query = queryTitleOf(request.title);
+    const artist = queryTitleOf(request.artistName ?? request.title);
+
+    switch (request.kind) {
+      case 'film':
+        return [
+          {
+            query,
+            mode: 'movie',
+            ...(request.tmdbId === null ? {} : { tmdbId: request.tmdbId }),
+          },
+        ];
+      case 'series':
+        return [
+          { query, mode: 'tv' },
+          ...seasons.map((season) => ({ query, mode: 'tv' as const, season })),
+        ];
+      case 'artist':
+        return [{ query: artist, mode: 'music', artist }];
+      case 'album':
+        return [{ query: `${artist} ${query}`, mode: 'music', artist, album: query }];
+    }
+  };
+
   const releasesOf = async (
     found: Found,
     blockedList: readonly BlockedReleaseRecord[],
@@ -837,14 +937,7 @@ const createRequestWorker = ({
     const seasons = [
       ...new Set(found.items.flatMap((item) => (item.season === null ? [] : [item.season]))),
     ];
-    const query = queryTitleOf(request.title);
-    const searches: ReleaseSearch[] =
-      request.kind === 'film'
-        ? [{ query, mode: 'movie', tmdbId: request.tmdbId }]
-        : [
-            { query, mode: 'tv' },
-            ...seasons.map((season) => ({ query, mode: 'tv' as const, season })),
-          ];
+    const searches = searchesByHand(request, seasons);
     const outcomes = await Promise.all(searches.map((search) => indexers.search(search)));
     const releases = [
       ...new Map(
@@ -919,7 +1012,7 @@ const createRequestWorker = ({
       return releasesOf(
         {
           request,
-          items: syncItems(request, draft.catalogue.episodes, []).add.map((one) => ({
+          items: syncItems(request, draft.catalogue, []).add.map((one) => ({
             ...itemFromDraft(one, randomUUID(), request.id, at()),
             state: 'wanted',
           })),
@@ -951,7 +1044,7 @@ const createRequestWorker = ({
         if (holding.length === 0) {
           return found.request.kind === 'film'
             ? 'The film is on its way already'
-            : 'That release holds no episode this request is waiting for';
+            : `That release holds no ${isMusicRequest(found.request.kind) ? 'album' : 'episode'} this request is waiting for`;
         }
 
         const problem = await send(

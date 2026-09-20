@@ -128,6 +128,7 @@ const tagsFromMetadata = (meta: IAudioMetadata, path: string): TrackTags => {
     lyrics: lyricsFrom(common.lyrics),
     picture: coverFrom(common.picture),
     albumMusicbrainzId: common.musicbrainz_albumid ?? null,
+    releaseGroupMusicbrainzId: common.musicbrainz_releasegroupid ?? null,
     artistMusicbrainzIds: common.musicbrainz_albumartistid ?? common.musicbrainz_artistid ?? [],
   };
 };

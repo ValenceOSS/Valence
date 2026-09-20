@@ -142,6 +142,8 @@ const readRequestCatalogue = (
         : [];
     }),
     isEnded: found.status !== undefined && ENDED.has(found.status),
+    artist: null,
+    albums: [],
   };
 };
 

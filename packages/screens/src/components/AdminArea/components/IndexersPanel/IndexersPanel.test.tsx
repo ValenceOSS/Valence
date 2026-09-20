@@ -132,21 +132,22 @@ describe('IndexersPanel', () => {
     expect(await screen.findByRole('dialog', { name: 'Add an indexer' })).toBeInTheDocument();
   });
 
-  it('adds a site chosen from the catalogue', async () => {
+  it('adds a site chosen from the catalogue, going back to the catalogue from it', async () => {
     const user = userEvent.setup();
 
     renderInAnAddress(<IndexersPanel />);
 
     await user.click(screen.getByRole('button', { name: 'Add an indexer' }));
+    await user.type(await screen.findByRole('searchbox', { name: 'Find a site' }), 'Ru');
     await user.click(await screen.findByText('RuTor'));
 
     expect(await screen.findByRole('dialog', { name: 'Add RuTor' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await user.click(screen.getByRole('button', { name: 'Back' }));
 
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog', { name: 'Add RuTor' })).not.toBeInTheDocument();
-    });
+    expect(await screen.findByRole('dialog', { name: 'Add an indexer' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Add RuTor' })).not.toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Find a site' })).toHaveValue('Ru');
   });
 
   it('closes the catalogue without adding anything', async () => {

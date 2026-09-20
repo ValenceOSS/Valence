@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { planSearches } from './planSearches';
 
-const SEVERANCE = { kind: 'series' as const, title: 'Severance', tmdbId: 95396 };
+const SEVERANCE = {
+  kind: 'series' as const,
+  title: 'Severance',
+  tmdbId: 95396,
+  artistName: null,
+};
 
 /**
  * An episode that aired on the day given.
@@ -11,15 +16,60 @@ const anEpisode = (season: number, episode: number, airDate: string | null = '20
   season,
   episode,
   airDate,
+  title: '',
 });
 
 describe('planSearches', () => {
   it('asks for a film by its title and catalogue id', () => {
-    const film = { id: 'film', season: null, episode: null, airDate: null };
+    const film = { id: 'film', season: null, episode: null, airDate: null, title: 'Dune' };
 
     expect(
-      planSearches({ kind: 'film', title: 'Dune', tmdbId: 438631 }, [film], [film], '2026-09-19'),
+      planSearches(
+        { kind: 'film', title: 'Dune', tmdbId: 438631, artistName: null },
+        [film],
+        [film],
+        '2026-09-19',
+      ),
     ).toEqual([{ search: { query: 'Dune', mode: 'movie', tmdbId: 438631 }, itemIds: ['film'] }]);
+  });
+
+  it('asks for each album among music, by its artist and title', () => {
+    const album = (id: string, title: string) => ({
+      id,
+      season: null,
+      episode: null,
+      airDate: '1973-03-01',
+      title,
+    });
+    const albums = [album('moon', 'The Dark Side of the Moon'), album('wall', 'The Wall')];
+
+    expect(
+      planSearches(
+        { kind: 'artist', title: 'Pink Floyd', tmdbId: null, artistName: 'Pink Floyd' },
+        albums,
+        albums,
+        '2026-09-19',
+      ),
+    ).toEqual([
+      {
+        search: {
+          query: 'Pink Floyd The Dark Side of the Moon',
+          mode: 'music',
+          artist: 'Pink Floyd',
+          album: 'The Dark Side of the Moon',
+        },
+        itemIds: ['moon'],
+      },
+      {
+        search: {
+          query: 'Pink Floyd The Wall',
+          mode: 'music',
+          artist: 'Pink Floyd',
+          album: 'The Wall',
+        },
+        itemIds: ['wall'],
+      },
+    ]);
   });
 
   it('asks for a season that has aired as a whole', () => {

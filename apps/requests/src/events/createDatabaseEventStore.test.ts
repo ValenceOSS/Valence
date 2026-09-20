@@ -15,6 +15,7 @@ describe('createDatabaseEventStore', () => {
       requestedById: 'someone',
       requestKind: 'film',
       tmdbId: 438631,
+      musicBrainzId: null,
       libraryId: 'films',
       folder: '/media/Films/Dune (2021)',
     });

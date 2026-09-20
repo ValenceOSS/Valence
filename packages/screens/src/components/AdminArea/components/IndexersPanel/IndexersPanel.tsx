@@ -245,6 +245,14 @@ const IndexersPanel = () => {
           setStart(null);
           setEditing(null);
         }}
+        {...(start === null
+          ? {}
+          : {
+              onBack: () => {
+                setStart(null);
+                setIsChoosing(true);
+              },
+            })}
         onSaved={() => {
           void reread();
         }}

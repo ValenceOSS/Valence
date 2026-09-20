@@ -8,6 +8,7 @@ import type { RequestItem, RequestItemState } from '@ValenceContracts/schemas/Me
  */
 const anEpisode = (episode: number, state: RequestItemState): RequestItem => ({
   id: `6ba7b810-9dad-11d1-80b4-${episode.toString().padStart(12, '0')}`,
+  musicBrainzId: null,
   season: 1,
   episode,
   title: '',
@@ -46,6 +47,25 @@ describe('describeRequestProgress', () => {
     expect(describeRequestProgress(aMediaRequest({ kind: 'series' }))).toBe(
       'Every season · 0 of 0 episodes here',
     );
+  });
+
+  it('counts what of an artist is out and has arrived, by the kinds watched for', () => {
+    expect(
+      describeRequestProgress(
+        aMediaRequest({
+          kind: 'artist',
+          releaseTypes: ['album', 'live'],
+          items: [anEpisode(1, 'available'), anEpisode(2, 'wanted'), anEpisode(3, 'waiting')],
+        }),
+      ),
+    ).toBe('Albums, Live · 1 of 2 albums here');
+  });
+
+  it('says who an album is by', () => {
+    expect(
+      describeRequestProgress(aMediaRequest({ kind: 'album', artistName: 'Pink Floyd' })),
+    ).toBe('By Pink Floyd');
+    expect(describeRequestProgress(aMediaRequest({ kind: 'album' }))).toBeNull();
   });
 
   it('says nothing of a film', () => {

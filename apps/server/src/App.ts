@@ -254,6 +254,7 @@ import {
   draftReleasesRoute,
   searchMissingRoute,
   seriesSeasonsRoute,
+  musicCatalogueRoute,
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,
@@ -393,9 +394,14 @@ import type {
   MediaRequestAsk,
   MediaRequestDraft,
   MediaRequestKind,
+  MusicCatalogueHit,
+  MusicRequestKind,
   RequestCatalogue,
+  VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
+import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
+import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { LogStore } from '@ValenceServer/logging/Logger';
 import type { JobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
 import type { ResourceHistoryStore } from '@ValenceServer/logging/createResourceHistoryStore';
@@ -461,6 +467,20 @@ const neverKeep = (): Record<string, string> => ({ 'cache-control': 'no-store' }
 const SignInBodySchema = z.object({ password: z.string().min(1) });
 
 const OVERVIEW_PATIENCE_MILLISECONDS = 5_000;
+
+const REQUEST_LIBRARY_KINDS: Record<MediaRequestKind, LibraryKind> = {
+  film: 'movies',
+  series: 'shows',
+  artist: 'music',
+  album: 'music',
+};
+
+const LIBRARY_KIND_WORDS: Record<LibraryKind, string> = {
+  movies: 'films',
+  shows: 'series',
+  music: 'music',
+  books: 'books',
+};
 
 const within = async <Answer>(work: Promise<Answer>, fallback: Answer): Promise<Answer> =>
   Promise.race([
@@ -613,7 +633,12 @@ type CreateAppOptions = {
   requestsClient?: RequestsClient | null;
   cancelJob?: (jobId: string) => Promise<boolean>;
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
-  describeForRequest?: (tmdbId: number, kind: MediaRequestKind) => Promise<RequestCatalogue | null>;
+  describeForRequest?: (tmdbId: number, kind: VideoRequestKind) => Promise<RequestCatalogue | null>;
+  describeMusicForRequest?: (
+    musicBrainzId: string,
+    kind: MusicRequestKind,
+  ) => Promise<RequestCatalogue | null>;
+  searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
   realtime?: RealtimePublisher;
   logs?: LogStore;
   jobHistory?: JobHistoryStore;
@@ -678,6 +703,8 @@ const createApp = ({
   cancelJob = () => Promise.resolve(false),
   searchCatalogue = () => Promise.resolve([]),
   describeForRequest = () => Promise.resolve(null),
+  describeMusicForRequest = () => Promise.resolve(null),
+  searchMusicCatalogue = () => Promise.resolve([]),
   permissions = createMemoryPermissionService(),
   history,
   apiKeys = createBetterAuthApiKeyService(auth),
@@ -3849,9 +3876,13 @@ const createApp = ({
   type Drafted =
     { kind: 'drafted'; draft: MediaRequestDraft } | { kind: 'refused'; status: 400; error: string };
 
+  const catalogueFor = (asked: Parameters<typeof catalogueForRequest>[1]) =>
+    catalogueForRequest({ describeForRequest, describeMusicForRequest }, asked);
+
   /**
    * What the requests service is told of something asked for: the catalogue's facts, the library
-   * it will be filed into, who asked and whether that makes it approved.
+   * it will be filed into — of films, series or music, as it is — who asked and whether that makes
+   * it approved.
    *
    * @param headers - Who is asking.
    * @param asked - What they asked for.
@@ -3859,8 +3890,8 @@ const createApp = ({
    */
   const draftFor = async (headers: Headers, asked: MediaRequestAsk): Promise<Drafted> => {
     const session = await readSessionOnce(auth, headers);
-    const catalogue = await describeForRequest(asked.tmdbId, asked.kind);
-    const libraryKind = asked.kind === 'film' ? 'movies' : 'shows';
+    const catalogue = await catalogueFor(asked);
+    const libraryKind = REQUEST_LIBRARY_KINDS[asked.kind];
     const libraries = (await library.list(asTheServer)).filter(
       (entry) => entry.kind === libraryKind,
     );
@@ -3881,7 +3912,7 @@ const createApp = ({
       return {
         kind: 'refused',
         status: 400,
-        error: `There is no library of ${asked.kind === 'film' ? 'films' : 'series'} to put it in.`,
+        error: `There is no library of ${LIBRARY_KIND_WORDS[libraryKind]} to put it in.`,
       };
     }
 
@@ -3889,8 +3920,10 @@ const createApp = ({
       kind: 'drafted',
       draft: {
         kind: asked.kind,
-        tmdbId: asked.tmdbId,
+        tmdbId: asked.tmdbId ?? null,
+        musicBrainzId: asked.musicBrainzId ?? null,
         seasons: asked.seasons,
+        releaseTypes: asked.releaseTypes ?? null,
         profileId: asked.profileId ?? null,
         isPickedByHand: asked.isPickedByHand,
         libraryId: chosen.id,
@@ -3991,6 +4024,23 @@ const createApp = ({
       : context.json(seasonsOf(catalogue.episodes), 200);
   });
 
+  app.openapi(musicCatalogueRoute, async (context) => {
+    const { headers } = context.req.raw;
+    const may = (
+      await Promise.all(
+        ['requests.ask' as const, ...APPROVERS].map((permission) => requires(headers, permission)),
+      )
+    ).some(Boolean);
+
+    if (!may) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    const { query, kind } = context.req.valid('query');
+
+    return context.json(await searchMusicCatalogue(query, kind), 200);
+  });
+
   app.openapi(searchMissingRoute, async (context) => {
     const answer = await throughRequests(context.req.raw.headers, (client) =>
       client.searchMissing(),
@@ -4007,7 +4057,7 @@ const createApp = ({
     const answer = await throughRequests(
       context.req.raw.headers,
       async (client) => {
-        if (change.seasons === undefined) {
+        if (change.seasons === undefined && change.releaseTypes === undefined) {
           return client.changeRequest(id, { change });
         }
 
@@ -4017,10 +4067,7 @@ const createApp = ({
           return found;
         }
 
-        return client.changeRequest(id, {
-          change,
-          catalogue: await describeForRequest(found.value.tmdbId, found.value.kind),
-        });
+        return client.changeRequest(id, { change, catalogue: await catalogueFor(found.value) });
       },
       APPROVERS,
     );

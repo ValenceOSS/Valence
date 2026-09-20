@@ -14,15 +14,26 @@ const MUSIC = aProfile({
 
 describe('chooseProfile', () => {
   it('takes the profile chosen for the request before its library’s', () => {
-    expect(chooseProfile({ profileId: CHOSEN.id, libraryId: 'films' }, [LIBRARYS, CHOSEN])).toBe(
-      CHOSEN,
-    );
-    expect(chooseProfile({ profileId: null, libraryId: 'films' }, [MUSIC, LIBRARYS])).toBe(
-      LIBRARYS,
-    );
+    expect(
+      chooseProfile({ kind: 'film', profileId: CHOSEN.id, libraryId: 'films' }, [LIBRARYS, CHOSEN]),
+    ).toBe(CHOSEN);
+    expect(
+      chooseProfile({ kind: 'film', profileId: null, libraryId: 'films' }, [MUSIC, LIBRARYS]),
+    ).toBe(LIBRARYS);
   });
 
   it('has none where neither names one for films and series', () => {
-    expect(chooseProfile({ profileId: null, libraryId: 'films' }, [MUSIC])).toBeNull();
+    expect(
+      chooseProfile({ kind: 'film', profileId: null, libraryId: 'films' }, [MUSIC]),
+    ).toBeNull();
+  });
+
+  it('takes a music profile for an artist or an album', () => {
+    expect(
+      chooseProfile({ kind: 'artist', profileId: null, libraryId: 'films' }, [LIBRARYS, MUSIC]),
+    ).toBe(MUSIC);
+    expect(
+      chooseProfile({ kind: 'album', profileId: CHOSEN.id, libraryId: 'albums' }, [CHOSEN]),
+    ).toBeNull();
   });
 });

@@ -694,12 +694,14 @@ const createDatabaseLibraryService = ({
    * @param found - The library.
    * @param force - Whether to read everything again regardless of what has changed.
    * @param jobId - The job to report against, where this is one.
+   * @param isPartial - Whether only a folder of the library is read, such as an album just filed.
    * @returns What the scan changed, or nothing changed where this server keeps no music.
    */
   const scanMusic = async (
     found: { id: string; path: string },
     force: boolean,
     jobId: string | undefined,
+    isPartial = false,
   ): Promise<ScanResult> => {
     if (music === undefined) {
       return { added: 0, updated: 0, removed: 0, failed: 0 };
@@ -712,6 +714,7 @@ const createDatabaseLibraryService = ({
       store: music.store,
       artwork: music.artwork,
       force,
+      isPartial,
       ...(onProblem === undefined ? {} : { onProblem }),
       ...(jobId === undefined
         ? {}
@@ -1759,7 +1762,9 @@ const createDatabaseLibraryService = ({
       const found = await findLibrary(libraryId);
 
       if (found === null || (found.kind !== 'movies' && found.kind !== 'shows')) {
-        return null;
+        return found?.kind === 'music'
+          ? scanMusic({ id: libraryId, path: folder }, false, jobId, true)
+          : null;
       }
 
       return scanLibrary({

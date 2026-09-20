@@ -49,6 +49,12 @@ describe('SegmentedRow', () => {
     );
   });
 
+  it('keeps its mark above its own background, whatever it sits on', () => {
+    render(<SegmentedRow label="Which library" items={ITEMS} value="books" onSelect={() => {}} />);
+
+    expect(screen.getByRole('group', { name: 'Which library' })).toHaveClass('isolate');
+  });
+
   it('carries one mark, which is what lets it travel between the choices', () => {
     render(<SegmentedRow label="Which library" items={ITEMS} value="books" onSelect={() => {}} />);
 
