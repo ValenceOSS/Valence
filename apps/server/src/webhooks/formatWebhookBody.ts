@@ -1,5 +1,8 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { describeSpan } from './describeSpan';
 import { discordEmbedFor } from './discordEmbedFor';
+import { nameOfItem } from './nameOfItem';
+import { nameOfViewer } from './nameOfViewer';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { WebhookPayload, WebhookPreset } from '@ValenceContracts/schemas/Webhook';
 
@@ -14,47 +17,6 @@ type WebhookRequestBody = {
   body: string;
   contentType: string;
 };
-
-type NamedItem = {
-  title: string;
-  seriesTitle: string | null;
-  seasonNumber: number | null;
-  episodeNumber: number | null;
-  year: number | null;
-};
-
-type NamedViewer = {
-  accountName: string | null;
-  profileName: string | null;
-};
-
-/**
- * Names one thing in a library the way a person would say it — an episode by its place in its
- * series, anything else by its title and year.
- *
- * @param item - What arrived, left, or is being watched.
- * @returns The name to say.
- */
-const nameOf = (item: NamedItem): string => {
-  if (item.seriesTitle !== null && item.seasonNumber !== null && item.episodeNumber !== null) {
-    const season = item.seasonNumber.toString().padStart(2, '0');
-    const episode = item.episodeNumber.toString().padStart(2, '0');
-
-    return `${item.seriesTitle} S${season}E${episode} — ${item.title}`;
-  }
-
-  return item.year === null ? item.title : `${item.title} (${item.year.toString()})`;
-};
-
-/**
- * Names whoever is watching, preferring the profile because that is who picked it, and falling back
- * to the account or to nobody at all — a share link is watched by no account and no profile.
- *
- * @param viewer - Who is watching.
- * @returns What to call them.
- */
-const nameOfViewer = (viewer: NamedViewer): string =>
-  viewer.profileName ?? viewer.accountName ?? 'Somebody with a share link';
 
 /**
  * Writes what happened as one sentence, for the chat services that show a line rather than render a
@@ -226,15 +188,15 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'media.added': {
-      return `${nameOf(payload.data)} arrived in ${payload.data.libraryName}.`;
+      return `${nameOfItem(payload.data)} arrived in ${payload.data.libraryName}.`;
     }
 
     case 'media.removed': {
-      return `${nameOf(payload.data)} is no longer in ${payload.data.libraryName}.`;
+      return `${nameOfItem(payload.data)} is no longer in ${payload.data.libraryName}.`;
     }
 
     case 'playback.started': {
-      return `${nameOfViewer(payload.data)} started watching ${nameOf(payload.data.item)} on ${payload.data.deviceLabel}, ${HOW_PLAYED[payload.data.mode]}.`;
+      return `${nameOfViewer(payload.data)} started watching ${nameOfItem(payload.data.item)} on ${payload.data.deviceLabel}, ${HOW_PLAYED[payload.data.mode]}.`;
     }
 
     case 'playback.stopped': {
@@ -244,7 +206,18 @@ const sentenceFor = (payload: WebhookPayload): string => {
           ? ''
           : ` ${Math.round((positionSeconds / durationSeconds) * 100).toString()}% of the way through`;
 
-      return `${nameOfViewer(payload.data)} stopped watching ${nameOf(payload.data.item)}${through}.`;
+      return `${nameOfViewer(payload.data)} stopped watching ${nameOfItem(payload.data.item)}${through}.`;
+    }
+
+    case 'session.started': {
+      return `${nameOfViewer(payload.data)} opened Valence on ${payload.data.deviceLabel}.`;
+    }
+
+    case 'session.ended': {
+      const stayed = describeSpan(payload.data.lastedSeconds);
+      const after = stayed === null ? '' : ` after ${stayed}`;
+
+      return `${nameOfViewer(payload.data)} closed Valence on ${payload.data.deviceLabel}${after}.`;
     }
   }
 };

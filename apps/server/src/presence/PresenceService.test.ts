@@ -758,3 +758,105 @@ describe('createPresenceService, a client that asks twice', () => {
     expect(started).toHaveBeenCalledWith(expect.objectContaining({ mode: 'DirectPlay' }));
   });
 });
+
+describe('createPresenceService, telling somebody who is here', () => {
+  const AN_ARRIVAL = {
+    clientId: 'tab-1',
+    socketId: 'socket-1',
+    accountId: 'account-1',
+    profileId: 'profile-1',
+    profileName: 'Dan',
+    guestOf: null,
+    viaShare: null,
+    deviceLabel: 'Chrome on Mac',
+  };
+
+  const connecting = () => {
+    const opened = vi.fn();
+    const closed = vi.fn();
+    const presence = createPresenceService({ onSessionOpened: opened, onSessionClosed: closed });
+
+    return { presence, opened, closed };
+  };
+
+  it('says who arrived and on what, without the parts that are about playing', () => {
+    const { presence, opened } = connecting();
+
+    presence.connect({ ...AN_ARRIVAL, send: vi.fn() });
+
+    expect(opened).toHaveBeenCalledWith({
+      clientId: 'tab-1',
+      accountId: 'account-1',
+      profileId: 'profile-1',
+      profileName: 'Dan',
+      guestOf: null,
+      viaShare: null,
+      deviceLabel: 'Chrome on Mac',
+    });
+  });
+
+  it('says how a guest got in, so whoever shared the link can be named', () => {
+    const { presence, opened } = connecting();
+
+    presence.connect({
+      ...AN_ARRIVAL,
+      accountId: null,
+      profileId: null,
+      profileName: null,
+      guestOf: 'Dan',
+      viaShare: 'share-1',
+      send: vi.fn(),
+    });
+
+    expect(opened).toHaveBeenCalledWith(
+      expect.objectContaining({ guestOf: 'Dan', viaShare: 'share-1' }),
+    );
+  });
+
+  it('says nothing about an arrival that was refused because somebody else holds the tab', () => {
+    const { presence, opened } = connecting();
+
+    presence.connect({ ...AN_ARRIVAL, send: vi.fn() });
+    presence.connect({
+      ...AN_ARRIVAL,
+      socketId: 'socket-2',
+      accountId: 'account-2',
+      send: vi.fn(),
+    });
+
+    expect(opened).toHaveBeenCalledTimes(1);
+  });
+
+  it('says the tab has gone when the socket holding it closes', () => {
+    const { presence, closed } = connecting();
+
+    presence.connect({ ...AN_ARRIVAL, send: vi.fn() });
+    presence.disconnect('tab-1', 'socket-1');
+
+    expect(closed).toHaveBeenCalledWith('tab-1');
+  });
+
+  it('says nothing when a socket that no longer holds the tab closes', () => {
+    const { presence, closed } = connecting();
+
+    presence.connect({ ...AN_ARRIVAL, send: vi.fn() });
+    presence.connect({ ...AN_ARRIVAL, socketId: 'socket-2', send: vi.fn() });
+    presence.disconnect('tab-1', 'socket-1');
+
+    expect(closed).not.toHaveBeenCalled();
+  });
+
+  it('ends the viewing before the session, so nothing is left watching after it has gone', () => {
+    const order: string[] = [];
+    const presence = createPresenceService({
+      onPlaybackStopped: () => order.push('playback'),
+      onSessionClosed: () => order.push('session'),
+    });
+
+    presence.connect({ ...AN_ARRIVAL, send: vi.fn() });
+    presence.startPlayback('tab-1', PLAYBACK);
+    presence.disconnect('tab-1', 'socket-1');
+
+    expect(order).toEqual(['playback', 'session']);
+  });
+});

@@ -35,6 +35,8 @@ const WEBHOOK_EVENTS = [
   'account.created',
   'account.deleted',
   'account.roleChanged',
+  'session.started',
+  'session.ended',
   'media.added',
   'media.removed',
   'playback.started',
@@ -94,6 +96,8 @@ const WEBHOOK_EVENT_LABELS: Record<WebhookEvent, string> = {
   'account.created': 'Account made',
   'account.deleted': 'Account deleted',
   'account.roleChanged': 'Role changed',
+  'session.started': 'Opened Valence',
+  'session.ended': 'Left Valence',
   'media.added': 'Something arrived',
   'media.removed': 'Something left',
   'playback.started': 'Started watching',
@@ -107,6 +111,8 @@ const WEBHOOK_EVENT_NOTES: Partial<Record<WebhookEvent, string>> = {
   'requests.available': 'Sent once the library has found what was filed.',
   'playback.started': 'Names the person and what they are watching.',
   'playback.stopped': 'Names the person and what they were watching.',
+  'session.started': 'Sent when somebody opens Valence, which is not the same as signing in.',
+  'session.ended': 'Sent a minute after the tab goes, so a reload is not a leaving.',
 };
 
 type WebhookEventGroup = {
@@ -162,6 +168,8 @@ const WEBHOOK_EVENT_GROUPS: readonly WebhookEventGroup[] = [
       'account.created',
       'account.deleted',
       'account.roleChanged',
+      'session.started',
+      'session.ended',
     ],
   },
   {
@@ -244,6 +252,13 @@ const WebhookPlaybackSchema = WebhookViewerSchema.extend({
   item: WebhookMediaSchema,
   deviceLabel: z.string(),
   mode: z.enum(PLAYBACK_MODES),
+});
+
+const WebhookSessionSchema = WebhookViewerSchema.extend({
+  clientId: z.string(),
+  deviceLabel: z.string(),
+  guestOf: z.string().nullable().default(null),
+  viaShare: z.string().nullable().default(null),
 });
 
 const ARRIVED_TITLES_KEPT = 25;
@@ -471,6 +486,18 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
       durationSeconds: z.number().nonnegative().nullable(),
     }),
   }),
+  z.object({
+    ...WebhookEnvelopeSchema,
+    event: z.literal('session.started'),
+    data: WebhookSessionSchema,
+  }),
+  z.object({
+    ...WebhookEnvelopeSchema,
+    event: z.literal('session.ended'),
+    data: WebhookSessionSchema.extend({
+      lastedSeconds: z.number().nonnegative(),
+    }),
+  }),
 ]);
 
 type WebhookPayload = z.infer<typeof WebhookPayloadSchema>;
@@ -538,6 +565,7 @@ export {
   WebhookFiltersSchema,
   WebhookJobDataSchema,
   WebhookPayloadSchema,
+  WebhookSessionSchema,
   ScannedLibrarySchema,
   WebhookPresetSchema,
   WebhookSubscriptionSchema,

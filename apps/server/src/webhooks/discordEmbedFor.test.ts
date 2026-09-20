@@ -492,3 +492,86 @@ describe('discordEmbedFor, a scan of several libraries at once', () => {
     expect(drawn.fields.map((one) => one.name)).not.toContain('Libraries');
   });
 });
+
+describe('discordEmbedFor, somebody opening and closing Valence', () => {
+  const aSession = {
+    accountId: 'account-1',
+    accountName: 'Dan',
+    profileId: 'profile-1',
+    profileName: 'Connie',
+    clientId: 'tab-1',
+    deviceLabel: "Connie's iPhone",
+    guestOf: null,
+    viaShare: null,
+  };
+
+  const fieldsOf = (payload: WebhookPayload) =>
+    Object.fromEntries(embed(payload).fields.map((one) => [one.name, one.value]));
+
+  it('puts whoever arrived in the title rather than burying them in a field', () => {
+    expect(embed({ ...anEnvelope, event: 'session.started', data: aSession }).title).toBe(
+      'Connie opened Valence',
+    );
+  });
+
+  it('names the device, and whose account the profile sits on', () => {
+    expect(fieldsOf({ ...anEnvelope, event: 'session.started', data: aSession })).toStrictEqual({
+      Device: "Connie's iPhone",
+      Account: 'Dan',
+    });
+  });
+
+  it('leaves the account out where it would only repeat the title', () => {
+    expect(
+      fieldsOf({
+        ...anEnvelope,
+        event: 'session.started',
+        data: { ...aSession, profileId: null, profileName: null },
+      }),
+    ).toStrictEqual({ Device: "Connie's iPhone" });
+  });
+
+  it('names whoever let a guest in', () => {
+    expect(
+      fieldsOf({
+        ...anEnvelope,
+        event: 'session.started',
+        data: {
+          ...aSession,
+          accountId: null,
+          accountName: null,
+          profileId: null,
+          profileName: null,
+          guestOf: 'Dan',
+          viaShare: 'share-1',
+        },
+      })['Guest of'],
+    ).toBe('Dan');
+  });
+
+  it('says how long somebody stayed when they go', () => {
+    const drawn = embed({
+      ...anEnvelope,
+      event: 'session.ended',
+      data: { ...aSession, lastedSeconds: 4_980 },
+    });
+
+    expect(drawn.title).toBe('Connie closed Valence');
+    expect(
+      fieldsOf({
+        ...anEnvelope,
+        event: 'session.ended',
+        data: { ...aSession, lastedSeconds: 4_980 },
+      }),
+    ).toStrictEqual({
+      Device: "Connie's iPhone",
+      Stayed: '1h 23m',
+    });
+  });
+
+  it('hangs no poster on a session, which is about a person rather than a film', () => {
+    expect(
+      embed({ ...anEnvelope, event: 'session.started', data: aSession }).thumbnail,
+    ).toBeUndefined();
+  });
+});

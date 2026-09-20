@@ -417,3 +417,64 @@ describe('isSubscribableEvent', () => {
     }
   });
 });
+
+describe('WebhookPayloadSchema, somebody opening and closing Valence', () => {
+  const aSession = {
+    accountId: 'account-1',
+    accountName: 'Dan',
+    profileId: 'profile-1',
+    profileName: 'Connie',
+    clientId: 'tab-1',
+    deviceLabel: "Connie's iPhone",
+  };
+
+  it('reads who opened it, on what, and which tab it was', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'session.started',
+      data: { ...aSession, guestOf: null, viaShare: 'share-1' },
+    });
+
+    expect(payload.data).toMatchObject({ clientId: 'tab-1', viaShare: 'share-1' });
+  });
+
+  it('takes a session that says nothing about share links as one that came in by neither', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'session.started',
+      data: aSession,
+    });
+
+    expect(payload.data).toMatchObject({ guestOf: null, viaShare: null });
+  });
+
+  it('carries how long somebody stayed when they leave', () => {
+    const payload = WebhookPayloadSchema.parse({
+      ...anEnvelope,
+      event: 'session.ended',
+      data: { ...aSession, lastedSeconds: 4_980 },
+    });
+
+    expect(payload.data).toMatchObject({ lastedSeconds: 4_980 });
+  });
+
+  it('refuses a visit that lasted less than no time', () => {
+    expect(
+      WebhookPayloadSchema.safeParse({
+        ...anEnvelope,
+        event: 'session.ended',
+        data: { ...aSession, lastedSeconds: -1 },
+      }).success,
+    ).toBe(false);
+  });
+
+  it('refuses a leaving that does not say how long it was', () => {
+    expect(
+      WebhookPayloadSchema.safeParse({
+        ...anEnvelope,
+        event: 'session.ended',
+        data: aSession,
+      }).success,
+    ).toBe(false);
+  });
+});
