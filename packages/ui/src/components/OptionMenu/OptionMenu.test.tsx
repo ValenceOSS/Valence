@@ -170,13 +170,13 @@ describe('OptionMenu', () => {
     expect(OptionMenu.displayName).toBe('OptionMenu');
   });
 
-  it('is drawn on the surface the admin sidebar is, rather than a float of its own', async () => {
+  it('is drawn in the sidebar colour but fully opaque, so nothing shows through it', async () => {
     await open([speed()]);
 
     const menu = await screen.findByRole('menu', { name: 'Playback speed' });
 
-    expect(menu).toHaveClass('valence-surface');
-    expect(menu).not.toHaveClass('valence-float');
+    expect(menu).toHaveClass('valence-float');
+    expect(menu).not.toHaveClass('valence-surface');
   });
 
   it('holds a group header at the top of its group as the choices scroll beneath it', async () => {

@@ -65,7 +65,7 @@ const OptionMenu = ({
             ? { style: { minWidth: 'var(--radix-dropdown-menu-trigger-width)' } }
             : {})}
           className={cn(
-            'valence-surface z-50 flex max-h-80 flex-col overflow-hidden rounded-xl p-1.5 text-sm text-text',
+            'valence-float z-50 flex max-h-80 flex-col overflow-hidden rounded-xl p-1.5 text-sm text-text',
             POPUP_MOTION,
           )}
         >
