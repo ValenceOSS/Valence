@@ -1,3 +1,4 @@
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -93,11 +94,13 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
       );
 
       onCreated(library);
+      tellOutcome(`Added ${library.name}.`, null);
       reset();
     } catch (error) {
-      setErrors({
-        submit: error instanceof Error ? error.message : 'The library could not be added.',
-      });
+      const said = error instanceof Error ? error.message : 'The library could not be added.';
+
+      setErrors({ submit: said });
+      tellOutcome('', said);
     } finally {
       setIsSubmitting(false);
     }

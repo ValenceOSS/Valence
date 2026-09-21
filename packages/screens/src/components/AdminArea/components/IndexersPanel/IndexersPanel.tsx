@@ -1,3 +1,5 @@
+import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -70,12 +72,14 @@ const IndexersPanel = () => {
 
       void testIndexer(indexer.id)
         .then(({ value, refusal }) => {
-          setProblem(
+          const failure =
             refusal?.message ??
-              (value?.isWorking === false
-                ? `${indexer.name}: ${value.problem ?? 'did not answer'}`
-                : null),
-          );
+            (value?.isWorking === false
+              ? `${indexer.name}: ${value.problem ?? 'did not answer'}`
+              : null);
+
+          tellOutcome(`${indexer.name} answered.`, failure);
+          setProblem(failure);
         })
         .then(reread)
         .finally(() => {
@@ -88,6 +92,10 @@ const IndexersPanel = () => {
 
       void changeIndexer(indexer.id, { isEnabled: !indexer.isEnabled })
         .then(({ refusal }) => {
+          tellOutcome(
+            indexer.isEnabled ? `Turned off ${indexer.name}.` : `Turned on ${indexer.name}.`,
+            failureOfRefusal(refusal),
+          );
           setProblem(refusal?.message ?? null);
         })
         .then(reread);
@@ -275,6 +283,7 @@ const IndexersPanel = () => {
           if (gone !== null) {
             void removeIndexer(gone.id)
               .then((refusal) => {
+                tellOutcome(`Removed ${gone.name}.`, failureOfRefusal(refusal));
                 setProblem(refusal?.message ?? null);
               })
               .then(reread);

@@ -1,3 +1,4 @@
+import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
@@ -105,6 +106,7 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
           return;
         }
 
+        notify.worked(`Approved ${request.title}.`);
         onApproved(value);
         onClose();
       })

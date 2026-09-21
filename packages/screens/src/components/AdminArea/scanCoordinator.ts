@@ -123,12 +123,13 @@ const untrack = (key: string) => {
  * @param libraryId - The library the work belongs to.
  * @param kind - What the work is.
  * @param enqueue - How to ask the server to start it.
+ * @returns Whether the server took the work, which is not the same as whether it went well.
  */
 const runAndTrack = async (
   libraryId: string,
   kind: string,
   enqueue: () => Promise<ScanJob | null>,
-): Promise<void> => {
+): Promise<boolean> => {
   const key = keyOf(libraryId, kind);
 
   track(key, {
@@ -144,29 +145,33 @@ const runAndTrack = async (
   try {
     const job = await enqueue();
 
-    if (job !== null) {
+    if (job === null) {
+      return false;
+    }
+
+    track(key, {
+      libraryId,
+      kind,
+      phase: null,
+      item: null,
+      processed: null,
+      total: null,
+      jobId: job.jobId,
+    });
+
+    await waitForScanCompletion(job.jobId, (found) => {
       track(key, {
         libraryId,
         kind,
-        phase: null,
-        item: null,
-        processed: null,
-        total: null,
+        phase: found.phase,
+        item: found.item,
+        processed: found.processed,
+        total: found.total,
         jobId: job.jobId,
       });
+    });
 
-      await waitForScanCompletion(job.jobId, (found) => {
-        track(key, {
-          libraryId,
-          kind,
-          phase: found.phase,
-          item: found.item,
-          processed: found.processed,
-          total: found.total,
-          jobId: job.jobId,
-        });
-      });
-    }
+    return true;
   } finally {
     untrack(key);
   }
@@ -231,7 +236,9 @@ const resumeRunning = async (): Promise<void> => {
  * @param jobId - The job to follow.
  */
 const watchJob = (libraryId: string, kind: string, jobId: string): Promise<void> =>
-  runAndTrack(libraryId, kind, () => Promise.resolve({ jobId, state: 'queued' }));
+  runAndTrack(libraryId, kind, () => Promise.resolve({ jobId, state: 'queued' })).then(
+    () => undefined,
+  );
 
 /**
  * Scans one library, tracking its progress until it finishes. Scanning reads what has changed;
@@ -240,8 +247,9 @@ const watchJob = (libraryId: string, kind: string, jobId: string): Promise<void>
  *
  * @param libraryId - The library to scan.
  * @param force - Whether to re-probe every file rather than only what has changed.
+ * @returns Whether the server took the scan.
  */
-const startScan = (libraryId: string, force = false): Promise<void> =>
+const startScan = (libraryId: string, force = false): Promise<boolean> =>
   runAndTrack(libraryId, force ? 'rescan' : 'scan', () => scanLibrary(libraryId, force));
 
 /**
@@ -251,18 +259,20 @@ const startScan = (libraryId: string, force = false): Promise<void> =>
  *
  * @param libraries - The libraries to scan.
  */
-const startScanAll = async (libraries: readonly Library[]): Promise<void> => {
+const startScanAll = async (libraries: readonly Library[]): Promise<boolean> => {
   isScanningAll = true;
   notify();
 
   const run = { id: crypto.randomUUID(), of: libraries.length };
 
   try {
-    await Promise.all(
+    const taken = await Promise.all(
       libraries.map((library) =>
         runAndTrack(library.id, 'scan', () => scanLibrary(library.id, true, run)),
       ),
     );
+
+    return taken.every(Boolean);
   } finally {
     isScanningAll = false;
     notify();
@@ -275,14 +285,16 @@ const startScanAll = async (libraries: readonly Library[]): Promise<void> => {
  *
  * @param libraries - The libraries to rebuild.
  */
-const startResetAll = async (libraries: readonly Library[]): Promise<void> => {
+const startResetAll = async (libraries: readonly Library[]): Promise<boolean> => {
   isResettingAll = true;
   notify();
 
   try {
-    await Promise.all(
+    const taken = await Promise.all(
       libraries.map((library) => runAndTrack(library.id, 'scan', () => resetLibrary(library.id))),
     );
+
+    return taken.every(Boolean);
   } finally {
     isResettingAll = false;
     notify();
@@ -295,7 +307,7 @@ const startResetAll = async (libraries: readonly Library[]): Promise<void> => {
  *
  * @param libraryId - The library to regenerate previews for.
  */
-const startRegeneratePreviews = (libraryId: string): Promise<void> =>
+const startRegeneratePreviews = (libraryId: string): Promise<boolean> =>
   runAndTrack(libraryId, 'regeneratePreviews', () => regenerateLibraryPreviews(libraryId));
 
 /**
@@ -306,7 +318,7 @@ const startRegeneratePreviews = (libraryId: string): Promise<void> =>
  * @param libraryId - The library to run it against, where it takes one.
  * @param force - Whether to redo work already done.
  */
-const runDefinedJob = (kind: string, libraryId?: string, force?: boolean): Promise<void> =>
+const runDefinedJob = (kind: string, libraryId?: string, force?: boolean): Promise<boolean> =>
   runAndTrack(libraryId ?? kind, kind, () => runJob(kind, libraryId, force));
 
 /**
@@ -321,9 +333,9 @@ const runDefinedJobAll = (
   kind: string,
   libraries: readonly Library[],
   force?: boolean,
-): Promise<void> =>
-  Promise.all(libraries.map((library) => runDefinedJob(kind, library.id, force))).then(
-    () => undefined,
+): Promise<boolean> =>
+  Promise.all(libraries.map((library) => runDefinedJob(kind, library.id, force))).then((taken) =>
+    taken.every(Boolean),
   );
 
 /**
@@ -339,7 +351,7 @@ const clearPartsOfAll = (
   kind: string,
   libraries: readonly Library[],
   parts: readonly LibraryPart[],
-): Promise<void> =>
+): Promise<boolean> =>
   Promise.all(
     libraries.flatMap((library) => {
       const offered = parts.filter((part) => LIBRARY_PARTS_BY_KIND[library.kind].includes(part));
@@ -348,7 +360,7 @@ const clearPartsOfAll = (
         ? []
         : [runAndTrack(library.id, kind, () => runJob(kind, library.id, undefined, offered))];
     }),
-  ).then(() => undefined);
+  ).then((taken) => taken.every(Boolean));
 
 export type { ScanEntry };
 
@@ -358,8 +370,9 @@ export type { ScanEntry };
  * before it stops and can go on saying it is running for some time after it was asked not to.
  *
  * @param kind - The job kind to stop.
+ * @returns Whether the server accepted every request to stop.
  */
-const stopJobs = async (kind: string): Promise<void> => {
+const stopJobs = async (kind: string): Promise<boolean> => {
   const running = [...snapshot.progress.entries()].filter(
     ([, entry]) => entry.kind === kind && entry.jobId !== null,
   );
@@ -375,7 +388,9 @@ const stopJobs = async (kind: string): Promise<void> => {
   );
   notify();
 
-  await Promise.all(running.map(([, entry]) => cancelJob(entry.jobId ?? '')));
+  const answers = await Promise.all(running.map(([, entry]) => cancelJob(entry.jobId ?? '')));
+
+  return answers.every(Boolean);
 };
 
 /**

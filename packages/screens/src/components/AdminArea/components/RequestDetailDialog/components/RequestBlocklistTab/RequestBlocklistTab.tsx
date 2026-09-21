@@ -1,3 +1,4 @@
+import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@ValenceUI/Button';
@@ -90,6 +91,7 @@ const RequestBlocklistTab = ({ request, onLifted }: RequestBlocklistTabProps) =>
                       return;
                     }
 
+                    notify.worked('Lifted the block.');
                     onLifted();
 
                     return cache.invalidateQueries({

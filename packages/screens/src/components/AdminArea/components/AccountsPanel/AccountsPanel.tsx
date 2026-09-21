@@ -1,3 +1,5 @@
+import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { AccountFace } from '@ValenceScreens/components/AdminArea/components/AccountsPanel/components/AccountFace/AccountFace';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
@@ -157,14 +159,17 @@ const AccountsPanel = () => {
   }, [cache, accountId]);
 
   const act = useCallback(
-    async (run: () => Promise<Refusal>) => {
+    async (run: () => Promise<Refusal>, done: string) => {
       const outcome = await run();
 
       setRefusal(outcome);
+      tellOutcome(done, failureOfRefusal(outcome));
 
       if (outcome === null) {
         await reload();
       }
+
+      return outcome === null;
     },
     [reload],
   );
@@ -231,6 +236,7 @@ const AccountsPanel = () => {
 
       if (outcome !== null) {
         setRefusal(outcome);
+        tellOutcome('', failureOfRefusal(outcome));
         return;
       }
     }
@@ -244,6 +250,7 @@ const AccountsPanel = () => {
 
       if (outcome !== null) {
         setRefusal(outcome);
+        tellOutcome('', failureOfRefusal(outcome));
         return;
       }
     }
@@ -257,6 +264,7 @@ const AccountsPanel = () => {
 
       if (outcome !== null) {
         setRefusal(outcome);
+        tellOutcome('', failureOfRefusal(outcome));
         return;
       }
     }
@@ -273,6 +281,7 @@ const AccountsPanel = () => {
 
         if (outcome !== null) {
           setRefusal(outcome);
+          tellOutcome('', failureOfRefusal(outcome));
           return;
         }
       }
@@ -291,6 +300,7 @@ const AccountsPanel = () => {
 
         if (outcome !== null) {
           setRefusal(outcome);
+          tellOutcome('', failureOfRefusal(outcome));
           return;
         }
       }
@@ -301,6 +311,7 @@ const AccountsPanel = () => {
 
       if (outcome !== null) {
         setRefusal(outcome);
+        tellOutcome('', failureOfRefusal(outcome));
         return;
       }
     } else {
@@ -317,12 +328,14 @@ const AccountsPanel = () => {
 
         if (outcome !== null) {
           setRefusal(outcome);
+          tellOutcome('', failureOfRefusal(outcome));
           return;
         }
       }
     }
 
     setRefusal(null);
+    tellOutcome('Changes saved.', null);
     await reload();
   }, [
     picked,
@@ -438,7 +451,7 @@ const AccountsPanel = () => {
                       icon: <Icon of={CircleXIcon} size={15} />,
                       onChoose: () => {
                         if (row.original.isBanned) {
-                          void act(() => unbanAccount(row.original.id));
+                          void act(() => unbanAccount(row.original.id), 'Account unbanned.');
 
                           return;
                         }
@@ -479,10 +492,12 @@ const AccountsPanel = () => {
 
     setAsking(null);
 
-    void act(() =>
-      kind === 'ban'
-        ? banAccount(account.id, 'Banned from the admin area')
-        : removeAccount(account.id),
+    void act(
+      () =>
+        kind === 'ban'
+          ? banAccount(account.id, 'Banned from the admin area')
+          : removeAccount(account.id),
+      kind === 'ban' ? `Banned ${account.name}.` : `Deleted ${account.name}.`,
     );
   };
 
@@ -539,6 +554,12 @@ const AccountsPanel = () => {
           <p className="text-center font-body text-xs text-text-muted">
             Valence cannot send email, so tell them this password yourself.
           </p>
+
+          {refusal === null ? null : (
+            <p role="alert" className="text-sm text-danger">
+              {refusal.message}
+            </p>
+          )}
         </DialogContent>
 
         <DialogFooter
@@ -550,13 +571,19 @@ const AccountsPanel = () => {
           confirm={{
             label: 'Add',
             onChoose: () => {
-              void act(() =>
-                inviteAccount({
-                  name: inviteName,
-                  email: inviteEmail,
-                  password: invitePassword,
-                }),
-              ).then(() => {
+              void act(
+                () =>
+                  inviteAccount({
+                    name: inviteName,
+                    email: inviteEmail,
+                    password: invitePassword,
+                  }),
+                `Added ${inviteName}.`,
+              ).then((isAdded) => {
+                if (!isAdded) {
+                  return;
+                }
+
                 setInviteName('');
                 setInviteEmail('');
                 setInvitePassword('');
@@ -568,7 +595,7 @@ const AccountsPanel = () => {
         />
       </DialogCompanion>
 
-      {refusal === null || picked !== null ? null : (
+      {refusal === null || picked !== null || isInviting ? null : (
         <p
           role="alert"
           className="flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-text"
@@ -958,7 +985,7 @@ const AccountsPanel = () => {
           setDraftPassword('');
 
           if (accountId !== null) {
-            void act(() => resetAccountPassword(accountId, password));
+            void act(() => resetAccountPassword(accountId, password), 'Password reset.');
           }
         }}
       />
@@ -976,7 +1003,7 @@ const AccountsPanel = () => {
           setConfirmingSignOutEverywhere(false);
 
           if (accountId !== null) {
-            void act(() => endAccountSessions(accountId));
+            void act(() => endAccountSessions(accountId), 'Signed them out everywhere.');
           }
         }}
       />

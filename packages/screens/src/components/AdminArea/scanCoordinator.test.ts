@@ -90,7 +90,7 @@ describe('scanCoordinator', () => {
       total: null,
     });
 
-    await expect(startScan('library-solo')).resolves.toBeUndefined();
+    await expect(startScan('library-solo')).resolves.toBe(true);
   });
 
   it('reports scan-all as busy for its whole run', async () => {
@@ -165,6 +165,12 @@ describe('scanCoordinator', () => {
     await startScan('library-null');
 
     expect(getSnapshot().progress.has('library-null:scan')).toBe(false);
+  });
+
+  it('says a scan was not started where the server returned no job', async () => {
+    scanLibraryMock.mockResolvedValue(null);
+
+    await expect(startScan('library-refused')).resolves.toBe(false);
   });
 
   it('tracks a job started by kind, from the Work tab picker', async () => {

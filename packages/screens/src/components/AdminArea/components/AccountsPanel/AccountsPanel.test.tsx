@@ -3,6 +3,7 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountsPanel } from './AccountsPanel';
+import { notify } from '@ValenceUI/notify';
 import type { Account } from '@ValenceClient/admin/fetchAccounts';
 
 const accountMocks = vi.hoisted(() => ({
@@ -14,6 +15,9 @@ const accountMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@ValenceClient/admin/fetchAccounts', () => accountMocks);
+vi.mock('@ValenceUI/notify', () => ({
+  notify: { worked: vi.fn(), failed: vi.fn() },
+}));
 
 const mocks = vi.hoisted(() => ({
   fetchPermissionCatalogue: vi.fn(),
@@ -326,6 +330,23 @@ describe('AccountsPanel', () => {
         name: 'Alex',
         email: 'alex@valence.local',
         password: 'a-long-enough-password',
+      });
+    });
+
+    it('says so once they are added', async () => {
+      accountMocks.inviteAccount.mockResolvedValue(null);
+
+      const user = userEvent.setup();
+      renderInAnAddress(<AccountsPanel />);
+
+      await openInvite(user);
+      await user.type(screen.getByLabelText('Name'), 'Alex');
+      await user.type(screen.getByLabelText('Address'), 'alex@valence.local');
+      await user.type(screen.getByLabelText('Password'), 'a-long-enough-password');
+      await user.click(screen.getByRole('button', { name: 'Add' }));
+
+      await waitFor(() => {
+        expect(notify.worked).toHaveBeenCalledWith('Added Alex.');
       });
     });
 

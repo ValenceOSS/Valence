@@ -1,3 +1,4 @@
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
 import {
   Bin as BinIcon,
@@ -422,6 +423,7 @@ const LibrariesPanel = ({
 
           void deleteLibrary(doomed.id)
             .then(() => {
+              tellOutcome(`Deleted ${doomed.name}.`, null);
               onLibraryDeleted(doomed.id);
             })
             .catch(() => {

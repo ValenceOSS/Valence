@@ -1,3 +1,5 @@
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { failureOfAnswer } from '@ValenceScreens/admin/failureOf';
 import { Icon } from '@ValenceUI/Icon';
 import { Info as InfoIcon, Unlink as UnlinkIcon } from '@keyline-icons/react';
 import { useMemo, useState } from 'react';
@@ -161,7 +163,14 @@ const SharesPanel = () => {
           setIsWorking(true);
 
           void revokeAnybodysShare(share.id)
-            .then(async () => cache.invalidateQueries({ queryKey: adminQueries.shares().queryKey }))
+            .then(async (revoked) => {
+              tellOutcome(
+                'Withdrew the link.',
+                failureOfAnswer(revoked, 'That link could not be withdrawn.'),
+              );
+
+              return cache.invalidateQueries({ queryKey: adminQueries.shares().queryKey });
+            })
             .finally(() => {
               setIsWorking(false);
               setWithdrawing(null);
