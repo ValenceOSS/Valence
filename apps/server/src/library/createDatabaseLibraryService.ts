@@ -58,7 +58,7 @@ import type {
 } from '@ValenceServer/music/scanMusicLibrary';
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
 import { createExpiringCache } from './createExpiringCache';
-import { resolveSeriesShape } from './MetadataProvider';
+import { resolveNextEpisode, resolveSeriesShape } from './MetadataProvider';
 import { nextEpisodeOf } from '@ValenceServer/library/nextEpisodeOf';
 import { regeneratePreviews } from './regeneratePreviews';
 import { generateTrickplay } from './generateTrickplay';
@@ -87,6 +87,7 @@ import type {
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { MediaFileSystem, ScanPhase, ScannedItem } from './scanLibrary';
 import type { MetadataProvider, SeriesShape } from './MetadataProvider';
+import type { NextEpisode } from '@ValenceServer/library/nextEpisodeOf';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
@@ -207,6 +208,8 @@ const CREDITS_LIMIT = 200;
 
 const SERIES_SHAPE_LIVES_FOR_MS = 6 * 60 * 60 * 1000;
 
+const COMING_UP_SHOWN = 40;
+
 /**
  * What one profile gave an item, as a subquery rather than a join, so that filtering or sorting by a
  * rating never changes how many rows a page comes back with. A profile that has not rated something
@@ -266,6 +269,8 @@ const createDatabaseLibraryService = ({
   const store = createMediaStore(db, certificationRegion);
 
   const shapes = createExpiringCache<SeriesShape | null>(SERIES_SHAPE_LIVES_FOR_MS);
+
+  const nextEpisodes = createExpiringCache<NextEpisode | null>(SERIES_SHAPE_LIVES_FOR_MS);
 
   /**
    * What a programme is made of — its seasons and their episodes — as the catalogue has it.
@@ -2010,6 +2015,63 @@ const createDatabaseLibraryService = ({
       });
 
       return page === null ? null : groupIntoShows(page.items);
+    },
+
+    comingUp: async (viewer) => {
+      const held = (await service.list(viewer)).filter((entry) => entry.kind === 'shows');
+
+      const shows = (
+        await Promise.all(held.map(async (entry) => service.listShows(viewer, entry.id)))
+      ).flatMap((listed) => listed ?? []);
+
+      if (shows.length === 0) {
+        return [];
+      }
+
+      const covers = await db
+        .select({ id: mediaItem.id, externalId: mediaItem.externalId })
+        .from(mediaItem)
+        .where(
+          inArray(
+            mediaItem.id,
+            shows.map((show) => show.coverMediaId),
+          ),
+        );
+
+      const externalIds = new Map(covers.map((cover) => [cover.id, cover.externalId]));
+      const today = new Date().toISOString().slice(0, 10);
+
+      const upcoming = await Promise.all(
+        shows.map(async (show) => {
+          const externalId = externalIds.get(show.coverMediaId) ?? null;
+
+          if (externalId === null || externalId === '') {
+            return [];
+          }
+
+          const known = nextEpisodes.get(externalId);
+
+          const next =
+            known !== undefined
+              ? known
+              : await resolveNextEpisode(providers ?? [], externalId, (provider, reason) => {
+                  onProblem?.(provider, reason);
+                });
+
+          nextEpisodes.set(externalId, next);
+
+          return next !== null && next.airDate >= today ? [{ show, episode: next }] : [];
+        }),
+      );
+
+      return upcoming
+        .flat()
+        .sort(
+          (left, right) =>
+            left.episode.airDate.localeCompare(right.episode.airDate) ||
+            left.show.title.localeCompare(right.show.title),
+        )
+        .slice(0, COMING_UP_SHOWN);
     },
 
     getShow: async (viewer, libraryId, showId) => {

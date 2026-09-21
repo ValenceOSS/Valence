@@ -669,6 +669,69 @@ describe('searching the catalogue by name', () => {
   });
 });
 
+describe('reading the next episode of a series', () => {
+  it('reads the episode the catalogue says airs next, and when', async () => {
+    const { instance, calls } = provider({
+      '/tv/5': {
+        id: 5,
+        name: 'Ted Lasso',
+        next_episode_to_air: {
+          air_date: '2026-10-01',
+          season_number: 4,
+          episode_number: 2,
+          name: 'Two',
+        },
+      },
+    });
+
+    await expect(instance.describeNextEpisode?.('5')).resolves.toEqual({
+      seasonNumber: 4,
+      episodeNumber: 2,
+      title: 'Two',
+      airDate: '2026-10-01',
+    });
+    expect(new URL(calls[0] ?? '').pathname).toBe('/3/tv/5');
+  });
+
+  it('names an episode by its number when the catalogue gives it no name', async () => {
+    const { instance } = provider({
+      '/tv/5': {
+        id: 5,
+        name: 'Ted Lasso',
+        next_episode_to_air: { air_date: '2026-10-01', season_number: 4, episode_number: 2 },
+      },
+    });
+
+    await expect(instance.describeNextEpisode?.('5')).resolves.toMatchObject({
+      title: 'Episode 2',
+    });
+  });
+
+  it('knows of none where the catalogue names none, or gives it no date', async () => {
+    await expect(
+      provider({
+        '/tv/5': { id: 5, name: 'Done', next_episode_to_air: null },
+      }).instance.describeNextEpisode?.('5'),
+    ).resolves.toBeNull();
+    await expect(
+      provider({
+        '/tv/5': {
+          id: 5,
+          name: 'Undated',
+          next_episode_to_air: { air_date: null, season_number: 1, episode_number: 1 },
+        },
+      }).instance.describeNextEpisode?.('5'),
+    ).resolves.toBeNull();
+  });
+
+  it('knows of none without a key, or for a series the catalogue does not know', async () => {
+    await expect(
+      provider({}, { key: null }).instance.describeNextEpisode?.('5'),
+    ).resolves.toBeNull();
+    await expect(provider({}).instance.describeNextEpisode?.('5')).resolves.toBeNull();
+  });
+});
+
 describe('reading the shape of a series', () => {
   const SERIES = {
     id: 5,
