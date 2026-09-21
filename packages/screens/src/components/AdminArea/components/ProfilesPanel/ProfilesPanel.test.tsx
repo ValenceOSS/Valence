@@ -75,19 +75,21 @@ describe('ProfilesPanel', () => {
       expect(within(rowOf('HD')).getByText('Films, A library that has gone')).toBeInTheDocument();
     });
     expect(within(rowOf('HD')).getByText('1080p · Blu-ray')).toBeInTheDocument();
-    expect(within(rowOf('Lossless')).getByText('Every library')).toBeInTheDocument();
   });
 
-  it('keeps the profiles for films and series apart from the ones for music', async () => {
+  it('shows films and series first, and music behind its own tab', async () => {
+    const user = userEvent.setup();
+
     renderInAnAddress(<ProfilesPanel />);
 
-    const video = await screen.findByRole('region', { name: 'Films and series' });
-    const music = screen.getByRole('region', { name: 'Music' });
+    expect(await screen.findByText('HD')).toBeInTheDocument();
+    expect(screen.queryByText('Lossless')).not.toBeInTheDocument();
 
-    expect(within(video).getByText('HD')).toBeInTheDocument();
-    expect(within(video).queryByText('Lossless')).not.toBeInTheDocument();
-    expect(within(music).getByText('Lossless')).toBeInTheDocument();
-    expect(within(music).queryByText('HD')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Music' }));
+
+    expect(await screen.findByText('Lossless')).toBeInTheDocument();
+    expect(within(rowOf('Lossless')).getByText('Every library')).toBeInTheDocument();
+    expect(screen.queryByText('HD')).not.toBeInTheDocument();
   });
 
   it('opens the dialog to add a profile, and to change one', async () => {
@@ -155,7 +157,6 @@ describe('ProfilesPanel', () => {
     answer([]);
 
     expect(await screen.findByText('No profiles for films or series yet.')).toBeInTheDocument();
-    expect(screen.getByText('No profiles for music yet.')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {
