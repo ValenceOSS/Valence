@@ -29,7 +29,9 @@ const OPENING = { duration: VALENCE_TOKENS.duration.slow, ease: VALENCE_TOKENS.e
  * The bars come and go together, as they are told, and a hidden bar cannot be pressed by accident.
  * The edges are a third of the screen each and always there, because somebody reading turns the page
  * far more often than they reach for anything else; the middle is left to whatever the page is. An
- * arrow sits on each edge for anybody who wants something to press, and shows with the bars.
+ * arrow sits in each edge for anybody who wants to see where to press, and shows with the bars. It
+ * is part of the edge rather than a button of its own on top of it, so a press that starts while the
+ * bars are fading still lands on the same thing it started on and is never lost.
  *
  * The whole reader can be taken to fill the screen, where the browser allows it.
  *
@@ -120,59 +122,47 @@ const ReaderChrome = ({
         <div className={cn('relative flex min-h-0 flex-1 overflow-hidden', className)}>
           {children}
 
-          <div className="absolute inset-y-0 left-0 flex w-1/3 items-center justify-start">
+          <div className="absolute inset-y-0 left-0 flex w-1/3">
             <Button
-              variant="ghost"
-              tabIndex={-1}
-              aria-hidden
-              className="h-full w-full opacity-0"
+              variant="bare"
+              size="none"
+              hasTooltip={false}
+              label={isRightToLeft ? 'Next page' : 'Previous page'}
+              className="h-full w-full items-center justify-start px-4"
               onClick={isRightToLeft ? onForward : onBack}
             >
-              <span />
+              <Icon
+                of={ChevronLeftIcon}
+                size={32}
+                tone="scrim"
+                className={cn(
+                  'drop-shadow-lg transition-opacity duration-[var(--duration-fast)]',
+                  isShown ? 'opacity-100' : 'opacity-0',
+                )}
+              />
             </Button>
           </div>
 
-          <div className="absolute inset-y-0 right-0 flex w-1/3 items-center justify-end">
+          <div className="absolute inset-y-0 right-0 flex w-1/3">
             <Button
-              variant="ghost"
-              tabIndex={-1}
-              aria-hidden
-              className="h-full w-full opacity-0"
+              variant="bare"
+              size="none"
+              hasTooltip={false}
+              label={isRightToLeft ? 'Previous page' : 'Next page'}
+              className="h-full w-full items-center justify-end px-4"
               onClick={isRightToLeft ? onBack : onForward}
             >
-              <span />
+              <Icon
+                of={ChevronRightIcon}
+                size={32}
+                tone="scrim"
+                className={cn(
+                  'drop-shadow-lg transition-opacity duration-[var(--duration-fast)]',
+                  isShown ? 'opacity-100' : 'opacity-0',
+                )}
+              />
             </Button>
           </div>
-
-          <Button
-            variant="overlay"
-            isIconOnly
-            size="lg"
-            isPill
-            label={isRightToLeft ? 'Next page' : 'Previous page'}
-            onClick={isRightToLeft ? onForward : onBack}
-            className={cn(
-              'absolute left-3 top-1/2 z-10 -translate-y-1/2 transition-opacity duration-[var(--duration-fast)]',
-              isShown ? 'opacity-100' : 'pointer-events-none opacity-0',
-            )}
-          >
-            <Icon of={ChevronLeftIcon} size={22} />
-          </Button>
-
-          <Button
-            variant="overlay"
-            isIconOnly
-            size="lg"
-            isPill
-            label={isRightToLeft ? 'Previous page' : 'Next page'}
-            onClick={isRightToLeft ? onBack : onForward}
-            className={cn(
-              'absolute right-3 top-1/2 z-10 -translate-y-1/2 transition-opacity duration-[var(--duration-fast)]',
-              isShown ? 'opacity-100' : 'pointer-events-none opacity-0',
-            )}
-          >
-            <Icon of={ChevronRightIcon} size={22} />
-          </Button>
         </div>
 
         <footer

@@ -135,14 +135,15 @@ describe('ReaderChrome', () => {
     expect(screen.getByRole('button', { name: 'Fill the screen' })).toBeInTheDocument();
   });
 
-  it('draws an arrow on each edge that turns the page, and hides them with the bars', () => {
-    draw({ isShown: false });
+  it('draws an arrow in each edge, faded with the bars but still pressable', async () => {
+    const { onForward } = draw({ isShown: false });
 
-    expect(screen.getByRole('button', { name: 'Next page', hidden: true })).toHaveClass(
-      'pointer-events-none',
-    );
-    expect(screen.getByRole('button', { name: 'Previous page', hidden: true })).toHaveClass(
-      'pointer-events-none',
-    );
+    const next = screen.getByRole('button', { name: 'Next page' });
+
+    expect(next.querySelector('svg')).toHaveClass('opacity-0');
+
+    await userEvent.click(next);
+
+    expect(onForward).toHaveBeenCalledOnce();
   });
 });

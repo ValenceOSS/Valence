@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
@@ -7,6 +8,7 @@ import { Slider } from '@ValenceUI/Slider';
 import { bookPageUrl } from '@ValenceClient/books/fetchBooks';
 import { groupHolding, spreadsFor } from '@ValenceScreens/reading/spreadsFor';
 import {
+  MOST_GAP,
   readReaderPreferences,
   writeReaderPreferences,
 } from '@ValenceScreens/reading/readerPreferences';
@@ -14,6 +16,7 @@ import type { ReaderPreferences } from '@ValenceScreens/reading/readerPreference
 import { CLOSEST, distanceBetween, heldWithin, scaleFrom } from '@ValenceScreens/reading/pinch';
 import { useChromeThatHides } from '@ValenceScreens/reading/useChromeThatHides';
 import { useTurnKeys } from '@ValenceScreens/reading/useTurnKeys';
+import { pageFlipVariants, swingOf } from '@ValenceScreens/reading/pageFlip';
 import { ReaderChrome } from '@ValenceScreens/components/ReaderChrome/ReaderChrome';
 import { ReaderPanel } from '@ValenceScreens/components/ReaderPanel/ReaderPanel';
 import { ReaderPicker } from '@ValenceScreens/components/ReaderPicker/ReaderPicker';
@@ -25,8 +28,6 @@ const A_SWIPE = 48;
 const PRELOAD = 4;
 
 const WIDEST = 3840;
-
-const A_LOOK = 2.5;
 
 /**
  * How wide to ask for a page, in real pixels rather than the ones a browser counts in.
@@ -119,6 +120,8 @@ const PageReader = ({
     ),
   );
   const { isShown: isChromeShown, wake, keep } = useChromeThatHides();
+  const prefersReducedMotion = useReducedMotionConfig();
+  const previousAt = useRef(at);
   const [isPanelPinned, setIsPanelPinned] = useState(readPanelPinned);
   const [isPanelOpen, setIsPanelOpen] = useState(isPanelPinned);
   const startedAt = useRef<number | null>(null);
@@ -235,6 +238,16 @@ const PageReader = ({
 
   const ordered = settings.direction === 'rightToLeft' ? [...showing].reverse() : showing;
 
+  const flip = {
+    isAdvancing: at >= previousAt.current,
+    isRightToLeft: settings.direction === 'rightToLeft',
+  };
+  const isFlipping = settings.isAnimated && prefersReducedMotion !== true;
+
+  useEffect(() => {
+    previousAt.current = at;
+  }, [at]);
+
   return (
     <div
       className="valence-below-the-bar z-50 flex flex-col bg-shade"
@@ -297,11 +310,6 @@ const PageReader = ({
         const isRightToLeft = settings.direction === 'rightToLeft';
 
         (wentLeft === isRightToLeft ? back : forward)();
-      }}
-      onDoubleClick={() => {
-        setScale((was) => (was > CLOSEST ? CLOSEST : A_LOOK));
-        setMoved({ x: 0, y: 0 });
-        wake();
       }}
     >
       <ReaderChrome
@@ -417,6 +425,31 @@ const PageReader = ({
                 </SettingRow>
               ) : null}
 
+              {settings.isDouble ? (
+                <SettingRow title="Gap between pages" description={`${settings.gap.toString()} px`}>
+                  <Slider
+                    label="Gap between pages"
+                    value={settings.gap}
+                    max={MOST_GAP}
+                    onValueChange={(next) => {
+                      change({ gap: next });
+                    }}
+                    className="w-40"
+                  />
+                </SettingRow>
+              ) : null}
+
+              <SettingRow title="Animate turning pages">
+                <Switch
+                  label="Animate turning pages"
+                  isLabelHidden
+                  isOn={settings.isAnimated}
+                  onToggle={() => {
+                    change({ isAnimated: !settings.isAnimated });
+                  }}
+                />
+              </SettingRow>
+
               <SettingRow title="Fit">
                 <SegmentedRow
                   label="Fit"
@@ -485,22 +518,66 @@ const PageReader = ({
               pinch.current === null && dragged.current === null ? 'transform 120ms' : 'none',
           }}
         >
-          {ordered.map((page) => (
-            <img
-              key={page}
-              src={bookPageUrl(book.id, chapterId, page, widthFor(showing.length))}
-              alt={`Page ${(page + 1).toString()}`}
-              onLoad={(event) => {
-                noted(page, event.currentTarget);
-              }}
-              className={[
-                'select-none',
-                settings.fit === 'width' ? 'w-full object-contain' : '',
-                settings.fit === 'height' ? 'h-full object-contain' : '',
-                settings.fit === 'both' ? 'max-h-full max-w-full object-contain' : '',
-              ].join(' ')}
-            />
-          ))}
+          {isFlipping ? (
+            <div className="relative h-full w-full" style={{ perspective: '2400px' }}>
+              <AnimatePresence initial={false} custom={flip} mode="popLayout">
+                <motion.div
+                  key={first ?? 0}
+                  custom={flip}
+                  variants={pageFlipVariants}
+                  initial="enter"
+                  animate="settled"
+                  exit="leave"
+                  transition={{ duration: 0.5, ease: 'easeInOut' }}
+                  className="flex h-full w-full items-center justify-center"
+                  style={{
+                    gap: `${settings.gap.toString()}px`,
+                    transformOrigin: swingOf(flip).hinge,
+                    backfaceVisibility: 'hidden',
+                  }}
+                >
+                  {ordered.map((page) => (
+                    <img
+                      key={page}
+                      src={bookPageUrl(book.id, chapterId, page, widthFor(showing.length))}
+                      alt={`Page ${(page + 1).toString()}`}
+                      onLoad={(event) => {
+                        noted(page, event.currentTarget);
+                      }}
+                      className={[
+                        'select-none',
+                        settings.fit === 'width' ? 'w-full object-contain' : '',
+                        settings.fit === 'height' ? 'h-full object-contain' : '',
+                        settings.fit === 'both' ? 'max-h-full max-w-full object-contain' : '',
+                      ].join(' ')}
+                    />
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          ) : (
+            <div
+              className="flex h-full w-full items-center justify-center"
+              style={{ gap: `${settings.gap.toString()}px` }}
+            >
+              {ordered.map((page) => (
+                <img
+                  key={page}
+                  src={bookPageUrl(book.id, chapterId, page, widthFor(showing.length))}
+                  alt={`Page ${(page + 1).toString()}`}
+                  onLoad={(event) => {
+                    noted(page, event.currentTarget);
+                  }}
+                  className={[
+                    'select-none',
+                    settings.fit === 'width' ? 'w-full object-contain' : '',
+                    settings.fit === 'height' ? 'h-full object-contain' : '',
+                    settings.fit === 'both' ? 'max-h-full max-w-full object-contain' : '',
+                  ].join(' ')}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </ReaderChrome>
 

@@ -206,6 +206,39 @@ describe('PageReader', () => {
     expect(held.get('valence.reader')).toContain('"isDouble":true');
   });
 
+  it('does not zoom the page when it is double clicked', async () => {
+    draw();
+
+    const page = screen.getByRole('img', { name: 'Page 1' });
+
+    await userEvent.dblClick(page);
+
+    expect(page.closest<HTMLElement>('[style*="translate3d"]')?.style.transform).toContain(
+      'scale(1)',
+    );
+  });
+
+  it('offers a gap between the two pages of a spread only while two are showing', async () => {
+    draw();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+
+    expect(screen.queryByRole('slider', { name: 'Gap between pages' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Two' }));
+
+    expect(screen.getByRole('slider', { name: 'Gap between pages' })).toBeInTheDocument();
+  });
+
+  it('remembers whether turning a page is animated', async () => {
+    draw();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Animate turning pages' }));
+
+    expect(held.get('valence.reader')).toContain('"isAnimated":false');
+  });
+
   it('says in the panel which book, which chapter and which page', async () => {
     draw();
 
