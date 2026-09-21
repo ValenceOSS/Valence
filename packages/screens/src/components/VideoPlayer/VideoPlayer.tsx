@@ -340,7 +340,7 @@ const VideoPlayer = ({
     ) {
       element.currentTime = reference - frameSkewRef.current;
     }
-  }, [party, party?.referenceSeconds]);
+  }, [party, party?.referenceSeconds, party?.meConnectionId]);
 
   useEffect(() => {
     const command = party?.command ?? null;
@@ -360,7 +360,7 @@ const VideoPlayer = ({
     if (command.command.kind !== 'changeWhatIsPlaying') {
       element.currentTime = command.command.atSeconds;
     }
-  }, [party?.command]);
+  }, [party?.command, party?.meConnectionId]);
 
   useEffect(() => {
     const element = videoRef.current;
@@ -577,7 +577,7 @@ const VideoPlayer = ({
     return () => {
       isAbandoned = true;
     };
-  }, []);
+  }, [isAWindowOfOurOwn]);
 
   useEffect(() => {
     const element = videoRef.current;
@@ -640,9 +640,45 @@ const VideoPlayer = ({
             },
           }),
     });
-  }, [castState, session]);
+  }, [castState, session, media.title]);
 
   const wasCastingRef = useRef(false);
+
+  const start = useCallback((element: HTMLVideoElement) => {
+    let attempts = 0;
+
+    const attempt = () => {
+      void element.play().catch((refusal) => {
+        if (!(refusal instanceof DOMException) || refusal.name !== 'NotAllowedError') {
+          return;
+        }
+
+        isSilencedByPolicyRef.current = true;
+        element.muted = true;
+        setIsMuted(true);
+
+        void element.play().catch(() => {});
+      });
+    };
+
+    attempt();
+
+    clearInterval(startTimerRef.current ?? undefined);
+
+    startTimerRef.current = setInterval(() => {
+      attempts += 1;
+
+      if (attempts > START_ATTEMPTS || element.readyState > 0 || !element.paused) {
+        clearInterval(startTimerRef.current ?? undefined);
+        startTimerRef.current = null;
+
+        return;
+      }
+
+      element.load();
+      attempt();
+    }, START_RETRY_MILLISECONDS);
+  }, []);
 
   useEffect(() => {
     if (castState === 'connected') {
@@ -671,7 +707,7 @@ const VideoPlayer = ({
       element.currentTime = at;
       start(element);
     });
-  }, [castState, session]);
+  }, [castState, session, start]);
 
   useEffect(
     () => () => {
@@ -710,42 +746,6 @@ const VideoPlayer = ({
         void document.exitPictureInPicture().catch(() => {});
       }
     };
-  }, []);
-
-  const start = useCallback((element: HTMLVideoElement) => {
-    let attempts = 0;
-
-    const attempt = () => {
-      void element.play().catch((refusal) => {
-        if (!(refusal instanceof DOMException) || refusal.name !== 'NotAllowedError') {
-          return;
-        }
-
-        isSilencedByPolicyRef.current = true;
-        element.muted = true;
-        setIsMuted(true);
-
-        void element.play().catch(() => {});
-      });
-    };
-
-    attempt();
-
-    clearInterval(startTimerRef.current ?? undefined);
-
-    startTimerRef.current = setInterval(() => {
-      attempts += 1;
-
-      if (attempts > START_ATTEMPTS || element.readyState > 0 || !element.paused) {
-        clearInterval(startTimerRef.current ?? undefined);
-        startTimerRef.current = null;
-
-        return;
-      }
-
-      element.load();
-      attempt();
-    }, START_RETRY_MILLISECONDS);
   }, []);
 
   const hold = useCallback((element: HTMLVideoElement | null, isItemChange = false) => {
@@ -960,7 +960,7 @@ const VideoPlayer = ({
         void stopPlaybackSession(startedId, clientId);
       }
     };
-  }, [request, start]);
+  }, [request, start, reportPresenceHeartbeat, deviceProfile, media.id]);
 
   useEffect(
     () =>
@@ -1085,7 +1085,7 @@ const VideoPlayer = ({
     return () => {
       abandoned = true;
     };
-  }, [media.id]);
+  }, [media.id, cache]);
 
   useEffect(() => {
     if (detail === null || session === null || subtitleTracks.length === 0) {
@@ -1354,7 +1354,7 @@ const VideoPlayer = ({
           : { subtitleStreamIndex: request.subtitleStreamIndex }),
       });
     },
-    [request.mediaId, request.requestedQuality, request.subtitleStreamIndex, position],
+    [request.mediaId, request.requestedQuality, request.subtitleStreamIndex, position, hold],
   );
 
   const changeQuality = useCallback(
@@ -1376,7 +1376,7 @@ const VideoPlayer = ({
           : { subtitleStreamIndex: request.subtitleStreamIndex }),
       });
     },
-    [request.mediaId, request.audioStreamIndex, request.subtitleStreamIndex, position],
+    [request.mediaId, request.audioStreamIndex, request.subtitleStreamIndex, position, hold],
   );
 
   useEffect(() => {
@@ -1432,7 +1432,9 @@ const VideoPlayer = ({
 
   const skipRef = useRef(skip);
 
-  skipRef.current = skip;
+  useEffect(() => {
+    skipRef.current = skip;
+  });
 
   const lastTapRef = useRef<{ at: number; x: number } | null>(null);
 
@@ -1543,7 +1545,10 @@ const VideoPlayer = ({
 
   const isBarUp = !isIdle || isShowingStats || isMenuOpen;
   const isBarUpRef = useRef(isBarUp);
-  isBarUpRef.current = isBarUp;
+
+  useEffect(() => {
+    isBarUpRef.current = isBarUp;
+  });
 
   useEffect(() => {
     const element = videoRef.current;

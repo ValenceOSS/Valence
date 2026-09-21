@@ -52,7 +52,6 @@ const Switch = ({
       return;
     }
 
-    knob.current.style.transformOrigin = isOn ? 'right center' : 'left center';
     void animate(knob.current, { scaleX: [1, STRETCH, 1] }, STRETCHING);
   }, [isOn, prefersReducedMotion, animate, knob]);
 
@@ -101,7 +100,7 @@ const Switch = ({
             'h-5 w-8 shrink-0 rounded-pill shadow-sm',
             'transition-[translate] duration-[var(--duration-fast)] ease-[var(--ease-out)]',
             'motion-reduce:transition-none',
-            isOn ? 'translate-x-[18px]' : 'translate-x-0',
+            isOn ? 'translate-x-[18px] origin-right' : 'translate-x-0 origin-left',
             isOn
               ? isOverlay
                 ? 'bg-shade'

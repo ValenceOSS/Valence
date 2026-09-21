@@ -120,10 +120,6 @@ const MediaDetailDialog = ({
   const [unlettered, setUnlettered] = useState<string | null>(null);
   const [lastShown, setLastShown] = useState<MediaSummary | null>(null);
   const [version, setVersion] = useState<string | null>(null);
-  const heldRef = useRef<{ resume: number | undefined; siblings: MediaSummary[] }>({
-    resume: undefined,
-    siblings: [],
-  });
   const topRef = useRef<HTMLDivElement>(null);
   const { mark: pastTheArtwork, hasPassed: hasScrolledPast } = useHasScrolledPast();
   const [isDownloading, setIsDownloading] = useState(false);
@@ -155,10 +151,7 @@ const MediaDetailDialog = ({
     };
   }, [media, prefersReducedMotion]);
 
-  if (media !== null) {
-    heldRef.current = { resume: resumeSeconds, siblings };
-  }
-
+  const siblingKey = siblings.map((sibling) => sibling.id).join(',');
   const shown = media ?? lastShown;
   const isLettered = shown?.hasLogo === true && unlettered !== shown.id;
 
@@ -167,8 +160,8 @@ const MediaDetailDialog = ({
   );
 
   const percent = `${Math.round((preparing?.progress ?? 0) * 100).toString()}%`;
-  const shownResume = media === null ? heldRef.current.resume : resumeSeconds;
-  const shownSiblings = media === null ? heldRef.current.siblings : siblings;
+  const shownResume = useHeldWhileLeaving(resumeSeconds, media !== null);
+  const shownSiblings = useHeldWhileLeaving(siblings, media !== null, siblingKey);
   const extras = detail?.extras ?? [];
   const trailer = extras.find((one) => one.extraKind === 'trailer') ?? null;
   const trailerKey = trailer === null ? (detail?.trailerKey ?? null) : null;

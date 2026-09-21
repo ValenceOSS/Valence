@@ -3,7 +3,7 @@ import {
   DoorOpen as DoorOpenIcon,
   MoreHorizontal as MoreHorizontalIcon,
 } from '@keyline-icons/react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -34,10 +34,6 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
     () => cache.invalidateQueries({ queryKey: adminQueries.accountSessions(accountId).queryKey }),
     [cache, accountId],
   );
-
-  const live = useRef({ onEnd: setEnding });
-
-  live.current = { onEnd: setEnding };
 
   const columns = useMemo<DataTableColumn<AccountSession>[]>(
     () => [
@@ -83,7 +79,7 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
                       icon: <Icon of={DoorOpenIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
-                        live.current.onEnd(row.original);
+                        setEnding(row.original);
                       },
                     },
                   ],

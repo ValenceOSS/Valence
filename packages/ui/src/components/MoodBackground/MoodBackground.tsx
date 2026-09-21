@@ -101,7 +101,6 @@ const MoodBackground = ({
   const prefersReducedMotion = useReducedMotionConfig();
   const given = lights.filter((light) => light.color !== '');
   const lit = everyBloom(given.length === 0 ? DEFAULT_LIGHTS : given);
-  const bloomsRef = useRef<(HTMLSpanElement | null)[]>([]);
   const heldRef = useRef<MoodLight[]>([]);
   const wantedRef = useRef<MoodLight[]>(lit);
   const paintedRef = useRef<string[]>([]);
@@ -110,11 +109,12 @@ const MoodBackground = ({
   const isShowingFilm = film !== null;
   const filmRef = useRef(isShowingFilm);
 
-  filmRef.current = isShowingFilm;
-
   const gridProps: DotFieldProps = film === null ? {} : { frame: film };
 
-  wantedRef.current = lit;
+  useEffect(() => {
+    filmRef.current = isShowingFilm;
+    wantedRef.current = lit;
+  });
 
   useEffect(() => {
     if (heldRef.current.length === 0) {
@@ -138,10 +138,10 @@ const MoodBackground = ({
       }
 
       heldRef.current.forEach((light, at) => {
-        const element = bloomsRef.current[at];
+        const element = drifting?.children.item(at);
         const painted = paint(light, at);
 
-        if (element !== null && element !== undefined && paintedRef.current[at] !== painted) {
+        if (element instanceof HTMLElement && paintedRef.current[at] !== painted) {
           paintedRef.current[at] = painted;
           element.style.background = painted;
         }
@@ -169,16 +169,13 @@ const MoodBackground = ({
         {lit.map((light, at) => (
           <span
             key={`bloom-${at.toString()}`}
-            ref={(element) => {
-              bloomsRef.current[at] = element;
-            }}
             className={
               isDrifting && prefersReducedMotion !== true
                 ? 'valence-bloom valence-bloom--drift'
                 : 'valence-bloom'
             }
             style={{
-              background: paint(heldRef.current[at] ?? light, at),
+              background: paint(light, at),
               animationDuration: DRIFTS[at] ?? '40s',
             }}
           />

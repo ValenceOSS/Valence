@@ -5,7 +5,7 @@ import {
   DoorOpen as DoorOpenIcon,
   MoreHorizontal as MoreHorizontalIcon,
 } from '@keyline-icons/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -34,10 +34,6 @@ const DeviceList = () => {
   useEffect(read, [read]);
 
   const elsewhere = (devices ?? []).filter((device) => !device.isCurrent);
-
-  const live = useRef({ onEnd: setEnding });
-
-  live.current = { onEnd: setEnding };
 
   const columns = useMemo<DataTableColumn<Device>[]>(
     () => [
@@ -92,7 +88,7 @@ const DeviceList = () => {
                         icon: <Icon of={DoorOpenIcon} size={15} />,
                         isDestructive: true,
                         onChoose: () => {
-                          live.current.onEnd(row.original);
+                          setEnding(row.original);
                         },
                       },
                     ],

@@ -250,8 +250,10 @@ const SignedIn = ({ title }: SignedInProps) => {
     }
   }, [watchParty.party, place.party, replace]);
 
+  const { notice: partyNotice, forgetNotice: forgetPartyNotice } = watchParty;
+
   useEffect(() => {
-    if (watchParty.notice === null) {
+    if (partyNotice === null) {
       return;
     }
 
@@ -260,13 +262,13 @@ const SignedIn = ({ title }: SignedInProps) => {
     }
 
     const goes = setTimeout(() => {
-      watchParty.forgetNotice();
+      forgetPartyNotice();
     }, PARTY_NOTICE_LINGERS_MS);
 
     return () => {
       clearTimeout(goes);
     };
-  }, [watchParty.notice, watchParty.forgetNotice, place.party, replace]);
+  }, [partyNotice, forgetPartyNotice, place.party, replace]);
 
   const shell = useMemo(
     () =>

@@ -13,6 +13,8 @@ import { DeliveryHistory } from './components/DeliveryHistory/DeliveryHistory';
 import type { WebhookSubscription } from '@ValenceContracts/schemas/Webhook';
 import type { WebhooksPanelProps } from './WebhooksPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { useTicking } from '@ValenceScreens/clock/useTicking';
+import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 
 /**
  * Says how a subscription's last delivery went, in a word and a colour: never used, when it last
@@ -82,7 +84,7 @@ const WebhooksPanel = ({
   const [isAdding, setIsAdding] = useState(false);
   const [editing, setEditing] = useState<WebhookSubscription | null>(null);
   const [deleting, setDeleting] = useState<WebhookSubscription | null>(null);
-  const now = Date.now();
+  const now = useTicking(A_CAPTION_AGES_EVERY);
 
   return (
     <div className="flex flex-col gap-4">

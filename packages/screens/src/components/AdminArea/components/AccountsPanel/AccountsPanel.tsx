@@ -194,7 +194,10 @@ const AccountsPanel = () => {
 
   const travel = useTravelDirection([...EDIT_TABS], editTab);
 
-  const currentRoleIds = new Set((held?.roles ?? []).map((role) => role.id));
+  const currentRoleIds = useMemo(
+    () => new Set((held?.roles ?? []).map((role) => role.id)),
+    [held?.roles],
+  );
 
   const hasUnsavedChanges =
     picked !== null &&

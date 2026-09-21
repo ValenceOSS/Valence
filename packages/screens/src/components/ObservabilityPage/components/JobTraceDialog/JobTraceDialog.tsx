@@ -16,7 +16,7 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { describeJobKind } from '@ValenceClient/admin/describeJobKind';
 import { describeElapsed } from '@ValenceClient/admin/describeElapsed';
 import { describeWords } from '@ValenceClient/admin/describeWords';
-import { useTicking } from '@ValenceScreens/admin/useTicking';
+import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { ElapsedTime } from '@ValenceScreens/components/ElapsedTime/ElapsedTime';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
 import { describeLogSpan, describeLogTick } from '@ValenceClient/admin/describeLogTick';
@@ -24,6 +24,8 @@ import { logsAsText } from '@ValenceClient/admin/logsAsText';
 import { describeLogLevel } from '@ValenceScreens/admin/describeLogLevel';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 import type { JobTraceDialogProps } from './JobTraceDialog.types';
+
+const A_SECOND = 1000;
 
 const LINES = 500;
 
@@ -85,7 +87,7 @@ const JobTraceDialog = ({
     ...adminQueries.jobHistoryIssues(jobRunId),
     refetchInterval: liveEvery,
   });
-  const now = useTicking(isRunning);
+  const now = useTicking(A_SECOND, isRunning);
   const wasLive = useRef(false);
 
   useEffect(() => {

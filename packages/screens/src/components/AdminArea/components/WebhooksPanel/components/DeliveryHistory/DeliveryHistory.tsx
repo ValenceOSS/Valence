@@ -4,6 +4,8 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { WEBHOOK_EVENT_LABELS } from '@ValenceContracts/schemas/Webhook';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import type { DeliveryHistoryProps } from './DeliveryHistory.types';
+import { useTicking } from '@ValenceScreens/clock/useTicking';
+import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 
 /**
  * What a subscription has been sent lately and how each attempt went, with a way to send any of them
@@ -21,7 +23,7 @@ const DeliveryHistory = ({
   canRedeliver,
   onRedeliver,
 }: DeliveryHistoryProps) => {
-  const now = Date.now();
+  const now = useTicking(A_CAPTION_AGES_EVERY);
 
   if (isLoading) {
     return <Spinner isCentered label="Reading what has been sent" />;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { DependencyList, RefObject } from 'react';
+import type { RefObject } from 'react';
 
 const SCROLL_FRACTION = 0.85;
 
@@ -72,15 +72,15 @@ const measureOf = (track: HTMLElement): Measured => {
  * its contents come to and which is showing. Measured from the element rather than calculated from
  * the item count, since what fits depends on the window rather than on the data.
  *
- * @param watching - What the contents depend on, so the measurement is taken again when they change.
+ * @param watching - What the contents come to, so the measurement is taken again when they change.
+ *   A count rather than the contents themselves: a row's cards are all one width, so how many there
+ *   are is the whole of what the measurement depends on.
  * @returns A ref for the track, the pages found, whether the row is at either end of itself, how
  *   much of the next card shows, and ways to measure and move it. The ends are read from where the
  *   row actually is rather than from the page number, since a row rarely ends on a whole page and a
  *   rounded page number there says the wrong thing about which way is left to go.
  */
-const usePagedScroller = <Element extends HTMLElement>(
-  watching: DependencyList = [],
-): PagedScroller<Element> => {
+const usePagedScroller = <Element extends HTMLElement>(watching = 0): PagedScroller<Element> => {
   const trackRef = useRef<Element>(null);
   const [pages, setPages] = useState({ count: 1, at: 0 });
   const [edges, setEdges] = useState({ isAtStart: true, isAtEnd: true });
@@ -135,7 +135,7 @@ const usePagedScroller = <Element extends HTMLElement>(
     return () => {
       observer.disconnect();
     };
-  }, [measure, ...watching]);
+  }, [measure, watching]);
 
   const scrollTo = (page: number) => {
     const track = trackRef.current;

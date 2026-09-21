@@ -13,7 +13,7 @@ const mapWithLimit = async <Item, Answer>(
   limit: number,
   work: (item: Item, at: number) => Promise<Answer>,
 ): Promise<Answer[]> => {
-  const answers: Answer[] = new Array<Answer>(items.length);
+  const answers: Answer[] = Array.from<Answer>({ length: items.length });
   const width = Math.max(1, Math.floor(limit));
   let next = 0;
 

@@ -54,7 +54,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
   const libraries = useQuery(libraryQueries.all());
   const [filters, setFilters] = useState<ReadonlySet<string>>(new Set());
   const [search, setSearch] = useState('');
-  const everything = requests.data ?? [];
+  const everything = useMemo(() => requests.data ?? [], [requests.data]);
   const named = useMemo(
     () => new Map((libraries.data ?? []).map((library) => [library.id, library.name])),
     [libraries.data],

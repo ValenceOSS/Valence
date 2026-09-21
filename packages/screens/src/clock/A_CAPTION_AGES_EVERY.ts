@@ -1,0 +1,3 @@
+const A_CAPTION_AGES_EVERY = 30_000;
+
+export { A_CAPTION_AGES_EVERY };

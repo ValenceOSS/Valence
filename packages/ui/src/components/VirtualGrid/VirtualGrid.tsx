@@ -34,6 +34,7 @@ const VirtualGrid = ({
 }: VirtualGridProps) => {
   const laneRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
+  const [scrollMargin, setScrollMargin] = useState(0);
 
   useEffect(() => {
     const lane = laneRef.current;
@@ -43,6 +44,7 @@ const VirtualGrid = ({
     }
 
     setWidth(lane.clientWidth);
+    setScrollMargin(lane.offsetTop);
 
     if (typeof ResizeObserver === 'undefined') {
       return;
@@ -50,6 +52,7 @@ const VirtualGrid = ({
 
     const watching = new ResizeObserver(([entry]) => {
       setWidth(entry?.contentRect.width ?? lane.clientWidth);
+      setScrollMargin(lane.offsetTop);
     });
 
     watching.observe(lane);
@@ -66,7 +69,7 @@ const VirtualGrid = ({
     count: rows,
     estimateSize: () => rowHeight + gap,
     overscan: OVERSCAN_ROWS,
-    scrollMargin: laneRef.current?.offsetTop ?? 0,
+    scrollMargin,
   });
 
   return (

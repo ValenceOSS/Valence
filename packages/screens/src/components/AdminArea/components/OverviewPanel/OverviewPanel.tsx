@@ -23,6 +23,8 @@ import type { StorageCount } from '@ValenceClient/admin/fetchAdmin';
 import type { LoadRange } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle.types';
 import type { OverviewPanelProps } from './OverviewPanel.types';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
+import { useTicking } from '@ValenceScreens/clock/useTicking';
+import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 
 /**
  * One region of the dashboard: a heading, an optional action in its corner, and whatever the region
@@ -148,7 +150,7 @@ const OverviewPanel = ({
     }
   };
 
-  const now = Date.now();
+  const now = useTicking(A_CAPTION_AGES_EVERY);
   const watching = sessions.filter((session) => session.playback !== null);
   const running = (monitor?.queue.jobs ?? []).filter((job) => job.state === 'running');
   const waiting = monitor?.queue.queued ?? 0;

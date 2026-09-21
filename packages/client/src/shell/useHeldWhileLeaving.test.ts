@@ -58,4 +58,29 @@ describe('useHeldWhileLeaving', () => {
 
     expect(result.current).toBeNull();
   });
+
+  it('takes an identity for a caller whose value is a fresh array every render', () => {
+    const { result, rerender } = renderHook(
+      ({ ids, isPresent }: { ids: string[]; isPresent: boolean }) =>
+        useHeldWhileLeaving(ids, isPresent, ids.join(',')),
+      { initialProps: { ids: ['a', 'b'], isPresent: true } },
+    );
+
+    rerender({ ids: ['a', 'b'], isPresent: false });
+
+    expect(result.current).toEqual(['a', 'b']);
+  });
+
+  it('holds the newest list it saw where the identity says the list changed', () => {
+    const { result, rerender } = renderHook(
+      ({ ids, isPresent }: { ids: string[]; isPresent: boolean }) =>
+        useHeldWhileLeaving(ids, isPresent, ids.join(',')),
+      { initialProps: { ids: ['a'], isPresent: true } },
+    );
+
+    rerender({ ids: ['b', 'c'], isPresent: true });
+    rerender({ ids: [], isPresent: false });
+
+    expect(result.current).toEqual(['b', 'c']);
+  });
 });

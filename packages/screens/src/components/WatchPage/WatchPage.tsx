@@ -42,7 +42,7 @@ const WatchPage = () => {
   const prefersReducedMotion = useReducedMotionConfig();
 
   const [hasWaitedForTheRoom, setHasWaitedForTheRoom] = useState(false);
-  const begunRef = useRef<{ mediaId: string; atSeconds: number } | null>(null);
+  const [begun, setBegun] = useState<{ mediaId: string; atSeconds: number } | null>(null);
   const markedAtRef = useRef(0);
   const carriedOnRef = useRef(0);
   const carriedOnToRef = useRef<string | null>(null);
@@ -131,8 +131,6 @@ const WatchPage = () => {
         ? 0
         : Math.floor(found.positionSeconds);
 
-  const begun = begunRef.current;
-
   const beginning =
     begun !== null && begun.mediaId === playing.id
       ? { kind: 'begin' as const, atSeconds: begun.atSeconds }
@@ -149,7 +147,9 @@ const WatchPage = () => {
     return <SplashScreen name={title} label="Joining the watch party" />;
   }
 
-  begunRef.current = { mediaId: playing.id, atSeconds: beginning.atSeconds };
+  if (begun === null || begun.mediaId !== playing.id || begun.atSeconds !== beginning.atSeconds) {
+    setBegun({ mediaId: playing.id, atSeconds: beginning.atSeconds });
+  }
 
   return (
     <motion.main

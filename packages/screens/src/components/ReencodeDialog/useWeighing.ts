@@ -29,7 +29,9 @@ const useWeighing = (
 ): void => {
   const live = useRef(onWeigh);
 
-  live.current = onWeigh;
+  useEffect(() => {
+    live.current = onWeigh;
+  });
 
   useEffect(() => {
     if (!isOpen) {

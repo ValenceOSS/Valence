@@ -97,7 +97,9 @@ const ShowDialog = ({
 
   const carryOnRef = useRef({ resumeFor, isFinished });
 
-  carryOnRef.current = { resumeFor, isFinished };
+  useEffect(() => {
+    carryOnRef.current = { resumeFor, isFinished };
+  });
 
   useEffect(() => {
     if (show === null) {
