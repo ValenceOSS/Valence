@@ -15,9 +15,12 @@ import { viewOfBrowsing } from '@ValenceScreens/requests/viewOfBrowsing';
 import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
 import { CatalogueGrid } from './components/CatalogueGrid/CatalogueGrid';
 import { DiscoverShelves } from './components/DiscoverShelves/DiscoverShelves';
+import { MusicDiscover } from './components/MusicDiscover/MusicDiscover';
 import { MyRequests } from './components/MyRequests/MyRequests';
 
 const MINE = 'mine';
+
+const MUSIC = 'music';
 
 const DISCOVER = 'discover';
 
@@ -49,7 +52,11 @@ const RequestsPage = () => {
   const browsing = readBrowsing(place.requestsView);
 
   const showing =
-    browsing === null ? (place.requestsView === MINE ? MINE : DISCOVER) : browsingTab(browsing);
+    browsing === null
+      ? place.requestsView === MINE || place.requestsView === MUSIC
+        ? place.requestsView
+        : DISCOVER
+      : browsingTab(browsing);
 
   const ask = (asking: string) => {
     go({ asking });
@@ -88,6 +95,7 @@ const RequestsPage = () => {
                     { id: DISCOVER, label: 'Discover' },
                     { id: MOVIES, label: 'Movies' },
                     { id: SHOWS, label: 'Shows' },
+                    { id: MUSIC, label: 'Music' },
                     { id: MINE, label: 'My requests' },
                   ],
                 },
@@ -119,6 +127,10 @@ const RequestsPage = () => {
               <CatalogueGrid browsing={browsing} onAsk={ask} />
             </TabPanel>
           )}
+
+          <TabPanel value={MUSIC} className={cn(RAIL.inset, 'flex flex-col gap-6')}>
+            <MusicDiscover onAsk={ask} />
+          </TabPanel>
 
           <TabPanel value={MINE} className={cn(RAIL.inset, 'flex flex-col gap-4')}>
             <MyRequests

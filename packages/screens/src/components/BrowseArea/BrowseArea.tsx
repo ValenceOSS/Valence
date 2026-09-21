@@ -22,7 +22,10 @@ import type { IconGlyph } from '@ValenceUI/Icon.types';
 import type { BrowseAreaProps, BrowseKind } from './BrowseArea.types';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
+import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { BackToTop } from '@ValenceUI/BackToTop';
+import { FilterMenu } from '@ValenceUI/FilterMenu';
+import { useLibraryFilters } from '@ValenceScreens/library/useLibraryFilters';
 
 const PAGE_SIZE = 120;
 
@@ -100,6 +103,15 @@ const BrowseArea = ({
   const [size, setSize] = useState(readGridSize);
   const prefersReducedMotion = useReducedMotionConfig();
   const page = PAGES[kind];
+  const filters = useLibraryFilters();
+  const kindBefore = useRef(kind);
+
+  useEffect(() => {
+    if (kindBefore.current !== kind) {
+      kindBefore.current = kind;
+      filters.clear();
+    }
+  });
 
   const reportItems = useRef(onItemsLoaded);
 
@@ -121,13 +133,14 @@ const BrowseArea = ({
   }, [libraries.data, libraryId, kind]);
 
   const kept = favourites.join(',');
+  const isFilterable = kind === 'films' || kind === 'shows';
 
   const asked =
     kind === 'favourites'
       ? { ids: kept === '' ? [] : kept.split(','), limit: PAGE_SIZE }
       : kind === 'new'
         ? { order: 'newest' as const, limit: PAGE_SIZE }
-        : { kind, limit: PAGE_SIZE };
+        : { kind, ...(isFilterable ? filters.asked : {}), limit: PAGE_SIZE };
 
   const found = useQuery(libraryQueries.across(libraryIds, asked));
 
@@ -165,6 +178,16 @@ const BrowseArea = ({
       >
         <h1 className="sr-only">{page.title}</h1>
 
+        {!isFilterable || filters.groups.length === 0 ? null : (
+          <FilterMenu
+            label={`Filter ${page.title.toLowerCase()}`}
+            hasLabel
+            groups={filters.groups}
+            selected={filters.selected}
+            onChange={filters.change}
+          />
+        )}
+
         {isReading || items.length === 0 ? null : (
           <GridSizeChooser
             value={size}
@@ -175,6 +198,20 @@ const BrowseArea = ({
           />
         )}
       </motion.header>
+
+      {!isFilterable ? null : (
+        <AppliedFilters
+          groups={filters.groups}
+          selected={filters.selected}
+          onRemove={(id) => {
+            const next = new Set(filters.selected);
+
+            next.delete(id);
+            filters.change(next);
+          }}
+          onClear={filters.clear}
+        />
+      )}
 
       <motion.section
         variants={revealVariants(prefersReducedMotion)}

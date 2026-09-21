@@ -10,6 +10,12 @@ type Page = { items: MediaSummary[]; total: number };
 type Options = { kind?: string; order?: string; ids?: string[]; limit?: number };
 
 const fetchLibraries = vi.fn<() => Promise<{ id: string; kind?: string }[]>>();
+const fetchFacets =
+  vi.fn<() => Promise<{ genres: string[]; decades: number[]; maxRating: number }>>();
+
+vi.mock('@ValenceClient/library/fetchFacets', () => ({
+  fetchFacets: () => fetchFacets(),
+}));
 const fetchLibraryItems = vi.fn<(libraryId: string, options?: Options) => Promise<Page>>();
 
 const findBooks = vi.fn<(query: { ids?: readonly string[] }) => Promise<Book[]>>();
@@ -61,6 +67,9 @@ const A_BOOK: Book = {
 
 beforeEach(() => {
   findBooks.mockReset().mockResolvedValue([A_BOOK]);
+  fetchFacets
+    .mockReset()
+    .mockResolvedValue({ genres: ['Drama'], decades: [1990, 2010], maxRating: 8.5 });
   fetchLibraries.mockReset().mockResolvedValue([{ id: 'library-1' }]);
   fetchLibraryItems.mockReset().mockResolvedValue({ items: [item('a', 'Arrival')], total: 1 });
 });
@@ -253,6 +262,32 @@ describe('BrowseArea', () => {
 });
 
 describe('how a page of the library is laid out', () => {
+  it('offers to narrow the films by genre, decade and rating, and asks the libraries for it', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Filter films' }));
+    await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
+
+    await vi.waitFor(() => {
+      expect(fetchLibraryItems).toHaveBeenCalledWith(
+        'library-1',
+        expect.objectContaining({ yearFrom: 1990, yearTo: 1999 }),
+      );
+    });
+
+    expect(screen.getByText('Decade: 1990s')).toBeInTheDocument();
+  });
+
+  it('offers no filters on a page that is not one kind of thing', async () => {
+    renderInAnAddress(<BrowseArea kind="new" onPlay={vi.fn()} onInspect={vi.fn()} />);
+
+    await screen.findByRole('button', { name: /Arrival/ });
+
+    expect(screen.queryByRole('button', { name: /^Filter/ })).not.toBeInTheDocument();
+  });
+
   it('names the page for anybody reading it, without a banner saying it again', async () => {
     renderInAnAddress(<BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
