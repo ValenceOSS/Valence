@@ -715,6 +715,35 @@ pub fn filter_name(expression: &str) -> &str {
     expression.split('=').next().unwrap_or(expression)
 }
 
+/// The pixel format a tone map expression leaves its frames in.
+///
+/// Every tone mapper on a device is told what to convert to, and they do not
+/// all agree: the `VAAPI` and `VideoToolbox` ones are given `format=nv12`,
+/// where `tonemap_cuda` is given `format=yuv420p`. A frames context holds one
+/// format and `hwdownload` can only produce that one, so a download placed
+/// after a tone mapper has to name what the mapper left rather than what the
+/// decoder produced — asking a `yuv420p` context for the source's `p010le` is
+/// refused outright and the graph does not configure.
+///
+/// This is [`HardwarePipeline::wide_download_format`]'s problem from the other
+/// end: that field is what the *decoder* hands over, and it stops being the
+/// answer the moment a filter converts. Read from the expression rather than
+/// stored beside it, so the two cannot drift apart.
+///
+/// `None` where the expression names no format, which no device mapper here
+/// does but every software one does.
+///
+/// Measured on an RTX 5080 against a ten-bit HDR source: `tonemap_cuda`, then
+/// `hwdownload,format=p010le`, gives "Invalid output format p010le for hwframe
+/// download".
+#[must_use]
+pub fn tone_map_format(expression: &str) -> Option<&str> {
+    let start = expression.find("format=")? + "format=".len();
+    let rest = &expression[start..];
+
+    Some(rest.split([':', ',']).next().unwrap_or(rest))
+}
+
 /// Which route this session can take.
 ///
 /// `InSoftware` when:
@@ -2258,9 +2287,10 @@ mod tests {
     use super::{
         composited_graph, filter_name, fitted_size, force_key_frames_argument,
         forced_idr_arguments, frame_route, keeps_frames_on_the_gpu, rate_control_arguments,
-        software_equivalent, takes_ten_bit, AudioAction, AudioCarry, DeviceFilters, FrameRoute,
-        HardwareAccel, SegmentContainer, SegmentStart, SessionSpec, SubtitleAction, ToneMapping,
-        TrackCarry, TranscodePlan, VideoAction, DEFAULT_DEVICE, TEXT_OVERLAY_FPS,
+        software_equivalent, takes_ten_bit, tone_map_format, AudioAction, AudioCarry,
+        DeviceFilters, FrameRoute, HardwareAccel, SegmentContainer, SegmentStart, SessionSpec,
+        SubtitleAction, ToneMapping, TrackCarry, TranscodePlan, VideoAction, DEFAULT_DEVICE,
+        TEXT_OVERLAY_FPS,
     };
     use crate::media::ColourMetadata;
 
@@ -3024,6 +3054,48 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
             "tonemap_vaapi"
         );
         assert_eq!(filter_name("hwupload"), "hwupload");
+    }
+
+    #[test]
+    fn reads_the_format_a_tone_mapper_leaves_behind() {
+        assert_eq!(
+            tone_map_format("tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709"),
+            Some("nv12")
+        );
+        assert_eq!(
+            tone_map_format("tonemap_cuda=format=yuv420p:p=bt709:t=bt709:m=bt709:tonemap=bt2390"),
+            Some("yuv420p")
+        );
+    }
+
+    #[test]
+    fn reads_no_format_from_a_mapper_that_names_none() {
+        assert_eq!(tone_map_format("tonemap_videotoolbox"), None);
+    }
+
+    /// Every tone mapper on a device names the format it leaves.
+    ///
+    /// The download that follows one reads this rather than the decoder's
+    /// format, so a mapper that named none would silently fall back to the
+    /// format the frames stopped being — which is the bug this pairing exists
+    /// to make impossible.
+    #[test]
+    fn every_device_tone_mapper_names_the_format_it_leaves() {
+        for accel in [
+            HardwareAccel::Vaapi,
+            HardwareAccel::Qsv,
+            HardwareAccel::Nvenc,
+            HardwareAccel::VideoToolbox,
+        ] {
+            let Some(mapper) = accel.pipeline().and_then(|pipeline| pipeline.tone_map) else {
+                continue;
+            };
+
+            assert!(
+                tone_map_format(mapper).is_some(),
+                "{accel:?} tone maps with {mapper}, which names no format"
+            );
+        }
     }
 
     /// The route that makes the descent unnecessary.
