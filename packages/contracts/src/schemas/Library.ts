@@ -113,6 +113,10 @@ const MediaMetadataSchema = z.object({
   seasonNumber: z.number().int().nullish(),
   episodeNumber: z.number().int().nullish(),
   externalId: z.string().nullish(),
+  releaseDate: z.string().nullish(),
+  budget: z.number().nonnegative().nullish(),
+  revenue: z.number().nonnegative().nullish(),
+  status: z.string().nullish(),
 });
 
 const PreviewMomentSchema = z.object({

@@ -6,6 +6,7 @@ type EpisodeRowProps = {
   onInspect?: (media: MediaSummary) => void;
   watchedFraction?: number;
   resumeSeconds?: number;
+  airs?: string;
 };
 
 export type { EpisodeRowProps };

@@ -46,6 +46,11 @@ type Metadata = {
   logoUrl?: string;
   externalId?: string;
   trailerKey?: string;
+  releaseDate?: string;
+  budget?: number;
+  revenue?: number;
+  status?: string;
+  imdbId?: string;
 };
 
 type CatalogueMatch = {
@@ -87,8 +92,10 @@ type SeriesShape = {
       title: string;
       stillUrl: string | null;
       overview: string | null;
+      airDate?: string | null;
     }[];
   }[];
+  status?: string | null;
 };
 
 type MetadataProvider = {

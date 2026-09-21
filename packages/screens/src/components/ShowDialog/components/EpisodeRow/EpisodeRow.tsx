@@ -23,6 +23,7 @@ const stillUrl = (mediaId: string): string => `/api/media/${mediaId}/image/backd
  * @param onInspect - Told to open the page about it.
  * @param watchedFraction - How far through it this viewer is.
  * @param resumeSeconds - Where they left it.
+ * @param airs - When it aired, in words, where the catalogue dates it.
  */
 const EpisodeRow = ({
   episode,
@@ -30,6 +31,7 @@ const EpisodeRow = ({
   onInspect,
   watchedFraction,
   resumeSeconds,
+  airs,
 }: EpisodeRowProps) => (
   <div className="group/episode flex items-center gap-3 py-3">
     <Button
@@ -87,6 +89,7 @@ const EpisodeRow = ({
         <span className="truncate text-sm font-medium text-text">{episode.title}</span>
         <span className="font-body text-xs text-text-muted">
           {formatDuration(episode.durationSeconds)}
+          {airs === undefined || airs === '' ? '' : ` · ${airs}`}
           {resumeSeconds === undefined ? '' : ` · ${formatDuration(resumeSeconds)} in`}
         </span>
       </span>

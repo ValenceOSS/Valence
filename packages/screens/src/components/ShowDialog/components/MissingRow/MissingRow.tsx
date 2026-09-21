@@ -9,8 +9,9 @@ import type { MissingRowProps } from './MissingRow.types';
  * @param episodeNumber - Which episode is missing.
  * @param title - What the catalogue calls it.
  * @param stillUrl - The catalogue's own still, where it has one.
+ * @param airs - When it aired or airs, in words, where the catalogue dates it.
  */
-const MissingRow = ({ episodeNumber, title, stillUrl }: MissingRowProps) => (
+const MissingRow = ({ episodeNumber, title, stillUrl, airs }: MissingRowProps) => (
   <div className="flex items-center gap-3 py-3">
     <span className="flex min-w-0 flex-1 items-center gap-4 text-left">
       <span className="w-8 shrink-0 text-center text-sm tabular-nums text-text-muted">
@@ -36,7 +37,9 @@ const MissingRow = ({ episodeNumber, title, stillUrl }: MissingRowProps) => (
         <span className="truncate text-sm font-medium text-text-muted">
           {title ?? `Episode ${episodeNumber.toString()}`}
         </span>
-        <span className="font-body text-xs text-text-muted">Not in this library</span>
+        <span className="font-body text-xs text-text-muted">
+          Not in this library{airs === undefined || airs === '' ? '' : ` · ${airs}`}
+        </span>
       </span>
     </span>
   </div>

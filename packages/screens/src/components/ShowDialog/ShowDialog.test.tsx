@@ -192,6 +192,68 @@ describe('ShowDialog', () => {
     expect(screen.getByRole('button', { name: 'Season 1' })).toBeInTheDocument();
   });
 
+  it('says what the catalogue says of where the programme stands', async () => {
+    fetchShowMock.mockResolvedValue({
+      ...detail([{ seasonNumber: 1, episodes: [1] }]),
+      status: 'Returning Series',
+    });
+    renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    expect(await screen.findByText('Returning Series')).toBeInTheDocument();
+  });
+
+  it('says when the next episode comes out, and which it is', async () => {
+    fetchShowMock.mockResolvedValue({
+      ...detail([{ seasonNumber: 1, episodes: [1] }]),
+      nextEpisode: { seasonNumber: 2, episodeNumber: 4, title: 'Four', airDate: '2999-01-01' },
+    });
+    renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    expect(await screen.findByText('Next: S2 E4 · Airs 1 Jan 2999')).toBeInTheDocument();
+  });
+
+  it('says nothing of a next episode where there is none', async () => {
+    fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
+    renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await screen.findByRole('button', { name: /Play Episode 1/ });
+
+    expect(screen.queryByText(/^Next:/)).not.toBeInTheDocument();
+  });
+
+  it('dates the episodes it holds and the ones it lacks from the catalogue', async () => {
+    fetchShowMock.mockResolvedValue({
+      ...detail([{ seasonNumber: 1, episodes: [1, 3] }]),
+      shape: [
+        {
+          seasonNumber: 1,
+          episodeCount: 3,
+          episodes: [
+            {
+              episodeNumber: 1,
+              title: 'One',
+              stillUrl: null,
+              overview: null,
+              airDate: '2000-01-01',
+            },
+            {
+              episodeNumber: 2,
+              title: 'Two',
+              stillUrl: null,
+              overview: null,
+              airDate: '2999-01-01',
+            },
+            { episodeNumber: 3, title: 'Three', stillUrl: null, overview: null, airDate: null },
+          ],
+        },
+      ],
+    });
+    renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    expect(await screen.findByText(/Aired 1 Jan 2000/)).toBeInTheDocument();
+    expect(screen.getByText('Not in this library · Airs 1 Jan 2999')).toBeInTheDocument();
+  });
+
   it('opens a season it holds none of, and says so of every episode', async () => {
     const user = userEvent.setup();
     fetchShowMock.mockResolvedValue({
