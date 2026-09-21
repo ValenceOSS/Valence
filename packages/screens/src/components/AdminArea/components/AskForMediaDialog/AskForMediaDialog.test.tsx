@@ -105,9 +105,9 @@ beforeEach(() => {
     refusal: null,
   });
   fetchSeriesSeasons.mockReset().mockResolvedValue([
-    { season: 0, episodeCount: 2, firstAired: null },
-    { season: 1, episodeCount: 9, firstAired: '2022-02-18' },
-    { season: 2, episodeCount: 10, firstAired: '2025-01-17' },
+    { season: 0, episodeCount: 2, firstAired: null, standing: 'askable' },
+    { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'askable' },
+    { season: 2, episodeCount: 10, firstAired: '2025-01-17', standing: 'askable' },
   ]);
 });
 

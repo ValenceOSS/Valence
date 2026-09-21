@@ -4473,11 +4473,21 @@ const createApp = ({
       return context.json(NOT_YOURS, 403);
     }
 
-    const catalogue = await describeForRequest(context.req.valid('param').tmdbId, 'series');
+    const { tmdbId } = context.req.valid('param');
+    const [catalogue, requested] = await Promise.all([
+      describeForRequest(tmdbId, 'series'),
+      everyRequest(),
+    ]);
 
     return catalogue === null
       ? context.json({ error: 'The catalogue does not know that series, or cannot be asked.' }, 404)
-      : context.json(seasonsOf(catalogue.episodes), 200);
+      : context.json(
+          seasonsOf(
+            catalogue.episodes,
+            requested.filter((request) => request.kind === 'series' && request.tmdbId === tmdbId),
+          ),
+          200,
+        );
   });
 
   app.openapi(musicCatalogueRoute, async (context) => {

@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { FormField } from '@ValenceUI/FormField';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Switch } from '@ValenceUI/Switch';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
-import type { CatalogueSeason } from '@ValenceContracts/schemas/MediaRequest';
+import type { CatalogueSeason, SeasonStanding } from '@ValenceContracts/schemas/MediaRequest';
+import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { SeasonChooserProps } from './SeasonChooser.types';
 
@@ -19,6 +21,20 @@ import type { SeasonChooserProps } from './SeasonChooser.types';
  */
 const tickedOf = (seasons: number[] | null, listed: readonly CatalogueSeason[]): number[] =>
   seasons ?? listed.map((one) => one.season);
+
+const STANDING_NAMES: Readonly<Record<SeasonStanding, string>> = {
+  askable: 'Not requested',
+  requested: 'Requested',
+  partly: 'Partly here',
+  library: 'In the library',
+};
+
+const STANDING_TONES: Readonly<Record<SeasonStanding, BadgeTone>> = {
+  askable: 'quiet',
+  requested: 'waiting',
+  partly: 'busy',
+  library: 'success',
+};
 
 /**
  * Which of a series' seasons to ask for, as a row each: how many episodes it holds and the year it
@@ -100,6 +116,16 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
           <span className="whitespace-nowrap text-sm text-text-muted">
             {row.original.firstAired === null ? '—' : row.original.firstAired.slice(0, 4)}
           </span>
+        ),
+      },
+      {
+        id: 'standing',
+        header: 'Status',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <Badge size="sm" tone={STANDING_TONES[row.original.standing]}>
+            {STANDING_NAMES[row.original.standing]}
+          </Badge>
         ),
       },
     ],

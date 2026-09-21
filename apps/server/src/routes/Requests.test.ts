@@ -1319,6 +1319,63 @@ describe('requests for films and series, through the server', () => {
     ).toBe(403);
   });
 
+  it('says where each season stands against what has already been asked', async () => {
+    const anEpisode = (id: string, season: number, episode: number, state: 'filed' | 'wanted') => ({
+      id,
+      musicBrainzId: null,
+      season,
+      episode,
+      title: '',
+      airDate: null,
+      state,
+      problem: null,
+      releaseTitle: null,
+      downloadId: null,
+      filePath: null,
+      score: null,
+      downloadedBytes: null,
+      downloadSeconds: null,
+      lastSearchedAt: null,
+      updatedAt: '2026-09-19T00:00:00.000Z',
+    });
+
+    const asking = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: (url: string, init: { method?: string }) =>
+        url.endsWith('/api/requests') && (init.method ?? 'GET') === 'GET'
+          ? Response.json([
+              {
+                ...REQUEST,
+                kind: 'series',
+                tmdbId: 95396,
+                items: [
+                  anEpisode('7c9e6679-7425-40de-944b-e07fc1f90ae7', 1, 1, 'filed'),
+                  anEpisode('1b4e28ba-2fa1-11d2-883f-0016d3cca427', 1, 2, 'wanted'),
+                ],
+              },
+              { ...REQUEST, kind: 'series', tmdbId: 1399, items: [] },
+            ])
+          : Response.json({}),
+      describeForRequest: () =>
+        Promise.resolve({
+          ...DUNE,
+          episodes: [
+            { season: 1, episode: 1, title: '', airDate: '2022-02-18' },
+            { season: 1, episode: 2, title: '', airDate: '2022-02-25' },
+            { season: 2, episode: 1, title: '', airDate: null },
+          ],
+        }),
+    });
+
+    expect(await (await asking.ask('/api/requests/catalogue/series/95396/seasons')).json()).toEqual(
+      [
+        { season: 1, episodeCount: 2, firstAired: '2022-02-18', standing: 'partly' },
+        { season: 2, episodeCount: 1, firstAired: null, standing: 'askable' },
+      ],
+    );
+  });
+
   it('lists the seasons a series has for whoever may ask', async () => {
     const asking = await build({
       isOn: true,
@@ -1336,8 +1393,8 @@ describe('requests for films and series, through the server', () => {
 
     expect(await (await asking.ask('/api/requests/catalogue/series/95396/seasons')).json()).toEqual(
       [
-        { season: 0, episodeCount: 1, firstAired: null },
-        { season: 1, episodeCount: 1, firstAired: '2022-02-18' },
+        { season: 0, episodeCount: 1, firstAired: null, standing: 'askable' },
+        { season: 1, episodeCount: 1, firstAired: '2022-02-18', standing: 'askable' },
       ],
     );
 

@@ -13,9 +13,9 @@ vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
 
 beforeEach(() => {
   fetchSeriesSeasons.mockReset().mockResolvedValue([
-    { season: 0, episodeCount: 2, firstAired: null },
-    { season: 1, episodeCount: 9, firstAired: '2022-02-18' },
-    { season: 2, episodeCount: 10, firstAired: '2025-01-17' },
+    { season: 0, episodeCount: 2, firstAired: null, standing: 'askable' },
+    { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'askable' },
+    { season: 2, episodeCount: 10, firstAired: '2025-01-17', standing: 'askable' },
   ]);
 });
 
@@ -33,6 +33,23 @@ describe('SeasonChooser', () => {
     expect(within(rowOf('Season 1')).getByText('9')).toBeInTheDocument();
     expect(within(rowOf('Season 1')).getByText('2022')).toBeInTheDocument();
     expect(within(rowOf('Specials')).getByText('—')).toBeInTheDocument();
+  });
+
+  it('says where each season stands, so nobody asks twice for what is here', async () => {
+    fetchSeriesSeasons.mockResolvedValue([
+      { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'library' },
+      { season: 2, episodeCount: 10, firstAired: '2025-01-17', standing: 'partly' },
+      { season: 3, episodeCount: 8, firstAired: '2026-01-01', standing: 'requested' },
+      { season: 4, episodeCount: 8, firstAired: null, standing: 'askable' },
+    ]);
+
+    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={null} onChange={vi.fn()} />);
+
+    expect(await screen.findByText('Season 1')).toBeInTheDocument();
+    expect(within(rowOf('Season 1')).getByText('In the library')).toBeInTheDocument();
+    expect(within(rowOf('Season 2')).getByText('Partly here')).toBeInTheDocument();
+    expect(within(rowOf('Season 3')).getByText('Requested')).toBeInTheDocument();
+    expect(within(rowOf('Season 4')).getByText('Not requested')).toBeInTheDocument();
   });
 
   it('takes every season until one is dropped', async () => {

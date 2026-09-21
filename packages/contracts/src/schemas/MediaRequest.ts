@@ -258,10 +258,15 @@ const FollowedRequestSchema = z.object({
   libraryId: z.string(),
 });
 
+const SEASON_STANDINGS = ['askable', 'requested', 'partly', 'library'] as const;
+
+const SeasonStandingSchema = z.enum(SEASON_STANDINGS);
+
 const CatalogueSeasonSchema = z.object({
   season: z.number().int().nonnegative(),
   episodeCount: z.number().int().nonnegative(),
   firstAired: CalendarDateSchema.nullable(),
+  standing: SeasonStandingSchema.default('askable'),
 });
 
 const MusicCatalogueHitSchema = z.object({
@@ -318,6 +323,7 @@ type FollowedRequest = z.infer<typeof FollowedRequestSchema>;
 type MissingSearch = z.infer<typeof MissingSearchSchema>;
 type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;
 type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
+type SeasonStanding = (typeof SEASON_STANDINGS)[number];
 
 export type {
   BlockedRelease,
@@ -325,6 +331,7 @@ export type {
   CatalogueAlbum,
   CatalogueEpisode,
   CatalogueSeason,
+  SeasonStanding,
   FollowedRequest,
   MediaRequest,
   MediaRequestArrival,
@@ -368,6 +375,8 @@ export {
   CatalogueAlbumSchema,
   CatalogueEpisodeSchema,
   CatalogueSeasonSchema,
+  SEASON_STANDINGS,
+  SeasonStandingSchema,
   FollowedRequestSchema,
   MediaRequestAddedSchema,
   MediaRequestArrivalSchema,
