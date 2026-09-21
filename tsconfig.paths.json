@@ -218,6 +218,7 @@
       "@ValenceUI/VirtualGrid.types": [
         "./packages/ui/src/components/VirtualGrid/VirtualGrid.types.ts"
       ],
+      "@ValenceUI/VirtualStrip": ["./packages/ui/src/components/VirtualStrip/VirtualStrip.tsx"],
       "@ValenceUI/columnsIn": ["./packages/ui/src/components/VirtualGrid/columnsIn.ts"],
       "@ValenceUI/cn": ["./packages/ui/src/functions/cn.ts"],
       "@ValenceUI/useHasScrolledPast": ["./packages/ui/src/functions/useHasScrolledPast.ts"],
