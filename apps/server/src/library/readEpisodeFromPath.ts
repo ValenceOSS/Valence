@@ -2,10 +2,16 @@ import { findYear } from './readTitleFromPath';
 import { readSeasonDirectory } from './readSeasonDirectory';
 
 const EPISODE_PATTERNS = [
-  /\bs(?<season>\d{1,2})[\s._-]*e(?<episode>\d{1,3})(?:[\s._-]*e\d{1,3})*\b/i,
-  /\b(?<season>\d{1,2})x(?<episode>\d{1,3})\b/i,
-  /\b(?:season|series)[\s._-]*(?<season>\d{1,2})[\s._-]*episode[\s._-]*(?<episode>\d{1,3})\b/i,
+  /\bs(?<season>\d{1,4})[\s._-]*e(?<episode>\d{1,4})(?:[\s._-]*e\d{1,4}|[\s._-]*-[\s._-]*e?\d{1,4})*\b/i,
+  /\b(?<season>\d{1,4})x(?<episode>\d{1,4})\b/i,
+  /\b(?:season|series)[\s._-]*(?<season>\d{1,4})[\s._-]*episode[\s._-]*(?<episode>\d{1,4})\b/i,
 ] as const;
+
+const IMPOSSIBLE_SEASON_FROM = 200;
+
+const IMPOSSIBLE_SEASON_UNTIL = 1928;
+
+const LATEST_PLAUSIBLE_SEASON = 2500;
 
 const RELEASE_NOISE =
   /\b(?:\d{3,4}p|4k|uhd|web[\s._-]?dl|webrip|bluray|blu[\s._-]?ray|hdtv|dvdrip|remux|proper|repack|x26[45]|h\.?26[45]|hevc|avc|aac\d*|ac3|eac3|ddp?\d?|dts[\w]*|flac|opus|10bit|8bit|hdr\d*|dv|sdr|amzn|nf|dsnp|hulu|atvp|multi|dual)\b/i;
@@ -18,6 +24,22 @@ type EpisodeNumbering = {
   episodeNumber: number | null;
   episodeTitle: string | null;
 };
+
+/**
+ * Whether a number read as a season cannot be one, which is how a picture's dimensions are told
+ * apart from an episode of television.
+ *
+ * `Series Special (1920x1080).mkv` reads as season 1920 episode 1080 on the face of it, and no
+ * programme has run for nineteen hundred seasons. Numbers in the range a year falls in are let
+ * through, since a programme numbered by year is a real if uncommon thing.
+ *
+ * @param season - The season as read from the path.
+ * @returns Whether to throw the reading away.
+ */
+const isImpossibleSeason = (season: number | null): boolean =>
+  season !== null &&
+  ((season >= IMPOSSIBLE_SEASON_FROM && season < IMPOSSIBLE_SEASON_UNTIL) ||
+    season > LATEST_PLAUSIBLE_SEASON);
 
 /**
  * Tidies a directory name into something worth showing, turning separators into spaces, dropping
@@ -67,7 +89,7 @@ const readEpisodeFromPath = (filePath: string): EpisodeNumbering => {
   const episodeNumber =
     numbering?.groups?.episode === undefined ? null : Number(numbering.groups.episode);
 
-  if (episodeNumber === null || numbering === undefined) {
+  if (episodeNumber === null || numbering === undefined || isImpossibleSeason(seasonNumber)) {
     return {
       seriesTitle: null,
       seriesYear: null,

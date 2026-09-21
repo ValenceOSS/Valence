@@ -9,6 +9,7 @@ type BareEpisode = {
   seriesTitle: string;
   seasonNumber: number;
   episodeNumber: number;
+  episodeTitle: string | null;
 };
 
 /**
@@ -25,9 +26,22 @@ const stripExtension = (name: string): string => {
 };
 
 /**
+ * The filename at the end of a path.
+ *
+ * @param path - The file's full path.
+ * @returns Its own name.
+ */
+const nameOf = (path: string): string => path.slice(path.lastIndexOf('/') + 1);
+
+/**
  * Reads episode numbers out of files that are numbered without saying so — `01.mkv`, `02.mkv` — by
  * treating a folder of consecutively numbered files as a season. Common in ripped collections, and
  * without this every one of them is a separate film named after a number.
+ *
+ * A file among a programme's specials keeps its own name as the episode's title. `Deleted Scenes 1`
+ * and `Deleted Scenes 2` are episode one and two of season zero, but neither is called after the
+ * programme — so the name on the file is the only thing that tells them apart once a catalogue has
+ * nothing to say about either.
  *
  * @param paths - The files in one folder, with what was already read from their names.
  * @returns Which episode each file is, where the folder read as a season.
@@ -76,6 +90,7 @@ const groupBareNumberedEpisodes = (paths: readonly string[]): Map<string, BareEp
         seriesTitle: one.stem,
         seasonNumber,
         episodeNumber: one.number,
+        episodeTitle: seasonNumber === 0 ? tidy(stripExtension(nameOf(one.path))) : null,
       });
     }
   }

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import {
   mediaItem,
   mediaItemJob,
@@ -8,6 +8,10 @@ import {
   mediaPreviewOverride,
   library,
   series,
+  rating,
+  hidden,
+  ageException,
+  share,
 } from '@ValenceServer/db/Schema';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import { isNotATrack } from '@ValenceServer/music/isNotATrack';
@@ -18,6 +22,56 @@ import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import { resolveSeriesKey } from './resolveSeriesKey';
 import type { MediaStore } from './scanLibrary';
 import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
+
+type SeriesPlacement = {
+  path: string;
+  seriesId: string | null;
+};
+
+/**
+ * Works out which programmes the shelf currently holds for each folder, so that the ones a single
+ * folder was split across can be made one again.
+ *
+ * A programme is counted against the folder most of its episodes are in rather than the first one
+ * seen, since a stray file filed somewhere odd should not decide where the whole programme lives.
+ *
+ * @param items - Every stored file that belongs to a programme, with the programme it belongs to.
+ * @param foldersByPath - The folder each file's programme is filed under.
+ * @returns The programmes held against each folder.
+ */
+const groupSeriesByFolder = (
+  items: readonly SeriesPlacement[],
+  foldersByPath: Map<string, string>,
+): Map<string, string[]> => {
+  const weights = new Map<string, Map<string, number>>();
+
+  for (const item of items) {
+    const folder = foldersByPath.get(item.path);
+
+    if (folder === undefined || item.seriesId === null) {
+      continue;
+    }
+
+    const counted = weights.get(item.seriesId) ?? new Map<string, number>();
+
+    counted.set(folder, (counted.get(folder) ?? 0) + 1);
+    weights.set(item.seriesId, counted);
+  }
+
+  const byFolder = new Map<string, string[]>();
+
+  for (const [seriesId, counted] of weights) {
+    const folder = [...counted].sort((left, right) => right[1] - left[1])[0]?.[0];
+
+    if (folder === undefined) {
+      continue;
+    }
+
+    byFolder.set(folder, [...(byFolder.get(folder) ?? []), seriesId]);
+  }
+
+  return byFolder;
+};
 
 /**
  * The library's tables as the scanner uses them: what is stored now, what to write, what to remove,
@@ -106,8 +160,8 @@ const createMediaStore = (
               .onConflictDoUpdate({
                 target: [series.libraryId, series.key],
                 set: {
-                  title: seriesTitle,
-                  externalId: row.metadata.externalId ?? null,
+                  title: sql`case when excluded."externalId" is not null then excluded."title" when ${series.externalId} is not null then ${series.title} else excluded."title" end`,
+                  externalId: sql`coalesce(excluded."externalId", ${series.externalId})`,
                   updatedAt: new Date(),
                 },
               })
@@ -222,6 +276,100 @@ const createMediaStore = (
 
   markScanned: async (libraryId) => {
     await db.update(library).set({ lastScannedAt: new Date() }).where(eq(library.id, libraryId));
+  },
+
+  regroupSeries: async (libraryId, foldersByPath) => {
+    const items = await db
+      .select({ path: mediaItem.path, seriesId: mediaItem.seriesId })
+      .from(mediaItem)
+      .where(and(eq(mediaItem.libraryId, libraryId), isNotNull(mediaItem.seriesId)));
+
+    for (const [folder, ids] of groupSeriesByFolder(items, foldersByPath)) {
+      const key = `folder:${folder}`;
+
+      const candidates = await db
+        .select({ id: series.id, key: series.key, externalId: series.externalId })
+        .from(series)
+        .where(and(eq(series.libraryId, libraryId), inArray(series.id, ids)))
+        .orderBy(
+          sql`case when ${series.externalId} is null then 1 else 0 end`,
+          series.addedAt,
+          series.id,
+        );
+
+      const survivor = candidates[0];
+
+      if (survivor === undefined) {
+        continue;
+      }
+
+      const losers = candidates.slice(1).map((one) => one.id);
+
+      if (losers.length > 0) {
+        const kept = survivor.id;
+
+        await db
+          .delete(rating)
+          .where(
+            and(
+              inArray(rating.seriesId, losers),
+              sql`exists (select 1 from ${rating} as kept where kept."profileId" = ${rating.profileId} and kept."seriesId" = ${kept})`,
+            ),
+          );
+
+        await db
+          .delete(hidden)
+          .where(
+            and(
+              inArray(hidden.seriesId, losers),
+              sql`exists (select 1 from ${hidden} as kept where kept."profileId" = ${hidden.profileId} and kept."seriesId" = ${kept})`,
+            ),
+          );
+
+        await db
+          .delete(ageException)
+          .where(
+            and(
+              inArray(ageException.seriesId, losers),
+              sql`exists (select 1 from ${ageException} as kept where kept."userId" = ${ageException.userId} and kept."seriesId" = ${kept})`,
+            ),
+          );
+
+        await db.update(rating).set({ seriesId: kept }).where(inArray(rating.seriesId, losers));
+        await db.update(hidden).set({ seriesId: kept }).where(inArray(hidden.seriesId, losers));
+        await db
+          .update(ageException)
+          .set({ seriesId: kept })
+          .where(inArray(ageException.seriesId, losers));
+        await db.update(share).set({ seriesId: kept }).where(inArray(share.seriesId, losers));
+
+        await db
+          .update(mediaItem)
+          .set({ seriesId: kept })
+          .where(inArray(mediaItem.seriesId, losers));
+
+        await db.delete(series).where(inArray(series.id, losers));
+      }
+
+      if (survivor.key === key) {
+        continue;
+      }
+
+      await db.delete(series).where(and(eq(series.libraryId, libraryId), eq(series.key, key)));
+
+      await db.update(series).set({ key }).where(eq(series.id, survivor.id));
+    }
+  },
+
+  forgetEmptySeries: async (libraryId) => {
+    await db
+      .delete(series)
+      .where(
+        and(
+          eq(series.libraryId, libraryId),
+          sql`not exists (select 1 from ${mediaItem} where ${mediaItem.seriesId} = ${series.id})`,
+        ),
+      );
   },
 
   linkExtras: async (libraryId, links) => {
@@ -490,6 +638,7 @@ const clearJobCompletion = async (
 
 export {
   createMediaStore,
+  groupSeriesByFolder,
   outstandingFor,
   listOutstandingFor,
   markJobComplete,
