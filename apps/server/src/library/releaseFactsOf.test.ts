@@ -42,6 +42,18 @@ describe('releaseFactsOf', () => {
     expect(releaseFactsOf({ imdb_id: null }, null)).toEqual({});
   });
 
+  it('takes the id from a series’ external ids, where a series has no id of its own', () => {
+    expect(releaseFactsOf({ external_ids: { imdb_id: 'tt11280740' } }, null).imdbId).toBe(
+      'tt11280740',
+    );
+  });
+
+  it('prefers the id a film carries itself', () => {
+    expect(releaseFactsOf({ imdb_id: 'tt1', external_ids: { imdb_id: 'tt2' } }, null).imdbId).toBe(
+      'tt1',
+    );
+  });
+
   it('says nothing about a title it knows nothing of', () => {
     expect(releaseFactsOf({}, null)).toEqual({});
   });

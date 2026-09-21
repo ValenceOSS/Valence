@@ -12,8 +12,15 @@ import type { TitleDetailsProps } from './TitleDetails.types';
  * @param status - Where the catalogue says it stands, such as "Released".
  * @param budget - What it cost to make, in dollars.
  * @param revenue - What it took at the box office, in dollars.
+ * @param rottenTomatoes - Its Rotten Tomatoes score, as a percentage.
  */
-const TitleDetails = ({ releaseDate, status, budget, revenue }: TitleDetailsProps) => {
+const TitleDetails = ({
+  releaseDate,
+  status,
+  budget,
+  revenue,
+  rottenTomatoes,
+}: TitleDetailsProps) => {
   const facts: { label: string; value: string }[] = [
     ...(releaseDate === undefined || releaseDate === null || releaseDate === ''
       ? []
@@ -27,6 +34,9 @@ const TitleDetails = ({ releaseDate, status, budget, revenue }: TitleDetailsProp
     ...(revenue === undefined || revenue === null || revenue <= 0
       ? []
       : [{ label: 'Box office', value: formatMoney(revenue) }]),
+    ...(rottenTomatoes === undefined || rottenTomatoes === null
+      ? []
+      : [{ label: 'Rotten Tomatoes', value: `${rottenTomatoes.toString()}%` }]),
   ];
 
   if (facts.length === 0) {

@@ -165,6 +165,7 @@ const createMediaStore = (
       revenue: row.metadata.revenue ?? null,
       catalogueStatus: row.metadata.status ?? null,
       imdbId: row.metadata.imdbId ?? null,
+      rottenTomatoes: row.metadata.rottenTomatoes ?? null,
       extraKind: row.extraKind,
       versionLabel: row.versionLabel,
       updatedAt: new Date(),

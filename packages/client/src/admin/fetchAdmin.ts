@@ -39,6 +39,7 @@ const AdminOverviewSchema = z.object({
   settings: z.object({
     hasCatalogueKey: z.boolean(),
     hasAudioDbKey: z.boolean().default(false),
+    hasOmdbKey: z.boolean().default(false),
     trustedOrigins: z.array(z.string()),
     cookieSecure: z.boolean(),
     hardwareAccel: z.string().default(''),
@@ -1005,6 +1006,24 @@ const saveAudioDbKey = async (audioDbKey: string): Promise<boolean> => {
   return response !== null && response.ok;
 };
 
+/**
+ * Saves the OMDb key Rotten Tomatoes scores are looked up with. Without one titles simply carry no
+ * score.
+ *
+ * @param omdbKey - The key.
+ * @returns Whether it was written.
+ */
+const saveOmdbKey = async (omdbKey: string): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ omdbKey }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 export type {
   CatalogueMatch,
   ActiveSession,
@@ -1037,6 +1056,7 @@ export {
   saveFetchesMusicDetails,
   saveRequestReleaseTypes,
   saveAudioDbKey,
+  saveOmdbKey,
   saveSplashscreen,
   removeSplashscreen,
   fetchActiveSessions,

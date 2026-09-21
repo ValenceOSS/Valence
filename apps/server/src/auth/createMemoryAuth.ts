@@ -89,6 +89,7 @@ const createMemoryAuth = (
     requestReleaseTypes: ['album'],
     fetchesMusicDetails: false,
     audioDbKey: '',
+    omdbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
     reencodesAwaitingReviewCap: 5,
