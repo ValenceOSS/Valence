@@ -119,6 +119,31 @@ describe('ShowDialog', () => {
     expect(await screen.findByRole('button', { name: /Play Episode 1/ })).toBeInTheDocument();
   });
 
+  it('says the programme is watched once every episode it holds has been', async () => {
+    fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1, 2] }]));
+    renderInAnAddress(
+      <ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} watchedFractionFor={() => 1} />,
+    );
+
+    expect(await screen.findByText('Watched')).toBeInTheDocument();
+  });
+
+  it('does not say the programme is watched while an episode is not', async () => {
+    fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1, 2] }]));
+    renderInAnAddress(
+      <ShowDialog
+        show={summary}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+        watchedFractionFor={(id) => (id.endsWith('1') ? 1 : 0.2)}
+      />,
+    );
+
+    await screen.findByRole('button', { name: /Play Episode 1/ });
+
+    expect(screen.queryByText('Watched')).not.toBeInTheDocument();
+  });
+
   it('shows the hole where a missing episode belongs', async () => {
     fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1, 2, 4] }]));
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);

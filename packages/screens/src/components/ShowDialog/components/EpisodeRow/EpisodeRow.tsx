@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Info as InfoIcon } from '@keyline-icons/react';
+import { Info as InfoIcon, Check as CheckIcon } from '@keyline-icons/react';
 import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -63,7 +63,17 @@ const EpisodeRow = ({
           <Icon of={PlayFilledIcon} size={20} tone="scrim" />
         </span>
 
-        {watchedFraction === undefined ? null : (
+        {watchedFraction === undefined || watchedFraction < 1 ? null : (
+          <span
+            role="img"
+            aria-label="Watched"
+            className="absolute bottom-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-scrim"
+          >
+            <Icon of={CheckIcon} size={12} tone="scrim" />
+          </span>
+        )}
+
+        {watchedFraction === undefined || watchedFraction >= 1 ? null : (
           <span className="absolute inset-x-0 bottom-0 h-1 bg-shade/50">
             <span
               className="block h-full bg-primary"

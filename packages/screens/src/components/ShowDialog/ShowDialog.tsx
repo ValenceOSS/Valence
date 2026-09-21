@@ -140,6 +140,13 @@ const ShowDialog = ({
     ...(gaps?.seasons ?? []).map((number) => ({ seasonNumber: number, isHeld: false })),
   ].sort((left, right) => inSeasonOrder(left.seasonNumber, right.seasonNumber));
 
+  const heldEpisodes = seasons.flatMap((one) => one.episodes);
+
+  const isWatchedThrough =
+    watchedFractionFor !== undefined &&
+    heldEpisodes.length > 0 &&
+    heldEpisodes.every((episode) => (watchedFractionFor(episode.id) ?? 0) >= 1);
+
   const chosen = chooseFrom.find((one) => one.seasonNumber === chosenSeason) ?? chooseFrom[0];
   const showing = chosen?.seasonNumber ?? null;
   const season = seasons.find((one) => one.seasonNumber === showing) ?? {
@@ -216,6 +223,12 @@ const ShowDialog = ({
                   ? `${shown.episodeCount.toString()} episodes`
                   : `${shown.seasonCount.toString()} seasons · ${shown.episodeCount.toString()} episodes`}
               </span>
+
+              {isWatchedThrough ? (
+                <Badge tone="success" size="sm">
+                  Watched
+                </Badge>
+              ) : null}
             </motion.div>
 
             <motion.h2
