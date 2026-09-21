@@ -88,6 +88,10 @@ import {
 } from './routes/LibraryRoute';
 import { createFolderRoute, listFoldersRoute } from '@ValenceServer/routes/FolderRoute';
 import { createFolder } from '@ValenceServer/folders/createFolder';
+import { uploadMediaRoute } from '@ValenceServer/routes/UploadRoute';
+import { planUpload } from '@ValenceServer/uploads/planUpload';
+import { createUploadDisk } from '@ValenceServer/uploads/createUploadDisk';
+import type { UploadDisk } from '@ValenceServer/uploads/UploadDisk';
 import { listFolders } from '@ValenceServer/folders/listFolders';
 import { createFolderDisk } from '@ValenceServer/folders/createFolderDisk';
 import type { FolderDisk } from '@ValenceServer/folders/FolderDisk';
@@ -652,6 +656,7 @@ type CreateAppOptions = {
   measureStorage?: () => Promise<StorageCount>;
   readImage?: (url: string) => Promise<{ body: ArrayBuffer; contentType: string } | null>;
   folderDisk?: FolderDisk;
+  uploadDisk?: UploadDisk;
   isTranscoderReachable?: () => Promise<boolean>;
   transcoderAddress?: string;
   listRunningJobs?: () => RunningJob[];
@@ -724,6 +729,7 @@ const createApp = ({
   readImage,
   isTranscoderReachable = () => Promise.resolve(false),
   folderDisk = createFolderDisk(),
+  uploadDisk = createUploadDisk(),
   transcoderAddress = '',
   listRunningJobs = () => [],
   jobDefinitions = JOB_DEFINITIONS,
@@ -1208,6 +1214,67 @@ const createApp = ({
     }
 
     return context.json(item, 200);
+  });
+
+  app.openapi(uploadMediaRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const target = (await library.list(viewer)).find(
+      (entry) => entry.id === context.req.valid('param').id,
+    );
+
+    if (target === undefined) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    const relativePath = context.req.valid('query').path;
+    const plan = planUpload(target.path, relativePath, target.kind);
+
+    if (plan.kind === 'badPath') {
+      return context.json(
+        { error: 'A file goes at a plain path inside the library, with no dots or empty names.' },
+        400,
+      );
+    }
+
+    if (plan.kind === 'refused') {
+      return context.json({ error: 'That is not something this library reads.' }, 415);
+    }
+
+    const body = context.req.raw.body;
+
+    if (body === null) {
+      return context.json({ error: 'No file was sent.' }, 400);
+    }
+
+    const written = await uploadDisk.write(plan.destination, body);
+
+    switch (written.kind) {
+      case 'written':
+        return context.json({ path: relativePath, bytes: written.bytes }, 201);
+      case 'exists':
+        return context.json({ error: 'There is already a file called that.' }, 409);
+      case 'readOnly':
+        return context.json(
+          {
+            error:
+              'That disk is read-only to Valence. Give it read-write access to upload media there.',
+          },
+          403,
+        );
+      case 'denied':
+        return context.json({ error: 'Valence is not allowed to write there.' }, 403);
+      case 'failed':
+        return context.json({ error: 'The file could not be written.' }, 500);
+    }
   });
 
   app.openapi(scanLibraryRoute, async (context) => {

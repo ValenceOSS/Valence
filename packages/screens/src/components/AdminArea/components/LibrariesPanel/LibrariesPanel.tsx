@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
   Bin as BinIcon,
+  FileArrowUp as FileArrowUpIcon,
   Images as ImagesIcon,
   Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
@@ -10,6 +11,7 @@ import {
   Settings as SettingsIcon,
 } from '@keyline-icons/react';
 import { useMemo, useRef, useState } from 'react';
+import { UploadMediaDialog } from '@ValenceScreens/components/AdminArea/components/UploadMediaDialog/UploadMediaDialog';
 import { AdminSetupGuide } from '@ValenceScreens/components/AdminArea/components/AdminSetupGuide/AdminSetupGuide';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -87,6 +89,7 @@ const LibrariesPanel = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [rereading, setRereading] = useState<Library | null>(null);
   const [watching, setWatching] = useState<Library | null>(null);
+  const [uploadingTo, setUploadingTo] = useState<Library | null>(null);
 
   const watchedWork = watching === null ? [] : workOf(progress, watching.id);
 
@@ -102,6 +105,7 @@ const LibrariesPanel = ({
     setDeleting,
     setRereading,
     setWatching,
+    setUploadingTo,
   });
 
   live.current = {
@@ -112,6 +116,7 @@ const LibrariesPanel = ({
     setDeleting,
     setRereading,
     setWatching,
+    setUploadingTo,
   };
 
   const columns = useMemo<DataTableColumn<Library>[]>(
@@ -226,6 +231,14 @@ const LibrariesPanel = ({
                       isDisabled: readingOf(live.current.progress, row.original.id) !== undefined,
                       onChoose: () => {
                         live.current.onScan(row.original.id);
+                      },
+                    },
+                    {
+                      id: 'upload',
+                      label: 'Upload media',
+                      icon: <Icon of={FileArrowUpIcon} size={15} />,
+                      onChoose: () => {
+                        live.current.setUploadingTo(row.original);
                       },
                     },
                     {
@@ -458,6 +471,16 @@ const LibrariesPanel = ({
         onConfirm={() => {
           setIsConfirmingReset(false);
           onResetAll();
+        }}
+      />
+
+      <UploadMediaDialog
+        library={uploadingTo}
+        onClose={() => {
+          setUploadingTo(null);
+        }}
+        onUploaded={(uploaded) => {
+          onScan(uploaded.id);
         }}
       />
 

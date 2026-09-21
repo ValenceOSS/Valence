@@ -20,6 +20,14 @@ const library = (overrides: Partial<Library> = {}): Library => ({
   ...overrides,
 });
 
+const aFileNamed = (name: string): File => {
+  const file = new File(['x'], name);
+
+  Object.defineProperty(file, 'webkitRelativePath', { value: '' });
+
+  return file;
+};
+
 const scanning = (overrides: Partial<ScanEntry> = {}): ScanEntry =>
   ({
     libraryId: library().id,
@@ -61,6 +69,35 @@ const choose = async (user: ReturnType<typeof userEvent.setup>, name: string, ac
 };
 
 describe('LibrariesPanel', () => {
+  it('offers to upload media into a library, and scans it once something is there', async () => {
+    const onScan = vi.fn();
+    const user = userEvent.setup();
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          status: 201,
+          json: () => Promise.resolve({ path: 'Arrival.mkv', bytes: 1 }),
+        }),
+      ),
+    );
+
+    render(<LibrariesPanel {...props} onScan={onScan} libraries={[library()]} />);
+
+    await choose(user, 'Films', /Upload media/);
+
+    expect(await screen.findByRole('dialog', { name: 'Upload media' })).toBeInTheDocument();
+
+    await user.upload(screen.getByLabelText(/Choose files to upload/), aFileNamed('Arrival.mkv'));
+    await user.click(screen.getByRole('button', { name: 'Upload' }));
+
+    await waitFor(() => {
+      expect(onScan).toHaveBeenCalledWith(library().id);
+    });
+  });
+
   it('labels a library with the type it was given rather than the kind it reads as', () => {
     render(
       <LibrariesPanel
