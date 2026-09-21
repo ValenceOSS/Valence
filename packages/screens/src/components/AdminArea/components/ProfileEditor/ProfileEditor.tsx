@@ -11,6 +11,9 @@ import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Switch } from '@ValenceUI/Switch';
+import { TabPanel } from '@ValenceUI/TabPanel';
+import { TabRow } from '@ValenceUI/TabRow';
+import { Tabs } from '@ValenceUI/Tabs';
 import { TextField } from '@ValenceUI/TextField';
 import {
   MUSIC_QUALITIES,
@@ -27,8 +30,22 @@ import { RankedChoices } from '@ValenceScreens/components/AdminArea/components/R
 import { QUALITY_NAMES } from '@ValenceScreens/components/AdminArea/QUALITY_NAMES';
 import { formFor, readProfileForm } from './readProfileForm';
 import type { ProfileKind, ReleaseWait } from '@ValenceContracts/schemas/QualityProfile';
-import type { ProfileForm } from './readProfileForm';
+import type { ProfileForm, ProfileTab } from './readProfileForm';
 import type { ProfileEditorProps } from './ProfileEditor.types';
+
+const TABS: readonly { id: ProfileTab; label: string }[] = [
+  { id: 'quality', label: 'Quality' },
+  { id: 'matching', label: 'Matching' },
+  { id: 'access', label: 'Access' },
+];
+
+/**
+ * Whether a tab name is one of this dialog's.
+ *
+ * @param value - What the tabs said.
+ * @returns Whether it names a tab.
+ */
+const isProfileTab = (value: string): value is ProfileTab => TABS.some((tab) => tab.id === value);
 
 const KINDS: readonly { id: ProfileKind; label: string }[] = [
   { id: 'video', label: 'Films and series' },
@@ -156,6 +173,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
   const [shownFor, setShownFor] = useState(profile);
   const [problem, setProblem] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [tab, setTab] = useState<ProfileTab>('quality');
 
   if (shownFor !== profile) {
     setShownFor(profile);
@@ -178,6 +196,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
     if (outcome.draft === null) {
       setProblem(outcome.problem);
+      setTab(outcome.at);
 
       return;
     }
@@ -204,326 +223,350 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
   return (
     <Dialog label={title} isOpen={isOpen} onClose={onClose} size="stage">
-      <DialogTitle
-        title={title}
-        detail="Every release a search finds is judged against a profile: what it may not be is refused, and the rest are ranked by how well they fit."
-      />
-
-      <DialogContent>
-        <div className="flex w-full flex-col gap-6">
-          <Section title="Profile">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextField
-                label="Name"
-                value={form.name}
-                onValueChange={(name) => {
-                  change({ name });
-                }}
-                placeholder={isVideo ? 'HD' : 'Lossless'}
-                required
-              />
-
-              <FormField label="For">
-                <SegmentedRow
-                  label="For"
-                  size="sm"
-                  items={KINDS}
-                  value={form.kind}
-                  onSelect={(next) => {
-                    const kind = KINDS.find((one) => one.id === next)?.id;
-
-                    if (kind !== undefined) {
-                      change({ kind, libraryIds: [] });
-                    }
-                  }}
-                />
-              </FormField>
-            </div>
-          </Section>
-
-          <Section
-            title="What it takes"
-            detail="Tick what may be taken, best first. The order is what ranks releases before anything else."
-          >
-            {isVideo ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormField label="Resolutions">
-                  <RankedChoices
-                    label="Resolutions"
-                    options={optionsOf(RESOLUTIONS)}
-                    chosen={form.resolutions}
-                    onChange={(resolutions) => {
-                      change({ resolutions });
-                    }}
-                  />
-                </FormField>
-
-                <FormField
-                  label="Sources"
-                  description="A release that does not say is let through."
-                >
-                  <RankedChoices
-                    label="Sources"
-                    options={optionsOf(RELEASE_SOURCES)}
-                    chosen={form.sources}
-                    onChange={(sources) => {
-                      change({ sources });
-                    }}
-                  />
-                </FormField>
-              </div>
-            ) : (
-              <FormField label="Formats">
-                <RankedChoices
-                  label="Formats"
-                  options={optionsOf(MUSIC_QUALITIES)}
-                  chosen={form.musicQualities}
-                  onChange={(musicQualities) => {
-                    change({ musicQualities });
-                  }}
-                />
-              </FormField>
-            )}
-          </Section>
-
-          <Section
-            title="Sizes"
-            detail={
-              isVideo
-                ? 'How large a release of each quality may be, an hour of it, so a whole season is judged by its episodes. A handle at either end is no limit.'
-                : 'How large an album may be.'
-            }
-          >
-            {isVideo ? (
-              <QualitySizes
-                resolutions={form.resolutions}
-                sources={form.sources}
-                sizes={form.sizes}
-                onChange={(sizes) => {
-                  change({ sizes });
-                }}
-              />
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <TextField
-                  label="Smallest (MB an album)"
-                  type="number"
-                  min={0}
-                  value={form.smallestMb}
-                  onValueChange={(smallestMb) => {
-                    change({ smallestMb });
-                  }}
-                  placeholder="No limit"
-                />
-
-                <TextField
-                  label="Largest (MB an album)"
-                  type="number"
-                  min={1}
-                  value={form.largestMb}
-                  onValueChange={(largestMb) => {
-                    change({ largestMb });
-                  }}
-                  placeholder="No limit"
-                />
-              </div>
-            )}
-          </Section>
-
-          {isVideo ? (
-            <Section
-              title="Films"
-              detail="A film is held until then before it is searched for, so nothing is fetched from cinemas."
-            >
-              <FormField label="Search films once they are">
-                <SegmentedRow
-                  label="Search films once they are"
-                  size="sm"
-                  items={WAITS}
-                  value={form.releaseWait}
-                  onSelect={(next) => {
-                    const releaseWait = WAITS.find((one) => one.id === next)?.id;
-
-                    if (releaseWait !== undefined) {
-                      change({ releaseWait });
-                    }
-                  }}
-                />
-              </FormField>
-            </Section>
-          ) : null}
-
-          <Section title="Words">
-            <TextField
-              label="Preferred words"
-              value={form.preferredWords}
-              onValueChange={(preferredWords) => {
-                change({ preferredWords });
-              }}
-              description="Each one a release has adds to its score. Separate them with commas; a word between slashes, such as /hdr10\+?/, is a pattern."
-            />
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextField
-                label="Required words"
-                value={form.requiredWords}
-                onValueChange={(requiredWords) => {
-                  change({ requiredWords });
-                }}
-                description="A release needs at least one."
-              />
-
-              <TextField
-                label="Banned words"
-                value={form.bannedWords}
-                onValueChange={(bannedWords) => {
-                  change({ bannedWords });
-                }}
-                description="A release with any is refused."
-              />
-            </div>
-          </Section>
-
-          <Section title="Upgrades">
-            <Switch
-              label="Upgrade to a better release later"
-              isOn={form.isUpgrading}
-              onToggle={() => {
-                change({ isUpgrading: !form.isUpgrading });
-              }}
-            />
-
-            {!form.isUpgrading ? null : isVideo ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Choosing
-                  label="Until the resolution is"
-                  value={form.upgradeUntilResolution}
-                  options={optionsOf(form.resolutions)}
-                  onChoose={(upgradeUntilResolution) => {
-                    change({ upgradeUntilResolution });
-                  }}
-                />
-
-                <Choosing
-                  label="And the source is"
-                  value={form.upgradeUntilSource}
-                  options={optionsOf(form.sources)}
-                  onChoose={(upgradeUntilSource) => {
-                    change({ upgradeUntilSource });
-                  }}
-                />
-              </div>
-            ) : (
-              <Choosing
-                label="Until the format is"
-                value={form.upgradeUntilMusicQuality}
-                options={optionsOf(form.musicQualities)}
-                onChoose={(upgradeUntilMusicQuality) => {
-                  change({ upgradeUntilMusicQuality });
-                }}
-              />
-            )}
-          </Section>
-
-          <Section
-            title="Language"
-            detail="Prefers releases that say they are in this language. Most releases say nothing, and those are left alone."
-          >
-            <Choosing
-              label="Preferred language"
-              value={form.preferredLanguage}
-              options={LANGUAGES}
-              onChoose={(preferredLanguage) => {
-                change({ preferredLanguage });
-              }}
-              anything="Use the library’s language"
-            />
-          </Section>
-
-          <Section
-            title="Who can use it"
-            detail="Leave both empty and anyone can pick this profile. Tick roles or people to keep it to them."
-          >
-            <Switch
-              label="Always use this profile"
-              isOn={form.isDefault}
-              onToggle={() => {
-                change({ isDefault: !form.isDefault });
-              }}
-            />
-
-            <p className="font-body text-sm text-text-muted">
-              {form.isDefault
-                ? `Every ${isVideo ? 'film and series' : 'music'} request uses this profile. Only one ${isVideo ? 'video' : 'music'} profile can do this.`
-                : 'Leave off to let people pick a quality themselves.'}
-            </p>
-
-            {form.isDefault ? null : (
-              <div className="grid gap-6 sm:grid-cols-2">
-                <AskerPicker
-                  legend="Roles"
-                  everyLabel="Any role"
-                  askers={(roles.data ?? []).map((role) => ({ id: role.id, name: role.name }))}
-                  chosen={new Set(form.roleIds)}
-                  onChange={(chosen) => {
-                    change({ roleIds: [...chosen] });
-                  }}
-                />
-
-                <AskerPicker
-                  legend="People"
-                  everyLabel="Anybody"
-                  askers={(accounts.data ?? []).map((account) => ({
-                    id: account.id,
-                    name: account.name,
-                    detail: account.email,
-                  }))}
-                  chosen={new Set(form.accountIds)}
-                  onChange={(chosen) => {
-                    change({ accountIds: [...chosen] });
-                  }}
-                />
-              </div>
-            )}
-          </Section>
-
-          <Section
-            title="Used for"
-            detail={
-              forKind.length === 0
-                ? `There are no ${isVideo ? 'film or series' : 'music'} libraries yet.`
-                : 'Which libraries offer this profile when somebody asks. Tick none and it is offered for all of them.'
-            }
-          >
-            {forKind.length === 0 ? null : (
-              <AskerPicker
-                legend="Libraries"
-                everyLabel="Every library"
-                askers={forKind.map((entry) => ({
-                  id: entry.id,
-                  name: entry.name,
-                  detail:
-                    entry.itemCount === 1 ? '1 item' : `${entry.itemCount.toLocaleString()} items`,
-                }))}
-                chosen={new Set(form.libraryIds)}
-                onChange={(chosen) => {
-                  change({ libraryIds: [...chosen] });
-                }}
-              />
-            )}
-          </Section>
-        </div>
-      </DialogContent>
-
-      <DialogFooter
-        note={problem}
-        dismiss={{ onChoose: onClose }}
-        confirm={{
-          label: profile === null ? 'Add profile' : 'Save',
-          onChoose: save,
-          isLoading: isSaving,
+      <Tabs
+        value={tab}
+        onValueChange={(next) => {
+          if (isProfileTab(next)) {
+            setTab(next);
+          }
         }}
-      />
+      >
+        <DialogTitle
+          title={title}
+          detail="Every release a search finds is judged against a profile: what it may not be is refused, and the rest are ranked by how well they fit."
+          below={
+            <TabRow
+              label="Which part of the profile to edit"
+              tone="underlined"
+              size="sm"
+              value={tab}
+              groups={[{ items: TABS.map(({ id, label }) => ({ id, label })) }]}
+            />
+          }
+        />
+
+        <DialogContent>
+          <TabPanel value="quality" className="flex w-full flex-col gap-6">
+            <Section title="Profile">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextField
+                  label="Name"
+                  value={form.name}
+                  onValueChange={(name) => {
+                    change({ name });
+                  }}
+                  placeholder={isVideo ? 'HD' : 'Lossless'}
+                  required
+                />
+
+                <FormField label="For">
+                  <SegmentedRow
+                    label="For"
+                    size="sm"
+                    items={KINDS}
+                    value={form.kind}
+                    onSelect={(next) => {
+                      const kind = KINDS.find((one) => one.id === next)?.id;
+
+                      if (kind !== undefined) {
+                        change({ kind, libraryIds: [] });
+                      }
+                    }}
+                  />
+                </FormField>
+              </div>
+            </Section>
+
+            <Section
+              title="What it takes"
+              detail="Tick what may be taken, best first. The order is what ranks releases before anything else."
+            >
+              {isVideo ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField label="Resolutions">
+                    <RankedChoices
+                      label="Resolutions"
+                      options={optionsOf(RESOLUTIONS)}
+                      chosen={form.resolutions}
+                      onChange={(resolutions) => {
+                        change({ resolutions });
+                      }}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Sources"
+                    description="A release that does not say is let through."
+                  >
+                    <RankedChoices
+                      label="Sources"
+                      options={optionsOf(RELEASE_SOURCES)}
+                      chosen={form.sources}
+                      onChange={(sources) => {
+                        change({ sources });
+                      }}
+                    />
+                  </FormField>
+                </div>
+              ) : (
+                <FormField label="Formats">
+                  <RankedChoices
+                    label="Formats"
+                    options={optionsOf(MUSIC_QUALITIES)}
+                    chosen={form.musicQualities}
+                    onChange={(musicQualities) => {
+                      change({ musicQualities });
+                    }}
+                  />
+                </FormField>
+              )}
+            </Section>
+
+            <Section
+              title="Sizes"
+              detail={
+                isVideo
+                  ? 'How large a release of each quality may be, an hour of it, so a whole season is judged by its episodes. A handle at either end is no limit.'
+                  : 'How large an album may be.'
+              }
+            >
+              {isVideo ? (
+                <QualitySizes
+                  resolutions={form.resolutions}
+                  sources={form.sources}
+                  sizes={form.sizes}
+                  onChange={(sizes) => {
+                    change({ sizes });
+                  }}
+                />
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextField
+                    label="Smallest (MB an album)"
+                    type="number"
+                    min={0}
+                    value={form.smallestMb}
+                    onValueChange={(smallestMb) => {
+                      change({ smallestMb });
+                    }}
+                    placeholder="No limit"
+                  />
+
+                  <TextField
+                    label="Largest (MB an album)"
+                    type="number"
+                    min={1}
+                    value={form.largestMb}
+                    onValueChange={(largestMb) => {
+                      change({ largestMb });
+                    }}
+                    placeholder="No limit"
+                  />
+                </div>
+              )}
+            </Section>
+          </TabPanel>
+
+          <TabPanel value="matching" className="flex w-full flex-col gap-6">
+            {isVideo ? (
+              <Section
+                title="Films"
+                detail="A film is held until then before it is searched for, so nothing is fetched from cinemas."
+              >
+                <FormField label="Search films once they are">
+                  <SegmentedRow
+                    label="Search films once they are"
+                    size="sm"
+                    items={WAITS}
+                    value={form.releaseWait}
+                    onSelect={(next) => {
+                      const releaseWait = WAITS.find((one) => one.id === next)?.id;
+
+                      if (releaseWait !== undefined) {
+                        change({ releaseWait });
+                      }
+                    }}
+                  />
+                </FormField>
+              </Section>
+            ) : null}
+
+            <Section title="Words">
+              <TextField
+                label="Preferred words"
+                value={form.preferredWords}
+                onValueChange={(preferredWords) => {
+                  change({ preferredWords });
+                }}
+                description="Each one a release has adds to its score. Separate them with commas; a word between slashes, such as /hdr10\+?/, is a pattern."
+              />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextField
+                  label="Required words"
+                  value={form.requiredWords}
+                  onValueChange={(requiredWords) => {
+                    change({ requiredWords });
+                  }}
+                  description="A release needs at least one."
+                />
+
+                <TextField
+                  label="Banned words"
+                  value={form.bannedWords}
+                  onValueChange={(bannedWords) => {
+                    change({ bannedWords });
+                  }}
+                  description="A release with any is refused."
+                />
+              </div>
+            </Section>
+
+            <Section title="Upgrades">
+              <Switch
+                label="Upgrade to a better release later"
+                isOn={form.isUpgrading}
+                onToggle={() => {
+                  change({ isUpgrading: !form.isUpgrading });
+                }}
+              />
+
+              {!form.isUpgrading ? null : isVideo ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Choosing
+                    label="Until the resolution is"
+                    value={form.upgradeUntilResolution}
+                    options={optionsOf(form.resolutions)}
+                    onChoose={(upgradeUntilResolution) => {
+                      change({ upgradeUntilResolution });
+                    }}
+                  />
+
+                  <Choosing
+                    label="And the source is"
+                    value={form.upgradeUntilSource}
+                    options={optionsOf(form.sources)}
+                    onChoose={(upgradeUntilSource) => {
+                      change({ upgradeUntilSource });
+                    }}
+                  />
+                </div>
+              ) : (
+                <Choosing
+                  label="Until the format is"
+                  value={form.upgradeUntilMusicQuality}
+                  options={optionsOf(form.musicQualities)}
+                  onChoose={(upgradeUntilMusicQuality) => {
+                    change({ upgradeUntilMusicQuality });
+                  }}
+                />
+              )}
+            </Section>
+
+            <Section
+              title="Language"
+              detail="Prefers releases that say they are in this language. Most releases say nothing, and those are left alone."
+            >
+              <Choosing
+                label="Preferred language"
+                value={form.preferredLanguage}
+                options={LANGUAGES}
+                onChoose={(preferredLanguage) => {
+                  change({ preferredLanguage });
+                }}
+                anything="Use the library’s language"
+              />
+            </Section>
+          </TabPanel>
+
+          <TabPanel value="access" className="flex w-full flex-col gap-6">
+            <Section
+              title="Who can use it"
+              detail="Leave both empty and anyone can pick this profile. Tick roles or people to keep it to them."
+            >
+              <Switch
+                label="Always use this profile"
+                isOn={form.isDefault}
+                onToggle={() => {
+                  change({ isDefault: !form.isDefault });
+                }}
+              />
+
+              <p className="font-body text-sm text-text-muted">
+                {form.isDefault
+                  ? `Every ${isVideo ? 'film and series' : 'music'} request uses this profile. Only one ${isVideo ? 'video' : 'music'} profile can do this.`
+                  : 'Leave off to let people pick a quality themselves.'}
+              </p>
+
+              {form.isDefault ? null : (
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <AskerPicker
+                    legend="Roles"
+                    everyLabel="Any role"
+                    askers={(roles.data ?? []).map((role) => ({ id: role.id, name: role.name }))}
+                    chosen={new Set(form.roleIds)}
+                    onChange={(chosen) => {
+                      change({ roleIds: [...chosen] });
+                    }}
+                  />
+
+                  <AskerPicker
+                    legend="People"
+                    everyLabel="Anybody"
+                    askers={(accounts.data ?? []).map((account) => ({
+                      id: account.id,
+                      name: account.name,
+                      detail: account.email,
+                    }))}
+                    chosen={new Set(form.accountIds)}
+                    onChange={(chosen) => {
+                      change({ accountIds: [...chosen] });
+                    }}
+                  />
+                </div>
+              )}
+            </Section>
+
+            <Section
+              title="Used for"
+              detail={
+                forKind.length === 0
+                  ? `There are no ${isVideo ? 'film or series' : 'music'} libraries yet.`
+                  : 'Which libraries offer this profile when somebody asks. Tick none and it is offered for all of them.'
+              }
+            >
+              {forKind.length === 0 ? null : (
+                <AskerPicker
+                  legend="Libraries"
+                  everyLabel="Every library"
+                  askers={forKind.map((entry) => ({
+                    id: entry.id,
+                    name: entry.name,
+                    detail:
+                      entry.itemCount === 1
+                        ? '1 item'
+                        : `${entry.itemCount.toLocaleString()} items`,
+                  }))}
+                  chosen={new Set(form.libraryIds)}
+                  onChange={(chosen) => {
+                    change({ libraryIds: [...chosen] });
+                  }}
+                />
+              )}
+            </Section>
+          </TabPanel>
+        </DialogContent>
+
+        <DialogFooter
+          note={problem}
+          dismiss={{ onChoose: onClose }}
+          confirm={{
+            label: profile === null ? 'Add profile' : 'Save',
+            onChoose: save,
+            isLoading: isSaving,
+          }}
+        />
+      </Tabs>
     </Dialog>
   );
 };

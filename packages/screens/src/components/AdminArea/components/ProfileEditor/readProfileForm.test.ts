@@ -77,6 +77,7 @@ describe('readProfileForm', () => {
         accountIds: [],
       },
       problem: null,
+      at: null,
     });
   });
 
@@ -114,6 +115,10 @@ describe('readProfileForm', () => {
       'The largest size has to be more than the smallest.',
     ],
   ])('says what is wrong with %o', (change, problem) => {
-    expect(readProfileForm({ ...FILLED, ...change })).toEqual({ draft: null, problem });
+    expect(readProfileForm({ ...FILLED, ...change })).toEqual({
+      draft: null,
+      problem,
+      at: 'quality',
+    });
   });
 });
