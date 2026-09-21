@@ -69,6 +69,7 @@ const PAGES: Record<
  * has been kept — drawn as a grid across every library rather than one at a time.
  *
  * @param kind - Which question this page asks.
+ * @param libraryId - One library to keep the page to, or null for every one of that kind.
  * @param onOpenShow - Told to open a programme, for a page whose cards stand for programmes.
  * @param onPlay - Told to start something, and where from.
  * @param onInspect - Told to open the page about something.
@@ -84,6 +85,7 @@ const PAGES: Record<
  */
 const BrowseArea = ({
   kind,
+  libraryId = null,
   onOpenShow,
   onPlay,
   onInspect,
@@ -119,10 +121,16 @@ const BrowseArea = ({
 
   const hasNoLibraries = libraries.data !== undefined && libraries.data.length === 0;
 
-  const libraryIds = useMemo(
-    () => (libraries.data ?? []).map((entry) => entry.id),
-    [libraries.data],
-  );
+  const libraryIds = useMemo(() => {
+    const every = libraries.data ?? [];
+    const only = every.find((entry) => entry.id === libraryId);
+
+    return (
+      only !== undefined && (kind === 'films' ? only.kind === 'movies' : only.kind === kind)
+        ? [only]
+        : every
+    ).map((entry) => entry.id);
+  }, [libraries.data, libraryId, kind]);
 
   const kept = favourites.join(',');
   const isFilterable = kind === 'films' || kind === 'shows';

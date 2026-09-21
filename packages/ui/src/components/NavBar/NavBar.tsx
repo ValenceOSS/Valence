@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Menu as MenuIcon } from '@keyline-icons/react';
+import { ChevronDown as ChevronDownIcon, Menu as MenuIcon } from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedIcon } from '@ValenceUI/AnimatedIcon';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
+import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SlidingMark } from '@ValenceUI/SlidingMark';
 import { cn } from '@ValenceUI/cn';
 import { useOpenAction } from './useOpenAction';
@@ -137,7 +138,7 @@ const NavBar = ({
             const isCurrent = item.id === selectedId;
 
             return (
-              <li key={item.id} className="shrink-0">
+              <li key={item.id} className="flex shrink-0 items-center">
                 <Button
                   variant="bare"
                   size="none"
@@ -175,7 +176,7 @@ const NavBar = ({
                         'relative z-10 flex overflow-hidden',
                         OPENS,
                         isCurrent
-                          ? 'md:ml-0 md:w-[18px] md:opacity-100'
+                          ? 'md:-mx-0.5 md:w-[22px] md:px-0.5 md:opacity-100'
                           : 'md:-ml-2 md:w-0 md:opacity-0',
                       )}
                     >
@@ -194,6 +195,23 @@ const NavBar = ({
 
                   <span className="relative z-10 hidden md:inline">{item.label}</span>
                 </Button>
+
+                {item.choices === undefined ? null : (
+                  <OptionMenu
+                    label={item.choices.label}
+                    triggerShape="icon"
+                    align="start"
+                    trigger={<Icon of={ChevronDownIcon} size={14} />}
+                    groups={[
+                      {
+                        name: item.choices.label,
+                        options: [...item.choices.options],
+                        selectedId: item.choices.selectedId,
+                        onSelect: item.choices.onSelect,
+                      },
+                    ]}
+                  />
+                )}
               </li>
             );
           })}

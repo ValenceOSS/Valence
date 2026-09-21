@@ -76,6 +76,31 @@ describe('AppShell', () => {
     expect(screen.getByText('The library')).toBeInTheDocument();
   });
 
+  it('offers a choice of library beside films when there are several of them', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+
+    draw({
+      libraryChoices: {
+        films: {
+          label: 'Film library',
+          options: [
+            { id: 'all', label: 'All film libraries' },
+            { id: 'lib-4k', label: '4K' },
+          ],
+          selectedId: 'all',
+          onSelect,
+        },
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Film library' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /4K/ }));
+
+    expect(onSelect).toHaveBeenCalledWith('lib-4k');
+    expect(screen.queryByRole('button', { name: 'Programme library' })).not.toBeInTheDocument();
+  });
+
   it('leaves nothing to scroll around a section that fills the window', () => {
     const { view } = draw({ isFitted: true, dock: <p>Now playing</p> });
 

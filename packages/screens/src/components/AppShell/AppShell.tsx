@@ -207,6 +207,8 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  * @param onSurprise - Told to choose something at random, optionally from one kind of library.
  * @param libraryKinds - Which kinds of library there are, which decides whether the dice offer a
  *   menu or simply act.
+ * @param libraryChoices - For films and programmes, a choice between the libraries that hold them,
+ *   given only where there are several to choose from.
  * @param stocked - Which of films, programmes and books have anything in them, once known. A place
  *   in the bar is offered only where there is something to find there — an empty library is not a
  *   place to go — and every place is offered until the answer arrives, rather than places
@@ -240,6 +242,7 @@ const AppShell = ({
   onSignOut,
   onSurprise,
   libraryKinds,
+  libraryChoices = {},
   stocked,
   mayRequest = false,
   onOpenFavourites,
@@ -334,13 +337,18 @@ const AppShell = ({
       (id !== 'requests' || mayRequest),
   );
 
-  const items: NavBarItem[] = places.map((id) => ({
-    id,
-    label: SECTION_LABELS[id],
-    icon: SECTION_ICONS[id],
-    activeIcon: ACTIVE_SECTION_ICONS[id],
-    gesture: SECTION_GESTURES[id],
-  }));
+  const items: NavBarItem[] = places.map((id) => {
+    const choices = id === 'films' || id === 'shows' ? libraryChoices[id] : undefined;
+
+    return {
+      id,
+      label: SECTION_LABELS[id],
+      icon: SECTION_ICONS[id],
+      activeIcon: ACTIVE_SECTION_ICONS[id],
+      gesture: SECTION_GESTURES[id],
+      ...(choices === undefined ? {} : { choices }),
+    };
+  });
 
   const face = avatar ?? <Icon of={CircleUserIcon} size={22} />;
 
