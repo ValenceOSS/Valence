@@ -12,6 +12,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "test": "turbo run test",
+    "test:serial": "turbo run test --concurrency=1",
     "test:coverage": "turbo run test -- --coverage",
     "coverage": "pnpm test:coverage && pnpm --filter @valence/tools exec tsx coverageAverage/checkCoverageAverage.ts",
     "typecheck": "turbo run typecheck",
