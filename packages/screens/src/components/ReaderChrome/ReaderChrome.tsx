@@ -1,11 +1,20 @@
+import { useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { PanelRight as PanelRightIcon, X as XIcon } from '@keyline-icons/react';
+import {
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  Maximize as MaximizeIcon,
+  Minimize as MinimizeIcon,
+  PanelRight as PanelRightIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
 import { PanelRight as PanelRightFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { stillTransition } from '@ValenceUI/animations/reveal';
 import { VALENCE_TOKENS } from '@ValenceUI/tokens';
+import { useFullscreen } from '@ValenceScreens/reading/useFullscreen';
 import type { ReaderChromeProps } from './ReaderChrome.types';
 
 const PANEL_ROOM = '21rem';
@@ -19,7 +28,10 @@ const OPENING = { duration: VALENCE_TOKENS.duration.slow, ease: VALENCE_TOKENS.e
  *
  * The bars come and go together, as they are told, and a hidden bar cannot be pressed by accident.
  * The edges are a third of the screen each and always there, because somebody reading turns the page
- * far more often than they reach for anything else; the middle is left to whatever the page is.
+ * far more often than they reach for anything else; the middle is left to whatever the page is. An
+ * arrow sits on each edge for anybody who wants something to press, and shows with the bars.
+ *
+ * The whole reader can be taken to fill the screen, where the browser allows it.
  *
  * The panel is either pinned, in which case the page makes room for it and it stays, or loose, in
  * which case it slides over the page from the side it lives on and touching the page puts it away.
@@ -55,10 +67,12 @@ const ReaderChrome = ({
   className,
 }: ReaderChromeProps) => {
   const isStill = useReducedMotionConfig() === true;
+  const holder = useRef<HTMLDivElement>(null);
+  const { isFullscreen, isAvailable, toggle } = useFullscreen(holder);
   const moving = isStill ? stillTransition : OPENING;
 
   return (
-    <div className="relative flex min-h-0 flex-1">
+    <div ref={holder} className="relative flex min-h-0 flex-1 bg-surface">
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <header
           className={cn(
@@ -73,6 +87,17 @@ const ReaderChrome = ({
           </Button>
 
           <span className="min-w-0 flex-1 truncate text-sm text-on-scrim">{title}</span>
+
+          {isAvailable ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={isFullscreen ? 'Leave full screen' : 'Fill the screen'}
+              onClick={toggle}
+            >
+              <Icon of={isFullscreen ? MinimizeIcon : MaximizeIcon} size={18} />
+            </Button>
+          ) : null}
 
           <Button
             variant="ghost"
@@ -95,27 +120,59 @@ const ReaderChrome = ({
         <div className={cn('relative flex min-h-0 flex-1 overflow-hidden', className)}>
           {children}
 
-          <div className="absolute inset-y-0 left-0 flex w-1/3">
+          <div className="absolute inset-y-0 left-0 flex w-1/3 items-center justify-start">
             <Button
               variant="ghost"
+              tabIndex={-1}
+              aria-hidden
               className="h-full w-full opacity-0"
-              aria-label={isRightToLeft ? 'Next page' : 'Previous page'}
               onClick={isRightToLeft ? onForward : onBack}
             >
               <span />
             </Button>
           </div>
 
-          <div className="absolute inset-y-0 right-0 flex w-1/3">
+          <div className="absolute inset-y-0 right-0 flex w-1/3 items-center justify-end">
             <Button
               variant="ghost"
+              tabIndex={-1}
+              aria-hidden
               className="h-full w-full opacity-0"
-              aria-label={isRightToLeft ? 'Previous page' : 'Next page'}
               onClick={isRightToLeft ? onBack : onForward}
             >
               <span />
             </Button>
           </div>
+
+          <Button
+            variant="overlay"
+            isIconOnly
+            size="lg"
+            isPill
+            label={isRightToLeft ? 'Next page' : 'Previous page'}
+            onClick={isRightToLeft ? onForward : onBack}
+            className={cn(
+              'absolute left-3 top-1/2 z-10 -translate-y-1/2 transition-opacity duration-[var(--duration-fast)]',
+              isShown ? 'opacity-100' : 'pointer-events-none opacity-0',
+            )}
+          >
+            <Icon of={ChevronLeftIcon} size={22} />
+          </Button>
+
+          <Button
+            variant="overlay"
+            isIconOnly
+            size="lg"
+            isPill
+            label={isRightToLeft ? 'Previous page' : 'Next page'}
+            onClick={isRightToLeft ? onBack : onForward}
+            className={cn(
+              'absolute right-3 top-1/2 z-10 -translate-y-1/2 transition-opacity duration-[var(--duration-fast)]',
+              isShown ? 'opacity-100' : 'pointer-events-none opacity-0',
+            )}
+          >
+            <Icon of={ChevronRightIcon} size={22} />
+          </Button>
         </div>
 
         <footer

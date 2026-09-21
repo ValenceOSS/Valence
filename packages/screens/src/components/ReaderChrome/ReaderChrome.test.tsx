@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ReaderChrome } from './ReaderChrome';
 
 /**
@@ -32,6 +32,10 @@ const draw = (overrides: Partial<Parameters<typeof ReaderChrome>[0]> = {}) => {
 
   return handlers;
 };
+
+afterEach(() => {
+  Reflect.deleteProperty(document, 'fullscreenEnabled');
+});
 
 describe('ReaderChrome', () => {
   it('shows the title, the page and the footer, and keeps the panel away until asked', () => {
@@ -115,5 +119,30 @@ describe('ReaderChrome', () => {
     draw({ isShown: false, isPanelOpen: true, isPanelPinned: true });
 
     expect(screen.getByRole('banner', { hidden: true })).not.toHaveClass('pointer-events-none');
+  });
+
+  it('offers no full screen where the browser will not allow it', () => {
+    Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: false });
+    draw();
+
+    expect(screen.queryByRole('button', { name: 'Fill the screen' })).not.toBeInTheDocument();
+  });
+
+  it('offers to fill the screen where the browser will allow it', () => {
+    Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: true });
+    draw();
+
+    expect(screen.getByRole('button', { name: 'Fill the screen' })).toBeInTheDocument();
+  });
+
+  it('draws an arrow on each edge that turns the page, and hides them with the bars', () => {
+    draw({ isShown: false });
+
+    expect(screen.getByRole('button', { name: 'Next page', hidden: true })).toHaveClass(
+      'pointer-events-none',
+    );
+    expect(screen.getByRole('button', { name: 'Previous page', hidden: true })).toHaveClass(
+      'pointer-events-none',
+    );
   });
 });
