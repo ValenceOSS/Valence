@@ -152,6 +152,19 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Dismiss' })).not.toHaveClass('border');
   });
 
+  it('centres the label of a subtle button in its box, as every other button does', () => {
+    render(
+      <Button variant="subtle" size="xs">
+        Clear all
+      </Button>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Clear all' })).toHaveClass(
+      'items-center',
+      'justify-center',
+    );
+  });
+
   it('rounds a pill of text all the way, so it reads as one soft shape', () => {
     render(<Button isPill>Play</Button>);
 

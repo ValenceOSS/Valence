@@ -7,7 +7,6 @@ import {
   Inbox as InboxIcon,
   LayoutDashboard as LayoutDashboardIcon,
   Link as LinkIcon,
-  ListCheck as ListCheckIcon,
   Route as RouteIcon,
   Search as SearchIcon,
   Settings as SettingsIcon,
@@ -27,7 +26,6 @@ import {
   Inbox as InboxFilledIcon,
   LayoutDashboard as LayoutDashboardFilledIcon,
   Link as LinkFilledIcon,
-  ListCheck as ListCheckFilledIcon,
   Route as RouteFilledIcon,
   Search as SearchFilledIcon,
   Settings as SettingsFilledIcon,
@@ -57,7 +55,7 @@ const ADMIN_SECTIONS = [
     items: [
       { id: 'activity', label: 'Sessions', icon: ActivityIcon, activeIcon: ActivityFilledIcon },
       { id: 'shares', label: 'Links', icon: LinkIcon, activeIcon: LinkFilledIcon },
-      { id: 'jobs', label: 'Jobs', icon: ListCheckIcon, activeIcon: ListCheckFilledIcon },
+      { id: 'jobs', label: 'Jobs & logs', icon: TerminalIcon, activeIcon: TerminalFilledIcon },
     ],
   },
   {
@@ -96,7 +94,6 @@ const ADMIN_SECTIONS = [
     items: [
       { id: 'settings', label: 'Settings', icon: SettingsIcon, activeIcon: SettingsFilledIcon },
       { id: 'webhooks', label: 'Webhooks', icon: RouteIcon, activeIcon: RouteFilledIcon },
-      { id: 'logs', label: 'Logs', icon: TerminalIcon, activeIcon: TerminalFilledIcon },
     ],
   },
 ] as const;

@@ -17,6 +17,21 @@ describe('AppliedFilters', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('lines each chip and the way to clear them up on one line, level with each other', () => {
+    render(
+      <AppliedFilters
+        groups={GROUPS}
+        selected={new Set(['genre:Drama'])}
+        onRemove={vi.fn()}
+        onClear={vi.fn()}
+      />,
+    );
+
+    for (const item of screen.getAllByRole('listitem')) {
+      expect(item).toHaveClass('flex', 'h-7', 'items-center');
+    }
+  });
+
   it('says each applied filter with the name of what it narrows', () => {
     render(
       <AppliedFilters

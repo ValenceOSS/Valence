@@ -6,6 +6,7 @@ type ProgressBarProps = {
   max?: number;
   children?: ReactNode;
   readout?: ReactNode;
+  isFull?: boolean;
   className?: string;
 };
 

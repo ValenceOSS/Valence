@@ -268,7 +268,7 @@ describe('how a page of the library is laid out', () => {
     renderInAnAddress(<BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
     await user.click(await screen.findByRole('button', { name: 'Filter films' }));
-    await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
+    await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
 
     await vi.waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith(

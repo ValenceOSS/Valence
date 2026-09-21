@@ -7,11 +7,21 @@ import { PREVIEW_QUALITIES } from '@ValenceContracts/schemas/PreviewQuality';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import { JobRunRequestSchema } from '@ValenceServer/jobs/jobDefinitions';
 import { ScheduleTriggerSchema } from '@ValenceServer/jobs/scheduleTrigger';
-import { LogPageSchema, LogQuerySchema } from '@ValenceContracts/schemas/Log';
+import {
+  LogFacetsQuerySchema,
+  LogFacetsSchema,
+  LogHistogramQuerySchema,
+  LogHistogramSchema,
+  LogPageSchema,
+  LogQuerySchema,
+} from '@ValenceContracts/schemas/Log';
 import {
   JobRunIssueSchema,
   JobRunPageSchema,
+  JobRunRecordSchema,
+  JobRunSortSchema,
   JobRunStatusSchema,
+  JobStatsSchema,
 } from '@ValenceContracts/schemas/JobRun';
 import {
   ResourceSampleHistorySchema,
@@ -689,6 +699,46 @@ const adminLogsRoute = createRoute({
   },
 });
 
+const adminLogHistogramRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/logs/histogram',
+  tags: ['Admin'],
+  summary: 'Count the log over time, by level',
+  request: {
+    body: { content: { 'application/json': { schema: LogHistogramQuerySchema } } },
+  },
+  responses: {
+    200: {
+      description: 'How many events there were at each level in each stretch of the range',
+      content: { 'application/json': { schema: LogHistogramSchema } },
+    },
+    403: {
+      description: 'Not allowed to read the logs',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
+const adminLogFacetsRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/logs/facets',
+  tags: ['Admin'],
+  summary: 'Find which sources and kinds of job the log mentions most',
+  request: {
+    body: { content: { 'application/json': { schema: LogFacetsQuerySchema } } },
+  },
+  responses: {
+    200: {
+      description: 'The most common sources and job kinds among the records that matched',
+      content: { 'application/json': { schema: LogFacetsSchema } },
+    },
+    403: {
+      description: 'Not allowed to read the logs',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
 const adminJobHistoryRoute = createRoute({
   method: 'get',
   path: '/api/admin/jobs/history',
@@ -700,16 +750,64 @@ const adminJobHistoryRoute = createRoute({
       status: JobRunStatusSchema.optional(),
       search: z.string().optional(),
       sinceMs: z.coerce.number().int().nonnegative().optional(),
+      untilMs: z.coerce.number().int().nonnegative().optional(),
+      sort: JobRunSortSchema.optional(),
+      offset: z.coerce.number().int().nonnegative().optional(),
       limit: z.coerce.number().int().positive().max(1000).optional(),
     }),
   },
   responses: {
     200: {
-      description: 'The runs that matched, newest first',
+      description: 'The runs that matched, newest first unless another order was asked for',
       content: { 'application/json': { schema: JobRunPageSchema } },
     },
     403: {
       description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
+const adminJobStatsRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/jobs/stats',
+  tags: ['Admin'],
+  summary: 'Summarise how each kind of job has gone',
+  request: {
+    query: z.object({ sinceMs: z.coerce.number().int().nonnegative().optional() }),
+  },
+  responses: {
+    200: {
+      description:
+        'For each kind of job that ran, how many runs, how they ended and how long they took',
+      content: { 'application/json': { schema: JobStatsSchema } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
+const adminJobRunRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/jobs/history/{jobRunId}',
+  tags: ['Admin'],
+  summary: 'Read one job run',
+  request: {
+    params: z.object({ jobRunId: z.string().min(1) }),
+  },
+  responses: {
+    200: {
+      description: 'The run',
+      content: { 'application/json': { schema: JobRunRecordSchema } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+    404: {
+      description: 'No such run, or it has been forgotten',
       content: { 'application/json': { schema: AdminError } },
     },
   },
@@ -757,6 +855,10 @@ const adminMonitorHistoryRoute = createRoute({
 
 export {
   adminLogsRoute,
+  adminLogHistogramRoute,
+  adminLogFacetsRoute,
+  adminJobStatsRoute,
+  adminJobRunRoute,
   searchCatalogueRoute,
   adminOverviewRoute,
   adminMeasureStorageRoute,

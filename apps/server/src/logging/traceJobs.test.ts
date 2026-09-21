@@ -25,6 +25,46 @@ describe('traceJobs', () => {
     expect(seen).toStrictEqual({ jobId: 'job-1', jobKind: 'scan' });
   });
 
+  it('says which library a job was enqueued for, where it was for one', async () => {
+    const scope = createLogScope();
+    let seen: Partial<LogContext> = {};
+
+    const traced = traceJobs(
+      {
+        scan: () => {
+          seen = scope.current();
+
+          return Promise.resolve();
+        },
+      },
+      scope,
+    );
+
+    await traced.scan?.('job-1', { libraryId: 'library-1' });
+
+    expect(seen).toStrictEqual({ jobId: 'job-1', jobKind: 'scan', libraryId: 'library-1' });
+  });
+
+  it('does not say a library where the payload names none that is text', async () => {
+    const scope = createLogScope();
+    let seen: Partial<LogContext> = {};
+
+    const traced = traceJobs(
+      {
+        scan: () => {
+          seen = scope.current();
+
+          return Promise.resolve();
+        },
+      },
+      scope,
+    );
+
+    await traced.scan?.('job-1', { libraryId: 7 });
+
+    expect(seen).toStrictEqual({ jobId: 'job-1', jobKind: 'scan' });
+  });
+
   it('wraps every handler, not only the first', async () => {
     const scope = createLogScope();
     const seen: string[] = [];

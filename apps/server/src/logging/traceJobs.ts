@@ -6,7 +6,8 @@ import type { LogScope } from './createLogScope';
  *
  * Done to the whole set at once rather than to each handler, because there are twenty of them and a
  * handler added later would otherwise write lines that belong to no job — which is the state the
- * logs were in before any of this.
+ * logs were in before any of this. A job that was enqueued for a library says which one as well, so
+ * everything a library's jobs wrote can be found by the library.
  *
  * @param handlers - The handlers as written.
  * @param scope - What carries the context while a job runs.
@@ -19,7 +20,15 @@ const traceJobs = (
   Object.fromEntries(
     Object.entries(handlers).map(([kind, run]) => [
       kind,
-      (jobId, payload) => scope.during({ jobId, jobKind: kind }, () => run(jobId, payload)),
+      (jobId, payload) =>
+        scope.during(
+          {
+            jobId,
+            jobKind: kind,
+            ...(typeof payload.libraryId === 'string' ? { libraryId: payload.libraryId } : {}),
+          },
+          () => run(jobId, payload),
+        ),
     ]),
   );
 

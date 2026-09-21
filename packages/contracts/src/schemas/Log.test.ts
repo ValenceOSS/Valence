@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_LEVELS,
   LOG_LEVELS,
+  LogFacetsQuerySchema,
+  LogFacetsSchema,
+  LogHistogramQuerySchema,
+  LogHistogramSchema,
   LogQuerySchema,
   LogRecordSchema,
   forgottenAfterMs,
@@ -222,5 +226,102 @@ describe('LogRecordSchema', () => {
     });
 
     expect(read.success).toBe(false);
+  });
+});
+
+describe('LogQuerySchema narrowing, ordering and paging', () => {
+  it('starts at the newest and the first page, narrowed by nothing but the levels', () => {
+    expect(LogQuerySchema.parse({})).toMatchObject({
+      sort: 'newest',
+      offset: 0,
+      jobKinds: [],
+      libraryId: null,
+      mediaId: null,
+      sessionId: null,
+      requestId: null,
+    });
+  });
+
+  it('takes an identifier for each thing a record can belong to', () => {
+    expect(
+      LogQuerySchema.parse({ libraryId: 'l', mediaId: 'm', sessionId: 's', requestId: 'r' }),
+    ).toMatchObject({ libraryId: 'l', mediaId: 'm', sessionId: 's', requestId: 'r' });
+  });
+
+  it.each(['newest', 'oldest', 'severest', 'busiest'])('takes the order %s', (sort) => {
+    expect(LogQuerySchema.parse({ sort }).sort).toBe(sort);
+  });
+
+  it('refuses an order it does not know, and a page before the first', () => {
+    expect(LogQuerySchema.safeParse({ sort: 'loudest' }).success).toBe(false);
+    expect(LogQuerySchema.safeParse({ offset: -1 }).success).toBe(false);
+  });
+});
+
+describe('LogHistogramQuerySchema', () => {
+  it('takes the same filters as a page of the log, and a number of bars', () => {
+    expect(LogHistogramQuerySchema.parse({ jobId: 'j', buckets: 20 })).toMatchObject({
+      jobId: 'j',
+      buckets: 20,
+    });
+  });
+
+  it('draws forty-eight bars unless told otherwise', () => {
+    expect(LogHistogramQuerySchema.parse({}).buckets).toBe(48);
+  });
+
+  it('has no order or page of its own, since a graph has neither', () => {
+    const parsed = LogHistogramQuerySchema.parse({ sort: 'oldest', offset: 5, limit: 10 });
+
+    expect(parsed).not.toHaveProperty('sort');
+    expect(parsed).not.toHaveProperty('offset');
+    expect(parsed).not.toHaveProperty('limit');
+  });
+
+  it('refuses fewer than two bars, and more than there is room for', () => {
+    expect(LogHistogramQuerySchema.safeParse({ buckets: 1 }).success).toBe(false);
+    expect(LogHistogramQuerySchema.safeParse({ buckets: 201 }).success).toBe(false);
+  });
+});
+
+describe('LogHistogramSchema', () => {
+  it('reads bars counted by level', () => {
+    expect(
+      LogHistogramSchema.parse({
+        fromMs: 0,
+        untilMs: 2000,
+        bucketMs: 1000,
+        buckets: [{ atMs: 0, debug: 0, info: 1, warn: 2, error: 3 }],
+      }).buckets,
+    ).toHaveLength(1);
+  });
+
+  it('refuses a bar that has a negative count', () => {
+    expect(
+      LogHistogramSchema.safeParse({
+        fromMs: 0,
+        untilMs: 1,
+        bucketMs: 1,
+        buckets: [{ atMs: 0, debug: -1, info: 0, warn: 0, error: 0 }],
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe('LogFacetsQuerySchema and LogFacetsSchema', () => {
+  it('ranks the same records a page of the log would list, with no bars to count them into', () => {
+    expect(LogFacetsQuerySchema.parse({ levels: ['error'] })).not.toHaveProperty('buckets');
+  });
+
+  it('reads the most common sources and kinds of job', () => {
+    expect(
+      LogFacetsSchema.parse({
+        sources: [{ value: 'jobs', events: 3 }],
+        jobKinds: [{ value: 'library.scan', events: 2 }],
+      }),
+    ).toStrictEqual({
+      sources: [{ value: 'jobs', events: 3 }],
+      jobKinds: [{ value: 'library.scan', events: 2 }],
+    });
   });
 });

@@ -58,6 +58,7 @@ const buttonStyles = cva(
           'danger',
           'overlay',
           'link',
+          'subtle',
         ],
         class: 'shrink-0 items-center justify-center whitespace-nowrap',
       },

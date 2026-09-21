@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { createDatabase } from '@ValenceServer/db/Database';
-import { asIssue, asRecord, buildReadQuery } from './createJobHistoryStore';
+import {
+  asIssue,
+  asMilliseconds,
+  asRecord,
+  buildReadQuery,
+  buildInterruptQuery,
+  buildStatsQuery,
+} from './createJobHistoryStore';
 
 const NOWHERE = 'postgres://nobody@localhost:1/none';
 
@@ -14,7 +21,16 @@ const sqlFor = (query: Parameters<typeof buildReadQuery>[1]): string => {
   return buildReadQuery(db, query).toSQL().sql;
 };
 
-const NO_FILTERS = { kind: null, status: null, search: '', sinceMs: null, limit: 200 };
+const NO_FILTERS = {
+  kind: null,
+  status: null,
+  search: '',
+  sinceMs: null,
+  untilMs: null,
+  sort: 'newest',
+  offset: 0,
+  limit: 200,
+} as const;
 
 describe('reading a page of job history', () => {
   it('reads from the job run table', () => {
@@ -32,7 +48,7 @@ describe('reading a page of job history', () => {
   it('searches the kind, subject and error message when asked for text', () => {
     const sql = sqlFor({ ...NO_FILTERS, search: 'previews' });
 
-    expect(sql).toContain('ILIKE');
+    expect(sql).toContain('ilike');
     expect(sql).toContain('"kind"');
     expect(sql).toContain('"subject"');
     expect(sql).toContain('"errorMessage"');
@@ -50,8 +66,38 @@ describe('reading a page of job history', () => {
     expect(sqlFor(NO_FILTERS)).toContain('order by "job_run"."createdAt" desc');
   });
 
-  it('caps how many rows come back', () => {
-    expect(sqlFor({ ...NO_FILTERS, limit: 50 })).toContain('limit');
+  it('caps how many rows come back, and skips the pages before the one asked for', () => {
+    const sql = sqlFor({ ...NO_FILTERS, limit: 50, offset: 100 });
+
+    expect(sql).toContain('limit');
+    expect(sql).toContain('offset');
+  });
+
+  it('puts the oldest run first when asked', () => {
+    expect(sqlFor({ ...NO_FILTERS, sort: 'oldest' })).toContain(
+      'order by "job_run"."createdAt" asc',
+    );
+  });
+
+  it('puts the run that took longest first when asked, unfinished runs last', () => {
+    const sql = sqlFor({ ...NO_FILTERS, sort: 'longest' });
+
+    expect(sql).toContain('"finishedAt" - "job_run"."startedAt"');
+    expect(sql).toContain('desc nulls last');
+  });
+
+  it('narrows to what was created before a given time when asked for one', () => {
+    expect(sqlFor({ ...NO_FILTERS, untilMs: 5000 })).toContain('"createdAt" <=');
+  });
+
+  it('finds a run by the id it was given, as well as by what it did', () => {
+    expect(sqlFor({ ...NO_FILTERS, search: 'abc' })).toContain('"job_run"."id" ilike');
+  });
+
+  it('groups the alternatives of a search, so they cannot widen the filters beside them', () => {
+    const sql = sqlFor({ ...NO_FILTERS, status: 'failed', search: 'abc' });
+
+    expect(sql).toMatch(/"status" = \$\d+ and \(/);
   });
 });
 
@@ -113,5 +159,77 @@ describe('asIssue', () => {
       reason: 'ffmpeg failed',
       atMs: 1234,
     });
+  });
+});
+
+describe('buildStatsQuery', () => {
+  const statsSql = (): string => {
+    const { db } = createDatabase(NOWHERE);
+
+    return buildStatsQuery(db, 1000).toSQL().sql;
+  };
+
+  it('summarises each kind of job on its own', () => {
+    expect(statsSql()).toContain('group by "job_run"."kind"');
+  });
+
+  it('counts how the runs ended', () => {
+    const sql = statsSql();
+
+    expect(sql).toContain('filter (where "status" = \'completed\')');
+    expect(sql).toContain('filter (where "status" = \'failed\')');
+  });
+
+  it('measures the typical run and the slowest', () => {
+    const sql = statsSql();
+
+    expect(sql).toContain('percentile_cont(0.5)');
+    expect(sql).toContain('max(');
+  });
+
+  it('counts only runs since the moment given', () => {
+    expect(statsSql()).toContain('"createdAt" >=');
+  });
+});
+
+describe('asMilliseconds', () => {
+  it('reads an exact number the database gave as text', () => {
+    expect(asMilliseconds('1400.25')).toBe(1400.25);
+  });
+
+  it('reads a number as it is', () => {
+    expect(asMilliseconds(900)).toBe(900);
+  });
+
+  it('has nothing where there was no finished run to measure', () => {
+    expect(asMilliseconds(null)).toBeNull();
+  });
+
+  it('has nothing for what is not a number', () => {
+    expect(asMilliseconds('soon')).toBeNull();
+  });
+});
+
+describe('buildInterruptQuery', () => {
+  const queryFor = (reason: string) => {
+    const { db } = createDatabase(NOWHERE);
+
+    return buildInterruptQuery(db, reason).toSQL();
+  };
+
+  it('stops every run still marked as running or waiting, and no other', () => {
+    const { sql: text } = queryFor('why');
+
+    expect(text).toContain('update "job_run" set "status" = $1');
+    expect(text).toContain("\"status\" in ('running', 'queued')");
+  });
+
+  it('marks them failed, saying why', () => {
+    expect(queryFor('The server restarted').params).toContain('failed');
+    expect(queryFor('The server restarted').params).toContain('The server restarted');
+  });
+
+  it('says which runs it stopped', () => {
+    expect(queryFor('why').sql).toContain('returning "id"');
   });
 });

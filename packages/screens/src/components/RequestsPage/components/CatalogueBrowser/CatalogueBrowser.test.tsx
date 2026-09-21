@@ -49,7 +49,7 @@ describe('CatalogueBrowser', () => {
     renderInAnAddress(<CatalogueBrowser browsing={BROWSING} onAsk={vi.fn()} />);
 
     await actor.click(await screen.findByRole('button', { name: /Filter films/ }));
-    await actor.click(await screen.findByRole('checkbox', { name: 'Science Fiction' }));
+    await actor.click(await screen.findByRole('menuitemcheckbox', { name: 'Science Fiction' }));
 
     await waitFor(() => {
       expect(fetchCatalogueBrowse).toHaveBeenLastCalledWith(BROWSING, 1, { genre: '878' });

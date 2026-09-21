@@ -147,6 +147,18 @@
       "@ValenceUI/SectionBar": ["./packages/ui/src/components/SectionBar/SectionBar.tsx"],
       "@ValenceUI/SettingsMenu": ["./packages/ui/src/components/SettingsMenu/SettingsMenu.tsx"],
       "@ValenceUI/Skeleton": ["./packages/ui/src/components/Skeleton/Skeleton.tsx"],
+      "@ValenceUI/BarList": ["./packages/ui/src/components/BarList/BarList.tsx"],
+      "@ValenceUI/BarList.types": ["./packages/ui/src/components/BarList/BarList.types.ts"],
+      "@ValenceUI/HeadedSection": ["./packages/ui/src/components/HeadedSection/HeadedSection.tsx"],
+      "@ValenceUI/HeadedSection.types": [
+        "./packages/ui/src/components/HeadedSection/HeadedSection.types.ts"
+      ],
+      "@ValenceUI/StatStrip": ["./packages/ui/src/components/StatStrip/StatStrip.tsx"],
+      "@ValenceUI/StatStrip.types": ["./packages/ui/src/components/StatStrip/StatStrip.types.ts"],
+      "@ValenceUI/TimeBars": ["./packages/ui/src/components/TimeBars/TimeBars.tsx"],
+      "@ValenceUI/TimeBars.types": ["./packages/ui/src/components/TimeBars/TimeBars.types.ts"],
+      "@ValenceUI/Well": ["./packages/ui/src/components/Well/Well.tsx"],
+      "@ValenceUI/Well.types": ["./packages/ui/src/components/Well/Well.types.ts"],
       "@ValenceUI/VisualiserStage": [
         "./packages/ui/src/components/VisualiserStage/VisualiserStage.tsx"
       ],

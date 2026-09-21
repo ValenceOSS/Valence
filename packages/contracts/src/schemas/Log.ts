@@ -13,7 +13,11 @@ const LOG_SOURCES = [
   'requests',
 ] as const;
 
+const LOG_SORTS = ['newest', 'oldest', 'severest', 'busiest'] as const;
+
 const LogLevelSchema = z.enum(LOG_LEVELS);
+
+const LogSortSchema = z.enum(LOG_SORTS);
 
 const LogSourceSchema = z.enum(LOG_SOURCES);
 
@@ -49,7 +53,49 @@ const LogQuerySchema = z.object({
   sinceMs: z.number().int().nonnegative().nullable().default(null),
   untilMs: z.number().int().nonnegative().nullable().default(null),
   jobId: z.string().nullable().default(null),
+  jobKinds: z.array(z.string()).default([]),
+  libraryId: z.string().nullable().default(null),
+  mediaId: z.string().nullable().default(null),
+  sessionId: z.string().nullable().default(null),
+  requestId: z.string().nullable().default(null),
+  sort: LogSortSchema.default('newest'),
+  offset: z.number().int().nonnegative().default(0),
   limit: z.number().int().positive().max(1000).default(200),
+});
+
+const LogHistogramQuerySchema = LogQuerySchema.omit({
+  sort: true,
+  offset: true,
+  limit: true,
+}).extend({
+  buckets: z.number().int().min(2).max(200).default(48),
+});
+
+const LogHistogramBucketSchema = z.object({
+  atMs: z.number().int().nonnegative(),
+  debug: z.number().int().nonnegative(),
+  info: z.number().int().nonnegative(),
+  warn: z.number().int().nonnegative(),
+  error: z.number().int().nonnegative(),
+});
+
+const LogHistogramSchema = z.object({
+  fromMs: z.number().int().nonnegative(),
+  untilMs: z.number().int().nonnegative(),
+  bucketMs: z.number().int().positive(),
+  buckets: z.array(LogHistogramBucketSchema),
+});
+
+const LogFacetsQuerySchema = LogHistogramQuerySchema.omit({ buckets: true });
+
+const LogFacetSchema = z.object({
+  value: z.string(),
+  events: z.number().int().nonnegative(),
+});
+
+const LogFacetsSchema = z.object({
+  sources: z.array(LogFacetSchema),
+  jobKinds: z.array(LogFacetSchema),
 });
 
 type LogLevel = z.infer<typeof LogLevelSchema>;
@@ -57,6 +103,13 @@ type LogSource = z.infer<typeof LogSourceSchema>;
 type LogContext = z.infer<typeof LogContextSchema>;
 type LogRecord = z.infer<typeof LogRecordSchema>;
 type LogQuery = z.infer<typeof LogQuerySchema>;
+type LogSort = z.infer<typeof LogSortSchema>;
+type LogHistogramQuery = z.infer<typeof LogHistogramQuerySchema>;
+type LogHistogramBucket = z.infer<typeof LogHistogramBucketSchema>;
+type LogHistogram = z.infer<typeof LogHistogramSchema>;
+type LogFacetsQuery = z.infer<typeof LogFacetsQuerySchema>;
+type LogFacet = z.infer<typeof LogFacetSchema>;
+type LogFacets = z.infer<typeof LogFacetsSchema>;
 
 const RANK: Readonly<Record<LogLevel, number>> = { debug: 0, info: 1, warn: 2, error: 3 };
 
@@ -131,18 +184,39 @@ const sameEventKey = (record: {
     record.context.sessionId ?? '',
   ].join(SEPARATOR);
 
-export type { LogLevel, LogSource, LogContext, LogRecord, LogQuery };
+export type {
+  LogLevel,
+  LogSource,
+  LogContext,
+  LogRecord,
+  LogQuery,
+  LogSort,
+  LogHistogramQuery,
+  LogHistogramBucket,
+  LogHistogram,
+  LogFacetsQuery,
+  LogFacet,
+  LogFacets,
+};
 
 export {
   LOG_LEVELS,
   LOG_SOURCES,
+  LOG_SORTS,
   DEFAULT_LEVELS,
   LogLevelSchema,
   LogSourceSchema,
+  LogSortSchema,
   LogContextSchema,
   LogRecordSchema,
   LogPageSchema,
   LogQuerySchema,
+  LogHistogramQuerySchema,
+  LogHistogramBucketSchema,
+  LogHistogramSchema,
+  LogFacetsQuerySchema,
+  LogFacetSchema,
+  LogFacetsSchema,
   isAtLeast,
   keptForDays,
   forgottenAfterMs,

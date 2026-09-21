@@ -30,6 +30,9 @@ const LOOKS = {
  * An item that needs explaining carries a hint, drawn as an information mark that says it on hover,
  * rather than a line of small print that makes every row of the menu taller.
  *
+ * Pressing it, or anything in it, is not a press on whatever it sits inside, so a menu in the row of
+ * a table does not also choose the row.
+ *
  * An item closes the menu on being chosen, because doing the thing is the end of the errand. An item
  * that sets a value rather than doing a thing can ask to stay open: choosing a theme and having the
  * menu vanish means anybody comparing two of them has to reopen it between each, and the menu is
@@ -66,6 +69,9 @@ const ActionMenu = ({
       <RadixMenu.Trigger
         aria-label={label}
         disabled={isDisabled}
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
         className={cn(
           'inline-flex shrink-0 items-center justify-center rounded-md outline-none',
           TRIGGER_SIZES[size],
@@ -86,6 +92,9 @@ const ActionMenu = ({
           sideOffset={8}
           align={align}
           data-slot="menu-content"
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
           className={cn(MENU.content, POPUP_MOTION)}
         >
           <div

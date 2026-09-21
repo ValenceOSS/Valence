@@ -5,9 +5,8 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
-import { JobsPanel } from './components/JobsPanel/JobsPanel';
 import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
-import { LogsPanel } from './components/LogsPanel/LogsPanel';
+import { ObservabilityPage } from '@ValenceScreens/components/ObservabilityPage/ObservabilityPage';
 import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
 import { EncodingPanel } from './components/EncodingPanel/EncodingPanel';
 import { MediaPanel } from './components/MediaPanel/MediaPanel';
@@ -131,6 +130,8 @@ const PANEL_ORDER = ADMIN_PANELS.map((one) => one.id);
  * @param panel - Which panel is open, which the dialog around this holds.
  * @param onPanel - Told which panel to open.
  * @param initialJob - The job whose schedule to open, where the address named one.
+ * @param observability - What the address says the jobs and logs page is showing and narrowed to.
+ * @param onObservabilityChange - Called with each change to it, to write into the address.
  * @param onJobChange - Called with the job whose schedule was opened, or null on going back.
  */
 const AdminArea = ({
@@ -138,6 +139,8 @@ const AdminArea = ({
   panel,
   onPanel,
   initialJob,
+  observability,
+  onObservabilityChange,
   onJobChange,
 }: AdminAreaProps) => {
   const cache = useQueryClient();
@@ -154,7 +157,6 @@ const AdminArea = ({
   } = useSyncExternalStore(subscribeToScans, getScanSnapshot);
   const [createdWebhook, setCreatedWebhook] = useState<CreatedWebhook | null>(null);
   const [openHistoryId, setOpenHistoryId] = useState<string | null>(null);
-  const [pendingLogJobId, setPendingLogJobId] = useState<string | null>(null);
 
   const [busyClientId, setBusyClientId] = useState<string | null>(null);
   const [isChoosingReencode, setIsChoosingReencode] = useState(false);
@@ -270,14 +272,6 @@ const AdminArea = ({
       setViewingJobKind(null);
     },
     [onPanel],
-  );
-
-  const viewLogsForJob = useCallback(
-    (jobId: string) => {
-      setPendingLogJobId(jobId);
-      showPanel('logs');
-    },
-    [showPanel],
   );
 
   const loadAll = useCallback(async () => {
@@ -813,29 +807,6 @@ const AdminArea = ({
             />
           </TabPanel>
 
-          <TabPanel value="jobs" travel={travel}>
-            <JobsPanel
-              definitions={jobDefinitions}
-              libraries={libraries}
-              progress={scanProgress}
-              monitor={monitor}
-              viewingJobKind={viewingJobKind}
-              schedules={jobSchedules}
-              schedulesTimezone={jobsTimezone}
-              onRun={startJob}
-              onStop={stopJob}
-              onOpenSchedule={openJobSchedule}
-              onCloseSchedule={closeJobSchedule}
-              onAddTrigger={(kind, trigger) => {
-                void addTrigger(kind, trigger);
-              }}
-              onRemoveTrigger={(kind, triggerId) => {
-                void removeTrigger(kind, triggerId);
-              }}
-              onViewLogs={viewLogsForJob}
-            />
-          </TabPanel>
-
           <TabPanel value="libraries" travel={travel}>
             <LibrariesPanel
               libraries={libraries}
@@ -1042,11 +1013,28 @@ const AdminArea = ({
             />
           </TabPanel>
 
-          <TabPanel value="logs" travel={travel}>
-            <LogsPanel
-              initialJobId={pendingLogJobId}
-              onInitialJobIdConsumed={() => {
-                setPendingLogJobId(null);
+          <TabPanel value="jobs" travel={travel}>
+            <ObservabilityPage
+              {...(observability === undefined ? {} : { search: observability })}
+              {...(onObservabilityChange === undefined
+                ? {}
+                : { onSearchChange: onObservabilityChange })}
+              definitions={jobDefinitions}
+              libraries={libraries}
+              progress={scanProgress}
+              monitor={monitor}
+              viewingJobKind={viewingJobKind}
+              schedules={jobSchedules}
+              schedulesTimezone={jobsTimezone}
+              onRun={startJob}
+              onStop={stopJob}
+              onOpenSchedule={openJobSchedule}
+              onCloseSchedule={closeJobSchedule}
+              onAddTrigger={(kind, trigger) => {
+                void addTrigger(kind, trigger);
+              }}
+              onRemoveTrigger={(kind, triggerId) => {
+                void removeTrigger(kind, triggerId);
               }}
             />
           </TabPanel>

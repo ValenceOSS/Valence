@@ -1,5 +1,7 @@
 import type { LogQuery, LogRecord } from '@ValenceContracts/schemas/Log';
 
+const ID_FIELDS = ['jobId', 'libraryId', 'mediaId', 'sessionId', 'requestId'] as const;
+
 /**
  * Whether a record belongs in what is on screen.
  *
@@ -25,8 +27,18 @@ const matchesLogQuery = (record: LogRecord, query: Partial<LogQuery>): boolean =
     return false;
   }
 
-  if (typeof query.jobId === 'string' && record.context.jobId !== query.jobId) {
+  const jobKinds = query.jobKinds ?? [];
+
+  if (jobKinds.length > 0 && !jobKinds.includes(record.context.jobKind ?? '')) {
     return false;
+  }
+
+  for (const field of ID_FIELDS) {
+    const wanted = query[field];
+
+    if (typeof wanted === 'string' && record.context[field] !== wanted) {
+      return false;
+    }
   }
 
   if (typeof query.sinceMs === 'number' && record.atMs < query.sinceMs) {
@@ -39,8 +51,13 @@ const matchesLogQuery = (record: LogRecord, query: Partial<LogQuery>): boolean =
 
   return (
     search === '' ||
-    record.message.toLowerCase().includes(search) ||
-    (record.detail ?? '').toLowerCase().includes(search)
+    [
+      record.message,
+      record.detail,
+      record.source,
+      record.id,
+      ...Object.values(record.context),
+    ].some((text) => (text ?? '').toLowerCase().includes(search))
   );
 };
 
