@@ -1,6 +1,5 @@
-import { useRef, useState } from 'react';
+import { isValidElement, useRef, useState } from 'react';
 import { Check as CheckIcon, Copy as CopyIcon } from '@keyline-icons/react';
-import { isValidElement } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { HTMLAttributes } from 'react';
