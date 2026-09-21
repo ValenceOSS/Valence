@@ -1,29 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { describeProfile } from './describeProfile';
-import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { aQualityProfile } from '@ValenceScreens/testing/aQualityProfile';
 
-const HD: QualityProfile = {
-  id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-  name: 'HD',
-  kind: 'video',
-  resolutions: ['1080p', '720p'],
-  sources: ['bluray', 'webdl'],
-  musicQualities: ['flac'],
-  smallestMb: null,
-  largestMb: null,
-  preferredWords: [],
-  requiredWords: [],
-  bannedWords: [],
-  isUpgrading: false,
-  releaseWait: 'digital',
-  sizes: [],
-  upgradeUntilResolution: null,
-  upgradeUntilSource: null,
-  upgradeUntilMusicQuality: null,
-  libraryIds: [],
-  createdAt: '2026-09-19T00:00:00.000Z',
-  updatedAt: '2026-09-19T00:00:00.000Z',
-};
+const HD = aQualityProfile({ musicQualities: ['flac'] });
 
 describe('describeProfile', () => {
   it('says what a video profile takes, and that it does not upgrade', () => {

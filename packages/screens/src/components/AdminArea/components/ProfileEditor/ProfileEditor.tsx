@@ -17,9 +17,11 @@ import {
   RELEASE_SOURCES,
   RESOLUTIONS,
 } from '@ValenceContracts/schemas/ParsedRelease';
+import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { addProfile, changeProfile } from '@ValenceClient/requests/fetchProfiles';
 import { QualitySizes } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/components/QualitySizes/QualitySizes';
+import { AskerPicker } from '@ValenceScreens/components/AdminArea/components/AskerPicker/AskerPicker';
 import { LibraryPicker } from '@ValenceScreens/components/AdminArea/components/LibraryPicker/LibraryPicker';
 import { RankedChoices } from '@ValenceScreens/components/AdminArea/components/RankedChoices/RankedChoices';
 import { QUALITY_NAMES } from '@ValenceScreens/components/AdminArea/QUALITY_NAMES';
@@ -141,6 +143,8 @@ Choosing.displayName = 'Choosing';
  */
 const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps) => {
   const libraries = useQuery(libraryQueries.all());
+  const roles = useQuery(adminQueries.roles());
+  const accounts = useQuery(adminQueries.accounts());
   const [form, setForm] = useState<ProfileForm>(() => formFor(profile));
   const [shownFor, setShownFor] = useState(profile);
   const [problem, setProblem] = useState<string | null>(null);
@@ -411,6 +415,53 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                   change({ upgradeUntilMusicQuality });
                 }}
               />
+            )}
+          </Section>
+
+          <Section
+            title="Who asks with it"
+            detail="A profile nobody is named on is one anybody who may ask can choose. Naming roles or people keeps it to them."
+          >
+            <Switch
+              label="Ask at this quality and no other"
+              isOn={form.isDefault}
+              onToggle={() => {
+                change({ isDefault: !form.isDefault });
+              }}
+            />
+
+            <p className="font-body text-sm text-text-muted">
+              {form.isDefault
+                ? `Every ${isVideo ? 'film and series' : 'music'} request goes through this profile, and nobody is asked to choose. Only one profile of a kind can be set this way.`
+                : 'Leave this off to let people choose which quality to ask at.'}
+            </p>
+
+            {form.isDefault ? null : (
+              <div className="grid gap-6 sm:grid-cols-2">
+                <AskerPicker
+                  legend="Roles"
+                  everyLabel="Anybody who may ask"
+                  askers={(roles.data ?? []).map((role) => ({ id: role.id, name: role.name }))}
+                  chosen={new Set(form.roleIds)}
+                  onChange={(chosen) => {
+                    change({ roleIds: [...chosen] });
+                  }}
+                />
+
+                <AskerPicker
+                  legend="People"
+                  everyLabel="Nobody in particular"
+                  askers={(accounts.data ?? []).map((account) => ({
+                    id: account.id,
+                    name: account.name,
+                    detail: account.email,
+                  }))}
+                  chosen={new Set(form.accountIds)}
+                  onChange={(chosen) => {
+                    change({ accountIds: [...chosen] });
+                  }}
+                />
+              </div>
             )}
           </Section>
 

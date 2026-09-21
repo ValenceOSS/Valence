@@ -161,6 +161,9 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   upgradeUntilSource: text('upgrade_until_source', { enum: RELEASE_SOURCES }),
   upgradeUntilMusicQuality: text('upgrade_until_music_quality', { enum: MUSIC_QUALITIES }),
   libraryIds: jsonb('library_ids').$type<string[]>().notNull().default([]),
+  isDefault: boolean('is_default').notNull().default(false),
+  roleIds: jsonb('role_ids').$type<string[]>().notNull().default([]),
+  accountIds: jsonb('account_ids').$type<string[]>().notNull().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

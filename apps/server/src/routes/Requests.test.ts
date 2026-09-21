@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -19,8 +19,10 @@ import {
   NO_WORK,
   RequestsOverviewSchema,
 } from '@ValenceContracts/schemas/Requests';
+import { ProfilesOnOfferSchema } from '@ValenceContracts/schemas/QualityProfile';
 import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type {
   MusicCatalogueHit,
@@ -229,6 +231,7 @@ const build = async ({
 
   const cookie = await signUpForTest(app);
   const accountId = store.user[0]?.id ?? '';
+  let roleId: string | null = null;
 
   if (isAdministrator) {
     await makeAdministrator(permissions, accountId);
@@ -241,6 +244,8 @@ const build = async ({
     });
 
     await permissions.assignRole(accountId, role.id);
+
+    roleId = role.id;
   }
 
   const ask = (path: string, method = 'GET', body?: object) =>
@@ -254,7 +259,7 @@ const build = async ({
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
 
-  return { app, ask, readStatus, accountId };
+  return { app, ask, readStatus, accountId, roleId };
 };
 
 describe('GET /api/requests/availability', () => {
@@ -887,6 +892,9 @@ describe('quality profiles, through the server', () => {
     upgradeUntilSource: null,
     upgradeUntilMusicQuality: null,
     libraryIds: [],
+    isDefault: false,
+    roleIds: [],
+    accountIds: [],
     createdAt: '2026-09-19T00:00:00.000Z',
     updatedAt: '2026-09-19T00:00:00.000Z',
   };
@@ -1007,6 +1015,57 @@ describe('requests for films and series, through the server', () => {
 
   const sent: Array<{ method: string; url: string; body: string | undefined }> = [];
 
+  const PROFILES: QualityProfile[] = [];
+
+  /**
+   * What was sent to a path, as it was written. Found by path rather than by position, because
+   * every ask reads the profiles first and counting calls would be counting something else.
+   *
+   * @param ending - What the path ends with.
+   * @returns The body, or an empty object where nothing was sent there.
+   */
+  const bodySentTo = (ending: string): string =>
+    sent.find(({ url }) => url.endsWith(ending))?.body ?? '{}';
+
+  /**
+   * A profile for HD video that nobody is named on, with whatever a test cares about changed.
+   *
+   * @param id - Its id.
+   * @param name - What it is called.
+   * @param extra - What to change.
+   * @returns The profile.
+   */
+  const aProfile = (
+    id: string,
+    name: string,
+    extra: Partial<QualityProfile> = {},
+  ): QualityProfile => ({
+    id,
+    name,
+    kind: 'video',
+    resolutions: [],
+    sources: [],
+    musicQualities: [],
+    smallestMb: null,
+    largestMb: null,
+    sizes: [],
+    preferredWords: [],
+    requiredWords: [],
+    bannedWords: [],
+    isUpgrading: false,
+    releaseWait: 'digital',
+    upgradeUntilResolution: null,
+    upgradeUntilSource: null,
+    upgradeUntilMusicQuality: null,
+    libraryIds: [],
+    isDefault: false,
+    roleIds: [],
+    accountIds: [],
+    createdAt: '2026-09-19T00:00:00.000Z',
+    updatedAt: '2026-09-19T00:00:00.000Z',
+    ...extra,
+  });
+
   /**
    * The requests service as it answers questions about requests when everything goes well.
    */
@@ -1038,6 +1097,10 @@ describe('requests for films and series, through the server', () => {
 
     if (url.endsWith('/log')) {
       return Response.json([{ id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched.' }]);
+    }
+
+    if (url.endsWith('/api/profiles')) {
+      return Response.json(PROFILES);
     }
 
     if (url.endsWith('/releases')) {
@@ -1086,7 +1149,7 @@ describe('requests for films and series, through the server', () => {
     const made = await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 });
 
     expect(made.status).toBe(201);
-    expect(JSON.parse(sent[0]?.body ?? '{}')).toMatchObject({
+    expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({
       libraryId: FILMS.id,
       libraryPath: '/media/Films',
       isApproved: true,
@@ -1160,7 +1223,7 @@ describe('requests for films and series, through the server', () => {
       '83d91898-7763-47d7-b03b-b92132375c47',
       'artist',
     );
-    expect(JSON.parse(sent[0]?.body ?? '{}')).toMatchObject({
+    expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({
       kind: 'artist',
       tmdbId: null,
       musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
@@ -1280,6 +1343,7 @@ describe('requests for films and series, through the server', () => {
       (await ask('/api/requests/media/releases', 'POST', { kind: 'film', tmdbId: 1 })).status,
     ).toBe(200);
     expect(sent.map(({ method, url }) => `${method} ${url}`)).toEqual([
+      'GET http://requests:8421/api/profiles',
       'POST http://requests:8421/api/requests/releases',
     ]);
 
@@ -1294,10 +1358,11 @@ describe('requests for films and series, through the server', () => {
 
     expect(made.status).toBe(201);
     expect(sent.map(({ method, url }) => `${method} ${url}`)).toEqual([
+      'GET http://requests:8421/api/profiles',
       'POST http://requests:8421/api/requests',
       `POST http://requests:8421/api/requests/${REQUEST.id}/pick`,
     ]);
-    expect(JSON.parse(sent[0]?.body ?? '{}')).not.toHaveProperty('release');
+    expect(JSON.parse(bodySentTo('/api/requests'))).not.toHaveProperty('release');
   });
 
   it('says a release picked on asking could not be fetched, and keeps picking to managers', async () => {
@@ -1776,5 +1841,172 @@ describe('requests for films and series, through the server', () => {
     ] as const) {
       expect((await refusing.ask(path, method, body)).status).toBe(400);
     }
+  });
+
+  describe('the quality a request is asked at', () => {
+    const UHD = '3f2504e0-4f89-11d3-9a0c-0305e82c3301';
+    const HD = '3f2504e0-4f89-11d3-9a0c-0305e82c3302';
+
+    const asking = async (granted: readonly Permission[] = ['requests.ask']) => {
+      const built = await build({
+        isOn: true,
+        granted,
+        service: aWillingKeeper,
+        describeForRequest: () => Promise.resolve(DUNE),
+        libraries: [FILMS, MUSIC],
+      });
+
+      sent.length = 0;
+
+      return built;
+    };
+
+    const offered = async (ask: Awaited<ReturnType<typeof build>>['ask'], kind = 'video') => {
+      const response = await ask(`/api/requests/profiles?kind=${kind}`);
+
+      expect(response.status).toBe(200);
+
+      return ProfilesOnOfferSchema.parse(await response.json());
+    };
+
+    beforeEach(() => {
+      PROFILES.length = 0;
+    });
+
+    it('offers the profiles that are nobody’s in particular', async () => {
+      PROFILES.push(aProfile(HD, 'HD'), aProfile(UHD, '4K'));
+
+      const { ask } = await asking();
+
+      expect(await offered(ask)).toEqual({
+        choices: [
+          { id: HD, name: 'HD', kind: 'video' },
+          { id: UHD, name: '4K', kind: 'video' },
+        ],
+        forcedId: null,
+      });
+    });
+
+    it('offers only profiles of the kind asked about', async () => {
+      PROFILES.push(aProfile(HD, 'HD'), aProfile(UHD, 'Lossless', { kind: 'music' }));
+
+      const { ask } = await asking(['requests.ask', 'requests.askMusic']);
+
+      expect((await offered(ask, 'music')).choices).toEqual([
+        { id: UHD, name: 'Lossless', kind: 'music' },
+      ]);
+    });
+
+    it('keeps a profile locked to a role away from somebody who does not hold it', async () => {
+      PROFILES.push(aProfile(HD, 'HD'), aProfile(UHD, '4K', { roleIds: ['some-other-role'] }));
+
+      const { ask } = await asking();
+
+      expect((await offered(ask)).choices).toEqual([{ id: HD, name: 'HD', kind: 'video' }]);
+    });
+
+    it('offers a locked profile to somebody whose role is named on it', async () => {
+      const { ask, roleId } = await asking();
+
+      PROFILES.push(aProfile(UHD, '4K', { roleIds: [roleId ?? ''] }));
+
+      expect((await offered(ask)).choices).toEqual([{ id: UHD, name: '4K', kind: 'video' }]);
+    });
+
+    it('offers a locked profile to an account named on it', async () => {
+      const { ask, accountId } = await asking();
+
+      PROFILES.push(aProfile(UHD, '4K', { accountIds: [accountId] }));
+
+      expect((await offered(ask)).choices).toEqual([{ id: UHD, name: '4K', kind: 'video' }]);
+    });
+
+    it('offers only the default once one is set, and says it is forced', async () => {
+      const { ask, accountId } = await asking();
+
+      PROFILES.push(
+        aProfile(HD, 'HD', { isDefault: true }),
+        aProfile(UHD, '4K', { accountIds: [accountId] }),
+      );
+
+      expect(await offered(ask)).toEqual({
+        choices: [{ id: HD, name: 'HD', kind: 'video' }],
+        forcedId: HD,
+      });
+    });
+
+    it('asks at the quality chosen, where it is theirs to choose', async () => {
+      PROFILES.push(aProfile(HD, 'HD'));
+
+      const { ask } = await asking();
+
+      expect(
+        (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631, profileId: HD }))
+          .status,
+      ).toBe(201);
+      expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ profileId: HD });
+    });
+
+    it('refuses a quality that is not theirs to ask for, without asking for anything', async () => {
+      PROFILES.push(aProfile(HD, 'HD'), aProfile(UHD, '4K', { roleIds: ['some-other-role'] }));
+
+      const { ask } = await asking();
+      const refused = await ask('/api/requests/media', 'POST', {
+        kind: 'film',
+        tmdbId: 438631,
+        profileId: UHD,
+      });
+
+      expect(refused.status).toBe(403);
+      expect(await refused.json()).toEqual({ error: 'That quality is not yours to ask for.' });
+      expect(sent.some(({ url }) => url.endsWith('/api/requests'))).toBe(false);
+    });
+
+    it('takes every request through the default, and refuses anybody asking past it', async () => {
+      PROFILES.push(aProfile(HD, 'HD', { isDefault: true }), aProfile(UHD, '4K'));
+
+      const { ask } = await asking();
+
+      expect(
+        (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 })).status,
+      ).toBe(201);
+      expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ profileId: HD });
+
+      const refused = await ask('/api/requests/media', 'POST', {
+        kind: 'film',
+        tmdbId: 438631,
+        profileId: UHD,
+      });
+
+      expect(refused.status).toBe(403);
+    });
+
+    it('neither gates nor forces whoever manages requesting', async () => {
+      PROFILES.push(
+        aProfile(HD, 'HD', { isDefault: true }),
+        aProfile(UHD, '4K', { roleIds: ['some-other-role'] }),
+      );
+
+      const { ask } = await asking(['requests.manage', 'requests.ask']);
+
+      expect(await offered(ask)).toEqual({
+        choices: [
+          { id: HD, name: 'HD', kind: 'video' },
+          { id: UHD, name: '4K', kind: 'video' },
+        ],
+        forcedId: null,
+      });
+      expect(
+        (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631, profileId: UHD }))
+          .status,
+      ).toBe(201);
+      expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ profileId: UHD });
+    });
+
+    it('refuses to say what is on offer to somebody who may not ask at all', async () => {
+      const { ask } = await build({ isOn: true, granted: [], service: aWillingKeeper });
+
+      expect((await ask('/api/requests/profiles?kind=video')).status).toBe(403);
+    });
   });
 });

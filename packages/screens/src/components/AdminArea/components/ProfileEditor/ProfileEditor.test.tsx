@@ -6,6 +6,7 @@ import { ProfileEditor } from './ProfileEditor';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type * as Profiles from '@ValenceClient/requests/fetchProfiles';
+import { aQualityProfile } from '@ValenceScreens/testing/aQualityProfile';
 
 const addProfile = vi.fn<typeof Profiles.addProfile>();
 const changeProfile = vi.fn<typeof Profiles.changeProfile>();
@@ -16,33 +17,31 @@ vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
   changeProfile: (...given: Parameters<typeof Profiles.changeProfile>) => changeProfile(...given),
 }));
 
+vi.mock('@ValenceClient/admin/fetchRoles', async (actual) => ({
+  ...(await actual<object>()),
+  fetchRoles: () =>
+    Promise.resolve([
+      { id: 'trusted', name: 'Trusted', position: 200, permissions: [], color: null },
+      { id: 'household', name: 'Household', position: 100, permissions: [], color: null },
+    ]),
+}));
+
+vi.mock('@ValenceClient/admin/fetchAccounts', () => ({
+  fetchAccounts: () =>
+    Promise.resolve([{ id: 'dan', name: 'Dan', email: 'dan@example.com', roles: [] }]),
+}));
+
 vi.mock('@ValenceClient/library/fetchLibrary', async (actual) => ({
   ...(await actual<object>()),
   fetchLibraries: () => fetchLibraries(),
 }));
 
-const KEPT: QualityProfile = {
-  id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-  name: 'HD',
-  kind: 'video',
-  resolutions: ['1080p', '720p'],
-  sources: ['bluray', 'webdl'],
+const KEPT = aQualityProfile({
   musicQualities: ['flac'],
-  smallestMb: null,
   largestMb: 8000,
   preferredWords: ['HDR'],
-  requiredWords: [],
   bannedWords: ['cam'],
-  isUpgrading: false,
-  releaseWait: 'digital',
-  sizes: [],
-  upgradeUntilResolution: null,
-  upgradeUntilSource: null,
-  upgradeUntilMusicQuality: null,
-  libraryIds: [],
-  createdAt: '2026-09-19T00:00:00.000Z',
-  updatedAt: '2026-09-19T00:00:00.000Z',
-};
+});
 
 /**
  * A library of the kind given.
@@ -127,6 +126,43 @@ describe('ProfileEditor', () => {
       resolution: '2160p',
       minMb: 1500,
       maxMb: 39_601,
+    });
+  });
+
+  it('keeps a profile to the roles and people named on it', async () => {
+    const user = userEvent.setup();
+
+    open();
+
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
+    await user.click(await screen.findByRole('checkbox', { name: 'Trusted' }));
+    await user.click(await screen.findByRole('checkbox', { name: /Dan/ }));
+    await user.click(screen.getByRole('button', { name: 'Add profile' }));
+
+    await waitFor(() => {
+      expect(addProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ roleIds: ['trusted'], accountIds: ['dan'], isDefault: false }),
+      );
+    });
+  });
+
+  it('stops asking who a profile is for once everything goes through it', async () => {
+    const user = userEvent.setup();
+
+    open();
+
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
+    await user.click(await screen.findByRole('checkbox', { name: 'Trusted' }));
+    await user.click(screen.getByRole('switch', { name: 'Ask at this quality and no other' }));
+
+    expect(screen.queryByRole('checkbox', { name: 'Trusted' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Add profile' }));
+
+    await waitFor(() => {
+      expect(addProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ isDefault: true, roleIds: [], accountIds: [] }),
+      );
     });
   });
 

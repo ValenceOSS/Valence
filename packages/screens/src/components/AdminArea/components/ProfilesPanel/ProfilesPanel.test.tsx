@@ -6,6 +6,7 @@ import { ProfilesPanel } from './ProfilesPanel';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type * as Profiles from '@ValenceClient/requests/fetchProfiles';
+import { aQualityProfile } from '@ValenceScreens/testing/aQualityProfile';
 
 const fetchProfiles = vi.fn<typeof Profiles.fetchProfiles>();
 const removeProfile = vi.fn<typeof Profiles.removeProfile>();
@@ -23,28 +24,11 @@ vi.mock('@ValenceClient/library/fetchLibrary', async (actual) => ({
   fetchLibraries: () => fetchLibraries(),
 }));
 
-const HD: QualityProfile = {
-  id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-  name: 'HD',
-  kind: 'video',
+const HD = aQualityProfile({
   resolutions: ['1080p'],
   sources: ['bluray'],
-  musicQualities: [],
-  smallestMb: null,
-  largestMb: null,
-  preferredWords: [],
-  requiredWords: [],
-  bannedWords: [],
-  isUpgrading: false,
-  releaseWait: 'digital',
-  sizes: [],
-  upgradeUntilResolution: null,
-  upgradeUntilSource: null,
-  upgradeUntilMusicQuality: null,
   libraryIds: ['films', 'gone'],
-  createdAt: '2026-09-19T00:00:00.000Z',
-  updatedAt: '2026-09-19T00:00:00.000Z',
-};
+});
 
 const LOSSLESS: QualityProfile = {
   ...HD,

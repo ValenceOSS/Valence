@@ -9,6 +9,7 @@ import type * as Queue from '@ValenceClient/requests/fetchDownloadQueue';
 import type * as Clients from '@ValenceClient/requests/fetchDownloadClients';
 import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
 import type { Judgement, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { aQualityProfile } from '@ValenceScreens/testing/aQualityProfile';
 
 const searchReleases = vi.fn<typeof Indexers.searchReleases>();
 
@@ -29,28 +30,11 @@ vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
   fetchProfiles: () => fetchProfiles(),
 }));
 
-const HD: QualityProfile = {
+const HD = aQualityProfile({
   id: '9b2e1f5a-8d4c-4e2a-9f6b-1c3d5e7f9a0b',
-  name: 'HD',
-  kind: 'video',
   resolutions: ['1080p'],
   sources: ['bluray'],
-  musicQualities: [],
-  smallestMb: null,
-  largestMb: null,
-  preferredWords: [],
-  requiredWords: [],
-  bannedWords: [],
-  isUpgrading: false,
-  releaseWait: 'digital',
-  sizes: [],
-  upgradeUntilResolution: null,
-  upgradeUntilSource: null,
-  upgradeUntilMusicQuality: null,
-  libraryIds: [],
-  createdAt: '2026-09-19T00:00:00.000Z',
-  updatedAt: '2026-09-19T00:00:00.000Z',
-};
+});
 
 /**
  * A judgement of the release named.

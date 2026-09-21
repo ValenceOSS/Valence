@@ -19,6 +19,7 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { removeProfile } from '@ValenceClient/requests/fetchProfiles';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/ProfileEditor';
+import { describeAskers } from './describeAskers';
 import { describeProfile } from './describeProfile';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
@@ -73,6 +74,14 @@ const ProfilesPanel = () => {
         accessorFn: (profile) => describeProfile(profile).upgrades,
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">{describeProfile(row.original).upgrades}</span>
+        ),
+      },
+      {
+        id: 'askers',
+        header: 'Asked with by',
+        accessorFn: (profile) => describeAskers(profile),
+        cell: ({ row }) => (
+          <span className="text-xs text-text-muted">{describeAskers(row.original)}</span>
         ),
       },
       {

@@ -65,6 +65,8 @@ const RECOMMENDED_QUALITY_SIZES: readonly z.infer<typeof QualitySizeSchema>[] = 
 
 const WordsSchema = z.array(z.string().trim().min(1).max(100)).max(50);
 
+const HoldersSchema = z.array(z.string().min(1)).max(200);
+
 const QualityProfileSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(80),
@@ -84,6 +86,9 @@ const QualityProfileSchema = z.object({
   upgradeUntilSource: ReleaseSourceSchema.nullable(),
   upgradeUntilMusicQuality: MusicQualitySchema.nullable(),
   libraryIds: z.array(z.string()),
+  isDefault: z.boolean(),
+  roleIds: z.array(z.string()),
+  accountIds: z.array(z.string()),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -112,6 +117,9 @@ const QualityProfileDraftSchema = z.object({
   upgradeUntilSource: ReleaseSourceSchema.nullable().default(null),
   upgradeUntilMusicQuality: MusicQualitySchema.nullable().default(null),
   libraryIds: z.array(z.string().min(1)).max(100).default([]),
+  isDefault: z.boolean().default(false),
+  roleIds: HoldersSchema.default([]),
+  accountIds: HoldersSchema.default([]),
 });
 
 const QualityProfileChangeSchema = z.object({
@@ -132,6 +140,20 @@ const QualityProfileChangeSchema = z.object({
   upgradeUntilSource: ReleaseSourceSchema.nullable().optional(),
   upgradeUntilMusicQuality: MusicQualitySchema.nullable().optional(),
   libraryIds: z.array(z.string().min(1)).max(100).optional(),
+  isDefault: z.boolean().optional(),
+  roleIds: HoldersSchema.optional(),
+  accountIds: HoldersSchema.optional(),
+});
+
+const ProfileChoiceSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  kind: ProfileKindSchema,
+});
+
+const ProfilesOnOfferSchema = z.object({
+  choices: z.array(ProfileChoiceSchema),
+  forcedId: z.string().uuid().nullable(),
 });
 
 const JudgementSchema = z.object({
@@ -145,6 +167,8 @@ const JudgementSchema = z.object({
 
 type ProfileKind = (typeof PROFILE_KINDS)[number];
 type ReleaseWait = (typeof RELEASE_WAITS)[number];
+type ProfileChoice = z.infer<typeof ProfileChoiceSchema>;
+type ProfilesOnOffer = z.infer<typeof ProfilesOnOfferSchema>;
 type QualitySize = z.infer<typeof QualitySizeSchema>;
 type QualityProfile = z.infer<typeof QualityProfileSchema>;
 type QualityProfileDraft = z.input<typeof QualityProfileDraftSchema>;
@@ -153,7 +177,9 @@ type Judgement = z.infer<typeof JudgementSchema>;
 
 export type {
   Judgement,
+  ProfileChoice,
   ProfileKind,
+  ProfilesOnOffer,
   QualityProfile,
   QualityProfileChange,
   QualityProfileDraft,
@@ -167,7 +193,9 @@ export {
   RELEASE_WAITS,
   VIDEO_QUALITIES,
   JudgementSchema,
+  ProfileChoiceSchema,
   ProfileKindSchema,
+  ProfilesOnOfferSchema,
   QualityProfileChangeSchema,
   QualityProfileDraftSchema,
   QualityProfileSchema,
