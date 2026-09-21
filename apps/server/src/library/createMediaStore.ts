@@ -160,8 +160,8 @@ const createMediaStore = (
               .onConflictDoUpdate({
                 target: [series.libraryId, series.key],
                 set: {
-                  title: sql`case when excluded."externalId" is not null then excluded."title" when ${series.externalId} is not null then ${series.title} else excluded."title" end`,
-                  externalId: sql`coalesce(excluded."externalId", ${series.externalId})`,
+                  title: sql`case when ${series.externalId} is null or excluded."externalId" is not distinct from ${series.externalId} then excluded."title" else ${series.title} end`,
+                  externalId: sql`coalesce(${series.externalId}, excluded."externalId")`,
                   updatedAt: new Date(),
                 },
               })
