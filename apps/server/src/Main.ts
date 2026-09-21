@@ -2728,6 +2728,7 @@ const app = createApp({
   requests,
   requestsClient,
   cancelJob: (jobId) => jobs.cancel(jobId),
+  controlQueue: transcoder.controlQueue,
   describeForRequest,
   describeMusicForRequest,
   searchMusicCatalogue: (query, kind) => searchMusicCatalogue(musicWeb, query, kind),
