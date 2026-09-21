@@ -117,6 +117,7 @@ const MediaMetadataSchema = z.object({
   budget: z.number().nonnegative().nullish(),
   revenue: z.number().nonnegative().nullish(),
   status: z.string().nullish(),
+  rottenTomatoes: z.number().int().min(0).max(100).nullish(),
 });
 
 const PreviewMomentSchema = z.object({

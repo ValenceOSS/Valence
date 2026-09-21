@@ -25,6 +25,7 @@ import {
   saveFetchesMusicDetails,
   saveRequestReleaseTypes,
   saveAudioDbKey,
+  saveOmdbKey,
   saveSplashscreen,
   removeSplashscreen,
 } from '@ValenceClient/admin/fetchAdmin';
@@ -97,6 +98,8 @@ const SettingsPanel = ({
   );
   const [audioDbKey, setAudioDbKey] = useState('');
   const [isSavingAudioDbKey, setIsSavingAudioDbKey] = useState(false);
+  const [omdbKey, setOmdbKey] = useState('');
+  const [isSavingOmdbKey, setIsSavingOmdbKey] = useState(false);
   const [fetchesMusic, setFetchesMusic] = useState(overview?.settings.fetchesMusicDetails ?? false);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([
     ...(overview?.settings.requestReleaseTypes ?? ['album']),
@@ -496,6 +499,59 @@ const SettingsPanel = ({
 
                 if (saved) {
                   setCatalogueKey('');
+                  onCatalogueKeySaved();
+                }
+              });
+            }}
+          >
+            Save
+          </Button>
+        </SettingRow>
+
+        <SettingRow
+          title="Rotten Tomatoes scores"
+          description={
+            overview?.settings.hasOmdbKey === true
+              ? 'A key is set. Entering a new one replaces it. Scores fill in as titles are scanned again.'
+              : 'Optional. A free OMDb key adds each title’s Rotten Tomatoes score, as titles are scanned.'
+          }
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              window.open('https://www.omdbapi.com/apikey.aspx', '_blank', 'noopener,noreferrer');
+            }}
+          >
+            Get a free key
+          </Button>
+
+          <TextField
+            label="OMDb key"
+            isLabelHidden
+            type="password"
+            value={omdbKey}
+            onValueChange={setOmdbKey}
+            placeholder="Paste a key"
+            size="sm"
+            className="w-48 max-w-full"
+          />
+
+          <Button
+            variant="glossy"
+            size="sm"
+            label="Save the OMDb key"
+            hasTooltip={false}
+            isLoading={isSavingOmdbKey}
+            disabled={omdbKey === ''}
+            onClick={() => {
+              setIsSavingOmdbKey(true);
+
+              void saveOmdbKey(omdbKey).then((saved) => {
+                setIsSavingOmdbKey(false);
+
+                if (saved) {
+                  setOmdbKey('');
                   onCatalogueKeySaved();
                 }
               });

@@ -19,6 +19,19 @@ describe('TitleDetails', () => {
     expect(screen.getByText('$402M')).toBeInTheDocument();
   });
 
+  it('states the Rotten Tomatoes score as a percentage, where there is one', () => {
+    render(<TitleDetails rottenTomatoes={93} />);
+
+    expect(screen.getByText('Rotten Tomatoes')).toBeInTheDocument();
+    expect(screen.getByText('93%')).toBeInTheDocument();
+  });
+
+  it('states a score of nothing, which is a real score and not an absent one', () => {
+    render(<TitleDetails rottenTomatoes={0} />);
+
+    expect(screen.getByText('0%')).toBeInTheDocument();
+  });
+
   it('shows only what is known', () => {
     render(<TitleDetails status="Returning Series" />);
 

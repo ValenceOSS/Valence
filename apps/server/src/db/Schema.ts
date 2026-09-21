@@ -696,6 +696,7 @@ const mediaItem = pgTable(
     revenue: bigint('revenue', { mode: 'number' }),
     catalogueStatus: text('catalogueStatus'),
     imdbId: text('imdbId'),
+    rottenTomatoes: integer('rottenTomatoes'),
     seriesId: text('seriesId').references(() => series.id, { onDelete: 'set null' }),
     seriesTitle: text('seriesTitle'),
     certifications: jsonb('certifications'),

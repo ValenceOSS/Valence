@@ -1607,6 +1607,7 @@ const createDatabaseLibraryService = ({
           budget: row.budget,
           revenue: row.revenue,
           status: row.catalogueStatus,
+          rottenTomatoes: row.rottenTomatoes,
         },
       });
 

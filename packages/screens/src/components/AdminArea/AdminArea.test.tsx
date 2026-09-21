@@ -31,6 +31,7 @@ const OVERVIEW: AdminOverview = {
   settings: {
     hasCatalogueKey: false,
     hasAudioDbKey: false,
+    hasOmdbKey: false,
     trustedOrigins: ['http://localhost:5173'],
     cookieSecure: false,
     hardwareAccel: '',

@@ -2533,6 +2533,7 @@ const createApp = ({
         settings: {
           hasCatalogueKey: current.catalogueApiKey !== '',
           hasAudioDbKey: current.audioDbKey !== '',
+          hasOmdbKey: current.omdbKey !== '',
           hardwareAccel: current.hardwareAccel,
           previewQuality: current.previewQuality,
           certificationRegion: current.certificationRegion,
@@ -2580,6 +2581,7 @@ const createApp = ({
     const updated = await settings.write({
       ...(patch.catalogueApiKey === undefined ? {} : { catalogueApiKey: patch.catalogueApiKey }),
       ...(patch.audioDbKey === undefined ? {} : { audioDbKey: patch.audioDbKey }),
+      ...(patch.omdbKey === undefined ? {} : { omdbKey: patch.omdbKey }),
       ...(patch.hardwareAccel === undefined ? {} : { hardwareAccel: patch.hardwareAccel }),
       ...(patch.previewQuality === undefined ? {} : { previewQuality: patch.previewQuality }),
       ...(patch.certificationRegion === undefined
@@ -2618,6 +2620,7 @@ const createApp = ({
       {
         hasCatalogueKey: updated.catalogueApiKey !== '',
         hasAudioDbKey: updated.audioDbKey !== '',
+        hasOmdbKey: updated.omdbKey !== '',
         trustedOrigins: updated.trustedOrigins,
         cookieSecure: updated.cookieSecure,
         hardwareAccel: updated.hardwareAccel,
