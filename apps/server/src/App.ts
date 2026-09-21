@@ -263,6 +263,7 @@ import {
   musicCatalogueRoute,
   discoverRoute,
   catalogueBrowseRoute,
+  catalogueGenresRoute,
   decideMediaRequestsRoute,
   liftMediaBlockRoute,
   mediaRequestBlocklistRoute,
@@ -4309,7 +4310,8 @@ const createApp = ({
   });
 
   app.openapi(catalogueBrowseRoute, async (context) => {
-    const { kind, list, studio, page } = context.req.valid('query');
+    const { kind, list, studio, page, genre, yearFrom, yearTo, minRating } =
+      context.req.valid('query');
 
     if (requestsClient === null) {
       return context.json(REQUESTING_OFF, 404);
@@ -4326,6 +4328,12 @@ const createApp = ({
       kind: kind === 'film' ? 'movie' : 'tv',
       page,
       studio: studio ?? null,
+      filters: {
+        ...(genre === undefined ? {} : { genre }),
+        ...(yearFrom === undefined ? {} : { yearFrom }),
+        ...(yearTo === undefined ? {} : { yearTo }),
+        ...(minRating === undefined ? {} : { minRating }),
+      },
     });
 
     const titles = browsed.matches.map((match) => ({
@@ -4344,6 +4352,23 @@ const createApp = ({
         page,
         hasMore: browsed.hasMore,
       },
+      200,
+    );
+  });
+
+  app.openapi(catalogueGenresRoute, async (context) => {
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    return context.json(
+      await discovery.genres(context.req.valid('query').kind === 'film' ? 'movie' : 'tv'),
       200,
     );
   });

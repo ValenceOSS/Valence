@@ -14,6 +14,7 @@ import type {
   Metadata,
   MetadataProvider,
 } from './MetadataProvider';
+import { discoverParameters } from '@ValenceServer/library/discoverParameters';
 import { readCertifications } from '@ValenceServer/library/readCertifications';
 import { readRequestCatalogue } from '@ValenceServer/library/readRequestCatalogue';
 
@@ -92,6 +93,10 @@ const LIST_PATHS: Readonly<Record<CatalogueList, Record<'tv' | 'movie', string>>
   popular: { movie: '/movie/popular', tv: '/tv/popular' },
   upcoming: { movie: '/movie/upcoming', tv: '/tv/on_the_air' },
 };
+
+const GenreListSchema = z.object({
+  genres: z.array(z.object({ id: z.number().int(), name: z.string() })).default([]),
+});
 
 const STUDIO_IDS = [2, 420, 174, 33, 4, 5, 127928, 3, 1, 521, 10342, 41077] as const;
 
@@ -890,19 +895,28 @@ const createCatalogueMetadataProvider = ({
       return results.data.results.map((entry) => matchOf(entry, kind, query, imageBaseUrl));
     },
 
-    browse: async ({ list, kind, page, studio }) => {
+    browse: async ({ list, kind, page, studio, filters = {} }) => {
       const key = await readApiKey();
 
       if (key === null || key === '') {
         return { matches: [], hasMore: false };
       }
 
+      const isNarrowed =
+        filters.genre !== undefined ||
+        filters.yearFrom !== undefined ||
+        filters.yearTo !== undefined ||
+        filters.minRating !== undefined;
+
       const asked =
-        studio === null
+        studio === null && !isNarrowed
           ? { path: LIST_PATHS[list][kind], query: {} }
           : {
               path: `/discover/${kind}`,
-              query: { with_companies: studio, sort_by: 'popularity.desc' },
+              query: {
+                ...(studio === null ? {} : { with_companies: studio }),
+                ...discoverParameters(list, kind, filters, new Date().toISOString().slice(0, 10)),
+              },
             };
 
       const results = SearchResponseSchema.safeParse(
@@ -917,6 +931,20 @@ const createCatalogueMetadataProvider = ({
         matches: results.data.results.map((entry) => matchOf(entry, kind, '', imageBaseUrl)),
         hasMore: page < results.data.total_pages,
       };
+    },
+
+    genres: async (kind) => {
+      const key = await readApiKey();
+
+      if (key === null || key === '') {
+        return [];
+      }
+
+      const listed = GenreListSchema.safeParse(await request(`/genre/${kind}/list`, key, {}));
+
+      return listed.success
+        ? listed.data.genres.map((genre) => ({ id: genre.id.toString(), name: genre.name }))
+        : [];
     },
 
     studios: async () => {
