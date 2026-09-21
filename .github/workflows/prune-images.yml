@@ -36,7 +36,7 @@ concurrency:
 
 jobs:
   prune:
-    name: Old commit images
+    name: Prune old commit images
     runs-on: ubuntu-latest
 
     permissions:

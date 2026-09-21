@@ -14,9 +14,23 @@ name: Dev image
 # repository is public, so Actions minutes are free and an image that only exists when somebody
 # remembers to press a button is worse than one that is always current.
 
+# Skipped for a push that changes only what the image does not contain: the documentation and landing
+# sites, notes, and the workflows that belong to other pipelines. Anything else, this file included,
+# builds.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'apps/docs/**'
+      - 'apps/landing/**'
+      - '**/*.md'
+      - '.github/workflows/nightly-image.yml'
+      - '.github/workflows/prune-images.yml'
+      - '.github/workflows/media-pipeline.yml'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/release-please.yml'
+      - 'release-please-config.json'
+      - '.release-please-manifest.json'
 
 concurrency:
   group: dev-image-${{ github.ref }}

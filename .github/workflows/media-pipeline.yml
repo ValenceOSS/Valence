@@ -37,7 +37,7 @@ env:
 
 jobs:
   transcoder:
-    name: The corpus, and the transcoder against it
+    name: Build the corpus and test the transcoder
     runs-on: ubuntu-latest
     # In Debian rather than on the runner's Ubuntu, because the FFmpeg Valence ships is built for
     # Debian and its packages say so: the bookworm build wants libvpx7 and the trixie one wants
