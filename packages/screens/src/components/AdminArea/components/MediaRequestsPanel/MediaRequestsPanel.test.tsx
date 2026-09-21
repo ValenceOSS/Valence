@@ -113,6 +113,36 @@ describe('MediaRequestsPanel', () => {
     ).toBeInTheDocument();
   });
 
+  it('narrows the list to the kinds ticked in the filter, which says how many are', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await screen.findByText('Dune (2021)');
+    await user.click(screen.getByRole('button', { name: 'Filter the requests' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Series' }));
+
+    expect(screen.queryByText('Dune (2021)')).not.toBeInTheDocument();
+    expect(screen.getByText('Severance (2022)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filter the requests' })).toHaveTextContent('1');
+  });
+
+  it('narrows the list to what was searched for, and says so when nothing matches', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await screen.findByText('Dune (2021)');
+    await user.type(screen.getByRole('searchbox', { name: 'Search the requests' }), 'sever');
+
+    expect(screen.queryByText('Dune (2021)')).not.toBeInTheDocument();
+    expect(screen.getByText('Severance (2022)')).toBeInTheDocument();
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search the requests' }), 'zzz');
+
+    expect(screen.getByText(/Nothing matches/)).toBeInTheDocument();
+  });
+
   it('approves a request waiting on approval, having looked it over', async () => {
     const user = userEvent.setup();
 

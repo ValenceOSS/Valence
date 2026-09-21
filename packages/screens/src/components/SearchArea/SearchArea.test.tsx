@@ -198,7 +198,11 @@ describe('SearchArea', () => {
       />,
     );
 
-    expect(await screen.findByRole('button', { name: 'Science fiction' })).toBeInTheDocument();
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: 'Filter the library' }));
+
+    expect(await screen.findByRole('checkbox', { name: 'Science fiction' })).toBeInTheDocument();
   });
 
   it('shows what it found', async () => {
@@ -235,23 +239,23 @@ describe('SearchArea', () => {
     expect(await screen.findByText(/Taking one of the filters off/)).toBeInTheDocument();
   });
 
-  it('clears what was asked on request', async () => {
-    const onSearchChange = vi.fn();
+  it('takes the genre off on request, from the chip that says it is on', async () => {
+    const onGenreChange = vi.fn();
     const user = userEvent.setup();
 
     renderInAnAddress(
       <SearchArea
-        search="arrival"
-        onSearchChange={onSearchChange}
-        genre={null}
-        onGenreChange={vi.fn()}
+        search=""
+        onSearchChange={vi.fn()}
+        genre="Science fiction"
+        onGenreChange={onGenreChange}
         onPlay={vi.fn()}
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: /Clear/ }));
+    await user.click(await screen.findByRole('button', { name: 'Clear all' }));
 
-    expect(onSearchChange).toHaveBeenCalledWith('');
+    expect(onGenreChange).toHaveBeenCalledWith(null);
   });
 
   it('draws a programme once rather than once per episode', async () => {
@@ -300,7 +304,7 @@ describe('SearchArea', () => {
     });
   });
 
-  it('keeps the narrower filters folded away until they are asked for', async () => {
+  it('keeps the narrower filters in a panel until they are asked for', async () => {
     renderInAnAddress(
       <SearchArea
         search=""
@@ -312,9 +316,9 @@ describe('SearchArea', () => {
       />,
     );
 
-    await screen.findByRole('button', { name: 'Filters' });
+    await screen.findByRole('button', { name: 'Filter the library' });
 
-    expect(screen.queryByRole('button', { name: '1990s' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: '1990s' })).not.toBeInTheDocument();
   });
 
   it('asks for a decade as the years either side of it', async () => {
@@ -330,8 +334,8 @@ describe('SearchArea', () => {
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filters' }));
-    await user.click(await screen.findByRole('button', { name: '1990s' }));
+    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith(
@@ -354,8 +358,8 @@ describe('SearchArea', () => {
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filters' }));
-    await user.click(await screen.findByRole('button', { name: '8+' }));
+    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await user.click(await screen.findByRole('checkbox', { name: '8+' }));
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith(
@@ -365,7 +369,7 @@ describe('SearchArea', () => {
     });
   });
 
-  it('says how many filters are on, since they are folded away', async () => {
+  it('says how many filters are on, since they are in a panel', async () => {
     const user = userEvent.setup();
 
     renderInAnAddress(
@@ -378,10 +382,12 @@ describe('SearchArea', () => {
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filters' }));
-    await user.click(await screen.findByRole('button', { name: '1990s' }));
+    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
 
-    expect(await screen.findByRole('button', { name: 'Filters (1)' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Filter the library' })).toHaveTextContent(
+      '1',
+    );
   });
 
   it('takes every filter off at once when asked to clear', async () => {
@@ -397,11 +403,12 @@ describe('SearchArea', () => {
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filters' }));
-    await user.click(await screen.findByRole('button', { name: '1990s' }));
-    await user.click(await screen.findByRole('button', { name: /Clear/ }));
+    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
+    await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
+    await user.keyboard('{Escape}');
+    await user.click(await screen.findByRole('button', { name: 'Clear all' }));
 
-    expect(await screen.findByRole('button', { name: 'Filters' })).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Applied filters' })).not.toBeInTheDocument();
   });
 
   it('offers nothing that would only lead to an empty page', async () => {
@@ -419,7 +426,7 @@ describe('SearchArea', () => {
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: 'Filters' }));
+    await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
 
     expect(screen.queryByRole('group', { name: 'Rating' })).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Genre' })).not.toBeInTheDocument();

@@ -13,6 +13,7 @@ import {
   RotateCw as RotateCwIcon,
   Search as SearchIcon,
   X as XIcon,
+  Info as InfoIcon,
 } from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -21,8 +22,11 @@ import { Checkbox } from '@ValenceUI/Checkbox';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
+import { FilterMenu } from '@ValenceUI/FilterMenu';
+import { HoverCard } from '@ValenceUI/HoverCard';
 import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
+import { TextField } from '@ValenceUI/TextField';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import {
   changeMediaRequest,
@@ -40,6 +44,8 @@ import { ApproveRequestDialog } from '@ValenceScreens/components/AdminArea/compo
 import { RefuseRequestDialog } from '@ValenceScreens/components/AdminArea/components/RefuseRequestDialog/RefuseRequestDialog';
 import { RequestDetailDialog } from '@ValenceScreens/components/AdminArea/components/RequestDetailDialog/RequestDetailDialog';
 import { describeRequestBadge } from './describeRequestBadge';
+import { describeRequestFilters } from './describeRequestFilters';
+import { filterRequests } from './filterRequests';
 import { describeRequestProgress } from './describeRequestProgress';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { RequestDetailTab } from '@ValenceScreens/components/AdminArea/components/RequestDetailDialog/RequestDetailDialog.types';
@@ -80,6 +86,8 @@ const MediaRequestsPanel = () => {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [said, setSaid] = useState<{ text: string; isProblem: boolean } | null>(null);
   const [isSearchingMissing, setIsSearchingMissing] = useState(false);
+  const [filters, setFilters] = useState<ReadonlySet<string>>(new Set());
+  const [search, setSearch] = useState('');
 
   const reread = useCallback(
     () => cache.invalidateQueries({ queryKey: requestsQueries.mediaRequests().queryKey }),
@@ -104,6 +112,12 @@ const MediaRequestsPanel = () => {
     },
     [reread],
   );
+
+  const shown = useMemo(
+    () => filterRequests(requests.data ?? [], filters, search),
+    [requests.data, filters, search],
+  );
+  const filterGroups = useMemo(() => describeRequestFilters(requests.data ?? []), [requests.data]);
 
   const awaiting = (requests.data ?? []).filter((request) => request.approval === 'awaiting');
   const chosenAwaiting = awaiting.filter((request) => chosen.has(request.id));
@@ -382,6 +396,40 @@ const MediaRequestsPanel = () => {
       isFlush
       actions={
         <>
+          <FilterMenu
+            label="Filter the requests"
+            groups={filterGroups}
+            selected={filters}
+            onChange={setFilters}
+          />
+
+          <TextField
+            label="Search the requests"
+            isLabelHidden
+            size="sm"
+            type="search"
+            placeholder="A title, or who asked"
+            value={search}
+            onValueChange={setSearch}
+            className="w-56 max-w-full"
+          />
+
+          <HoverCard
+            side="bottom"
+            align="end"
+            detail={
+              <p className="max-w-xs text-xs leading-relaxed">
+                Every film, series, artist and album asked for, and where each has got to.
+                Everything still wanted is searched for again every few hours by itself, and can be
+                searched for now with Refetch media.
+              </p>
+            }
+          >
+            <Button variant="ghost" size="xs" isIconOnly label="About this list" hasTooltip={false}>
+              <Icon of={InfoIcon} size={16} />
+            </Button>
+          </HoverCard>
+
           <PanelCardAction
             icon={RefreshCwIcon}
             isLoading={isSearchingMissing}
@@ -522,7 +570,7 @@ const MediaRequestsPanel = () => {
         <DataTable
           label="Requests"
           columns={columns}
-          rows={requests.data}
+          rows={shown}
           getRowId={(request) => request.id}
           toolbar={
             awaiting.length === 0 ? undefined : (
@@ -569,7 +617,11 @@ const MediaRequestsPanel = () => {
               </div>
             )
           }
-          emptyMessage="Nothing has been asked for yet. Ask for a film, a series, an artist or an album to have it fetched and filed into its library."
+          emptyMessage={
+            requests.data.length === 0
+              ? 'Nothing has been asked for yet. Ask for a film, a series, an artist or an album to have it fetched and filed into its library.'
+              : 'Nothing matches. Clear the filters or search for something else.'
+          }
         />
       )}
     </PanelCard>

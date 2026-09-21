@@ -1,4 +1,5 @@
 import * as RadixPopover from '@radix-ui/react-popover';
+import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { cn } from '@ValenceUI/cn';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { Tooltip } from '@ValenceUI/Tooltip';
@@ -21,6 +22,8 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param isDisabled - Whether it can be opened at all.
  * @param isBare - Whether the surrounding chrome already draws the hover, so this must not draw a
  * second one.
+ * @param triggerLook - An icon square that is lit when pointed at, or a button of the standard kind
+ *   with room for a word beside its icon.
  * @param tone - Whether it sits on the page or over film, where the page's colours say nothing.
  * @param className - Extra classes for the caller's own layout.
  */
@@ -35,6 +38,7 @@ const PopoverPanel = ({
   align = 'end',
   isDisabled = false,
   isBare = false,
+  triggerLook = 'icon',
   tone = 'default',
   className,
 }: PopoverPanelProps) => {
@@ -50,15 +54,19 @@ const PopoverPanel = ({
           aria-label={label}
           disabled={isDisabled}
           data-slot="popover-trigger"
-          className={cn(
-            'inline-flex size-10 shrink-0 items-center justify-center rounded-md',
-            'text-current outline-none',
-            'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
-            'motion-reduce:transition-none',
-            'focus-visible:ring-[3px] focus-visible:ring-ring',
-            'disabled:cursor-not-allowed disabled:opacity-50',
-            isBare ? '' : 'hover:bg-hover data-[state=open]:bg-active',
-          )}
+          className={
+            triggerLook === 'button'
+              ? buttonStyles({ variant: 'glossy', size: 'sm' })
+              : cn(
+                  'inline-flex size-10 shrink-0 items-center justify-center rounded-md',
+                  'text-current outline-none',
+                  'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
+                  'motion-reduce:transition-none',
+                  'focus-visible:ring-[3px] focus-visible:ring-ring',
+                  'disabled:cursor-not-allowed disabled:opacity-50',
+                  isBare ? '' : 'hover:bg-hover data-[state=open]:bg-active',
+                )
+          }
         >
           {trigger}
         </RadixPopover.Trigger>

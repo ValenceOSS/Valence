@@ -1,10 +1,8 @@
 import { Icon } from '@ValenceUI/Icon';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
-import { Filter as FilterIcon, Search as SearchIcon, X as XIcon } from '@keyline-icons/react';
-import { Filter as FilterFilledIcon } from '@keyline-icons/react/fill';
+import { Search as SearchIcon } from '@keyline-icons/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
 import { Spinner } from '@ValenceUI/Spinner';
 import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
@@ -16,7 +14,6 @@ import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';
 import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
 import { readGridSize, saveGridSize } from '@ValenceScreens/library/gridSizePreference';
 import { buildFilterOptions } from './buildFilterOptions';
-import { FilterChips } from './components/FilterChips/FilterChips';
 import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
 import type { SearchAreaProps, SearchKind } from './SearchArea.types';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
@@ -26,6 +23,9 @@ import { ArtistShelf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf'
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { AskableResults } from './components/AskableResults/AskableResults';
 import { BackToTop } from '@ValenceUI/BackToTop';
+import { AppliedFilters } from '@ValenceUI/AppliedFilters';
+import { FilterMenu } from '@ValenceUI/FilterMenu';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 
 const SETTLE_MILLISECONDS = 250;
 
@@ -95,7 +95,6 @@ const SearchArea = ({
   const [decade, setDecade] = useState<string | null>(null);
   const [minRating, setMinRating] = useState<string | null>(null);
   const [minYourStars, setMinYourStars] = useState<string | null>(null);
-  const [isShowingFilters, setIsShowingFilters] = useState(false);
   const [size, setSize] = useState(readGridSize);
   const [liveSearch, setLiveSearch] = useState(search);
   const prefersReducedMotion = useReducedMotionConfig();
@@ -224,8 +223,45 @@ const SearchArea = ({
     kind !== 'everything' || genre !== null || liveSearch.trim() !== '' || narrowed > 0;
 
   const clearFilters = () => {
+    onGenreChange(null);
     setDecade(null);
     setMinRating(null);
+    setMinYourStars(null);
+  };
+
+  const filterGroups = [
+    { name: 'Genre', prefix: 'genre:', options: options.genres },
+    { name: 'Decade', prefix: 'decade:', options: options.decades },
+    { name: 'Rating', prefix: 'rating:', options: options.ratings },
+    { name: 'Your rating', prefix: 'yours:', options: options.yourStars },
+  ]
+    .map((group) => ({
+      name: group.name,
+      isSingle: true,
+      options: group.options.map((option) => ({
+        id: `${group.prefix}${option.value}`,
+        label: option.label,
+      })),
+    }))
+    .filter((group) => group.options.length > 0);
+
+  const filterSelected = new Set(
+    [
+      genre === null ? null : `genre:${genre}`,
+      decade === null ? null : `decade:${decade}`,
+      minRating === null ? null : `rating:${minRating}`,
+      minYourStars === null ? null : `yours:${minYourStars}`,
+    ].filter((id) => id !== null),
+  );
+
+  const changeFilters = (next: ReadonlySet<string>) => {
+    const pick = (prefix: string): string | null =>
+      [...next].find((id) => id.startsWith(prefix))?.slice(prefix.length) ?? null;
+
+    onGenreChange(pick('genre:'));
+    setDecade(pick('decade:'));
+    setMinRating(pick('rating:'));
+    setMinYourStars(pick('yours:'));
   };
 
   return (
@@ -262,95 +298,43 @@ const SearchArea = ({
           transition={revealTransition(prefersReducedMotion)}
           className="flex flex-col gap-3"
         >
-          <div className="flex flex-wrap items-center gap-2">
-            {KINDS.map((option) => (
-              <Button
-                key={option.id}
-                size="sm"
-                variant={option.id === kind ? 'glossy' : 'secondary'}
-                onClick={() => {
-                  setKind(option.id);
-                }}
-              >
-                {option.label}
-              </Button>
-            ))}
-
-            <Button
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <SegmentedRow
+              label="What to search"
               size="sm"
-              variant={isShowingFilters ? 'glossy' : 'secondary'}
-              isActive={isShowingFilters}
-              onClick={() => {
-                setIsShowingFilters(!isShowingFilters);
-              }}
-            >
-              <Icon
-                of={FilterIcon}
-                whenActive={FilterFilledIcon}
-                isActive={isShowingFilters}
-                size={16}
-              />
-              {narrowed === 0 ? 'Filters' : `Filters (${narrowed.toString()})`}
-            </Button>
+              items={KINDS}
+              value={kind}
+              onSelect={(id) => {
+                const chosen = KINDS.find((option) => option.id === id);
 
-            {!isNarrowed ? null : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setKind('everything');
-                  onGenreChange(null);
-                  setLiveSearch('');
-                  onSearchChange('');
-                  clearFilters();
-                }}
-              >
-                <Icon of={XIcon} size={16} />
-                Clear
-              </Button>
+                if (chosen !== undefined) {
+                  setKind(chosen.id);
+                }
+              }}
+            />
+
+            {filterGroups.length === 0 ? null : (
+              <FilterMenu
+                label="Filter the library"
+                hasLabel
+                groups={filterGroups}
+                selected={filterSelected}
+                onChange={changeFilters}
+              />
             )}
           </div>
 
-          <FilterChips
-            legend="Genre"
-            options={options.genres}
-            value={genre}
-            onValueChange={onGenreChange}
-          />
+          <AppliedFilters
+            groups={filterGroups}
+            selected={filterSelected}
+            onRemove={(id) => {
+              const next = new Set(filterSelected);
 
-          <AnimatePresence initial={false}>
-            {!isShowingFilters ? null : (
-              <motion.div
-                key="filters"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={revealTransition(prefersReducedMotion)}
-                className="overflow-hidden"
-              >
-                <div className="flex flex-col gap-5 pt-2">
-                  <FilterChips
-                    legend="Decade"
-                    options={options.decades}
-                    value={decade}
-                    onValueChange={setDecade}
-                  />
-                  <FilterChips
-                    legend="Rating"
-                    options={options.ratings}
-                    value={minRating}
-                    onValueChange={setMinRating}
-                  />
-                  <FilterChips
-                    legend="Your rating"
-                    options={options.yourStars}
-                    value={minYourStars}
-                    onValueChange={setMinYourStars}
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              next.delete(id);
+              changeFilters(next);
+            }}
+            onClear={clearFilters}
+          />
         </motion.div>
       </div>
 
