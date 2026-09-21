@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.1.0](https://github.com/ValenceOSS/Valence/compare/v1.0.0...v1.1.0) (2026-09-21)
+
+
+### Added
+
+* **desktop:** build a Windows installer, and attach it to every release ([34a928f](https://github.com/ValenceOSS/Valence/commit/34a928feafaf0daa812370fc7a73494e5f06fe92))
+* **desktop:** build for macOS and Linux as well, and attach every platform to the release ([1e7d62c](https://github.com/ValenceOSS/Valence/commit/1e7d62c3bb0ef9bf2bc7d4274035ed8d5ea18884))
+* **desktop:** build for Windows, macOS and Linux, and attach them to every release ([67a8afb](https://github.com/ValenceOSS/Valence/commit/67a8afb5bd24852a6c45b2ea181ff8d3b6b32f50))
+
+
+### Fixed
+
+* **desktop:** name the Linux executable, since the package name is not a safe file name ([81f83be](https://github.com/ValenceOSS/Valence/commit/81f83be87e6929fab6abc728839d37c9446a26a9))
+* **desktop:** shut the developer tools in an installed build ([169e6c7](https://github.com/ValenceOSS/Valence/commit/169e6c78c96334ae6c093d1ea2dc9b833f505b3d))
+* **desktop:** shut the developer tools in an installed build ([dddbc52](https://github.com/ValenceOSS/Valence/commit/dddbc52e5931aa2e1c11bc47e96a2a8ec59afa25))
+* **desktop:** stamp the version into the checkout rather than through a flag PowerShell mangles ([91ea2f1](https://github.com/ValenceOSS/Valence/commit/91ea2f1151cb0eb4d2f2d6eacaf061caa1264f5b))
+* episodes of one programme no longer split into two shows when a lookup fails ([d6099ab](https://github.com/ValenceOSS/Valence/commit/d6099abcb44d0845421338e582cb65b1dfdd037b))
+* one mis-matched episode no longer renames the programme it sits in ([75de84b](https://github.com/ValenceOSS/Valence/commit/75de84bf55ae9e4945c0c8abf8da098f3e6ef7eb))
+* **server:** a programme is the folder it is filed under, not what the catalogue answered ([04e92ba](https://github.com/ValenceOSS/Valence/commit/04e92bad5867f642ed44d28bcb6bb1ddc476721e))
+* **server:** one mis-matched episode can no longer rename the programme it sits in ([22b85c5](https://github.com/ValenceOSS/Valence/commit/22b85c53cd07389f55bcfd42b3763295a701cb2c))
+
 ## [1.0.0](https://github.com/ValenceOSS/Valence/compare/v0.3.0...v1.0.0) (2026-09-21)
 
 
