@@ -108,6 +108,7 @@ const MONITOR: Monitor = {
     loadAverage: 1.5,
     disks: [],
     graphics: null,
+    graphicsNotes: [],
     artefacts: null,
   },
   queue: { concurrency: 2, paused: false, queued: 1, running: 1, jobs: [] },

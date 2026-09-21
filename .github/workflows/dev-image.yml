@@ -123,6 +123,12 @@ jobs:
             org.opencontainers.image.description=An unreleased build of main, for testing
             org.opencontainers.image.licenses=MIT
 
+      # The commit goes into the version the server reports, so a bug filed against a dev image names
+      # a build that can be found rather than the same `1.0.0-dev` every push produces.
+      - name: Name the commit
+        id: commit
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       - uses: docker/setup-buildx-action@v4
 
       - uses: docker/login-action@v4
@@ -143,7 +149,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: VALENCE_VERSION=${{ needs.version.outputs.next }}-dev
+          build-args: VALENCE_VERSION=${{ needs.version.outputs.next }}-dev.${{ steps.commit.outputs.short }}
           cache-from: type=gha,scope=${{ matrix.image.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
           provenance: false

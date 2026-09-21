@@ -103,6 +103,20 @@ docker compose logs -f valence
 
 On the host, `intel_gpu_top` (Intel), `radeontop` (AMD) or `nvidia-smi` (NVIDIA) shows the card working during a transcode.
 
+### When the graphics tile is blank
+
+If the tile shows a dash, hover over its information icon. The media service now says, source by source, why it could not read a figure, and writes the same line to the container log as `graphics use could not be read`.
+
+| Card   | Where the figure comes from                                                             | What a blank usually means                                                                                                                                                                               |
+| :----- | :-------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NVIDIA | `nvidia-smi`, which the container only has when the NVIDIA Container Toolkit injects it | `nvidia-smi is not installed in this container`. Include `utility` in the device reservation's `capabilities`, as above. Without it the encoder can still work while the figure stays blank.             |
+| AMD    | `gpu_busy_percent` under `/sys/class/drm/*/device`, published by the `amdgpu` driver    | No card in the container has that file. Check that the card is driven by `amdgpu` and that `/sys/class/drm` is visible inside the container, since passing `/dev/dri` through says nothing about `/sys`. |
+| Intel  | The kernel's own per client books for the render node                                   | Only Valence's own encodes are counted, so an idle figure means Valence is not using the card, not that nobody is.                                                                                       |
+
+A card that names itself and reports no utilisation does not stop the search: the other sources are still tried, and the name is shown only where none of them has a number.
+
+The sidebar's encoder label on the admin pages also shows the FFmpeg version the media service is using when hovered, and whether it is the build Valence ships.
+
 ## Choosing a backend
 
 The Hardware acceleration setting has these options.

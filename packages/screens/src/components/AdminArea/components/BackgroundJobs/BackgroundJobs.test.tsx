@@ -31,6 +31,7 @@ const monitor = (jobs: Job[]): Monitor => ({
     loadAverage: 0,
     disks: [],
     graphics: null,
+    graphicsNotes: [],
     artefacts: null,
   },
   queue: { concurrency: 1, paused: false, queued: 0, running: jobs.length, jobs },

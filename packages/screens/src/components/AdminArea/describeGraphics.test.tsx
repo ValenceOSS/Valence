@@ -145,4 +145,21 @@ describe('describeGraphics', () => {
       }).detail,
     ).not.toBe('encoder, not whole card');
   });
+
+  it('points at the reasons when the media service gave some for having no figure', () => {
+    expect(
+      describeGraphics(null, ['NVIDIA: nvidia-smi is not installed in this container']).detail,
+    ).toBe('No reading, hover for why');
+    expect(
+      describeGraphics(
+        {
+          name: 'Card',
+          encoderPercent: null,
+          devicePercent: null,
+          measured: 'wholeMachine' as const,
+        },
+        ['kernel: Card has no utilisation figure to report yet'],
+      ).detail,
+    ).toBe('No reading, hover for why');
+  });
 });

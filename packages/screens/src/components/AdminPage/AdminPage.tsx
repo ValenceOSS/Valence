@@ -21,6 +21,7 @@ import { AdminArea } from '@ValenceScreens/components/AdminArea/AdminArea';
 import { visibleAdminSections } from '@ValenceScreens/components/AdminArea/visibleAdminSections';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { describeAcceleration } from '@ValenceScreens/components/AdminArea/describeAcceleration';
+import { describeFfmpeg } from '@ValenceScreens/components/AdminArea/describeFfmpeg';
 import {
   readSidebarCollapsed,
   saveSidebarCollapsed,
@@ -61,6 +62,8 @@ const AdminPage = () => {
     overview === null
       ? null
       : describeAcceleration(overview.settings.hardwareAccel, overview.transcoder.hardwareAccels);
+
+  const ffmpeg = describeFfmpeg(overview?.transcoder.ffmpegVersion ?? null);
 
   useEffect(() => {
     if (!isLoading && !mayAdminister) {
@@ -138,7 +141,13 @@ const AdminPage = () => {
                 <HoverCard
                   side="right"
                   align="start"
-                  detail={<p className="max-w-xs text-xs leading-relaxed">{acceleration.detail}</p>}
+                  detail={
+                    <div className="flex max-w-xs flex-col gap-2 text-xs leading-relaxed">
+                      <p>{acceleration.detail}</p>
+
+                      {ffmpeg === null ? null : <p className="font-medium text-text">{ffmpeg}</p>}
+                    </div>
+                  }
                 >
                   <span className="block w-full">
                     <Badge size="sm" tone={acceleration.tone} className="w-full justify-center">

@@ -20,7 +20,7 @@ use tracing_subscriber::layer::Context;
 use tracing_subscriber::Layer;
 
 use crate::cache_usage::CacheUse;
-use crate::graphics::GraphicsUse;
+use crate::graphics::{GraphicsUse, Reading};
 use crate::queue::now_ms;
 
 /// How many log lines are kept.
@@ -249,6 +249,8 @@ pub struct ResourceUse {
     pub disks: Vec<DiskUse>,
     /// What the graphics hardware is doing, where the machine will say.
     pub graphics: Option<GraphicsUse>,
+    /// Why no figure was read, source by source, where none was.
+    pub graphics_notes: Vec<String>,
     /// Where rendered artefacts are kept, and whether they will still be there.
     pub artefacts: Option<ArtefactStore>,
 }
@@ -332,7 +334,7 @@ impl Journal {
 pub struct Monitor {
     system: Arc<Mutex<System>>,
     disks: Arc<Mutex<DiskReadings>>,
-    graphics: Arc<Mutex<Option<GraphicsUse>>>,
+    graphics: Arc<Mutex<Reading>>,
     artefacts: Arc<Mutex<Option<ArtefactStore>>>,
     cache: Arc<Mutex<Option<CacheUse>>>,
     journal: Journal,
@@ -391,7 +393,7 @@ impl Monitor {
         Self {
             system: Arc::new(Mutex::new(System::new())),
             disks: Arc::new(Mutex::new(DiskReadings::new())),
-            graphics: Arc::new(Mutex::new(None)),
+            graphics: Arc::new(Mutex::new(Reading::default())),
             artefacts: Arc::new(Mutex::new(None)),
             cache: Arc::new(Mutex::new(None)),
             journal,
@@ -425,9 +427,23 @@ impl Monitor {
 
         tokio::spawn(async move {
             let mut reader = crate::graphics::Reader::new();
+            let mut said = None;
 
             loop {
                 let reading = reader.read().await;
+
+                if said.as_ref() != Some(&reading.notes) {
+                    if reading.notes.is_empty() {
+                        tracing::info!("graphics use is being read");
+                    } else {
+                        tracing::warn!(
+                            "graphics use could not be read: {}",
+                            reading.notes.join("; ")
+                        );
+                    }
+
+                    said = Some(reading.notes.clone());
+                }
 
                 *cell.lock().await = reading;
 
@@ -481,7 +497,10 @@ impl Monitor {
     /// Measures the machine and the processes the service is responsible for.
     pub async fn measure(&self) -> ResourceUse {
         let disks = self.disks.lock().await.read();
-        let graphics = self.graphics.lock().await.clone();
+        let Reading {
+            graphics,
+            notes: graphics_notes,
+        } = self.graphics.lock().await.clone();
         let artefacts = self.artefacts.lock().await.clone();
         let mut system = self.system.lock().await;
 
@@ -530,6 +549,7 @@ impl Monitor {
             load_average: System::load_average().one,
             disks,
             graphics,
+            graphics_notes,
             artefacts,
         }
     }

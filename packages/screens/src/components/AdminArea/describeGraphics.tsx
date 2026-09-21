@@ -10,13 +10,18 @@ import type { Stat } from '@ValenceScreens/components/AdminArea/components/StatS
  * busy one Valence is not using look identical from there.
  *
  * @param graphics - What the monitor read from the card, or null where there is nothing readable.
+ * @param notes - Why nothing was read, where the media service said, so the tile can point at them.
  * @returns The figure, how full the bar should be, and what the figure actually measures.
  */
 const describeGraphics = (
   graphics: Monitor['resources']['graphics'],
+  notes: readonly string[] = [],
 ): Omit<Stat, 'label' | 'detail'> & { detail: string } => {
   if (graphics === null) {
-    return { value: '—', detail: 'No card Valence can read' };
+    return {
+      value: '—',
+      detail: notes.length === 0 ? 'No card Valence can read' : 'No reading, hover for why',
+    };
   }
 
   if (graphics.encoderPercent !== null) {
@@ -36,7 +41,10 @@ const describeGraphics = (
     };
   }
 
-  return { value: '—', detail: 'Nothing readable' };
+  return {
+    value: '—',
+    detail: notes.length === 0 ? 'Nothing readable' : 'No reading, hover for why',
+  };
 };
 
 export { describeGraphics };

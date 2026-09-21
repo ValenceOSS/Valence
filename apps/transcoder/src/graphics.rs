@@ -78,19 +78,40 @@ pub struct GraphicsUse {
     pub measured: Measured,
 }
 
-/// Runs a vendor tool, treating anything short of a clean answer as absence.
+/// Runs a vendor tool, and says why not where it gave no clean answer.
 ///
-/// A missing tool, a tool that fails and a tool that hangs are all the same
-/// thing here: this machine cannot answer, and Valence says so rather than
-/// guessing.
-async fn run(program: &str, args: &[&str]) -> Option<String> {
+/// A missing tool, a tool that fails and a tool that hangs all mean this
+/// machine cannot answer, but they are different problems with different
+/// fixes, so each is told apart rather than being one silence.
+async fn ask(program: &str, args: &[&str]) -> Result<String, String> {
     let call = Command::new(program).args(args).kill_on_drop(true).output();
-    let outcome = tokio::time::timeout(PROBE_TIMEOUT, call).await.ok()?.ok()?;
 
-    outcome
-        .status
-        .success()
-        .then(|| String::from_utf8_lossy(&outcome.stdout).into_owned())
+    let outcome = match tokio::time::timeout(PROBE_TIMEOUT, call).await {
+        Err(_) => {
+            return Err(format!(
+                "{program} did not answer within {} seconds",
+                PROBE_TIMEOUT.as_secs()
+            ));
+        }
+        Ok(Err(problem)) if problem.kind() == std::io::ErrorKind::NotFound => {
+            return Err(format!("{program} is not installed in this container"));
+        }
+        Ok(Err(problem)) => return Err(format!("{program} could not be started: {problem}")),
+        Ok(Ok(outcome)) => outcome,
+    };
+
+    if outcome.status.success() {
+        return Ok(String::from_utf8_lossy(&outcome.stdout).into_owned());
+    }
+
+    let said = String::from_utf8_lossy(&outcome.stderr);
+    let said = said.lines().next().unwrap_or("").trim();
+
+    Err(if said.is_empty() {
+        format!("{program} exited with {}", outcome.status)
+    } else {
+        format!("{program} exited with {}: {said}", outcome.status)
+    })
 }
 
 /// The digits straight after a key, as a percentage.
@@ -117,19 +138,49 @@ fn quoted_after(text: &str, key: &str) -> Option<String> {
 /// encode block on its own.
 ///
 /// A card that does not support the encoder counter prints `[N/A]`, which
-/// fails to parse and is reported as no reading — which is what it is.
-fn parse_nvidia(output: &str) -> Option<GraphicsUse> {
-    let mut fields = output.lines().next()?.split(',').map(str::trim);
-    let name = fields.next()?;
-    let device = fields.next()?;
-    let encoder = fields.next()?;
+/// fails to parse and is reported as no reading — which is what it is. A card
+/// that prints `[N/A]` for both is not an answer at all, and is passed over so
+/// that the sources after this one are still asked, rather than a name with no
+/// numbers ending the search. Where a machine lists several cards, the first
+/// that has a figure is the one reported.
+fn parse_nvidia(output: &str) -> Result<GraphicsUse, String> {
+    let mut named_without_figures = None;
 
-    (!name.is_empty()).then(|| GraphicsUse {
-        name: name.to_owned(),
-        encoder_percent: encoder.parse().ok(),
-        device_percent: device.parse().ok(),
-        measured: Measured::WholeMachine,
-    })
+    for line in output.lines().filter(|line| !line.trim().is_empty()) {
+        let mut fields = line.split(',').map(str::trim);
+
+        let (Some(name), Some(device), Some(encoder)) =
+            (fields.next(), fields.next(), fields.next())
+        else {
+            continue;
+        };
+
+        if name.is_empty() {
+            continue;
+        }
+
+        let reading = GraphicsUse {
+            name: name.to_owned(),
+            encoder_percent: encoder.parse().ok(),
+            device_percent: device.parse().ok(),
+            measured: Measured::WholeMachine,
+        };
+
+        if reading.encoder_percent.is_some() || reading.device_percent.is_some() {
+            return Ok(reading);
+        }
+
+        named_without_figures.get_or_insert_with(|| {
+            format!("nvidia-smi named {name} but gave no utilisation for it (it said {device}, {encoder})")
+        });
+    }
+
+    Err(named_without_figures.unwrap_or_else(|| {
+        format!(
+            "nvidia-smi answered with nothing this can read: {}",
+            output.lines().next().unwrap_or("nothing").trim()
+        )
+    }))
 }
 
 /// What the IO registry said about the accelerator on an Apple machine.
@@ -162,21 +213,32 @@ fn parse_apple(output: &str) -> Option<GraphicsUse> {
     })
 }
 
-async fn read_nvidia() -> Option<GraphicsUse> {
+async fn read_nvidia() -> Result<GraphicsUse, String> {
     parse_nvidia(
-        &run(
+        &ask(
             "nvidia-smi",
             &[
                 "--query-gpu=name,utilization.gpu,utilization.encoder",
                 "--format=csv,noheader,nounits",
             ],
         )
-        .await?,
+        .await
+        .map_err(|why| {
+            if why.contains("not installed") {
+                format!(
+                    "{why}; the NVIDIA container toolkit only brings it when \
+                     NVIDIA_DRIVER_CAPABILITIES includes utility"
+                )
+            } else {
+                why
+            }
+        })?,
     )
 }
 
-async fn read_apple() -> Option<GraphicsUse> {
-    parse_apple(&run("ioreg", &["-r", "-d", "1", "-c", "IOAccelerator"]).await?)
+async fn read_apple() -> Result<GraphicsUse, String> {
+    parse_apple(&ask("ioreg", &["-r", "-d", "1", "-c", "IOAccelerator"]).await?)
+        .ok_or_else(|| "ioreg listed no accelerator with a utilisation figure".to_owned())
 }
 
 /// What the kernel driver said about an AMD card.
@@ -184,13 +246,21 @@ async fn read_apple() -> Option<GraphicsUse> {
 /// Read from sysfs rather than a tool, so this needs nothing installed and no
 /// privileges. Overall utilisation only: the driver does not break out the
 /// encode block.
-async fn read_amd() -> Option<GraphicsUse> {
-    let mut cards = tokio::fs::read_dir("/sys/class/drm").await.ok()?;
+async fn read_amd() -> Result<GraphicsUse, String> {
+    let mut cards = tokio::fs::read_dir("/sys/class/drm")
+        .await
+        .map_err(|problem| {
+            format!("/sys/class/drm cannot be read from this container: {problem}")
+        })?;
+
+    let mut looked_at = Vec::new();
 
     while let Ok(Some(card)) = cards.next_entry().await {
         let device = card.path().join("device");
 
         let Ok(busy) = tokio::fs::read_to_string(device.join("gpu_busy_percent")).await else {
+            looked_at.push(card.file_name().to_string_lossy().into_owned());
+
             continue;
         };
 
@@ -198,7 +268,7 @@ async fn read_amd() -> Option<GraphicsUse> {
             continue;
         };
 
-        return Some(GraphicsUse {
+        return Ok(GraphicsUse {
             name: tokio::fs::read_to_string(device.join("product_name"))
                 .await
                 .map(|name| name.trim().to_owned())
@@ -211,7 +281,15 @@ async fn read_amd() -> Option<GraphicsUse> {
         });
     }
 
-    None
+    Err(if looked_at.is_empty() {
+        "/sys/class/drm lists no graphics cards inside this container".to_owned()
+    } else {
+        format!(
+            "none of {} has a gpu_busy_percent to read, which the amdgpu driver publishes \
+             and other drivers do not",
+            looked_at.join(", ")
+        )
+    })
 }
 
 /// A card's recent readings, and the steady figure they average to.
@@ -277,15 +355,31 @@ impl Smoothed {
 /// are deliberately separate questions. A machine with an Intel card and
 /// nothing transcoding has a card worth naming and no work to report, and
 /// saying "no card Valence can read" of it would be false.
-async fn read_drm(engine: &mut VideoEngine) -> Option<GraphicsUse> {
-    let card = crate::drm_clients::card().await?;
+async fn read_drm(engine: &mut VideoEngine) -> Result<GraphicsUse, String> {
+    let card = crate::drm_clients::card().await.ok_or_else(|| {
+        "no render node under /sys/class/drm, which is what a transcode opens; \
+         /dev/dri says nothing about /sys"
+            .to_owned()
+    })?;
 
-    Some(GraphicsUse {
+    Ok(GraphicsUse {
         name: crate::pci_names::name(card).await,
         encoder_percent: engine.read().await,
         device_percent: None,
         measured: Measured::ValenceOnly,
     })
+}
+
+/// What the sources were asked, and what they said.
+///
+/// A card with no figure and a machine nobody could ask are different things,
+/// and without this both were one empty tile. `notes` says, for each source
+/// that had nothing to report, why not — and is empty once a figure was found,
+/// since what a source that was never needed said is noise.
+#[derive(Debug, Clone, Default)]
+pub struct Reading {
+    pub graphics: Option<GraphicsUse>,
+    pub notes: Vec<String>,
 }
 
 /// Everything needed to keep asking one machine the same question.
@@ -300,6 +394,38 @@ pub struct Reader {
     engine: VideoEngine,
 }
 
+/// Whether a reading carries a number, rather than only a name.
+fn has_a_figure(reading: &GraphicsUse) -> bool {
+    reading.encoder_percent.is_some() || reading.device_percent.is_some()
+}
+
+/// Takes what one source said: its reading where it has a number, and otherwise what to remember
+/// about why it did not.
+fn weigh(
+    source: &str,
+    attempt: Result<GraphicsUse, String>,
+    notes: &mut Vec<String>,
+    named_only: &mut Option<GraphicsUse>,
+) -> Option<GraphicsUse> {
+    match attempt {
+        Ok(reading) if has_a_figure(&reading) => Some(reading),
+        Ok(reading) => {
+            notes.push(format!(
+                "{source}: {} has no utilisation figure to report yet",
+                reading.name
+            ));
+            named_only.get_or_insert(reading);
+
+            None
+        }
+        Err(why) => {
+            notes.push(format!("{source}: {why}"));
+
+            None
+        }
+    }
+}
+
 impl Reader {
     #[must_use]
     pub fn new() -> Self {
@@ -312,25 +438,52 @@ impl Reader {
     /// NVIDIA card beside an integrated one reports the one that can speak
     /// about its encoder, and a card whose driver publishes a whole-machine
     /// figure is read that way rather than through Valence's own share of it.
-    pub async fn read(&mut self) -> Option<GraphicsUse> {
-        let reading = match read_nvidia().await {
-            Some(reading) => Some(reading),
-            None => match read_amd().await {
-                Some(reading) => Some(reading),
-                None => match read_drm(&mut self.engine).await {
-                    Some(reading) => Some(reading),
-                    None => read_apple().await,
-                },
-            },
-        };
+    ///
+    /// A source that names a card but has no number for it does not end the
+    /// search: the sources after it are still asked, and the name is what is
+    /// reported only where none of them has a figure either.
+    pub async fn read(&mut self) -> Reading {
+        let mut notes = Vec::new();
+        let mut named_only: Option<GraphicsUse> = None;
 
-        self.smoothed.push(reading)
+        let mut found = weigh("NVIDIA", read_nvidia().await, &mut notes, &mut named_only);
+
+        if found.is_none() {
+            found = weigh("AMD", read_amd().await, &mut notes, &mut named_only);
+        }
+
+        if found.is_none() {
+            found = weigh(
+                "kernel",
+                read_drm(&mut self.engine).await,
+                &mut notes,
+                &mut named_only,
+            );
+        }
+
+        if found.is_none() && cfg!(target_os = "macos") {
+            match read_apple().await {
+                Ok(reading) => found = Some(reading),
+                Err(why) => notes.push(format!("Apple: {why}")),
+            }
+        }
+
+        let graphics = self.smoothed.push(found.or(named_only));
+
+        Reading {
+            notes: if graphics.as_ref().is_some_and(has_a_figure) {
+                Vec::new()
+            } else {
+                notes
+            },
+            graphics,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_apple, parse_nvidia, GraphicsUse, Measured, Smoothed};
+    use super::{parse_apple, parse_nvidia, weigh, GraphicsUse, Measured, Smoothed};
 
     fn card(encoder: Option<f32>, device: Option<f32>) -> GraphicsUse {
         GraphicsUse {
@@ -489,7 +642,7 @@ mod tests {
 
     #[test]
     fn reads_the_encode_block_where_nvidia_reports_it() {
-        let reading = parse_nvidia("NVIDIA GeForce RTX 4070, 34, 88\n").expect("three fields");
+        let reading = parse_nvidia("NVIDIA GeForce RTX 4070, 34, 88\n").expect("a figure");
 
         assert_eq!(reading.name, "NVIDIA GeForce RTX 4070");
         assert_eq!(reading.encoder_percent, Some(88.0));
@@ -498,7 +651,7 @@ mod tests {
 
     #[test]
     fn keeps_the_card_when_it_will_not_speak_about_its_encoder() {
-        let reading = parse_nvidia("NVIDIA T400, 12, [N/A]\n").expect("three fields");
+        let reading = parse_nvidia("NVIDIA T400, 12, [N/A]\n").expect("a figure");
 
         assert_eq!(reading.encoder_percent, None);
         assert_eq!(reading.device_percent, Some(12.0));
@@ -506,7 +659,7 @@ mod tests {
 
     #[test]
     fn reports_only_the_first_card_rather_than_adding_them_up() {
-        let reading = parse_nvidia("NVIDIA A, 10, 20\nNVIDIA B, 90, 90\n").expect("three fields");
+        let reading = parse_nvidia("NVIDIA A, 10, 20\nNVIDIA B, 90, 90\n").expect("a figure");
 
         assert_eq!(reading.name, "NVIDIA A");
         assert_eq!(reading.encoder_percent, Some(20.0));
@@ -514,7 +667,7 @@ mod tests {
 
     #[test]
     fn keeps_a_reading_labelled_as_the_machine_rather_than_as_our_share_of_it() {
-        let reading = parse_nvidia("NVIDIA T400, 12, 30\n").expect("three fields");
+        let reading = parse_nvidia("NVIDIA T400, 12, 30\n").expect("a figure");
 
         assert_eq!(reading.measured, Measured::WholeMachine);
     }
@@ -541,7 +694,80 @@ mod tests {
 
     #[test]
     fn says_nothing_about_output_it_does_not_understand() {
-        assert!(parse_nvidia("").is_none());
-        assert!(parse_nvidia("Failed to initialise NVML\n").is_none());
+        assert!(parse_nvidia("").is_err());
+        assert!(parse_nvidia("Failed to initialise NVML\n").is_err());
+    }
+
+    #[test]
+    fn passes_over_a_card_that_names_itself_and_gives_no_figures() {
+        let why = parse_nvidia("NVIDIA GeForce RTX 5080, [N/A], [N/A]\n")
+            .expect_err("a name with no numbers is not an answer");
+
+        assert!(
+            why.contains("RTX 5080"),
+            "the reason should name the card: {why}"
+        );
+    }
+
+    #[test]
+    fn takes_the_first_card_that_has_a_figure() {
+        let reading = parse_nvidia("NVIDIA A, [N/A], [N/A]\nNVIDIA B, 40, [N/A]\n")
+            .expect("the second card has a figure");
+
+        assert_eq!(reading.name, "NVIDIA B");
+    }
+
+    #[test]
+    fn keeps_the_reason_a_source_had_nothing() {
+        let mut notes = Vec::new();
+        let mut named = None;
+
+        let found = weigh(
+            "NVIDIA",
+            Err("nvidia-smi is not installed in this container".to_owned()),
+            &mut notes,
+            &mut named,
+        );
+
+        assert!(found.is_none());
+        assert_eq!(
+            notes,
+            ["NVIDIA: nvidia-smi is not installed in this container"]
+        );
+    }
+
+    #[test]
+    fn remembers_a_card_that_has_a_name_and_no_figure_without_ending_the_search() {
+        let mut notes = Vec::new();
+        let mut named = None;
+
+        let found = weigh(
+            "kernel",
+            Ok(card_named("Intel UHD")),
+            &mut notes,
+            &mut named,
+        );
+
+        assert!(found.is_none(), "a name alone must not end the search");
+        assert_eq!(named.map(|card| card.name), Some("Intel UHD".to_owned()));
+        assert_eq!(notes.len(), 1);
+    }
+
+    #[test]
+    fn takes_a_reading_that_has_a_figure() {
+        let mut notes = Vec::new();
+        let mut named = None;
+
+        let found = weigh("AMD", Ok(card(None, Some(40.0))), &mut notes, &mut named);
+
+        assert_eq!(found.and_then(|reading| reading.device_percent), Some(40.0));
+        assert!(notes.is_empty());
+    }
+
+    fn card_named(name: &str) -> GraphicsUse {
+        GraphicsUse {
+            name: name.to_owned(),
+            ..card(None, None)
+        }
     }
 }

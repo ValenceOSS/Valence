@@ -82,6 +82,7 @@ const MONITOR: Monitor = {
       devicePercent: 41,
       measured: 'wholeMachine',
     },
+    graphicsNotes: [],
     artefacts: null,
   },
   queue: {
@@ -523,6 +524,7 @@ describe('AdminArea', () => {
           devicePercent: null,
           measured: 'wholeMachine',
         },
+        graphicsNotes: [],
       },
     });
 

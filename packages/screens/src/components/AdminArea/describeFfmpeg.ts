@@ -1,36 +1,29 @@
-const REPORTED_VERSION = /ffmpeg version (?<version>\S+)/u;
-
-const OUR_BUILD = /-(?:Valence|Valence)$/u;
-
-const LONGEST_UNPARSED = 24;
+const OUR_BUILDS = ['-Valence', '-Flux'];
 
 /**
- * Names the FFmpeg the media service is running, and says whose build it is.
+ * Says which FFmpeg the transcoder is using, in a line a person can quote in a bug report.
  *
- * Our own build stamps its name into the version through `--extra-version`, so the two can be told
- * apart without asking the transcoder anything further. Both names are matched: the binaries already
- * fetched and already in containers say `-Valence`, and will go on saying it until they are rebuilt.
- * Recognising only the new one would quietly reclassify every existing build as a stranger. Worth telling apart: a machine that fell
- * back to whatever was on PATH keeps working and loses the filters that hold frames on the device,
- * which is invisible from a dashboard that calls every build the same thing.
+ * Reads the banner FFmpeg prints about itself, whose third word is the version, and says whether the
+ * build is the one Valence ships. That difference matters: a machine's own FFmpeg keeps working and
+ * quietly loses the filters that hold frames on the graphics card, which looks like a slow computer.
  *
- * @param reported - What the transcoder said FFmpeg calls itself, or null where it never answered.
- * @returns The build's name and version, trimmed of the paragraph of configuration that follows it.
+ * @param banner - The first line of `ffmpeg -version`, or null where the media service did not say.
+ * @returns The line to show, or null where there is nothing worth saying.
  */
-const describeFfmpeg = (reported: string | null): string => {
-  if (reported === null) {
-    return 'ffmpeg unknown';
+const describeFfmpeg = (banner: string | null): string | null => {
+  if (banner === null || !banner.startsWith('ffmpeg version')) {
+    return null;
   }
 
-  const version = REPORTED_VERSION.exec(reported)?.groups?.['version'];
+  const version = banner.split(/\s+/u)[2];
 
-  if (version === undefined) {
-    return `ffmpeg ${reported.slice(0, LONGEST_UNPARSED)}`;
+  if (version === undefined || version === '') {
+    return null;
   }
 
-  return OUR_BUILD.test(version)
-    ? `valence-ffmpeg ${version.replace(OUR_BUILD, '')}`
-    : `ffmpeg ${version}`;
+  return OUR_BUILDS.some((name) => banner.includes(name))
+    ? `FFmpeg ${version}, the build Valence ships`
+    : `FFmpeg ${version}, not the build Valence ships`;
 };
 
 export { describeFfmpeg };

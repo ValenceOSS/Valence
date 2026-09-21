@@ -72,6 +72,7 @@ import { valenceMemoryUse } from './valenceMemoryUse';
 import { memoryEnvelope } from './memoryEnvelope';
 import { libraryDisk } from './libraryDisk';
 import { describeGraphics } from './describeGraphics';
+import { describeFfmpeg } from './describeFfmpeg';
 import { describeCpuShare } from './describeCpuShare';
 import { describeValenceMemory } from './describeValenceMemory';
 import { describeAcceleration } from './describeAcceleration';
@@ -608,6 +609,8 @@ const AdminArea = ({
       ? null
       : describeToneMapping(overview.transcoder.toneMapping, overview.transcoder.hardwareToneMaps);
 
+  const ffmpegLine = describeFfmpeg(overview?.transcoder.ffmpegVersion ?? null);
+
   const graphicsInfo = (
     <dl className="flex flex-col gap-2 text-xs">
       <div className="flex items-baseline justify-between gap-3">
@@ -627,6 +630,25 @@ const AdminArea = ({
 
       {toneMapping?.detail === null || toneMapping?.detail === undefined ? null : (
         <dd className="text-text-muted">{toneMapping.detail}</dd>
+      )}
+
+      {ffmpegLine === null ? null : (
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="shrink-0 text-text-muted">Transcoder</dt>
+          <dd className="min-w-0 text-right text-text">{ffmpegLine}</dd>
+        </div>
+      )}
+
+      {(resources?.graphicsNotes ?? []).length === 0 ? null : (
+        <div className="flex flex-col gap-1 border-t border-[var(--surface-line)] pt-2">
+          <dt className="text-text-muted">Why there is no figure</dt>
+
+          {(resources?.graphicsNotes ?? []).map((note) => (
+            <dd key={note} className="text-text">
+              {note}
+            </dd>
+          ))}
+        </div>
       )}
     </dl>
   );
@@ -787,7 +809,7 @@ const AdminArea = ({
             },
             {
               label: 'Graphics',
-              ...describeGraphics(resources?.graphics ?? null),
+              ...describeGraphics(resources?.graphics ?? null, resources?.graphicsNotes ?? []),
               info: graphicsInfo,
             },
             {
