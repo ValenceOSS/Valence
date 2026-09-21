@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UploadMediaDialog } from './UploadMediaDialog';
@@ -20,6 +20,13 @@ const FILMS: Library = {
   takesRequests: true,
   requestProfileId: null,
   requestPath: null,
+};
+
+type AnEntry = {
+  isFile: boolean;
+  isDirectory: boolean;
+  fullPath: string;
+  file: (ok: (file: File) => void) => void;
 };
 
 const fileAt = (name: string, relativePath = ''): File => {
@@ -65,7 +72,7 @@ describe('UploadMediaDialog', () => {
   });
 
   it('lists what was chosen as waiting, leaving out what the library would not read', async () => {
-    const actor = userEvent.setup();
+    const actor = userEvent.setup({ applyAccept: false });
 
     draw();
 
@@ -79,6 +86,83 @@ describe('UploadMediaDialog', () => {
     expect(within(list).getByText('Arrival.mkv')).toBeInTheDocument();
     expect(within(list).getByText('Waiting')).toBeInTheDocument();
     expect(within(list).queryByText('cover.jpg')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('1 file was left out because this library does not read it.'),
+    ).toBeInTheDocument();
+  });
+
+  it('offers only what the library reads when choosing files', () => {
+    draw();
+
+    const accepted = screen.getByLabelText(/Choose files to upload/).getAttribute('accept') ?? '';
+
+    expect(accepted).toContain('.mkv');
+    expect(accepted).toContain('.mp4');
+    expect(accepted).not.toContain('.mp3');
+  });
+
+  it('offers tracks, not films, to a music library', () => {
+    draw({ ...FILMS, kind: 'music', name: 'Music' });
+
+    const accepted = screen.getByLabelText(/Choose files to upload/).getAttribute('accept') ?? '';
+
+    expect(accepted).toContain('.mp3');
+    expect(accepted).not.toContain('.mkv');
+    expect(screen.getByText(/Music takes .* .mp3/)).toBeInTheDocument();
+  });
+
+  it('takes files and folders dropped on it, queuing what the library reads and saying what it left out', async () => {
+    draw();
+
+    const zone = screen.getByText('Drop files or folders here').closest('label') ?? document.body;
+
+    fireEvent.drop(zone, {
+      dataTransfer: {
+        items: [
+          {
+            webkitGetAsEntry: () => ({
+              isFile: false,
+              isDirectory: true,
+              fullPath: '/Arrival (2016)',
+              createReader: () => {
+                let given = false;
+
+                return {
+                  readEntries: (done: (entries: AnEntry[]) => void) => {
+                    done(
+                      given
+                        ? []
+                        : [
+                            {
+                              isFile: true,
+                              isDirectory: false,
+                              fullPath: '/Arrival (2016)/Arrival.mkv',
+                              file: (ok: (file: File) => void) => {
+                                ok(new File(['x'], 'Arrival.mkv'));
+                              },
+                            },
+                            {
+                              isFile: true,
+                              isDirectory: false,
+                              fullPath: '/Arrival (2016)/poster.jpg',
+                              file: (ok: (file: File) => void) => {
+                                ok(new File(['x'], 'poster.jpg'));
+                              },
+                            },
+                          ],
+                    );
+                    given = true;
+                  },
+                };
+              },
+            }),
+          },
+        ],
+        files: [],
+      },
+    });
+
+    expect(await screen.findByText('Arrival (2016)/Arrival.mkv')).toBeInTheDocument();
     expect(
       screen.getByText('1 file was left out because this library does not read it.'),
     ).toBeInTheDocument();

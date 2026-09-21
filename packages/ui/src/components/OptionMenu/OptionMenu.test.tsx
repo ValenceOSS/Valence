@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { OptionMenu } from './OptionMenu';
@@ -186,5 +186,85 @@ describe('OptionMenu', () => {
 
     expect(header).toHaveClass('sticky', 'top-0');
     expect(header.className).toContain('bg-[var(--color-surface-raised)]');
+  });
+});
+
+describe('OptionMenu anchored to something that does its own job', () => {
+  const draw = (onGo = vi.fn(), onSelect = vi.fn()) => {
+    render(
+      <OptionMenu
+        label="Which library"
+        anchor={<button onClick={onGo}>Films</button>}
+        groups={[speed(onSelect)]}
+      />,
+    );
+
+    return userEvent.setup();
+  };
+
+  it('opens when the pointer rests on what it is anchored to, without pressing anything', async () => {
+    const user = draw();
+
+    expect(screen.queryByRole('menuitemradio', { name: '2x' })).not.toBeInTheDocument();
+
+    await user.hover(screen.getByRole('button', { name: 'Films' }));
+
+    expect(await screen.findByRole('menuitemradio', { name: '2x' })).toBeInTheDocument();
+  });
+
+  it('still does what pressing the anchor always did, and does not open a menu for the press', async () => {
+    const onGo = vi.fn();
+    const user = draw(onGo);
+
+    await user.click(screen.getByRole('button', { name: 'Films' }));
+
+    expect(onGo).toHaveBeenCalledTimes(1);
+  });
+
+  it('takes a choice like any other menu, and closes on it', async () => {
+    const onSelect = vi.fn();
+    const user = draw(vi.fn(), onSelect);
+
+    await user.hover(screen.getByRole('button', { name: 'Films' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: '2x' }));
+
+    expect(onSelect).toHaveBeenCalledWith('2');
+    await waitFor(() => {
+      expect(screen.queryByRole('menuitemradio', { name: '2x' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('goes away once the pointer has left it and the menu both', async () => {
+    const user = draw();
+
+    await user.hover(screen.getByRole('button', { name: 'Films' }));
+    await screen.findByRole('menuitemradio', { name: '2x' });
+    await user.unhover(screen.getByRole('button', { name: 'Films' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('menuitemradio', { name: '2x' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('stays while the pointer is on the menu, having crossed from what opened it', async () => {
+    const user = draw();
+
+    await user.hover(screen.getByRole('button', { name: 'Films' }));
+    const choice = await screen.findByRole('menuitemradio', { name: '2x' });
+
+    await user.unhover(screen.getByRole('button', { name: 'Films' }));
+    await user.hover(choice);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(screen.getByRole('menuitemradio', { name: '2x' })).toBeInTheDocument();
+  });
+
+  it('opens from the keyboard with the down arrow, for anybody with no pointer', async () => {
+    const user = draw();
+
+    screen.getByRole('button', { name: 'Films' }).focus();
+    await user.keyboard('{ArrowDown}');
+
+    expect(await screen.findByRole('menuitemradio', { name: '2x' })).toBeInTheDocument();
   });
 });
