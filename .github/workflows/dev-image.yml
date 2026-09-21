@@ -1,43 +1,83 @@
 name: Dev image
 
-# Builds an image from any branch, by hand, so a change can be run somewhere real before it merges.
+# Builds the images from main every time something is merged, so what has just landed can be pulled
+# and tried without waiting for a release.
 #
-# Publish is off by default: most of the time the question is "does it build", and an image nobody
-# asked for costs registry space and confuses anybody reading the tag list. Turn it on when you want
-# to pull the thing onto a server or a television and actually watch something through it.
+# A dev image is tagged for the release it is on the way to — `0.3.1-dev` — and moves with every
+# merge until that release is cut, alongside `dev`, which always means the newest, and `sha-3a2e85d`,
+# which is that one commit. It is never `latest`: that tag belongs to a release and to nothing else,
+# so a server following it cannot be moved onto unreleased code by a merge. The release itself is
+# built by release.yml, and an image somebody asked for by hand from a pull request by
+# nightly-image.yml.
 #
-# Tags are named for where they came from, never `latest`, so a dev image can never be mistaken for a
-# release or picked up by a deployment following the moving tag.
+# Unlike ci.yml this runs on its own. That workflow is held back because it costs real minutes; this
+# repository is public, so Actions minutes are free and an image that only exists when somebody
+# remembers to press a button is worse than one that is always current.
 
 on:
-  workflow_dispatch:
-    inputs:
-      ref:
-        description: Branch, tag or sha to build
-        required: false
-        default: ''
-      publish:
-        description: Push it to the registry, rather than only proving it builds
-        type: boolean
-        required: false
-        default: false
-      platforms:
-        description: Architectures to build
-        type: choice
-        options:
-          - linux/amd64
-          - linux/amd64,linux/arm64
-        required: false
-        default: linux/amd64
+  push:
+    branches: [main]
 
 concurrency:
-  group: dev-image-${{ inputs.ref || github.ref }}
+  group: dev-image-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  image:
-    name: Build${{ inputs.publish && ' and publish' || '' }}
+  version:
+    name: Work out the next version
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    outputs:
+      next: ${{ steps.next.outputs.next }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # The release that is being worked towards. Release-please keeps a pull request open for it, and
+      # its title names the version it has decided on — `chore(main): release 1.0.0` — which is the
+      # honest answer, including when a commit asked for a particular number with `Release-As`. Where
+      # there is no such pull request the next patch after the last release stands in: a name that
+      # says "on the way to something after the last release", which is all a dev image needs to say.
+      - name: Read the release being prepared
+        id: next
+        run: |
+          title="$(gh pr list --repo "${REPO}" --head "${BRANCH}" --state open --json title --jq '.[0].title // ""')"
+          next="$(echo "${title}" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
+
+          if [ -z "${next}" ]; then
+            last="$(jq -r '.["."]' .release-please-manifest.json)"
+            IFS=. read -r major minor patch <<< "${last}"
+            next="${major}.${minor}.$((patch + 1))"
+          fi
+
+          echo "next=${next}" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BRANCH: release-please--branches--main--components--valence
+
+  image:
+    name: Image (${{ matrix.image.name }})
+    needs: version
+    runs-on: ubuntu-latest
+    # Two images from one repository: Valence itself, and the optional requests service beside it.
+    # Each is built on its own runner with its own cache, since they share nothing but contracts.
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - name: valence
+            file: Dockerfile
+            title: Valence
+            description: A self-hosted streaming platform
+          - name: valence-requests
+            file: apps/requests/Dockerfile
+            title: Valence requests
+            description: The optional service that finds and downloads what Valence is asked for
 
     permissions:
       contents: read
@@ -45,17 +85,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.ref || github.ref }}
 
-      - name: Work out what to call it
+      # A registry accepts a lower case name and this owner is not spelt that
+      # way, so it is folded here rather than written out and left to drift.
+      - name: Work out what to call the image
         id: named
-        run: |
-          echo "image=ghcr.io/${OWNER,,}/valence" >> "$GITHUB_OUTPUT"
-          echo "slug=$(echo "${REF}" | tr '/' '-' | tr -cd '[:alnum:]-_.' | cut -c1-40)" >> "$GITHUB_OUTPUT"
+        run: echo "image=ghcr.io/${OWNER,,}/${NAME}" >> "$GITHUB_OUTPUT"
         env:
           OWNER: ${{ github.repository_owner }}
-          REF: ${{ inputs.ref || github.ref_name }}
+          NAME: ${{ matrix.image.name }}
 
       - name: Work out how to tag it
         id: meta
@@ -63,62 +101,48 @@ jobs:
         with:
           images: ${{ steps.named.outputs.image }}
           tags: |
-            type=raw,value=dev-${{ steps.named.outputs.slug }}
-            type=raw,value=dev-${{ steps.named.outputs.slug }}-${{ github.run_number }}
+            type=raw,value=${{ needs.version.outputs.next }}-dev
+            type=raw,value=dev
+            type=sha,format=short
           labels: |
-            org.opencontainers.image.title=Valence (dev)
-            org.opencontainers.image.description=An unreleased build, for testing
+            org.opencontainers.image.title=${{ matrix.image.title }} (dev)
+            org.opencontainers.image.description=An unreleased build of main, for testing
             org.opencontainers.image.licenses=MIT
-
-      - uses: docker/setup-qemu-action@v4
-        if: contains(inputs.platforms, 'arm64')
 
       - uses: docker/setup-buildx-action@v4
 
       - uses: docker/login-action@v4
-        if: ${{ inputs.publish }}
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build${{ inputs.publish && ' and push' || '' }}
+      # amd64 alone. The other half of a multi-architecture build runs under
+      # emulation, and a release-mode Rust build under QEMU takes long enough
+      # to be worth deciding on rather than inheriting.
+      - name: Build and push
         uses: docker/build-push-action@v7
         with:
           context: .
-          platforms: ${{ inputs.platforms }}
-          push: ${{ inputs.publish }}
-          load: ${{ !inputs.publish && inputs.platforms == 'linux/amd64' }}
+          file: ${{ matrix.image.file }}
+          platforms: linux/amd64
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          build-args: VALENCE_VERSION=${{ needs.version.outputs.next }}-dev
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
           provenance: false
 
-      - name: Say how to run it
+      - name: Say where it went
         run: |
           {
-            echo "### Dev image"
-            echo
-            if [ "${PUBLISHED}" = "true" ]; then
-              echo "Pull and run it:"
-              echo
-              echo '```bash'
-              echo "docker pull ${TAG}"
-              echo "docker run --rm -p 8420:8420 ${TAG}"
-              echo '```'
-              echo
-              echo "It needs a database and a media mount to do anything useful:"
-              echo "see \`compose.yaml\` and point the \`valence\` service at this tag."
-            else
-              echo "Built, not published. Run this again with **publish** ticked to push it."
-            fi
+            echo "### Published (${NAME})"
             echo
             echo '```'
             echo "${TAGS}"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
         env:
-          PUBLISHED: ${{ inputs.publish }}
+          NAME: ${{ matrix.image.name }}
           TAGS: ${{ steps.meta.outputs.tags }}
-          TAG: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}

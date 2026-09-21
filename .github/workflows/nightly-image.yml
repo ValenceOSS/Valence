@@ -1,0 +1,180 @@
+name: Nightly image
+
+# Builds an image by hand, from a pull request or any branch, tag or sha, so a change can be run
+# somewhere real before it merges.
+#
+# Nothing starts this but a person pressing the button. It is tagged for the commit it came from —
+# `3a2e85d-nightly` — and, when it was built from a pull request, `pr-123-nightly` as well, which
+# moves to that pull request's newest build. It is never `latest`, never a version and never `dev`,
+# so nothing following a moving tag can pick one up by accident.
+#
+# Publishing is on by default, since the reason to run this is to pull the result onto a server or a
+# television and watch something through it. Untick it to prove the image builds without leaving
+# anything in the registry.
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number to build. Leave empty to build the ref below instead
+        required: false
+        default: ''
+      ref:
+        description: Branch, tag or sha to build, where no pull request is given
+        required: false
+        default: ''
+      publish:
+        description: Push it to the registry, rather than only proving it builds
+        type: boolean
+        required: false
+        default: true
+      platforms:
+        description: Architectures to build
+        type: choice
+        options:
+          - linux/amd64
+          - linux/amd64,linux/arm64
+        required: false
+        default: linux/amd64
+
+concurrency:
+  group: nightly-image-${{ inputs.pr || inputs.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source:
+    name: Work out what to build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+      short: ${{ steps.commit.outputs.short }}
+
+    steps:
+      - name: Find the commit
+        id: commit
+        run: |
+          if [ -n "${PR}" ]; then
+            sha="$(gh pr view "${PR}" --repo "${REPO}" --json headRefOid --jq .headRefOid)"
+          elif [ -n "${REF}" ]; then
+            sha="$(gh api "repos/${REPO}/commits/${REF}" --jq .sha)"
+          else
+            sha="${GITHUB_SHA}"
+          fi
+
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "short=${sha:0:7}" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ inputs.pr }}
+          REF: ${{ inputs.ref }}
+
+  image:
+    name: Image (${{ matrix.image.name }})
+    needs: source
+    runs-on: ubuntu-latest
+    # Two images from one repository: Valence itself, and the optional requests service beside it.
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - name: valence
+            file: Dockerfile
+            title: Valence
+            description: A self-hosted streaming platform
+          - name: valence-requests
+            file: apps/requests/Dockerfile
+            title: Valence requests
+            description: The optional service that finds and downloads what Valence is asked for
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+
+      # A registry accepts a lower case name and this owner is not spelt that way, so it is folded
+      # here rather than written out and left to drift.
+      - name: Work out what to call the image
+        id: named
+        run: echo "image=ghcr.io/${OWNER,,}/${NAME}" >> "$GITHUB_OUTPUT"
+        env:
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ matrix.image.name }}
+
+      - name: Work out how to tag it
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ steps.named.outputs.image }}
+          tags: |
+            type=raw,value=${{ needs.source.outputs.short }}-nightly
+            type=raw,value=pr-${{ inputs.pr }}-nightly,enable=${{ inputs.pr != '' }}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.image.title }} (nightly)
+            org.opencontainers.image.description=An unreleased build made by hand, for testing
+            org.opencontainers.image.revision=${{ needs.source.outputs.sha }}
+            org.opencontainers.image.licenses=MIT
+
+      - uses: docker/setup-qemu-action@v4
+        if: contains(inputs.platforms, 'arm64')
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        if: ${{ inputs.publish }}
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build${{ inputs.publish && ' and push' || '' }}
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.image.file }}
+          platforms: ${{ inputs.platforms }}
+          push: ${{ inputs.publish }}
+          load: ${{ !inputs.publish && inputs.platforms == 'linux/amd64' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: VALENCE_VERSION=${{ needs.source.outputs.short }}-nightly
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
+          provenance: false
+
+      - name: Say how to run it
+        run: |
+          {
+            echo "### Nightly image (${NAME})"
+            echo
+            if [ "${PUBLISHED}" = "true" ]; then
+              echo "Pull and run it:"
+              echo
+              echo '```bash'
+              echo "docker pull ${TAG}"
+              echo '```'
+              echo
+              echo "It needs a database and a media mount to do anything useful:"
+              echo "see \`compose.yaml\` and point the service at this tag."
+            else
+              echo "Built, not published. Run this again with **publish** ticked to push it."
+            fi
+            echo
+            echo '```'
+            echo "${TAGS}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          NAME: ${{ matrix.image.name }}
+          PUBLISHED: ${{ inputs.publish }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+          TAG: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
