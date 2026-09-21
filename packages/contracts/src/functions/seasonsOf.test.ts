@@ -54,6 +54,17 @@ describe('seasonsOf', () => {
     ).toBe('library');
   });
 
+  it('says a season the library already holds is here, whoever fetched it', () => {
+    expect(seasonsOf(EPISODES, [], new Map([[1, 2]]))[1]?.standing).toBe('library');
+    expect(seasonsOf(EPISODES, [], new Map([[1, 1]]))[1]?.standing).toBe('partly');
+  });
+
+  it('counts an episode once where the library holds what was also filed for it', () => {
+    expect(
+      seasonsOf(EPISODES, asking({ season: 1, state: 'filed' }), new Map([[1, 1]]))[1]?.standing,
+    ).toBe('partly');
+  });
+
   it('counts what was asked across every request for the series', () => {
     expect(
       seasonsOf(EPISODES, [

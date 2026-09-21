@@ -1376,6 +1376,38 @@ describe('requests for films and series, through the server', () => {
     );
   });
 
+  it('says a season the library already holds is here, whoever fetched it', async () => {
+    const asking = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: {
+        ...NO_DISCOVERY,
+        lookup: {
+          ...NO_DISCOVERY.lookup,
+          episodesHeld: (tmdbId: string) =>
+            Promise.resolve(tmdbId === '95396' ? new Map([[1, 2]]) : new Map<number, number>()),
+        },
+      },
+      describeForRequest: () =>
+        Promise.resolve({
+          ...DUNE,
+          episodes: [
+            { season: 1, episode: 1, title: '', airDate: '2022-02-18' },
+            { season: 1, episode: 2, title: '', airDate: '2022-02-25' },
+            { season: 2, episode: 1, title: '', airDate: null },
+          ],
+        }),
+    });
+
+    expect(await (await asking.ask('/api/requests/catalogue/series/95396/seasons')).json()).toEqual(
+      [
+        { season: 1, episodeCount: 2, firstAired: '2022-02-18', standing: 'library' },
+        { season: 2, episodeCount: 1, firstAired: null, standing: 'askable' },
+      ],
+    );
+  });
+
   it('lists the seasons a series has for whoever may ask', async () => {
     const asking = await build({
       isOn: true,

@@ -23,6 +23,7 @@ const aLookup = (
   return {
     films: held('films'),
     series: held('series'),
+    episodesHeld: () => Promise.resolve(new Map<number, number>()),
     artists: held('artists'),
     albums: held('albums'),
     artistsNamed: held('artistsNamed'),

@@ -44,6 +44,8 @@ const STANDING_TONES: Readonly<Record<SeasonStanding, BadgeTone>> = {
  * a series still running goes on being fetched as it airs. Ticking them one by one comes to the
  * same thing, which is what a person ticking all of them means.
  *
+ * Each season says where it stands, so nobody asks again for what is already on the shelf.
+ *
  * @param tmdbId - The series' catalogue id.
  * @param seasons - The seasons chosen, or null for every one.
  * @param onChange - Told the seasons as they change.

@@ -4534,9 +4534,10 @@ const createApp = ({
     }
 
     const { tmdbId } = context.req.valid('param');
-    const [catalogue, requested] = await Promise.all([
+    const [catalogue, requested, held] = await Promise.all([
       describeForRequest(tmdbId, 'series'),
       everyRequest(),
+      discovery.lookup.episodesHeld(tmdbId.toString()),
     ]);
 
     return catalogue === null
@@ -4545,6 +4546,7 @@ const createApp = ({
           seasonsOf(
             catalogue.episodes,
             requested.filter((request) => request.kind === 'series' && request.tmdbId === tmdbId),
+            held,
           ),
           200,
         );
