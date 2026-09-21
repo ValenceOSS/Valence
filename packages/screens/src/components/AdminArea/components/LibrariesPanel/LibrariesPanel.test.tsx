@@ -98,6 +98,47 @@ describe('LibrariesPanel', () => {
     });
   });
 
+  it('offers to generate previews for films and programmes, which have them', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <LibrariesPanel
+        {...props}
+        libraries={[
+          library({ name: 'Films' }),
+          library({ id: 'shows-1', name: 'Shows', kind: 'shows', path: '/media/shows' }),
+        ]}
+      />,
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Actions for Films' }));
+
+    expect(
+      await screen.findByRole('menuitem', { name: /Generate missing previews/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('does not offer previews for music or books, which have none to generate', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <LibrariesPanel
+        {...props}
+        libraries={[
+          library({ id: 'music-1', name: 'Music', kind: 'music', path: '/media/music' }),
+          library({ id: 'books-1', name: 'Books', kind: 'books', path: '/media/books' }),
+        ]}
+      />,
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Actions for Music' }));
+    await screen.findByRole('menuitem', { name: /Scan for changes/ });
+
+    expect(
+      screen.queryByRole('menuitem', { name: /Generate missing previews/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it('labels a library with the type it was given rather than the kind it reads as', () => {
     render(
       <LibrariesPanel

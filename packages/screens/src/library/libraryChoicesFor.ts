@@ -11,16 +11,17 @@ const PLACES = [
     everyLabel: 'All programme libraries',
     label: 'Programme library',
   },
+  { place: 'read', kind: 'books', everyLabel: 'All book libraries', label: 'Book library' },
 ] as const satisfies readonly {
-  place: 'films' | 'shows';
+  place: 'films' | 'shows' | 'read';
   kind: LibraryKind;
   everyLabel: string;
   label: string;
 }[];
 
 /**
- * Works out, for films and for programmes, the choice between the libraries that hold them — offered
- * only where there is more than one library to choose between.
+ * Works out, for films, programmes and books, the choice between the libraries that hold them —
+ * offered only where there is more than one library to choose between.
  *
  * @param libraries - Every library there is.
  * @param selectedId - The library the address names, or null for all of them.
@@ -31,7 +32,7 @@ const libraryChoicesFor = (
   libraries: readonly Library[],
   selectedId: string | null,
   onSelect: (libraryId: string | null) => void,
-): Partial<Record<'films' | 'shows', NavBarChoices>> =>
+): Partial<Record<'films' | 'shows' | 'read', NavBarChoices>> =>
   Object.fromEntries(
     PLACES.flatMap(({ place, kind, everyLabel, label }) => {
       const held = libraries.filter((library) => library.kind === kind);

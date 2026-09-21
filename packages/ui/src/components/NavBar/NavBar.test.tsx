@@ -77,6 +77,44 @@ describe('NavBar', () => {
     expect(onSelect).toHaveBeenCalledWith('lib-4k');
   });
 
+  it('offers the libraries when the pointer rests on the place itself, and goes there when pressed', async () => {
+    const onSelect = vi.fn();
+    const onChoose = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <NavBar
+        {...props}
+        onSelect={onSelect}
+        items={[
+          { id: 'home', label: 'Home' },
+          {
+            id: 'films',
+            label: 'Films',
+            choices: {
+              label: 'Which films library',
+              options: [
+                { id: 'all', label: 'All film libraries' },
+                { id: 'lib-4k', label: '4K films' },
+              ],
+              selectedId: 'all',
+              onSelect: onChoose,
+            },
+          },
+        ]}
+      />,
+    );
+
+    await user.hover(screen.getByRole('button', { name: 'Films' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /4K films/ }));
+
+    expect(onChoose).toHaveBeenCalledWith('lib-4k');
+
+    await user.click(screen.getByRole('button', { name: 'Films' }));
+
+    expect(onSelect).toHaveBeenCalledWith('films');
+  });
+
   it('offers no choice beside a place that has only the one library', () => {
     render(<NavBar {...props} />);
 

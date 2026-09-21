@@ -15,7 +15,8 @@ type MenuGroup = {
 
 type OptionMenuProps = {
   label: string;
-  trigger: ReactNode;
+  trigger?: ReactNode;
+  anchor?: ReactNode;
   groups: MenuGroup[];
   footer?: ReactNode;
   isDisabled?: boolean;

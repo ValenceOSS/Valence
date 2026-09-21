@@ -21,7 +21,7 @@ import type { Book } from '@ValenceContracts/schemas/Book';
  */
 const BooksPage = () => {
   const go = useNavigate();
-  const { go: goTo } = usePlace();
+  const { place, go: goTo } = usePlace();
   const { mayAdminister } = useWhatIMayDo();
   const open = (book: Book) => {
     goTo({ book: book.id });
@@ -48,6 +48,7 @@ const BooksPage = () => {
 
         <BookShelf
           onOpen={open}
+          libraryId={place.library}
           {...(mayAdminister
             ? {
                 onAddLibrary: () => {

@@ -1,7 +1,4 @@
-import { AUDIO_FILE_EXTENSIONS } from '@ValenceContracts/constants/AUDIO_FILE_EXTENSIONS';
-import { BOOK_FILE_FORMATS } from '@ValenceContracts/constants/BOOK_FILE_FORMATS';
-import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
-import { VIDEO_FILE_EXTENSIONS } from '@ValenceContracts/constants/VIDEO_FILE_EXTENSIONS';
+import { uploadExtensionsFor } from '@ValenceContracts/functions/uploadExtensionsFor';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 
 /**
@@ -24,17 +21,7 @@ const isUploadableTo = (kind: LibraryKind, fileName: string): boolean => {
     return false;
   }
 
-  const extension = name.slice(at + 1).toLowerCase();
-
-  switch (kind) {
-    case 'movies':
-    case 'shows':
-      return VIDEO_FILE_EXTENSIONS.has(extension) || TEXT_SUBTITLE_EXTENSIONS.has(extension);
-    case 'music':
-      return AUDIO_FILE_EXTENSIONS.has(extension);
-    case 'books':
-      return BOOK_FILE_FORMATS.has(extension);
-  }
+  return uploadExtensionsFor(kind).includes(name.slice(at + 1).toLowerCase());
 };
 
 export { isUploadableTo };

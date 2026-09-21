@@ -250,15 +250,20 @@ const LibrariesPanel = ({
                         live.current.setRereading(row.original);
                       },
                     },
-                    {
-                      id: 'previews',
-                      label: 'Generate missing previews',
-                      icon: <Icon of={ImagesIcon} size={15} />,
-                      isDisabled: readingOf(live.current.progress, row.original.id) !== undefined,
-                      onChoose: () => {
-                        live.current.onRegeneratePreviews(row.original.id);
-                      },
-                    },
+                    ...(row.original.kind === 'movies' || row.original.kind === 'shows'
+                      ? [
+                          {
+                            id: 'previews',
+                            label: 'Generate missing previews',
+                            icon: <Icon of={ImagesIcon} size={15} />,
+                            isDisabled:
+                              readingOf(live.current.progress, row.original.id) !== undefined,
+                            onChoose: () => {
+                              live.current.onRegeneratePreviews(row.original.id);
+                            },
+                          },
+                        ]
+                      : []),
                   ],
                 },
                 {

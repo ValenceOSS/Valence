@@ -213,4 +213,101 @@ describe('FilePicker', () => {
 
     expect(onPickMany).not.toHaveBeenCalled();
   });
+
+  describe('as somewhere to drop files', () => {
+    const entryFor = (name: string) => ({
+      isFile: true,
+      isDirectory: false,
+      fullPath: `/${name}`,
+      file: (done: (file: File) => void) => {
+        done(new File(['x'], name));
+      },
+    });
+
+    it('takes files and folders dropped on it, and reports what was in them', async () => {
+      const onPickMany = vi.fn();
+
+      render(
+        <FilePicker label="Drop films here" onPickMany={onPickMany} isDropZone>
+          <span>Drop or press</span>
+        </FilePicker>,
+      );
+
+      fireEvent.drop(screen.getByText('Drop or press').closest('label') ?? document.body, {
+        dataTransfer: {
+          items: [{ webkitGetAsEntry: () => entryFor('a.mkv') }],
+          files: [],
+        },
+      });
+
+      await vi.waitFor(() => {
+        expect(onPickMany).toHaveBeenCalledWith([expect.objectContaining({ name: 'a.mkv' })]);
+      });
+    });
+
+    it('says nothing when what was dropped held no files', async () => {
+      const onPickMany = vi.fn();
+
+      render(
+        <FilePicker label="Drop films here" onPickMany={onPickMany} isDropZone>
+          <span>Drop or press</span>
+        </FilePicker>,
+      );
+
+      fireEvent.drop(screen.getByText('Drop or press').closest('label') ?? document.body, {
+        dataTransfer: { items: [], files: [] },
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(onPickMany).not.toHaveBeenCalled();
+    });
+
+    it('lights up while something is dragged over it, and stops when it leaves', () => {
+      render(
+        <FilePicker label="Drop films here" onPickMany={vi.fn()} isDropZone>
+          <span>Drop or press</span>
+        </FilePicker>,
+      );
+
+      const zone = screen.getByText('Drop or press').closest('label') ?? document.body;
+
+      fireEvent.dragOver(zone);
+
+      expect(zone).toHaveClass('border-accent');
+
+      fireEvent.dragLeave(zone);
+
+      expect(zone).not.toHaveClass('border-accent');
+    });
+
+    it('takes nothing dropped on it while it is disabled', async () => {
+      const onPickMany = vi.fn();
+
+      render(
+        <FilePicker label="Drop films here" onPickMany={onPickMany} isDropZone disabled>
+          <span>Drop or press</span>
+        </FilePicker>,
+      );
+
+      fireEvent.drop(screen.getByText('Drop or press').closest('label') ?? document.body, {
+        dataTransfer: { items: [{ webkitGetAsEntry: () => entryFor('a.mkv') }], files: [] },
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(onPickMany).not.toHaveBeenCalled();
+    });
+
+    it('still opens the file dialog when pressed, offering only what was asked for', () => {
+      render(
+        <FilePicker label="Drop films here" onPickMany={vi.fn()} isDropZone accept=".mkv,.mp4">
+          <span>Drop or press</span>
+        </FilePicker>,
+      );
+
+      expect(screen.getByLabelText(/Drop films here/)).toHaveAttribute('accept', '.mkv,.mp4');
+      expect(screen.getByLabelText(/Drop films here/)).toHaveAttribute('multiple');
+    });
+  });
 });
