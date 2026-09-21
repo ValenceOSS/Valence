@@ -49,6 +49,7 @@ type ShowService = {
 type CreateLibraryInput = {
   name: string;
   kind: Library['kind'];
+  flavour?: string | null;
   path: string;
 };
 

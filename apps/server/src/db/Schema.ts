@@ -163,6 +163,7 @@ const library = pgTable('library', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   kind: text('kind').notNull(),
+  flavour: text('flavour'),
   path: text('path').notNull().unique(),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   lastScannedAt: timestamp('lastScannedAt'),

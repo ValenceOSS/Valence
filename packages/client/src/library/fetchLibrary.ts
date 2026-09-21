@@ -49,6 +49,7 @@ type ListItemsOptions = {
 type CreateLibraryInput = {
   name: string;
   kind: LibraryKind;
+  flavour?: string | null;
   path: string;
 };
 

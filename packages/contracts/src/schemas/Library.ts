@@ -45,6 +45,7 @@ const LibrarySchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(100),
   kind: LibraryKindSchema,
+  flavour: z.string().max(40).nullable().optional(),
   path: z.string().min(1),
   itemCount: z.number().int().nonnegative(),
   lastScannedAt: z.string().datetime().nullable(),

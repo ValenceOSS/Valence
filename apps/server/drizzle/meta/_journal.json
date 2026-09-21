@@ -519,6 +519,13 @@
       "when": 1789856896173,
       "tag": "0073_a_library_that_takes_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1789968712396,
+      "tag": "0074_library_flavour",
+      "breakpoints": true
     }
   ]
 }

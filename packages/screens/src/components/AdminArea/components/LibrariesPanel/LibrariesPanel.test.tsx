@@ -61,6 +61,24 @@ const choose = async (user: ReturnType<typeof userEvent.setup>, name: string, ac
 };
 
 describe('LibrariesPanel', () => {
+  it('labels a library with the type it was given rather than the kind it reads as', () => {
+    render(
+      <LibrariesPanel
+        {...props}
+        libraries={[library({ name: 'Cartoons', kind: 'shows', flavour: 'Anime' })]}
+      />,
+    );
+
+    expect(screen.getByText('Anime')).toBeInTheDocument();
+    expect(screen.queryByText('shows')).not.toBeInTheDocument();
+  });
+
+  it('labels a library with the kind it is where it has no type of its own', () => {
+    render(<LibrariesPanel {...props} libraries={[library({ flavour: null })]} />);
+
+    expect(screen.getByText('movies')).toBeInTheDocument();
+  });
+
   it('tells somebody not to add a library when the list simply could not be read', () => {
     render(<LibrariesPanel {...props} isUnreachable />);
 

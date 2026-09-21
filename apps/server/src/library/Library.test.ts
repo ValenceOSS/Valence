@@ -1156,6 +1156,50 @@ describe('adding a library', () => {
     expect(await response.json()).toMatchObject({ name: 'Shows', filesAtOnce: null });
   });
 
+  it('keeps what an admin called the type of library, such as anime or manga', async () => {
+    const { app } = build([]);
+
+    const response = await app.request(`${BASE}/api/libraries`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Anime',
+        kind: 'shows',
+        flavour: 'Anime',
+        path: '/media/anime',
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ kind: 'shows', flavour: 'Anime' });
+  });
+
+  it('leaves a library with no type of its own as the kind it is', async () => {
+    const { app } = build([]);
+
+    const response = await app.request(`${BASE}/api/libraries`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Shows', kind: 'shows', path: '/media/shows' }),
+    });
+
+    expect(await response.json()).toMatchObject({ flavour: null });
+  });
+
+  it('refuses a type that is empty or too long to be a name', async () => {
+    const { app } = build([]);
+
+    const send = (flavour: string) =>
+      app.request(`${BASE}/api/libraries`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'Shows', kind: 'shows', flavour, path: '/media/shows' }),
+      });
+
+    expect((await send('   ')).status).toBe(400);
+    expect((await send('x'.repeat(41))).status).toBe(400);
+  });
+
   it('reports an item with no year rather than leaving the field out', async () => {
     const { app } = build([detail({ year: null })]);
 
