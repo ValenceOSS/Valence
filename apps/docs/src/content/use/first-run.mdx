@@ -1,0 +1,133 @@
+---
+title: First run
+description: Create the first administrator, confirm how the server is reached, add a library, sign in and meet the profile picker.
+order: 1
+---
+
+The first time you open a new Valence server in a browser, it has no accounts and nothing to show, so it shows a setup wizard instead of the usual sign-in screen. This page walks through that wizard, what happens behind it, and the short run of screens that follow until your first library is on the shelf.
+
+If you have not installed Valence yet, start with the [Quick start](/start/quick-start) or [Docker Compose](/install/docker-compose) guide, then come back here.
+
+## Before you begin
+
+Open Valence at the address you will normally use to reach it, not at `localhost` if you plan to use it from other devices. The wizard detects the address you loaded it from and offers it as a trusted origin, so opening it from the right place saves a correction later.
+
+<Callout title="Open it from the address you will really use" tone="warning">
+  Sign-in cookies are tied to the origins you list in the wizard. If you finish setup on
+  `http://localhost:8420` and later reach the server as `https://valence.example.com`, sign-in from
+  the second address fails until that origin is added. You can list several origins at once, so add
+  them all now.
+</Callout>
+
+## The setup wizard
+
+Until an account exists, every page of the web app resolves to the wizard, titled **Set up Valence**. Whoever gets there first becomes the administrator, so complete it yourself before sharing the address with anyone.
+
+### The administrator
+
+| Field    | What it needs                                                          |
+| -------- | ---------------------------------------------------------------------- |
+| Name     | Any name. It becomes the name of the account and of its first profile. |
+| Email    | A valid address. You sign in with it.                                  |
+| Password | At least 10 characters.                                                |
+
+The wizard checks these as you type, and the server checks them again, so a short password is refused either way.
+
+### Access
+
+The **Access** section decides which addresses may sign in and how the session cookie is marked.
+
+| Field                             | Meaning                                                                                                                                                                                                                                          |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Trusted origins                   | A comma separated list of full URLs, such as `http://192.168.1.40:8420`. Every address you use to reach Valence must appear here. The wizard fills in the address it was loaded from, plus the development client on port 5173 of the same host. |
+| This server is reached over HTTPS | Ticked automatically when you loaded the wizard over HTTPS. It marks the session cookie as secure.                                                                                                                                               |
+
+The HTTPS checkbox has a real consequence in both directions, and the wizard says so beneath it:
+
+- Ticked: secure cookies are used, and sign-in will not work over plain HTTP.
+- Unticked: cookies are not marked secure, so Valence works over plain HTTP on your network.
+
+Tick it only if the address people type starts with `https://`. If you run Valence behind a reverse proxy that terminates TLS, see [Reverse proxy](/install/reverse-proxy) for the settings that go with it.
+
+Press **Finish setup** when everything is filled in.
+
+### What the wizard does behind the scenes
+
+The web app sends a single request to `POST /api/setup` with the administrator, the trusted origins and the cookie mode. The server does the following, in order:
+
+1. Counts existing users. If there is already one, it refuses with a `409` and creates nothing. The wizard then tells you the server is already set up and asks you to reload to sign in. This is what stops the endpoint being replayed to claim a second administrator.
+2. Creates the account through the sign-up flow with the name, email and password you gave.
+3. Promotes that account to administrator and records it as the owner of the server.
+4. Stores the trusted origins and the cookie mode in the server settings, along with the time setup completed.
+5. Answers with `isComplete` and a `restartRequired` flag.
+
+`restartRequired` is true when the cookie mode you chose differs from what the server was already using. If you see it, restart the server container so that the new mode takes effect. See [Updating](/install/updating) for the usual restart commands.
+
+If the administrator cannot be created (for example because the email is not acceptable), the server answers with a `400` and the wizard shows "Setup could not be completed. Check the details and try again." Nothing is stored in that case, so you can correct the form and try again.
+
+<Callout title="Setup happens once">
+  Once any account exists, `GET /api/setup/status` reports setup as complete and the wizard never
+  appears again. Trusted origins and the cookie mode can afterwards be reviewed in the admin
+  Settings panel, described in [Settings](/use/settings).
+</Callout>
+
+## Signing in
+
+When setup finishes, the app reloads its status from the server and shows the way in. What you see depends on the server setting **Show who lives here**, which is on by default.
+
+### With the profile picker
+
+With **Show who lives here** on, the sign-in screen is the profile picker: a wall of faces headed "Who is watching?". Pick yours, then type your password and press **Watch**. Escape steps back from a chosen face to the wall. Use the arrow keys to move between faces, and the page arrows or dots when the household has more than ten people.
+
+Each face is a profile. An account can have several profiles, up to six, which lets one login serve a whole household with separate watch histories, favourites and hidden titles. Profiles are covered in [Accounts and roles](/use/accounts-and-roles).
+
+If your account has two-factor authentication, a code prompt follows the password. If your browser supports passkeys and you have registered one, the same screen offers **Use a passkey instead**.
+
+### With the plain form
+
+With **Show who lives here** off, the picker is replaced by a form asking for an email and a password. This is the safer choice for a server on the public internet, because the list of names and pictures is then hidden from anyone who is not signed in. A **Theme** switch sits above either version so you can choose light or dark before signing in.
+
+### The first administrator
+
+Right after setup the wall has one face, the administrator. Pick it and sign in with the password you chose in the wizard.
+
+## Setting up the household
+
+The first time somebody signs in to a fresh household, Valence walks them through three short steps before showing the home page. Nothing is recorded as finished until the last step, so closing the tab halfway simply offers it again.
+
+1. **Name.** What the household is called. It is shared by everybody who watches on this server.
+2. **Picture.** A photograph for the household, or carry on without one. JPEG, PNG, WebP, AVIF and GIF are accepted.
+3. **Passkey.** An offer to register a passkey so you can sign in with your face, fingerprint or screen lock. You can skip it and add one later from your account security settings.
+
+A short welcome screen follows, and after it a tour of the main sections (Home, Films, Shows, Music, Read, Requests, Favourites and Search). The tour can be skipped, and it is remembered per device.
+
+## Adding your first library
+
+A new server has nothing to play until it has at least one library. Open the admin area from your account menu, or go straight to `/admin`, and choose **Libraries** under **Content**. On a fresh server the page opens with a checklist called **Get Valence set up**:
+
+1. **Add a library.** A library is a folder of one kind of media: films, shows, music or books.
+2. **Add a metadata key.** Titles, artwork, years and ratings come from The Movie Database. A free key takes a minute to get: sign in there, open Settings, then API. The **Get a free key** button opens the right page, and **Enter it in Settings** takes you to the field.
+3. **Scan your libraries.** Scanning reads what is in each folder and looks it all up. Nothing can be watched until it has run.
+
+The step that is not yet done is marked **Start here**. The checklist disappears by itself once all three are complete, and **Hide** puts it away sooner if you prefer to work your own way.
+
+Use **Add library** to create the first library. The dialog asks for a name, a type and a path on the machine running Valence, and offers a **Browse** button that walks the server's own folders. Everything about that dialog, the folder layouts each type expects and how scanning works is covered in [Libraries](/use/libraries).
+
+<Callout title="Paths are seen from the server">
+  The path you enter is resolved by the Valence server, not by your browser. In a Docker install
+  that means the path inside the container, so the folder must be mounted into it first. See
+  [Storage and volumes](/install/storage-and-volumes).
+</Callout>
+
+When the scan has read the folder, films and episodes appear on the Home page and in the Films, Shows, Music and Read sections. To start watching, see [Playing media](/use/playing-media).
+
+## If something goes wrong
+
+| Symptom                                       | Likely cause                                                                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| The page says Valence is not reachable        | The server did not answer the setup status request. Check that the container is running and reload.                      |
+| Setup says the server has already been set up | Somebody, or an earlier attempt of yours, already created an account. Reload and sign in.                                |
+| Sign-in does nothing after setup              | The address in the browser is not among the trusted origins, or the HTTPS tickbox does not match how you are connecting. |
+| The picker says nobody has an account yet     | Setup has not completed, or the accounts were removed. Reload the page.                                                  |
+
+For deeper problems see [Troubleshooting](/reference/troubleshooting).

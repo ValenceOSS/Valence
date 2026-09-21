@@ -13,6 +13,15 @@ describe('findNewerMigrations', () => {
     expect(newer).toEqual([]);
   });
 
+  it('leaves alone a stamp the journal does not list but that is older than its newest', async () => {
+    const newer = await findNewerMigrations({
+      readJournal: () => Promise.resolve(journal),
+      readAppliedAt: () => Promise.resolve([1, 2, 0]),
+    });
+
+    expect(newer).toEqual([]);
+  });
+
   it('finds what a newer release ran', async () => {
     const newer = await findNewerMigrations({
       readJournal: () => Promise.resolve(journal),

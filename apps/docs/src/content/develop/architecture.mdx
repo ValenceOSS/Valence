@@ -1,0 +1,152 @@
+---
+title: Architecture
+description: How the Valence server, media service, requests service, web client, desktop app and shared packages fit together, and how a request travels through them.
+order: 1
+---
+
+Valence is a TypeScript and Rust monorepo. One container carries three things: a Node server that owns the API, a Rust media service that owns every conversation with FFmpeg, and the built web client that the server hands to browsers. A fourth piece, the requests service, is optional and runs as an image of its own. This page maps all of it, so you know where to look before you change anything.
+
+## The system at a glance
+
+| Piece              | Where it lives    | Language                | Runs as                                       | Talks to                                                          |
+| ------------------ | ----------------- | ----------------------- | --------------------------------------------- | ----------------------------------------------------------------- |
+| API server         | `apps/server`     | TypeScript (Hono)       | A Node process on port 8420                   | Postgres, the media service, the requests service, every client   |
+| Media service      | `apps/transcoder` | Rust (axum, tokio)      | A process beside the server, on a unix socket | FFmpeg and ffprobe as child processes, the disk                   |
+| Requests service   | `apps/requests`   | TypeScript (Hono)       | An optional container on port 8421            | Postgres (its own schema), indexers, download clients, the server |
+| Web client         | `apps/web`        | TypeScript (React)      | Static files served by the server             | The server over HTTP and one WebSocket                            |
+| Desktop client     | `apps/desktop`    | TypeScript (Electron)   | A window onto a server                        | The server, through the main process                              |
+| Marketing site     | `apps/landing`    | TypeScript (React)      | Its own image                                 | Nothing at run time                                               |
+| This documentation | `apps/docs`       | TypeScript (React, MDX) | Static files                                  | Nothing at run time                                               |
+
+The application itself, meaning everything a viewer sees, is not in `apps/web`. It lives in two packages, `packages/client` and `packages/screens`, and a client is a host that runs it. See [Repository layout](/develop/repository-layout) for the full directory map.
+
+```
+                    Browser                 Desktop (Electron)
+                       |                           |
+                       |  HTTP  +  one WebSocket   |  valence:// scheme, then HTTP
+                       v                           v
+        +--------------------------------------------------------+
+        |                    apps/server (Hono)                  |
+        |  session gate, zod-openapi routes, better-auth,        |
+        |  realtime registry, job queue (pg-boss), plugin seam   |
+        +---------+------------------+---------------+-----------+
+                  |                  |               |
+                  | SQL              | unix socket   | HTTP + shared secret
+                  v                  v               v
+             Postgres          apps/transcoder   apps/requests (optional)
+        (public + valence_jobs)   (Rust)            (valence_requests schema)
+                                     |
+                                     | child process
+                                     v
+                                 FFmpeg / ffprobe
+```
+
+## The server
+
+`apps/server` is a Hono application built with `@hono/zod-openapi`, so every route is declared once as a contract and produces both its validation and its OpenAPI entry. `src/App.ts` builds the application with `createApp`, which takes every service as an argument. `src/Main.ts` is the composition root: it reads the environment, opens the database, migrates it, constructs the real services and starts listening.
+
+That split is what makes the server testable. Tests call `createApp` with in-memory services (the `createMemory*` family) and never touch Postgres. The same trick writes the API reference: the `spec` script in `apps/docs` builds an app over memory services and asks it for `/api/openapi.json`. See [Testing](/develop/testing).
+
+| Concern         | What Valence uses                                                                                         | Where                        |
+| --------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| HTTP framework  | Hono                                                                                                      | `apps/server/src/App.ts`     |
+| Route contracts | `@hono/zod-openapi`, schemas from `@valence/contracts`                                                    | `apps/server/src/routes`     |
+| API reference   | Scalar at `/api/reference`, document at `/api/openapi.json`                                               | `App.ts`                     |
+| Authentication  | better-auth with two factor, passkey, device authorisation, JWT, API key, admin and generic OAuth plugins | `apps/server/src/auth`       |
+| Database        | Postgres through Drizzle ORM and the `pg` pool                                                            | `apps/server/src/db`         |
+| Background work | pg-boss, in its own `valence_jobs` schema                                                                 | `apps/server/src/jobs`       |
+| Realtime        | `@hono/node-ws`, one route at `/api/realtime`                                                             | `apps/server/src/realtime`   |
+| Configuration   | Zod-validated environment                                                                                 | `apps/server/src/env/Env.ts` |
+
+### Request flow
+
+A request to `/api/...` passes through these stages in order.
+
+1. Hono receives it. The origin checks apply: sign-in and sign-out are refused with `403 MISSING_OR_NULL_ORIGIN` unless the browser's `Origin` matches one of `TRUSTED_ORIGINS`.
+2. The session gate (`createSessionGate`) checks whether the route is public (`isPublicRoute`: sign-in, first-run setup, the health check and a few others). If not, it reads the better-auth session from the cookie once (`readSessionOnce`).
+3. With no session, the request is handed to the share gate if sharing is enabled, so a share link can work for somebody with no account. A share never widens what a signed-in account already has. With neither, the answer is `401`.
+4. The route handler validates the body, query and params against its Zod contract, checks the permission the route needs, and calls a service.
+5. The service answers from Postgres, the media service or memory (in tests). The handler shapes the response to the contract.
+
+Anything that is not `/api` and looks like an application address falls through to the static web client, with `index.html` as the fallback so client-side routes survive a reload.
+
+### Configuration and start-up order
+
+`Main.ts` reads the environment with `readEnv`, which fails at start-up naming the offending variable rather than misbehaving later. Then, in this order:
+
+1. It opens the Postgres pool.
+2. It runs `migrateToLatest`, which takes a snapshot, applies pending migrations and refuses to continue if the schema is wrong. The job queue starts only after this, deliberately. See [Database and migrations](/develop/database-and-migrations).
+3. It builds the services, the realtime registry, the job queue and the transcoder client.
+4. It registers `/api/realtime`, the static web client and starts serving.
+
+### Background jobs
+
+Scans, previews, thumbnails, artwork and webhook deliveries are pg-boss jobs. Work outlives the request that asked for it and survives a restart, which is why a queue exists rather than a promise. Job runs, their progress and their outcomes are written to history tables and surfaced to administrators over the realtime `jobs` topic. The `MEDIA_JOBS` variable sets how many media jobs run at once.
+
+## The media service
+
+`apps/transcoder` is a Rust binary, `valence-transcoder`, built on axum and tokio. It owns every interaction with FFmpeg, and FFmpeg is driven as a child process rather than linked. That keeps Valence's licence its own and turns a codec crash into a retryable job instead of a dead server.
+
+It exposes an HTTP API that the server calls. The main groups of routes are:
+
+| Route group                               | Purpose                                                      |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| `/health`, `/capabilities`                | Liveness, and what this machine's FFmpeg and hardware can do |
+| `/probe`                                  | ffprobe a file into a structured description                 |
+| `/sessions`                               | Start, serve and stop HLS transcode sessions                 |
+| `/file`, `/audio`                         | Direct delivery of an original file, and audio renditions    |
+| `/previews`, `/frame`, `/subtitles`       | Preview clips, single frames and subtitle extraction         |
+| `/renditions`                             | Re-encodes                                                   |
+| `/fingerprint`                            | Audio fingerprinting for intro and credit detection          |
+| `/monitor`, `/monitor/stream`, `/queue/*` | Resource readings and the media work queue                   |
+
+The server and the media service agree on one setting, `TRANSCODER_URL`. A `unix:` address (`unix:/run/valence-transcoder.sock` in the container) is both bound by the service and dialled by the server, so the two cannot disagree. An `http://` address is used when the media service runs on another machine. The server side of the conversation is `apps/server/src/transcoder/TranscoderClient.ts`, which validates every answer with Zod.
+
+Inside the container, `docker-entrypoint.sh` starts the media service and the server as siblings. If either dies the container exits, so the orchestrator restarts both together rather than leaving an API that cannot play anything.
+
+The Rust crate has strict lints: `unwrap` and `expect` are denied, and pedantic clippy is a warning that CI turns into an error. See [Coding standard](/develop/coding-standard).
+
+## The requests service
+
+`apps/requests` is optional. It is a second Hono service that finds and downloads what a viewer asks for: it holds indexer definitions, talks to download clients, tracks each request and reports progress. It keeps its data in the same Postgres server but in its own `valence_requests` schema, with its own Drizzle migrations that it applies itself at start-up.
+
+Valence shows nothing about requesting until both `REQUESTS_URL` and `REQUESTS_SECRET` are set on the server, with the same secret (at least 32 characters) on the requests service. The server talks to it through `createRequestsClient` and relays download progress to administrators over the realtime `downloads` topic. See [Requesting](/install/requesting) for the operator's view.
+
+## The web client and the shared packages
+
+`apps/web` is deliberately tiny: an entry point, a browser platform, a socket and a service worker for push. Everything else is in packages, so the desktop client can run the same application.
+
+| Package               | Role                                                                          |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `packages/contracts`  | Zod schemas and shared types. The source of truth for every API shape.        |
+| `packages/core`       | Shared pure logic, such as playback negotiation.                              |
+| `packages/client`     | What Valence is: readers, queries, realtime, session, sharing. Does not draw. |
+| `packages/screens`    | What Valence looks like: every screen and the routes onto them.               |
+| `packages/ui`         | ValenceUI, the component library. See [UI library](/develop/ui-library).      |
+| `packages/plugin-sdk` | The public plugin manifest contract. See [Plugins](/develop/plugins).         |
+
+Anything a package needs from the host is a port on `Platform`: a device store, what to call this client, which client this is, held files, reachability and opening a socket. A host installs them with `installPlatform` before anything else runs. That is how one application runs in a browser tab and in an Electron window.
+
+Data fetching uses TanStack Query and routing uses TanStack Router. The cache does not poll. It listens to the socket and invalidates what the server says changed. See [Realtime](/develop/realtime).
+
+## The desktop client
+
+`apps/desktop` is an Electron application that is a window onto a server, not a server. It serves the same application from a custom `valence://app` scheme with a strict content security policy, forwards API requests to whichever Valence the person chose, and looks for a Valence on the same machine at the usual address, asking the person where it is only if none answers. It also owns the things a browser cannot: downloaded files kept on disk, the menu, the dock icon and Discord presence. It installs a desktop platform (`installDesktopPlatform`) whose ports are backed by files and IPC rather than by `localStorage`. See [Desktop app](/install/desktop-app) for installing it.
+
+## Realtime
+
+The server holds one WebSocket route, `/api/realtime`, shared by viewer feeds and administrator feeds. A client opens one connection per tab and subscribes to topics over it. Entitlement is checked when a topic is asked for and again at delivery, because roles can change while a socket is open. The full protocol is in [Realtime](/develop/realtime).
+
+## Plugin processes
+
+The design is process per plugin, brokered: a plugin runs in its own process and reaches the filesystem, network and session data only through a broker that enforces the capabilities its manifest declared. Today the repository contains the manifest contract in `packages/plugin-sdk` and an internal metadata provider seam in the server, but not a plugin host or a broker. [Plugins](/develop/plugins) says exactly what exists.
+
+## Build and release shape
+
+The `Dockerfile` has four stages. It builds the Rust binary, builds the web client and bundles the server with esbuild, then assembles a Debian runtime with Valence's own FFmpeg build, the Postgres client tools (for snapshots) and the built artefacts. The server is bundled rather than compiled because `tsc` would emit the path aliases Node cannot resolve. The requests service has its own `Dockerfile` in `apps/requests`. See [Releasing](/develop/releasing) for how images are tagged and published.
+
+## Where to go next
+
+- [Local setup](/develop/local-setup) to run all of this on your machine.
+- [Repository layout](/develop/repository-layout) for the alias and directory map.
+- [Coding standard](/develop/coding-standard) before you write anything.

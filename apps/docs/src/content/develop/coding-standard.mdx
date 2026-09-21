@@ -1,0 +1,208 @@
+---
+title: Coding standard
+description: The binding rules for Valence code, why each exists, what the linters enforce, and the commit, branch and pull request conventions.
+order: 4
+---
+
+The rules in `CODING_STANDARD.md` are binding. Tooling enforces every rule that can be expressed as a lint rule, and review enforces the rest. A pull request that breaks a rule does not merge, however good the change is otherwise. Where a rule has a known cost, the standard states the cost. This page summarises it and explains the reasoning. When a review comment cites a rule, it cites a section number from that file.
+
+<Callout title="A rule seems wrong for your case?" tone="quiet">
+  Raise it in an issue or on the pull request. Rules are amendable. Silent exceptions are not. Never
+  lower a coverage threshold or disable a lint rule to get a build through: each is a pull request
+  of its own with its own justification.
+</Callout>
+
+## The rules at a glance
+
+| Section | Rule                                                         | Enforced by                                         |
+| ------- | ------------------------------------------------------------ | --------------------------------------------------- |
+| 1       | TypeScript and Rust only, config included                    | Review                                              |
+| 2       | No duplication across modules                                | Review                                              |
+| 3       | No `../` imports, use aliases                                | ESLint                                              |
+| 4       | No `index.ts` or `index.tsx`, no barrels                     | Review                                              |
+| 5       | Named exports only, one member per file                      | oxlint (`import/no-default-export`) and review      |
+| 6       | No comments beyond the allowed few                           | ESLint (`valence/no-comments`) and `tools/comments` |
+| 7       | PascalCase and camelCase file naming, co-located types       | Review                                              |
+| 8       | No `any`, `unknown` or `as`                                  | ESLint and oxlint                                   |
+| 9       | One ValenceUI component owns each interactive element        | ESLint                                              |
+| 10      | Icons from `@keyline-icons/react` through `Icon`, no raw SVG | ESLint and review                                   |
+| 11      | Motion for animation, respect reduced motion                 | Review                                              |
+| 12      | Every function and component has a co-located Vitest test    | Coverage thresholds in CI and review                |
+| 13      | Conventional Commits                                         | commitlint                                          |
+
+## Languages
+
+TypeScript and Rust only. Build config, scripts, tooling and lint config are all TypeScript (`vite.config.ts`, `eslint.config.ts`) and run through `tsx` where a runtime needs them. No `.js`, `.jsx`, `.mjs` or `.cjs` file is committed. Where a tool physically cannot load TypeScript config, the generated JavaScript is a git-ignored build artefact and is never hand edited.
+
+## No duplication
+
+If a function, type, constant or component is needed in more than one place, it is extracted and shared. Copy and paste between `apps/`, `packages/` or platforms is not acceptable. The extraction target is fixed by who shares it.
+
+| Shared between                           | Goes in               |
+| ---------------------------------------- | --------------------- |
+| Any two workspace members                | `packages/contracts`  |
+| Any two UI surfaces                      | `packages/ui`         |
+| Server-only helpers used by two services | `packages/core`       |
+| Plugin-facing anything                   | `packages/plugin-sdk` |
+
+Extraction must not create a dependency cycle. If it would, the shared thing belongs further up the graph, usually in `contracts`. In Rust, shared logic lives in a workspace crate rather than being duplicated between binaries.
+
+## Imports and exports
+
+### Aliases, not parent imports
+
+```ts
+import { Button } from '@ValenceUI/Button';
+```
+
+Relative parent imports are banned in any form (`../`, `../../`). Same-directory imports such as `./Button.types` are fine. The aliases are `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`, `@ValenceCore/*`, `@ValenceSDK/*` and the per-app aliases listed in [Repository layout](/develop/repository-layout). The `no-restricted-imports` rule in `eslint.config.ts` bans the `../*` pattern.
+
+### No index files
+
+`index.ts` and `index.tsx` are not used to re-export anything, anywhere. There are no barrels, no `export * from` and no directory-level public surface. It costs slightly longer import paths and buys precise dependency graphs, faster type checking and no accidental circular imports through a barrel. This is why the UI component aliases are listed one per line.
+
+### Named exports
+
+A file exports the thing it is named after, by name, and a caller imports what it uses.
+
+```tsx
+const Button = (props: ButtonProps) => {
+  return <BaseButton className={styles(props)}>{props.children}</BaseButton>;
+};
+
+Button.displayName = 'Button';
+
+export { Button };
+```
+
+- No default exports and no module objects. `import/no-default-export` is on in oxlint, with an exception for config files that tooling insists on reading a default from.
+- Type-only exports (`export type { ButtonProps }`) sit beside the value export.
+- One exported runtime member per file, named after the file. A constant that belongs to the member may be exported beside it where tests or callers need it.
+- Every component sets `displayName`.
+
+The reasoning: React Fast Refresh tracks a named component but not one buried in an object literal, so the old default-object form remounted whole subtrees on every edit and lost local state. `React.lazy` also works directly with a named export.
+
+The one tooling note worth knowing is that `apps/server/src/db/Schema.ts` exports each table by name because drizzle-kit discovers tables by scanning a module's named exports. Anything else generates an empty migration silently.
+
+## Comments
+
+There are no comments in the codebase, with four exceptions.
+
+1. TSDoc on functions and components, and on nothing else. One sentence saying what the function does, plus `@param` and `@returns` only where the name and type do not already say it. Types, constants, properties and interfaces carry no TSDoc at all. If a type needs a paragraph to be understood, the name is wrong. TSDoc is required on anything exported from `packages/plugin-sdk` or `packages/contracts`, because those generate public documentation.
+2. Rust doc comments (`///` and `//!`) on public items.
+3. A `// SAFETY:` comment on every Rust `unsafe` block, which `clippy::undocumented_unsafe_blocks` requires.
+4. Lint suppression directives such as `eslint-disable-next-line` and `#[allow(...)]`. Each requires a reason, and each is reviewed as a change in its own right.
+
+Explanatory comments, section banners, commented-out code, `TODO` and `FIXME` are all rejected. If code needs explaining, the explanation belongs in a name, a type or a TSDoc block. Outstanding work belongs in an issue where it can be tracked.
+
+Two checks enforce it, because no single linter reads every language here. The ESLint rule `valence/no-comments` (in `tools/eslint/noComments.ts`) covers TypeScript and removes offenders under `--fix`. TSDoc counts only when it sits on a function: a declaration, a method or a `const` holding an arrow function. `tools/comments/checkComments.ts` covers Rust and CSS, which ESLint cannot see. It parses rather than pattern-matches, so a slash pair inside a string literal is left alone. Both run under `pnpm lint`.
+
+## Types
+
+`any`, `unknown` and type assertions with `as` are banned. `as const` and `satisfies` are permitted. Banning `unknown` without banning `as` would push untrusted data through unchecked casts, which is strictly less safe, so the two rules only work together. `tsconfig.base.json` also turns on `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` and `useUnknownInCatchVariables`.
+
+Untrusted data enters through a Zod schema, which produces a concrete type without any annotation.
+
+```ts
+const item = MediaItemSchema.parse(JSON.parse(body));
+```
+
+`JSON.parse` returns `any`, but no `any` token appears in the source and the result is validated at run time before it is used. This is required at every external boundary: HTTP bodies, plugin payloads, file metadata, transcoder output and anything read from disk. For errors, do not annotate the catch variable, and narrow it with `instanceof`.
+
+```ts
+try {
+  await startSession(plan);
+} catch (error) {
+  if (error instanceof TranscodeError) {
+    return failure(error.code);
+  }
+  throw error;
+}
+```
+
+## UI components and icons
+
+Raw HTML form and interactive elements are banned outside the one ValenceUI component that owns each. That covers `<button>`, `<input>`, `<select>`, `<textarea>`, `<dialog>` and `<iframe>`, in application code and in other ValenceUI components alike.
+
+| Primitive                     | Owned by        |
+| ----------------------------- | --------------- |
+| `<button>`                    | `Button`        |
+| Text-like `<input>`           | `TextField`     |
+| `<input type="file">`         | `FilePicker`    |
+| `<dialog>` and focus trapping | `Dialog`        |
+| `<iframe>`                    | `EmbeddedVideo` |
+
+A control that is not one of these is a shape of one of them. An icon button is `Button` with an icon and a label. There is no `IconButton`, and there should be no equivalent for any other primitive: a second component wrapping the same element is a second set of focus, disabled and keyboard behaviour that drifts from the first. When a control needs something the owner lacks, widen the owner. `Button` carries `variant="bare"` and `size="none"` for controls that supply their own shape.
+
+`className` on a ValenceUI component is for where a thing sits (width, margin, grid placement), not what it looks like. A look that appears in more than one place is a named variant, painted from tokens, so a theme can move it. ESLint enforces a set of these through `no-restricted-syntax` selectors, for example refusing fill, border and shadow classes on a `Button` and text colour classes on an `Icon`. Structural elements such as `div`, `span`, `section` and `ul` are fine.
+
+Icons come from `@keyline-icons/react` and are drawn by `@ValenceUI/Icon`. Other icon sets are banned by ESLint. `apps/landing` is the one exception and draws from `@tabler/icons-react`, because the marketing site wants brand icons the product set lacks. Whether a thing is on is said with the filled twin through `whenActive`, not a different glyph. Play, pause and skip always draw solid. There is no raw SVG anywhere: no inline `<svg>`, no `.svg` imported as a component, no SVG strings. Brand assets are the exception and are referenced by URL. See [UI library](/develop/ui-library).
+
+A colour written into a component is a colour only one theme is right about, so `valence/no-raw-colours` fails literal colours and `white` or `black` palette utilities in `packages/ui`, `packages/screens`, `apps/web` and `apps/landing` source. Tests, stylesheets and token files are exempt.
+
+## Animation
+
+Motion is preferred over raw CSS animations, because declarative and interruptible beats keyframes. CSS transitions remain fine for trivial hover and focus states. Shared animations live in `packages/ui/src/animations`, and an animation used by several files inside one component lives in that component's `animations/` folder. Everything must respect `prefers-reduced-motion`, which the stylesheet also honours through the `still` variant and a `data-motion` attribute.
+
+## Testing
+
+Every function and every component is tested, with Vitest, co-located. Components use React Testing Library and query by role and accessible name. Coverage thresholds are enforced and are not lowered to make a build pass. See [Testing](/develop/testing).
+
+## What the tools enforce
+
+| Tool                     | Config                            | What it owns                                                                                                                                                                                                                              |
+| ------------------------ | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| oxlint                   | `.oxlintrc.json`                  | Fast, non-type-aware rules: `no-console`, `no-debugger`, `eqeqeq`, `prefer-const`, `typescript/no-explicit-any`, `consistent-type-imports`, `react/rules-of-hooks`, `react/no-danger`, `import/no-duplicates`, `import/no-default-export` |
+| ESLint                   | `eslint.config.ts`                | Rules that need the type checker (`no-floating-promises`, `no-misused-promises`, `no-unnecessary-condition`, `switch-exhaustiveness-check`), import bans, the raw control ban, the `unknown` and `as` bans, and the two Valence rules     |
+| `valence/no-comments`    | `tools/eslint/noComments.ts`      | The comment rule for TypeScript                                                                                                                                                                                                           |
+| `valence/no-raw-colours` | `tools/eslint/noRawColours.ts`    | Literal colours in UI code                                                                                                                                                                                                                |
+| `checkComments`          | `tools/comments/checkComments.ts` | The comment rule for Rust and CSS                                                                                                                                                                                                         |
+| clippy and rustfmt       | `Cargo.toml`, `rustfmt.toml`      | `all` denied, `pedantic` as warnings, `unwrap_used` and `expect_used` denied, `undocumented_unsafe_blocks` denied                                                                                                                         |
+| Prettier                 | `.prettierrc.json`                | Single quotes, semicolons, trailing commas, 100 columns                                                                                                                                                                                   |
+| commitlint               | `commitlint.config.ts`            | Commit messages                                                                                                                                                                                                                           |
+| `tools/branches`         | `pnpm branch:check`               | Branch names                                                                                                                                                                                                                              |
+| `db:check`               | `tools/drizzle`                   | Drizzle snapshots match the schema                                                                                                                                                                                                        |
+
+oxlint runs first for speed. ESLint keeps only the rules that need the type checker. Husky blocks anything non-conforming before it reaches the remote, and CI runs the same checks. `react/set-state-in-effect` is deliberately off in `.oxlintrc.json`: it could not model cleanup functions and mislabelled thirty-six correct timers, subscriptions and loaders as mistakes. A rule that fights the linter is a rule that gets disabled, and this is that principle pointed the other way.
+
+Some rules have no upstream equivalent and are upheld in review: no barrels, one exported member per file, the naming scheme and no raw SVG.
+
+## Conventional Commits
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/), enforced by commitlint at the `commit-msg` hook.
+
+```
+feat(transcoder): preserve HDR10 metadata through transcode
+fix(ui): correct MediaCard focus ring in dark theme
+docs(server): say how the data layer handles more than one node
+```
+
+| Part    | Allowed values                                                                                                                           |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Types   | `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, `style`, `revert`                                             |
+| Scopes  | `web`, `landing`, `server`, `transcoder`, `requests`, `desktop`, `ui`, `contracts`, `core`, `plugin-sdk`, `auth`, `docs`, `deps`, `repo` |
+| Subject | Lower case                                                                                                                               |
+
+A change spanning several layers takes no scope rather than an invented one. Breaking changes use `!` and a `BREAKING CHANGE:` footer. For anything affecting the API contract or a plugin extension point that is mandatory, because both are public surfaces with support windows, and it drives the changelog and the version bump. See [Releasing](/develop/releasing).
+
+## Branches
+
+Branch names are `type/short-description`, with the same types commits use, lower case and hyphenated.
+
+```
+feat/hide-a-library-per-profile
+fix/a-stop-that-ends-one-viewing
+docs/say-how-releases-are-cut
+```
+
+Names say what the work is, never who is doing it. The pattern is `type/` followed by a name that starts with a letter or digit and continues with lower case letters, digits, dots, underscores and hyphens. `main`, and branches that bots name for themselves (`renovate/` and `dependabot/`), are left alone. `pnpm branch:check` runs on `pre-push`. A repository ruleset on GitHub is intended to apply the same rule, so `--no-verify` cannot get a badly named branch onto the remote. If you need to rename, `git branch -m old-name fix/something-that-says-what-this-is`.
+
+## Pull requests and merging
+
+- One logical change per pull request.
+- Fill in the template, including what you tested and on what hardware. For media pipeline work, GPU vendor and driver version matter.
+- Update documentation in the same pull request as the change.
+- CI must be green. See [Local setup](/develop/local-setup#hooks-and-ci) for what it runs.
+- Merge with a merge commit, not a squash. Every commit reaches `main`, so each one should be written to be read on its own, and each one feeds the changelog.
+
+The full process, from picking up an issue to review, is in [Contributing](/develop/contributing).

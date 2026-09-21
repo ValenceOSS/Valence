@@ -1,0 +1,154 @@
+---
+title: Security
+description: How Valence handles authentication, sessions, permissions, secrets and sharing, how to harden an install, and how to report a vulnerability.
+order: 6
+---
+
+Valence is a server that holds your media, your household's accounts and, if you use requesting, credentials for your download clients. This page describes how it protects them, what you are responsible for when you run it, and how to report a problem. It is a companion to `SECURITY.md` in the repository, which is the authoritative statement of the reporting policy.
+
+## Reporting a vulnerability
+
+**Do not open a public issue for a vulnerability.** Use GitHub's private reporting, which reaches the maintainers directly:
+
+[Report a vulnerability](https://github.com/ValenceOSS/Valence/security/advisories/new)
+
+Say what you can reach, how you reached it and what it gets you. A request that demonstrates the problem is worth more than a description of the class of problem. If you have a patch, say so, and it will be worked through the advisory rather than in public. Expect an acknowledgement within a few days. Valence is maintained by a small number of people, so confirming an exploit chain can take longer than reporting it.
+
+Things the policy counts as in scope:
+
+- The server, and anything reachable through `/api`.
+- The session gate and the permission model: a route that acts on something without checking whose it is, or a permission that turns out to be a way round the permission beside it.
+- The share gate. A share link is a way in for somebody with no account, and it must never be a second set of permissions for somebody who has one.
+- The plugin broker. Anything that lets plugin code reach the filesystem, the network or session data beyond its granted capabilities is treated as critical.
+- The media service, including anything a crafted media file can make it do.
+
+Reading library content with no account at all, or as a share guest beyond what the link covers, is a finding. A Valence server is a household, and accounts you create are trusted with the library according to the roles and library access you give them.
+
+## The security model
+
+Every request to `/api` passes through a session gate before it reaches a route. The gate lets through only a short list of routes without credentials: the health check, first-run setup, the sign-in endpoints, the public documents of the API, shared links and the pictures a sign-in page draws. The full list is in the [API overview](/reference/api-overview). Everything else needs a session, or a live share link, and a share guest is confined to what the link covers.
+
+After the gate, each route checks a permission where the action needs one, and a request for something an account is not allowed to see answers `404` as though it did not exist, so that being told it exists is not a leak. The permission model has four layers.
+
+1. **Roles.** Each account holds roles, and each role grants named permissions. The default roles are Administrator, Manager, Member and Restricted, and you can make your own.
+2. **Account overrides.** A single permission can be allowed or denied for one account whatever its roles say.
+3. **Library access.** An account can be kept from seeing a library, and given an age ceiling in the libraries it can see, with exceptions for single titles.
+4. **Rank.** Roles are ranked. Nobody can grant a permission they do not hold, and nobody can change an account that outranks them.
+
+Give people the least they need. The Member role, which is what everybody gets by default, can watch, share, request and download, and nothing that changes the server. Reserve Administrator for the people who run it, and see [Accounts and roles](/use/accounts-and-roles).
+
+<Callout title="Turn off the wall of faces on the open internet" tone="warning">
+  By default the sign-in screen shows who lives here, so a household can pick a face. Anybody who
+  can reach the server can ask for that list, which gives them every profile's name and picture. A
+  server exposed to the internet should switch this off in the admin settings, and then it answers
+  only after sign-in.
+</Callout>
+
+## Authentication and session cookies
+
+Accounts and sessions are handled by [better-auth](https://www.better-auth.com). The relevant properties are:
+
+| Property           | Value                                                                                           |
+| :----------------- | :---------------------------------------------------------------------------------------------- |
+| Sign-in            | Email and password, with a minimum password length of 10, plus optional two-factor and passkeys |
+| Session lifetime   | 30 days, refreshed once a day of use                                                            |
+| Cookie attributes  | `httpOnly`, `SameSite=Lax`, and `Secure` when `COOKIE_SECURE` is true                           |
+| Sealing            | Cookies are sealed with `BETTER_AUTH_SECRET`                                                    |
+| Origin check       | Sign-in and sign-out require an `Origin` header that matches a trusted origin                   |
+| Cross-origin reads | Only from trusted origins, with credentials allowed, and never from a wildcard                  |
+| Response headers   | `Referrer-Policy: no-referrer` and `X-Robots-Tag: noindex, nofollow` on every response          |
+
+Set `COOKIE_SECURE=true` whenever the instance is reached over HTTPS, which is the recommended state and the default in the compose file. Secure cookies are never sent over plain HTTP, so on a plain HTTP test system it must be `false`, or sign-in appears to work and then does not hold.
+
+Keep `TRUSTED_ORIGINS` to the addresses you actually use. Adding an origin lets pages served from it use the API with a signed-in user's cookies. The addresses the machine itself holds are trusted automatically, and so is the desktop client's own scheme, which only an application that registered it can use.
+
+An account can be signed out of every device from its owner's account page, and by an administrator. Banning an account stops it signing in, and administrators can see and end each session. better-auth's own administration endpoints are closed, and account administration goes through Valence's permission checked routes under `/api/admin/accounts`.
+
+Passkeys tie to the hostname in `BETTER_AUTH_URL` and need a secure context, so they work over HTTPS and not over a plain HTTP address on your network.
+
+## Rate limiting
+
+The authentication endpoints are rate limited, per caller address and path, with `AUTH_RATE_LIMIT_ENABLED`, `AUTH_RATE_LIMIT_WINDOW_SECONDS` and `AUTH_RATE_LIMIT_MAX`, which default to on, 60 seconds and 60 requests. A caller over the limit gets `429`. Sign-in attempts are also recorded in the log, and can be sent to a webhook as `auth.failed` events, so repeated failures are visible.
+
+The limiter counts against the address in `X-Forwarded-For`, then `X-Real-IP`, then the socket. Behind a reverse proxy, make sure the proxy sets one of them and strips any copy the client sent, or an attacker can pick their own address and every household member looks like the proxy. Never turn the limiter off on a server that faces the internet.
+
+## Secrets
+
+| Secret                                 | What it protects                                  | Guidance                                                                                                                                                                   |
+| :------------------------------------- | :------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET`                   | Sign-in cookies                                   | At least 32 random characters, for example `openssl rand -base64 48`. Never keep the default, which is a development value in the source. Changing it signs everybody out. |
+| `POSTGRES_PASSWORD`                    | The database                                      | A long random string. Only Valence uses it, and the database port is not published.                                                                                        |
+| `REQUESTS_SECRET`                      | Calls between the server and the requests service | At least 32 characters, the same on both. `openssl rand -hex 32` makes one.                                                                                                |
+| `CATALOGUE_API_KEY`                    | Your metadata catalogue quota                     | Optional. Treat it as a credential.                                                                                                                                        |
+| `VPN_API_KEY`, `WIREGUARD_PRIVATE_KEY` | The VPN tunnel and its control server             | Keep out of version control.                                                                                                                                               |
+| API keys                               | Scripted access as an account                     | Shown once at creation. Give each key the narrowest permissions and an expiry, and revoke what you no longer use.                                                          |
+| Webhook secrets                        | Signing deliveries                                | Shown once at creation.                                                                                                                                                    |
+
+Keep secrets in an `.env` file that is not committed, or in your stack manager's secret store. Do not put them in an image or in a screenshot posted for help. If one leaks, rotate it: for `BETTER_AUTH_SECRET` that means a new value and signing in again, and for keys and webhooks it means revoking and creating a new one.
+
+## Reverse proxy and HTTPS
+
+Valence speaks plain HTTP and expects a reverse proxy to terminate TLS. That makes the proxy part of your security boundary.
+
+- Publish the proxy on 443, and keep the server's own port reachable only by the proxy. See [Ports](/reference/ports).
+- Redirect port 80 to HTTPS, and consider sending an `HSTS` header from the proxy once you are sure HTTPS works.
+- Let the WebSocket at `/api/realtime` through, set `X-Forwarded-For`, and turn response buffering off, as described in [Reverse proxy](/install/reverse-proxy).
+- Set `PUBLIC_URL` to the address the proxy answers as, and `COOKIE_SECURE=true`.
+- Keep the database, requests service, FlareSolverr and gluetun off the internet.
+
+If you use a tunnel or a CDN, remember it sees your traffic, including video, and read its terms.
+
+## Media mounts are read only
+
+The media folder is mounted `:ro` by default, which is how a media server should run. Valence never writes sidecars, renames files or writes back into your library. Three features need write access, and each refuses politely when it does not have it: re-encoding, uploading media and making folders. Turn them on by setting `MEDIA_ACCESS` to an empty string only when you use them. The permission that governs re-encoding, `media.reencode`, is separate from deleting media, and no default role other than Administrator holds it. See [Storage and volumes](/install/storage-and-volumes).
+
+The requests service is the exception in the stack: it mounts the library writable, because filing what it downloads into the library is its whole purpose. It is optional, and it is the only service that does.
+
+The media service reads only the directories in `VALENCE_MEDIA_ROOTS` and writes finished encodes only into those in `VALENCE_WRITE_ROOTS`. With no write roots every encode is refused. It has no authentication of its own, which is why it listens on a socket inside the container and should never be exposed on a network you do not control.
+
+## Webhooks
+
+Webhook deliveries are signed. Each request carries an `x-valence-signature` header of `sha256=` followed by the hex HMAC-SHA256 of the exact body, made with the subscription's secret. A receiver should recompute it and compare in constant time before trusting the payload, and reject requests without it. Deliveries time out after 10 seconds and use the `Valence` user agent.
+
+Valence refuses to send to addresses that are not HTTP or HTTPS, and to link-local addresses, which is where cloud instance metadata services live. That stops a webhook being used to read the machine's credentials, but it does not stop a subscription pointing at another service on your network, so only people with `server.webhooks` should be able to create them.
+
+## Share links
+
+A share link gives somebody with no account access to one title or one series. It can carry an expiry and a view cap, and can be withdrawn at once, including for anybody watching through it. Links are held to what they were made for: a request for anything else answers `That is not part of what was shared.` and a spent or withdrawn link answers that it no longer works.
+
+Anybody holding the link can use it, so treat it as you would a password to that title. Making a link needs `sharing.link`, and withdrawing anybody's needs `sharing.manage`. Administrators can see every link the server has handed out and who made each one.
+
+## Plugin isolation
+
+Plugins run in a process of their own, and reach everything through a broker, so that the boundary between plugin code and the server is a real one. A plugin sees only the capabilities it was granted. The design is described in [Plugins](/develop/plugins). A hole in that boundary is treated as critical, and reports are welcome.
+
+## Keep the image updated
+
+Fixes ship in releases, and the image is the unit you update. Follow the `latest` tag, or pin a version tag and move it deliberately. A release is published to `latest`, `MAJOR.MINOR.PATCH`, `MAJOR.MINOR` and `MAJOR`, while builds of unreleased code carry `-dev` or `-nightly` tags and never `latest`, so a server following `latest` moves only when a release is cut. The image includes Valence's own build of FFmpeg, so updating Valence also updates the parts of FFmpeg it carries. Watch the [changelog](https://getvalence.app/changelog) and the [releases](https://github.com/ValenceOSS/Valence/releases), and see [Updating](/install/updating).
+
+Update Postgres and the requests service images on the same schedule. Postgres major versions need a dump and restore, see [Troubleshooting](/reference/troubleshooting).
+
+## Backups and snapshots are sensitive
+
+Before an upgrade changes the database, Valence copies it to `/config/backups`, and you may take dumps of your own. Every one of those files is a full copy of the database, and so contains what the database contains:
+
+- account records and password hashes
+- session tokens, and API key records
+- the settings, which include the catalogue key and the push notification private key
+- webhook secrets and download client and indexer credentials, where requests are set up
+- your viewing history, ratings and everything else households do
+
+Treat them like the database. Keep them off shared storage, do not attach one to a bug report, and encrypt any copy that leaves the machine. A restore replaces the current database entirely, and undoes anything written since. See [Rolling back](/install/rolling-back), and lower `BACKUPS_KEPT` if you do not want many copies sitting on disk. The `config` volume also holds profile pictures, the only copy of each.
+
+## A hardening checklist
+
+1. Serve Valence over HTTPS through a reverse proxy, with `COOKIE_SECURE=true`.
+2. Replace `BETTER_AUTH_SECRET` with a random value, and use a strong `POSTGRES_PASSWORD`.
+3. Publish only the proxy. Do not publish 5432, 8421, 8191 or 8000.
+4. Keep the media mount read only unless you use re-encoding or uploads.
+5. Keep `TRUSTED_ORIGINS` to the addresses you use.
+6. Leave the authentication rate limiter on, and pass the client address through the proxy.
+7. Give accounts the Member role or narrower, and few people the Administrator role.
+8. Switch off the profile wall on a server facing the internet.
+9. Give API keys narrow permissions and an expiry.
+10. Update the image regularly, and keep snapshots private.

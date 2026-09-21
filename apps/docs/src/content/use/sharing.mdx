@@ -1,0 +1,89 @@
+---
+title: Sharing
+description: Hand out a link so somebody without an account can watch one title, a whole series or read a book, then limit it by time or people and withdraw it at once.
+order: 9
+---
+
+A share link lets a person with no account on your server watch or read one specific thing. It does not give them a library, search or a profile. The link is the credential: anybody holding it can use it, so Valence lets you decide how long it lasts, how many people may use it and lets you withdraw it at any moment.
+
+## What can be shared
+
+Three kinds of thing can sit behind a link.
+
+| Kind   | What the guest can reach                                                        |
+| ------ | ------------------------------------------------------------------------------- |
+| Item   | That one film, episode or video and nothing else.                               |
+| Series | Every episode of that programme and nothing outside it.                         |
+| Book   | That one book, for reading. Where the guest is up to stays on their own device. |
+
+A guest cannot browse to anything else. Valence names the routes a guest may use and refuses every other one, so a feature added later stays closed to share links until somebody deliberately opens it. Music and other library kinds are not offered for sharing.
+
+Sharing needs the `sharing.link` permission. The default Member, Manager and Administrator roles have it, and Restricted does not. See [Accounts and roles](/use/accounts-and-roles) to change that.
+
+## Creating a link
+
+1. Open the title you want to share and press its Share action. Films, episodes, series and books all have one.
+2. If you opened an episode, choose **Just this episode** or **The whole programme**. For a book the choice is **The whole book**.
+3. Under **Lasts**, pick how long it should work: **A day**, **Three days**, **A week** (the default), **A month** or **Until I withdraw it**.
+4. Under **Who can watch** (or **Who can read** for a book), pick **Anybody with the link**, **One person**, **Two people** or **Five people**.
+5. Press the button to make the link, then use **Copy the link** and send it however you like.
+
+<Callout title="The link is shown once" tone="warning">
+  The token in the link is stored only as a hash, so Valence cannot show it to you again later. If
+  you lose it, withdraw the link and make a new one.
+</Callout>
+
+If you cannot see the item because your account lacks access to its library, or you lack `sharing.link`, the dialog tells you it could not be shared and nothing is created.
+
+## How the limits work
+
+Expiry and the person cap are both checked on every request the guest makes, not only when they first open the link. That is what makes them reliable.
+
+- **Expiry.** The link stops working at the moment it expires, including for somebody halfway through a film.
+- **Person cap.** The cap counts people, not requests. A guest is recognised by a cookie, so the one person a one person link was made for is not locked out after they arrive. A second, different browser is turned away once the cap is full.
+- **Guest memory.** The cookie lasts up to 30 days, but never longer than the link itself.
+
+A link ends in one of three ways, and the guest sees which one:
+
+| Ending    | What the guest is told                                              |
+| --------- | ------------------------------------------------------------------- |
+| Withdrawn | This link was withdrawn. Somebody stopped it working.               |
+| Expired   | This link has expired.                                              |
+| Used up   | This link has been used up. It was made for a set number of people. |
+
+If a link is both withdrawn and past its expiry, it is reported as withdrawn.
+
+## What a guest sees
+
+The guest opens an address of the form `/share/` followed by the token. They land on a page showing the title and its episodes, or the book, and can play or read from there. Their playback shows up in the admin Sessions view marked as a guest of whoever made the link.
+
+Somebody who is already signed in to your server is not given extra rights by a link. The share gate only applies to requests with no session, so it is a way in for people without an account, not a second set of permissions.
+
+## Managing your own links
+
+Your links are listed under **Your links** in your account area. Each row shows what the link points at, whether it covers a whole series, its standing and how many times it has been opened.
+
+| Standing    | Meaning                                              |
+| ----------- | ---------------------------------------------------- |
+| Live        | It works now. An end date, if any, is shown beneath. |
+| Withdrawn   | You or an administrator stopped it.                  |
+| Ran out     | Its end date has passed.                             |
+| All used up | Its person cap was reached.                          |
+
+To withdraw a link, press the withdraw action on its row and confirm. It stops at once, including for a guest who is watching through it now. The action is hidden once a link is already used up.
+
+## Managing everybody's links
+
+An account with `sharing.manage` (Managers and Administrators by default) sees the **Links** panel under Activity in the admin area. It lists every link on the server, adds a **Handed out by** column and lets you withdraw anybody's.
+
+When you withdraw somebody else's link, Valence confirms it with a toast reading "Withdrew the link." and sends the person who made it a notification saying which link was withdrawn and by whom. That is deliberate: a link disappearing without a word makes a shared server feel arbitrary. The guest, by contrast, is only told that the link was withdrawn, not who did it. The notification appears in the bell described in [Notifications and webhooks](/use/notifications-and-webhooks).
+
+## Sharing versus watch parties
+
+A share link is for one person or a few, watching on their own. A watch party is for people with accounts who watch together in sync. They use separate permissions (`sharing.link` and `sharing.party`). Parties are covered in [Playing media](/use/playing-media).
+
+## Security notes
+
+- Tokens are 32 random bytes, encoded to be URL safe, and are stored hashed.
+- Send a link only to people you trust with the content, and prefer an end date over **Until I withdraw it** for anything sensitive.
+- If your server is reachable from the internet, guests need it behind HTTPS. See [Reverse proxy](/install/reverse-proxy) and [Security](/reference/security).

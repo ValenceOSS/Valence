@@ -1,0 +1,217 @@
+---
+title: Settings
+description: Every option in the admin Settings panel, what it does and its default, plus the Overview, storage recount, re-encoding and the toasts that confirm each change.
+order: 7
+---
+
+The admin area is where you run the server. It lives at `/admin` and is split into panels down the left: Overview, Sessions, Links, Jobs and logs, Libraries, Media, Encoding, Accounts, Roles, the Requests group, Settings and Webhooks. What you see depends on your permissions, and the Requests group only appears where [requesting](/install/requesting) is set up. This page covers the Settings panel in detail, then the Overview and Encoding panels.
+
+Every setting saves the moment you change it and answers with a small toast so you know it took. Where a save fails the control goes back to its old value and the toast says what could not be saved. Changing settings needs the `server.settings` permission, which only the Administrator role has by default. See [Accounts and roles](/use/accounts-and-roles).
+
+![The admin Settings panel from the top, showing Hardware acceleration, Age certificates, Preview quality, Roundness and Show who lives here as rows with their descriptions and controls.](/screenshots/admin-settings.png)
+
+## Settings at a glance
+
+| Setting                              | Default               | What it controls                                               |
+| ------------------------------------ | --------------------- | -------------------------------------------------------------- |
+| Hardware acceleration                | Automatic             | Which encoder transcodes use.                                  |
+| Age certificates                     | United Kingdom (`GB`) | Whose age ratings Valence reads.                               |
+| Preview quality                      | High                  | Size and sharpness of hover previews.                          |
+| Roundness                            | Default               | How rounded every corner is, for everybody.                    |
+| Show who lives here                  | On                    | Whether the sign in screen shows the household's faces.        |
+| Picture behind the way in            | None                  | A background for the profile picker.                           |
+| Fetch trailers from the catalogue    | Off                   | Offers trailers for titles that have none on disk.             |
+| Fetch music details from the web     | Off                   | Cover art, artist photos, music videos and lyrics.             |
+| TheAudioDB key                       | Empty                 | A personal key for artist lookups.                             |
+| What a request for an artist watches | Album                 | Which releases an artist request follows.                      |
+| Metadata catalogue                   | Empty                 | The key that fetches titles, years and artwork.                |
+| Rotten Tomatoes scores               | Empty                 | An OMDb key for critic scores.                                 |
+| Signing in                           | Read only             | The origins allowed to sign in and whether cookies are secure. |
+
+## Playback and encoding
+
+### Hardware acceleration
+
+Valence normally picks whichever encoder the machine proves it can use. Choose one to insist on it, which also uses an encoder that failed that check, for the rare case where the check is wrong and the card plainly works.
+
+| Choice              | Meant for                                   |
+| ------------------- | ------------------------------------------- |
+| Automatic (default) | Use whichever the machine proves it can do. |
+| VAAPI               | Intel and AMD on Linux.                     |
+| QuickSync           | Intel.                                      |
+| NVENC               | NVIDIA.                                     |
+| AMF                 | AMD, needs the proprietary driver.          |
+| VideoToolbox        | Apple.                                      |
+| RKMPP               | Rockchip.                                   |
+| Software only       | Never use the hardware.                     |
+
+Saving shows "Hardware encoding saved." The Overview shows what was actually detected under Graphics. Getting a card through to the media service in the first place is covered in [Hardware transcoding](/install/hardware-transcoding).
+
+### Preview quality
+
+Previews are the short clips that play when you hover a title. They are made once per file and kept, so this setting is a trade between disk and processor time and how good they look across a large hero image.
+
+| Choice         | Clip width  | Notes                                                                       |
+| -------------- | ----------- | --------------------------------------------------------------------------- |
+| Low            | 854 pixels  | Smallest files, quickest to make. For a server short of space or processor. |
+| Standard       | 1280 pixels | Sharp on a card, a little soft across a hero.                               |
+| High (default) | 1920 pixels | Full width, at the best quality.                                            |
+
+Changing it makes every preview again in the background, so expect a burst of work on a large library. Watch it in [Jobs and logs](/use/jobs-and-logs). A toast reads "Preview quality saved."
+
+### Age certificates
+
+Different countries rate films differently. A 15 and an R are not the same thing, so Valence orders certificates within one country rather than pretending they map onto each other. This setting chooses whose certificates to read.
+
+| Region                   | Certificates            |
+| ------------------------ | ----------------------- |
+| United Kingdom (default) | U, PG, 12, 15, 18       |
+| United States            | G, PG, PG-13, R, NC-17  |
+| Ireland                  | G, PG, 12A, 15A, 16, 18 |
+| Australia                | G, PG, M, MA15+, R18+   |
+| Germany                  | FSK 0, 6, 12, 16, 18    |
+| France                   | 0, 12, 16, 18           |
+| Netherlands              | 0, 6, 9, 12, 14, 16, 18 |
+| Spain                    | 0, 7, 12, 16, 18        |
+
+Every country's certificates are already stored, so changing region reads them again rather than rescanning your files. The toast reads "Certification region saved."
+
+## Appearance and sign in
+
+### Roundness
+
+Sets the corner radius of everything in Valence, for everybody who uses the server. All corners are drawn from one scaled value, so a single choice changes them together.
+
+| Level   | Radius scale    |
+| ------- | --------------- |
+| Sharp   | 0, fully square |
+| Soft    | 0.6             |
+| Default | 1               |
+| Round   | 1.6             |
+
+Saving shows "Roundness saved."
+
+### Show who lives here
+
+On by default. The way in draws the household's faces so somebody signs in by picking one. Turn it off and the way in asks for an address and a password instead, and nobody who has not signed in can read the names, pictures or identifiers of the people here. Consider turning it off on a server that is exposed to the internet. The toast reads "Sign-in screen saved."
+
+### Picture behind the way in
+
+An optional background drawn behind the faces on the sign in screen, with the colour of whoever is chosen washing over it. It only shows while **Show who lives here** is on, because only somebody allowed to see the faces sees it. Accepted types are JPEG, PNG, WebP, AVIF and GIF, up to 16 MB. Use the file picker to upload one and the remove action to take it away. Toasts read "Splashscreen removed." when you remove it.
+
+## Metadata and outside lookups
+
+### Metadata catalogue
+
+The catalogue key fetches titles, years, posters and descriptions for films and shows. Without it, everything comes from filenames alone. The key can also be supplied at install time with the `CATALOGUE_API_KEY` environment variable (see [Configuration](/install/configuration)), and it is the default the setting starts from. Paste a key and press Save. Once set, the row says a key is set and entering a new one replaces it. The stored key is never shown again. The toast reads "Catalogue key saved."
+
+### Rotten Tomatoes scores
+
+Optional. A free OMDb key adds each title's Rotten Tomatoes score as titles are scanned. The **Get a free key** button opens the OMDb sign up page. Scores fill in as titles are scanned again, so run a scan after saving. The toast reads "OMDb key saved."
+
+### Fetch trailers from the catalogue
+
+Off by default. When on, Valence offers a trailer for titles that have none on disk, played in a frame from the video host the catalogue points at. This is the one thing Valence does that reaches outside your server for playback, which is why it is off until you say otherwise. A trailer already beside the file is always used instead. The toast reads "Trailer setting saved."
+
+### Fetch music details from the web
+
+Off by default. When on, Valence looks for what a music library's files left out: album covers on the Cover Art Archive, artists' photographs and music videos on TheAudioDB, and song words from LRCLIB. Each album, artist and song is asked about once, on the next scan, and nothing a file already carries is replaced. The toast reads "Music details setting saved."
+
+### TheAudioDB key
+
+Without a key, artists are looked up with the free public key, which finds only one music video for each artist. Paste your own key for more. The toast reads "TheAudioDB key saved."
+
+### What a request for an artist watches
+
+If you use requests with music, this chooses which of an artist's records are fetched where whoever asked did not say. The default is albums only, and it can be changed on any single request. See [Requests](/use/requests). The toast reads "Release types saved."
+
+### Signing in
+
+This row is read only. It lists the origins allowed to sign in and shows whether cookies are marked secure. If sign in fails from a particular address, check it is in that list. The list comes from the server's configuration, described in [Configuration](/install/configuration) and [Reverse proxy](/install/reverse-proxy).
+
+<Callout title="Keys are write only" tone="quiet">
+  Catalogue, OMDb and TheAudioDB keys are stored on the server and only ever reported as set or not
+  set. The panel cannot show them back to you, so keep your own copy.
+</Callout>
+
+## Overview
+
+The first panel of the admin area is a live view of the server.
+
+![The admin Overview panel with the load chart, the Processor, Memory, Graphics and Storage strip and the Libraries, Watching now and Running now regions below.](/screenshots/admin-overview.png)
+
+- **Concerns.** A banner at the top lists problems Valence has noticed and links to the panel that fixes each: the requests service or VPN being down, an indexer failing, the media service being unreachable, an FFmpeg that is too old, failed or stalled jobs, memory or the library disk nearly full, a processor or graphics encoder at full stretch, previews not being kept, libraries never scanned, no libraries, or no catalogue key. Each can be dismissed and stays dismissed until the concern changes.
+- **Setup guide.** On a fresh server the Overview offers a guide covering adding a library, setting a catalogue key and scanning. You can hide it. If there are no libraries you are taken to the Libraries panel once. See [First run](/use/first-run).
+- **Stat strip.** Processor, memory, graphics and storage, each with how much is Valence's own. Hardware encoding, hardware chains and HDR conversion sit under Graphics.
+- **Server load.** A chart of processor use over the last minute, with longer ranges available.
+- **Watching now, Running now, Libraries and Recent jobs.** What is being streamed, which jobs are working, each library and its last scan, and how recent jobs went. See [Jobs and logs](/use/jobs-and-logs).
+
+Reading the Overview needs `server.monitor`, held by Managers and Administrators.
+
+### Storage Valence is using
+
+This region breaks down what Valence keeps on disk apart from your media: preview clips, scrub thumbnails, transcode sessions, artwork and book pages, plus the size of the media library itself. Counting these is slow, so the figures come from the last count. Press **Refresh** to count again. A toast reads "Counted the storage again." If the count fails it says the storage could not be counted. Refreshing needs `server.monitor`.
+
+## Encoding and re-encoding
+
+Re-encoding converts a media file into a smaller or more compatible one. It is the one thing in Valence that can destroy your own media, so it has its own permission, `media.reencode`, which no default role except Administrator holds, and its own safeguards.
+
+### Starting one
+
+1. Open the **Media** panel, open the row menu on a title and choose **Re-encode**. Or open **Encoding** and press **Re-encode something**.
+2. Filter by library, search by title or set a minimum size in GB, then tick the files.
+3. Choose what to do.
+4. Read the estimate. Nothing starts until you press the button at the bottom, and a final confirmation repeats what will happen.
+
+| Mode           | What happens                                                                         |
+| -------------- | ------------------------------------------------------------------------------------ |
+| Replace        | Frees disk. The original is kept until you have watched the result and confirmed it. |
+| Keep alongside | Costs disk, and means the server never has to convert that title on the fly.         |
+| Audio only     | Copies the picture untouched and only compresses lossless audio. The safest option.  |
+
+For Replace and Keep alongside you also choose a quality step (from 144p up to 4K, with a maximum bitrate for each) and a codec (H.264, HEVC or AV1). The **Compress the lossless audio too** option shrinks a TrueHD or DTS-HD track, which is often a large share of a remux, and narrows 7.1 to 5.1.
+
+### What Valence refuses
+
+Before anything starts Valence checks each file and tells you why it will not proceed, so a Friday batch does not fail overnight.
+
+| Refusal                     | Reason                                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Already queued              | It is already queued or being worked on.                                                                                       |
+| Being watched               | Replacing a file under a live stream would end it.                                                                             |
+| Folder is read only         | Valence cannot write to the folder. Media is often mounted read only, which is sensible; mount it read and write to re-encode. |
+| Subtitles would not survive | An AVI or M2TS file carries subtitles its container cannot hold, and the container is never changed.                           |
+| Already as small            | The result would match or exceed what the file is already, so it would waste a generation of quality.                          |
+| Not enough room             | The estimate does not fit in free space.                                                                                       |
+| Too many awaiting review    | The review queue is full.                                                                                                      |
+
+### Review, then decide
+
+When an encode finishes it does not replace anything yet. It appears under **Waiting for you** in the Encoding panel, with its size before and after. Press **Review** to compare frames from the original and the encode, then either confirm or reject it.
+
+- Confirming keeps the new encode and removes the original: "Kept the new encode and removed the original."
+- Rejecting puts the original back in one action: "Put the original back."
+- Stopping a running encode says "Stopped the re-encode."
+
+Because every waiting encode holds a film and its replacement on disk, the queue pauses when too many encodes are waiting for you (five by default). Review some to let it carry on. Starting shows "Started re-encoding."
+
+![The Encoding panel showing Waiting for you with a Review button, an Under way list with progress bars and the Already done table.](/screenshots/admin-encoding.png)
+
+An encode moves through Waiting its turn, Encoding, Checking what came out, Waiting for you and then Done. Rejected, Failed and Stopped are the other outcomes. The **Already done** table keeps the history.
+
+## Toasts that confirm admin actions
+
+Small confirmations appear at the corner of the screen after most admin actions. If one never appears, the action probably did not happen.
+
+| Area      | Confirmation                                                                                                                                                                                                                                                                                                    |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Settings  | "Hardware encoding saved.", "Certification region saved.", "Preview quality saved.", "Roundness saved.", "Sign-in screen saved.", "Splashscreen removed.", "Trailer setting saved.", "Music details setting saved.", "TheAudioDB key saved.", "Catalogue key saved.", "OMDb key saved.", "Release types saved." |
+| Overview  | "Counted the storage again."                                                                                                                                                                                                                                                                                    |
+| Libraries | "Read every file of every library again.", "Rebuilt every library."                                                                                                                                                                                                                                             |
+| Sessions  | "Paused that stream.", "Resumed that stream.", "Stopped that stream.", "Sent the message."                                                                                                                                                                                                                      |
+| Jobs      | "Asked (job name) to stop.", "Schedule added.", "Schedule removed."                                                                                                                                                                                                                                             |
+| Links     | "Withdrew the link."                                                                                                                                                                                                                                                                                            |
+| Webhooks  | "Webhook created.", "Webhook saved.", "Webhook turned on.", "Webhook turned off.", "Webhook deleted.", "Sent a test delivery.", "Delivered it again."                                                                                                                                                           |
+| Encoding  | "Started re-encoding.", "Stopped the re-encode.", "Kept the new encode and removed the original.", "Put the original back."                                                                                                                                                                                     |
+
+A failure shows the reason in place of the confirmation, for example that a key could not be saved.

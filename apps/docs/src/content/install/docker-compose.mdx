@@ -1,0 +1,240 @@
+---
+title: Docker Compose
+description: A full walkthrough of the compose.yaml that ships with Valence, service by service, with the settings file, secrets, first start and a health check.
+order: 1
+---
+
+Valence is deployed from one `compose.yaml`. It is written for a server that pulls a published image rather than building it, with TLS terminated by a reverse proxy somewhere else. It works with anything that takes a compose file, and the project's own guide is written against Dockge. Nothing needs writing to disk on the Docker host beyond the compose file and its settings: there is no certificate, no Caddyfile and no configuration file of any kind. Everything is a setting.
+
+If you only want to see it running, the [Quick start](/start/quick-start) is shorter. This page explains each part so you can change it with confidence.
+
+## What you need
+
+- A machine running Docker with the Compose plugin, and your library on a path it can read.
+- A reverse proxy holding the certificate, unless you are only testing. See [Reverse proxy](/install/reverse-proxy).
+- A domain pointed at that proxy.
+
+The [System requirements](/start/system-requirements) page has the hardware and version details.
+
+## Get the file
+
+```bash
+mkdir -p ~/valence && cd ~/valence
+curl -fsSL -o compose.yaml https://raw.githubusercontent.com/ValenceOSS/Valence/main/compose.yaml
+```
+
+Each GitHub release attaches a `compose.yaml` and an `env.example` (the repository's `.env.example`), which is the safer choice if you want the file that matches a specific release. The file at `main` follows unreleased work.
+
+## The services
+
+`compose.yaml` defines five services. Only `db` and `valence` start by default. The other three use Compose profiles and start only when you ask for them.
+
+| Service        | Image                                           | Starts by default      | Purpose                                                  |
+| -------------- | ----------------------------------------------- | ---------------------- | -------------------------------------------------------- |
+| `db`           | `postgres:18-alpine`                            | Yes                    | The database                                             |
+| `valence`      | `ghcr.io/marquescoding/valence:latest`          | Yes                    | Server, web client and media service                     |
+| `requests`     | `ghcr.io/marquescoding/valence-requests:latest` | Profile `requests`     | Optional requesting service                              |
+| `flaresolverr` | `ghcr.io/flaresolverr/flaresolverr:latest`      | Profile `flaresolverr` | Optional, for indexers behind Cloudflare's browser check |
+| `gluetun`      | `qmcgaw/gluetun:latest`                         | Profile `vpn`          | Optional VPN for a download client                       |
+
+### db
+
+```yaml
+db:
+  image: postgres:18-alpine
+  restart: unless-stopped
+  environment:
+    POSTGRES_USER: valence
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    POSTGRES_DB: valence
+    TZ: ${TZ:-UTC}
+  volumes:
+    - db-data:/var/lib/postgresql/data
+  healthcheck:
+    test: ['CMD-SHELL', 'pg_isready -U valence']
+    interval: 10s
+    timeout: 5s
+    retries: 5
+```
+
+The user and database are both called `valence`. Only Valence uses the password, so it can be any long random string. The service publishes no ports on purpose: only Valence talks to it, over the stack's own network. The healthcheck matters because the `valence` service waits for it with `depends_on`.
+
+The `${NAME:?message}` form makes Compose refuse to start with that message if the variable is unset. This is how the required settings are enforced.
+
+### valence
+
+```yaml
+valence:
+  image: ghcr.io/marquescoding/valence:latest
+  restart: unless-stopped
+  depends_on:
+    db:
+      condition: service_healthy
+```
+
+The image carries three programs: the server, the web client and the media service. The entrypoint starts the media service and the server side by side and stops the container as soon as either exits, so the orchestrator restarts both rather than leaving an API that cannot play anything.
+
+The image defines a healthcheck that calls `/api/health` inside the container every 30 seconds after a 20 second start period.
+
+#### Environment
+
+The service's `environment` block is the list of settings that reach the container. Not every variable Valence understands is in it. Anything you want to set that is not listed has to be added as a line under `environment`. [Configuration](/install/configuration) marks which variables the file passes through.
+
+| Compose line                      | Purpose                                                                                                                                       |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                    | Built from `POSTGRES_PASSWORD`, pointing at `db:5432`.                                                                                        |
+| `BACKUPS_KEPT`                    | How many pre-migration snapshots to keep, 3 by default. See [Rolling back](/install/rolling-back).                                            |
+| `BETTER_AUTH_SECRET`              | Seals sign-in cookies. At least 32 characters. Changing it later signs everybody out.                                                         |
+| `BETTER_AUTH_URL`                 | Set from `PUBLIC_URL`. The address a browser reaches Valence at, which is the proxy's, not the container's. Sign-in builds redirects from it. |
+| `TRUSTED_ORIGINS`                 | Also set from `PUBLIC_URL`. Sign-in is refused from any origin not listed here.                                                               |
+| `COOKIE_SECURE`                   | `true` by default because the browser's half of the journey is HTTPS. Set `false` only for plain HTTP testing.                                |
+| `VALENCE_ARTEFACT_DIR`            | Where previews and thumbnail sheets go, `/cache/artefacts` by default.                                                                        |
+| `PROFILE_IMAGE_DIR`               | Where profile pictures go, `/config/profiles` by default.                                                                                     |
+| `TZ`                              | The clock scheduled jobs keep, `UTC` by default.                                                                                              |
+| `MEDIA_JOBS`                      | Files probed at once during a scan, 4 by default through this file.                                                                           |
+| `CATALOGUE_API_KEY`               | Optional metadata key.                                                                                                                        |
+| `REQUESTS_URL`, `REQUESTS_SECRET` | Both empty leaves requesting off.                                                                                                             |
+
+A wrong `PUBLIC_URL` fails only at the moment somebody tries to sign in, which is why it is worth checking twice.
+
+Whatever you set `VALENCE_ARTEFACT_DIR` or `PROFILE_IMAGE_DIR` to, **map a volume there**. A path with no volume behind it lives on the container's own filesystem and is gone the next time the container is recreated, which an update does. Valence warns at startup and on the admin page when the artefact directory has no volume.
+
+#### Ports
+
+```yaml
+ports:
+  - '${VALENCE_PORT:-8420}:8420'
+```
+
+The left side of the colon is the port on the host, which your proxy points at. Change `VALENCE_PORT` if something else already answers on 8420. The container always listens on 8420 internally.
+
+If the proxy runs on the same host, you can bind only to the loopback address to keep the port off your network, by writing the mapping as `'127.0.0.1:${VALENCE_PORT:-8420}:8420'`. This is a common Docker hardening step and is not part of the shipped file.
+
+#### Volumes
+
+```yaml
+volumes:
+  - config:/config
+  - cache:/cache
+  - transcodes:/transcodes
+  - ${MEDIA_PATH:?set MEDIA_PATH, e.g. /mnt/tank/media}:/media${MEDIA_ACCESS-:ro}
+```
+
+Three named volumes hold Valence's own data and one bind mount is your library. The `${MEDIA_ACCESS-:ro}` suffix mounts the library read only unless you set `MEDIA_ACCESS` to an empty string, which is how you enable re-encoding. The dash rather than `:-` is deliberate, because it lets an empty value mean "read and write". See [Storage and volumes](/install/storage-and-volumes).
+
+#### Devices
+
+```yaml
+devices:
+  - /dev/dri:/dev/dri
+group_add:
+  - ${RENDER_GROUP_ID:-44}
+```
+
+This passes the GPU through. **Delete both entries if the machine has no GPU**, because a device that is not there stops the container starting and the failure does not say why. `RENDER_GROUP_ID` is the group that owns `/dev/dri/renderD128` on the host: 44 on most Debian-derived systems and 104 on some. `ls -n /dev/dri` shows it. See [Hardware transcoding](/install/hardware-transcoding).
+
+### requests, flaresolverr and gluetun
+
+These are covered in [Requesting](/install/requesting). They stay off unless you start the stack with their profile, for example:
+
+```bash
+COMPOSE_PROFILES=requests docker compose up -d
+```
+
+### Volumes
+
+The file ends by declaring `db-data`, `config`, `cache` and `transcodes` as named volumes.
+
+## Create the settings file
+
+Compose reads a `.env` file from the same directory as `compose.yaml`. These settings are read by the compose file itself.
+
+| Setting              | Required | Meaning                                                                       |
+| -------------------- | -------- | ----------------------------------------------------------------------------- |
+| `POSTGRES_PASSWORD`  | Yes      | Any long random string.                                                       |
+| `BETTER_AUTH_SECRET` | Yes      | At least 32 characters.                                                       |
+| `PUBLIC_URL`         | Yes      | The proxy's address, such as `https://valence.example.com`. Not the NAS's.    |
+| `MEDIA_PATH`         | Yes      | The library on the host, such as `/mnt/tank/media`.                           |
+| `VALENCE_PORT`       | No       | The host port, 8420 by default.                                               |
+| `TZ`                 | No       | UTC by default.                                                               |
+| `MEDIA_JOBS`         | No       | Files probed at once during a scan, 4 by default.                             |
+| `CATALOGUE_API_KEY`  | No       | A TMDB key. Without one, titles come from file names.                         |
+| `COOKIE_SECURE`      | No       | True by default. Set false only when testing over plain HTTP.                 |
+| `RENDER_GROUP_ID`    | No       | The group owning `/dev/dri/renderD128`, 44 by default.                        |
+| `PROFILE_IMAGE_DIR`  | No       | Where profile pictures are kept, `/config/profiles` by default.               |
+| `MEDIA_ACCESS`       | No       | `:ro` by default. Set to an empty string to mount the library read and write. |
+
+Every setting is described in [Configuration](/install/configuration).
+
+### Generate the secrets
+
+Two ways to make a secret at a shell:
+
+```bash
+openssl rand -base64 48
+head -c 48 /dev/urandom | base64
+```
+
+A minimal `.env`:
+
+```ini
+POSTGRES_PASSWORD=paste-a-long-random-string
+BETTER_AUTH_SECRET=paste-a-different-random-string-of-at-least-32-characters
+PUBLIC_URL=https://valence.example.com
+MEDIA_PATH=/mnt/tank/media
+TZ=Europe/London
+```
+
+Give `TZ` an IANA name such as `Europe/London`, never an offset. A name follows daylight saving.
+
+### Generating the secrets without a shell
+
+If you cannot reach a terminal on the host, any long random string will do for both secrets. They are never typed by a person and never shown anywhere. A password manager's generator set to 48 characters is fine. In Dockge, put the values in the environment editor rather than the compose file.
+
+Keep a record of `BETTER_AUTH_SECRET` and `POSTGRES_PASSWORD` in your password manager. Losing the first only signs people out, but you will want the second if you ever restore the database by hand.
+
+## First start
+
+```bash
+docker compose up -d
+```
+
+The server migrates its own database on the way up, so the first start takes a little longer than later ones. Watch it:
+
+```bash
+docker compose logs -f valence
+```
+
+Look for the line that the database is up to date with this release. Then open `PUBLIC_URL`, where the setup wizard asks you to create the administrator. Follow the [Quick start](/start/quick-start) from step 4, or [First run](/use/first-run).
+
+## Verify health
+
+The server answers a health check without any sign-in at `/api/health`:
+
+```bash
+curl -s http://localhost:8420/api/health
+```
+
+```json
+{ "status": "ok", "version": "1.0.0", "transcoderReachable": true }
+```
+
+The `status` is `ok` when the media service answers and `degraded` when it does not. The `version` is the release that is running. Also check the container health that Docker tracks:
+
+```bash
+docker compose ps
+```
+
+If the API is reachable through your proxy but the check fails there, the proxy is the problem, not Valence.
+
+## Day two
+
+| Task                                   | Command                           |
+| -------------------------------------- | --------------------------------- |
+| Follow the logs                        | `docker compose logs -f valence`  |
+| Restart Valence only                   | `docker compose restart valence`  |
+| Apply a changed `.env` or compose file | `docker compose up -d`            |
+| Stop everything, keeping data          | `docker compose down`             |
+| Update to a newer image                | See [Updating](/install/updating) |
+
+Do not add a volume flag to `down` unless you mean to erase data. See [Uninstalling](/install/uninstalling).

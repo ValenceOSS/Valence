@@ -1,0 +1,94 @@
+---
+title: Quick start
+description: The fastest path from an empty machine to playing a film, in five steps, using the published Docker image.
+order: 3
+---
+
+This page gets a working Valence server running on one machine and plays a film from it. It uses the published image and a plain HTTP address on your local network, which is the quickest route and is fine for trying Valence. For a server that people reach from outside the house, finish here and then read [Docker Compose](/install/docker-compose) and [Reverse proxy](/install/reverse-proxy).
+
+You need Docker with the Compose plugin, a folder of media on the machine, and a shell. The [System requirements](/start/system-requirements) page lists the rest.
+
+## 1. Get the compose file
+
+Make a folder for the stack and download `compose.yaml` into it.
+
+```bash
+mkdir -p ~/valence && cd ~/valence
+curl -fsSL -o compose.yaml https://raw.githubusercontent.com/ValenceOSS/Valence/main/compose.yaml
+```
+
+Each release also carries a copy of `compose.yaml`, and one called `env.example`, as release assets on [GitHub](https://github.com/ValenceOSS/Valence/releases). The file on `main` follows unreleased work, so if you want a pinned setup, take the one attached to the release you intend to run.
+
+The file has a `devices` entry that hands the GPU to the container. **If this machine has no `/dev/dri` (a virtual machine, a Mac or a Windows PC running Docker Desktop), delete the `devices` and `group_add` entries** from the `valence` service. A device that does not exist stops the container from starting at all, and the error does not say why.
+
+## 2. Write the settings
+
+Compose reads settings from a file called `.env` beside `compose.yaml`. Four are required. Create the file with generated secrets:
+
+```bash
+cat > .env <<EOF
+POSTGRES_PASSWORD=$(openssl rand -base64 24 | tr -d '/+=')
+BETTER_AUTH_SECRET=$(openssl rand -base64 48)
+PUBLIC_URL=http://localhost:8420
+MEDIA_PATH=/path/to/your/media
+COOKIE_SECURE=false
+EOF
+```
+
+Then edit the values:
+
+- `MEDIA_PATH` is the folder on the host that holds your library. Put the real path here, for example `/mnt/tank/media`.
+- `PUBLIC_URL` is the address you will type into a browser. On the same machine, `http://localhost:8420` works. From another machine on your network, use its address, for example `http://192.168.1.40:8420`.
+- `COOKIE_SECURE=false` is needed only because this quick start uses plain HTTP. A browser refuses to keep a secure cookie from an insecure address, so with the default of `true` sign-in appears to succeed and then does not hold. Remove this line once you are behind HTTPS.
+
+If you have no `openssl`, any long random string works for the two secrets. `BETTER_AUTH_SECRET` must be at least 32 characters. See [Configuration](/install/configuration) for every setting.
+
+## 3. Start it
+
+```bash
+docker compose up -d
+```
+
+The first start pulls the images and takes longer than later ones, because the server creates its own database tables on the way up. Watch it come alive and check it is healthy:
+
+```bash
+docker compose ps
+curl http://localhost:8420/api/health
+```
+
+A healthy server answers with JSON containing `"status":"ok"`, its `version` and `"transcoderReachable":true`. If the status is `degraded`, the server is up but cannot reach its media service. If the container keeps restarting, run `docker compose logs valence` and see [Troubleshooting](/reference/troubleshooting).
+
+## 4. Create the administrator
+
+Open your `PUBLIC_URL` in a browser. The first visit shows the setup wizard, which asks for a name, an email address and a password of at least 10 characters for the administrator account, plus the addresses you use to reach the server and whether it is reached over HTTPS.
+
+The first account is the administrator, so make it before you tell anybody else the address. Confirm that the trusted origins box lists the address you are actually using. A missing origin is the most common cause of a sign-in that does nothing. Leave the HTTPS box unticked for this plain HTTP test. See [First run](/use/first-run) for the rest of the wizard.
+
+## 5. Add a library and play a film
+
+In the admin area, open **Libraries** and add a library.
+
+1. Choose the kind, which for a folder of films is **movies**.
+2. Set the path to `/media`, or to a folder below it. This is the path **inside the container**, where your `MEDIA_PATH` appears. The host path is not visible to the container, and using it is the usual reason a library scans to nothing.
+3. Save it and start a scan.
+
+The request returns as soon as the scan is queued, so a large library shows progress instead of appearing to hang. You can follow it under **Jobs & logs**. When the first films appear, open one and press play.
+
+Without a `CATALOGUE_API_KEY`, titles and years come from file names and nothing fetches posters, descriptions or cast. To get them, set a metadata catalogue key in `.env` and run `docker compose up -d` again. See [Libraries](/use/libraries).
+
+## Something went wrong
+
+| Symptom                                        | Likely cause                                                                                                                 |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| The container starts and stops again           | The `devices` entry on a machine with no GPU. Delete `devices` and `group_add`.                                              |
+| Sign-in succeeds and immediately forgets you   | `PUBLIC_URL` does not match the address in the browser, or `COOKIE_SECURE` is `true` over plain HTTP.                        |
+| The library scans to nothing                   | The library path is a host path. Use `/media`, or check `MEDIA_PATH` points somewhere readable.                              |
+| Everything loads but nothing updates by itself | The WebSocket is not passing through a proxy. Not an issue on this quick start; see [Reverse proxy](/install/reverse-proxy). |
+
+## Where to go next
+
+- Put it behind HTTPS with a [reverse proxy](/install/reverse-proxy) and set `PUBLIC_URL` to the real address.
+- Read [Concepts](/start/concepts) to learn the vocabulary the admin area uses.
+- Set up [hardware transcoding](/install/hardware-transcoding) if the machine has a GPU.
+- Invite the household from [Accounts and roles](/use/accounts-and-roles).
+- Learn how to [update](/install/updating) safely.

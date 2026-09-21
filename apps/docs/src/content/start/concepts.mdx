@@ -1,0 +1,129 @@
+---
+title: Concepts
+description: 'The vocabulary of Valence: libraries, media kinds, accounts and profiles, roles, jobs, requests, playback modes and generated artefacts.'
+order: 4
+---
+
+A handful of ideas explain most of what you see in Valence. This page defines them in the words the admin area uses, and links to the pages that go deeper.
+
+## The pieces
+
+A running Valence stack has these parts, each with one job.
+
+| Part             | What it does                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| Server           | The API, the sign-in system, the job queue and the web client, in one Node process listening on port 8420.   |
+| Media service    | A Rust program that probes files, transcodes with FFmpeg, and renders previews. It listens on a Unix socket. |
+| Database         | Postgres. Holds accounts, libraries, watch history, settings and the job queue.                              |
+| Requests service | Optional. Searches indexers, drives a download client and files what arrives into a library.                 |
+| Clients          | The web app in a browser, or the desktop app. Both are windows onto the server.                              |
+
+The server and the media service run together inside the single `valence` container. If either stops, the container stops so that the orchestrator restarts both, rather than leaving an API that cannot play anything.
+
+## Libraries
+
+A **library** is a folder on the server that Valence watches and reads. It has a name, a kind, a path and a few per-library settings such as the default audio language and how many files may be probed at once.
+
+The path is the location **inside the container**. With the shipped compose file your `MEDIA_PATH` appears as `/media`, so a library at `/media/films` is the `films` folder in your host library.
+
+Valence never changes the files in a library. It stores what it learns about them (titles, durations, streams, artwork) in the database and in its caches, and a **scan** reads the folder again to find what was added, changed or removed. Resetting a library or clearing its artwork removes rows and derived files, which a rescan brings back. The one exception is [re-encoding](/install/storage-and-volumes#re-encoding-and-write-access), which is opt-in and can replace a file.
+
+### Library kinds
+
+There are four kinds of library:
+
+| Kind     | Holds                                     | Formats Valence recognises                                              |
+| -------- | ----------------------------------------- | ----------------------------------------------------------------------- |
+| `movies` | Films, plus their extras such as trailers | mkv, mp4, m4v, mov, avi, webm, ts, m2ts, mpg, mpeg, wmv, flv, ogv, 3gp  |
+| `shows`  | Series, seasons and episodes              | The same video formats                                                  |
+| `music`  | Artists, albums and songs                 | mp3, flac, m4a, aac, alac, ogg, oga, opus, wav, aiff, aif, wma, ape, wv |
+| `books`  | Books and comics                          | epub, pdf, cbz (also zip), cbr (also rar)                               |
+
+Subtitle files beside a video are picked up in srt, vtt, ass and ssa formats.
+
+## Media kinds
+
+Inside a library, each thing Valence knows about has a **media kind**. The contract defines eight: `movie`, `episode`, `season`, `series`, `album`, `song`, `video` and `book`. A film is a movie, a show is a series made of seasons made of episodes, and music is albums made of songs. Extras such as trailers, behind-the-scenes footage and deleted scenes hang off a parent title and are labelled by kind rather than shown as films in their own right.
+
+A film can have more than one **version**, such as a theatrical cut and an extended cut. Each version carries a label.
+
+## Accounts and profiles
+
+Valence separates who signs in from who is watching.
+
+- An **account** is a sign-in: an email and a password, and optionally two-factor authentication and passkeys. Accounts are created by an administrator through invitations, not by open signup. Roles are attached to accounts.
+- A **profile** belongs to an account and is who is watching. Each profile has a name, a colour and a picture, and owns its own watch progress, history, favourites and ratings. A household with one account on the television can still give every member their own continue watching.
+
+There is also a **household**, which has a name, a colour and a picture of its own. Profile pictures are stored under `/config/profiles`, which is why the `config` volume matters. See [Storage and volumes](/install/storage-and-volumes).
+
+The Settings page can choose whether profiles are shown before sign-in.
+
+## Roles and permissions
+
+Access is controlled by **roles**, and each role is a set of **permissions**. An account can hold roles, and a role can be edited freely. Valence creates four roles the first time it starts:
+
+| Role          | Intended for                                           | Highlights                                                                                    |
+| ------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Administrator | Whoever runs the server                                | Everything, including anything added later.                                                   |
+| Manager       | Someone who looks after libraries but not the server   | Library creation and editing, jobs, rescans, sharing, requests approval, logs and monitoring. |
+| Member        | What everybody in the house gets. This is the default. | Sharing links and parties, downloads, and asking for films, series and music.                 |
+| Restricted    | An account somebody wants kept narrow                  | Watches, and nothing else.                                                                    |
+
+If you delete one of these roles, it is not recreated on the next restart. The first account, created by the wizard, is the administrator.
+
+Permissions are named for what they allow. Examples are `library.create`, `jobs.run`, `media.rescan`, `media.delete`, `media.reencode` (kept separate from deleting media on purpose), `sharing.link`, `download.media`, `requests.ask`, `requests.approve`, `server.settings` and `server.webhooks`. The complete list is in the API reference. See [Accounts and roles](/use/accounts-and-roles).
+
+## Jobs
+
+Anything slow happens as a **job**, on a queue, rather than inside a web request. Scanning a library, generating previews, fetching logos, detecting intros and cleaning caches are all jobs. A job has a status (`queued`, `running`, `completed` or `failed`), a subject, and progress with a phase and a count.
+
+Some jobs also have **schedules**, which keep the clock set by the `TZ` setting. That is why `TZ` matters: "daily at 03:00" means 3am where you are only when the container knows where that is. Job history is kept for 30 days.
+
+The library-related jobs shipped include **Scan for changes**, **Generate missing previews**, **Generate missing scrub previews**, **Fetch missing logos**, **Detect missing intros and outros**, **Reset and rebuild**, **Clear and fetch again**, and the cleanup jobs for the image cache, the artefact cache and old viewing history. Manage them from **Jobs & logs** in the admin area. See [Jobs and logs](/use/jobs-and-logs).
+
+## Requests
+
+**Requesting** is an optional feature that lets people ask for a film, a series, an artist or an album that is not in the library yet. A request goes through this life:
+
+1. Somebody with the `requests.ask` permission asks for a title from the catalogue.
+2. It waits for somebody with `requests.approve`, unless the asker's role has `requests.autoApprove`.
+3. Once approved, the requests service searches your indexers, judges releases by a **quality profile**, and hands the best one to your download client.
+4. When the download finishes, the file is named and filed into the right library, Valence scans just that folder, and tells whoever asked.
+
+Nothing about requesting appears in the interface until it is set up. See [Requesting](/install/requesting) for the setup and [Requests](/use/requests) for using it.
+
+## Transcoding and direct play
+
+When somebody plays something, Valence works out a **playback plan** for that device: what to do with the container, the video, the audio and the subtitles. The admin area's Sessions page names the outcome as one of four modes, from cheapest to most expensive.
+
+| Mode          | What happens                                                                                     | Cost     |
+| ------------- | ------------------------------------------------------------------------------------------------ | -------- |
+| Direct play   | The file is sent as it lies.                                                                     | Minimal  |
+| Remux         | The streams are repackaged into a container the device accepts, without touching video or audio. | Very low |
+| Direct stream | The video is untouched but the audio is transcoded.                                              | Low      |
+| Transcode     | The video is re-encoded, or subtitles are burned into it. This is where a GPU helps most.        | High     |
+
+The plan is negotiated per device, so a phone and a television watching the same film can receive different things. HDR is tone mapped to SDR only when the screen needs it. See [Playing media](/use/playing-media) and [Hardware transcoding](/install/hardware-transcoding).
+
+Transcodes are written as a playlist and a stream of segments into the `transcodes` scratch space, and are removed when nobody is watching them any more.
+
+## Previews and artefacts
+
+Valence generates derived files from your media so the interface can be fast and pleasant. There are two families, and they live in different places for a reason.
+
+- **Artefacts** are things rendered from a film or episode: a short preview clip and the thumbnail sheets that let you scrub along the timeline (trickplay). They cost minutes of decoding per title and are read for as long as the title is in the library, so they are kept in `/cache/artefacts`, which is the `VALENCE_ARTEFACT_DIR` setting. The preview quality setting (`low`, `standard` or `high`, `high` by default) trades size for detail.
+- **Images** are posters, backdrops and logos fetched from the metadata catalogue. Valence proxies and caches them in `/cache/images`, so a browser drawing your library never talks to the catalogue and covers survive the catalogue reorganising.
+
+Segments for playback, by contrast, are scratch. None of these can be lost for good: a deleted preview or image is rendered or fetched again, which costs time and not data. Profile pictures are the opposite, because nothing can bring back a photo somebody uploaded, so they are kept under `/config`.
+
+## Other terms
+
+| Term           | Meaning                                                                                                               |
+| -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Watch party    | A shared viewing that keeps everybody at the same moment. Can be password protected. See [Sharing](/use/sharing).     |
+| Link           | A share of one title or series to somebody with no account, for as long as you decide.                                |
+| Webhook        | An HTTP call Valence makes when something happens. See [Notifications and webhooks](/use/notifications-and-webhooks). |
+| Trusted origin | An address a browser is allowed to sign in from. Set through `TRUSTED_ORIGINS`.                                       |
+| Snapshot       | A database copy taken automatically before a migration. See [Rolling back](/install/rolling-back).                    |
+
+Ready to install? Continue to [Docker Compose](/install/docker-compose).

@@ -10,25 +10,26 @@ type FindNewerMigrationsOptions = {
 };
 
 /**
- * Counts the migrations this database has run that this release has never heard of.
+ * Finds the migrations this database has run that are newer than any this release carries.
  *
  * That only happens when a newer release migrated the database and an older one was started over
- * it afterwards. The older code then reads tables it does not understand, and nothing at the API
- * says why, so it is found here instead.
+ * it afterwards. A stamp the journal does not list but that is older than its newest is not that:
+ * it is left by a branch whose migration was since renumbered, the older code never reads it, and
+ * refusing to start over it would stop a development database that is perfectly usable.
  *
  * @param readJournal - How to read the migration journal.
  * @param readAppliedAt - How to read the stamps this database has run.
- * @returns The stamps the database has run that the journal does not list.
+ * @returns The stamps the database has run that are newer than the journal's newest.
  */
 const findNewerMigrations = async ({
   readJournal,
   readAppliedAt,
 }: FindNewerMigrationsOptions): Promise<readonly number[]> => {
-  const known = new Set(
-    JournalSchema.parse(JSON.parse(await readJournal())).entries.map((e) => e.when),
+  const newest = Math.max(
+    ...JournalSchema.parse(JSON.parse(await readJournal())).entries.map((entry) => entry.when),
   );
 
-  return (await readAppliedAt()).filter((stamp) => !known.has(stamp));
+  return (await readAppliedAt()).filter((stamp) => stamp > newest);
 };
 
 export type { FindNewerMigrationsOptions };

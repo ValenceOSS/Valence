@@ -1,0 +1,147 @@
+---
+title: Contributing
+description: How to contribute to Valence, from finding work and branching to commit format, the pull request checklist, review, licensing and security reports.
+order: 10
+---
+
+Contributions are welcome, from a one line fix to a new feature. This page walks through the whole path: picking something to work on, setting up, branching, committing, opening a pull request, getting it reviewed and merged. The coding rules themselves are in [Coding standard](/develop/coding-standard) and are binding. Read them before you open a pull request, because most review friction comes from rules that are easy to follow and easy to miss.
+
+## Before you start
+
+For anything beyond a small fix, open an issue first. This is not bureaucracy. Several areas of the codebase are more constrained than they look, and it is far better to learn that a plugin API needs a new extension point before you have written a workaround than after.
+
+- **Small fixes** (a typo, an obvious bug, a missing test) can go straight to a pull request.
+- **Features and behaviour changes** should start as an issue describing the problem, not the patch. Say who it affects and what you would expect to happen.
+- **Media pipeline changes** need hardware context. Say which GPU vendor, driver version and operating system you tested on, because they matter enormously.
+- **If you need something the plugin broker does not expose, say so.** Extension point requests are a first class issue type with a fast path, deliberately, so that the brokered plugin model does not become a wall. See [Plugins](/develop/plugins).
+
+### Finding work
+
+- Browse the open issues on the [Valence repository](https://github.com/ValenceOSS/Valence/issues) and look for ones that describe a clear problem.
+- Read [Architecture](/develop/architecture) and [Repository layout](/develop/repository-layout) to find the part of the code an issue lives in.
+- Documentation is a good first contribution. Pages under `apps/docs/src/content` are MDX, and the pull request template asks for docs to be updated alongside behaviour anyway.
+- Comment on the issue before you start so two people do not do the same work.
+
+## Set up
+
+The short version is below. [Local setup](/develop/local-setup) has the full walk through.
+
+```bash
+git clone https://github.com/ValenceOSS/Valence.git
+cd Valence
+pnpm install
+docker compose -f compose.dev.yaml up -d db
+pnpm ffmpeg:sync
+pnpm dev --filter=@valence/server --filter=@valence/web --filter=@valence/transcoder
+```
+
+- Working on the web client only? You can skip the Rust toolchain.
+- Working on the media pipeline? You need fixtures: `pnpm fixtures:sync --tier 1`. Tests requiring an absent tier skip with a message naming the command, and never silently pass.
+- Adding a ValenceUI component? Add its alias line to `tsconfig.paths.json`. See [UI library](/develop/ui-library).
+
+## Branches
+
+Name a branch `type/short-description`, using the same types commits use, lower case and hyphenated.
+
+```
+feat/hide-a-library-per-profile
+fix/a-stop-that-ends-one-viewing
+docs/say-how-releases-are-cut
+```
+
+A branch and its commits describe the same piece of work, so they share one vocabulary. Names say what the work is, never who is doing it: `alex/the-thing` tells a reader nothing they can act on. The check runs on `pre-push` (`pnpm branch:check`), and a repository ruleset is meant to apply the same rule on GitHub. Bots name their own branches and are left alone.
+
+## Commits
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/), enforced by commitlint at the `commit-msg` hook.
+
+```
+feat(transcoder): preserve HDR10 metadata through transcode
+fix(ui): correct MediaCard focus ring in dark theme
+docs(server): say how the data layer handles more than one node
+```
+
+- **Types:** `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, `style`, `revert`.
+- **Scopes:** `web`, `landing`, `server`, `transcoder`, `requests`, `desktop`, `ui`, `contracts`, `core`, `plugin-sdk`, `auth`, `docs`, `deps`, `repo`. A change spanning several layers takes no scope rather than an invented one.
+- **Subject:** lower case.
+- **Breaking changes** use `!` and a `BREAKING CHANGE:` footer. Changes to the API contract or to a plugin extension point must be marked when they are breaking, because both are public surfaces with support windows.
+
+Commits are what the changelog and the next version number are made from, so write them for a reader who has not seen your pull request. See [Releasing](/develop/releasing). Commit incrementally in logical steps. Each commit reaches `main`, so each one should build and read well on its own.
+
+## The checks
+
+Husky runs three hooks.
+
+| Hook         | What it runs                                                                                         |
+| ------------ | ---------------------------------------------------------------------------------------------------- |
+| `commit-msg` | commitlint on the message                                                                            |
+| `pre-commit` | `lint-staged`: oxlint, eslint and prettier on staged code                                            |
+| `pre-push`   | `pnpm lint`, `pnpm typecheck`, `pnpm branch:check`, `pnpm test`, `pnpm rust:check`, `pnpm rust:test` |
+
+<Callout title="Do not bypass the hooks" tone="warning">
+  Do not use `--no-verify` to get around a failing hook. CI runs the same checks, so it only delays
+  the failure. If a lint rule is wrong, say so in an issue rather than silencing it.
+</Callout>
+
+You will spend less time in review if you run these while you work:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm --filter @valence/server test
+```
+
+## Pull requests
+
+- **One logical change per pull request.** If you find a second problem, fix it in a second pull request.
+- **Fill in the template.** It asks what the change does, why (the problem, not the patch), and how it was tested and on what.
+- **Update documentation in the same pull request.** Docs live in the repository precisely so this is possible.
+- **Every new function and component ships with a co-located test.** See [Testing](/develop/testing).
+- **Do not lower a coverage threshold or disable a lint rule to make a build pass.** Each is its own pull request with its own justification.
+
+The pull request template checklist:
+
+- [ ] Branch is named `type/short-description`
+- [ ] Commits follow Conventional Commits
+- [ ] Every new function and component has a co-located test
+- [ ] Documentation updated in this pull request, where behaviour changed
+
+### What CI checks
+
+CI runs on every pull request. It runs lint and `pnpm db:check`, builds the packages once, typechecks, runs one test job per package (with the screens package sharded four ways), and runs the Rust job when your change touches the transcoder. All of it must be green before merge. The full picture is in [Local setup](/develop/local-setup#hooks-and-ci).
+
+A failure in a test you did not touch, that differs on each run, is usually load on a shared runner rather than a regression. Say so on the pull request and re-run the job. Do not change unrelated tests to get past it.
+
+## Review
+
+Reviews look at correctness, the coding standard, tests and whether the change does what the pull request says. Review comments cite a section number from `CODING_STANDARD.md` when they cite a rule, for example "section 9" for raw HTML controls, so you can read the reasoning. Some rules are enforced by tooling and the rest by reviewers, so a green build does not mean every rule is met.
+
+- Respond to each comment, either with a change or a reason.
+- If a rule appears to conflict with a library's expectations, raise it rather than deviating silently. Rules are amendable. Silent exceptions are not.
+
+## Merging
+
+Approved pull requests are merged with a merge commit, not a squash, so every well written commit reaches `main`. A maintainer merges. After merge, release-please picks your commits up for the next release notes. See [Releasing](/develop/releasing).
+
+## Test media and licensing
+
+Valence is released under the MIT licence, and your contribution is under it too.
+
+**Only freely redistributable media may be added as a test fixture.** Clips from commercial films are not redistributable at any length, regardless of intent. Every fixture records its licence in `fixtures.manifest.json`, and a pull request adding one without a licence field will be rejected. This is a legal constraint on the project, not a preference.
+
+## Reporting a security issue
+
+Do not open a public issue. Use GitHub's private vulnerability reporting for the repository, which is the fastest route to somebody who can act on it. `SECURITY.md` in the repository root says how, and what to include: what you can reach, how you reached it and what it gets you. A request that demonstrates it is worth more than a description of the class of problem. If you have a patch, say so, and it can be worked through the advisory rather than in the open.
+
+Plugin sandbox escapes, meaning anything letting plugin code reach the filesystem, network or session data outside its granted capabilities, are treated as critical.
+
+Two things are known and are not findings. Valence has no per account entitlement model: every signed in account may read every item in every library, because a server is a household. That is a decided property. Reading library content without an account, or as a share guest beyond what the link covers, is a finding. Fixes land on `main`. For the wider policy, see [Security](/reference/security).
+
+## Conduct
+
+The repository does not carry a separate code of conduct file at the time of writing. Be kind, assume good faith, keep review comments about the code, and remember that Valence is maintained by a small number of people who are giving their time. Harassment, or contributions that would damage other people, are not welcome. If someone's behaviour is a problem, tell a maintainer privately.
+
+## Where to ask
+
+Open an issue for bugs and proposals. For questions about how something works, start with these pages, [Architecture](/develop/architecture) and [Repository layout](/develop/repository-layout). The [links](/reference/links) page lists the community channels.

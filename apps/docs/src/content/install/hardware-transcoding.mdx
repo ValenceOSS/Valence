@@ -1,0 +1,144 @@
+---
+title: Hardware transcoding
+description: Use an Intel, AMD or NVIDIA GPU for transcoding in Valence, with the compose device mapping, how to check it works and how to choose a backend.
+order: 5
+---
+
+Valence plays a file directly whenever the device can take it. When it cannot, the media service converts the video, and it can do that on a graphics card instead of on the processor. Hardware transcoding is optional. Without a GPU everything still works, and anything that cannot be direct played is converted on the processor, which is slower and costs more of it.
+
+This page covers what the shipped image provides, how to pass a GPU through, how to confirm that it is being used and what to do when it is not.
+
+## What the image provides
+
+The Valence image does not use the FFmpeg that Debian ships. It installs its own build (`valence-ffmpeg`, a version pinned in the `Dockerfile`) for three reasons that matter here:
+
+- Debian packages none of Intel's media stack (no `libvpl`, no `vpl-gpu-rt`, no `iHD` driver), so QuickSync would not work on the stock FFmpeg.
+- The build carries its own drivers inside its own prefix: `iHD` and `i965` for Intel and `radeonsi` for AMD. The VA-API library is patched at build time to look there first.
+- A build without `libzimg` cannot tone map HDR to SDR, and one without `libass` cannot draw text subtitles. Both failures are silent, so the build is pinned.
+
+You therefore need no drivers inside the container for Intel or AMD. You need the **host** to expose the render device, and the container to be allowed to open it.
+
+## What is supported
+
+The Settings page offers these backends. The **Where it works** column is what the options themselves say, and **Container support** is what the repository configures.
+
+| Backend      | Hardware                            | Where it works               | Container support in the shipped compose file           |
+| ------------ | ----------------------------------- | ---------------------------- | ------------------------------------------------------- |
+| VAAPI        | Intel and AMD                       | Linux                        | Yes. Passed through with `/dev/dri`.                    |
+| QuickSync    | Intel                               | Linux                        | Yes. Passed through with `/dev/dri`.                    |
+| AMD          | AMD, through VAAPI in the container | Linux                        | Yes through VAAPI, using the bundled `radeonsi` driver. |
+| NVENC        | NVIDIA                              | Linux with the NVIDIA driver | Not configured. See [NVIDIA](#nvidia).                  |
+| AMF          | AMD, needs the proprietary driver   | Depends on the host          | Not configured. Use VAAPI on Linux.                     |
+| VideoToolbox | Apple                               | macOS, running natively      | Not reachable from inside a container.                  |
+| RKMPP        | Rockchip                            | Rockchip boards              | Not configured.                                         |
+
+Several of these support AV1 encoding. Which codecs your card can encode depends on the card.
+
+## Intel and AMD
+
+Both go through `/dev/dri`. The compose file already has the mapping:
+
+```yaml
+devices:
+  - /dev/dri:/dev/dri
+group_add:
+  - ${RENDER_GROUP_ID:-44}
+```
+
+`devices` gives the container the render node. `group_add` adds the group that owns it, because the render node is not world readable. Set `RENDER_GROUP_ID` to the numeric group of `/dev/dri/renderD128` on your host. It is 44 on most Debian-derived systems, and 104 on some.
+
+```bash
+ls -n /dev/dri
+```
+
+The line for `renderD128` shows the numeric group in the fourth column. Put that number in `.env`:
+
+```ini
+RENDER_GROUP_ID=104
+```
+
+### Machines with more than one card
+
+A machine with two GPUs has a `renderD129` as well as a `renderD128`. Which one is Valence's to spend is not guessed. Set `VALENCE_VAAPI_DEVICE` in the container's environment, for example `/dev/dri/renderD129`. It is only read on Linux, and it applies to VAAPI and QuickSync. Getting it wrong is visible: the accelerator fails verification and Valence falls back to software encoding, which costs roughly two hundred times the processor time.
+
+```yaml
+environment:
+  VALENCE_VAAPI_DEVICE: /dev/dri/renderD129
+```
+
+### If there is no GPU
+
+**Delete both `devices` and `group_add`.** A device that is not there stops the container from starting at all, and the failure does not say why. This applies to virtual machines, most cloud servers, and Docker Desktop on macOS and Windows.
+
+## NVIDIA
+
+The repository does not ship an NVIDIA configuration, and its compose file has no NVIDIA runtime. The Settings page and the media service both know about NVENC, so the encoder is present in the bundled FFmpeg. Whether it can open in your container depends on the NVIDIA driver libraries being available inside it. The media service reports `Cannot load libcuda.so.1` in exactly the case where they are not.
+
+The usual way to expose them is the NVIDIA Container Toolkit on the host. A Compose device reservation looks like this:
+
+```yaml
+deploy:
+  resources:
+    reservations:
+      devices:
+        - driver: nvidia
+          count: 1
+          capabilities: [gpu, video, compute, utility]
+```
+
+Treat this as a recommendation to try and not a tested configuration. Install the toolkit and driver on the host first, add the reservation to the `valence` service, recreate the container and then check the result as described below. If the Settings page does not list NVENC as proven, the container cannot use it yet. Report what you find on [Discord](https://discord.gg/uTtcAHMy9N) or as a GitHub issue so that this page can be made firmer.
+
+## Checking that it works
+
+Valence proves what the machine can do by opening an encoder session and encoding a small probe, so what the admin area reports is measured rather than assumed.
+
+1. Open the admin area's **Overview** page. It shows the graphics card and its use, with the note `No card Valence can read` where none is found.
+2. Open **Settings** and find the **Hardware acceleration** card. With **Automatic** selected it names what the machine proved it can use, such as `VAAPI, QSV, automatic`. If it says **Software only**, the machine proved no hardware encoder that Valence can use.
+3. Play something that needs a transcode, such as a high bitrate 4K file to a browser that cannot take it, then open **Sessions**. The session names its mode, and the graphics tile on **Overview** should show encoder activity.
+4. Watch the container logs while you do, for verification failures:
+
+```bash
+docker compose logs -f valence
+```
+
+On the host, `intel_gpu_top` (Intel), `radeontop` (AMD) or `nvidia-smi` (NVIDIA) shows the card working during a transcode.
+
+## Choosing a backend
+
+The Hardware acceleration setting has these options.
+
+| Option        | Meaning                                                  |
+| ------------- | -------------------------------------------------------- |
+| Automatic     | Use whichever the machine proves it can do. The default. |
+| VAAPI         | Intel and AMD on Linux.                                  |
+| QuickSync     | Intel.                                                   |
+| NVENC         | NVIDIA.                                                  |
+| AMF           | AMD, needs the proprietary driver.                       |
+| VideoToolbox  | Apple.                                                   |
+| RKMPP         | Rockchip.                                                |
+| Software only | Never use the hardware.                                  |
+
+Leave it on **Automatic** unless you have a reason. Forcing a backend has consequences that the page reports:
+
+- **A backend forced by hand that the machine never proved** shows a danger warning. Every transcode falls back to software silently, which shows up as unexplained load rather than as an error.
+- **Software only** is a warning too: every transcode is done by the processor, several times the work and fewer streams at once. It is useful for ruling the GPU out while you debug.
+
+## What else uses the GPU
+
+Transcoding for playback is the obvious use, and the media service also uses hardware for background work.
+
+- **Previews and scrub sheets** are rendered in the background while nobody is watching. How many run at once is measured from the device by opening sessions until it refuses. The `VALENCE_BACKGROUND_JOBS` variable overrides that, but a value that is too high can exhaust an integrated GPU's sessions or memory, and the failure reads as an encoder that would not open.
+- **HDR tone mapping and burned in subtitles** can run on the device when the FFmpeg build has the right filters. Without them, frames come down to system memory and back, which is slower but works.
+- **Direct play uses no transcoding hardware at all.** If most of your library plays directly, a GPU matters less than you might expect.
+
+## Troubleshooting
+
+| Symptom                                                      | Cause and fix                                                                                                 |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| The container starts and stops, nothing in the logs says why | The `devices` entry refers to a device the host does not have. Delete `devices` and `group_add`.              |
+| The card is not listed on the Settings page                  | The render node is not readable. Check `RENDER_GROUP_ID`, and that `/dev/dri/renderD128` exists on the host.  |
+| Automatic says Software only on a machine with a GPU         | The host driver is missing or the device is the wrong node. On a two card machine set `VALENCE_VAAPI_DEVICE`. |
+| Transcodes are slow and the processor is busy                | The transcode is falling back to software. Check the Hardware acceleration card and the logs.                 |
+| NVENC is not offered                                         | The NVIDIA libraries are not visible in the container. See [NVIDIA](#nvidia).                                 |
+
+See [Troubleshooting](/reference/troubleshooting) for more. For how the choice between direct play and transcoding is made, read [Concepts](/start/concepts#transcoding-and-direct-play).

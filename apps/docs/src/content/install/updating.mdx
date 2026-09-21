@@ -1,0 +1,160 @@
+---
+title: Updating
+description: How to upgrade Valence safely, which image tag to follow, how database migrations run at start, and how to move to Postgres 18.
+order: 8
+---
+
+Updating Valence means pulling a newer image and recreating the container. The database is brought up to date automatically when the new server starts, and a snapshot is taken first so that you can go back. This page covers which tag to follow, the routine, what happens during a migration and the one upgrade that is not automatic: Postgres 17 to 18.
+
+## Which image
+
+Three kinds of image are published, and only one of them is `latest`.
+
+| Tag                                 | What it is                                                      | When it is built                       |
+| ----------------------------------- | --------------------------------------------------------------- | -------------------------------------- |
+| `latest`, `1.0.0`, `1.0`, `1`       | A release                                                       | When a release is cut                  |
+| `1.0.1-dev`, `dev`, `sha-3a2e85d`   | The newest `main`, unreleased                                   | Every time something is merged         |
+| `3a2e85d-nightly`, `pr-123-nightly` | A build somebody asked for by hand, usually from a pull request | When the Nightly image workflow is run |
+
+The version numbers in the table are examples of the pattern, not the current release.
+
+`latest` never moves for a merge or a nightly build, so a server following it only changes when a release is made. That is the tag `compose.yaml` uses:
+
+```yaml
+image: ghcr.io/marquescoding/valence:latest
+```
+
+Choose one of these approaches:
+
+- **Follow `latest`.** You get each release when you pull. This suits most home servers.
+- **Pin a version tag**, such as `1.0.0` or `1.0`, if you would rather choose when an upgrade happens. Edit the `image:` line, and change it deliberately when you are ready.
+- **Try something early** with a `-dev` or `-nightly` tag. Expect it to be rough. The version in a dev tag is the release being prepared, and the number in a nightly tag is the commit it was built from. Do not run a dev or nightly build against a database you are not prepared to restore.
+
+If you run the requests service, it has its own image, `ghcr.io/marquescoding/valence-requests`, which follows the same release scheme. Keep it at the same release as the server.
+
+## The routine
+
+1. **Read the release notes.** They are on the [GitHub releases page](https://github.com/ValenceOSS/Valence/releases). Look for anything marked as breaking, and for changes to `compose.yaml` that you need to copy across.
+2. **Take a copy of the `db-data` volume before a major upgrade.** Migrations run on start and are not reversed automatically. The automatic snapshot described below is a safety net, not a replacement for your own backup. See [Storage and volumes](/install/storage-and-volumes#backups).
+3. **Pull and recreate:**
+
+   ```bash
+   docker compose pull
+   docker compose up -d
+   ```
+
+   In Dockge, use the update button. If you follow `latest`, this is all it takes. If you pin a tag, edit the tag first.
+
+4. **Watch the start.** Follow the logs while the new container migrates and comes up:
+
+   ```bash
+   docker compose logs -f valence
+   ```
+
+5. **Check health.** `curl -s http://localhost:8420/api/health` should report `"status":"ok"` and the new `version`.
+
+Your settings live in the database and in `.env`, so they carry across an update. Your libraries, users and history are in the database, and profile pictures are in the `config` volume. None of that is touched by pulling an image.
+
+## Migrations at start
+
+Valence brings its database up to date with the release it is running before anything else reads it. This ordering is the point: a scan against a half-migrated schema was a real failure, and a server that could not migrate stops rather than coming up to serve errors from tables that moved.
+
+When the server starts it:
+
+1. Compares the migrations in the image with those the database has run.
+2. **Refuses if the database is ahead.** If a newer release has already migrated it, the server fails with a message and does not start an older release over it. See [Rolling back](/install/rolling-back).
+3. If migrations are pending, **takes a snapshot** of the database (unless switched off) into `/config/backups`.
+4. Applies the pending migrations, in order.
+5. Checks that none were skipped. Drizzle skips a migration stamped earlier than one already run and says nothing, so the server checks its work, applies whatever was skipped and stops with an error if anything is still missing.
+6. Reports `The database is up to date with this release.`
+
+A brand new database has never run a migration and so has no snapshot taken: there is nothing in it to lose. The first start of a fresh install therefore takes a little longer than the rest, and creates no snapshot.
+
+If a migration fails, the server does not start. Read the log, fix the cause, and start again. Do not delete a snapshot or your database to make the message go away.
+
+### MIGRATE_ON_START
+
+`MIGRATE_ON_START` controls whether the server applies pending migrations itself. It is `true` by default, because updating should mean pulling the image and restarting. Turning it off leaves a server that comes up against a schema a release behind, where a missing column breaks reads of one table while the rest of the API answers normally, which reads as a bug in a screen rather than an update that has not landed.
+
+The reason to turn it off is to control the moment of change, for example to take your own backup first. It is not in the shipped compose file's `environment:` block, so add it under the `valence` service:
+
+```yaml
+environment:
+  MIGRATE_ON_START: 'false'
+```
+
+With it off, the server starts, logs what is waiting and how to run it, and leaves the database alone. Take your copy, then run the migrations by hand inside the container:
+
+```bash
+docker compose exec valence node apps/server/dist/Migrate.js
+```
+
+`Migrate.js` ships in the image next to the server, because the person reading the instruction can only run what is inside the container. Running it is the consent that `MIGRATE_ON_START` withholds, so it ignores that setting. It applies exactly what starting the server would have applied, including the snapshot beforehand, and prints what it did.
+
+### Snapshots before migrating
+
+| Setting                 | Default           | Meaning                                                  |
+| ----------------------- | ----------------- | -------------------------------------------------------- |
+| `BACKUP_BEFORE_MIGRATE` | `true`            | Take a snapshot before a migration changes the database. |
+| `BACKUP_DIR`            | `/config/backups` | Where snapshots are kept, inside the `config` volume.    |
+| `BACKUPS_KEPT`          | `3`               | How many to keep. The oldest are removed.                |
+
+If the snapshot cannot be made because the Postgres client tool is missing, Valence says so and carries on. If the tool is present and fails, the migration does **not** run, because a database changed with no way back is the thing this exists to prevent. The full procedure is in [Rolling back](/install/rolling-back).
+
+## Moving to Postgres 18
+
+`compose.yaml` now asks for `postgres:18-alpine`, where it used to ask for `postgres:17-alpine`. A major Postgres version cannot read the data directory that the previous one wrote. So pulling the new image over an existing `db-data` volume upgrades nothing: the container starts, finds a directory it does not recognise, and stops again. The data has to be carried across by hand. A fresh install needs none of this.
+
+Dump the data while the old version is still the one running, then bring it back into the new one.
+
+1. **Dump the database while the old Postgres is still running:**
+
+   ```bash
+   docker compose exec db pg_dumpall -U valence > valence-backup.sql
+   ```
+
+   Check that `valence-backup.sql` is not empty before you go on.
+
+2. **Stop the database and find its volume:**
+
+   ```bash
+   docker compose stop db
+   docker volume ls | grep db-data
+   ```
+
+3. **Remove the database volume, and only that one.** Use the name the previous command printed:
+
+   ```bash
+   docker volume rm the-volume-name-printed-above
+   ```
+
+4. **Start the new database and load the dump:**
+
+   ```bash
+   docker compose up -d db
+   docker compose exec -T db psql -U valence -d postgres < valence-backup.sql
+   ```
+
+5. **Start everything:**
+
+   ```bash
+   docker compose up -d
+   ```
+
+Remove the database volume alone. `config`, `cache` and `transcodes` carry settings and generated files that the upgrade leaves perfectly good, and `docker compose down` with the volume option would take all four rather than the one.
+
+`config` is the one that cannot be rebuilt. Alongside the settings it holds `/config/profiles`, the household's uploaded profile pictures, which are the only copy of each. `cache` and `transcodes` hold nothing that cannot be made again, so losing either costs a re-render and nothing else.
+
+Keep `valence-backup.sql` until you are sure everything works. The Valence image installs the Postgres 18 client for its snapshots, which is why the two versions have to match.
+
+## After an upgrade
+
+| Check                            | How                                                                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| The server is healthy            | `curl -s http://localhost:8420/api/health`                                                             |
+| The migration completed          | `docker compose logs valence`, looking for the up to date line                                         |
+| A snapshot exists                | `docker compose run --rm valence node apps/server/dist/Rollback.js --list`                             |
+| Hardware transcoding still works | The Hardware acceleration card on Settings. See [Hardware transcoding](/install/hardware-transcoding). |
+| Playback works                   | Play something.                                                                                        |
+
+If something is wrong and you need to go back, read [Rolling back](/install/rolling-back) before you change anything else.

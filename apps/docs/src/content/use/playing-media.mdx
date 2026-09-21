@@ -1,0 +1,263 @@
+---
+title: Playing media
+description: Watch, listen and read in Valence, from direct play and quality choices to subtitles, skip intro, watch parties, the music player and the book reader.
+order: 3
+---
+
+Valence plays video in the browser, streams music to a persistent player bar, and reads books and comics in a reader of its own. This page covers how each works, the choices you can make while playing, and the keyboard shortcuts that go with them.
+
+If nothing is on the shelves yet, add a library first, as described in [Libraries](/use/libraries).
+
+## Starting something
+
+Press a title on the Home, Films, Shows, Favourites or Search page to open its dialog. Its main button reads **Play**, or **Resume from** and the time when you have watched part of it. The menu beside it holds the rest of what you can do with the title:
+
+| Action            | What it does                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------ |
+| Start again       | Plays from the beginning instead of resuming.                                                          |
+| Watch the trailer | Plays a trailer, from a file beside the film, or from the catalogue if the administrator enabled that. |
+| Watch together    | Starts a watch party, described below.                                                                 |
+| Share             | Makes a share link. See [Sharing](/use/sharing).                                                       |
+| Download          | Prepares a copy for offline use, where your role allows downloads.                                     |
+| Hide this         | Removes the title from your own browsing. See [Libraries](/use/libraries#hiding-per-profile).          |
+
+A film with several cuts shows **Which version to play** beside the button. A series shows **Which season** and an episode list, and remembers which episode you are on.
+
+![A film detail dialog with the Play button, the actions menu, a star rating and the household rating.](/screenshots/media-detail-dialog.png)
+
+## The video player
+
+The player opens over the page you were on. Close it with Escape (unless you are in full screen, where Escape first leaves full screen) and you land where you were.
+
+![The video player controls bar showing the seek bar, back ten, play, forward ten, volume, subtitles and the settings gear.](/screenshots/player-controls.png)
+
+### The controls bar
+
+The bar hides itself after a moment of inactivity and returns when you move the pointer or press a key.
+
+| Control                                            | What it does                                                                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Seek bar                                           | Drag or press to move. Dragging shows scrub previews, small pictures of the film at that point, when the server has made them. |
+| Time                                               | Shows the time played. Press it to switch to time remaining.                                                                   |
+| Back 10 seconds, Play or Pause, Forward 10 seconds | The main transport.                                                                                                            |
+| Mute and Volume                                    | Silences the sound or sets its level.                                                                                          |
+| Subtitles                                          | Turns subtitles on or off.                                                                                                     |
+| Settings                                           | Audio, subtitles, speed, volume boost, quality and stats. See below.                                                           |
+| Pop out                                            | Picture in picture, where the browser supports it.                                                                             |
+| Immersive view                                     | Adds an ambient glow behind the picture.                                                                                       |
+| Full screen                                        | Fills the screen.                                                                                                              |
+
+### Direct play, remux and transcode
+
+Valence decides how to deliver each file to each device, one part at a time: container, picture, sound and subtitles. The rule is to send whatever the device can already play untouched, and change only what it cannot. There are four outcomes, from cheapest to most expensive:
+
+| Mode          | What happens                                                                                    | When                                                                                                                                                                  |
+| ------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Direct play   | The file is sent as it is.                                                                      | The device supports the container, codecs, range and subtitles.                                                                                                       |
+| Remux         | The picture and sound are repackaged into a container the device supports, without re-encoding. | The codecs are fine but the container, such as MKV, is not supported by that browser.                                                                                 |
+| Direct stream | The picture is passed through and only the sound is re-encoded.                                 | The sound codec or channel layout is not supported, for example a surround track the browser cannot decode.                                                           |
+| Transcode     | The picture is re-encoded.                                                                      | The picture codec, profile, level, HDR range, frame rate or interlacing is not supported, you pinned a lower quality, or an image based subtitle has to be burned in. |
+
+Every decision carries a reason (for example "Client does not support the mkv container" or "Quality step limits resolution to 1280x720"), and the administrator can see how each live session is being delivered in the admin **Sessions** panel. Transcoding uses your server's processor or graphics card, so prefer direct play where you can. If the server has a supported graphics card, see [Hardware transcoding](/install/hardware-transcoding).
+
+### Quality
+
+Open **Settings** then **Quality**. The default is **Original**, which means the file as it is, sized for the screen in front of you. A display smaller than the file does not force a re-encode, since the browser downsamples the picture well.
+
+Choosing a step asks for something else on purpose, so it forces a transcode of the picture to at most that size and bitrate:
+
+| Step  | Largest picture | Video bitrate ceiling |
+| ----- | --------------- | --------------------- |
+| 4K    | 3840 by 2160    | 15000 kbps            |
+| 1440p | 2560 by 1440    | 8000 kbps             |
+| 1080p | 1920 by 1080    | 4500 kbps             |
+| 720p  | 1280 by 720     | 2500 kbps             |
+| 480p  | 854 by 480      | 1000 kbps             |
+| 360p  | 640 by 360      | 700 kbps              |
+| 240p  | 426 by 240      | 400 kbps              |
+| 144p  | 256 by 144      | 150 kbps              |
+
+A step caps the bitrate and does not aim at it, so a well compressed film often comes in under the ceiling. At 720p and below, sound is compressed to 128 kbps as well. The menu shows what each step would cost for the file you are watching. The choice is remembered on that device only, so a phone on mobile data and a television on a wire can differ.
+
+### Audio tracks
+
+**Settings** then **Audio track** lists every track in the file by language and format. Valence prefers the language set as **Force default audio track** on the library, if the file has one, and otherwise the file's own default.
+
+### Subtitles
+
+Press the subtitles button to turn them on and off, or open **Settings** then **Subtitles/CC** to pick a track. Valence finds subtitles in three places:
+
+- **Embedded** in the video file, extracted on demand and converted to WebVTT for the browser.
+- **Beside the video**, as text files (`srt`, `vtt`, `ass` or `ssa`) whose name starts with the video's name, for example `Film (2016).en.srt`. Files in a folder called `Subs` or `Subtitles` are found too.
+- Image based subtitles (`sup`, `sub`, `idx` and disc formats) cannot be drawn as text, so they are burned into the picture, which forces a transcode.
+
+Name tags between the dots are understood: a language such as `en` or `english`, `forced` for forced tracks, and `sdh` or `cc` for tracks that also transcribe sounds. They show in the menu, for example as a language with "(forced)" or "(SDH)". Nothing is turned on for you. The single exception is a forced track in the language being heard, which carries the lines nobody is meant to miss.
+
+Two extra controls live in the same menu:
+
+- **Subtitle timing** has earlier, in time and later buttons to nudge subtitles that are out of step.
+- **Caption settings** changes the font (sans serif, serif, monospace or casual), size, text colour, background colour and opacity, and edge (none, outline, drop shadow or raised), with a live preview.
+
+### Speed and volume boost
+
+**Playback speed** offers 0.5x, 0.75x, Normal, 1.25x, 1.5x and 2x. **Volume boost** offers Off, 1.5x, 2x and 3x for quiet films.
+
+### Stats for nerds
+
+**Stats for nerds** opens a panel over the picture with live figures about the stream: how it is delivered, the codecs, the resolution, the bitrate and buffering. It is the quickest way to see why a film is transcoding.
+
+### Skip intro, recap and credits
+
+For series, Valence detects intros, recaps and credits. When you reach one, a **Skip Intro**, **Skip Recap** or **Skip Credits** button appears for the first 12 seconds of the marked stretch. Press it to jump to the end of that stretch.
+
+Detection runs as a background job after a scan:
+
+- If a file carries chapters that name them, those are used.
+- Otherwise Valence compares the audio of several episodes of the same season. It listens to the first stretch of each episode (roughly a third of it, and between three and ten minutes) and looks for the section they share. It needs at least three episodes in a season to find one.
+- Markings are checked for plausibility. An intro must be between 10 and 180 seconds and start in the first 40 percent of the episode. Credits must be between 15 and 300 seconds and start in the last 40 percent. Anything else is thrown away as a detection gone wrong.
+
+Detection works on the seasons of a series, so films are not listened to in this way. You can watch progress on the jobs page, described in [Jobs and logs](/use/jobs-and-logs).
+
+### Resume, progress and the next episode
+
+Your position is saved while you watch, on a timer and again when you stop, for the profile you are watching as. Because progress belongs to a profile, two people on one account do not overwrite each other.
+
+- A title is offered for resuming only if you are at least 60 seconds in and not within the last 90 seconds. A title is counted as finished once you get within 90 seconds of the end, so sitting through the credits does not leave it half watched.
+- Finished items show a full progress bar. Home puts what you are part way through in its continue rows.
+- When an episode ends, the next one plays. To avoid transcoding for an empty room, Valence asks **Are you still watching?** after a number of episodes in a row that carried on by themselves. The default is 4. You answer within 90 seconds with **Still watching** or **Stop**. Picking something yourself resets the count. The number is a setting on each profile, from 0 (never ask) to 20.
+
+### Keyboard shortcuts in the video player
+
+These work while the player is open and you are not typing in a field:
+
+| Key          | Action                                       |
+| ------------ | -------------------------------------------- |
+| Space or `k` | Play or pause                                |
+| `j`          | Back 30 seconds                              |
+| `l`          | Forward 30 seconds                           |
+| Left arrow   | Step back one frame (pauses the video)       |
+| Right arrow  | Step forward one frame (pauses the video)    |
+| `f`          | Toggle full screen                           |
+| `m`          | Mute or unmute                               |
+| `c`          | Subtitles on (first track) or off            |
+| Escape       | Close the player, or leave full screen first |
+
+The on-screen buttons skip 10 seconds.
+
+## Favourites, ratings, playlists and history
+
+### Favourites
+
+Press the heart on a title to keep it in **Favourites**, which has its own page in the navigation. Favourites belong to your profile. In music the same idea is called liking a song, and liked songs collect in a **Liked songs** tile in the music library.
+
+### Ratings
+
+Rate a film, a series or a book from one to five stars. The dialog shows your own rating, which you can change or take back, and beside it the household average with the number of people who rated. Ratings are per profile, and the household figure updates as soon as you press a star.
+
+### Playlists
+
+Playlists live in the music section. From the menu on any track choose **New playlist**, or choose an existing playlist by name, to add the song. A playlist has a name, an optional description and a switch called **The order matters**. Turn it on for things that should never shuffle or repeat, such as chapters or a series in release order. A playlist can be shared, and shared playlists from other people appear in a **Shared with you** shelf. If something in a playlist is removed from its library, the playlist keeps its place and says what it lost.
+
+### History
+
+Open your account area and choose **History** to see what you have watched and read, most recent first. Each entry can be forgotten individually, which is the way to remove something you would rather not have on record. A book appears once, at the last time it was opened, with how far you got.
+
+## Watch parties
+
+A watch party keeps a group in step on the same title. It is a live conversation held by the server in memory, so it lasts as long as people are connected and ends when the last person leaves. It does not survive a server restart.
+
+1. Open a title and choose **Watch together**, or press **Watch party** in the player bar.
+2. Choose **Start a watch party**. You get a link to send to the others.
+3. Anyone with an account on the server can open the link and join. To ask somebody along directly, use the list of people in the party panel and press **Ask along**.
+
+You need the permission to start watch parties, which the default Member role has.
+
+### Roles and powers
+
+| Role    | Can                                                                               |
+| ------- | --------------------------------------------------------------------------------- |
+| Host    | Play and pause, seek, change what is playing, invite people and manage the party. |
+| Co-host | Play and pause, seek, change what is playing and invite.                          |
+| Guest   | Watch. Guests have no powers by default.                                          |
+
+The host can make a guest a co-host, remove people, and use two switches to loosen the room: **Everyone can play and pause** and **Everyone can skip around**. A **Party password** can be set, or changed, so that people need it to join. The server keeps the password and only tells everybody that there is one.
+
+Playback commands are stamped by the server, so two people pressing pause at the same moment resolve the same way for everyone. If someone falls behind, the party holds and shows "Waiting for" that person "to catch up".
+
+Music has a matching feature, a **Listening party**, where only the host drives what is playing until they loosen it, and everybody keeps their own volume.
+
+## Music
+
+Music is played from a bar that stays at the bottom of every page. Open the Music page to browse artists, albums, playlists and liked songs.
+
+### The player bar
+
+| Control                | What it does                                                                                                                                  |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cover and title        | Opens the immersive view.                                                                                                                     |
+| Shuffle                | Shuffles the queue. Shuffle and repeat are switched off for queues whose order means something, such as ordered playlists.                    |
+| Repeat                 | Cycles repeat everything, repeat this song and stop repeating.                                                                                |
+| Like                   | Adds or removes the song from Liked songs.                                                                                                    |
+| Lyrics                 | Shows the words, synchronised line by line when the source has timings.                                                                       |
+| Queue                  | Shows the queue, which you can drag into order.                                                                                               |
+| Listening party        | Starts or opens a listening party.                                                                                                            |
+| Play on another device | Sends what is playing to another device signed in to your account, and controls it from here.                                                 |
+| Streaming quality      | Lossless (the file as it is on the server), High (320 kbps), Normal (160 kbps) or Data saver (96 kbps). Each shows roughly what an hour uses. |
+
+Track menus offer **Play next**, **Add to queue**, playlists, **Watch the video** where the song has a music video, and **Go to album** or **Go to artist**.
+
+### Immersive view and visualiser
+
+The immersive view fills the window with the cover, the lyrics and larger controls. From it, the **Visualiser** button takes the whole screen over for a picture of the music. There is no interface while it is being watched. Controls appear when you move the pointer and fade away again.
+
+There are five visualisers: Bars and waves, Waves, Ambience, Halo and Warp. Use the left and right arrow keys, or the buttons at each side, to change visualiser. Full screen and close buttons sit beside them, and Escape leaves. The one you last chose is remembered. The visualiser listens to the music through the browser, so where the browser does not allow that it says so instead of drawing a picture of silence. It is shown still when you have asked your system for less motion, and it closes itself when nothing is playing.
+
+## Reading books
+
+Books and comics open in the reader from the Read page. Your place is kept, wherever you read them, and appears in the continue reading row.
+
+### Layouts
+
+Page based books (comics, manga and PDFs) can be read in two layouts. Choose one under **Layout** in the Reading panel.
+
+| Layout | How it reads                                                                                                                                                                                                                                        |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pages  | One page at a time, or two pages as a spread. Pages turn like a real leaf.                                                                                                                                                                          |
+| Scroll | A whole chapter as one long strip, scrolled down, the way a webtoon is made to be read. Only the pages near the screen are held, however long the chapter is, and pages ahead are fetched early. At the foot there is a way on to the next chapter. |
+
+The Reading panel also holds:
+
+| Setting               | Options                                   | Default         |
+| --------------------- | ----------------------------------------- | --------------- |
+| Pages                 | One or Two                                | One             |
+| Cover on its own      | On or off. Pairing starts after page one. | On              |
+| Gap between pages     | 0 to 64                                   | 0               |
+| Animate turning pages | On or off                                 | On              |
+| Fit                   | Screen, Width or Height                   | Screen          |
+| Reading direction     | Left to right or Right to left            | From the book   |
+| Chapter               | Picks a chapter                           | Current chapter |
+
+The reading direction starts from the book: page based books read right to left, reflowing books left to right, and what you choose afterwards is remembered. These reader preferences are stored on the device rather than the account, because a person wants two pages on a desktop and one on a phone.
+
+### Reading text books
+
+EPUBs reflow to fit the screen. The panel offers **Contents** and four typographic settings:
+
+| Setting | Options                      | Default |
+| ------- | ---------------------------- | ------- |
+| Size    | Small, Medium, Large, Larger | Medium  |
+| Spacing | Tight, Normal, Loose         | Normal  |
+| Margins | Narrow, Normal, Wide         | Normal  |
+| Page    | Light, Sepia, Dark           | Dark    |
+
+### Keyboard shortcuts in the reader
+
+| Key                            | Action                                                   |
+| ------------------------------ | -------------------------------------------------------- |
+| Right arrow                    | Next page, or previous page in a book read right to left |
+| Left arrow                     | Previous page, or next page in a book read right to left |
+| Down arrow, Space or Page Down | Always forward                                           |
+| Up arrow or Page Up            | Always back                                              |
+| Escape                         | Leave the reader                                         |
+
+Arrows follow the direction the book is read in, while down, space and page down always go on and up and page up always go back, because they say where you are going and not which way the page lies. Page arrows are also drawn at the edges of the screen, and **Fill the screen** in the reader bar toggles full screen.

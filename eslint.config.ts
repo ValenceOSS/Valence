@@ -143,13 +143,19 @@ export default tseslint.config(
       'packages/screens/src/**/*.tsx',
       'apps/web/src/**/*.tsx',
       'apps/landing/src/**/*.tsx',
+      'apps/docs/src/**/*.tsx',
     ],
     rules: {
       'valence/no-raw-colours': 'error',
     },
   },
   {
-    files: ['apps/landing/src/**/*.ts', 'apps/landing/src/**/*.tsx'],
+    files: [
+      'apps/landing/src/**/*.ts',
+      'apps/landing/src/**/*.tsx',
+      'apps/docs/src/**/*.ts',
+      'apps/docs/src/**/*.tsx',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',

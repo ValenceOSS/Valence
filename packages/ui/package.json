@@ -31,6 +31,7 @@
     "@tanstack/react-virtual": "^3.14.13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "motion": "^13.0.0",
     "qrcode": "^1.5.4",
     "recharts": "^3.10.1",

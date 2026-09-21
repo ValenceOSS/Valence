@@ -1,0 +1,162 @@
+---
+title: Repository layout
+description: Every top level directory, app and package in the Valence monorepo, the import alias each one uses, and the naming and file layout conventions.
+order: 3
+---
+
+Valence is one pnpm workspace with a Cargo workspace beside it. This page lists what is where, which import alias reaches it, and how files inside a package are named and arranged. The dependency rules matter as much as the layout, so they are collected at the end.
+
+## Top level
+
+| Path                                                                                 | What it is                                                                                                                           |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `apps/`                                                                              | Things that run: the server, the clients, the media service and the sites                                                            |
+| `packages/`                                                                          | Libraries the apps share                                                                                                             |
+| `tools/`                                                                             | Repository tooling written in TypeScript: lint rules, the branch check, fixtures, FFmpeg sync, Drizzle checks, transcoder dev script |
+| `.github/`                                                                           | Workflows, the pull request template and release note configuration                                                                  |
+| `.husky/`                                                                            | The three git hooks: `commit-msg`, `pre-commit` and `pre-push`                                                                       |
+| `assets/`                                                                            | Images used by the README                                                                                                            |
+| `target/`                                                                            | Cargo build output. Git-ignored.                                                                                                     |
+| `Cargo.toml`, `Cargo.lock`, `rustfmt.toml`                                           | The Rust workspace, whose only member is `apps/transcoder`. Clippy lints are set here.                                               |
+| `package.json`, `pnpm-workspace.yaml`, `turbo.json`                                  | The pnpm workspace and turbo tasks                                                                                                   |
+| `tsconfig.base.json`, `tsconfig.paths.json`, `tsconfig.json`                         | Compiler options, the alias map and the project references                                                                           |
+| `eslint.config.ts`, `.oxlintrc.json`, `.prettierrc.json`, `commitlint.config.ts`     | Lint, format and commit rules                                                                                                        |
+| `compose.yaml`, `compose.dev.yaml`, `Dockerfile`, `docker-entrypoint.sh`             | Production and development container definitions                                                                                     |
+| `.env.example`                                                                       | Every setting the server reads, documented. Copy to `.env`.                                                                          |
+| `fixtures.manifest.json`                                                             | The media test corpus manifest: name, tier, licence and checksum of every fixture                                                    |
+| `release-please-config.json`, `.release-please-manifest.json`                        | Release automation. See [Releasing](/develop/releasing).                                                                             |
+| `CODING_STANDARD.md`, `CONTRIBUTING.md`, `SECURITY.md`, `DEPLOYMENT.md`, `CLAUDE.md` | Rules and operator guidance in the repository                                                                                        |
+
+The workspace members are listed in `pnpm-workspace.yaml`: `apps/desktop`, `apps/docs`, `apps/landing`, `apps/web`, `apps/server`, `apps/requests`, `apps/transcoder`, every directory under `packages/`, and `tools`.
+
+## Apps
+
+| Directory         | Package name                                 | Purpose                                                       | Alias                               |
+| ----------------- | -------------------------------------------- | ------------------------------------------------------------- | ----------------------------------- |
+| `apps/server`     | `@valence/server`                            | The Hono API, auth, jobs, realtime, database access           | `@ValenceServer/*`                  |
+| `apps/requests`   | `@valence/requests`                          | The optional service that finds and downloads requested media | `@ValenceRequests/*`                |
+| `apps/transcoder` | `@valence/transcoder` (a dev script wrapper) | The Rust media service, crate `valence-transcoder`            | None. Rust modules are not aliased. |
+| `apps/web`        | `@valence/web`                               | The browser host: entry, platform, socket, service worker     | `@ValenceWeb/*`                     |
+| `apps/desktop`    | `@valence/desktop`                           | The Electron host                                             | `@ValenceDesktop/*`                 |
+| `apps/landing`    | `@valence/landing`                           | The getvalence.app marketing site                             | `@ValenceLanding/*`                 |
+| `apps/docs`       | `@valence/docs`                              | This documentation site                                       | `@ValenceDocs/*`                    |
+
+## Packages
+
+| Directory             | Published name        | Purpose                                                                          | Alias                 |
+| --------------------- | --------------------- | -------------------------------------------------------------------------------- | --------------------- |
+| `packages/contracts`  | `@valence/contracts`  | Zod schemas and shared types. The source of truth for API shapes.                | `@ValenceContracts/*` |
+| `packages/core`       | `@valence/core`       | Pure shared logic, such as playback source selection and default roles           | `@ValenceCore/*`      |
+| `packages/client`     | `@valence/client`     | What Valence is: readers, queries, realtime, session, sharing. It does not draw. | `@ValenceClient/*`    |
+| `packages/screens`    | `@valence/screens`    | What Valence looks like: every screen and the routes onto them                   | `@ValenceScreens/*`   |
+| `packages/ui`         | `@valence/ui`         | ValenceUI, the component library, tokens and stylesheet                          | `@ValenceUI/<Name>`   |
+| `packages/plugin-sdk` | `@valence/plugin-sdk` | The plugin manifest contract                                                     | `@ValenceSDK/*`       |
+
+The alias and the package name are deliberately different things. `@ValenceUI` is an internal alias only, because npm scopes must be lowercase; anything published to a registry uses a lowercase name such as `@valence/ui`. All of these packages are currently marked `private` in their manifests.
+
+`tools` (`@valence/tools`) has no alias. Its files are run with `tsx` and import each other with same-directory relative paths.
+
+### How the aliases resolve
+
+All aliases live in one file, `tsconfig.paths.json` at the repository root, which every package's `tsconfig.json` extends. Vite and Vitest read it through their `tsconfigPaths` resolver, so there is a single source of truth and no duplicate alias list per bundler.
+
+The non-UI aliases are ordinary wildcards.
+
+```json
+{
+  "@ValenceClient/*": ["./packages/client/src/*"],
+  "@ValenceContracts/*": ["./packages/contracts/src/*"],
+  "@ValenceServer/*": ["./apps/server/src/*"]
+}
+```
+
+ValenceUI is different. TypeScript path mapping substitutes a wildcard once, so `@ValenceUI/*` cannot expand to `components/*/*.tsx`, and barrel files are banned. Component aliases are therefore listed explicitly, one line per component.
+
+```json
+{
+  "@ValenceUI/Button": ["./packages/ui/src/components/Button/Button.tsx"],
+  "@ValenceUI/Button.types": ["./packages/ui/src/components/Button/Button.types.ts"],
+  "@ValenceUI/cn": ["./packages/ui/src/functions/cn.ts"]
+}
+```
+
+Non-component modules in `packages/ui` (functions, hooks, tokens) get their own explicit alias too, for example `@ValenceUI/tokens` and `@ValenceUI/usePagedScroller`. Adding a component means adding its lines here. It is a one-line diff in review and keeps resolution greppable. See [UI library](/develop/ui-library).
+
+Imports that climb with `../` are banned outright. Same-directory relative imports such as `./Button.types` are allowed, because a component importing its own co-located types is not crossing a boundary.
+
+## Inside a package
+
+### Component folders
+
+A component owns a folder named after it. Its types and tests sit beside it, and sub-components nest under its `components/` directory to any depth.
+
+```
+components/MediaCard/
+  MediaCard.tsx
+  MediaCard.types.ts
+  MediaCard.test.tsx
+  animations/
+    fadeIn.tsx
+  components/
+    MediaCardBadge/
+      MediaCardBadge.tsx
+      MediaCardBadge.types.ts
+      MediaCardBadge.test.tsx
+```
+
+A sub-component used by two different parents is not a sub-component. It is promoted to a top-level component. Types shared across components live in `packages/contracts`, never in a shared types directory.
+
+### Naming
+
+| Kind                | Casing                   | Example                  |
+| ------------------- | ------------------------ | ------------------------ |
+| Component           | PascalCase               | `MediaCard.tsx`          |
+| Component types     | PascalCase plus `.types` | `MediaCard.types.ts`     |
+| Component test      | PascalCase plus `.test`  | `MediaCard.test.tsx`     |
+| Hook                | camelCase                | `usePlaybackSession.ts`  |
+| Standalone function | camelCase                | `formatDuration.ts`      |
+| Function test       | camelCase plus `.test`   | `formatDuration.test.ts` |
+| Rust module         | snake_case               | `transcode_plan.rs`      |
+
+Two more habits show up everywhere in the tree.
+
+- One exported runtime member per file, with the file named after it. There are no `index.ts` or `index.tsx` files and no default exports.
+- Server code is grouped by feature, one directory per concern (`auth`, `library`, `realtime`, `jobs`, `sharing`), each with the services, their in-memory twins (`createMemory*`) and their tests side by side.
+
+Shared animations live in `packages/ui/src/animations`. An animation used inside one component stays in that component's `animations/` folder.
+
+### Where front-end code goes
+
+| Directory          | What it holds                                                            |
+| ------------------ | ------------------------------------------------------------------------ |
+| `packages/client`  | Readers, queries, realtime, session, sharing, the `Platform` port        |
+| `packages/screens` | Every screen, the router and the routes onto them                        |
+| `apps/web`         | The browser entry, its platform ports, the socket and the service worker |
+
+The rules that keep this honest:
+
+- Neither `packages/client` nor `packages/screens` may import `@ValenceWeb/*`. ESLint enforces it.
+- `packages/client` may not import `@ValenceUI/*` either, because it does not draw. `packages/screens` is what draws.
+- Anything either package needs from a host is a port on `Platform`, installed by the host with `installPlatform` before anything else runs.
+- A host is a handful of source files. If something you are adding to `apps/web` is not the entry point, a platform port or a browser API, it belongs in a package.
+
+### Server and requests layout
+
+`apps/server/src` holds `App.ts` (the application factory), `Main.ts` (the composition root), `Migrate.ts` and `Rollback.ts` (operator entry points, described in [Database and migrations](/develop/database-and-migrations)) and `writeOpenApiDocument.ts` (used by the docs build). Drizzle output lives in `apps/server/drizzle`. `apps/requests` follows the same shape with its own `drizzle` folder and its own `Dockerfile`.
+
+### The media service
+
+`apps/transcoder/src` is a flat set of snake_case modules, one concern each: `probe.rs`, `session.rs`, `playlist.rs`, `transcode_plan.rs`, `capability.rs`, `router.rs` and so on, exported from `lib.rs`. The binary in `main.rs` wires configuration and starts the router. Integration tests are in `apps/transcoder/tests`.
+
+## Dependency direction
+
+Packages may only depend downwards, and extraction must never create a cycle. If sharing something would create one, the shared thing belongs further up the graph, usually in `contracts`.
+
+| Shared between                           | Goes in                               |
+| ---------------------------------------- | ------------------------------------- |
+| Any two workspace members                | `packages/contracts` (types, schemas) |
+| Any two UI surfaces                      | `packages/ui`                         |
+| Server-only helpers used by two services | `packages/core`                       |
+| Plugin-facing anything                   | `packages/plugin-sdk`                 |
+
+In practice the chain is `contracts`, then `core`, then `client`, then `screens`, with `ui` beside them and the apps on top. The build order in CI follows it.

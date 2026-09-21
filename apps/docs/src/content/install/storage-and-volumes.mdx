@@ -1,0 +1,147 @@
+---
+title: Storage and volumes
+description: Where Valence keeps each kind of data, which volumes matter, how read only media works, and what to back up.
+order: 4
+---
+
+Valence keeps several different kinds of data, and they deserve different treatment. Some cannot be made again, some can be regenerated at the cost of time, and some are scratch. Knowing which is which tells you where to spend disk speed, where to put network storage and what to back up.
+
+## What lives where
+
+| Volume or mount | Path in the container   | What it holds                                                                                                  | Can it be rebuilt?                                  |
+| --------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `db-data`       | Postgres data directory | The database: accounts, roles, libraries, watch history, favourites, ratings, settings, job history and queue. | No. Back it up.                                     |
+| `config`        | `/config`               | Profile pictures (`/config/profiles`) and pre-migration snapshots (`/config/backups`).                         | No. The profile pictures are the only copy of each. |
+| `cache`         | `/cache`                | Fetched artwork (`/cache/images`) and rendered previews and thumbnail sheets (`/cache/artefacts`).             | Yes, with time. A re-render or a fetch.             |
+| `transcodes`    | `/transcodes`           | Video segments written while somebody is watching.                                                             | Yes. It is scratch.                                 |
+| Your library    | `/media`                | The media itself, from `MEDIA_PATH`.                                                                           | It is your data. Valence does not copy it.          |
+
+Losing `cache` or `transcodes` costs a re-render and nothing else. Losing `config` costs the household's profile pictures, and you cannot get them back. Losing `db-data` costs the database.
+
+### Where each path is set
+
+| Path                | Setting                  | Default            |
+| ------------------- | ------------------------ | ------------------ |
+| Profile pictures    | `PROFILE_IMAGE_DIR`      | `/config/profiles` |
+| Snapshots           | `BACKUP_DIR`             | `/config/backups`  |
+| Fetched artwork     | `IMAGE_CACHE_DIR`        | `/cache/images`    |
+| Previews and sheets | `VALENCE_ARTEFACT_DIR`   | `/cache/artefacts` |
+| Playback segments   | `VALENCE_TRANSCODE_DIR`  | `/transcodes`      |
+| Library             | `MEDIA_PATH` on the host | `/media` inside    |
+
+See [Configuration](/install/configuration) for each one. Whatever you change one of them to, **map a volume there**. Data written to a path with no volume behind it lives on the container's own filesystem and is gone the next time the container is recreated, which an update does. For profile pictures that means every face turning back into a letter. Valence warns at startup and on the admin page when the artefact directory has no volume behind it, rather than letting a library quietly re-render itself.
+
+To check what is really mapped:
+
+```bash
+docker inspect $(docker compose ps -q valence) --format '{{json .Mounts}}'
+```
+
+## Read only media
+
+The library is mounted read only by default. Valence reads your files and nothing it normally does needs more. It writes no sidecar files and renames nothing. The compose file expresses this with the `:ro` suffix on the mount, controlled by `MEDIA_ACCESS`.
+
+Because the mount is read only, a bug or a compromise in Valence cannot damage your library. That is the reason to leave it alone unless you specifically need one of the features below.
+
+## Re-encoding and write access
+
+Three features write into your library mount, and each is refused, with a message saying what to change, while the mount is read only:
+
+- **Re-encoding media**, either to reclaim disk by replacing a file or to keep a smaller copy beside it.
+- **Uploading media** from the admin page.
+- **Making folders** in the admin page's folder browser.
+
+To allow them, set `MEDIA_ACCESS` to an empty string in your `.env` so that the mount becomes read and write, and recreate the container:
+
+```ini
+MEDIA_ACCESS=
+```
+
+Nothing after the equals sign: any other value is appended to the mount as is. The compose file uses `${MEDIA_ACCESS-:ro}` rather than the more common `:-` form for this reason. The colon form falls back to the default when the variable is empty, which would keep the mount read only.
+
+### Where the work happens
+
+Re-encoding writes into a folder called `.valence` at the top of each library, one per library and not one per film. It holds the new file while it is made, and the original once it has been swapped aside.
+
+It sits under the library root rather than somewhere else on purpose. Swapping an encode into place is a rename, and a rename is only instant and atomic within one filesystem. Across a volume boundary it would become a copy of the whole file, needing the disk twice over and able to half finish. This also means the drive holding a library needs room for a full second copy of the largest file being re-encoded, plus the originals waiting for review.
+
+Valence checks before it starts an encode and says plainly that the folder is read only, rather than failing part way through two hours of work.
+
+The media service enforces this separately. `VALENCE_WRITE_ROOTS`, which the image sets to `/media`, lists the directories it may write finished encodes into. It is deliberately separate from the directories it may read, and empty means nowhere: every encode is refused. Reading a file somebody asked to watch and writing over the top of it are not the same permission.
+
+### Safety of re-encoding
+
+- **Replacing a file is the only thing in Valence that destroys your own media.** Everything else that looks destructive, such as resetting a library or clearing its artwork, deletes rows and derived files that a rescan brings back. A re-encoded remux does not come back, because what a lossy encoder discards is gone.
+- **Nothing is discarded until you have looked at it.** A replacement is verified, swapped into place, and then waits. Both files sit on disk until you have watched the result and either confirmed it, which disposes of the original, or rejected it, which puts the original back in one action. There is no timer and no way to skip that step.
+- **The permission is its own.** It is `media.reencode`, separate from deleting media, and no default role other than Administrator grants it.
+- **A cap on how many wait.** Each encode awaiting judgement holds both the original and its replacement, so the queue pauses at a server setting, five by default. Raise it on the Settings page if you have the room.
+
+## Network and NAS storage
+
+The library only has to be a path that the Docker host can read, so a network share works.
+
+- **Mount the share on the host, then bind mount that path.** Point `MEDIA_PATH` at the host's mountpoint, such as `/mnt/nas/media`. Do not try to mount a share from inside the container.
+- **The host path must exist before the container starts.** If a network mount comes up after Docker starts, the container can see an empty folder and a scan will find nothing, or remove everything it had. Make the Docker service depend on the mount, or check with `ls` first.
+- **Permissions.** The image does not set a non-root user, so the container reads with the permissions of the mount. With a read only mount that rarely matters. If you enable write access, make sure the share allows writes from the Docker host.
+- **Speed.** Probing files at scan time and generating previews read a great deal of data. On a slow link or a busy NAS, lower `MEDIA_JOBS`. The default in the compose file is 4.
+
+### Splitting fast and slow storage
+
+Valence separates the things that want fast disk from the things that want big disk, and the compose file's own notes recommend using that.
+
+- **`transcodes`** wants the fastest disk you have, or memory backed storage, because segments are written while somebody watches and thrown away behind them. Keep it local.
+- **Artefacts** (previews and sheets) cost minutes of decoding per title and are read for as long as the title exists, so they want a disk that is kept, which is often a larger, slower, network attached one. Point `VALENCE_ARTEFACT_DIR` at network storage if that is where the space is.
+- **`db-data`** wants a local disk with reliable writes. Postgres over a network filesystem is asking for trouble, and this page does not recommend it.
+
+To place a volume on a specific disk, replace the named volume with a bind mount in `compose.yaml`:
+
+```yaml
+volumes:
+  - config:/config
+  - /mnt/nas/valence/artefacts:/cache/artefacts
+  - cache:/cache
+  - /mnt/ssd/valence-transcodes:/transcodes
+```
+
+If you do this, keep `VALENCE_ARTEFACT_DIR` at its default so the path inside stays `/cache/artefacts`, and remove any of the named volumes you no longer use from the file's `volumes:` section.
+
+## Sizing
+
+The repository does not publish sizing figures, so treat these as guidance to check against your own library.
+
+| Data                | How it grows                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Database            | Small compared with media. Grows with library size, viewing history and job history (kept for 30 days).             |
+| Artwork cache       | Grows with the number of titles. A cleanup job, **Clean up cached images**, trims it.                               |
+| Previews and sheets | The largest cache. Grows per title, and the Preview quality setting trades size for detail. A cleanup job trims it. |
+| Transcodes          | Bounded by how many people are watching transcoded video at once, and cleaned up by a timer.                        |
+| Snapshots           | One full database dump each, times `BACKUPS_KEPT` (3 by default).                                                   |
+| `.valence` folders  | Only if you re-encode. Room for one large file per encode, plus originals awaiting review.                          |
+
+The admin area breaks the cache down by kind, so you can see where the space went. Filling the disk that a media server sits on takes down streaming, transcoding and the database with it, so leave headroom.
+
+## Backups
+
+Back up what cannot be made again.
+
+1. **The database.** Two options. The snapshots Valence takes before an upgrade are in `/config/backups`, but they are only taken when a migration is about to run, so they are a way back and not a schedule. For a regular backup, dump the database yourself:
+
+   ```bash
+   docker compose exec db pg_dumpall -U valence > valence-backup.sql
+   ```
+
+   Restore with `docker compose exec -T db psql -U valence -d postgres < valence-backup.sql` into an empty database. Test that you can.
+
+2. **The `config` volume.** It holds the profile pictures and the snapshots. Copy the volume's contents out with a throwaway container:
+
+   ```bash
+   docker run --rm -v valence_config:/config -v "$PWD":/backup alpine tar czf /backup/valence-config.tar.gz -C /config .
+   ```
+
+   The volume's real name is your stack folder's name plus `_config`. `docker volume ls` lists it.
+
+3. **Your settings file.** Keep a copy of `.env` and `compose.yaml` somewhere safe, especially `POSTGRES_PASSWORD` and `BETTER_AUTH_SECRET`.
+
+You do not need to back up `cache` or `transcodes`. Your media is your own responsibility, and Valence does not modify it in the default configuration.
+
+Before a major upgrade, take a copy of `db-data` as well. See [Updating](/install/updating) and [Rolling back](/install/rolling-back).

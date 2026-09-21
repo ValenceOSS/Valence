@@ -1,0 +1,180 @@
+---
+title: Configuration
+description: Every setting an operator can change in Valence, grouped by purpose, with defaults and what each one does.
+order: 3
+---
+
+Valence is configured through environment variables, plus a few settings kept in the database and edited on the admin Settings page. This page lists all of them. The sources are `apps/server/src/env/Env.ts` (which validates the server's environment at startup and names the variable in its error message when one is wrong), `.env.example` and `compose.yaml`.
+
+## How settings reach the container
+
+There are two layers, and confusing them is the most common configuration mistake.
+
+1. **Your `.env` file** is read by Docker Compose, beside `compose.yaml`. It fills in the `${...}` placeholders in the compose file. Compose does not pass the whole file into the container.
+2. **The `environment:` block** of each service in `compose.yaml` is what the container actually receives.
+
+So a variable is only seen by Valence if the compose file lists it. The shipped file passes through the ones marked **compose** in the tables below. For any other variable, add a line under `environment:` in the `valence` service, for example:
+
+```yaml
+environment:
+  BACKUP_BEFORE_MIGRATE: 'false'
+  AUTH_RATE_LIMIT_MAX: '120'
+```
+
+Then run `docker compose up -d` to recreate the container. Changing a value in `.env` needs the same command.
+
+In the tables, **Default** is what Valence uses when nothing sets the variable. Where `compose.yaml` supplies a different default, the description says so. Boolean settings accept exactly `true` or `false`.
+
+## Compose settings
+
+These names are read by `compose.yaml` itself. Valence does not read any of these six directly; Compose uses them to build the settings it does read.
+
+| Name                | Default        | What it does                                                                                                                                                                                       |
+| ------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_PASSWORD` | none, required | The database password. Used to build `DATABASE_URL` and to start Postgres. Any long random string.                                                                                                 |
+| `PUBLIC_URL`        | none, required | The address a browser reaches Valence at. Becomes `BETTER_AUTH_URL` and `TRUSTED_ORIGINS`.                                                                                                         |
+| `MEDIA_PATH`        | none, required | The library folder on the host. Mounted at `/media`.                                                                                                                                               |
+| `VALENCE_PORT`      | `8420`         | The port published on the host. What the proxy points at. The container always listens on 8420.                                                                                                    |
+| `RENDER_GROUP_ID`   | `44`           | The group owning `/dev/dri/renderD128`, used for hardware transcoding. `ls -n /dev/dri` shows it. 104 on some systems.                                                                             |
+| `MEDIA_ACCESS`      | `:ro`          | The suffix on the media mount. Unset means read only. Set to an empty string to mount read and write, which re-encoding, media uploads and making folders need. Any other value is appended as is. |
+
+## Core server
+
+Read by the server. Listed in `Env.ts`.
+
+| Name               | Default                                             | What it does                                                                                                                                                                                          |
+| ------------------ | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`         | `development` (`production` in the image)           | One of `development`, `test` or `production`. The image sets `production`.                                                                                                                            |
+| `PORT`             | `8420`                                              | The port the server listens on inside the container. Leave it alone and change `VALENCE_PORT` instead.                                                                                                |
+| `DATABASE_URL`     | `postgres://valence:valence@localhost:5432/valence` | The Postgres connection string. **compose** sets it to `postgres://valence:` plus your password `@db:5432/valence`.                                                                                   |
+| `MIGRATE_ON_START` | `true`                                              | Whether the server brings the database up to date when it starts. Turn off only if you want to back up yourself first. See [Updating](/install/updating).                                             |
+| `VALENCE_VERSION`  | `0.0.0`                                             | The release the image was built from. Set by the image. A local build reads `0.0.0`. Shown by `/api/health`.                                                                                          |
+| `TZ`               | `UTC`                                               | The clock scheduled jobs keep, as an IANA name such as `Europe/London`, never an offset. **compose**. A setting saved on the admin page overrides it. The admin page shows which clock it settled on. |
+
+## Authentication and origins
+
+| Name                             | Default                                | What it does                                                                                                                                                                                                 |
+| -------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `BETTER_AUTH_SECRET`             | a development placeholder (do not use) | Seals sign-in cookies. At least 32 characters. Changing it signs everybody out. **compose**, required.                                                                                                       |
+| `BETTER_AUTH_URL`                | `http://localhost:8420`                | The URL users reach the instance on. Passkeys derive their relying party from its hostname, so changing it invalidates enrolled passkeys. **compose** sets it from `PUBLIC_URL`.                             |
+| `TRUSTED_ORIGINS`                | `http://localhost:5173`                | Comma separated origins the web client may sign in from. Sign-in and sign-out are refused unless the browser's `Origin` matches. **compose** sets it from `PUBLIC_URL` alone, so edit the line to list more. |
+| `COOKIE_SECURE`                  | `false` (`true` through compose)       | Whether cookies are marked secure. Set `true` when the instance is reached over HTTPS. **compose** defaults it to `true`. Over plain HTTP it silently breaks login.                                          |
+| `AUTH_RATE_LIMIT_ENABLED`        | `true`                                 | Whether sign-in attempts are rate limited.                                                                                                                                                                   |
+| `AUTH_RATE_LIMIT_WINDOW_SECONDS` | `60`                                   | The length of the rate limit window, in seconds.                                                                                                                                                             |
+| `AUTH_RATE_LIMIT_MAX`            | `60`                                   | The number of requests allowed in one window. Counted per client address, which is why your proxy must set `X-Forwarded-For`.                                                                                |
+
+Generate the secret with `openssl rand -base64 48`. See [Reverse proxy](/install/reverse-proxy) for how the address settings interact.
+
+## Media and library
+
+| Name                   | Default                               | What it does                                                                                                                                                                                                                                   |
+| ---------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MEDIA_JOBS`           | `1` (`4` through compose)             | How many files the library works on at once during scans. The media service holds its own queue, so more here mostly means more waiting. A NAS with spare cores can afford more. **compose** defaults it to `4`.                               |
+| `CATALOGUE_API_KEY`    | empty                                 | Key for the metadata catalogue (TMDB). Empty by default so that sending your library's titles to a third party is your decision. Without it, titles and years come from file names. **compose**. A key can also be saved on the Settings page. |
+| `IMAGE_CACHE_DIR`      | `/cache/images`                       | Where fetched posters and backdrops are cached. Under the `cache` volume by default.                                                                                                                                                           |
+| `PROFILE_IMAGE_DIR`    | `/config/profiles`                    | Where profile pictures are kept. Under `/config` because a picture somebody uploaded cannot be made again. Map a volume wherever you point it. **compose**.                                                                                    |
+| `VALENCE_ARTEFACT_DIR` | `/cache/artefacts` (set by the image) | Where previews and scrub thumbnail sheets are kept. Separate from segments on purpose. Can be network storage. Map a volume there. **compose**. Read by the media service.                                                                     |
+
+## Snapshots and rollback
+
+| Name                    | Default           | What it does                                                                                                                         |
+| ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `BACKUP_BEFORE_MIGRATE` | `true`            | Whether a database snapshot is taken before a migration changes the schema. Add it to the compose `environment:` to set it.          |
+| `BACKUP_DIR`            | `/config/backups` | Where snapshots are kept. Inside the `config` volume, so they survive recreation. Add it to the compose `environment:` to change it. |
+| `BACKUPS_KEPT`          | `3`               | How many snapshots to keep, newest first. **compose**.                                                                               |
+
+See [Rolling back](/install/rolling-back).
+
+## Media service and transcoding
+
+The media service is a separate program inside the same container. It reads its own variables, most of which the image already sets.
+
+| Name                               | Default                                        | What it does                                                                                                                                                                                               |
+| ---------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TRANSCODER_URL`                   | `unix:/run/valence-transcoder.sock`            | Where the media service listens and where the server dials it, in one setting so the two cannot disagree. The image sets it. An `http://` address is used when the media service runs on another machine.  |
+| `VALENCE_VAAPI_DEVICE`             | `/dev/dri/renderD128`                          | Which render node VAAPI and QuickSync open, on Linux. Set by the image. A machine with two cards has a `renderD129` too, and which is yours is not guessed. A wrong value falls back to software encoding. |
+| `VALENCE_FFMPEG`                   | `/usr/lib/valence-ffmpeg/ffmpeg` in the image  | The FFmpeg the media service runs. Set with `VALENCE_FFPROBE`, since they are read independently.                                                                                                          |
+| `VALENCE_FFPROBE`                  | `/usr/lib/valence-ffmpeg/ffprobe` in the image | The ffprobe to use. Set both or neither.                                                                                                                                                                   |
+| `VALENCE_TRANSCODE_DIR`            | `/transcodes` (set by the image)               | Where a session's segments are written. Scratch. Wants the fastest local disk.                                                                                                                             |
+| `VALENCE_MEDIA_ROOTS`              | `/media` (set by the image)                    | The directories the media service may read.                                                                                                                                                                |
+| `VALENCE_WRITE_ROOTS`              | `/media` (set by the image)                    | The directories it may write finished encodes into, colon separated. Empty means nowhere, and every encode is refused. Deliberately separate from the read roots.                                          |
+| `VALENCE_SESSION_IDLE_SECONDS`     | `90`                                           | How long an idle playback session is kept before it is reaped, so a closed tab does not leave a transcode running.                                                                                         |
+| `VALENCE_MANIFEST_TIMEOUT_SECONDS` | `20`                                           | How long a request waits for FFmpeg to write the first playlist. Raise it on a slow box, a cold container or a network filesystem.                                                                         |
+| `VALENCE_BACKGROUND_JOBS`          | measured by the device                         | How many background renders run at once while nobody is watching. Must be a positive number. By default the media service asks the device how many it can take.                                            |
+| `VALENCE_FINGERPRINT_JOBS`         | number of cores, at most 4                     | How many audio fingerprinting jobs run at once, for intro detection.                                                                                                                                       |
+| `VALENCE_TRANSCODER_ADDR`          | unset                                          | A TCP address for the media service to bind, taking priority over the socket settings. For running it on another machine.                                                                                  |
+| `VALENCE_TRANSCODER_SOCKET`        | unset                                          | A socket path for the media service to bind. Legacy alternative to `TRANSCODER_URL`.                                                                                                                       |
+
+Most operators never set any of these. `VALENCE_VAAPI_DEVICE` is the one that most often matters, on a machine with more than one graphics card. See [Hardware transcoding](/install/hardware-transcoding).
+
+## Requesting
+
+Set on the `valence` service, and on the `requests` service where marked. See [Requesting](/install/requesting) for the workflow.
+
+| Name                     | Default             | Service  | What it does                                                                                                                                                                                                |
+| ------------------------ | ------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `REQUESTS_URL`           | empty               | valence  | Where Valence reaches the requests service, `http://requests:8421` with the compose file as it is. A trailing slash is removed. **compose**.                                                                |
+| `REQUESTS_SECRET`        | empty               | both     | At least 32 characters, the same on both. Valence presents it on every call. Setting only one of `REQUESTS_URL` and `REQUESTS_SECRET` leaves requesting off. `openssl rand -hex 32` makes one. **compose**. |
+| `DOWNLOADS_PATH`         | `./downloads`       | compose  | Where your download client writes, on the host. Mounted at `/downloads` in the requests service.                                                                                                            |
+| `REQUESTS_PORT`          | `8421`              | requests | The port the requests service listens on. Not set through compose.                                                                                                                                          |
+| `VPN_URL`                | empty               | requests | gluetun's control server, `http://gluetun:8000`, so Valence can report whether the VPN is up. **compose**.                                                                                                  |
+| `VPN_API_KEY`            | empty               | requests | The key gluetun's control server was given. `docker run --rm qmcgaw/gluetun genkey` makes one. Also passed to gluetun. **compose**.                                                                         |
+| `VPN_CHECK_SECONDS`      | `30`                | requests | How often the VPN is checked. Not set through compose.                                                                                                                                                      |
+| `FLARESOLVERR_URL`       | empty               | requests | FlareSolverr, `http://flaresolverr:8191`, for indexers behind Cloudflare's browser check. **compose**.                                                                                                      |
+| `DEFINITIONS_REPOSITORY` | `Prowlarr/Indexers` | requests | The GitHub repository the indexer catalogue is fetched from. **compose**.                                                                                                                                   |
+| `DEFINITIONS_BRANCH`     | `master`            | requests | The branch to read. **compose**.                                                                                                                                                                            |
+| `DEFINITIONS_PATH`       | `definitions/v11`   | requests | The folder in the repository that holds the definitions. **compose**.                                                                                                                                       |
+
+The requests service also reads `DATABASE_URL`, `NODE_ENV` and `VALENCE_VERSION`, which compose or the image supply. It shares the Valence database.
+
+### VPN container
+
+The optional `gluetun` service reads its own settings from `.env`. They are gluetun's; its wiki describes them.
+
+| Name                    | Default     | What it does                             |
+| ----------------------- | ----------- | ---------------------------------------- |
+| `VPN_SERVICE_PROVIDER`  | empty       | Your VPN provider, as gluetun names it.  |
+| `VPN_TYPE`              | `wireguard` | The VPN protocol.                        |
+| `WIREGUARD_PRIVATE_KEY` | empty       | Your WireGuard key.                      |
+| `VPN_SERVER_COUNTRIES`  | empty       | Passed to gluetun as `SERVER_COUNTRIES`. |
+
+## Settings kept in the database
+
+These live in the database and are edited on the admin **Settings** page, not through environment variables. They survive recreating the container because the database does.
+
+| Setting                              | Default                  | What it does                                                                                                                                                                     |
+| ------------------------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hardware acceleration                | Automatic                | Which encoder backend transcodes use. Automatic, VAAPI, QuickSync, NVENC, AMF, VideoToolbox, RKMPP, or Software only. See [Hardware transcoding](/install/hardware-transcoding). |
+| Preview quality                      | `high`                   | `low`, `standard` or `high`. Smaller clips take less room and time to make.                                                                                                      |
+| Age certificates                     | `GB`                     | Which country's certificates to read, as a two-letter code.                                                                                                                      |
+| Roundness                            | `default`                | How round corners are for everybody: `sharp`, `soft`, `default` or `round`.                                                                                                      |
+| Show who lives here                  | on                       | Draws the household's profiles before sign-in.                                                                                                                                   |
+| Picture behind the way in            | none                     | A picture drawn behind the profiles on the sign-in screen.                                                                                                                       |
+| Fetch trailers from the catalogue    | off                      | Offers a trailer for titles that have none on disk.                                                                                                                              |
+| Fetch music details from the web     | off                      | Looks for what a music library's files left out, such as album covers.                                                                                                           |
+| TheAudioDB key, and the OMDb key     | empty                    | Keys for the music details and for Rotten Tomatoes scores.                                                                                                                       |
+| Metadata catalogue                   | from `CATALOGUE_API_KEY` | The catalogue key, if you would rather enter it here.                                                                                                                            |
+| What a request for an artist watches | albums                   | Which kinds of record are fetched for an artist request. See [Requesting](/install/requesting).                                                                                  |
+| Awaiting review cap                  | `5`                      | How many re-encodes may wait for judgement at once. Each holds both the original and its replacement, so the queue pauses at this number. Up to 50.                              |
+| Job timezone                         | from `TZ`                | The clock scheduled jobs keep. Wins over `TZ` when set.                                                                                                                          |
+| Trusted origins and secure cookies   | from setup               | The first-run wizard records both. The compose settings are the ones to get right first.                                                                                         |
+
+More on these in [Settings](/use/settings). A full table of variables with links is also kept in the [environment variable reference](/reference/environment-variables).
+
+## A worked example
+
+A `.env` for a server behind HTTPS with a catalogue key, a New York clock and a proxy on the same host:
+
+```ini
+POSTGRES_PASSWORD=long-random-string-one
+BETTER_AUTH_SECRET=long-random-string-two-at-least-32-characters
+PUBLIC_URL=https://valence.example.com
+MEDIA_PATH=/mnt/tank/media
+VALENCE_PORT=8420
+TZ=America/New_York
+CATALOGUE_API_KEY=your-catalogue-key
+MEDIA_JOBS=2
+BACKUPS_KEPT=5
+```
+
+Anything not in that file takes the default in the tables above.

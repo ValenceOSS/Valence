@@ -1,0 +1,174 @@
+---
+title: Requests
+description: Ask for films, series, music and books that are not in your library yet, and approve, track and troubleshoot those requests as an administrator.
+order: 5
+---
+
+Requesting lets anybody with an account ask for something the server does not have. An approved request is searched for on your indexers, sent to your download client, filed into the right library and announced to the person who asked. This page covers both sides: asking, and running the queue behind it.
+
+Requesting is an optional part of Valence. It needs the requests service, indexers and a download client. If your install does not have it, none of the request screens appear. To set it up, see [Requesting](/install/requesting).
+
+## Asking for something
+
+Open **Requests** from the main navigation. The page has six tabs.
+
+| Tab         | What it shows                                                                      |
+| ----------- | ---------------------------------------------------------------------------------- |
+| Discover    | Shelves of what is trending, popular and coming soon, plus studios you can browse. |
+| Movies      | The full list of popular films, going on as far as you scroll.                     |
+| Shows       | The same for series.                                                               |
+| Music       | Artists and albums to ask for.                                                     |
+| Books       | Books to ask for.                                                                  |
+| My requests | Everything you have asked for, and where each has got to.                          |
+
+Which tab is open is kept in the address, so you can link straight to any of them.
+
+### Making a request
+
+1. Find a title on a shelf, or browse Movies, Shows, Music or Books.
+2. Open it. The dialog shows the poster, facts, cast and, for an artist, their albums.
+3. Choose **Request**. For an artist the button reads **Watch this artist**.
+4. For a series you can choose which seasons you want; leaving it alone asks for every season. For an artist you can choose which kinds of release to watch (albums, EPs, singles, live records and compilations).
+
+A title that is already in your library shows an **In your library** badge and an **Open** button instead. A title someone has already asked for shows where it stands (**Requested**, **Waiting for approval**, **Downloading**, **Arriving**, **Refused** or **Stuck**), so nobody asks twice.
+
+You need `requests.ask` to request films, series and books, and `requests.askMusic` to request artists and albums. Both are part of the default Member role.
+
+### Approval
+
+What happens next depends on who asked.
+
+- If you hold `requests.autoApprove`, your request is approved at once and the search starts immediately.
+- Otherwise it waits with the status **Awaiting approval** until somebody with `requests.approve` decides.
+
+Choosing a release by hand is a separate ability: only accounts with `requests.manage` can pick a specific release when asking.
+
+### Following and cancelling
+
+**My requests** lists each request with its cover, a badge and a line of detail, plus a progress bar for series and artists showing how much has arrived. When a request is available, choose it to open the film, series, album or book in the library.
+
+You can **Cancel** a request until its files have been filed. A cancelled request is not fetched, and anything it had started downloading is deleted. You can ask for the same thing again whenever you like.
+
+### Books
+
+Books can be requested, but Valence does not search for them. A requested book shows **Waiting to be added**: an administrator adds it to the library by hand, and the request completes once it appears.
+
+### Notifications
+
+When something you asked for lands in the library, you get an in-app notification ("Something you asked for is ready"), and a push notification if you have enabled them. Each person can switch this on or off per transport. See [Notifications and webhooks](/use/notifications-and-webhooks).
+
+## Statuses
+
+A request's badge tells you where it stands. The same labels appear in the admin list and can be used to filter it.
+
+| Badge               | Meaning                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| Awaiting approval   | Nobody has decided yet. Nothing is fetched.                                                   |
+| Refused             | An administrator declined it, with a reason if they gave one. It can still be approved later. |
+| Looking it up       | For a series or artist, Valence is working out what there is to fetch.                        |
+| Queued to search    | It is out, and will be searched for in a moment.                                              |
+| Not out yet         | Held until the release date (or the next episode or album) the catalogue gives.               |
+| Wanted              | Searched for and not found. It is searched again every few hours.                             |
+| Searching           | An indexer search is running.                                                                 |
+| Release chosen      | A release has been picked and is about to be sent.                                            |
+| Downloading         | The download client is fetching it.                                                           |
+| Filing              | The download finished and is being placed into the library.                                   |
+| Filed               | In its library, waiting for the library to find it.                                           |
+| Available           | It is in the library.                                                                         |
+| Failed              | Something went wrong, with the reason shown.                                                  |
+| Waiting to be added | A book, which is added by hand.                                                               |
+
+## The admin side
+
+Administrators manage requesting under the **Requests** heading of the admin area.
+
+| Panel     | Purpose                                                                      |
+| --------- | ---------------------------------------------------------------------------- |
+| Overview  | Whether the requests service answers, its version, the VPN and the indexers. |
+| Requested | Every request, with approve, refuse and troubleshooting actions.             |
+| Indexers  | The sites Valence searches for releases.                                     |
+| Search    | A manual search across every enabled indexer.                                |
+| Profiles  | Quality profiles that judge releases.                                        |
+| Downloads | The queue of downloads, and the download clients.                            |
+
+### Overview
+
+The Overview panel checks that the requests service is answering, shows which version is running, tells you whether the VPN the downloads travel through is up, and lists how many indexers are switched on and which are failing. **Check now** asks again rather than waiting for the next scheduled check, which happens every five minutes by default (see [Jobs and logs](/use/jobs-and-logs)).
+
+### Approving and refusing
+
+Open **Requested** to see everything asked for, filtered by kind and by where it stands, or searched by title or by who asked.
+
+- **Approve** opens a dialog where you may change the **Quality** profile the release is judged by, and the **Library** it is filed into, before the search begins.
+- **Refuse** takes an optional reason, shown to whoever asked. Nothing is fetched, and the request can be approved later.
+- Tick several requests waiting on approval to approve or refuse them together. A reason on a bulk refusal is shown to everybody who asked for one of them.
+
+Approving and refusing need `requests.approve`. Seeing everybody's requests needs `requests.viewAll` (or approve or manage). Without one of those, a person sees only their own.
+
+### Working on a single request
+
+Each row has an actions menu.
+
+| Action               | What it does                                                                                                                        |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Open                 | Opens the finished item in the library.                                                                                             |
+| See what it has done | Opens the request's history.                                                                                                        |
+| Search again now     | Searches for a request that is wanted, without waiting for the next round. Not available for books or for requests already in hand. |
+| Mark as added        | Tells Valence the item is in the library, for a request you satisfied yourself.                                                     |
+| Pick a release       | Opens the releases tab so you can choose a specific release by hand.                                                                |
+| Pick by hand only    | Stops Valence choosing for this request. It is then only followed and filed once you pick a release.                                |
+| Forget               | Removes the request. Nothing more is fetched, and whatever it already brought stays in the library.                                 |
+
+The request detail dialog holds four tabs:
+
+- **How it is going** shows the current downloads with pause and resume.
+- **Releases** lists every release the indexers offered and how each was judged.
+- **What it has done** is the request's log, for finding out why something happened.
+- **Never again** is the **blocklist**: releases that failed for this request and will not be tried again. Remove an entry to allow it.
+
+### Refetch media
+
+Anything still wanted is searched for again by itself every few hours, and again shortly after the service starts, which also catches things that came out while it was down. **Refetch media** on the Requested panel runs that search now. The service also reads the newest releases on every indexer about every quarter of an hour, so a release appearing on an indexer can be picked up without waiting for the full search.
+
+If a download fails or stalls for hours, Valence blocklists that release for that request and looks for the next best at once. If filing fails, it tries a few times before marking the item as **Failed** for you to look at.
+
+### Releases, quality profiles and libraries
+
+A **quality profile** decides which releases are acceptable: which resolutions and sources, how big they should be, and when a film counts as released. Profiles are managed on the **Profiles** panel and need `requests.manage`. Each library says whether it **Takes requests**, which profile its requests are judged by (by default, whichever profile names that library) and where requests are filed (by default, the library's own folder). See [Libraries](/use/libraries).
+
+For music requests, the **Settings** panel has an option for what a request for an artist watches by default: which of an artist's records are fetched when the person asking did not say. It defaults to albums.
+
+### Indexers
+
+An indexer is a site Valence can search for releases. The **Indexers** panel shows each with its priority, what it can search and its state.
+
+- Add one from the catalogue of supported sites, or add a Torznab or Newznab indexer directly.
+- **Test** checks a kept indexer and reads what it can search again. You can also try an indexer before keeping it.
+- **Switch off** and **Switch on** take an indexer out of and back into rotation. **Remove** forgets it and its key.
+
+The **Search** panel searches every enabled indexer at once, by title, mode (anything, films, series, music, books), season and episode. From a result you can send it to a download client, copy the magnet link or save the torrent or NZB file.
+
+![The Indexers panel listing indexers with priority, searches and state badges.](/screenshots/admin-indexers.png)
+
+### Downloads
+
+The **Downloads** panel has two tabs. **Queue** lists every download Valence has sent, with its state (queued, downloading, stalled, paused, finishing, done, not filed or failed), speed and time left. Each row can be paused, resumed, filed by hand into a library if automatic filing did not, or removed. **Clients** lists your download clients. Valence works with qBittorrent, Transmission, SABnzbd and NZBGet. For each one you set the address, credentials, the category or label Valence puts on what it sends for each kind of library, a priority (the lowest is sent releases first), and, where the client and Valence see the downloads folder by different names, a path mapping.
+
+Removing a client stops Valence sending to it and following what it sent. What it is already downloading carries on in the client.
+
+![The Downloads panel on the Queue tab showing downloads with state badges, speeds and time left.](/screenshots/admin-downloads.png)
+
+### Permissions summary
+
+| Permission             | Lets you                                                                           |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| `requests.ask`         | Ask for films, series and books.                                                   |
+| `requests.askMusic`    | Ask for artists and albums.                                                        |
+| `requests.autoApprove` | Skip approval.                                                                     |
+| `requests.viewAll`     | See everybody's requests and how their downloads are going.                        |
+| `requests.approve`     | Approve or refuse requests.                                                        |
+| `requests.manage`      | Set up indexers, download clients and quality profiles, and pick releases by hand. |
+
+## Events
+
+Request activity is available to [webhooks](/use/notifications-and-webhooks) as well: a request being made, approved, refused, chosen, filed or available, a download starting or failing, an indexer failing or recovering, and the requests service or its VPN going down or coming back.

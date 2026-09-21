@@ -1,0 +1,204 @@
+---
+title: Accounts and roles
+description: Add people to your server, give them roles, limit what they can see, and manage their sign-ins, profiles, passkeys and API keys.
+order: 4
+---
+
+Valence separates three things that are easy to blur together. An **account** is a sign-in: an address and a password (or a passkey). A **profile** is a face on the couch: a name, a picture and its own watch history. A **role** is a named bundle of permissions that decides what an account may do on the server. One account can carry several profiles, and one account can hold several roles.
+
+This page covers the People section of the admin area, and the account settings every signed-in person gets for themselves. If you have not created your first administrator yet, start with [First run](/use/first-run).
+
+## Where things live
+
+Open the admin area from the account menu. Under the **People** heading there are two panels.
+
+| Panel    | What it is for                                                                                                                           |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Accounts | Adding, editing, banning and deleting accounts; resetting passwords; ending sessions; choosing roles and library access for each person. |
+| Roles    | Creating roles, choosing the permissions each one grants, and seeing who holds it.                                                       |
+
+Everything on these panels is gated by a permission, so somebody with a narrower role sees fewer panels. The permissions involved are listed later on this page.
+
+![The Accounts panel in the admin area, listing each person with their roles and an actions menu.](/screenshots/admin-accounts.png)
+
+## Accounts
+
+### Adding a person
+
+Valence cannot send email, so there is no emailed invitation. You add a person and hand them a password yourself.
+
+1. Open **Accounts** and choose **Add user**.
+2. Enter a **Name**, an **Address** (their email address, which is what they sign in with) and a **Password**.
+3. Confirm. The new account appears in the list.
+4. Tell the person the password. They can change it afterwards in their own account settings.
+
+A new account is given the default role, **Member**, so it can watch, share and request. If you would rather somebody start narrower, give them the **Restricted** role instead and remove Member (see [Roles](#roles)).
+
+<Callout title="Use a long password" tone="quiet">
+  Sign-up requires at least ten characters. Use the same length when you set a password for somebody
+  else, and ask them to change it the first time they sign in.
+</Callout>
+
+### Editing an account
+
+Choose the actions menu on a row, then **Edit account**. The editor has five tabs. Changes to the name, picture, roles and libraries apply when you save. Resetting a password and ending sessions happen at once.
+
+| Tab       | What you can do                                                                                      |
+| --------- | ---------------------------------------------------------------------------------------------------- |
+| Display   | Change the name and address, and set the account's picture.                                          |
+| Security  | Reset the password, or sign the account out everywhere.                                              |
+| Devices   | See every place the account is signed in, with an address and when each session started and expires. |
+| Roles     | Switch each role on or off for this account.                                                         |
+| Libraries | Choose which libraries the account may see, and how old the content in each may be.                  |
+
+### Resetting a password and ending sessions
+
+On the **Security** tab, **Reset password** sets a new password directly and ends every session the account holds, so the person has to sign in again with the new one. **Sign out everywhere** ends every session without touching the password. Use it when a phone goes missing or somebody is shown the door but should keep their account.
+
+Both need the `account.security` permission. Valence asks you to confirm each before it acts.
+
+### Banning and deleting
+
+The actions menu offers **Ban** and **Delete account**.
+
+- **Ban** signs the person out and refuses them entry until you choose **Let back in**. Nothing they own is touched, which makes it the right tool for a pause.
+- **Delete account** removes the account, every profile on it and everything those profiles were watching. The person's API keys and share links are revoked at once, so anything using one stops working. Playlists they shared with the household stay, marked as belonging to a removed profile. Nothing leaves your libraries. This cannot be undone.
+
+Banning needs `account.ban`. Deleting and editing need `account.manage`.
+
+### Who may act on whom
+
+Valence protects itself from one administrator acting against another. The rules are the same everywhere in the admin area.
+
+- Nobody can ban, delete or reset themselves. Doing so would remove their own last way in.
+- Every role has a **rank**, a number. You cannot act on an account whose highest role is at or above your own, and you cannot change a role at or above yours. This applies to administrators too.
+- You cannot grant a permission you do not hold yourself.
+- The **owner** sits outside these rules. Nobody can act on the owner, and the owner can act on anybody. On a server that predates the idea of an owner, the oldest administrator is recorded as the owner the first time it starts, which on every install is the account made during setup.
+
+The practical result is that giving somebody the Administrator role lets them help run the server but does not let them lock you out of it.
+
+## Roles
+
+### The default roles
+
+A fresh server is given four roles the first time it starts. Their ranks are 300, 200, 100 and 0. Valence records that it has seeded them, so if you delete a role it does not come back on the next restart. Accounts that already exist when the roles are first created are assigned one: administrators get Administrator, everyone else gets Member.
+
+| Role          | Rank | What it grants                                                                                                                                                                                                                                                                                                                                     |
+| ------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Administrator | 300  | Everything, including permissions added by later releases.                                                                                                                                                                                                                                                                                         |
+| Manager       | 200  | Looks after libraries and what is in them, but not the server itself: creating and editing libraries, running and scheduling jobs, rescanning, correcting metadata and artwork, hiding items, seeing and stopping streams, share management, all the request permissions except setting up requesting, API keys, and reading the logs and monitor. |
+| Member        | 100  | Sharing links, starting watch parties, downloading media, and asking for films, series and music.                                                                                                                                                                                                                                                  |
+| Restricted    | 0    | Watching, and nothing else.                                                                                                                                                                                                                                                                                                                        |
+
+Everyone can watch what their libraries allow. Roles only add abilities on top of that.
+
+### Creating and editing a role
+
+1. Open **Roles** and choose **Create a role**.
+2. Give it a **Name**, a **Rank** and a **Colour**. The colour is shown wherever someone holding the role appears.
+3. Create it, then open **Edit role** to choose permissions.
+
+The role editor has three tabs: **Display**, **Permissions** and **Manage members**. Each permission is described in a sentence, so you can read what you are granting before you switch it on. A higher rank manages a lower one, and nobody may touch a role at or above their own.
+
+![The role editor open on the Permissions tab, showing the grouped permission list with a description beside each.](/screenshots/admin-role-permissions.png)
+
+Deleting a role removes what it granted from everyone who held it. Creating roles needs `account.roles`.
+
+### The permission catalogue
+
+Permissions are the only thing a role contains. These are all of them.
+
+| Permission             | What it lets somebody do                                             |
+| ---------------------- | -------------------------------------------------------------------- |
+| `administrator`        | Everything, including anything added later.                          |
+| `library.create`       | Add a library.                                                       |
+| `library.edit`         | Change a library's settings.                                         |
+| `library.delete`       | Remove a library and forget everything scanned from it.              |
+| `jobs.run`             | Start a job by hand, stop one, and change how many run at once.      |
+| `jobs.schedule`        | Change when a recurring job runs.                                    |
+| `jobs.runDestructive`  | Run reset and rebuild, the jobs that throw away what is stored.      |
+| `media.rescan`         | Ask Valence to read one item again.                                  |
+| `media.delete`         | Delete a media file from disk.                                       |
+| `media.reencode`       | Re-encode media at a chosen quality.                                 |
+| `media.override`       | Correct an item's metadata by hand.                                  |
+| `media.artwork`        | Replace an item's poster or backdrop.                                |
+| `media.hide`           | Hide an item from every profile.                                     |
+| `sharing.link`         | Create share links.                                                  |
+| `sharing.party`        | Start watch parties.                                                 |
+| `sharing.manage`       | See every share link and withdraw any of them.                       |
+| `streaming.view`       | See who is watching and what.                                        |
+| `streaming.stop`       | End somebody else's stream.                                          |
+| `streaming.pause`      | Pause somebody else's stream.                                        |
+| `streaming.message`    | Send a message that appears over somebody else's stream.             |
+| `download.media`       | Save media to a device for offline viewing.                          |
+| `requests.ask`         | Request films and series.                                            |
+| `requests.askMusic`    | Request artists and albums.                                          |
+| `requests.autoApprove` | Have requests go straight through without approval.                  |
+| `requests.viewAll`     | See everybody's requests.                                            |
+| `requests.approve`     | Approve or refuse other people's requests.                           |
+| `requests.manage`      | Set up indexers, download clients and quality profiles.              |
+| `account.invite`       | Add a new account.                                                   |
+| `account.manage`       | List, rename and remove accounts.                                    |
+| `account.ban`          | Ban and unban accounts.                                              |
+| `account.roles`        | Create roles and choose what they grant.                             |
+| `account.profiles`     | Add, rename or remove another account's profiles.                    |
+| `account.security`     | Reset passwords, end sessions and see where an account is signed in. |
+| `account.keys`         | Hold API keys.                                                       |
+| `server.settings`      | Change server-wide settings.                                         |
+| `server.backup`        | Start a backup or restore one.                                       |
+| `server.logs`          | Read the server's log.                                               |
+| `server.monitor`       | See what the server is doing: load, memory and encoding.             |
+| `server.webhooks`      | Have the server call out to another address when something happens.  |
+
+An account's effective permissions are the union of everything its roles grant. The server also supports per-account allow and deny overrides for a single permission through the API, but the admin area does not expose them yet, so manage access through roles.
+
+## Limiting what somebody can see
+
+The **Libraries** tab in the account editor controls reach per account. Every library is listed, and by default the account may see all of them.
+
+- Click a library's button to switch it off for that account. A person who can reach no library at all sees an empty server, which looks broken rather than restricted, so Valence warns you.
+- With a library switched on, an **age limit** menu lets you cap what may appear from that library by certification. Choose "Nothing above" plus a limit, or leave it open.
+- **Allow unrated** decides whether items with no certification appear under a limit. It only appears once a limit is set.
+
+Limits belong to the account and therefore to every profile on it. If a parent and a child share one account, give the child an account of their own and limit that one.
+
+## Profiles and the household
+
+The household is the account itself, presented to the family: it has a name, a colour and a picture, set up the first time somebody signs in. Under it sit the profiles, each of which keeps its own history, progress, favourites, ratings and hidden items.
+
+After signing in, a **profile picker** asks who is watching. From it you can:
+
+- Add a profile, giving it a name (up to 24 characters), a colour and a picture. A picture can be an uploaded photograph, one of the drawn faces, or simply the initial of the name.
+- Edit a profile: name, colour, picture, how many episodes play before Valence asks "are you still watching", and whether the title you are playing is shown on Discord.
+- Remove a profile. Everything that profile watched goes with it: history, progress, likes, ratings and hidden items. Playlists it shared with the household stay, and private ones go.
+
+Administrators with `account.profiles` can manage other people's profiles on their behalf.
+
+## Your own account
+
+Everyone gets an account area with six panels.
+
+| Panel    | What it holds                                                                                                                                     |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Profile  | Display name, profile picture, theme (kept on this device), motion preference, colour, the still-watching prompt and the Discord presence option. |
+| Security | Sign-in settings: two-step sign in, passkeys and, for those allowed, API keys.                                                                    |
+| Devices  | Every device signed in to the account, with a way to sign each out.                                                                               |
+| Links    | Share links you have created, with a way to withdraw each. See [Sharing](/use/sharing).                                                           |
+| History  | What you have watched.                                                                                                                            |
+| Hidden   | What you have hidden, and whole libraries you have hidden, with a way to bring them back.                                                         |
+
+### Sessions
+
+A sign-in lasts 30 days and is refreshed once a day while you use it. Sign-out on one device does not affect the others. The Devices panel lists every live session so that you can end any of them.
+
+### Two-step sign in
+
+On **Security**, enable **Two-step sign in** to require a code from an authenticator app as well as your password. You confirm your password, scan the QR code (or type the setup key), save the backup codes, then enter a code from your app to finish. Two-step sign in is not on until you enter that first code.
+
+### Passkeys
+
+Passkeys let you sign in with the face, fingerprint or PIN a device already uses, instead of a password. Add one from **Security**, give it a name you will recognise, such as the device you are on, and rename or remove it later. Passkeys need a browser and device that support them; where they are unavailable the option says so.
+
+### API keys
+
+If your role includes `account.keys`, the **API keys** card on the Security panel lets you create keys for scripts and devices outside the browser. Give a key a name and create it. The key is shown once, so copy it then. You can turn a key off and on again, or revoke it. A key can be created with an expiry, a narrower set of permissions and a rate limit through the API, and it can never carry a permission that its holder does not have. See the [API overview](/reference/api-overview) for how to use one.

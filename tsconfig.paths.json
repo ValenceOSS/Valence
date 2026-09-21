@@ -5,6 +5,7 @@
       "@ValenceContracts/*": ["./packages/contracts/src/*"],
       "@ValenceCore/*": ["./packages/core/src/*"],
       "@ValenceDesktop/*": ["./apps/desktop/src/*"],
+      "@ValenceDocs/*": ["./apps/docs/src/*"],
       "@ValenceLanding/*": ["./apps/landing/src/*"],
       "@ValenceSDK/*": ["./packages/plugin-sdk/src/*"],
       "@ValenceScreens/*": ["./packages/screens/src/*"],
@@ -33,6 +34,12 @@
       "@ValenceUI/Button": ["./packages/ui/src/components/Button/Button.tsx"],
       "@ValenceUI/Button/buttonStyles": ["./packages/ui/src/components/Button/buttonStyles.ts"],
       "@ValenceUI/Button.types": ["./packages/ui/src/components/Button/Button.types.ts"],
+      "@ValenceUI/CommandPalette": [
+        "./packages/ui/src/components/CommandPalette/CommandPalette.tsx"
+      ],
+      "@ValenceUI/CommandPalette.types": [
+        "./packages/ui/src/components/CommandPalette/CommandPalette.types.ts"
+      ],
       "@ValenceUI/Callout": ["./packages/ui/src/components/Callout/Callout.tsx"],
       "@ValenceUI/Callout.types": ["./packages/ui/src/components/Callout/Callout.types.ts"],
       "@ValenceUI/Card": ["./packages/ui/src/components/Card/Card.tsx"],
@@ -143,6 +150,7 @@
       "@ValenceUI/Rail": ["./packages/ui/src/components/Rail/Rail.tsx"],
       "@ValenceUI/ReadMore": ["./packages/ui/src/components/ReadMore/ReadMore.tsx"],
       "@ValenceUI/ReadMore.types": ["./packages/ui/src/components/ReadMore/ReadMore.types.ts"],
+      "@ValenceUI/Reveal": ["./packages/ui/src/components/Reveal/Reveal.tsx"],
       "@ValenceUI/RevealItem": ["./packages/ui/src/components/RevealItem/RevealItem.tsx"],
       "@ValenceUI/SectionBar": ["./packages/ui/src/components/SectionBar/SectionBar.tsx"],
       "@ValenceUI/SettingsMenu": ["./packages/ui/src/components/SettingsMenu/SettingsMenu.tsx"],

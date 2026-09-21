@@ -82,6 +82,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm lint
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
 
       # A hand-written migration with no snapshot beside it leaves generation silent and recreating
       # tables that already exist. See VAL-193.
@@ -165,6 +167,7 @@ jobs:
           - '@valence/web'
           - '@valence/desktop'
           - '@valence/landing'
+          - '@valence/docs'
     steps:
       - uses: actions/checkout@v7
 

@@ -59,6 +59,10 @@ Point it at your media by editing the mount in `compose.yaml`. It is mounted rea
 only, deliberately. [`DEPLOYMENT.md`](DEPLOYMENT.md) covers settings, a reverse
 proxy, hardware transcoding and upgrades.
 
+The full documentation, with install guides, a guide to every screen, developer
+documentation and the interactive API reference, lives in `apps/docs`. Run it with
+`pnpm --filter @valence/docs spec` followed by `pnpm --filter @valence/docs dev`.
+
 ## Develop it
 
 ```bash
