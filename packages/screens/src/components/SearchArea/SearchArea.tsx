@@ -14,7 +14,7 @@ import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';
 import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
 import { readGridSize, saveGridSize } from '@ValenceScreens/library/gridSizePreference';
 import { buildFilterOptions } from './buildFilterOptions';
-import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
+import type { LibraryFacets, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { SearchAreaProps, SearchKind } from './SearchArea.types';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
@@ -28,6 +28,9 @@ import { FilterMenu } from '@ValenceUI/FilterMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 
 const SETTLE_MILLISECONDS = 250;
+
+const isAProgramme = (media: MediaSummary): boolean =>
+  media.seriesTitle !== null && media.seriesTitle !== undefined;
 
 const PAGE_SIZE = 60;
 
@@ -74,6 +77,8 @@ const asNumber = (value: string | null): number | undefined =>
  * @param onAsk - Told which title not in the library was chosen, where somebody may ask for one;
  *   without it, only the library is searched.
  * @param onHide - Told to hide something from this viewer.
+ * @param onOpenShow - Told to open the programme a result stands for, since a result that is an
+ *   episode is drawn as its programme and opening it should list every episode, not play that one.
  */
 const SearchArea = ({
   search,
@@ -88,6 +93,7 @@ const SearchArea = ({
   isKept,
   onToggleKept,
   onHide,
+  onOpenShow,
   onOpenBook,
   onAsk,
 }: SearchAreaProps) => {
@@ -401,6 +407,8 @@ const SearchArea = ({
                     size={size}
                     onPlay={onPlay}
                     onInspect={onInspect}
+                    isSeries={isAProgramme}
+                    {...(onOpenShow === undefined ? {} : { onOpenShow })}
                     {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
                     {...(resumeFor === undefined ? {} : { resumeFor })}
                     {...(isKept === undefined ? {} : { isKept })}

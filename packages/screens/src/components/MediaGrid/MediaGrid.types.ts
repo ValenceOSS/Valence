@@ -13,7 +13,7 @@ type MediaGridProps = {
   onToggleKept?: (media: MediaSummary) => void;
   onHide?: (media: MediaSummary) => void;
   size?: MediaGridSize;
-  isSeries?: boolean;
+  isSeries?: boolean | ((media: MediaSummary) => boolean);
   onOpenShow?: (media: MediaSummary) => void;
   shape?: RailCardProps['shape'];
 };
