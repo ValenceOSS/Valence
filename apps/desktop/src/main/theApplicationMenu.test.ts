@@ -81,4 +81,16 @@ describe('theApplicationMenu', () => {
 
     expect(setApplicationMenu).toHaveBeenCalledOnce();
   });
+
+  it('leaves the developer tools out of an installed build', () => {
+    theApplicationMenu(vi.fn());
+
+    expect(built().some((item) => item.role === 'toggleDevTools')).toBe(false);
+  });
+
+  it('offers the developer tools to a build that is being worked on', () => {
+    theApplicationMenu(vi.fn(), true);
+
+    expect(built().some((item) => item.role === 'toggleDevTools')).toBe(true);
+  });
 });

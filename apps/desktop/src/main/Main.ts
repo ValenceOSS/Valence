@@ -213,7 +213,7 @@ const start = async (): Promise<void> => {
     discord.close();
   });
 
-  theApplicationMenu(changeServer);
+  theApplicationMenu(changeServer, !app.isPackaged);
 
   theWindow = openTheWindow();
   theWindowsOwnMenu(theWindow, changeServer);
