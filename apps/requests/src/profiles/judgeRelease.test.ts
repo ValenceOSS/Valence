@@ -14,7 +14,15 @@ const judge = (
   profile: QualityProfile = aProfile(),
   overrides: Partial<Release> = {},
   runtimeMinutes?: number,
-) => judgeRelease(aRelease(title, overrides), parseReleaseName(title), profile, runtimeMinutes);
+  episodesHeld?: number,
+) =>
+  judgeRelease(
+    aRelease(title, overrides),
+    parseReleaseName(title),
+    profile,
+    runtimeMinutes,
+    episodesHeld,
+  );
 
 const GB = 1024 ** 3;
 
@@ -173,15 +181,32 @@ describe('judgeRelease', () => {
     ).toBe(false);
   });
 
-  it('judges several episodes by their time together, and leaves a whole season be', () => {
+  it('judges several episodes by their time together', () => {
     const profile = aProfile({ largestMb: 3000 });
 
     expect(
       judge('Show.S01E01E02.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 4 * GB }, 60).isRejected,
     ).toBe(false);
+  });
+
+  it('judges a pack over the episodes it holds, not over one', () => {
+    const profile = aProfile({ largestMb: 3000 });
+    const tenHours = { sizeBytes: 20 * GB };
+
+    expect(judge('Show.S01.1080p.WEB-DL.x264-GRP', profile, tenHours, 60, 10).isRejected).toBe(
+      false,
+    );
+    expect(
+      judge('Show.S01.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 90 * GB }, 60, 10).rejections,
+    ).toEqual(['At 9,216 MB an hour it is larger than this profile takes, 3,000']);
+  });
+
+  it('leaves a pack unjudged by size where nobody says what it holds', () => {
+    const profile = aProfile({ largestMb: 3000 });
+
     expect(
       judge('Show.S01.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 40 * GB }, 60).reasons,
-    ).toContain('Its size is not judged, since it is a whole season');
+    ).toContain('Its size is not judged without knowing what it holds');
   });
 
   it('judges nothing by size where there are no limits, or no size', () => {

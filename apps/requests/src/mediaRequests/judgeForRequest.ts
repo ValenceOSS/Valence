@@ -90,7 +90,13 @@ const judgeForRequest = ({
     }
 
     const fetched = covered.filter(isFetching);
-    const judgement = judgeRelease(release, parsed, judgedBy, request.runtimeMinutes ?? undefined);
+    const judgement = judgeRelease(
+      release,
+      parsed,
+      judgedBy,
+      request.runtimeMinutes ?? undefined,
+      covered.length,
+    );
     const reason = blockedBecause.get(release.title);
     const rejections = [
       ...judgement.rejections,

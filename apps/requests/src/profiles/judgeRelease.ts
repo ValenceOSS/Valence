@@ -94,13 +94,17 @@ const judgeChoice = <Quality extends Resolution | ReleaseSource | MusicQuality>(
 /**
  * Judges a release's size against the profile's limits: per album for music, and per hour for
  * video — the limits for its own source and resolution, where the profile sets them, and otherwise
- * the profile's own — which needs its running time — a whole season's cannot be judged without knowing how many
- * episodes it holds.
+ * the profile's own — which needs its running time.
+ *
+ * A pack is judged per hour like anything else, over however many episodes it holds. Where nobody
+ * has said how many that is, as an interactive search has not, it goes unjudged rather than being
+ * measured against one episode's limit and refused for being a pack.
  *
  * @param release - The release.
  * @param parsed - What its name says.
  * @param profile - The profile.
  * @param runtimeMinutes - How long one film or episode runs, where known.
+ * @param episodesHeld - How many episodes it holds, where that is known.
  * @returns The verdict.
  */
 const judgeSize = (
@@ -108,6 +112,7 @@ const judgeSize = (
   parsed: ParsedRelease,
   profile: QualityProfile,
   runtimeMinutes: number | undefined,
+  episodesHeld: number | undefined,
 ): Verdict => {
   const nothing: Verdict = { score: 0, rejections: [], reasons: [] };
   const isVideo = profile.kind === 'video';
@@ -129,11 +134,14 @@ const judgeSize = (
     return { ...nothing, reasons: ['Its size is not judged without a running time'] };
   }
 
-  if (isVideo && parsed.seasons.length > 0 && parsed.episodes.length === 0) {
-    return { ...nothing, reasons: ['Its size is not judged, since it is a whole season'] };
+  const isPack = isVideo && parsed.seasons.length > 0 && parsed.episodes.length === 0;
+  const held = parsed.episodes.length > 0 ? parsed.episodes.length : (episodesHeld ?? 0);
+
+  if (isPack && held === 0) {
+    return { ...nothing, reasons: ['Its size is not judged without knowing what it holds'] };
   }
 
-  const hours = ((runtimeMinutes ?? 60) * Math.max(parsed.episodes.length, 1)) / 60;
+  const hours = ((runtimeMinutes ?? 60) * Math.max(held, 1)) / 60;
   const measured = isVideo ? megabytes / hours : megabytes;
   const said = `${Math.round(measured).toLocaleString('en-GB')} MB${isVideo ? ' an hour' : ''}`;
 
@@ -179,6 +187,8 @@ const judgeSize = (
  * @param parsed - What its name says.
  * @param profile - The profile.
  * @param runtimeMinutes - How long one film or episode runs, for judging video by size an hour.
+ * @param episodesHeld - How many episodes the release holds, so a pack is judged by size an hour
+ *   like anything else. Left out where nobody knows, and then a pack's size goes unjudged.
  * @returns The judgement.
  */
 const judgeRelease = (
@@ -186,6 +196,7 @@ const judgeRelease = (
   parsed: ParsedRelease,
   profile: QualityProfile,
   runtimeMinutes?: number,
+  episodesHeld?: number,
 ): Judgement => {
   const verdicts: Verdict[] =
     profile.kind === 'video'
@@ -249,7 +260,7 @@ const judgeRelease = (
           : [],
     },
     judgeLanguage(parsed.languages, profile.preferredLanguage),
-    judgeSize(release, parsed, profile, runtimeMinutes),
+    judgeSize(release, parsed, profile, runtimeMinutes, episodesHeld),
   );
 
   const rejections = verdicts.flatMap((verdict) => verdict.rejections);
