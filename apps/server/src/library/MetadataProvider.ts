@@ -2,7 +2,12 @@ import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import type { Person } from '@ValenceContracts/schemas/Person';
 import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
-import type { CatalogueList, CatalogueStudio } from '@ValenceContracts/schemas/CatalogueTitle';
+import type {
+  CatalogueFilters,
+  CatalogueGenre,
+  CatalogueList,
+  CatalogueStudio,
+} from '@ValenceContracts/schemas/CatalogueTitle';
 
 type MediaFacts = {
   path: string;
@@ -62,6 +67,7 @@ type CatalogueBrowsing = {
   kind: 'tv' | 'movie';
   page: number;
   studio: string | null;
+  filters?: CatalogueFilters;
 };
 
 type CataloguePaged = { matches: CatalogueMatch[]; hasMore: boolean };
@@ -101,6 +107,7 @@ type MetadataProvider = {
   search?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   browse?: (browsing: CatalogueBrowsing) => Promise<CataloguePaged>;
   studios?: () => Promise<CatalogueStudio[]>;
+  genres?: (kind: 'tv' | 'movie') => Promise<CatalogueGenre[]>;
   describeTitle?: (
     externalId: string,
     kind: 'tv' | 'movie',

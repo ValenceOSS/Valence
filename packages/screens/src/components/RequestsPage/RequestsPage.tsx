@@ -13,7 +13,7 @@ import { describeBrowsing } from '@ValenceScreens/requests/describeBrowsing';
 import { readBrowsing } from '@ValenceScreens/requests/readBrowsing';
 import { viewOfBrowsing } from '@ValenceScreens/requests/viewOfBrowsing';
 import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
-import { CatalogueGrid } from './components/CatalogueGrid/CatalogueGrid';
+import { CatalogueBrowser } from './components/CatalogueBrowser/CatalogueBrowser';
 import { DiscoverShelves } from './components/DiscoverShelves/DiscoverShelves';
 import { MusicDiscover } from './components/MusicDiscover/MusicDiscover';
 import { MyRequests } from './components/MyRequests/MyRequests';
@@ -124,7 +124,7 @@ const RequestsPage = () => {
                 {describeBrowsing(browsing, studioName)}
               </h2>
 
-              <CatalogueGrid browsing={browsing} onAsk={ask} />
+              <CatalogueBrowser key={browsing.kind} browsing={browsing} onAsk={ask} />
             </TabPanel>
           )}
 

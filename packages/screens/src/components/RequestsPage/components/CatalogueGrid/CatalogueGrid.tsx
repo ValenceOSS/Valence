@@ -24,10 +24,11 @@ const BEFORE_THE_END = '0px 0px 800px 0px';
  * button to press and no page to turn.
  *
  * @param browsing - Which list, of which kind, and whose studio where one was chosen.
+ * @param filters - What it is narrowed by, where anything is, which changes what an empty page means.
  * @param onAsk - Called with the title to open, as its address names it.
  */
-const CatalogueGrid = ({ browsing, onAsk }: CatalogueGridProps) => {
-  const pages = useInfiniteQuery(requestsQueries.catalogueBrowse(browsing));
+const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) => {
+  const pages = useInfiniteQuery(requestsQueries.catalogueBrowse(browsing, true, filters));
   const [end, setEnd] = useState<HTMLDivElement | null>(null);
 
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = pages;
@@ -80,7 +81,11 @@ const CatalogueGrid = ({ browsing, onAsk }: CatalogueGridProps) => {
       <NothingHere
         of={CompassIcon}
         title="Nothing to ask for here"
-        detail="The catalogue listed nothing."
+        detail={
+          Object.keys(filters).length === 0
+            ? 'The catalogue listed nothing.'
+            : 'Nothing in the catalogue matches those filters.'
+        }
       />
     );
   }

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import {
   CatalogueDiscoverySchema,
+  CatalogueGenreSchema,
   CataloguePageSchema,
   CatalogueTitleDetailSchema,
   CatalogueTitleSchema,
@@ -10,6 +11,8 @@ import {
 import type {
   CatalogueBrowse,
   CatalogueDiscovery,
+  CatalogueFilters,
+  CatalogueGenre,
   CataloguePage,
   CatalogueTitle,
   CatalogueTitleDetail,
@@ -31,17 +34,38 @@ const fetchDiscover = (): Promise<CatalogueDiscovery> =>
  *
  * @param browsing - Which list, of which kind, and whose studio where one was chosen.
  * @param page - Which page, counting from one.
+ * @param filters - What to narrow it by: a genre, a span of years, a least rating.
  * @returns The page, each title saying where it stands, and whether there is more after it.
  */
-const fetchCatalogueBrowse = (browsing: CatalogueBrowse, page: number): Promise<CataloguePage> =>
+const fetchCatalogueBrowse = (
+  browsing: CatalogueBrowse,
+  page: number,
+  filters: CatalogueFilters = {},
+): Promise<CataloguePage> =>
   readFromServer(
     `/api/requests/catalogue/browse?${new URLSearchParams({
       kind: browsing.kind,
       list: browsing.list,
       ...(browsing.studio === null ? {} : { studio: browsing.studio }),
+      ...(filters.genre === undefined ? {} : { genre: filters.genre }),
+      ...(filters.yearFrom === undefined ? {} : { yearFrom: filters.yearFrom.toString() }),
+      ...(filters.yearTo === undefined ? {} : { yearTo: filters.yearTo.toString() }),
+      ...(filters.minRating === undefined ? {} : { minRating: filters.minRating.toString() }),
       page: page.toString(),
     }).toString()}`,
     CataloguePageSchema,
+  );
+
+/**
+ * Reads the genres a list of films or series can be narrowed to.
+ *
+ * @param kind - Whether it is films or series.
+ * @returns Each genre, by the id to narrow with and the name to show.
+ */
+const fetchCatalogueGenres = (kind: CatalogueBrowse['kind']): Promise<CatalogueGenre[]> =>
+  readFromServer(
+    `/api/requests/catalogue/genres?${new URLSearchParams({ kind }).toString()}`,
+    z.array(CatalogueGenreSchema),
   );
 
 /**
@@ -78,4 +102,11 @@ const fetchAskable = (kind: MediaRequestKind, id: string): Promise<CatalogueTitl
 const fetchRequestProgress = (): Promise<RequestProgress[]> =>
   readFromServer('/api/requests/progress', z.array(RequestProgressSchema));
 
-export { fetchAskable, fetchCatalogueBrowse, fetchDiscover, fetchRequestProgress, searchAskable };
+export {
+  fetchAskable,
+  fetchCatalogueBrowse,
+  fetchCatalogueGenres,
+  fetchDiscover,
+  fetchRequestProgress,
+  searchAskable,
+};

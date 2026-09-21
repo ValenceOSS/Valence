@@ -53,6 +53,11 @@ const CatalogueStudioSchema = z.object({
   logoUrl: z.string().nullable(),
 });
 
+const CatalogueGenreSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+});
+
 const CatalogueDiscoverySchema = z.object({
   shelves: z.array(CatalogueShelfSchema),
   studios: z.array(CatalogueStudioSchema),
@@ -94,6 +99,13 @@ const RequestProgressSchema = z.object({
 type CatalogueBrowse = z.infer<typeof CatalogueBrowseSchema>;
 type CatalogueBrowseKind = z.infer<typeof CatalogueBrowseKindSchema>;
 type CatalogueDiscovery = z.infer<typeof CatalogueDiscoverySchema>;
+type CatalogueFilters = {
+  genre?: string;
+  yearFrom?: number;
+  yearTo?: number;
+  minRating?: number;
+};
+type CatalogueGenre = z.infer<typeof CatalogueGenreSchema>;
 type CatalogueList = z.infer<typeof CatalogueListSchema>;
 type CataloguePage = z.infer<typeof CataloguePageSchema>;
 type CatalogueStanding = z.infer<typeof CatalogueStandingSchema>;
@@ -108,6 +120,8 @@ export type {
   CatalogueBrowse,
   CatalogueBrowseKind,
   CatalogueCredit,
+  CatalogueFilters,
+  CatalogueGenre,
   CatalogueDiscovery,
   CatalogueList,
   CataloguePage,
@@ -128,6 +142,7 @@ export {
   CatalogueBrowseSchema,
   CatalogueCreditSchema,
   CatalogueDiscoverySchema,
+  CatalogueGenreSchema,
   CatalogueListSchema,
   CataloguePageSchema,
   CatalogueShelfSchema,

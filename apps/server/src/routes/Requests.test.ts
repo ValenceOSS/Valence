@@ -1504,10 +1504,19 @@ describe('requests for films and series, through the server', () => {
 
   const DISCOVERY: Discovery = {
     ...NO_DISCOVERY,
-    browse: ({ list, kind }) =>
+    genres: (kind) =>
+      Promise.resolve(
+        kind === 'movie'
+          ? [
+              { id: '28', name: 'Action' },
+              { id: '878', name: 'Science Fiction' },
+            ]
+          : [{ id: '18', name: 'Drama' }],
+      ),
+    browse: ({ list, kind, filters }) =>
       Promise.resolve({
         matches:
-          list === 'trending' && kind === 'movie'
+          filters?.genre === '878'
             ? [
                 {
                   externalId: '438631',
@@ -1518,7 +1527,18 @@ describe('requests for films and series, through the server', () => {
                   posterUrl: null,
                 },
               ]
-            : [],
+            : list === 'trending' && kind === 'movie'
+              ? [
+                  {
+                    externalId: '438631',
+                    kind,
+                    title: 'Dune',
+                    year: 2021,
+                    overview: null,
+                    posterUrl: null,
+                  },
+                ]
+              : [],
         hasMore: list === 'trending',
       }),
     studios: () =>
@@ -1620,6 +1640,90 @@ describe('requests for films and series, through the server', () => {
     expect((await music.ask('/api/requests/catalogue/browse?kind=film&list=popular')).status).toBe(
       403,
     );
+  });
+
+  it('narrows a whole list by genre, years and rating, passing them to the catalogue', async () => {
+    const browse = vi.fn<Discovery['browse']>(() =>
+      Promise.resolve({ matches: [], hasMore: false }),
+    );
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: { ...DISCOVERY, browse },
+    });
+
+    await ask(
+      '/api/requests/catalogue/browse?kind=film&list=popular&genre=878&yearFrom=1990&yearTo=1999&minRating=7',
+    );
+
+    expect(browse).toHaveBeenCalledWith({
+      list: 'popular',
+      kind: 'movie',
+      page: 1,
+      studio: null,
+      filters: { genre: '878', yearFrom: 1990, yearTo: 1999, minRating: 7 },
+    });
+  });
+
+  it('narrows nothing where nothing was asked', async () => {
+    const browse = vi.fn<Discovery['browse']>(() =>
+      Promise.resolve({ matches: [], hasMore: false }),
+    );
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: { ...DISCOVERY, browse },
+    });
+
+    await ask('/api/requests/catalogue/browse?kind=series&list=trending');
+
+    expect(browse).toHaveBeenCalledWith(expect.objectContaining({ filters: {} }));
+  });
+
+  it('refuses a genre that is not an id, and a rating past the top of the scale', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect(
+      (await ask('/api/requests/catalogue/browse?kind=film&list=popular&genre=action')).status,
+    ).toBe(400);
+    expect(
+      (await ask('/api/requests/catalogue/browse?kind=film&list=popular&minRating=11')).status,
+    ).toBe(400);
+  });
+
+  it('lists the genres a list can be narrowed to, for films and for series', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect(await (await ask('/api/requests/catalogue/genres?kind=film')).json()).toEqual([
+      { id: '28', name: 'Action' },
+      { id: '878', name: 'Science Fiction' },
+    ]);
+    expect(await (await ask('/api/requests/catalogue/genres?kind=series')).json()).toEqual([
+      { id: '18', name: 'Drama' },
+    ]);
+  });
+
+  it('lists the genres only for somebody who may ask for films and series', async () => {
+    const music = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect((await music.ask('/api/requests/catalogue/genres?kind=film')).status).toBe(403);
   });
 
   it('searches and describes titles to ask for, by what a viewer may ask for', async () => {

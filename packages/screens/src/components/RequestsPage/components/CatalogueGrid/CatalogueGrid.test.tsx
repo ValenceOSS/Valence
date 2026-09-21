@@ -54,7 +54,7 @@ describe('CatalogueGrid', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Dune/ }));
 
     expect(onAsk).toHaveBeenCalledWith('film:Dune');
-    expect(fetchCatalogueBrowse).toHaveBeenCalledWith(BROWSING, 1);
+    expect(fetchCatalogueBrowse).toHaveBeenCalledWith(BROWSING, 1, {});
   });
 
   it('offers the way back to the top once the top has been left', async () => {
@@ -111,8 +111,42 @@ describe('CatalogueGrid', () => {
     observers.at(-1)?.();
 
     expect(await screen.findByRole('button', { name: /Arrival/ })).toBeInTheDocument();
-    expect(fetchCatalogueBrowse).toHaveBeenLastCalledWith(BROWSING, 2);
+    expect(fetchCatalogueBrowse).toHaveBeenLastCalledWith(BROWSING, 2, {});
 
     vi.unstubAllGlobals();
+  });
+
+  it('puts what the list is narrowed by to the catalogue with every page', async () => {
+    renderInAnAddress(
+      <CatalogueGrid
+        browsing={BROWSING}
+        filters={{ genre: '878', minRating: 7 }}
+        onAsk={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole('button', { name: /Dune/ });
+
+    expect(fetchCatalogueBrowse).toHaveBeenCalledWith(BROWSING, 1, { genre: '878', minRating: 7 });
+  });
+
+  it('says nothing matches, rather than that the catalogue listed nothing, when it is narrowed', async () => {
+    fetchCatalogueBrowse.mockResolvedValue({ titles: [], page: 1, hasMore: false });
+
+    renderInAnAddress(
+      <CatalogueGrid browsing={BROWSING} filters={{ genre: '878' }} onAsk={vi.fn()} />,
+    );
+
+    expect(
+      await screen.findByText('Nothing in the catalogue matches those filters.'),
+    ).toBeInTheDocument();
+  });
+
+  it('says the catalogue listed nothing where nothing narrows it', async () => {
+    fetchCatalogueBrowse.mockResolvedValue({ titles: [], page: 1, hasMore: false });
+
+    renderInAnAddress(<CatalogueGrid browsing={BROWSING} onAsk={vi.fn()} />);
+
+    expect(await screen.findByText('The catalogue listed nothing.')).toBeInTheDocument();
   });
 });

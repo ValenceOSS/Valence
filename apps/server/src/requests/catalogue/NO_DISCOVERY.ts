@@ -5,6 +5,7 @@ const NOTHING_FOUND = () => Promise.resolve(new Map<string, string>());
 const NO_DISCOVERY: Discovery = {
   browse: () => Promise.resolve({ matches: [], hasMore: false }),
   studios: () => Promise.resolve([]),
+  genres: () => Promise.resolve([]),
   charts: () => Promise.resolve({ albums: [], artists: [] }),
   describeTitle: () => Promise.resolve(null),
   describeMusic: () => Promise.resolve(null),
