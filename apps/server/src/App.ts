@@ -207,6 +207,10 @@ import {
 import {
   adminOverviewRoute,
   adminLogsRoute,
+  adminLogHistogramRoute,
+  adminLogFacetsRoute,
+  adminJobStatsRoute,
+  adminJobRunRoute,
   adminMeasureStorageRoute,
   searchCatalogueRoute,
   adminSettingsRoute,
@@ -2511,6 +2515,37 @@ const createApp = ({
     return context.json(await logs.read(context.req.valid('json')), 200);
   });
 
+  app.openapi(adminLogHistogramRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'server.logs'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const query = context.req.valid('json');
+
+    if (logs === undefined) {
+      const untilMs = query.untilMs ?? Date.now();
+
+      return context.json(
+        { fromMs: query.sinceMs ?? untilMs - 3_600_000, untilMs, bucketMs: 60_000, buckets: [] },
+        200,
+      );
+    }
+
+    return context.json(await logs.histogram(query, Date.now()), 200);
+  });
+
+  app.openapi(adminLogFacetsRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'server.logs'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    if (logs === undefined) {
+      return context.json({ sources: [], jobKinds: [] }, 200);
+    }
+
+    return context.json(await logs.facets(context.req.valid('json')), 200);
+  });
+
   app.openapi(adminMeasureStorageRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
       return context.json({ error: 'That is for administrators.' }, 403);
@@ -2920,10 +2955,35 @@ const createApp = ({
         status: asked.status ?? null,
         search: asked.search ?? '',
         sinceMs: asked.sinceMs ?? null,
+        untilMs: asked.untilMs ?? null,
+        sort: asked.sort ?? 'newest',
+        offset: asked.offset ?? 0,
         limit: asked.limit ?? 200,
       }),
       200,
     );
+  });
+
+  app.openapi(adminJobStatsRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const sinceMs = context.req.valid('query').sinceMs ?? Date.now() - 7 * 86_400_000;
+
+    return context.json({ sinceMs, kinds: (await jobHistory?.readStats(sinceMs)) ?? [] }, 200);
+  });
+
+  app.openapi(adminJobRunRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const found = await jobHistory?.readOne(context.req.valid('param').jobRunId);
+
+    return found === undefined || found === null
+      ? context.json({ error: 'That run is not in the history.' }, 404)
+      : context.json(found, 200);
   });
 
   app.openapi(adminJobHistoryIssuesRoute, async (context) => {

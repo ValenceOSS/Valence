@@ -1,5 +1,9 @@
 import type {
   LogContext,
+  LogFacets,
+  LogFacetsQuery,
+  LogHistogram,
+  LogHistogramQuery,
   LogLevel,
   LogQuery,
   LogRecord,
@@ -36,6 +40,8 @@ type LogStore = {
   save: (records: readonly StoredLog[]) => Promise<void>;
   countAgain: (ids: readonly string[]) => Promise<void>;
   read: (query: LogQuery) => Promise<{ records: LogRecord[]; total: number }>;
+  histogram: (query: LogHistogramQuery, nowMs: number) => Promise<LogHistogram>;
+  facets: (query: LogFacetsQuery) => Promise<LogFacets>;
   forgetExpired: (nowMs: number) => Promise<number>;
 };
 

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, count, desc, eq, gte, lt, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, ilike, lt, lte, or, sql } from 'drizzle-orm';
 import { jobRun, jobRunIssue } from '@ValenceServer/db/Schema';
 import {
   JOB_RUN_KEPT_FOR_DAYS,
@@ -9,10 +9,12 @@ import {
 import type { SQL } from 'drizzle-orm';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type {
+  JobKindStats,
   JobRunIssue,
   JobRunProgress,
   JobRunQuery,
   JobRunRecord,
+  JobRunSort,
   JobRunStatus,
 } from '@ValenceContracts/schemas/JobRun';
 
@@ -26,7 +28,9 @@ type JobHistoryStore = {
     errorMessage: string | null;
   }) => Promise<void>;
   read: (query: JobRunQuery) => Promise<{ records: JobRunRecord[]; total: number }>;
+  readOne: (jobRunId: string) => Promise<JobRunRecord | null>;
   readIssues: (jobRunId: string) => Promise<JobRunIssue[]>;
+  readStats: (sinceMs: number) => Promise<JobKindStats[]>;
   forgetExpired: (nowMs: number) => Promise<void>;
 };
 
@@ -67,11 +71,36 @@ const whereFor = (query: JobRunQuery): SQL | undefined => {
     query.status === null ? undefined : eq(jobRun.status, query.status),
     query.search === ''
       ? undefined
-      : sql`${jobRun.kind} ILIKE ${`%${query.search}%`} OR ${jobRun.subject} ILIKE ${`%${query.search}%`} OR ${jobRun.errorMessage} ILIKE ${`%${query.search}%`}`,
+      : or(
+          ilike(jobRun.id, `%${query.search}%`),
+          ilike(jobRun.kind, `%${query.search}%`),
+          ilike(jobRun.subject, `%${query.search}%`),
+          ilike(jobRun.errorMessage, `%${query.search}%`),
+        ),
     query.sinceMs === null ? undefined : gte(jobRun.createdAt, new Date(query.sinceMs)),
+    query.untilMs === null ? undefined : lte(jobRun.createdAt, new Date(query.untilMs)),
   ].filter((one) => one !== undefined);
 
   return wheres.length === 0 ? undefined : and(...wheres);
+};
+
+const TOOK = sql`extract(epoch from (${jobRun.finishedAt} - ${jobRun.startedAt})) * 1000`;
+
+/**
+ * What a page of runs is ordered by. Ties always fall to the newest first.
+ *
+ * @param sort - How the operator asked for the runs to be ordered.
+ * @returns The ordering, from most to least significant.
+ */
+const orderingFor = (sort: JobRunSort): SQL[] => {
+  switch (sort) {
+    case 'oldest':
+      return [asc(jobRun.createdAt), asc(jobRun.id)];
+    case 'longest':
+      return [sql`${TOOK} desc nulls last`, desc(jobRun.createdAt), desc(jobRun.id)];
+    case 'newest':
+      return [desc(jobRun.createdAt), desc(jobRun.id)];
+  }
 };
 
 /**
@@ -86,8 +115,52 @@ const buildReadQuery = (db: ValenceDatabase, query: JobRunQuery) =>
     .select()
     .from(jobRun)
     .where(whereFor(query))
-    .orderBy(desc(jobRun.createdAt))
-    .limit(query.limit);
+    .orderBy(...orderingFor(query.sort))
+    .limit(query.limit)
+    .offset(query.offset);
+
+/**
+ * Reads a duration the database gave back — a string for an exact number, a number for a
+ * floating-point one, and nothing where there was no finished run to measure.
+ *
+ * @param value - What the database returned.
+ * @returns The duration in milliseconds, or nothing.
+ */
+const asMilliseconds = (value: string | number | null): number | null => {
+  const read = value === null ? Number.NaN : Number(value);
+
+  return Number.isFinite(read) ? read : null;
+};
+
+/**
+ * Builds the query that summarises how each kind of job has gone since a moment, without running it:
+ * how many runs there were and how they ended, how long the typical one took and the slowest.
+ *
+ * @param db - The database to query.
+ * @param sinceMs - The earliest a counted run was created.
+ * @returns The select query, ready to be awaited.
+ */
+const buildStatsQuery = (db: ValenceDatabase, sinceMs: number) =>
+  db
+    .select({
+      kind: jobRun.kind,
+      runs: count(),
+      completed: sql<number>`count(*) filter (where ${jobRun.status} = 'completed')`.mapWith(
+        Number,
+      ),
+      failed: sql<number>`count(*) filter (where ${jobRun.status} = 'failed')`.mapWith(Number),
+      running:
+        sql<number>`count(*) filter (where ${jobRun.status} in ('running', 'queued'))`.mapWith(
+          Number,
+        ),
+      medianMs: sql<string | number | null>`percentile_cont(0.5) within group (order by ${TOOK})`,
+      slowestMs: sql<string | number | null>`max(${TOOK})`,
+      lastAt: sql<Date | null>`max(${jobRun.createdAt})`,
+    })
+    .from(jobRun)
+    .where(gte(jobRun.createdAt, new Date(sinceMs)))
+    .groupBy(jobRun.kind)
+    .orderBy(jobRun.kind);
 
 /**
  * Keeps pg-boss job runs in Postgres, so what a job did survives the job finishing and a restart.
@@ -151,6 +224,27 @@ const createJobHistoryStore = (db: ValenceDatabase): JobHistoryStore => ({
     return { records: rows.map(asRecord), total: Number(counted?.total ?? 0) };
   },
 
+  readOne: async (jobRunId) => {
+    const [row] = await db.select().from(jobRun).where(eq(jobRun.id, jobRunId)).limit(1);
+
+    return row === undefined ? null : asRecord(row);
+  },
+
+  readStats: async (sinceMs) => {
+    const rows = await buildStatsQuery(db, sinceMs);
+
+    return rows.map((row) => ({
+      kind: row.kind,
+      runs: Number(row.runs),
+      completed: row.completed,
+      failed: row.failed,
+      running: row.running,
+      medianMs: asMilliseconds(row.medianMs),
+      slowestMs: asMilliseconds(row.slowestMs),
+      lastAtMs: row.lastAt === null ? null : new Date(row.lastAt).getTime(),
+    }));
+  },
+
   readIssues: async (jobRunId) => {
     const rows = await db
       .select()
@@ -170,4 +264,13 @@ const createJobHistoryStore = (db: ValenceDatabase): JobHistoryStore => ({
 
 export type { JobHistoryStore };
 
-export { createJobHistoryStore, buildReadQuery, whereFor, asRecord, asIssue };
+export {
+  createJobHistoryStore,
+  buildReadQuery,
+  buildStatsQuery,
+  asMilliseconds,
+  orderingFor,
+  whereFor,
+  asRecord,
+  asIssue,
+};
