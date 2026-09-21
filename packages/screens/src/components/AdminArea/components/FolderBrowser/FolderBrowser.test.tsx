@@ -8,7 +8,10 @@ import type { FolderListing } from '@ValenceContracts/schemas/Folder';
 
 const fetchFoldersMock = vi.hoisted(() => vi.fn());
 
+const createFolderMock = vi.hoisted(() => vi.fn());
+
 vi.mock('@ValenceClient/admin/fetchFolders', () => ({ fetchFolders: fetchFoldersMock }));
+vi.mock('@ValenceClient/admin/createFolder', () => ({ createFolder: createFolderMock }));
 
 const LISTINGS: Record<string, FolderListing> = {
   places: {
@@ -34,6 +37,7 @@ const LISTINGS: Record<string, FolderListing> = {
 };
 
 beforeEach(() => {
+  createFolderMock.mockReset();
   fetchFoldersMock.mockReset();
   fetchFoldersMock.mockImplementation((path: string | null) => {
     if (path === '/locked') {
@@ -142,5 +146,78 @@ describe('FolderBrowser', () => {
 
     expect(onCancel).toHaveBeenCalled();
     expect(onChoose).not.toHaveBeenCalled();
+  });
+});
+
+describe('making a folder', () => {
+  it('cannot make one until there is a folder to make it in', async () => {
+    draw();
+
+    await screen.findByRole('button', { name: '/media' });
+
+    expect(screen.getByRole('button', { name: 'New folder' })).toBeDisabled();
+  });
+
+  it('makes one inside the folder being looked at, and opens it', async () => {
+    const actor = userEvent.setup();
+
+    createFolderMock.mockResolvedValue({ name: 'anime', path: '/media/anime' });
+    fetchFoldersMock.mockImplementation((path: string | null) =>
+      Promise.resolve(
+        path === '/media/anime'
+          ? { path: '/media/anime', parent: '/media', folders: [], isTruncated: false }
+          : (LISTINGS[path ?? 'places'] ?? LISTINGS['places']),
+      ),
+    );
+
+    draw('/media');
+
+    await screen.findByRole('button', { name: 'films' });
+    await actor.click(screen.getByRole('button', { name: 'New folder' }));
+    await actor.type(screen.getByLabelText('Folder name'), 'anime');
+    await actor.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(createFolderMock).toHaveBeenCalledWith('/media', 'anime');
+    expect(await screen.findByText('/media/anime')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Folder name')).not.toBeInTheDocument();
+  });
+
+  it("shows the server's own words where the disk would not allow it, and stays put", async () => {
+    const actor = userEvent.setup();
+
+    createFolderMock.mockRejectedValue(new Error('That disk is read-only to Valence.'));
+
+    draw('/media');
+
+    await screen.findByRole('button', { name: 'films' });
+    await actor.click(screen.getByRole('button', { name: 'New folder' }));
+    await actor.type(screen.getByLabelText('Folder name'), 'anime');
+    await actor.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(await screen.findByText('That disk is read-only to Valence.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Folder name')).toBeInTheDocument();
+  });
+
+  it('will not make a folder with no name', async () => {
+    const actor = userEvent.setup();
+
+    draw('/media');
+
+    await screen.findByRole('button', { name: 'films' });
+    await actor.click(screen.getByRole('button', { name: 'New folder' }));
+
+    expect(screen.getByRole('button', { name: 'Create' })).toBeDisabled();
+  });
+
+  it('puts the name away on cancel', async () => {
+    const actor = userEvent.setup();
+
+    draw('/media');
+
+    await screen.findByRole('button', { name: 'films' });
+    await actor.click(screen.getByRole('button', { name: 'New folder' }));
+    await actor.click(screen.getByRole('button', { name: 'Cancel the new folder' }));
+
+    expect(screen.queryByLabelText('Folder name')).not.toBeInTheDocument();
   });
 });

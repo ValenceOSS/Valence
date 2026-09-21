@@ -12,7 +12,13 @@ const FolderListingSchema = z.object({
   isTruncated: z.boolean(),
 });
 
+const CreateFolderRequestSchema = z.object({
+  path: z.string().min(1),
+  name: z.string().min(1).max(255),
+});
+
+export type CreateFolderRequest = z.infer<typeof CreateFolderRequestSchema>;
 export type Folder = z.infer<typeof FolderSchema>;
 export type FolderListing = z.infer<typeof FolderListingSchema>;
 
-export { FolderSchema, FolderListingSchema };
+export { CreateFolderRequestSchema, FolderSchema, FolderListingSchema };

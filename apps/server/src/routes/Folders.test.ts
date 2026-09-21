@@ -12,7 +12,7 @@ import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMe
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
-import type { DirectoryRead, FolderDisk } from '@ValenceServer/folders/FolderDisk';
+import type { DirectoryMade, DirectoryRead, FolderDisk } from '@ValenceServer/folders/FolderDisk';
 
 const BASE = 'http://localhost:8420';
 
@@ -33,10 +33,19 @@ const TREE: Record<string, DirectoryRead> = {
   '/root': { kind: 'unreadable' },
 };
 
+const made = new Map<string, DirectoryMade>([
+  ['/media/anime', 'made'],
+  ['/media/films', 'exists'],
+  ['/gone/anime', 'missing'],
+  ['/mnt/ro/anime', 'readOnly'],
+  ['/root/anime', 'denied'],
+]);
+
 const disk: FolderDisk = {
   readDirectory: (path) => Promise.resolve(TREE[path] ?? { kind: 'missing' }),
   isDirectory: () => Promise.resolve(false),
   roots: () => Promise.resolve(['/', '/Volumes']),
+  makeDirectory: (path) => Promise.resolve(made.get(path) ?? 'denied'),
 };
 
 const build = () => {
@@ -166,5 +175,88 @@ describe('choosing a folder over HTTP', () => {
     const cookie = await signIn(built, true);
 
     expect((await ask(built, cookie, 'media/films')).status).toBe(400);
+  });
+});
+
+/**
+ * Asks the server to make a folder, as a signed-in account.
+ *
+ * @param built - The app.
+ * @param cookie - Whose session to ask with.
+ * @param path - The folder to make it in.
+ * @param name - What to call it.
+ * @returns The answer.
+ */
+const make = (
+  built: ReturnType<typeof build>,
+  cookie: string,
+  path: string,
+  name: string,
+): Promise<Response> =>
+  Promise.resolve(
+    built.app.request(`${BASE}/api/admin/folders`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+      body: JSON.stringify({ path, name }),
+    }),
+  );
+
+describe('making a folder over HTTP', () => {
+  it('lets nobody make one who could not add a library', async () => {
+    const built = build();
+    const cookie = await signIn(built, false);
+
+    expect((await make(built, cookie, '/media', 'anime')).status).toBe(403);
+  });
+
+  it('makes one for an administrator, and says where it is', async () => {
+    const built = build();
+    const cookie = await signIn(built, true);
+
+    const response = await make(built, cookie, '/media', 'anime');
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({ name: 'anime', path: '/media/anime' });
+  });
+
+  it('says so when something is already there, rather than pretending', async () => {
+    const built = build();
+    const cookie = await signIn(built, true);
+
+    expect((await make(built, cookie, '/media', 'films')).status).toBe(409);
+  });
+
+  it('says there is no such folder to make it in', async () => {
+    const built = build();
+    const cookie = await signIn(built, true);
+
+    expect((await make(built, cookie, '/gone', 'anime')).status).toBe(404);
+  });
+
+  it('says a read-only disk is read-only, and what to do about it', async () => {
+    const built = build();
+    const cookie = await signIn(built, true);
+
+    const response = await make(built, cookie, '/mnt/ro', 'anime');
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({
+      error: 'That disk is read-only to Valence. Give it read-write access to make folders there.',
+    });
+  });
+
+  it('refuses a place Valence is not allowed to write', async () => {
+    const built = build();
+    const cookie = await signIn(built, true);
+
+    expect((await make(built, cookie, '/root', 'anime')).status).toBe(403);
+  });
+
+  it('refuses a name that is a path, and a parent that is not from the root', async () => {
+    const built = build();
+    const cookie = await signIn(built, true);
+
+    expect((await make(built, cookie, '/media', '../etc')).status).toBe(400);
+    expect((await make(built, cookie, 'media', 'anime')).status).toBe(400);
   });
 });

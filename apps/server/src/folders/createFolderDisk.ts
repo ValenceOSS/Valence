@@ -1,6 +1,6 @@
-import { readdir, stat } from 'node:fs/promises';
+import { mkdir, readdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import type { DirectoryRead, FolderDisk } from '@ValenceServer/folders/FolderDisk';
+import type { DirectoryMade, DirectoryRead, FolderDisk } from '@ValenceServer/folders/FolderDisk';
 
 const MOUNT_PLACES = ['/Volumes', '/media', '/mnt', '/srv'] as const;
 
@@ -38,6 +38,9 @@ const isFolderAt = async (path: string): Promise<boolean> => {
  * wherever drives are usually mounted — `/Volumes` on a Mac, `/media` and `/mnt` on Linux, `/srv`
  * on a server — where those exist. On Windows they are the drive letters that answer.
  *
+ * Making a folder is one level only, inside one that is already there, and says which of the ways it
+ * can fail it did: already there, no such parent, a disk mounted read-only, or not allowed.
+ *
  * A folder that is not there, or is a file, reads as missing; one that is there but will not be
  * read reads as unreadable — the difference between a typing mistake and a permission somebody has
  * to change.
@@ -65,6 +68,25 @@ const createFolderDisk = (platform: NodeJS.Platform = process.platform): FolderD
     }
   },
   isDirectory: isFolderAt,
+  makeDirectory: async (path): Promise<DirectoryMade> => {
+    try {
+      await mkdir(path);
+
+      return 'made';
+    } catch (error) {
+      const code = error instanceof Error ? codeOf(error) : null;
+
+      if (code === 'EEXIST') {
+        return 'exists';
+      }
+
+      if (code === 'ENOENT' || code === 'ENOTDIR') {
+        return 'missing';
+      }
+
+      return code === 'EROFS' ? 'readOnly' : 'denied';
+    }
+  },
   roots: async () => {
     if (platform === 'win32') {
       const drives = await Promise.all(
