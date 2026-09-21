@@ -45,6 +45,7 @@ import { loadCastSender, castStateOf, castStream } from '@ValenceScreens/playbac
 import { applyVolumeBoost } from '@ValenceScreens/playback/volumeBoost';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
+import { whatIsPlaying } from '@ValenceScreens/playback/whatIsPlaying';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
 import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
 import { popOutWithCaptions } from '@ValenceScreens/playback/popOutWithCaptions';
@@ -1821,7 +1822,7 @@ const VideoPlayer = ({
                 label={
                   party?.isHeld === true
                     ? waitingWord(party.waitingFor)
-                    : 'Waiting for more of the film'
+                    : `Waiting for more of ${whatIsPlaying(media)}`
                 }
                 size="lg"
               />
@@ -1829,7 +1830,7 @@ const VideoPlayer = ({
               <p className="valence-solid rounded-md px-4 py-1.5 text-sm text-text">
                 {party?.isHeld === true
                   ? waitingWord(party.waitingFor)
-                  : 'Waiting for more of the film'}
+                  : `Waiting for more of ${whatIsPlaying(media)}`}
               </p>
             </div>
           )}

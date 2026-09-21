@@ -24,7 +24,10 @@ type PartyPlayback = {
 type VideoPlayerProps = {
   media: Pick<MediaSummary, 'id' | 'title' | 'durationSeconds'> &
     Partial<
-      Pick<MediaSummary, 'seriesTitle' | 'seasonNumber' | 'episodeNumber' | 'hasPoster' | 'year'>
+      Pick<
+        MediaSummary,
+        'seriesTitle' | 'seasonNumber' | 'episodeNumber' | 'hasPoster' | 'year' | 'extraKind'
+      >
     >;
   isImmersive?: boolean;
   startSeconds?: number;
