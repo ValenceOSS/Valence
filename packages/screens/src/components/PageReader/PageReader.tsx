@@ -118,7 +118,7 @@ const PageReader = ({
       startAtPage,
     ),
   );
-  const { isShown: isChromeShown, wake } = useChromeThatHides();
+  const { isShown: isChromeShown, wake, keep } = useChromeThatHides();
   const [isPanelPinned, setIsPanelPinned] = useState(readPanelPinned);
   const [isPanelOpen, setIsPanelOpen] = useState(isPanelPinned);
   const startedAt = useRef<number | null>(null);
@@ -167,7 +167,7 @@ const PageReader = ({
 
   const turn = useCallback(
     (by: number) => {
-      wake();
+      keep();
 
       setAt((was) => {
         const next = was + by;
@@ -195,7 +195,7 @@ const PageReader = ({
         return next;
       });
     },
-    [groups.length, onChapterChange, ordering, wake, which],
+    [groups.length, onChapterChange, ordering, keep, which],
   );
 
   const forward = useCallback(() => {
