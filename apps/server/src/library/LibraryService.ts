@@ -18,6 +18,7 @@ type ListItemsOptions = {
   yearTo?: number;
   minRating?: number;
   ids?: string[];
+  seriesId?: string;
   order?: 'title' | 'newest' | 'yourRating';
   profileId?: string;
   minYourStars?: number;
