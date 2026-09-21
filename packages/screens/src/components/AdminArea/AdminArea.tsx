@@ -57,6 +57,13 @@ import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { StatStrip } from './components/StatStrip/StatStrip';
 import { ConcernsBanner } from './components/ConcernsBanner/ConcernsBanner';
+import { AdminSetupGuide } from './components/AdminSetupGuide/AdminSetupGuide';
+import {
+  hasBeenTakenToSetup,
+  hideSetupGuide,
+  isSetupGuideHidden,
+  markTakenToSetup,
+} from './setupGuidePreference';
 import { collectConcerns } from './collectConcerns';
 import { concernKey } from './concernKey';
 import { readDismissedConcerns, saveDismissedConcerns } from './dismissedConcerns';
@@ -171,6 +178,7 @@ const AdminArea = ({
   const overview = askedOverview.data ?? null;
   const monitor = askedMonitor.data ?? null;
   const [dismissedConcerns, setDismissedConcerns] = useState(readDismissedConcerns);
+  const [isSetupHidden, setIsSetupHidden] = useState(isSetupGuideHidden);
 
   const libraries = useMemo(() => askedLibraries.data ?? [], [askedLibraries.data]);
 
@@ -578,6 +586,31 @@ const AdminArea = ({
     askedLibraries.data !== undefined &&
     (!hasRequests || askedRequestsOverview.data !== undefined);
 
+  const isSetupDone =
+    libraries.length > 0 &&
+    overview?.settings.hasCatalogueKey === true &&
+    libraries.some((library) => library.lastScannedAt !== null);
+  const isGuideOffered = isEverythingRead && !isSetupHidden && !isSetupDone;
+  const isGuideOnOverview = panel === 'overview' && isGuideOffered;
+
+  const hideSetup = () => {
+    hideSetupGuide();
+    setIsSetupHidden(true);
+  };
+
+  useEffect(() => {
+    if (
+      panel === 'overview' &&
+      isEverythingRead &&
+      libraries.length === 0 &&
+      !isSetupHidden &&
+      !hasBeenTakenToSetup()
+    ) {
+      markTakenToSetup();
+      onPanel('libraries');
+    }
+  }, [panel, isEverythingRead, libraries.length, isSetupHidden, onPanel]);
+
   useEffect(() => {
     if (!isEverythingRead) {
       return;
@@ -603,8 +636,36 @@ const AdminArea = ({
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion)}
       >
+        {isGuideOnOverview ? (
+          <div className="mb-5">
+            <AdminSetupGuide
+              hasLibrary={libraries.length > 0}
+              hasCatalogueKey={overview.settings.hasCatalogueKey}
+              hasScanned={libraries.some((library) => library.lastScannedAt !== null)}
+              isScanning={isScanningAll}
+              onAddLibrary={() => {
+                showPanel('libraries');
+              }}
+              onOpenSettings={() => {
+                showPanel('settings');
+              }}
+              onScanAll={() => {
+                void rescanAll();
+              }}
+              onHide={hideSetup}
+            />
+          </div>
+        ) : null}
+
         <ConcernsBanner
-          concerns={concerns.filter((concern) => !dismissedConcerns.includes(concernKey(concern)))}
+          concerns={concerns.filter(
+            (concern) =>
+              !dismissedConcerns.includes(concernKey(concern)) &&
+              !(
+                (isGuideOnOverview || (panel === 'libraries' && isGuideOffered)) &&
+                (concern.id === 'no-libraries' || concern.id === 'no-catalogue-key')
+              ),
+          )}
           onOpenPanel={showPanel}
           onDismiss={(concern) => {
             const dismissed = [...dismissedConcerns, concernKey(concern)];
@@ -782,6 +843,12 @@ const AdminArea = ({
               progress={scanProgress}
               working={monitor?.queue.jobs ?? []}
               isScanningAll={isScanningAll}
+              hasCatalogueKey={overview?.settings.hasCatalogueKey === true}
+              isSetupHidden={isSetupHidden}
+              onOpenSettings={() => {
+                showPanel('settings');
+              }}
+              onHideSetup={hideSetup}
               isResettingAll={isResettingAll}
               onScan={(libraryId, force) => {
                 void rescan(libraryId, force);

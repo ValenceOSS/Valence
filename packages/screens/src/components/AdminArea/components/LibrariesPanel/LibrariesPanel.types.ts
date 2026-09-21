@@ -18,6 +18,10 @@ type LibrariesPanelProps = {
   onLibraryCreated: (library: Library) => void;
   onLibraryUpdated: (library: Library) => void;
   onLibraryDeleted: (libraryId: string) => void;
+  hasCatalogueKey?: boolean;
+  isSetupHidden?: boolean;
+  onOpenSettings?: () => void;
+  onHideSetup?: () => void;
 };
 
 export type { LibrariesPanelProps };
