@@ -1,3 +1,4 @@
+import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
@@ -181,6 +182,7 @@ const IndexerDialog = ({
           return;
         }
 
+        notify.worked(indexer === null ? `Added ${value.name}.` : `Saved ${value.name}.`);
         onSaved(value);
         onClose();
       })

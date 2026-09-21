@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Icon } from '@ValenceUI/Icon';
 import { Check as CheckIcon } from '@keyline-icons/react';
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
@@ -7,6 +8,10 @@ import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
 import type { OptionMenuProps } from './OptionMenu.types';
 
+const HOVER_OPENS_MS = 120;
+
+const HOVER_CLOSES_MS = 220;
+
 /**
  * A menu of choices where exactly one is in force — an audio track, a quality, a sort order. Shows
  * which is chosen rather than only changing what is beneath it, and lays out in columns where there
@@ -14,12 +19,16 @@ import type { OptionMenuProps } from './OptionMenu.types';
  *
  * @param label - What is being chosen, read out to anybody who cannot see the menu.
  * @param trigger - The control that opens it.
+ * @param anchor - Instead of a control of its own, something that already does its own job, such as a
+ *   button that goes somewhere: the menu appears when the pointer rests on it, or when the down
+ *   arrow is pressed on it, and pressing it still does what it did.
  * @param columns - The choices, in one or more named columns.
  * @param className - Extra classes for the caller's own layout.
  */
 const OptionMenu = ({
   label,
   trigger,
+  anchor,
   groups,
   footer,
   isDisabled = false,
@@ -29,38 +38,109 @@ const OptionMenu = ({
   triggerShape = 'icon',
 }: OptionMenuProps) => {
   const portalContainer = usePortalContainer();
+  const isAnchored = anchor !== undefined;
+  const [isOpen, setIsOpen] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const openedBy = useRef<'pointer' | 'keyboard'>('pointer');
+
+  useEffect(
+    () => () => {
+      clearTimeout(timer.current);
+    },
+    [],
+  );
+
+  const stayOpen = () => {
+    clearTimeout(timer.current);
+  };
+
+  const openSoon = () => {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      openedBy.current = 'pointer';
+      setIsOpen(true);
+    }, HOVER_OPENS_MS);
+  };
+
+  const closeSoon = () => {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      setIsOpen(false);
+    }, HOVER_CLOSES_MS);
+  };
+
+  const control = (
+    <RadixMenu.Trigger
+      aria-label={label}
+      title={label}
+      disabled={isDisabled}
+      className={cn(
+        'inline-flex shrink-0 items-center text-current',
+        'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]',
+        'disabled:cursor-not-allowed disabled:opacity-50',
+        triggerShape === 'field'
+          ? cn(
+              'h-8 w-full justify-between gap-2 rounded-md px-3 text-[0.8125rem] font-medium',
+              'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
+              'hover:bg-[var(--surface-active)]',
+            )
+          : cn(
+              'size-8 justify-center rounded-md',
+              'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
+            ),
+        className,
+      )}
+    >
+      {trigger}
+    </RadixMenu.Trigger>
+  );
+
+  const anchored = (
+    <span
+      className={cn('relative inline-flex', className)}
+      onPointerEnter={openSoon}
+      onPointerLeave={closeSoon}
+      onKeyDown={(event) => {
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          openedBy.current = 'keyboard';
+          setIsOpen(true);
+        }
+      }}
+    >
+      {anchor}
+
+      <RadixMenu.Trigger asChild>
+        <span aria-hidden className="pointer-events-none absolute inset-0" />
+      </RadixMenu.Trigger>
+    </span>
+  );
 
   return (
-    <RadixMenu.Root>
-      <RadixMenu.Trigger
-        aria-label={label}
-        title={label}
-        disabled={isDisabled}
-        className={cn(
-          'inline-flex shrink-0 items-center text-current',
-          'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-          triggerShape === 'field'
-            ? cn(
-                'h-8 w-full justify-between gap-2 rounded-md px-3 text-[0.8125rem] font-medium',
-                'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
-                'hover:bg-[var(--surface-active)]',
-              )
-            : cn(
-                'size-8 justify-center rounded-md',
-                'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
-              ),
-          className,
-        )}
-      >
-        {trigger}
-      </RadixMenu.Trigger>
+    <RadixMenu.Root
+      {...(isAnchored ? { open: isOpen, onOpenChange: setIsOpen, modal: false } : {})}
+    >
+      {isAnchored ? anchored : control}
 
       <RadixMenu.Portal {...(portalContainer === undefined ? {} : { container: portalContainer })}>
         <RadixMenu.Content
           sideOffset={8}
           align={align}
           aria-label={label}
+          {...(isAnchored
+            ? {
+                onPointerEnter: stayOpen,
+                onPointerLeave: closeSoon,
+                onOpenAutoFocus: (event: Event) => {
+                  if (openedBy.current === 'pointer') {
+                    event.preventDefault();
+                  }
+                },
+                onCloseAutoFocus: (event: Event) => {
+                  event.preventDefault();
+                },
+              }
+            : {})}
           {...(matchTriggerWidth
             ? { style: { minWidth: 'var(--radix-dropdown-menu-trigger-width)' } }
             : {})}

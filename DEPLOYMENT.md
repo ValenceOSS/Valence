@@ -436,6 +436,21 @@ server name and certificate paths with yours.
 4. Scan. The API answers as soon as the scan is queued rather than when it
    finishes, so a large library reports progress rather than appearing to hang.
 
+## Which image
+
+Three kinds of image are published, and only one of them is `latest`:
+
+| Tag                                 | What it is                                                      | When it is built                         |
+| ----------------------------------- | --------------------------------------------------------------- | ---------------------------------------- |
+| `latest`, `1.0.0`, `1.0`, `1`       | A release                                                       | When a release is cut                    |
+| `1.0.1-dev`, `dev`, `sha-3a2e85d`   | The newest `main`, unreleased                                   | Every time something is merged           |
+| `3a2e85d-nightly`, `pr-123-nightly` | A build somebody asked for by hand, usually from a pull request | When the _Nightly image_ workflow is run |
+
+`latest` never moves for a merge or a nightly build, so a server following it only ever changes
+when a release is made. Use a `-dev` or `-nightly` tag to try something before it ships, and expect
+it to be rough. The version in a dev tag is the release being prepared, and the number in a nightly
+one is the commit it was built from.
+
 ## Upgrading
 
 The tag is `latest`, so pull and recreate. In Dockge that is the update button.

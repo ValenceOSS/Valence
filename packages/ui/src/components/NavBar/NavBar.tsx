@@ -137,79 +137,98 @@ const NavBar = ({
           {items.map((item) => {
             const isCurrent = item.id === selectedId;
 
+            const button = (
+              <Button
+                variant="bare"
+                size="none"
+                label={item.label}
+                hasTooltip={false}
+                aria-current={isCurrent ? 'page' : undefined}
+                onPointerEnter={() => {
+                  setPointedAt(item.id);
+                }}
+                onFocus={(event) => {
+                  if (event.target.matches(':focus-visible')) {
+                    setPointedAt(item.id);
+                  }
+                }}
+                onClick={() => {
+                  setPointedAt(item.id);
+                  onSelect(item.id);
+                }}
+                className={cn(
+                  'relative flex h-9 shrink-0 items-center gap-2 rounded-md px-3.5 text-sm',
+                  'coarse:h-11',
+                  MOVES,
+                  isCurrent
+                    ? 'font-medium text-text'
+                    : lit === item.id
+                      ? 'text-text'
+                      : 'text-text-muted hover:text-text focus-visible:text-text',
+                )}
+              >
+                {lit === item.id ? mark : null}
+
+                {item.icon === undefined ? null : (
+                  <span
+                    className={cn(
+                      'relative z-10 flex overflow-hidden',
+                      OPENS,
+                      isCurrent
+                        ? 'md:-mx-0.5 md:w-[22px] md:px-0.5 md:opacity-100'
+                        : 'md:-ml-2 md:w-0 md:opacity-0',
+                    )}
+                  >
+                    <AnimatedIcon
+                      isPlaying={!isCurrent && pointedAt === item.id}
+                      icon={isCurrent ? (item.activeIcon ?? item.icon) : item.icon}
+                      {...(isCurrent || item.gesture === undefined
+                        ? {}
+                        : { gesture: item.gesture })}
+                      {...(isCurrent || item.activeIcon === undefined
+                        ? {}
+                        : { activeIcon: item.activeIcon })}
+                    />
+                  </span>
+                )}
+
+                <span className="relative z-10 hidden md:inline">{item.label}</span>
+              </Button>
+            );
+
+            const groups =
+              item.choices === undefined
+                ? []
+                : [
+                    {
+                      name: item.choices.label,
+                      options: [...item.choices.options],
+                      selectedId: item.choices.selectedId,
+                      onSelect: item.choices.onSelect,
+                    },
+                  ];
+
             return (
               <li key={item.id} className="flex shrink-0 items-center">
-                <Button
-                  variant="bare"
-                  size="none"
-                  label={item.label}
-                  hasTooltip={false}
-                  aria-current={isCurrent ? 'page' : undefined}
-                  onPointerEnter={() => {
-                    setPointedAt(item.id);
-                  }}
-                  onFocus={(event) => {
-                    if (event.target.matches(':focus-visible')) {
-                      setPointedAt(item.id);
-                    }
-                  }}
-                  onClick={() => {
-                    setPointedAt(item.id);
-                    onSelect(item.id);
-                  }}
-                  className={cn(
-                    'relative flex h-9 shrink-0 items-center gap-2 rounded-md px-3.5 text-sm',
-                    'coarse:h-11',
-                    MOVES,
-                    isCurrent
-                      ? 'font-medium text-text'
-                      : lit === item.id
-                        ? 'text-text'
-                        : 'text-text-muted hover:text-text focus-visible:text-text',
-                  )}
-                >
-                  {lit === item.id ? mark : null}
-
-                  {item.icon === undefined ? null : (
-                    <span
-                      className={cn(
-                        'relative z-10 flex overflow-hidden',
-                        OPENS,
-                        isCurrent
-                          ? 'md:-mx-0.5 md:w-[22px] md:px-0.5 md:opacity-100'
-                          : 'md:-ml-2 md:w-0 md:opacity-0',
-                      )}
-                    >
-                      <AnimatedIcon
-                        isPlaying={!isCurrent && pointedAt === item.id}
-                        icon={isCurrent ? (item.activeIcon ?? item.icon) : item.icon}
-                        {...(isCurrent || item.gesture === undefined
-                          ? {}
-                          : { gesture: item.gesture })}
-                        {...(isCurrent || item.activeIcon === undefined
-                          ? {}
-                          : { activeIcon: item.activeIcon })}
-                      />
-                    </span>
-                  )}
-
-                  <span className="relative z-10 hidden md:inline">{item.label}</span>
-                </Button>
+                {item.choices === undefined ? (
+                  button
+                ) : (
+                  <OptionMenu
+                    label={item.choices.label}
+                    align="start"
+                    anchor={button}
+                    groups={groups}
+                  />
+                )}
 
                 {item.choices === undefined ? null : (
                   <OptionMenu
                     label={item.choices.label}
                     triggerShape="icon"
                     align="start"
+                    className="hidden coarse:inline-flex"
                     trigger={<Icon of={ChevronDownIcon} size={14} />}
-                    groups={[
-                      {
-                        name: item.choices.label,
-                        options: [...item.choices.options],
-                        selectedId: item.choices.selectedId,
-                        onSelect: item.choices.onSelect,
-                      },
-                    ]}
+                    groups={groups}
                   />
                 )}
               </li>

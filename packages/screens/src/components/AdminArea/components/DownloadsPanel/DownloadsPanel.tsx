@@ -1,3 +1,5 @@
+import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Plus as PlusIcon } from '@keyline-icons/react';
 import { useCallback, useEffect, useState } from 'react';
@@ -95,12 +97,14 @@ const DownloadsPanel = () => {
     (
       download: QueuedDownload,
       doing: (id: string) => Promise<{ refusal: { message: string } | null }>,
+      done: string,
     ) => {
       setBusyId(download.id);
       setProblem(null);
 
       void doing(download.id)
         .then(({ refusal }) => {
+          tellOutcome(done, failureOfRefusal(refusal));
           setProblem(refusal?.message ?? null);
         })
         .then(reread)
@@ -113,21 +117,21 @@ const DownloadsPanel = () => {
 
   const pause = useCallback(
     (download: QueuedDownload) => {
-      act(download, pauseQueuedDownload);
+      act(download, pauseQueuedDownload, `Paused ${download.title}.`);
     },
     [act],
   );
 
   const file = useCallback(
     (download: QueuedDownload, libraryId: string) => {
-      act(download, (id) => fileQueuedDownload(id, libraryId));
+      act(download, (id) => fileQueuedDownload(id, libraryId), `Filed ${download.title}.`);
     },
     [act],
   );
 
   const resume = useCallback(
     (download: QueuedDownload) => {
-      act(download, resumeQueuedDownload);
+      act(download, resumeQueuedDownload, `Resumed ${download.title}.`);
     },
     [act],
   );
@@ -139,12 +143,14 @@ const DownloadsPanel = () => {
 
       void testDownloadClient(client.id)
         .then(({ value, refusal }) => {
-          setProblem(
+          const failure =
             refusal?.message ??
-              (value?.isWorking === false
-                ? `${client.name}: ${value.problem ?? 'did not answer'}`
-                : null),
-          );
+            (value?.isWorking === false
+              ? `${client.name}: ${value.problem ?? 'did not answer'}`
+              : null);
+
+          tellOutcome(`${client.name} answered.`, failure);
+          setProblem(failure);
         })
         .then(reread)
         .finally(() => {
@@ -160,6 +166,10 @@ const DownloadsPanel = () => {
 
       void changeDownloadClient(client.id, { isEnabled: !client.isEnabled })
         .then(({ refusal }) => {
+          tellOutcome(
+            client.isEnabled ? `Turned off ${client.name}.` : `Turned on ${client.name}.`,
+            failureOfRefusal(refusal),
+          );
           setProblem(refusal?.message ?? null);
         })
         .then(reread);
@@ -254,6 +264,7 @@ const DownloadsPanel = () => {
             if (gone !== null) {
               void removeDownloadClient(gone.id)
                 .then((refusal) => {
+                  tellOutcome(`Removed ${gone.name}.`, failureOfRefusal(refusal));
                   setProblem(refusal?.message ?? null);
                 })
                 .then(reread);
@@ -273,7 +284,11 @@ const DownloadsPanel = () => {
             setRemovingDownload(null);
 
             if (gone !== null) {
-              act(gone, async (id) => ({ refusal: await removeQueuedDownload(id, deleteData) }));
+              act(
+                gone,
+                async (id) => ({ refusal: await removeQueuedDownload(id, deleteData) }),
+                `Removed ${gone.title}.`,
+              );
             }
           }}
         />

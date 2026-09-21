@@ -1,3 +1,4 @@
+import { notify } from '@ValenceUI/notify';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
 import { useState } from 'react';
@@ -30,8 +31,13 @@ const RequestsPanel = () => {
     void checkRequestsNow()
       .then((fresh) => {
         cache.setQueryData(requestsQueries.overview().queryKey, fresh);
+        notify.worked('Checked the requests.');
       })
-      .catch(() => asked.refetch())
+      .catch(() => {
+        notify.failed('The requests could not be checked.');
+
+        return asked.refetch();
+      })
       .finally(() => {
         setIsChecking(false);
       });

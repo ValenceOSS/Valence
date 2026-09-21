@@ -1,5 +1,6 @@
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { useState } from 'react';
-import { File as FileIcon, Folder as FolderIcon } from '@keyline-icons/react';
+import { FileArrowUp as FileArrowUpIcon, Folder as FolderIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -9,6 +10,7 @@ import { FilePicker } from '@ValenceUI/FilePicker';
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { uploadMedia } from '@ValenceClient/library/uploadMedia';
+import { uploadExtensionsFor } from '@ValenceContracts/functions/uploadExtensionsFor';
 import { queueUploads } from './queueUploads';
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { QueuedUpload, UploadMediaDialogProps, UploadStatus } from './UploadMediaDialog.types';
@@ -21,8 +23,9 @@ const STATUS_WORDS: Record<UploadStatus, { label: string; tone: BadgeTone }> = {
 };
 
 /**
- * Sends media from this device into a library: pick some files, or a whole folder, and they are
- * uploaded one after another to where the library keeps its media, keeping the folders they were in.
+ * Sends media from this device into a library: drop some files or a whole folder on it, or press it
+ * to choose files, and they are uploaded one after another to where the library keeps its media,
+ * keeping the folders they were in.
  *
  * Only what the library would read is queued, and what was left out is said, so nothing is uploaded
  * to a place no scan would look. Each file shows how it got on, with the server's own words where it
@@ -96,11 +99,21 @@ const UploadMediaDialog = ({ library, onClose, onUploaded }: UploadMediaDialogPr
     setIsUploading(false);
     setHasFinished(true);
 
+    const failed = items.filter((one) => one.status !== 'done').length - uploaded;
+
+    tellOutcome(
+      `Uploaded ${uploaded.toString()} ${uploaded === 1 ? 'file' : 'files'} to ${library.name}.`,
+      uploaded === 0 || failed > 0
+        ? `${failed.toString()} ${failed === 1 ? 'file' : 'files'} could not be uploaded.`
+        : null,
+    );
+
     if (uploaded > 0) {
       onUploaded(library);
     }
   };
 
+  const accepted = library === null ? [] : uploadExtensionsFor(library.kind);
   const done = items.filter((item) => item.status === 'done').length;
   const isNothingToSend = items.every((item) => item.status === 'done');
 
@@ -109,27 +122,32 @@ const UploadMediaDialog = ({ library, onClose, onUploaded }: UploadMediaDialogPr
       <DialogTitle size="compact" title={`Upload to ${library?.name ?? 'a library'}`} />
 
       <DialogContent className="flex flex-col gap-5">
-        <p className="text-sm text-text-muted">
-          Choose files or a whole folder from this device. They are copied to where this library
-          keeps its media, keeping the folders they were in, and the library is scanned when they
-          are there.
-        </p>
+        <FilePicker
+          label="Choose files to upload"
+          isDropZone
+          disabled={isUploading}
+          accept={accepted.map((extension) => `.${extension}`).join(',')}
+          onPickMany={add}
+        >
+          <Icon of={FileArrowUpIcon} size={28} />
 
-        <div className="flex flex-wrap gap-2">
-          <FilePicker
-            label="Choose files to upload"
-            variant="secondary"
-            size="sm"
-            disabled={isUploading}
-            onPickMany={add}
-          >
-            <Icon of={FileIcon} size={14} />
-            Choose files
-          </FilePicker>
+          <span className="text-base font-medium text-text">Drop files or folders here</span>
+
+          <span>or press to choose files</span>
+
+          <span className="mt-1 max-w-full text-xs text-text-muted">
+            {`${library?.name ?? 'This library'} takes ${accepted.map((extension) => `.${extension}`).join(' ')}`}
+          </span>
+        </FilePicker>
+
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs text-text-muted">
+            Folders keep the folders they were in, and the library is scanned once they are there.
+          </span>
 
           <FilePicker
             label="Choose a folder to upload"
-            variant="secondary"
+            variant="ghost"
             size="sm"
             disabled={isUploading}
             isFolder

@@ -656,6 +656,18 @@ const fetchJobHistory = async (query: Partial<JobRunQuery> = {}): Promise<JobRun
     parameters.set('sinceMs', query.sinceMs.toString());
   }
 
+  if (query.untilMs !== undefined && query.untilMs !== null) {
+    parameters.set('untilMs', query.untilMs.toString());
+  }
+
+  if (query.sort !== undefined) {
+    parameters.set('sort', query.sort);
+  }
+
+  if (query.offset !== undefined && query.offset > 0) {
+    parameters.set('offset', query.offset.toString());
+  }
+
   if (query.limit !== undefined) {
     parameters.set('limit', query.limit.toString());
   }

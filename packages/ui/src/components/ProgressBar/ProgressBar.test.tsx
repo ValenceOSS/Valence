@@ -57,6 +57,17 @@ describe('ProgressBar', () => {
     expect(screen.getByText('3/12')).toBeInTheDocument();
   });
 
+  it('has a short bar of its own unless it is told to fill the room it has', () => {
+    const { rerender } = render(<ProgressBar label="Scanning Films" value={3} max={12} />);
+
+    expect(screen.getByRole('progressbar')).toHaveClass('w-20');
+
+    rerender(<ProgressBar isFull label="Scanning Films" value={3} max={12} />);
+
+    expect(screen.getByRole('progressbar')).toHaveClass('w-full');
+    expect(screen.getByRole('progressbar')).not.toHaveClass('w-20');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(ProgressBar.displayName).toBe('ProgressBar');
   });

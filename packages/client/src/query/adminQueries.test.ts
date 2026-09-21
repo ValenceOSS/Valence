@@ -16,6 +16,11 @@ const admin = vi.hoisted(() => ({
 }));
 
 const fetchResourceHistory = vi.hoisted(() => vi.fn());
+const fetchLogs = vi.hoisted(() => vi.fn());
+const fetchLogHistogram = vi.hoisted(() => vi.fn());
+const fetchLogFacets = vi.hoisted(() => vi.fn());
+const fetchJobStats = vi.hoisted(() => vi.fn());
+const fetchJobRun = vi.hoisted(() => vi.fn());
 
 const roles = vi.hoisted(() => ({
   fetchRoles: vi.fn(),
@@ -30,6 +35,11 @@ const readWholeLibrary = vi.hoisted(() => vi.fn());
 const fetchEverybodysShares = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/admin/fetchAdmin', () => admin);
+vi.mock('@ValenceClient/admin/fetchLogs', () => ({ fetchLogs }));
+vi.mock('@ValenceClient/admin/fetchLogHistogram', () => ({ fetchLogHistogram }));
+vi.mock('@ValenceClient/admin/fetchLogFacets', () => ({ fetchLogFacets }));
+vi.mock('@ValenceClient/admin/fetchJobStats', () => ({ fetchJobStats }));
+vi.mock('@ValenceClient/admin/fetchJobRun', () => ({ fetchJobRun }));
 vi.mock('@ValenceClient/admin/fetchResourceHistory', () => ({ fetchResourceHistory }));
 vi.mock('@ValenceClient/admin/fetchRoles', () => roles);
 vi.mock('@ValenceClient/admin/fetchWebhooks', () => webhooks);
@@ -60,6 +70,11 @@ beforeEach(() => {
   }
 
   fetchResourceHistory.mockResolvedValue([]);
+  fetchLogs.mockResolvedValue({ records: [], total: 0 });
+  fetchLogHistogram.mockResolvedValue({ fromMs: 0, untilMs: 1, bucketMs: 1000, buckets: [] });
+  fetchLogFacets.mockResolvedValue({ sources: [], jobKinds: [] });
+  fetchJobStats.mockResolvedValue({ sinceMs: 0, kinds: [] });
+  fetchJobRun.mockResolvedValue(null);
 
   Object.assign(roles, {
     fetchRoles: answered([]),
@@ -120,6 +135,7 @@ describe('adminQueries', () => {
     expect(adminQueries.deliveries(null).enabled).toBe(false);
     expect(adminQueries.everything([]).enabled).toBe(false);
     expect(adminQueries.jobHistoryIssues(null).enabled).toBe(false);
+    expect(adminQueries.jobRun(null).enabled).toBe(false);
   });
 
   it('reads the persisted history of job runs, filtered', async () => {
@@ -134,6 +150,94 @@ describe('adminQueries', () => {
     await expect(aCache().fetchQuery(adminQueries.jobHistoryIssues('run-1'))).resolves.toEqual([]);
 
     expect(admin.fetchJobHistoryIssues).toHaveBeenCalledWith('run-1');
+  });
+
+  it('reads a page of the log, filtered', async () => {
+    await expect(aCache().fetchQuery(adminQueries.logs({ levels: ['error'] }))).resolves.toEqual({
+      records: [],
+      total: 0,
+    });
+
+    expect(fetchLogs).toHaveBeenCalledWith({ levels: ['error'] });
+  });
+
+  it('keeps a page of the log under its own key for each question, so answers are not mixed up', () => {
+    expect(adminQueries.logs({ levels: ['error'] }).queryKey).not.toEqual(
+      adminQueries.logs({ levels: ['warn'] }).queryKey,
+    );
+  });
+
+  describe('reading the log a page after another', () => {
+    const page = (count: number, total: number) => ({
+      records: Array.from({ length: count }, (_, at) => ({
+        id: at.toString(),
+        atMs: at,
+        level: 'info' as const,
+        source: 'server' as const,
+        message: 'A line',
+        detail: null,
+        count: 1,
+        context: {
+          jobId: null,
+          jobKind: null,
+          libraryId: null,
+          mediaId: null,
+          sessionId: null,
+          requestId: null,
+        },
+      })),
+      total,
+    });
+
+    it('starts at the first page, and asks for the next from where the last ended', async () => {
+      fetchLogs.mockResolvedValueOnce(page(200, 900)).mockResolvedValueOnce(page(200, 900));
+
+      const cache = aCache();
+      const options = adminQueries.logPages({ limit: 200 });
+
+      await cache.prefetchInfiniteQuery({ ...options, pages: 2 });
+
+      expect(fetchLogs).toHaveBeenNthCalledWith(1, { limit: 200, offset: 0 });
+      expect(fetchLogs).toHaveBeenNthCalledWith(2, { limit: 200, offset: 200 });
+    });
+
+    it('has no next page once everything has been read', () => {
+      const { getNextPageParam } = adminQueries.logPages({});
+      const first = page(50, 50);
+
+      expect(getNextPageParam(first, [first], 0, [0])).toBeUndefined();
+    });
+
+    it('has no next page where the last one came back empty', () => {
+      const { getNextPageParam } = adminQueries.logPages({});
+      const empty = page(0, 900);
+
+      expect(getNextPageParam(empty, [empty], 0, [0])).toBeUndefined();
+    });
+
+    it('stops reading at a couple of thousand lines', () => {
+      const { getNextPageParam } = adminQueries.logPages({});
+      const full = page(1000, 20_000);
+
+      expect(getNextPageParam(full, [full], 0, [0])).toBe(1000);
+      expect(getNextPageParam(full, [full, full], 0, [0, 1000])).toBeUndefined();
+    });
+  });
+
+  it('reads the log over time, and the sources it comes from', async () => {
+    await aCache().fetchQuery(adminQueries.logHistogram({ buckets: 12 }));
+    await aCache().fetchQuery(adminQueries.logFacets({ jobId: 'job-1' }));
+
+    expect(fetchLogHistogram).toHaveBeenCalledWith({ buckets: 12 });
+    expect(fetchLogFacets).toHaveBeenCalledWith({ jobId: 'job-1' });
+  });
+
+  it('reads how each kind of job has gone, and one run by its id', async () => {
+    await aCache().fetchQuery(adminQueries.jobStats(500));
+    await aCache().fetchQuery(adminQueries.jobRun('run-1'));
+
+    expect(fetchJobStats).toHaveBeenCalledWith(500);
+    expect(fetchJobRun).toHaveBeenCalledWith('run-1');
   });
 
   it('reads a range of the server load history', async () => {

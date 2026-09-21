@@ -103,4 +103,56 @@ describe('BookShelf', () => {
     expect(screen.getByText('Manga')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Nothing to read yet' })).not.toBeInTheDocument();
   });
+
+  describe('with several book libraries', () => {
+    const NOVELS = aShelf({ id: 'a1b2c3d4-0000-4000-8000-000000000001', name: 'Novels' });
+    const MANGA = aShelf({ id: 'a1b2c3d4-0000-4000-8000-000000000002', name: 'Manga' });
+
+    const aBook = (title: string, libraryId: string) => ({
+      id: `book-${title}`,
+      libraryId,
+      title,
+      layout: 'fixed',
+      direction: 'leftToRight',
+      year: null,
+      overview: null,
+      genres: null,
+      authors: null,
+      rating: null,
+      hasCover: true,
+      chapterCount: 1,
+      addedAt: '2026-08-10T00:00:00.000Z',
+      updatedAt: '2026-08-10T00:00:00.000Z',
+    });
+
+    beforeEach(() => {
+      fetchLibrariesMock.mockResolvedValue([NOVELS, MANGA]);
+      fetchBooksMock.mockImplementation((libraryId: string) =>
+        Promise.resolve(
+          libraryId === NOVELS.id ? [aBook('Emma', NOVELS.id)] : [aBook('Berserk', MANGA.id)],
+        ),
+      );
+    });
+
+    it('draws a shelf for each library where none is chosen', async () => {
+      renderInAnAddress(<BookShelf onOpen={vi.fn()} />);
+
+      expect(await screen.findByText('Emma')).toBeInTheDocument();
+      expect(await screen.findByText('Berserk')).toBeInTheDocument();
+    });
+
+    it('keeps to the one library that was chosen', async () => {
+      renderInAnAddress(<BookShelf onOpen={vi.fn()} libraryId={MANGA.id} />);
+
+      expect(await screen.findByText('Berserk')).toBeInTheDocument();
+      expect(screen.queryByText('Emma')).not.toBeInTheDocument();
+    });
+
+    it('draws every shelf where the library chosen is not a book library', async () => {
+      renderInAnAddress(<BookShelf onOpen={vi.fn()} libraryId="not-a-library" />);
+
+      expect(await screen.findByText('Emma')).toBeInTheDocument();
+      expect(await screen.findByText('Berserk')).toBeInTheDocument();
+    });
+  });
 });

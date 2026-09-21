@@ -44,6 +44,7 @@ import { useShell } from '@ValenceClient/shell/useShell';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import { ImmersiveMusic } from '@ValenceScreens/components/ImmersiveMusic/ImmersiveMusic';
+import { MusicVisualiser } from '@ValenceScreens/components/MusicVisualiser/MusicVisualiser';
 import { NowPlayingBar } from '@ValenceScreens/components/NowPlayingBar/NowPlayingBar';
 import { useMusicLights } from '@ValenceScreens/music/musicLights';
 import { AskableDialog } from '@ValenceScreens/components/AskableDialog/AskableDialog';
@@ -207,6 +208,7 @@ const ValenceShell = () => {
       dock={
         <>
           <ImmersiveMusic />
+          <MusicVisualiser />
           <NowPlayingBar />
         </>
       }

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import {
+  AudioLines as AudioLinesIcon,
   Heart as HeartIcon,
   Volume as VolumeIcon,
   VolumeLow as VolumeLowIcon,
@@ -11,7 +12,6 @@ import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Slider } from '@ValenceUI/Slider';
-import { SpectrumBars } from '@ValenceUI/SpectrumBars';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { lyricLineAt } from '@ValenceClient/music/lyricLineAt';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
@@ -23,9 +23,9 @@ import { LyricLines } from '@ValenceScreens/components/LyricLines/LyricLines';
 import { MusicTransport } from '@ValenceScreens/components/MusicTransport/MusicTransport';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { setMusicImmersive, useMusicImmersive } from '@ValenceScreens/music/musicImmersive';
-import { theMusicAudio, theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
+import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
+import { setMusicVisualiser, useMusicVisualiser } from '@ValenceScreens/music/musicVisualiser';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
-import { useSpectrum } from '@ValenceScreens/music/useSpectrum';
 import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
 import type { ImmersiveMusicProps } from './ImmersiveMusic.types';
 
@@ -45,8 +45,8 @@ const CHANGING = { duration: 0.35, ease: [0.23, 1, 0.32, 1] } as const;
  * dissolves into the next cover's, a new album's cover gives way to the old through a moment of
  * blur, the name rises in, and the old song's words fall away as the new one's come up.
  *
- * Along the foot the sound plays as a row of bars rising and falling with it, drawn only while the
- * view is open and only where the browser can listen to the music without changing how it plays.
+ * A button beside the close button takes the whole screen over for the visualiser page, which is
+ * drawn by `MusicVisualiser` on top of this view.
  *
  * It opens from the cover on the player bar, and the bar steps aside while it is open — the view
  * carries its own quiet controls, so nothing but the music is on the screen. Escape, the close button or the cover again
@@ -56,11 +56,11 @@ const CHANGING = { duration: 0.35, ease: [0.23, 1, 0.32, 1] } as const;
  */
 const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
   const isOpen = useMusicImmersive();
+  const isVisualising = useMusicVisualiser();
   const { state, player } = useMusicPlayer(given ?? theMusicPlayer(), { followsPosition: true });
   const shown = useWhatIsPlaying(state);
   const favourites = useFavourites(useWatchingProfile());
   const prefersReducedMotion = useReducedMotionConfig();
-  const heard = useSpectrum(isOpen && shown !== null ? theMusicAudio() : null, isOpen);
   const trackId = shown?.trackId ?? null;
   const asked = useQuery({
     ...musicQueries.lyrics(trackId ?? ''),
@@ -74,7 +74,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
   const cover = shown !== null && shown.hasArtwork ? albumArtworkUrl(shown.albumId) : null;
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || isVisualising) {
       return;
     }
 
@@ -91,7 +91,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
     return () => {
       window.removeEventListener('keydown', onKey, { capture: true });
     };
-  }, [isOpen]);
+  }, [isOpen, isVisualising]);
 
   useEffect(() => {
     if (shown === null && isOpen) {
@@ -120,23 +120,30 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
         >
           <CoverGlow src={cover} className="absolute inset-0" />
 
-          <SpectrumBars
-            read={heard}
-            isPlaying={state.isPlaying}
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[28svh] text-on-scrim [mask-image:linear-gradient(to_top,black,transparent)]"
-          />
-
-          <Button
-            variant="overlay"
-            isIconOnly
-            label="Close"
-            className="absolute top-[calc(1rem+env(safe-area-inset-top,0px))] right-4 z-10"
-            onClick={() => {
-              setMusicImmersive(false);
-            }}
-          >
-            <Icon of={XIcon} size={20} />
-          </Button>
+          <div className="absolute top-[calc(1rem+env(safe-area-inset-top,0px))] right-4 z-10 flex items-center gap-2">
+            {isStill ? null : (
+              <Button
+                variant="overlay"
+                isIconOnly
+                label="Visualiser"
+                onClick={() => {
+                  setMusicVisualiser(true);
+                }}
+              >
+                <Icon of={AudioLinesIcon} size={20} />
+              </Button>
+            )}
+            <Button
+              variant="overlay"
+              isIconOnly
+              label="Close"
+              onClick={() => {
+                setMusicImmersive(false);
+              }}
+            >
+              <Icon of={XIcon} size={20} />
+            </Button>
+          </div>
 
           <div className="relative mx-auto grid h-full max-w-[88rem] grid-cols-1 items-start gap-10 overflow-y-auto overscroll-contain px-6 py-16 sm:px-12 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:items-center lg:gap-20 lg:overflow-y-visible lg:px-20">
             <div className="mx-auto flex w-full max-w-md flex-col justify-center gap-6">

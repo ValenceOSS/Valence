@@ -202,7 +202,9 @@ describe('SearchArea', () => {
       .setup()
       .click(await screen.findByRole('button', { name: 'Filter the library' }));
 
-    expect(await screen.findByRole('checkbox', { name: 'Science fiction' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('menuitemcheckbox', { name: 'Science fiction' }),
+    ).toBeInTheDocument();
   });
 
   it('shows what it found', async () => {
@@ -348,7 +350,7 @@ describe('SearchArea', () => {
 
     await screen.findByRole('button', { name: 'Filter the library' });
 
-    expect(screen.queryByRole('checkbox', { name: '1990s' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitemcheckbox', { name: '1990s' })).not.toBeInTheDocument();
   });
 
   it('asks for a decade as the years either side of it', async () => {
@@ -365,7 +367,7 @@ describe('SearchArea', () => {
       />,
     );
     await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
-    await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
+    await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith(
@@ -389,7 +391,7 @@ describe('SearchArea', () => {
       />,
     );
     await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
-    await user.click(await screen.findByRole('checkbox', { name: '8+' }));
+    await user.click(await screen.findByRole('menuitemcheckbox', { name: '8+' }));
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith(
@@ -413,7 +415,7 @@ describe('SearchArea', () => {
       />,
     );
     await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
-    await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
+    await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
 
     expect(await screen.findByRole('button', { name: 'Filter the library' })).toHaveTextContent(
       '1',
@@ -434,7 +436,7 @@ describe('SearchArea', () => {
       />,
     );
     await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
-    await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
+    await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
     await user.keyboard('{Escape}');
     await user.click(await screen.findByRole('button', { name: 'Clear all' }));
 

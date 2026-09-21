@@ -1,3 +1,4 @@
+import { notify } from '@ValenceUI/notify';
 import { useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -116,6 +117,7 @@ const PreviewMomentPicker = ({
       return;
     }
 
+    notify.worked('Saved the preview moment.');
     onChanged(answer);
     onClose();
   };
@@ -134,6 +136,7 @@ const PreviewMomentPicker = ({
       return;
     }
 
+    notify.worked('Put the preview back to automatic.');
     onChanged(null);
     onClose();
   };

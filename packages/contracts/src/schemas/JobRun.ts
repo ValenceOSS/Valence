@@ -4,7 +4,11 @@ const JOB_RUN_STATUSES = ['queued', 'running', 'completed', 'failed'] as const;
 
 const JOB_RUN_KEPT_FOR_DAYS = 30;
 
+const JOB_RUN_SORTS = ['newest', 'oldest', 'longest'] as const;
+
 const JobRunStatusSchema = z.enum(JOB_RUN_STATUSES);
+
+const JobRunSortSchema = z.enum(JOB_RUN_SORTS);
 
 const JobRunProgressSchema = z.object({
   phase: z.string(),
@@ -42,7 +46,26 @@ const JobRunQuerySchema = z.object({
   status: JobRunStatusSchema.nullable().default(null),
   search: z.string().default(''),
   sinceMs: z.number().int().nonnegative().nullable().default(null),
+  untilMs: z.number().int().nonnegative().nullable().default(null),
+  sort: JobRunSortSchema.default('newest'),
+  offset: z.number().int().nonnegative().default(0),
   limit: z.number().int().positive().max(1000).default(200),
+});
+
+const JobKindStatsSchema = z.object({
+  kind: z.string(),
+  runs: z.number().int().nonnegative(),
+  completed: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+  running: z.number().int().nonnegative(),
+  medianMs: z.number().nonnegative().nullable(),
+  slowestMs: z.number().nonnegative().nullable(),
+  lastAtMs: z.number().int().nonnegative().nullable(),
+});
+
+const JobStatsSchema = z.object({
+  sinceMs: z.number().int().nonnegative(),
+  kinds: z.array(JobKindStatsSchema),
 });
 
 const JobStartedEventSchema = z.object({
@@ -93,6 +116,9 @@ type JobRunRecord = z.infer<typeof JobRunRecordSchema>;
 type JobRunIssue = z.infer<typeof JobRunIssueSchema>;
 type JobRunPage = z.infer<typeof JobRunPageSchema>;
 type JobRunQuery = z.infer<typeof JobRunQuerySchema>;
+type JobRunSort = z.infer<typeof JobRunSortSchema>;
+type JobKindStats = z.infer<typeof JobKindStatsSchema>;
+type JobStats = z.infer<typeof JobStatsSchema>;
 type JobEvent = z.infer<typeof JobEventSchema>;
 
 export type {
@@ -102,17 +128,24 @@ export type {
   JobRunIssue,
   JobRunPage,
   JobRunQuery,
+  JobRunSort,
+  JobKindStats,
+  JobStats,
   JobEvent,
 };
 
 export {
   JOB_RUN_STATUSES,
+  JOB_RUN_SORTS,
   JOB_RUN_KEPT_FOR_DAYS,
   JobRunStatusSchema,
+  JobRunSortSchema,
   JobRunProgressSchema,
   JobRunRecordSchema,
   JobRunIssueSchema,
   JobRunPageSchema,
   JobRunQuerySchema,
+  JobKindStatsSchema,
+  JobStatsSchema,
   JobEventSchema,
 };

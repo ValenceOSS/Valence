@@ -445,6 +445,36 @@ describe('job history and load history endpoints', () => {
           total: 1,
         });
       },
+      interruptRunning: () => Promise.resolve(0),
+      readOne: (jobRunId) =>
+        Promise.resolve(
+          jobRunId === 'run-1'
+            ? {
+                id: 'run-1',
+                kind: 'library.regeneratePreviews',
+                status: 'completed',
+                subject: 'films',
+                startedAtMs: 1,
+                finishedAtMs: 2,
+                progress: null,
+                errorMessage: null,
+                createdAtMs: 1,
+              }
+            : null,
+        ),
+      readStats: () =>
+        Promise.resolve([
+          {
+            kind: 'library.regeneratePreviews',
+            runs: 3,
+            completed: 2,
+            failed: 1,
+            running: 0,
+            medianMs: 1200,
+            slowestMs: 4000,
+            lastAtMs: 5,
+          },
+        ]),
       readIssues: (jobRunId) =>
         Promise.resolve([
           { id: 'issue-1', jobRunId, path: '/media/a.mkv', reason: 'ffmpeg failed', atMs: 1 },
@@ -508,9 +538,66 @@ describe('job history and load history endpoints', () => {
         status: 'completed',
         search: 'films',
         sinceMs: 5,
+        untilMs: null,
+        sort: 'newest',
+        offset: 0,
         limit: 10,
       },
     ]);
+  });
+
+  it('reads a page of job history in the order and from the page asked for', async () => {
+    const { app, readCalls } = withHistory();
+
+    await app.request(`${TEST_ORIGIN}/api/admin/jobs/history?sort=longest&offset=30&untilMs=900`);
+
+    expect(readCalls[0]).toMatchObject({ sort: 'longest', offset: 30, untilMs: 900 });
+  });
+
+  it('refuses an order it does not know', async () => {
+    const { app } = withHistory();
+
+    expect((await app.request(`${TEST_ORIGIN}/api/admin/jobs/history?sort=shortest`)).status).toBe(
+      400,
+    );
+  });
+
+  it('reads one job run', async () => {
+    const { app } = withHistory();
+
+    const response = await app.request(`${TEST_ORIGIN}/api/admin/jobs/history/run-1`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ id: 'run-1', status: 'completed' });
+  });
+
+  it('says so when a job run is not in the history', async () => {
+    const { app } = withHistory();
+
+    expect((await app.request(`${TEST_ORIGIN}/api/admin/jobs/history/gone`)).status).toBe(404);
+  });
+
+  it('summarises how each kind of job has gone', async () => {
+    const { app } = withHistory();
+
+    const response = await app.request(`${TEST_ORIGIN}/api/admin/jobs/stats?sinceMs=100`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      sinceMs: 100,
+      kinds: [{ kind: 'library.regeneratePreviews', runs: 3, failed: 1, medianMs: 1200 }],
+    });
+  });
+
+  it('summarises the last week when no start is given', async () => {
+    const { app } = withHistory();
+
+    const body = z
+      .object({ sinceMs: z.number() })
+      .parse(await (await app.request(`${TEST_ORIGIN}/api/admin/jobs/stats`)).json());
+
+    expect(Date.now() - body.sinceMs).toBeGreaterThan(6.9 * 86_400_000);
+    expect(Date.now() - body.sinceMs).toBeLessThan(7.1 * 86_400_000);
   });
 
   it('reads the issues one job run accumulated', async () => {

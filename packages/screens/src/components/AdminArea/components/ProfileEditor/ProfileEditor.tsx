@@ -1,3 +1,4 @@
+import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -211,6 +212,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
           return;
         }
 
+        notify.worked(profile === null ? `Added ${value.name}.` : `Saved ${value.name}.`);
         onSaved(value);
         onClose();
       })

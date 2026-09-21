@@ -1,3 +1,4 @@
+import { logLineAsText } from './logLineAsText';
 import type { LogRecord } from '@ValenceContracts/schemas/Log';
 
 const WARNING = [
@@ -6,22 +7,6 @@ const WARNING = [
   '# titles on the disk. Read what you are about to send before sending it.',
   '',
 ].join('\n');
-
-const describeContext = (record: LogRecord): string => {
-  const said = Object.entries(record.context)
-    .filter((entry): entry is [string, string] => entry[1] !== null)
-    .map(([name, value]) => `${name}=${value}`);
-
-  return said.length === 0 ? '' : ` (${said.join(' ')})`;
-};
-
-const asLine = (record: LogRecord): string => {
-  const stamp = new Date(record.atMs).toISOString();
-  const repeated = record.count > 1 ? ` [x${record.count.toString()}]` : '';
-  const detail = record.detail === null ? '' : `\n    ${record.detail.replaceAll('\n', '\n    ')}`;
-
-  return `${stamp} ${record.level.toUpperCase().padEnd(5)} ${record.source}: ${record.message}${repeated}${describeContext(record)}${detail}`;
-};
 
 /**
  * Turns the records on screen into something worth pasting into a bug report.
@@ -39,7 +24,7 @@ const asLine = (record: LogRecord): string => {
 const logsAsText = (records: readonly LogRecord[]): string =>
   `${WARNING}${[...records]
     .sort((one, other) => one.atMs - other.atMs)
-    .map(asLine)
+    .map(logLineAsText)
     .join('\n')}\n`;
 
 export { logsAsText, WARNING };

@@ -13,6 +13,8 @@ type DataTableProps<Row extends RowData> = {
   getRowId?: (row: Row) => string;
   toolbar?: ReactNode;
   pageSize?: number;
+  page?: number;
+  onPageChange?: (page: number) => void;
   growsOnScroll?: boolean;
   height?: 'compact' | 'fill' | 'parent';
   className?: string;

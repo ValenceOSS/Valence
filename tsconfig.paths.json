@@ -147,9 +147,23 @@
       "@ValenceUI/SectionBar": ["./packages/ui/src/components/SectionBar/SectionBar.tsx"],
       "@ValenceUI/SettingsMenu": ["./packages/ui/src/components/SettingsMenu/SettingsMenu.tsx"],
       "@ValenceUI/Skeleton": ["./packages/ui/src/components/Skeleton/Skeleton.tsx"],
-      "@ValenceUI/SpectrumBars": ["./packages/ui/src/components/SpectrumBars/SpectrumBars.tsx"],
-      "@ValenceUI/SpectrumBars.types": [
-        "./packages/ui/src/components/SpectrumBars/SpectrumBars.types.ts"
+      "@ValenceUI/BarList": ["./packages/ui/src/components/BarList/BarList.tsx"],
+      "@ValenceUI/BarList.types": ["./packages/ui/src/components/BarList/BarList.types.ts"],
+      "@ValenceUI/HeadedSection": ["./packages/ui/src/components/HeadedSection/HeadedSection.tsx"],
+      "@ValenceUI/HeadedSection.types": [
+        "./packages/ui/src/components/HeadedSection/HeadedSection.types.ts"
+      ],
+      "@ValenceUI/StatStrip": ["./packages/ui/src/components/StatStrip/StatStrip.tsx"],
+      "@ValenceUI/StatStrip.types": ["./packages/ui/src/components/StatStrip/StatStrip.types.ts"],
+      "@ValenceUI/TimeBars": ["./packages/ui/src/components/TimeBars/TimeBars.tsx"],
+      "@ValenceUI/TimeBars.types": ["./packages/ui/src/components/TimeBars/TimeBars.types.ts"],
+      "@ValenceUI/Well": ["./packages/ui/src/components/Well/Well.tsx"],
+      "@ValenceUI/Well.types": ["./packages/ui/src/components/Well/Well.types.ts"],
+      "@ValenceUI/VisualiserStage": [
+        "./packages/ui/src/components/VisualiserStage/VisualiserStage.tsx"
+      ],
+      "@ValenceUI/VisualiserStage.types": [
+        "./packages/ui/src/components/VisualiserStage/VisualiserStage.types.ts"
       ],
       "@ValenceUI/SettingList": ["./packages/ui/src/components/SettingList/SettingList.tsx"],
       "@ValenceUI/SettingList.types": [

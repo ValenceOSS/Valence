@@ -601,6 +601,12 @@ body[data-scroll-locked] .valence-navbar {
   padding: 0.25rem;
 }
 
+.valence-well {
+  background-color: var(--color-surface);
+  background-image: linear-gradient(var(--card-shell), var(--card-shell));
+  border: 1px solid var(--surface-line);
+}
+
 .valence-card-face {
   border-radius: var(--radius-xl);
   background-color: var(--card-face);

@@ -78,7 +78,7 @@ describe('RequestsList', () => {
     renderInAnAddress(<RequestsList onAsk={vi.fn()} onOpen={vi.fn()} />);
 
     await userEvent.click(await screen.findByRole('button', { name: 'Filter the requests' }));
-    await userEvent.click(await screen.findByRole('checkbox', { name: 'Sam' }));
+    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Sam' }));
 
     expect(screen.getByText('Arrival (2021)')).toBeInTheDocument();
     expect(screen.queryByText('Dune (2021)')).not.toBeInTheDocument();

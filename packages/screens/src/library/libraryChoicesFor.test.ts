@@ -56,4 +56,25 @@ describe('libraryChoicesFor', () => {
     expect(onSelect).toHaveBeenNthCalledWith(1, 'b');
     expect(onSelect).toHaveBeenNthCalledWith(2, null);
   });
+
+  it('offers a choice for books once there are several book libraries, under the reading place', () => {
+    const choices = libraryChoicesFor(
+      [library('a', 'books'), library('b', 'books'), library('c', 'movies')],
+      'b',
+      vi.fn(),
+    );
+
+    expect(choices.read?.label).toBe('Book library');
+    expect(choices.read?.options.map((option) => option.label)).toEqual([
+      'All book libraries',
+      'a',
+      'b',
+    ]);
+    expect(choices.read?.selectedId).toBe('b');
+    expect(choices.films).toBeUndefined();
+  });
+
+  it('offers nothing for books where there is a single book library', () => {
+    expect(libraryChoicesFor([library('a', 'books')], null, vi.fn()).read).toBeUndefined();
+  });
 });

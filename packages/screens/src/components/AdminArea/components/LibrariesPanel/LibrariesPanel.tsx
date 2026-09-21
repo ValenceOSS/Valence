@@ -1,3 +1,4 @@
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
 import {
   Bin as BinIcon,
@@ -250,15 +251,20 @@ const LibrariesPanel = ({
                         live.current.setRereading(row.original);
                       },
                     },
-                    {
-                      id: 'previews',
-                      label: 'Generate missing previews',
-                      icon: <Icon of={ImagesIcon} size={15} />,
-                      isDisabled: readingOf(live.current.progress, row.original.id) !== undefined,
-                      onChoose: () => {
-                        live.current.onRegeneratePreviews(row.original.id);
-                      },
-                    },
+                    ...(row.original.kind === 'movies' || row.original.kind === 'shows'
+                      ? [
+                          {
+                            id: 'previews',
+                            label: 'Generate missing previews',
+                            icon: <Icon of={ImagesIcon} size={15} />,
+                            isDisabled:
+                              readingOf(live.current.progress, row.original.id) !== undefined,
+                            onChoose: () => {
+                              live.current.onRegeneratePreviews(row.original.id);
+                            },
+                          },
+                        ]
+                      : []),
                   ],
                 },
                 {
@@ -417,6 +423,7 @@ const LibrariesPanel = ({
 
           void deleteLibrary(doomed.id)
             .then(() => {
+              tellOutcome(`Deleted ${doomed.name}.`, null);
               onLibraryDeleted(doomed.id);
             })
             .catch(() => {

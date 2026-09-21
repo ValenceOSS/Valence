@@ -71,6 +71,9 @@ const HEIGHT_CLASSES = {
  *   is mid-interaction with keeps its own identity when a live update inserts or reorders around it.
  * @param toolbar - Controls to sit above the table, such as a search box.
  * @param pageSize - How many rows to show at once.
+ * @param page - Which page to show, counted from nothing, where the caller keeps it — so it survives
+ *   the table being drawn again elsewhere, and can be carried in an address.
+ * @param onPageChange - Told each time the page changes, where the caller keeps it.
  * @param growsOnScroll - Whether reaching the bottom loads more rather than paging.
  * @param height - Whether the table caps at a modest height, reaches for the bottom of the
  *   viewport, for a page that is otherwise this table alone, or takes whatever room its parent
@@ -86,15 +89,25 @@ const DataTable = <Row extends RowData>({
   getRowId,
   toolbar,
   pageSize = ROWS_A_PAGE,
+  page: givenPage,
+  onPageChange,
   growsOnScroll = false,
   height = 'compact',
   className,
 }: DataTableProps<Row>) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [page, setPage] = useState(0);
+  const [ownPage, setOwnPage] = useState(0);
   const [shown, setShown] = useState(pageSize);
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
+
+  const lastPage = Math.max(0, Math.ceil(rows.length / pageSize) - 1);
+  const page = Math.min(givenPage ?? ownPage, lastPage);
+
+  const setPage = (next: number) => {
+    setOwnPage(next);
+    onPageChange?.(next);
+  };
 
   const holding = Math.min(shown, Math.max(rows.length, pageSize));
 
@@ -120,8 +133,15 @@ const DataTable = <Row extends RowData>({
         ? { pageIndex: 0, pageSize: holding }
         : { pageIndex: page, pageSize },
     },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    autoResetPageIndex: false,
+    onSortingChange: (next) => {
+      setSorting(next);
+      setPage(0);
+    },
+    onColumnFiltersChange: (next) => {
+      setColumnFilters(next);
+      setPage(0);
+    },
     onPaginationChange: (next) => {
       setPage(
         typeof next === 'function' ? next({ pageIndex: page, pageSize }).pageIndex : next.pageIndex,
@@ -165,7 +185,7 @@ const DataTable = <Row extends RowData>({
                     <th
                       key={header.id}
                       scope="col"
-                      className="sticky top-0 z-20 bg-[var(--card-face)] px-3 py-2 text-left text-xs font-medium uppercase tracking-[0.14em] text-text-muted sm:px-5"
+                      className="sticky top-0 z-20 bg-[var(--card-face)] px-3 py-2 first:rounded-tl-lg last:rounded-tr-lg text-left text-xs font-medium uppercase tracking-[0.14em] text-text-muted sm:px-5"
                     >
                       <div className="flex items-center gap-1">
                         {header.isPlaceholder ? null : canSort ? (

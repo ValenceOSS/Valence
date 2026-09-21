@@ -1,3 +1,4 @@
+import { notify } from '@ValenceUI/notify';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -138,8 +139,10 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
     void refreshCatalogue()
       .then((fresh) => {
         cache.setQueryData(requestsQueries.catalogue().queryKey, fresh);
+        notify.worked('Brought the catalogue up to date.');
       })
       .catch(() => {
+        notify.failed('The catalogue could not be brought up to date.');
         setProblem('The catalogue could not be brought up to date.');
       })
       .finally(() => {

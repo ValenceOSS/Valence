@@ -10,7 +10,12 @@ import { createMemorySegmentService } from '@ValenceServer/segments/createMemory
 import { createMemoryWatchProgressService } from '@ValenceServer/progress/createMemoryWatchProgressService';
 import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMemoryFavouriteService';
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
-import type { LogQuery, LogRecord } from '@ValenceContracts/schemas/Log';
+import type {
+  LogFacetsQuery,
+  LogHistogramQuery,
+  LogQuery,
+  LogRecord,
+} from '@ValenceContracts/schemas/Log';
 import type { LogStore } from '@ValenceServer/logging/Logger';
 
 const BASE = 'http://localhost';
@@ -44,6 +49,8 @@ const build = () => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
   const asked: LogQuery[] = [];
+  const histogramAsked: LogHistogramQuery[] = [];
+  const facetsAsked: LogFacetsQuery[] = [];
 
   const logs: LogStore = {
     save: () => Promise.resolve(),
@@ -52,6 +59,27 @@ const build = () => {
       asked.push(query);
 
       return Promise.resolve({ records: [aRecord()], total: 1 });
+    },
+    histogram: (query) => {
+      histogramAsked.push(query);
+
+      return Promise.resolve({
+        fromMs: 0,
+        untilMs: 2000,
+        bucketMs: 1000,
+        buckets: [
+          { atMs: 0, debug: 0, info: 4, warn: 0, error: 1 },
+          { atMs: 1000, debug: 0, info: 0, warn: 2, error: 0 },
+        ],
+      });
+    },
+    facets: (query) => {
+      facetsAsked.push(query);
+
+      return Promise.resolve({
+        sources: [{ value: 'jobs', events: 7 }],
+        jobKinds: [{ value: 'library.scan', events: 5 }],
+      });
     },
     forgetExpired: () => Promise.resolve(0),
   };
@@ -72,7 +100,7 @@ const build = () => {
     logs,
   });
 
-  return { app, store, permissions, asked };
+  return { app, store, permissions, asked, histogramAsked, facetsAsked };
 };
 
 const signedIn = (app: ReturnType<typeof build>['app']): Promise<string> =>
@@ -189,5 +217,139 @@ describe('reading the log from the admin area', () => {
     });
 
     expect(response.status).toBe(400);
+  });
+});
+
+const post = (
+  context: ReturnType<typeof build>,
+  cookie: string,
+  path: string,
+  body: object,
+): Promise<Response> =>
+  Promise.resolve(
+    context.app.request(`${BASE}${path}`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+  );
+
+describe('narrowing and ordering the log', () => {
+  it('passes on the identifiers, the kinds of job, the order and the page', async () => {
+    const context = build();
+    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+
+    await post(context, cookie, '/api/admin/logs', {
+      jobId: 'job-1',
+      jobKinds: ['library.scan'],
+      libraryId: 'lib-1',
+      mediaId: 'media-1',
+      sessionId: 'session-1',
+      requestId: 'request-1',
+      sort: 'oldest',
+      offset: 200,
+    });
+
+    expect(context.asked[0]).toMatchObject({
+      jobId: 'job-1',
+      jobKinds: ['library.scan'],
+      libraryId: 'lib-1',
+      mediaId: 'media-1',
+      sessionId: 'session-1',
+      requestId: 'request-1',
+      sort: 'oldest',
+      offset: 200,
+    });
+  });
+
+  it('starts at the newest and the first page when nothing is said', async () => {
+    const context = build();
+    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+
+    await post(context, cookie, '/api/admin/logs', {});
+
+    expect(context.asked[0]).toMatchObject({ sort: 'newest', offset: 0, jobKinds: [] });
+  });
+
+  it('refuses an order it does not know', async () => {
+    const context = build();
+    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+
+    expect((await post(context, cookie, '/api/admin/logs', { sort: 'loudest' })).status).toBe(400);
+  });
+});
+
+describe.each(['/api/admin/logs/histogram', '/api/admin/logs/facets'])('%s', (path) => {
+  it('turns away somebody who may not read the logs', async () => {
+    const { app } = build();
+    const cookie = await signedIn(app);
+
+    expect(
+      (
+        await app.request(`${BASE}${path}`, {
+          method: 'POST',
+          headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+          body: JSON.stringify({}),
+        })
+      ).status,
+    ).toBe(403);
+  });
+});
+
+describe('the log over time', () => {
+  it('counts the log into bars by level', async () => {
+    const context = build();
+    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+
+    const response = await post(context, cookie, '/api/admin/logs/histogram', {});
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      bucketMs: 1000,
+      buckets: [{ info: 4, error: 1 }, { warn: 2 }],
+    });
+  });
+
+  it('counts the same records the table lists, so it is asked the same question', async () => {
+    const context = build();
+    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+
+    await post(context, cookie, '/api/admin/logs/histogram', {
+      levels: ['error'],
+      jobId: 'job-1',
+      sinceMs: 1000,
+      buckets: 20,
+    });
+
+    expect(context.histogramAsked[0]).toMatchObject({
+      levels: ['error'],
+      jobId: 'job-1',
+      sinceMs: 1000,
+      buckets: 20,
+    });
+  });
+
+  it('refuses more bars than there is room to draw', async () => {
+    const context = build();
+    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+
+    expect(
+      (await post(context, cookie, '/api/admin/logs/histogram', { buckets: 5000 })).status,
+    ).toBe(400);
+  });
+});
+
+describe('what the log mentions most', () => {
+  it('gives the most common sources and kinds of job', async () => {
+    const context = build();
+    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+
+    const response = await post(context, cookie, '/api/admin/logs/facets', { levels: ['error'] });
+
+    expect(await response.json()).toStrictEqual({
+      sources: [{ value: 'jobs', events: 7 }],
+      jobKinds: [{ value: 'library.scan', events: 5 }],
+    });
+    expect(context.facetsAsked[0]).toMatchObject({ levels: ['error'] });
   });
 });

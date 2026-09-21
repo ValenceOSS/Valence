@@ -55,6 +55,8 @@ const createWorld = (options?: {
       return Promise.resolve();
     },
     read: () => Promise.resolve({ records: [], total: 0 }),
+    histogram: () => Promise.resolve({ fromMs: 0, untilMs: 1, bucketMs: 1000, buckets: [] }),
+    facets: () => Promise.resolve({ sources: [], jobKinds: [] }),
     forgetExpired: () => Promise.resolve(0),
   };
 

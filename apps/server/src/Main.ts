@@ -38,6 +38,7 @@ import { withApiMemory } from '@ValenceServer/monitor/withApiMemory';
 import { createJobHealthWatch } from '@ValenceServer/jobs/createJobHealthWatch';
 import { labelForQueue } from '@ValenceServer/jobs/labelForQueue';
 import { announcesCompletion } from '@ValenceServer/jobs/announcesCompletion';
+import { createJobEventLog } from '@ValenceServer/logging/createJobEventLog';
 import { traceJobs } from '@ValenceServer/logging/traceJobs';
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
@@ -232,6 +233,7 @@ import {
 import { cleanupSessions } from '@ValenceServer/maintenance/cleanupSessions';
 import { checkCatalogueConnectivity } from '@ValenceServer/maintenance/checkCatalogueConnectivity';
 import {
+  JOB_DEFINITIONS,
   RESET_LIBRARY_JOB,
   jobDefinitionsFor,
   scheduleQueueNameFor,
@@ -1169,6 +1171,22 @@ const announceFinishedJob = (finished: FinishedJob): void => {
   })();
 };
 
+const interrupted = await jobHistory.interruptRunning(
+  'The server restarted while this was running, so it was stopped.',
+);
+
+if (interrupted > 0) {
+  log.warn(
+    'jobs',
+    `${interrupted.toString()} job run(s) were still marked as running when the server started, so they were marked as stopped`,
+  );
+}
+
+const jobEventLog = createJobEventLog(
+  log,
+  (kind) => JOB_DEFINITIONS.find((definition) => definition.kind === kind)?.label ?? kind,
+);
+
 const jobs = await createJobQueue({
   connectionString: env.DATABASE_URL,
   handlers: traceJobs(
@@ -1813,6 +1831,7 @@ const jobs = await createJobQueue({
     log.error('jobs', `job queue: ${message}`);
   },
   onStarted: async (entry) => {
+    jobEventLog.started(entry);
     realtime.publish('jobs', { event: 'started', ...entry }, { kind: 'everyone' });
 
     await jobHistory
@@ -1820,6 +1839,7 @@ const jobs = await createJobQueue({
       .catch(() => {});
   },
   onProgress: (entry) => {
+    jobEventLog.progress(entry);
     void jobHistory
       .recordProgress({
         id: entry.jobId,
@@ -1829,6 +1849,7 @@ const jobs = await createJobQueue({
     realtime.publish('jobs', { event: 'progress', ...entry }, { kind: 'everyone' });
   },
   onFinished: (finished) => {
+    jobEventLog.finished(finished);
     announceFinishedJob(finished);
     void jobHistory
       .recordFinished({

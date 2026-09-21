@@ -17,6 +17,32 @@ const props = {
 };
 
 describe('ActionMenu', () => {
+  it('is not a press on whatever it sits inside, whether opened or chosen from', async () => {
+    const onPress = vi.fn();
+    const onChoose = vi.fn();
+
+    render(
+      <div
+        role="presentation"
+        onClick={() => {
+          onPress();
+        }}
+      >
+        <ActionMenu
+          {...props}
+          groups={[{ items: [{ id: 'pin', label: 'Pin to the top', onChoose }] }]}
+        />
+      </div>,
+    );
+
+    const user = await open();
+
+    await user.click(await screen.findByRole('menuitem', { name: 'Pin to the top' }));
+
+    expect(onChoose).toHaveBeenCalled();
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
   it('stays shut until it is asked for', () => {
     render(<ActionMenu {...props} groups={[{ items: [] }]} />);
 

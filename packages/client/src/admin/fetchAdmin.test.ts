@@ -31,6 +31,7 @@ import {
   measureStorage,
   saveSplashscreen,
   removeSplashscreen,
+  fetchJobHistory,
 } from './fetchAdmin';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { Monitor } from './fetchAdmin';
@@ -1269,5 +1270,51 @@ describe('the picture behind the way in', () => {
     answerWith({ error: 'That is for administrators.' }, false);
 
     await expect(removeSplashscreen()).resolves.toBe(false);
+  });
+});
+
+describe('reading the history of job runs', () => {
+  const asked = () => String(fetchMock.mock.calls.at(-1)?.[0]);
+
+  it('asks for the runs with nothing filtered where nothing is given', async () => {
+    answerWith({ records: [], total: 0 });
+
+    await fetchJobHistory();
+
+    expect(asked()).toBe('/api/admin/jobs/history');
+  });
+
+  it('says what to filter by, where it is given', async () => {
+    answerWith({ records: [], total: 0 });
+
+    await fetchJobHistory({ kind: 'library.scan', status: 'failed', search: 'abc', limit: 50 });
+
+    expect(asked()).toBe(
+      '/api/admin/jobs/history?kind=library.scan&status=failed&search=abc&limit=50',
+    );
+  });
+
+  it('says how far back and up to when', async () => {
+    answerWith({ records: [], total: 0 });
+
+    await fetchJobHistory({ sinceMs: 100, untilMs: 900 });
+
+    expect(asked()).toBe('/api/admin/jobs/history?sinceMs=100&untilMs=900');
+  });
+
+  it('says what order to read them in, and how many pages to skip', async () => {
+    answerWith({ records: [], total: 0 });
+
+    await fetchJobHistory({ sort: 'longest', offset: 200 });
+
+    expect(asked()).toBe('/api/admin/jobs/history?sort=longest&offset=200');
+  });
+
+  it('does not say to skip nothing', async () => {
+    answerWith({ records: [], total: 0 });
+
+    await fetchJobHistory({ offset: 0 });
+
+    expect(asked()).toBe('/api/admin/jobs/history');
   });
 });

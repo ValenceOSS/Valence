@@ -90,6 +90,7 @@ const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
       return;
     }
 
+    notify.worked('Corrected the match.');
     onCorrected(outcome.jobId);
     onClose();
   };
