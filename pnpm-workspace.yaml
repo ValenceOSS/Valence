@@ -1,5 +1,6 @@
 packages:
   - 'apps/desktop'
+  - 'apps/docs'
   - 'apps/landing'
   - 'apps/web'
   - 'apps/server'

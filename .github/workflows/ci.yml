@@ -165,6 +165,7 @@ jobs:
           - '@valence/web'
           - '@valence/desktop'
           - '@valence/landing'
+          - '@valence/docs'
     steps:
       - uses: actions/checkout@v7
 

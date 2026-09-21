@@ -1,0 +1,46 @@
+@import '@valence/ui/src/styles/valence.css';
+
+.hljs {
+  color: var(--color-text);
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-literal {
+  color: var(--color-accent);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition {
+  color: var(--color-success);
+}
+
+.hljs-number,
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable {
+  color: var(--color-highlight);
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-name,
+.hljs-type,
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.hljs-deletion {
+  color: var(--color-danger);
+}

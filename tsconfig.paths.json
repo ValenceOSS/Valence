@@ -5,6 +5,7 @@
       "@ValenceContracts/*": ["./packages/contracts/src/*"],
       "@ValenceCore/*": ["./packages/core/src/*"],
       "@ValenceDesktop/*": ["./apps/desktop/src/*"],
+      "@ValenceDocs/*": ["./apps/docs/src/*"],
       "@ValenceLanding/*": ["./apps/landing/src/*"],
       "@ValenceSDK/*": ["./packages/plugin-sdk/src/*"],
       "@ValenceScreens/*": ["./packages/screens/src/*"],
