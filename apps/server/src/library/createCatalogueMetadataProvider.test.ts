@@ -777,6 +777,84 @@ describe('discovering and describing titles to ask for', () => {
     ]);
   });
 
+  it('narrows a list by genre, years and rating through the discover endpoint', async () => {
+    const { instance, calls } = provider({
+      '/discover/movie': {
+        results: [{ id: 438631, title: 'Dune', release_date: '2021-09-15' }],
+        total_pages: 3,
+      },
+    });
+
+    await expect(
+      instance.browse?.({
+        list: 'popular',
+        kind: 'movie',
+        page: 2,
+        studio: null,
+        filters: { genre: '878', yearFrom: 2020, yearTo: 2029, minRating: 7 },
+      }),
+    ).resolves.toMatchObject({ matches: [{ externalId: '438631' }], hasMore: true });
+
+    const asked = new URL(calls[0] ?? '');
+
+    expect(asked.pathname).toBe('/3/discover/movie');
+    expect(asked.searchParams.get('with_genres')).toBe('878');
+    expect(asked.searchParams.get('primary_release_date.gte')).toBe('2020-01-01');
+    expect(asked.searchParams.get('primary_release_date.lte')).toBe('2029-12-31');
+    expect(asked.searchParams.get('vote_average.gte')).toBe('7');
+    expect(asked.searchParams.get('sort_by')).toBe('popularity.desc');
+    expect(asked.searchParams.get('page')).toBe('2');
+  });
+
+  it('keeps a studio when a list is narrowed as well', async () => {
+    const { instance, calls } = provider({ '/discover/tv': { results: [] } });
+
+    await instance.browse?.({
+      list: 'popular',
+      kind: 'tv',
+      page: 1,
+      studio: '2',
+      filters: { genre: '18' },
+    });
+
+    const asked = new URL(calls[0] ?? '');
+
+    expect(asked.searchParams.get('with_companies')).toBe('2');
+    expect(asked.searchParams.get('with_genres')).toBe('18');
+  });
+
+  it('reads the list as it always did where nothing narrows it', async () => {
+    const { instance, calls } = provider({ '/movie/popular': { results: [] } });
+
+    await instance.browse?.({ list: 'popular', kind: 'movie', page: 1, studio: null, filters: {} });
+
+    expect(new URL(calls[0] ?? '').pathname).toBe('/3/movie/popular');
+  });
+
+  it('lists the genres of films and of series by the ids it narrows with', async () => {
+    const { instance, calls } = provider({
+      '/genre/movie/list': {
+        genres: [
+          { id: 28, name: 'Action' },
+          { id: 878, name: 'Science Fiction' },
+        ],
+      },
+    });
+
+    await expect(instance.genres?.('movie')).resolves.toEqual([
+      { id: '28', name: 'Action' },
+      { id: '878', name: 'Science Fiction' },
+    ]);
+    expect(new URL(calls[0] ?? '').pathname).toBe('/3/genre/movie/list');
+  });
+
+  it('lists no genres without a key, or from an answer it cannot read', async () => {
+    await expect(provider({}, { key: null }).instance.genres?.('tv')).resolves.toEqual([]);
+    await expect(
+      provider({ '/genre/tv/list': { nonsense: true } }).instance.genres?.('tv'),
+    ).resolves.toEqual([]);
+  });
+
   it('describes a title with its backdrop, genres, running time and cast', async () => {
     const { instance, calls } = provider({
       '/tv/95396': {

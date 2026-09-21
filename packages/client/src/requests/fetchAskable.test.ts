@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchAskable,
   fetchCatalogueBrowse,
+  fetchCatalogueGenres,
   fetchDiscover,
   fetchRequestProgress,
   searchAskable,
@@ -75,6 +76,28 @@ describe('fetchAskable', () => {
     expect(byStudio.mock.calls[0]?.[0]).toBe(
       '/api/requests/catalogue/browse?kind=series&list=popular&studio=2&page=1',
     );
+  });
+
+  it('narrows a page by genre, years and rating, and asks for nothing that was not chosen', async () => {
+    const asked = answering({ titles: [], page: 1, hasMore: false });
+
+    await fetchCatalogueBrowse({ kind: 'film', list: 'popular', studio: null }, 1, {
+      genre: '878',
+      yearFrom: 1990,
+      yearTo: 1999,
+      minRating: 7,
+    });
+
+    expect(asked.mock.calls[0]?.[0]).toBe(
+      '/api/requests/catalogue/browse?kind=film&list=popular&genre=878&yearFrom=1990&yearTo=1999&minRating=7&page=1',
+    );
+  });
+
+  it('reads the genres a list can be narrowed to, for the kind asked about', async () => {
+    const asked = answering([{ id: '878', name: 'Science Fiction' }]);
+
+    expect(await fetchCatalogueGenres('film')).toEqual([{ id: '878', name: 'Science Fiction' }]);
+    expect(asked.mock.calls[0]?.[0]).toBe('/api/requests/catalogue/genres?kind=film');
   });
 
   it('searches for things to ask for, of the kind given', async () => {

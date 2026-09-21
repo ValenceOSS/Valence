@@ -2055,6 +2055,7 @@ const keeping = <T>(
 const discovery: Discovery = {
   browse: (browsing) =>
     catalogueProvider.browse?.(browsing) ?? Promise.resolve({ matches: [], hasMore: false }),
+  genres: (kind) => catalogueProvider.genres?.(kind) ?? Promise.resolve([]),
   studios: () => {
     const kept = studioed.get('studios');
 
