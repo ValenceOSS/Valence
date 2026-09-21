@@ -16,7 +16,7 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
-use tokio::sync::{watch, Mutex, Notify, Semaphore};
+use tokio::sync::{watch, Mutex, Notify, OwnedSemaphorePermit, Semaphore};
 
 /// How many finished items are remembered.
 ///
@@ -404,6 +404,35 @@ impl WorkQueue {
                 }
             });
         }
+    }
+
+    /// Holds every place but one until the returned guard is dropped.
+    ///
+    /// A render on a graphics chip competes for the same decode and encode
+    /// engines as the film somebody is watching, and niceness answers only for
+    /// the processor. So while anyone is watching, background work goes back to
+    /// one at a time — which is what this queue ran unconditionally before it
+    /// could be measured.
+    ///
+    /// Waits for work already running to finish rather than stopping it: the
+    /// semaphore is fair, so nothing new starts in the places being held while
+    /// this waits for them. The guard is ordinary permits, so a change of
+    /// [`Self::set_concurrency`] while it is held settles when it is let go.
+    /// `None` where there is only one place to begin with.
+    pub async fn hold_all_but_one(&self) -> Option<OwnedSemaphorePermit> {
+        let extra = self.concurrency.load(Ordering::Acquire).saturating_sub(1);
+        let extra = u32::try_from(extra).ok().filter(|count| *count > 0)?;
+
+        Arc::clone(&self.permits)
+            .acquire_many_owned(extra)
+            .await
+            .ok()
+    }
+
+    /// How many pieces of work may run at once, as things stand.
+    #[must_use]
+    pub fn concurrency(&self) -> usize {
+        self.concurrency.load(Ordering::Acquire)
     }
 
     /// Holds back work that has not started. Work already running finishes.
@@ -994,5 +1023,99 @@ timestamps up by eye"
         queue.set_concurrency(0);
 
         assert_eq!(queue.snapshot().await.concurrency, 1);
+    }
+
+    #[tokio::test]
+    async fn holds_every_place_but_one_while_somebody_is_watching() {
+        let queue = WorkQueue::new(3);
+        let held = queue.hold_all_but_one().await;
+
+        assert!(held.is_some());
+        assert_eq!(queue.permits.available_permits(), 1);
+
+        drop(held);
+        assert_eq!(queue.permits.available_permits(), 3);
+    }
+
+    #[tokio::test]
+    async fn holds_nothing_where_there_is_only_one_place() {
+        let queue = WorkQueue::new(1);
+
+        assert!(queue.hold_all_but_one().await.is_none());
+        assert_eq!(queue.permits.available_permits(), 1);
+    }
+
+    /// Work already running finishes: the hold waits for it rather than
+    /// stopping it, and nothing new takes the places it is waiting on.
+    ///
+    /// Three places, two renders running. Holding all but one needs two and
+    /// only one is free, so the hold waits until a render finishes — leaving
+    /// the other running in the one place kept for it.
+    #[tokio::test]
+    async fn waits_for_running_work_rather_than_stopping_it() {
+        let queue = WorkQueue::new(3);
+        let render = |finished: tokio::sync::oneshot::Receiver<()>| {
+            let running = queue.clone();
+
+            tokio::spawn(async move {
+                running
+                    .run(thumbnails("a film"), None, async move {
+                        let _ = finished.await;
+                        Ok::<(), std::io::Error>(())
+                    })
+                    .await
+            })
+        };
+
+        let (finish_first, first_finished) = tokio::sync::oneshot::channel::<()>();
+        let (finish_second, second_finished) = tokio::sync::oneshot::channel::<()>();
+        let first = render(first_finished);
+        let second = render(second_finished);
+
+        tokio::time::sleep(Duration::from_millis(20)).await;
+        assert_eq!(queue.permits.available_permits(), 1);
+
+        let holding = queue.clone();
+        let waiting = tokio::spawn(async move { holding.hold_all_but_one().await });
+
+        tokio::time::sleep(Duration::from_millis(20)).await;
+        assert!(!waiting.is_finished(), "the hold waits for a render to end");
+
+        finish_first.send(()).expect("the first render is waiting");
+        first
+            .await
+            .expect("joins")
+            .expect("the first render finishes");
+
+        let extra_places = waiting.await.expect("joins");
+
+        assert!(extra_places.is_some());
+        assert_eq!(queue.permits.available_permits(), 0);
+        assert!(!second.is_finished(), "the other render is left running");
+
+        finish_second
+            .send(())
+            .expect("the second render is waiting");
+        second
+            .await
+            .expect("joins")
+            .expect("the second render finishes");
+        drop(extra_places);
+        assert_eq!(queue.permits.available_permits(), 3);
+    }
+
+    /// Lowering the ceiling while places are held is settled when they are let
+    /// go: the held permits pass to the change rather than back into use.
+    #[tokio::test]
+    async fn settles_a_lowered_ceiling_once_the_hold_is_let_go() {
+        let queue = WorkQueue::new(3);
+        let held = queue.hold_all_but_one().await;
+
+        queue.set_concurrency(1);
+        drop(held);
+        tokio::time::sleep(Duration::from_millis(20)).await;
+
+        assert_eq!(queue.concurrency(), 1);
+        assert_eq!(queue.permits.available_permits(), 1);
     }
 }

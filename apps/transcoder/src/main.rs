@@ -224,7 +224,7 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
         previews: valence_transcoder::preview::PreviewRegistry::new(),
         monitor: valence_transcoder::monitor::Monitor::new(journal),
         audio: valence_transcoder::audio::AudioRegistry::new(),
-        queue: valence_transcoder::queue::WorkQueue::new(background_jobs())
+        queue: valence_transcoder::queue::WorkQueue::new(chosen_background_jobs().unwrap_or(1))
             .with_lane("fingerprint", fingerprint_jobs()),
         renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
         media_roots: env::var("VALENCE_MEDIA_ROOTS")
@@ -235,18 +235,14 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
             .unwrap_or_default(),
     };
 
-    tracing::info!(
-        target: "service",
-        "running {} background jobs at once",
-        background_jobs()
-    );
-
     state.monitor.watch_graphics();
     state
         .monitor
         .watch_cache(state.registry.config().artefact_root.clone());
 
     report_durability(&registry, &state.monitor).await;
+
+    spawn_width_keeper(state.queue.clone(), registry.clone(), ffmpeg.clone());
 
     let router = create_router(state);
 
@@ -295,33 +291,107 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
     registry.stop_all().await;
 }
 
-/// The most background renders to run at once, unless told otherwise.
-///
-/// One. This was worked out from the core count — half of them, capped at four
-/// — on the reasoning that an ffmpeg process takes every core it is given. That
-/// reasoning is about processors, and a render on a graphics chip is not bound
-/// by processors: it costs a session and a share of the device's memory, of
-/// which there are a fixed number however many cores sit beside them. Four
-/// renders at once against one iGPU exhausted it, which read as
-/// "-17 (File exists)" and an encoder that would not open; ten took the whole
-/// API down with it.
-///
-/// Measured rather than reasoned about, twice over. Four sheet renders together
-/// held about one core of twenty, so this work waits on a disk and not on a
-/// processor and the cores were never the resource being shared. And Jellyfin,
-/// reading the same library on the same machine without trouble, draws
-/// thumbnails behind a lock of exactly one.
-///
-/// It costs less than it looks. Nothing waits on a render any more — a caller
-/// is answered at once and asks again — so a queue of one is a queue, not a
-/// stall, and the library is worked through in the same order either way.
-fn background_jobs() -> usize {
-    const AT_A_TIME: usize = 1;
-
+/// How many background renders the operator asked for, where they asked.
+fn chosen_background_jobs() -> Option<usize> {
     env::var("VALENCE_BACKGROUND_JOBS")
         .ok()
         .and_then(|value| value.parse().ok())
-        .unwrap_or(AT_A_TIME)
+        .filter(|count: &usize| *count > 0)
+}
+
+/// The most background renders the device's own measurement is trusted for.
+///
+/// Measured on an RTX 5080, eight episodes each drawn as a sheet and a
+/// preview: one at a time took 143.5 seconds, two 73.5, three 54.0 and four
+/// 42.7 — close to linear — while eight took 33.0, twice the sessions and the
+/// device memory for a quarter less time. Four takes most of what there is to
+/// take and leaves the rest for whatever else the card is doing.
+const MEASURED_CEILING: usize = 4;
+
+/// How often the watch on playback looks again.
+///
+/// A viewer's transcode waits on its first segment for longer than this, so
+/// renders going back to one at a time is settled before it matters.
+const WATCH_INTERVAL: Duration = Duration::from_secs(2);
+
+/// The most background renders to run at once while nobody is watching.
+///
+/// Asked of the device rather than fixed. This was worked out from the core
+/// count once — half of them, capped at four — on the reasoning that an ffmpeg
+/// process takes every core it is given. That reasoning is about processors,
+/// and a render on a graphics chip is not bound by processors: it costs a
+/// session and a share of the device's memory, of which there are a fixed
+/// number however many cores sit beside them. Four renders at once against one
+/// iGPU exhausted it, which read as "-17 (File exists)" and an encoder that
+/// would not open; ten took the whole API down with it. So it became one, for
+/// every machine, which left a card with two decode engines using one.
+///
+/// [`capability::Capabilities::concurrent_renders`] is that question asked
+/// properly, by opening sessions until the device refuses, so an iGPU answers
+/// small and is held to it. It counts sessions rather than engines and so
+/// runs ahead of what is worth running, which is what [`MEASURED_CEILING`]
+/// answers. Nothing measured means one, as before; an operator's number is
+/// taken as it is.
+fn background_width(chosen: Option<usize>, measured: u32) -> usize {
+    chosen.unwrap_or_else(|| {
+        usize::try_from(measured)
+            .unwrap_or(1)
+            .clamp(1, MEASURED_CEILING)
+    })
+}
+
+/// Widens the queue once the device has been measured, and narrows what it
+/// uses to one while anybody is watching.
+///
+/// A background render shares the decode and encode engines with the film
+/// being watched, and [`valence_transcoder::steps_aside::steps_aside`] answers only for the
+/// processor. So the extra slots are held back whenever a transcode session is
+/// open, and handed back when the last one closes — the promise the queue has
+/// always made, that background work never crowds the film, kept at a width
+/// that uses the machine when there is no film to crowd.
+///
+/// The measured width is applied only where nobody has changed it in the
+/// seconds the measuring takes: an operator who moved the Jobs card's slider
+/// meanwhile meant what they chose. The watch keeps running whatever the width,
+/// because the slider can raise it later.
+fn spawn_width_keeper(
+    queue: valence_transcoder::queue::WorkQueue,
+    registry: SessionRegistry,
+    ffmpeg: String,
+) {
+    let starting = queue.concurrency();
+
+    tokio::spawn(async move {
+        let device = registry.config().device.clone();
+        let measured = capability::detect_capabilities(&ffmpeg, &device)
+            .await
+            .concurrent_renders;
+        let width = background_width(chosen_background_jobs(), measured);
+
+        if queue.concurrency() == starting {
+            queue.set_concurrency(width);
+        }
+
+        tracing::info!(
+            target: "service",
+            "running up to {} background jobs at once, and one while anybody is watching",
+            queue.concurrency()
+        );
+
+        let mut held = None;
+
+        loop {
+            let watching = !registry.is_empty().await;
+
+            if watching && held.is_none() {
+                held = queue.hold_all_but_one().await;
+            } else if !watching && held.is_some() {
+                held = None;
+            }
+
+            tokio::time::sleep(WATCH_INTERVAL).await;
+        }
+    });
 }
 
 /// How many files may be fingerprinted at once.
@@ -396,7 +466,10 @@ async fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{listen_target, socket_from_url, ListenTarget, DEFAULT_SOCKET};
+    use super::{
+        background_width, listen_target, socket_from_url, ListenTarget, DEFAULT_SOCKET,
+        MEASURED_CEILING,
+    };
 
     fn reading(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<String> {
         let owned: Vec<(String, String)> = pairs
@@ -475,5 +548,30 @@ mod tests {
         ]));
 
         assert_eq!(target, ListenTarget::Socket("/tmp/valence.sock".to_owned()));
+    }
+
+    /// A card that measures eight sessions is trusted for four: the rest
+    /// bought a quarter less time for twice the sessions.
+    #[test]
+    fn trusts_a_measurement_only_as_far_as_the_ceiling() {
+        assert_eq!(background_width(None, 8), MEASURED_CEILING);
+    }
+
+    /// An iGPU that measures small is held to it — four at once is what
+    /// exhausted one, before anything was measured.
+    #[test]
+    fn holds_a_small_device_to_what_it_measured() {
+        assert_eq!(background_width(None, 2), 2);
+    }
+
+    #[test]
+    fn runs_one_at_a_time_where_nothing_was_measured() {
+        assert_eq!(background_width(None, 0), 1);
+    }
+
+    #[test]
+    fn takes_the_operators_number_as_it_is() {
+        assert_eq!(background_width(Some(6), 2), 6);
+        assert_eq!(background_width(Some(1), 8), 1);
     }
 }
