@@ -173,11 +173,12 @@ services:
       # socket, which nothing outside that container can reach, so switching
       # this on is three settings rather than one:
       #
-      #   On valence:   VALENCE_TRANSCODER_ADDR: 0.0.0.0:8420
-      #                 TRANSCODER_URL: http://127.0.0.1:8420
-      #   Here:         TRANSCODER_URL: http://valence:8420
+      #   On valence:   VALENCE_TRANSCODER_ADDR: 0.0.0.0:8422
+      #                 TRANSCODER_URL: http://127.0.0.1:8422
+      #   Here:         TRANSCODER_URL: http://valence:8422
       #
-      # Only the stack's own network can reach that port either way — it is not
+      # Not 8420: the server already listens there in this same container. Only
+      # the stack's own network can reach that port either way — it is not
       # published — but it is a port where there was none, so it is off unless
       # you ask for it.
       TRANSCODER_URL: ${REQUESTS_TRANSCODER_URL:-}

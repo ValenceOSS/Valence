@@ -40,14 +40,15 @@ Valence does not supply content, indexers or a download client. You choose and c
 
 3. Run `docker compose up -d` again so the `valence` and `requests` services both pick the values up.
 
-| Setting            | Required | What it is                                                                                                                 |
-| ------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `REQUESTS_URL`     | Yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                                  |
-| `REQUESTS_SECRET`  | Yes      | At least 32 characters, the same for both services. Valence presents it on every call, and the service refuses without it. |
-| `DOWNLOADS_PATH`   | No       | Where your download client writes, on the host. `./downloads` by default.                                                  |
-| `VPN_URL`          | No       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                                 |
-| `VPN_API_KEY`      | No       | The key gluetun's control server was given.                                                                                |
-| `FLARESOLVERR_URL` | No       | FlareSolverr, `http://flaresolverr:8191`.                                                                                  |
+| Setting                   | Required | What it is                                                                                                                                                                       |
+| ------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `REQUESTS_URL`            | Yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                                                                                        |
+| `REQUESTS_SECRET`         | Yes      | At least 32 characters, the same for both services. Valence presents it on every call, and the service refuses without it.                                                       |
+| `DOWNLOADS_PATH`          | No       | Where your download client writes, on the host. `./downloads` by default.                                                                                                        |
+| `VPN_URL`                 | No       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                                                                                       |
+| `VPN_API_KEY`             | No       | The key gluetun's control server was given.                                                                                                                                      |
+| `REQUESTS_TRANSCODER_URL` | No       | Lets the requests service ask the media service what a filed video really is. Empty by default; see [Naming a video by what it really is](#naming-a-video-by-what-it-really-is). |
+| `FLARESOLVERR_URL`        | No       | FlareSolverr, `http://flaresolverr:8191`.                                                                                                                                        |
 
 Setting only one of `REQUESTS_URL` and `REQUESTS_SECRET` leaves requesting off, and the log says which is missing. The requests service refuses to start at all without a secret.
 
@@ -201,6 +202,30 @@ For how requesters see it, read [Requests](/use/requests). The `requests.made`, 
 | Album   | `Artist/Album (Year)/01 - Title.flac`, or `1-01 - Title.flac` over several discs, with the cover beside it |
 
 Music is named from what its tracks' tags say, not from what the download is called. Valence then reads just that folder, ties the request to what it found and tells whoever asked, in the app and by push where they chose.
+
+### Naming a video by what it really is
+
+A release name is what an uploader chose to type. It is usually right, and it says nothing about what the encoder did that they left out. Once a video is filed and the media service can read it, the requests service can ask the media service what the file actually is, and rename it where that differs from what it was called, so the name says the resolution, codec and audio the file really has.
+
+Where a release came from, such as a remux or a web download, is never probed. Two files can be the same bytes from different sources, and only the name ever knew, so that part always comes from the name.
+
+This is off unless you switch it on. The media service lives inside the `valence` container and talks over a Unix socket that nothing outside that container can reach, so it takes three settings rather than one.
+
+| Where                           | Setting                                       | Why                                                                     |
+| :------------------------------ | :-------------------------------------------- | :---------------------------------------------------------------------- |
+| `valence` service `environment` | `VALENCE_TRANSCODER_ADDR: 0.0.0.0:8422`       | Makes the media service listen on a network port as well as its socket. |
+| `valence` service `environment` | `TRANSCODER_URL: http://127.0.0.1:8422`       | Keeps the server talking to it, now by address rather than by socket.   |
+| `.env`                          | `REQUESTS_TRANSCODER_URL=http://valence:8422` | What compose hands the requests service as its own `TRANSCODER_URL`.    |
+
+Use a port that is not 8420, which the server already listens on inside the same container. The port is not published on the host, so only the stack's own network can reach it, but it is a port where there was none.
+
+<Callout title="The media service has no login" tone="warning">
+  It trusts whoever can reach it, and can read the media directories and write to the writable ones.
+  Keep it on the stack's private network and never publish it. See [Ports and
+  sockets](/reference/ports#the-media-service-socket).
+</Callout>
+
+Left empty, the requests service takes a release name at its word, which is right most of the time.
 
 ## Troubleshooting
 
