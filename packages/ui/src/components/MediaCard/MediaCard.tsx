@@ -3,6 +3,7 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { Badge } from '@ValenceUI/Badge';
+import { Check as CheckIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { revealTransition } from '@ValenceUI/animations/reveal';
@@ -27,7 +28,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  * @param imageUrl - The artwork, where any has been fetched.
  * @param shape - Whether the artwork stands upright or lies flat.
  * @param emphasis - How much the card should draw the eye.
- * @param watchedFraction - How far through it this viewer is, drawn as a bar.
+ * @param watchedFraction - How far through it this viewer is, drawn as a bar, and as a tick in the
+ *   corner once it is all of it.
  * @param onSelect - Told when the card was pressed.
  * @param isStill - Whether to hold the card still rather than letting it lift under a pointer.
  * @param className - Extra classes for the caller's own layout.
@@ -118,7 +120,21 @@ const MediaCard = ({
           </span>
         )}
 
-        {watchedFraction === undefined ? null : (
+        {watchedFraction === undefined || watchedFraction < 1 ? null : (
+          <span className="absolute bottom-3 right-3">
+            <Tooltip label="Watched">
+              <span
+                role="img"
+                aria-label="Watched"
+                className="flex size-6 items-center justify-center rounded-full bg-scrim"
+              >
+                <Icon of={CheckIcon} size={14} tone="scrim" />
+              </span>
+            </Tooltip>
+          </span>
+        )}
+
+        {watchedFraction === undefined || watchedFraction >= 1 ? null : (
           <span className="absolute inset-x-3 bottom-2.5 mx-2 mb-1 h-1 overflow-hidden rounded-full bg-on-scrim/25">
             <span
               className="block h-full rounded-full bg-primary"

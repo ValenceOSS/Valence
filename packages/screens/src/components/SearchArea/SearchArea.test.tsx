@@ -281,6 +281,36 @@ describe('SearchArea', () => {
     expect(await screen.findByText('1 result')).toBeInTheDocument();
   });
 
+  it('opens the programme rather than the episode when a programme is chosen', async () => {
+    fetchLibraryItems.mockResolvedValue({
+      items: [
+        { ...item('e1', 'Pilot'), seriesId: 'ted', seriesTitle: 'Ted Lasso', episodeNumber: 1 },
+        { ...item('e2', 'Biscuits'), seriesId: 'ted', seriesTitle: 'Ted Lasso', episodeNumber: 2 },
+      ],
+      total: 2,
+    });
+
+    const onOpenShow = vi.fn();
+    const onInspect = vi.fn();
+
+    renderInAnAddress(
+      <SearchArea
+        search=""
+        onSearchChange={vi.fn()}
+        genre={null}
+        onGenreChange={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={onInspect}
+        onOpenShow={onOpenShow}
+      />,
+    );
+
+    await userEvent.setup().click(await screen.findByRole('button', { name: /Ted Lasso/ }));
+
+    expect(onOpenShow).toHaveBeenCalledOnce();
+    expect(onInspect).not.toHaveBeenCalled();
+  });
+
   it('replaces the whole result set on a filter change, not only the cards that differ', async () => {
     const user = userEvent.setup();
 

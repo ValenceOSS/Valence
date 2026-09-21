@@ -110,9 +110,7 @@ const ReencodeListSchema = z.object({ reencodes: z.array(ReencodeSchema) });
 
 const ReencodeStartedSchema = z.object({
   started: z.array(ReencodeSchema),
-  refused: z.array(
-    z.object({ mediaId: z.string().uuid(), refusal: ReencodeRefusalSchema }),
-  ),
+  refused: z.array(z.object({ mediaId: z.string().uuid(), refusal: ReencodeRefusalSchema })),
 });
 
 const REVIEWABLE_SIDES = ['original', 'encode'] as const;

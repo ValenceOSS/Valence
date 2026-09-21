@@ -77,6 +77,10 @@ describe('watchedFraction', () => {
     expect(watchedFraction(progressOf({ positionSeconds: 9000 }))).toBe(1);
   });
 
+  it('reads something finished as all of it, however far it got', () => {
+    expect(watchedFraction(progressOf({ positionSeconds: 1800, isFinished: true }))).toBe(1);
+  });
+
   it('says nothing has been watched of something with no length', () => {
     expect(watchedFraction({ ...progressOf(), durationSeconds: 0 })).toBe(0);
   });
