@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { setQueuePaused } from '@ValenceClient/admin/fetchAdmin';
 import { JobsPanel } from './JobsPanel';
 import type { ReactElement } from 'react';
 import type * as FetchAdmin from '@ValenceClient/admin/fetchAdmin';
@@ -12,6 +13,8 @@ vi.mock('@ValenceClient/admin/fetchAdmin', async (importOriginal) => ({
   watchJobs: vi.fn(() => () => {}),
   fetchJobHistory: vi.fn().mockResolvedValue({ records: [], total: 0 }),
   fetchJobHistoryIssues: vi.fn().mockResolvedValue([]),
+  setQueuePaused: vi.fn().mockResolvedValue(true),
+  setQueueConcurrency: vi.fn().mockResolvedValue(true),
 }));
 
 const definition: JobDefinition = {
@@ -53,7 +56,7 @@ const reading = (jobs: Job[], queue: Partial<Monitor['queue']> = {}): Monitor =>
     graphics: null,
     artefacts: null,
   },
-  queue: { concurrency: 2, queued: 0, running: jobs.length, jobs, ...queue },
+  queue: { concurrency: 2, paused: false, queued: 0, running: jobs.length, jobs, ...queue },
   sessions: 0,
   logs: [],
   cache: null,
@@ -104,9 +107,28 @@ describe('JobsPanel', () => {
   it('summarises the queue rather than making somebody count', () => {
     renderPanel(<JobsPanel {...props} monitor={reading([job()], { queued: 3, running: 1 })} />);
 
-    expect(screen.getByText('1 running').parentElement).toHaveTextContent(
-      '1 running · 3 waiting · 2 at a time',
+    expect(screen.getByText('1 running').parentElement).toHaveTextContent('1 running · 3 waiting');
+    expect(screen.getByRole('button', { name: 'How many jobs run at once' })).toHaveTextContent(
+      '2 at a time',
     );
+  });
+
+  it('offers to pause the queue, and asks for it', async () => {
+    renderPanel(<JobsPanel {...props} monitor={reading([job()])} />);
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Pause' }));
+
+    expect(setQueuePaused).toHaveBeenCalledWith(true);
+  });
+
+  it('says the queue is paused, and offers to resume it instead', async () => {
+    renderPanel(<JobsPanel {...props} monitor={reading([job()], { paused: true })} />);
+
+    expect(screen.getByText('Paused')).toBeInTheDocument();
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Resume' }));
+
+    expect(setQueuePaused).toHaveBeenCalledWith(false);
   });
 
   it('mentions failures only when there are some', () => {

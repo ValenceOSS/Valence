@@ -21,6 +21,9 @@ import {
   fetchRunningScans,
   searchCatalogue,
   cancelJob,
+  setQueueConcurrency,
+  setQueuePaused,
+  runQueuedJobNow,
   saveHardwareAccel,
   savePreviewQuality,
   saveRoundness,
@@ -105,7 +108,7 @@ const MONITOR: Monitor = {
     graphics: null,
     artefacts: null,
   },
-  queue: { concurrency: 2, queued: 1, running: 1, jobs: [] },
+  queue: { concurrency: 2, paused: false, queued: 1, running: 1, jobs: [] },
   sessions: 0,
   logs: [{ atMs: 1, level: 'info', source: 'transcoder', message: 'Started' }],
   cache: null,
@@ -862,6 +865,43 @@ describe('asking the catalogue what it holds under a name', () => {
     });
 
     await expect(searchCatalogue('Arrival', 'movie')).resolves.toEqual([]);
+  });
+});
+
+describe('controlling the work queue', () => {
+  it('asks the queue to run a number at once', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}) });
+
+    await expect(setQueueConcurrency(4)).resolves.toBe(true);
+    expect(fetchMock.mock.calls.at(-1)?.[0]).toBe('/api/admin/jobs/queue/concurrency');
+    expect(sentBody()).toEqual({ concurrency: 4 });
+  });
+
+  it('holds waiting jobs back, and lets them go', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}) });
+
+    await setQueuePaused(true);
+    expect(fetchMock.mock.calls.at(-1)?.[0]).toBe('/api/admin/jobs/queue/pause');
+
+    await setQueuePaused(false);
+    expect(fetchMock.mock.calls.at(-1)?.[0]).toBe('/api/admin/jobs/queue/resume');
+  });
+
+  it('starts one waiting job now, and reports one that was not waiting', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 202, json: () => Promise.resolve({}) });
+
+    await expect(runQueuedJobNow(7)).resolves.toBe(true);
+    expect(fetchMock.mock.calls.at(-1)?.[0]).toBe('/api/admin/jobs/queue/jobs/7/run-now');
+
+    fetchMock.mockResolvedValue({ ok: false, status: 404, json: () => Promise.resolve({}) });
+
+    await expect(runQueuedJobNow(7)).resolves.toBe(false);
+  });
+
+  it('reports a server it could not reach', async () => {
+    fetchMock.mockRejectedValue(new Error('offline'));
+
+    await expect(setQueuePaused(true)).resolves.toBe(false);
   });
 });
 

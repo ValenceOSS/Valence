@@ -181,6 +181,7 @@ const MonitorSchema = z.object({
     .default(null),
   queue: z.object({
     concurrency: z.number(),
+    paused: z.boolean().default(false),
     queued: z.number(),
     running: z.number(),
     jobs: z.array(JobSchema),
@@ -572,6 +573,55 @@ const runJob = async (
  */
 const cancelJob = async (jobId: string): Promise<boolean> => {
   const response = await fetch(`/api/admin/jobs/running/${jobId}/cancel`, {
+    method: 'POST',
+    credentials: 'same-origin',
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
+ * Asks the work queue to run a different number of jobs at once. Lowering it takes effect as running
+ * work finishes; nothing already started is cut short.
+ *
+ * @param concurrency - How many to run at once, from one to sixty-four.
+ * @returns Whether the queue accepted it.
+ */
+const setQueueConcurrency = async (concurrency: number): Promise<boolean> => {
+  const response = await fetch('/api/admin/jobs/queue/concurrency', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ concurrency }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
+ * Holds back jobs that have not started, or lets them start again. Work already running finishes
+ * either way.
+ *
+ * @param isPaused - Whether to hold waiting jobs back.
+ * @returns Whether the queue accepted it.
+ */
+const setQueuePaused = async (isPaused: boolean): Promise<boolean> => {
+  const response = await fetch(`/api/admin/jobs/queue/${isPaused ? 'pause' : 'resume'}`, {
+    method: 'POST',
+    credentials: 'same-origin',
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
+ * Starts one waiting job now, past the limit on how many run at once and past a pause.
+ *
+ * @param jobId - The waiting job.
+ * @returns Whether it was still waiting to be told.
+ */
+const runQueuedJobNow = async (jobId: number): Promise<boolean> => {
+  const response = await fetch(`/api/admin/jobs/queue/jobs/${jobId.toString()}/run-now`, {
     method: 'POST',
     credentials: 'same-origin',
   }).catch(() => null);
@@ -998,6 +1048,9 @@ export {
   fetchJobDefinitions,
   runJob,
   cancelJob,
+  setQueueConcurrency,
+  setQueuePaused,
+  runQueuedJobNow,
   fetchJobHistory,
   fetchJobHistoryIssues,
   fetchJobSchedules,

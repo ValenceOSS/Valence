@@ -1,4 +1,9 @@
 import { useMemo, useState } from 'react';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import { Badge } from '@ValenceUI/Badge';
+import { setQueuePaused } from '@ValenceClient/admin/fetchAdmin';
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import { QueueConcurrency } from './components/QueueConcurrency/QueueConcurrency';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -117,23 +122,45 @@ const JobsPanel = ({
           title="Jobs"
           isFlush
           actions={
-            <span className="text-xs text-text-muted">
-              {monitor === null ? (
-                '—'
-              ) : (
+            <>
+              <span className="text-xs text-text-muted">
+                {monitor === null ? (
+                  '—'
+                ) : (
+                  <>
+                    <AnimatedNumber value={monitor.queue.running} suffix=" running" /> ·{' '}
+                    <AnimatedNumber value={monitor.queue.queued} suffix=" waiting" />
+                    {failures === 0 ? null : (
+                      <>
+                        {' '}
+                        · <AnimatedNumber value={failures} suffix=" failed" />
+                      </>
+                    )}
+                  </>
+                )}
+              </span>
+
+              {monitor === null ? null : (
                 <>
-                  <AnimatedNumber value={monitor.queue.running} suffix=" running" /> ·{' '}
-                  <AnimatedNumber value={monitor.queue.queued} suffix=" waiting" /> ·{' '}
-                  <AnimatedNumber value={monitor.queue.concurrency} suffix=" at a time" />
-                  {failures === 0 ? null : (
-                    <>
-                      {' '}
-                      · <AnimatedNumber value={failures} suffix=" failed" />
-                    </>
-                  )}
+                  {monitor.queue.paused ? (
+                    <Badge size="sm" tone="warning">
+                      Paused
+                    </Badge>
+                  ) : null}
+
+                  <QueueConcurrency concurrency={monitor.queue.concurrency} />
+
+                  <PanelCardAction
+                    icon={monitor.queue.paused ? PlayFilledIcon : PauseFilledIcon}
+                    onClick={() => {
+                      void setQueuePaused(!monitor.queue.paused);
+                    }}
+                  >
+                    {monitor.queue.paused ? 'Resume' : 'Pause'}
+                  </PanelCardAction>
                 </>
               )}
-            </span>
+            </>
           }
           below={
             <TabRow
