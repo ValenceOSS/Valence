@@ -2,17 +2,9 @@ import { openComicRar } from './openComicRar';
 import { openEpub } from './openEpub';
 import { openComicZip } from './openComicZip';
 import { openPortableDocument } from './openPortableDocument';
+import { BOOK_FILE_FORMATS } from '@ValenceContracts/constants/BOOK_FILE_FORMATS';
 import type { BookFormat } from '@ValenceContracts/schemas/Book';
 import type { OpenedBook } from './BookFile';
-
-const FORMATS = new Map<string, BookFormat>([
-  ['cbz', 'cbz'],
-  ['zip', 'cbz'],
-  ['cbr', 'cbr'],
-  ['rar', 'cbr'],
-  ['pdf', 'pdf'],
-  ['epub', 'epub'],
-]);
 
 /**
  * What kind of book a file is, judged by its name.
@@ -27,7 +19,7 @@ const FORMATS = new Map<string, BookFormat>([
 const bookFormatOf = (path: string): BookFormat | null => {
   const at = path.lastIndexOf('.');
 
-  return at === -1 ? null : (FORMATS.get(path.slice(at + 1).toLowerCase()) ?? null);
+  return at === -1 ? null : (BOOK_FILE_FORMATS.get(path.slice(at + 1).toLowerCase()) ?? null);
 };
 
 /**
