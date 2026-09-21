@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { scanLibrary, selectChanged } from './scanLibrary';
 import type { MediaRow, ScanPhase, ScannedFile, ScannedItem, StoredItem } from './scanLibrary';
 import type { MetadataProvider } from './MetadataProvider';
+import { resolveSeriesKey } from './resolveSeriesKey';
 import type { MediaProbe, Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 
 const LIBRARY_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
@@ -97,6 +98,7 @@ const harness = (options: {
   capabilitiesImpl?: () => Promise<never>;
   onAdded?: (item: ScannedItem) => void;
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
+  root?: string;
 }) => {
   const rows: MediaRow[] = [];
   const removedPaths: string[] = [];
@@ -173,7 +175,7 @@ const harness = (options: {
   const run = () =>
     scanLibrary({
       libraryId: LIBRARY_ID,
-      root: '/media/films',
+      root: options.root ?? '/media/films',
       files: {
         listFiles: () =>
           Promise.resolve({
@@ -1223,5 +1225,277 @@ describe('what is worth reading a file again for', () => {
     );
 
     expect(changed).toHaveLength(1);
+  });
+});
+
+describe('a programme split in two by a catalogue that answered for only some of it', () => {
+  const SHOWS = '/media/shows';
+
+  const patchy = (answers: Record<string, string>): MetadataProvider => ({
+    name: 'patchy',
+    describe: (facts) => {
+      const externalId = answers[facts.path];
+
+      return Promise.resolve(
+        externalId === undefined
+          ? {
+              title: facts.episode?.episodeTitle ?? 'Untitled',
+              year: null,
+              ...(facts.episode?.seriesTitle === null || facts.episode?.seriesTitle === undefined
+                ? {}
+                : { seriesTitle: facts.episode.seriesTitle }),
+            }
+          : {
+              title: 'Known Episode',
+              year: 1999,
+              seriesTitle: 'Curb Your Enthusiasm',
+              externalId,
+            },
+      );
+    },
+  });
+
+  const keysOf = (rows: MediaRow[]): Set<string | null> =>
+    new Set(
+      rows.map((row) =>
+        resolveSeriesKey({
+          externalId: row.metadata.externalId ?? null,
+          seriesFolder: row.episode.seriesFolder,
+          seriesTitle: row.metadata.seriesTitle ?? row.episode.seriesTitle,
+        }),
+      ),
+    );
+
+  it('keeps every season of one folder in one programme', async () => {
+    const answered = `${SHOWS}/Curb Your Enthusiasm/Season 11/Curb.S11E01.mkv`;
+    const missed = `${SHOWS}/Curb Your Enthusiasm/Season 1/Curb.S01E01.mkv`;
+
+    const { run, rows } = harness({
+      root: SHOWS,
+      found: [file(answered), file(missed)],
+      providers: [patchy({ [answered]: '4546' })],
+    });
+
+    await run();
+
+    expect(rows).toHaveLength(2);
+    expect(keysOf(rows)).toEqual(new Set(['folder:/media/shows/Curb Your Enthusiasm']));
+  });
+
+  it('keeps episodes of one flat folder together when half of them missed', async () => {
+    const answered = `${SHOWS}/Unsolved (2018)/Unsolved.S01E05.mkv`;
+    const missed = `${SHOWS}/Unsolved (2018)/Unsolved.S01E01.mkv`;
+
+    const { run, rows } = harness({
+      root: SHOWS,
+      found: [file(answered), file(missed)],
+      providers: [patchy({ [answered]: '101605' })],
+    });
+
+    await run();
+
+    expect(keysOf(rows)).toEqual(new Set(['folder:/media/shows/Unsolved (2018)']));
+  });
+
+  it('holds a programme together when a stray file writes its name differently', async () => {
+    const usual = `${SHOWS}/Euphoria (US)/Euphoria.S01E01.mkv`;
+    const stray = `${SHOWS}/Euphoria (US)/Euphoria US S03E01 Andale.mkv`;
+
+    const { run, rows } = harness({
+      root: SHOWS,
+      found: [file(usual), file(stray)],
+      providers: [patchy({})],
+    });
+
+    await run();
+
+    expect(keysOf(rows)).toEqual(new Set(['folder:/media/shows/Euphoria (US)']));
+    expect(new Set(rows.map((row) => row.episode.seriesTitle))).toEqual(new Set(['Euphoria US']));
+  });
+
+  it('names every episode of a folder after the folder, whatever each file called it', async () => {
+    const { run, rows } = harness({
+      root: SHOWS,
+      found: [
+        file(`${SHOWS}/The Office (US)/The Office - S04E01.mkv`),
+        file(`${SHOWS}/The Office (US)/The Office US S04E03 04 Dunder Mifflin Infinity.mkv`),
+      ],
+      providers: [patchy({})],
+    });
+
+    await run();
+
+    expect(new Set(rows.map((row) => row.episode.seriesTitle))).toEqual(new Set(['The Office US']));
+  });
+});
+
+describe('a folder below a programme, which is never a programme of its own', () => {
+  const SHOWS = '/media/shows';
+
+  it('files a programme’s specials under the programme rather than beside it', async () => {
+    const episode = `${SHOWS}/The Fall/The Fall - S01E01 - Dark Descent.mkv`;
+    const first = `${SHOWS}/The Fall/Specials/Deleted Scenes 1.mkv`;
+    const second = `${SHOWS}/The Fall/Specials/Deleted Scenes 2.mkv`;
+
+    const { run, rows } = harness({
+      root: SHOWS,
+      found: [file(episode), file(first), file(second)],
+    });
+
+    await run();
+
+    expect(new Set(rows.map((row) => row.episode.seriesFolder))).toEqual(
+      new Set(['/media/shows/The Fall']),
+    );
+    expect(new Set(rows.map((row) => row.episode.seriesTitle))).toEqual(new Set(['The Fall']));
+  });
+
+  it('keeps the name of a special, which is the only thing telling two of them apart', async () => {
+    const { run, rows } = harness({
+      root: SHOWS,
+      found: [
+        file(`${SHOWS}/The Fall/The Fall - S01E01 - Dark Descent.mkv`),
+        file(`${SHOWS}/The Fall/Specials/Deleted Scenes 1.mkv`),
+        file(`${SHOWS}/The Fall/Specials/Deleted Scenes 2.mkv`),
+      ],
+    });
+
+    await run();
+
+    const specials = rows.filter((row) => row.episode.seasonNumber === 0);
+
+    expect(specials.map((row) => row.episode.episodeTitle).sort()).toEqual([
+      'Deleted Scenes 1',
+      'Deleted Scenes 2',
+    ]);
+  });
+
+  it('does not merge two programmes filed under one drawer', async () => {
+    const { run, rows } = harness({
+      root: SHOWS,
+      found: [
+        file(`${SHOWS}/Marvel/Daredevil/Season 1/Daredevil.S01E01.mkv`),
+        file(`${SHOWS}/Marvel/Jessica Jones/Season 1/Jessica.Jones.S01E01.mkv`),
+      ],
+    });
+
+    await run();
+
+    expect(new Set(rows.map((row) => row.episode.seriesFolder)).size).toBe(2);
+  });
+});
+
+describe('an episode whose lookup failed while its neighbours succeeded', () => {
+  const SHOWS = '/media/shows';
+
+  it('reads it from the programme its folder already named', async () => {
+    const asked: (string | null | undefined)[] = [];
+
+    const provider: MetadataProvider = {
+      name: 'remembering',
+      describe: (facts) => {
+        asked.push(facts.knownExternalId);
+
+        return Promise.resolve({ title: 'An Episode', year: null, seriesTitle: 'The Fall' });
+      },
+    };
+
+    const { run } = harness({
+      root: SHOWS,
+      found: [file(`${SHOWS}/The Fall/The Fall - S01E02.mkv`)],
+      existing: [stored(`${SHOWS}/The Fall/The Fall - S01E01.mkv`, { externalId: '2085' })],
+      providers: [provider],
+    });
+
+    await run();
+
+    expect(asked).toEqual(['2085']);
+  });
+
+  it('asks nothing of a film, which belongs to no programme', async () => {
+    const asked: (string | null | undefined)[] = [];
+
+    const provider: MetadataProvider = {
+      name: 'remembering',
+      describe: (facts) => {
+        asked.push(facts.knownExternalId);
+
+        return Promise.resolve({ title: 'A Film', year: 2016 });
+      },
+    };
+
+    const { run } = harness({
+      root: '/media/films',
+      found: [file('/media/films/Arrival (2016)/Arrival (2016).mkv')],
+      existing: [
+        stored('/media/films/Arrival (2016)/Arrival (2016) extras.mkv', {
+          externalId: '329',
+        }),
+      ],
+      providers: [provider],
+    });
+
+    await run();
+
+    expect(asked).toEqual([null]);
+  });
+});
+
+describe('a film, which belongs to no programme however it is filed', () => {
+  it('is given no programme by the folder it sits in', async () => {
+    const { run, rows } = harness({
+      root: '/media/films',
+      found: [file('/media/films/Arrival (2016)/Arrival (2016) Bluray-1080p.mkv')],
+    });
+
+    await run();
+
+    expect(rows[0]?.episode.seriesTitle).toBeNull();
+    expect(rows[0]?.episode.seriesFolder).toBeNull();
+  });
+
+  it('is left off the shelf of programmes entirely', async () => {
+    const { run, rows } = harness({
+      root: '/media/films',
+      found: [file('/media/films/Arrival (2016)/Arrival (2016).mkv')],
+    });
+
+    await run();
+
+    expect(
+      resolveSeriesKey({
+        externalId: rows[0]?.metadata.externalId ?? null,
+        seriesFolder: rows[0]?.episode.seriesFolder ?? null,
+        seriesTitle: rows[0]?.metadata.seriesTitle ?? rows[0]?.episode.seriesTitle ?? null,
+      }),
+    ).toBeNull();
+  });
+});
+
+describe('a season filed under a numbered folder', () => {
+  it('reads the number as the season, since it sits inside the programme', async () => {
+    const { run, rows } = harness({
+      root: '/media/shows',
+      found: [
+        file('/media/shows/Some Show/01/Some Show ep 1.mkv'),
+        file('/media/shows/Some Show/01/Some Show ep 2.mkv'),
+      ],
+    });
+
+    await run();
+
+    expect(new Set(rows.map((row) => row.episode.seasonNumber))).toEqual(new Set([1]));
+  });
+
+  it('does not read a programme called 24 as a twenty-fourth season', async () => {
+    const { run, rows } = harness({
+      root: '/media/shows',
+      found: [file('/media/shows/24/24.S02E01.mkv')],
+    });
+
+    await run();
+
+    expect(rows[0]?.episode.seasonNumber).toBe(2);
+    expect(rows[0]?.episode.seriesFolder).toBe('/media/shows/24');
   });
 });

@@ -7,6 +7,8 @@ import { readEpisodeFromPath, tidy } from './readEpisodeFromPath';
 import { nameOfFile } from './nameOfFile';
 import { groupBareNumberedEpisodes } from './groupBareNumberedEpisodes';
 import { groupExtras } from './groupExtras';
+import { resolveSeriesFolders } from './resolveSeriesFolders';
+import { titleOfSeriesFolder } from './titleOfSeriesFolder';
 import { groupVersions } from './groupVersions';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
@@ -84,6 +86,8 @@ type MediaStore = {
   removeByPaths: (libraryId: string, paths: string[]) => Promise<ScannedItem[]>;
   listOverrides?: (libraryId: string) => Promise<MediaOverride[]>;
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
+  regroupSeries?: (libraryId: string, foldersByPath: Map<string, string>) => Promise<void>;
+  forgetEmptySeries?: (libraryId: string) => Promise<void>;
   markScanned: (libraryId: string) => Promise<void>;
 };
 
@@ -149,11 +153,15 @@ const isReachable = async (transcoder: Transcoder): Promise<boolean> => {
  * @param corrections - Every correction held for the library.
  * @returns The correction for each programme, by its folder.
  */
-const correctionsBySeries = (corrections: MediaOverride[]): Map<string, MediaOverride> => {
+const correctionsBySeries = (
+  corrections: MediaOverride[],
+  seriesFolders: Map<string, string>,
+): Map<string, MediaOverride> => {
   const bySeries = new Map<string, MediaOverride>();
 
   for (const correction of corrections) {
-    const folder = readEpisodeFromPath(correction.path).seriesFolder;
+    const folder =
+      seriesFolders.get(correction.path) ?? readEpisodeFromPath(correction.path).seriesFolder;
 
     if (folder !== null && !bySeries.has(folder)) {
       bySeries.set(folder, correction);
@@ -161,6 +169,61 @@ const correctionsBySeries = (corrections: MediaOverride[]): Map<string, MediaOve
   }
 
   return bySeries;
+};
+
+/**
+ * The catalogue identifier already held for each programme, taken from the episodes of it that were
+ * read successfully before.
+ *
+ * What this recovers is the episode a lookup failed on. Its neighbours in the same folder carry the
+ * programme's identifier, so rather than searching a catalogue again for a title that did not match
+ * the first time, the episode is read straight from the programme its folder already named. A
+ * season that came back half-lettered fills itself in on the next scan instead of staying that way.
+ *
+ * @param stored - What the database already holds about the library.
+ * @param seriesFolders - The folder each file's programme is filed under.
+ * @returns The identifier known for each programme's folder.
+ */
+const catalogueIdsBySeries = (
+  stored: StoredItem[],
+  seriesFolders: Map<string, string>,
+): Map<string, string> => {
+  const byFolder = new Map<string, string>();
+
+  for (const item of stored) {
+    const folder = seriesFolders.get(item.path);
+
+    if (folder === undefined || item.externalId === null || byFolder.has(folder)) {
+      continue;
+    }
+
+    byFolder.set(folder, item.externalId);
+  }
+
+  return byFolder;
+};
+
+/**
+ * The season a numbered folder names, for a folder that sits inside a programme.
+ *
+ * `Some Show/01/` is the first season, which is how a ripped collection is usually laid out. Read
+ * without knowing where the programme's own folder is, `24/` would be season twenty-four rather
+ * than a programme called 24 — so this is only ever asked of a folder below one.
+ *
+ * @param path - The file being read.
+ * @param seriesFolder - The folder of the programme it belongs to.
+ * @returns The season the folder names, or null where it names none.
+ */
+const numericSeasonUnder = (path: string, seriesFolder: string | null): number | null => {
+  const folder = path.slice(0, Math.max(0, path.lastIndexOf('/')));
+
+  if (seriesFolder === null || !folder.startsWith(`${seriesFolder}/`)) {
+    return null;
+  }
+
+  const name = folder.slice(folder.lastIndexOf('/') + 1);
+
+  return /^\d{1,4}$/.test(name) ? Number(name) : null;
 };
 
 /**
@@ -300,7 +363,18 @@ const scanLibrary = async ({
   const storedByPath = new Map(stored.map((item) => [item.path, item]));
   const corrections = (await store.listOverrides?.(libraryId)) ?? [];
   const overrides = new Map(corrections.map((one) => [one.path, one]));
-  const overridesBySeries = correctionsBySeries(corrections);
+  const seriesFolders = resolveSeriesFolders({
+    paths: [
+      ...found.map((file) => file.path),
+      ...stored.map((item) => item.path),
+      ...corrections.map((one) => one.path),
+    ],
+    root,
+  });
+  const overridesBySeries = correctionsBySeries(corrections, seriesFolders);
+  const catalogueBySeries = catalogueIdsBySeries(stored, seriesFolders);
+
+  await store.regroupSeries?.(libraryId, seriesFolders);
 
   let added = 0;
   let updated = 0;
@@ -335,7 +409,7 @@ const scanLibrary = async ({
           ? { ...read, ...bare, seriesYear: read.seriesYear }
           : read;
 
-      const episode =
+      const placed =
         extra?.seriesFolder === null || extra === null
           ? numbered
           : {
@@ -343,6 +417,22 @@ const scanLibrary = async ({
               seriesTitle: tidy(extra.seriesFolder.slice(extra.seriesFolder.lastIndexOf('/') + 1)),
               seriesFolder: extra.seriesFolder,
             };
+
+      const belongsToSeries = placed.episodeNumber !== null || placed.seriesFolder !== null;
+      const seriesFolder = belongsToSeries
+        ? (seriesFolders.get(file.path) ?? placed.seriesFolder)
+        : null;
+      const fromFolder = seriesFolder === null ? null : titleOfSeriesFolder(seriesFolder);
+
+      const episode = belongsToSeries
+        ? {
+            ...placed,
+            seriesFolder,
+            seriesTitle: fromFolder ?? placed.seriesTitle,
+            seasonNumber: placed.seasonNumber ?? numericSeasonUnder(file.path, seriesFolder),
+          }
+        : placed;
+
       const corrected = correctionFor(
         file.path,
         episode.seriesFolder,
@@ -350,7 +440,11 @@ const scanLibrary = async ({
         overridesBySeries,
       );
       const knownExternalId =
-        corrected?.externalId ?? storedByPath.get(file.path)?.externalId ?? null;
+        corrected?.externalId ??
+        storedByPath.get(file.path)?.externalId ??
+        (episode.episodeNumber === null || seriesFolder === null
+          ? null
+          : (catalogueBySeries.get(seriesFolder) ?? null));
 
       const metadata = await resolveMetadata(
         providers,
@@ -483,6 +577,8 @@ const scanLibrary = async ({
   if (gone.length > 0) {
     onRemoved?.(gone);
   }
+
+  await store.forgetEmptySeries?.(libraryId);
 
   await store.markScanned(libraryId);
 

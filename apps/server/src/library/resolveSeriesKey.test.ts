@@ -8,17 +8,49 @@ describe('resolveSeriesKey', () => {
     ).toBeNull();
   });
 
-  it('takes the catalogue’s id, which every episode of a programme shares', () => {
+  it('takes the folder, which every episode of a programme shares before anybody is asked', () => {
     const key = resolveSeriesKey({
       externalId: '2316',
       seriesFolder: '/media/The Office',
       seriesTitle: 'The Office',
     });
 
-    expect(key).toBe('catalogue:2316');
+    expect(key).toBe('folder:/media/The Office');
   });
 
-  it('keeps two programmes of one name apart when a catalogue names them', () => {
+  it('holds a programme together when the catalogue answered for only some of it', () => {
+    const answered = resolveSeriesKey({
+      externalId: '4546',
+      seriesFolder: '/media/Curb Your Enthusiasm',
+      seriesTitle: 'Curb Your Enthusiasm',
+    });
+
+    const timedOut = resolveSeriesKey({
+      externalId: null,
+      seriesFolder: '/media/Curb Your Enthusiasm',
+      seriesTitle: 'Curb Your Enthusiasm',
+    });
+
+    expect(timedOut).toBe(answered);
+  });
+
+  it('holds it together when a stray file names the programme differently', () => {
+    const named = resolveSeriesKey({
+      externalId: null,
+      seriesFolder: '/media/Euphoria (US)',
+      seriesTitle: 'Euphoria',
+    });
+
+    const misnamed = resolveSeriesKey({
+      externalId: null,
+      seriesFolder: '/media/Euphoria (US)',
+      seriesTitle: 'Euphoria US',
+    });
+
+    expect(misnamed).toBe(named);
+  });
+
+  it('keeps two programmes of one name apart, each in its own folder', () => {
     const uk = resolveSeriesKey({
       externalId: '2996',
       seriesFolder: '/media/The Office (UK)',
@@ -82,7 +114,7 @@ describe('resolveSeriesKey', () => {
     expect(after).toBe(before);
   });
 
-  it('prefers the catalogue to the folder, since a folder can be reorganised', () => {
+  it('reads a programme that was moved as a new one, which is the cost of trusting the folder', () => {
     const filed = resolveSeriesKey({
       externalId: '2316',
       seriesFolder: '/media/TV/The Office',
@@ -95,7 +127,13 @@ describe('resolveSeriesKey', () => {
       seriesTitle: 'The Office',
     });
 
-    expect(refiled).toBe(filed);
+    expect(refiled).not.toBe(filed);
+  });
+
+  it('falls back to the catalogue for a loose file the root itself holds', () => {
+    expect(
+      resolveSeriesKey({ externalId: '2316', seriesFolder: null, seriesTitle: 'The Office' }),
+    ).toBe('catalogue:2316');
   });
 
   it('falls back to the title for a loose file with nothing else to go on', () => {
@@ -117,8 +155,8 @@ describe('resolveSeriesKey', () => {
   });
 
   it('ignores an empty catalogue id rather than keying every programme on it', () => {
-    expect(
-      resolveSeriesKey({ externalId: '', seriesFolder: '/media/Show', seriesTitle: 'Show' }),
-    ).toBe('folder:/media/Show');
+    expect(resolveSeriesKey({ externalId: '', seriesFolder: null, seriesTitle: 'Show' })).toBe(
+      'title:show',
+    );
   });
 });

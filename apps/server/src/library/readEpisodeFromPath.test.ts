@@ -226,3 +226,57 @@ describe('names the parser used to read as nothing at all', () => {
     expect(read.seriesTitle).toBeNull();
   });
 });
+
+describe('forms the parser was too narrow to read', () => {
+  it('reads a double episode written as a range', () => {
+    const read = readEpisodeFromPath('/shows/A Show/A Show S01E01-E02.mkv');
+
+    expect(read.seasonNumber).toBe(1);
+    expect(read.episodeNumber).toBe(1);
+  });
+
+  it('reads a range written without the second e', () => {
+    expect(readEpisodeFromPath('/shows/A Show/A Show S04E03-04.mkv').episodeNumber).toBe(3);
+  });
+
+  it('reads a range spaced out the way a renamer writes it', () => {
+    expect(readEpisodeFromPath('/shows/A Show/A Show - S04E03 - E04 - Title.mkv')).toMatchObject({
+      seasonNumber: 4,
+      episodeNumber: 3,
+    });
+  });
+
+  it('reads a programme that has run past ninety-nine seasons', () => {
+    expect(readEpisodeFromPath('/shows/A Show/A Show S104E02.mkv')).toMatchObject({
+      seasonNumber: 104,
+      episodeNumber: 2,
+    });
+  });
+
+  it('reads an episode past the ninety-ninth of its season', () => {
+    expect(readEpisodeFromPath('/shows/A Show/A Show S01E1024.mkv').episodeNumber).toBe(1024);
+  });
+
+  it('does not read a picture’s dimensions as a season and an episode', () => {
+    expect(
+      readEpisodeFromPath('/shows/A Show/A Show Special (1920x1080).mkv').episodeNumber,
+    ).toBeNull();
+  });
+
+  it('does not read a smaller picture’s dimensions either', () => {
+    expect(
+      readEpisodeFromPath('/shows/A Show/A Show Special 1280x720.mkv').episodeNumber,
+    ).toBeNull();
+  });
+
+  it('keeps reading a resolution that follows a real episode as noise', () => {
+    const read = readEpisodeFromPath('/shows/A Show/A Show S01E01 1080p WEB-DL.mkv');
+
+    expect(read.episodeNumber).toBe(1);
+    expect(read.episodeTitle).toBeNull();
+  });
+
+  it('does not take a resolution after an episode as the end of a range', () => {
+    expect(readEpisodeFromPath('/shows/A Show/A Show S09E14-1080p.mkv').episodeNumber).toBe(14);
+  });
+});
