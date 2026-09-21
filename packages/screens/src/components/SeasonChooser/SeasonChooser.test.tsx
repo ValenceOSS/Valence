@@ -83,6 +83,20 @@ describe('SeasonChooser', () => {
     expect(await screen.findByText('No season is taken yet.')).toBeInTheDocument();
   });
 
+  it('keeps a switch the same element as what is taken changes, so its animation runs', async () => {
+    const onChange = vi.fn();
+    const { rerender } = renderInAnAddress(
+      <SeasonChooser tmdbId={95396} seasons={[1]} onChange={onChange} />,
+    );
+
+    const before = await screen.findByRole('switch', { name: 'Season 2' });
+
+    rerender(<SeasonChooser tmdbId={95396} seasons={[1, 2]} onChange={onChange} />);
+
+    expect(screen.getByRole('switch', { name: 'Season 2' })).toBe(before);
+    expect(before).toBeChecked();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(SeasonChooser.displayName).toBe('SeasonChooser');
   });
