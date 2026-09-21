@@ -811,7 +811,17 @@ describe('createRequestWorker', () => {
 
       expect(filed).toHaveBeenCalledWith(
         { libraryPath: '/media/Films', title: 'The Matrix', year: 1999 },
-        [{ id: 'film', season: null, episode: null, title: '', airDate: null, filePath: null }],
+        [
+          {
+            id: 'film',
+            season: null,
+            episode: null,
+            title: '',
+            airDate: null,
+            filePath: null,
+            releaseTitle: 'The.Matrix.1999.1080p.BrRip.x264-YIFY',
+          },
+        ],
         '/srv/downloads/The Matrix (1999) [1080p]',
         true,
       );
@@ -998,7 +1008,15 @@ describe('createRequestWorker', () => {
       await worker.tick();
 
       expect(filed.mock.calls[0]?.[1]).toEqual([
-        { id: '1x2', season: 1, episode: 2, title: '', airDate: null, filePath: null },
+        {
+          id: '1x2',
+          season: 1,
+          episode: 2,
+          title: '',
+          airDate: null,
+          filePath: null,
+          releaseTitle: 'Severance.S01E02.1080p.WEB-DL',
+        },
       ]);
     });
   });

@@ -31,4 +31,26 @@ describe('libraryFileOf', () => {
       ),
     ).toBe('/media/Series/Severance/Season 00/Severance - S00E01.mkv');
   });
+
+  it('says what a copy is on the file, and never on the folder around it', () => {
+    expect(
+      libraryFileOf(
+        { libraryPath: '/media/Films', title: 'Dune', year: 2021 },
+        { season: null, episode: null, title: 'Dune' },
+        'mkv',
+        ' [2160p][Remux][x265]',
+      ),
+    ).toBe('/media/Films/Dune (2021)/Dune (2021) [2160p][Remux][x265].mkv');
+
+    expect(
+      libraryFileOf(
+        { libraryPath: '/media/Series', title: 'Severance', year: 2022 },
+        { season: 1, episode: 2, title: 'Half Loop' },
+        'mkv',
+        ' [1080p][WEBDL]',
+      ),
+    ).toBe(
+      '/media/Series/Severance (2022)/Season 01/Severance (2022) - S01E02 - Half Loop [1080p][WEBDL].mkv',
+    );
+  });
 });

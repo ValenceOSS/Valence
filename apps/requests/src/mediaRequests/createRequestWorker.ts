@@ -726,6 +726,7 @@ const createRequestWorker = ({
     parsed: ReturnType<typeof parseReleaseName>,
     path: string,
     protocol: Release['protocol'],
+    releaseTitle: string,
   ): Promise<string | null> => {
     const wanted =
       libraryKind === 'movies'
@@ -733,7 +734,7 @@ const createRequestWorker = ({
         : await episodesInDownload(path, parsed);
     const { filed } = await file(
       into,
-      wanted.map((one) => ({ ...one, title: '', airDate: null, filePath: null })),
+      wanted.map((one) => ({ ...one, title: '', airDate: null, filePath: null, releaseTitle })),
       path,
       protocol === 'torrent',
     );
@@ -808,7 +809,14 @@ const createRequestWorker = ({
         const folder =
           download.libraryKind === 'music'
             ? await fileSentAlbum(parsed.title, into.libraryPath, path, download.protocol)
-            : await fileSentVideo(into, download.libraryKind, parsed, path, download.protocol);
+            : await fileSentVideo(
+                into,
+                download.libraryKind,
+                parsed,
+                path,
+                download.protocol,
+                download.title,
+              );
 
         if (folder === null) {
           await couldNot(
