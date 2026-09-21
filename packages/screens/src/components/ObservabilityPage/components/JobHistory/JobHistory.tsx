@@ -280,6 +280,7 @@ const JobHistoryPanel = ({
       {
         id: 'kind',
         header: 'Job',
+        enableSorting: false,
         accessorFn: (record) => describeJobKind(record.kind, labels),
         cell: ({ row }) => (
           <span
@@ -293,10 +294,8 @@ const JobHistoryPanel = ({
       {
         id: 'status',
         header: 'Status',
+        enableSorting: false,
         accessorFn: (record) => record.status,
-        filterFn: (row, columnId, filterValue) =>
-          filterValue === undefined || row.getValue(columnId) === filterValue,
-        meta: { filterOptions: STATUS_FILTER_OPTIONS },
         cell: ({ row }) => (
           <span className="flex items-center gap-1.5">
             <Badge size="sm" tone={describeJobStatus(row.original.status).tone}>
@@ -322,6 +321,7 @@ const JobHistoryPanel = ({
       {
         id: 'subject',
         header: 'Subject',
+        enableSorting: false,
         accessorFn: (record) => describeRunSubject(record.subject, libraries, record.kind).name,
         cell: ({ row }) => {
           const { name, library } = describeRunSubject(
@@ -431,6 +431,7 @@ const JobHistoryPanel = ({
       {
         id: 'when',
         header: 'When',
+        enableSorting: false,
         accessorFn: (record) => record.finishedAtMs ?? record.startedAtMs ?? 0,
         cell: ({ row }) => (
           <span className="flex flex-col whitespace-nowrap tabular-nums text-text-muted">

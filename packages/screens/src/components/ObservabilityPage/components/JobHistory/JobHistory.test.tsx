@@ -254,11 +254,9 @@ describe('JobHistory', () => {
     }
   });
 
-  it('filters by status when a status is chosen', async () => {
-    const actor = userEvent.setup();
-
+  it('leaves the order to the order menu, so no column of the table can disagree with it', async () => {
     askedHistory.mockResolvedValue(
-      page([record(), record({ id: 'run-2', status: 'failed', subject: 'Shows' })]),
+      page([record({ id: 'a', subject: 'Movies' }), record({ id: 'b', subject: 'Shows' })]),
     );
 
     renderHistory(
@@ -274,16 +272,11 @@ describe('JobHistory', () => {
     );
 
     await screen.findByText('Movies');
-    await screen.findByText('Shows');
 
-    await actor.click(screen.getByRole('button', { name: 'Filter by status' }));
-    await actor.click(await screen.findByRole('menuitemradio', { name: 'Failed' }));
+    const table = screen.getByRole('table', { name: 'What pg-boss has run' });
 
-    await waitFor(() => {
-      expect(screen.queryByText('Movies')).not.toBeInTheDocument();
-    });
-
-    expect(screen.getByText('Shows')).toBeInTheDocument();
+    expect(within(table).queryByRole('button', { name: /Job|Status|Subject|When/ })).toBeNull();
+    expect(within(table).queryByRole('button', { name: 'Filter by status' })).toBeNull();
   });
 
   it('opens the log filtered to a run when View logs is chosen', async () => {
