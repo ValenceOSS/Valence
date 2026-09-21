@@ -1,5 +1,5 @@
 const HOW_TO_ROLL_BACK =
-  'docker compose stop valence && docker compose run --rm valence node apps/server/dist/Rollback.js --list';
+  'docker compose stop valence && docker compose run --rm --entrypoint node valence apps/server/dist/Rollback.js --list';
 
 /**
  * Words what to do about a database a newer release has already migrated.
