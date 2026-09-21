@@ -25,6 +25,7 @@ const recordFromDraft = (
   ...requestFactsOf(draft.catalogue),
   libraryId: draft.libraryId,
   libraryPath: draft.libraryPath,
+  libraryLanguage: draft.libraryLanguage ?? null,
   profileId: draft.profileId,
   isPickedByHand: draft.isPickedByHand,
   approval: draft.isApproved ? 'approved' : 'awaiting',

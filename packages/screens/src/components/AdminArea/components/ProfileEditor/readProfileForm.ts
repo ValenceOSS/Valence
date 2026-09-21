@@ -30,6 +30,7 @@ type ProfileForm = {
   upgradeUntilSource: ReleaseSource | null;
   upgradeUntilMusicQuality: MusicQuality | null;
   libraryIds: string[];
+  preferredLanguage: string | null;
   isDefault: boolean;
   roleIds: string[];
   accountIds: string[];
@@ -58,6 +59,7 @@ const A_NEW_PROFILE: ProfileForm = {
   upgradeUntilSource: null,
   upgradeUntilMusicQuality: null,
   libraryIds: [],
+  preferredLanguage: null,
   isDefault: false,
   roleIds: [],
   accountIds: [],
@@ -90,6 +92,7 @@ const formFor = (profile: QualityProfile | null): ProfileForm =>
         upgradeUntilSource: profile.upgradeUntilSource,
         upgradeUntilMusicQuality: profile.upgradeUntilMusicQuality,
         libraryIds: profile.libraryIds,
+        preferredLanguage: profile.preferredLanguage,
         isDefault: profile.isDefault,
         roleIds: profile.roleIds,
         accountIds: profile.accountIds,
@@ -185,6 +188,7 @@ const readProfileForm = (form: ProfileForm): ReadProfileForm => {
       upgradeUntilSource: form.isUpgrading ? form.upgradeUntilSource : null,
       upgradeUntilMusicQuality: form.isUpgrading ? form.upgradeUntilMusicQuality : null,
       libraryIds: form.libraryIds,
+      preferredLanguage: form.preferredLanguage,
       isDefault: form.isDefault,
       roleIds: form.isDefault ? [] : form.roleIds,
       accountIds: form.isDefault ? [] : form.accountIds,

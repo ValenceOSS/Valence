@@ -71,6 +71,7 @@ describe('readProfileForm', () => {
         upgradeUntilSource: 'bluray',
         upgradeUntilMusicQuality: null,
         libraryIds: [],
+        preferredLanguage: null,
         isDefault: false,
         roleIds: [],
         accountIds: [],

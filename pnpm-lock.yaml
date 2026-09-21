@@ -219,6 +219,9 @@ importers:
       '@valence/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@valence/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       cheerio:
         specifier: ^1.2.0
         version: 1.2.0

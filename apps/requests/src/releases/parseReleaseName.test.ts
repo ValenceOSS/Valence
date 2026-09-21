@@ -1486,6 +1486,7 @@ describe('parseReleaseName', () => {
       audio: ['atmos', 'eac3'],
       audioChannels: '5.1',
       musicQuality: null,
+      languages: [],
       edition: null,
       group: 'FLUX',
       isProper: false,

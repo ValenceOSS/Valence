@@ -72,6 +72,7 @@ const ParsedReleaseSchema = z.object({
   audio: z.array(AudioCodecSchema),
   audioChannels: z.string().nullable(),
   musicQuality: MusicQualitySchema.nullable(),
+  languages: z.array(z.string()),
   edition: z.string().nullable(),
   group: z.string().nullable(),
   isProper: z.boolean(),

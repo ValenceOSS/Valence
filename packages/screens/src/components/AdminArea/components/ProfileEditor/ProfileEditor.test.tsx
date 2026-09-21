@@ -129,6 +129,21 @@ describe('ProfileEditor', () => {
     });
   });
 
+  it('prefers releases in the language chosen, and takes the library’s otherwise', async () => {
+    const user = userEvent.setup();
+
+    open();
+
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
+    await user.click(screen.getByRole('button', { name: /Prefer releases in/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Deutsch' }));
+    await user.click(screen.getByRole('button', { name: 'Add profile' }));
+
+    await waitFor(() => {
+      expect(addProfile).toHaveBeenCalledWith(expect.objectContaining({ preferredLanguage: 'de' }));
+    });
+  });
+
   it('keeps a profile to the roles and people named on it', async () => {
     const user = userEvent.setup();
 

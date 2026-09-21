@@ -4138,6 +4138,7 @@ const createApp = ({
         isPickedByHand: asked.isPickedByHand,
         libraryId: chosen.id,
         libraryPath: chosen.requestPath ?? chosen.path,
+        libraryLanguage: chosen.defaultAudioLanguage,
         requestedBy: { id: session.user.id, name: session.user.name },
         isApproved: await requires(headers, 'requests.autoApprove'),
         catalogue,

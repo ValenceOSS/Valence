@@ -85,6 +85,47 @@ describe('judgeRelease', () => {
     expect(judge('Dune.2021.REPACK.1080p.BluRay.x264-GRP').score).toBe(2000 + 400 + 5);
   });
 
+  it('lifts a release that says it is in the language wanted', () => {
+    const profile = aProfile({ preferredLanguage: 'de' });
+    const plain = judge('Dune.2021.1080p.BluRay.x264-GRP', profile);
+    const german = judge('Dune.2021.1080p.GERMAN.BluRay.x264-GRP', profile);
+
+    expect(german.score).toBe(plain.score + 50);
+    expect(german.reasons).toContain('In Deutsch (+50)');
+  });
+
+  it('drops a release that says it is in another language, without refusing it', () => {
+    const profile = aProfile({ preferredLanguage: 'en' });
+    const plain = judge('Dune.2021.1080p.BluRay.x264-GRP', profile);
+    const german = judge('Dune.2021.1080p.GERMAN.BluRay.x264-GRP', profile);
+
+    expect(german.score).toBe(plain.score - 50);
+    expect(german.reasons).toContain('Not in English (−50)');
+    expect(german.isRejected).toBe(false);
+  });
+
+  it('says nothing about a release whose name names no language', () => {
+    const profile = aProfile({ preferredLanguage: 'en' });
+    const judged = judge('Dune.2021.1080p.BluRay.x264-GRP', profile);
+
+    expect(judged.score).toBe(judge('Dune.2021.1080p.BluRay.x264-GRP').score);
+    expect(judged.reasons.join(' ')).not.toContain('English');
+  });
+
+  it('says nothing at all where the profile wants no particular language', () => {
+    expect(judge('Dune.2021.1080p.GERMAN.BluRay.x264-GRP').reasons.join(' ')).not.toContain(
+      'Deutsch',
+    );
+  });
+
+  it('never lets a wanted language outrank a resolution', () => {
+    const profile = aProfile({ preferredLanguage: 'de', resolutions: ['1080p', '720p'] });
+
+    expect(judge('Dune.2021.1080p.BluRay.x264-GRP', profile).score).toBeGreaterThan(
+      judge('Dune.2021.720p.GERMAN.BluRay.x264-GRP', profile).score,
+    );
+  });
+
   it('refuses a torrent nobody seeds, but not an NZB', () => {
     expect(judge('Dune.2021.1080p.BluRay.x264-GRP', aProfile(), { seeders: 0 }).rejections).toEqual(
       ['Nobody is seeding it'],

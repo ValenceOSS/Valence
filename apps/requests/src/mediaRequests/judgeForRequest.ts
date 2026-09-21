@@ -13,7 +13,7 @@ import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestIt
 type JudgeForRequestOptions = {
   request: Pick<
     MediaRequestRecord,
-    'kind' | 'title' | 'artistName' | 'aliases' | 'year' | 'runtimeMinutes'
+    'kind' | 'title' | 'artistName' | 'aliases' | 'year' | 'runtimeMinutes' | 'libraryLanguage'
   >;
   items: readonly RequestItemRecord[];
   releases: readonly Release[];
@@ -40,6 +40,10 @@ type JudgedForRequest = {
  * A release picked by hand is matched by its numbers alone, or an album by its title alone, since
  * whoever picked it knows what it is better than its name does.
  *
+ * A profile that names no preferred language takes the one its library is set to, which is what
+ * makes the setting worth having: an operator who has already said their films are in German
+ * should not have to say it again on every profile.
+ *
  * @param request - What was asked for.
  * @param items - Its films or episodes.
  * @param releases - What the indexers found.
@@ -62,6 +66,10 @@ const judgeForRequest = ({
 }: JudgeForRequestOptions): JudgedForRequest => {
   const holding = new Map<string, RequestItemRecord[]>();
   const blockedBecause = new Map(blocked.map((block) => [block.title, block.reason]));
+  const judgedBy: QualityProfile = {
+    ...profile,
+    preferredLanguage: profile.preferredLanguage ?? request.libraryLanguage,
+  };
   const judged = releases.flatMap((release) => {
     const parsed = parseReleaseName(release.title);
     const covered = isMusicRequest(request.kind)
@@ -77,7 +85,7 @@ const judgeForRequest = ({
     }
 
     const fetched = covered.filter(isFetching);
-    const judgement = judgeRelease(release, parsed, profile, request.runtimeMinutes ?? undefined);
+    const judgement = judgeRelease(release, parsed, judgedBy, request.runtimeMinutes ?? undefined);
     const reason = blockedBecause.get(release.title);
     const rejections = [
       ...judgement.rejections,

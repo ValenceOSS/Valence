@@ -1,3 +1,4 @@
+import { describeLanguage } from '@ValenceCore/functions/describeTrack';
 import { hasWord } from '@ValenceRequests/profiles/hasWord';
 import { QUALITY_LABELS } from '@ValenceRequests/profiles/QUALITY_LABELS';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
@@ -18,6 +19,40 @@ const MEGABYTE = 1024 * 1024;
 const PREFERRED_WORD = 10;
 
 const REVISION = 5;
+
+const LANGUAGE = 50;
+
+/**
+ * Judges a release against the language wanted, where one is wanted.
+ *
+ * Three answers rather than two, because a release name that says nothing about language is the
+ * common case and must not be read either way. Most English releases never say they are English,
+ * so scoring silence as a miss would bury them; scoring it as a hit would rank an English dub
+ * above the Japanese original of a film that has no dub. Silence scores nothing.
+ *
+ * Never a rejection. Wanting English is a preference about which release to take, not a claim that
+ * a film has an English version, and a profile that refused everything else would leave a foreign
+ * film unfetchable.
+ *
+ * @param languages - The languages the release name says it carries.
+ * @param wanted - The language wanted, or null where none is.
+ * @returns The verdict.
+ */
+const judgeLanguage = (languages: readonly string[], wanted: string | null): Verdict => {
+  if (wanted === null || languages.length === 0) {
+    return { score: 0, rejections: [], reasons: [] };
+  }
+
+  const name = describeLanguage(wanted) ?? wanted;
+
+  return languages.includes(wanted)
+    ? { score: LANGUAGE, rejections: [], reasons: [`In ${name} (+${LANGUAGE.toString()})`] }
+    : {
+        score: -LANGUAGE,
+        rejections: [],
+        reasons: [`Not in ${name} (−${LANGUAGE.toString()})`],
+      };
+};
 
 /**
  * Judges one part of a release's quality against the profile's choices, best first: the further
@@ -138,6 +173,8 @@ const judgeSize = (
  * profile is chiefly about those. One that does not say its source is let through unscored, as
  * anime releases seldom do. A torrent nobody seeds is refused, since it would never arrive.
  *
+ * The language a profile prefers only ranks releases, and never refuses one. See [`judgeLanguage`].
+ *
  * @param release - The release.
  * @param parsed - What its name says.
  * @param profile - The profile.
@@ -211,6 +248,7 @@ const judgeRelease = (
           ? [`A repack, fixing an earlier release (+${REVISION.toString()})`]
           : [],
     },
+    judgeLanguage(parsed.languages, profile.preferredLanguage),
     judgeSize(release, parsed, profile, runtimeMinutes),
   );
 

@@ -141,6 +141,13 @@
       "when": 1789953248359,
       "tag": "0019_a_profile_of_ones_own",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789955049920,
+      "tag": "0020_the_language_it_is_wanted_in",
+      "breakpoints": true
     }
   ]
 }

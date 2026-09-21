@@ -38,6 +38,7 @@ const judged = (releaseId: string, score: number, isRejected = false): Judgement
     audio: [],
     audioChannels: null,
     musicQuality: null,
+    languages: [],
     edition: null,
     group: null,
     isProper: false,

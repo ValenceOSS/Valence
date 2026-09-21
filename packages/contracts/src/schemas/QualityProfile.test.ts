@@ -26,6 +26,21 @@ describe('QualityProfileDraftSchema', () => {
       upgradeUntilSource: null,
       upgradeUntilMusicQuality: null,
       libraryIds: [],
+      preferredLanguage: null,
+      isDefault: false,
+      roleIds: [],
+      accountIds: [],
+    });
+  });
+
+  it('leaves a new profile nobody’s in particular, and the choice of quality open', () => {
+    const draft = QualityProfileDraftSchema.parse({ name: 'HD', kind: 'video' });
+
+    expect(draft).toMatchObject({
+      isDefault: false,
+      roleIds: [],
+      accountIds: [],
+      preferredLanguage: null,
     });
   });
 

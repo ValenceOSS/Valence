@@ -31,6 +31,29 @@ describe('judgeForRequest', () => {
     expect(judged.holding.get(BLURAY)?.map((item) => item.id)).toEqual([aRequestItem().id]);
   });
 
+  it('takes the library’s language where the profile names none', () => {
+    const GERMAN = 'Dune.2021.1080p.GERMAN.BluRay.x264-GRP';
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      request: aMediaRequest({ libraryLanguage: 'de' }),
+      releases: [aRelease(BLURAY), aRelease(GERMAN)],
+    });
+
+    expect(judged.pickedId).toBe(GERMAN);
+  });
+
+  it('lets the profile’s own language override the library’s', () => {
+    const GERMAN = 'Dune.2021.1080p.GERMAN.BluRay.x264-GRP';
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      request: aMediaRequest({ libraryLanguage: 'de' }),
+      profile: aProfile({ sources: ['bluray', 'webdl'], preferredLanguage: 'en' }),
+      releases: [aRelease(BLURAY), aRelease(GERMAN)],
+    });
+
+    expect(judged.pickedId).toBe(BLURAY);
+  });
+
   it('refuses a release that failed before', () => {
     const judged = judgeForRequest({
       ...OPTIONS,

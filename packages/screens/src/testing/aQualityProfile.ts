@@ -26,6 +26,7 @@ const aQualityProfile = (overrides: Partial<QualityProfile> = {}): QualityProfil
   upgradeUntilSource: null,
   upgradeUntilMusicQuality: null,
   libraryIds: [],
+  preferredLanguage: null,
   isDefault: false,
   roleIds: [],
   accountIds: [],

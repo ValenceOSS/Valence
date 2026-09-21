@@ -61,6 +61,7 @@ const aJudgement = (
     audio: [],
     audioChannels: null,
     musicQuality: null,
+    languages: [],
     edition: null,
     group: null,
     isProper: false,

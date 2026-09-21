@@ -17,6 +17,7 @@ import {
   RELEASE_SOURCES,
   RESOLUTIONS,
 } from '@ValenceContracts/schemas/ParsedRelease';
+import { LANGUAGE_NAMES } from '@ValenceCore/functions/describeTrack';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { addProfile, changeProfile } from '@ValenceClient/requests/fetchProfiles';
@@ -34,6 +35,10 @@ const KINDS: readonly { id: ProfileKind; label: string }[] = [
   { id: 'video', label: 'Films and series' },
   { id: 'music', label: 'Music' },
 ];
+
+const LANGUAGES: readonly { id: string; label: string }[] = Object.entries(LANGUAGE_NAMES)
+  .map(([id, label]) => ({ id, label }))
+  .toSorted((left, right) => left.label.localeCompare(right.label));
 
 const WAITS: readonly { id: ReleaseWait; label: string }[] = [
   { id: 'digital', label: 'Out digitally' },
@@ -94,11 +99,13 @@ const Choosing = <Value extends string>({
   value,
   options,
   onChoose,
+  anything = 'The best there is',
 }: {
   label: string;
   value: Value | null;
   options: readonly { id: Value; label: string }[];
   onChoose: (value: Value | null) => void;
+  anything?: string;
 }) => (
   <FormField label={label}>
     <OptionMenu
@@ -112,13 +119,13 @@ const Choosing = <Value extends string>({
           onSelect: (next) => {
             onChoose(options.find((option) => option.id === next)?.id ?? null);
           },
-          options: [{ id: 'any', label: 'The best there is' }, ...options],
+          options: [{ id: 'any', label: anything }, ...options],
         },
       ]}
       trigger={
         <>
           <span className="truncate">
-            {options.find((option) => option.id === value)?.label ?? 'The best there is'}
+            {options.find((option) => option.id === value)?.label ?? anything}
           </span>
           <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
         </>
@@ -133,8 +140,9 @@ Choosing.displayName = 'Choosing';
  * The dialog for adding a quality profile, or changing one already kept: for films and series, which
  * resolutions and sources may be taken, best first, how large a release of each quality may be an
  * hour, and whether a film is held until it is out digitally or on disc; for music, which formats,
- * and how large an album. Words can be preferred, required or banned, it can say whether to
- * upgrade later and up to what, and which libraries it is for.
+ * and how large an album. Words can be preferred, required or banned, a language can be preferred,
+ * it can say whether to upgrade later and up to what, who may ask with it, and which libraries it
+ * is for.
  *
  * @param isOpen - Whether the dialog is showing.
  * @param profile - The profile being changed, or null to add one.
@@ -416,6 +424,21 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                 }}
               />
             )}
+          </Section>
+
+          <Section
+            title="Language"
+            detail="Releases that say they are in this language are preferred, and ones that say they are in another are not. A release whose name says nothing is left alone, which is most of them."
+          >
+            <Choosing
+              label="Prefer releases in"
+              value={form.preferredLanguage}
+              options={LANGUAGES}
+              onChoose={(preferredLanguage) => {
+                change({ preferredLanguage });
+              }}
+              anything="Whatever the library is set to"
+            />
           </Section>
 
           <Section

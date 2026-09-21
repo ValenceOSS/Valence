@@ -128,6 +128,7 @@ const MediaRequestDraftSchema = z
     musicBrainzId: MusicBrainzIdSchema.nullable().default(null),
     libraryId: z.string().min(1),
     libraryPath: z.string().min(1),
+    libraryLanguage: z.string().min(2).max(8).nullable().default(null),
     profileId: z.string().uuid().nullable().default(null),
     isPickedByHand: z.boolean().default(false),
     seasons: SeasonsSchema.default(null),

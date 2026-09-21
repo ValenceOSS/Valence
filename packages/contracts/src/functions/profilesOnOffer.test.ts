@@ -25,6 +25,7 @@ const aProfile = (
   upgradeUntilSource: null,
   upgradeUntilMusicQuality: null,
   libraryIds: [],
+  preferredLanguage: null,
   isDefault: false,
   roleIds: [],
   accountIds: [],

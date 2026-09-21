@@ -3,6 +3,7 @@ import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 
 type MediaRequestRecord = Omit<MediaRequest, 'state' | 'items' | 'requestedBy' | 'releaseDate'> & {
   libraryPath: string;
+  libraryLanguage: string | null;
   aliases: string[];
   requestedById: string;
   requestedByName: string;
