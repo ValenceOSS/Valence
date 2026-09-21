@@ -206,6 +206,8 @@ describe('createTransmissionAdapter', () => {
       secondsLeft: 3,
       seeds: 4,
       peers: 1,
+      uploadedBytes: null,
+      seedingSeconds: null,
       path: '/downloads/valence/Dune',
     });
     expect(listed.map((torrent) => [torrent.remoteId, torrent.state])).toEqual([

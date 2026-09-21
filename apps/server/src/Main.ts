@@ -2966,6 +2966,15 @@ if (requestsClient !== null) {
           return;
         }
 
+        case 'sweptUp': {
+          log.info(
+            'requests',
+            `${event.title} has seeded enough, so ${event.clientName} was told to clear it up`,
+          );
+
+          return;
+        }
+
         case 'chosen': {
           log.info('requests', `chose ${event.releaseTitle} for ${event.title}`);
 

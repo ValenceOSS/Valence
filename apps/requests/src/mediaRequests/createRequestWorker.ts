@@ -344,6 +344,8 @@ const createRequestWorker = ({
       libraryKind: LIBRARY_KINDS_OF[request.kind],
       sizeBytes: release.sizeBytes,
       indexerName: release.indexerName,
+      minimumSeedSeconds: release.minimumSeedSeconds,
+      minimumRatio: release.minimumRatio,
     });
 
     if (typeof sent === 'string') {

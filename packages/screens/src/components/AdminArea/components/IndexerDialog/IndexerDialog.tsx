@@ -23,6 +23,12 @@ import type { IndexerForm } from './readIndexerForm';
 import type { IndexerDialogProps } from './IndexerDialog.types';
 import type { TryVerdict } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton.types';
 
+const KEEPING: readonly { id: IndexerForm['removesWhenDone']; label: string }[] = [
+  { id: 'tracker', label: 'As the tracker expects' },
+  { id: 'always', label: 'Always clear it up' },
+  { id: 'never', label: 'Never clear it up' },
+];
+
 const KINDS = [
   { id: 'torznab', label: 'Torznab' },
   { id: 'newznab', label: 'Newznab' },
@@ -383,6 +389,53 @@ const IndexerDialog = ({
             change({ isEnabled: !form.isEnabled });
           }}
         />
+
+        <FormField
+          label="When a torrent is filed"
+          description="A public tracker's torrents are cleared up once the file is in the library. A private one's are kept, because deleting early is how an account is lost."
+        >
+          <SegmentedRow
+            label="When a torrent is filed"
+            size="sm"
+            items={KEEPING}
+            value={form.removesWhenDone}
+            onSelect={(next) => {
+              const chosen = KEEPING.find((one) => one.id === next)?.id;
+
+              if (chosen !== undefined) {
+                change({ removesWhenDone: chosen });
+              }
+            }}
+          />
+        </FormField>
+
+        {form.removesWhenDone === 'never' ? null : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField
+              label="Seed for at least (seconds)"
+              type="number"
+              min={0}
+              value={form.seedSeconds}
+              onValueChange={(seedSeconds) => {
+                change({ seedSeconds });
+              }}
+              placeholder="What the tracker asks"
+              description="Whichever is longer, this or what the release itself demands."
+            />
+
+            <TextField
+              label="Seed to a ratio of at least"
+              type="number"
+              min={0}
+              value={form.seedRatio}
+              onValueChange={(seedRatio) => {
+                change({ seedRatio });
+              }}
+              placeholder="What the tracker asks"
+              description="Whichever is larger, this or what the release itself demands."
+            />
+          </div>
+        )}
 
         {categories.length === 0 ? null : (
           <FormField

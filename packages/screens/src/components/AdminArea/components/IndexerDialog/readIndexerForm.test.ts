@@ -29,6 +29,9 @@ const KEPT: Indexer = {
   lastProblem: null,
   lastFailedAt: null,
   turnedOffBecause: null,
+  removesWhenDone: null,
+  seedSeconds: null,
+  seedRatio: null,
   createdAt: '2026-09-19T00:00:00.000Z',
   updatedAt: '2026-09-19T00:00:00.000Z',
 };
@@ -38,6 +41,21 @@ describe('formFor', () => {
     expect(formFor(null)).toEqual(A_NEW_INDEXER);
   });
 
+  it('opens on what the tracker expects, where nobody has said otherwise', () => {
+    expect(formFor(KEPT)).toMatchObject({
+      removesWhenDone: 'tracker',
+      seedSeconds: '',
+      seedRatio: '',
+    });
+    expect(formFor({ ...KEPT, removesWhenDone: true, seedSeconds: 3600 })).toMatchObject({
+      removesWhenDone: 'always',
+      seedSeconds: '3600',
+    });
+    expect(formFor({ ...KEPT, removesWhenDone: false })).toMatchObject({
+      removesWhenDone: 'never',
+    });
+  });
+
   it('opens on a kept indexer without its key', () => {
     expect(formFor(KEPT)).toEqual({
       kind: 'newznab',
@@ -45,6 +63,9 @@ describe('formFor', () => {
       url: 'https://api.nzbgeek.info',
       apiKey: '',
       priority: '5',
+      removesWhenDone: 'tracker',
+      seedSeconds: '',
+      seedRatio: '',
       requestsPerMinute: '10',
       timeoutSeconds: '60',
       isEnabled: false,
@@ -94,6 +115,31 @@ describe('readIndexerForm', () => {
     });
   });
 
+  it('reads what an operator asked of a torrent once it is filed', () => {
+    expect(
+      readIndexerForm({ ...FILLED, removesWhenDone: 'always', seedSeconds: '3600', seedRatio: '2' })
+        .draft,
+    ).toMatchObject({ removesWhenDone: true, seedSeconds: 3600, seedRatio: 2 });
+    expect(readIndexerForm({ ...FILLED, removesWhenDone: 'never' }).draft?.removesWhenDone).toBe(
+      false,
+    );
+    expect(readIndexerForm({ ...FILLED, removesWhenDone: 'tracker' }).draft?.removesWhenDone).toBe(
+      null,
+    );
+  });
+
+  it('says what is wrong with a seed time or a ratio it cannot read', () => {
+    expect(readIndexerForm({ ...FILLED, seedSeconds: 'ages' }).problem).toBe(
+      'Seed for a whole number of minutes, up to a year.',
+    );
+    expect(readIndexerForm({ ...FILLED, seedRatio: 'lots' }).problem).toBe(
+      'A ratio is a number from 0 to 1000.',
+    );
+    expect(readIndexerForm({ ...FILLED, seedRatio: '-1' }).problem).toBe(
+      'A ratio is a number from 0 to 1000.',
+    );
+  });
+
   it('reads a filled form, trimming what was typed', () => {
     expect(readIndexerForm(FILLED)).toEqual({
       draft: {
@@ -102,6 +148,9 @@ describe('readIndexerForm', () => {
         url: 'http://jackett:9117/',
         apiKey: 'key',
         priority: 25,
+        removesWhenDone: null,
+        seedSeconds: null,
+        seedRatio: null,
         requestsPerMinute: null,
         timeoutSeconds: 30,
         isEnabled: true,

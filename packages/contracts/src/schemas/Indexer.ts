@@ -40,6 +40,9 @@ const IndexerSchema = z.object({
   settings: IndexerSettingsSchema.default({}),
   secretsSet: z.array(z.string()).default([]),
   privacy: z.enum(['public', 'semi-private', 'private']).nullable().default(null),
+  removesWhenDone: z.boolean().nullable().default(null),
+  seedSeconds: z.number().int().nonnegative().nullable().default(null),
+  seedRatio: z.number().nonnegative().nullable().default(null),
   priority: z.number().int().min(1).max(50),
   isEnabled: z.boolean(),
   categories: z.array(z.number().int()),
@@ -66,6 +69,9 @@ const IndexerDraftSchema = z.object({
   timeoutSeconds: z.number().int().min(5).max(120).default(30),
   definitionId: z.string().min(1).nullable().default(null),
   settings: IndexerSettingsSchema.default({}),
+  removesWhenDone: z.boolean().nullable().default(null),
+  seedSeconds: z.number().int().nonnegative().max(31_536_000).nullable().default(null),
+  seedRatio: z.number().nonnegative().max(1000).nullable().default(null),
 });
 
 const IndexerChangeSchema = z.object({
@@ -79,6 +85,9 @@ const IndexerChangeSchema = z.object({
   requestsPerMinute: z.number().int().positive().max(600).nullable().optional(),
   timeoutSeconds: z.number().int().min(5).max(120).optional(),
   settings: IndexerSettingsSchema.optional(),
+  removesWhenDone: z.boolean().nullable().optional(),
+  seedSeconds: z.number().int().nonnegative().max(31_536_000).nullable().optional(),
+  seedRatio: z.number().nonnegative().max(1000).nullable().optional(),
 });
 
 const IndexerTestSchema = z.object({

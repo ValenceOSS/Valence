@@ -125,6 +125,7 @@ const downloadQueue = createDownloadQueue({
   clients: downloadClients,
   downloads: sentDownloads,
   events,
+  indexers: { records: () => indexers.list() },
   fetchRelease: (indexerId, url) => indexers.download(indexerId, url),
 });
 

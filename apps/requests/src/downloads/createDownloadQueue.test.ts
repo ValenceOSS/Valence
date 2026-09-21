@@ -12,6 +12,7 @@ import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 import type { ClientItem, DownloadClientAdapter } from './DownloadClientAdapter';
 import type { DownloadClientRecord } from './DownloadClientRecord';
 import type { SentDownloadRecord } from './SentDownloadRecord';
+import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 
 const AT = new Date('2026-09-19T00:00:00.000Z');
 
@@ -37,6 +38,8 @@ const anItem = (overrides: Partial<ClientItem> = {}): ClientItem => ({
   secondsLeft: 5,
   seeds: 9,
   peers: 2,
+  uploadedBytes: null,
+  seedingSeconds: null,
   path: null,
   ...overrides,
 });
@@ -84,6 +87,7 @@ const aQueue = ({
   clients = [QBITTORRENT],
   sent = [],
   adapter = anAdapter(),
+  indexers = [],
   fetchRelease = vi.fn((indexerId: string, url: string) => {
     void indexerId;
     void url;
@@ -94,6 +98,7 @@ const aQueue = ({
   clients?: DownloadClientRecord[];
   sent?: SentDownloadRecord[];
   adapter?: ReturnType<typeof anAdapter>;
+  indexers?: Pick<Indexer, 'id' | 'privacy' | 'removesWhenDone' | 'seedSeconds' | 'seedRatio'>[];
   fetchRelease?: (indexerId: string, url: string) => Promise<ReleaseFile | null>;
 } = {}) => {
   const store = createMemoryRecordStore(clients);
@@ -113,6 +118,7 @@ const aQueue = ({
     clients: { records: () => store.list(), adapterOf: () => adapter },
     downloads,
     events,
+    indexers: { records: () => Promise.resolve(indexers) },
     fetchRelease,
     now: () => AT,
     schedule,
@@ -815,6 +821,91 @@ describe('createDownloadQueue', () => {
       queue.watch(true);
 
       expect(waits.filter((wait) => !wait.isCancelled)).toEqual([]);
+    });
+  });
+
+  describe('clearing up after seeding', () => {
+    const filed = (overrides = {}) =>
+      aSentDownload({
+        state: 'done',
+        filedInto: '/media/Films/Dune (2021)',
+        removesWhenDone: true,
+        ...overrides,
+      });
+
+    const done = (overrides = {}) =>
+      anItem({ state: 'done', progress: 1, doneBytes: 1000, ...overrides });
+
+    it('removes a filed torrent and its files once it owes nothing', async () => {
+      const adapter = anAdapter([done()]);
+      const { queue, downloads } = aQueue({ sent: [filed()], adapter });
+
+      await queue.check();
+
+      expect(adapter.remove).toHaveBeenCalledWith(HASH, true);
+      expect(await downloads.list()).toEqual([]);
+    });
+
+    it('keeps one that has not seeded for as long as it was asked to', async () => {
+      const adapter = anAdapter([done({ seedingSeconds: 60 })]);
+      const { queue, downloads } = aQueue({
+        sent: [filed({ seedSeconds: 3600 })],
+        adapter,
+      });
+
+      await queue.check();
+
+      expect(adapter.remove).not.toHaveBeenCalled();
+      expect(await downloads.list()).toHaveLength(1);
+    });
+
+    it('removes it once it has seeded for long enough', async () => {
+      const adapter = anAdapter([done({ seedingSeconds: 3600 })]);
+      const { queue } = aQueue({ sent: [filed({ seedSeconds: 3600 })], adapter });
+
+      await queue.check();
+
+      expect(adapter.remove).toHaveBeenCalledWith(HASH, true);
+    });
+
+    it('keeps one whose indexer Valence was told not to clear up after', async () => {
+      const adapter = anAdapter([done()]);
+      const { queue } = aQueue({ sent: [filed({ removesWhenDone: false })], adapter });
+
+      await queue.check();
+
+      expect(adapter.remove).not.toHaveBeenCalled();
+    });
+
+    it('keeps one that has finished but has not been filed', async () => {
+      const adapter = anAdapter([done()]);
+      const { queue } = aQueue({ sent: [filed({ filedInto: null })], adapter });
+
+      await queue.check();
+
+      expect(adapter.remove).not.toHaveBeenCalled();
+    });
+
+    it('says so, so the library knows the disk is free again', async () => {
+      const { queue, events } = aQueue({ sent: [filed()], adapter: anAdapter([done()]) });
+
+      await queue.check();
+
+      expect(await events.pending()).toMatchObject([
+        { kind: 'sweptUp', title: 'Dune', clientName: 'qBittorrent' },
+      ]);
+    });
+
+    it('keeps it where the client would not take it out', async () => {
+      const adapter = anAdapter([done()]);
+
+      adapter.remove.mockRejectedValue(new Error('no'));
+
+      const { queue, downloads } = aQueue({ sent: [filed()], adapter });
+
+      await queue.check();
+
+      expect(await downloads.list()).toHaveLength(1);
     });
   });
 });

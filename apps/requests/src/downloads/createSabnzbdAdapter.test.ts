@@ -227,6 +227,8 @@ describe('createSabnzbdAdapter', () => {
       secondsLeft: 65,
       seeds: null,
       peers: null,
+      uploadedBytes: null,
+      seedingSeconds: null,
       path: null,
     });
     expect(listed[2]?.path).toBe('/downloads/valence/Heat');

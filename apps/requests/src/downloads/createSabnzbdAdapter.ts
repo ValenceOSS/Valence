@@ -216,6 +216,8 @@ const createSabnzbdAdapter = (
           secondsLeft: state === 'downloading' ? readTimeLeft(slot.timeleft) : null,
           seeds: null,
           peers: null,
+          uploadedBytes: null,
+          seedingSeconds: null,
           path: null,
         };
       });
@@ -243,6 +245,8 @@ const createSabnzbdAdapter = (
             secondsLeft: null,
             seeds: null,
             peers: null,
+            uploadedBytes: null,
+            seedingSeconds: null,
             path: slot.storage === null || slot.storage === '' ? null : slot.storage,
           };
         });
