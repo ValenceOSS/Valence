@@ -89,6 +89,50 @@ describe('AskableDialog', () => {
     expect(fetchAskable).toHaveBeenCalledWith('film', '438631');
   });
 
+  it('splits an artist’s releases by what each one is', async () => {
+    fetchAskable.mockResolvedValue(
+      aTitle({
+        kind: 'artist',
+        id: '83d91898-7763-47d7-b03b-b92132375c47',
+        musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+        title: 'Pink Floyd',
+        albums: [
+          {
+            id: '6ba7b810-9dad-11d1-80b4-00c04fd43001',
+            title: 'Another Brick',
+            type: 'single',
+            firstReleased: '1979-11-23',
+          },
+          {
+            id: '6ba7b810-9dad-11d1-80b4-00c04fd43002',
+            title: 'The Wall',
+            type: 'album',
+            firstReleased: '1979-11-30',
+          },
+          {
+            id: '6ba7b810-9dad-11d1-80b4-00c04fd43003',
+            title: 'Pulse',
+            type: 'live',
+            firstReleased: '1995-05-29',
+          },
+        ],
+      }),
+    );
+
+    open('artist:83d91898-7763-47d7-b03b-b92132375c47');
+
+    const albums = await screen.findByRole('region', { name: 'Albums' });
+
+    expect(within(albums).getByText('The Wall')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: 'Singles' })).getByText('Another Brick'),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: 'Live' })).getByText('Pulse'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'EPs' })).not.toBeInTheDocument();
+  });
+
   it('plays the trailer of something not in the library yet', async () => {
     fetchAskable.mockResolvedValue(aTitle({ trailerKey: 'abc123' }));
 

@@ -18,7 +18,6 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
-import { RELEASE_TYPE_NAMES } from '@ValenceScreens/components/AdminArea/RELEASE_TYPE_NAMES';
 import { CastGrid } from '@ValenceScreens/components/MediaDetailDialog/components/CastGrid/CastGrid';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
@@ -29,6 +28,7 @@ import { describeStanding } from './describeStanding';
 import { readAsking } from './readAsking';
 import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
+import { groupReleases } from '@ValenceScreens/requests/groupReleases';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskableDialogProps } from './AskableDialog.types';
@@ -279,55 +279,47 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                 <ReleaseTypeChooser value={releaseTypes} onChange={setReleaseTypes} />
               ) : null}
 
-              {title.albums.length === 0 ? null : (
-                <section aria-label="Albums" className="flex flex-col gap-3">
-                  <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">Albums</h3>
+              {groupReleases(title.albums).map((group) => (
+                <section key={group.id} aria-label={group.title} className="flex flex-col gap-3">
+                  <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">
+                    {group.title}
+                  </h3>
                   <ul className="flex flex-col gap-1">
-                    {title.albums
-                      .filter((album) => album.type !== null)
-                      .toSorted((left, right) =>
-                        (right.firstReleased ?? '').localeCompare(left.firstReleased ?? ''),
-                      )
-                      .map((album) => (
-                        <li
-                          key={album.id}
-                          className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[var(--surface-hover)]"
-                        >
-                          <Icon of={MusicNoteIcon} size={16} tone="muted" className="shrink-0" />
-                          <span className="flex min-w-0 flex-1 flex-col">
-                            <span className="truncate text-sm text-text">{album.title}</span>
-                            <span className="text-xs text-text-muted">
-                              {[
-                                album.type === null ? null : RELEASE_TYPE_NAMES[album.type].one,
-                                album.firstReleased?.slice(0, 4) ?? null,
-                              ]
-                                .filter((part) => part !== null)
-                                .join(' · ')}
-                            </span>
+                    {group.albums.map((album) => (
+                      <li
+                        key={album.id}
+                        className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[var(--surface-hover)]"
+                      >
+                        <Icon of={MusicNoteIcon} size={16} tone="muted" className="shrink-0" />
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <span className="truncate text-sm text-text">{album.title}</span>
+                          <span className="text-xs text-text-muted">
+                            {album.firstReleased?.slice(0, 4) ?? 'No year given'}
                           </span>
-                          {askedAlbums.has(album.id) ? (
-                            <Badge size="sm" tone={STATUS_LOOK.queued.tone}>
-                              Requested
-                            </Badge>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="xs"
-                              isLoading={isAsking}
-                              onClick={() => {
-                                ask({ kind: 'album', musicBrainzId: album.id }, () => {
-                                  setAskedAlbums(new Set([...askedAlbums, album.id]));
-                                });
-                              }}
-                            >
-                              Request
-                            </Button>
-                          )}
-                        </li>
-                      ))}
+                        </span>
+                        {askedAlbums.has(album.id) ? (
+                          <Badge size="sm" tone={STATUS_LOOK.queued.tone}>
+                            Requested
+                          </Badge>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            isLoading={isAsking}
+                            onClick={() => {
+                              ask({ kind: 'album', musicBrainzId: album.id }, () => {
+                                setAskedAlbums(new Set([...askedAlbums, album.id]));
+                              });
+                            }}
+                          >
+                            Request
+                          </Button>
+                        )}
+                      </li>
+                    ))}
                   </ul>
                 </section>
-              )}
+              ))}
             </div>
           </div>
         )}
