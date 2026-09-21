@@ -18,6 +18,7 @@ type ScanEntry = {
   processed: number | null;
   total: number | null;
   jobId: string | null;
+  isStopping: boolean;
 };
 
 type ScanSnapshot = {
@@ -27,6 +28,7 @@ type ScanSnapshot = {
 };
 
 let progress = new Map<string, ScanEntry>();
+let stopping = new Set<string>();
 let isScanningAll = false;
 let isResettingAll = false;
 let snapshot: ScanSnapshot = { progress, isScanningAll, isResettingAll };
@@ -87,8 +89,8 @@ const getSnapshot = (): ScanSnapshot => snapshot;
  * @param libraryId - The library being worked on.
  * @param entry - What its job is doing.
  */
-const track = (key: string, entry: ScanEntry) => {
-  progress = new Map(progress).set(key, entry);
+const track = (key: string, entry: Omit<ScanEntry, 'isStopping'>) => {
+  progress = new Map(progress).set(key, { ...entry, isStopping: stopping.has(key) });
   notify();
 };
 
@@ -99,6 +101,8 @@ const track = (key: string, entry: ScanEntry) => {
  * @param libraryId - The library to forget.
  */
 const untrack = (key: string) => {
+  stopping.delete(key);
+
   if (!progress.has(key)) {
     return;
   }
@@ -349,16 +353,29 @@ const clearPartsOfAll = (
 export type { ScanEntry };
 
 /**
- * Asks every run of one job kind to stop, whichever library each is working on.
+ * Asks every run of one job kind to stop, whichever library each is working on. Each is marked as
+ * stopping at once and stays so until it has ended, since a run finishes what it has already started
+ * before it stops and can go on saying it is running for some time after it was asked not to.
  *
  * @param kind - The job kind to stop.
  */
 const stopJobs = async (kind: string): Promise<void> => {
-  const ids = [...snapshot.progress.values()]
-    .filter((entry) => entry.kind === kind && entry.jobId !== null)
-    .map((entry) => entry.jobId ?? '');
+  const running = [...snapshot.progress.entries()].filter(
+    ([, entry]) => entry.kind === kind && entry.jobId !== null,
+  );
 
-  await Promise.all(ids.map((jobId) => cancelJob(jobId)));
+  running.forEach(([key]) => {
+    stopping.add(key);
+  });
+  progress = new Map(
+    [...progress.entries()].map(([key, entry]) => [
+      key,
+      stopping.has(key) ? { ...entry, isStopping: true } : entry,
+    ]),
+  );
+  notify();
+
+  await Promise.all(running.map(([, entry]) => cancelJob(entry.jobId ?? '')));
 };
 
 /**
@@ -367,6 +384,7 @@ const stopJobs = async (kind: string): Promise<void> => {
  */
 const resetForTests = () => {
   progress = new Map();
+  stopping = new Set();
   isScanningAll = false;
   isResettingAll = false;
   notify();
