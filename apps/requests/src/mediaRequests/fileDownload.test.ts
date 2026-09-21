@@ -161,6 +161,75 @@ describe('fileDownload', () => {
     );
   });
 
+  it('renames a filed video to what it turns out to be, subtitles with it', async () => {
+    const { downloads, library } = await aPlace();
+    const release = join(downloads, 'Dune.2021.1080p.WEB-DL-GRP');
+
+    await mkdir(release);
+    await writeFile(join(release, 'Dune.2021.1080p.WEB-DL-GRP.mkv'), 'the film');
+    await writeFile(join(release, 'Dune.2021.1080p.WEB-DL-GRP.en.srt'), 'words');
+
+    const { filed } = await fileDownload(
+      { libraryPath: library, title: 'Dune', year: 2021 },
+      [anItem('film', null, null)],
+      release,
+      true,
+      () =>
+        Promise.resolve({
+          video: { codec: 'hevc', width: 3840, height: 2160 },
+          audioStreams: [{ codec: 'eac3', channels: 6, profile: null }],
+        }),
+    );
+
+    expect(filed.get('film')).toBe(
+      join(library, 'Dune (2021)', 'Dune (2021) [2160p][WEBDL][x265][EAC3 5.1].mkv'),
+    );
+    expect((await readdir(join(library, 'Dune (2021)'))).toSorted()).toEqual([
+      'Dune (2021) [2160p][WEBDL][x265][EAC3 5.1].en.srt',
+      'Dune (2021) [2160p][WEBDL][x265][EAC3 5.1].mkv',
+    ]);
+  });
+
+  it('keeps what the name said where nothing answers the probe', async () => {
+    const { downloads, library } = await aPlace();
+
+    await writeFile(join(downloads, 'Dune.2021.1080p.WEB-DL.x264-GRP.mkv'), 'the film');
+
+    const { filed } = await fileDownload(
+      { libraryPath: library, title: 'Dune', year: 2021 },
+      [anItem('film', null, null)],
+      join(downloads, 'Dune.2021.1080p.WEB-DL.x264-GRP.mkv'),
+      true,
+      () => Promise.resolve(null),
+    );
+
+    expect(filed.get('film')).toBe(
+      join(library, 'Dune (2021)', 'Dune (2021) [1080p][WEBDL][x264].mkv'),
+    );
+  });
+
+  it('keeps where a release came from, which no probe can tell it', async () => {
+    const { downloads, library } = await aPlace();
+
+    await writeFile(join(downloads, 'Dune.2021.2160p.BluRay.REMUX.mkv'), 'the film');
+
+    const { filed } = await fileDownload(
+      { libraryPath: library, title: 'Dune', year: 2021 },
+      [anItem('film', null, null)],
+      join(downloads, 'Dune.2021.2160p.BluRay.REMUX.mkv'),
+      true,
+      () =>
+        Promise.resolve({
+          video: { codec: 'hevc', width: 3840, height: 2160 },
+          audioStreams: [],
+        }),
+    );
+
+    expect(filed.get('film')).toBe(
+      join(library, 'Dune (2021)', 'Dune (2021) [2160p][Remux][x265].mkv'),
+    );
+  });
+
   it('removes what an upgrade replaces', async () => {
     const { downloads, library } = await aPlace();
     const old = join(library, 'Dune (2021)', 'Dune (2021).avi');

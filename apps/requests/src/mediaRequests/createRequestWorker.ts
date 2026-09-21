@@ -33,6 +33,7 @@ import type {
   MissingSearch,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
+import type { ProbeClient } from '@ValenceRequests/media/createProbeClient';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import type { DownloadQueueService } from '@ValenceRequests/downloads/createDownloadQueue';
@@ -70,6 +71,7 @@ type CreateRequestWorkerOptions = {
   events: EventStore;
   log: RequestLogStore;
   file?: typeof fileDownload;
+  probe?: ProbeClient;
   fileMusic?: typeof fileAlbum;
   now?: () => Date;
   schedule?: Schedule;
@@ -240,6 +242,7 @@ const createRequestWorker = ({
   events,
   log,
   file = fileDownload,
+  probe = () => Promise.resolve(null),
   fileMusic = fileAlbum,
   now = () => new Date(),
   schedule = waitThenRun,
@@ -665,7 +668,7 @@ const createRequestWorker = ({
       try {
         const { filed, missing } = await (isMusicRequest(request.kind)
           ? fileMusic(request, filing, path, download.protocol === 'torrent')
-          : file(request, filing, path, download.protocol === 'torrent'));
+          : file(request, filing, path, download.protocol === 'torrent', probe));
 
         for (const item of filing) {
           const path = filed.get(item.id);
@@ -737,6 +740,7 @@ const createRequestWorker = ({
       wanted.map((one) => ({ ...one, title: '', airDate: null, filePath: null, releaseTitle })),
       path,
       protocol === 'torrent',
+      probe,
     );
 
     return filed.size === 0 ? null : libraryFolderOf(into);

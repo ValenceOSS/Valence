@@ -441,6 +441,7 @@ describe('createRequestWorker', () => {
         [expect.objectContaining({ state: 'filing' })],
         '/srv/downloads/valence-films/Dune',
         true,
+        expect.any(Function),
       );
       expect(await theItem(items)).toMatchObject({
         state: 'filed',
@@ -824,6 +825,7 @@ describe('createRequestWorker', () => {
         ],
         '/srv/downloads/The Matrix (1999) [1080p]',
         true,
+        expect.any(Function),
       );
       expect((await downloads.find(BY_HAND.id))?.filedInto).toBe('/media/Films/The Matrix (1999)');
       expect(await events.pending()).toMatchObject([
