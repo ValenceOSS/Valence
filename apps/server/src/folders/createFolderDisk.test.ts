@@ -86,3 +86,45 @@ describe('createFolderDisk', () => {
     }
   });
 });
+
+describe('making a folder', () => {
+  it('makes it, one level inside a folder that is there', async () => {
+    const disk = createFolderDisk('darwin');
+
+    await expect(disk.makeDirectory(join(root, 'anime'))).resolves.toBe('made');
+    await expect(disk.isDirectory(join(root, 'anime'))).resolves.toBe(true);
+  });
+
+  it('says something is already there, whether folder or file', async () => {
+    const disk = createFolderDisk('darwin');
+
+    await expect(disk.makeDirectory(join(root, 'films'))).resolves.toBe('exists');
+    await expect(disk.makeDirectory(join(root, 'notes.txt'))).resolves.toBe('exists');
+  });
+
+  it('will not build a parent that is not there', async () => {
+    const disk = createFolderDisk('darwin');
+
+    await expect(disk.makeDirectory(join(root, 'nowhere', 'anime'))).resolves.toBe('missing');
+    await expect(disk.isDirectory(join(root, 'nowhere'))).resolves.toBe(false);
+  });
+
+  it('will not make one inside a file', async () => {
+    await expect(
+      createFolderDisk('darwin').makeDirectory(join(root, 'notes.txt', 'anime')),
+    ).resolves.toBe('missing');
+  });
+
+  it.skipIf(process.getuid?.() === 0)('says so where it is not allowed to write', async () => {
+    const locked = join(root, 'locked');
+
+    await mkdir(locked);
+    await chmod(locked, 0o555);
+
+    await expect(createFolderDisk('darwin').makeDirectory(join(locked, 'anime'))).resolves.toBe(
+      'denied',
+    );
+
+    await chmod(locked, 0o755);
+  });
+});
