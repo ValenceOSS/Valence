@@ -130,7 +130,7 @@ describe('readIndexerForm', () => {
 
   it('says what is wrong with a seed time or a ratio it cannot read', () => {
     expect(readIndexerForm({ ...FILLED, seedSeconds: 'ages' }).problem).toBe(
-      'Seed for a whole number of minutes, up to a year.',
+      'Seed time is a whole number of seconds, up to a year.',
     );
     expect(readIndexerForm({ ...FILLED, seedRatio: 'lots' }).problem).toBe(
       'A ratio is a number from 0 to 1000.',

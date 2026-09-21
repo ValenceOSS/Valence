@@ -78,7 +78,7 @@ const ProfilesPanel = () => {
       },
       {
         id: 'askers',
-        header: 'Asked with by',
+        header: 'Who can use it',
         accessorFn: (profile) => describeAskers(profile),
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">{describeAskers(row.original)}</span>

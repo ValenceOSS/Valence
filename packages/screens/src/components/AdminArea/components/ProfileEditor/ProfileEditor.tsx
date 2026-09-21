@@ -428,25 +428,25 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
           <Section
             title="Language"
-            detail="Releases that say they are in this language are preferred, and ones that say they are in another are not. A release whose name says nothing is left alone, which is most of them."
+            detail="Prefers releases that say they are in this language. Most releases say nothing, and those are left alone."
           >
             <Choosing
-              label="Prefer releases in"
+              label="Preferred language"
               value={form.preferredLanguage}
               options={LANGUAGES}
               onChoose={(preferredLanguage) => {
                 change({ preferredLanguage });
               }}
-              anything="Whatever the library is set to"
+              anything="Use the library’s language"
             />
           </Section>
 
           <Section
-            title="Who asks with it"
-            detail="A profile nobody is named on is one anybody who may ask can choose. Naming roles or people keeps it to them."
+            title="Who can use it"
+            detail="Leave both empty and anyone can pick this profile. Tick roles or people to keep it to them."
           >
             <Switch
-              label="Ask at this quality and no other"
+              label="Always use this profile"
               isOn={form.isDefault}
               onToggle={() => {
                 change({ isDefault: !form.isDefault });
@@ -455,15 +455,15 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
             <p className="font-body text-sm text-text-muted">
               {form.isDefault
-                ? `Every ${isVideo ? 'film and series' : 'music'} request goes through this profile, and nobody is asked to choose. Only one profile of a kind can be set this way.`
-                : 'Leave this off to let people choose which quality to ask at.'}
+                ? `Every ${isVideo ? 'film and series' : 'music'} request uses this profile. Only one ${isVideo ? 'video' : 'music'} profile can do this.`
+                : 'Leave off to let people pick a quality themselves.'}
             </p>
 
             {form.isDefault ? null : (
               <div className="grid gap-6 sm:grid-cols-2">
                 <AskerPicker
                   legend="Roles"
-                  everyLabel="Anybody who may ask"
+                  everyLabel="Any role"
                   askers={(roles.data ?? []).map((role) => ({ id: role.id, name: role.name }))}
                   chosen={new Set(form.roleIds)}
                   onChange={(chosen) => {
@@ -473,7 +473,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
                 <AskerPicker
                   legend="People"
-                  everyLabel="Nobody in particular"
+                  everyLabel="Anybody"
                   askers={(accounts.data ?? []).map((account) => ({
                     id: account.id,
                     name: account.name,

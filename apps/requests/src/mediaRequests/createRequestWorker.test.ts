@@ -520,7 +520,7 @@ describe('createRequestWorker', () => {
       await worker.tick();
 
       expect((await blocked.list())[0]?.reason).toBe(
-        'Nobody would tell it what it holds, so it never started',
+        'It never got its file list, so it never started',
       );
     });
 

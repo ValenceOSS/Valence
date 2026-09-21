@@ -24,9 +24,9 @@ import type { IndexerDialogProps } from './IndexerDialog.types';
 import type { TryVerdict } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton.types';
 
 const KEEPING: readonly { id: IndexerForm['removesWhenDone']; label: string }[] = [
-  { id: 'tracker', label: 'As the tracker expects' },
-  { id: 'always', label: 'Always clear it up' },
-  { id: 'never', label: 'Never clear it up' },
+  { id: 'tracker', label: 'Follow the tracker' },
+  { id: 'always', label: 'Always delete' },
+  { id: 'never', label: 'Never delete' },
 ];
 
 const KINDS = [
@@ -391,11 +391,11 @@ const IndexerDialog = ({
         />
 
         <FormField
-          label="When a torrent is filed"
-          description="A public tracker's torrents are cleared up once the file is in the library. A private one's are kept, because deleting early is how an account is lost."
+          label="After a download is filed"
+          description="Public trackers default to deleting the torrent. Private ones keep seeding, so you do not lose your account."
         >
           <SegmentedRow
-            label="When a torrent is filed"
+            label="After a download is filed"
             size="sm"
             items={KEEPING}
             value={form.removesWhenDone}
@@ -412,7 +412,7 @@ const IndexerDialog = ({
         {form.removesWhenDone === 'never' ? null : (
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField
-              label="Seed for at least (seconds)"
+              label="Minimum seed time (seconds)"
               type="number"
               min={0}
               value={form.seedSeconds}
@@ -420,11 +420,11 @@ const IndexerDialog = ({
                 change({ seedSeconds });
               }}
               placeholder="What the tracker asks"
-              description="Whichever is longer, this or what the release itself demands."
+              description="Whichever is higher: this or the tracker’s own minimum."
             />
 
             <TextField
-              label="Seed to a ratio of at least"
+              label="Minimum seed ratio"
               type="number"
               min={0}
               value={form.seedRatio}
@@ -432,7 +432,7 @@ const IndexerDialog = ({
                 change({ seedRatio });
               }}
               placeholder="What the tracker asks"
-              description="Whichever is larger, this or what the release itself demands."
+              description="Whichever is higher: this or the tracker’s own minimum."
             />
           </div>
         )}

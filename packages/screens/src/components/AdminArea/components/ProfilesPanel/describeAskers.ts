@@ -9,7 +9,7 @@ import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
  */
 const describeAskers = (profile: QualityProfile): string => {
   if (profile.isDefault) {
-    return 'Everything, with no choice';
+    return 'Everything';
   }
 
   const counted = [
@@ -19,7 +19,7 @@ const describeAskers = (profile: QualityProfile): string => {
     .filter(({ many }) => many > 0)
     .map(({ many, one, more }) => `${many} ${many === 1 ? one : more}`);
 
-  return counted.length === 0 ? 'Anybody who may ask' : counted.join(' and ');
+  return counted.length === 0 ? 'Anybody' : counted.join(' and ');
 };
 
 export { describeAskers };

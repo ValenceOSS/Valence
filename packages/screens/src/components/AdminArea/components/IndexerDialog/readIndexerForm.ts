@@ -127,7 +127,7 @@ const readIndexerForm = (form: IndexerForm): ReadIndexerForm => {
     form.seedSeconds.trim() === '' ? null : readWholeNumber(form.seedSeconds, 0, 31_536_000);
 
   if (seedSeconds === null && form.seedSeconds.trim() !== '') {
-    return { draft: null, problem: 'Seed for a whole number of minutes, up to a year.' };
+    return { draft: null, problem: 'Seed time is a whole number of seconds, up to a year.' };
   }
 
   const ratio = form.seedRatio.trim() === '' ? null : Number(form.seedRatio.trim());

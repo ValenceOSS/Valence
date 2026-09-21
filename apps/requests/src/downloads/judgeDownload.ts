@@ -94,7 +94,7 @@ const judgeDownload = (
   ) {
     return {
       isDoomed: true,
-      reason: 'Nobody would tell it what it holds, so it never started',
+      reason: 'It never got its file list, so it never started',
     };
   }
 

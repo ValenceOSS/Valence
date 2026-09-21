@@ -12,7 +12,7 @@ const draw = (chosen: string[], onChange = vi.fn()) => {
   render(
     <AskerPicker
       legend="Roles"
-      everyLabel="Anybody who may ask"
+      everyLabel="Any role"
       askers={ASKERS}
       chosen={new Set(chosen)}
       onChange={onChange}
@@ -33,13 +33,13 @@ describe('AskerPicker', () => {
   it('reads as anybody while nobody is named', () => {
     draw([]);
 
-    expect(screen.getByRole('checkbox', { name: 'Anybody who may ask' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Any role' })).toBeChecked();
   });
 
   it('stops reading as anybody once somebody is named', () => {
     draw(['trusted']);
 
-    expect(screen.getByRole('checkbox', { name: 'Anybody who may ask' })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Any role' })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: /Trusted/ })).toBeChecked();
   });
 
@@ -62,7 +62,7 @@ describe('AskerPicker', () => {
   it('gives a profile back to the house when the box above is ticked', async () => {
     const onChange = draw(['trusted']);
 
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Anybody who may ask' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Any role' }));
 
     expect(onChange).toHaveBeenCalledWith(new Set());
   });

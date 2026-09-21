@@ -4,7 +4,7 @@ import { describeAskers } from './describeAskers';
 
 describe('describeAskers', () => {
   it('says a profile naming nobody is anybody’s', () => {
-    expect(describeAskers(aQualityProfile())).toBe('Anybody who may ask');
+    expect(describeAskers(aQualityProfile())).toBe('Anybody');
   });
 
   it('counts the roles and the people named on it', () => {
@@ -17,7 +17,7 @@ describe('describeAskers', () => {
 
   it('says the default takes the choice away, whoever is named on it', () => {
     expect(describeAskers(aQualityProfile({ isDefault: true, roleIds: ['trusted'] }))).toBe(
-      'Everything, with no choice',
+      'Everything',
     );
   });
 });

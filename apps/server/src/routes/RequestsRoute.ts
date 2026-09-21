@@ -659,7 +659,7 @@ const profilesOnOfferRoute = createRoute({
   method: 'get',
   path: '/api/requests/profiles',
   tags: ['Requests'],
-  summary: 'List the quality profiles somebody may ask with, and the one they have no say over',
+  summary: 'List the quality profiles somebody may ask with',
   request: {
     query: z.object({
       kind: ProfileKindSchema.openapi({ param: { name: 'kind', in: 'query' } }),

@@ -2306,7 +2306,7 @@ describe('requests for films and series, through the server', () => {
       });
 
       expect(refused.status).toBe(403);
-      expect(await refused.json()).toEqual({ error: 'That quality is not yours to ask for.' });
+      expect(await refused.json()).toEqual({ error: 'That quality is not available to you.' });
       expect(sent.some(({ url }) => url.endsWith('/api/requests'))).toBe(false);
     });
 

@@ -60,7 +60,7 @@ describe('judgeDownload', () => {
     expect(judgeDownload(stuck, at(4 * MINUTE), RULES).isDoomed).toBe(false);
     expect(judgeDownload(stuck, at(6 * MINUTE), RULES)).toEqual({
       isDoomed: true,
-      reason: 'Nobody would tell it what it holds, so it never started',
+      reason: 'It never got its file list, so it never started',
     });
   });
 

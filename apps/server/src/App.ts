@@ -4254,12 +4254,12 @@ const createApp = ({
         : {
             kind: 'refused',
             status: 403,
-            error: 'Every request goes through the quality this server has been set to ask at.',
+            error: 'This server uses one quality for every request.',
           };
     }
 
     if (asked.profileId !== undefined && !choices.some(({ id }) => id === asked.profileId)) {
-      return { kind: 'refused', status: 403, error: 'That quality is not yours to ask for.' };
+      return { kind: 'refused', status: 403, error: 'That quality is not available to you.' };
     }
 
     return { kind: 'chosen', profileId: asked.profileId };

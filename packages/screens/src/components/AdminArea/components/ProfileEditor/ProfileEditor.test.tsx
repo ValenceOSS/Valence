@@ -135,7 +135,7 @@ describe('ProfileEditor', () => {
     open();
 
     await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
-    await user.click(screen.getByRole('button', { name: /Prefer releases in/ }));
+    await user.click(screen.getByRole('button', { name: /Preferred language/ }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'Deutsch' }));
     await user.click(screen.getByRole('button', { name: 'Add profile' }));
 
@@ -168,7 +168,7 @@ describe('ProfileEditor', () => {
 
     await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
     await user.click(await screen.findByRole('checkbox', { name: 'Trusted' }));
-    await user.click(screen.getByRole('switch', { name: 'Ask at this quality and no other' }));
+    await user.click(screen.getByRole('switch', { name: 'Always use this profile' }));
 
     expect(screen.queryByRole('checkbox', { name: 'Trusted' })).not.toBeInTheDocument();
 
