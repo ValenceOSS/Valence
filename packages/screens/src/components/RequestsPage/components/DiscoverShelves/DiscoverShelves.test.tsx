@@ -77,6 +77,32 @@ describe('DiscoverShelves', () => {
     expect(onBrowseStudio).toHaveBeenCalledWith('2');
   });
 
+  it('leaves the books to their own tab, rather than shelving them among the films', async () => {
+    fetchDiscover.mockResolvedValue({
+      shelves: [
+        {
+          id: 'trending-films',
+          title: 'Trending films',
+          titles: [aTitle()],
+          browse: null,
+        },
+        {
+          id: 'trending-books',
+          title: 'Trending books',
+          titles: [aTitle({ kind: 'book', id: '5', title: 'Emma', subtitle: 'Jane Austen' })],
+          browse: null,
+        },
+      ],
+      studios: [],
+    });
+
+    draw();
+
+    expect(await screen.findByRole('region', { name: 'Trending films' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Trending books' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Emma')).not.toBeInTheDocument();
+  });
+
   it('ends a shelf with the card that opens the whole list it came from', async () => {
     const { onBrowse } = draw();
 

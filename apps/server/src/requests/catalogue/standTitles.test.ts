@@ -9,7 +9,7 @@ import type { CatalogueLookup } from './CatalogueLookup';
 const aLookup = (
   holds: Partial<Record<keyof CatalogueLookup, Record<string, string>>> = {},
 ): CatalogueLookup => {
-  const held = (name: keyof CatalogueLookup) => (keys: readonly string[]) =>
+  const held = (name: Exclude<keyof CatalogueLookup, 'booksNamed'>) => (keys: readonly string[]) =>
     Promise.resolve(
       new Map(
         keys.flatMap((key) => {
@@ -27,17 +27,31 @@ const aLookup = (
     albums: held('albums'),
     artistsNamed: held('artistsNamed'),
     albumsNamed: held('albumsNamed'),
+    booksNamed: (books) =>
+      Promise.resolve(
+        new Map(
+          books.flatMap(({ key }) => {
+            const found = holds.booksNamed?.[key];
+
+            return found === undefined ? [] : [[key, found] as const];
+          }),
+        ),
+      ),
   };
 };
 
 /**
  * A title to stand, of the kind and id given.
  */
-const aTitle = (kind: 'film' | 'series' | 'artist' | 'album', id: string, title = 'Dune') => ({
+const aTitle = (
+  kind: 'film' | 'series' | 'artist' | 'album' | 'book',
+  id: string,
+  title = 'Dune',
+) => ({
   kind,
   id,
   title,
-  subtitle: kind === 'album' ? 'Pink Floyd' : null,
+  subtitle: kind === 'album' ? 'Pink Floyd' : kind === 'book' ? 'Frank Herbert' : null,
   year: null,
   overview: null,
   posterUrl: null,
@@ -51,6 +65,7 @@ const aRequest = (overrides: Partial<MediaRequest>): MediaRequest => ({
   kind: 'film',
   tmdbId: 438631,
   musicBrainzId: null,
+  openLibraryId: null,
   title: 'Dune',
   artistName: null,
   year: 2021,
@@ -121,6 +136,40 @@ describe('standTitles', () => {
       ['library', 'album-1'],
       ['requested', null],
     ]);
+  });
+
+  it('knows a book by its Open Library number when asked for, and by its author and title when held', async () => {
+    const stood = await standTitles(
+      [
+        aTitle('book', '21277329', 'Project Hail Mary'),
+        aTitle('book', '893', 'Dune'),
+        aTitle('book', '5', 'Emma'),
+      ],
+      aLookup({ booksNamed: { 'frank herbert/dune': 'book-1' } }),
+      [
+        aRequest({
+          kind: 'book',
+          tmdbId: null,
+          openLibraryId: 21_277_329,
+          title: 'Project Hail Mary',
+          state: 'wanted',
+        }),
+      ],
+    );
+
+    expect(stood.map((title) => [title.standing.status, title.standing.mediaId])).toEqual([
+      ['requested', null],
+      ['library', 'book-1'],
+      ['askable', null],
+    ]);
+  });
+
+  it('does not take a film for a book that shares its number', async () => {
+    const [stood] = await standTitles([aTitle('book', '438631', 'Dune')], aLookup(), [
+      aRequest({}),
+    ]);
+
+    expect(stood?.standing.status).toBe('askable');
   });
 
   it('asks the library nothing it has no ids for', async () => {

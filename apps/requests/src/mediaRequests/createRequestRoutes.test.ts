@@ -106,6 +106,18 @@ describe('createRequestRoutes', () => {
     expect((await ask('/requests/missing/approve', 'POST')).status).toBe(404);
   });
 
+  it('says a request was met by hand, and says nothing of one that does not exist', async () => {
+    const { ask } = theRoutes();
+    const id = await madeDune(ask);
+
+    await ask(`/requests/${id}/approve`, 'POST');
+
+    expect(await (await ask(`/requests/${id}/fulfil`, 'POST')).json()).toMatchObject({
+      state: 'available',
+    });
+    expect((await ask('/requests/missing/fulfil', 'POST')).status).toBe(404);
+  });
+
   it('changes a request, and brings it up to date with the catalogue', async () => {
     const { ask } = theRoutes();
     const id = await madeDune(ask);

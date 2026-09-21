@@ -5,6 +5,7 @@ import type {
   MusicRequestKind,
   RequestCatalogue,
 } from '@ValenceContracts/schemas/MediaRequest';
+import type { OpenLibraryDescription } from '@ValenceServer/requests/openLibrary/describeOpenLibraryBook';
 import type { CatalogueDescription } from '@ValenceServer/library/MetadataProvider';
 
 type UnstoodDetail = Omit<CatalogueTitleDetail, 'standing'>;
@@ -16,6 +17,7 @@ type DescriptionSources = {
     kind: MusicRequestKind,
   ) => Promise<RequestCatalogue | null>;
   findOnMusicBrainz: (kind: MusicRequestKind, deezerId: number) => Promise<string | null>;
+  describeBook: (openLibraryId: number) => Promise<OpenLibraryDescription | null>;
 };
 
 /**
@@ -45,8 +47,8 @@ const musicBrainzIdOf = async (
 
 /**
  * Everything a title's page shows of something not asked for yet: a film or series with its
- * backdrop, genres, running time and cast from the catalogue, or an artist with their albums and
- * an album with its artist from MusicBrainz. A title from Deezer's charts is found in MusicBrainz
+ * backdrop, genres, running time and cast from the catalogue, a book with its authors and subjects
+ * from Open Library, or an artist with their albums and an album with its artist from MusicBrainz. A title from Deezer's charts is found in MusicBrainz
  * first, so it can be asked for by the id a request needs.
  *
  * @param sources - Where each kind is described.
@@ -78,6 +80,34 @@ const describeCatalogueTitle = async (
           runtimeMinutes: found.runtimeMinutes,
           cast: found.cast,
           albums: [],
+          authors: [],
+        };
+  }
+
+  if (kind === 'book') {
+    const openLibraryId = Number(id);
+    const found =
+      Number.isInteger(openLibraryId) && openLibraryId > 0
+        ? await sources.describeBook(openLibraryId)
+        : null;
+
+    return found === null
+      ? null
+      : {
+          kind,
+          id,
+          musicBrainzId: null,
+          title: found.title,
+          subtitle: found.authors[0] ?? null,
+          year: found.year,
+          overview: found.overview,
+          posterUrl: found.posterUrl,
+          backdropUrl: null,
+          genres: found.subjects,
+          runtimeMinutes: null,
+          cast: [],
+          albums: [],
+          authors: found.authors,
         };
   }
 
@@ -100,6 +130,7 @@ const describeCatalogueTitle = async (
         runtimeMinutes: null,
         cast: [],
         albums: kind === 'artist' ? found.albums : [],
+        authors: [],
       };
 };
 

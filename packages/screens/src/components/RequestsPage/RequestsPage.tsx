@@ -15,12 +15,15 @@ import { viewOfBrowsing } from '@ValenceScreens/requests/viewOfBrowsing';
 import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
 import { CatalogueBrowser } from './components/CatalogueBrowser/CatalogueBrowser';
 import { DiscoverShelves } from './components/DiscoverShelves/DiscoverShelves';
+import { BooksDiscover } from './components/BooksDiscover/BooksDiscover';
 import { MusicDiscover } from './components/MusicDiscover/MusicDiscover';
 import { MyRequests } from './components/MyRequests/MyRequests';
 
 const MINE = 'mine';
 
 const MUSIC = 'music';
+
+const BOOKS = 'books';
 
 const DISCOVER = 'discover';
 
@@ -53,7 +56,7 @@ const RequestsPage = () => {
 
   const showing =
     browsing === null
-      ? place.requestsView === MINE || place.requestsView === MUSIC
+      ? place.requestsView === MINE || place.requestsView === MUSIC || place.requestsView === BOOKS
         ? place.requestsView
         : DISCOVER
       : browsingTab(browsing);
@@ -96,6 +99,7 @@ const RequestsPage = () => {
                     { id: MOVIES, label: 'Movies' },
                     { id: SHOWS, label: 'Shows' },
                     { id: MUSIC, label: 'Music' },
+                    { id: BOOKS, label: 'Books' },
                     { id: MINE, label: 'My requests' },
                   ],
                 },
@@ -130,6 +134,10 @@ const RequestsPage = () => {
 
           <TabPanel value={MUSIC} className={cn(RAIL.inset, 'flex flex-col gap-6')}>
             <MusicDiscover onAsk={ask} />
+          </TabPanel>
+
+          <TabPanel value={BOOKS} className={cn(RAIL.inset, 'flex flex-col gap-6')}>
+            <BooksDiscover onAsk={ask} />
           </TabPanel>
 
           <TabPanel value={MINE} className={cn(RAIL.inset, 'flex flex-col gap-4')}>

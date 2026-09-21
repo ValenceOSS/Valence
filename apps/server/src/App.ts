@@ -261,6 +261,7 @@ import {
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
   retryMediaRequestRoute,
+  fulfilMediaRequestRoute,
   draftReleasesRoute,
   searchMissingRoute,
   seriesSeasonsRoute,
@@ -419,6 +420,7 @@ import type {
   RequestCatalogue,
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { libraryKindOf } from '@ValenceContracts/functions/libraryKindOf';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
@@ -426,7 +428,7 @@ import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
 import { workOf } from '@ValenceServer/requests/workOf';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
-import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
+import { bookAsTitle, discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
 import { progressOf } from '@ValenceServer/requests/progressOf';
@@ -672,6 +674,7 @@ type CreateAppOptions = {
     musicBrainzId: string,
     kind: MusicRequestKind,
   ) => Promise<RequestCatalogue | null>;
+  describeBookForRequest?: (openLibraryId: number) => Promise<RequestCatalogue | null>;
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
   discovery?: Discovery;
   realtime?: RealtimePublisher;
@@ -741,6 +744,7 @@ const createApp = ({
   searchCatalogue = () => Promise.resolve([]),
   describeForRequest = () => Promise.resolve(null),
   describeMusicForRequest = () => Promise.resolve(null),
+  describeBookForRequest = () => Promise.resolve(null),
   searchMusicCatalogue = () => Promise.resolve([]),
   discovery = NO_DISCOVERY,
   permissions = createMemoryPermissionService(),
@@ -4146,7 +4150,10 @@ const createApp = ({
     { kind: 'drafted'; draft: MediaRequestDraft } | { kind: 'refused'; status: 400; error: string };
 
   const catalogueFor = (asked: Parameters<typeof catalogueForRequest>[1]) =>
-    catalogueForRequest({ describeForRequest, describeMusicForRequest }, asked);
+    catalogueForRequest(
+      { describeForRequest, describeMusicForRequest, describeBookForRequest },
+      asked,
+    );
 
   /**
    * What the requests service is told of something asked for: the catalogue's facts, the library
@@ -4200,6 +4207,7 @@ const createApp = ({
         kind: asked.kind,
         tmdbId: asked.tmdbId ?? null,
         musicBrainzId: asked.musicBrainzId ?? null,
+        openLibraryId: asked.openLibraryId ?? null,
         seasons: asked.seasons,
         releaseTypes:
           asked.releaseTypes ?? (isMusicRequest(asked.kind) ? await defaultReleaseTypes() : null),
@@ -4361,7 +4369,7 @@ const createApp = ({
     }
 
     const [discovered, requested] = await Promise.all([
-      discoverShelves(discovery, may),
+      discoverShelves(discovery, { ...may, books: may.video }),
       everyRequest(),
     ]);
 
@@ -4456,25 +4464,27 @@ const createApp = ({
       return context.json(NOT_YOURS, 403);
     }
 
-    const found: UnstoodTitle[] = isMusicRequest(kind)
-      ? (await searchMusicCatalogue(query, kind)).map((hit) => ({
-          kind: hit.kind,
-          id: hit.musicBrainzId,
-          title: hit.title,
-          subtitle: hit.artist ?? hit.disambiguation,
-          year: hit.year,
-          overview: null,
-          posterUrl: hit.coverUrl,
-        }))
-      : (await searchCatalogue(query, kind === 'film' ? 'movie' : 'tv')).map((match) => ({
-          kind,
-          id: match.externalId,
-          title: match.title,
-          subtitle: null,
-          year: match.year,
-          overview: match.overview,
-          posterUrl: match.posterUrl,
-        }));
+    const found: UnstoodTitle[] = isBookRequest(kind)
+      ? (await discovery.searchBooks(query)).map(bookAsTitle)
+      : isMusicRequest(kind)
+        ? (await searchMusicCatalogue(query, kind)).map((hit) => ({
+            kind: hit.kind,
+            id: hit.musicBrainzId,
+            title: hit.title,
+            subtitle: hit.artist ?? hit.disambiguation,
+            year: hit.year,
+            overview: null,
+            posterUrl: hit.coverUrl,
+          }))
+        : (await searchCatalogue(query, kind === 'film' ? 'movie' : 'tv')).map((match) => ({
+            kind,
+            id: match.externalId,
+            title: match.title,
+            subtitle: null,
+            year: match.year,
+            overview: match.overview,
+            posterUrl: match.posterUrl,
+          }));
 
     return context.json(await standTitles(found, discovery.lookup, await everyRequest()), 200);
   });
@@ -4655,6 +4665,16 @@ const createApp = ({
   app.openapi(retryMediaRequestRoute, async (context) => {
     const answer = await throughRequests(context.req.raw.headers, (client) =>
       client.retryRequest(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(fulfilMediaRequestRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.fulfilRequest(context.req.valid('param').id),
     );
 
     return answer.kind === 'answered'

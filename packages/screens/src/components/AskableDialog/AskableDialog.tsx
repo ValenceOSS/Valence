@@ -16,6 +16,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { RELEASE_TYPE_NAMES } from '@ValenceScreens/components/AdminArea/RELEASE_TYPE_NAMES';
 import { CastGrid } from '@ValenceScreens/components/MediaDetailDialog/components/CastGrid/CastGrid';
@@ -35,7 +36,7 @@ const FOLLOWED_EVERY_MS = 5000;
 
 /**
  * What to ask for a title as it stands: a film as it is, a series with the seasons chosen, an
- * artist with the kinds of release chosen, an album as it is.
+ * artist with the kinds of release chosen, an album as it is, a book by its Open Library number.
  *
  * @param title - The title.
  * @param seasons - The seasons chosen, for a series.
@@ -47,17 +48,19 @@ const askingFor = (
   seasons: number[] | null,
   releaseTypes: ReleaseType[],
 ): MediaRequestAsk =>
-  isMusicRequest(title.kind)
-    ? {
-        kind: title.kind,
-        musicBrainzId: title.musicBrainzId ?? title.id,
-        ...(title.kind === 'artist' ? { releaseTypes } : {}),
-      }
-    : {
-        kind: title.kind,
-        tmdbId: Number(title.id),
-        ...(title.kind === 'series' ? { seasons } : {}),
-      };
+  isBookRequest(title.kind)
+    ? { kind: title.kind, openLibraryId: Number(title.id) }
+    : isMusicRequest(title.kind)
+      ? {
+          kind: title.kind,
+          musicBrainzId: title.musicBrainzId ?? title.id,
+          ...(title.kind === 'artist' ? { releaseTypes } : {}),
+        }
+      : {
+          kind: title.kind,
+          tmdbId: Number(title.id),
+          ...(title.kind === 'series' ? { seasons } : {}),
+        };
 
 /**
  * The page of a film, series, artist or album that can be asked for, opened from anywhere its

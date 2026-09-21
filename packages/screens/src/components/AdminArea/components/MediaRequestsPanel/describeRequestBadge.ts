@@ -42,11 +42,25 @@ const calendarToday = (): string => new Date().toISOString().slice(0, 10);
  * waiting, and the worker promotes what is out a moment later, so somebody looking in that moment
  * is told it is queued for a search rather than that it has not been released.
  *
+ * A book is never searched for, so where it stands is that somebody has yet to add it, rather than
+ * that it is queued or wanted.
+ *
  * @param request - The request.
  * @param today - Today, as a calendar day, for deciding what has come out.
  * @returns The badge's words and tone, and the line beneath it where there is one.
  */
 const describeRequestBadge = (request: MediaRequest, today = calendarToday()): StateBadge => {
+  if (
+    request.kind === 'book' &&
+    (request.state === 'waiting' || request.state === 'wanted' || request.state === 'searching')
+  ) {
+    return {
+      ...STATUS_LOOK.queued,
+      label: 'Waiting to be added',
+      detail: 'Books are added to the library by hand. It will show up here once one has been.',
+    };
+  }
+
   switch (request.state) {
     case 'awaitingApproval':
       return { ...STATUS_LOOK.attention, label: 'Awaiting approval', detail: null };

@@ -61,6 +61,27 @@ describe('describeRequestBadge', () => {
     ).toBe('Waiting for the next album to be announced.');
   });
 
+  it('says a book waits to be added by hand, and is never queued for a search', () => {
+    for (const state of ['waiting', 'wanted', 'searching'] as const) {
+      const badge = describeRequestBadge(
+        aMediaRequest({ kind: 'book', tmdbId: null, openLibraryId: 5, state, items: [] }),
+        TODAY,
+      );
+
+      expect(badge.label).toBe('Waiting to be added');
+      expect(badge.detail).toMatch(/added to the library by hand/);
+    }
+  });
+
+  it('says a book that has been added is available, like anything else', () => {
+    expect(
+      describeRequestBadge(
+        aMediaRequest({ kind: 'book', tmdbId: null, openLibraryId: 5, state: 'available' }),
+        TODAY,
+      ).label,
+    ).toBe('Done');
+  });
+
   it('says what has come out is queued for a search, not that it is not out yet', () => {
     expect(describeRequestBadge(aMediaRequest({ state: 'waiting' }), '2022-01-01')).toMatchObject({
       label: 'Queued to search',

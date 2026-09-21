@@ -84,6 +84,16 @@ const aService = () => {
   };
 };
 
+const PROJECT_HAIL_MARY: MediaRequestDraft = {
+  kind: 'book',
+  openLibraryId: 21_277_329,
+  libraryId: 'books',
+  libraryPath: '/media/Books',
+  requestedBy: { id: 'someone', name: 'Someone' },
+  isApproved: true,
+  catalogue: { title: 'Project Hail Mary', year: 2021, artist: 'Andy Weir' },
+};
+
 describe('createRequestService', () => {
   it('makes a request waiting on approval, for a film held until its release', async () => {
     const { service, onChange } = aService();
@@ -220,6 +230,7 @@ describe('createRequestService', () => {
         kind: 'series',
         tmdbId: 95396,
         musicBrainzId: null,
+        openLibraryId: null,
         libraryId: 'series',
       },
     ]);
@@ -252,7 +263,61 @@ describe('createRequestService', () => {
         kind: 'artist',
         tmdbId: null,
         musicBrainzId: PINK_FLOYD.musicBrainzId,
+        openLibraryId: null,
         libraryId: 'music',
+      },
+    ]);
+  });
+
+  it('asks for a book by its Open Library id, with nothing to wait for but somebody to add it', async () => {
+    const { service } = aService();
+
+    const { request } = await service.add(PROJECT_HAIL_MARY);
+
+    expect(request).toMatchObject({
+      kind: 'book',
+      title: 'Project Hail Mary',
+      artistName: 'Andy Weir',
+      openLibraryId: 21_277_329,
+      tmdbId: null,
+      musicBrainzId: null,
+      state: 'waiting',
+    });
+    expect(request.items).toMatchObject([{ title: 'Project Hail Mary', airDate: null }]);
+  });
+
+  it('adds to a request already made for the same book rather than making another', async () => {
+    const { service } = aService();
+
+    await service.add(PROJECT_HAIL_MARY);
+
+    const again = await service.add({ ...PROJECT_HAIL_MARY, requestedBy: { id: 'x', name: 'X' } });
+
+    expect(again.isNew).toBe(false);
+    expect(await service.list()).toHaveLength(1);
+  });
+
+  it('keeps a book and a film with the same number apart', async () => {
+    const { service } = aService();
+
+    await service.add(PROJECT_HAIL_MARY);
+    await service.add({ ...DUNE, tmdbId: 21_277_329 });
+
+    expect(await service.list()).toHaveLength(2);
+  });
+
+  it('follows a book that has not been filed, and stops when it has been', async () => {
+    const { service } = aService();
+    const { request } = await service.add(PROJECT_HAIL_MARY);
+
+    expect(await service.following()).toEqual([
+      {
+        id: request.id,
+        kind: 'book',
+        tmdbId: null,
+        musicBrainzId: null,
+        openLibraryId: 21_277_329,
+        libraryId: 'books',
       },
     ]);
   });
@@ -273,6 +338,22 @@ describe('createRequestService', () => {
     expect(isNew).toBe(true);
     expect(request).toMatchObject({ kind: 'album', title: 'Pulse', releaseDate: '1995-05-29' });
     expect(request.items.map((item) => item.title)).toEqual(['Pulse']);
+  });
+
+  it('marks everything a request waits on available once somebody has met it by hand', async () => {
+    const { service } = aService();
+    const { request } = await service.add(PROJECT_HAIL_MARY);
+
+    const met = await service.fulfil(request.id);
+
+    expect(met?.state).toBe('available');
+    expect(met?.items.every((item) => item.state === 'available')).toBe(true);
+  });
+
+  it('says nothing of meeting a request that is not there', async () => {
+    const { service } = aService();
+
+    expect(await service.fulfil('9b2d4f6e-1a3c-4e5f-8a7b-0c1d2e3f4a5b')).toBeNull();
   });
 
   it('tries again what failed, and marks what was filed arrived', async () => {

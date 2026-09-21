@@ -904,6 +904,15 @@ const retryMediaRequestRoute = createRoute({
   responses: requestFailures(ONE_REQUEST),
 });
 
+const fulfilMediaRequestRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/fulfil',
+  tags: ['Requests'],
+  summary: 'Say a request has been met by hand, such as a book somebody added to the library',
+  request: { params: RecordIdParameter },
+  responses: requestFailures(ONE_REQUEST),
+});
+
 const mediaRequestReleasesRoute = createRoute({
   method: 'get',
   path: '/api/requests/media/{id}/releases',
@@ -1004,6 +1013,7 @@ export {
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
   retryMediaRequestRoute,
+  fulfilMediaRequestRoute,
   draftReleasesRoute,
   searchMissingRoute,
   seriesSeasonsRoute,

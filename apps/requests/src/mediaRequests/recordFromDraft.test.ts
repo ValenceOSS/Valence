@@ -36,4 +36,30 @@ describe('recordFromDraft', () => {
       ),
     ).toMatchObject({ approval: 'awaiting', seasons: null });
   });
+
+  it('keeps the Open Library id of a book, and names no seasons or releases for it', () => {
+    expect(
+      recordFromDraft(
+        MediaRequestDraftSchema.parse({
+          kind: 'book',
+          openLibraryId: 21_277_329,
+          libraryId: 'books',
+          libraryPath: '/media/Books',
+          requestedBy: { id: 'someone', name: 'Someone' },
+          isApproved: true,
+          catalogue: { title: 'Project Hail Mary', year: 2021, artist: 'Andy Weir' },
+        }),
+        'id',
+        '2026-09-19T00:00:00.000Z',
+      ),
+    ).toMatchObject({
+      kind: 'book',
+      openLibraryId: 21_277_329,
+      tmdbId: null,
+      musicBrainzId: null,
+      seasons: null,
+      releaseTypes: null,
+      artistName: 'Andy Weir',
+    });
+  });
 });
