@@ -12,7 +12,6 @@ import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Slider } from '@ValenceUI/Slider';
-import { SpectrumBars } from '@ValenceUI/SpectrumBars';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { lyricLineAt } from '@ValenceClient/music/lyricLineAt';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
@@ -24,10 +23,9 @@ import { LyricLines } from '@ValenceScreens/components/LyricLines/LyricLines';
 import { MusicTransport } from '@ValenceScreens/components/MusicTransport/MusicTransport';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { setMusicImmersive, useMusicImmersive } from '@ValenceScreens/music/musicImmersive';
-import { theMusicAudio, theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
+import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
 import { setMusicVisualiser, useMusicVisualiser } from '@ValenceScreens/music/musicVisualiser';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
-import { useSpectrum } from '@ValenceScreens/music/useSpectrum';
 import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
 import type { ImmersiveMusicProps } from './ImmersiveMusic.types';
 
@@ -47,9 +45,6 @@ const CHANGING = { duration: 0.35, ease: [0.23, 1, 0.32, 1] } as const;
  * dissolves into the next cover's, a new album's cover gives way to the old through a moment of
  * blur, the name rises in, and the old song's words fall away as the new one's come up.
  *
- * Along the foot the sound plays as a row of bars rising and falling with it, drawn only while the
- * view is open and only where the browser can listen to the music without changing how it plays.
- *
  * A button beside the close button takes the whole screen over for the visualiser page, which is
  * drawn by `MusicVisualiser` on top of this view.
  *
@@ -66,7 +61,6 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
   const shown = useWhatIsPlaying(state);
   const favourites = useFavourites(useWatchingProfile());
   const prefersReducedMotion = useReducedMotionConfig();
-  const heard = useSpectrum(isOpen && shown !== null ? theMusicAudio() : null, isOpen);
   const trackId = shown?.trackId ?? null;
   const asked = useQuery({
     ...musicQueries.lyrics(trackId ?? ''),
@@ -125,12 +119,6 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
           className="fixed inset-0 z-[35] overflow-hidden text-on-scrim"
         >
           <CoverGlow src={cover} className="absolute inset-0" />
-
-          <SpectrumBars
-            read={heard}
-            isPlaying={state.isPlaying}
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[28svh] text-on-scrim [mask-image:linear-gradient(to_top,black,transparent)]"
-          />
 
           <div className="absolute top-[calc(1rem+env(safe-area-inset-top,0px))] right-4 z-10 flex items-center gap-2">
             {isStill ? null : (

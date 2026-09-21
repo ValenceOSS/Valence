@@ -65,18 +65,6 @@ describe('ImmersiveMusic', () => {
     expect(words?.parentElement).toHaveClass('overflow-y-auto', 'lg:overflow-y-visible');
   });
 
-  it('draws the sound as bars along the foot of the view, for nobody to read out', async () => {
-    renderInAnAddress(<ImmersiveMusic player={playing().player} />);
-
-    act(() => {
-      setMusicImmersive(true);
-    });
-
-    const view = await screen.findByRole('region', { name: 'Track 1, immersive' });
-
-    expect(view.querySelector('canvas')).toHaveAttribute('aria-hidden', 'true');
-  });
-
   it('carries its own quiet controls beneath the cover', async () => {
     const { player } = playing();
 
