@@ -91,10 +91,31 @@ describe('planSearches', () => {
         (planned) => planned.search,
       ),
     ).toEqual([
+      { query: 'Severance', mode: 'tv' },
       { query: 'Severance', mode: 'tv', season: 1, episode: 2 },
       { query: 'Severance', mode: 'tv', season: 2, episode: 1 },
       { query: 'Severance', mode: 'tv', season: 2, episode: 2 },
     ]);
+  });
+
+  it('asks for the whole run first where what is wanted spans more than one season', () => {
+    const first = anEpisode(1, 1);
+    const second = anEpisode(2, 1, '2025-01-17');
+    const planned = planSearches(SEVERANCE, [first, second], [first, second], '2026-09-19');
+
+    expect(planned[0]?.search).toEqual({ query: 'Severance', mode: 'tv' });
+    expect(planned[0]?.itemIds).toEqual([first.id, second.id]);
+  });
+
+  it('asks for no whole run where only one season is wanted', () => {
+    const first = anEpisode(1, 1);
+    const second = anEpisode(1, 2);
+
+    expect(
+      planSearches(SEVERANCE, [first, second], [first, second], '2026-09-19').map(
+        (planned) => planned.search,
+      ),
+    ).toEqual([{ query: 'Severance', mode: 'tv', season: 1 }]);
   });
 
   it('searches by a title that no indexer reads as leaving words out', () => {

@@ -108,4 +108,43 @@ describe('rankReleases', () => {
     expect(ranked.pickedId).toBeNull();
     expect(ranked.releases).toHaveLength(1);
   });
+
+  it('puts what fills the most of what is wanted before what merely scores best', () => {
+    const ranked = rankReleases(
+      [aRelease(FIRST), aRelease(SECOND)],
+      [judged(FIRST, 1100), judged(SECOND, 1000)],
+      new Map(),
+      new Map([
+        [SECOND, 9],
+        [FIRST, 1],
+      ]),
+    );
+
+    expect(ranked.pickedId).toBe(SECOND);
+    expect(ranked.releases.map((release) => release.id)).toEqual([SECOND, FIRST]);
+  });
+
+  it('lets the score decide where nobody says what each fills', () => {
+    const ranked = rankReleases(
+      [aRelease(SECOND), aRelease(FIRST)],
+      [judged(SECOND, 1000), judged(FIRST, 1100)],
+      new Map(),
+    );
+
+    expect(ranked.pickedId).toBe(FIRST);
+  });
+
+  it('never lets what it fills raise a release the profile refused', () => {
+    const ranked = rankReleases(
+      [aRelease(SECOND), aRelease(FIRST)],
+      [judged(SECOND, 1000, true), judged(FIRST, 100)],
+      new Map(),
+      new Map([
+        [SECOND, 9],
+        [FIRST, 1],
+      ]),
+    );
+
+    expect(ranked.pickedId).toBe(FIRST);
+  });
 });

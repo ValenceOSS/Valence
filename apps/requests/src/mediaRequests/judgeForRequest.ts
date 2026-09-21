@@ -133,6 +133,7 @@ const judgeForRequest = ({
       judged.map((pair) => pair.release),
       judged.map((pair) => pair.judgement),
       priorities,
+      new Map([...holding].map(([id, items]) => [id, items.length])),
     ),
     holding,
   };
