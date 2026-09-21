@@ -97,4 +97,30 @@ describe('matchesLogQuery', () => {
 
     expect(matchesLogQuery(record, { levels: ['error'], sources: ['scanner'] })).toBe(false);
   });
+
+  it('keeps a record from one of the kinds of job being watched', () => {
+    const record = aRecord({ context: { ...aRecord().context, jobKind: 'library.scan' } });
+
+    expect(matchesLogQuery(record, { jobKinds: ['library.scan', 'library.reencode'] })).toBe(true);
+    expect(matchesLogQuery(record, { jobKinds: ['library.reencode'] })).toBe(false);
+    expect(matchesLogQuery(aRecord(), { jobKinds: ['library.scan'] })).toBe(false);
+  });
+
+  it.each(['libraryId', 'mediaId', 'sessionId', 'requestId'] as const)(
+    'holds a record to the %s that was asked for',
+    (field) => {
+      const record = aRecord({ context: { ...aRecord().context, [field]: 'wanted' } });
+
+      expect(matchesLogQuery(record, { [field]: 'wanted' })).toBe(true);
+      expect(matchesLogQuery(record, { [field]: 'other' })).toBe(false);
+      expect(matchesLogQuery(aRecord(), { [field]: 'wanted' })).toBe(false);
+    },
+  );
+
+  it('finds a record by any identifier it carries or by its source, as the server does', () => {
+    const record = aRecord({ context: { ...aRecord().context, sessionId: 'abc-123' } });
+
+    expect(matchesLogQuery(record, { search: 'ABC-1' })).toBe(true);
+    expect(matchesLogQuery(record, { search: 'scann' })).toBe(true);
+  });
 });

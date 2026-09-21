@@ -81,7 +81,13 @@ describe('JobHistory', () => {
     askedHistory.mockResolvedValue(page([record()]));
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     expect(await screen.findByText('Generate missing previews')).toBeInTheDocument();
@@ -92,7 +98,13 @@ describe('JobHistory', () => {
     askedHistory.mockResolvedValue(page([record({ kind: 'catalogue.rematch' })]));
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     expect(await screen.findByText('catalogue.rematch')).toBeInTheDocument();
@@ -102,7 +114,13 @@ describe('JobHistory', () => {
     askedHistory.mockResolvedValue(page([record()]));
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     expect(await screen.findByText('Movies')).toBeInTheDocument();
@@ -117,7 +135,13 @@ describe('JobHistory', () => {
     );
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     expect(await screen.findByText('no such path')).toBeInTheDocument();
@@ -127,7 +151,13 @@ describe('JobHistory', () => {
     askedHistory.mockReturnValue(new Promise(() => undefined));
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     expect(screen.getByText('Reading job history…')).toBeInTheDocument();
@@ -137,7 +167,13 @@ describe('JobHistory', () => {
     askedHistory.mockResolvedValue(page([]));
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     expect(await screen.findByText('No job runs match this.')).toBeInTheDocument();
@@ -147,7 +183,13 @@ describe('JobHistory', () => {
     askedHistory.mockRejectedValue(new Error('offline'));
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     expect(
@@ -170,7 +212,13 @@ describe('JobHistory', () => {
       askedHistory.mockResolvedValue(page([record()]));
 
       renderHistory(
-        <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+        <JobHistory
+          definitions={DEFINITIONS}
+          libraries={[]}
+          working={[]}
+          onViewLogs={vi.fn()}
+          onTrace={vi.fn()}
+        />,
       );
 
       await screen.findByText('Movies');
@@ -196,7 +244,13 @@ describe('JobHistory', () => {
     );
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     await screen.findByText('Movies');
@@ -219,7 +273,13 @@ describe('JobHistory', () => {
     askedHistory.mockResolvedValue(page([record()]));
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={onViewLogs} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={onViewLogs}
+        onTrace={vi.fn()}
+      />,
     );
 
     await actor.click(
@@ -237,7 +297,13 @@ describe('JobHistory', () => {
     askedIssues.mockResolvedValue([issue()]);
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     expect(askedIssues).not.toHaveBeenCalled();
@@ -260,7 +326,13 @@ describe('JobHistory', () => {
     askedIssues.mockResolvedValue([]);
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     await actor.click(
@@ -280,7 +352,13 @@ describe('JobHistory', () => {
     askedIssues.mockResolvedValue([]);
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     await actor.click(
@@ -306,7 +384,13 @@ describe('JobHistory', () => {
     askedIssues.mockResolvedValue([issue()]);
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     await actor.click(
@@ -354,6 +438,7 @@ describe('JobHistory', () => {
           },
         ]}
         onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
       />,
     );
 
@@ -369,7 +454,13 @@ describe('JobHistory', () => {
     askedHistory.mockResolvedValue(page([record()]));
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     await screen.findByText('Done');
@@ -402,6 +493,7 @@ describe('JobHistory', () => {
         ]}
         working={[]}
         onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
       />,
     );
 
@@ -421,7 +513,13 @@ describe('JobHistory', () => {
     askedIssues.mockResolvedValue([issue()]);
 
     renderHistory(
-      <JobHistory definitions={DEFINITIONS} libraries={[]} working={[]} onViewLogs={vi.fn()} />,
+      <JobHistory
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
     );
 
     await actor.click(
@@ -436,6 +534,133 @@ describe('JobHistory', () => {
     );
 
     vi.unstubAllGlobals();
+  });
+
+  describe('finding a run', () => {
+    const drawHistory = (onTrace = vi.fn()) =>
+      renderHistory(
+        <JobHistory
+          definitions={DEFINITIONS}
+          libraries={[]}
+          working={[]}
+          onViewLogs={vi.fn()}
+          onTrace={onTrace}
+        />,
+      );
+
+    it('asks for the last seven days, newest first, with nothing filtered, to begin with', async () => {
+      askedHistory.mockResolvedValue(page([record()]));
+
+      drawHistory();
+      await screen.findByText('Generate missing previews');
+
+      const asked = askedHistory.mock.calls.at(-1)?.[0];
+
+      expect(asked).toMatchObject({ sort: 'newest', search: '', kind: null, status: null });
+      expect(asked?.sinceMs ?? 0).toBeLessThan(Date.now() - 6.9 * 86_400_000);
+    });
+
+    it('lets the server search, by job, library, error or run id', async () => {
+      askedHistory.mockResolvedValue(page([record()]));
+
+      drawHistory();
+      await screen.findByText('Generate missing previews');
+      await userEvent.type(screen.getByRole('searchbox', { name: 'Search job runs' }), 'run-9');
+
+      await waitFor(() => {
+        expect(askedHistory.mock.calls.at(-1)?.[0]).toMatchObject({ search: 'run-9' });
+      });
+    });
+
+    it('lets the server filter by status and by job', async () => {
+      askedHistory.mockResolvedValue(page([record()]));
+
+      drawHistory();
+      await screen.findByText('Generate missing previews');
+      await userEvent.click(screen.getByRole('button', { name: 'Filter job runs' }));
+      await userEvent.click(await screen.findByRole('checkbox', { name: 'Failed' }));
+
+      await waitFor(() => {
+        expect(askedHistory.mock.calls.at(-1)?.[0]).toMatchObject({ status: 'failed' });
+      });
+    });
+
+    it('changes the order', async () => {
+      askedHistory.mockResolvedValue(page([record()]));
+
+      drawHistory();
+      await screen.findByText('Generate missing previews');
+      await userEvent.click(screen.getByRole('button', { name: 'Order' }));
+      await userEvent.click(await screen.findByRole('menuitemradio', { name: /Longest first/ }));
+
+      await waitFor(() => {
+        expect(askedHistory.mock.calls.at(-1)?.[0]).toMatchObject({ sort: 'longest' });
+      });
+    });
+
+    it('counts the runs in view by how they ended', async () => {
+      askedHistory.mockResolvedValue(
+        page([
+          record({ id: 'a', status: 'running' }),
+          record({ id: 'b', status: 'completed' }),
+          record({ id: 'c', status: 'completed' }),
+          record({ id: 'd', status: 'failed' }),
+        ]),
+      );
+
+      drawHistory();
+
+      const strip = await screen.findByLabelText('How the job runs stand');
+
+      await waitFor(() => {
+        expect(within(strip).getByText('Completed').nextElementSibling).toHaveTextContent('2');
+      });
+      expect(within(strip).getByText('Running now').nextElementSibling).toHaveTextContent('1');
+      expect(within(strip).getByText('Failed').nextElementSibling).toHaveTextContent('1');
+    });
+
+    it('says how long a finished run took', async () => {
+      askedHistory.mockResolvedValue(page([record()]));
+
+      drawHistory();
+
+      expect(await screen.findByText('took 5 s')).toBeInTheDocument();
+    });
+
+    it('draws how far a run got as a bar, not only as numbers', async () => {
+      askedHistory.mockResolvedValue(page([record({ status: 'running', finishedAtMs: null })]));
+
+      drawHistory();
+
+      expect(
+        await screen.findByRole('progressbar', { name: 'Generate missing previews progress' }),
+      ).toBeInTheDocument();
+    });
+
+    it('traces a run from its menu', async () => {
+      askedHistory.mockResolvedValue(page([record()]));
+
+      const onTrace = vi.fn();
+
+      drawHistory(onTrace);
+      await userEvent.click(
+        await screen.findByRole('button', { name: 'Actions for Generate missing previews' }),
+      );
+      await userEvent.click(await screen.findByRole('menuitem', { name: 'Trace this run' }));
+
+      expect(onTrace).toHaveBeenCalledWith('run-1');
+    });
+
+    it('traces a run when its row is chosen', async () => {
+      askedHistory.mockResolvedValue(page([record()]));
+
+      const onTrace = vi.fn();
+
+      drawHistory(onTrace);
+      await userEvent.click(await screen.findByText('Generate missing previews'));
+
+      expect(onTrace).toHaveBeenCalledWith('run-1');
+    });
   });
 
   it('sets a display name so devtools can identify it', () => {

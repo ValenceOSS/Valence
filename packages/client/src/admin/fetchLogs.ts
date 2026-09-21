@@ -1,4 +1,5 @@
 import { LogPageSchema, LogRecordSchema } from '@ValenceContracts/schemas/Log';
+import { postForLogs } from './postForLogs';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import type { LogQuery, LogRecord } from '@ValenceContracts/schemas/Log';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
@@ -19,22 +20,8 @@ const NOTHING: LogPage = { records: [], total: 0 };
  * @param query - What to look for.
  * @returns The records that matched, newest first.
  */
-const fetchLogs = async (query: Partial<LogQuery>): Promise<LogPage> => {
-  const response = await fetch('/api/admin/logs', {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(query),
-  }).catch(() => null);
-
-  if (response === null || !response.ok) {
-    return NOTHING;
-  }
-
-  const read = LogPageSchema.safeParse(await response.json().catch(() => null));
-
-  return read.success ? read.data : NOTHING;
-};
+const fetchLogs = (query: Partial<LogQuery>): Promise<LogPage> =>
+  postForLogs('/api/admin/logs', query, LogPageSchema, NOTHING);
 
 /**
  * Follows the log as it is written, over the connection the rest of the app already has.

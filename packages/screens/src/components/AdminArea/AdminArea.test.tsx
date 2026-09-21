@@ -434,8 +434,8 @@ const goTo = async (actor: ReturnType<typeof userEvent.setup>, section: string) 
 };
 
 /**
- * Opens the Jobs panel's own Run & schedule tab, which is where the live queue and the runnable job
- * definitions live now that History is the default.
+ * Opens the logs and jobs page's own Run & schedule tab, which is where the runnable job definitions
+ * live.
  */
 const openWorkTab = async (actor: ReturnType<typeof userEvent.setup>) => {
   await actor.click(await screen.findByRole('tab', { name: 'Run & schedule' }));
@@ -590,9 +590,11 @@ describe('AdminArea', () => {
   });
 
   it('opens on the panel the address named, so a reload lands back where it was', async () => {
-    renderInAnAddress(<TheAdmin panel="jobs" />);
+    renderInAnAddress(<TheAdmin panel="logs" />);
 
-    expect(await screen.findByRole('tab', { name: 'Jobs', selected: true })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('tab', { name: 'Logs & jobs', selected: true }),
+    ).toBeInTheDocument();
   });
 
   it('opens on the overview when the address names no panel', async () => {
@@ -690,9 +692,9 @@ describe('AdminArea', () => {
 
     renderInAnAddress(<TheAdmin onPanel={onPanel} />);
 
-    await goTo(actor, 'Jobs');
+    await goTo(actor, 'Logs & jobs');
 
-    expect(onPanel).toHaveBeenCalledWith('jobs');
+    expect(onPanel).toHaveBeenCalledWith('logs');
   });
 
   it('says why a job failed rather than only that it did', async () => {
@@ -700,9 +702,10 @@ describe('AdminArea', () => {
 
     renderInAnAddress(<TheAdmin />);
 
-    await goTo(actor, 'Jobs');
+    await goTo(actor, 'Logs & jobs');
+    await actor.click(await screen.findByRole('tab', { name: 'Job runs' }));
 
-    expect(screen.getAllByText('no such encoder').length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('no such encoder')).length).toBeGreaterThan(0);
   });
 
   it('lets an admin start any job on demand from the Work tab', async () => {
@@ -710,7 +713,7 @@ describe('AdminArea', () => {
 
     renderInAnAddress(<TheAdmin />);
 
-    await goTo(actor, 'Jobs');
+    await goTo(actor, 'Logs & jobs');
     await openWorkTab(actor);
 
     expect(await screen.findByText('Scan for changes')).toBeInTheDocument();
@@ -738,7 +741,7 @@ describe('AdminArea', () => {
 
     renderInAnAddress(<TheAdmin />);
 
-    await goTo(actor, 'Jobs');
+    await goTo(actor, 'Logs & jobs');
     await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Run now/);
     await actor.click(await screen.findByRole('button', { name: 'Run on every library' }));
@@ -764,7 +767,7 @@ describe('AdminArea', () => {
 
     renderInAnAddress(<TheAdmin />);
 
-    await goTo(actor, 'Jobs');
+    await goTo(actor, 'Logs & jobs');
     await openWorkTab(actor);
     await chooseJob(actor, 'Reset and rebuild', /Run now/);
 
@@ -781,7 +784,7 @@ describe('AdminArea', () => {
 
     renderInAnAddress(<TheAdmin />);
 
-    await goTo(actor, 'Jobs');
+    await goTo(actor, 'Logs & jobs');
     await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Edit schedule/);
 
@@ -796,7 +799,7 @@ describe('AdminArea', () => {
 
     renderInAnAddress(<TheAdmin />);
 
-    await goTo(actor, 'Jobs');
+    await goTo(actor, 'Logs & jobs');
     await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Edit schedule/);
     await actor.click(await screen.findByRole('button', { name: 'Add trigger' }));
@@ -820,7 +823,7 @@ describe('AdminArea', () => {
 
     renderInAnAddress(<TheAdmin />);
 
-    await goTo(actor, 'Jobs');
+    await goTo(actor, 'Logs & jobs');
     await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Edit schedule/);
     await actor.click(await screen.findByRole('button', { name: 'Add trigger' }));
@@ -842,7 +845,7 @@ describe('AdminArea', () => {
 
     renderInAnAddress(<TheAdmin />);
 
-    await goTo(actor, 'Jobs');
+    await goTo(actor, 'Logs & jobs');
     await openWorkTab(actor);
     await chooseJob(actor, 'Scan for changes', /Edit schedule/);
     await actor.click(

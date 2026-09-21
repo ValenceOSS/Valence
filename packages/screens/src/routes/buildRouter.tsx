@@ -68,7 +68,10 @@ const BROWSABLE = ['/shows', '/films', '/new', '/favourites'] as const;
 
 const ADMIN_DEFAULT_PANEL = 'overview';
 
-const adminSearch = z.object({ job: z.string().optional() });
+const adminSearch = z.object({
+  job: z.string().optional(),
+  view: z.enum(['logs', 'jobs', 'health', 'run']).optional(),
+});
 
 const deviceSearch = z.object({ user_code: z.string().optional() });
 

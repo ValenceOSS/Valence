@@ -6,6 +6,7 @@ type JobHistoryProps = {
   libraries: Library[];
   working: Job[];
   onViewLogs: (jobId: string) => void;
+  onTrace: (jobRunId: string) => void;
 };
 
 export type { JobHistoryProps };

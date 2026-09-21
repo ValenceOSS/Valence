@@ -1,3 +1,4 @@
+import { readObservabilityView } from '@ValenceScreens/components/ObservabilityPage/readObservabilityView';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
@@ -35,14 +36,17 @@ import {
 const AdminPage = () => {
   const go = useNavigate();
   const { panel } = useParams({ strict: false });
-  const { job } = useSearch({ strict: false });
+  const { job, view } = useSearch({ strict: false });
   const { mayAdminister, isLoading } = useWhatIMayDo();
+  const initialView = readObservabilityView(view, panel);
   const [isCollapsed, setIsCollapsed] = useState(readSidebarCollapsed);
 
   const requesting = useQuery(requestsQueries.availability());
   const sections = visibleAdminSections(requesting.data?.isEnabled ?? false);
   const showing =
-    sections.flatMap((section) => section.items).find((one) => one.id === panel)?.id ?? 'overview';
+    sections
+      .flatMap((section) => section.items)
+      .find((one) => one.id === (panel === 'jobs' ? 'logs' : panel))?.id ?? 'overview';
 
   const asked = useQuery(adminQueries.overview());
   const overview = asked.data ?? null;
@@ -172,6 +176,7 @@ const AdminPage = () => {
                 void go({ to: '/admin/$panel', params: { panel: next } });
               }}
               initialJob={job ?? null}
+              {...(initialView === undefined ? {} : { initialView })}
               onJobChange={(next) => {
                 void go({
                   to: '/admin/$panel',

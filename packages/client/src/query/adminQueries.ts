@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import {
   fetchAdminOverview,
   fetchRunningScans,
@@ -9,6 +9,11 @@ import {
   fetchJobHistoryIssues,
   fetchJobSchedules,
 } from '@ValenceClient/admin/fetchAdmin';
+import { fetchJobRun } from '@ValenceClient/admin/fetchJobRun';
+import { fetchJobStats } from '@ValenceClient/admin/fetchJobStats';
+import { fetchLogFacets } from '@ValenceClient/admin/fetchLogFacets';
+import { fetchLogHistogram } from '@ValenceClient/admin/fetchLogHistogram';
+import { fetchLogs } from '@ValenceClient/admin/fetchLogs';
 import { fetchAccounts } from '@ValenceClient/admin/fetchAccounts';
 import { fetchAccountSessions } from '@ValenceClient/admin/fetchAccountSessions';
 import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
@@ -24,6 +29,7 @@ import { whenToAskAgain } from '@ValenceClient/admin/whenToAskAgain';
 import { fetchEverybodysShares } from '@ValenceClient/sharing/fetchShares';
 import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { JobRunQuery } from '@ValenceContracts/schemas/JobRun';
+import type { LogFacetsQuery, LogHistogramQuery, LogQuery } from '@ValenceContracts/schemas/Log';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ResourceSampleRange } from '@ValenceContracts/schemas/ResourceSample';
 import { fetchExceptionsOn, fetchLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
@@ -31,6 +37,8 @@ import { fetchExceptionsOn, fetchLibraryAccess } from '@ValenceClient/admin/fetc
 const ADMIN = ['admin'] as const;
 
 const WATCHED_EVERY_MS = 5000;
+
+const MOST_LOG_LINES_LOADED = 2000;
 
 /**
  * What the server is doing at a glance.
@@ -111,6 +119,90 @@ const jobHistoryIssues = (jobRunId: string | null) =>
   queryOptions({
     queryKey: [...ADMIN, 'jobHistoryIssues', jobRunId],
     queryFn: () => fetchJobHistoryIssues(jobRunId ?? ''),
+    enabled: jobRunId !== null,
+  });
+
+/**
+ * A page of the log, filtered, ordered and cut to a length.
+ *
+ * @param query - What to look for, how to order it and how many records to read.
+ * @returns The query.
+ */
+const logs = (query: Partial<LogQuery>) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'logs', query],
+    queryFn: () => fetchLogs(query),
+  });
+
+/**
+ * The log read a page after another, for a list that loads more as it is scrolled.
+ *
+ * Reading stops at a couple of thousand lines, past which a list that long is not being read but
+ * scrolled through: the operator is better served by narrowing what they are looking at.
+ *
+ * @param query - What to look for, how to order it and how many records make a page.
+ * @returns The query.
+ */
+const logPages = (query: Partial<LogQuery>) =>
+  infiniteQueryOptions({
+    queryKey: [...ADMIN, 'logPages', query],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => fetchLogs({ ...query, offset: pageParam }),
+    getNextPageParam: (last, pages) => {
+      const loaded = pages.reduce((sum, page) => sum + page.records.length, 0);
+
+      return last.records.length > 0 && loaded < last.total && loaded < MOST_LOG_LINES_LOADED
+        ? loaded
+        : undefined;
+    },
+  });
+
+/**
+ * The log counted over time by level, for the records a query matches.
+ *
+ * @param query - What to count, and how many bars to count it into.
+ * @returns The query.
+ */
+const logHistogram = (query: Partial<LogHistogramQuery>) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'logHistogram', query],
+    queryFn: () => fetchLogHistogram(query),
+  });
+
+/**
+ * The sources and kinds of job the matching records come from most often.
+ *
+ * @param query - What to count.
+ * @returns The query.
+ */
+const logFacets = (query: Partial<LogFacetsQuery>) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'logFacets', query],
+    queryFn: () => fetchLogFacets(query),
+  });
+
+/**
+ * How each kind of job has gone since a moment.
+ *
+ * @param sinceMs - The earliest a counted run was created.
+ * @returns The query.
+ */
+const jobStats = (sinceMs: number) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'jobStats', sinceMs],
+    queryFn: () => fetchJobStats(sinceMs),
+  });
+
+/**
+ * One job run, read only where a run is named.
+ *
+ * @param jobRunId - Which run, or null where none is.
+ * @returns The query.
+ */
+const jobRun = (jobRunId: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'jobRun', jobRunId],
+    queryFn: () => fetchJobRun(jobRunId ?? ''),
     enabled: jobRunId !== null,
   });
 
@@ -371,6 +463,12 @@ const adminQueries = {
   jobs,
   jobHistory,
   jobHistoryIssues,
+  jobStats,
+  jobRun,
+  logs,
+  logPages,
+  logHistogram,
+  logFacets,
   resourceHistory,
   schedules,
   accounts,
