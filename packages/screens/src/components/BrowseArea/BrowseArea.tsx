@@ -138,11 +138,13 @@ const BrowseArea = ({
   const asked =
     kind === 'favourites'
       ? { ids: kept === '' ? [] : kept.split(','), limit: PAGE_SIZE }
-      : kind === 'new'
-        ? { order: 'newest' as const, limit: PAGE_SIZE }
-        : { kind, ...(isFilterable ? filters.asked : {}), limit: PAGE_SIZE };
+      : { order: 'newest' as const, limit: PAGE_SIZE };
 
-  const found = useQuery(libraryQueries.across(libraryIds, asked));
+  const found = useQuery(
+    isFilterable
+      ? libraryQueries.everything(libraryIds, { kind, ...filters.asked })
+      : libraryQueries.across(libraryIds, asked),
+  );
 
   const items = useMemo(() => collapseToShows(found.data ?? []), [found.data]);
 

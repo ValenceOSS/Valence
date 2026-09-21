@@ -169,6 +169,30 @@ describe('DataTable', () => {
     expect(screen.getByRole('columnheader', { name: /Name/ })).toHaveClass('sticky');
   });
 
+  it('pages by the count it is given, showing the rows as they come, where the server holds the rest', async () => {
+    const onPageChange = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <DataTable
+        label="Libraries"
+        columns={COLUMNS}
+        rows={MANY.slice(0, 5)}
+        totalRows={23}
+        pageSize={5}
+        page={0}
+        onPageChange={onPageChange}
+      />,
+    );
+
+    expect(screen.getAllByRole('row')).toHaveLength(6);
+    expect(screen.getByText('Page 1 of 5 · 23 in total')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Next page' }));
+
+    expect(onPageChange).toHaveBeenCalledWith(1);
+  });
+
   it('rounds the outer corners of its heading, so it sits inside a rounded container', () => {
     render(<DataTable label="Library roots" columns={COLUMNS} rows={ROWS} />);
 

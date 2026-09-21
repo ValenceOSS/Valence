@@ -8,6 +8,7 @@ type DataTableProps<Row extends RowData> = {
   label: string;
   columns: DataTableColumn<Row>[];
   rows: Row[];
+  totalRows?: number;
   emptyMessage?: string;
   onChooseRow?: (row: Row) => void;
   getRowId?: (row: Row) => string;

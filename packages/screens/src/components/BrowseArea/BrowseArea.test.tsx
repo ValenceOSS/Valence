@@ -1,13 +1,15 @@
 import { screen, waitFor } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { readEveryItem } from '@ValenceClient/library/readEveryItem';
 import { BrowseArea } from './BrowseArea';
+import type * as ReadEveryItem from '@ValenceClient/library/readEveryItem';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import userEvent from '@testing-library/user-event';
 
 type Page = { items: MediaSummary[]; total: number };
-type Options = { kind?: string; order?: string; ids?: string[]; limit?: number };
+type Options = { kind?: string; order?: string; ids?: string[]; limit?: number; offset?: number };
 
 const fetchLibraries = vi.fn<() => Promise<{ id: string; kind?: string }[]>>();
 const fetchFacets =
@@ -23,6 +25,10 @@ const findBooks = vi.fn<(query: { ids?: readonly string[] }) => Promise<Book[]>>
 vi.mock('@ValenceClient/books/fetchBooks', () => ({
   findBooks: (query: { ids?: readonly string[] }) => findBooks(query),
   bookCoverUrl: (bookId: string) => `/api/books/${bookId}/cover`,
+}));
+
+vi.mock('@ValenceClient/library/readEveryItem', async (importOriginal) => ({
+  readEveryItem: vi.fn((await importOriginal<typeof ReadEveryItem>()).readEveryItem),
 }));
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
@@ -134,6 +140,17 @@ describe('BrowseArea', () => {
     });
 
     expect(fetchLibraryItems).toHaveBeenCalledWith('library-2', expect.anything());
+  });
+
+  it('reads every page of the films, not the first one, since a library can hold more than a page', async () => {
+    renderInAnAddress(<BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(readEveryItem).toHaveBeenCalledWith(
+        'library-1',
+        expect.objectContaining({ kind: 'films' }),
+      );
+    });
   });
 
   it('asks for the newest first on the page about newness', async () => {

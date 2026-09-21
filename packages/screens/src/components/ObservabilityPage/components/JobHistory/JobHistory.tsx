@@ -5,7 +5,7 @@ import {
   Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
 } from '@keyline-icons/react';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
@@ -23,7 +23,7 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { notify } from '@ValenceUI/notify';
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
 import { describeRunIssues } from './describeRunIssues';
 import { describeRunSubject } from './describeRunSubject';
@@ -52,8 +52,6 @@ import type {
 import type { JobHistoryProps } from './JobHistory.types';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 
-const PAGE = 200;
-
 const TYPING_MS = 350;
 
 const ROWS_PER_PAGE = 10;
@@ -61,6 +59,14 @@ const ROWS_PER_PAGE = 10;
 const REFRESH_THROTTLE_MS = 1_000;
 
 const NOTHING_RUN: JobRunRecord[] = [];
+
+const runId = (record: JobRunRecord): string => record.id;
+
+const STATUSES_COUNTED = [
+  'running',
+  'completed',
+  'failed',
+] as const satisfies readonly JobRunStatus[];
 
 const STATUSES = [
   'queued',
@@ -174,29 +180,62 @@ const JobHistoryPanel = ({
     };
   }, [typed, onSearchChange]);
 
-  const query = useMemo(
+  const page = (search.rpage ?? 1) - 1;
+  const narrowing = useMemo(
     () => ({
-      limit: PAGE,
       sort,
       search: rq ?? '',
       sinceMs: from ?? logRangeStart(range ?? defaultLogView().range, anchor),
       untilMs: until ?? null,
       kind: rkind ?? null,
-      status: rstatus ?? null,
     }),
-    [rq, range, from, until, sort, anchor, rkind, rstatus],
+    [rq, range, from, until, sort, anchor, rkind],
+  );
+  const query = useMemo(
+    () => ({
+      ...narrowing,
+      status: rstatus ?? null,
+      limit: ROWS_PER_PAGE,
+      offset: page * ROWS_PER_PAGE,
+    }),
+    [narrowing, rstatus, page],
   );
   const askedHistory = useQuery({
     ...adminQueries.jobHistory(query),
     placeholderData: keepPreviousData,
   });
+  const [askedRunning, askedCompleted, askedFailed] = useQueries({
+    queries: STATUSES_COUNTED.map((status) => ({
+      ...adminQueries.jobHistory({ ...narrowing, status, limit: 1, offset: 0 }),
+      placeholderData: keepPreviousData,
+    })),
+  });
   const askedIssues = useQuery(adminQueries.jobHistoryIssues(openIssuesFor));
 
   const { pinned, toggle: togglePin } = usePinnedJobRuns();
   const fetched = askedHistory.data?.records ?? NOTHING_RUN;
+  const isUnnarrowed = rq === undefined && rstatus === undefined && rkind === undefined;
+  const askedPinned = useQueries({
+    queries: [...pinned].map((id) => adminQueries.jobRun(page === 0 && isUnnarrowed ? id : null)),
+  });
+  const pinnedElsewhere = useMemo(
+    () =>
+      askedPinned.flatMap((asked) =>
+        asked.data === undefined || asked.data === null ? [] : [asked.data],
+      ),
+    [askedPinned],
+  );
   const records = useMemo(
-    () => pinFirst(fetched, pinned, (record) => record.id),
-    [fetched, pinned],
+    () =>
+      pinFirst(
+        [
+          ...pinnedElsewhere.filter((run) => !fetched.some((record) => record.id === run.id)),
+          ...fetched,
+        ],
+        pinned,
+        (record) => record.id,
+      ),
+    [fetched, pinned, pinnedElsewhere],
   );
   const issues = askedIssues.data ?? [];
   const openRun = records.find((record) => record.id === openIssuesFor);
@@ -204,28 +243,80 @@ const JobHistoryPanel = ({
   const issuesText = describeRunIssues(failure, issues);
   const openWork = records.find((record) => record.id === openWorkFor);
   const counts = {
-    running: records.filter((record) => record.status === 'running').length,
-    completed: records.filter((record) => record.status === 'completed').length,
-    failed: records.filter((record) => record.status === 'failed').length,
+    running: askedRunning?.data?.total ?? 0,
+    completed: askedCompleted?.data?.total ?? 0,
+    failed: askedFailed?.data?.total ?? 0,
   };
-  const groups: FilterGroup[] = [
-    {
-      name: 'Status',
-      isSingle: true,
-      options: STATUS_FILTER_OPTIONS.map((option) => ({
-        id: `status:${option.id}`,
-        label: option.label,
-      })),
+  const groups = useMemo<FilterGroup[]>(
+    () => [
+      {
+        name: 'Status',
+        isSingle: true,
+        options: STATUS_FILTER_OPTIONS.map((option) => ({
+          id: `status:${option.id}`,
+          label: option.label,
+        })),
+      },
+      {
+        name: 'Job',
+        isSingle: true,
+        options: definitions.map((definition) => ({
+          id: `kind:${definition.kind}`,
+          label: definition.label,
+        })),
+      },
+    ],
+    [definitions],
+  );
+  const filterView = shared.view;
+  const filterText = shared.text;
+  const changeFilters = useCallback(
+    (next: ReadonlySet<string>) => {
+      const status = STATUSES.find((one) => next.has(`status:${one}`));
+      const kind = definitions.find((one) => next.has(`kind:${one.kind}`))?.kind;
+
+      onSearchChange({
+        rstatus: status,
+        ...logSearchFromView(
+          { ...filterView, jobKinds: kind === undefined ? [] : [kind] },
+          filterText,
+        ),
+      });
     },
-    {
-      name: 'Job',
-      isSingle: true,
-      options: definitions.map((definition) => ({
-        id: `kind:${definition.kind}`,
-        label: definition.label,
-      })),
+    [definitions, filterText, filterView, onSearchChange],
+  );
+  const sortGroups = useMemo(
+    () => [
+      {
+        name: 'Order',
+        selectedId: sort,
+        onSelect: (id: string) => {
+          const found = SORTS.find((one) => one.id === id);
+
+          if (found !== undefined) {
+            onSearchChange({ rsort: found.id === 'newest' ? undefined : found.id });
+          }
+        },
+        options: SORTS.map((one) => ({ id: one.id, label: one.label, detail: one.detail })),
+      },
+    ],
+    [sort, onSearchChange],
+  );
+  const sortTrigger = useMemo(
+    () => (
+      <>
+        <span className="truncate">{SORTS.find((one) => one.id === sort)?.label}</span>
+        <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
+      </>
+    ),
+    [sort],
+  );
+  const traceRun = useCallback(
+    (record: JobRunRecord) => {
+      onTrace(record.id);
     },
-  ];
+    [onTrace],
+  );
 
   useEffect(() => {
     let pending: ReturnType<typeof setTimeout> | null = null;
@@ -530,26 +621,8 @@ const JobHistoryPanel = ({
           label="Order"
           triggerShape="field"
           className="w-auto"
-          groups={[
-            {
-              name: 'Order',
-              selectedId: sort,
-              onSelect: (id) => {
-                const found = SORTS.find((one) => one.id === id);
-
-                if (found !== undefined) {
-                  onSearchChange({ rsort: found.id === 'newest' ? undefined : found.id });
-                }
-              },
-              options: SORTS.map((one) => ({ id: one.id, label: one.label, detail: one.detail })),
-            },
-          ]}
-          trigger={
-            <>
-              <span className="truncate">{SORTS.find((one) => one.id === sort)?.label}</span>
-              <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
-            </>
-          }
+          groups={sortGroups}
+          trigger={sortTrigger}
         />
 
         <FilterMenu
@@ -557,18 +630,7 @@ const JobHistoryPanel = ({
           hasLabel
           groups={groups}
           selected={chosen}
-          onChange={(next) => {
-            const status = STATUSES.find((one) => next.has(`status:${one}`));
-            const kind = definitions.find((one) => next.has(`kind:${one.kind}`))?.kind;
-
-            onSearchChange({
-              rstatus: status,
-              ...logSearchFromView(
-                { ...shared.view, jobKinds: kind === undefined ? [] : [kind] },
-                shared.text,
-              ),
-            });
-          }}
+          onChange={changeFilters}
         />
       </div>
 
@@ -601,10 +663,13 @@ const JobHistoryPanel = ({
           label="What pg-boss has run"
           columns={columns}
           rows={records}
-          getRowId={(record) => record.id}
-          onChooseRow={(record) => {
-            onTrace(record.id);
+          totalRows={askedHistory.data?.total ?? records.length}
+          page={page}
+          onPageChange={(next) => {
+            onSearchChange({ rpage: next === 0 ? undefined : next + 1 });
           }}
+          getRowId={runId}
+          onChooseRow={traceRun}
           height="fill"
           pageSize={ROWS_PER_PAGE}
           emptyMessage={

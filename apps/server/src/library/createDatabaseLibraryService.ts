@@ -56,6 +56,7 @@ import type {
   MusicFileSystem,
   MusicStore,
 } from '@ValenceServer/music/scanMusicLibrary';
+import { readEveryEpisode } from '@ValenceServer/library/readEveryEpisode';
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
 import { createExpiringCache } from './createExpiringCache';
 import { resolveNextEpisode, resolveSeriesShape } from './MetadataProvider';
@@ -202,7 +203,9 @@ type DatabaseLibraryService = LibraryService & {
   runClearParts: (libraryId: string, parts: LibraryPart[], jobId?: string) => Promise<void>;
 };
 
-const EVERY_EPISODE = 2000;
+const EPISODES_AT_A_TIME = 2000;
+
+const MOST_EPISODES_SHARED = 2000;
 
 const CREDITS_LIMIT = 200;
 
@@ -233,10 +236,17 @@ const yourStars = (profileId: string) =>
  */
 const orderingFor = (options: ListItemsOptions) => {
   if (options.order === 'yourRating' && options.profileId !== undefined) {
-    return [sql`${yourStars(options.profileId)} desc nulls last`, asc(mediaItem.title)];
+    return [
+      sql`${yourStars(options.profileId)} desc nulls last`,
+      asc(mediaItem.title),
+      asc(mediaItem.id),
+    ];
   }
 
-  return [options.order === 'newest' ? desc(mediaItem.addedAt) : asc(mediaItem.title)];
+  return [
+    options.order === 'newest' ? desc(mediaItem.addedAt) : asc(mediaItem.title),
+    asc(mediaItem.id),
+  ];
 };
 
 /**
@@ -1016,6 +1026,7 @@ const createDatabaseLibraryService = ({
         ...(options.yearFrom === undefined ? [] : [gte(mediaItem.year, options.yearFrom)]),
         ...(options.yearTo === undefined ? [] : [lte(mediaItem.year, options.yearTo)]),
         ...(options.minRating === undefined ? [] : [gte(mediaItem.rating, options.minRating)]),
+        ...(options.seriesId === undefined ? [] : [eq(mediaItem.seriesId, options.seriesId)]),
         ...(options.ids === undefined
           ? [isNull(mediaItem.extraKind)]
           : options.ids.length === 0
@@ -1233,7 +1244,7 @@ const createDatabaseLibraryService = ({
         .from(mediaItem)
         .where(where)
         .orderBy(asc(mediaItem.seasonNumber), asc(mediaItem.episodeNumber), asc(mediaItem.title))
-        .limit(EVERY_EPISODE);
+        .limit(MOST_EPISODES_SHARED);
 
       return rows.map(({ posterUrl, backdropUrl, logoUrl, genres, ...row }) => ({
         ...row,
@@ -2008,13 +2019,13 @@ const createDatabaseLibraryService = ({
     },
 
     listShows: async (viewer, libraryId) => {
-      const page = await service.listItems(viewer, libraryId, {
-        kind: 'shows',
-        limit: EVERY_EPISODE,
-        offset: 0,
+      const episodes = await readEveryEpisode({
+        pageSize: EPISODES_AT_A_TIME,
+        readPage: (limit, offset) =>
+          service.listItems(viewer, libraryId, { kind: 'shows', limit, offset }),
       });
 
-      return page === null ? null : groupIntoShows(page.items);
+      return episodes === null ? null : groupIntoShows(episodes);
     },
 
     comingUp: async (viewer) => {
@@ -2075,13 +2086,22 @@ const createDatabaseLibraryService = ({
     },
 
     getShow: async (viewer, libraryId, showId) => {
-      const page = await service.listItems(viewer, libraryId, {
-        kind: 'shows',
-        limit: EVERY_EPISODE,
-        offset: 0,
-      });
+      const readShow = (narrowed: boolean) =>
+        readEveryEpisode({
+          pageSize: EPISODES_AT_A_TIME,
+          readPage: (limit, offset) =>
+            service.listItems(viewer, libraryId, {
+              kind: 'shows',
+              limit,
+              offset,
+              ...(narrowed ? { seriesId: showId } : {}),
+            }),
+        });
 
-      const detail = page === null ? null : buildShowDetail(page.items, showId);
+      const ofTheSeries = await readShow(true);
+      const episodes =
+        ofTheSeries !== null && ofTheSeries.length > 0 ? ofTheSeries : await readShow(false);
+      const detail = episodes === null ? null : buildShowDetail(episodes, showId);
 
       if (detail === null) {
         return null;
