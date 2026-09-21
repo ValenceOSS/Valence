@@ -6,6 +6,7 @@ import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceScreens/testing/aTrack';
 import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests';
 import { setMusicImmersive } from '@ValenceScreens/music/musicImmersive';
+import { setMusicVisualiser, useMusicVisualiser } from '@ValenceScreens/music/musicVisualiser';
 import { ImmersiveMusic } from './ImmersiveMusic';
 
 const TRACK = aTrack(1, { hasLyrics: true });
@@ -24,6 +25,7 @@ beforeEach(() => {
 
 afterEach(() => {
   setMusicImmersive(false);
+  setMusicVisualiser(false);
 });
 
 const playing = () => aFakeMusicPlayer({ current: TRACK, isPlaying: true, positionSeconds: 6 });
@@ -89,6 +91,39 @@ describe('ImmersiveMusic', () => {
     expect(player.pause).toHaveBeenCalled();
     expect(screen.getByRole('slider', { name: 'Volume' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Like Track 1' })).toBeInTheDocument();
+  });
+
+  it('opens the visualiser page from a button beside the close button', async () => {
+    const Watching = () => <p>{useMusicVisualiser() ? 'Visualising' : 'Not visualising'}</p>;
+
+    renderInAnAddress(
+      <>
+        <ImmersiveMusic player={playing().player} />
+        <Watching />
+      </>,
+    );
+
+    act(() => {
+      setMusicImmersive(true);
+    });
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Visualiser' }));
+
+    expect(screen.getByText('Visualising')).toBeInTheDocument();
+  });
+
+  it('leaves Escape to the visualiser while it is open over the view', async () => {
+    renderInAnAddress(<ImmersiveMusic player={playing().player} />);
+
+    act(() => {
+      setMusicImmersive(true);
+      setMusicVisualiser(true);
+    });
+
+    await screen.findByRole('region', { name: 'Track 1, immersive' });
+    await userEvent.keyboard('{Escape}');
+
+    expect(screen.getByRole('region', { name: 'Track 1, immersive' })).toBeInTheDocument();
   });
 
   it('says plainly when no lyrics were found', async () => {

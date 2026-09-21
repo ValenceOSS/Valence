@@ -1,4 +1,4 @@
-const FFT_SIZE = 256;
+const FFT_SIZE = 1024;
 
 const SMOOTHING = 0.78;
 

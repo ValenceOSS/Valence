@@ -151,6 +151,12 @@
       "@ValenceUI/SpectrumBars.types": [
         "./packages/ui/src/components/SpectrumBars/SpectrumBars.types.ts"
       ],
+      "@ValenceUI/VisualiserStage": [
+        "./packages/ui/src/components/VisualiserStage/VisualiserStage.tsx"
+      ],
+      "@ValenceUI/VisualiserStage.types": [
+        "./packages/ui/src/components/VisualiserStage/VisualiserStage.types.ts"
+      ],
       "@ValenceUI/SettingList": ["./packages/ui/src/components/SettingList/SettingList.tsx"],
       "@ValenceUI/SettingList.types": [
         "./packages/ui/src/components/SettingList/SettingList.types.ts"
