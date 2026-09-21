@@ -64,6 +64,21 @@ ARG TARGETARCH
 # nobody set reads as the development build it is rather than as a release that does not exist.
 ARG VALENCE_VERSION=0.0.0
 
+# Matches the postgres major the compose file runs, since pg_dump refuses a server newer than itself.
+# What takes the snapshot before a migration, and puts one back on a rollback.
+ARG POSTGRES_MAJOR=18
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+  && install -d /usr/share/keyrings \
+  && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/pgdg.gpg \
+  && echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends postgresql-client-${POSTGRES_MAJOR} \
+  && apt-get purge -y curl gnupg \
+  && apt-get autoremove -y \
+  && rm -rf /var/lib/apt/lists/*
+
 ADD https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}-bookworm_${TARGETARCH}.deb /tmp/valence-ffmpeg.deb
 
 RUN apt-get update \

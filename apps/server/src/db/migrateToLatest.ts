@@ -1,3 +1,4 @@
+import { describeNewerSchema } from '@ValenceServer/db/describeNewerSchema';
 import { planMigration } from '@ValenceServer/db/planMigration';
 import type { MigrationPlan } from '@ValenceServer/db/planMigration';
 
@@ -5,6 +6,8 @@ type MigrateToLatestOptions = {
   pending: () => Promise<readonly string[]>;
   apply: () => Promise<void>;
   applyMissed?: () => Promise<readonly string[]>;
+  beforeApply?: (pending: readonly string[]) => Promise<void>;
+  newer?: () => Promise<readonly number[]>;
   isAllowed: boolean;
   say: (level: 'info' | 'error', line: string) => void;
 };
@@ -26,19 +29,30 @@ type MigrateToLatestOptions = {
  * @param applyMissed - Runs whatever `apply` left behind. Drizzle skips a migration stamped earlier
  *   than one the database has already run and says nothing, so what it did is checked rather than
  *   trusted, and what it skipped is run here.
+ * @param beforeApply - Runs once the migrations are known and before the first is applied, which is
+ *   where a way back is kept.
+ * @param newer - Reads the migrations the database has run that this release does not carry.
  * @param isAllowed - Whether this server may apply them itself.
  * @param say - Where to report what happened.
  * @returns What it decided to do.
- * @throws If the migrations could not be applied, or some are still missing once everything has been
+ * @throws If a newer release has already migrated the database, or the migrations could not be applied, or some are still missing once everything has been
  * tried, since coming up on a schema that half moved is worse than not coming up.
  */
 const migrateToLatest = async ({
   pending,
   apply,
   applyMissed,
+  beforeApply,
+  newer,
   isAllowed,
   say,
 }: MigrateToLatestOptions): Promise<MigrationPlan> => {
+  const ahead = newer === undefined ? [] : await newer();
+
+  if (ahead.length > 0) {
+    throw new Error(describeNewerSchema(ahead.length));
+  }
+
   const plan = planMigration({ pending: await pending(), isAllowed });
 
   if (plan.kind === 'inStep') {
@@ -53,6 +67,7 @@ const migrateToLatest = async ({
 
   say('info', plan.saying);
 
+  await beforeApply?.(plan.pending);
   await apply();
 
   if (applyMissed !== undefined) {
