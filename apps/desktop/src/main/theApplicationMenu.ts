@@ -20,10 +20,15 @@ const IS_MAC = process.platform === 'darwin';
  * looking for Valence may be reading a menu called something else — and somebody who cannot find the
  * thing that points this window at their server has an application that does nothing.
  *
+ * The developer tools are offered only where asked for, which is a build being worked on and never an
+ * installed one. They open the page's own scripts and storage to whoever is at the keyboard, which is
+ * what a person debugging wants and not what somebody watching a film needs in their View menu.
+ *
  * @param changeServer - What to do when somebody asks for a different one.
+ * @param hasDevTools - Whether to offer the developer tools, which an installed build does not.
  * @returns The menu, already set.
  */
-const theApplicationMenu = (changeServer: () => void): Menu => {
+const theApplicationMenu = (changeServer: () => void, hasDevTools = false): Menu => {
   const valence: MenuItemConstructorOptions = {
     label: 'Valence',
     submenu: [
@@ -58,7 +63,7 @@ const theApplicationMenu = (changeServer: () => void): Menu => {
       submenu: [
         { role: 'reload' },
         { role: 'forceReload' },
-        { role: 'toggleDevTools' },
+        ...(hasDevTools ? [{ role: 'toggleDevTools' } as const] : []),
         { type: 'separator' },
         { role: 'resetZoom' },
         { role: 'zoomIn' },
