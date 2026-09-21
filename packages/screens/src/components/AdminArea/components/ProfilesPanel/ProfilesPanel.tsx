@@ -22,7 +22,16 @@ import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/P
 import { describeAskers } from './describeAskers';
 import { describeProfile } from './describeProfile';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
-import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import type { ProfileKind, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+
+const KINDS: readonly { id: ProfileKind; label: string; empty: string }[] = [
+  {
+    id: 'video',
+    label: 'Films and series',
+    empty: 'No profiles for films or series yet.',
+  },
+  { id: 'music', label: 'Music', empty: 'No profiles for music yet.' },
+];
 
 /**
  * The Profiles page: every quality profile, what each takes and how far it upgrades, the libraries
@@ -91,7 +100,7 @@ const ProfilesPanel = () => {
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">
             {row.original.libraryIds.length === 0
-              ? 'No library yet'
+              ? 'Every library'
               : row.original.libraryIds
                   .map((id) => named.get(id) ?? 'A library that has gone')
                   .join(', ')}
@@ -210,13 +219,23 @@ const ProfilesPanel = () => {
       ) : profiles.isPending ? (
         <Spinner isCentered label="Reading the profiles" size="sm" />
       ) : (
-        <DataTable
-          label="Profiles"
-          columns={columns}
-          rows={profiles.data}
-          getRowId={(profile) => profile.id}
-          emptyMessage="No profiles yet. Add one to judge what searches find, and to choose what is downloaded."
-        />
+        <div className="flex flex-col gap-6">
+          {KINDS.map((kind) => (
+            <section key={kind.id} aria-label={kind.label} className="flex flex-col gap-2">
+              <h4 className="px-4 text-xs uppercase tracking-[0.14em] text-text-muted">
+                {kind.label}
+              </h4>
+
+              <DataTable
+                label={kind.label}
+                columns={columns}
+                rows={profiles.data.filter((profile) => profile.kind === kind.id)}
+                getRowId={(profile) => profile.id}
+                emptyMessage={kind.empty}
+              />
+            </section>
+          ))}
+        </div>
       )}
     </PanelCard>
   );

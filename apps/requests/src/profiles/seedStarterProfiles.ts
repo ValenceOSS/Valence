@@ -3,46 +3,50 @@ import type { ProfileService } from '@ValenceRequests/profiles/createProfileServ
 
 type SeedStarterProfilesOptions = {
   profiles: Pick<ProfileService, 'list' | 'add'>;
-  wasSeeded: () => Promise<boolean>;
-  remember: () => Promise<void>;
+  seeded: () => Promise<string[]>;
+  remember: (names: readonly string[]) => Promise<void>;
 };
 
 /**
- * Gives a server the quality profiles it should have had to begin with, the first time it starts.
+ * Gives a server the quality profiles it should have had to begin with.
  *
  * Requesting is unusable without one: a search has nothing to judge what it finds against, so the
- * first thing every operator had to do was write out five profiles that are the same on every
- * server. These are those five.
+ * first thing every operator had to do was write out the same handful by hand.
  *
- * Done once and recorded, rather than whenever the list is empty. An operator who deletes what they
- * do not want has said something, and putting it back on the next restart would be arguing with
- * them. A profile whose name is already taken is left alone for the same reason.
+ * Which have been seeded is recorded by name rather than as one flag for the lot, so a starter
+ * profile added to a later version reaches servers that were set up before it existed — which is
+ * the only reason the music ones reach anybody who installed Valence before they were written. A
+ * name is recorded whether or not it was added, so a profile an operator deletes stays deleted and
+ * one whose name they had already taken is left alone.
  *
  * @param profiles - The profiles, to read and to add to.
- * @param wasSeeded - Whether this has been done before.
- * @param remember - Records that it has been done.
+ * @param seeded - The names seeded on this server before now.
+ * @param remember - Records the names that have now been seen.
  * @returns The names of the profiles added.
  */
 const seedStarterProfiles = async ({
   profiles,
-  wasSeeded,
+  seeded,
   remember,
 }: SeedStarterProfilesOptions): Promise<string[]> => {
-  if (await wasSeeded()) {
+  const already = new Set(await seeded());
+  const wanted = STARTER_PROFILES.filter((draft) => !already.has(draft.name));
+
+  if (wanted.length === 0) {
     return [];
   }
 
   const taken = new Set((await profiles.list()).map((profile) => profile.name));
   const added: string[] = [];
 
-  for (const draft of STARTER_PROFILES) {
+  for (const draft of wanted) {
     if (!taken.has(draft.name)) {
       await profiles.add(draft);
       added.push(draft.name);
     }
   }
 
-  await remember();
+  await remember([...already, ...wanted.map((draft) => draft.name)]);
 
   return added;
 };

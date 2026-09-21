@@ -33,10 +33,13 @@ import { createDatabaseRequestLogStore } from '@ValenceRequests/mediaRequests/cr
 import { createRequestRoutes } from '@ValenceRequests/mediaRequests/createRequestRoutes';
 import { createRequestService } from '@ValenceRequests/mediaRequests/createRequestService';
 import { createRequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
+import { z } from 'zod';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
 
-const PROFILES_SEEDED_AT = 'profilesSeededAt';
+const SEEDED_PROFILES = 'seededProfileNames';
+
+const SeededProfilesSchema = z.array(z.string());
 
 const env = readEnv(process.env);
 const { db, pool } = createDatabase(env.DATABASE_URL);
@@ -109,8 +112,9 @@ const settings = createDatabaseSettingStore(db);
 
 const seeded = await seedStarterProfiles({
   profiles,
-  wasSeeded: async () => (await settings.read(PROFILES_SEEDED_AT)) !== null,
-  remember: () => settings.write(PROFILES_SEEDED_AT, new Date().toISOString()),
+  seeded: async () =>
+    SeededProfilesSchema.parse(JSON.parse((await settings.read(SEEDED_PROFILES)) ?? '[]')),
+  remember: (names) => settings.write(SEEDED_PROFILES, JSON.stringify(names)),
 });
 
 if (seeded.length > 0) {

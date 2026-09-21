@@ -4135,6 +4135,11 @@ const createApp = ({
    * what the house may ask for, and somebody who can edit the profiles is not the house — forcing
    * them would only mean editing a profile to make one request and editing it back.
    *
+   * A book is offered nothing. Books are never searched for by themselves — they are marked as
+   * added by hand — so no profile ever judges one, and offering a quality would be asking a
+   * question that changes nothing. The permission check above still runs, so refusing somebody who
+   * may not ask still happens before anything else is worked out.
+   *
    * @param headers - What the asking carried.
    * @param kind - Whether the request is for music or for video.
    * @returns What to offer them, or why it could not be worked out.
@@ -4165,6 +4170,10 @@ const createApp = ({
 
     if (session === null) {
       return { kind: 'refused' as const, status: 403 as const, ...NOT_YOURS };
+    }
+
+    if (isBookRequest(kind)) {
+      return { kind: 'answered' as const, value: { choices: [], forcedId: null } };
     }
 
     const asChoice = (profile: QualityProfile) => ({
@@ -4263,6 +4272,10 @@ const createApp = ({
 
     if (offered.kind !== 'answered') {
       return { kind: 'refused', status: offered.status, error: offered.error };
+    }
+
+    if (isBookRequest(asked.kind)) {
+      return { kind: 'chosen', profileId: undefined };
     }
 
     const { choices, forcedId } = offered.value;
