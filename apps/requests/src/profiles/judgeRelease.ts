@@ -1,3 +1,4 @@
+import { describeLanguage } from '@ValenceCore/functions/describeTrack';
 import { hasWord } from '@ValenceRequests/profiles/hasWord';
 import { QUALITY_LABELS } from '@ValenceRequests/profiles/QUALITY_LABELS';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
@@ -18,6 +19,40 @@ const MEGABYTE = 1024 * 1024;
 const PREFERRED_WORD = 10;
 
 const REVISION = 5;
+
+const LANGUAGE = 50;
+
+/**
+ * Judges a release against the language wanted, where one is wanted.
+ *
+ * Three answers rather than two, because a release name that says nothing about language is the
+ * common case and must not be read either way. Most English releases never say they are English,
+ * so scoring silence as a miss would bury them; scoring it as a hit would rank an English dub
+ * above the Japanese original of a film that has no dub. Silence scores nothing.
+ *
+ * Never a rejection. Wanting English is a preference about which release to take, not a claim that
+ * a film has an English version, and a profile that refused everything else would leave a foreign
+ * film unfetchable.
+ *
+ * @param languages - The languages the release name says it carries.
+ * @param wanted - The language wanted, or null where none is.
+ * @returns The verdict.
+ */
+const judgeLanguage = (languages: readonly string[], wanted: string | null): Verdict => {
+  if (wanted === null || languages.length === 0) {
+    return { score: 0, rejections: [], reasons: [] };
+  }
+
+  const name = describeLanguage(wanted) ?? wanted;
+
+  return languages.includes(wanted)
+    ? { score: LANGUAGE, rejections: [], reasons: [`In ${name} (+${LANGUAGE.toString()})`] }
+    : {
+        score: -LANGUAGE,
+        rejections: [],
+        reasons: [`Not in ${name} (−${LANGUAGE.toString()})`],
+      };
+};
 
 /**
  * Judges one part of a release's quality against the profile's choices, best first: the further
@@ -59,13 +94,17 @@ const judgeChoice = <Quality extends Resolution | ReleaseSource | MusicQuality>(
 /**
  * Judges a release's size against the profile's limits: per album for music, and per hour for
  * video — the limits for its own source and resolution, where the profile sets them, and otherwise
- * the profile's own — which needs its running time — a whole season's cannot be judged without knowing how many
- * episodes it holds.
+ * the profile's own — which needs its running time.
+ *
+ * A pack is judged per hour like anything else, over however many episodes it holds. Where nobody
+ * has said how many that is, as an interactive search has not, it goes unjudged rather than being
+ * measured against one episode's limit and refused for being a pack.
  *
  * @param release - The release.
  * @param parsed - What its name says.
  * @param profile - The profile.
  * @param runtimeMinutes - How long one film or episode runs, where known.
+ * @param episodesHeld - How many episodes it holds, where that is known.
  * @returns The verdict.
  */
 const judgeSize = (
@@ -73,6 +112,7 @@ const judgeSize = (
   parsed: ParsedRelease,
   profile: QualityProfile,
   runtimeMinutes: number | undefined,
+  episodesHeld: number | undefined,
 ): Verdict => {
   const nothing: Verdict = { score: 0, rejections: [], reasons: [] };
   const isVideo = profile.kind === 'video';
@@ -94,11 +134,14 @@ const judgeSize = (
     return { ...nothing, reasons: ['Its size is not judged without a running time'] };
   }
 
-  if (isVideo && parsed.seasons.length > 0 && parsed.episodes.length === 0) {
-    return { ...nothing, reasons: ['Its size is not judged, since it is a whole season'] };
+  const isPack = isVideo && parsed.seasons.length > 0 && parsed.episodes.length === 0;
+  const held = parsed.episodes.length > 0 ? parsed.episodes.length : (episodesHeld ?? 0);
+
+  if (isPack && held === 0) {
+    return { ...nothing, reasons: ['Its size is not judged without knowing what it holds'] };
   }
 
-  const hours = ((runtimeMinutes ?? 60) * Math.max(parsed.episodes.length, 1)) / 60;
+  const hours = ((runtimeMinutes ?? 60) * Math.max(held, 1)) / 60;
   const measured = isVideo ? megabytes / hours : megabytes;
   const said = `${Math.round(measured).toLocaleString('en-GB')} MB${isVideo ? ' an hour' : ''}`;
 
@@ -138,10 +181,14 @@ const judgeSize = (
  * profile is chiefly about those. One that does not say its source is let through unscored, as
  * anime releases seldom do. A torrent nobody seeds is refused, since it would never arrive.
  *
+ * The language a profile prefers only ranks releases, and never refuses one. See [`judgeLanguage`].
+ *
  * @param release - The release.
  * @param parsed - What its name says.
  * @param profile - The profile.
  * @param runtimeMinutes - How long one film or episode runs, for judging video by size an hour.
+ * @param episodesHeld - How many episodes the release holds, so a pack is judged by size an hour
+ *   like anything else. Left out where nobody knows, and then a pack's size goes unjudged.
  * @returns The judgement.
  */
 const judgeRelease = (
@@ -149,6 +196,7 @@ const judgeRelease = (
   parsed: ParsedRelease,
   profile: QualityProfile,
   runtimeMinutes?: number,
+  episodesHeld?: number,
 ): Judgement => {
   const verdicts: Verdict[] =
     profile.kind === 'video'
@@ -211,7 +259,8 @@ const judgeRelease = (
           ? [`A repack, fixing an earlier release (+${REVISION.toString()})`]
           : [],
     },
-    judgeSize(release, parsed, profile, runtimeMinutes),
+    judgeLanguage(parsed.languages, profile.preferredLanguage),
+    judgeSize(release, parsed, profile, runtimeMinutes, episodesHeld),
   );
 
   const rejections = verdicts.flatMap((verdict) => verdict.rejections);

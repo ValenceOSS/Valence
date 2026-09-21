@@ -17,6 +17,21 @@ const isNearYear = (released: number | null, wanted: number | null): boolean =>
   released === null || wanted === null || Math.abs(released - wanted) <= 1;
 
 /**
+ * Whether an episode had aired by the time a release was made, which is the only way a release
+ * claiming a whole season or a whole run could hold it.
+ *
+ * A show that ends, is packed as complete, and is then brought back is the case this is for: the
+ * pack is honest about what it held when it was made, and would otherwise be credited with every
+ * episode of every season that came after it, which are then never searched for again.
+ *
+ * @param item - The episode.
+ * @param madeAt - The day the release was made, as a calendar date.
+ * @returns Whether it had aired, and so could be in it.
+ */
+const hadAired = (item: Matchable, madeAt: string | null): boolean =>
+  item.airDate === null || madeAt === null || item.airDate <= madeAt;
+
+/**
  * The episodes a release numbered from the very first episode holds, counting through every regular
  * season in order — which only works where the request holds every season up to the ones asked
  * about, so it is only tried where it holds the first episode of all.
@@ -52,15 +67,20 @@ const byAbsoluteNumber = <Item extends Matchable>(
  * title (or another it goes by) and a year near enough, and for a series the complete run, whole
  * seasons, the episodes it numbers, or the day it aired.
  *
+ * A release claiming a whole season or a whole run is only credited with the episodes that had
+ * aired when it was made, since it cannot hold the ones that had not.
+ *
  * @param request - What was asked for.
  * @param items - What it is waiting for.
  * @param parsed - What the release's name says it is.
+ * @param madeAt - The day the release was made, as a calendar date, where it is known.
  * @returns The ones it holds, or none where it is not for this request.
  */
 const matchRelease = <Item extends Matchable>(
   request: Pick<MediaRequestRecord, 'kind' | 'title' | 'aliases' | 'year'>,
   items: readonly Item[],
   parsed: ParsedRelease,
+  madeAt: string | null = null,
 ): Item[] => {
   const isNamed = [request.title, ...request.aliases].some((title) =>
     isSameTitle(parsed.title, title),
@@ -81,7 +101,7 @@ const matchRelease = <Item extends Matchable>(
   }
 
   if (parsed.isCompleteSeries) {
-    return [...items];
+    return items.filter((item) => hadAired(item, madeAt));
   }
 
   if (parsed.airDate !== null) {
@@ -90,7 +110,10 @@ const matchRelease = <Item extends Matchable>(
 
   if (parsed.seasons.length > 0) {
     return parsed.episodes.length === 0
-      ? items.filter((item) => item.season !== null && parsed.seasons.includes(item.season))
+      ? items.filter(
+          (item) =>
+            item.season !== null && parsed.seasons.includes(item.season) && hadAired(item, madeAt),
+        )
       : items.filter(
           (item) =>
             item.season === parsed.seasons[0] &&

@@ -8,6 +8,7 @@ import type { Library } from '@ValenceContracts/schemas/Library';
 import type * as Requests from '@ValenceClient/requests/fetchMediaRequests';
 import type * as Profiles from '@ValenceClient/requests/fetchProfiles';
 import type * as Libraries from '@ValenceClient/library/fetchLibrary';
+import { aQualityProfile } from '@ValenceScreens/testing/aQualityProfile';
 
 const approveMediaRequest = vi.fn<typeof Requests.approveMediaRequest>();
 const changeMediaRequest = vi.fn<typeof Requests.changeMediaRequest>();
@@ -50,28 +51,12 @@ beforeEach(() => {
   approveMediaRequest.mockReset().mockResolvedValue({ value: DUNE, refusal: null });
   changeMediaRequest.mockReset().mockResolvedValue({ value: DUNE, refusal: null });
   fetchProfiles.mockReset().mockResolvedValue([
-    {
+    aQualityProfile({
       id: '2a9e6679-7425-40de-944b-e07fc1f90ae7',
       name: 'Ultra HD',
-      kind: 'video',
       resolutions: [],
       sources: [],
-      musicQualities: [],
-      smallestMb: null,
-      largestMb: null,
-      sizes: [],
-      preferredWords: [],
-      requiredWords: [],
-      bannedWords: [],
-      isUpgrading: false,
-      releaseWait: 'digital',
-      upgradeUntilResolution: null,
-      upgradeUntilSource: null,
-      upgradeUntilMusicQuality: null,
-      libraryIds: [],
-      createdAt: '2026-01-01T00:00:00.000Z',
-      updatedAt: '2026-01-01T00:00:00.000Z',
-    },
+    }),
   ]);
   fetchLibraries
     .mockReset()

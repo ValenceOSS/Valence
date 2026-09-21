@@ -15,6 +15,8 @@ type ClientItem = {
   secondsLeft: number | null;
   seeds: number | null;
   peers: number | null;
+  uploadedBytes: number | null;
+  seedingSeconds: number | null;
   path: string | null;
 };
 

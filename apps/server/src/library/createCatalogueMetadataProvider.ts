@@ -506,10 +506,12 @@ const matchOf = (
  * Only YouTube, because that is the only thing Valence can play one from, and an official one ahead
  * of a fan cut. Nothing is what a title with no trailer gets, which is most of them.
  *
- * @param detail - The catalogue's own record, with its videos appended.
+ * @param detail - The videos the catalogue appended to its own record.
  * @returns The YouTube identifier of the trailer, or null.
  */
-const youTubeTrailerIn = (detail: z.infer<typeof DetailResponseSchema>): string | null => {
+const youTubeTrailerIn = (
+  detail: Pick<z.infer<typeof DetailResponseSchema>, 'videos'>,
+): string | null => {
   const filmed = (detail.videos?.results ?? []).filter(
     (video) => video.site === 'YouTube' && video.type === 'Trailer',
   );
@@ -998,14 +1000,17 @@ const createCatalogueMetadataProvider = ({
         return null;
       }
 
-      const detail = TitleResponseSchema.safeParse(
-        await request(`/${kind}/${externalId}`, key, { append_to_response: 'credits' }),
-      );
+      const wantsTrailers = await readWantsTrailers();
+      const answer = await request(`/${kind}/${externalId}`, key, {
+        append_to_response: wantsTrailers ? 'credits,videos' : 'credits',
+      });
+      const detail = TitleResponseSchema.safeParse(answer);
 
       if (!detail.success) {
         return null;
       }
 
+      const filmed = DetailResponseSchema.pick({ videos: true }).safeParse(answer);
       const found = detail.data;
       const runtime = found.runtime ?? found.episode_run_time[0] ?? 0;
 
@@ -1022,6 +1027,8 @@ const createCatalogueMetadataProvider = ({
           role: member.character === undefined || member.character === '' ? null : member.character,
           photoUrl: imageUrl(imageBaseUrl, member.profile_path, 'w185'),
         })),
+        trailerKey:
+          wantsTrailers && filmed.success ? youTubeTrailerIn({ videos: filmed.data.videos }) : null,
       };
     },
 

@@ -34,6 +34,8 @@ const TorrentSchema = z.object({
   peersGettingFromUs: z.number().int(),
   labels: z.array(z.string()).default([]),
   downloadDir: z.string().default(''),
+  uploadedEver: z.number().optional(),
+  secondsSeeding: z.number().optional(),
 });
 
 const FilesSchema = z.array(
@@ -58,6 +60,8 @@ const FIELDS = [
   'peersGettingFromUs',
   'labels',
   'downloadDir',
+  'uploadedEver',
+  'secondsSeeding',
 ];
 
 const LOCAL_ERROR = 3;
@@ -132,6 +136,8 @@ const readTorrent = (torrent: z.infer<typeof TorrentSchema>): ClientItem => {
     secondsLeft: state === 'downloading' && torrent.eta >= 0 ? torrent.eta : null,
     seeds: torrent.peersSendingToUs,
     peers: torrent.peersGettingFromUs,
+    uploadedBytes: torrent.uploadedEver ?? null,
+    seedingSeconds: torrent.secondsSeeding ?? null,
     path:
       torrent.downloadDir === ''
         ? null

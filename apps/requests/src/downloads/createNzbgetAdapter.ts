@@ -198,6 +198,8 @@ const createNzbgetAdapter = (
           secondsLeft: isTheOne && speed > 0 ? Math.round(remaining / speed) : null,
           seeds: null,
           peers: null,
+          uploadedBytes: null,
+          seedingSeconds: null,
           path: null,
         };
       });
@@ -218,6 +220,8 @@ const createNzbgetAdapter = (
           secondsLeft: null,
           seeds: null,
           peers: null,
+          uploadedBytes: null,
+          seedingSeconds: null,
           path: job.FinalDir || job.DestDir || null,
         };
       });

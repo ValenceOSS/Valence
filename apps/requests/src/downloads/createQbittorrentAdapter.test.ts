@@ -298,6 +298,8 @@ describe('createQbittorrentAdapter', () => {
       secondsLeft: 6,
       seeds: 12,
       peers: 3,
+      uploadedBytes: null,
+      seedingSeconds: null,
       path: '/downloads/valence/Dune',
     });
     expect(arrival?.path).toBeNull();

@@ -47,8 +47,9 @@ const musicBrainzIdOf = async (
 
 /**
  * Everything a title's page shows of something not asked for yet: a film or series with its
- * backdrop, genres, running time and cast from the catalogue, a book with its authors and subjects
- * from Open Library, or an artist with their albums and an album with its artist from MusicBrainz. A title from Deezer's charts is found in MusicBrainz
+ * backdrop, genres, running time, cast and trailer from the catalogue, a book with its authors and
+ * subjects from Open Library, or an artist with their albums and an album with its artist from
+ * MusicBrainz. A title from Deezer's charts is found in MusicBrainz
  * first, so it can be asked for by the id a request needs.
  *
  * @param sources - Where each kind is described.
@@ -81,6 +82,7 @@ const describeCatalogueTitle = async (
           cast: found.cast,
           albums: [],
           authors: [],
+          trailerKey: found.trailerKey,
         };
   }
 
@@ -108,6 +110,7 @@ const describeCatalogueTitle = async (
           cast: [],
           albums: [],
           authors: found.authors,
+          trailerKey: null,
         };
   }
 
@@ -131,6 +134,7 @@ const describeCatalogueTitle = async (
         cast: [],
         albums: kind === 'artist' ? found.albums : [],
         authors: [],
+        trailerKey: null,
       };
 };
 

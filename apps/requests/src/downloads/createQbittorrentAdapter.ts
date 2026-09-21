@@ -25,6 +25,8 @@ const TorrentSchema = z.object({
   eta: z.number().optional(),
   num_seeds: z.number().optional(),
   num_leechs: z.number().optional(),
+  uploaded: z.number().optional(),
+  seeding_time: z.number().optional(),
   content_path: z.string().optional(),
 });
 
@@ -89,6 +91,8 @@ const readTorrent = (torrent: z.infer<typeof TorrentSchema>): ClientItem => {
         : null,
     seeds: torrent.num_seeds ?? null,
     peers: torrent.num_leechs ?? null,
+    uploadedBytes: torrent.uploaded ?? null,
+    seedingSeconds: torrent.seeding_time ?? null,
     path:
       torrent.content_path === undefined || torrent.content_path === ''
         ? null

@@ -283,6 +283,7 @@ import {
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,
+  profilesOnOfferRoute,
   removeQualityProfileRoute,
   addDownloadClientRoute,
   changeDownloadClientRoute,
@@ -419,6 +420,7 @@ import type {
   MediaRequest,
   MediaRequestAsk,
   MediaRequestDraft,
+  MediaRequestKind,
   MusicCatalogueHit,
   MusicRequestKind,
   ReleaseType,
@@ -427,6 +429,8 @@ import type {
 } from '@ValenceContracts/schemas/MediaRequest';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { isForLibrary, profilesOnOffer } from '@ValenceContracts/functions/profilesOnOffer';
+import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import { libraryKindOf } from '@ValenceContracts/functions/libraryKindOf';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
@@ -4185,6 +4189,88 @@ const createApp = ({
   ];
 
   /**
+   * The quality profiles somebody may ask with, and the one they are given no say over.
+   *
+   * Whoever manages requesting is neither gated nor forced. The locks and the default toggle narrow
+   * what the house may ask for, and somebody who can edit the profiles is not the house — forcing
+   * them would only mean editing a profile to make one request and editing it back.
+   *
+   * A book is offered nothing. Books are never searched for by themselves — they are marked as
+   * added by hand — so no profile ever judges one, and offering a quality would be asking a
+   * question that changes nothing. The permission check above still runs, so refusing somebody who
+   * may not ask still happens before anything else is worked out.
+   *
+   * @param headers - What the asking carried.
+   * @param kind - Whether the request is for music or for video.
+   * @returns What to offer them, or why it could not be worked out.
+   */
+  const libraryForRequest = async (kind: MediaRequestKind, libraryId?: string) => {
+    const wanted = libraryKindOf(kind);
+    const libraries = (await library.list(asTheServer)).filter(
+      (entry) => entry.kind === wanted && entry.takesRequests,
+    );
+
+    return libraryId === undefined
+      ? libraries[0]
+      : libraries.find((entry) => entry.id === libraryId);
+  };
+
+  const profilesFor = async (
+    headers: Headers,
+    kind: MediaRequestKind,
+    libraryId: string | undefined,
+    allowed: readonly Permission[] = [...ASKERS, ...APPROVERS],
+  ) => {
+    const session = await readSessionOnce(auth, headers);
+    const answer = await throughRequests(headers, (client) => client.listProfiles(), allowed);
+
+    if (answer.kind !== 'answered') {
+      return answer;
+    }
+
+    if (session === null) {
+      return { kind: 'refused' as const, status: 403 as const, ...NOT_YOURS };
+    }
+
+    if (isBookRequest(kind)) {
+      return { kind: 'answered' as const, value: { choices: [], forcedId: null } };
+    }
+
+    const asChoice = (profile: QualityProfile) => ({
+      id: profile.id,
+      name: profile.name,
+      kind: profile.kind,
+    });
+    const profileKind = isMusicRequest(kind) ? 'music' : 'video';
+    const into = (await libraryForRequest(kind, libraryId))?.id ?? null;
+
+    if (await requires(headers, 'requests.manage')) {
+      return {
+        kind: 'answered' as const,
+        value: {
+          choices: answer.value
+            .filter((profile) => profile.kind === profileKind && isForLibrary(profile, into))
+            .map(asChoice),
+          forcedId: null,
+        },
+      };
+    }
+
+    const held = await permissions.rolesFor(session.user.id);
+    const offered = profilesOnOffer(
+      answer.value,
+      profileKind,
+      { accountId: session.user.id, roleIds: held.map((role) => role.id) },
+      into,
+    );
+
+    return {
+      kind: 'answered' as const,
+      value: { choices: offered.choices.map(asChoice), forcedId: offered.forcedId },
+    };
+  };
+
+  /**
    * Says a request's news to anything subscribed, where anything could be.
    *
    * @param payload - What happened.
@@ -4217,6 +4303,60 @@ const createApp = ({
     );
   });
 
+  /**
+   * The quality profile a request is to be judged by, once the locks and the default have had their
+   * say: the one the server forces, the one the asker chose where it is theirs to choose, or none,
+   * which leaves the library's own.
+   *
+   * Run before anything is drafted, because working out what a request would look like reveals what
+   * libraries take requests, and somebody who may not ask should not learn that from being refused.
+   * Reaching the profiles is itself gated on the same permission the ask is, so the refusal for not
+   * being allowed to ask at all comes from here.
+   *
+   * @param headers - What the asking carried.
+   * @param asked - What is being asked for.
+   * @returns The profile to draft with, or why the ask is refused.
+   */
+  const profileForAsk = async (
+    headers: Headers,
+    asked: MediaRequestAsk,
+  ): Promise<
+    | { kind: 'chosen'; profileId: string | undefined }
+    | { kind: 'refused'; status: 400 | 403 | 404 | 502; error: string }
+  > => {
+    const isMusic = isMusicRequest(asked.kind);
+    const offered = await profilesFor(headers, asked.kind, asked.libraryId, [
+      isMusic ? 'requests.askMusic' : 'requests.ask',
+      ...APPROVERS,
+    ]);
+
+    if (offered.kind !== 'answered') {
+      return { kind: 'refused', status: offered.status, error: offered.error };
+    }
+
+    if (isBookRequest(asked.kind)) {
+      return { kind: 'chosen', profileId: undefined };
+    }
+
+    const { choices, forcedId } = offered.value;
+
+    if (forcedId !== null) {
+      return asked.profileId === undefined || asked.profileId === forcedId
+        ? { kind: 'chosen', profileId: forcedId }
+        : {
+            kind: 'refused',
+            status: 403,
+            error: 'This server uses one quality for every request.',
+          };
+    }
+
+    if (asked.profileId !== undefined && !choices.some(({ id }) => id === asked.profileId)) {
+      return { kind: 'refused', status: 403, error: 'That quality is not available to you.' };
+    }
+
+    return { kind: 'chosen', profileId: asked.profileId };
+  };
+
   type Drafted =
     { kind: 'drafted'; draft: MediaRequestDraft } | { kind: 'refused'; status: 400; error: string };
 
@@ -4244,7 +4384,11 @@ const createApp = ({
   const defaultReleaseTypes = async (): Promise<ReleaseType[]> =>
     (await settings.read()).requestReleaseTypes;
 
-  const draftFor = async (headers: Headers, asked: MediaRequestAsk): Promise<Drafted> => {
+  const draftFor = async (
+    headers: Headers,
+    asked: MediaRequestAsk,
+    profileId: string | undefined,
+  ): Promise<Drafted> => {
     const session = await readSessionOnce(auth, headers);
     const catalogue = await catalogueFor(asked);
     const libraryKind = libraryKindOf(asked.kind);
@@ -4282,10 +4426,11 @@ const createApp = ({
         seasons: asked.seasons,
         releaseTypes:
           asked.releaseTypes ?? (isMusicRequest(asked.kind) ? await defaultReleaseTypes() : null),
-        profileId: asked.profileId ?? chosen.requestProfileId,
+        profileId: profileId ?? chosen.requestProfileId,
         isPickedByHand: asked.isPickedByHand,
         libraryId: chosen.id,
         libraryPath: chosen.requestPath ?? chosen.path,
+        libraryLanguage: chosen.defaultAudioLanguage,
         requestedBy: { id: session.user.id, name: session.user.name },
         isApproved: await requires(headers, 'requests.autoApprove'),
         catalogue,
@@ -4302,7 +4447,13 @@ const createApp = ({
       return context.json({ error: 'Picking a release is for whoever manages requesting.' }, 403);
     }
 
-    const drafted = await draftFor(headers, asked);
+    const profile = await profileForAsk(headers, asked);
+
+    if (profile.kind === 'refused') {
+      return context.json({ error: profile.error }, profile.status);
+    }
+
+    const drafted = await draftFor(headers, asked, profile.profileId);
     const answer = await throughRequests(
       headers,
       (client) =>
@@ -4351,7 +4502,14 @@ const createApp = ({
 
   app.openapi(draftReleasesRoute, async (context) => {
     const { headers } = context.req.raw;
-    const drafted = await draftFor(headers, context.req.valid('json'));
+    const asked = context.req.valid('json');
+    const profile = await profileForAsk(headers, asked);
+
+    if (profile.kind === 'refused') {
+      return context.json({ error: profile.error }, profile.status);
+    }
+
+    const drafted = await draftFor(headers, asked, profile.profileId);
     const answer = await throughRequests(headers, (client) =>
       drafted.kind === 'refused'
         ? Promise.resolve(drafted)
@@ -4375,11 +4533,23 @@ const createApp = ({
       return context.json(NOT_YOURS, 403);
     }
 
-    const catalogue = await describeForRequest(context.req.valid('param').tmdbId, 'series');
+    const { tmdbId } = context.req.valid('param');
+    const [catalogue, requested, held] = await Promise.all([
+      describeForRequest(tmdbId, 'series'),
+      everyRequest(),
+      discovery.lookup.episodesHeld(tmdbId.toString()),
+    ]);
 
     return catalogue === null
       ? context.json({ error: 'The catalogue does not know that series, or cannot be asked.' }, 404)
-      : context.json(seasonsOf(catalogue.episodes), 200);
+      : context.json(
+          seasonsOf(
+            catalogue.episodes,
+            requested.filter((request) => request.kind === 'series' && request.tmdbId === tmdbId),
+            held,
+          ),
+          200,
+        );
   });
 
   app.openapi(musicCatalogueRoute, async (context) => {
@@ -4844,6 +5014,15 @@ const createApp = ({
     const answer = await throughRequests(context.req.raw.headers, (client) =>
       client.pickRelease(context.req.valid('param').id, context.req.valid('json').release),
     );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(profilesOnOfferRoute, async (context) => {
+    const { kind, libraryId } = context.req.valid('query');
+    const answer = await profilesFor(context.req.raw.headers, kind, libraryId);
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)

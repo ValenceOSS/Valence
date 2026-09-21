@@ -504,6 +504,65 @@ describe('createRequestWorker', () => {
       expect((await blocked.list())[0]?.reason).toBe('It stalled, with nobody to fetch it from');
     });
 
+    it('gives up on a torrent that never learned what it holds', async () => {
+      const { worker, blocked } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        sent: [
+          aSentDownload({
+            sizeBytes: null,
+            doneBytes: null,
+            progress: 0,
+            sentAt: '2026-09-18T23:50:00.000Z',
+          }),
+        ],
+      });
+
+      await worker.tick();
+
+      expect((await blocked.list())[0]?.reason).toBe(
+        'It never got its file list, so it never started',
+      );
+    });
+
+    it('gives up on a download too slow ever to arrive, and says how slow', async () => {
+      const { worker, blocked, remove } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        sent: [
+          aSentDownload({
+            sizeBytes: 1_000_000_000,
+            doneBytes: 1_000_000,
+            progress: 0.001,
+            sentAt: '2026-09-18T23:00:00.000Z',
+          }),
+        ],
+      });
+
+      await worker.tick();
+
+      expect((await blocked.list())[0]?.reason).toBe(
+        'At the rate it is going it would take another 42 days',
+      );
+      expect(remove).toHaveBeenCalledWith(aSentDownload().id, true);
+    });
+
+    it('leaves a download alone that has nearly arrived, however slow it has become', async () => {
+      const { worker, blocked } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        sent: [
+          aSentDownload({
+            sizeBytes: 1_000_000_000,
+            doneBytes: 999_000_000,
+            progress: 0.999,
+            sentAt: '2026-09-18T14:00:00.000Z',
+          }),
+        ],
+      });
+
+      await worker.tick();
+
+      expect(await blocked.list()).toEqual([]);
+    });
+
     it('wants a film again whose download was taken out', async () => {
       const { worker, items, send } = aWorker({
         items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
@@ -752,7 +811,17 @@ describe('createRequestWorker', () => {
 
       expect(filed).toHaveBeenCalledWith(
         { libraryPath: '/media/Films', title: 'The Matrix', year: 1999 },
-        [{ id: 'film', season: null, episode: null, title: '', airDate: null, filePath: null }],
+        [
+          {
+            id: 'film',
+            season: null,
+            episode: null,
+            title: '',
+            airDate: null,
+            filePath: null,
+            releaseTitle: 'The.Matrix.1999.1080p.BrRip.x264-YIFY',
+          },
+        ],
         '/srv/downloads/The Matrix (1999) [1080p]',
         true,
       );
@@ -939,7 +1008,15 @@ describe('createRequestWorker', () => {
       await worker.tick();
 
       expect(filed.mock.calls[0]?.[1]).toEqual([
-        { id: '1x2', season: 1, episode: 2, title: '', airDate: null, filePath: null },
+        {
+          id: '1x2',
+          season: 1,
+          episode: 2,
+          title: '',
+          airDate: null,
+          filePath: null,
+          releaseTitle: 'Severance.S01E02.1080p.WEB-DL',
+        },
       ]);
     });
   });

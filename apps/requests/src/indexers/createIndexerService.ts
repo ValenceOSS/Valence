@@ -146,6 +146,9 @@ const createIndexerService = ({
           : definition.type === 'public' || definition.type === 'semi-private'
             ? definition.type
             : 'private',
+      removesWhenDone: record.removesWhenDone,
+      seedSeconds: record.seedSeconds,
+      seedRatio: record.seedRatio,
       priority: record.priority,
       isEnabled: record.isEnabled,
       categories: record.categories,

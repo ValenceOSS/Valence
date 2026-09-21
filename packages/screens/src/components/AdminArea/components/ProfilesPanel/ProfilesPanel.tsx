@@ -10,10 +10,12 @@ import {
   Plus as PlusIcon,
 } from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
-import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
+import { TabPanel } from '@ValenceUI/TabPanel';
+import { TabRow } from '@ValenceUI/TabRow';
+import { Tabs } from '@ValenceUI/Tabs';
 import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -21,9 +23,28 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { removeProfile } from '@ValenceClient/requests/fetchProfiles';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/ProfileEditor';
+import { describeAskers } from './describeAskers';
 import { describeProfile } from './describeProfile';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
-import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import type { ProfileKind, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+
+const KINDS: readonly { id: ProfileKind; label: string; empty: string }[] = [
+  {
+    id: 'video',
+    label: 'Films and series',
+    empty: 'No profiles for films or series yet.',
+  },
+  { id: 'music', label: 'Music', empty: 'No profiles for music yet.' },
+];
+
+/**
+ * Whether a tab name is one of the kinds a profile can be.
+ *
+ * @param value - What the tabs said.
+ * @returns Whether it names a kind.
+ */
+const isProfileKind = (value: string): value is ProfileKind =>
+  KINDS.some((kind) => kind.id === value);
 
 /**
  * The Profiles page: every quality profile, what each takes and how far it upgrades, the libraries
@@ -35,6 +56,7 @@ const ProfilesPanel = () => {
   const libraries = useQuery(libraryQueries.all());
   const [editing, setEditing] = useState<QualityProfile | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [shown, setShown] = useState<ProfileKind>('video');
   const [removing, setRemoving] = useState<QualityProfile | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -56,12 +78,7 @@ const ProfilesPanel = () => {
         accessorFn: (profile) => profile.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="truncate font-medium text-text">{row.original.name}</span>
-              <Badge size="sm">
-                {row.original.kind === 'video' ? 'Films and series' : 'Music'}
-              </Badge>
-            </span>
+            <span className="truncate font-medium text-text">{row.original.name}</span>
 
             <span className="truncate text-xs text-text-muted">
               {describeProfile(row.original).takes}
@@ -78,13 +95,21 @@ const ProfilesPanel = () => {
         ),
       },
       {
+        id: 'askers',
+        header: 'Who can use it',
+        accessorFn: (profile) => describeAskers(profile),
+        cell: ({ row }) => (
+          <span className="text-xs text-text-muted">{describeAskers(row.original)}</span>
+        ),
+      },
+      {
         id: 'libraries',
         header: 'Used for',
         accessorFn: (profile) => profile.libraryIds.length,
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">
             {row.original.libraryIds.length === 0
-              ? 'No library yet'
+              ? 'Every library'
               : row.original.libraryIds
                   .map((id) => named.get(id) ?? 'A library that has gone')
                   .join(', ')}
@@ -136,83 +161,105 @@ const ProfilesPanel = () => {
   );
 
   return (
-    <PanelCard
-      title="Profiles"
-      isFlush
-      actions={
-        <PanelCardAction
-          icon={PlusIcon}
-          onClick={() => {
-            setIsAdding(true);
-          }}
-        >
-          Add media profile
-        </PanelCardAction>
-      }
+    <Tabs
+      value={shown}
+      onValueChange={(next) => {
+        if (isProfileKind(next)) {
+          setShown(next);
+        }
+      }}
     >
-      <ProfileEditor
-        isOpen={isAdding || editing !== null}
-        profile={editing}
-        onClose={() => {
-          setIsAdding(false);
-          setEditing(null);
-        }}
-        onSaved={() => {
-          void reread();
-        }}
-      />
-
-      <ConfirmDialog
-        title={`Remove ${removing?.name ?? 'this profile'}?`}
-        detail="Searches can no longer be judged against it, and the libraries it was for will have none."
-        confirmLabel="Remove"
-        isDestructive
-        isOpen={removing !== null}
-        onClose={() => {
-          setRemoving(null);
-        }}
-        onConfirm={() => {
-          const gone = removing;
-
-          setRemoving(null);
-
-          if (gone !== null) {
-            void removeProfile(gone.id)
-              .then((refusal) => {
-                tellOutcome(`Removed ${gone.name}.`, failureOfRefusal(refusal));
-                setProblem(refusal?.message ?? null);
-              })
-              .then(reread);
-          }
-        }}
-      />
-
-      {problem === null ? null : (
-        <p role="alert" className="px-4 pt-3 text-sm text-danger">
-          {problem}
-        </p>
-      )}
-
-      {profiles.isError ? (
-        <CouldNotRead
-          what="The profiles"
-          isTryingAgain={profiles.isFetching}
-          onTryAgain={() => {
-            void profiles.refetch();
+      <PanelCard
+        title="Profiles"
+        isFlush
+        actions={
+          <PanelCardAction
+            icon={PlusIcon}
+            onClick={() => {
+              setIsAdding(true);
+            }}
+          >
+            Add media profile
+          </PanelCardAction>
+        }
+        below={
+          <TabRow
+            label="Which profiles to show"
+            tone="underlined"
+            size="sm"
+            value={shown}
+            groups={[{ items: KINDS.map(({ id, label }) => ({ id, label })) }]}
+          />
+        }
+      >
+        <ProfileEditor
+          isOpen={isAdding || editing !== null}
+          profile={editing}
+          onClose={() => {
+            setIsAdding(false);
+            setEditing(null);
+          }}
+          onSaved={() => {
+            void reread();
           }}
         />
-      ) : profiles.isPending ? (
-        <Spinner isCentered label="Reading the profiles" size="sm" />
-      ) : (
-        <DataTable
-          label="Profiles"
-          columns={columns}
-          rows={profiles.data}
-          getRowId={(profile) => profile.id}
-          emptyMessage="No profiles yet. Add one to judge what searches find, and to choose what is downloaded."
+
+        <ConfirmDialog
+          title={`Remove ${removing?.name ?? 'this profile'}?`}
+          detail="Searches can no longer be judged against it, and the libraries it was for will have none."
+          confirmLabel="Remove"
+          isDestructive
+          isOpen={removing !== null}
+          onClose={() => {
+            setRemoving(null);
+          }}
+          onConfirm={() => {
+            const gone = removing;
+
+            setRemoving(null);
+
+            if (gone !== null) {
+              void removeProfile(gone.id)
+                .then((refusal) => {
+                  tellOutcome(`Removed ${gone.name}.`, failureOfRefusal(refusal));
+                  setProblem(refusal?.message ?? null);
+                })
+                .then(reread);
+            }
+          }}
         />
-      )}
-    </PanelCard>
+
+        {problem === null ? null : (
+          <p role="alert" className="px-4 pt-3 text-sm text-danger">
+            {problem}
+          </p>
+        )}
+
+        {profiles.isError ? (
+          <CouldNotRead
+            what="The profiles"
+            isTryingAgain={profiles.isFetching}
+            onTryAgain={() => {
+              void profiles.refetch();
+            }}
+          />
+        ) : profiles.isPending ? (
+          <Spinner isCentered label="Reading the profiles" size="sm" />
+        ) : (
+          KINDS.map((kind) => (
+            <TabPanel key={kind.id} value={kind.id}>
+              <DataTable
+                label={kind.label}
+                columns={columns}
+                rows={profiles.data.filter((profile) => profile.kind === kind.id)}
+                getRowId={(profile) => profile.id}
+                emptyMessage={kind.empty}
+              />
+            </TabPanel>
+          ))
+        )}
+      </PanelCard>
+    </Tabs>
   );
 };
 

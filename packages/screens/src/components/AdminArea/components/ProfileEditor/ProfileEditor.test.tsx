@@ -6,6 +6,7 @@ import { ProfileEditor } from './ProfileEditor';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type * as Profiles from '@ValenceClient/requests/fetchProfiles';
+import { aQualityProfile } from '@ValenceScreens/testing/aQualityProfile';
 
 const addProfile = vi.fn<typeof Profiles.addProfile>();
 const changeProfile = vi.fn<typeof Profiles.changeProfile>();
@@ -16,33 +17,31 @@ vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
   changeProfile: (...given: Parameters<typeof Profiles.changeProfile>) => changeProfile(...given),
 }));
 
+vi.mock('@ValenceClient/admin/fetchRoles', async (actual) => ({
+  ...(await actual<object>()),
+  fetchRoles: () =>
+    Promise.resolve([
+      { id: 'trusted', name: 'Trusted', position: 200, permissions: [], color: null },
+      { id: 'household', name: 'Household', position: 100, permissions: [], color: null },
+    ]),
+}));
+
+vi.mock('@ValenceClient/admin/fetchAccounts', () => ({
+  fetchAccounts: () =>
+    Promise.resolve([{ id: 'dan', name: 'Dan', email: 'dan@example.com', roles: [] }]),
+}));
+
 vi.mock('@ValenceClient/library/fetchLibrary', async (actual) => ({
   ...(await actual<object>()),
   fetchLibraries: () => fetchLibraries(),
 }));
 
-const KEPT: QualityProfile = {
-  id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-  name: 'HD',
-  kind: 'video',
-  resolutions: ['1080p', '720p'],
-  sources: ['bluray', 'webdl'],
+const KEPT = aQualityProfile({
   musicQualities: ['flac'],
-  smallestMb: null,
   largestMb: 8000,
   preferredWords: ['HDR'],
-  requiredWords: [],
   bannedWords: ['cam'],
-  isUpgrading: false,
-  releaseWait: 'digital',
-  sizes: [],
-  upgradeUntilResolution: null,
-  upgradeUntilSource: null,
-  upgradeUntilMusicQuality: null,
-  libraryIds: [],
-  createdAt: '2026-09-19T00:00:00.000Z',
-  updatedAt: '2026-09-19T00:00:00.000Z',
-};
+});
 
 /**
  * A library of the kind given.
@@ -83,6 +82,13 @@ const open = (profile: QualityProfile | null = null) => {
   return { ...handlers, ...shown };
 };
 
+/**
+ * Moves to one of the dialog's tabs, since only the one showing is rendered.
+ */
+const goTo = async (user: ReturnType<typeof userEvent.setup>, tab: string) => {
+  await user.click(screen.getByRole('tab', { name: tab }));
+};
+
 describe('ProfileEditor', () => {
   it('opens as a dialog over the profiles rather than replacing them', () => {
     open();
@@ -99,8 +105,14 @@ describe('ProfileEditor', () => {
     await user.click(screen.getByRole('button', { name: 'Move 2160p up' }));
     screen.getByRole('slider', { name: 'Largest for WEB-DL 2160p' }).focus();
     await user.keyboard('{ArrowLeft}');
+
+    await goTo(user, 'Matching');
+
     await user.click(screen.getByRole('button', { name: 'Out on disc' }));
     await user.type(screen.getByRole('textbox', { name: 'Preferred words' }), 'HDR, Atmos');
+
+    await goTo(user, 'Access');
+
     await user.click(await screen.findByRole('checkbox', { name: /Films/ }));
     await user.click(screen.getByRole('button', { name: 'Add profile' }));
 
@@ -121,12 +133,90 @@ describe('ProfileEditor', () => {
       }),
     );
     expect(screen.queryByRole('checkbox', { name: /Albums/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('spinbutton', { name: /Largest/ })).not.toBeInTheDocument();
     expect(addProfile.mock.calls[0]?.[0].sizes).toContainEqual({
       source: 'webdl',
       resolution: '2160p',
       minMb: 1500,
       maxMb: 39_601,
+    });
+  });
+
+  it('prefers releases in the language chosen, and takes the library’s otherwise', async () => {
+    const user = userEvent.setup();
+
+    open();
+
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
+
+    await goTo(user, 'Matching');
+
+    await user.click(screen.getByRole('button', { name: /Preferred language/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Deutsch' }));
+    await user.click(screen.getByRole('button', { name: 'Add profile' }));
+
+    await waitFor(() => {
+      expect(addProfile).toHaveBeenCalledWith(expect.objectContaining({ preferredLanguage: 'de' }));
+    });
+  });
+
+  it('leaves a profile naming no library, which offers it for all of them', async () => {
+    const user = userEvent.setup();
+
+    open();
+
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
+
+    await goTo(user, 'Access');
+
+    expect(await screen.findByRole('checkbox', { name: 'Every library' })).toBeChecked();
+
+    await user.click(screen.getByRole('button', { name: 'Add profile' }));
+
+    await waitFor(() => {
+      expect(addProfile).toHaveBeenCalledWith(expect.objectContaining({ libraryIds: [] }));
+    });
+  });
+
+  it('keeps a profile to the roles and people named on it', async () => {
+    const user = userEvent.setup();
+
+    open();
+
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
+
+    await goTo(user, 'Access');
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Trusted' }));
+    await user.click(await screen.findByRole('checkbox', { name: /Dan/ }));
+    await user.click(screen.getByRole('button', { name: 'Add profile' }));
+
+    await waitFor(() => {
+      expect(addProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ roleIds: ['trusted'], accountIds: ['dan'], isDefault: false }),
+      );
+    });
+  });
+
+  it('stops asking who a profile is for once everything goes through it', async () => {
+    const user = userEvent.setup();
+
+    open();
+
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
+
+    await goTo(user, 'Access');
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Trusted' }));
+    await user.click(screen.getByRole('switch', { name: 'Always use this profile' }));
+
+    expect(screen.queryByRole('checkbox', { name: 'Trusted' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Add profile' }));
+
+    await waitFor(() => {
+      expect(addProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ isDefault: true, roleIds: [], accountIds: [] }),
+      );
     });
   });
 
@@ -140,13 +230,20 @@ describe('ProfileEditor', () => {
     expect(screen.getByRole('list', { name: 'Formats' })).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Resolutions' })).not.toBeInTheDocument();
     expect(screen.getByRole('spinbutton', { name: 'Largest (MB an album)' })).toBeInTheDocument();
+
+    await goTo(user, 'Access');
+
     expect(await screen.findByRole('checkbox', { name: /Albums/ })).toBeInTheDocument();
   });
 
   it('says there are no libraries of the kind yet', async () => {
+    const user = userEvent.setup();
+
     fetchLibraries.mockResolvedValue([]);
 
     open();
+
+    await goTo(user, 'Access');
 
     expect(
       await screen.findByText('There are no film or series libraries yet.'),
@@ -157,6 +254,8 @@ describe('ProfileEditor', () => {
     const user = userEvent.setup();
 
     open(KEPT);
+
+    await goTo(user, 'Matching');
 
     await user.click(screen.getByRole('switch', { name: 'Upgrade to a better release later' }));
     await user.click(screen.getByRole('button', { name: 'Until the resolution is' }));
@@ -183,6 +282,8 @@ describe('ProfileEditor', () => {
 
     open({ ...KEPT, kind: 'music', isUpgrading: true });
 
+    await goTo(user, 'Matching');
+
     await user.click(screen.getByRole('button', { name: 'Until the format is' }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'FLAC' }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
@@ -193,6 +294,21 @@ describe('ProfileEditor', () => {
         expect.objectContaining({ upgradeUntilMusicQuality: 'flac' }),
       );
     });
+  });
+
+  it('goes back to the tab holding whatever is wrong, so it is not hidden', async () => {
+    const user = userEvent.setup();
+
+    open();
+
+    await goTo(user, 'Access');
+
+    expect(screen.queryByRole('textbox', { name: 'Name' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Add profile' }));
+
+    expect(await screen.findByText('Give the profile a name.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Name' })).toBeInTheDocument();
   });
 
   it('says what is wrong, or why it could not be saved', async () => {

@@ -28,6 +28,8 @@ const itemFromDraft = (
   score: null,
   filedTitle: null,
   filedScore: null,
+  downloadedBytes: null,
+  downloadSeconds: null,
   attempts: 0,
   lastSearchedAt: null,
   updatedAt: at,

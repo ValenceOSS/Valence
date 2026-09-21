@@ -20,6 +20,7 @@ const aMediaRequest = (overrides: Partial<MediaRequestRecord> = {}): MediaReques
   posterUrl: null,
   libraryId: 'films',
   libraryPath: '/media/Films',
+  libraryLanguage: null,
   profileId: null,
   isPickedByHand: false,
   approval: 'approved',

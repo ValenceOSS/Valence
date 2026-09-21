@@ -7,20 +7,28 @@ import { AskableDialog } from './AskableDialog';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type * as Askable from '@ValenceClient/requests/fetchAskable';
 import type * as Requests from '@ValenceClient/requests/fetchMediaRequests';
+import type { ProfilesOnOffer } from '@ValenceContracts/schemas/QualityProfile';
 
 const fetchAskable = vi.fn<typeof Askable.fetchAskable>();
 const askForMedia = vi.fn<typeof Requests.askForMedia>();
+const fetchProfilesOnOffer = vi.fn<() => Promise<ProfilesOnOffer>>();
+
+const aQuality = (id: string, name: string) => ({ id, name, kind: 'video' as const });
 
 vi.mock('@ValenceClient/requests/fetchAskable', () => ({
   fetchAskable: (...given: Parameters<typeof Askable.fetchAskable>) => fetchAskable(...given),
+}));
+
+vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
+  fetchProfilesOnOffer: () => fetchProfilesOnOffer(),
 }));
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   askForMedia: (...given: Parameters<typeof Requests.askForMedia>) => askForMedia(...given),
   fetchSeriesSeasons: () =>
     Promise.resolve([
-      { season: 1, episodeCount: 9, firstAired: '2022-02-18' },
-      { season: 2, episodeCount: 10, firstAired: '2025-01-17' },
+      { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'askable' },
+      { season: 2, episodeCount: 10, firstAired: '2025-01-17', standing: 'askable' },
     ]),
 }));
 
@@ -44,6 +52,7 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
   cast: [{ name: 'Zendaya', role: 'Chani', photoUrl: null }],
   albums: [],
   authors: [],
+  trailerKey: null,
   standing: ASKABLE,
   ...overrides,
 });
@@ -51,6 +60,7 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
 beforeEach(() => {
   fetchAskable.mockReset().mockResolvedValue(aTitle());
   askForMedia.mockReset().mockResolvedValue({ value: aMediaRequest(), refusal: null });
+  fetchProfilesOnOffer.mockReset().mockResolvedValue({ choices: [], forcedId: null });
 });
 
 /**
@@ -107,16 +117,148 @@ describe('AskableDialog', () => {
     expect(fetchAskable).toHaveBeenCalledWith('film', '438631');
   });
 
+  it('splits an artist’s releases by what each one is', async () => {
+    fetchAskable.mockResolvedValue(
+      aTitle({
+        kind: 'artist',
+        id: '83d91898-7763-47d7-b03b-b92132375c47',
+        musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
+        title: 'Pink Floyd',
+        albums: [
+          {
+            id: '6ba7b810-9dad-11d1-80b4-00c04fd43001',
+            title: 'Another Brick',
+            type: 'single',
+            firstReleased: '1979-11-23',
+          },
+          {
+            id: '6ba7b810-9dad-11d1-80b4-00c04fd43002',
+            title: 'The Wall',
+            type: 'album',
+            firstReleased: '1979-11-30',
+          },
+          {
+            id: '6ba7b810-9dad-11d1-80b4-00c04fd43003',
+            title: 'Pulse',
+            type: 'live',
+            firstReleased: '1995-05-29',
+          },
+        ],
+      }),
+    );
+
+    open('artist:83d91898-7763-47d7-b03b-b92132375c47');
+
+    const albums = await screen.findByRole('region', { name: 'Albums' });
+
+    expect(within(albums).getByText('The Wall')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: 'Singles' })).getByText('Another Brick'),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: 'Live' })).getByText('Pulse'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'EPs' })).not.toBeInTheDocument();
+  });
+
+  it('plays the trailer of something not in the library yet', async () => {
+    fetchAskable.mockResolvedValue(aTitle({ trailerKey: 'abc123' }));
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Watch the trailer' }));
+
+    const playing = await screen.findByRole('dialog', { name: 'Dune, the trailer' });
+
+    expect(within(playing).getByTitle('Dune, the trailer')).toHaveAttribute(
+      'src',
+      'https://www.youtube-nocookie.com/embed/abc123?rel=0&modestbranding=1',
+    );
+  });
+
+  it('offers no trailer where the catalogue knows of none', async () => {
+    open();
+
+    expect(await screen.findByRole('heading', { name: 'Dune' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Watch the trailer' })).not.toBeInTheDocument();
+  });
+
+  it('asks which quality to look for, once there is more than one to choose between', async () => {
+    fetchProfilesOnOffer.mockResolvedValue({
+      choices: [aQuality('uhd', '4K'), aQuality('hd', '1080p')],
+      forcedId: null,
+    });
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
+    await userEvent.click(await screen.findByRole('button', { name: '1080p' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith({
+        kind: 'film',
+        tmdbId: 438631,
+        profileId: 'hd',
+      });
+    });
+  });
+
+  it('does not ask where there is only one quality to ask at', async () => {
+    fetchProfilesOnOffer.mockResolvedValue({ choices: [aQuality('hd', '1080p')], forcedId: null });
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith({ kind: 'film', tmdbId: 438631 });
+    });
+  });
+
+  it('does not ask where the server asks at one quality and no other', async () => {
+    fetchProfilesOnOffer.mockResolvedValue({
+      choices: [aQuality('hd', '1080p'), aQuality('uhd', '4K')],
+      forcedId: 'hd',
+    });
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith({ kind: 'film', tmdbId: 438631 });
+    });
+  });
+
+  it('asks for nothing when the quality prompt is dismissed', async () => {
+    fetchProfilesOnOffer.mockResolvedValue({
+      choices: [aQuality('uhd', '4K'), aQuality('hd', '1080p')],
+      forcedId: null,
+    });
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
+
+    const prompt = await screen.findByRole('dialog', { name: 'Which quality for Dune?' });
+
+    expect(within(prompt).getByRole('heading', { name: 'Ask for Dune' })).toBeInTheDocument();
+
+    await userEvent.click(within(prompt).getByRole('button', { name: 'Close' }));
+
+    expect(askForMedia).not.toHaveBeenCalled();
+  });
+
   it('asks for the seasons of a series chosen', async () => {
     fetchAskable.mockResolvedValue(aTitle({ kind: 'series', id: '95396', title: 'Severance' }));
 
     open('series:95396');
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Only some seasons' }));
+    await userEvent.click(await screen.findByRole('switch', { name: 'Every season' }));
 
     expect(screen.getByRole('button', { name: 'Request' })).toBeDisabled();
 
-    await userEvent.click(await screen.findByRole('checkbox', { name: /Season 2/ }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Season 2' }));
     await userEvent.click(screen.getByRole('button', { name: 'Request' }));
 
     await waitFor(() => {

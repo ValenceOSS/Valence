@@ -15,8 +15,37 @@ import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { dataTableFeatures } from './dataTableFeatures';
-import type { ColumnFiltersState, RowData, SortingState } from '@tanstack/react-table';
+import { DrawnCell } from './DrawnCell';
+import type { ColumnFiltersState, Renderable, RowData, SortingState } from '@tanstack/react-table';
+import type { ReactNode } from 'react';
 import type { DataTableProps } from './DataTable.types';
+
+/**
+ * Whether a column draws something with a function of its own, rather than handing over something
+ * already drawn.
+ *
+ * @param drawing - What the column said to draw.
+ * @returns Whether it must be called to find out.
+ */
+const isDrawnByHand = <Props,>(
+  drawing: Renderable<Props>,
+): drawing is (context: Props) => ReactNode => typeof drawing === 'function';
+
+/**
+ * What a column says to draw, drawn: called where it draws with a function of its own, and taken as
+ * it stands where it is already something drawn.
+ *
+ * @param drawing - What the column said to draw.
+ * @param context - The cell or header to draw it for.
+ * @returns What to put there.
+ */
+const drawnBy = <Props,>(drawing: Renderable<Props>, context: Props): ReactNode => {
+  if (isDrawnByHand(drawing)) {
+    return drawing(context);
+  }
+
+  return typeof drawing === 'function' ? null : drawing;
+};
 
 const ROWS_A_PAGE = 25;
 
@@ -166,7 +195,11 @@ const DataTable = <Row extends RowData>({
                             onClick={header.column.getToggleSortingHandler()}
                             className="inline-flex items-center gap-1.5 uppercase tracking-[0.14em]"
                           >
-                            <table.FlexRender header={header} />
+                            <DrawnCell
+                              draw={() =>
+                                drawnBy(header.column.columnDef.header, header.getContext())
+                              }
+                            />
 
                             {direction === 'asc' ? (
                               <Icon of={ChevronUpIcon} size={13} />
@@ -177,7 +210,11 @@ const DataTable = <Row extends RowData>({
                             )}
                           </Button>
                         ) : (
-                          <table.FlexRender header={header} />
+                          <DrawnCell
+                            draw={() =>
+                              drawnBy(header.column.columnDef.header, header.getContext())
+                            }
+                          />
                         )}
 
                         {filterOptions === undefined ? null : (
@@ -237,7 +274,9 @@ const DataTable = <Row extends RowData>({
                 >
                   {row.getAllCells().map((cell) => (
                     <td key={cell.id} className="px-3 py-3 align-middle sm:px-5">
-                      <table.FlexRender cell={cell} />
+                      <DrawnCell
+                        draw={() => drawnBy(cell.column.columnDef.cell, cell.getContext())}
+                      />
                     </td>
                   ))}
                 </tr>

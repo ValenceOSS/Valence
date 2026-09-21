@@ -5,6 +5,7 @@ import { VIDEO_FILE_EXTENSIONS } from '@ValenceContracts/constants/VIDEO_FILE_EX
 import { findDownloadedFiles } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import { libraryFileOf } from '@ValenceRequests/mediaRequests/libraryFileOf';
 import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
+import { qualityTagOf } from '@ValenceRequests/mediaRequests/qualityTagOf';
 import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
 import type { DownloadedFile } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -12,7 +13,7 @@ import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestIt
 
 type Fileable = Pick<
   RequestItemRecord,
-  'id' | 'season' | 'episode' | 'title' | 'airDate' | 'filePath'
+  'id' | 'season' | 'episode' | 'title' | 'airDate' | 'filePath' | 'releaseTitle'
 >;
 
 type Filed = { filed: ReadonlyMap<string, string>; missing: readonly string[] };
@@ -32,6 +33,34 @@ const extensionOf = (name: string): string => extname(name).slice(1).toLowerCase
  * @returns Its stem.
  */
 const stemOf = (name: string): string => name.slice(0, name.length - extname(name).length);
+
+/**
+ * What a video is, for its own name to say: read from the file's name, and from the name of the
+ * release it came in for whatever its own name leaves out — which a pack's files often do, being
+ * numbered and nothing more, while the release around them names the lot.
+ *
+ * @param videoName - The video file's name.
+ * @param releaseTitle - The name of the release it came in, where it is known.
+ * @returns The tag, as `qualityTagOf` gives it.
+ */
+const qualityOf = (videoName: string, releaseTitle: string | null): string => {
+  const own = parseReleaseName(stemOf(videoName));
+
+  if (releaseTitle === null) {
+    return qualityTagOf(own);
+  }
+
+  const release = parseReleaseName(releaseTitle);
+
+  return qualityTagOf({
+    ...own,
+    resolution: own.resolution ?? release.resolution,
+    source: own.source ?? release.source,
+    codec: own.codec ?? release.codec,
+    audio: own.audio.length === 0 ? release.audio : own.audio,
+    audioChannels: own.audioChannels ?? release.audioChannels,
+  });
+};
 
 /**
  * Whether a file is a video worth filing, rather than a sample of one.
@@ -86,9 +115,10 @@ const videoFor = (
 
 /**
  * Files what a finished download holds into the library: each film or episode it was fetched for
- * is found among its videos, named as the library's scanner reads without guessing, and placed —
- * linked, copied or moved — with any subtitles beside it that share its name. Whatever it replaces,
- * as an upgrade does, is removed.
+ * is found among its videos, named as the library's scanner reads without guessing — and saying
+ * what this copy is, its resolution, source, codec and audio — and placed, linked, copied or moved,
+ * with any subtitles beside it that share its name. Whatever it replaces, as an upgrade does, is
+ * removed.
  *
  * @param request - What was asked for.
  * @param items - The films or episodes the download was fetched for.
@@ -115,7 +145,12 @@ const fileDownload = async (
       continue;
     }
 
-    const destination = libraryFileOf(request, item, extensionOf(video.name));
+    const destination = libraryFileOf(
+      request,
+      item,
+      extensionOf(video.name),
+      qualityOf(video.name, item.releaseTitle),
+    );
     const videoStem = stemOf(video.name);
 
     await placeFile(video.path, destination, isKeepingSource);

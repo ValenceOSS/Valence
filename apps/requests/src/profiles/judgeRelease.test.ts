@@ -14,7 +14,15 @@ const judge = (
   profile: QualityProfile = aProfile(),
   overrides: Partial<Release> = {},
   runtimeMinutes?: number,
-) => judgeRelease(aRelease(title, overrides), parseReleaseName(title), profile, runtimeMinutes);
+  episodesHeld?: number,
+) =>
+  judgeRelease(
+    aRelease(title, overrides),
+    parseReleaseName(title),
+    profile,
+    runtimeMinutes,
+    episodesHeld,
+  );
 
 const GB = 1024 ** 3;
 
@@ -85,6 +93,47 @@ describe('judgeRelease', () => {
     expect(judge('Dune.2021.REPACK.1080p.BluRay.x264-GRP').score).toBe(2000 + 400 + 5);
   });
 
+  it('lifts a release that says it is in the language wanted', () => {
+    const profile = aProfile({ preferredLanguage: 'de' });
+    const plain = judge('Dune.2021.1080p.BluRay.x264-GRP', profile);
+    const german = judge('Dune.2021.1080p.GERMAN.BluRay.x264-GRP', profile);
+
+    expect(german.score).toBe(plain.score + 50);
+    expect(german.reasons).toContain('In Deutsch (+50)');
+  });
+
+  it('drops a release that says it is in another language, without refusing it', () => {
+    const profile = aProfile({ preferredLanguage: 'en' });
+    const plain = judge('Dune.2021.1080p.BluRay.x264-GRP', profile);
+    const german = judge('Dune.2021.1080p.GERMAN.BluRay.x264-GRP', profile);
+
+    expect(german.score).toBe(plain.score - 50);
+    expect(german.reasons).toContain('Not in English (−50)');
+    expect(german.isRejected).toBe(false);
+  });
+
+  it('says nothing about a release whose name names no language', () => {
+    const profile = aProfile({ preferredLanguage: 'en' });
+    const judged = judge('Dune.2021.1080p.BluRay.x264-GRP', profile);
+
+    expect(judged.score).toBe(judge('Dune.2021.1080p.BluRay.x264-GRP').score);
+    expect(judged.reasons.join(' ')).not.toContain('English');
+  });
+
+  it('says nothing at all where the profile wants no particular language', () => {
+    expect(judge('Dune.2021.1080p.GERMAN.BluRay.x264-GRP').reasons.join(' ')).not.toContain(
+      'Deutsch',
+    );
+  });
+
+  it('never lets a wanted language outrank a resolution', () => {
+    const profile = aProfile({ preferredLanguage: 'de', resolutions: ['1080p', '720p'] });
+
+    expect(judge('Dune.2021.1080p.BluRay.x264-GRP', profile).score).toBeGreaterThan(
+      judge('Dune.2021.720p.GERMAN.BluRay.x264-GRP', profile).score,
+    );
+  });
+
   it('refuses a torrent nobody seeds, but not an NZB', () => {
     expect(judge('Dune.2021.1080p.BluRay.x264-GRP', aProfile(), { seeders: 0 }).rejections).toEqual(
       ['Nobody is seeding it'],
@@ -132,15 +181,32 @@ describe('judgeRelease', () => {
     ).toBe(false);
   });
 
-  it('judges several episodes by their time together, and leaves a whole season be', () => {
+  it('judges several episodes by their time together', () => {
     const profile = aProfile({ largestMb: 3000 });
 
     expect(
       judge('Show.S01E01E02.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 4 * GB }, 60).isRejected,
     ).toBe(false);
+  });
+
+  it('judges a pack over the episodes it holds, not over one', () => {
+    const profile = aProfile({ largestMb: 3000 });
+    const tenHours = { sizeBytes: 20 * GB };
+
+    expect(judge('Show.S01.1080p.WEB-DL.x264-GRP', profile, tenHours, 60, 10).isRejected).toBe(
+      false,
+    );
+    expect(
+      judge('Show.S01.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 90 * GB }, 60, 10).rejections,
+    ).toEqual(['At 9,216 MB an hour it is larger than this profile takes, 3,000']);
+  });
+
+  it('leaves a pack unjudged by size where nobody says what it holds', () => {
+    const profile = aProfile({ largestMb: 3000 });
+
     expect(
       judge('Show.S01.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 40 * GB }, 60).reasons,
-    ).toContain('Its size is not judged, since it is a whole season');
+    ).toContain('Its size is not judged without knowing what it holds');
   });
 
   it('judges nothing by size where there are no limits, or no size', () => {

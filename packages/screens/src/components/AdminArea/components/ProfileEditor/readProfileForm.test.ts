@@ -2,30 +2,21 @@ import { RECOMMENDED_QUALITY_SIZES } from '@ValenceContracts/schemas/QualityProf
 import { describe, expect, it } from 'vitest';
 import { A_NEW_PROFILE, formFor, readProfileForm } from './readProfileForm';
 import type { ProfileForm } from './readProfileForm';
-import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { aQualityProfile } from '@ValenceScreens/testing/aQualityProfile';
 
-const KEPT: QualityProfile = {
-  id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+const KEPT = aQualityProfile({
   name: 'Albums',
   kind: 'music',
   resolutions: [],
   sources: [],
   musicQualities: ['flac', 'mp3-320'],
   smallestMb: 50,
-  largestMb: null,
   preferredWords: ['Deluxe', 'Remastered'],
-  requiredWords: [],
   bannedWords: ['karaoke'],
   isUpgrading: true,
-  releaseWait: 'digital',
-  sizes: [],
-  upgradeUntilResolution: null,
-  upgradeUntilSource: null,
   upgradeUntilMusicQuality: 'flac',
   libraryIds: ['music'],
-  createdAt: '2026-09-19T00:00:00.000Z',
-  updatedAt: '2026-09-19T00:00:00.000Z',
-};
+});
 
 const FILLED = { ...A_NEW_PROFILE, name: ' HD ' };
 
@@ -80,9 +71,31 @@ describe('readProfileForm', () => {
         upgradeUntilSource: 'bluray',
         upgradeUntilMusicQuality: null,
         libraryIds: [],
+        preferredLanguage: null,
+        isDefault: false,
+        roleIds: [],
+        accountIds: [],
       },
       problem: null,
+      at: null,
     });
+  });
+
+  it('forgets who is named once the profile is what everything goes through', () => {
+    expect(
+      readProfileForm({
+        ...FILLED,
+        isDefault: true,
+        roleIds: ['trusted'],
+        accountIds: ['dan'],
+      }).draft,
+    ).toMatchObject({ isDefault: true, roleIds: [], accountIds: [] });
+  });
+
+  it('keeps who is named while the profile is one among others', () => {
+    expect(
+      readProfileForm({ ...FILLED, roleIds: ['trusted'], accountIds: ['dan'] }).draft,
+    ).toMatchObject({ isDefault: false, roleIds: ['trusted'], accountIds: ['dan'] });
   });
 
   it('forgets how far to upgrade when upgrading is off', () => {
@@ -102,6 +115,10 @@ describe('readProfileForm', () => {
       'The largest size has to be more than the smallest.',
     ],
   ])('says what is wrong with %o', (change, problem) => {
-    expect(readProfileForm({ ...FILLED, ...change })).toEqual({ draft: null, problem });
+    expect(readProfileForm({ ...FILLED, ...change })).toEqual({
+      draft: null,
+      problem,
+      at: 'quality',
+    });
   });
 });

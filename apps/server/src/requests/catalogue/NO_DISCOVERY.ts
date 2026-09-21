@@ -16,6 +16,7 @@ const NO_DISCOVERY: Discovery = {
   lookup: {
     films: NOTHING_FOUND,
     series: NOTHING_FOUND,
+    episodesHeld: () => Promise.resolve(new Map()),
     artists: NOTHING_FOUND,
     albums: NOTHING_FOUND,
     artistsNamed: NOTHING_FOUND,

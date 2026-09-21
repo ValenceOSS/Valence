@@ -162,6 +162,8 @@ describe('createNzbgetAdapter', () => {
       secondsLeft: 20,
       seeds: null,
       peers: null,
+      uploadedBytes: null,
+      seedingSeconds: null,
       path: null,
     });
     expect(listed.map((job) => job.path)).toEqual([

@@ -31,6 +31,29 @@ describe('judgeForRequest', () => {
     expect(judged.holding.get(BLURAY)?.map((item) => item.id)).toEqual([aRequestItem().id]);
   });
 
+  it('takes the library’s language where the profile names none', () => {
+    const GERMAN = 'Dune.2021.1080p.GERMAN.BluRay.x264-GRP';
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      request: aMediaRequest({ libraryLanguage: 'de' }),
+      releases: [aRelease(BLURAY), aRelease(GERMAN)],
+    });
+
+    expect(judged.pickedId).toBe(GERMAN);
+  });
+
+  it('lets the profile’s own language override the library’s', () => {
+    const GERMAN = 'Dune.2021.1080p.GERMAN.BluRay.x264-GRP';
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      request: aMediaRequest({ libraryLanguage: 'de' }),
+      profile: aProfile({ sources: ['bluray', 'webdl'], preferredLanguage: 'en' }),
+      releases: [aRelease(BLURAY), aRelease(GERMAN)],
+    });
+
+    expect(judged.pickedId).toBe(BLURAY);
+  });
+
   it('refuses a release that failed before', () => {
     const judged = judgeForRequest({
       ...OPTIONS,
@@ -59,6 +82,72 @@ describe('judgeForRequest', () => {
         isFetching: () => true,
       }).judgements[0]?.rejections,
     ).toEqual(['It is no better than what is here already']);
+  });
+
+  it('refuses a whole run where most of what it holds is here already', () => {
+    const PACK = 'Severance.S01-S03.1080p.BluRay.x264-GRP';
+    const series = aMediaRequest({ kind: 'series', title: 'Severance', year: 2022 });
+    const episodes = (state: RequestItemRecord['state'], season: number, count: number) =>
+      Array.from({ length: count }, (_unused, index) =>
+        aRequestItem({
+          id: `${season.toString()}x${(index + 1).toString()}`,
+          season,
+          episode: index + 1,
+          title: 'Severance',
+          state,
+        }),
+      );
+
+    expect(
+      judgeForRequest({
+        ...OPTIONS,
+        request: series,
+        releases: [aRelease(PACK)],
+        items: [
+          ...episodes('available', 1, 9),
+          ...episodes('available', 2, 9),
+          ...episodes('wanted', 3, 2),
+        ],
+      }).judgements[0]?.rejections,
+    ).toEqual(['Only 2 of the 20 episodes it holds are wanted']);
+
+    expect(
+      judgeForRequest({
+        ...OPTIONS,
+        request: series,
+        releases: [aRelease(PACK)],
+        items: [...episodes('available', 1, 3), ...episodes('wanted', 2, 9)],
+      }).judgements[0]?.isRejected,
+    ).toBe(false);
+  });
+
+  it('never grudges a single season pack what it holds', () => {
+    const series = aMediaRequest({ kind: 'series', title: 'Severance', year: 2022 });
+
+    expect(
+      judgeForRequest({
+        ...OPTIONS,
+        request: series,
+        releases: [aRelease('Severance.S01.1080p.BluRay.x264-GRP')],
+        items: [
+          aRequestItem({ id: '1x1', season: 1, episode: 1, title: 'Severance', state: 'wanted' }),
+          aRequestItem({
+            id: '1x2',
+            season: 1,
+            episode: 2,
+            title: 'Severance',
+            state: 'available',
+          }),
+          aRequestItem({
+            id: '1x3',
+            season: 1,
+            episode: 3,
+            title: 'Severance',
+            state: 'available',
+          }),
+        ],
+      }).judgements[0]?.isRejected,
+    ).toBe(false);
   });
 
   it('takes a release picked by hand by its numbers, whatever it is called', () => {

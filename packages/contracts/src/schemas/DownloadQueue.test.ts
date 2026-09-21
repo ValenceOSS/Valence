@@ -23,6 +23,8 @@ describe('ReleaseSendSchema', () => {
       libraryKind: 'movies',
       sizeBytes: null,
       indexerName: null,
+      minimumSeedSeconds: null,
+      minimumRatio: null,
       library: null,
     });
   });

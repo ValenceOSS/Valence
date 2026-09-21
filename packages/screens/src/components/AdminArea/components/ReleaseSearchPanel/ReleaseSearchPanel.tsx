@@ -32,6 +32,7 @@ import { IndexerReportList } from '@ValenceScreens/components/AdminArea/componen
 import { inReleaseOrder } from './inReleaseOrder';
 import { describeWhereItGoes } from './describeWhereItGoes';
 import { libraryKindOf } from './libraryKindOf';
+import { profilesForMode } from './profilesForMode';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { IndexerSearchMode, Release, ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 
@@ -77,7 +78,8 @@ const ReleaseSearchPanel = () => {
   const [runtime, setRuntime] = useState('');
   const found = useQuery(requestsQueries.search(asked));
   const profiles = useQuery(requestsQueries.profiles());
-  const profile = (profiles.data ?? []).find((one) => one.id === profileId) ?? null;
+  const offered = profilesForMode(profiles.data ?? [], mode);
+  const profile = offered.find((one) => one.id === profileId) ?? null;
   const judged = useMemo(
     () => new Map((found.data?.judgements ?? []).map((one) => [one.releaseId, one])),
     [found.data],
@@ -321,8 +323,16 @@ const ReleaseSearchPanel = () => {
             onSelect={(next) => {
               const chosen = MODES.find((one) => one.id === next)?.id;
 
-              if (chosen !== undefined) {
-                setMode(chosen);
+              if (chosen === undefined) {
+                return;
+              }
+
+              setMode(chosen);
+
+              if (
+                !profilesForMode(profiles.data ?? [], chosen).some((one) => one.id === profileId)
+              ) {
+                setProfileId(null);
               }
             }}
           />
@@ -338,7 +348,7 @@ const ReleaseSearchPanel = () => {
                 },
                 options: [
                   { id: 'none', label: 'No profile' },
-                  ...(profiles.data ?? []).map((one) => ({ id: one.id, label: one.name })),
+                  ...offered.map((one) => ({ id: one.id, label: one.name })),
                 ],
               },
             ]}

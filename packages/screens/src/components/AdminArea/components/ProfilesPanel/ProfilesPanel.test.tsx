@@ -6,6 +6,7 @@ import { ProfilesPanel } from './ProfilesPanel';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type * as Profiles from '@ValenceClient/requests/fetchProfiles';
+import { aQualityProfile } from '@ValenceScreens/testing/aQualityProfile';
 
 const fetchProfiles = vi.fn<typeof Profiles.fetchProfiles>();
 const removeProfile = vi.fn<typeof Profiles.removeProfile>();
@@ -23,28 +24,11 @@ vi.mock('@ValenceClient/library/fetchLibrary', async (actual) => ({
   fetchLibraries: () => fetchLibraries(),
 }));
 
-const HD: QualityProfile = {
-  id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-  name: 'HD',
-  kind: 'video',
+const HD = aQualityProfile({
   resolutions: ['1080p'],
   sources: ['bluray'],
-  musicQualities: [],
-  smallestMb: null,
-  largestMb: null,
-  preferredWords: [],
-  requiredWords: [],
-  bannedWords: [],
-  isUpgrading: false,
-  releaseWait: 'digital',
-  sizes: [],
-  upgradeUntilResolution: null,
-  upgradeUntilSource: null,
-  upgradeUntilMusicQuality: null,
   libraryIds: ['films', 'gone'],
-  createdAt: '2026-09-19T00:00:00.000Z',
-  updatedAt: '2026-09-19T00:00:00.000Z',
-};
+});
 
 const LOSSLESS: QualityProfile = {
   ...HD,
@@ -91,9 +75,21 @@ describe('ProfilesPanel', () => {
       expect(within(rowOf('HD')).getByText('Films, A library that has gone')).toBeInTheDocument();
     });
     expect(within(rowOf('HD')).getByText('1080p · Blu-ray')).toBeInTheDocument();
-    expect(within(rowOf('HD')).getByText('Films and series')).toBeInTheDocument();
-    expect(within(rowOf('Lossless')).getByText('No library yet')).toBeInTheDocument();
-    expect(within(rowOf('Lossless')).getByText('Music')).toBeInTheDocument();
+  });
+
+  it('shows films and series first, and music behind its own tab', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ProfilesPanel />);
+
+    expect(await screen.findByText('HD')).toBeInTheDocument();
+    expect(screen.queryByText('Lossless')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Music' }));
+
+    expect(await screen.findByText('Lossless')).toBeInTheDocument();
+    expect(within(rowOf('Lossless')).getByText('Every library')).toBeInTheDocument();
+    expect(screen.queryByText('HD')).not.toBeInTheDocument();
   });
 
   it('opens the dialog to add a profile, and to change one', async () => {
@@ -160,7 +156,7 @@ describe('ProfilesPanel', () => {
 
     answer([]);
 
-    expect(await screen.findByText(/No profiles yet/)).toBeInTheDocument();
+    expect(await screen.findByText('No profiles for films or series yet.')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

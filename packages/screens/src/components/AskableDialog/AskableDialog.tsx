@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { MusicNote as MusicNoteIcon, X as XIcon } from '@keyline-icons/react';
+import { MusicNote as MusicNoteIcon, Tape as TapeIcon, X as XIcon } from '@keyline-icons/react';
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { DownloadProgressReadout } from '@ValenceScreens/components/DownloadProgressReadout/DownloadProgressReadout';
 import { Badge } from '@ValenceUI/Badge';
@@ -8,6 +8,7 @@ import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Dialog } from '@ValenceUI/Dialog';
+import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { Icon } from '@ValenceUI/Icon';
@@ -18,21 +19,25 @@ import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMe
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
-import { RELEASE_TYPE_NAMES } from '@ValenceScreens/components/AdminArea/RELEASE_TYPE_NAMES';
 import { CastGrid } from '@ValenceScreens/components/MediaDetailDialog/components/CastGrid/CastGrid';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
+import { ChooseQualityDialog } from '@ValenceScreens/components/AskableDialog/components/ChooseQualityDialog/ChooseQualityDialog';
 import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
 import { describeAskableFacts } from './describeAskableFacts';
 import { describeStanding } from './describeStanding';
 import { readAsking } from './readAsking';
 import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
+import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
+import { groupReleases } from '@ValenceScreens/requests/groupReleases';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskableDialogProps } from './AskableDialog.types';
 import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
 
 const FOLLOWED_EVERY_MS = 5000;
+
+type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
 
 /**
  * What to ask for a title as it stands: a film as it is, a series with the seasons chosen, an
@@ -95,6 +100,13 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const going = request === null ? null : progressOfRequest(request, progress.data ?? []);
   const me = useQuery(sessionQueries.who());
   const [isCancelling, setIsCancelling] = useState(false);
+  const [choosing, setChoosing] = useState<Choosing | null>(null);
+  const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
+  const trailerKey = title?.trailerKey ?? null;
+  const offered = useQuery(
+    requestsQueries.profilesOnOffer(title?.kind ?? 'film', title?.standing.status === 'askable'),
+  );
+  const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const mayCancel =
     request !== null &&
     request.requestedBy.id === me.data?.id &&
@@ -124,6 +136,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
       .finally(() => {
         setIsAsking(false);
       });
+  };
+
+  const ask = (asked: MediaRequestAsk, onAsked: () => void = () => undefined) => {
+    if (choices.length < 2) {
+      send(asked, onAsked);
+
+      return;
+    }
+
+    setChoosing({ asked, onAsked });
   };
 
   return (
@@ -203,6 +225,21 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                     {title.title}
                   </h2>
                   <span className="text-sm text-on-scrim/75">{describeAskableFacts(title)}</span>
+
+                  {trailerKey === null ? null : (
+                    <span>
+                      <Button
+                        variant="overlay"
+                        size="sm"
+                        onClick={() => {
+                          setIsWatchingTrailer(true);
+                        }}
+                      >
+                        <Icon of={TapeIcon} size={16} />
+                        Watch the trailer
+                      </Button>
+                    </span>
+                  )}
                   {going === null ? null : (
                     <ProgressBar
                       label={`How much of ${title.title} has arrived`}
@@ -242,55 +279,47 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                 <ReleaseTypeChooser value={releaseTypes} onChange={setReleaseTypes} />
               ) : null}
 
-              {title.albums.length === 0 ? null : (
-                <section aria-label="Albums" className="flex flex-col gap-3">
-                  <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">Albums</h3>
+              {groupReleases(title.albums).map((group) => (
+                <section key={group.id} aria-label={group.title} className="flex flex-col gap-3">
+                  <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">
+                    {group.title}
+                  </h3>
                   <ul className="flex flex-col gap-1">
-                    {title.albums
-                      .filter((album) => album.type !== null)
-                      .toSorted((left, right) =>
-                        (right.firstReleased ?? '').localeCompare(left.firstReleased ?? ''),
-                      )
-                      .map((album) => (
-                        <li
-                          key={album.id}
-                          className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[var(--surface-hover)]"
-                        >
-                          <Icon of={MusicNoteIcon} size={16} tone="muted" className="shrink-0" />
-                          <span className="flex min-w-0 flex-1 flex-col">
-                            <span className="truncate text-sm text-text">{album.title}</span>
-                            <span className="text-xs text-text-muted">
-                              {[
-                                album.type === null ? null : RELEASE_TYPE_NAMES[album.type].one,
-                                album.firstReleased?.slice(0, 4) ?? null,
-                              ]
-                                .filter((part) => part !== null)
-                                .join(' · ')}
-                            </span>
+                    {group.albums.map((album) => (
+                      <li
+                        key={album.id}
+                        className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[var(--surface-hover)]"
+                      >
+                        <Icon of={MusicNoteIcon} size={16} tone="muted" className="shrink-0" />
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <span className="truncate text-sm text-text">{album.title}</span>
+                          <span className="text-xs text-text-muted">
+                            {album.firstReleased?.slice(0, 4) ?? 'No year given'}
                           </span>
-                          {askedAlbums.has(album.id) ? (
-                            <Badge size="sm" tone={STATUS_LOOK.queued.tone}>
-                              Requested
-                            </Badge>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="xs"
-                              isLoading={isAsking}
-                              onClick={() => {
-                                send({ kind: 'album', musicBrainzId: album.id }, () => {
-                                  setAskedAlbums(new Set([...askedAlbums, album.id]));
-                                });
-                              }}
-                            >
-                              Request
-                            </Button>
-                          )}
-                        </li>
-                      ))}
+                        </span>
+                        {askedAlbums.has(album.id) ? (
+                          <Badge size="sm" tone={STATUS_LOOK.queued.tone}>
+                            Requested
+                          </Badge>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            isLoading={isAsking}
+                            onClick={() => {
+                              ask({ kind: 'album', musicBrainzId: album.id }, () => {
+                                setAskedAlbums(new Set([...askedAlbums, album.id]));
+                              });
+                            }}
+                          >
+                            Request
+                          </Button>
+                        )}
+                      </li>
+                    ))}
                   </ul>
                 </section>
-              )}
+              ))}
             </div>
           </div>
         )}
@@ -315,7 +344,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                     isDisabled: !isReady,
                     isLoading: isAsking,
                     onChoose: () => {
-                      send(askingFor(title, seasons, releaseTypes));
+                      ask(askingFor(title, seasons, releaseTypes));
                     },
                   }
                 : undefined
@@ -332,6 +361,43 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
           </Button>
         ) : null}
       </DialogFooter>
+
+      <Dialog
+        label={`${title?.title ?? 'This'}, the trailer`}
+        isOpen={isWatchingTrailer && trailerKey !== null}
+        className="sm:w-[min(64rem,94vw)]"
+        onClose={() => {
+          setIsWatchingTrailer(false);
+        }}
+      >
+        <DialogContent className="p-0">
+          {trailerKey === null ? null : (
+            <EmbeddedVideo
+              label={`${title?.title ?? 'This'}, the trailer`}
+              src={catalogueTrailerUrl(trailerKey)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <ChooseQualityDialog
+        title={title?.title ?? 'this'}
+        choices={choices}
+        isOpen={choosing !== null}
+        isAsking={isAsking}
+        onChoose={(profileId) => {
+          const waiting = choosing;
+
+          setChoosing(null);
+
+          if (waiting !== null) {
+            send({ ...waiting.asked, profileId }, waiting.onAsked);
+          }
+        }}
+        onClose={() => {
+          setChoosing(null);
+        }}
+      />
 
       <ConfirmDialog
         title={`Cancel ${title?.title ?? 'this request'}?`}

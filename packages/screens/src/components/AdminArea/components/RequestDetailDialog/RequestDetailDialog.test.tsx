@@ -48,6 +48,8 @@ const DUNE = aMediaRequest({
       downloadId: DOWNLOAD_ID,
       filePath: null,
       score: 420,
+      downloadedBytes: null,
+      downloadSeconds: null,
       lastSearchedAt: null,
       updatedAt: '2026-09-19T00:00:00.000Z',
     },

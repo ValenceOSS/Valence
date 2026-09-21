@@ -5,6 +5,8 @@ import { DownloadClientFailure } from '@ValenceRequests/downloads/DownloadClient
 import { sortTorrentFiles } from '@ValenceRequests/downloads/sortTorrentFiles';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
+import { hasSeededEnough } from '@ValenceRequests/downloads/hasSeededEnough';
+import { seedingRuleFor } from '@ValenceRequests/downloads/seedingRuleFor';
 import type {
   DownloadQueue,
   DownloadStreamFrame,
@@ -25,17 +27,24 @@ import type {
 } from '@ValenceRequests/downloads/SentDownloadRecord';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 import type { Schedule } from '@ValenceRequests/timing/Schedule';
+import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 
 type CreateDownloadQueueOptions = {
   clients: Pick<DownloadClientService, 'records' | 'adapterOf'>;
   downloads: SentDownloadStore;
   events: EventStore;
+  indexers?: { records: () => Promise<SeedingIndexer[]> };
   fetchRelease: (indexerId: string, url: string) => Promise<ReleaseFile | null>;
   now?: () => Date;
   schedule?: Schedule;
   watchedEveryMs?: number;
   idleEveryMs?: number;
 };
+
+type SeedingIndexer = Pick<
+  Indexer,
+  'id' | 'privacy' | 'removesWhenDone' | 'seedSeconds' | 'seedRatio'
+>;
 
 type Live = Pick<
   ClientItem,
@@ -98,9 +107,14 @@ const NOTHING_LIVE: Omit<Live, 'progress' | 'doneBytes'> = {
  * took it out, it will not finish now — once it has had a minute to appear, since a client can take
  * a moment to list something it has just been given.
  *
+ * A torrent from an indexer Valence is allowed to clear up is removed, with its files, once it has
+ * been filed into the library and has given back whatever its tracker asked for. See
+ * [`seedingRuleFor`] for whose rule wins, and [`hasSeededEnough`] for when it is met.
+ *
  * @param clients - The download clients, and how to speak to each.
  * @param downloads - Where what was sent is kept.
  * @param events - Where events wait for the server.
+ * @param indexers - The indexers, for what each asks a torrent to give back.
  * @param fetchRelease - How to fetch a release from the indexer that found it.
  * @param now - The clock.
  * @param schedule - How to wait before asking again.
@@ -112,6 +126,7 @@ const createDownloadQueue = ({
   clients,
   downloads,
   events,
+  indexers = { records: () => Promise.resolve([]) },
   fetchRelease,
   now = () => new Date(),
   schedule = waitThenRun,
@@ -317,6 +332,43 @@ const createDownloadQueue = ({
     await events.add({ kind: 'failed', title: record.title, clientName, problem });
   };
 
+  const clearUp = async (
+    record: SentDownloadRecord,
+    item: ClientItem | null,
+    adapter: DownloadClientAdapter,
+    clientName: string,
+  ): Promise<boolean> => {
+    if (item === null || !record.removesWhenDone || record.filedInto === null) {
+      return false;
+    }
+
+    const isSeeded = hasSeededEnough(
+      { ...item, sizeBytes: item.sizeBytes ?? record.sizeBytes },
+      record,
+    );
+
+    if (!isSeeded) {
+      return false;
+    }
+
+    try {
+      await adapter.remove(record.remoteId, true);
+    } catch {
+      return false;
+    }
+
+    live.delete(record.id);
+
+    await downloads.remove(record.id);
+    await events.add({
+      kind: 'sweptUp',
+      title: record.title,
+      clientName,
+    });
+
+    return true;
+  };
+
   const round = async (): Promise<void> => {
     const [kept, sent] = await Promise.all([clients.records(), downloads.list()]);
 
@@ -337,6 +389,10 @@ const createDownloadQueue = ({
 
             for (const record of sent.filter((one) => one.clientId === client.id)) {
               const item = byId.get(record.remoteId.toLowerCase()) ?? null;
+
+              if (await clearUp(record, item, adapter, client.name)) {
+                continue;
+              }
 
               await follow(record, item, client.name);
               await checkFiles(record, item, adapter, client.name);
@@ -487,6 +543,10 @@ const createDownloadQueue = ({
           filingProblem: null,
           filingAttempts: 0,
           filesChecked: false,
+          ...seedingRuleFor(
+            (await indexers.records()).find((one) => one.id === read.indexerId) ?? null,
+            read,
+          ),
           protocol: read.protocol,
           libraryKind: read.libraryKind,
           title: read.title,

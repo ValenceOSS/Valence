@@ -41,6 +41,39 @@ describe('createProfileService', () => {
     expect(await service.change('nothing', { name: 'x' })).toBeNull();
   });
 
+  it('leaves at most one default profile of a kind standing, whichever was set last', async () => {
+    const service = aService();
+    const hd = await service.add({ name: 'HD', kind: 'video', isDefault: true });
+    const ultra = await service.add({ name: 'Ultra', kind: 'video', isDefault: true });
+
+    expect((await service.find(hd.id))?.isDefault).toBe(false);
+    expect((await service.find(ultra.id))?.isDefault).toBe(true);
+
+    const back = await service.change(hd.id, { isDefault: true });
+
+    expect(back?.isDefault).toBe(true);
+    expect((await service.find(ultra.id))?.isDefault).toBe(false);
+  });
+
+  it('leaves the default for music standing when one is set for video', async () => {
+    const service = aService();
+    const albums = await service.add({ name: 'Albums', kind: 'music', isDefault: true });
+
+    await service.add({ name: 'HD', kind: 'video', isDefault: true });
+
+    expect((await service.find(albums.id))?.isDefault).toBe(true);
+  });
+
+  it('names nobody by default, which is what puts a profile on offer to the house', async () => {
+    const service = aService();
+    const hd = await service.add({ name: 'HD', kind: 'video' });
+
+    expect(hd).toMatchObject({ isDefault: false, roleIds: [], accountIds: [] });
+    expect(await service.change(hd.id, { roleIds: ['trusted'] })).toMatchObject({
+      roleIds: ['trusted'],
+    });
+  });
+
   it('removes a profile, and says whether there was one', async () => {
     const service = aService();
     const hd = await service.add({ name: 'HD', kind: 'video' });

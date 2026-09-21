@@ -1,8 +1,8 @@
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 
-type MyRequestsProps = {
+type RequestsListProps = {
   onAsk: (asking: string) => void;
   onOpen: (kind: MediaRequestKind, mediaId: string) => void;
 };
 
-export type { MyRequestsProps };
+export type { RequestsListProps };

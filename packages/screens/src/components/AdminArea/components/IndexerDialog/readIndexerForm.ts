@@ -19,6 +19,9 @@ type IndexerForm = {
   categories: number[];
   definitionId: string | null;
   settings: IndexerSettings;
+  removesWhenDone: 'tracker' | 'always' | 'never';
+  seedSeconds: string;
+  seedRatio: string;
 };
 
 type ReadIndexerForm = { draft: IndexerDraft; problem: null } | { draft: null; problem: string };
@@ -35,6 +38,9 @@ const A_NEW_INDEXER: IndexerForm = {
   categories: [],
   definitionId: null,
   settings: {},
+  removesWhenDone: 'tracker',
+  seedSeconds: '',
+  seedRatio: '',
 };
 
 /**
@@ -72,6 +78,10 @@ const formFor = (indexer: Indexer | null, start: IndexerStart | null = null): In
     categories: indexer.categories,
     definitionId: indexer.definitionId,
     settings: indexer.settings,
+    removesWhenDone:
+      indexer.removesWhenDone === null ? 'tracker' : indexer.removesWhenDone ? 'always' : 'never',
+    seedSeconds: indexer.seedSeconds?.toString() ?? '',
+    seedRatio: indexer.seedRatio?.toString() ?? '',
   };
 };
 
@@ -113,6 +123,19 @@ const readIndexerForm = (form: IndexerForm): ReadIndexerForm => {
     return { draft: null, problem: 'Wait between 5 and 120 seconds for an answer.' };
   }
 
+  const seedSeconds =
+    form.seedSeconds.trim() === '' ? null : readWholeNumber(form.seedSeconds, 0, 31_536_000);
+
+  if (seedSeconds === null && form.seedSeconds.trim() !== '') {
+    return { draft: null, problem: 'Seed time is a whole number of seconds, up to a year.' };
+  }
+
+  const ratio = form.seedRatio.trim() === '' ? null : Number(form.seedRatio.trim());
+
+  if (ratio !== null && (!Number.isFinite(ratio) || ratio < 0 || ratio > 1000)) {
+    return { draft: null, problem: 'A ratio is a number from 0 to 1000.' };
+  }
+
   return {
     draft: {
       kind: form.kind,
@@ -126,6 +149,10 @@ const readIndexerForm = (form: IndexerForm): ReadIndexerForm => {
       categories: form.categories,
       definitionId: form.kind === 'cardigann' ? form.definitionId : null,
       settings: form.kind === 'cardigann' ? form.settings : {},
+      removesWhenDone:
+        form.removesWhenDone === 'tracker' ? null : form.removesWhenDone === 'always',
+      seedSeconds,
+      seedRatio: ratio,
     },
     problem: null,
   };

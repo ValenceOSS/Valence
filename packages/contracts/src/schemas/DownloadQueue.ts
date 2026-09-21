@@ -71,6 +71,8 @@ const ReleaseSendSchema = z.object({
   clientId: z.string().uuid().optional(),
   libraryId: z.string().min(1).optional(),
   library: FilingLibrarySchema.nullable().default(null),
+  minimumSeedSeconds: z.number().int().nonnegative().nullable().default(null),
+  minimumRatio: z.number().nonnegative().nullable().default(null),
 });
 
 const DownloadFilingSchema = z.object({ libraryId: z.string().min(1) });
@@ -107,6 +109,7 @@ const ServiceEventSchema = z.discriminatedUnion('kind', [
     folder: z.string(),
   }),
   RequestEventBaseSchema.extend({ kind: z.literal('stuck'), problem: z.string() }),
+  EventBaseSchema.extend({ kind: z.literal('sweptUp'), clientName: z.string() }),
   EventBaseSchema.extend({
     kind: z.literal('imported'),
     libraryId: z.string(),

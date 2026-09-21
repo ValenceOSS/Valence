@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Compass as CompassIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
@@ -10,6 +10,9 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
+import { FilterMenu } from '@ValenceUI/FilterMenu';
+import { TextField } from '@ValenceUI/TextField';
+import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
@@ -20,26 +23,49 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
+import { describeRequestFilters } from '@ValenceScreens/requests/describeRequestFilters';
+import { filterRequests } from '@ValenceScreens/requests/filterRequests';
+import { costOfRequest } from '@ValenceScreens/requests/costOfRequest';
+import { describeDownloadCost } from '@ValenceScreens/requests/describeDownloadCost';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
-import type { MyRequestsProps } from './MyRequests.types';
+import type { RequestsListProps } from './RequestsList.types';
 
 /**
- * Every request of your own, newest first, with where each has got to — waiting on approval,
- * refused and why, not out yet, being searched for, arriving — and, while any is downloading, how
- * far it has got, how fast and how long is left, read again every couple of seconds. A request can be cancelled until
- * it is in the library, which deletes whatever it had started downloading. Choosing one opens it: in the library once it is there, and its page
- * until then.
+ * The requests on this server, newest first, with where each has got to — waiting on approval,
+ * refused and why, not out yet, being searched for, arriving — who asked for it, which library it
+ * is for, the quality it is judged at, and, while any is downloading, how far it has got, how fast
+ * and how long is left, read again every couple of seconds. Once it has arrived, what it cost takes
+ * the progress bar's place: how much was downloaded, and how long the wait was.
+ *
+ * Everybody's or only your own, depending on what the server sends: it answers with the whole house
+ * to whoever may see it and with one person's to everybody else, so there is nothing to decide
+ * here. Filtering by who asked therefore appears only for somebody who can see more than their own.
+ *
+ * A request can be cancelled until it is in the library, which deletes whatever it had started
+ * downloading. Choosing one opens it: in the library once it is there, and its page until then.
  *
  * @param onAsk - Called with a title to open its page, as its address names it.
  * @param onOpen - Called to open what is in the library already.
  */
-const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
+const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
   const cache = useQueryClient();
   const me = useQuery(sessionQueries.who());
   const requests = useQuery(requestsQueries.mediaRequests());
-  const mine = (requests.data ?? []).filter((request) => request.requestedBy.id === me.data?.id);
+  const libraries = useQuery(libraryQueries.all());
+  const [filters, setFilters] = useState<ReadonlySet<string>>(new Set());
+  const [search, setSearch] = useState('');
+  const everything = requests.data ?? [];
+  const named = useMemo(
+    () => new Map((libraries.data ?? []).map((library) => [library.id, library.name])),
+    [libraries.data],
+  );
+  const groups = useMemo(() => describeRequestFilters(everything, named), [everything, named]);
+  const shown = useMemo(
+    () => filterRequests(everything, filters, search),
+    [everything, filters, search],
+  );
   const progress = useQuery(
-    requestsQueries.requestProgress(mine.some((request) => request.state === 'downloading')),
+    requestsQueries.requestProgress(shown.some((request) => request.state === 'downloading')),
   );
   const [cancelling, setCancelling] = useState<MediaRequest | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -47,7 +73,7 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
   if (requests.isError) {
     return (
       <CouldNotRead
-        what="Your requests"
+        what="The requests"
         isTryingAgain={requests.isFetching}
         onTryAgain={() => {
           void requests.refetch();
@@ -57,14 +83,14 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
   }
 
   if (requests.data === undefined || me.data === undefined) {
-    return <Spinner isCentered label="Reading your requests" />;
+    return <Spinner isCentered label="Reading the requests" />;
   }
 
-  if (mine.length === 0) {
+  if (everything.length === 0) {
     return (
       <NothingHere
         of={CompassIcon}
-        title="You have not asked for anything yet"
+        title="Nothing has been asked for yet"
         detail="Find something on Discover, or search for it, and ask for it from its page."
       />
     );
@@ -72,17 +98,47 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
 
   return (
     <>
+      <div className="flex flex-wrap items-center gap-2">
+        <FilterMenu
+          label="Filter the requests"
+          groups={groups}
+          selected={filters}
+          onChange={setFilters}
+        />
+
+        <TextField
+          label="Search the requests"
+          isLabelHidden
+          size="sm"
+          type="search"
+          placeholder="A title, or who asked"
+          value={search}
+          onValueChange={setSearch}
+          className="w-56 max-w-full"
+        />
+      </div>
+
       {problem === null ? null : (
         <p role="alert" className="text-sm text-danger">
           {problem}
         </p>
       )}
 
-      <ul aria-label="Your requests" className="flex flex-col gap-3">
-        {mine.map((request) => {
+      {shown.length === 0 ? (
+        <NothingHere
+          of={CompassIcon}
+          title="Nothing matches that"
+          detail="Clear a filter, or search for something else."
+        />
+      ) : null}
+
+      <ul aria-label="Requests" className="flex flex-col gap-3">
+        {shown.map((request) => {
           const badge = describeRequestBadge(request);
           const said = describeRequestProgress(request);
           const going = progressOfRequest(request, progress.data ?? []);
+          const spent = costOfRequest(request);
+          const cost = describeDownloadCost(spent.bytes, spent.seconds);
 
           return (
             <Card key={request.id} as="li" className="flex flex-wrap items-start gap-4">
@@ -118,6 +174,18 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
                   </Badge>
                 </span>
 
+                <span className="text-xs text-text-muted">
+                  {[
+                    request.requestedBy.id === me.data?.id
+                      ? 'Asked by you'
+                      : `Asked by ${request.requestedBy.name}`,
+                    named.get(request.libraryId) ?? null,
+                    request.profileName,
+                  ]
+                    .filter((part) => part !== null)
+                    .join(' · ')}
+                </span>
+
                 {said === null ? null : <span className="text-xs text-text-muted">{said}</span>}
                 {request.refusedBecause === null ? null : (
                   <span className="break-words text-xs text-text-muted">
@@ -126,6 +194,10 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
                 )}
                 {badge.detail === null ? null : (
                   <span className="break-words text-xs text-text-muted">{badge.detail}</span>
+                )}
+
+                {going !== null || cost === null ? null : (
+                  <span className="text-xs text-text-muted">{cost}</span>
                 )}
 
                 {going === null ? null : (
@@ -140,7 +212,9 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
               </div>
 
               <span className="flex shrink-0 flex-wrap gap-2">
-                {request.state !== 'filed' && request.state !== 'available' ? (
+                {request.requestedBy.id === me.data?.id &&
+                request.state !== 'filed' &&
+                request.state !== 'available' ? (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -207,6 +281,6 @@ const MyRequests = ({ onAsk, onOpen }: MyRequestsProps) => {
   );
 };
 
-MyRequests.displayName = 'MyRequests';
+RequestsList.displayName = 'RequestsList';
 
-export { MyRequests };
+export { RequestsList };

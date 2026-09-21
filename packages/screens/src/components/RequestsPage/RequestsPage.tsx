@@ -17,7 +17,7 @@ import { CatalogueBrowser } from './components/CatalogueBrowser/CatalogueBrowser
 import { DiscoverShelves } from './components/DiscoverShelves/DiscoverShelves';
 import { BooksDiscover } from './components/BooksDiscover/BooksDiscover';
 import { MusicDiscover } from './components/MusicDiscover/MusicDiscover';
-import { MyRequests } from './components/MyRequests/MyRequests';
+import { RequestsList } from './components/RequestsList/RequestsList';
 
 const MINE = 'mine';
 
@@ -100,7 +100,7 @@ const RequestsPage = () => {
                     { id: SHOWS, label: 'Shows' },
                     { id: MUSIC, label: 'Music' },
                     { id: BOOKS, label: 'Books' },
-                    { id: MINE, label: 'My requests' },
+                    { id: MINE, label: 'Requests' },
                   ],
                 },
               ]}
@@ -141,7 +141,7 @@ const RequestsPage = () => {
           </TabPanel>
 
           <TabPanel value={MINE} className={cn(RAIL.inset, 'flex flex-col gap-4')}>
-            <MyRequests
+            <RequestsList
               onAsk={ask}
               onOpen={(kind, mediaId) => {
                 go(placeOfArrival(kind, mediaId));

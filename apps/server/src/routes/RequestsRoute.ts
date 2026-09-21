@@ -22,6 +22,7 @@ import {
   DownloadClientTestSchema,
 } from '@ValenceContracts/schemas/DownloadClient';
 import {
+  ProfilesOnOfferSchema,
   QualityProfileChangeSchema,
   QualityProfileDraftSchema,
   QualityProfileSchema,
@@ -29,6 +30,7 @@ import {
 import {
   CatalogueSeasonSchema,
   MediaRequestAskSchema,
+  MediaRequestKindSchema,
   MediaRequestChangeSchema,
   BlockedReleaseSchema,
   MediaRequestDecidedSchema,
@@ -653,6 +655,31 @@ const listMediaRequestsRoute = createRoute({
   }),
 });
 
+const profilesOnOfferRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/profiles',
+  tags: ['Requests'],
+  summary: 'List the quality profiles somebody may ask with, for what they are asking for',
+  request: {
+    query: z.object({
+      kind: MediaRequestKindSchema.openapi({ param: { name: 'kind', in: 'query' } }),
+      libraryId: z
+        .string()
+        .min(1)
+        .optional()
+        .openapi({ param: { name: 'libraryId', in: 'query' } }),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'What to offer, and whichever profile overrides the offer',
+      content: {
+        'application/json': { schema: ProfilesOnOfferSchema.openapi('ProfilesOnOffer') },
+      },
+    },
+  }),
+});
+
 const askForMediaRoute = createRoute({
   method: 'post',
   path: '/api/requests/media',
@@ -1027,6 +1054,7 @@ export {
   addQualityProfileRoute,
   changeQualityProfileRoute,
   listQualityProfilesRoute,
+  profilesOnOfferRoute,
   removeQualityProfileRoute,
   addDownloadClientRoute,
   changeDownloadClientRoute,

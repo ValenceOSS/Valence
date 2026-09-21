@@ -15,6 +15,7 @@
   "dependencies": {
     "@hono/node-server": "^1.19.17",
     "@valence/contracts": "workspace:*",
+    "@valence/core": "workspace:*",
     "cheerio": "^1.2.0",
     "domhandler": "^5.0.3",
     "drizzle-orm": "^0.45.2",

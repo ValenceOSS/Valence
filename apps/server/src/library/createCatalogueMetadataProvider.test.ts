@@ -1026,8 +1026,36 @@ describe('discovering and describing titles to ask for', () => {
         { name: 'Adam Scott', role: 'Mark S.', photoUrl: 'https://image.tmdb.org/t/p/w185/a.jpg' },
         { name: 'Britt Lower', role: null, photoUrl: null },
       ],
+      trailerKey: null,
     });
     expect(calls[0]).toContain('append_to_response=credits');
+    expect(calls[0]).not.toContain('videos');
+  });
+
+  it('describes a title with its trailer where the operator wants trailers', async () => {
+    const { instance, calls } = provider(
+      {
+        '/tv/95396': {
+          id: 95396,
+          name: 'Severance',
+          genres: [],
+          episode_run_time: [55],
+          videos: {
+            results: [
+              { key: 'fan', site: 'YouTube', type: 'Trailer', official: false },
+              { key: 'official', site: 'YouTube', type: 'Trailer', official: true },
+              { key: 'elsewhere', site: 'Vimeo', type: 'Trailer', official: true },
+            ],
+          },
+        },
+      },
+      { wantsTrailers: true },
+    );
+
+    await expect(instance.describeTitle?.('95396', 'tv')).resolves.toMatchObject({
+      trailerKey: 'official',
+    });
+    expect(calls[0]).toContain('append_to_response=credits%2Cvideos');
   });
 
   it('has nothing to list or describe without a key', async () => {

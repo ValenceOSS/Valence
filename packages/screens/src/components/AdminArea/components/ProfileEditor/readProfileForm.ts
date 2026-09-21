@@ -30,10 +30,17 @@ type ProfileForm = {
   upgradeUntilSource: ReleaseSource | null;
   upgradeUntilMusicQuality: MusicQuality | null;
   libraryIds: string[];
+  preferredLanguage: string | null;
+  isDefault: boolean;
+  roleIds: string[];
+  accountIds: string[];
 };
 
+type ProfileTab = 'quality' | 'matching' | 'access';
+
 type ReadProfileForm =
-  { draft: QualityProfileDraft; problem: null } | { draft: null; problem: string };
+  | { draft: QualityProfileDraft; problem: null; at: null }
+  | { draft: null; problem: string; at: ProfileTab };
 
 const DEFAULTS = QualityProfileDraftSchema.parse({ name: 'New', kind: 'video' });
 
@@ -55,6 +62,10 @@ const A_NEW_PROFILE: ProfileForm = {
   upgradeUntilSource: null,
   upgradeUntilMusicQuality: null,
   libraryIds: [],
+  preferredLanguage: null,
+  isDefault: false,
+  roleIds: [],
+  accountIds: [],
 };
 
 /**
@@ -84,6 +95,10 @@ const formFor = (profile: QualityProfile | null): ProfileForm =>
         upgradeUntilSource: profile.upgradeUntilSource,
         upgradeUntilMusicQuality: profile.upgradeUntilMusicQuality,
         libraryIds: profile.libraryIds,
+        preferredLanguage: profile.preferredLanguage,
+        isDefault: profile.isDefault,
+        roleIds: profile.roleIds,
+        accountIds: profile.accountIds,
       };
 
 /**
@@ -116,7 +131,7 @@ const sizeOf = (text: string): number | null | undefined => {
 
 /**
  * Reads the profile form into a profile to keep, or says the first thing wrong with it in words
- * that point at the field. A video profile must allow at least one resolution, and a music profile
+ * that point at the field, and which tab of the dialog to show to reach it. A video profile must allow at least one resolution, and a music profile
  * at least one format, or it would take nothing. Video is limited by the size of each quality, and
  * music by the size of an album.
  *
@@ -129,21 +144,21 @@ const readProfileForm = (form: ProfileForm): ReadProfileForm => {
   const largestMb = sizeOf(form.largestMb);
 
   if (name === '') {
-    return { draft: null, problem: 'Give the profile a name.' };
+    return { draft: null, problem: 'Give the profile a name.', at: 'quality' };
   }
 
   if (form.kind === 'video' && form.resolutions.length === 0) {
-    return { draft: null, problem: 'Allow at least one resolution.' };
+    return { draft: null, problem: 'Allow at least one resolution.', at: 'quality' };
   }
 
   if (form.kind === 'music' && form.musicQualities.length === 0) {
-    return { draft: null, problem: 'Allow at least one format.' };
+    return { draft: null, problem: 'Allow at least one format.', at: 'quality' };
   }
 
   const isMusic = form.kind === 'music';
 
   if (isMusic && (smallestMb === undefined || largestMb === undefined || largestMb === 0)) {
-    return { draft: null, problem: 'A size is a number of megabytes.' };
+    return { draft: null, problem: 'A size is a number of megabytes.', at: 'quality' };
   }
 
   if (
@@ -154,7 +169,11 @@ const readProfileForm = (form: ProfileForm): ReadProfileForm => {
     largestMb !== undefined &&
     largestMb <= smallestMb
   ) {
-    return { draft: null, problem: 'The largest size has to be more than the smallest.' };
+    return {
+      draft: null,
+      problem: 'The largest size has to be more than the smallest.',
+      at: 'quality',
+    };
   }
 
   return {
@@ -176,11 +195,16 @@ const readProfileForm = (form: ProfileForm): ReadProfileForm => {
       upgradeUntilSource: form.isUpgrading ? form.upgradeUntilSource : null,
       upgradeUntilMusicQuality: form.isUpgrading ? form.upgradeUntilMusicQuality : null,
       libraryIds: form.libraryIds,
+      preferredLanguage: form.preferredLanguage,
+      isDefault: form.isDefault,
+      roleIds: form.isDefault ? [] : form.roleIds,
+      accountIds: form.isDefault ? [] : form.accountIds,
     },
     problem: null,
+    at: null,
   };
 };
 
-export type { ProfileForm };
+export type { ProfileForm, ProfileTab };
 
 export { A_NEW_PROFILE, formFor, readProfileForm };

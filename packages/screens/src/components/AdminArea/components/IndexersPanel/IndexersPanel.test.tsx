@@ -51,6 +51,9 @@ const anIndexer = (overrides: Partial<Indexer> = {}): Indexer => ({
   lastProblem: null,
   lastFailedAt: null,
   turnedOffBecause: null,
+  removesWhenDone: null,
+  seedSeconds: null,
+  seedRatio: null,
   createdAt: '2026-09-19T00:00:00.000Z',
   updatedAt: '2026-09-19T00:00:00.000Z',
   ...overrides,
@@ -105,6 +108,9 @@ describe('IndexersPanel', () => {
       anIndexer({
         isEnabled: false,
         turnedOffBecause: 'Turned off after 5 failures in a row: Timed out',
+        removesWhenDone: null,
+        seedSeconds: null,
+        seedRatio: null,
       }),
     ]);
 

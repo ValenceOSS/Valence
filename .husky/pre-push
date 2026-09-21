@@ -1,4 +1,4 @@
 pnpm branch:check
-pnpm test
+pnpm test:serial
 pnpm rust:check
 pnpm rust:test

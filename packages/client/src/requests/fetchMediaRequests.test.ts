@@ -30,6 +30,7 @@ const REQUEST = {
   posterUrl: null,
   libraryId: 'films',
   profileId: null,
+  profileName: null,
   isPickedByHand: false,
   state: 'wanted',
   problem: null,
@@ -117,11 +118,16 @@ describe('fetchMediaRequests', () => {
     ]);
   });
 
-  it('reads the seasons a series has', async () => {
-    const seasons = [{ season: 1, episodeCount: 9, firstAired: '2022-02-18' }];
-    const asked = answering(seasons);
+  it('reads the seasons a series has, and where each stands', async () => {
+    const asked = answering([
+      { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'library' },
+      { season: 2, episodeCount: 10, firstAired: null },
+    ]);
 
-    expect(await fetchSeriesSeasons(95396)).toEqual(seasons);
+    expect(await fetchSeriesSeasons(95396)).toEqual([
+      { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'library' },
+      { season: 2, episodeCount: 10, firstAired: null, standing: 'askable' },
+    ]);
     expect(asked.mock.calls[0]?.[0]).toBe('/api/requests/catalogue/series/95396/seasons');
   });
 

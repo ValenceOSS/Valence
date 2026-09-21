@@ -61,6 +61,23 @@ const createDatabaseCatalogueLookup = (db: ValenceDatabase): CatalogueLookup => 
         .where(inArray(series.externalId, wanted)),
     ),
 
+  episodesHeld: async (tmdbId) => {
+    const rows = await db
+      .select({ season: mediaItem.seasonNumber, held: sql<number>`count(*)::int` })
+      .from(mediaItem)
+      .innerJoin(series, eq(mediaItem.seriesId, series.id))
+      .where(
+        and(
+          eq(series.externalId, tmdbId),
+          isNotNull(mediaItem.episodeNumber),
+          isNotNull(mediaItem.seasonNumber),
+        ),
+      )
+      .groupBy(mediaItem.seasonNumber);
+
+    return new Map(rows.flatMap((row) => (row.season === null ? [] : [[row.season, row.held]])));
+  },
+
   artists: (musicBrainzIds) =>
     byKey(musicBrainzIds, (wanted) =>
       db

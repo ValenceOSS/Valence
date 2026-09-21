@@ -51,6 +51,7 @@ const judged = (releaseId: string, score: number, rejections: string[] = []): Ju
     audio: [],
     audioChannels: null,
     musicQuality: null,
+    languages: [],
     edition: null,
     group: null,
     isProper: false,

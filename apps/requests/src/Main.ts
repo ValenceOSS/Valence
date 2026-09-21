@@ -22,6 +22,8 @@ import { createDownloadClientService } from '@ValenceRequests/downloads/createDo
 import { createDownloadQueue } from '@ValenceRequests/downloads/createDownloadQueue';
 import { createDownloadRoutes } from '@ValenceRequests/downloads/createDownloadRoutes';
 import { createDatabaseProfileStore } from '@ValenceRequests/profiles/createDatabaseProfileStore';
+import { seedStarterProfiles } from '@ValenceRequests/profiles/seedStarterProfiles';
+import { createDatabaseSettingStore } from '@ValenceRequests/stores/createDatabaseSettingStore';
 import { createProfileRoutes } from '@ValenceRequests/profiles/createProfileRoutes';
 import { createProfileService } from '@ValenceRequests/profiles/createProfileService';
 import { createDatabaseBlockedReleaseStore } from '@ValenceRequests/mediaRequests/createDatabaseBlockedReleaseStore';
@@ -31,8 +33,13 @@ import { createDatabaseRequestLogStore } from '@ValenceRequests/mediaRequests/cr
 import { createRequestRoutes } from '@ValenceRequests/mediaRequests/createRequestRoutes';
 import { createRequestService } from '@ValenceRequests/mediaRequests/createRequestService';
 import { createRequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
+import { z } from 'zod';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
+
+const SEEDED_PROFILES = 'seededProfileNames';
+
+const SeededProfilesSchema = z.array(z.string());
 
 const env = readEnv(process.env);
 const { db, pool } = createDatabase(env.DATABASE_URL);
@@ -101,6 +108,19 @@ const downloadClients = createDownloadClientService({
 
 const profiles = createProfileService({ store: createDatabaseProfileStore(db) });
 
+const settings = createDatabaseSettingStore(db);
+
+const seeded = await seedStarterProfiles({
+  profiles,
+  seeded: async () =>
+    SeededProfilesSchema.parse(JSON.parse((await settings.read(SEEDED_PROFILES)) ?? '[]')),
+  remember: (names) => settings.write(SEEDED_PROFILES, JSON.stringify(names)),
+});
+
+if (seeded.length > 0) {
+  say(`Started with the ${seeded.join(', ')} quality profiles.`);
+}
+
 const sentDownloads = createDatabaseSentDownloadStore(db);
 
 const events = createDatabaseEventStore(db);
@@ -109,6 +129,7 @@ const downloadQueue = createDownloadQueue({
   clients: downloadClients,
   downloads: sentDownloads,
   events,
+  indexers: { records: () => indexers.list() },
   fetchRelease: (indexerId, url) => indexers.download(indexerId, url),
 });
 

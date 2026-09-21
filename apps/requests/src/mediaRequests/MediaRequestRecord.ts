@@ -1,8 +1,12 @@
 import type { MediaRequest, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 
-type MediaRequestRecord = Omit<MediaRequest, 'state' | 'items' | 'requestedBy' | 'releaseDate'> & {
+type MediaRequestRecord = Omit<
+  MediaRequest,
+  'state' | 'items' | 'requestedBy' | 'releaseDate' | 'profileName'
+> & {
   libraryPath: string;
+  libraryLanguage: string | null;
   aliases: string[];
   requestedById: string;
   requestedByName: string;

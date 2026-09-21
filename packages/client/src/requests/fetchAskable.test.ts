@@ -118,6 +118,7 @@ describe('fetchAskable', () => {
       runtimeMinutes: 155,
       cast: [],
       albums: [],
+      trailerKey: null,
     });
 
     expect((await fetchAskable('album', 'deezer-7')).runtimeMinutes).toBe(155);

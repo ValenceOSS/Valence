@@ -1,16 +1,35 @@
 import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { sendToRequests } from '@ValenceClient/requests/sendToRequests';
-import { QualityProfileSchema } from '@ValenceContracts/schemas/QualityProfile';
+import {
+  ProfilesOnOfferSchema,
+  QualityProfileSchema,
+} from '@ValenceContracts/schemas/QualityProfile';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { Sent } from '@ValenceClient/requests/sendToRequests';
+import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type {
+  ProfilesOnOffer,
   QualityProfile,
   QualityProfileChange,
   QualityProfileDraft,
 } from '@ValenceContracts/schemas/QualityProfile';
 
 const PROFILES = '/api/admin/requests/profiles';
+
+const ON_OFFER = '/api/requests/profiles';
+
+/**
+ * Reads the qualities somebody may ask at for something, and the one they are given no say over.
+ *
+ * Asked by what is being requested rather than by kind of profile, because the answer depends on
+ * the library it would be filed into, and only the server knows which that is.
+ *
+ * @param kind - What is being asked for.
+ * @returns What to offer, and whichever profile overrides the offer.
+ */
+const fetchProfilesOnOffer = (kind: MediaRequestKind): Promise<ProfilesOnOffer> =>
+  readFromServer(`${ON_OFFER}?kind=${kind}`, ProfilesOnOfferSchema);
 
 /**
  * Reads the quality profiles searches are judged against.
@@ -53,4 +72,4 @@ const removeProfile = async (id: string): Promise<Refusal> =>
   (await sendToRequests(`${PROFILES}/${id}`, 'DELETE', undefined, () => Promise.resolve(null)))
     .refusal;
 
-export { addProfile, changeProfile, fetchProfiles, removeProfile };
+export { addProfile, changeProfile, fetchProfiles, fetchProfilesOnOffer, removeProfile };

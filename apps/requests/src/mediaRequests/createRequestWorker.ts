@@ -19,6 +19,8 @@ import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
 import { wantsUpgrade } from '@ValenceRequests/mediaRequests/wantsUpgrade';
 import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
+import { downloadFacts } from '@ValenceRequests/mediaRequests/downloadFacts';
+import { judgeDownload } from '@ValenceRequests/downloads/judgeDownload';
 import type {
   IndexerSearchReport,
   Release,
@@ -76,6 +78,9 @@ type CreateRequestWorkerOptions = {
   firstMissingAfterMs?: number;
   feedsEveryMs?: number;
   stalledForMs?: number;
+  metadataForMs?: number;
+  settlesForMs?: number;
+  wouldTakeLongerThanMs?: number;
   say?: (line: string) => void;
 };
 
@@ -90,6 +95,12 @@ const FIRST_MISSING_AFTER_MS = 2 * 60 * 1000;
 const FEEDS_EVERY_MS = 15 * 60 * 1000;
 
 const STALLED_FOR_MS = 6 * 60 * 60 * 1000;
+
+const METADATA_FOR_MS = 5 * 60 * 1000;
+
+const SETTLES_FOR_MS = 15 * 60 * 1000;
+
+const WOULD_TAKE_LONGER_THAN_MS = 7 * 24 * 60 * 60 * 1000;
 
 const NUDGE_AFTER_MS = 1000;
 
@@ -211,6 +222,9 @@ const groupedByDownload = (
  * @param firstMissingAfterMs - How long after starting to search for everything missing first.
  * @param feedsEveryMs - How often to read the indexers' newest releases.
  * @param stalledForMs - How long a download may stall before another release is tried.
+ * @param metadataForMs - How long a torrent has to learn what it holds before it is given up on.
+ * @param settlesForMs - How long a download runs before it is judged on how fast it is going.
+ * @param wouldTakeLongerThanMs - How long a download may still have left before it is given up on.
  * @param say - Where to say what happened.
  * @returns The worker.
  */
@@ -234,6 +248,9 @@ const createRequestWorker = ({
   firstMissingAfterMs = FIRST_MISSING_AFTER_MS,
   feedsEveryMs = FEEDS_EVERY_MS,
   stalledForMs = STALLED_FOR_MS,
+  metadataForMs = METADATA_FOR_MS,
+  settlesForMs = SETTLES_FOR_MS,
+  wouldTakeLongerThanMs = WOULD_TAKE_LONGER_THAN_MS,
   say = () => undefined,
 }: CreateRequestWorkerOptions) => {
   let working: Promise<void> = Promise.resolve();
@@ -331,6 +348,8 @@ const createRequestWorker = ({
       libraryKind: LIBRARY_KINDS_OF[request.kind],
       sizeBytes: release.sizeBytes,
       indexerName: release.indexerName,
+      minimumSeedSeconds: release.minimumSeedSeconds,
+      minimumRatio: release.minimumRatio,
     });
 
     if (typeof sent === 'string') {
@@ -577,17 +596,18 @@ const createRequestWorker = ({
         continue;
       }
 
-      const isStalled =
-        download.state === 'stalled' &&
-        now().getTime() - Date.parse(download.updatedAt) >= stalledForMs;
+      const judged = judgeDownload(download, now(), {
+        metadataForMs,
+        stalledForMs,
+        settlesForMs,
+        wouldTakeLongerThanMs,
+      });
 
-      if (download.state !== 'failed' && !isStalled) {
+      if (!judged.isDoomed) {
         continue;
       }
 
-      const reason = isStalled
-        ? 'It stalled, with nobody to fetch it from'
-        : (download.problem ?? 'The download failed');
+      const reason = judged.reason ?? 'The download failed';
 
       await block(request.id, download.title, fetching[0]?.indexerId ?? null, reason);
       await queue.remove(download.id, true);
@@ -659,6 +679,7 @@ const createRequestWorker = ({
                 filedTitle: item.releaseTitle,
                 filedScore: item.score,
                 attempts: 0,
+                ...downloadFacts(download),
               }));
         }
 
@@ -705,6 +726,7 @@ const createRequestWorker = ({
     parsed: ReturnType<typeof parseReleaseName>,
     path: string,
     protocol: Release['protocol'],
+    releaseTitle: string,
   ): Promise<string | null> => {
     const wanted =
       libraryKind === 'movies'
@@ -712,7 +734,7 @@ const createRequestWorker = ({
         : await episodesInDownload(path, parsed);
     const { filed } = await file(
       into,
-      wanted.map((one) => ({ ...one, title: '', airDate: null, filePath: null })),
+      wanted.map((one) => ({ ...one, title: '', airDate: null, filePath: null, releaseTitle })),
       path,
       protocol === 'torrent',
     );
@@ -787,7 +809,14 @@ const createRequestWorker = ({
         const folder =
           download.libraryKind === 'music'
             ? await fileSentAlbum(parsed.title, into.libraryPath, path, download.protocol)
-            : await fileSentVideo(into, download.libraryKind, parsed, path, download.protocol);
+            : await fileSentVideo(
+                into,
+                download.libraryKind,
+                parsed,
+                path,
+                download.protocol,
+                download.title,
+              );
 
         if (folder === null) {
           await couldNot(

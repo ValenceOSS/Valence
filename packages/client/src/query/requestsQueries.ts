@@ -7,7 +7,7 @@ import { fetchIndexers, searchReleases } from '@ValenceClient/requests/fetchInde
 import { fetchCatalogue, fetchDefinition } from '@ValenceClient/requests/fetchDefinitions';
 import { fetchDownloadClients } from '@ValenceClient/requests/fetchDownloadClients';
 import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
-import { fetchProfiles } from '@ValenceClient/requests/fetchProfiles';
+import { fetchProfiles, fetchProfilesOnOffer } from '@ValenceClient/requests/fetchProfiles';
 import {
   fetchRequestBlocklist,
   fetchMediaRequestLog,
@@ -150,6 +150,20 @@ const profiles = () =>
   queryOptions({
     queryKey: [...REQUESTS, 'profiles'],
     queryFn: () => fetchProfiles(),
+  });
+
+/**
+ * The qualities somebody may ask at for something.
+ *
+ * @param kind - What is being asked for.
+ * @param isEnabled - Whether to ask at all, which a dialog that is shut does not.
+ * @returns The query.
+ */
+const profilesOnOffer = (kind: MediaRequestKind, isEnabled = true) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'profiles', 'onOffer', kind],
+    queryFn: () => fetchProfilesOnOffer(kind),
+    enabled: isEnabled,
   });
 
 /**
@@ -342,6 +356,7 @@ const requestsQueries = {
   downloadClients,
   downloadQueue,
   profiles,
+  profilesOnOffer,
   mediaRequests,
   mediaRequestReleases,
   mediaRequestLog,

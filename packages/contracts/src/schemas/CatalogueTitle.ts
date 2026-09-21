@@ -83,6 +83,7 @@ const CatalogueTitleDetailSchema = CatalogueTitleSchema.extend({
   cast: z.array(CatalogueCreditSchema),
   albums: z.array(CatalogueAlbumSchema),
   authors: z.array(z.string()).default([]),
+  trailerKey: z.string().nullable(),
 });
 
 const CATALOGUE_SEARCH_KINDS = ['film', 'series', 'artist', 'album', 'book'] as const;
