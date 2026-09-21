@@ -168,6 +168,7 @@ const MediaRequestSchema = z.object({
   posterUrl: z.string().nullable(),
   libraryId: z.string(),
   profileId: z.string().nullable(),
+  profileName: z.string().nullable(),
   isPickedByHand: z.boolean(),
   state: MediaRequestStateSchema,
   problem: z.string().nullable(),

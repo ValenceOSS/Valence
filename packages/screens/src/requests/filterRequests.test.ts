@@ -32,4 +32,32 @@ describe('filterRequests', () => {
 
     expect(filterRequests(ALL, new Set(), asker.toUpperCase())).toEqual(ALL);
   });
+
+  it('keeps a request in any one of the libraries ticked', () => {
+    const shows = aMediaRequest({ title: 'Severance', libraryId: 'shows' });
+    const both = [DUNE, shows];
+
+    expect(filterRequests(both, new Set(['library:shows']), '')).toEqual([shows]);
+    expect(filterRequests(both, new Set(['library:films', 'library:shows']), '')).toEqual(both);
+  });
+
+  it('keeps a request asked for by any one of the people ticked', () => {
+    const theirs = aMediaRequest({ requestedBy: { id: 'dan', name: 'Dan' } });
+    const both = [DUNE, theirs];
+
+    expect(filterRequests(both, new Set(['who:dan']), '')).toEqual([theirs]);
+  });
+
+  it('keeps a request judged at any one of the qualities ticked', () => {
+    const ultra = aMediaRequest({ title: 'Arrival', profileName: '4K' });
+    const both = [DUNE, ultra];
+
+    expect(filterRequests(both, new Set(['quality:4K']), '')).toEqual([ultra]);
+  });
+
+  it('lets a request judged at no quality be asked for like any other', () => {
+    const ultra = aMediaRequest({ title: 'Arrival', profileName: '4K' });
+
+    expect(filterRequests([DUNE, ultra], new Set(['quality:']), '')).toEqual([DUNE]);
+  });
 });

@@ -640,6 +640,10 @@ describe('createRequestsClient with quality profiles', () => {
     upgradeUntilSource: null,
     upgradeUntilMusicQuality: null,
     libraryIds: [],
+    preferredLanguage: null,
+    isDefault: false,
+    roleIds: [],
+    accountIds: [],
     createdAt: '2026-09-19T00:00:00.000Z',
     updatedAt: '2026-09-19T00:00:00.000Z',
   };
@@ -697,6 +701,7 @@ describe('createRequestsClient with requests for films and series', () => {
     posterUrl: null,
     libraryId: 'films',
     profileId: null,
+    profileName: null,
     isPickedByHand: false,
     state: 'wanted' as const,
     problem: null,

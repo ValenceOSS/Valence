@@ -89,7 +89,11 @@ const createRequestService = ({
     (await items.list()).filter((item) => item.requestId === id);
 
   const shown = async (record: MediaRequestRecord) =>
-    showMediaRequest(record, await itemsOf(record.id));
+    showMediaRequest(
+      record,
+      await itemsOf(record.id),
+      chooseProfile(record, await profiles.list())?.name ?? null,
+    );
 
   const sync = async (
     record: MediaRequestRecord,
@@ -126,7 +130,11 @@ const createRequestService = ({
 
   return {
     list: async (): Promise<MediaRequest[]> => {
-      const [kept, waiting] = await Promise.all([requests.list(), items.list()]);
+      const [kept, waiting, judging] = await Promise.all([
+        requests.list(),
+        items.list(),
+        profiles.list(),
+      ]);
 
       return kept
         .toSorted((left, right) => right.createdAt.localeCompare(left.createdAt))
@@ -134,6 +142,7 @@ const createRequestService = ({
           showMediaRequest(
             record,
             waiting.filter((item) => item.requestId === record.id),
+            chooseProfile(record, judging)?.name ?? null,
           ),
         );
     },

@@ -1,6 +1,6 @@
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { cn } from '@ValenceUI/cn';
-import { describeDownloadProgress } from '@ValenceScreens/components/RequestsPage/components/MyRequests/describeDownloadProgress';
+import { describeDownloadProgress } from '@ValenceScreens/components/RequestsPage/components/RequestsList/describeDownloadProgress';
 import type { DownloadProgressReadoutProps } from './DownloadProgressReadout.types';
 
 /**

@@ -161,6 +161,32 @@ describe('createRequestService', () => {
     expect(await service.change('missing', {}, null)).toBeNull();
   });
 
+  it('names the quality a request is judged at, so whoever reads it need not look up an id', async () => {
+    const requests = createMemoryRecordStore<MediaRequestRecord>();
+    const items = createMemoryRecordStore<RequestItemRecord>();
+    const service = createRequestService({
+      requests,
+      items,
+      profiles: {
+        list: () => Promise.resolve([aProfile({ name: 'Ultra HD', libraryIds: ['films'] })]),
+      },
+      now: () => AT,
+    });
+
+    const { request } = await service.add(DUNE);
+
+    expect(request.profileName).toBe('Ultra HD');
+    expect((await service.list())[0]?.profileName).toBe('Ultra HD');
+    expect((await service.find(request.id))?.profileName).toBe('Ultra HD');
+  });
+
+  it('names no quality where no profile covers the request', async () => {
+    const { service } = aService();
+    const { request } = await service.add(DUNE);
+
+    expect(request.profileName).toBeNull();
+  });
+
   it('holds a film until it is out in the way its quality profile says', async () => {
     const requests = createMemoryRecordStore<MediaRequestRecord>();
     const items = createMemoryRecordStore<RequestItemRecord>();

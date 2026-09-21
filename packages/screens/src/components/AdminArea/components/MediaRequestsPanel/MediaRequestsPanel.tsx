@@ -44,8 +44,8 @@ import { ApproveRequestDialog } from '@ValenceScreens/components/AdminArea/compo
 import { RefuseRequestDialog } from '@ValenceScreens/components/AdminArea/components/RefuseRequestDialog/RefuseRequestDialog';
 import { RequestDetailDialog } from '@ValenceScreens/components/AdminArea/components/RequestDetailDialog/RequestDetailDialog';
 import { describeRequestBadge } from './describeRequestBadge';
-import { describeRequestFilters } from './describeRequestFilters';
-import { filterRequests } from './filterRequests';
+import { describeRequestFilters } from '@ValenceScreens/requests/describeRequestFilters';
+import { filterRequests } from '@ValenceScreens/requests/filterRequests';
 import { describeRequestProgress } from './describeRequestProgress';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { RequestDetailTab } from '@ValenceScreens/components/AdminArea/components/RequestDetailDialog/RequestDetailDialog.types';

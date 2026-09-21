@@ -4,16 +4,22 @@ import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaReq
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
 /**
- * A request as it is shown: where it has got to as a whole, who asked, the day a film or an album is
- * held until, and each film, episode or album in the order it comes.
+ * A request as it is shown: where it has got to as a whole, who asked, the quality it will be judged
+ * at, the day a film or an album is held until, and each film, episode or album in the order it
+ * comes.
+ *
+ * The quality is named rather than left as an id, because whoever reads it cannot look the id up:
+ * the profiles are the operator's, and somebody asking is only ever shown the few that are theirs.
  *
  * @param record - The request as kept.
  * @param items - Its films or episodes.
+ * @param profileName - What the profile judging it is called, where there is one.
  * @returns It as shown.
  */
 const showMediaRequest = (
   record: MediaRequestRecord,
   items: readonly RequestItemRecord[],
+  profileName: string | null = null,
 ): MediaRequest => ({
   id: record.id,
   kind: record.kind,
@@ -26,6 +32,7 @@ const showMediaRequest = (
   posterUrl: record.posterUrl,
   libraryId: record.libraryId,
   profileId: record.profileId,
+  profileName,
   isPickedByHand: record.isPickedByHand,
   ...describeRequestState(record, items),
   approval: record.approval,

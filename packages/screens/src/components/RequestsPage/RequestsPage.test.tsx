@@ -25,8 +25,8 @@ vi.mock('./components/CatalogueGrid/CatalogueGrid', () => ({
   },
 }));
 
-vi.mock('./components/MyRequests/MyRequests', () => ({
-  MyRequests: () => <p>your requests</p>,
+vi.mock('./components/RequestsList/RequestsList', () => ({
+  RequestsList: () => <p>your requests</p>,
 }));
 
 beforeEach(() => {

@@ -18,6 +18,7 @@ const aMediaRequest = (overrides: Partial<MediaRequest> = {}): MediaRequest => (
   posterUrl: null,
   libraryId: 'films',
   profileId: null,
+  profileName: null,
   isPickedByHand: false,
   state: 'wanted',
   problem: null,

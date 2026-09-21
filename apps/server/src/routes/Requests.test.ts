@@ -983,6 +983,7 @@ describe('requests for films and series, through the server', () => {
     posterUrl: null,
     libraryId: FILMS.id,
     profileId: null,
+    profileName: null,
     isPickedByHand: false,
     state: 'wanted',
     problem: null,

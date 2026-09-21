@@ -15,7 +15,7 @@ import { viewOfBrowsing } from '@ValenceScreens/requests/viewOfBrowsing';
 import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
 import { CatalogueGrid } from './components/CatalogueGrid/CatalogueGrid';
 import { DiscoverShelves } from './components/DiscoverShelves/DiscoverShelves';
-import { MyRequests } from './components/MyRequests/MyRequests';
+import { RequestsList } from './components/RequestsList/RequestsList';
 
 const MINE = 'mine';
 
@@ -88,7 +88,7 @@ const RequestsPage = () => {
                     { id: DISCOVER, label: 'Discover' },
                     { id: MOVIES, label: 'Movies' },
                     { id: SHOWS, label: 'Shows' },
-                    { id: MINE, label: 'My requests' },
+                    { id: MINE, label: 'Requests' },
                   ],
                 },
               ]}
@@ -121,7 +121,7 @@ const RequestsPage = () => {
           )}
 
           <TabPanel value={MINE} className={cn(RAIL.inset, 'flex flex-col gap-4')}>
-            <MyRequests
+            <RequestsList
               onAsk={ask}
               onOpen={(kind, mediaId) => {
                 go(placeOfArrival(kind, mediaId));
