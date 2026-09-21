@@ -7,7 +7,6 @@ import {
   MoreHorizontal as MoreHorizontalIcon,
   Radio as RadioIcon,
   RefreshCw as RefreshCwIcon,
-  Search as SearchIcon,
   Terminal as TerminalIcon,
   X as XIcon,
 } from '@keyline-icons/react';
@@ -354,7 +353,6 @@ const LogExplorer = ({
           isLabelHidden
           type="search"
           size="sm"
-          icon={<Icon of={SearchIcon} size={16} />}
           placeholder="Search — or filter with level:error  job:abc123  library:…  session:…"
           value={typed}
           className="min-w-64 flex-1"

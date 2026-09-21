@@ -3,7 +3,6 @@ import {
   ChevronDown as ChevronDownIcon,
   Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
-  Search as SearchIcon,
 } from '@keyline-icons/react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
@@ -496,7 +495,6 @@ const JobHistoryPanel = ({
           isLabelHidden
           type="search"
           size="sm"
-          icon={<Icon of={SearchIcon} size={16} />}
           placeholder="Search by job, library, error or run id"
           value={typed}
           className="min-w-56 flex-1"

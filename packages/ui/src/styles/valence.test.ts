@@ -70,6 +70,7 @@ describe('the Valence stylesheet', () => {
 
   it('paints a card in two layers, a tinted shell and a face set into it', () => {
     expect(stylesheet).toContain('.valence-card-shell');
+    expect(stylesheet).toContain('.valence-well');
     expect(stylesheet).toContain('.valence-card-face');
     expect(stylesheet).toContain('--card-shell:');
     expect(stylesheet).toContain('--card-face:');

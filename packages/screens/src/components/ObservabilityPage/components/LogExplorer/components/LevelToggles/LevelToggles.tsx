@@ -30,7 +30,10 @@ const LevelToggles = ({ histogram, levels, isReading, onToggle }: LevelTogglesPr
   const events = totals.reduce((sum, one) => sum + one.count, 0);
 
   return (
-    <div aria-busy={isReading} className="flex flex-wrap items-center gap-x-4 gap-y-2">
+    <div
+      aria-busy={isReading}
+      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
+    >
       <p className="text-sm text-text-muted">
         <span className="text-lg font-semibold tabular-nums text-text">
           {events.toLocaleString()}
@@ -38,7 +41,7 @@ const LevelToggles = ({ histogram, levels, isReading, onToggle }: LevelTogglesPr
         events
       </p>
 
-      <ul aria-label="Levels" className="flex flex-wrap items-center gap-1.5">
+      <ul aria-label="Levels" className="flex flex-wrap items-center justify-end gap-1">
         {totals.map(({ level, count }) => {
           const look = describeLogLevel(level);
           const isOn = levels.includes(level);
@@ -48,7 +51,7 @@ const LevelToggles = ({ histogram, levels, isReading, onToggle }: LevelTogglesPr
               <Button
                 variant={isOn ? 'secondary' : 'ghost'}
                 isActive={isOn}
-                size="sm"
+                size="xs"
                 disabled={isOn && levels.length === 1}
                 onClick={() => {
                   onToggle(level);

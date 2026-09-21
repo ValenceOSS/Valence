@@ -42,10 +42,7 @@ describe('HeadedSection', () => {
       </HeadedSection>,
     );
 
-    expect(screen.getByText('Content').parentElement).toHaveClass(
-      'rounded-xl',
-      'bg-[var(--card-shell)]',
-    );
+    expect(screen.getByText('Content').parentElement).toHaveClass('rounded-xl', 'valence-well');
   });
 
   it('sets a display name so devtools can identify it', () => {

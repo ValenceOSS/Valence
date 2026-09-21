@@ -13,15 +13,10 @@ describe('Well', () => {
     expect(screen.getByText('A chart')).toBeInTheDocument();
   });
 
-  it('is rounded, with the grey and the line of a card, but is not a card', () => {
+  it('is rounded, drawn as a card’s background is, but is not a card', () => {
     const { container } = render(<Well>Content</Well>);
 
-    expect(container.firstElementChild).toHaveClass(
-      'rounded-xl',
-      'border',
-      'border-[var(--surface-line)]',
-      'bg-[var(--card-shell)]',
-    );
+    expect(container.firstElementChild).toHaveClass('valence-well', 'rounded-xl');
     expect(container.querySelector('.valence-card-shell, .valence-card-face')).toBeNull();
   });
 
