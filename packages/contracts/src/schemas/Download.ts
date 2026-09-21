@@ -26,12 +26,6 @@ const DownloadSchema = z.object({
 
 const DownloadListSchema = z.object({ downloads: z.array(DownloadSchema) });
 
-const DownloadRequestSchema = z.object({
-  mediaId: z.string().uuid(),
-  quality: DownloadQualitySchema,
-  audioLanguages: z.array(z.string()).default([]),
-});
-
 const HoldingSchema = z.object({
   mediaId: z.string().uuid(),
   quality: DownloadQualitySchema,
@@ -40,19 +34,16 @@ const HoldingSchema = z.object({
 
 const HoldingListSchema = z.object({ holdings: z.array(HoldingSchema) });
 
-type DownloadState = z.infer<typeof DownloadStateSchema>;
 type DownloadQuality = z.infer<typeof DownloadQualitySchema>;
 type Download = z.infer<typeof DownloadSchema>;
-type DownloadRequest = z.infer<typeof DownloadRequestSchema>;
 type Holding = z.infer<typeof HoldingSchema>;
 
-export type { Download, DownloadQuality, DownloadRequest, DownloadState, Holding };
+export type { Download, DownloadQuality, Holding };
 
 export {
   DOWNLOAD_STATES,
   DownloadListSchema,
   DownloadQualitySchema,
-  DownloadRequestSchema,
   DownloadSchema,
   DownloadStateSchema,
   HoldingListSchema,

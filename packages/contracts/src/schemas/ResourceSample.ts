@@ -26,9 +26,6 @@ const ResourceSampleQuerySchema = z.object({
 
 type ResourceSampleRange = z.infer<typeof ResourceSampleRangeSchema>;
 type ResourceSampleRecord = z.infer<typeof ResourceSampleRecordSchema>;
-type ResourceSampleHistory = z.infer<typeof ResourceSampleHistorySchema>;
-type ResourceSampleQuery = z.infer<typeof ResourceSampleQuerySchema>;
-
 const RESOURCE_SAMPLE_RANGE_MS: Readonly<Record<ResourceSampleRange, number>> = {
   '24h': 86_400_000,
   '3d': 3 * 86_400_000,
@@ -45,12 +42,7 @@ const RESOURCE_SAMPLE_RANGE_MS: Readonly<Record<ResourceSampleRange, number>> = 
 const sinceMsForRange = (range: ResourceSampleRange, nowMs: number): number =>
   nowMs - RESOURCE_SAMPLE_RANGE_MS[range];
 
-export type {
-  ResourceSampleRange,
-  ResourceSampleRecord,
-  ResourceSampleHistory,
-  ResourceSampleQuery,
-};
+export type { ResourceSampleRange, ResourceSampleRecord };
 
 export {
   RESOURCE_SAMPLE_RANGES,

@@ -46,4 +46,4 @@ const useWeighing = (
   }, [isOpen, mediaIds, settings]);
 };
 
-export { WEIGH_AFTER_MS, useWeighing };
+export { useWeighing };

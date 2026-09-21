@@ -385,4 +385,4 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
   };
 };
 
-export { createDatabaseShareService, columnsFor, LIMIT };
+export { createDatabaseShareService, columnsFor };

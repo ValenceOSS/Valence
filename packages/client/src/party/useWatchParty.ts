@@ -255,4 +255,4 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
 
 export type { WatchPartyState };
 
-export { useWatchParty, ASK_THE_CLOCK_EVERY_MS };
+export { useWatchParty };

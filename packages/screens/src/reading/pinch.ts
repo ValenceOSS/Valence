@@ -56,4 +56,4 @@ const heldWithin = (moved: number, across: number, scale: number): number => {
 
 export type { Point };
 
-export { CLOSEST, FURTHEST, distanceBetween, heldWithin, scaleFrom };
+export { CLOSEST, distanceBetween, heldWithin, scaleFrom };

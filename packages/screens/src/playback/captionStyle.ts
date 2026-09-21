@@ -161,8 +161,6 @@ export type { CaptionStyle };
 
 export {
   DEFAULT_CAPTION_STYLE,
-  edgeStyle,
-  STORAGE_KEY,
   toCueCss,
   toCueDeclarations,
   withOpacity,

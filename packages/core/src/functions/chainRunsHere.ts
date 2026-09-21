@@ -48,4 +48,4 @@ const chainRunsHere = (
 
 export type { ChainShape, VerifiedChain };
 
-export { EIGHT_BIT, TEN_BIT, chainRunsHere };
+export { chainRunsHere };

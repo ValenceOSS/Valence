@@ -56,4 +56,4 @@ const carryOldKeysOver = (store: DeviceStore): string[] => {
   return carried;
 };
 
-export { IS, KEPT_UNDER, WAS, carryOldKeysOver };
+export { KEPT_UNDER, carryOldKeysOver };

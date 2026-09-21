@@ -108,7 +108,6 @@ type LogHistogramQuery = z.infer<typeof LogHistogramQuerySchema>;
 type LogHistogramBucket = z.infer<typeof LogHistogramBucketSchema>;
 type LogHistogram = z.infer<typeof LogHistogramSchema>;
 type LogFacetsQuery = z.infer<typeof LogFacetsQuerySchema>;
-type LogFacet = z.infer<typeof LogFacetSchema>;
 type LogFacets = z.infer<typeof LogFacetsSchema>;
 
 const RANK: Readonly<Record<LogLevel, number>> = { debug: 0, info: 1, warn: 2, error: 3 };
@@ -195,7 +194,6 @@ export type {
   LogHistogramBucket,
   LogHistogram,
   LogFacetsQuery,
-  LogFacet,
   LogFacets,
 };
 

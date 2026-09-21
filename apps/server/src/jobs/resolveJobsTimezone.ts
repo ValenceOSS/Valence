@@ -32,4 +32,4 @@ const resolveJobsTimezone = ({
 
 export type { ResolveJobsTimezoneOptions };
 
-export { resolveJobsTimezone, FALLBACK };
+export { resolveJobsTimezone };

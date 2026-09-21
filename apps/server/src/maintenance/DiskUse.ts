@@ -12,6 +12,6 @@ const MonitorDisksSchema = z.object({
 
 type DiskUse = z.infer<typeof DiskUseSchema>;
 
-export { DiskUseSchema, MonitorDisksSchema };
+export { MonitorDisksSchema };
 
 export type { DiskUse };

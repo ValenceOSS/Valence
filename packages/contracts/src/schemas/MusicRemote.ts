@@ -90,9 +90,7 @@ type MusicNowPlaying = z.infer<typeof MusicNowPlayingSchema>;
 type ListeningSession = z.infer<typeof ListeningSessionSchema>;
 type MusicDevice = z.infer<typeof MusicDeviceSchema>;
 type MusicCommand = z.infer<typeof MusicCommandSchema>;
-type PlaybackEvent = z.infer<typeof PlaybackEventSchema>;
-
-export type { ListeningSession, MusicCommand, MusicDevice, MusicNowPlaying, PlaybackEvent };
+export type { ListeningSession, MusicCommand, MusicDevice, MusicNowPlaying };
 
 export {
   ListeningSessionSchema,

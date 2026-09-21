@@ -292,8 +292,6 @@ export {
   buildStatsQuery,
   buildInterruptQuery,
   asMilliseconds,
-  orderingFor,
-  whereFor,
   asRecord,
   asIssue,
 };

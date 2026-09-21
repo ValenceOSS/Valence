@@ -70,7 +70,6 @@ const MovePlaylistEntrySchema = z.object({
 
 type PlaylistOwner = z.infer<typeof PlaylistOwnerSchema>;
 type PlaylistSummary = z.infer<typeof PlaylistSummarySchema>;
-type PlaylistItem = z.infer<typeof PlaylistItemSchema>;
 type PlaylistEntry = z.infer<typeof PlaylistEntrySchema>;
 type PlaylistDetail = z.infer<typeof PlaylistDetailSchema>;
 type CreatePlaylist = z.infer<typeof CreatePlaylistSchema>;
@@ -80,7 +79,6 @@ export type {
   CreatePlaylist,
   PlaylistDetail,
   PlaylistEntry,
-  PlaylistItem,
   PlaylistOwner,
   PlaylistSummary,
   UpdatePlaylist,

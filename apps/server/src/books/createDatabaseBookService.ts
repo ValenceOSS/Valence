@@ -11,7 +11,6 @@ import {
 } from '@ValenceContracts/schemas/Book';
 import { createBookPageCache } from './createBookPageCache';
 import { drawBookCover } from './drawBookCover';
-import { imageTypeFor } from './imageTypeFor';
 import { openBookFile } from './openBookFile';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -517,4 +516,4 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
 
 export type { BookQuery, BookService };
 
-export { createDatabaseBookService, imageTypeFor };
+export { createDatabaseBookService };

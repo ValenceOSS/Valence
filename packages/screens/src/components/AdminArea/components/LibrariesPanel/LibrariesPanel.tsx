@@ -26,7 +26,6 @@ import { cn } from '@ValenceUI/cn';
 import { describeScanResult } from '@ValenceClient/admin/describeScanResult';
 import { AddLibraryDialog } from '@ValenceScreens/components/AdminArea/components/AddLibraryDialog/AddLibraryDialog';
 import { LibrarySettingsDialog } from '@ValenceScreens/components/AdminArea/components/LibrarySettingsDialog/LibrarySettingsDialog';
-import { ResetLibrariesDialog } from '@ValenceScreens/components/AdminArea/components/ResetLibrariesDialog/ResetLibrariesDialog';
 import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
 import { describeScanKind } from '@ValenceScreens/components/AdminArea/describeScanKind';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
@@ -469,9 +468,13 @@ const LibrariesPanel = ({
         }}
       />
 
-      <ResetLibrariesDialog
+      <ConfirmDialog
+        title="Reset and rebuild every library?"
+        detail="Every item in every library will be deleted, then probed and added again from scratch. Watch progress and marked intros for those items go with them. This cannot be undone."
+        confirmLabel="Reset and rebuild"
+        isDestructive
+        isBusy={isResettingAll}
         isOpen={isConfirmingReset}
-        isResetting={isResettingAll}
         onClose={() => {
           setIsConfirmingReset(false);
         }}

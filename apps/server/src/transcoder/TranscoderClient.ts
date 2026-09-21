@@ -371,11 +371,6 @@ type TranscoderFile = {
   contentType: string;
 };
 
-type TranscoderRangedFile = TranscoderFile & {
-  status: number;
-  contentRange: string | null;
-};
-
 type TranscoderStreamedFile = {
   body: ReadableStream<Uint8Array>;
   contentType: string;
@@ -825,7 +820,6 @@ export type {
   Fingerprint,
   FingerprintRequest,
   TranscoderFile,
-  TranscoderRangedFile,
   TranscoderStreamedFile,
   PreviewSweepSubject,
   SweepReport,
@@ -833,4 +827,4 @@ export type {
   TranscoderSocket,
 };
 
-export { createTranscoderClient, readSocketPath, TranscoderError, MediaProbeSchema };
+export { createTranscoderClient, readSocketPath };

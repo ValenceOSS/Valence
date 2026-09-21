@@ -114,14 +114,12 @@ type CatalogueStanding = z.infer<typeof CatalogueStandingSchema>;
 type CatalogueStudio = z.infer<typeof CatalogueStudioSchema>;
 type CatalogueTitle = z.infer<typeof CatalogueTitleSchema>;
 type CatalogueShelf = z.infer<typeof CatalogueShelfSchema>;
-type CatalogueCredit = z.infer<typeof CatalogueCreditSchema>;
 type CatalogueTitleDetail = z.infer<typeof CatalogueTitleDetailSchema>;
 type RequestProgress = z.infer<typeof RequestProgressSchema>;
 
 export type {
   CatalogueBrowse,
   CatalogueBrowseKind,
-  CatalogueCredit,
   CatalogueFilters,
   CatalogueGenre,
   CatalogueDiscovery,

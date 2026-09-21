@@ -36,4 +36,4 @@ const markTheDocument = (within: Document): void => {
   waiting.observe(within, { childList: true });
 };
 
-export { markTheDocument, MARK };
+export { markTheDocument };

@@ -79,4 +79,4 @@ const createDatabaseWatchProgressService = (db: ValenceDatabase): WatchProgressS
   },
 });
 
-export { createDatabaseWatchProgressService, LIMIT };
+export { createDatabaseWatchProgressService };

@@ -44,10 +44,6 @@
       "@ValenceUI/Callout.types": ["./packages/ui/src/components/Callout/Callout.types.ts"],
       "@ValenceUI/Card": ["./packages/ui/src/components/Card/Card.tsx"],
       "@ValenceUI/Card.types": ["./packages/ui/src/components/Card/Card.types.ts"],
-      "@ValenceUI/CardHeader": ["./packages/ui/src/components/CardHeader/CardHeader.tsx"],
-      "@ValenceUI/CardHeader.types": [
-        "./packages/ui/src/components/CardHeader/CardHeader.types.ts"
-      ],
       "@ValenceUI/Checkbox": ["./packages/ui/src/components/Checkbox/Checkbox.tsx"],
       "@ValenceUI/ConfirmDialog": ["./packages/ui/src/components/ConfirmDialog/ConfirmDialog.tsx"],
       "@ValenceUI/ConfirmDialog.types": [
@@ -119,7 +115,6 @@
       "@ValenceUI/MaskFrames.types": ["./packages/ui/src/functions/MaskFrames.types.ts"],
       "@ValenceUI/MediaCard": ["./packages/ui/src/components/MediaCard/MediaCard.tsx"],
       "@ValenceUI/MediaCard.types": ["./packages/ui/src/components/MediaCard/MediaCard.types.ts"],
-      "@ValenceUI/Meter": ["./packages/ui/src/components/Meter/Meter.tsx"],
       "@ValenceUI/MoodBackground": [
         "./packages/ui/src/components/MoodBackground/MoodBackground.tsx"
       ],
@@ -152,7 +147,6 @@
       "@ValenceUI/ReadMore.types": ["./packages/ui/src/components/ReadMore/ReadMore.types.ts"],
       "@ValenceUI/Reveal": ["./packages/ui/src/components/Reveal/Reveal.tsx"],
       "@ValenceUI/RevealItem": ["./packages/ui/src/components/RevealItem/RevealItem.tsx"],
-      "@ValenceUI/SectionBar": ["./packages/ui/src/components/SectionBar/SectionBar.tsx"],
       "@ValenceUI/SettingsMenu": ["./packages/ui/src/components/SettingsMenu/SettingsMenu.tsx"],
       "@ValenceUI/Skeleton": ["./packages/ui/src/components/Skeleton/Skeleton.tsx"],
       "@ValenceUI/BarList": ["./packages/ui/src/components/BarList/BarList.tsx"],
@@ -206,8 +200,6 @@
       "@ValenceUI/StatTile.types": ["./packages/ui/src/components/StatTile/StatTile.types.ts"],
       "@ValenceUI/Switch": ["./packages/ui/src/components/Switch/Switch.tsx"],
       "@ValenceUI/Switch.types": ["./packages/ui/src/components/Switch/Switch.types.ts"],
-      "@ValenceUI/TabBar": ["./packages/ui/src/components/TabBar/TabBar.tsx"],
-      "@ValenceUI/TabBar.types": ["./packages/ui/src/components/TabBar/TabBar.types.ts"],
       "@ValenceUI/TabPanel": ["./packages/ui/src/components/TabPanel/TabPanel.tsx"],
       "@ValenceUI/TabPanel.types": ["./packages/ui/src/components/TabPanel/TabPanel.types.ts"],
       "@ValenceUI/TabRow": ["./packages/ui/src/components/TabRow/TabRow.tsx"],

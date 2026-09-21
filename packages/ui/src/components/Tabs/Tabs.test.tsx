@@ -1,19 +1,23 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { Tabs } from './Tabs';
-import { TabBar } from '@ValenceUI/TabBar';
+import { TabRow } from '@ValenceUI/TabRow';
 import { TabPanel } from '@ValenceUI/TabPanel';
 
-const tabs = [
-  { id: 'one', label: 'One' },
-  { id: 'two', label: 'Two' },
+const groups = [
+  {
+    items: [
+      { id: 'one', label: 'One' },
+      { id: 'two', label: 'Two' },
+    ],
+  },
 ];
 
 describe('Tabs', () => {
   it('shows the panel belonging to the tab it was given', () => {
     render(
       <Tabs value="two" onValueChange={vi.fn()}>
-        <TabBar tabs={tabs} label="Sections" />
+        <TabRow groups={groups} tone="underlined" label="Sections" />
         <TabPanel value="one">The first</TabPanel>
         <TabPanel value="two">The second</TabPanel>
       </Tabs>,

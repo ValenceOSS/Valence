@@ -59,8 +59,6 @@ const createVpnWatch = ({ read, everyMs, onChange }: CreateVpnWatchOptions) => {
   };
 };
 
-type VpnWatch = ReturnType<typeof createVpnWatch>;
-
-export type { CreateVpnWatchOptions, VpnWatch };
+export type { CreateVpnWatchOptions };
 
 export { createVpnWatch };

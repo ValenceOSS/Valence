@@ -1,15 +1,10 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import {
-  AgeExceptionListSchema,
   ExceptionHolderListSchema,
   LibraryAccessSchema,
 } from '@ValenceContracts/schemas/LibraryAccess';
 import { readRefusal } from '@ValenceClient/admin/readRefusal';
-import type {
-  AgeException,
-  ExceptionHolder,
-  LibraryReach,
-} from '@ValenceContracts/schemas/LibraryAccess';
+import type { ExceptionHolder, LibraryReach } from '@ValenceContracts/schemas/LibraryAccess';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 
 /**
@@ -85,17 +80,6 @@ const setCeiling = async (
 };
 
 /**
- * Everything allowed or denied for this account regardless of what its ceiling says.
- *
- * @param userId - The account.
- * @returns The exceptions granted against it.
- */
-const fetchExceptions = async (userId: string): Promise<AgeException[]> => {
-  return (await readFromServer(`/api/admin/accounts/${userId}/exceptions`, AgeExceptionListSchema))
-    .exceptions;
-};
-
-/**
  * Forgets an exception, leaving the ceiling to decide about that thing again.
  *
  * @param userId - The account.
@@ -164,7 +148,6 @@ export {
   fetchLibraryAccess,
   setLibraryAccess,
   setCeiling,
-  fetchExceptions,
   fetchExceptionsOn,
   setException,
   clearException,

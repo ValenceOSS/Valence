@@ -111,8 +111,6 @@ const LyricsSchema = z.object({
   lines: z.array(LyricLineSchema),
 });
 
-type MusicArtistRef = z.infer<typeof MusicArtistRefSchema>;
-type MusicAlbumRef = z.infer<typeof MusicAlbumRefSchema>;
 type MusicArtist = z.infer<typeof MusicArtistSchema>;
 type MusicAlbum = z.infer<typeof MusicAlbumSchema>;
 type MusicTrack = z.infer<typeof MusicTrackSchema>;
@@ -127,10 +125,8 @@ export type {
   Lyrics,
   MusicAlbum,
   MusicAlbumDetail,
-  MusicAlbumRef,
   MusicArtist,
   MusicArtistDetail,
-  MusicArtistRef,
   MusicTrack,
 };
 

@@ -43,9 +43,8 @@ const RenditionSchema = z.object({
 
 const RenditionListSchema = z.object({ renditions: z.array(RenditionSchema) });
 
-type RenditionKind = z.infer<typeof RenditionKindSchema>;
 type Rendition = z.infer<typeof RenditionSchema>;
 
-export type { Rendition, RenditionKind };
+export type { Rendition };
 
 export { RENDITION_KINDS, RenditionKindSchema, RenditionListSchema, RenditionSchema };

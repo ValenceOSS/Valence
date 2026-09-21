@@ -77,4 +77,4 @@ const measurementJitter = (readings: readonly Reading[]): number => {
 
 export type { Reading };
 
-export { estimateClockOffset, measurementJitter, offsetOf, roundTripOf, KEPT_READINGS };
+export { estimateClockOffset, measurementJitter, offsetOf, roundTripOf };

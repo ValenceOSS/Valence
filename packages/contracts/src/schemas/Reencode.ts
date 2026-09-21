@@ -120,11 +120,8 @@ const ReviewSideSchema = z.enum(REVIEWABLE_SIDES);
 type ReencodeMode = z.infer<typeof ReencodeModeSchema>;
 type ReencodeState = z.infer<typeof ReencodeStateSchema>;
 type ReencodeCodec = z.infer<typeof ReencodeCodecSchema>;
-type ReencodeAudio = z.infer<typeof ReencodeAudioSchema>;
-type ReencodeRefusalCode = z.infer<typeof ReencodeRefusalCodeSchema>;
 type ReencodeRefusal = z.infer<typeof ReencodeRefusalSchema>;
 type ReencodeSettings = z.infer<typeof ReencodeSettingsSchema>;
-type ReencodeRequest = z.infer<typeof ReencodeRequestSchema>;
 type ReencodeCandidate = z.infer<typeof ReencodeCandidateSchema>;
 type ReencodeEstimate = z.infer<typeof ReencodeEstimateSchema>;
 type Reencode = z.infer<typeof ReencodeSchema>;
@@ -133,14 +130,11 @@ type ReviewSide = z.infer<typeof ReviewSideSchema>;
 
 export type {
   Reencode,
-  ReencodeAudio,
   ReencodeCandidate,
   ReencodeCodec,
   ReencodeEstimate,
   ReencodeMode,
   ReencodeRefusal,
-  ReencodeRefusalCode,
-  ReencodeRequest,
   ReencodeSettings,
   ReencodeStarted,
   ReencodeState,

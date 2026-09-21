@@ -63,4 +63,4 @@ const whatToReport = (player: Player): Reported => {
 
 export type { Player, Reported };
 
-export { whatToReport, HAVE_METADATA, HAVE_FUTURE_DATA, ENOUGH_TO_START_SECONDS };
+export { whatToReport };

@@ -49,4 +49,4 @@ const teachShakaOurScheme = (net: ShakaNetworking, protocol: string): void => {
 
 export type { ShakaNetworking, ShakaSchemePlugin };
 
-export { ALREADY_KNOWN, AS_THE_ENGINE_REGISTERS_HTTP, teachShakaOurScheme };
+export { teachShakaOurScheme };

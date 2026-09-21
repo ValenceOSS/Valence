@@ -57,4 +57,4 @@ const planTranscoderDev = ({
 
 export type { DevPlan, PlanTranscoderDevOptions };
 
-export { planTranscoderDev, UNIX_PREFIX };
+export { planTranscoderDev };

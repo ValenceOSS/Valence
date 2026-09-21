@@ -115,7 +115,7 @@ Conventions every component follows:
 - Props in a `.types.ts` beside it.
 - TSDoc on the component: one sentence, then `@param` lines for props whose meaning the name does not give.
 - A co-located `.test.tsx` that queries by role and accessible name.
-- Motion respects reduced motion. Enter and exit animation goes through the shared recipes in `animations/motion.ts` (`POPUP_MOTION`, `OVERLAY_MOTION`, `PANEL_MOTION` and `PRESS_MOTION`), which switch off under `motion-reduce`.
+- Motion respects reduced motion. Enter and exit animation goes through the shared recipes in `animations/motion.ts` (`POPUP_MOTION` and `PRESS_MOTION`), which switch off under `motion-reduce`.
 - A boolean prop starts with `is` or `has`, and a label for a control is a `label` prop, so it is announced and doubles as a tooltip.
 
 ## One component owns each interactive element
@@ -280,7 +280,7 @@ The library has more than eighty components. The list below groups the main ones
 | `PopoverPanel`, `HoverCard`, `Tooltip`         | Panels and hints anchored to a control or a pointer                               |
 | `Toaster`                                      | Where everything the app has to say arrives. Mounted once, near the root          |
 | `Callout`                                      | One thing a reader has to know before they act                                    |
-| `Card`, `CardHeader`, `Well`, `GlassPanel`     | Raised, headed, inset and translucent surfaces                                    |
+| `Card`, `Well`, `GlassPanel`                   | Raised, inset and translucent surfaces                                            |
 
 ### Navigation and layout
 
@@ -288,8 +288,8 @@ The library has more than eighty components. The list below groups the main ones
 | ------------------------------- | ---------------------------------------------------------- |
 | `NavBar`                        | The one navigation bar along the top of the window         |
 | `Sidebar`, `SidebarGroup`       | A column of destinations, with foldable groups             |
-| `SectionBar`, `TabRow`          | Related sections or a set of destinations                  |
-| `Tabs`, `TabBar`, `TabPanel`    | A set of panels and the words that choose between them     |
+| `TabRow`                        | A set of destinations                                      |
+| `Tabs`, `TabPanel`              | A set of panels, chosen between by a `TabRow`              |
 | `HeadedSection`                 | A part of a page with a small heading over a thin line     |
 | `PageDots`                      | Which of several pages is on screen                        |
 | `BackToTop`                     | The way back up a long page                                |
@@ -310,14 +310,14 @@ The library has more than eighty components. The list below groups the main ones
 
 ### Data and status
 
-| Component                                       | What it is for                                       |
-| ----------------------------------------------- | ---------------------------------------------------- |
-| `DataTable`                                     | A table that sorts by any column and pages           |
-| `StatTile`, `StatStrip`                         | One figure about the server, and a row of them       |
-| `Meter`, `ProgressBar`, `BarList`, `TrendChart` | Usage, progress, ranked lists and readings over time |
-| `Badge`                                         | One small fact beside the thing it is about          |
-| `AnimatedNumber`                                | A number that rolls to its new value                 |
-| `SettingRow`, `SettingList`, `SettingsMenu`     | Settings in two lines with the answer on the right   |
+| Component                                   | What it is for                                     |
+| ------------------------------------------- | -------------------------------------------------- |
+| `DataTable`                                 | A table that sorts by any column and pages         |
+| `StatTile`, `StatStrip`                     | One figure about the server, and a row of them     |
+| `ProgressBar`, `BarList`, `TrendChart`      | Progress, ranked lists and readings over time      |
+| `Badge`                                     | One small fact beside the thing it is about        |
+| `AnimatedNumber`                            | A number that rolls to its new value               |
+| `SettingRow`, `SettingList`, `SettingsMenu` | Settings in two lines with the answer on the right |
 
 ### Feedback and small parts
 

@@ -71,4 +71,4 @@ const writeReaderPreferences = (preferences: ReaderPreferences): void => {
 
 export type { ReaderFit, ReaderPreferences };
 
-export { FITS, MOST_GAP, STORAGE_KEY, readReaderPreferences, writeReaderPreferences };
+export { MOST_GAP, readReaderPreferences, writeReaderPreferences };

@@ -241,4 +241,4 @@ const createMemoryReencodeService = ({
 
 export type { CreateMemoryReencodeServiceOptions, HeldItem };
 
-export { AWAITING_REVIEW_CAP, createMemoryReencodeService };
+export { createMemoryReencodeService };

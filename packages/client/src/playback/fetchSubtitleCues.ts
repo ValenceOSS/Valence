@@ -67,4 +67,4 @@ const fetchSubtitleCues = async (url: string): Promise<SubtitleCue[] | null> => 
 
 export type { SubtitleCue, SubtitleSpan };
 
-export { SubtitleCuesSchema, fetchSubtitleCues, subtitleCuesUrl };
+export { fetchSubtitleCues, subtitleCuesUrl };

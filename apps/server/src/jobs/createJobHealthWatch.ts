@@ -83,4 +83,4 @@ const createJobHealthWatch = ({
 
 export type { JobStall };
 
-export { createJobHealthWatch, STALLED_AFTER };
+export { createJobHealthWatch };

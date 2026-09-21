@@ -78,4 +78,4 @@ const runScanPhases = async ({
 
 export type { ScanPhaseWork, ScanPhaseOptions };
 
-export { runScanPhases, PHASES };
+export { runScanPhases };

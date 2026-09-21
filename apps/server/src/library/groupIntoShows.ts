@@ -123,4 +123,4 @@ const buildShowDetail = (items: MediaSummary[], showId: string): ShowDetail | nu
   };
 };
 
-export { groupIntoShows, buildShowDetail, inBroadcastOrder };
+export { groupIntoShows, buildShowDetail };

@@ -27,10 +27,9 @@ const HeldFileSchema = WhatToKeepSchema.extend({
 
 const HeldFileListSchema = z.object({ held: z.array(HeldFileSchema) });
 
-type HeldState = z.infer<typeof HeldStateSchema>;
 type WhatToKeep = z.infer<typeof WhatToKeepSchema>;
 type HeldFile = z.infer<typeof HeldFileSchema>;
 
-export type { HeldFile, HeldState, WhatToKeep };
+export type { HeldFile, WhatToKeep };
 
 export { HELD_STATES, HeldFileListSchema, HeldFileSchema, HeldStateSchema, WhatToKeepSchema };

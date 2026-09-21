@@ -14,24 +14,6 @@ const KNOWN_VIDEO_CODECS = [
   'mpeg1video',
 ] as const;
 
-const KNOWN_AUDIO_CODECS = [
-  'aac',
-  'mp3',
-  'mp2',
-  'flac',
-  'alac',
-  'opus',
-  'vorbis',
-  'ac3',
-  'eac3',
-  'truehd',
-  'dts',
-  'dtshd',
-  'pcm',
-] as const;
-
-const KNOWN_CONTAINERS = ['mp4', 'mkv', 'webm', 'ts', 'm2ts', 'mov', 'avi', 'unknown'] as const;
-
 const VideoCodecSchema = z
   .string()
   .min(1)
@@ -146,16 +128,10 @@ const MediaItemSchema = z.object({
 
 export type VideoRange = z.infer<typeof VideoRangeSchema>;
 export type VideoCodec = (typeof KNOWN_VIDEO_CODECS)[number] | (string & {});
-export type AudioCodec = (typeof KNOWN_AUDIO_CODECS)[number] | (string & {});
-export type Container = (typeof KNOWN_CONTAINERS)[number] | (string & {});
-export type SubtitleFormat = z.infer<typeof SubtitleFormatSchema>;
 export type AudioStream = z.infer<typeof AudioStreamSchema>;
-export type SubtitleStream = z.infer<typeof SubtitleStreamSchema>;
 export type MediaItem = z.infer<typeof MediaItemSchema>;
 
 export {
-  KNOWN_AUDIO_CODECS,
-  KNOWN_CONTAINERS,
   KNOWN_VIDEO_CODECS,
   MediaItemSchema,
   VideoRangeSchema,

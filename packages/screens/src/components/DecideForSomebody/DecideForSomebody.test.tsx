@@ -13,7 +13,6 @@ const accessMocks = vi.hoisted(() => ({
   fetchLibraryAccess: vi.fn(),
   setLibraryAccess: vi.fn(),
   setCeiling: vi.fn(),
-  fetchExceptions: vi.fn(),
 }));
 
 vi.mock('@ValenceClient/admin/fetchLibraryAccess', () => accessMocks);

@@ -73,12 +73,10 @@ const profileAvatarUrl = (profile: { id: string; updatedAt: string }): string =>
   `/api/profiles/${profile.id}/avatar?v=${encodeURIComponent(profile.updatedAt)}`;
 
 type Avatar = z.infer<typeof AvatarSchema>;
-type AvatarStyle = z.infer<typeof AvatarStyleSchema>;
 type ViewerProfile = z.infer<typeof ViewerProfileSchema>;
-type ViewerProfileRequest = z.infer<typeof ViewerProfileRequestSchema>;
 type ProfileColour = z.infer<typeof ProfileColourSchema>;
 
-export type { Avatar, AvatarStyle, ProfileColour, ViewerProfile, ViewerProfileRequest };
+export type { Avatar, ProfileColour, ViewerProfile };
 
 export {
   ViewerProfileSchema,

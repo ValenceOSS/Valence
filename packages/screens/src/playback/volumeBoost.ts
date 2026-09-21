@@ -76,4 +76,4 @@ const applyVolumeBoost = (element: HTMLMediaElement, boost: number): boolean => 
   return true;
 };
 
-export { applyVolumeBoost, NO_BOOST };
+export { applyVolumeBoost };

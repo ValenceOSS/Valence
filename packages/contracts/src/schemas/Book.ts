@@ -103,11 +103,6 @@ const BookDetailSchema = z.object({
   chapters: z.array(BookChapterSchema),
 });
 
-const BookPageSchema = z.object({
-  items: z.array(BookSchema),
-  total: z.number().int().nonnegative(),
-});
-
 const BookContentsSchema = z.object({
   parts: z.array(z.object({ size: z.number().int().nonnegative() })),
   contents: z.array(
@@ -169,7 +164,6 @@ export type Book = z.infer<typeof BookSchema>;
 export type BookChapter = z.infer<typeof BookChapterSchema>;
 export type BookDetail = z.infer<typeof BookDetailSchema>;
 export type BookContents = z.infer<typeof BookContentsSchema>;
-export type BookPage = z.infer<typeof BookPageSchema>;
 export type ReadingProgress = z.infer<typeof ReadingProgressSchema>;
 export type BookReading = z.infer<typeof BookReadingSchema>;
 export type SaveReadingProgress = z.infer<typeof SaveReadingProgressSchema>;
@@ -209,7 +203,6 @@ export {
   BookDetailSchema,
   BookFormatSchema,
   BookLayoutSchema,
-  BookPageSchema,
   BookReadingListSchema,
   BookReadingSchema,
   BookSchema,

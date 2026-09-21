@@ -186,14 +186,12 @@ type CardigannSelector = z.infer<typeof SelectorSchema>;
 type CardigannSelectorField = z.infer<typeof SelectorFieldSchema>;
 type CardigannSetting = z.infer<typeof SettingSchema>;
 type CardigannSearchPath = z.infer<typeof SearchPathSchema>;
-type CardigannRequestBlock = z.infer<typeof RequestSchema>;
 type CardigannErrorBlock = z.infer<typeof ErrorSchema>;
 
 export type {
   CardigannDefinition,
   CardigannErrorBlock,
   CardigannFilter,
-  CardigannRequestBlock,
   CardigannSearchPath,
   CardigannSelector,
   CardigannSelectorField,

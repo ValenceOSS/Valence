@@ -120,4 +120,4 @@ const SubtitleCues = ({ src, cuesSrc, atSeconds, style, isLifted = false }: Subt
 
 SubtitleCues.displayName = 'SubtitleCues';
 
-export { CLEAR_OF_THE_CONTROLS, NEAR_THE_BOTTOM, SubtitleCues };
+export { SubtitleCues };

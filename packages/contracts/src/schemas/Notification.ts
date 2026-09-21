@@ -11,13 +11,6 @@ const NotificationEventSchema = z.enum(NOTIFICATION_EVENTS);
 
 type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];
 
-const NOTIFICATION_EVENT_LABELS: Record<NotificationEvent, string> = {
-  'media.added': 'Something new to watch',
-  'party.invited': 'Somebody wants to watch with you',
-  'sharing.withdrawn': 'A link you handed out was withdrawn',
-  'requests.available': 'Something you asked for is ready',
-};
-
 const NotificationSchema = z.object({
   id: z.string().uuid(),
   event: NotificationEventSchema,
@@ -43,7 +36,6 @@ const DEFAULT_NOTIFICATION_PREFERENCE = { inApp: true, push: false } as const;
 export {
   DEFAULT_NOTIFICATION_PREFERENCE,
   NOTIFICATION_EVENTS,
-  NOTIFICATION_EVENT_LABELS,
   NotificationEventSchema,
   NotificationPreferenceSchema,
   NotificationSchema,

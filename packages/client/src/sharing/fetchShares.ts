@@ -15,7 +15,6 @@ import type {
   Share,
   ShareEnding,
 } from '@ValenceContracts/schemas/Share';
-import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 const OpenedShareSchema = z.object({
   kind: z.enum(['item', 'series', 'book']),
@@ -156,7 +155,7 @@ const openShare = async (token: string): Promise<ShareOutcome> => {
 const shareAddress = (token: string, origin: string): string =>
   `${origin}/share/${encodeURIComponent(token)}`;
 
-export type { OpenedShare, ShareOutcome, MediaSummary };
+export type { OpenedShare, ShareOutcome };
 
 export {
   fetchShares,
@@ -166,5 +165,4 @@ export {
   revokeAnybodysShare,
   openShare,
   shareAddress,
-  OpenedShareSchema,
 };

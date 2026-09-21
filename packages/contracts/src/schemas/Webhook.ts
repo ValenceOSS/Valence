@@ -191,8 +191,6 @@ const MEDIA_ADDED_GRANULARITIES = ['perItem', 'perScan'] as const;
 
 const MediaAddedGranularitySchema = z.enum(MEDIA_ADDED_GRANULARITIES);
 
-type MediaAddedGranularity = (typeof MEDIA_ADDED_GRANULARITIES)[number];
-
 const WebhookFiltersSchema = z.object({
   mediaAdded: MediaAddedGranularitySchema.default('perScan'),
   accounts: z.array(z.string()).default([]),
@@ -552,8 +550,6 @@ const WebhookDeliverySchema = z.object({
 
 type WebhookDelivery = z.infer<typeof WebhookDeliverySchema>;
 
-type WebhookDeliveryResult = z.infer<typeof WebhookDeliveryResultSchema>;
-
 export {
   ARRIVED_TITLES_KEPT,
   WEBHOOK_EVENT_GROUPS,
@@ -583,12 +579,10 @@ export {
 
 export type {
   ArrivedTitle,
-  MediaAddedGranularity,
   ScannedLibrary,
   WebhookSubscribableEvent,
   WebhookEventGroup,
   WebhookDelivery,
-  WebhookDeliveryResult,
   WebhookEvent,
   WebhookFilters,
   WebhookPayload,

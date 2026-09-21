@@ -18,27 +18,8 @@ const ApiKeySchema = z.object({
 
 const CreatedApiKeySchema = ApiKeySchema.extend({ key: z.string() });
 
-const CreateApiKeyRequestSchema = z.object({
-  name: z.string().min(1).max(100),
-  expiresInDays: z.number().int().positive().max(3650).nullable().default(null),
-  permissions: z.array(PermissionSchema).nullable().default(null),
-  rateLimit: z
-    .object({
-      max: z.number().int().positive().max(100_000),
-      everySeconds: z.number().int().positive().max(86_400),
-    })
-    .nullable()
-    .default(null),
-});
-
-const UpdateApiKeyRequestSchema = z.object({
-  enabled: z.boolean(),
-});
-
 type ApiKey = z.infer<typeof ApiKeySchema>;
 type CreatedApiKey = z.infer<typeof CreatedApiKeySchema>;
-type CreateApiKeyRequest = z.infer<typeof CreateApiKeyRequestSchema>;
+export type { ApiKey, CreatedApiKey };
 
-export type { ApiKey, CreatedApiKey, CreateApiKeyRequest };
-
-export { ApiKeySchema, CreatedApiKeySchema, CreateApiKeyRequestSchema, UpdateApiKeyRequestSchema };
+export { ApiKeySchema, CreatedApiKeySchema };

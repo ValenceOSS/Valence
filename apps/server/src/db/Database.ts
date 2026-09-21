@@ -22,4 +22,4 @@ const createDatabase = (databaseUrl: string) => {
 
 export type { ValenceDatabase };
 
-export { createDatabase, schema };
+export { createDatabase };

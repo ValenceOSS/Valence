@@ -61,4 +61,4 @@ const deliveredBitrateKbps = ({
 
 export type { DeliveredBitrateKbpsOptions };
 
-export { deliveredBitrateKbps, ENOUGH_MEDIA_SECONDS };
+export { deliveredBitrateKbps };

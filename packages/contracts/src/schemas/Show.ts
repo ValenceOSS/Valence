@@ -56,15 +56,12 @@ const ComingUpSchema = z.object({
   shows: z.array(z.object({ show: ShowSummarySchema, episode: NextEpisodeSchema })),
 });
 
-type CatalogueEpisode = z.infer<typeof CatalogueEpisodeSchema>;
-type SeasonShape = z.infer<typeof SeasonShapeSchema>;
 type ShowSummary = z.infer<typeof ShowSummarySchema>;
-type ShowSeason = z.infer<typeof ShowSeasonSchema>;
 type ShowDetail = z.infer<typeof ShowDetailSchema>;
 
 type ComingUp = z.infer<typeof ComingUpSchema>;
 
-export type { CatalogueEpisode, ComingUp, SeasonShape, ShowDetail, ShowSeason, ShowSummary };
+export type { ComingUp, ShowDetail, ShowSummary };
 
 export {
   ComingUpSchema,
