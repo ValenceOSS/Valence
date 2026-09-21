@@ -2,6 +2,10 @@
   "name": "@valence/desktop",
   "version": "0.0.0",
   "productName": "Valence",
+  "description": "Valence, a self-hosted streaming platform, as a desktop app.",
+  "author": {
+    "name": "Valence"
+  },
   "private": true,
   "type": "module",
   "scripts": {
@@ -62,14 +66,52 @@
     ],
     "mac": {
       "category": "public.app-category.entertainment",
-      "icon": "build/icon-macos.png"
+      "icon": "build/icon-macos.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ]
     },
     "win": {
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     },
     "linux": {
       "icon": "build/icon.png",
-      "category": "AudioVideo"
+      "category": "AudioVideo",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "executableName": "valence"
+    },
+    "copyright": "Copyright © Valence contributors",
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Valence-Setup-${version}.${ext}"
+    },
+    "dmg": {
+      "artifactName": "Valence-${version}-${arch}.${ext}"
+    },
+    "appImage": {
+      "artifactName": "Valence-${version}.${ext}"
     }
   }
 }

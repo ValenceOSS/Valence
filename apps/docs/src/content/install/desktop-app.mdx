@@ -1,10 +1,30 @@
 ---
 title: Desktop app
-description: What the Valence desktop app is, how it finds your server, what it adds over a browser and how to build it from source.
+description: What the desktop app is, how it finds your server, where to download it for each platform and how to build it yourself.
 order: 7
 ---
 
 The desktop app is an Electron application that gives Valence a window of its own on macOS, Windows and Linux. It is a window onto a server and nothing more: it does not run a server, keep a library or replace the browser client's role. Everything you see is the same application the web client runs. You still need a running Valence server to use it.
+
+## Getting it
+
+Each release attaches the desktop app for the three platforms on the [releases page](https://github.com/ValenceOSS/Valence/releases).
+
+| Platform | File                                                          | Notes                                                          |
+| :------- | :------------------------------------------------------------ | :------------------------------------------------------------- |
+| Windows  | `Valence-Setup-<version>.exe`                                 | 64 bit. An installer that lets you choose where to install it. |
+| macOS    | `Valence-<version>-arm64.dmg` and `Valence-<version>-x64.dmg` | `arm64` for Apple silicon, `x64` for Intel.                    |
+| Linux    | `Valence-<version>.AppImage`                                  | 64 bit. Mark it executable, then run it.                       |
+
+<Callout title="The apps are not signed yet" tone="warning">
+  There are no code signing certificates, so Windows SmartScreen may warn that the publisher is
+  unknown, and macOS Gatekeeper may refuse to open the app on a double click. On Windows choose
+  **More info**, then **Run anyway**. On macOS open it from the context menu with **Open**, or allow
+  it under **Privacy and Security** in System Settings. Only do either for a file you downloaded
+  from the releases page of this repository.
+</Callout>
+
+You can also build it yourself, as described at the end of this page.
 
 ## What it is
 
