@@ -1,0 +1,343 @@
+---
+title: API overview
+description: How to call the Valence HTTP API, with authentication, permissions, errors, pagination, streaming, the WebSocket and worked curl examples.
+order: 1
+---
+
+Everything the Valence web and desktop clients do goes through one HTTP API, and that API is open to you. Every route is declared with a contract, and the interactive reference is generated from those contracts, so what you read there is what the server answers. This page covers the conventions that apply to every route. For the individual routes, open the [interactive API reference](/api).
+
+## Base URL and documents
+
+The API lives under `/api` on the same address as the web client. If you reach Valence at `https://valence.example.com`, the base URL is `https://valence.example.com/api`. There is no separate API host and no version prefix.
+
+| What                                     | Where               |
+| :--------------------------------------- | :------------------ |
+| Interactive reference on this site       | [/api](/api)        |
+| Interactive reference on your own server | `/api/reference`    |
+| OpenAPI 3.1 document                     | `/api/openapi.json` |
+| Health check                             | `/api/health`       |
+| WebSocket                                | `/api/realtime`     |
+
+The OpenAPI document and the server's own reference page are public, so a client generator can read them without signing in. The document your server serves reports the version of the release it is running, which makes it the right one to generate a client against. The copy behind this site's reference is written from the same routes at documentation build time.
+
+```bash
+curl -s https://valence.example.com/api/openapi.json | head -c 300
+```
+
+## Versioning
+
+The API is versioned with the server. There is no `/v1` in the path: the `info.version` field of the OpenAPI document is the release of Valence that served it. Pin the image tag you develop against (see [Updating](/install/updating)) and check the [changelog](https://getvalence.app/changelog) before moving to a new release. Fields are added freely, so a client should ignore keys it does not know.
+
+## Authentication
+
+Valence uses [better-auth](https://www.better-auth.com), and a request is answered as whoever its credentials say it is. Almost every route needs a session. The routes that do not are:
+
+| Route                                                                                            | Why it is open                                                                                       |
+| :----------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
+| `GET /api/health`                                                                                | So a monitor or a container health check can call it                                                 |
+| `GET /api/setup/status` and `POST /api/setup`                                                    | First run, before any account exists (setup answers 409 once an account exists)                      |
+| `GET /api/appearance`                                                                            | The sign-in page draws itself before anybody is signed in                                            |
+| `GET` and `POST /api/auth/*`                                                                     | Sign in, sign out, sessions, passkeys and two-factor                                                 |
+| `GET /api/profiles/avatars/{style}` and `POST /api/profiles/{profileId}/sign-in`                 | Drawn faces and signing in as a household profile                                                    |
+| `GET /api/share/{token}`                                                                         | Opening a share link with no account                                                                 |
+| `GET /api/openapi.json` and `GET /api/reference`                                                 | The documentation of the API itself                                                                  |
+| `GET /api/profiles/everyone`, `GET /api/profiles/{profileId}/avatar` and `GET /api/splashscreen` | Only while the server is set to show who lives here before sign-in (an admin setting, on by default) |
+
+Anything else without credentials answers `401` with `{"error": "Nobody is signed in."}`, unless the request carries a live share link, in which case it is handled as a share guest and confined to what the link covers.
+
+### Cookie sessions
+
+Signing in with an email address and password sets a session cookie. Sessions last 30 days and are refreshed once a day of use. The cookie is `httpOnly` and `SameSite=Lax`, and it carries the `Secure` attribute when the server is set to `COOKIE_SECURE=true` (see [Configuration](/install/configuration)). A client that stores cookies, such as `curl -c`, `requests.Session` or a browser, only needs to sign in once.
+
+Sign-in is checked against the request's `Origin` header. A request whose origin is not in the trusted list is refused with `403` and the code `MISSING_OR_NULL_ORIGIN` or an invalid origin message, which is the most common reason a script cannot sign in. Send an `Origin` header that is one of your trusted origins, as in the examples below. The list comes from `TRUSTED_ORIGINS`, the origins chosen at first run, additions made on the admin settings page, and the addresses the machine itself holds.
+
+Sign-in and sign-up run through the better-auth endpoints under `/api/auth`:
+
+| Endpoint                       | Body                                  |
+| :----------------------------- | :------------------------------------ |
+| `POST /api/auth/sign-in/email` | `{"email": "...", "password": "..."}` |
+| `POST /api/auth/sign-out`      | none                                  |
+| `GET /api/auth/get-session`    | none                                  |
+
+Passwords must be at least 10 characters. Two-factor, passkeys, the device authorisation flow (for clients with no keyboard) and JWTs are also enabled through the same `/api/auth` prefix. better-auth's own administration endpoints under `/api/auth/admin/*` are closed and answer `404` with a pointer to `/api/admin/accounts`.
+
+### Household profiles
+
+One account can hold several profiles. Routes that depend on who is watching (progress, history, favourites, ratings) read the profile from the `x-valence-profile` header. If the header is missing, or names a profile the account does not own, the account's default profile is used.
+
+### API keys
+
+For scripts, use an API key rather than a password. Keys are created by an account that holds the `account.keys` permission, on the account page of the web client or through the API, and the key itself is shown once, at creation.
+
+```bash
+curl -s -X POST https://valence.example.com/api/keys \
+  -b cookies.txt \
+  -H 'Origin: https://valence.example.com' \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "Home Assistant", "expiresInDays": 90, "permissions": ["streaming.view"], "rateLimit": {"max": 60, "everySeconds": 60}}'
+```
+
+Send the key in an `x-api-key` header. A key acts as the account that owns it, and the session it resolves to is subject to the same permission checks as a cookie session. A key can be narrowed to a subset of permissions when it is made, and it can never hold more than its account holds. Each key can carry its own rate limit, an expiry, and an enabled flag that `PATCH /api/keys/{id}` can switch off without deleting the key.
+
+```bash
+curl -s https://valence.example.com/api/libraries -H 'x-api-key: YOUR_KEY'
+```
+
+## Rate limits
+
+Rate limiting applies to the authentication endpoints under `/api/auth`, counted per caller address and path. It is controlled by three settings, described in the [environment variables](/reference/environment-variables) reference.
+
+| Variable                         | Default | Meaning                       |
+| :------------------------------- | :------ | :---------------------------- |
+| `AUTH_RATE_LIMIT_ENABLED`        | `true`  | Turns the limiter on or off   |
+| `AUTH_RATE_LIMIT_WINDOW_SECONDS` | `60`    | Length of the counting window |
+| `AUTH_RATE_LIMIT_MAX`            | `60`    | Requests allowed per window   |
+
+A caller over the limit gets `429` with the message `Too many requests. Please try again later.` and an `X-Retry-After` header giving the seconds to wait. better-auth also applies stricter built-in limits to a few sensitive endpoints such as sign-in. Counts are kept in memory, so a restart clears them.
+
+The limiter identifies callers by the `X-Forwarded-For` header, then `X-Real-IP`, then the socket address. Behind a reverse proxy, the proxy has to set one of them or every household member looks like the proxy's own address. See [Reverse proxy](/install/reverse-proxy).
+
+## Permissions and roles
+
+Being signed in is enough to read libraries, play media and manage your own progress, favourites and ratings. Anything that changes the server or reaches other people needs a permission, granted through roles. The default roles are Administrator (everything), Manager, Member and Restricted. Roles and per-account overrides are managed on the accounts page and through `/api/admin/roles`; see [Accounts and roles](/use/accounts-and-roles).
+
+The permission names are fixed, and a request without the one it needs answers `403`. Grouped by area:
+
+| Area       | Permission                                                                                                             | What it allows                                              |
+| :--------- | :--------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
+| Libraries  | `library.create`                                                                                                       | Add a library, browse server folders, make a folder         |
+| Libraries  | `library.edit`                                                                                                         | Change library settings, upload media                       |
+| Libraries  | `library.delete`                                                                                                       | Delete a library                                            |
+| Media      | `media.override`                                                                                                       | Correct a match, choose a preview moment, rebuild artefacts |
+| Jobs       | `jobs.run`                                                                                                             | Scan, view jobs and history, control the queue              |
+| Jobs       | `jobs.schedule`                                                                                                        | Add and remove job triggers                                 |
+| Jobs       | `jobs.runDestructive`                                                                                                  | Reset and rebuild a library                                 |
+| Streaming  | `streaming.view`, `streaming.stop`, `streaming.pause`, `streaming.message`                                             | See, stop, pause and message other viewers' streams         |
+| Sharing    | `sharing.link`, `sharing.manage`                                                                                       | Make share links, withdraw anybody's                        |
+| Accounts   | `account.invite`, `account.manage`, `account.ban`, `account.roles`, `account.profiles`, `account.security`             | Administer accounts                                         |
+| Keys       | `account.keys`                                                                                                         | Hold API keys                                               |
+| Requests   | `requests.ask`, `requests.askMusic`, `requests.autoApprove`, `requests.viewAll`, `requests.approve`, `requests.manage` | Ask for titles and administer requesting                    |
+| Server     | `server.settings`, `server.logs`, `server.monitor`, `server.webhooks`, `server.backup`                                 | Settings, logs, load history, webhooks                      |
+| Everything | `administrator`                                                                                                        | All of the above, including anything added later            |
+
+`GET /api/account/permissions` returns what the signed-in account may do, which is the quickest way to check what a key can reach. An API key can also carry a narrower list of its own.
+
+Some routes answer as though the thing were not there. A library, series or item that an account has been refused access to (by library access, an age ceiling or an exception) answers `404` with `{"error": "No such item."}` rather than `403`.
+
+## Errors
+
+Most errors have the shape:
+
+```json
+{ "error": "Nobody is signed in." }
+```
+
+The `error` string is meant to be read by a person and is the same text the web client shows. Branch on the status code, not on the wording.
+
+| Status | Meaning                                                                                                                                                                                             |
+| :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `400`  | The request was well formed but the values were refused, such as a library path that is not a directory. Body validation failures are also `400`, with the validator's report of which field failed |
+| `401`  | No session and no key                                                                                                                                                                               |
+| `403`  | Signed in, but without the permission, or the origin is not trusted                                                                                                                                 |
+| `404`  | No such thing, or one you may not know exists                                                                                                                                                       |
+| `409`  | A conflict, such as setup already complete or a file already present                                                                                                                                |
+| `413`  | A picture is too large to keep                                                                                                                                                                      |
+| `415`  | An upload of a kind the library does not read                                                                                                                                                       |
+| `422`  | Playback: this server cannot produce a stream the client can play                                                                                                                                   |
+| `429`  | Rate limited                                                                                                                                                                                        |
+| `500`  | The server failed, and the log says why                                                                                                                                                             |
+
+Responses to `better-auth` endpoints under `/api/auth` follow better-auth's own error format, with a `code` and a `message`.
+
+## Pagination and filtering
+
+Lists that can be long take `limit` and `offset` query parameters. A limit is a positive integer with a per-route maximum (200 for items, history and similar lists) and a default (60 for library items). Item lists answer `{ "items": [...], "total": 240 }`, so a client can page until `offset` passes `total`.
+
+`GET /api/libraries/{id}/items` also filters, and every filter is optional:
+
+| Parameter            | Meaning                                                    |
+| :------------------- | :--------------------------------------------------------- |
+| `search`             | Text to match against titles                               |
+| `kind`               | `films` or `shows`                                         |
+| `genre`              | A genre name from `GET /api/library-facets`                |
+| `yearFrom`, `yearTo` | A range of years                                           |
+| `minRating`          | The lowest catalogue rating, 0 to 10                       |
+| `minYourStars`       | The lowest star rating given by the asking profile, 1 to 5 |
+| `ids`                | A comma separated list of item ids                         |
+| `order`              | `title`, `newest` or `yourRating`                          |
+
+The admin log and job history routes take their filters in the request body or query (levels, sources, a search string, a time range) and are documented in the [reference](/api).
+
+## Streaming endpoints
+
+Playback is a small negotiation, not a single download.
+
+1. `POST /api/playback/{mediaId}/explain` describes how the item would be played for a device profile, without starting anything.
+2. `POST /api/playback/{mediaId}/session` starts a session and answers with a `sessionId`, a `mode` and a `delivery`. When the delivery is `hls`, it carries a `manifestUrl`; when it is `direct`, a `url` to the original file.
+3. `GET /api/playback/session/{sessionId}/{name}` reads the manifest and each segment. It is answered only to whoever started the session, and it is never cached.
+4. `POST /api/playback/session/{sessionId}/heartbeat` tells the server the session is still wanted. `DELETE /api/playback/session/{sessionId}` stops it. An idle session is collected by the media service after a while, so a closed tab does not leave a transcode running.
+
+`GET /api/playback/{mediaId}/file` streams the original file for direct play and honours `Range` requests (`206 Partial Content`), so a player can seek. The CORS configuration exposes `Content-Range`, `Content-Length` and `Accept-Ranges` to trusted origins.
+
+Pictures come from `GET /api/media/{mediaId}/image/{kind}` (poster, backdrop or logo), `GET /api/playback/{mediaId}/frame` (a single frame as a JPEG) and the trickplay routes under `/api/playback/trickplay`. Subtitles are served as WebVTT from `GET /api/media/{mediaId}/subtitles/{trackId}`. Artwork is proxied and cached by Valence, so a client never talks to the metadata provider.
+
+If your proxy buffers responses, playback stalls. See [Reverse proxy](/install/reverse-proxy).
+
+## File uploads
+
+Uploads are streamed as the raw body of the request, not as multipart form data.
+
+```bash
+curl -s -X POST \
+  'https://valence.example.com/api/libraries/LIBRARY_ID/uploads?path=Films/Example%20(2020)/Example%20(2020).mkv' \
+  -b cookies.txt \
+  -H 'Origin: https://valence.example.com' \
+  --data-binary @Example.mkv
+```
+
+The `path` is a plain path inside the library, with no dots or empty names. It needs the `library.edit` permission and the media mount to be writable: with a read-only mount the answer is `403` and `That disk is read-only to Valence. Give it read-write access to upload media there.` A file that already exists answers `409`. Profile pictures, household pictures and the splash screen are separate `PUT` routes that take an image body and answer `413` when it is over the size limit.
+
+## WebSocket
+
+Live updates come over one WebSocket at `/api/realtime`. It uses the same session cookie as the HTTP API, and a share guest can connect with the share cookie. A connection with neither is not upgraded.
+
+The server sends a `welcome` message with a connection id, and the client then subscribes to topics with `{"kind": "subscribe", "topics": ["media", "notifications"]}`. The topics are:
+
+| Topic                                                                | Needs               |
+| :------------------------------------------------------------------- | :------------------ |
+| `media`, `notifications`, `profile`, `presence`, `playback`, `party` | A signed-in account |
+| `monitor`                                                            | `server.monitor`    |
+| `sessions`                                                           | `streaming.view`    |
+| `logs`                                                               | `server.logs`       |
+| `jobs`                                                               | `jobs.run`          |
+| `downloads`                                                          | `requests.manage`   |
+
+The server's replies are `subscribed` (with any topics refused), `event`, `dropped`, `ping`, `clockTell` and `refused`. Permissions are checked on every event, not only when subscribing, so removing a role stops the feed. The server pings every 20 seconds. A client also sends `identify` to say which profile and device it is, and party messages start with `party`. The full message list is in [Realtime](/develop/realtime). A proxy has to pass the upgrade headers through, or the socket never opens; see [Reverse proxy](/install/reverse-proxy).
+
+## The API by area
+
+The routes are grouped by tag in the reference. These are the main ones for each area.
+
+| Area                    | Main endpoints                                                                                                                                                                                                                                               |
+| :---------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setup                   | `GET /api/setup/status`, `POST /api/setup`                                                                                                                                                                                                                   |
+| System                  | `GET /api/health`, `GET /api/admin/overview`, `GET /api/admin/monitor/history`                                                                                                                                                                               |
+| Library                 | `GET`, `POST /api/libraries`; `PATCH`, `DELETE /api/libraries/{id}`; `GET /api/libraries/{id}/items`; `GET /api/libraries/{id}/shows`; `GET /api/media/{id}`; `POST /api/libraries/{id}/scan`; `POST /api/libraries/{id}/uploads`; `GET /api/library-facets` |
+| Books                   | `GET /api/books`, `GET /api/libraries/{libraryId}/books`, `GET /api/books/{bookId}`, chapter pages, `GET /api/reading`                                                                                                                                       |
+| Playback                | `POST /api/playback/{mediaId}/session`, `GET /api/playback/{mediaId}/file`, `GET /api/playback/session/{sessionId}/{name}`, `GET /api/media/{mediaId}/segments`                                                                                              |
+| Subtitles and images    | `GET /api/media/{mediaId}/subtitles`, `GET /api/media/{mediaId}/image/{kind}`                                                                                                                                                                                |
+| Viewer state            | `GET /api/progress`, `PUT /api/media/{mediaId}/progress`, `GET /api/history`, `GET /api/favourites`, `GET /api/ratings`, `GET /api/hidden`                                                                                                                   |
+| Profiles and account    | `GET`, `POST /api/profiles`, `GET /api/account/permissions`, `GET /api/account/devices`, `PATCH /api/account`                                                                                                                                                |
+| Sharing                 | `POST`, `GET /api/shares`, `DELETE /api/shares/{shareId}`, `GET /api/share/{token}`                                                                                                                                                                          |
+| Notifications           | `GET /api/notifications`, `POST /api/notifications/read`, `GET`, `PUT /api/notifications/preferences`                                                                                                                                                        |
+| Webhooks                | `GET`, `POST /api/webhooks`, `POST /api/webhooks/{id}/test`, `GET /api/webhooks/{id}/deliveries`                                                                                                                                                             |
+| API keys                | `GET`, `POST /api/keys`, `PATCH`, `DELETE /api/keys/{id}`                                                                                                                                                                                                    |
+| Accounts                | `GET`, `POST /api/admin/accounts`, `POST /api/admin/accounts/{userId}/ban`, `GET /api/admin/accounts/{userId}/sessions`                                                                                                                                      |
+| Roles                   | `GET`, `POST /api/admin/roles`, `PUT /api/admin/accounts/{userId}/roles/{roleId}`, `GET /api/admin/permissions`                                                                                                                                              |
+| Library access          | `GET /api/admin/accounts/{userId}/libraries`, ceilings and exceptions under the same prefix                                                                                                                                                                  |
+| Jobs and logs           | `POST /api/admin/logs`, `GET /api/admin/jobs/history`, `POST /api/admin/jobs/{kind}/run`, `GET /api/admin/jobs/schedules`                                                                                                                                    |
+| Streams                 | `GET /api/admin/sessions`, `DELETE /api/admin/sessions/{clientId}`, `POST /api/presence/{clientId}/heartbeat`                                                                                                                                                |
+| Settings                | `PATCH /api/admin/settings`                                                                                                                                                                                                                                  |
+| Requests                | `GET`, `POST /api/requests/media`, `GET /api/requests/discover`, `POST /api/requests/media/{id}/approve`, `GET /api/requests/progress`                                                                                                                       |
+| Requests administration | `/api/admin/requests/indexers`, `/clients`, `/downloads`, `/profiles`, `/definitions`                                                                                                                                                                        |
+
+Requests routes exist in the document whether or not the requests service is running. `GET /api/requests/availability` says whether this server takes requests at all.
+
+## Worked examples
+
+The examples assume the server is at `https://valence.example.com`, which is also one of its trusted origins, and use `jq` to pick values out of responses. Replace the address, the email and the password with yours. Sign in once, saving the cookie, and reuse it.
+
+### Check that the server is up
+
+```bash
+curl -s https://valence.example.com/api/health
+```
+
+```json
+{ "status": "ok", "version": "1.0.0", "transcoderReachable": true }
+```
+
+`status` is `degraded` when the media service cannot be reached. The route needs no credentials, which is why it suits a monitor.
+
+### Sign in and read the session
+
+```bash
+curl -s -c cookies.txt -X POST https://valence.example.com/api/auth/sign-in/email \
+  -H 'Origin: https://valence.example.com' \
+  -H 'Content-Type: application/json' \
+  -d '{"email": "you@example.com", "password": "a long password"}'
+
+curl -s -b cookies.txt https://valence.example.com/api/auth/get-session
+```
+
+### List libraries
+
+```bash
+curl -s -b cookies.txt https://valence.example.com/api/libraries
+```
+
+The answer is an array of libraries, each with an `id`, `name`, `kind` (`movies`, `shows`, `music` or `books`), `path`, `itemCount` and the outcome of the last scan.
+
+### Page through the items in a library
+
+```bash
+LIBRARY=$(curl -s -b cookies.txt https://valence.example.com/api/libraries | jq -r '.[0].id')
+
+curl -s -b cookies.txt \
+  "https://valence.example.com/api/libraries/$LIBRARY/items?limit=20&offset=0&order=newest&genre=Drama"
+```
+
+Read `total` from the response and repeat with `offset=20`, `offset=40` and so on.
+
+### Read one item in full
+
+```bash
+curl -s -b cookies.txt https://valence.example.com/api/media/ITEM_ID | jq '{title, year, durationSeconds}'
+```
+
+### Queue a scan
+
+```bash
+curl -s -b cookies.txt -X POST \
+  -H 'Origin: https://valence.example.com' \
+  "https://valence.example.com/api/libraries/$LIBRARY/scan"
+```
+
+The answer is `202` with `{"jobId": "...", "state": "..."}`, returned as soon as the scan is queued. Poll `GET /api/libraries/scans/{jobId}` for progress, or subscribe to the `jobs` topic on the WebSocket.
+
+### Download the original file with a range
+
+```bash
+curl -s -b cookies.txt -H 'Range: bytes=0-1048575' \
+  -o first-megabyte.bin https://valence.example.com/api/playback/ITEM_ID/file
+```
+
+The response is `206 Partial Content` when the file can be ranged.
+
+### Create an API key and use it
+
+```bash
+curl -s -b cookies.txt -X POST https://valence.example.com/api/keys \
+  -H 'Origin: https://valence.example.com' \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "backup script", "expiresInDays": 30}'
+
+curl -s https://valence.example.com/api/libraries -H "x-api-key: $VALENCE_KEY"
+```
+
+The first response includes a `key` field. Copy it then: Valence cannot show it again.
+
+### Read the server log
+
+```bash
+curl -s -b cookies.txt -X POST https://valence.example.com/api/admin/logs \
+  -H 'Origin: https://valence.example.com' \
+  -H 'Content-Type: application/json' \
+  -d '{"levels": ["warn", "error"], "sources": ["transcoder"], "search": "hardware"}'
+```
+
+This needs `server.logs`. Every body field is optional and the defaults return warnings and errors from all sources. See [Jobs and logs](/use/jobs-and-logs).
+
+## Webhooks
+
+Instead of polling, an account with `server.webhooks` can subscribe a URL to server events, such as `job.failed`, `library.scanned`, `media.added` and `disk.low`. Each delivery is signed with the subscription's secret, sent in the `x-valence-signature` header as `sha256=` followed by the hex HMAC of the exact body. The secret is shown once when the subscription is made. See [Notifications and webhooks](/use/notifications-and-webhooks).

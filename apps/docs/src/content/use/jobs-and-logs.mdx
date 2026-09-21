@@ -1,0 +1,239 @@
+---
+title: Jobs and logs
+description: See what Valence is doing in the background, run and schedule jobs, stop or pause work, and search the server log with its levels, context and retention.
+order: 6
+---
+
+Valence does its heavy lifting in the background: scanning libraries, making previews, checking that its own parts are alive, tidying caches. The **Jobs & logs** page in the admin area is where you watch that work, start it, stop it, decide when it repeats, and read the log lines it leaves behind.
+
+Open the admin area and choose **Jobs & logs** under **Activity**.
+
+![The Jobs and logs page showing the header with running and waiting counts, the concurrency control and the four tabs.](/screenshots/admin-jobs-and-logs.png)
+
+## The page at a glance
+
+The header shows how many jobs are running and waiting, and how many have failed. Beside it are two controls for the whole queue.
+
+- **Jobs at once** is a slider from 1 to 16. More jobs at once finishes background work sooner and takes more of the machine while it does. Lowering it lets whatever is running finish first.
+- **Pause** stops the queue picking up new work. A **Paused** badge appears while it is paused, and the button becomes **Resume**. Jobs already running finish; nothing new starts until you resume.
+
+Below sit four tabs.
+
+| Tab            | What it is for                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------ |
+| Jobs           | The history of every run: what ran, against what, when, how long it took and how it ended. |
+| Logs           | The searchable server log.                                                                 |
+| Health         | How each kind of job has been doing over a time range.                                     |
+| Run & schedule | Every job Valence offers, with a way to run it now and to edit its schedule.               |
+
+Which tab is open, and every filter on it, is kept in the address, so a link shares exactly what you are looking at. More on that [below](#filters-are-kept-in-the-address).
+
+Running and scheduling jobs needs `jobs.run` and `jobs.schedule`. Reading the log needs `server.logs`. See [Accounts and roles](/use/accounts-and-roles).
+
+## Job kinds
+
+Every job has a kind, shown in logs and filters, and a friendly label. Some run against a library and can be pointed at one or several; the rest are server-wide.
+
+### Library work
+
+| Label                              | Kind                          | What it does                                                                                                                                                                                                    |
+| ---------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scan for changes                   | `library.scan`                | Finds new, changed and removed files, then makes whatever they are still missing.                                                                                                                               |
+| Generate missing previews          | `library.regeneratePreviews`  | Renders preview clips for items that have none.                                                                                                                                                                 |
+| Generate missing scrub previews    | `library.regenerateTrickplay` | Renders the strip of images shown when scrubbing the seek bar.                                                                                                                                                  |
+| Fetch missing logos                | `library.fetchLogos`          | Collects each title's own lettering, so a hero shows the programme's logo.                                                                                                                                      |
+| Detect missing intros and outros   | `library.detectSegments`      | Finds intros and recaps in episodes by comparing audio across a season, so viewers can skip them.                                                                                                               |
+| Reset and rebuild                  | `library.reset`               | Deletes every item in every library and starts again from nothing. Hours of work on a large library.                                                                                                            |
+| Clear and fetch again              | `library.clearParts`          | Erases the chosen parts of a library, such as descriptions, artwork, trailers or previews, then fetches or makes them again.                                                                                    |
+| Prune old viewing history          | `library.pruneHistory`        | Forgets viewings older than a year.                                                                                                                                                                             |
+| Work through the re-encoding queue | `library.reencode`            | Produces the encodes an administrator asked for, one file at a time. Each replacement waits for somebody to approve it before the original is disposed of, so it pauses once too many are waiting to be judged. |
+
+### Server work
+
+| Label                                        | Kind                                | What it does                                                                                              |
+| -------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Clean up cached images                       | `server.cleanupImageCache`          | Removes artwork and profile photos nothing references, and kept book pages nobody has opened for 30 days. |
+| Clean up cached previews                     | `server.cleanupArtefactCache`       | Removes preview clips and scrub previews nothing addresses any more.                                      |
+| Clean up sessions                            | `server.cleanupSessions`            | Clears expired sign-in sessions and device-authorization codes.                                           |
+| Check catalogue connectivity                 | `server.checkCatalogueConnectivity` | Verifies the configured catalogue key can reach the catalogue.                                            |
+| Check the transcoder                         | `server.checkTranscoder`            | Asks the transcoder whether it is still answering.                                                        |
+| Check disk space                             | `server.checkDiskSpace`             | Asks how much room is left on the filesystems Valence writes to.                                          |
+| Check the requests service                   | `server.checkRequests`              | Asks the requests service, and the VPN it downloads through, whether they are up.                         |
+| Bring requests up to date with the catalogue | `requests.refreshCatalogue`         | Asks the catalogue again about films not yet fetched and series still running.                            |
+| Tell the household about new media           | `server.sendMediaDigest`            | Collects what was imported since last time and says it once.                                              |
+| Prune old log records                        | `server.pruneLogs`                  | Forgets log records past the age their level is kept for.                                                 |
+| Prune old webhook deliveries                 | `server.pruneWebhookDeliveries`     | Forgets webhook deliveries more than a week old.                                                          |
+| Prune old job history                        | `server.pruneJobHistory`            | Forgets job runs older than 30 days, and their per-item issues.                                           |
+| Prune old server load history                | `server.pruneResourceHistory`       | Forgets server load samples older than a week.                                                            |
+
+The two request jobs are offered only when requesting is turned on. Webhook deliveries also run as jobs (`webhook.deliver`) and appear in the history, but they are not started by hand.
+
+## Running a job
+
+1. Open **Run & schedule**.
+2. Find the job. The table shows its label, its scope (a library or the whole server) and its state.
+3. Open its actions menu and choose **Run now**.
+4. For a library job, choose which libraries to run it on. For **Clear and fetch again**, also choose which parts to erase.
+5. Confirm. Valence describes what the job does and says the action cannot be undone.
+
+The job's progress appears in the same row, with a phase and a count, and you can open a dialog to follow each item as it goes. Jobs that can take long, such as previews and segment detection, announce when they finish.
+
+<Callout title="Destructive jobs" tone="danger">
+  Reset and rebuild, Clear and fetch again, Prune old viewing history and the re-encoding queue are
+  destructive: they throw away what is stored and make it again, or dispose of originals. They need
+  the separate `jobs.runDestructive` permission, which the Manager role does not have. Run them
+  deliberately.
+</Callout>
+
+![The Run and schedule tab listing the server's jobs with scope and state, and an actions menu open on a job.](/screenshots/admin-jobs-run-schedule.png)
+
+### Stopping a job
+
+For a running job, the actions menu offers **Stop it**. What it has done so far is kept, and the rest is left undone until it is run again. A job that is only queued can be stopped the same way.
+
+### Pausing the queue
+
+The **Pause** control in the header pauses the whole queue rather than one job. Use it when you need the machine for something else, for instance while a long scan is stealing bandwidth from a stream. Resume when you are ready.
+
+## Schedules and triggers
+
+Most jobs repeat on their own. A job's schedule is a list of **triggers**, and a job can have several. Choose **Edit schedule** from the actions menu to see and change them.
+
+Each trigger is one of these.
+
+| Trigger                | Meaning                              |
+| ---------------------- | ------------------------------------ |
+| Daily                  | Every day at a clock time.           |
+| Weekly                 | On a chosen weekday at a clock time. |
+| On an interval         | Every so many minutes or hours.      |
+| On application startup | Each time the server starts.         |
+
+Add a trigger with **Add trigger**, and remove one with its remove button. A job with no triggers only runs when you run it.
+
+### Default schedules
+
+The first time Valence sees a job it gives it a default schedule. It never does so again, so if you turn a nightly scan off it stays off after a restart. Requests jobs get theirs the first time requesting is offered.
+
+| Job                                          | Default          |
+| -------------------------------------------- | ---------------- |
+| Scan for changes                             | Daily at 03:00   |
+| Check catalogue connectivity                 | Daily at 05:00   |
+| Check the transcoder                         | Every 5 minutes  |
+| Check disk space                             | Every 15 minutes |
+| Check the requests service                   | Every 5 minutes  |
+| Bring requests up to date with the catalogue | Daily at 04:30   |
+| Tell the household about new media           | Every hour       |
+| Clean up sessions                            | Daily at 05:30   |
+| Prune old webhook deliveries                 | Daily at 05:45   |
+| Prune old log records                        | Daily at 05:55   |
+| Prune old job history                        | Daily at 06:05   |
+| Prune old server load history                | Daily at 06:10   |
+| Clean up cached images                       | Sundays at 06:00 |
+| Clean up cached previews                     | Sundays at 06:30 |
+
+The remaining jobs, including reset, clear, previews, scrub previews, logos, segment detection, history pruning and re-encoding, have no schedule by default.
+
+A scheduled library job runs once for every library that exists at that moment.
+
+### Which clock a schedule keeps
+
+Times are read in one timezone. Valence uses the timezone you set in the server settings if there is one, then the `TZ` environment variable, then the host's own zone, and falls back to UTC. Only named zones such as `Europe/London` are accepted; a fixed offset such as `+01:00` is ignored because it cannot follow daylight saving. The schedule dialog says which clock it is using, and whether that matches the one on your screen. In a container, set the timezone in the settings or with `TZ`, because the image does not set one and would otherwise report UTC. See [Settings](/use/settings) and [Configuration](/install/configuration).
+
+## Reading the Jobs tab
+
+The Jobs tab is a table of runs, kept for 30 days. Each row shows the kind, what it ran against (a library name, for example), when it ran, how long it took, its progress, and its outcome: **Running now**, **Completed** or **Failed** (or queued while it waits). Failed runs show their error message.
+
+Above the table are:
+
+- A search box, "Search by job, library, error or run id".
+- An order menu: newest first, oldest first, or longest first.
+- A filter menu to narrow by kind and by status.
+- Summary counts for how the runs stand.
+
+Each row has an actions menu.
+
+| Action         | What it does                                                          |
+| -------------- | --------------------------------------------------------------------- |
+| Pin to the top | Keeps this run at the top of the list, whichever view is open.        |
+| Trace this run | Opens a dialog with the run's timeline and the log lines it wrote.    |
+| View logs      | Jumps to the Logs tab filtered to this run.                           |
+| View issues    | Lists per-item problems recorded against the run, with a Copy button. |
+
+Pins are stored in your browser rather than on the server, and only the twenty most recent are kept, because a run is forgotten after a month and a pin on a missing run would only linger.
+
+### The Health tab
+
+Health summarises the job runs over a time range: total runs, how many finished well and how many failed, and the slowest run. Underneath is a row for each kind of job with its runs, failures, median duration, slowest run and when it last ran. It is the quickest way to spot a job that has started failing every night.
+
+## The log
+
+The Logs tab is a searchable view of what the server, the scanner and the other parts write. Lines are stored in the database and are indexed, so filtering is fast on a large history.
+
+### Levels
+
+| Level   | Meaning                                       | Kept for |
+| ------- | --------------------------------------------- | -------- |
+| `debug` | Fine detail.                                  | 1 day    |
+| `info`  | Ordinary events.                              | 3 days   |
+| `warn`  | Something unexpected that Valence coped with. | 14 days  |
+| `error` | Something failed.                             | 30 days  |
+
+The log opens showing `warn` and `error` only, which is what you usually want. Switch on `info` and `debug` from the filter menu when you are chasing something specific. Errors outlive the chatter on purpose: the line explaining why a scan failed last week is worth more than four thousand lines saying it read a file.
+
+Identical lines that repeat, such as a scan meeting thousands of unreadable files, are folded into one line with a count rather than filling the log.
+
+### Sources and context
+
+Each line has a **source**: `server`, `scanner`, `transcoder`, `jobs`, `auth`, `playback`, `catalogue` or `requests`. It may also carry context that links it to the thing it was about: a job id, a job kind, a library, an item, a playback session or a request. Open a line to see its full detail and that context, and to jump to related lines.
+
+### Searching
+
+Type words to search the messages, or use fields. A field is a word ending in a colon, followed by a value.
+
+| Field               | Narrows to                         |
+| ------------------- | ---------------------------------- |
+| `level:error`       | Lines at that level.               |
+| `source:jobs`       | Lines from that source.            |
+| `kind:library.scan` | Lines written by that kind of job. |
+| `job:abc123`        | One run of a job.                  |
+| `library:`          | One library, by id.                |
+| `media:`            | One item, by id.                   |
+| `session:`          | One playback session.              |
+| `request:`          | One request.                       |
+
+A field turns into a filter chip once you type a space after it, and levels you type add to the levels already shown. Quote a value to keep spaces in it. Anything that does not fit a field is searched as text, so nothing you type is silently dropped.
+
+The **time range** menu offers the last 15 minutes, hour, 6 hours, 24 hours and 7 days, or everything kept. A histogram above the lines shows how many events happened at each level over time, and you can click into it to zoom on a burst. The **order** menu offers newest first, oldest first, most serious first and most repeated first. Alongside the lines are panels for the top sources and top jobs.
+
+From the more menu you can copy or download the lines currently shown, wrap or cut long lines, and show or hide the time.
+
+![The Logs tab showing the search box, the level histogram and log lines with level badges.](/screenshots/admin-logs.png)
+
+### Retention
+
+The **Prune old log records** job runs daily and forgets records past the age their level is kept for, so the log cannot grow until the disk fills. Job history is pruned after 30 days, webhook deliveries after a week and server load samples after a week. You can run any of these by hand, or change when they run, like any other job.
+
+## Filters are kept in the address
+
+The page keeps its state in the query string, so a URL is a saved view. These parameters are used.
+
+| Parameter        | Holds                                                                 |
+| ---------------- | --------------------------------------------------------------------- |
+| `view`           | Which tab is open: `jobs`, `logs`, `health` or `run`.                 |
+| `q`              | The log search text and fields.                                       |
+| `range`          | The log time range: `15m`, `1h`, `6h`, `24h`, `7d` or `all`.          |
+| `from`, `until`  | A custom span in milliseconds, after zooming the histogram.           |
+| `sort`           | The log order.                                                        |
+| `rq`             | The search on the Jobs tab.                                           |
+| `rstatus`        | The status filter on the Jobs tab.                                    |
+| `rsort`          | The order on the Jobs tab.                                            |
+| `rpage`, `hpage` | The page of results, from page 2 onward, on the Jobs and Health tabs. |
+
+An unrecognised value is ignored rather than breaking the page. This is why **View logs** from a job run lands on the Logs tab already filtered to that run: it sets `view=logs` and `q=job:` followed by the run's id, with the range set to everything.
+
+## Where to look when something is wrong
+
+1. Open **Jobs** and filter the status to **Failed**. The error is in the row.
+2. Choose **Trace this run**, or **View logs**, to see the lines that run wrote.
+3. If nothing failed but something is missing, open **Logs**, switch on `info`, and search for the library or item id.
+4. For playback trouble, filter by `source:playback` or `source:transcoder`. See [Troubleshooting](/reference/troubleshooting).

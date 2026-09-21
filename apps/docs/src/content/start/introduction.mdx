@@ -1,0 +1,110 @@
+---
+title: Introduction
+description: What Valence is, who it is for, what it can and cannot do, how it is licensed and where to get help.
+order: 1
+---
+
+Valence is a self-hosted streaming platform for your own library. You point it at folders of films, series, music and books that you already have, and it serves them to every screen in the house from a server that you own. It reads your files and leaves them exactly as it found them: no sidecar files, no renames, nothing written back into your library.
+
+It ships as a single Docker image that carries the server, the web client and the media service, plus a Postgres database beside it. There is no account to create with anybody else, and nothing in Valence calls out to us.
+
+![The Valence home screen, showing a hero banner and a continue watching row](/screenshots/home-screen.png)
+
+## Who it is for
+
+Valence is aimed at people who already keep a media library on a NAS, a home server or a spare machine and want one good way to watch it. You should be comfortable with three things:
+
+- Running a Docker Compose stack, or pasting one into a tool such as Dockge.
+- Putting a reverse proxy with a certificate in front of a service. Valence itself speaks plain HTTP.
+- Owning the backups of your own data.
+
+If you have used Plex or Jellyfin the shape will be familiar. The differences are described under [How it compares](#how-it-compares).
+
+## What it can do
+
+The list below is what the project itself claims for Valence. Each item is covered in more depth in the [Use](/use/first-run) section.
+
+### Watching
+
+- **Direct play or a transcode that earns its keep.** Each device is given what it can actually take, negotiated per device rather than per server. Where a device can play the file as it lies, it does. Where it cannot, the media service converts it, on a GPU where there is one and on the processor where there is not. See [Transcoding and direct play](/start/concepts#transcoding-and-direct-play) and [Hardware transcoding](/install/hardware-transcoding).
+- **HDR stays HDR.** Tone mapping from PQ and HLG to SDR happens because a screen needs it, not because the transcoder gave up.
+- **Skipping intros, recaps and credits.** These are found by fingerprinting the audio across episodes rather than from timestamps typed in by hand.
+- **Books.** A built-in reader for EPUB, PDF, CBZ and CBR files that remembers where you left off.
+- **Music.** Albums and songs live in their own kind of library.
+
+### Sharing and social
+
+- **Watch together.** A party keeps everybody at the same moment in the same film, corrects drift rather than allowing it, and can be password protected.
+- **Share a link.** One title or one series can be shared with somebody who has no account, for as long as you decide.
+- **Take it with you.** Choose a quality against a size, then watch offline.
+- **Notifications.** In-app notifications and web push.
+
+### Running it
+
+- **An admin area.** Accounts, roles and permissions, live sessions, background jobs and their schedules, a metadata match picker, cache usage by kind, and a live log viewer.
+- **Webhooks.** A catalogue of events covering jobs, scans, playback and accounts, with delivery history and a redeliver button.
+- **A setup wizard.** The first visit creates the administrator account and confirms how the server is reached.
+- **Requesting.** An optional second service takes requests for films, series and music, searches your indexers, hands releases to your download client and files the result into the library. See [Requesting](/install/requesting).
+
+### Building on it
+
+- **A documented API.** Every endpoint has a contract. Valence serves an OpenAPI 3.1 document and an interactive reference from the server itself. See the [API reference](/api) and the [API overview](/reference/api-overview).
+- **API keys.** Create, list and revoke keys from the account area.
+- **Plugins.** A capability-scoped plugin model is designed in, and the runtime is still in progress. Read [Plugins](/develop/plugins) for the current state before building on it.
+
+### Security
+
+Sign-in supports TOTP two-factor authentication with backup codes, WebAuthn passkeys, and a device authorisation flow for televisions. Sign-in attempts are rate limited. See [Security](/reference/security).
+
+## How it compares
+
+| Topic                | Plex                           | Jellyfin    | Valence                                 |
+| -------------------- | ------------------------------ | ----------- | --------------------------------------- |
+| Source               | Closed                         | Open (GPL)  | Open (MIT)                              |
+| Phones home          | Yes, a plex.tv account         | No          | No                                      |
+| Hardware transcoding | Yes, some behind Plex Pass     | Yes         | Yes, free, AV1 on several backends      |
+| Books                | Removed in 2022                | Plugin only | Built in                                |
+| Offline downloads    | Behind Plex Pass               | Via apps    | Built in, including a full offline mode |
+| Plugin ecosystem     | Closed, mostly deprecated      | Mature      | Capability-scoped API, in progress      |
+| Documented API       | Reverse-engineered             | Partial     | Full OpenAPI 3.1, hosted reference      |
+| Price                | Free tier, plus a subscription | Free        | Free                                    |
+
+These rows are the project's own summary of the differences. Check each product's current terms before making a decision that depends on them.
+
+## What it is not
+
+- **Not a hosted service.** Nobody runs Valence for you. You run the server, you hold the data and you keep the backups.
+- **Not a downloader.** Valence does not fetch anything by itself. The optional requesting service searches indexers and hands releases to a download client that you provide, such as qBittorrent, Transmission, SABnzbd or NZBGet. You are responsible for what you choose to request.
+- **Not open to the internet by default.** It expects a reverse proxy in front of it that holds the certificate. See [Reverse proxy](/install/reverse-proxy).
+- **Not an open-signup site.** Accounts are created by an administrator, through invitations. Everybody in a household gets a profile of their own with their own history.
+- **Not a plugin platform yet.** The plugin runtime is in progress.
+- **Not multi-architecture for releases.** The published release images are built for linux/amd64. Other architectures are only built on request for nightly images. See [System requirements](/start/system-requirements).
+
+## Licence
+
+Valence is released under the MIT licence. You may use it, change it, ship it and sell it, provided the copyright notice travels with it. It comes with no warranty. The full text is in `LICENSE.md` in the repository.
+
+## Getting help
+
+| Where                                           | For                                                             |
+| ----------------------------------------------- | --------------------------------------------------------------- |
+| [GitHub](https://github.com/ValenceOSS/Valence) | Source, releases, issues and pull requests                      |
+| [Discord](https://discord.gg/uTtcAHMy9N)        | Questions, help with a setup, and announcements of new releases |
+| [getvalence.app](https://getvalence.app)        | The project site                                                |
+
+Before asking for help, work through [Troubleshooting](/reference/troubleshooting) and read the container logs with `docker compose logs valence`. When you open an issue, include the Valence version (the `/api/health` response shows it), how you deploy it and the relevant log lines.
+
+Security problems should not go in a public issue. See [Security](/reference/security) for where to send them.
+
+## How these docs are organised
+
+| Section                              | What it holds                                                                     |
+| ------------------------------------ | --------------------------------------------------------------------------------- |
+| [Start](/start/system-requirements)  | What Valence needs, the fastest path to a working server, and the vocabulary      |
+| [Install](/install/docker-compose)   | Deploying, configuring, proxying, upgrading and removing a server                 |
+| [Use](/use/first-run)                | Running it day to day: libraries, playback, accounts, requests, jobs and settings |
+| [Develop](/develop/architecture)     | How Valence is built, and how to contribute or write a plugin                     |
+| [Reference](/reference/api-overview) | Environment variables, the command line, ports, troubleshooting and security      |
+| [API](/api)                          | The generated API reference                                                       |
+
+New here? Read [System requirements](/start/system-requirements), follow the [Quick start](/start/quick-start), then skim [Concepts](/start/concepts) so the words in the admin area make sense.

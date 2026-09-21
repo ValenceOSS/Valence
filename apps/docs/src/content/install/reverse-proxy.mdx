@@ -1,0 +1,198 @@
+---
+title: Reverse proxy
+description: Why Valence needs a reverse proxy, and working configurations for nginx, Caddy, Traefik and Nginx Proxy Manager, with the settings that must agree with them.
+order: 2
+---
+
+Valence speaks plain HTTP on `VALENCE_PORT` (8420 by default) and expects something in front of it to hold the certificate. That something is a reverse proxy. It gives you HTTPS, a real domain name and a single place to manage certificates, and it is a requirement rather than a nicety: passkeys need a secure context, and secure cookies are never stored by a browser from an insecure origin.
+
+This page explains what any proxy must do for Valence, gives configurations for four common ones, and shows which Valence settings have to match.
+
+## What the proxy must do
+
+Three things matter. The first two are the ones people miss.
+
+**Allow the WebSocket through.** Valence keeps one WebSocket, at `/api/realtime`. Without the upgrade headers everything loads and nothing updates by itself: no scan progress, no notifications, and nobody appearing in a watch party.
+
+**Turn buffering off.** Video is delivered as a playlist and a stream of segments. A proxy that buffers responses holds each segment until it is whole, which turns steady playback into stalling.
+
+**Set `X-Forwarded-For`.** It is what the sign-in rate limiter counts against. Without it every person in the house looks like one address, the proxy's, and shares one limit.
+
+Two more are worth doing:
+
+- **Allow large request bodies.** Photos and avatars are uploaded whole, and uploading media from the admin page sends files. The default of 1 MB in nginx rejects most of them.
+- **Use long timeouts.** A film is longer than a minute, and so is the socket. Timeouts of an hour are a reasonable choice.
+
+Also pass the original `Host` and `X-Forwarded-Proto` headers so Valence sees the address the browser used.
+
+## Settings that must agree
+
+Three settings in the compose file describe the address the browser uses. If they disagree with the proxy, sign-in fails in ways that look like a bug elsewhere.
+
+| Setting           | What to set it to                                                                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUBLIC_URL`      | The proxy's public address, such as `https://valence.example.com`. The compose file uses it for both `BETTER_AUTH_URL` and `TRUSTED_ORIGINS`.                                      |
+| `BETTER_AUTH_URL` | The address a browser reaches Valence at, which is the proxy's and not the container's. Sign-in builds its redirects from it.                                                      |
+| `TRUSTED_ORIGINS` | Every address the web client is served from, comma separated. Sign-in and sign-out are refused with `403 MISSING_OR_NULL_ORIGIN` unless the browser's `Origin` header matches one. |
+| `COOKIE_SECURE`   | `true` (the default in `compose.yaml`) behind HTTPS. `false` only when testing over plain HTTP.                                                                                    |
+
+Some consequences worth knowing:
+
+- **A wrong `PUBLIC_URL` fails only when somebody signs in.** Everything else works, which makes it hard to spot. Type the URL exactly as it appears in the browser, including `https://` and no trailing path.
+- **Several addresses.** The shipped compose file sets `TRUSTED_ORIGINS` from `PUBLIC_URL` alone. If people also reach Valence by a LAN address or a Tailscale name, edit that line to a comma separated list, for example `https://valence.example.com,http://192.168.1.40:8420`. The addresses the machine itself holds are trusted without being listed, over either scheme, so this is for everything else. Reaching Valence from an address that is missing here is the most common cause of a sign-in that does nothing.
+- **Passkeys are tied to a hostname.** They derive their relying party from the hostname in `BETTER_AUTH_URL`, and a passkey works only on the hostname it was registered against. Changing the domain after people have enrolled passkeys invalidates them. Choose the domain before you enrol.
+- **`COOKIE_SECURE=true` over HTTP looks like a login that fails silently.** Sign-in appears to succeed and the browser then drops the cookie. If you serve HTTP to a LAN address for a while, set `COOKIE_SECURE=false` and change it back when you move behind HTTPS.
+- **The desktop app** is trusted without being listed, because it is not a page anybody can navigate to. See [Desktop app](/install/desktop-app).
+
+The first-run wizard also asks for the trusted origins and whether the server is reached over HTTPS. Its suggestions are worked out from the address you opened. Confirm they match your real address.
+
+## nginx
+
+This is the configuration from the project's deployment guide. Replace `192.168.1.40:8420` with the Docker host and your `VALENCE_PORT`, and the server name and certificate paths with yours.
+
+```nginx
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name valence.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/valence.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/valence.example.com/privkey.pem;
+
+    client_max_body_size 0;
+
+    location / {
+        proxy_pass http://192.168.1.40:8420;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade    $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_buffering off;
+        proxy_request_buffering off;
+
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+}
+
+server {
+    listen 80;
+    server_name valence.example.com;
+    return 301 https://$host$request_uri;
+}
+```
+
+The `map` block lets one `location` serve both ordinary requests and WebSocket upgrades. `client_max_body_size 0` removes the upload limit. `proxy_buffering off` and `proxy_request_buffering off` keep segments flowing.
+
+## Caddy
+
+Caddy obtains and renews certificates by itself and passes WebSocket upgrades and `X-Forwarded-For` without extra configuration. Set the address and the upstream.
+
+```text
+valence.example.com {
+    reverse_proxy 192.168.1.40:8420 {
+        flush_interval -1
+    }
+}
+```
+
+`flush_interval -1` sends data to the client as soon as it arrives instead of batching it, which is Caddy's equivalent of turning buffering off. Caddy sets no request body limit and no read timeout on the proxied response by default, so the long timeouts and the upload limit that nginx needs are already what you want.
+
+If Caddy runs in the same Compose stack, use the service name as the upstream instead of an IP address:
+
+```text
+valence.example.com {
+    reverse_proxy valence:8420 {
+        flush_interval -1
+    }
+}
+```
+
+In that case the Caddy service must share a Compose network with `valence`, and you do not need to publish port 8420 on the host.
+
+## Traefik
+
+With Traefik running against the Docker provider, label the `valence` service. Put these in a `compose.override.yaml` beside `compose.yaml`, which Compose merges automatically.
+
+```yaml
+services:
+  valence:
+    networks:
+      - default
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.valence.rule=Host(`valence.example.com`)
+      - traefik.http.routers.valence.entrypoints=websecure
+      - traefik.http.routers.valence.tls.certresolver=letsencrypt
+      - traefik.http.services.valence.loadbalancer.server.port=8420
+
+networks:
+  proxy:
+    external: true
+```
+
+Adjust the network name, entrypoint and certificate resolver to match your Traefik. Traefik passes WebSocket upgrades and `X-Forwarded-For` by default, and does not buffer responses unless you add a buffering middleware.
+
+Traefik's entry point has a default `readTimeout` of 60 seconds, which can cut off a long upload. Raise it in the static configuration:
+
+```yaml
+entryPoints:
+  websecure:
+    address: ':443'
+    transport:
+      respondingTimeouts:
+        readTimeout: 0s
+        writeTimeout: 0s
+        idleTimeout: 3600s
+```
+
+Do not attach a buffering middleware to this router. Confirm the option names against the Traefik version you run, because they have changed between major versions.
+
+## Nginx Proxy Manager
+
+Nginx Proxy Manager builds on nginx, so the same rules apply, set through its interface.
+
+1. Add a **Proxy Host**. Set the domain to your Valence domain, the scheme to `http`, the forward host to the Docker host address and the forward port to `8420` (or your `VALENCE_PORT`).
+2. Turn on **Websockets Support**. Without it the upgrade headers are not sent and nothing updates by itself.
+3. On the **SSL** tab, request a certificate, turn on **Force SSL** and **HTTP/2 Support**.
+4. On the **Advanced** tab, paste the custom configuration:
+
+```nginx
+client_max_body_size 0;
+proxy_buffering off;
+proxy_request_buffering off;
+proxy_read_timeout 3600s;
+proxy_send_timeout 3600s;
+```
+
+Nginx Proxy Manager sets `X-Forwarded-For` itself. Set `PUBLIC_URL` to the same `https://` domain you entered in step 1.
+
+## Testing it
+
+1. Check the health endpoint through the proxy: `curl -s https://valence.example.com/api/health`. You should see JSON with `"status":"ok"`.
+2. Sign in from a browser.
+3. Start a library scan and confirm progress updates without reloading the page. If it only updates on reload, the WebSocket is not getting through.
+4. Play something and confirm it starts without long stalls. Stalling that gets worse over time points at buffering.
+
+| Symptom                              | Likely cause                                                                             |
+| ------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Sign-in does nothing, or returns 403 | The address is not in `TRUSTED_ORIGINS`.                                                 |
+| Sign-in succeeds and forgets you     | `PUBLIC_URL` differs from the browser's address, or `COOKIE_SECURE` is `true` over HTTP. |
+| Loads, but nothing updates by itself | WebSocket upgrade headers are missing.                                                   |
+| Playback stalls                      | Response buffering is on.                                                                |
+| Uploads fail                         | Request body limit is too small.                                                         |
+
+See [Troubleshooting](/reference/troubleshooting) for more, and [Ports](/reference/ports) for what listens where.

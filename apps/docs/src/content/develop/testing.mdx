@@ -1,0 +1,252 @@
+---
+title: Testing
+description: How Valence is tested, from co-located Vitest suites and in-memory services to Rust integration tests, coverage floors, fixtures and the media pipeline.
+order: 5
+---
+
+Every function and every component in Valence has a test, written with Vitest and kept beside the code it covers. Rust is tested with `cargo test`. This page explains the conventions, the helpers that make tests cheap to write, the coverage floors CI holds you to and how to run a single package or file.
+
+## Ground rules
+
+- Tests are co-located. `formatDuration.ts` has `formatDuration.test.ts` next to it, and `MediaCard.tsx` has `MediaCard.test.tsx`.
+- Components are tested with Vitest and React Testing Library. Query by role and accessible name, not by test id or class. If a component is hard to query by role, that is usually an accessibility defect in the component, not a testing problem.
+- The coding rules apply to tests as well. `any`, `unknown` and `as` are banned in test files too, and only the colour rule is relaxed for them. See [Coding standard](/develop/coding-standard).
+- Coverage thresholds are enforced in CI and are never lowered to make a build pass. Raising them is a pull request of its own.
+- Tests that need media fixtures skip with a message naming the command that builds the missing tier. They never silently pass.
+- Nothing in a unit test talks to a real network, a real Postgres or a real FFmpeg. Those live in the Rust integration tests and the media pipeline workflow.
+
+## Running tests
+
+Every package with tests has a `test` script that runs `vitest run`.
+
+```bash
+pnpm test
+pnpm --filter @valence/server test
+pnpm --filter @valence/ui test
+```
+
+Run one file, or filter by test name, by calling Vitest through the package.
+
+```bash
+pnpm --filter @valence/server exec vitest run src/App.test.ts
+pnpm --filter @valence/client exec vitest run src/realtime -t "reconnect"
+```
+
+Add coverage with `pnpm test:coverage` for everything, or per package:
+
+```bash
+pnpm --filter @valence/client exec vitest run --coverage
+```
+
+`pnpm coverage` runs the coverage pass and then `tools/coverageAverage/checkCoverageAverage.ts`, which reads each package's `coverage/coverage-summary.json` and fails if the mean across the nine measured packages falls below 90 percent.
+
+Turbo's `test` task depends on `^build`, so a package's workspace dependencies build first. Remember that the screens package typechecks and tests against built output from `packages/ui`, so rebuild it with `pnpm --filter @valence/ui build` when you change UI code and see a surprising failure in screens.
+
+### Reading failures
+
+The test runner output in some shells is filtered. If a failure is not explained, redirect the output to a file and read that.
+
+```bash
+pnpm --filter @valence/screens exec vitest run src/routes > /tmp/screens.log 2>&1
+```
+
+The screens suite is large and runs jsdom. If a different test fails on each run, that points at load rather than a regression. Check whether your diff touched the failing test at all before changing anything.
+
+## Coverage thresholds
+
+Each package sets its own thresholds in its `vitest.config.ts`. Lines, functions, branches and statements are measured.
+
+| Package                                                      | Lines | Functions | Branches | Statements | Environment |
+| ------------------------------------------------------------ | ----- | --------- | -------- | ---------- | ----------- |
+| `@valence/contracts`, `@valence/core`, `@valence/plugin-sdk` | 90    | 90        | 90       | 90         | node        |
+| `@valence/client`                                            | 90    | 90        | 90       | 90         | jsdom       |
+| `@valence/server`                                            | 90    | 90        | 90       | 90         | node        |
+| `@valence/requests`                                          | 90    | 90        | 90       | 90         | node        |
+| `@valence/ui`                                                | 90    | 90        | 83       | 90         | jsdom       |
+| `@valence/screens`                                           | 90    | 83        | 84       | 90         | jsdom       |
+| `@valence/web`                                               | 90    | 83        | 84       | 90         | jsdom       |
+| `@valence/desktop`                                           | 90    | 83        | 84       | 90         | jsdom       |
+| `@valence/landing`, `@valence/docs`                          | 90    | 90        | 83       | 90         | jsdom       |
+
+The server excludes `src/db/Schema.ts` and `src/jobs/createInertJobQueue.ts` from coverage, and the requests service excludes its `Schema.ts` and `Main.ts`. Everything else counts. A drop below a threshold fails the package's test job.
+
+## Testing components
+
+Component tests render with Testing Library and query the way a person would.
+
+```tsx
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+import { Button } from './Button';
+
+describe('Button', () => {
+  it('calls onClick when pressed', async () => {
+    const onClick = vi.fn();
+    const user = userEvent.setup();
+    render(<Button onClick={onClick}>Play</Button>);
+
+    await user.click(screen.getByRole('button', { name: 'Play' }));
+
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+});
+```
+
+A raw `<button>` in a test file is permitted only as a stand-in for an arbitrary caller supplied child. The ESLint exemption list names test files for that reason.
+
+### Shared helpers
+
+The screens and client packages ship test helpers so that a page is rendered inside the same providers the app uses. They live in `src/testing` in each package.
+
+| Helper                                                 | Package                   | What it gives you                                                                                                          |
+| ------------------------------------------------------ | ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `aFakePlatform`                                        | `@ValenceClient/testing`  | A `Platform` with an in-memory device store, a quiet socket, reachable server and no held files, with any port overridable |
+| `installATestClient`                                   | `@ValenceScreens/testing` | Installs a fake platform before a suite runs                                                                               |
+| `renderInACache`, `renderHookInACache`                 | `@ValenceClient/testing`  | Render or run a hook inside a fresh TanStack Query cache                                                                   |
+| `aShell`                                               | `@ValenceClient/testing`  | A `Shell` (who is watching, what has been seen) with overridable fields                                                    |
+| `renderInAShell`                                       | `@ValenceScreens/testing` | Renders a page inside a shell and a router address                                                                         |
+| `renderInAnAddress`, `renderHookInAnAddress`           | `@ValenceScreens/testing` | Render or run a hook inside a router at a chosen address                                                                   |
+| `renderTheApp`                                         | `@ValenceScreens/testing` | Renders the whole application                                                                                              |
+| `fakeMediaElement`, `aFakeMusicPlayer`, `aFakePainter` | `@ValenceScreens/testing` | Stand-ins for browser media and canvas APIs jsdom lacks                                                                    |
+| `aTrack`, `aMediaRequest`, `answerMusicRequests`       | `@ValenceScreens/testing` | Builders and canned answers for common data                                                                                |
+
+The naming convention is worth copying: a builder is `aThing`, a renderer is `renderIn...`, and a canned server is `answer...`. The `vitest.setup.ts` files in the UI and screens packages also install Testing Library's jest-dom matchers, clean up after each test, stub `ResizeObserver` and the 2D canvas, and turn motion off so animations do not race assertions. The web and screens setups also restore web storage on Node versions that hide it.
+
+Test the client without a socket. `createRealtimeClient` takes its `connect`, `schedule` and `backoffMs` as arguments, so its tests drive a fake link and a fake clock and assert on the exact frames sent.
+
+## Testing the server
+
+The server is built for tests. `createApp` takes every service as an argument, and each service has an in-memory twin named `createMemory...` beside its real, database backed one. A test builds an application over memory services and drives it with `app.request`, so it runs the real routes, validation, session gate and permission checks with no Postgres.
+
+```ts
+import { describe, expect, it } from 'vitest';
+import { createApp } from './App';
+import { createMemoryAuth } from './auth/createMemoryAuth';
+import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
+import { createMemoryWatchProgressService } from '@ValenceServer/progress/createMemoryWatchProgressService';
+import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMemoryFavouriteService';
+import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
+import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
+import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
+import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
+
+describe('createApp', () => {
+  it('reports ok when the media service answers', async () => {
+    const { auth, settings } = createMemoryAuth();
+    const app = createApp({
+      auth,
+      settings,
+      countUsers: () => Promise.resolve(1),
+      promoteToAdmin: () => Promise.resolve(null),
+      library: createMemoryLibraryService(),
+      subtitles: createMemorySubtitleService(),
+      segments: createMemorySegmentService(),
+      progress: createMemoryWatchProgressService(),
+      favourites: createMemoryFavouriteService(),
+      ratings: createMemoryRatingService(),
+      playback: createMemoryPlaybackService(),
+      isTranscoderReachable: () => Promise.resolve(true),
+    });
+
+    const response = await app.request('/api/health');
+
+    expect(await response.json()).toMatchObject({ status: 'ok', transcoderReachable: true });
+  });
+});
+```
+
+For routes behind the session gate, `signedInApp` in `apps/server/src/auth/signUpForTest.ts` wraps an app so every request carries a real session cookie, obtained by signing an account up through the real endpoints. Pass `isAdministrator` together with the memory store to promote the account when a route needs more than being signed in.
+
+The memory family covers auth, permissions, libraries, books, downloads, favourites, hiding, history, household, jobs, notifications, playback, profiles, progress, ratings, re-encoding, segments, settings, sharing, splash screens, subtitles and webhooks. When you add a service, add its in-memory twin and test both against the same expectations.
+
+The same construction writes the API document. `writeOpenApiDocument.ts` builds an app over memory services and requests `/api/openapi.json`, which is how the docs site gets its reference with no database.
+
+### Testing database query builders
+
+Some faults are in the text of a query rather than in anything the database does with it. For those, build the query and read its SQL with Drizzle's `toSQL()`, which never touches the connection. A `pg` pool only connects at its first query, so pointing one at an unreachable address is safe.
+
+```ts
+import { eq } from 'drizzle-orm';
+import { describe, expect, it } from 'vitest';
+import { createDatabase } from '@ValenceServer/db/Database';
+import { share } from '@ValenceServer/db/Schema';
+
+const NOWHERE = 'postgres://nobody@localhost:1/none';
+
+describe('the share listing', () => {
+  it('asks for the share by id', () => {
+    const { db } = createDatabase(NOWHERE);
+
+    const asked = db.select().from(share).where(eq(share.createdBy, 'ada')).toSQL().sql;
+
+    expect(asked).toContain('"share"."createdBy"');
+  });
+});
+```
+
+This runs on any machine with no Postgres, which is why the server's suite needs no database service in CI. Migration logic is tested the same way, as pure functions over injected readers: `findPendingMigrations`, `planMigration`, `migrateToLatest` and the snapshot helpers all take their I/O as arguments. See [Database and migrations](/develop/database-and-migrations).
+
+The requests service uses PGlite (`@electric-sql/pglite`) as a dev dependency for tests that need a database engine in process.
+
+### Injecting the world
+
+Where a function needs the clock, timers, the network or a child process, it takes them as parameters and the test passes fakes. That is why so many functions in this codebase read like `createThing({ now, schedule, send })`. Prefer this to module mocks. When you do need a network stand-in, `apps/server/src/testing/aWebThatAnswers.ts` builds a web that answers each address from a table.
+
+## Testing Rust
+
+The media service has unit tests inside its modules and integration tests in `apps/transcoder/tests`. Run them with:
+
+```bash
+pnpm rust:test
+```
+
+which is `cargo test`. Lint with `pnpm rust:check`, which is `cargo clippy --all-targets -- -D warnings` followed by `cargo fmt --check`.
+
+- Negotiation logic is tested as pure functions over data, with no media files and no FFmpeg. `transcode_plan.rs` is the example.
+- Integration tests drive the real router with `tower::ServiceExt` and real FFmpeg, then assert on bytes it produced. Unit tests can prove an argument vector is right. Only these prove the arguments transcode something a player can read.
+- Cargo compiles each file directly under `tests/` as its own binary, so shared helpers live in `tests/common/mod.rs`. It reads `VALENCE_FFMPEG` and `VALENCE_FFPROBE` rather than asking for `ffmpeg` by name, and builds fixtures under the system temp directory.
+- Tests that need FFmpeg skip rather than fail when it cannot be run.
+- Clippy denies `unwrap` and `expect` in library code. Test code opts in with an explicit `allow`.
+
+The FFmpeg you test against matters. One test scribbles over the middle of a clip and requires the decoder to notice, and Ubuntu's FFmpeg 6.1 decodes the damage without complaint. CI therefore runs the Rust job in a Debian container with the same FFmpeg build that ships. Set `VALENCE_FFMPEG` to the build `pnpm ffmpeg:sync` fetched, or your results may differ from CI's.
+
+## Fixtures and the media pipeline
+
+The fixture corpus is a matrix of small generated and fetched media files that cover codecs, HDR ranges, interlacing, timestamps, audio layouts and containers. It is built by `tools/fixtures`.
+
+```bash
+pnpm fixtures:sync --tier 0
+pnpm fixtures:sync --tier 2
+```
+
+Files are written outside the repository, to `~/.cache/valence-fixtures` unless `VALENCE_FIXTURES_DIR` is set. `fixtures.manifest.json` records every fixture's name, tier, licence, checksum and size, along with the FFmpeg version that generated it. Tiers are cumulative: 0 costs nothing but time and runs everywhere, 1 adds samples fetched on demand, and 2 adds the Dolby Vision and HDR10+ pair, which needs `mkvmerge`.
+
+Only freely redistributable media may become a fixture. Clips from commercial films are not redistributable at any length. Every fixture records its licence, and a pull request adding one without a licence field is rejected. This is a legal constraint on the project.
+
+Tests in `tools/fixtures` check that the corpus describes itself honestly, meaning each fixture is what the matrix claims. A corpus that lies is worse than none.
+
+### The media pipeline workflow
+
+`.github/workflows/media-pipeline.yml` is the deeper check, run deliberately rather than on every push. It runs on `workflow_dispatch` and on a weekly schedule (Mondays, 06:00 UTC). In a `debian:bookworm-slim` container it:
+
+1. installs the pinned Valence FFmpeg build and asserts its tone mapping filters (`zscale` or `libplacebo`) are present;
+2. installs Node, pnpm and Rust;
+3. restores or builds the fixture corpus at tier 2, cached on the fixture definitions and FFmpeg version;
+4. runs `pnpm --filter @valence/tools exec vitest run fixtures/` to check the corpus;
+5. runs `cargo test` against it;
+6. uploads the manifest it produced for amd64 as an artefact.
+
+It is separate from `ci.yml` because a Debian container, a Rust build and minutes of encoding would hold every pull request behind it. Run it before a release, after touching the media pipeline, or when a rule's behaviour is in question. Releases also run the Rust tests, as described in [Releasing](/develop/releasing).
+
+## What CI runs
+
+`ci.yml` runs lint and `pnpm db:check`, one shared build job, typecheck, then a matrix of one test job per package (`@valence/contracts`, `core`, `plugin-sdk`, `tools`, `ui`, `client`, `server`, `requests`, `web`, `desktop` and `landing`) and a four way sharded job for `@valence/screens`. The Rust job runs only when a pull request touches `apps/transcoder`, `Cargo.toml`, `Cargo.lock` or the CI workflow itself, and always on `main`. See [Local setup](/develop/local-setup#hooks-and-ci) for the hooks that run the same checks before you push.
+
+## Writing a good test here
+
+- Name the behaviour, not the function: `it('does not call onClick when disabled')`.
+- Assert one thing per test, and put the setup a reader needs inside the test.
+- Prefer real objects and in-memory twins over mocks. A mock proves you called what you said you would call.
+- Test the failure the code exists to prevent. Many tests here name the incident that motivated them.
+- Parse untrusted responses with a Zod schema in the test too, rather than casting.

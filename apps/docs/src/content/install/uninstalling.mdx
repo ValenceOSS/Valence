@@ -1,0 +1,125 @@
+---
+title: Uninstalling
+description: How to stop and remove Valence, what each command deletes, and which volumes and files are safe to remove or must be kept.
+order: 10
+---
+
+Removing Valence is straightforward, and it never touches your media library in its default configuration. The care is in choosing how much of Valence's own data to keep. This page describes each level of removal and what it deletes.
+
+## What Valence owns
+
+Before deleting anything, know what belongs to Valence and what belongs to you.
+
+| Item                              | Whose it is | Notes                                                                        |
+| --------------------------------- | ----------- | ---------------------------------------------------------------------------- |
+| Your media library (`MEDIA_PATH`) | Yours       | Mounted read only by default. Valence does not delete it when you uninstall. |
+| `db-data` volume                  | Valence     | The database. Accounts, history, libraries, settings.                        |
+| `config` volume                   | Valence     | Profile pictures and pre-upgrade snapshots. Cannot be rebuilt.               |
+| `cache` volume                    | Valence     | Artwork, previews and thumbnail sheets. Can be rebuilt.                      |
+| `transcodes` volume               | Valence     | Playback scratch. Can be rebuilt.                                            |
+| `.env` and `compose.yaml`         | Yours       | On the host, beside each other.                                              |
+| `DOWNLOADS_PATH`                  | Yours       | Only if you use requesting. What your download client wrote.                 |
+| `.valence` folders in libraries   | Valence     | Only if you enabled re-encoding. See below.                                  |
+
+## Stop it, keep everything
+
+To stop Valence without removing anything:
+
+```bash
+docker compose stop
+```
+
+The containers stay, and `docker compose start` brings them back. This is what to do if you only want it off for a while.
+
+## Remove the containers, keep the data
+
+```bash
+docker compose down
+```
+
+This stops and removes the containers and the stack's network, and leaves the named volumes alone. Your database, settings, profile pictures and caches survive. Running `docker compose up -d` in the same folder brings the same Valence back, with everything as you left it.
+
+Use this before moving the stack to another machine, or when you want to remove the containers and think about the data afterwards.
+
+## Remove everything
+
+To remove the containers **and delete the volumes**, add the volumes flag to `down`:
+
+```bash
+docker compose down -v
+```
+
+<Callout title="This deletes your data" tone="danger">
+
+`down -v` deletes all four volumes: the database, the settings, the household's profile pictures and the caches. There is no undo. The profile pictures in `config` are the only copy of each.
+
+</Callout>
+
+Before you do this, decide whether you want anything back. Take a database dump and copy out the `config` volume as described in [Storage and volumes](/install/storage-and-volumes#backups). Also keep your `.env`, which holds the secrets.
+
+If you started optional services with profiles, a plain `docker compose down` only removes the services that are active. To remove those as well, name the profiles:
+
+```bash
+COMPOSE_PROFILES=requests,flaresolverr,vpn docker compose down
+```
+
+Add the volumes flag to that command if you also want the data gone.
+
+## Remove one volume
+
+Each volume can be removed on its own, which is what you want when you are clearing one problem and not everything. Stop the stack first, then list the volumes:
+
+```bash
+docker compose down
+docker volume ls
+```
+
+Volume names are your stack folder's name, an underscore, and the volume's name, such as `valence_cache`. Remove one with:
+
+```bash
+docker volume rm valence_cache
+```
+
+What is safe:
+
+| Volume       | Safe to delete?                                                                                                         |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `transcodes` | Yes. Scratch. It is refilled as people watch. Stop Valence first.                                                       |
+| `cache`      | Yes. Artwork is fetched again and previews are rendered again, which costs time and network requests, and nothing else. |
+| `config`     | Only if you accept losing every uploaded profile picture and your pre-upgrade snapshots.                                |
+| `db-data`    | Only if you accept losing the database, which means starting from the setup wizard again.                               |
+
+Deleting `db-data` alone gives you a Valence with no accounts and no libraries but with the old pictures and caches still on disk. Your media is still there and can be scanned again. When you are moving to a new Postgres major version, this is the one volume you remove on purpose. See [Updating](/install/updating#moving-to-postgres-18).
+
+## Remove the images
+
+Once the containers are gone you can remove the images to reclaim disk:
+
+```bash
+docker image rm ghcr.io/marquescoding/valence:latest
+docker image rm postgres:18-alpine
+```
+
+Repeat for `ghcr.io/marquescoding/valence-requests`, `ghcr.io/flaresolverr/flaresolverr` and `qmcgaw/gluetun` if you used them. Use the tag you actually pulled, which `docker image ls` shows.
+
+## Files on the host
+
+Nothing else is installed on the host. The compose file and `.env` are the only files, and the stack needed no certificate or other configuration file. Delete the stack folder when you are done. If you followed the [Quick start](/start/quick-start), that is `~/valence`.
+
+If you built the [desktop app](/install/desktop-app) on a computer, remove it the way you would any application, and delete its data folder if you want its remembered server address and its downloads gone. The desktop app keeps downloads in its own user data folder, not in your Downloads folder.
+
+## If you enabled re-encoding
+
+Re-encoding writes into a `.valence` folder at the top of each library. It holds files that are being made, and originals that have been swapped aside and are waiting for you to confirm or reject the result.
+
+**Look before you delete it.** An original waiting for judgement lives in that folder, and if you remove the folder while an encode is unconfirmed, the original goes with it. Confirm or reject each pending re-encode in Valence first, so that no replaced file is left half decided. See [Storage and volumes](/install/storage-and-volumes#re-encoding-and-write-access).
+
+When nothing is pending, the folder can be deleted.
+
+## Requesting leftovers
+
+If you used requesting, files it filed are ordinary files in your library, and they stay. Your download client, its categories (`valence-films`, `valence-series`, `valence-music` and `valence-books` by default) and its downloads folder are yours and are not removed by anything on this page. Remove the categories in the client if you no longer want them. The hard links or copies in `DOWNLOADS_PATH` are also yours to clear.
+
+## Starting again
+
+Reinstalling is the same as a new install. Follow the [Quick start](/start/quick-start), or [Docker Compose](/install/docker-compose) if you want the fuller walkthrough. If you kept `db-data` and `config`, Valence will come back with its accounts and pictures. If your database was created by an older Postgres major version and the image now asks for 18, read [Updating](/install/updating#moving-to-postgres-18) first.

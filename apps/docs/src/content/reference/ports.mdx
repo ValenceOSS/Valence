@@ -1,0 +1,103 @@
+---
+title: Ports and sockets
+description: Every port and socket Valence uses, which ones are published on the host and which stay internal, with firewall and reverse proxy guidance.
+order: 4
+---
+
+A Valence install has one public face, the server on port 8420, and everything else stays on the stack's private network. This page lists every port and socket in a production install and in a development checkout, says which are published and which are not, and gives guidance for firewalls and proxies. The proxy itself is covered in [Reverse proxy](/install/reverse-proxy).
+
+## Production stack
+
+These are the ports in the `compose.yaml` that ships with Valence.
+
+| Port or socket                               | Service                                       | Published on the host                 | Purpose                                                                                                                                                                                            |
+| :------------------------------------------- | :-------------------------------------------- | :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `8420` (TCP)                                 | `valence` server                              | Yes, as `VALENCE_PORT` (default 8420) | The web client, the API at `/api`, the interactive reference at `/api/reference` and the WebSocket at `/api/realtime`. Plain HTTP, expecting a reverse proxy in front to hold the certificate.     |
+| `/run/valence-transcoder.sock` (Unix socket) | Media service, inside the `valence` container | No                                    | Where the server talks to the media service. It exists only inside the container, so there is nothing to open.                                                                                     |
+| `5432` (TCP)                                 | `db` (Postgres 18)                            | No                                    | The database. Deliberately has no `ports` entry: only the server and the requests service talk to it, over the stack's own network.                                                                |
+| `8421` (TCP)                                 | `requests` service                            | No                                    | The optional requests service. The server reaches it at `http://requests:8421`. Started only with the `requests` profile.                                                                          |
+| `8191` (TCP)                                 | `flaresolverr`                                | No                                    | FlareSolverr, which solves Cloudflare's browser check for indexers. Started only with the `flaresolverr` profile. The requests service reaches it at `http://flaresolverr:8191`.                   |
+| `8000` (TCP)                                 | `gluetun` control server                      | No                                    | gluetun's control server, which the requests service asks whether the tunnel is up (`http://gluetun:8000`). Started only with the `vpn` profile.                                                   |
+| The download client's web port               | Your download client                          | Only if you publish it                | For example qBittorrent's web interface, commonly `8080`. When the client sits behind gluetun with `network_mode: service:gluetun`, publish this port on the `gluetun` service, not on the client. |
+
+Only one line of the table is meant to be reachable from outside the machine: the server port, and in practice only by your reverse proxy. The requests service and its neighbours never need a published port for Valence to work.
+
+### Changing the published port
+
+Left of the colon in `compose.yaml` is the port on the host, and `VALENCE_PORT` sets it. The container side stays 8420, because the image sets `PORT=8420`.
+
+```yaml
+ports:
+  - '${VALENCE_PORT:-8420}:8420'
+```
+
+Set `VALENCE_PORT=9000` in your `.env` file, and point the proxy at port 9000 on the Docker host. Do not set `PORT` in the server's environment to change the published port: that moves the port inside the container, and the health check and your mapping would no longer agree.
+
+### Health checks
+
+Both images carry a Docker health check that runs every 30 seconds.
+
+| Service  | Check                                                                                                                                  |
+| :------- | :------------------------------------------------------------------------------------------------------------------------------------- |
+| Server   | `GET http://127.0.0.1:8420/api/health`, which answers `200` even when the media service is unreachable (the body then says `degraded`) |
+| Requests | `GET http://127.0.0.1:8421/health`                                                                                                     |
+
+## Development
+
+These are used when you work on Valence from a checkout. See [Local setup](/develop/local-setup).
+
+| Port                           | What                                                      | Notes                                                                                                                                                                                           |
+| :----------------------------- | :-------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `5173`                         | Web client dev server (Vite)                              | Listens on all interfaces, so another device on your network can reach it. It proxies `/api` to `http://localhost:8420`, WebSocket included.                                                    |
+| `8420`                         | Server (`pnpm dev`)                                       | From the `PORT` setting, default 8420.                                                                                                                                                          |
+| `8421`                         | Requests service (`pnpm dev`)                             | From `REQUESTS_PORT`, default 8421.                                                                                                                                                             |
+| `5174`                         | Landing site dev server                                   | Fixed in its Vite configuration. The desktop client's dev renderer is also addressed at `http://localhost:5174` in `.env.example`, so add that origin to `TRUSTED_ORIGINS` when you work on it. |
+| `5175`                         | Documentation site dev server                             | Fixed in its Vite configuration. Started with `pnpm --filter @valence/docs dev`, after `pnpm --filter @valence/docs spec` has written the API document.                                         |
+| `3000`                         | `pnpm start` for the landing and docs sites               | Serves the built site. Set `PORT` to change it.                                                                                                                                                 |
+| `5432`                         | Postgres from `compose.dev.yaml`                          | Published to the host so the server running on your machine can reach it.                                                                                                                       |
+| `8421` and `8191`              | Requests service and FlareSolverr from `compose.dev.yaml` | Published to the host in the development file only.                                                                                                                                             |
+| `/tmp/valence-transcoder.sock` | Media service                                             | The example value in `.env.example`. Outside a container `/run` is usually not writable, so choose a temporary path, `TRANSCODER_URL=unix:/tmp/valence-transcoder.sock`.                        |
+
+The development compose file publishes more than the production one, because the code you are running sits outside the containers. Do not use it for a server other people depend on.
+
+## The media service socket
+
+The server and the media service agree on one address, `TRANSCODER_URL`. It has two forms.
+
+| Form                   | When to use it                                                                                                                                                                                                                 |
+| :--------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unix:/path/to/socket` | The default. Both halves are on one machine, in one container in the standard image. Nothing listens on the network.                                                                                                           |
+| `http://host:port`     | The media service runs on another machine, for example one with the graphics card. Start it there with `VALENCE_TRANSCODER_ADDR` set to the interface and port it should bind, and point `TRANSCODER_URL` on the server at it. |
+
+<Callout title="The media service has no login" tone="warning">
+  It trusts whoever can reach it. If you put it on the network, keep it on a private network or
+  behind a firewall that admits only the server, and never expose it to the internet. It can read
+  the media directories listed in `VALENCE_MEDIA_ROOTS` and write to `VALENCE_WRITE_ROOTS`.
+</Callout>
+
+## Outbound connections
+
+Valence also opens connections of its own. A firewall that blocks outbound traffic needs to allow these for the features that use them.
+
+| From                       | To                                 | Why                                                                                                     |
+| :------------------------- | :--------------------------------- | :------------------------------------------------------------------------------------------------------ |
+| Server                     | The metadata catalogue, over HTTPS | Titles, posters and cast, only when `CATALOGUE_API_KEY` is set                                          |
+| Server                     | MusicBrainz, over HTTPS            | Music details and music requests, when enabled                                                          |
+| Server                     | Webhook URLs you configure         | Notifications. Non-HTTP addresses and link-local addresses such as cloud metadata services are refused. |
+| Server                     | The requests service on 8421       | Only when requesting is on                                                                              |
+| Requests                   | Your indexers and download client  | Searching and handing over downloads                                                                    |
+| Requests                   | `github.com`                       | The daily fetch of indexer definitions from `DEFINITIONS_REPOSITORY`                                    |
+| Requests                   | FlareSolverr and gluetun           | Only when configured                                                                                    |
+| Server, at build or update | `ghcr.io`                          | Pulling images, done by Docker                                                                          |
+
+## Firewall and proxy guidance
+
+- **Expose 443 and, if you redirect, 80 on the proxy. Do not expose 8420 to the internet.** The server speaks plain HTTP, so anything that reaches it directly skips your certificate. On the Docker host, allow 8420 only from the proxy, or bind the published port to a private address by writing `'127.0.0.1:8420:8420'` in the port mapping in place of the default when the proxy runs on the same host.
+- **Never publish 5432.** The database password is the only thing between the port and your data. The production file publishes nothing for `db`, and that should stay so.
+- **Let the WebSocket through.** The path is `/api/realtime`. The proxy must pass `Upgrade` and `Connection` headers, or nothing updates by itself. See [Reverse proxy](/install/reverse-proxy).
+- **Turn buffering off** for the whole site, and allow a long read timeout, since a film is longer than a proxy's default of a minute.
+- **Set `X-Forwarded-For`,** which the sign-in rate limiter counts against.
+- **Keep the requests stack private.** 8421, 8191 and 8000 need to be reachable by the containers that use them and by nobody else. The requests secret is shared between the server and the service, and `REQUESTS_SECRET` should be a long random value.
+- **Local addresses need listing too.** Devices that reach the server by its address on your network work as long as that address is a trusted origin. Addresses the machine itself holds are trusted automatically, and anything else, such as a domain, goes in `TRUSTED_ORIGINS`.
+
+If something on the host already answers on 8420, change `VALENCE_PORT` rather than stopping the other service. See [Troubleshooting](/reference/troubleshooting) for what a port clash looks like.

@@ -1,0 +1,101 @@
+---
+title: System requirements
+description: What a Valence server needs in hardware, software, network ports and storage, and which clients can play from it.
+order: 2
+---
+
+Valence runs as a Docker Compose stack: a Postgres database and one Valence container that holds the server, the web client and the media service. This page separates what the repository states or enforces from what is only a sensible recommendation. Anything marked **Recommendation** is our guidance and is not checked by Valence.
+
+## Server hardware
+
+The repository does not publish a minimum specification, so the figures below are recommendations. Sizing depends far more on how many people stream at once, and whether they need transcodes, than on the size of the library.
+
+| Resource | Minimum (recommendation)                    | Comfortable (recommendation)                    | Notes                                                                                                |
+| -------- | ------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| CPU      | 64-bit x86, 2 cores                         | 4 or more cores                                 | Software transcoding is the heaviest thing Valence does. Direct play needs almost no processor.      |
+| RAM      | 2 GB free for the stack                     | 4 GB or more                                    | Postgres, the Node server and FFmpeg all run on the same machine.                                    |
+| GPU      | None                                        | An Intel, AMD or NVIDIA GPU that FFmpeg can use | Optional. See [Hardware transcoding](/install/hardware-transcoding).                                 |
+| Disk     | Local disk for `db-data`, `config`, `cache` | An SSD for `transcodes` and `db-data`           | See [Storage and volumes](/install/storage-and-volumes) for what each volume holds and how it grows. |
+
+Two facts come from the repository and are not recommendations:
+
+- The published release image is built for **linux/amd64** only. The release workflow states that the emulated second architecture was left out on purpose because a release-mode Rust build under emulation is too slow. Nightly builds can be requested for linux/arm64 by hand, but those are for testing.
+- The image bundles its own FFmpeg build (pinned in the `Dockerfile`), so you do not need FFmpeg on the host.
+
+### Graphics hardware
+
+Hardware transcoding is optional. Without a GPU everything still works, and anything that cannot be direct played is converted on the processor instead, which is slower and uses more of it.
+
+The Valence Settings page offers these encoders: VAAPI (Intel and AMD on Linux), QuickSync (Intel), NVENC (NVIDIA), AMF (AMD, needs the proprietary driver), VideoToolbox (Apple), and RKMPP (Rockchip). Which ones work inside a container depends on your host and how you pass the device through. The compose file only ships the `/dev/dri` mapping used by Intel and AMD. Read [Hardware transcoding](/install/hardware-transcoding) before you buy hardware for it.
+
+## Operating system
+
+| Host                                  | Status                                                                                                                                                                                        |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Linux (x86-64)                        | The supported target. The container is Debian bookworm based, and the GPU mapping in `compose.yaml` assumes a Linux host with `/dev/dri`.                                                     |
+| NAS operating systems that run Docker | Works wherever Docker and Compose run. The deployment guide is written against Dockge and applies to anything that takes a compose file.                                                      |
+| macOS and Windows with Docker Desktop | Can run the stack for trying it out, but there is no `/dev/dri` to map, so you must delete the `devices` and `group_add` entries. Hardware transcoding is not available inside the container. |
+
+## Software on the host
+
+| Software      | Requirement                                                                                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Docker        | Docker Engine with the Compose plugin (`docker compose`). The repository does not state a minimum version; use a current release.                                |
+| Postgres      | **18.** `compose.yaml` runs `postgres:18-alpine`, and the Valence image installs the Postgres 18 client so that snapshots can be taken.                          |
+| Reverse proxy | Anything that terminates TLS and can pass WebSocket upgrades: nginx, Caddy, Traefik, Nginx Proxy Manager, a tunnel. See [Reverse proxy](/install/reverse-proxy). |
+
+Postgres 18 is a hard requirement of the shipped stack rather than a preference. A major Postgres version cannot read the data directory that the previous one wrote. If you are coming from an older release that used Postgres 17, follow the migration steps in [Updating](/install/updating).
+
+Node.js and pnpm matter only if you build from source. The repository requires **Node 24 or newer** (`engines` in `package.json` and `.nvmrc`) and pins pnpm 10 through `packageManager`. The container carries its own Node, so a plain server install needs neither.
+
+## Browsers and clients
+
+| Client      | Notes                                                                                                                                                                         |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web browser | The main client, served by the server itself at your public address. The repository does not publish a supported browser list. Use a current version of a mainstream browser. |
+| Desktop app | An Electron window onto your server, built from source. See [Desktop app](/install/desktop-app).                                                                              |
+
+Two browser requirements are stated in the configuration itself:
+
+- **Passkeys** need a secure context, so they are unavailable over plain HTTP on a LAN address. Use HTTPS. A passkey also only works on the hostname it was registered against.
+- **Secure cookies** are never stored by a browser from an insecure origin. Serve Valence over HTTPS in normal use.
+
+Other devices, such as televisions, sign in with a device authorisation code flow. Support for particular television platforms is not documented in the repository, so do not assume it.
+
+## Network ports
+
+| Port | Service                | Published by default | Purpose                                                                                          |
+| ---- | ---------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
+| 8420 | Valence                | Yes (`VALENCE_PORT`) | The web client, the API and the WebSocket at `/api/realtime`. Your reverse proxy points here.    |
+| 5432 | Postgres               | No                   | Reached over the stack's own network only. `compose.dev.yaml` publishes it for development.      |
+| 8421 | Requests service       | No                   | Only with the `requests` profile. Valence reaches it at `http://requests:8421` inside the stack. |
+| 8000 | gluetun control server | No                   | Only with the `vpn` profile.                                                                     |
+| 8191 | FlareSolverr           | No                   | Only with the `flaresolverr` profile.                                                            |
+
+The media service inside the Valence container listens on a Unix socket (`/run/valence-transcoder.sock`), not a network port. Nothing else needs to be open. The full list is in [Ports](/reference/ports).
+
+The container needs outbound internet access if you use a catalogue key, where it contacts the metadata catalogue, and for the optional requesting service, which reaches your indexers and downloads its indexer definitions from GitHub.
+
+## Storage layout
+
+| Volume       | Mounted at    | Holds                                                                                           |
+| ------------ | ------------- | ----------------------------------------------------------------------------------------------- |
+| `db-data`    | Postgres data | The database: accounts, libraries, history, settings.                                           |
+| `config`     | `/config`     | Settings, **profile pictures** (`/config/profiles`) and database snapshots (`/config/backups`). |
+| `cache`      | `/cache`      | Fetched artwork (`/cache/images`) and rendered previews and sheets (`/cache/artefacts`).        |
+| `transcodes` | `/transcodes` | Scratch space for video segments while someone is watching.                                     |
+| Your library | `/media`      | Mounted from `MEDIA_PATH`, read only unless you change `MEDIA_ACCESS`.                          |
+
+The library must be on a path the Docker host can read. A network share works, and is discussed in [Storage and volumes](/install/storage-and-volumes).
+
+## Transcoding load
+
+These are guidance, not measurements published by the project.
+
+- **Direct play and remux** cost almost nothing. A single small machine can serve many of them.
+- **Audio-only transcoding** (a direct stream) is cheap.
+- **Video transcoding, or burning in subtitles,** is the expensive case. On the processor alone, plan for one to two simultaneous transcodes per few modern cores, and fewer for 4K or HDR sources.
+- **A working GPU** moves that cost off the processor. The image's own notes warn that a failed hardware path drops to software encoding at roughly two hundred times the processor time, so check the [hardware transcoding](/install/hardware-transcoding) page before relying on it.
+- **Background work,** such as generating scrub previews and fingerprinting audio for intro detection, competes with playback. Use `MEDIA_JOBS` to limit how many files are worked on at once. See [Configuration](/install/configuration).
+
+Once the machine meets these, continue to the [Quick start](/start/quick-start).

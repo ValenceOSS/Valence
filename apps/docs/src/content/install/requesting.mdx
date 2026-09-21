@@ -1,0 +1,216 @@
+---
+title: Requesting
+description: Set up optional media requesting in Valence with indexers, a download client, a VPN, quality profiles and per library behaviour.
+order: 6
+---
+
+Valence can take requests for films, series and music, find them on your indexers and hand them to a download client of your own, then file what arrives into the right library. It is a second service, `requests`, and nothing about it shows in Valence until it is set up: no sidebar group, no permissions and no webhook events.
+
+Valence does not supply content, indexers or a download client. You choose and configure those, and you are responsible for what you request.
+
+## How the pieces fit
+
+| Piece            | Provided by                      | Job                                                                                  |
+| ---------------- | -------------------------------- | ------------------------------------------------------------------------------------ |
+| Valence          | The `valence` service            | The interface, permissions, approval and notifications.                              |
+| Requests service | The `requests` service (profile) | Searches indexers, judges releases, drives the download client and files the result. |
+| Indexers         | You                              | Torznab or Newznab feeds, or sites from the built-in catalogue.                      |
+| Download client  | You                              | qBittorrent, Transmission, SABnzbd or NZBGet.                                        |
+| FlareSolverr     | Optional profile                 | Gets past Cloudflare's browser check for some indexers.                              |
+| gluetun          | Optional profile                 | A VPN that your download client sits behind.                                         |
+
+## Switching it on
+
+1. Start the stack with the `requests` profile. Either set `COMPOSE_PROFILES=requests` in your `.env` (or in Dockge's environment editor), or start it once from the shell:
+
+   ```bash
+   COMPOSE_PROFILES=requests docker compose up -d
+   ```
+
+2. Generate a secret of at least 32 characters, and set both variables, then restart Valence:
+
+   ```bash
+   openssl rand -hex 32
+   ```
+
+   ```ini
+   REQUESTS_URL=http://requests:8421
+   REQUESTS_SECRET=paste-the-generated-secret-here
+   ```
+
+3. Run `docker compose up -d` again so the `valence` and `requests` services both pick the values up.
+
+| Setting            | Required | What it is                                                                                                                 |
+| ------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `REQUESTS_URL`     | Yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                                  |
+| `REQUESTS_SECRET`  | Yes      | At least 32 characters, the same for both services. Valence presents it on every call, and the service refuses without it. |
+| `DOWNLOADS_PATH`   | No       | Where your download client writes, on the host. `./downloads` by default.                                                  |
+| `VPN_URL`          | No       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                                 |
+| `VPN_API_KEY`      | No       | The key gluetun's control server was given.                                                                                |
+| `FLARESOLVERR_URL` | No       | FlareSolverr, `http://flaresolverr:8191`.                                                                                  |
+
+Setting only one of `REQUESTS_URL` and `REQUESTS_SECRET` leaves requesting off, and the log says which is missing. The requests service refuses to start at all without a secret.
+
+The requests service shares Valence's database. It listens on port 8421, which is not published on the host. Only Valence needs to reach it, over the stack's network.
+
+### The media mount is writable
+
+Unlike Valence, the requests service mounts `MEDIA_PATH` **writable**, because filing what it downloads into the library is its whole job. Valence itself still never writes there. One service writes to your library, and it is the one whose job that is.
+
+Libraries are filed into at the path Valence has for them, so the requests service must see each library at the same path Valence does. Both mount `MEDIA_PATH` at `/media` in the compose file, which is what makes that so. Do not change one without the other.
+
+## Indexers
+
+The admin area's **Indexers** page adds them. Two kinds work:
+
+- **A Torznab or Newznab feed.** Jackett, Prowlarr, NZBHydra or a usenet indexer's own API.
+- **A site from the catalogue.** Several hundred public and private trackers, each described by a [Cardigann definition](https://github.com/Jackett/Jackett/wiki/Definition-format). Valence runs the definitions itself, so it does not need Jackett or Prowlarr.
+
+![The Indexers page in the admin area, listing configured indexers with their state](/screenshots/admin-indexers.png)
+
+The catalogue is fetched from GitHub once a day and kept in the database, so a site the definitions stop describing keeps working until you remove it. It comes from Prowlarr's definitions by default. To use another copy, such as your own fork, set these on the requests service:
+
+| Setting                  | Default             |
+| ------------------------ | ------------------- |
+| `DEFINITIONS_REPOSITORY` | `Prowlarr/Indexers` |
+| `DEFINITIONS_BRANCH`     | `master`            |
+| `DEFINITIONS_PATH`       | `definitions/v11`   |
+
+### Indexers behind Cloudflare
+
+Some sites answer with Cloudflare's browser check instead of their pages. The `flaresolverr` profile starts [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr), which gets past it. Start it and set `FLARESOLVERR_URL` to `http://flaresolverr:8191`:
+
+```bash
+COMPOSE_PROFILES=requests,flaresolverr docker compose up -d
+```
+
+Without it, those indexers report that Cloudflare stopped them.
+
+### Failing indexers
+
+Valence raises a warning, and sends the `requests.indexerFailing` webhook, when an enabled indexer fails three times in a row. Five failures turn it off. `requests.indexerWorking` follows when it answers again.
+
+## Download clients
+
+The admin area's **Downloads** page adds them: qBittorrent or Transmission for torrents, and SABnzbd or NZBGet for usenet. Give each the address the requests service reaches it at, which inside the compose network is its container's name, such as `http://qbittorrent:8080`, plus its login, or SABnzbd's API key.
+
+Valence sends everything under one **category** per kind of library (a label in Transmission):
+
+| Kind   | Default category |
+| ------ | ---------------- |
+| Films  | `valence-films`  |
+| Series | `valence-series` |
+| Music  | `valence-music`  |
+| Books  | `valence-books`  |
+
+Valence only ever lists, pauses or removes what carries one of these categories, so the rest of your client is left alone. Like Sonarr's and Radarr's categories, each can be given its own download folder in the client.
+
+A search sends a release to the first client switched on that takes it, as the kind searched for. Searching for anything, it uses the kind its indexer filed it under, and asks where that does not say. The Downloads page follows each download: progress, speed, time left, and seeds and peers for torrents. The clients are asked every couple of seconds while that page is open, and every half minute otherwise, which is how Valence notices a download finishing or failing.
+
+### Paths must line up
+
+Point each category's folder somewhere under `DOWNLOADS_PATH`. Where the client and the requests service see that folder by different names, for example the client mounting it at `/downloads` and the requests service somewhere else, tell the client's dialog both, under **Where it saves downloads**, so a finished download can be found.
+
+### Hard links
+
+Filing hard links where it can, so a film takes no extra room and a torrent goes on seeding. A hard link only works within one filesystem as a container sees it. `MEDIA_PATH` and `DOWNLOADS_PATH` are mounted separately, so as the compose file stands a torrent's files are copied and a usenet download's files are moved. To hard link instead, keep both on one disk, mount their common parent into the download client and the requests service at the same place, and point your libraries and the client's folders inside it.
+
+## A VPN for the download client
+
+The `vpn` profile starts [gluetun](https://github.com/qdm12/gluetun). Fill in its provider settings from gluetun's wiki, put your download client on its network with `network_mode: service:gluetun`, and publish the client's web port on gluetun rather than on the client.
+
+The compose file reads these gluetun settings from `.env`:
+
+```ini
+VPN_SERVICE_PROVIDER=your-provider
+VPN_TYPE=wireguard
+WIREGUARD_PRIVATE_KEY=your-key
+VPN_SERVER_COUNTRIES=Netherlands
+VPN_API_KEY=key-from-genkey
+VPN_URL=http://gluetun:8000
+```
+
+`docker run --rm qmcgaw/gluetun genkey` makes a key. With `VPN_URL` and `VPN_API_KEY` set, the admin area's **Requests** page shows whether the tunnel is up and where traffic leaves from, and Valence raises a warning and a webhook when it drops.
+
+An example of a download client added to the same stack, behind gluetun. This is an illustration to adapt, not a service the repository ships:
+
+```yaml
+services:
+  gluetun:
+    ports:
+      - '8080:8080'
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    network_mode: service:gluetun
+    depends_on:
+      - gluetun
+    volumes:
+      - ${DOWNLOADS_PATH:-./downloads}:/downloads
+```
+
+The web port is published on `gluetun`, so from the requests service the client is at `http://gluetun:8080`, not `http://qbittorrent:8080`.
+
+**The kill switch is the point of doing it this way.** gluetun's firewall is on unless you turn it off (`FIREWALL=on` is its default), and a container sharing gluetun's network has no other way out. When the tunnel drops, the download client's traffic stops rather than going out over your own address. Two things undo that, so do neither:
+
+- Do not give the download client `network_mode: bridge` or ports of its own. Its web interface is published on gluetun, which is what keeps it behind the firewall.
+- Do not add your LAN to `FIREWALL_OUTBOUND_SUBNETS` beyond what you need to reach the web interface, since anything listed there is reachable without the tunnel.
+
+The requests service does not go through the VPN and does not need to. It talks to your indexers and to the download client, and the download client is what speaks to the swarm.
+
+## Quality profiles
+
+A **quality profile** is what releases are judged by. The admin area's **Profiles** page manages them, and a request can be given one when it is approved.
+
+- **A profile is chosen** when the request is approved, or the library's own is used, or the defaults apply.
+- **Defaults for video.** With no profile at all, 1080p or 720p from any good source is taken.
+- **Defaults for music.** A music quality profile puts FLAC before MP3 and so on. With none, the choice is FLAC, MP3 320 or V0.
+- **Upgrades.** Where the profile upgrades, a better release replaces what was fetched until the profile's limit is reached.
+- **Not out yet.** A film is held until it is out at home, digitally or on disc, as its profile says, and an episode until it airs.
+
+## Per library behaviour
+
+A library's own settings, on the **Libraries** page, say how requesting treats it:
+
+| Setting                      | What it does                                                                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Takes requests               | Off, and nothing is filed there and it is not offered when somebody asks. A library of things you ripped yourself can be left out entirely. |
+| Quality profile for requests | The profile releases for it are judged by. Left alone, whichever profile names this library is used, and failing that the defaults.         |
+| Where requests are filed     | A folder of its own for what is fetched, where you want it kept apart from what you already had. The library's own folder otherwise.        |
+
+One server-wide setting sits beside them, on the **Settings** page: **what a request for an artist watches**. Albums alone unless you say otherwise.
+
+## Making and approving requests
+
+Films and series come from the catalogue, which needs `CATALOGUE_API_KEY`. Music comes from MusicBrainz, which needs no key. Valence asks it no more than once a second and names itself when it does.
+
+- Somebody with `requests.ask` makes a request, and `requests.askMusic` covers music.
+- It waits for somebody with `requests.approve`, unless the asker's role has `requests.autoApprove`.
+- Approving opens the request first, so its profile, library, and the seasons or record kinds it watches can be changed. Several waiting requests can be approved, or refused with one reason between them.
+- A refusal's reason is shown to whoever asked, on their own requests page.
+
+After approval, everything wanted is searched for at once. A request that finds nothing acceptable stays **wanted**, and is searched for again every six hours and on demand with **Search for what is missing**. The indexers' newest releases are read every quarter of an hour. A download that fails, or stalls for six hours, blocklists that release and the next best is fetched straight away. Anything a request gave up on is listed under **Never again**, and can be let back.
+
+For how requesters see it, read [Requests](/use/requests). The `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`, `requests.filed`, `requests.available`, `requests.downloadStarted` and `requests.downloadFailed` webhooks follow a request along. See [Notifications and webhooks](/use/notifications-and-webhooks).
+
+## How things are filed
+
+| Kind    | Filed as                                                                                                   |
+| ------- | ---------------------------------------------------------------------------------------------------------- |
+| Film    | `Title (Year)/Title (Year).mkv`                                                                            |
+| Episode | `Title (Year)/Season 01/Title (Year) - S01E01 - Episode.mkv`                                               |
+| Album   | `Artist/Album (Year)/01 - Title.flac`, or `1-01 - Title.flac` over several discs, with the cover beside it |
+
+Music is named from what its tracks' tags say, not from what the download is called. Valence then reads just that folder, ties the request to what it found and tells whoever asked, in the app and by push where they chose.
+
+## Troubleshooting
+
+| Symptom                                 | Likely cause                                                                                                    |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| No requesting anywhere in Valence       | `REQUESTS_URL` or `REQUESTS_SECRET` is missing or the secrets differ. The log says which.                       |
+| The requests container refuses to start | `REQUESTS_SECRET` is empty or shorter than 32 characters.                                                       |
+| Indexer says Cloudflare stopped it      | Start the `flaresolverr` profile and set `FLARESOLVERR_URL`.                                                    |
+| A finished download is not found        | The client and the requests service see the folder under different names. Fill in **Where it saves downloads**. |
+| Files are copied instead of hard linked | `MEDIA_PATH` and `DOWNLOADS_PATH` are on separate mounts. See [Hard links](#hard-links).                        |
+| The VPN status is missing               | `VPN_URL` and `VPN_API_KEY` are not set on the requests service.                                                |
+
+See [Troubleshooting](/reference/troubleshooting) for more.

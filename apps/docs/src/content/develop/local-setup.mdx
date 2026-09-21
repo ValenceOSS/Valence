@@ -1,0 +1,227 @@
+---
+title: Local setup
+description: Install the toolchain, start Postgres, run the server, web client, media service and desktop app, and know which checks guard every commit.
+order: 2
+---
+
+This page takes you from a fresh clone to a running Valence development environment. You need a database, a Node toolchain and, if you work on the media pipeline, Rust and FFmpeg. Read [Architecture](/develop/architecture) first if you want the picture of what you are about to start.
+
+## Prerequisites
+
+| Tool    | Version                                            | Why                                                                                          |
+| ------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Node.js | The version in `.nvmrc` (currently 24)             | Runs the server, the tooling and every build. `package.json` requires `node` at 24 or newer. |
+| pnpm    | 10.34.5, from the `packageManager` field           | The workspace manager. Enable it with `corepack enable`.                                     |
+| Docker  | Any recent Docker with Compose                     | Runs Postgres for development.                                                               |
+| Rust    | Stable, through [rustup](https://rustup.rs)        | Builds the media service. Optional if you only touch the web client.                         |
+| FFmpeg  | Valence's own build, fetched by `pnpm ffmpeg:sync` | The media service drives it as a child process.                                              |
+
+Two notes on that table.
+
+- Skipping Rust is fine for web work. The dev script for the media service tells you in a sentence that `cargo` was not found, rather than failing with a stack trace.
+- Skipping the FFmpeg sync is not fatal but it is worse than it looks. The media service falls back to whatever `ffmpeg` is on your `PATH`. On a Mac, Homebrew's build has no `overlay_videotoolbox` or `tonemap_videotoolbox`, so subtitles and HDR quietly leave the hardware and nothing says so.
+
+## Clone and install
+
+```bash
+git clone https://github.com/ValenceOSS/Valence.git
+cd Valence
+corepack enable
+pnpm install
+```
+
+`pnpm install` also runs the `prepare` script, which installs the husky git hooks. See [Hooks and CI](#hooks-and-ci) below.
+
+The install reports one unmet peer dependency, from `electron-vite` about Vite 8. It is expected and nothing is broken: the desktop app builds, and the warning describes a Vite range the tool was released before.
+
+## Environment
+
+The server, the requests service and the media service dev script all read one `.env` file at the repository root. It is git-ignored. Start from the example.
+
+```bash
+cp .env.example .env
+```
+
+`.env.example` is written for the container, so two values need changing for development.
+
+```ini
+NODE_ENV=development
+DATABASE_URL=postgres://valence:valence@localhost:5432/valence
+```
+
+The example points `DATABASE_URL` at a host named `db`, which only exists inside Compose, and sets `NODE_ENV` to `production`. The server's own defaults are `development` and the `localhost` URL above, so removing both lines works too.
+
+The rest of the example is safe as it stands for development. The values that matter most:
+
+| Variable             | Development value                             | Notes                                                                                                                                 |
+| -------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET` | Any string of 32 or more characters           | The example value is long enough.                                                                                                     |
+| `BETTER_AUTH_URL`    | `http://localhost:8420`                       | Passkeys derive their relying party from this hostname.                                                                               |
+| `TRUSTED_ORIGINS`    | `http://localhost:8420,http://localhost:5173` | The dev client runs on 5173 and proxies to 8420, so both must be listed. A missing origin is the usual cause of "login does nothing". |
+| `COOKIE_SECURE`      | `false`                                       | Secure cookies are never sent over plain HTTP.                                                                                        |
+| `TRANSCODER_URL`     | `unix:/tmp/valence-transcoder.sock`           | The server dials it and the media service binds it. `/run` is root owned outside a container, so a temporary path is used.            |
+| `MIGRATE_ON_START`   | `true`                                        | The server migrates the database when it starts. See [Database and migrations](/develop/database-and-migrations).                     |
+
+The desktop client is trusted without being listed. Its dev server is an ordinary web address though, so add `http://localhost:5174` to `TRUSTED_ORIGINS` to work on it. For every variable, see [Environment variables](/reference/environment-variables) and [Configuration](/install/configuration).
+
+### Valence's FFmpeg
+
+```bash
+pnpm ffmpeg:sync
+```
+
+This fetches the FFmpeg build the shipped image carries (the version pinned in the `Dockerfile`), unpacks it into `.ffmpeg` at the repository root and records `VALENCE_FFMPEG` and `VALENCE_FFPROBE` in your `.env`. It never overwrites either variable if you have already set them.
+
+## Start Postgres
+
+`compose.dev.yaml` defines a Postgres 18 service named `db` (user, password and database all `valence`, port 5432), plus a `valence` service that builds the whole image and two optional profiles. For daily development you only want the database.
+
+```bash
+docker compose -f compose.dev.yaml up -d db
+```
+
+Data lives in a named volume, `db-data`, so it survives restarts. The optional services are `requests` (behind the `requests` profile, built from `apps/requests/Dockerfile`) and `flaresolverr` (behind its own profile). You normally run the requests service from source instead, as described below.
+
+## Migrations
+
+You do not need to run migrations by hand. The server applies pending migrations when it starts, because `MIGRATE_ON_START` defaults to `true`. The requests service does the same for its own schema. When you change a schema you generate a migration yourself, which is covered in [Database and migrations](/develop/database-and-migrations).
+
+## Run the services
+
+You have two ways to start things: everything at once, or one service at a time.
+
+```bash
+pnpm dev
+```
+
+`pnpm dev` runs `turbo run dev`, which starts the `dev` script of every workspace package that has one: the server, web client, media service, requests service, desktop app, landing site and this documentation. That is more than most tasks need, and the requests service will refuse to start without a `REQUESTS_SECRET` of at least 32 characters. Filter to what you are working on.
+
+```bash
+pnpm dev --filter=@valence/server --filter=@valence/web --filter=@valence/transcoder
+```
+
+Or run one at a time, each in its own terminal.
+
+```bash
+pnpm --filter @valence/server dev
+pnpm --filter @valence/web dev
+pnpm --filter @valence/transcoder dev
+pnpm --filter @valence/requests dev
+```
+
+| Service          | Command                                 | What it does                                                                                     | Port                                              |
+| ---------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| Server           | `pnpm --filter @valence/server dev`     | `tsx watch` over `src/Main.ts`, reading the root `.env`                                          | 8420                                              |
+| Web client       | `pnpm --filter @valence/web dev`        | Vite dev server that proxies `/api` (with WebSockets) to 8420                                    | 5173                                              |
+| Media service    | `pnpm --filter @valence/transcoder dev` | Runs `cargo run --bin valence-transcoder -- serve` through `tools/transcoder/serveTranscoder.ts` | The unix socket in `TRANSCODER_URL`               |
+| Requests service | `pnpm --filter @valence/requests dev`   | `tsx watch` over its `src/Main.ts`                                                               | 8421, from `REQUESTS_PORT`                        |
+| Desktop          | `pnpm --filter @valence/desktop dev`    | `electron-vite dev`                                                                              | The renderer's dev server, 5174 in `.env.example` |
+
+The media service dev script decides for you what to do. With a `unix:` address in `TRANSCODER_URL` it starts the Rust service. With an `http://` address it assumes the service runs elsewhere and starts nothing. With no address it stops and tells you to copy `.env.example`.
+
+Once the server is up, these addresses work:
+
+| Address                                  | What is there                                       |
+| ---------------------------------------- | --------------------------------------------------- |
+| `http://localhost:5173`                  | The web client, with hot reload                     |
+| `http://localhost:8420/api`              | The API                                             |
+| `http://localhost:8420/api/reference`    | The Scalar API reference                            |
+| `http://localhost:8420/api/openapi.json` | The OpenAPI document                                |
+| `http://localhost:8420/api/health`       | Health, including whether the media service answers |
+
+The server serves the built web client from `apps/web/dist` at port 8420. In development you use port 5173 instead, so you never need that build.
+
+<Callout title="Adding a ValenceUI component" tone="warning">
+  The web dev server reads `tsconfig.paths.json` when it starts, and its config restarts the server
+  in place when that file changes. Write the new component file before anything imports it, or Vite
+  may cache the failed resolution until you restart the server.
+</Callout>
+
+### Running requesting locally
+
+Set both variables in `.env`, using the same secret for the server and the requests service.
+
+```ini
+REQUESTS_URL=http://localhost:8421
+REQUESTS_SECRET=a-random-value-of-at-least-32-characters
+```
+
+Then start `pnpm --filter @valence/requests dev`. Leave both variables empty to switch requesting off entirely, in which case Valence shows nothing about it. The optional settings (`VPN_URL`, `VPN_API_KEY`, `REQUESTS_PORT`, `FLARESOLVERR_URL` and the indexer definition repository) are commented in `.env.example`.
+
+## First administrator
+
+A fresh database has no accounts. Open `http://localhost:5173` and the web client shows first-run setup, which calls `GET /api/setup/status` and then `POST /api/setup`. Setup creates the administrator, records your trusted origins and marks setup complete. A second attempt answers `409`, so it cannot be used to add accounts later. Afterwards, add libraries from the admin area. See [First run](/use/first-run) and [Libraries](/use/libraries) for the viewer's side.
+
+## Media for development
+
+To work on the web client you only need a library folder with a few files in it. To work on the media pipeline you want the fixture corpus.
+
+```bash
+pnpm fixtures:sync --tier 1
+```
+
+Fixtures are generated or fetched by `tools/fixtures` and written outside the working tree, to `~/.cache/valence-fixtures` unless `VALENCE_FIXTURES_DIR` says otherwise. The bytes stay out of the repository so cloning stays fast. `fixtures.manifest.json` at the repository root records each fixture, its tier, its licence and its checksum.
+
+| Tier | Contents                                                                                                                                  |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | Costs nothing but time and runs everywhere. What a contributor gets by default.                                                           |
+| 1    | Adds real-world samples fetched on demand from public sources, such as bitmap (PGS) subtitles. They are fetched, never redistributed.     |
+| 2    | Includes Dolby Vision and HDR10+, which FFmpeg cannot author. They are written by two MIT tools the sync fetches and muxed by `mkvmerge`. |
+
+Asking for a higher tier includes the lower ones. Tests that need an absent tier skip with a message naming the command that builds it, and never silently pass. See [Testing](/develop/testing).
+
+## The docs site
+
+This site is `apps/docs`. It compiles the MDX in `src/content` and serves the API reference from a generated OpenAPI document.
+
+```bash
+pnpm --filter @valence/docs dev
+pnpm --filter @valence/docs build
+```
+
+`build` runs the `spec` script first, which writes `public/openapi.json` by building the server's app over in-memory services, then `tsc --build` and `vite build`. It needs no database. Vite prints the address the dev server picked.
+
+## Root scripts
+
+| Command                            | What it does                                                                |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| `pnpm build`                       | `turbo run build` across every package and app                              |
+| `pnpm dev`                         | `turbo run dev`, see above                                                  |
+| `pnpm test`                        | `turbo run test`, every package                                             |
+| `pnpm test:coverage`               | The same, passing `--coverage`                                              |
+| `pnpm coverage`                    | Coverage, then checks the mean across packages against the 90 percent floor |
+| `pnpm typecheck`                   | `turbo run typecheck`                                                       |
+| `pnpm lint`                        | `oxlint`, then `eslint .`, then the comment checker                         |
+| `pnpm lint:fix`                    | The same with `--fix`                                                       |
+| `pnpm format`, `pnpm format:check` | Prettier over the whole tree                                                |
+| `pnpm branch:check`                | Checks the current branch name                                              |
+| `pnpm db:check`                    | Checks the Drizzle snapshots still describe the schema                      |
+| `pnpm rust:check`                  | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`         |
+| `pnpm rust:test`                   | `cargo test`                                                                |
+| `pnpm fixtures:sync`               | Builds the media fixture corpus                                             |
+| `pnpm ffmpeg:sync`                 | Fetches Valence's FFmpeg build                                              |
+
+Turbo's `build` and `typecheck` tasks depend on `^build`, so a package's dependencies build first. Remember that `packages/screens` typechecks against the built output of `packages/ui`, so rebuild the UI package with `pnpm --filter @valence/ui build` before trusting a type error in screens.
+
+## Hooks and CI
+
+Husky installs three hooks.
+
+| Hook         | Runs                                                                                                                         |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `commit-msg` | `commitlint`, enforcing [Conventional Commits](/develop/coding-standard)                                                     |
+| `pre-commit` | `lint-staged`: oxlint, eslint and prettier on staged TypeScript, prettier on JSON, Markdown, CSS and YAML, `rustfmt` on Rust |
+| `pre-push`   | `pnpm lint`, `pnpm typecheck`, `pnpm branch:check`, `pnpm test`, `pnpm rust:check` and `pnpm rust:test`                      |
+
+Do not use `--no-verify` to get past a failing hook. CI runs the same checks, so it only delays the failure.
+
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`. Lint and `pnpm db:check` start at once. One job builds every package other packages depend on and caches turbo's output. Typecheck and every test job restore that cache, so nothing rebuilds. Tests run one package per runner, and `@valence/screens` is sharded four ways because it is the one package on jsdom with hundreds of test files. The Rust job runs only on pull requests that touch the transcoder, in a Debian container with Valence's FFmpeg, and always on `main`. The media pipeline has its own workflow, described in [Testing](/develop/testing).
+
+## When something does not start
+
+- The server exits with a message naming an environment variable: fix `.env`, since the environment is validated at start-up.
+- Login does nothing: your browser's origin is missing from `TRUSTED_ORIGINS`.
+- The server reports the media service is unreachable: start `pnpm --filter @valence/transcoder dev`, and check the socket path in `TRANSCODER_URL` matches on both ends.
+- Playback has no hardware encoding: run `pnpm ffmpeg:sync`.
+
+For the wider picture see [Troubleshooting](/reference/troubleshooting).

@@ -1,0 +1,96 @@
+---
+title: Desktop app
+description: What the Valence desktop app is, how it finds your server, what it adds over a browser and how to build it from source.
+order: 7
+---
+
+The desktop app is an Electron application that gives Valence a window of its own on macOS, Windows and Linux. It is a window onto a server and nothing more: it does not run a server, keep a library or replace the browser client's role. Everything you see is the same application the web client runs. You still need a running Valence server to use it.
+
+## What it is
+
+Valence's front end is split into packages. One holds what Valence is (readers, queries, realtime, sessions), one holds what it looks like (every screen and its routes), and a **client** is a host that runs them. The browser is one host. The desktop app is another, with different answers to the four things a host is asked: where preferences live, what to call this client, which client this is, and how to open a socket.
+
+Because both clients run the same code, features arrive on both together. The repository describes the desktop as "a window onto the server", and that is the right model to keep in mind. The screens are drawn by the app rather than fetched from the server as pages, and requests to the server go out through the application's own process, so nothing is cross-origin and signing in is an ordinary request.
+
+## What it adds over a browser
+
+- **Its own window.** A frameless window with a draggable strip along the top, an application menu and a Dock icon on macOS.
+- **Finding your server.** It looks for a server on the same machine and only asks you for an address when it does not find one. See below.
+- **Downloads it can keep.** Offline downloads are held in the app's own user data folder, not your operating system's Downloads folder. A file in Downloads gets renamed, moved and tidied away by other programs, and the app would keep listing something that was gone. In its own folder, one thing owns the files and can say honestly what is still on disk.
+- **Discord activity.** Where Discord is running on the same machine, the app can show what you are watching in your Discord status. It is optional and quiet: if Discord is not running, nothing happens and nothing complains.
+- **Change server.** A menu item to point the window at a different server.
+
+## How it finds the server
+
+The first thing the app shows is a **Connect to server** screen, because until it is answered there is no server to ask anything of.
+
+1. **It looks on this machine.** It asks `http://localhost:8420` and then `http://127.0.0.1:8420` whether a Valence answers at `/api/health`. If you start the app and the server together, it keeps looking quietly for up to a minute, checking every two seconds, so that a server that is still starting is found rather than missed.
+2. **It offers what it found.** A server found on this machine is offered, so you do not have to type it.
+3. **It asks you otherwise.** If your server is on another machine, type its address. Use the same address you use in a browser, such as `https://valence.example.com`.
+
+The app does not scan your network. Sweeping a network for open ports is what a scanner does, and on a shared network it means knocking on machines that are not yours. If your Valence is elsewhere, you are asked for it.
+
+The address is remembered in the app's preference file, so later launches go straight to your server. If a remembered address stops answering and there is nothing on the device to fall back on, the app asks again and shows you the address that stopped answering rather than an empty box. If you have downloads on the device, it keeps them available, because a laptop on a plane has not mistyped its address.
+
+### Changing server
+
+Choose **Change server** from the **File** menu, or press `Ctrl+Shift+S` on Windows and Linux or `Cmd+Shift+S` on macOS. On macOS it is also in the Valence application menu. It forgets the remembered address and shows the Connect screen again. It has to be a menu item because once the window is showing your server's screens there is no screen of the app's own left to put a button on.
+
+### Server settings that matter
+
+- **Trusted origins.** The desktop client is trusted without being listed in `TRUSTED_ORIGINS`, since it is not a page anybody can navigate to. Sign in works against a server that lists only its public address.
+- **HTTPS.** A server behind a reverse proxy works the same way as it does in a browser. Type the `https://` address.
+- **Development builds.** The desktop dev server is an ordinary web address, so if you work on it, add `http://localhost:5174` to `TRUSTED_ORIGINS`.
+- **Versions.** The app carries its own copy of the screens, built from the same repository as the server. The repository does not state a compatibility guarantee across versions, so keep the app and the server at the same release when you can.
+
+## Getting the app
+
+The release workflow attaches `compose.yaml`, `env.example` and the web client to a GitHub release. It does not attach desktop installers at the time of writing, so for now you build the app from source. Check the [releases page](https://github.com/ValenceOSS/Valence/releases) for anything newer.
+
+## Building from source
+
+You need Node 24 or newer and pnpm 10, the same as for [local development](/develop/local-setup). Clone the repository and install its dependencies:
+
+```bash
+git clone https://github.com/ValenceOSS/Valence.git
+cd Valence
+corepack enable
+pnpm install
+```
+
+The desktop app uses a build of Electron from castlabs (a fork that supports Widevine), fetched from a GitHub release mirror named in `apps/desktop/package.json`. The install therefore needs internet access to GitHub, and the first install downloads a full Electron.
+
+To run it in development, against a server you already have running:
+
+```bash
+pnpm --filter @valence/desktop dev
+```
+
+To make an installable package for the operating system you are on:
+
+```bash
+pnpm --filter @valence/desktop package
+```
+
+That builds the app with `electron-vite` and packages it with `electron-builder`. The output goes to `apps/desktop/release`. The builder is configured for macOS, Windows and Linux, with application id `app.valence.desktop`. As with most Electron builds, produce each platform's package on that platform. The repository does not document cross-building.
+
+Run the tests and type checks for the package with:
+
+```bash
+pnpm --filter @valence/desktop test
+pnpm --filter @valence/desktop typecheck
+```
+
+The desktop app's own code lives in `apps/desktop`. Read [Repository layout](/develop/repository-layout) and [Contributing](/develop/contributing) if you want to change it.
+
+## Troubleshooting
+
+| Symptom                                           | Likely cause                                                                                                     |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| It does not find my server                        | Only this machine is looked at. Type the address. Check that `/api/health` answers at that address in a browser. |
+| Sign-in fails from the app but works in a browser | Check `PUBLIC_URL`, `COOKIE_SECURE` and your proxy. See [Reverse proxy](/install/reverse-proxy).                 |
+| I typed the wrong address                         | Use **Change server** in the **File** menu.                                                                      |
+| Nothing updates on its own                        | The WebSocket is not passing through your proxy. Same cause and fix as in a browser.                             |
+| The install fails downloading Electron            | The install needs access to GitHub's release downloads. Check the network and any proxy.                         |
+
+See [Troubleshooting](/reference/troubleshooting) for the rest.

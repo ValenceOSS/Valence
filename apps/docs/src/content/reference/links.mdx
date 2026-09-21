@@ -1,0 +1,130 @@
+---
+title: Links and resources
+description: A directory of Valence's repository, releases, changelog, community, container images, licence and policies, plus a guide from what you want to do to the right page.
+order: 7
+---
+
+This page collects the places that matter around Valence: where the code lives, where releases and images come from, where to talk to people, and which page of this documentation answers which question.
+
+## Project
+
+| What                                                | Where                                                                                          |
+| :-------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| Source code                                         | [github.com/ValenceOSS/Valence](https://github.com/ValenceOSS/Valence)                         |
+| Issues, bugs and feature requests                   | [github.com/ValenceOSS/Valence/issues](https://github.com/ValenceOSS/Valence/issues)           |
+| Discussions (where the repository has them enabled) | [github.com/ValenceOSS/Valence/discussions](https://github.com/ValenceOSS/Valence/discussions) |
+| Releases                                            | [github.com/ValenceOSS/Valence/releases](https://github.com/ValenceOSS/Valence/releases)       |
+| Changelog                                           | [getvalence.app/changelog](https://getvalence.app/changelog)                                   |
+| Website                                             | [getvalence.app](https://getvalence.app)                                                       |
+| Community chat                                      | [Discord](https://discord.gg/uTtcAHMy9N)                                                       |
+
+Every release carries the files a deployment needs: `compose.yaml`, `env.example` and the built web client as `valence-web.tar.gz`. The release notes list who did the work, pull request by pull request. The `CHANGELOG.md` at the root of the repository is the full history, written from commit messages.
+
+The OpenAPI document is not attached to releases, on purpose. The running server serves it at `/api/openapi.json`, so the copy you read is always the one that matches your server. This site's [API reference](/api) is generated from the same routes.
+
+## Container images
+
+Valence publishes images to the GitHub Container Registry, named for the repository owner in lower case.
+
+| Image                                    | What it is                                                                                  |
+| :--------------------------------------- | :------------------------------------------------------------------------------------------ |
+| `ghcr.io/marquescoding/valence`          | The server, web client and media service, as `compose.yaml` names it at the time of writing |
+| `ghcr.io/marquescoding/valence-requests` | The optional requests service                                                               |
+
+The release workflow builds both images from the repository and pushes them under the owner name in lower case, so if the compose file in the release you downloaded names a different owner, use that one. Pull what your compose file names, and treat the compose file as the source of truth. The package page for the server is at [github.com/ValenceOSS/Valence/pkgs/container/valence](https://github.com/ValenceOSS/Valence/pkgs/container/valence).
+
+Three kinds of tag exist, and only releases are `latest`.
+
+| Tag                                 | What it is                                                        |
+| :---------------------------------- | :---------------------------------------------------------------- |
+| `latest`, `1.0.0`, `1.0`, `1`       | A release. Following `latest` changes only when a release is cut. |
+| `1.0.1-dev`, `dev`, `sha-3a2e85d`   | The newest `main`, unreleased, rebuilt at every merge.            |
+| `3a2e85d-nightly`, `pr-123-nightly` | A build somebody asked for by hand, usually from a pull request.  |
+
+Use a `-dev` or `-nightly` tag to try something before it ships, and expect it to be rough. Release images are built for `linux/amd64`. See [Updating](/install/updating) and [Rolling back](/install/rolling-back).
+
+Other images in the stack come from their own projects.
+
+| Image                               | Project                                                               |
+| :---------------------------------- | :-------------------------------------------------------------------- |
+| `postgres:18-alpine`                | [PostgreSQL](https://www.postgresql.org)                              |
+| `qmcgaw/gluetun`                    | [gluetun](https://github.com/qdm12/gluetun), the VPN client container |
+| `ghcr.io/flaresolverr/flaresolverr` | [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr)          |
+
+## Licence and policies
+
+| Document                                          | Where                                                                                                                                               |
+| :------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Licence: MIT                                      | [LICENSE.md](https://github.com/ValenceOSS/Valence/blob/main/LICENSE.md)                                                                            |
+| Security policy and how to report a vulnerability | [SECURITY.md](https://github.com/ValenceOSS/Valence/blob/main/SECURITY.md), summarised in [Security](/reference/security)                           |
+| Contributing guide                                | [CONTRIBUTING.md](https://github.com/ValenceOSS/Valence/blob/main/CONTRIBUTING.md), summarised in [Contributing](/develop/contributing)             |
+| Coding standard                                   | [CODING_STANDARD.md](https://github.com/ValenceOSS/Valence/blob/main/CODING_STANDARD.md), summarised in [Coding standard](/develop/coding-standard) |
+| Deployment notes                                  | [DEPLOYMENT.md](https://github.com/ValenceOSS/Valence/blob/main/DEPLOYMENT.md), covered by the [Install](/install/docker-compose) section           |
+
+Valence is MIT licensed, and copyright belongs to its contributors.
+
+## Related projects
+
+| Project                                                        | Why it matters here                                                                                                                          |
+| :------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- |
+| [valence-ffmpeg](https://github.com/ValenceOSS/valence-ffmpeg) | Valence's own FFmpeg build, which the image installs. It carries the patches that give hardware tone mapping and overlays on some platforms. |
+| [better-auth](https://www.better-auth.com)                     | The authentication library behind sign-in, sessions, passkeys and API keys                                                                   |
+| [Drizzle](https://orm.drizzle.team)                            | The database toolkit, and the origin of the migrations                                                                                       |
+| [Prowlarr Indexers](https://github.com/Prowlarr/Indexers)      | The default source of indexer definitions for the requests service                                                                           |
+| [TMDB](https://www.themoviedb.org)                             | The metadata catalogue behind `CATALOGUE_API_KEY`                                                                                            |
+| [MusicBrainz](https://musicbrainz.org)                         | The music catalogue used for music requests                                                                                                  |
+
+## Getting the files
+
+Download the compose file straight from the repository:
+
+```bash
+curl -O https://raw.githubusercontent.com/ValenceOSS/Valence/main/compose.yaml
+```
+
+Or take the files attached to the release you want, which match that release exactly. The `.env.example` in the repository is written for running from source. The variables a compose deployment reads are in [Environment variables](/reference/environment-variables).
+
+## Where to ask for help
+
+1. Search this documentation, starting with [Troubleshooting](/reference/troubleshooting) and the [FAQ](/start/faq).
+2. Ask on [Discord](https://discord.gg/uTtcAHMy9N) for quick questions and setup help.
+3. Open an [issue](https://github.com/ValenceOSS/Valence/issues) for something that looks like a bug, with your version, what you expected and the relevant log lines.
+4. For a security problem, do not post anywhere public: use the [private advisory form](https://github.com/ValenceOSS/Valence/security/advisories/new).
+
+## I want to...
+
+| I want to                                               | Go to                                                                                                          |
+| :------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------- |
+| Understand what Valence is                              | [Introduction](/start/introduction) and [Concepts](/start/concepts)                                            |
+| Check my machine can run it                             | [System requirements](/start/system-requirements)                                                              |
+| Get it running quickly                                  | [Quick start](/start/quick-start)                                                                              |
+| Install it properly with Docker Compose                 | [Docker Compose](/install/docker-compose)                                                                      |
+| Put it behind HTTPS and a domain                        | [Reverse proxy](/install/reverse-proxy)                                                                        |
+| Change a setting, or find what a variable does          | [Configuration](/install/configuration) and [Environment variables](/reference/environment-variables)          |
+| Mount my media, and understand the volumes              | [Storage and volumes](/install/storage-and-volumes)                                                            |
+| Use my GPU for transcoding                              | [Hardware transcoding](/install/hardware-transcoding)                                                          |
+| Let people ask for films and series                     | [Requesting](/install/requesting) and [Requests](/use/requests)                                                |
+| Use the desktop app                                     | [Desktop app](/install/desktop-app)                                                                            |
+| Update, roll back or remove Valence                     | [Updating](/install/updating), [Rolling back](/install/rolling-back) and [Uninstalling](/install/uninstalling) |
+| Do the first-run setup                                  | [First run](/use/first-run)                                                                                    |
+| Add and scan libraries                                  | [Libraries](/use/libraries)                                                                                    |
+| Play things, and understand direct play and transcoding | [Playing media](/use/playing-media)                                                                            |
+| Add people, and control what they can do                | [Accounts and roles](/use/accounts-and-roles)                                                                  |
+| Read logs and see what jobs are doing                   | [Jobs and logs](/use/jobs-and-logs)                                                                            |
+| Change server settings                                  | [Settings](/use/settings)                                                                                      |
+| Get told about events, or call a URL when they happen   | [Notifications and webhooks](/use/notifications-and-webhooks)                                                  |
+| Share a title with somebody who has no account          | [Sharing](/use/sharing)                                                                                        |
+| Call the API from a script                              | [API overview](/reference/api-overview) and the [API reference](/api)                                          |
+| Find a port, or open the right firewall rules           | [Ports](/reference/ports)                                                                                      |
+| Run a command, or a pnpm script                         | [Command line](/reference/cli)                                                                                 |
+| Fix something that has gone wrong                       | [Troubleshooting](/reference/troubleshooting)                                                                  |
+| Harden an install, or report a vulnerability            | [Security](/reference/security)                                                                                |
+| Understand how it is built                              | [Architecture](/develop/architecture) and [Repository layout](/develop/repository-layout)                      |
+| Run it from source                                      | [Local setup](/develop/local-setup)                                                                            |
+| Work on the database                                    | [Database and migrations](/develop/database-and-migrations)                                                    |
+| Write a plugin                                          | [Plugins](/develop/plugins)                                                                                    |
+| Understand the live update socket                       | [Realtime](/develop/realtime)                                                                                  |
+| Write or run tests                                      | [Testing](/develop/testing)                                                                                    |
+| Build or use UI components                              | [UI library](/develop/ui-library)                                                                              |
+| Understand how releases are made                        | [Releasing](/develop/releasing)                                                                                |
+| Contribute a change                                     | [Contributing](/develop/contributing) and [Coding standard](/develop/coding-standard)                          |

@@ -1,0 +1,133 @@
+---
+title: Rolling back
+description: Go back to an older Valence release by restoring the database snapshot taken before the upgrade, and understand why an older release refuses a newer database.
+order: 9
+---
+
+Valence migrations only go forward. Once a newer release has changed the database, an older release cannot read it. To go back you restore the snapshot that Valence took just before that upgrade, then start the older image. This page explains the snapshots, walks through a rollback and describes the refusal you see if you skip it.
+
+## How snapshots work
+
+Before a migration changes the database, Valence copies the whole database into a file. The copy is made while the database is still exactly as the older release left it, which is what makes it a way back.
+
+- It is made with `pg_dump` in Postgres's custom format, with the create option, so restoring drops the database and builds it again. That is the only way a rollback also removes the tables a later migration added.
+- It is only taken when a migration is about to run. A restart with nothing to migrate takes none, so snapshots are a way back from upgrades and are not a backup schedule.
+- A database that has never run a migration, as on a fresh install, gets none, because there is nothing in it to lose.
+- The file name starts with the time and ends with the newest migration that was about to run, so you can tell which upgrade each one came before:
+
+  ```text
+  valence-2026-09-21T16-30-05-123Z-before-0078_more.dump
+  ```
+
+- Names sort by age, and Valence keeps only the newest few.
+
+| Setting                 | Default           | Meaning                                                                                     |
+| ----------------------- | ----------------- | ------------------------------------------------------------------------------------------- |
+| `BACKUP_BEFORE_MIGRATE` | `true`            | Set `false` to stop taking snapshots.                                                       |
+| `BACKUP_DIR`            | `/config/backups` | The folder. It is inside the `config` volume, so it survives the container being recreated. |
+| `BACKUPS_KEPT`          | `3`               | How many snapshots to keep. Older ones are deleted after a new one is taken.                |
+
+Only `BACKUPS_KEPT` is passed through by the shipped `compose.yaml`. To set the other two, add them to the `valence` service's `environment:` block. See [Configuration](/install/configuration).
+
+If the snapshot cannot be taken because `pg_dump` is not installed, Valence logs that rolling back to this point will not be possible and carries on. The published image includes the Postgres 18 client. If `pg_dump` is installed and fails, the migration does **not** run.
+
+Snapshots take disk space equal to a full database dump each. See [Storage and volumes](/install/storage-and-volumes).
+
+## Rolling back
+
+Restoring **replaces the database as it is now**. Anything written since the snapshot is lost: watch progress, new accounts, requests, settings changes. Decide that this is acceptable before you begin. If it is not, keep running the newer release.
+
+1. **Stop Valence.** The database cannot be replaced while anything is connected to it. If you run the requests service, stop that too, since it uses the same database.
+
+   ```bash
+   docker compose stop valence requests
+   ```
+
+   Leave the `db` service running.
+
+2. **List the snapshots.** The command runs inside the Valence image. Because the image's entrypoint starts the server, override it so that the command you give is what runs:
+
+   ```bash
+   docker compose run --rm --entrypoint node valence apps/server/dist/Rollback.js --list
+   ```
+
+   It prints the snapshots, newest first:
+
+   ```text
+   Snapshots in /config/backups, newest first:
+     valence-2026-09-21T16-30-05-123Z-before-0078_more.dump
+     valence-2026-08-02T09-12-44-901Z-before-0071_earlier.dump
+   ```
+
+   The number after `before-` is the newest migration that was about to run, so it tells you which release each snapshot precedes. If none exist, it says `There are no snapshots in /config/backups.`
+
+3. **Restore one.** With no name, the newest is restored, which returns you to the state before your latest upgrade:
+
+   ```bash
+   docker compose run --rm --entrypoint node valence apps/server/dist/Rollback.js --restore
+   ```
+
+   To choose one, pass its name:
+
+   ```bash
+   docker compose run --rm --entrypoint node valence apps/server/dist/Rollback.js --restore valence-2026-08-02T09-12-44-901Z-before-0071_earlier.dump
+   ```
+
+   A name that is not in the list is refused, and nothing is changed. On success it prints `Restored.`
+
+4. **Start the older release.** Point the `image:` line at the release that was running when the snapshot was taken, for example a version tag such as `1.0.0` in place of `latest`, then start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+   Do not start a newer release at this point. Starting a newer one applies its migrations again, which is what you rolled back from.
+
+5. **Check health.** `curl -s http://localhost:8420/api/health` should show `"status":"ok"` and the older `version`.
+
+If you follow `latest`, the next `docker compose pull` will fetch the release you rolled back from and migrate the database again. Pin a tag until the problem is fixed.
+
+### Why the command uses an entrypoint override
+
+The Valence image runs both the server and the media service from its entrypoint, so a command placed after the service name does not replace it. The `--entrypoint node` form runs `node` directly, with the rollback script as its argument. Compose's own comments and the refusal message in the log show the shorter form, `docker compose run --rm valence node apps/server/dist/Rollback.js --list`. If that starts a second Valence server rather than printing the list, stop it and use the form above.
+
+While Valence is running, you can also list snapshots with `docker compose exec valence node apps/server/dist/Rollback.js --list`. Do not restore while it runs.
+
+## The refusal
+
+If you start an older release over a database that a newer release has already migrated, Valence refuses to start and fails with a message along these lines:
+
+```text
+This database has run 2 migrations this release does not carry, so a newer Valence has used it.
+Starting an older one over it would read tables it does not understand. Either run the newer
+release again, or roll the database back to the snapshot taken before that upgrade, then start
+this release.
+```
+
+The count is the number of migrations the database has run that this release does not know about. The message also includes the command to stop and list snapshots. It exists because an older release would otherwise read tables it does not understand.
+
+You have two ways out:
+
+- **Run the newer release again.** Set the `image:` line back and start it. Nothing is lost.
+- **Roll the database back**, following the steps above, then start the older release.
+
+Do not try to bypass the check by editing the database's migration table. That is what the refusal is protecting you from.
+
+## When there is no snapshot
+
+Snapshots are not always available: `BACKUP_BEFORE_MIGRATE` may have been `false`, the `config` volume may have been lost, or more upgrades than `BACKUPS_KEPT` may have happened since. In that case the only ways back are your own backups.
+
+- A `pg_dumpall` dump taken before the upgrade, restored the way [Updating](/install/updating#moving-to-postgres-18) restores one.
+- A copy of the `db-data` volume taken while Valence was stopped.
+
+This is why the upgrade routine says to take your own copy before a major upgrade. See [Storage and volumes](/install/storage-and-volumes#backups).
+
+## Quick reference
+
+| Task                     | Command                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| Stop before restoring    | `docker compose stop valence requests`                                                     |
+| List snapshots           | `docker compose run --rm --entrypoint node valence apps/server/dist/Rollback.js --list`    |
+| Restore the newest       | `docker compose run --rm --entrypoint node valence apps/server/dist/Rollback.js --restore` |
+| Restore a named snapshot | The same, followed by the snapshot's file name                                             |
+| Start the older release  | Set the older tag on the `image:` line, then `docker compose up -d`                        |

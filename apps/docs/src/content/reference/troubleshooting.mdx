@@ -1,0 +1,231 @@
+---
+title: Troubleshooting
+description: Problems, causes and fixes for Valence installs, using the real messages the server and media service print, from startup and sign-in to playback and disk space.
+order: 5
+---
+
+Most Valence problems come from a short list of causes: an address that does not match what the browser uses, a mount with the wrong permissions, a proxy that buffers or drops the WebSocket, or a device that is not there. This page starts with a table for quick lookup, then goes through each area in turn. The messages quoted are the ones the code prints, so you can search for them in your logs.
+
+If you do not know where to look first, read the log. See [Reading the logs](#reading-the-logs) at the end of the page.
+
+## Quick lookup
+
+| Problem                                        | Likely cause                                                                       | Fix                                                                              |
+| :--------------------------------------------- | :--------------------------------------------------------------------------------- | :------------------------------------------------------------------------------- |
+| The container starts and stops again           | `devices` and `group_add` in `compose.yaml` on a machine with no GPU               | Delete both, then `docker compose up -d`                                         |
+| Compose stops with `set POSTGRES_PASSWORD`     | A required variable is missing                                                     | Set `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `PUBLIC_URL` and `MEDIA_PATH`     |
+| Startup fails naming a variable                | A value failed validation, such as a secret under 32 characters                    | Fix that variable, see [Environment variables](/reference/environment-variables) |
+| Sign-in does nothing, or answers 403           | The address is not in the trusted origins                                          | Add it to `TRUSTED_ORIGINS`, or on the admin settings page                       |
+| Sign-in works, then you are signed out at once | `COOKIE_SECURE=true` over plain HTTP, or `PUBLIC_URL` is not what the browser uses | Match the scheme and address, see below                                          |
+| Everyone signed out after a restart            | `BETTER_AUTH_SECRET` changed                                                       | Keep the same secret, and sign in again                                          |
+| `429` when signing in                          | The rate limiter                                                                   | Wait for `X-Retry-After` seconds, and set `X-Forwarded-For` at the proxy         |
+| Video stalls or restarts                       | A buffering proxy, a slow disk, or software transcoding                            | Turn buffering off, check hardware acceleration                                  |
+| `/api/health` says `degraded`                  | The media service is not reachable                                                 | Check `TRANSCODER_URL` and the container log                                     |
+| Scan finds nothing                             | Library path is the host path, or the mount is unreadable                          | Use `/media` paths, check permissions                                            |
+| Re-encode says it cannot write                 | Media is mounted read only                                                         | Set `MEDIA_ACCESS` to an empty string                                            |
+| Requests never start downloading               | Requesting is half configured, or the client cannot be reached                     | Set `REQUESTS_URL` and `REQUESTS_SECRET`, test the client                        |
+| Nothing updates by itself                      | The proxy is not passing the WebSocket                                             | Pass `Upgrade` headers to `/api/realtime`                                        |
+| Profile pictures are broken                    | `PROFILE_IMAGE_DIR` has no volume                                                  | Map a volume and upload them again                                               |
+| Previews regenerate after every update         | `VALENCE_ARTEFACT_DIR` has no volume                                               | Map a volume there                                                               |
+| Postgres will not start after an image change  | A major version change over an old data volume                                     | Dump and restore, see below                                                      |
+
+## The server will not start
+
+**Check that the container stays up.** Run `docker compose ps` and then `docker compose logs --tail 100 valence`. The first lines say what stopped it.
+
+**A device that is not there.** The compose file passes `/dev/dri` into the container for hardware transcoding. On a machine without a GPU that device does not exist, and Docker refuses to start the container without saying why. Delete the `devices` and `group_add` entries from the `valence` service. Everything still works, but transcoding runs on the processor. See [Hardware transcoding](/install/hardware-transcoding).
+
+**A required value is missing.** The compose file uses `${VARIABLE:?message}` for four settings, and stops immediately with the message: `set POSTGRES_PASSWORD`, `set BETTER_AUTH_SECRET, at least 32 characters`, `set PUBLIC_URL, e.g. https://valence.example.com` or `set MEDIA_PATH, e.g. /mnt/tank/media`.
+
+**A value is invalid.** The server validates its environment when it starts and exits with a message naming the variable at fault. The usual cases are a `BETTER_AUTH_SECRET` under 32 characters, a `DATABASE_URL` that is not a URL, a boolean that is not exactly `true` or `false`, or a port that is not a positive whole number. The requests service additionally refuses to start without a `REQUESTS_SECRET` of at least 32 characters.
+
+**Postgres is not ready.** The server depends on the database being healthy, which normally takes seconds. If `db` is restarting, read `docker compose logs db`. A wrong `POSTGRES_PASSWORD` after the volume was created shows as an authentication failure in the server log, because the password is only applied when the database is first initialised. Either restore the original password, or, if the data does not matter, remove the `db-data` volume alone.
+
+**The port is taken.** If something else on the host answers on 8420, `docker compose up` reports that the port is already allocated. Set `VALENCE_PORT` to a free port and point the proxy at it.
+
+## Migrations
+
+The server migrates its own database on the way up, which makes the first start after an update slower than usual. The messages you may see are these.
+
+| Message                                                                                                                                                                   | Meaning and fix                                                                                                                                                                            |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Applying 3 migrations this database has not run: ...`                                                                                                                    | Normal. An upgrade is being applied, after a snapshot.                                                                                                                                     |
+| `This database has not run 2 migrations this release carries: ... MIGRATE_ON_START is false, so they have been left alone and reads of the tables they change will fail.` | You turned automatic migration off. Run `docker compose exec valence node apps/server/dist/Migrate.js`, or set `MIGRATE_ON_START` to `true` and restart.                                   |
+| `This database has run 1 migration this release does not carry, so a newer Valence has used it. Starting an older one over it would read tables it does not understand.`  | You started an older image over a database a newer one changed. Run the newer release again, or restore the snapshot taken before that upgrade, see [Rolling back](/install/rolling-back). |
+| `Drizzle skipped 1 of them, which it does for any migration stamped earlier than one already run: ... Applying them now, in the order they were written.`                 | Normal, and handled automatically.                                                                                                                                                         |
+| `These migrations could not be applied: ...`                                                                                                                              | A migration failed. Read the lines above it, and keep the snapshot.                                                                                                                        |
+| `pg_dump is not installed here, so no snapshot was taken before migrating. Rolling back to this point will not be possible.`                                              | The snapshot step could not run. Use the official image, which includes `pg_dump`, or take your own dump first.                                                                            |
+| `The migrations could not be applied: ...`                                                                                                                                | From `Migrate.js`. The reason follows, and the exit status is 1.                                                                                                                           |
+
+Before it changes an existing database, the server copies it to `BACKUP_DIR` (`/config/backups`), keeping the newest `BACKUPS_KEPT`. To go back, stop Valence and use `Rollback.js`, described in the [command line reference](/reference/cli).
+
+## Cannot sign in
+
+Sign-in has more ways to go wrong than any other feature, because three separate things have to agree: the address in the browser, the trusted origins and the cookie settings.
+
+**Origin refused.** Sign-in and sign-out are rejected with `403 MISSING_OR_NULL_ORIGIN` unless the browser's `Origin` header matches a trusted origin. The trusted origins are `TRUSTED_ORIGINS`, whatever was chosen at first-run setup, additions on the admin settings page, and the addresses the machine itself holds. A domain or a Tailscale name has to be added. With the compose file, `TRUSTED_ORIGINS` is set from `PUBLIC_URL`, so if you reach Valence by more than one address, add the others. Scripts must send an `Origin` header too, see the [API overview](/reference/api-overview).
+
+**The cookie is discarded.** If sign-in appears to succeed and you are immediately signed out again, the cookie is not being stored or sent. There are two usual causes.
+
+1. `COOKIE_SECURE` is `true` and you are using plain HTTP. A browser refuses to store a secure cookie from an insecure origin, and does not say so. Reach Valence over HTTPS, or set `COOKIE_SECURE=false` for testing on your own network.
+2. `COOKIE_SECURE` is `false` behind HTTPS. That works, but the cookie is less protected. Set it to `true`.
+
+The secure flag is stored in the database at first-run setup, and once setup has run the stored value wins over the variable, so changing the variable later does not change it. The setup response reports `restartRequired` when the value chosen differs from the one the server started with.
+
+**`BETTER_AUTH_URL` is wrong.** It must be the address the browser uses, which is the proxy's and not the container's. Sign-in builds its redirects from it, and a wrong value fails only at the moment somebody tries to sign in. Passkeys also derive their identity from its hostname, and stop working on a hostname other than the one they were registered on, so changing it invalidates them.
+
+**Rate limiting.** More than `AUTH_RATE_LIMIT_MAX` requests per `AUTH_RATE_LIMIT_WINDOW_SECONDS` from one address answers `429` with `Too many requests. Please try again later.` If everybody in the house hits it, the proxy is not sending `X-Forwarded-For`, so all of them look like one address. Fix the proxy rather than turning the limiter off.
+
+**Signed out for everyone.** Sessions are sealed with `BETTER_AUTH_SECRET`. If it changed, everybody has to sign in again, which is expected.
+
+**Account problems.** A banned account cannot sign in. An administrator can lift the ban on the accounts page. The default password minimum is 10 characters.
+
+## Playback stutters or fails
+
+Start with the health check, which needs no sign-in:
+
+```bash
+curl -s https://valence.example.com/api/health
+```
+
+`"status": "ok"` means the media service answers. `"status": "degraded"` with `"transcoderReachable": false` means the server cannot reach it, so anything that cannot be played directly fails. The log says `transcoder: stopped answering` when this starts and `transcoder: answering again` when it recovers.
+
+| Symptom                                     | Cause                                                                                | Fix                                                                                                                      |
+| :------------------------------------------ | :----------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- |
+| Every transcode fails, health is `degraded` | The media service is not running or `TRANSCODER_URL` disagrees with where it listens | In the standard image both are set for you. If you set `TRANSCODER_URL`, remove it, or use the same value on both halves |
+| Playback answers `422`                      | The server cannot produce a stream this client can play                              | The error text gives the reason. Try a different client, or one that accepts more codecs                                 |
+| Playback answers `500`                      | The media service could not start a session                                          | Read the `transcoder` lines in the log                                                                                   |
+| Video stalls at regular intervals           | A proxy is buffering the segments                                                    | Set `proxy_buffering off` and `proxy_request_buffering off`, see [Reverse proxy](/install/reverse-proxy)                 |
+| Playback stops after a minute               | A proxy read timeout                                                                 | Raise it, an hour is sensible                                                                                            |
+| Constant buffering on a transcode           | Transcoding on the processor, or a slow transcode disk                               | Check hardware acceleration, and keep `/transcodes` on a fast local disk                                                 |
+| Many viewers, one stutters                  | The concurrent transcode limit                                                       | `VALENCE_MAX_CONCURRENT_TRANSCODES` defaults to 2                                                                        |
+
+To see how an item would be played without starting anything, call `POST /api/playback/{mediaId}/explain`, or open the item in the web client and read what it says about the playback mode.
+
+## Hardware acceleration does not work
+
+Valence uses the graphics device through VAAPI and QuickSync on Linux, NVENC, or VideoToolbox on a Mac. When acceleration is unavailable, it falls back to encoding on the processor, which works but costs far more of it.
+
+1. Check that the device exists on the host and in the container: `ls -n /dev/dri` on the host and `docker compose exec valence ls -l /dev/dri`.
+2. Check the group. The container needs the group that owns `renderD128` on the host, which is what `RENDER_GROUP_ID` sets. It is 44 on most Debian derived systems and 104 on some. `ls -n /dev/dri` shows the number in the group column.
+3. If the machine has two graphics devices, `VALENCE_VAAPI_DEVICE` chooses between them. The default is `/dev/dri/renderD128`, and a second card is often `renderD129`.
+4. Ask the media service what it found:
+
+```bash
+docker compose exec valence valence-transcoder capabilities
+```
+
+5. Read the log. When something cannot run, the media service warns with lines of the form `ACCELERATION is not available on this machine — REASON`, when a whole method is unavailable, or `ENCODER would not run — REASON`, when the device works but one encoder was refused. Filter the log page to the `transcoder` source.
+
+Check `/api/health` and the admin overview page too. If you use your own FFmpeg through `VALENCE_FFMPEG` and `VALENCE_FFPROBE`, set both. A build without the right filters silently loses hardware tone mapping and subtitle burning, and the image ships its own build for that reason.
+
+## A library scan finds nothing
+
+| Cause                                                      | What you see                                            | Fix                                                                             |
+| :--------------------------------------------------------- | :------------------------------------------------------ | :------------------------------------------------------------------------------ |
+| The library was added with the host path                   | `That path is not a readable directory.` when adding it | Use the path inside the container. `MEDIA_PATH` on the host appears as `/media` |
+| The library folder does not exist in the container         | `There is no such folder.` in the folder browser        | The volume is not mounted, or the path is misspelt                              |
+| The container user cannot read the files                   | `Valence is not allowed to read that folder.`           | Fix the permissions on the host, see below                                      |
+| The folder is empty because a network share is not mounted | An empty listing                                        | Mount the share on the host before the container starts                         |
+| Files are in a layout the library kind does not read       | Items missing                                           | Check the library kind and see [Libraries](/use/libraries)                      |
+
+The scan is queued and returns at once, so a large library reports progress rather than appearing to hang. Progress is on the Jobs page. If the media service stops during a scan, the scan gives up rather than marking the rest of the library as unreadable: `The media service stopped answering, so this scan gave up ... Nothing was deleted, and the files it never reached are still waiting to be read.` Run it again after the media service is back.
+
+Without a `CATALOGUE_API_KEY`, titles and years come from filenames and no posters, descriptions or cast are fetched. That is how it is designed, not a failure.
+
+## Permissions on mounted media
+
+The server runs as the container user and needs read access to everything under `/media`. Check what it sees:
+
+```bash
+docker compose exec valence ls -la /media
+```
+
+If that fails, or shows folders you expect to be full as empty, the host permissions or the mount are wrong. On a network share, check the mount options and the user mapping, because a share mounted for another user shows as unreadable inside the container. Files must be world readable, or readable by the user the container runs as.
+
+## Re-encoding, uploads and folders cannot write
+
+Media is mounted read only, on purpose. Three features write to it and refuse when it is read only:
+
+| Feature         | Message                                                                                                                                                                    |
+| :-------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Re-encoding     | `Valence cannot write to the folder this file is in. Media is usually mounted read only, which is sensible and means this cannot work until it is mounted read and write.` |
+| Uploading media | `That disk is read-only to Valence. Give it read-write access to upload media there.`                                                                                      |
+| Making a folder | `That disk is read-only to Valence. Give it read-write access to make folders there.`                                                                                      |
+
+To turn them on, set `MEDIA_ACCESS` to an empty string in the environment, and recreate the container. The empty string is deliberate: the compose file uses the `-` form, so an unset variable keeps `:ro` and an empty one removes it. Any other value is appended to the mount as it is. Re-encoding also needs the media service to have write access, which the image gives it through `VALENCE_WRITE_ROOTS=/media`. See [Storage and volumes](/install/storage-and-volumes).
+
+Re-encoding writes into a `.valence` folder at the top of each library. That folder has to be on the same filesystem as the library, since swapping the finished file in is a rename.
+
+## Requests are not downloading
+
+1. **Is requesting on?** Setting only one of `REQUESTS_URL` and `REQUESTS_SECRET`, or a secret shorter than 32 characters, leaves it off. The server log says `requesting is left off, since ... is missing or too short; it needs REQUESTS_URL and a REQUESTS_SECRET of at least 32 characters`. Set both, the same secret on the server and the service.
+2. **Is the service running?** It starts only with the `requests` profile: `docker compose --profile requests up -d`. A log line `the requests service stopped answering` means the server cannot reach it, and `the requests service is answering again` says it recovered.
+3. **Is there a download client?** Add one on the admin Requests page and use its test button. Use the address the requests container can reach, not `localhost`. A client behind gluetun is reached through the `gluetun` service.
+4. **Do the folders line up?** The requests service mounts `DOWNLOADS_PATH` at `/downloads` and the library at `/media`, both writable. Your download client has to write into the same host folder as `DOWNLOADS_PATH`, or the service cannot find what finished, and the library folder must be writable for it to file what arrives.
+5. **Is an indexer failing?** The log says `the indexer NAME keeps failing` with the reason, and `the indexer NAME is working again` when it recovers. Sites behind a Cloudflare check need FlareSolverr, set through `FLARESOLVERR_URL` and the `flaresolverr` profile.
+6. **Is the VPN down?** With `VPN_URL` and `VPN_API_KEY` set, the log warns `the VPN is down` and the admin page shows the tunnel. Fix the gluetun settings, since its firewall stops the download client's traffic while the tunnel is down.
+
+See [Requests](/install/requesting) and [using requests](/use/requests).
+
+## The WebSocket drops behind a proxy
+
+The client keeps one WebSocket open at `/api/realtime`. If everything loads but nothing updates on its own (no scan progress, no notifications, nobody appearing in a watch party), the socket is not getting through, or is being closed.
+
+- The proxy must pass `Upgrade` and `Connection` headers. In nginx, set `proxy_http_version 1.1`, `proxy_set_header Upgrade $http_upgrade` and a `Connection` header from a `map`, as in the [reverse proxy](/install/reverse-proxy) guide.
+- Raise read and send timeouts. The server pings every 20 seconds, so a timeout above that stops idle drops, and an hour suits long sessions.
+- A CDN or tunnel in front may not support WebSockets on your plan, or may need a setting to enable them.
+- Open the browser developer tools, look at the `realtime` request in the network tab, and check that it answers `101`.
+
+A connection without a session is not upgraded at all, so a socket that fails only when signed out is normal.
+
+## Upgrading Postgres
+
+Postgres cannot read a data directory written by another major version. When `compose.yaml` moved from `postgres:17-alpine` to `postgres:18-alpine`, pulling the new image over an old `db-data` volume upgraded nothing: the container started, found a directory it did not recognise and stopped. The data has to be carried across by hand. Dump it while the old version is still running:
+
+```bash
+docker compose exec db pg_dumpall -U valence > valence-backup.sql
+docker compose stop db
+docker volume ls | grep db-data
+docker volume rm THE_VOLUME_NAMED_ABOVE
+docker compose up -d db
+docker compose exec -T db psql -U valence -d postgres < valence-backup.sql
+docker compose up -d
+```
+
+Remove the database volume alone. `config` holds settings, snapshots and profile pictures, which cannot be rebuilt, and `docker compose down -v` would remove all four volumes. A fresh install needs none of this. The image's `postgresql-client` is built for the same major version as the Postgres in the compose file, because `pg_dump` refuses a server newer than itself, so upgrade Valence and Postgres together.
+
+## The disk is full
+
+Valence writes to four places, and each fills up for a different reason.
+
+| Location      | What is in it                                                               | Safe to empty                                                                      |
+| :------------ | :-------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| `/transcodes` | Live segments of transcodes                                                 | Yes. Spent transcodes are reclaimed automatically every 15 minutes, and at startup |
+| `/cache`      | Fetched artwork, and previews and thumbnail sheets under `/cache/artefacts` | Yes, at the cost of rendering them again                                           |
+| `/config`     | Settings, snapshots in `/config/backups`, profile pictures                  | No, except old snapshots                                                           |
+| `db-data`     | The database                                                                | No                                                                                 |
+
+The server warns with `disk: /some/mount is running out of room`, and `disk: /some/mount has room again` when it recovers. The same moments are available as the `disk.low` and `disk.recovered` webhook events, see [Notifications and webhooks](/use/notifications-and-webhooks). The admin overview page shows what each cache is holding, and can measure them.
+
+To free space, reduce `BACKUPS_KEPT`, delete old files from `/config/backups` by hand, or empty the transcode volume when nobody is watching. Put `/transcodes` on the fastest local disk, and, if that is small, put `VALENCE_ARTEFACT_DIR` on a larger disk, since sheets and previews are read for as long as a title is in the library. Whatever path you choose needs a volume mapped there. Without one the media service says at startup that previews are being written to a place where `nothing there survives this container being recreated, and an update recreates it`. Media that is re-encoded holds both the original and the replacement until you have reviewed it, so a full disk during a re-encode queue means reviews are waiting.
+
+## Reading the logs
+
+Valence keeps its log in two places, and both are useful.
+
+**The Jobs and logs page.** Administrators with the `server.logs` permission can read and filter the log in the web client, by level, source, search text and time range. The sources are `server`, `scanner`, `transcoder`, `jobs`, `auth`, `playback`, `catalogue` and `requests`. The page also shows the job history, running jobs and their issues. See [Jobs and logs](/use/jobs-and-logs).
+
+![The Jobs and logs page of the admin area, showing filters above a list of log lines and job runs.](/screenshots/admin-jobs-and-logs.png)
+
+**The container log.** Everything the server and the media service print goes to the container's output:
+
+```bash
+docker compose logs -f valence
+docker compose logs --since 30m valence
+docker compose logs --tail 200 db requests
+```
+
+The media service logs at `info` by default. To see more, set `RUST_LOG=debug`, or a finer filter such as `info,capability=debug`, recreate the container, and reproduce the problem. Set it back afterwards, since debug logging is noisy.
+
+When you ask for help on [Discord](https://discord.gg/uTtcAHMy9N) or in an [issue](https://github.com/ValenceOSS/Valence/issues), include your Valence version from `/api/health`, the relevant lines of the log, how you reach the server (direct or through which proxy), and whether it worked before. Remove anything secret first: the log can show email addresses and, for password resets, a reset link.

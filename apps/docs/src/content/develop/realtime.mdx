@@ -1,0 +1,192 @@
+---
+title: Realtime
+description: The single WebSocket for viewer and admin feeds, with message shapes, authentication, topic permissions, reconnection and how a client subscribes.
+order: 8
+---
+
+Valence uses one WebSocket per tab for everything that has to arrive without asking: a library changing, a scan making progress, a notification, a watch party command, an administrator's live monitor. This page describes the protocol end to end, on the server and in the client, so you can subscribe to a feed, publish a new one or debug a stuck one.
+
+## Why one socket
+
+Earlier versions used separate streams per feature. A browser allows only a handful of connections to one origin, and an administrator with a player open was using most of them. So there is exactly one connection, the client multiplexes topics over it, and it keeps every subscription alive across drops. The server and the client both treat the socket as a hint that something changed, not as the record of what happened: a tab that reconnects refetches rather than replaying a gap of unknown size.
+
+## Endpoint and authentication
+
+The socket lives at `/api/realtime`, registered in `apps/server/src/Main.ts` with `@hono/node-ws`.
+
+- The browser client opens it against the same origin the page came from, choosing `wss:` on HTTPS pages and `ws:` otherwise. In development the Vite server proxies `/api` with WebSockets enabled to port 8420.
+- There is no separate handshake token. The upgrade request carries the same session cookie as any other request, and the server reads the better-auth session from it (`readSessionOnce`).
+- If there is no session, the server checks for a share guest through the share cookie (`guestAtTheDoor`). A share guest can hold a socket, but every topic subscription it asks for is refused.
+- If there is neither, the upgrade is answered with no handlers, so the connection never registers and never receives anything.
+- The server also records the address a session was last seen at when a socket opens, since better-auth writes it once at sign-in only.
+
+Anything a client sends is parsed with Zod (`FromClientSchema`) before it is believed. An unreadable message is dropped rather than closing the connection, so a tab on an older build sending a message this server does not know loses that one message, not its whole feed.
+
+The desktop app cannot use the browser's same-origin socket, because its pages are served from a custom `valence://` scheme. It installs its own `openSocket` port that dials the chosen server directly. See [Architecture](/develop/architecture).
+
+## Message shapes
+
+All messages are JSON text frames. Each has a `kind` field, and the shapes are defined once in `packages/contracts/src/schemas/Realtime.ts`, so the server and every client share them.
+
+### From the client
+
+| `kind`                                                                                                                                                 | Fields                                                                    | Purpose                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `subscribe`                                                                                                                                            | `topics`: 1 or more topic names                                           | Ask to hear topics                                                                   |
+| `unsubscribe`                                                                                                                                          | `topics`                                                                  | Stop hearing topics                                                                  |
+| `identify`                                                                                                                                             | `profileId` (uuid or `null`), optional `clientId`, optional `deviceLabel` | Say which household profile this tab is acting as, and register the tab for presence |
+| `pong`                                                                                                                                                 | none                                                                      | Answer the server's `ping`                                                           |
+| `clockAsk`                                                                                                                                             | `sentAtMs`                                                                | Ask for the server clock, for synchronised playback                                  |
+| `partyOpen`, `partyJoin`, `partyLeave`, `partyCommand`, `partyReport`, `partySetRole`, `partyInvite`, `partyRemove`, `partySetPassword`, `partyLoosen` | Party specific                                                            | Everything a watch or listening party needs                                          |
+
+### From the server
+
+| `kind`               | Fields                               | Meaning                                                                                      |
+| -------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `welcome`            | `connectionId`, `topics`             | Sent once on open. The `connectionId` identifies this socket, for example as a party member. |
+| `subscribed`         | `topics`, `refused`                  | The answer to `subscribe`: what will be delivered, and what will never be                    |
+| `event`              | `topic`, `atMs`, `folded`, `payload` | A change on a topic. `payload` is any JSON.                                                  |
+| `dropped`            | `topics`                             | Topics removed from this connection because the account lost the permission for them         |
+| `ping`               | none                                 | Heartbeat, every 20 seconds                                                                  |
+| `clockTell`          | `sentAtMs`, `serverAtMs`             | The answer to `clockAsk`                                                                     |
+| `refused`            | `why`                                | A party request that was refused                                                             |
+| `partyNeedsPassword` | `partyId`, `wasWrong`                | A party asked for a password, or the password was wrong                                      |
+
+A short exchange looks like this.
+
+```json
+{"kind":"welcome","connectionId":"5c1d8e1e-0a4c-4d0b-9f61-3f4a4d0c7c11","topics":[]}
+{"kind":"identify","profileId":null,"clientId":"tab-1","deviceLabel":"Firefox on Linux"}
+{"kind":"subscribe","topics":["media","notifications","jobs"]}
+{"kind":"subscribed","topics":["media","notifications"],"refused":["jobs"]}
+{"kind":"event","topic":"media","atMs":1789000000000,"folded":3,"payload":{"added":4}}
+{"kind":"ping"}
+{"kind":"pong"}
+```
+
+Here `jobs` was refused because the account does not hold `jobs.run`.
+
+## Topics and permissions
+
+Topics are split into viewer feeds, which any signed in account may hear, and admin feeds, which need a permission. The table is `PERMISSION_BY_TOPIC` in the contracts package, kept as one table rather than checked at each publishing site so that adding a topic without deciding who may hear it is a type error and not an accidental broadcast.
+
+| Topic           | Kind   | Permission needed | What it carries                                                                               |
+| --------------- | ------ | ----------------- | --------------------------------------------------------------------------------------------- |
+| `media`         | Viewer | None              | Library changes, such as `{"added": 4}` or `{"event":"changed","mediaId":"..."}`              |
+| `notifications` | Viewer | None              | A notification arrived for this account, such as `{"event":"media.added"}`                    |
+| `profile`       | Viewer | None              | This account's profile or settings changed                                                    |
+| `presence`      | Viewer | None              | Control events aimed at a tab, such as stopped, paused, resumed, a message or a music command |
+| `playback`      | Viewer | None              | Playback related changes, such as music devices changing                                      |
+| `party`         | Viewer | None              | Watch and listening party state and commands                                                  |
+| `monitor`       | Admin  | `server.monitor`  | Live resource readings relayed from the media service                                         |
+| `sessions`      | Admin  | `streaming.view`  | Viewing sessions started, stopped or changed                                                  |
+| `logs`          | Admin  | `server.logs`     | Log records as they are written                                                               |
+| `jobs`          | Admin  | `jobs.run`        | Job started, progress and finished events                                                     |
+| `downloads`     | Admin  | `requests.manage` | The download queue from the requests service                                                  |
+
+Payload shapes are per topic and are plain JSON. The contract types `payload` as any JSON value on purpose, so a topic can change what it carries without a protocol change. Treat payloads as signals: on `media`, invalidate library queries and refetch, rather than trying to patch the cache from the payload.
+
+Presence events are delivered straight to the tab that owns them, with topic `presence`, when the tab has sent `identify` with a `clientId`. The socket itself is what the server watches for a tab going away.
+
+### Entitlement is checked twice
+
+1. **When a topic is asked for.** `subscribe` returns `allowed` and `refused` halves (`splitByEntitlement`). The client is told plainly it will never receive a refused topic, rather than waiting on a feed that is silently never sent.
+2. **At delivery, for every connection.** Roles are editable while a socket is held open, so a check that ran once at connect is not a check. If someone lost a permission, the server removes the topic from that connection and sends `dropped`.
+
+Only the second check protects anything. The first is a courtesy. Permissions are read through `createEntitlements`, which remembers an account's permissions for 5 seconds so a scan touching four thousand items does not run four thousand queries. Immediacy where it matters comes from `recheck` and `recheckAll`, called when a role actually changes, which forget the cached reading and drop what is no longer held.
+
+## Coalescing
+
+A scan that changes four thousand items publishes four thousand times. A tab needs to know the library changed and roughly by how much, not receive four thousand frames. So `realtime.publish` never writes to a socket directly. It hands the event to a coalescer, which gathers events with the same topic and reach over a 200 millisecond window, keeps the most recent payload and sends one `event` whose `folded` field is the count of events folded into it. A receiver can tell a single change (`folded` of 0 or 1) from a flood without being sent the flood. Publishers never wait on a socket, so one stalled client cannot slow a scan.
+
+### Reach
+
+A publisher says who should hear an event with a `Reach`.
+
+| Reach                                    | Delivered to                                                                |
+| ---------------------------------------- | --------------------------------------------------------------------------- |
+| `{ kind: 'everyone' }`                   | Every connection subscribed to the topic and entitled to it                 |
+| `{ kind: 'accounts', accountIds }`       | Connections belonging to those accounts                                     |
+| `{ kind: 'profiles', profileIds }`       | Connections acting as those household profiles                              |
+| `{ kind: 'connections', connectionIds }` | Exactly those sockets, which is how party messages reach only party members |
+
+Reach narrows who among the subscribers gets the event. It never widens it. A connection still needs to be subscribed and entitled.
+
+## Publishing from the server
+
+The registry exposes `publish(topic, payload, reach)`. Everything in `Main.ts` goes through it.
+
+```ts
+realtime.publish('media', { added: result.added }, { kind: 'everyone' });
+
+realtime.publish('profile', { changed: true }, { kind: 'accounts', accountIds: [userId] });
+```
+
+Some feeds cost something to produce, so a producer can ask to be told when its first listener arrives and its last leaves with `realtime.onHeard(topic, listen)`. The downloads feed uses it: the server only asks the requests service to stream the queue while an administrator is subscribed.
+
+To add a topic, add its name to `VIEWER_TOPICS` or `ADMIN_TOPICS` in `Realtime.ts`, and its row to `PERMISSION_BY_TOPIC`. TypeScript will not compile until you decide who may hear it. Then publish to it and add tests for the registry behaviour.
+
+## The client
+
+`packages/client/src/realtime` owns the socket so nothing else has to think about one.
+
+| File                      | Role                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| `createRealtimeClient.ts` | The client itself: subscriptions, identity, reconnection, party queueing, clock |
+| `getRealtimeClient.ts`    | Returns the one shared client for this tab, created and started on first use    |
+| `realtimeBackoffMs.ts`    | The reconnection delay                                                          |
+
+`createRealtimeClient` takes `connect`, `schedule` and `backoffMs` as arguments, so it is tested without a socket. The real `connect` comes from the host's `Platform` as `openSocket`, which is why the browser and the desktop app can share all of this code.
+
+### Subscribing
+
+A component subscribes to a topic and gets back a function that stops listening.
+
+```tsx
+import { useEffect } from 'react';
+import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
+
+const useWhenMediaChanges = (onChange: () => void): void => {
+  useEffect(() => {
+    const stop = getRealtimeClient().subscribe('media', onChange);
+
+    return stop;
+  }, [onChange]);
+};
+
+export { useWhenMediaChanges };
+```
+
+The client counts listeners per topic. The first listener sends `subscribe`, and removing the last one sends `unsubscribe`, so a feed nobody is watching costs nothing on the server.
+
+In practice you rarely subscribe by hand. `useFreshFromTheSocket` in `packages/client/src/query` turns socket events into TanStack Query invalidations: `media` invalidates library and music queries, `notifications` the notification queries, `profile` the session queries and `sessions` the admin queries. The socket replaces polling intervals. Being told beats guessing.
+
+### Identity
+
+`identify({ profileId, clientId, deviceLabel })` says which household profile the tab is acting as. The server checks the tab actually owns that profile (`ownsProfile`) and quietly falls back to `null` if not. A `clientId` and `deviceLabel` also register the tab for presence, which is how the admin screens list who is watching on what.
+
+### Reconnecting
+
+The client retries a dropped connection with an exponential delay. It starts at 500 milliseconds, doubles each failed attempt and stops growing at 30 seconds. The ceiling exists so a tab left open overnight still comes back promptly once the server returns. On every successful reopen the client:
+
+1. sends `identify` again, if it had one;
+2. asks for every live subscription again in a single `subscribe`, because a feed that quietly stops after a laptop sleeps is worse than no feed at all;
+3. flushes party messages that were queued while it was down (at most 16, oldest dropped first);
+4. if this is not the first connection, calls every `onResumed` listener.
+
+A tab that was away missed whatever happened while it was gone. `onResumed` is the hook for refetching. `useFreshFromTheSocket` uses it to invalidate the whole query cache, which is simpler and more honest than replaying a gap of unknown size.
+
+The client answers the server's `ping` with `pong`. The server sends one every 20 seconds so a dead connection is noticed.
+
+### Clock and parties
+
+`askClock(sentAtMs)` and `onClockTell` implement a simple clock exchange used to keep watch parties in step. Party messages go through `sendParty`, the only messages that are queued while disconnected, because they have no second chance: a tab opening an invitation asks to join before the socket has finished connecting, and a dropped join would leave someone believing they are in a party nobody else can see. Party roles (`host`, `coHost`, `guest`) and powers are defined in `WatchParty.ts`.
+
+## Debugging
+
+- Open the browser's network tab, filter by WS, and select `/api/realtime` to read frames in both directions.
+- No events arriving: check the `subscribed` reply. A topic in `refused` means the account lacks the permission.
+- A feed stops after a permission change: look for a `dropped` frame.
+- Events arrive only as one frame with a large `folded`: that is coalescing working. Refetch instead of reading every payload.
+- Sign-in works but the socket does nothing: the cookie is not being sent. On the desktop app, remember the page origin and the server differ.
+- Behind a reverse proxy, WebSocket upgrade headers must be forwarded. See [Reverse proxy](/install/reverse-proxy).

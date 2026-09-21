@@ -1,0 +1,334 @@
+---
+title: UI library
+description: ValenceUI, the shared component library, covering design tokens, theming and dark mode, how components are built, the ownership rule and adding one.
+order: 11
+---
+
+ValenceUI is the component library in `packages/ui` (`@valence/ui`). Every screen in the web app, the desktop app, the marketing site and this documentation draws from it. It is built from Radix primitives, Tailwind CSS 4, class-variance-authority and Motion, and it is the one place where a control's look and behaviour are decided. This page covers its tokens, how components are built, the ownership rules that keep it coherent, and how to add to it.
+
+## Layout of the package
+
+| Path                     | Contents                                                                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `src/components/<Name>/` | One folder per component: the component, its `.types.ts`, its test, and nested `components/` and `animations/` when needed |
+| `src/functions/`         | Hooks and helpers such as `cn`, `usePagedScroller`, `useSlidingHighlight` and `useHasScrolledPast`                         |
+| `src/tokens/`            | Typed design tokens and shared class recipes such as `MENU`                                                                |
+| `src/styles/valence.css` | The Tailwind theme, the colour palette, dark mode, fonts and shared utilities                                              |
+| `src/animations/`        | Shared animation definitions such as `motion.ts` and `reveal.ts`                                                           |
+| `src/fonts/`             | The Gilroy and Manrope font files                                                                                          |
+| `src/assets/`            | Brand assets, referenced by URL and never inlined                                                                          |
+
+Component aliases follow one pattern: `@ValenceUI/Button` resolves to `packages/ui/src/components/Button/Button.tsx`. See [Repository layout](/develop/repository-layout) for how the alias map works and why it is explicit.
+
+## Design tokens
+
+Tokens live in two places that describe the same thing at different levels.
+
+### The stylesheet
+
+`packages/ui/src/styles/valence.css` is the source of truth. It imports Tailwind and `tw-animate-css`, registers the colour custom properties with `@property` so they can animate, and declares everything a theme can move inside a Tailwind `@theme` block. Apps import it once. The web client's `src/styles/main.css` is a single import of `@valence/ui/src/styles/valence.css` plus a `@source` line telling Tailwind to scan the screens package.
+
+| Group             | Custom properties                                                                                                                                       | Notes                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Surfaces and text | `--color-surface`, `--color-surface-raised`, `--color-border`, `--color-text`, `--color-text-muted`                                                     | Written in `oklch`                                               |
+| Accent            | `--color-accent`, `--color-accent-hover`, `--color-accent-contrast`                                                                                     | The brand blue and what to draw on it                            |
+| Status            | `--color-danger`, `--color-success`, `--color-busy`, `--color-highlight`                                                                                | Each has a light and a dark value                                |
+| Overlay           | `--color-scrim`, `--color-on-scrim`                                                                                                                     | A control drawn on artwork                                       |
+| Reader papers     | `--color-paper-light`, `--color-ink-light`, `--color-paper-sepia`, `--color-ink-sepia`, `--color-paper-dark`, `--color-ink-dark`                        | The book reader's pages                                          |
+| Radii             | `--radius-xs` through `--radius-3xl`, `--radius-pill`                                                                                                   | All multiplied by `--radius-scale`                               |
+| Shadows           | `--shadow-raised`, `--shadow-lifted`, `--shadow-overlay`, plus artwork and sheet variants                                                               |                                                                  |
+| Motion            | `--duration-instant` (100ms), `--duration-fast` (140ms), `--duration-base` (200ms), `--duration-slow` (320ms), `--ease-out`, `--ease-spring` and others |                                                                  |
+| Type              | `--font-sans` (Gilroy), `--font-body` (Manrope)                                                                                                         |                                                                  |
+| Semantic aliases  | `--color-background`, `--color-foreground`, `--color-card`, `--color-primary`, `--color-muted` and others                                               | The vocabulary Tailwind utilities such as `bg-card` are built on |
+
+The scale of every corner is one number. The server holds a roundness setting (`sharp`, `soft`, `default` or `round`), the screens package applies it as `--radius-scale` (0, 0.6, 1 or 1.6), and every radius follows. That is what makes "how round is this whole product" a single setting rather than a rewrite.
+
+### The typed tokens
+
+`packages/ui/src/tokens/tokens.ts` exports `VALENCE_TOKENS`, which names the same values for code that needs them in JavaScript, for example when handing a value to Motion.
+
+```ts
+import { VALENCE_TOKENS } from '@ValenceUI/tokens';
+
+const settle = { duration: VALENCE_TOKENS.duration.normal, ease: VALENCE_TOKENS.ease.soft };
+
+export { settle };
+```
+
+It has `color`, `radius` and `shadow` entries that are `var(--...)` references, `duration` values in seconds (`fast` 0.12, `normal` 0.22, `slow` 0.38) and two easing curves, `soft` and `spring`. Colours are references to custom properties on purpose: the value is resolved by the stylesheet, so it follows the theme.
+
+Shared class recipes live beside the tokens. `MENU` in `tokens/menu.ts` is the class set every menu shares (content, group, label, item, destructive item), so a dropdown, a context menu and a select cannot drift apart. Other files hold recipes for segmented and underlined rows and for role and caption colours.
+
+## Theming and dark mode
+
+Every colour in Valence is a custom property, and the whole palette is redefined under selectors. There is no second stylesheet and no class swapped on components. The rules are:
+
+- The default is light.
+- Under `prefers-color-scheme: dark`, the palette switches to dark unless the document says `data-theme="light"`.
+- `data-theme="dark"` on the document element forces dark regardless of the system.
+- **Following the system means writing no attribute at all.** `applyTheme` in `packages/screens` deletes `data-theme` for the `system` choice, and an absent attribute is a real answer that leaves `prefers-color-scheme` in charge.
+- Tailwind's `dark:` variant is bound to the attribute, `[data-theme='dark']`, for the cases where a component needs to say something specific.
+- Motion is separate. `data-motion="reduced"` or `prefers-reduced-motion` turns motion down, and the `still` variant in the stylesheet lets a component say what it does when motion is off.
+
+Because colour is a token, a component never needs to know which theme it is in. Prefer a semantic utility (`bg-surface-raised`, `text-text-muted`, `bg-accent`) over anything that names a hue. The ESLint rule `valence/no-raw-colours` fails literal colours (`#fff`, `rgb(...)`, `oklch(...)`) and `white` or `black` utilities in UI source, so a colour that only one theme is right about cannot be written by accident. If the palette lacks something, add a token to `valence.css`.
+
+Translating a reference design across themes means keeping its tonal steps in dark mode, not carrying its light values across.
+
+## How components are built
+
+A ValenceUI component is a small function with four ingredients.
+
+| Ingredient                          | Role                                                                                                                                                                                                      |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A Radix primitive, where one exists | Roles, keyboard handling, focus management and ARIA wiring. These are a contract with the browser and assistive technology, and hand rolling them produces something that looks right and is subtly wrong |
+| Tailwind classes                    | Layout and paint, written against tokens                                                                                                                                                                  |
+| CVA variants                        | The named looks, sizes and shapes a component offers                                                                                                                                                      |
+| Motion, or the shared class recipes | Enter, exit and press behaviour                                                                                                                                                                           |
+
+Only `packages/ui` imports the behaviour primitives, which are Radix today. If ValenceUI lacks a component you need, add it to ValenceUI.
+
+`Button` shows the pattern. Its variants are declared once with `cva` in `buttonStyles.ts`.
+
+```ts
+const buttonStyles = cva(BASE_CLASSES, {
+  variants: {
+    variant: {
+      primary: 'bg-accent text-primary-foreground hover:bg-accent-hover',
+      ghost: 'bg-transparent text-foreground hover:bg-[var(--surface-hover)]',
+      danger: 'bg-danger text-destructive-foreground hover:brightness-110',
+      bare: '',
+    },
+    size: {
+      sm: 'h-8 gap-2 px-2.5 text-[0.875rem]',
+      md: 'h-9 gap-2 px-3 text-[0.875rem]',
+      none: '',
+    },
+  },
+});
+```
+
+Then the component reads props, applies the variants through `cn`, and forwards the rest. `cn` (in `@ValenceUI/cn`) merges classes with `clsx` and resolves conflicting Tailwind utilities with `tailwind-merge`, so a class passed by a caller beats the component's own default.
+
+Conventions every component follows:
+
+- A named export and a `displayName`.
+- Props in a `.types.ts` beside it.
+- TSDoc on the component: one sentence, then `@param` lines for props whose meaning the name does not give.
+- A co-located `.test.tsx` that queries by role and accessible name.
+- Motion respects reduced motion. Enter and exit animation goes through the shared recipes in `animations/motion.ts` (`POPUP_MOTION`, `OVERLAY_MOTION`, `PANEL_MOTION` and `PRESS_MOTION`), which switch off under `motion-reduce`.
+- A boolean prop starts with `is` or `has`, and a label for a control is a `label` prop, so it is announced and doubles as a tooltip.
+
+## One component owns each interactive element
+
+This is the rule that keeps the library coherent. A raw HTML control appears in exactly one component, and everything else composes it. ESLint fails the build on `<button>`, `<input>`, `<select>`, `<textarea>`, `<dialog>` and `<iframe>` anywhere else.
+
+| Element                              | Owner           |
+| ------------------------------------ | --------------- |
+| `<button>`                           | `Button`        |
+| Text input                           | `TextField`     |
+| `<input type="file">`                | `FilePicker`    |
+| Dialog panel, overlay and focus trap | `Dialog`        |
+| `<iframe>`                           | `EmbeddedVideo` |
+| `<video>`                            | `VideoSurface`  |
+
+A control that is not one of these is a shape of one of them. There is no `IconButton`: it is `Button` with an icon and a label, and `isIconOnly` makes it square. A search box is `TextField` without a box. A row of page markers, a bar of places and a menu of settings are all `Button`, painted differently.
+
+When a control needs something the owner lacks, widen the owner. `Button` carries `variant="bare"` and `size="none"` for the controls ValenceUI builds out of it that need a button's behaviour and none of its skin: a card that is one large press target, an episode row, the clock in the player. `bare` says "painted by its caller", not "exempt".
+
+`className` on a ValenceUI component is for where something sits, meaning width, margin and grid placement. It is not for what it looks like. If a look appears in more than one place, name it (what is it for, not what colour it is), add it to the component's variant list in tokens, and use it everywhere. `variant="overlay"` on `Button` exists because four call sites once wrote the same translucent black background in raw colours that no theme could reach.
+
+If ValenceUI lacks a component, add it to ValenceUI. Do not work around it locally with a raw element.
+
+## Icons
+
+Icons come from `@keyline-icons/react` and are drawn by `@ValenceUI/Icon`. Other icon sets are banned. A call site aliases the icon with an `Icon` suffix so it never shadows anything, and `Icon` decides how it is drawn, which keeps the icon set swappable in one file.
+
+```tsx
+import { Icon } from '@ValenceUI/Icon';
+import { Home as HomeIcon } from '@keyline-icons/react';
+import { Home as HomeFilledIcon } from '@keyline-icons/react/fill';
+import type { HomeMarkProps } from './HomeMark.types';
+
+const HomeMark = (props: HomeMarkProps) => (
+  <Icon of={HomeIcon} whenActive={HomeFilledIcon} isActive={props.isCurrent} size={18} />
+);
+
+HomeMark.displayName = 'HomeMark';
+
+export { HomeMark };
+```
+
+- **On is solid.** Say "this one is selected" with the filled twin, through `whenActive`, not a different glyph. Every active navigation item, favourite, toggle and pressed button draws the fill. Play, pause and skip are always solid, and so is an icon inside a primary or confirm button.
+- **Colour is a tone.** `tone` is `inherit` (the default), `strong`, `muted`, `faint`, `danger` or `scrim`. Do not put a text colour in an icon's `className`. ESLint fails it. `className` on an icon is for where it sits.
+- **Size is in pixels at the base text size.** `Icon` draws it in `rem`, so it scales with the text.
+- **A label makes it meaningful.** Without a `label` the icon is hidden from assistive technology, because the words beside it say it. With one it becomes an image with that name.
+- **No raw SVG anywhere.** No inline `<svg>`, no `.svg` imported as a component, no SVG strings. Brand assets (logo, wordmark, favicon) are files referenced by URL. The landing site is the only place that draws from another set (`@tabler/icons-react`), for brand glyphs the product set lacks.
+
+## Adding a component
+
+1. **Check it does not exist.** Search `packages/ui/src/components`, and check whether an existing component's variants can be widened instead. A new look on a component that exists is a new variant, not a new component.
+2. **Create the folder** `packages/ui/src/components/Ribbon/` with `Ribbon.tsx`, `Ribbon.types.ts` and `Ribbon.test.tsx`.
+3. **Write the types.**
+
+   ```ts
+   import type { ReactNode } from 'react';
+
+   type RibbonTone = 'accent' | 'danger';
+
+   type RibbonProps = {
+     children: ReactNode;
+     tone?: RibbonTone;
+     className?: string;
+   };
+
+   export type { RibbonProps, RibbonTone };
+   ```
+
+4. **Write the component.** One named export, a `displayName`, tokens rather than colours.
+
+   ```tsx
+   import { cva } from 'class-variance-authority';
+   import { cn } from '@ValenceUI/cn';
+   import type { RibbonProps } from './Ribbon.types';
+
+   const ribbonStyles = cva('inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium', {
+     variants: {
+       tone: {
+         accent: 'bg-accent/15 text-accent',
+         danger: 'bg-danger/15 text-danger',
+       },
+     },
+   });
+
+   /**
+    * Marks a thing with one short word, such as a new arrival or a failure.
+    *
+    * @param tone - Which look it takes, from the accent to the danger colour.
+    */
+   const Ribbon = ({ children, tone = 'accent', className }: RibbonProps) => (
+     <span className={cn(ribbonStyles({ tone }), className)}>{children}</span>
+   );
+
+   Ribbon.displayName = 'Ribbon';
+
+   export { Ribbon };
+   ```
+
+5. **Write the test.**
+
+   ```tsx
+   import { render, screen } from '@testing-library/react';
+   import { describe, expect, it } from 'vitest';
+   import { Ribbon } from './Ribbon';
+
+   describe('Ribbon', () => {
+     it('shows what it marks', () => {
+       render(<Ribbon>New</Ribbon>);
+
+       expect(screen.getByText('New')).toBeInTheDocument();
+     });
+   });
+   ```
+
+6. **Add the alias lines** to `tsconfig.paths.json`, one per file other code imports. Component aliases are listed explicitly because TypeScript path mapping cannot expand `@ValenceUI/*` to `components/*/*.tsx`.
+
+   ```json
+   {
+     "@ValenceUI/Ribbon": ["./packages/ui/src/components/Ribbon/Ribbon.tsx"],
+     "@ValenceUI/Ribbon.types": ["./packages/ui/src/components/Ribbon/Ribbon.types.ts"]
+   }
+   ```
+
+7. **Use it** from a screen with `import { Ribbon } from '@ValenceUI/Ribbon'`. Write the file before anything imports it, and if the web dev server still reports the alias as unresolved, restart it.
+8. **Rebuild the package** with `pnpm --filter @valence/ui build` if a consumer such as `packages/screens` reports a type error, because it typechecks against the built output.
+9. **Run** `pnpm --filter @valence/ui test` and `pnpm lint`, then commit with the `ui` scope, for example `feat(ui): add a Ribbon for marking new arrivals`.
+
+Consider first whether you are composing a primitive. If your component contains a pressable thing, it renders a `Button`. If it contains a text box, a `TextField`. If it needs a dialog, a `Dialog`. Never write the raw element.
+
+## Components at a glance
+
+The library has more than eighty components. The list below groups the main ones by job, with what each is for. Each has a TSDoc block on the component itself, which is the authoritative description.
+
+### Controls and forms
+
+| Component                      | What it is for                                                                     |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| `Button`                       | The one place a `<button>` is written. Everything pressable is this or composes it |
+| `TextField`                    | The one place a single line of text is typed. Owns label, description and error    |
+| `FilePicker`                   | The one place a file is chosen                                                     |
+| `FormField`                    | One thing a form asks for: what it is, what answering means and the control        |
+| `Checkbox`                     | A labelled checkbox for a choice that is part of a form                            |
+| `Switch`                       | A setting that is on or off and takes effect immediately                           |
+| `Slider`, `RangeSlider`        | One number from a range, or a smallest and largest                                 |
+| `StarRating`                   | A rating out of five, shown and optionally set                                     |
+| `SegmentedRow`                 | A set of choices drawn as one track rather than separate pills                     |
+| `OptionMenu`                   | A menu where exactly one choice is in force, such as a quality or a sort order     |
+| `ActionMenu`                   | A menu of things to do, such as rename, rescan or delete                           |
+| `FilterMenu`, `AppliedFilters` | Choosing several filters, and showing what a list is narrowed by                   |
+| `ContextMenu`                  | The menu that opens on right click or press and hold                               |
+
+### Surfaces and overlays
+
+| Component                                      | What it is for                                                                    |
+| ---------------------------------------------- | --------------------------------------------------------------------------------- |
+| `Dialog`                                       | The one place a dialog is written: panel, overlay, focus trap and escape handling |
+| `DialogTitle`, `DialogContent`, `DialogFooter` | The head, scrolling middle and pinned foot of a dialog                            |
+| `DialogCompanion`                              | A panel that stands beside the dialog it was opened from                          |
+| `ConfirmDialog`                                | Asks before something that cannot be undone, and says what will happen            |
+| `ActionBar`                                    | The things a dialog is for: the one worth pressing and the few beside it          |
+| `Drawer`                                       | A dialog that rises from the foot of the screen                                   |
+| `PopoverPanel`, `HoverCard`, `Tooltip`         | Panels and hints anchored to a control or a pointer                               |
+| `Toaster`                                      | Where everything the app has to say arrives. Mounted once, near the root          |
+| `Callout`                                      | One thing a reader has to know before they act                                    |
+| `Card`, `CardHeader`, `Well`, `GlassPanel`     | Raised, headed, inset and translucent surfaces                                    |
+
+### Navigation and layout
+
+| Component                       | What it is for                                             |
+| ------------------------------- | ---------------------------------------------------------- |
+| `NavBar`                        | The one navigation bar along the top of the window         |
+| `Sidebar`, `SidebarGroup`       | A column of destinations, with foldable groups             |
+| `SectionBar`, `TabRow`          | Related sections or a set of destinations                  |
+| `Tabs`, `TabBar`, `TabPanel`    | A set of panels and the words that choose between them     |
+| `HeadedSection`                 | A part of a page with a small heading over a thin line     |
+| `PageDots`                      | Which of several pages is on screen                        |
+| `BackToTop`                     | The way back up a long page                                |
+| `Rail`                          | One titled row of a library, scrolling sideways            |
+| `VirtualGrid`, `VirtualStrip`   | Long lists that draw only what is on screen                |
+| `SlidingMark`, `HoverHighlight` | The single highlight that travels between controls or rows |
+
+### Media
+
+| Component                     | What it is for                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| `MediaCard`                   | One thing in a library, as artwork with its name beneath and how far through it |
+| `VideoSurface`                | The one place a `<video>` element is written                                    |
+| `EmbeddedVideo`               | The one place an `<iframe>` is written, for video Valence does not hold         |
+| `BackdropScrim`               | The darkening over the foot of a backdrop so titles stay readable               |
+| `MoodBackground`              | Coloured light behind a page, derived from what is showing                      |
+| `TimeBars`, `VisualiserStage` | Player timeline pieces and a full size canvas for visualisations                |
+
+### Data and status
+
+| Component                                       | What it is for                                       |
+| ----------------------------------------------- | ---------------------------------------------------- |
+| `DataTable`                                     | A table that sorts by any column and pages           |
+| `StatTile`, `StatStrip`                         | One figure about the server, and a row of them       |
+| `Meter`, `ProgressBar`, `BarList`, `TrendChart` | Usage, progress, ranked lists and readings over time |
+| `Badge`                                         | One small fact beside the thing it is about          |
+| `AnimatedNumber`                                | A number that rolls to its new value                 |
+| `SettingRow`, `SettingList`, `SettingsMenu`     | Settings in two lines with the answer on the right   |
+
+### Feedback and small parts
+
+| Component                             | What it is for                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------- |
+| `Icon`, `AnimatedIcon`                | Every glyph, and one that answers a pointer with movement                 |
+| `Spinner`, `Skeleton`, `SplashScreen` | Working, holding space while fetching, and holding the screen at start-up |
+| `NothingHere`, `CouldNotRead`         | An empty screen, and something that could not be read                     |
+| `ReadMore`                            | Text cut to a few lines with a way to see the rest                        |
+| `QrCode`                              | A value as a QR code, for handing something to a phone                    |
+| `Logo`                                | The Valence mark, painted rather than drawn                               |
+| `RevealItem`                          | Makes a row assemble left to right                                        |
+
+The web app has no interactive component gallery in the repository today, so the source and the tests are the reference. Reading a component's `.test.tsx` is often the quickest way to see how it is meant to be used.

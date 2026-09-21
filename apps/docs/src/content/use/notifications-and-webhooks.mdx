@@ -1,0 +1,175 @@
+---
+title: Notifications and webhooks
+description: How Valence tells people and other systems what happened, through the in app bell, browser push and signed webhooks, with events, payloads and redelivery.
+order: 8
+---
+
+Valence talks in two directions. Notifications tell the people in your household that something happened to them: new media arrived, a request is ready. Webhooks tell other systems, such as a Discord channel, an ntfy topic or your own script, what is happening on the server: a job failed, the disk is filling, somebody started watching. The two are independent, and a household usually wants both.
+
+## In app notifications
+
+Signed in users have a bell in the top bar. A count badge shows how many notifications are unread. Opening the bell lists them, each with a title, a sentence of detail and how long ago it happened. Pressing one marks it read and, where it points somewhere useful, takes you there.
+
+The bell offers **Mark all read** and **Clear all**. Notifications are short lived by design: a notice is taken off the bell about five minutes after it was written, so the bell only ever holds things that just happened. Somebody who steps away for longer will not see what arrived in the meantime.
+
+### What produces a notification
+
+| Event                               | When it is sent                                                    | Who is told                   |
+| ----------------------------------- | ------------------------------------------------------------------ | ----------------------------- |
+| Something new to watch              | An hourly digest of what has been imported since the last one.     | Everybody who wants it.       |
+| Somebody wants to watch with you    | You are invited to a watch party.                                  | The person invited.           |
+| A link you handed out was withdrawn | An administrator withdrew one of your [share links](/use/sharing). | The person who made the link. |
+| Something you asked for is ready    | A [request](/use/requests) you made is in the library.             | The person who asked.         |
+
+The new media digest is the job named **Tell the household about new media**, which by default runs every hour. It gathers everything imported since the last run and says it once, so a scan of four hundred files is one notification rather than four hundred. A film is named; several files are counted, with episodes grouped under their programme and songs under their albums. The first digest on a fresh server starts its window at that moment and stays silent, so installing Valence does not announce your entire library as new. See [Jobs and logs](/use/jobs-and-logs) to run or reschedule it.
+
+Each person's preferences say, per kind of event, whether they want it in the app and whether they want it as a push. The defaults are in app on and push off. Preferences are stored per account and read and written through the API at `/api/notifications/preferences`, described in the [API overview](/reference/api-overview).
+
+## Push notifications
+
+Push wakes a browser even when Valence is closed. It uses the standard Web Push protocol with a VAPID key pair that identifies your server to the browser vendor's push service.
+
+### The VAPID keys
+
+You do not configure these. Valence generates a key pair the first time it needs one and stores it in the server settings. The public key is handed to browsers that ask to subscribe. The private key never leaves the server.
+
+<Callout title="Keep the keys stable" tone="warning">
+  Browsers subscribe against a specific public key. If the stored key pair is lost, for example by
+  restoring an old database, existing subscriptions stop working and each person has to switch push
+  off and on again on each device.
+</Callout>
+
+### Turning push on for a device
+
+1. Open the notification bell.
+2. Turn on **Also send these to this device**.
+3. Accept the browser's permission prompt.
+
+Valence registers a service worker and stores the browser's endpoint against your account. Turning the switch off removes it from both the browser and the server. The switch only appears in browsers that support push, which needs a service worker, the Push API and a secure context, so plain HTTP on a LAN address will not offer it. See [Reverse proxy](/install/reverse-proxy) for serving Valence over HTTPS.
+
+The switch registers the device. Which events are sent to it is decided by the per event `push` preference described above. That preference is off by default and is set through the preferences endpoint of the API.
+
+When a push service answers that a subscription no longer exists (404 or 410), Valence deletes that device automatically so the list of endpoints does not grow forever. Other failures are logged and do not stop the remaining devices being told.
+
+## Webhooks
+
+A webhook is a subscription: an address, a format and a list of events. When one of those events occurs Valence posts a message to the address. Webhooks are managed by accounts holding the `server.webhooks` permission, under **Webhooks** in the System group of the admin area.
+
+### Creating a webhook
+
+1. Open the admin area, choose **Webhooks** and press **Create webhook**.
+2. Give it a **Name**. Only you see it.
+3. Enter the **Address** the deliveries are posted to.
+4. Choose a **Shape**: what Valence sends, so the other end understands it.
+5. Tick the events you want, grouped as The server, Requests, People, The library and Watching.
+6. Optionally narrow it with filters, described below.
+7. Press **Create webhook**.
+
+The signing secret is then shown once, in a highlighted card. Copy it and give it to the receiver. If you lose it, delete the webhook and create another; the delete confirmation says as much.
+
+<Callout title="Where deliveries may go" tone="quiet">
+  Valence refuses to send to anything that is not HTTP or HTTPS, and to link local addresses such as
+  `169.254.x.x` and the cloud metadata hostnames, so a webhook cannot be used to read a cloud host's
+  credentials.
+</Callout>
+
+### Shapes
+
+| Shape   | What is sent                                                                        |
+| ------- | ----------------------------------------------------------------------------------- |
+| generic | Valence's own envelope as JSON, sent as `application/json`. Build against this one. |
+| discord | A message with an embed, for a Discord channel webhook URL.                         |
+| ntfy    | The event written as one plain text sentence, for an ntfy topic.                    |
+
+### Events
+
+You can subscribe to these events. The test delivery is separate and is sent only when you ask.
+
+| Group       | Events                                                                                                                                                                                                                                                                                                               |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The server  | `job.completed`, `job.failed`, `job.stalled` (a job failing every time), `job.working` (working again), `library.scanned`, `catalogue.unreachable`, `catalogue.reachable`, `transcoder.unreachable`, `transcoder.reachable`, `disk.low`, `disk.recovered`                                                            |
+| Requests    | `requests.unreachable`, `requests.reachable`, `requests.vpnDown`, `requests.vpnUp`, `requests.indexerFailing`, `requests.indexerWorking`, `requests.downloadStarted`, `requests.downloadFailed`, `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`, `requests.filed`, `requests.available` |
+| People      | `auth.succeeded`, `auth.failed`, `account.created`, `account.deleted`, `account.roleChanged`, `session.started`, `session.ended`                                                                                                                                                                                     |
+| The library | `media.added`, `media.removed`                                                                                                                                                                                                                                                                                       |
+| Watching    | `playback.started`, `playback.stopped`                                                                                                                                                                                                                                                                               |
+
+Some notes worth knowing:
+
+- `session.started` is sent when somebody opens Valence, not when they sign in, and says where from. `session.ended` is sent a minute after the tab goes, so a page reload is not counted as leaving.
+- `requests.indexerFailing` is sent after three failures in a row. Five turn the indexer off.
+- `auth.failed` does not include attempts that were rate limited, because those are refused before Valence sees them.
+- The Requests group only appears where the requests service is set up. See [Requests](/use/requests).
+
+### Filters
+
+Filters narrow a subscription without changing its events. An empty filter means everything, and a filter that does not apply to an event lets it through, so a failed sign in (which names no account) is not silently dropped by an account filter.
+
+| Filter                    | Effect                                                                                                                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accounts                  | Only events about the chosen accounts.                                                                                                                                                                        |
+| Profiles                  | Only playback and session events for the chosen profiles.                                                                                                                                                     |
+| Kinds                     | Only `media.added`, `media.removed` and playback events about the chosen media kinds.                                                                                                                         |
+| How arrivals are reported | For `media.added`: **Once per scan** (the default) sends no per item deliveries, and you get the summary through `library.scanned` instead; **One for each thing** sends one `media.added` delivery per item. |
+
+### Payload format
+
+The generic shape posts this envelope as the request body:
+
+```json
+{
+  "version": 1,
+  "id": "3b7c6c1e-2f6f-4a55-9d0f-6f1d1e0a9b21",
+  "event": "job.failed",
+  "occurredAt": "2026-09-21T18:04:11.000Z",
+  "data": {
+    "kind": "library.scan",
+    "label": "Scan for changes",
+    "jobId": "8e1f0c3a",
+    "subject": "0b9a0e5e-0c7f-4a5c-bd1e-3d61f4f25c11",
+    "subjectName": "Films",
+    "reason": "The folder could not be read."
+  }
+}
+```
+
+`version` is the payload version, currently `1`. `id` is unique per event, so a receiver can ignore one it has already seen. `data` depends on `event`, and the full schema for each is in the API reference under [/api](/api).
+
+### Signing
+
+Every delivery carries an `x-valence-signature` header of the form `sha256=` followed by a hex HMAC SHA-256 of the exact request body, computed with the webhook's secret. The user agent is `Valence`. To verify, compute the HMAC over the raw bytes you received and compare it to the header in constant time.
+
+```ts
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+const isFromValence = (secret: string, rawBody: string, header: string): boolean => {
+  const expected = `sha256=${createHmac('sha256', secret).update(rawBody).digest('hex')}`;
+
+  return (
+    expected.length === header.length && timingSafeEqual(Buffer.from(expected), Buffer.from(header))
+  );
+};
+```
+
+Verify against the raw body before parsing it. The discord and ntfy shapes are signed too, over whatever body they send.
+
+### Testing
+
+Press **Send a test** on a webhook. It queues a `webhook.test` delivery and Valence confirms with a toast reading "Sent a test delivery." The test is only available while the webhook is enabled. The receiver gets a normal envelope with an empty `data` object, or, for discord and ntfy, a sentence saying that somebody pressed test.
+
+### Delivery, retries and history
+
+Deliveries are queued as jobs so a slow or dead receiver delays nothing else. A delivery counts as landed when the receiver answers with a 2xx status within ten seconds. Anything else, including a timeout or a refused address, is recorded and retried by the job queue with growing delays, for up to two retries after the first attempt.
+
+Each webhook shows a status badge from its last attempt. Press **History** to see recent deliveries with the event, the number of attempts, the status and any error. History is kept for seven days.
+
+To resend one, use the redeliver action on that row; a toast reads "Delivered it again." A redelivery replays the stored body byte for byte, with a fresh signature computed over the same bytes, rather than describing the event as it looks today. It uses the same `id`, so a receiver that deduplicates will recognise it. Redelivery is only offered while the webhook is enabled.
+
+### Editing, pausing and deleting
+
+Use the **Enabled** switch to pause a webhook without losing its secret or settings. A toast confirms "Webhook turned on." or "Webhook turned off." **Edit** changes its name, address, shape, events and filters and confirms with "Webhook saved." **Delete** asks first, then removes it and its secret, with "Webhook deleted."
+
+## Related pages
+
+- [Settings](/use/settings) for the other admin panels.
+- [Jobs and logs](/use/jobs-and-logs) for the delivery and digest jobs.
+- [Security](/reference/security) for how the server handles secrets and outbound requests.

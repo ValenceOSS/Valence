@@ -1,0 +1,152 @@
+---
+title: Plugins
+description: The plugin model Valence is built around, the manifest contract in the plugin SDK, and an exact account of what works today and what does not.
+order: 7
+---
+
+Valence is designed so that plugins can extend it without being trusted with the server. Each plugin runs in a process of its own and reaches everything through a broker that enforces the capabilities the plugin declared. This page describes that design and the contract that exists in the repository. It is deliberately precise about the state of the implementation, because the plugin runtime is only partly built.
+
+<Callout title="What works today" tone="warning">
+  The repository contains the plugin manifest contract (`packages/plugin-sdk`) and an internal
+  metadata provider seam in the server. It does not yet contain a plugin loader, a broker, plugin
+  process management, a messaging protocol, runtime permission enforcement or any way to install or
+  publish a plugin. You cannot run a plugin against Valence today.
+</Callout>
+
+## The model
+
+The design goals come from the project's own rules and security policy.
+
+- **Process per plugin.** A plugin is not code loaded into the server. It runs in its own process, so a crash or a bad plugin cannot take the server down with it.
+- **Brokered.** A plugin never touches the filesystem, the network or session data directly. It asks the broker, which allows only what the manifest declared and what the administrator granted.
+- **Declared up front.** What a plugin can do is written in a manifest that is validated before anything runs, so an administrator can see the requested capabilities before installing.
+- **Plugin-facing anything lives in the SDK.** Under the [Coding standard](/develop/coding-standard), anything a plugin sees goes in `packages/plugin-sdk`, and everything exported from it carries TSDoc because it generates public documentation.
+
+The broker is a security boundary. The project's [security policy](/reference/security) treats a plugin sandbox escape, meaning anything letting plugin code reach the filesystem, network or session data outside its granted capabilities, as critical.
+
+If you need something the broker does not expose, say so. Extension point requests are a first class issue type with a fast path, so the brokered model does not become a wall. See [Contributing](/develop/contributing).
+
+## What exists in the repository
+
+### The plugin SDK package
+
+`packages/plugin-sdk` is the workspace package `@valence/plugin-sdk`, reached inside the repository through the `@ValenceSDK/*` alias. It is marked `private` and is not published to a registry yet, so outside contributors cannot install it. Its dependencies are `@valence/contracts` and `zod`.
+
+Today it contains one module:
+
+| File                                  | Exports                                                                                                                              |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/manifest/PluginManifest.ts`      | `PluginManifestSchema`, `CapabilitySchema`, `ExtensionPointSchema` and the types `PluginManifest`, `Capability` and `ExtensionPoint` |
+| `src/manifest/PluginManifest.test.ts` | The tests for it                                                                                                                     |
+
+That is the whole public surface. There is no client library, no lifecycle hooks, no request or response types for extension points and no test harness for plugin authors yet.
+
+### The manifest
+
+A manifest is a JSON document that describes a plugin. `PluginManifestSchema` is the single definition of what is valid.
+
+```json
+{
+  "id": "tmdb-metadata",
+  "name": "TMDB Metadata",
+  "version": "1.2.0",
+  "apiVersion": "^1.0.0",
+  "author": "Valence Community",
+  "description": "Fetches film and series metadata from TMDB.",
+  "extensionPoints": ["MetadataProvider"],
+  "capabilities": [
+    { "kind": "network", "domains": ["api.themoviedb.org"] },
+    { "kind": "library", "access": "read" }
+  ],
+  "entry": "dist/plugin.js"
+}
+```
+
+| Field             | Type                  | Rules                                                                                                                 |
+| ----------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `id`              | string                | 3 to 64 characters, lower case kebab case, starting with a letter: `^[a-z][a-z0-9-]*$`                                |
+| `name`            | string                | 1 to 100 characters                                                                                                   |
+| `version`         | string                | Semver, starting `major.minor.patch`                                                                                  |
+| `apiVersion`      | string                | A semver range, such as `^1.0.0`, `~1.2` or `1.0.0 - 2.0.0`, naming the plugin API version the plugin was written for |
+| `author`          | string                | Required, at least one character                                                                                      |
+| `description`     | string                | 1 to 500 characters                                                                                                   |
+| `extensionPoints` | array                 | At least one value from the list below                                                                                |
+| `capabilities`    | array                 | Zero or more capability objects. An empty array is valid and means the plugin asks for nothing.                       |
+| `entry`           | string                | The plugin's entry file, relative to its package, such as `dist/plugin.js`                                            |
+| `settingsSchema`  | JSON object, optional | A JSON description of the settings the plugin exposes                                                                 |
+
+### Extension points
+
+`ExtensionPointSchema` names the seven places a plugin may extend Valence.
+
+| Extension point            | Intended for                                                        |
+| -------------------------- | ------------------------------------------------------------------- |
+| `MetadataProvider`         | Supplying titles, artwork, cast and other details for library items |
+| `LibraryScanner`           | Reading media sources beyond the built-in scanner                   |
+| `AuthProvider`             | Signing people in through another identity system                   |
+| `NotificationChannel`      | Delivering notifications somewhere new                              |
+| `RequestBackend`           | Fulfilling media requests through another source                    |
+| `TranscodeProfileProvider` | Contributing transcode profiles                                     |
+| `UIContribution`           | Adding to the interface                                             |
+
+These are the names the manifest accepts. The table describes the intent implied by each name. The request and response contracts for them have not been written, so nothing implements one end to end yet.
+
+### Capabilities
+
+A capability is a permission a plugin asks for. Each is an object with a `kind` and kind specific fields, and `CapabilitySchema` is a discriminated union over `kind`. An unknown kind is rejected, for example a `filesystem` capability with paths.
+
+| Kind      | Fields                                               | Meaning                                                     |
+| --------- | ---------------------------------------------------- | ----------------------------------------------------------- |
+| `network` | `domains`: one or more non-empty strings             | The domains the plugin may reach. At least one is required. |
+| `library` | `access`: `read`                                     | Read access to library data                                 |
+| `media`   | `access`: `probe` or `read`                          | Probing media files, or reading them                        |
+| `events`  | `topics`: one or more non-empty strings              | Which event topics the plugin may subscribe to              |
+| `storage` | `quotaBytes`: a positive integer, at most 50,000,000 | A quota of private storage, capped at 50 million bytes      |
+
+There is deliberately no filesystem capability and no session capability. A plugin cannot ask for either.
+
+### Validating a manifest
+
+Untrusted input enters through a Zod schema, and a manifest is untrusted input. This is the pattern for reading one.
+
+```ts
+import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifest';
+import type { PluginManifest } from '@ValenceSDK/manifest/PluginManifest';
+
+const readManifest = (raw: string): PluginManifest => PluginManifestSchema.parse(JSON.parse(raw));
+
+export { readManifest };
+```
+
+`parse` throws a `ZodError` naming the failing field, for example `Plugin ids are lowercase kebab-case` for a bad `id`, or `apiVersion must be a semver range`. Use `safeParse` where you want to report every problem rather than throw.
+
+Because the schema is the contract, changing it is a public change. A change to a plugin extension point or to the manifest shape is marked breaking with `!` and a `BREAKING CHANGE:` footer, and it needs tests in `PluginManifest.test.ts`. See [Coding standard](/develop/coding-standard).
+
+## The internal metadata seam
+
+The closest thing to an extension point in the running server is not in the SDK. `apps/server/src/library/MetadataProvider.ts` defines an internal `MetadataProvider` type, and `resolveMetadata` asks each provider in turn about a file and takes the first real answer. The comment on it states the design intent: a plugin's provider overrides the built-in filename reader without replacing it, and a provider that fails is skipped rather than failing the scan, because a metadata service being down must not make a library unreadable.
+
+Two providers are wired in `Main.ts` today: a catalogue provider, which needs `CATALOGUE_API_KEY`, and a filename provider that works from paths alone. Neither is a plugin. They are built-in code that use the shape a plugin would fill. Treat it as a hint of where the extension point will land, not as a supported API: it can change without notice and it is not exposed outside the server.
+
+## What does not exist yet
+
+To avoid guessing, here is the list of things this page cannot document because they are not in the codebase.
+
+| Topic                                                                                       | State                                                                       |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Plugin loader and discovery                                                                 | Not implemented                                                             |
+| Process supervision and the plugin lifecycle (install, enable, start, stop, update, remove) | Not implemented                                                             |
+| The broker and the messaging protocol between server and plugin                             | Not implemented                                                             |
+| Runtime enforcement of capabilities                                                         | Not implemented. The manifest declares them, and nothing enforces them yet. |
+| Administrator screens or API routes for plugins                                             | Not implemented                                                             |
+| A publishing or distribution channel                                                        | Not implemented                                                             |
+| A published SDK package                                                                     | Not implemented. `@valence/plugin-sdk` is private.                          |
+
+When any of these lands, this page will change with it. The rule that documentation is updated in the same pull request as the behaviour applies here too.
+
+## How to help
+
+- **Ask for an extension point.** Open an issue describing what you need and what capability it implies. This is the fast path the project promises.
+- **Review the manifest contract.** It is small, and it is where the security model is written down first. Pull requests that tighten it, or that add a capability with a clear reason, are welcome. Follow [Contributing](/develop/contributing).
+- **Keep it boring.** New capabilities should be as narrow as `network` is: an explicit list of things allowed, never a wildcard.
+- **Report holes.** If you find a way for plugin code to escape its declared capabilities in any future implementation, do not open a public issue. Follow the private reporting route in the [security policy](/reference/security).

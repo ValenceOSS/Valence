@@ -1,0 +1,282 @@
+---
+title: Libraries
+description: Add and manage libraries, name your files so they match, scan, upload, correct wrong matches and control what each person can see.
+order: 2
+---
+
+A library is a folder on the machine running Valence that holds one kind of media: films, shows, music or books. Valence reads what is in it, looks each thing up, and presents the result on the Home, Films, Shows, Music and Read pages. This page covers adding and managing libraries, how the scanner reads names, how to fix a wrong match, and how visibility and hiding work.
+
+Everything here happens in the admin area, under **Content** then **Libraries**, at `/admin/libraries`. You need the relevant permission for each action, listed in the table near the end of the page.
+
+![The admin Libraries panel listing three libraries with their type badge, path, item count, last read time and an Idle state.](/screenshots/admin-libraries.png)
+
+## Adding a library
+
+1. Open the admin area and choose **Libraries**.
+2. Open the menu at the top right of the panel and choose **Add library**.
+3. Enter a **Name**. It is only a label for you.
+4. Choose a **Type**.
+5. Enter the **Path**, or press **Browse** to pick it.
+6. Press the confirm button. The library is created but not scanned yet: adding is quick and scanning is not, so they are separate steps.
+
+### Types
+
+| Type   | Reads like | Holds                                                                                           |
+| ------ | ---------- | ----------------------------------------------------------------------------------------------- |
+| Movies | Films      | One film per file or per folder.                                                                |
+| Shows  | Series     | Episodes, grouped into seasons and series.                                                      |
+| Anime  | Series     | The same as Shows, with the badge Anime.                                                        |
+| Music  | Music      | Tracks, grouped into artists and albums.                                                        |
+| Books  | Books      | Comics and books, one shelf entry per book.                                                     |
+| Manga  | Books      | The same as Books, with the badge Manga.                                                        |
+| Custom | You choose | A type name of your own, such as Documentaries, that reads like one of the four built in kinds. |
+
+The type decides how files are read. The extra names (Anime, Manga, Custom) only change the label. Under the hood every library is one of `movies`, `shows`, `music` or `books`.
+
+### Choosing the path
+
+The path is a folder on the machine running Valence, not on the device your browser is on. **Browse** opens a folder browser that walks the server's own folders:
+
+- It opens on the folder you have already typed, if it exists, and otherwise on the places worth starting from.
+- Only folders are listed, because a library is a folder.
+- The trail along the top jumps back to any folder on the way down. The folder you are looking at is the one that is chosen, not one of the folders inside it.
+- **Up a folder** goes one level up, and **New folder** creates a folder in the one you are viewing, so you can give a library somewhere to live without leaving the page.
+- If Valence is not allowed to read a folder, the browser says so instead of listing it. The message is the server's own, and it says what to change.
+
+A library path that is not a readable directory is refused with "That path is not a readable directory."
+
+<Callout title="Docker paths are container paths">
+  In a Docker install, Valence can only see folders that you have mounted into the container. Add
+  the mount to your compose file first, then use the container side of it here. See [Storage and
+  volumes](/install/storage-and-volumes).
+</Callout>
+
+## How files should be named
+
+Valence reads names and folders first, and then, if you have a catalogue key, looks the result up in The Movie Database. The cleaner the names, the better the match. The rules below are what the scanner really does.
+
+### Files it will read
+
+| Library          | Extensions read                                                                                     |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| Movies and Shows | `mkv`, `mp4`, `m4v`, `mov`, `avi`, `webm`, `ts`, `m2ts`, `mpg`, `mpeg`, `wmv`, `flv`, `ogv`, `3gp`  |
+| Music            | `mp3`, `flac`, `m4a`, `aac`, `alac`, `ogg`, `oga`, `opus`, `wav`, `aiff`, `aif`, `wma`, `ape`, `wv` |
+| Books            | `cbz`, `zip`, `cbr`, `rar`, `pdf`, `epub`                                                           |
+
+Files starting with a dot are ignored. So is the `.valence` folder that Valence keeps beside your media for re-encoded copies, so a kept re-encode never appears as a second copy of the film.
+
+### Films
+
+A film needs a title and, ideally, a year. Both come from the file name and its folder:
+
+```text
+Movies/
+  Arrival (2016)/
+    Arrival (2016).mkv
+  Parasite (2019)/
+    Parasite (2019).mkv
+    Parasite (2019) - B&W.mkv
+  Zootopia 2 (2025).mkv
+```
+
+- The year is taken from a four digit number between 1900 and 2099. A bracketed year such as `(2016)` is preferred over a bare one.
+- Everything after the year, and release noise such as `1080p`, `BluRay`, `x265`, `HDR`, `DTS`, `AMZN` and group tags, is dropped. Dots, underscores and brackets become spaces.
+- A number that comes before the release noise is part of the title (`Zootopia 2`). A number that comes after it is treated as a channel count and dropped.
+- If a folder has a name with a year, such as `Arrival (2016)`, the folder is believed over the file. That makes a collection readable even when the file inside is called `movie.mkv` or `title00.mkv`.
+
+### Several cuts of one film
+
+When a folder is named after a film and every file in it begins with that name, the files are treated as versions of the one film. The file named exactly like the folder is the main one, and the others take their label from what follows the name:
+
+```text
+Parasite (2019)/
+  Parasite (2019).mkv
+  Parasite (2019) - B&W.mkv
+  Parasite (2019) - Director's Cut.mkv
+```
+
+The film's dialog then offers **Which version to play**. Files that merely sit in the same folder without sharing a name are separate films.
+
+### Extras
+
+Trailers, featurettes and similar are recognised in three ways, and all three attach the extra to the film or series it belongs to:
+
+- A folder named for what it holds: `trailers`, `behind the scenes`, `deleted scenes`, `featurettes`, `interviews`, `scenes`, `clips`, `shorts`, `samples`, `extras` or `other`. A folder such as `Season 1 Extras` also counts.
+- A suffix on the file name, such as `Arrival (2016)-trailer.mkv`, provided a file called `Arrival (2016)` sits beside it. The accepted suffixes are `trailer`, `behindthescenes`, `deleted`, `deletedscene`, `featurette`, `interview`, `scene`, `clip`, `short`, `sample` and `extra`.
+- A file called only `Trailer.mkv` (or one of the other words) that sits beside exactly one other video.
+
+A film that happens to be called `The Short` is still a film, because a suffix only counts when there is a matching film beside it.
+
+### Shows
+
+Episodes are recognised from the file name. These patterns are understood:
+
+| Pattern                       | Example                                                             |
+| ----------------------------- | ------------------------------------------------------------------- |
+| Season and episode            | `Show Name - S02E04 - Episode Title.mkv`                            |
+| A run of episodes in one file | `Show Name S09E19E20.mkv` (filed under the first number)            |
+| Number by number              | `Show Name 2x04.mkv`                                                |
+| In words                      | `Show Name Season 2 Episode 4.mkv` (Series works as well as Season) |
+
+The series name comes from the file name before the numbering, or from the folder above it. A season folder is recognised when it is called `Season 2`, `Series 2`, `S2` and similar, and a `Specials` folder is read as season 0. A recommended layout:
+
+```text
+Shows/
+  Curb Your Enthusiasm (2000)/
+    Season 1/
+      Curb Your Enthusiasm - S01E01 - Pilot.mkv
+    Season 2/
+      Curb Your Enthusiasm - S02E01 - The Larry David Sandwich.mkv
+```
+
+Two further conveniences exist:
+
+- A folder of consecutively numbered files with the same stem (`Show 01.mkv`, `Show 02.mkv`) is read as one season, numbered from the files. The folder needs at least two files with different numbers.
+- A file in a Shows library from which no series could be read is treated as a video rather than guessed to be a film, so a badly named episode does not appear among the features.
+
+If a corrected match is stored against a series, a season added later to the same folder inherits it, so it does not appear as a second show.
+
+### Music
+
+Music is read from tags first, not from paths. Artist, album artist, album, disc number and track number come from the file. The folder only stands in for the album name where no tag names one.
+
+- A record with a guest on every track stays one album, because an album belongs to its album artist. An album marked as a compilation belongs to Various Artists.
+- Every track is also linked to each artist it credits, so a guest verse appears on the guest's page.
+- If a track has no title tag, the file name is used, with a leading track number such as `01 - ` removed.
+- Album artwork comes from the front cover inside the first track that has one, and otherwise from a cover image in the album folder. An artist picture comes from an image beside their albums.
+- Lyrics come from the tags, or from an `.lrc` or `.txt` file with the same name beside the track. A lyrics file added or changed later is noticed on the next scan.
+
+### Books
+
+- A folder is a series and each file inside is a chapter. A file directly in the library root is a book of its own.
+- Titles lose bracketed text and chapter or volume numbering (`ch`, `chapter`, `vol`, `volume`, `c12`, `v3`). Chapter numbers are read from `Chapter 12`, `c012`, `#12`, `Vol 3` or `v3`, and otherwise from the last number in the name that is not a year.
+- What a file says about itself wins over its path. A comic's `ComicInfo.xml` provides series, volume title and writer.
+- A book's layout is decided by its first chapter: fixed for page images and PDF, reflowing for EPUB. Mixed folders are reported as a problem rather than quietly combined. Page based books open reading right to left by default and reflowing books left to right, and you can change either in the reader.
+
+See [Playing media](/use/playing-media#reading-books) for how books are read.
+
+## Scanning
+
+A scan reads the library folder, works out which files are new, changed or gone, and reads only those. A file whose size and modification time have not changed is skipped, so a library of twenty thousand items that gained two costs two probes.
+
+Open the actions menu next to a library:
+
+| Action                    | What it does                                                                                                                                                               |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scan for changes          | Reads new, changed and removed files. This is the everyday action.                                                                                                         |
+| Upload media              | Sends files from your device into the library.                                                                                                                             |
+| Read every file again     | Probes every file rather than only the changed ones. Nothing is deleted, but on a large library it takes a long while and keeps the server busy. It asks for confirmation. |
+| Generate missing previews | Films and shows only. Makes hover previews that are missing.                                                                                                               |
+| Library settings          | Opens the per library settings described below.                                                                                                                            |
+| Delete library            | Forgets the library. It asks for confirmation.                                                                                                                             |
+
+The menu at the top of the panel adds **Scan all libraries** and **Reset and rebuild**, which deletes every item in every library and reads it all again from scratch. Watch progress and marked intros go with it, and it cannot be undone.
+
+The **Last read** column reports when the library was last scanned and what changed. While work is running the **State** column shows a badge and an information button that opens a live view of what the library is doing.
+
+### Automatic scans
+
+A scan of every library runs daily at 03:00 by default, as a scheduled job. You can change or add triggers on the jobs page, described in [Jobs and logs](/use/jobs-and-logs). Reading is queued library by library. The slower follow up work (intros, previews, scrub thumbnails) is queued separately, so you can start watching a library as soon as it has been read.
+
+### Deleting a library
+
+Deleting removes the library and everything Valence knows about its contents: watch progress, ratings, favourites, previews and thumbnails. Playlists that hold items from it keep their places and say what they lost. The files on disk are never touched, and anything running for the library is stopped.
+
+## Per library settings
+
+**Library settings** in the actions menu opens a dialog with these options.
+
+| Setting                      | Default                              | What it does                                                                                                                                                                                                                 |
+| ---------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Force default audio track    | Off                                  | Makes previews and playback prefer this language when a file has a track in it. A file with no matching track keeps its own default. Changing it offers to regenerate previews, so the library is not left in two languages. |
+| Files at once                | However many the server allows       | How many of the library's files are rendered at the same time. The choices are the server default, one, two or four. A library on a network share wants one, because the files come down a single wire.                      |
+| Takes requests               | On                                   | Whether media that people request can be filed in this library.                                                                                                                                                              |
+| Quality profile for requests | Whichever profile names this library | Which quality profile releases for this library are judged by.                                                                                                                                                               |
+| Where requests are filed     | The library's own folder             | A folder of its own for fetched media, when you want it kept apart.                                                                                                                                                          |
+
+The request settings are explained in [Requests](/use/requests). The count of files rendered at once is also bounded by what your hardware proves it can do, so it never exceeds the number of hardware encodes the machine can run. See [Hardware transcoding](/install/hardware-transcoding).
+
+## Uploading media
+
+**Upload media** in the actions menu sends files from the device you are using into a library. Drop files or whole folders onto the dialog, or press to choose them. Files are uploaded one after another, keeping the folder structure they came in, and each shows its own status: waiting, uploading, uploaded or failed with the server's reason.
+
+Only files the library would read are queued, and anything left out is listed, so nothing is uploaded to a place no scan would look. For Movies and Shows the video extensions above are accepted along with subtitles (`srt`, `vtt`, `ass`, `ssa`). Music takes audio files and Books take book files.
+
+Every part of the path must be a plain name. Names starting with a dot, names containing a backslash and paths more than 12 folders deep are refused, and nothing can be written outside the library folder or into the `.valence` folder. When the uploads finish, the library is scanned so the new files appear without a further step.
+
+## Metadata sources
+
+Valence uses these sources, all configured in the admin **Settings** panel and described in full in [Settings](/use/settings):
+
+| Source                             | Used for                                                                                      | Key needed                                                                                        |
+| ---------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| The Movie Database (the catalogue) | Titles, years, overviews, cast, artwork, logos, certificates and trailers for films and shows | A free catalogue key. Without one, titles and years come from filenames alone.                    |
+| OMDb                               | Rotten Tomatoes scores                                                                        | An optional free key. Scores fill in as titles are scanned again.                                 |
+| TheAudioDB                         | Artist photographs and music videos                                                           | An optional key. Without one, a free key is used that finds only one music video for each artist. |
+| Cover Art Archive and LRCLIB       | Album covers and song words                                                                   | None. Enabled by the **Fetch music details from the web** switch, which is off by default.        |
+
+Nothing a file already carries is replaced by fetched music details, and each album, artist and song is asked about once, on the next scan.
+
+<Callout title="Outside requests are opt in">
+  Fetching catalogue trailers and music details are the only things Valence does that reach outside
+  your server, and both are off until you turn them on. A trailer file beside the film is always
+  used in preference.
+</Callout>
+
+## Correcting a wrong match
+
+Sometimes the catalogue matches a file to the wrong film or series, usually because the name was ambiguous. Fix it once and the fix sticks across future scans.
+
+1. Open **Media** under **Content** and find the title with the search box, or open the film's actions menu wherever it is offered.
+2. Choose **Wrong match?**. The match picker opens, titled with the item's name.
+3. The search box is filled with the current title. Edit it if needed and press **Search**. The picker asks the catalogue and lists matches.
+4. Choose the correct entry. For a film the correction applies to that film. For an episode it applies to every episode of the series.
+5. Valence records the correction and reads the file again. The correction is used by every later scan instead of guessing from the file name again.
+
+To undo a correction, open the picker again and press **Forget the correction**. The file is read as the catalogue finds it. You need the media override permission.
+
+## Previews and artwork
+
+Hover previews are the short clips that play when you rest on a title. They are made from the film at a point a fifth of the way in by default. That guess can land on a title card or a spoiler, so you can choose the moment yourself:
+
+1. In **Media**, open the row's actions and choose **Choose the preview moment**.
+2. Drag the two handles along the strip of frames to set where the clip starts and ends.
+3. Save. To go back to the automatic moment, choose the automatic option in the same dialog.
+
+Other actions in the same menu rebuild a title's previews and thumbnails from the file, and **Re-encode** starts a re-encode (see [Settings](/use/settings#encoding-and-re-encoding)). Preview quality, which sets how sharp and how large the clips are, is a server setting and defaults to High. Changing it remakes every preview in the background.
+
+## Who can see what
+
+Valence has three layers of visibility, and they do different jobs.
+
+### Per account library access and age limits
+
+An administrator can stop an account reaching a library at all, or set an age ceiling per library, from **Accounts** in the admin area. Access is stored as refusals, so every account reaches every library until somebody says otherwise, and a new account needs no extra step before it can watch.
+
+- **Age limit**: choices are No ceiling, Suitable for all, Up to 8, Up to 12, Up to 15 and Up to 18. The ceiling is compared with the certificates the catalogue supplies, read for the country chosen under **Age certificates** in Settings (default GB).
+- **Allow unrated**: items nobody has certificated are refused to an account with a ceiling unless this is on. That is deliberate: an unrated title shown to a child because a field was missing is the failure the feature exists to prevent. Music is never treated as unrated.
+- **Exceptions**: on a title's dialog, **Who may watch this** lets an administrator allow or deny a single film or series for an account. A deny always wins, an allow beats the ceiling, and otherwise the library ceiling applies.
+
+Limits belong to the account, not to a profile, because anyone holding the account can pick any face on it. Give a child their own account if you want a limit that holds. Administrators and share guests are not subject to ceilings. Full detail is in [Accounts and roles](/use/accounts-and-roles).
+
+### Hiding, per profile
+
+Anyone can hide something from their own browsing. **Hide this** in a title's menu (and the same for a series or a whole library) removes it from that profile's rows, searches and the randomiser. Nothing is deleted and a half watched position is kept. Hiding belongs to one profile, not to the account, so it never affects anybody else. Bring things back from **Hidden** in your account area.
+
+Hiding is a preference, not a restriction. It cannot be used to reach something an account is not allowed to see, and nobody can hide what they were never allowed to see in the first place.
+
+### Administrator hiding
+
+The **media.hide** permission lets a role hide an item from every profile, rather than only its holder's own. See [Accounts and roles](/use/accounts-and-roles) for the permission catalogue.
+
+## Permissions used on this page
+
+| Permission       | Allows                                                                                 |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| `library.create` | Adding libraries and using the folder browser, including creating folders.             |
+| `library.edit`   | Changing library settings and uploading media.                                         |
+| `library.delete` | Deleting a library.                                                                    |
+| `jobs.run`       | Scanning, reading files again, generating missing previews and watching scan progress. |
+| `media.override` | Correcting matches, rebuilding a title's previews and choosing preview moments.        |
+
+The default Manager role holds the first two, `jobs.run` and `media.override`. Only administrators can delete libraries by default. The full list of roles is in [Accounts and roles](/use/accounts-and-roles).

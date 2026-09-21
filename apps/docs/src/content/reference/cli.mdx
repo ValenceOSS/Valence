@@ -1,0 +1,215 @@
+---
+title: Command line
+description: Every command line entry point in Valence, from Migrate and Rollback in the image to the media service binary, pnpm scripts, Docker Compose and drizzle-kit.
+order: 3
+---
+
+Valence has two kinds of command line. The first is for people running a server: a few programs that ship inside the image and that you run with Docker Compose. The second is for people working on the code: the pnpm scripts, the build tools and the database tooling. This page covers both. Settings that these commands read are listed in [Environment variables](/reference/environment-variables).
+
+## In the image
+
+The image contains the server, the web client and the media service. Its entrypoint, `docker-entrypoint.sh`, starts `valence-transcoder serve` and `node apps/server/dist/Main.js` side by side, and exits as soon as either stops, so the orchestrator restarts both together. The commands below run beside that, using the same environment as the server.
+
+| Command                             | What it does                                                 |
+| :---------------------------------- | :----------------------------------------------------------- |
+| `node apps/server/dist/Main.js`     | Starts the server. This is what the entrypoint runs.         |
+| `node apps/server/dist/Migrate.js`  | Brings the database up to date by hand.                      |
+| `node apps/server/dist/Rollback.js` | Lists the snapshots taken before upgrades, or restores one.  |
+| `valence-transcoder`                | The media service binary, on the `PATH` at `/usr/local/bin`. |
+
+The image runs `node` from `/app`, which is why the paths are relative to it.
+
+### Migrate.js
+
+```bash
+docker compose exec valence node apps/server/dist/Migrate.js
+```
+
+Applies every migration the release carries that the database has not run yet. You need it only when `MIGRATE_ON_START` is `false`, for someone who wants to take their own backup before the schema changes. It takes no options and reads the same environment as the server: `DATABASE_URL`, `BACKUP_BEFORE_MIGRATE`, `BACKUP_DIR` and `BACKUPS_KEPT`. It does not consult `MIGRATE_ON_START`, because running it is the consent that variable withholds.
+
+It behaves as follows.
+
+- If the database is already up to date, it prints nothing and exits.
+- Otherwise it prints `Applying N migrations this database has not run: ...`, takes a snapshot with `pg_dump` (unless the database is new or `BACKUP_BEFORE_MIGRATE` is `false`), applies the migrations and ends with `The database is up to date with this release.`
+- If the database has run migrations the release does not carry, because a newer Valence used it, it refuses. See [Rolling back](/install/rolling-back).
+- On failure it prints `The migrations could not be applied:` followed by the reason to standard error, and exits with status 1.
+
+### Rollback.js
+
+Migrations only go forward, so the way back to an older release is the snapshot taken before an upgrade. `Rollback.js` lists those snapshots and restores one. Stop Valence first, and run it with the entrypoint replaced, since the image's own entrypoint starts the server rather than running the command you give it.
+
+```bash
+docker compose stop valence
+docker compose run --rm --entrypoint node valence apps/server/dist/Rollback.js --list
+```
+
+| Form                                  | Effect                                                                       |
+| :------------------------------------ | :--------------------------------------------------------------------------- |
+| `Rollback.js` or `Rollback.js --list` | Prints the snapshots in `BACKUP_DIR`, newest first, and changes nothing.     |
+| `Rollback.js --restore`               | Restores the newest snapshot.                                                |
+| `Rollback.js --restore NAME`          | Restores the snapshot with that file name, such as one copied from the list. |
+
+Both flags are booleans, and the snapshot name is a positional argument. If the folder holds none, it prints `There are no snapshots in /config/backups.` A name that is not in the list fails with `There is no snapshot called NAME. Run with --list to see them.` A restore prints `Restoring NAME...` and, when it is done, `Restored. Start the release that was running when it was taken; starting a newer one applies its migrations again.`
+
+Failures print `The rollback did not complete:` and the reason, and exit with status 1.
+
+<Callout title="A restore replaces the database" tone="danger">
+  Restoring drops and recreates the database from the snapshot with `pg_restore`, so everything
+  written since that snapshot is lost. Stop Valence first, and start the older image afterwards.
+  Snapshots are full copies of the database, so keep them as private as the database itself.
+</Callout>
+
+The snapshots are named `valence-` followed by a timestamp, `-before-` and the last migration they were taken ahead of, ending in `.dump`. They use the `pg_dump` custom format. The image installs `postgresql-client` at the major version of its `POSTGRES_MAJOR` build argument, which must match the Postgres in your compose file.
+
+### The media service binary
+
+`valence-transcoder` is the Rust program that runs FFmpeg for playback, previews and thumbnails. In normal use you never run it yourself, because the entrypoint does. It has three commands.
+
+| Command                           | What it does                                                                                                                            |
+| :-------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| `valence-transcoder serve`        | Runs the media service, listening on the socket or address described below.                                                             |
+| `valence-transcoder probe FILE`   | Reads a media file with ffprobe and prints what Valence understands of it as JSON. On failure it prints `probe failed:` and the reason. |
+| `valence-transcoder capabilities` | Measures what the machine's FFmpeg and graphics device can do (encoders, hardware acceleration, HDR handling) and prints it as JSON.    |
+
+With no command, or an unknown one, it prints its version and `commands: serve, probe <file>, capabilities`. The `probe` and `capabilities` commands are the fastest way to check hardware acceleration from a shell.
+
+```bash
+docker compose exec valence valence-transcoder capabilities
+docker compose exec valence valence-transcoder probe /media/Films/Example.mkv
+```
+
+`serve` listens on a Unix socket by default. It chooses where in this order: `VALENCE_TRANSCODER_ADDR` (a TCP address), then `VALENCE_TRANSCODER_SOCKET`, then the path in `TRANSCODER_URL` when that starts with `unix:`, and finally `/run/valence-transcoder.sock`. Logging goes to standard error, at the level in `RUST_LOG`, `info` by default. The service has no authentication of its own, so it is not meant to be exposed beyond the machine or private network the server is on. See [Ports](/reference/ports).
+
+To run it from source, use `cargo run --quiet --bin valence-transcoder -- serve` from the repository root, or `pnpm --filter @valence/transcoder dev`, which does that after checking that `TRANSCODER_URL` is set, that it is a `unix:` address and that `cargo` exists.
+
+## Docker Compose
+
+These are the commands the documentation uses. Run them in the folder that holds `compose.yaml`.
+
+| Command                                                        | Purpose                                                                                                                        |
+| :------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
+| `docker compose up -d`                                         | Start the stack, creating it if needed.                                                                                        |
+| `docker compose --profile requests up -d`                      | Also start the requests service. `COMPOSE_PROFILES=requests` does the same. Profiles are `requests`, `flaresolverr` and `vpn`. |
+| `docker compose pull`                                          | Fetch newer images. Follow it with `docker compose up -d` to recreate the containers.                                          |
+| `docker compose ps`                                            | Show what is running and whether it is healthy.                                                                                |
+| `docker compose logs -f valence`                               | Follow the server's log, which includes the media service.                                                                     |
+| `docker compose logs --tail 200 db`                            | The last 200 lines from the database.                                                                                          |
+| `docker compose stop valence`                                  | Stop the server, for example before a rollback.                                                                                |
+| `docker compose exec valence node apps/server/dist/Migrate.js` | Run migrations by hand.                                                                                                        |
+| `docker compose exec valence valence-transcoder capabilities`  | Inspect hardware acceleration.                                                                                                 |
+| `docker compose exec db pg_dumpall -U valence`                 | Dump the whole database, as used when [upgrading Postgres](/reference/troubleshooting).                                        |
+| `docker compose down`                                          | Stop and remove the containers, keeping the volumes.                                                                           |
+| `docker compose down -v`                                       | Also removes the volumes. This deletes your database and settings.                                                             |
+
+<Callout title="down -v is not an upgrade step" tone="warning">
+  The four volumes hold different things. `config` cannot be rebuilt, since it holds settings,
+  snapshots and profile pictures. Removing volumes is never needed to update Valence.
+</Callout>
+
+The development file is used with `-f`:
+
+```bash
+docker compose -f compose.dev.yaml up -d db
+docker compose -f compose.dev.yaml --profile requests up
+```
+
+## Root scripts
+
+From the repository root, with Node 24 or later and pnpm 10. Most run through [Turborepo](https://turbo.build), which builds a package's dependencies first.
+
+| Script               | What it runs                                                                                                                                                                                                                                                               |
+| :------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm install`       | Installs every workspace package and sets up the git hooks.                                                                                                                                                                                                                |
+| `pnpm dev`           | `turbo run dev`: the `dev` script of every package that has one, at once. That includes the API on 8420, the web client on 5173, the media service, the requests service, the landing site and the desktop client. Filter it to one package when you do not need the rest. |
+| `pnpm build`         | `turbo run build`: builds every package in dependency order.                                                                                                                                                                                                               |
+| `pnpm test`          | `turbo run test`: the Vitest suites of every package.                                                                                                                                                                                                                      |
+| `pnpm test:coverage` | The same suites with coverage.                                                                                                                                                                                                                                             |
+| `pnpm coverage`      | Runs coverage, then checks the average against the threshold.                                                                                                                                                                                                              |
+| `pnpm typecheck`     | `turbo run typecheck`: TypeScript across the workspace.                                                                                                                                                                                                                    |
+| `pnpm lint`          | `oxlint`, then `eslint .`, then the comment checker.                                                                                                                                                                                                                       |
+| `pnpm lint:fix`      | The same with automatic fixes.                                                                                                                                                                                                                                             |
+| `pnpm format`        | Prettier, writing changes. `pnpm format:check` only checks.                                                                                                                                                                                                                |
+| `pnpm rust:check`    | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`.                                                                                                                                                                                                       |
+| `pnpm rust:test`     | `cargo test`.                                                                                                                                                                                                                                                              |
+| `pnpm branch:check`  | Checks the current branch name follows the convention, such as `feat/some-thing`.                                                                                                                                                                                          |
+| `pnpm ffmpeg:sync`   | Downloads the FFmpeg build the image ships and points your `.env` at it, without overwriting values you set.                                                                                                                                                               |
+| `pnpm fixtures:sync` | Builds the media test corpus. `--tier 1` or `--tier 2` builds more, and `--force` fetches again over files already present.                                                                                                                                                |
+| `pnpm db:check`      | Checks the drizzle migrations and snapshots match the schema and are in order.                                                                                                                                                                                             |
+
+The `turbo.json` file defines the tasks `build` (which depends on the build of dependencies and outputs `dist`), `dev` (persistent, uncached), `test`, `test:watch`, `typecheck` and `lint`. It also passes the server and requests environment variables through to tasks, so a value in your shell reaches them.
+
+To work on one package, filter by its name:
+
+```bash
+pnpm --filter @valence/web dev
+pnpm --filter @valence/server test
+pnpm --filter @valence/ui typecheck
+```
+
+### Git hooks
+
+Husky installs three hooks. `commit-msg` runs commitlint, which requires Conventional Commits with a type such as `feat` or `fix`, an optional scope from a fixed list and a lower case subject. `pre-commit` runs lint-staged. `pre-push` runs lint, typecheck, the branch check, the tests and the Rust checks. See [Contributing](/develop/contributing) and [Testing](/develop/testing).
+
+## Scripts per package
+
+Package names are `@valence/` followed by the folder name.
+
+| Package                                                      | Script                                                 | Runs                                                                                                           |
+| :----------------------------------------------------------- | :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| `server`                                                     | `dev`                                                  | `tsx watch --env-file-if-exists=../../.env src/Main.ts`                                                        |
+| `server`                                                     | `build`                                                | `tsc --build`                                                                                                  |
+| `server`                                                     | `bundle`                                               | esbuild bundles `src/Main.ts` into `dist/Main.js`, with packages left external. This is what the image builds. |
+| `server`                                                     | `start`                                                | `node dist/Main.js`                                                                                            |
+| `server`                                                     | `test`, `typecheck`                                    | Vitest and `tsc --noEmit`                                                                                      |
+| `server`                                                     | `db:generate`, `db:migrate`, `db:push`                 | drizzle-kit, described below.                                                                                  |
+| `requests`                                                   | `dev`, `build`, `bundle`, `start`, `test`, `typecheck` | As for the server, on `apps/requests`.                                                                         |
+| `requests`                                                   | `db:generate`                                          | drizzle-kit generate.                                                                                          |
+| `web`                                                        | `dev`                                                  | `vite` on port 5173, proxying `/api` to `http://localhost:8420` with WebSocket support.                        |
+| `web`                                                        | `build`                                                | `tsc --build && vite build`.                                                                                   |
+| `web`                                                        | `preview`, `test`, `typecheck`                         | Vite preview, Vitest, `tsc --noEmit`.                                                                          |
+| `desktop`                                                    | `dev`                                                  | `electron-vite dev`.                                                                                           |
+| `desktop`                                                    | `build`                                                | `electron-vite build`.                                                                                         |
+| `desktop`                                                    | `package`                                              | `electron-vite build && electron-builder`, producing installers.                                               |
+| `desktop`                                                    | `test`, `typecheck`                                    | Vitest and `tsc --noEmit`.                                                                                     |
+| `landing`                                                    | `dev`                                                  | `vite` on port 5174.                                                                                           |
+| `landing`                                                    | `build`, `preview`, `test`, `typecheck`                | Build, preview, test, typecheck.                                                                               |
+| `landing`                                                    | `start`                                                | `serve dist -l ${PORT:-3000}`, serving the built site.                                                         |
+| `docs`                                                       | `dev`                                                  | `vite`, the development server for this documentation.                                                         |
+| `docs`                                                       | `spec`                                                 | Writes the OpenAPI document to `public/openapi.json`.                                                          |
+| `docs`                                                       | `build`                                                | `pnpm spec && tsc --build && vite build`.                                                                      |
+| `docs`                                                       | `preview`, `start`, `test`, `typecheck`                | Vite preview, `serve dist` on `PORT` or 3000, Vitest, `tsc --noEmit`.                                          |
+| `transcoder`                                                 | `dev`                                                  | Runs the media service from source, through `tools/transcoder/serveTranscoder.ts`.                             |
+| `client`, `contracts`, `core`, `plugin-sdk`, `screens`, `ui` | `build`, `test`, `typecheck`                           | `tsc --build`, Vitest, `tsc --noEmit`.                                                                         |
+| `tools`                                                      | `lint:comments`, `test`, `typecheck`                   | The comment checker, Vitest and `tsc --noEmit`.                                                                |
+
+### The documentation spec script
+
+```bash
+pnpm --filter @valence/docs spec
+```
+
+This runs `apps/server/src/writeOpenApiDocument.ts`, which builds the API over in-memory services, asks it for `/api/openapi.json` and writes the result to `apps/docs/public/openapi.json`. It needs no database. Pass a different path as the first argument to write elsewhere. The [API reference](/api) on this site reads that file, and `pnpm --filter @valence/docs build` runs the script first, so the reference always matches the routes in the checkout.
+
+## Database tooling
+
+Valence uses [Drizzle](https://orm.drizzle.team). The schema of the server is `apps/server/src/db/Schema.ts`, and its migrations are the SQL files in `apps/server/drizzle`. The requests service has its own schema and migration folder. Both read `DATABASE_URL`, loading the `.env` at the repository root, and fall back to the local development database.
+
+| Command                                       | Effect                                                                                                                     |
+| :-------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm --filter @valence/server db:generate`   | Writes a new migration from the difference between the schema and the last snapshot. Commit both the SQL and the snapshot. |
+| `pnpm --filter @valence/server db:migrate`    | Applies pending migrations with drizzle-kit, for development. A running server does this itself at start.                  |
+| `pnpm --filter @valence/server db:push`       | Pushes the schema straight to the database without a migration file. Use it for throwaway experiments only.                |
+| `pnpm --filter @valence/requests db:generate` | The same as the first, for the requests service.                                                                           |
+| `pnpm db:check`                               | Checks that no snapshot has drifted from the schema and that migrations are stamped in order.                              |
+
+`drizzle-kit` is a development dependency, so it is not in the image. That is why `Migrate.js` exists. See [Database and migrations](/develop/database-and-migrations).
+
+## Linting and comments
+
+`pnpm lint` runs `oxlint`, `eslint .` and `tsx tools/comments/checkComments.ts`. The comment checker enforces the repository's rule on comments, and `--fix` removes what it can. You can call it on its own:
+
+```bash
+pnpm --filter @valence/tools lint:comments
+```
+
+The coding rules those tools enforce are in [Coding standard](/develop/coding-standard).

@@ -1,0 +1,117 @@
+---
+title: Frequently asked questions
+description: Short, honest answers to the questions people ask before and after installing Valence.
+order: 5
+---
+
+Short answers, with links to the page that goes further. If your question is about something breaking, [Troubleshooting](/reference/troubleshooting) is the better place to start.
+
+## Before you install
+
+### Does Valence phone home?
+
+No. There is no Valence account and no telemetry service. The server only contacts services you turn on: the metadata catalogue if you set a `CATALOGUE_API_KEY`, and, if you use requesting, your indexers, your download client and the GitHub repository that holds the indexer definitions.
+
+### Is it free?
+
+Yes. Valence is released under the MIT licence, so you can use, change and redistribute it. There is no paid tier. See the [Introduction](/start/introduction).
+
+### Do I need a GPU?
+
+No. Without one, everything still works, and anything that cannot be direct played is converted on the processor. That is slower and costs more of it. A GPU helps mainly when several people need video transcodes at once. See [Hardware transcoding](/install/hardware-transcoding).
+
+### What hardware architecture does it run on?
+
+The published release image is built for linux/amd64. The bundled FFmpeg and Rust media service are built into that image, so a different architecture would need a build of your own. See [System requirements](/start/system-requirements).
+
+### Which Postgres version do I need?
+
+Postgres 18. The shipped `compose.yaml` runs `postgres:18-alpine`, and the Valence image includes the matching client so it can take snapshots. Pointing the new image at an older Postgres data directory does not upgrade anything. The steps for moving an existing install are in [Updating](/install/updating).
+
+### Can I run it without Docker?
+
+The supported way to run Valence is the Docker image. The repository also describes running from source for development, which needs Node 24 or newer, pnpm, the Rust toolchain and a Postgres database. See [Local setup](/develop/local-setup). It is a route for contributors and not a documented production install.
+
+### Can I use a database other than Postgres?
+
+No. Postgres is the only supported data store. SQLite and Redis are deliberately not used.
+
+## Setting up
+
+### Why does the container refuse to start on my machine?
+
+The most common cause is the `devices` entry in `compose.yaml`, which passes `/dev/dri` to the container for hardware transcoding. On a machine with no GPU, a virtual machine, or Docker Desktop, that device does not exist and the container will not start. Delete both `devices` and `group_add` under the `valence` service. See [Docker Compose](/install/docker-compose).
+
+### Sign-in works and then immediately forgets me. Why?
+
+Either `PUBLIC_URL` does not match the address your browser is using, or `COOKIE_SECURE` is `true` over plain HTTP. A browser refuses to store a secure cookie from an insecure origin. Behind HTTPS keep `COOKIE_SECURE` at its default. When testing over plain HTTP, set it to `false`. See [Reverse proxy](/install/reverse-proxy).
+
+### Why does my library scan to nothing?
+
+The library path must be the path inside the container, where `MEDIA_PATH` appears as `/media`. Using the host path (`/mnt/tank/media`) points at something the container cannot see. Check also that the host folder is readable by Docker.
+
+### Do I have to put a reverse proxy in front of it?
+
+For anything reached from outside your network, yes: Valence speaks plain HTTP and expects something in front of it to hold the certificate. Passkeys need a secure context. On a trusted local network you can go without HTTPS for trying it out, with `COOKIE_SECURE=false`. See [Reverse proxy](/install/reverse-proxy).
+
+### Everything loads but nothing updates on its own. What is wrong?
+
+The WebSocket, at `/api/realtime`, is not getting through your proxy. Without it there is no live scan progress, no notifications and no watch parties. Add the upgrade headers. Examples for four proxies are in [Reverse proxy](/install/reverse-proxy).
+
+### Where do I find posters and descriptions?
+
+They need a metadata catalogue key in `CATALOGUE_API_KEY`. It is empty by default on purpose, because looking up what is in your library means telling a third party about it, and that should be your decision. Without a key, titles and years are read from file names.
+
+## Media and playback
+
+### Does Valence change my files?
+
+No. The library is mounted read only by default and Valence writes nothing back: no sidecars, no renames. The one feature that writes is re-encoding, which you must switch on by mounting the library read and write. See [Storage and volumes](/install/storage-and-volumes).
+
+### Which file types does it support?
+
+For video: mkv, mp4, m4v, mov, avi, webm, ts, m2ts, mpg, mpeg, wmv, flv, ogv and 3gp. For music: mp3, flac, m4a, aac, alac, ogg, oga, opus, wav, aiff, aif, wma, ape and wv. For books: epub, pdf, cbz and cbr. What a given device can play directly depends on the device. See [Concepts](/start/concepts).
+
+### Does it handle HDR?
+
+Yes. HDR stays HDR where the screen can show it, and is tone mapped from PQ and HLG to SDR only when the screen needs it. Tone mapping in hardware depends on the encoder backend.
+
+### Can I watch offline?
+
+Yes. Downloads are chosen at a quality against a size before you commit, and there is a full offline mode. The desktop app keeps downloads in its own folder. See [Playing media](/use/playing-media) and [Desktop app](/install/desktop-app).
+
+### Can I share something with somebody who has no account?
+
+Yes. A share link covers one title or one series and lasts as long as you decide. The person sees only that, with no library browsing or search. See [Sharing](/use/sharing).
+
+## Running it
+
+### How do I update, and can I go back?
+
+Pull the new image and recreate the container. Migrations run on start, and before they change the database Valence takes a snapshot that you can restore. See [Updating](/install/updating) and [Rolling back](/install/rolling-back).
+
+### What should I back up?
+
+The `config` volume above all: it holds the settings and the only copy of the household's profile pictures. Also the database, either through the snapshots in `/config/backups` or with `pg_dumpall`. The `cache` and `transcodes` volumes hold nothing that cannot be made again. See [Storage and volumes](/install/storage-and-volumes).
+
+### Can I use network storage for my media?
+
+Yes, as long as the Docker host can read the path. Keep the transcode scratch space on fast local disk. Details are in [Storage and volumes](/install/storage-and-volumes).
+
+### Does Valence download things for me?
+
+Not by itself. The optional requesting service searches your own indexers and hands releases to your own download client. It is off until you configure it. See [Requesting](/install/requesting).
+
+### Is there an API?
+
+Yes. Every endpoint has a contract, and the server serves an OpenAPI 3.1 document and an interactive reference. Keys can be created from the account area. See the [API reference](/api) and [API overview](/reference/api-overview).
+
+### Can I write plugins?
+
+The plugin model is designed around capabilities such as network allowlists, read-only library access and storage quotas, but the runtime is still in progress. See [Plugins](/develop/plugins).
+
+## Getting involved
+
+### How do I report a bug or a security issue?
+
+Bugs go to [GitHub issues](https://github.com/ValenceOSS/Valence). Security problems must not go in a public issue: read [Security](/reference/security). For questions and help from other users, join the [Discord](https://discord.gg/uTtcAHMy9N).
