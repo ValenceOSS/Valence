@@ -543,6 +543,39 @@ describe('ReleaseSearchPanel', () => {
     expect(screen.getByRole('button', { name: 'Judge against' })).toHaveTextContent('No profile');
   });
 
+  it('offers only the profiles that judge what is being searched for', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Lossless' }));
+
+    await user.click(screen.getByRole('button', { name: 'Films' }));
+
+    expect(screen.getByRole('button', { name: 'Judge against' })).toHaveTextContent('No profile');
+
+    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+
+    expect(await screen.findByRole('menuitemradio', { name: 'HD' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitemradio', { name: 'Lossless' })).not.toBeInTheDocument();
+  });
+
+  it('offers no profile for a book, which none of them judge', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<ReleaseSearchPanel />);
+
+    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'HD' }));
+
+    await user.click(screen.getByRole('button', { name: 'Books' }));
+    await user.click(screen.getByRole('button', { name: 'Judge against' }));
+
+    expect(await screen.findByRole('menuitemradio', { name: 'No profile' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitemradio', { name: 'HD' })).not.toBeInTheDocument();
+  });
+
   it('says why a release could not be sent', async () => {
     sendRelease.mockResolvedValueOnce({
       value: null,
