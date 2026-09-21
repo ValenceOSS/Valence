@@ -79,7 +79,31 @@ describe('EpisodeRow', () => {
     expect(screen.queryByRole('button', { name: /About/ })).not.toBeInTheDocument();
   });
 
+  it('ticks an episode that has been watched through', () => {
+    render(<EpisodeRow episode={episode} watchedFraction={1} onPlay={vi.fn()} />);
+
+    expect(screen.getByRole('img', { name: 'Watched' })).toBeInTheDocument();
+  });
+
+  it('does not tick an episode that is only part watched', () => {
+    render(<EpisodeRow episode={episode} watchedFraction={0.5} onPlay={vi.fn()} />);
+
+    expect(screen.queryByRole('img', { name: 'Watched' })).not.toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(EpisodeRow.displayName).toBe('EpisodeRow');
+  });
+
+  it('says when it aired, beside how long it runs, where the catalogue dates it', () => {
+    render(<EpisodeRow episode={episode} onPlay={vi.fn()} airs="Aired 2 Jan 2024" />);
+
+    expect(screen.getByText(/Aired 2 Jan 2024/)).toBeInTheDocument();
+  });
+
+  it('says nothing of a date it was not given', () => {
+    render(<EpisodeRow episode={episode} onPlay={vi.fn()} />);
+
+    expect(screen.queryByText(/Aired|Airs/)).not.toBeInTheDocument();
   });
 });

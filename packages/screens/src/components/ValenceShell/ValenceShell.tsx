@@ -54,6 +54,7 @@ import type { Inbox } from '@ValenceClient/notifications/fetchNotifications';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { BookDialog } from '@ValenceScreens/components/BookDialog/BookDialog';
 import { useSurprise } from '@ValenceScreens/library/useSurprise';
+import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
 
 const NOTHING_WAITING = { notifications: [], unread: 0 };
 
@@ -122,6 +123,14 @@ const ValenceShell = () => {
   const libraries = useQuery(libraryQueries.all());
 
   const libraryKinds = [...new Set((libraries.data ?? []).map((one) => one.kind))];
+
+  const libraryChoices = useMemo(
+    () =>
+      libraryChoicesFor(libraries.data ?? [], place.library, (library) => {
+        go({ library });
+      }),
+    [libraries.data, place.library, go],
+  );
 
   const watchableIds = useMemo(
     () =>
@@ -203,7 +212,11 @@ const ValenceShell = () => {
       }
       isFitted={place.section === 'music'}
       onSectionChange={(next) => {
-        go(next === 'music' ? { section: next, listen: null } : { section: next });
+        go(
+          next === 'music'
+            ? { section: next, listen: null, library: null }
+            : { section: next, library: null },
+        );
       }}
       isAccountOpen={place.account !== null}
       onOpenAccount={() => {
@@ -225,6 +238,7 @@ const ValenceShell = () => {
       }
       isAdministrator={mayAdminister}
       hasMark={!isHoldingTheScreen}
+      libraryChoices={libraryChoices}
       {...(libraries.data === undefined ? {} : { libraryKinds })}
       {...(isStockKnown ? { stocked } : {})}
       mayRequest={mayRequest}

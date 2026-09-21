@@ -26,7 +26,6 @@ import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { DownloadDialog } from '@ValenceScreens/components/DownloadDialog/DownloadDialog';
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -38,9 +37,11 @@ import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPrevi
 import { scrollToTopOf } from '@ValenceScreens/navigation/scrollToTopOf';
 import { RatingPanel } from '@ValenceScreens/components/RatingPanel/RatingPanel';
 import { pickUpFrom } from './pickUpFrom';
+import { SeasonPicker } from './components/SeasonPicker/SeasonPicker';
 import { EpisodeRow } from './components/EpisodeRow/EpisodeRow';
 import { MissingRow } from './components/MissingRow/MissingRow';
 import { findGaps } from '@ValenceCore/functions/findGaps';
+import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import type { ShowDialogProps } from './ShowDialog.types';
 
 /**
@@ -140,6 +141,13 @@ const ShowDialog = ({
     ...(gaps?.seasons ?? []).map((number) => ({ seasonNumber: number, isHeld: false })),
   ].sort((left, right) => inSeasonOrder(left.seasonNumber, right.seasonNumber));
 
+  const heldEpisodes = seasons.flatMap((one) => one.episodes);
+
+  const isWatchedThrough =
+    watchedFractionFor !== undefined &&
+    heldEpisodes.length > 0 &&
+    heldEpisodes.every((episode) => (watchedFractionFor(episode.id) ?? 0) >= 1);
+
   const chosen = chooseFrom.find((one) => one.seasonNumber === chosenSeason) ?? chooseFrom[0];
   const showing = chosen?.seasonNumber ?? null;
   const season = seasons.find((one) => one.seasonNumber === showing) ?? {
@@ -154,18 +162,30 @@ const ShowDialog = ({
       ? (listedHere?.episodes.map((one) => one.episodeNumber) ?? [])
       : (gaps?.episodes.get(showing ?? -1) ?? []);
 
+  const today = new Date().toISOString().slice(0, 10);
+
+  const airsOf = (episodeNumber: number): string => {
+    const airDate = listedHere?.episodes.find(
+      (one) => one.episodeNumber === episodeNumber,
+    )?.airDate;
+
+    return airDate === undefined || airDate === null ? '' : describeAirDate(airDate, today);
+  };
+
   const inOrder = [
     ...season.episodes.map((episode) => ({
       key: episode.id,
       at: episode.episodeNumber ?? 0,
       episode,
       listed: null,
+      airs: airsOf(episode.episodeNumber ?? 0),
     })),
     ...missingHere.map((number) => ({
       key: `missing-${number.toString()}`,
       at: number,
       episode: null,
       listed: listedHere?.episodes.find((one) => one.episodeNumber === number) ?? null,
+      airs: airsOf(number),
     })),
   ].sort((left, right) => left.at - right.at);
 
@@ -216,6 +236,24 @@ const ShowDialog = ({
                   ? `${shown.episodeCount.toString()} episodes`
                   : `${shown.seasonCount.toString()} seasons · ${shown.episodeCount.toString()} episodes`}
               </span>
+
+              {isWatchedThrough ? (
+                <Badge tone="success" size="sm">
+                  Watched
+                </Badge>
+              ) : null}
+
+              {detail?.status === undefined ||
+              detail.status === null ||
+              detail.status === '' ? null : (
+                <Badge size="sm">{detail.status}</Badge>
+              )}
+
+              {detail?.nextEpisode === undefined || detail.nextEpisode === null ? null : (
+                <span className="text-sm text-on-scrim/85">
+                  {`Next: S${detail.nextEpisode.seasonNumber.toString()} E${detail.nextEpisode.episodeNumber.toString()} · ${describeAirDate(detail.nextEpisode.airDate, today)}`}
+                </span>
+              )}
             </motion.div>
 
             <motion.h2
@@ -277,20 +315,7 @@ const ShowDialog = ({
               </h3>
 
               {seasons.length < 2 && (gaps?.seasons ?? []).length === 0 ? null : (
-                <SegmentedRow
-                  size="sm"
-                  tone="accent"
-                  label="Which season"
-                  items={chooseFrom.map((one) => ({
-                    id: String(one.seasonNumber ?? 'specials'),
-                    label: nameSeason(one.seasonNumber),
-                    ...(one.isHeld ? {} : { isAbsent: true }),
-                  }))}
-                  value={String(showing ?? 'specials')}
-                  onSelect={(chosen) => {
-                    setChosenSeason(chosen === 'specials' ? null : Number(chosen));
-                  }}
-                />
+                <SeasonPicker seasons={chooseFrom} value={showing} onChange={setChosenSeason} />
               )}
             </header>
 
@@ -310,11 +335,12 @@ const ShowDialog = ({
               </p>
             ) : (
               <ul className="flex flex-col divide-y divide-divider">
-                {inOrder.map(({ key, at, episode, listed }) => (
+                {inOrder.map(({ key, at, episode, listed, airs }) => (
                   <li key={key}>
                     {episode === null ? (
                       <MissingRow
                         episodeNumber={at}
+                        {...(airs === '' ? {} : { airs })}
                         {...(listed === null ? {} : { title: listed.title })}
                         {...(listed?.stillUrl === null || listed?.stillUrl === undefined
                           ? {}
@@ -324,6 +350,7 @@ const ShowDialog = ({
                       <EpisodeRow
                         episode={episode}
                         onPlay={onPlay}
+                        {...(airs === '' ? {} : { airs })}
                         {...(onInspect === undefined ? {} : { onInspect })}
                         {...(watchedFractionFor?.(episode.id) === undefined
                           ? {}

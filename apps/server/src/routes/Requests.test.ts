@@ -160,6 +160,20 @@ const MUSIC: Library = {
   requestPath: null,
 };
 
+const BOOKS: Library = {
+  id: '5d7e9f1a-2b3c-4d5e-8f6a-7b8c9d0e1f2a',
+  name: 'Books',
+  kind: 'books',
+  path: '/media/Books',
+  itemCount: 0,
+  lastScannedAt: null,
+  defaultAudioLanguage: null,
+  filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
+};
+
 const build = async ({
   isOn,
   granted = [],
@@ -168,6 +182,7 @@ const build = async ({
   events,
   describeForRequest,
   describeMusicForRequest,
+  describeBookForRequest,
   searchMusicCatalogue,
   discovery,
   libraries = [FILMS],
@@ -182,6 +197,7 @@ const build = async ({
     musicBrainzId: string,
     kind: MusicRequestKind,
   ) => Promise<RequestCatalogue | null>;
+  describeBookForRequest?: (openLibraryId: number) => Promise<RequestCatalogue | null>;
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
   discovery?: Discovery;
   libraries?: Library[];
@@ -219,6 +235,7 @@ const build = async ({
     ...(events === undefined ? {} : { events }),
     ...(describeForRequest === undefined ? {} : { describeForRequest }),
     ...(describeMusicForRequest === undefined ? {} : { describeMusicForRequest }),
+    ...(describeBookForRequest === undefined ? {} : { describeBookForRequest }),
     ...(searchMusicCatalogue === undefined ? {} : { searchMusicCatalogue }),
     ...(discovery === undefined ? {} : { discovery }),
     playback: createMemoryPlaybackService(),
@@ -976,6 +993,7 @@ describe('requests for films and series, through the server', () => {
     kind: 'film',
     tmdbId: 438631,
     musicBrainzId: null,
+    openLibraryId: null,
     title: 'Dune',
     artistName: null,
     year: 2021,
@@ -1572,10 +1590,19 @@ describe('requests for films and series, through the server', () => {
 
   const DISCOVERY: Discovery = {
     ...NO_DISCOVERY,
-    browse: ({ list, kind }) =>
+    genres: (kind) =>
+      Promise.resolve(
+        kind === 'movie'
+          ? [
+              { id: '28', name: 'Action' },
+              { id: '878', name: 'Science Fiction' },
+            ]
+          : [{ id: '18', name: 'Drama' }],
+      ),
+    browse: ({ list, kind, filters }) =>
       Promise.resolve({
         matches:
-          list === 'trending' && kind === 'movie'
+          filters?.genre === '878'
             ? [
                 {
                   externalId: '438631',
@@ -1586,7 +1613,18 @@ describe('requests for films and series, through the server', () => {
                   posterUrl: null,
                 },
               ]
-            : [],
+            : list === 'trending' && kind === 'movie'
+              ? [
+                  {
+                    externalId: '438631',
+                    kind,
+                    title: 'Dune',
+                    year: 2021,
+                    overview: null,
+                    posterUrl: null,
+                  },
+                ]
+              : [],
         hasMore: list === 'trending',
       }),
     studios: () =>
@@ -1689,6 +1727,310 @@ describe('requests for films and series, through the server', () => {
     expect((await music.ask('/api/requests/catalogue/browse?kind=film&list=popular')).status).toBe(
       403,
     );
+  });
+
+  it('narrows a whole list by genre, years and rating, passing them to the catalogue', async () => {
+    const browse = vi.fn<Discovery['browse']>(() =>
+      Promise.resolve({ matches: [], hasMore: false }),
+    );
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: { ...DISCOVERY, browse },
+    });
+
+    await ask(
+      '/api/requests/catalogue/browse?kind=film&list=popular&genre=878&yearFrom=1990&yearTo=1999&minRating=7',
+    );
+
+    expect(browse).toHaveBeenCalledWith({
+      list: 'popular',
+      kind: 'movie',
+      page: 1,
+      studio: null,
+      filters: { genre: '878', yearFrom: 1990, yearTo: 1999, minRating: 7 },
+    });
+  });
+
+  it('narrows nothing where nothing was asked', async () => {
+    const browse = vi.fn<Discovery['browse']>(() =>
+      Promise.resolve({ matches: [], hasMore: false }),
+    );
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: { ...DISCOVERY, browse },
+    });
+
+    await ask('/api/requests/catalogue/browse?kind=series&list=trending');
+
+    expect(browse).toHaveBeenCalledWith(expect.objectContaining({ filters: {} }));
+  });
+
+  it('refuses a genre that is not an id, and a rating past the top of the scale', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect(
+      (await ask('/api/requests/catalogue/browse?kind=film&list=popular&genre=action')).status,
+    ).toBe(400);
+    expect(
+      (await ask('/api/requests/catalogue/browse?kind=film&list=popular&minRating=11')).status,
+    ).toBe(400);
+  });
+
+  it('lists the genres a list can be narrowed to, for films and for series', async () => {
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect(await (await ask('/api/requests/catalogue/genres?kind=film')).json()).toEqual([
+      { id: '28', name: 'Action' },
+      { id: '878', name: 'Science Fiction' },
+    ]);
+    expect(await (await ask('/api/requests/catalogue/genres?kind=series')).json()).toEqual([
+      { id: '18', name: 'Drama' },
+    ]);
+  });
+
+  it('lists the genres only for somebody who may ask for films and series', async () => {
+    const music = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
+      service: aWillingKeeper,
+      discovery: DISCOVERY,
+    });
+
+    expect((await music.ask('/api/requests/catalogue/genres?kind=film')).status).toBe(403);
+  });
+
+  describe('books', () => {
+    const PROJECT_HAIL_MARY = {
+      openLibraryId: 21_277_329,
+      title: 'Project Hail Mary',
+      author: 'Andy Weir',
+      year: 2021,
+      coverUrl: 'https://covers.openlibrary.org/b/id/1-M.jpg',
+    };
+
+    const WITH_BOOKS: Discovery = {
+      ...DISCOVERY,
+      bookShelves: () =>
+        Promise.resolve([
+          { id: 'trending-books', title: 'Trending books', books: [PROJECT_HAIL_MARY] },
+        ]),
+      searchBooks: (query) => Promise.resolve(query === 'hail mary' ? [PROJECT_HAIL_MARY] : []),
+      describeBook: (openLibraryId) =>
+        Promise.resolve(
+          openLibraryId === 21_277_329
+            ? {
+                title: 'Project Hail Mary',
+                year: 2021,
+                overview: 'A lone astronaut wakes up.',
+                posterUrl: null,
+                authors: ['Andy Weir'],
+                subjects: ['Science fiction'],
+              }
+            : null,
+        ),
+    };
+
+    it('asks for a book by its Open Library id, into the books library, as anybody who may ask for films can', async () => {
+      const describeBookForRequest = vi.fn(() =>
+        Promise.resolve({ ...DUNE, title: 'Project Hail Mary', year: 2021, artist: 'Andy Weir' }),
+      );
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+        describeBookForRequest,
+        libraries: [FILMS, BOOKS],
+      });
+
+      sent.length = 0;
+
+      const made = await ask('/api/requests/media', 'POST', {
+        kind: 'book',
+        openLibraryId: 21_277_329,
+      });
+
+      expect(made.status).toBe(201);
+      expect(describeBookForRequest).toHaveBeenCalledWith(21_277_329);
+      expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({
+        kind: 'book',
+        tmdbId: null,
+        musicBrainzId: null,
+        openLibraryId: 21_277_329,
+        libraryId: BOOKS.id,
+        libraryPath: '/media/Books',
+        catalogue: { title: 'Project Hail Mary', artist: 'Andy Weir' },
+      });
+    });
+
+    it('says there is no library of books to put it in, rather than filing it with the films', async () => {
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+        describeBookForRequest: () => Promise.resolve(DUNE),
+      });
+
+      expect(
+        await (await ask('/api/requests/media', 'POST', { kind: 'book', openLibraryId: 1 })).json(),
+      ).toEqual({ error: 'There is no library of books to put it in.' });
+    });
+
+    it('will not ask for a book by a TMDB id, nor for a film by an Open Library one', async () => {
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+        describeBookForRequest: () => Promise.resolve(DUNE),
+        describeForRequest: () => Promise.resolve(DUNE),
+        libraries: [FILMS, BOOKS],
+      });
+
+      expect((await ask('/api/requests/media', 'POST', { kind: 'book', tmdbId: 1 })).status).toBe(
+        400,
+      );
+      expect(
+        (await ask('/api/requests/media', 'POST', { kind: 'film', openLibraryId: 1 })).status,
+      ).toBe(400);
+    });
+
+    it('will not ask for a book where the catalogue does not know it', async () => {
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+        libraries: [FILMS, BOOKS],
+      });
+
+      expect(
+        await (
+          await ask('/api/requests/media', 'POST', { kind: 'book', openLibraryId: 99 })
+        ).json(),
+      ).toEqual({ error: 'The catalogue does not know that, or cannot be asked just now.' });
+    });
+
+    it('shelves books for anybody who may ask for films, and for nobody who may not', async () => {
+      const viewer = await build({
+        isOn: true,
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+        discovery: WITH_BOOKS,
+      });
+
+      const shelves = z
+        .object({ shelves: z.array(z.object({ id: z.string() })) })
+        .parse(await (await viewer.ask('/api/requests/discover')).json());
+
+      expect(shelves.shelves.map((shelf) => shelf.id)).toContain('trending-books');
+
+      const listener = await build({
+        isOn: true,
+        granted: ['requests.askMusic'],
+        service: aWillingKeeper,
+        discovery: WITH_BOOKS,
+      });
+
+      const heard = z
+        .object({ shelves: z.array(z.object({ id: z.string() })) })
+        .parse(await (await listener.ask('/api/requests/discover')).json());
+
+      expect(heard.shelves.map((shelf) => shelf.id)).not.toContain('trending-books');
+    });
+
+    it('searches Open Library for a book, each saying where it stands', async () => {
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+        discovery: WITH_BOOKS,
+      });
+
+      expect(
+        await (await ask('/api/requests/catalogue/search?query=hail%20mary&kind=book')).json(),
+      ).toMatchObject([
+        {
+          kind: 'book',
+          id: '21277329',
+          title: 'Project Hail Mary',
+          subtitle: 'Andy Weir',
+          standing: { status: 'askable' },
+        },
+      ]);
+    });
+
+    it('describes a book with its authors and subjects', async () => {
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+        discovery: WITH_BOOKS,
+      });
+
+      expect(await (await ask('/api/requests/catalogue/title/book/21277329')).json()).toMatchObject(
+        {
+          kind: 'book',
+          title: 'Project Hail Mary',
+          authors: ['Andy Weir'],
+          genres: ['Science fiction'],
+        },
+      );
+      expect((await ask('/api/requests/catalogue/title/book/5')).status).toBe(404);
+    });
+
+    it('keeps books from somebody who may only ask for music', async () => {
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.askMusic'],
+        service: aWillingKeeper,
+        discovery: WITH_BOOKS,
+      });
+
+      expect((await ask('/api/requests/catalogue/search?query=hail%20mary&kind=book')).status).toBe(
+        403,
+      );
+      expect((await ask('/api/requests/catalogue/title/book/21277329')).status).toBe(403);
+    });
+
+    it('lets whoever manages requesting say a request has been met by hand, and nobody else', async () => {
+      const manager = await build({
+        isOn: true,
+        granted: ['requests.manage'],
+        service: aWillingKeeper,
+      });
+
+      sent.length = 0;
+
+      expect((await manager.ask(`/api/requests/media/${REQUEST.id}/fulfil`, 'POST')).status).toBe(
+        200,
+      );
+      expect(sent[0]).toMatchObject({
+        method: 'POST',
+        url: `http://requests:8421/api/requests/${REQUEST.id}/fulfil`,
+      });
+
+      const asker = await build({
+        isOn: true,
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+      });
+
+      expect((await asker.ask(`/api/requests/media/${REQUEST.id}/fulfil`, 'POST')).status).toBe(
+        403,
+      );
+    });
   });
 
   it('searches and describes titles to ask for, by what a viewer may ask for', async () => {

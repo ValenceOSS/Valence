@@ -24,8 +24,20 @@ const albumKey = (title: string, artist: string | null): string =>
   `${nameKey(artist ?? '')}/${nameKey(title)}`;
 
 /**
- * Whether a request is for a title: a film or series by its TMDB id, an artist or album by its
- * MusicBrainz id — or, for one known only from Deezer's charts, by its name.
+ * The key a book is known by when all that is known of it is its name: its author and title
+ * together.
+ *
+ * @param title - The book's title.
+ * @param author - Who wrote it.
+ * @returns The key.
+ */
+const bookKey = (title: string, author: string | null): string =>
+  `${nameKey(author ?? '')}/${nameKey(title)}`;
+
+/**
+ * Whether a request is for a title: a film or series by its TMDB id, a book by its Open Library id,
+ * an artist or album by its MusicBrainz id — or, for one known only from Deezer's charts, by its
+ * name.
  *
  * @param request - The request.
  * @param title - The title.
@@ -38,6 +50,10 @@ const isFor = (request: MediaRequest, title: UnstoodTitle): boolean => {
 
   if (title.kind === 'film' || title.kind === 'series') {
     return request.tmdbId?.toString() === title.id;
+  }
+
+  if (title.kind === 'book') {
+    return request.openLibraryId?.toString() === title.id;
   }
 
   if (!title.id.startsWith(DEEZER_ID_PREFIX)) {
@@ -70,19 +86,26 @@ const standTitles = async (
       .map((title) => title.id);
   const namedOf = (kind: UnstoodTitle['kind']) =>
     titles.filter((title) => title.kind === kind && title.id.startsWith(DEEZER_ID_PREFIX));
-  const [films, series, artists, albums, artistsNamed, albumsNamed] = await Promise.all([
+  const [films, series, artists, albums, artistsNamed, albumsNamed, books] = await Promise.all([
     lookup.films(idsOf('film', false)),
     lookup.series(idsOf('series', false)),
     lookup.artists(idsOf('artist', false)),
     lookup.albums(idsOf('album', false)),
     lookup.artistsNamed(namedOf('artist').map((title) => nameKey(title.title))),
     lookup.albumsNamed(namedOf('album').map((title) => albumKey(title.title, title.subtitle))),
+    lookup.booksNamed(
+      titles
+        .filter((title) => title.kind === 'book')
+        .map((title) => ({ key: bookKey(title.title, title.subtitle), title: title.title })),
+    ),
   ]);
 
   const inLibrary = (title: UnstoodTitle): string | undefined => {
     const isNamed = title.id.startsWith(DEEZER_ID_PREFIX);
 
     switch (title.kind) {
+      case 'book':
+        return books.get(bookKey(title.title, title.subtitle));
       case 'film':
         return films.get(title.id);
       case 'series':
@@ -127,4 +150,4 @@ const standTitles = async (
   });
 };
 
-export { standTitles };
+export { bookKey, standTitles };

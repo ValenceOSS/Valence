@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
   Bin as BinIcon,
+  FileArrowUp as FileArrowUpIcon,
   Images as ImagesIcon,
   Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
@@ -10,6 +11,8 @@ import {
   Settings as SettingsIcon,
 } from '@keyline-icons/react';
 import { useMemo, useRef, useState } from 'react';
+import { UploadMediaDialog } from '@ValenceScreens/components/AdminArea/components/UploadMediaDialog/UploadMediaDialog';
+import { AdminSetupGuide } from '@ValenceScreens/components/AdminArea/components/AdminSetupGuide/AdminSetupGuide';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { notify } from '@ValenceUI/notify';
@@ -53,6 +56,11 @@ import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
  * @param onLibraryCreated - Called with a library that has just been added.
  * @param onLibraryUpdated - Called with a library whose settings have changed.
  * @param onLibraryDeleted - Told a library has been deleted, so the list can let it go.
+ * @param hasCatalogueKey - Whether a metadata catalogue key has been saved, for the setup guide.
+ * @param isSetupHidden - Whether the setup guide has been put away, which is also the default, so
+ *   that only a page told to offer it does.
+ * @param onOpenSettings - Told to open the settings, where the catalogue key goes.
+ * @param onHideSetup - Told to put the setup guide away.
  */
 const LibrariesPanel = ({
   isUnreachable = false,
@@ -69,6 +77,10 @@ const LibrariesPanel = ({
   onLibraryCreated,
   onLibraryUpdated,
   onLibraryDeleted,
+  hasCatalogueKey = true,
+  isSetupHidden = true,
+  onOpenSettings,
+  onHideSetup,
 }: LibrariesPanelProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
@@ -77,6 +89,7 @@ const LibrariesPanel = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [rereading, setRereading] = useState<Library | null>(null);
   const [watching, setWatching] = useState<Library | null>(null);
+  const [uploadingTo, setUploadingTo] = useState<Library | null>(null);
 
   const watchedWork = watching === null ? [] : workOf(progress, watching.id);
 
@@ -92,6 +105,7 @@ const LibrariesPanel = ({
     setDeleting,
     setRereading,
     setWatching,
+    setUploadingTo,
   });
 
   live.current = {
@@ -102,6 +116,7 @@ const LibrariesPanel = ({
     setDeleting,
     setRereading,
     setWatching,
+    setUploadingTo,
   };
 
   const columns = useMemo<DataTableColumn<Library>[]>(
@@ -114,7 +129,7 @@ const LibrariesPanel = ({
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex items-center gap-2">
               <span className="truncate font-medium text-text">{row.original.name}</span>
-              <Badge size="sm">{row.original.kind}</Badge>
+              <Badge size="sm">{row.original.flavour ?? row.original.kind}</Badge>
             </span>
 
             <span className="truncate text-xs text-text-muted" title={row.original.path}>
@@ -216,6 +231,14 @@ const LibrariesPanel = ({
                       isDisabled: readingOf(live.current.progress, row.original.id) !== undefined,
                       onChoose: () => {
                         live.current.onScan(row.original.id);
+                      },
+                    },
+                    {
+                      id: 'upload',
+                      label: 'Upload media',
+                      icon: <Icon of={FileArrowUpIcon} size={15} />,
+                      onChoose: () => {
+                        live.current.setUploadingTo(row.original);
                       },
                     },
                     {
@@ -323,12 +346,33 @@ const LibrariesPanel = ({
           The libraries could not be read from the server. This is not the same as having none — do
           not add one until it answers again.
         </p>
-      ) : libraries.length === 0 ? (
-        <p className="p-6 text-sm text-text-muted">
-          No libraries yet. Add one pointing at a folder of media.
-        </p>
       ) : (
-        <DataTable label="Library roots" columns={columns} rows={libraries} />
+        <>
+          {isSetupHidden || onOpenSettings === undefined || onHideSetup === undefined ? null : (
+            <div className="p-3">
+              <AdminSetupGuide
+                hasLibrary={libraries.length > 0}
+                hasCatalogueKey={hasCatalogueKey}
+                hasScanned={libraries.some((library) => library.lastScannedAt !== null)}
+                isScanning={isScanningAll}
+                onAddLibrary={() => {
+                  setIsAdding(true);
+                }}
+                onOpenSettings={onOpenSettings}
+                onScanAll={onScanAll}
+                onHide={onHideSetup}
+              />
+            </div>
+          )}
+
+          {libraries.length === 0 ? (
+            <p className="p-6 text-sm text-text-muted">
+              No libraries yet. Add one pointing at a folder of media.
+            </p>
+          ) : (
+            <DataTable label="Library roots" columns={columns} rows={libraries} />
+          )}
+        </>
       )}
 
       <RunningWorkDialog
@@ -340,6 +384,7 @@ const LibrariesPanel = ({
           processed: entry.processed,
           total: entry.total,
           item: entry.item,
+          isStopping: entry.isStopping,
         }))}
         tasks={working.filter(
           (job) =>
@@ -426,6 +471,16 @@ const LibrariesPanel = ({
         onConfirm={() => {
           setIsConfirmingReset(false);
           onResetAll();
+        }}
+      />
+
+      <UploadMediaDialog
+        library={uploadingTo}
+        onClose={() => {
+          setUploadingTo(null);
+        }}
+        onUploaded={(uploaded) => {
+          onScan(uploaded.id);
         }}
       />
 

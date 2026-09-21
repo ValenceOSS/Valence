@@ -59,4 +59,10 @@ describe('MissingRow', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(MissingRow.displayName).toBe('MissingRow');
   });
+
+  it('says when the episode airs, so a gap that is only the future is not mistaken for a hole', () => {
+    render(<MissingRow episodeNumber={4} airs="Airs in 7 days" />);
+
+    expect(screen.getByText('Not in this library · Airs in 7 days')).toBeInTheDocument();
+  });
 });

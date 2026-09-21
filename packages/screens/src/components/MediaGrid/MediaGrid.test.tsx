@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { describe, expect, it, vi } from 'vitest';
 import { columnsIn } from '@ValenceUI/columnsIn';
@@ -49,6 +50,31 @@ describe('MediaGrid', () => {
     );
 
     expect(container.querySelector('[style*="50%"]')).not.toBeNull();
+  });
+
+  it('opens the programme, not the episode, for the cards a caller says stand for programmes', async () => {
+    const onInspect = vi.fn();
+    const onOpenShow = vi.fn();
+    const episode = { ...item('e1', 'Pilot'), seriesId: 'ted', seriesTitle: 'Ted Lasso' };
+
+    renderInAnAddress(
+      <MediaGrid
+        items={[episode, item('a', 'Arrival')]}
+        isSeries={(media) => media.seriesTitle !== null && media.seriesTitle !== undefined}
+        onOpenShow={onOpenShow}
+        onPlay={vi.fn()}
+        onInspect={onInspect}
+      />,
+    );
+
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: /Ted Lasso/ }));
+    await user.click(screen.getByRole('button', { name: /Arrival/ }));
+
+    expect(onOpenShow).toHaveBeenCalledWith(episode);
+    expect(onInspect).toHaveBeenCalledTimes(1);
+    expect(onInspect).toHaveBeenCalledWith(expect.objectContaining({ title: 'Arrival' }));
   });
 
   it('sets a display name so devtools can identify it', () => {

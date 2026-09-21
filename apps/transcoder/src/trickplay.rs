@@ -22,7 +22,7 @@ use crate::integrity::decodes;
 use crate::media::VideoRange;
 use crate::render_registry::RenderRegistry;
 use crate::steps_aside::steps_aside;
-use crate::transcode_plan::{HardwareAccel, HardwarePipeline};
+use crate::transcode_plan::{tone_map_format, HardwareAccel, HardwarePipeline};
 
 /// Written only when every sheet is on disk.
 ///
@@ -392,10 +392,11 @@ fn extract_filters(
     onto_the_device: Option<(HardwareAccel, HardwarePipeline, &str)>,
     draws_on_the_device: bool,
 ) -> Vec<String> {
-    let skips_to_keyframes = onto_the_device.is_none();
+    let decodes_every_frame =
+        onto_the_device.is_some_and(|(_, pipeline, _)| !pipeline.skips_unreferenced_frames);
     let mut filters = Vec::new();
 
-    if !skips_to_keyframes {
+    if decodes_every_frame {
         filters.push(format!(
             "setpts=N/{:.3}/TB",
             source
@@ -409,9 +410,12 @@ fn extract_filters(
 
     match onto_the_device {
         Some((_, pipeline, _)) => {
+            let mut carried = None;
+
             if source.range != VideoRange::Sdr {
                 if let Some(mapper) = pipeline.tone_map {
                     filters.push(mapper.to_owned());
+                    carried = tone_map_format(mapper);
                 }
             }
 
@@ -436,7 +440,7 @@ fn extract_filters(
             if !draws_on_the_device {
                 filters.push(format!(
                     "hwdownload,format={}",
-                    pipeline.download_format_for(source.bit_depth)
+                    carried.unwrap_or_else(|| pipeline.download_format_for(source.bit_depth))
                 ));
             }
         }
@@ -477,12 +481,19 @@ fn extract_filters(
 /// every one of them will do, and `QSV` does not merely refuse it: it hangs the
 /// device, which resets it and takes down whatever else was using it.
 ///
+/// `NVDEC` is asked for less instead: `-skip_frame noref`, which drops only
+/// the frames nothing is predicted from. See
+/// [`HardwarePipeline::skips_unreferenced_frames`].
+///
 /// Where every frame is decoded, the timestamps are rebuilt from the frame
 /// count before they are sampled. A container that lies about its timestamps —
 /// and plenty do — otherwise hands `fps` a clock that jumps, and what comes out
 /// is thumbnails that do not land where the index says they do. Jellyfin
 /// inserts the same filter immediately before `fps`, and only in this mode,
 /// because skipping to keyframes takes its timing from the keyframes instead.
+/// Skipping unreferenced frames is the same: a count of the frames kept is no
+/// longer a clock, so `NVDEC` trusts the container's timestamps as software
+/// decoding already does — the price of decoding a third of the frames.
 ///
 /// `-fps_mode passthrough` for the same reason at the other end: the muxer is
 /// told to write exactly the frames it is given rather than making up a
@@ -523,6 +534,11 @@ pub fn extract_arguments(
 
     if let Some((found, pipeline, device)) = onto_the_device {
         arguments.extend(found.filter_device_arguments(device));
+
+        if pipeline.skips_unreferenced_frames {
+            arguments.push("-skip_frame".to_owned());
+            arguments.push("noref".to_owned());
+        }
 
         if found.ffmpeg_flag().is_some() {
             arguments.push("-hwaccel".to_owned());
@@ -663,6 +679,22 @@ async fn draw_sheets(
     }
 
     Ok(sheets)
+}
+
+/// Clears what a failed attempt left behind, so the next one starts on nothing.
+///
+/// The single thumbnails are only swept once they have been gathered, so a run
+/// that dies in the first pass leaves its own behind. Gathering those into the
+/// software attempt's sheets would put half of one render under the scrub bar.
+async fn clear_attempt(directory: &Path, subject: &str) {
+    if let Err(error) = tokio::fs::remove_dir_all(directory).await {
+        tracing::warn!(
+            target: "trickplay",
+            %error,
+            subject = %subject,
+            "could not clear a failed trickplay attempt"
+        );
+    }
 }
 
 /// Clears the single thumbnails away once they have been gathered into sheets.
@@ -868,6 +900,17 @@ impl TrickplayRegistry {
 /// worth no more than no sheet at all, and it would otherwise be kept for as
 /// long as the file stays in the library.
 ///
+/// The retry covers the decoder as much as the encoder, which is what makes it
+/// worth keeping. A device advertises one JPEG encoder for every file in a
+/// library, and its decoder speaks for a handful of codecs: an Intel iGPU has
+/// no MPEG-4 part 2 decoder at all, so every Xvid film in a library fails the
+/// same way. `FFmpeg` does not refuse at the decoder either, it drops
+/// to software there and carries on into a filter chain built for frames on the
+/// device, which is where it stops — "Failed to create frame context for
+/// reverse mapping", and nothing written. There is no capability to read that
+/// would have predicted it, because what Valence probes is which encoders run,
+/// not which files the decoder will take.
+///
 /// # Errors
 ///
 /// Returns [`TrickplayError`] when the directory cannot be made, ffmpeg cannot
@@ -915,32 +958,44 @@ pub async fn generate(
         .await
         .map_err(TrickplayError::Directory)?;
 
-    let drawn = draw_sheets(
-        ffmpeg,
-        device,
-        request,
-        tile_height,
-        source,
-        accel,
-        capabilities,
-        &directory,
-    )
-    .await;
+    let mut attempt = accel.filter(|found| *found != HardwareAccel::None);
 
-    let sheets = match drawn {
-        Ok(sheets) => sheets,
-        Err(failure) => {
-            if let Err(error) = tokio::fs::remove_dir_all(&directory).await {
-                tracing::warn!(
-                    target: "trickplay",
-                    %error,
-                    subject = %id,
-                    "could not clear a failed trickplay attempt"
-                );
-            }
+    let sheets = loop {
+        let drawn = draw_sheets(
+            ffmpeg,
+            device,
+            request,
+            tile_height,
+            source,
+            attempt,
+            capabilities,
+            &directory,
+        )
+        .await;
 
+        let failure = match drawn {
+            Ok(sheets) => break sheets,
+            Err(failure) => failure,
+        };
+
+        clear_attempt(&directory, &id).await;
+
+        if attempt.is_none() {
             return Err(failure);
         }
+
+        tracing::warn!(
+            target: "trickplay",
+            subject = %id,
+            "accelerated sheets for {} failed, retrying in software: {failure}",
+            request.input_path
+        );
+
+        attempt = None;
+
+        tokio::fs::create_dir_all(&directory)
+            .await
+            .map_err(TrickplayError::Directory)?;
     };
 
     tokio::fs::write(
@@ -1089,6 +1144,53 @@ otherwise start a second one"
         assert!(arguments
             .windows(2)
             .any(|pair| pair == ["-hwaccel", "vaapi"]));
+    }
+
+    fn on_nvenc() -> Vec<String> {
+        extract_arguments(
+            &request(),
+            180,
+            source_of(VideoRange::Sdr),
+            Some((HardwareAccel::Nvenc, "")),
+            &SheetEncoder::Software,
+            Path::new("/cache"),
+        )
+    }
+
+    /// `NVDEC` drops what nothing refers to, and never skips to keyframes.
+    ///
+    /// Keyframes alone put 48 to 74 percent of thumbnails on the wrong shot in
+    /// the files this was measured against. Unreferenced frames can go without
+    /// that, and the option has to come before the input to reach the decoder.
+    #[test]
+    fn asks_nvdec_to_skip_only_the_frames_nothing_refers_to() {
+        let arguments = on_nvenc();
+        let skip = arguments
+            .windows(2)
+            .position(|pair| pair == ["-skip_frame", "noref"])
+            .expect("asks to skip unreferenced frames");
+        let input = arguments
+            .iter()
+            .position(|argument| argument == "-i")
+            .expect("an input");
+
+        assert!(skip < input, "{arguments:?}");
+        assert!(
+            !arguments.iter().any(|argument| argument == "nokey"),
+            "{arguments:?}"
+        );
+    }
+
+    #[test]
+    fn trusts_the_container_clock_where_nvdec_skips_frames() {
+        let chain = on_nvenc()
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(!chain.contains("setpts"), "{chain}");
+        assert!(chain.starts_with("fps=1/"), "{chain}");
     }
 
     #[test]
@@ -1594,6 +1696,69 @@ otherwise start a second one"
 
         assert!(chain.contains("hwdownload,format=p010le"), "{chain}");
         assert!(!chain.contains(":format=nv12"), "{chain}");
+    }
+
+    /// The download names what the tone mapper left, not what the decoder made.
+    ///
+    /// A ten-bit HDR source decodes to `p010le` surfaces, so the download asked
+    /// for `p010le` — but `tonemap_cuda` has already converted them to
+    /// `yuv420p` by the time it runs, a frames context holds one format, and
+    /// ffmpeg refuses: "Invalid output format p010le for hwframe download".
+    /// Every sheet for every HDR film on an NVIDIA card was lost to it.
+    ///
+    /// Measured on an RTX 5080 against a 2160p HDR HEVC source.
+    #[test]
+    fn comes_down_as_the_tone_mapper_left_it() {
+        let arguments = extract_arguments(
+            &request(),
+            180,
+            SheetSource {
+                bit_depth: Some(10),
+                ..source_of(VideoRange::Hdr10)
+            },
+            Some((HardwareAccel::Nvenc, "")),
+            &SheetEncoder::Software,
+            Path::new("/cache"),
+        );
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(chain.contains("tonemap_cuda"), "{chain}");
+        assert!(chain.contains("hwdownload,format=yuv420p"), "{chain}");
+        assert!(!chain.contains("hwdownload,format=p010le"), "{chain}");
+    }
+
+    /// The same fault on the backend whose mapper leaves `nv12` instead.
+    ///
+    /// `tonemap_vaapi` converts to `nv12`, so the download that follows it must
+    /// say `nv12` however deep the source was. It escaped notice because VAAPI
+    /// usually draws on the device and skips the download entirely; a build
+    /// without the compositor takes this path and hit the same refusal.
+    #[test]
+    fn comes_down_as_vaapi_left_it_too() {
+        let arguments = extract_arguments(
+            &request(),
+            180,
+            SheetSource {
+                bit_depth: Some(10),
+                ..source_of(VideoRange::Hdr10)
+            },
+            Some((HardwareAccel::Vaapi, "")),
+            &SheetEncoder::Software,
+            Path::new("/cache"),
+        );
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(chain.contains("tonemap_vaapi"), "{chain}");
+        assert!(chain.contains("hwdownload,format=nv12"), "{chain}");
+        assert!(!chain.contains("hwdownload,format=p010le"), "{chain}");
     }
 
     #[test]

@@ -12,6 +12,21 @@ describe('ScanProgressBar', () => {
     ).toBeInTheDocument();
   });
 
+  it('says it is stopping instead of the phase it was in once it has been asked to', () => {
+    render(
+      <ScanProgressBar
+        label="Scanning Movies"
+        phase="probing"
+        processed={4}
+        total={10}
+        isStopping
+      />,
+    );
+
+    expect(screen.getByText('Stopping')).toBeInTheDocument();
+    expect(screen.queryByText('Probing')).not.toBeInTheDocument();
+  });
+
   it('names the clearing of parts of a library', () => {
     render(
       <ScanProgressBar label="Clearing parts of Movies" phase="clearing" processed={1} total={3} />,

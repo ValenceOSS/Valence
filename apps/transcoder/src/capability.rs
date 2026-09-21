@@ -464,15 +464,19 @@ pub struct Capabilities {
 
 /// Chooses a tone mapping route from the filters a build actually has.
 ///
-/// `libplacebo` is preferred: it does the whole conversion in one filter and
-/// handles more source formats. `zscale` is the widely available fallback. A
-/// build with neither cannot tone map at all, which callers must surface
-/// rather than quietly producing a washed out picture.
+/// `libplacebo` is preferred where it runs: it does the whole conversion in one
+/// filter and handles more source formats. `zscale` is the widely available
+/// fallback. A build with neither cannot tone map at all, which callers must
+/// surface rather than quietly producing a washed out picture.
+///
+/// `runs_libplacebo` is asked rather than assumed. The filter opens a Vulkan
+/// device of its own, and being compiled in says nothing about there being one
+/// to open — see [`verify_software_tone_map`].
 #[must_use]
-pub fn select_tone_mapping(filters: &[String]) -> ToneMapping {
+pub fn select_tone_mapping(filters: &[String], runs_libplacebo: bool) -> ToneMapping {
     let has = |name: &str| filters.iter().any(|filter| filter == name);
 
-    if has("libplacebo") {
+    if has("libplacebo") && runs_libplacebo {
         return ToneMapping::Libplacebo;
     }
 
@@ -701,6 +705,65 @@ pub fn tone_map_probe_arguments(accel: HardwareAccel, filter: &str, device: &str
 async fn verify_tone_map(ffmpeg: &str, accel: HardwareAccel, filter: &str, device: &str) -> bool {
     let Ok(outcome) = Command::new(ffmpeg)
         .args(tone_map_probe_arguments(accel, filter, device))
+        .kill_on_drop(true)
+        .output()
+        .await
+    else {
+        return false;
+    };
+
+    outcome.status.success()
+}
+
+/// The arguments that prove a software tone mapper works.
+///
+/// No device and no upload, unlike [`tone_map_probe_arguments`]: these filters
+/// work in system memory, and the one being asked about opens whatever it needs
+/// for itself. The frame is tagged HDR the same way, because a tone mapper
+/// handed SDR input can decline to do anything at all.
+#[must_use]
+pub fn software_tone_map_probe_arguments(filter: &str) -> Vec<String> {
+    let (width, height) = PROBE_SIZE;
+
+    vec![
+        "-hide_banner".to_owned(),
+        "-loglevel".to_owned(),
+        "error".to_owned(),
+        "-f".to_owned(),
+        "lavfi".to_owned(),
+        "-i".to_owned(),
+        format!("testsrc2=size={width}x{height}:rate=1"),
+        "-frames:v".to_owned(),
+        "1".to_owned(),
+        "-vf".to_owned(),
+        format!("format=p010,{PROBE_HDR_PARAMETERS},{filter}"),
+        "-f".to_owned(),
+        "null".to_owned(),
+        "-".to_owned(),
+    ]
+}
+
+/// Runs a one frame conversion to prove a software tone mapper works.
+///
+/// `libplacebo` is the reason this exists. It is a software filter in the sense
+/// that it takes system memory, but it opens a **Vulkan** device to do the work
+/// — and a build having the filter says nothing about there being a device for
+/// it to open. A container with no ICD, or a host with no Vulkan driver, lists
+/// `libplacebo` and then fails every HDR preview with
+/// `VK_ERROR_INITIALIZATION_FAILED`, then "Failed creating Vulkan device!".
+///
+/// This is the same mistake [`verify_tone_map`] exists to avoid, one layer up:
+/// presence answered for a hardware tone mapper and had to be replaced by a
+/// run, and presence was still answering here. See VAL-85 and VAL-111 for the
+/// hardware instances.
+///
+/// Measured in the published container on an RTX 5080: `libplacebo` is listed,
+/// `EnumeratePhysicalDevices` fails, and every preview clip of an HDR film was
+/// lost until the choice was verified rather than assumed. `zscale` is what it
+/// falls back to, which is pure software and runs anywhere.
+async fn verify_software_tone_map(ffmpeg: &str, filter: &str) -> bool {
+    let Ok(outcome) = Command::new(ffmpeg)
+        .args(software_tone_map_probe_arguments(filter))
         .kill_on_drop(true)
         .output()
         .await
@@ -1214,6 +1277,13 @@ async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilitie
         Err(_) => Vec::new(),
     };
 
+    let runs_libplacebo = match crate::transcode_plan::tone_map_filter(ToneMapping::Libplacebo) {
+        Some(expression) if filters.iter().any(|filter| filter == "libplacebo") => {
+            verify_software_tone_map(ffmpeg, expression).await
+        }
+        _ => false,
+    };
+
     let version = read_version(ffmpeg).await;
     let encoders_for_chains = encoders.clone();
     let encoders_for_concurrency = encoders.clone();
@@ -1224,7 +1294,7 @@ async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilitie
         probe_version: crate::probe::PROBE_VERSION,
         encoders,
         hardware_accels,
-        tone_mapping: select_tone_mapping(&filters),
+        tone_mapping: select_tone_mapping(&filters, runs_libplacebo),
         hardware_scalers: HARDWARE_SCALERS
             .iter()
             .filter(|scaler| filters.iter().any(|filter| filter == *scaler))
@@ -1249,9 +1319,10 @@ async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilitie
 mod tests {
     use super::{
         complaint, describe_build, overlay_probe_arguments, parse_listed_encoders,
-        parse_listed_filters, probe_arguments, select_tone_mapping, summarise_failure,
-        tone_map_probe_arguments, verified_accels, Capabilities, EncoderCandidate, VerifiedEncoder,
-        ENCODER_CANDIDATES, SMALLEST_USABLE_PROBE,
+        parse_listed_filters, probe_arguments, select_tone_mapping,
+        software_tone_map_probe_arguments, summarise_failure, tone_map_probe_arguments,
+        verified_accels, Capabilities, EncoderCandidate, VerifiedEncoder, ENCODER_CANDIDATES,
+        PROBE_HDR_PARAMETERS, SMALLEST_USABLE_PROBE,
     };
     use crate::transcode_plan::HardwareAccel;
     use crate::transcode_plan::DEFAULT_DEVICE;
@@ -1876,27 +1947,66 @@ reported anything else would either reprobe forever or never"
             "libplacebo".to_owned(),
         ];
 
-        assert_eq!(select_tone_mapping(&filters), ToneMapping::Libplacebo);
+        assert_eq!(select_tone_mapping(&filters, true), ToneMapping::Libplacebo);
     }
 
     #[test]
     fn falls_back_to_zscale() {
         let filters = vec!["zscale".to_owned(), "tonemap".to_owned()];
 
-        assert_eq!(select_tone_mapping(&filters), ToneMapping::Zscale);
+        assert_eq!(select_tone_mapping(&filters, true), ToneMapping::Zscale);
+    }
+
+    #[test]
+    fn falls_back_to_zscale_when_libplacebo_is_listed_but_will_not_run() {
+        let filters = vec![
+            "zscale".to_owned(),
+            "tonemap".to_owned(),
+            "libplacebo".to_owned(),
+        ];
+
+        assert_eq!(select_tone_mapping(&filters, false), ToneMapping::Zscale);
+    }
+
+    #[test]
+    fn reports_unavailable_when_libplacebo_will_not_run_and_nothing_else_is_there() {
+        assert_eq!(
+            select_tone_mapping(&["libplacebo".to_owned()], false),
+            ToneMapping::Unavailable
+        );
+    }
+
+    #[test]
+    fn probes_a_software_tone_mapper_without_a_device_or_an_upload() {
+        let arguments = software_tone_map_probe_arguments("libplacebo=tonemapping=bt.2390");
+        let chain = arguments
+            .iter()
+            .position(|argument| argument == "-vf")
+            .and_then(|index| arguments.get(index + 1))
+            .expect("a filter chain");
+
+        assert!(chain.contains("libplacebo=tonemapping=bt.2390"), "{chain}");
+        assert!(chain.contains(PROBE_HDR_PARAMETERS), "{chain}");
+        assert!(!chain.contains("hwupload"), "{chain}");
+        assert!(
+            !arguments
+                .iter()
+                .any(|argument| argument == "-init_hw_device"),
+            "{arguments:?}"
+        );
     }
 
     #[test]
     fn reports_unavailable_when_tonemap_has_no_lineariser() {
         assert_eq!(
-            select_tone_mapping(&["tonemap".to_owned()]),
+            select_tone_mapping(&["tonemap".to_owned()], true),
             ToneMapping::Unavailable
         );
     }
 
     #[test]
     fn reports_unavailable_when_no_filters_exist() {
-        assert_eq!(select_tone_mapping(&[]), ToneMapping::Unavailable);
+        assert_eq!(select_tone_mapping(&[], true), ToneMapping::Unavailable);
     }
 
     /// The real shape of `ffmpeg -filters`, legend and all.
@@ -1940,7 +2050,7 @@ reported anything else would either reprobe forever or never"
     #[test]
     fn detects_tone_mapping_from_real_output() {
         assert_eq!(
-            select_tone_mapping(&parse_listed_filters(FILTERS_OUTPUT)),
+            select_tone_mapping(&parse_listed_filters(FILTERS_OUTPUT), true),
             ToneMapping::Zscale
         );
     }

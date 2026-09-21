@@ -141,4 +141,76 @@ describe('FilePicker', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
     expect(inputOf()).toBeDisabled();
   });
+
+  it('reports every file chosen where several are wanted', async () => {
+    const onPickMany = vi.fn();
+    const actor = userEvent.setup();
+
+    render(
+      <FilePicker label="Choose films" onPickMany={onPickMany}>
+        <span>Choose</span>
+      </FilePicker>,
+    );
+
+    await actor.upload(screen.getByLabelText(/Choose films/), [fileOf('a.mkv'), fileOf('b.mkv')]);
+
+    expect(onPickMany).toHaveBeenCalledWith([
+      expect.objectContaining({ name: 'a.mkv' }),
+      expect.objectContaining({ name: 'b.mkv' }),
+    ]);
+  });
+
+  it('lets one file be chosen unless several are wanted', () => {
+    render(
+      <FilePicker label="Upload a photograph" onPick={vi.fn()}>
+        <span>Choose</span>
+      </FilePicker>,
+    );
+
+    expect(inputOf()).not.toHaveAttribute('multiple');
+  });
+
+  it('lets several be chosen where several are wanted', () => {
+    render(
+      <FilePicker label="Choose films" onPickMany={vi.fn()}>
+        <span>Choose</span>
+      </FilePicker>,
+    );
+
+    expect(screen.getByLabelText(/Choose films/)).toHaveAttribute('multiple');
+  });
+
+  it('chooses a whole folder where asked to', () => {
+    render(
+      <FilePicker label="Choose a folder" onPickMany={vi.fn()} isFolder>
+        <span>Choose</span>
+      </FilePicker>,
+    );
+
+    expect(screen.getByLabelText(/Choose a folder/)).toHaveAttribute('webkitdirectory');
+  });
+
+  it('chooses files, not a folder, by default', () => {
+    render(
+      <FilePicker label="Choose films" onPickMany={vi.fn()}>
+        <span>Choose</span>
+      </FilePicker>,
+    );
+
+    expect(screen.getByLabelText(/Choose films/)).not.toHaveAttribute('webkitdirectory');
+  });
+
+  it('says nothing when nothing was chosen', () => {
+    const onPickMany = vi.fn();
+
+    render(
+      <FilePicker label="Choose films" onPickMany={onPickMany}>
+        <span>Choose</span>
+      </FilePicker>,
+    );
+
+    fireEvent.change(screen.getByLabelText(/Choose films/), { target: { files: [] } });
+
+    expect(onPickMany).not.toHaveBeenCalled();
+  });
 });

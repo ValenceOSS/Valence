@@ -7,6 +7,7 @@ import { staggerVariants } from '@ValenceUI/animations/reveal';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { Rail } from '@ValenceUI/Rail';
+import { ComingUp } from '@ValenceScreens/components/ComingUp/ComingUp';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -329,6 +330,8 @@ const LibraryBrowser = ({
               />
             ) : (
               <div className="flex flex-col gap-10">
+                {isHome && onShow !== undefined ? <ComingUp onOpenShow={onShow} /> : null}
+
                 {rails.map(({ showOf, ...rail }) => (
                   <Rail
                     key={rail.id}

@@ -18,6 +18,15 @@ describe('validateAddLibraryForm', () => {
     );
   });
 
+  it('requires a name for a custom type, but not otherwise', () => {
+    expect(
+      validateAddLibraryForm({ name: 'Docs', path: '/media/docs', flavour: '  ' }).flavour,
+    ).toEqual('Say what kind of library this is.');
+    expect(
+      validateAddLibraryForm({ name: 'Docs', path: '/media/docs', flavour: 'Documentaries' }),
+    ).toEqual({});
+  });
+
   it('requires a path', () => {
     expect(validateAddLibraryForm({ name: 'Films', path: '' }).path).toEqual(
       'Enter the path to this library on the machine running Valence.',

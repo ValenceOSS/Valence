@@ -34,6 +34,24 @@ const sources = () => {
         artists: [{ deezerId: 2, name: 'Taylor Swift', pictureUrl: null }],
       }),
     ),
+    bookShelves: vi.fn<ShelfSources['bookShelves']>(() =>
+      Promise.resolve([
+        {
+          id: 'trending-books',
+          title: 'Trending books',
+          books: [
+            {
+              openLibraryId: 21_277_329,
+              title: 'Project Hail Mary',
+              author: 'Andy Weir',
+              year: 2021,
+              coverUrl: 'https://covers.openlibrary.org/b/id/1-M.jpg',
+            },
+          ],
+        },
+        { id: 'empty-books', title: 'Nothing', books: [] },
+      ]),
+    ),
   };
 
   return given satisfies ShelfSources;
@@ -41,7 +59,11 @@ const sources = () => {
 
 describe('discoverShelves', () => {
   it('shelves films, series and music for somebody who may ask for them all', async () => {
-    const { shelves, studios } = await discoverShelves(sources(), { video: true, music: true });
+    const { shelves, studios } = await discoverShelves(sources(), {
+      video: true,
+      music: true,
+      books: false,
+    });
 
     expect(studios).toEqual([
       { id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://p/d.png' },
@@ -71,7 +93,11 @@ describe('discoverShelves', () => {
 
   it('shelves only what somebody may ask for, asking nothing more', async () => {
     const asked = sources();
-    const { shelves, studios } = await discoverShelves(asked, { video: false, music: true });
+    const { shelves, studios } = await discoverShelves(asked, {
+      video: false,
+      music: true,
+      books: false,
+    });
 
     expect(shelves.map((shelf) => shelf.id)).toEqual(['popular-albums', 'popular-artists']);
     expect(studios).toEqual([]);
@@ -80,8 +106,36 @@ describe('discoverShelves', () => {
 
     const films = sources();
 
-    await discoverShelves(films, { video: true, music: false });
+    await discoverShelves(films, { video: true, music: false, books: false });
 
     expect(films.charts).not.toHaveBeenCalled();
+  });
+
+  it('shelves books for somebody who may ask for them, each by its Open Library number', async () => {
+    const { shelves } = await discoverShelves(sources(), {
+      video: false,
+      music: false,
+      books: true,
+    });
+
+    expect(shelves.map((shelf) => shelf.id)).toEqual(['trending-books']);
+    expect(shelves[0]?.browse).toBeNull();
+    expect(shelves[0]?.titles[0]).toEqual({
+      kind: 'book',
+      id: '21277329',
+      title: 'Project Hail Mary',
+      subtitle: 'Andy Weir',
+      year: 2021,
+      overview: null,
+      posterUrl: 'https://covers.openlibrary.org/b/id/1-M.jpg',
+    });
+  });
+
+  it('asks Open Library for nothing where books may not be asked for', async () => {
+    const asked = sources();
+
+    await discoverShelves(asked, { video: true, music: true, books: false });
+
+    expect(asked.bookShelves).not.toHaveBeenCalled();
   });
 });

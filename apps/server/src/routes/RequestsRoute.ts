@@ -48,6 +48,7 @@ import {
   CATALOGUE_BROWSE_KINDS,
   CATALOGUE_LISTS,
   CatalogueDiscoverySchema,
+  CatalogueGenreSchema,
   CataloguePageSchema,
   CatalogueTitleDetailSchema,
   CatalogueTitleSchema,
@@ -737,6 +738,13 @@ const catalogueBrowseRoute = createRoute({
       kind: z.enum(CATALOGUE_BROWSE_KINDS),
       list: z.enum(CATALOGUE_LISTS),
       studio: z.string().max(32).optional(),
+      genre: z
+        .string()
+        .regex(/^\d{1,8}$/)
+        .optional(),
+      yearFrom: z.coerce.number().int().min(1870).max(2200).optional(),
+      yearTo: z.coerce.number().int().min(1870).max(2200).optional(),
+      minRating: z.coerce.number().min(0).max(10).optional(),
       page: z.coerce.number().int().positive().max(500).default(1),
     }),
   },
@@ -744,6 +752,20 @@ const catalogueBrowseRoute = createRoute({
     200: {
       description: 'The page, each title saying where it stands, and whether there is more',
       content: { 'application/json': { schema: CataloguePageSchema } },
+    },
+  }),
+});
+
+const catalogueGenresRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/genres',
+  tags: ['Requests'],
+  summary: 'List the genres a list of films or series can be narrowed to',
+  request: { query: z.object({ kind: z.enum(CATALOGUE_BROWSE_KINDS) }) },
+  responses: requestFailures({
+    200: {
+      description: 'Each genre, by the id the browse route takes and the name to show',
+      content: { 'application/json': { schema: z.array(CatalogueGenreSchema) } },
     },
   }),
 });
@@ -904,6 +926,15 @@ const retryMediaRequestRoute = createRoute({
   responses: requestFailures(ONE_REQUEST),
 });
 
+const fulfilMediaRequestRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/fulfil',
+  tags: ['Requests'],
+  summary: 'Say a request has been met by hand, such as a book somebody added to the library',
+  request: { params: RecordIdParameter },
+  responses: requestFailures(ONE_REQUEST),
+});
+
 const mediaRequestReleasesRoute = createRoute({
   method: 'get',
   path: '/api/requests/media/{id}/releases',
@@ -1004,11 +1035,13 @@ export {
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
   retryMediaRequestRoute,
+  fulfilMediaRequestRoute,
   draftReleasesRoute,
   searchMissingRoute,
   seriesSeasonsRoute,
   musicCatalogueRoute,
   discoverRoute,
+  catalogueGenresRoute,
   catalogueBrowseRoute,
   catalogueSearchRoute,
   catalogueTitleRoute,

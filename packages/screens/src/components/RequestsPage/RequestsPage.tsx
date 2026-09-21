@@ -13,11 +13,17 @@ import { describeBrowsing } from '@ValenceScreens/requests/describeBrowsing';
 import { readBrowsing } from '@ValenceScreens/requests/readBrowsing';
 import { viewOfBrowsing } from '@ValenceScreens/requests/viewOfBrowsing';
 import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
-import { CatalogueGrid } from './components/CatalogueGrid/CatalogueGrid';
+import { CatalogueBrowser } from './components/CatalogueBrowser/CatalogueBrowser';
 import { DiscoverShelves } from './components/DiscoverShelves/DiscoverShelves';
+import { BooksDiscover } from './components/BooksDiscover/BooksDiscover';
+import { MusicDiscover } from './components/MusicDiscover/MusicDiscover';
 import { RequestsList } from './components/RequestsList/RequestsList';
 
 const MINE = 'mine';
+
+const MUSIC = 'music';
+
+const BOOKS = 'books';
 
 const DISCOVER = 'discover';
 
@@ -49,7 +55,11 @@ const RequestsPage = () => {
   const browsing = readBrowsing(place.requestsView);
 
   const showing =
-    browsing === null ? (place.requestsView === MINE ? MINE : DISCOVER) : browsingTab(browsing);
+    browsing === null
+      ? place.requestsView === MINE || place.requestsView === MUSIC || place.requestsView === BOOKS
+        ? place.requestsView
+        : DISCOVER
+      : browsingTab(browsing);
 
   const ask = (asking: string) => {
     go({ asking });
@@ -88,6 +98,8 @@ const RequestsPage = () => {
                     { id: DISCOVER, label: 'Discover' },
                     { id: MOVIES, label: 'Movies' },
                     { id: SHOWS, label: 'Shows' },
+                    { id: MUSIC, label: 'Music' },
+                    { id: BOOKS, label: 'Books' },
                     { id: MINE, label: 'Requests' },
                   ],
                 },
@@ -116,9 +128,17 @@ const RequestsPage = () => {
                 {describeBrowsing(browsing, studioName)}
               </h2>
 
-              <CatalogueGrid browsing={browsing} onAsk={ask} />
+              <CatalogueBrowser key={browsing.kind} browsing={browsing} onAsk={ask} />
             </TabPanel>
           )}
+
+          <TabPanel value={MUSIC} className={cn(RAIL.inset, 'flex flex-col gap-6')}>
+            <MusicDiscover onAsk={ask} />
+          </TabPanel>
+
+          <TabPanel value={BOOKS} className={cn(RAIL.inset, 'flex flex-col gap-6')}>
+            <BooksDiscover onAsk={ask} />
+          </TabPanel>
 
           <TabPanel value={MINE} className={cn(RAIL.inset, 'flex flex-col gap-4')}>
             <RequestsList

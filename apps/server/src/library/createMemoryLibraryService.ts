@@ -320,6 +320,7 @@ const createMemoryLibraryService = (
       id: randomUUID(),
       name: input.name,
       kind: input.kind,
+      flavour: input.flavour ?? null,
       path: input.path,
       itemCount: 0,
       lastScannedAt: null,
@@ -654,6 +655,8 @@ const createMemoryLibraryService = (
     ),
 
   readPerson: (personId) => Promise.resolve(state.people?.[personId] ?? null),
+
+  comingUp: () => Promise.resolve([]),
 
   listShows: (viewer, libraryId) =>
     Promise.resolve(

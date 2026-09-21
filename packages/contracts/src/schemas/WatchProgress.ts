@@ -31,13 +31,18 @@ const isWorthResuming = (progress: WatchProgress): boolean =>
 
 /**
  * Works out how far through something a viewer is, as a fraction between nothing and everything,
- * for the bar drawn across the foot of a card. Anything with no duration reads as unwatched rather
- * than as divided by zero.
+ * for the bar drawn across the foot of a card. Something finished reads as all of it, whatever the
+ * position it stopped at — it was watched to the credits, which is not the last second. Anything
+ * with no duration reads as unwatched rather than as divided by zero.
  *
  * @param progress - Where this viewer got to, and how long the thing is.
  * @returns A fraction from zero to one.
  */
 const watchedFraction = (progress: WatchProgress): number => {
+  if (progress.isFinished) {
+    return 1;
+  }
+
   if (progress.durationSeconds <= 0) {
     return 0;
   }

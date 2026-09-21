@@ -182,6 +182,7 @@ const mediaRequest = requestsSchema.table(
     kind: text('kind', { enum: MEDIA_REQUEST_KINDS }).notNull(),
     tmdbId: integer('tmdb_id'),
     musicBrainzId: text('music_brainz_id'),
+    openLibraryId: integer('open_library_id'),
     title: text('title').notNull(),
     artistName: text('artist_name'),
     year: integer('year'),
@@ -216,6 +217,7 @@ const mediaRequest = requestsSchema.table(
   (table) => [
     unique('media_request_title').on(table.kind, table.tmdbId),
     unique('media_request_music').on(table.kind, table.musicBrainzId),
+    unique('media_request_book').on(table.kind, table.openLibraryId),
   ],
 );
 

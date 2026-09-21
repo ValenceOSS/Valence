@@ -116,7 +116,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
     [contents.data],
   );
   const [settings, setSettings] = useState<TextPreferences>(readTextPreferences);
-  const { isShown, wake } = useChromeThatHides();
+  const { isShown, wake, keep } = useChromeThatHides();
   const [isPanelPinned, setIsPanelPinned] = useState(readPanelPinned);
   const [isPanelOpen, setIsPanelOpen] = useState(isPanelPinned);
   const [part, setPart] = useState<number | null>(null);
@@ -251,7 +251,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
 
   const turn = useCallback(
     (by: number) => {
-      wake();
+      keep();
 
       if (part === null) {
         return;
@@ -278,7 +278,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
       setLanding(null);
       setPage(next);
     },
-    [goTo, lastPart, page, pages, part, wake],
+    [goTo, lastPart, page, pages, part, keep],
   );
 
   const forward = useCallback(() => {

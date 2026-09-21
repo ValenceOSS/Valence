@@ -1728,6 +1728,60 @@ async fn heartbeat_session(
     error(StatusCode::NOT_FOUND, "No such session.")
 }
 
+/// How many pieces of background work may run at once.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct QueueConcurrency {
+    concurrency: usize,
+}
+
+/// The most an operator may ask the queue to run at once. More than this is not a faster machine, it
+/// is a typo.
+const MOST_AT_ONCE: usize = 64;
+
+/// Changes how many pieces of background work run at once, from now on.
+async fn set_queue_concurrency(
+    State(state): State<AppState>,
+    Json(request): Json<QueueConcurrency>,
+) -> Response {
+    if request.concurrency == 0 || request.concurrency > MOST_AT_ONCE {
+        return error(
+            StatusCode::BAD_REQUEST,
+            "Concurrency must be between one and sixty-four.",
+        );
+    }
+
+    state.queue.set_concurrency(request.concurrency);
+
+    (StatusCode::OK, Json(state.queue.snapshot().await)).into_response()
+}
+
+/// Holds back background work that has not started.
+async fn pause_queue(State(state): State<AppState>) -> Response {
+    state.queue.pause();
+
+    (StatusCode::OK, Json(state.queue.snapshot().await)).into_response()
+}
+
+/// Lets held-back background work start again.
+async fn resume_queue(State(state): State<AppState>) -> Response {
+    state.queue.resume();
+
+    (StatusCode::OK, Json(state.queue.snapshot().await)).into_response()
+}
+
+/// Starts one waiting job now, past the ceiling and past a pause.
+async fn run_queued_job_now(
+    State(state): State<AppState>,
+    AxumPath(id): AxumPath<u64>,
+) -> Response {
+    if state.queue.run_now(id).await {
+        return (StatusCode::NO_CONTENT, Body::empty()).into_response();
+    }
+
+    error(StatusCode::NOT_FOUND, "No such job is waiting.")
+}
+
 /// Everything an operator watching the server reads.
 ///
 /// One request rather than four, because these are read together and read
@@ -1793,6 +1847,10 @@ pub fn create_router(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health))
         .route("/monitor", get(monitor))
+        .route("/queue/concurrency", post(set_queue_concurrency))
+        .route("/queue/pause", post(pause_queue))
+        .route("/queue/resume", post(resume_queue))
+        .route("/queue/jobs/{id}/run-now", post(run_queued_job_now))
         .route("/monitor/stream", get(monitor_stream))
         .route("/cache/measure", post(measure_cache))
         .route("/capabilities", get(capabilities))

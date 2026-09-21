@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import {
   MediaRequestChangeSchema,
@@ -159,9 +160,11 @@ const createRequestService = ({
       const kept = (await requests.list()).find(
         (record) =>
           record.kind === draft.kind &&
-          (isMusicRequest(draft.kind)
-            ? record.musicBrainzId === draft.musicBrainzId
-            : record.tmdbId === draft.tmdbId),
+          (isBookRequest(draft.kind)
+            ? record.openLibraryId === draft.openLibraryId
+            : isMusicRequest(draft.kind)
+              ? record.musicBrainzId === draft.musicBrainzId
+              : record.tmdbId === draft.tmdbId),
       );
 
       if (kept !== undefined) {
@@ -270,11 +273,12 @@ const createRequestService = ({
                     (item.state === 'waiting' || item.state === 'wanted'),
                 )),
         )
-        .map(({ id, kind, tmdbId, musicBrainzId, libraryId }) => ({
+        .map(({ id, kind, tmdbId, musicBrainzId, openLibraryId, libraryId }) => ({
           id,
           kind,
           tmdbId,
           musicBrainzId,
+          openLibraryId,
           libraryId,
         }));
     },
@@ -295,6 +299,22 @@ const createRequestService = ({
             problem: null,
             attempts: 0,
             lastSearchedAt: null,
+            updatedAt: at,
+          });
+        }
+      }
+
+      return changed(id, { problem: null });
+    },
+
+    fulfil: async (id: string): Promise<MediaRequest | null> => {
+      const at = now().toISOString();
+
+      for (const item of await itemsOf(id)) {
+        if (item.state !== 'available') {
+          await items.update(item.id, {
+            state: 'available',
+            problem: null,
             updatedAt: at,
           });
         }

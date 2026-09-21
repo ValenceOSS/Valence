@@ -11,6 +11,7 @@ const aMediaRequest = (overrides: Partial<MediaRequest> = {}): MediaRequest => (
   kind: 'film',
   tmdbId: 438631,
   musicBrainzId: null,
+  openLibraryId: null,
   title: 'Dune',
   artistName: null,
   year: 2021,

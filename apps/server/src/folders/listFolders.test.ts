@@ -16,6 +16,7 @@ const diskWith = (
   readDirectory: (path) => Promise.resolve(tree[path] ?? { kind: 'missing' }),
   isDirectory: (path) => Promise.resolve(linkedFolders.includes(path)),
   roots: () => Promise.resolve(roots),
+  makeDirectory: () => Promise.resolve('denied'),
 });
 
 describe('listFolders', () => {

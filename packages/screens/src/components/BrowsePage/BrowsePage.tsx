@@ -43,6 +43,7 @@ const BrowsePage = () => {
 
       <BrowseArea
         kind={kindOf(place.section)}
+        libraryId={place.library}
         favourites={[...favourites.kept]}
         keptBooks={[...keptBooks.kept]}
         onOpenBook={(book) => {

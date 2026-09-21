@@ -42,6 +42,7 @@ const build = (
   waiting: {
     isTranscoderReachable?: () => Promise<boolean>;
     cancelJob?: (jobId: string) => Promise<boolean>;
+    controlQueue?: Parameters<typeof createApp>[0]['controlQueue'];
     capabilities?: Parameters<typeof createApp>[0]['capabilities'];
   } = {},
 ) => {
@@ -58,6 +59,7 @@ const build = (
       ? {}
       : { isTranscoderReachable: waiting.isTranscoderReachable }),
     ...(waiting.cancelJob === undefined ? {} : { cancelJob: waiting.cancelJob }),
+    ...(waiting.controlQueue === undefined ? {} : { controlQueue: waiting.controlQueue }),
     ...(waiting.capabilities === undefined ? {} : { capabilities: waiting.capabilities }),
     auth,
     settings,
@@ -553,6 +555,109 @@ describe('administration over HTTP', () => {
 
     expect(response.status).toBe(403);
     expect(cancelJob).not.toHaveBeenCalled();
+  });
+
+  describe('the work queue', () => {
+    const control = () => ({
+      setConcurrency: vi.fn(() => Promise.resolve()),
+      pause: vi.fn(() => Promise.resolve()),
+      resume: vi.fn(() => Promise.resolve()),
+      runNow: vi.fn(() => Promise.resolve(true)),
+    });
+
+    it('changes how many run at once', async () => {
+      const controlQueue = control();
+      const { app, store, permissions } = build({ controlQueue });
+      const cookie = await signedInAsAdmin(app, store, permissions);
+
+      const response = await app.request(`${BASE}/api/admin/jobs/queue/concurrency`, {
+        method: 'POST',
+        headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+        body: JSON.stringify({ concurrency: 4 }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(controlQueue.setConcurrency).toHaveBeenCalledWith(4);
+    });
+
+    it('will not run none at once, or more than sixty-four', async () => {
+      const controlQueue = control();
+      const { app, store, permissions } = build({ controlQueue });
+      const cookie = await signedInAsAdmin(app, store, permissions);
+
+      for (const concurrency of [0, 65]) {
+        const response = await app.request(`${BASE}/api/admin/jobs/queue/concurrency`, {
+          method: 'POST',
+          headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+          body: JSON.stringify({ concurrency }),
+        });
+
+        expect(response.status).toBe(400);
+      }
+
+      expect(controlQueue.setConcurrency).not.toHaveBeenCalled();
+    });
+
+    it('holds waiting jobs back, and lets them go again', async () => {
+      const controlQueue = control();
+      const { app, store, permissions } = build({ controlQueue });
+      const cookie = await signedInAsAdmin(app, store, permissions);
+      const post = (path: string) =>
+        app.request(`${BASE}/api/admin/jobs/queue/${path}`, {
+          method: 'POST',
+          headers: { cookie, origin: BASE },
+        });
+
+      expect((await post('pause')).status).toBe(200);
+      expect((await post('resume')).status).toBe(200);
+      expect(controlQueue.pause).toHaveBeenCalledOnce();
+      expect(controlQueue.resume).toHaveBeenCalledOnce();
+    });
+
+    it('starts one waiting job now, and says so when none is waiting', async () => {
+      const controlQueue = control();
+      const { app, store, permissions } = build({ controlQueue });
+      const cookie = await signedInAsAdmin(app, store, permissions);
+      const run = () =>
+        app.request(`${BASE}/api/admin/jobs/queue/jobs/7/run-now`, {
+          method: 'POST',
+          headers: { cookie, origin: BASE },
+        });
+
+      expect((await run()).status).toBe(202);
+      expect(controlQueue.runNow).toHaveBeenCalledWith(7);
+
+      controlQueue.runNow.mockResolvedValueOnce(false);
+
+      expect((await run()).status).toBe(404);
+    });
+
+    it('says the media service could not be reached where it cannot', async () => {
+      const controlQueue = { ...control(), pause: () => Promise.reject(new Error('down')) };
+      const { app, store, permissions } = build({ controlQueue });
+      const cookie = await signedInAsAdmin(app, store, permissions);
+
+      const response = await app.request(`${BASE}/api/admin/jobs/queue/pause`, {
+        method: 'POST',
+        headers: { cookie, origin: BASE },
+      });
+
+      expect(response.status).toBe(502);
+    });
+
+    it('will not let an ordinary account touch the queue', async () => {
+      const controlQueue = control();
+      const { app } = build({ controlQueue });
+      const cookie = await signedIn(app);
+
+      const response = await app.request(`${BASE}/api/admin/jobs/queue/pause`, {
+        method: 'POST',
+        headers: { cookie, origin: BASE },
+      });
+
+      expect(response.status).toBe(403);
+      expect(controlQueue.pause).not.toHaveBeenCalled();
+    });
   });
 
   it('queues a server-wide job asked for by hand, which needs no library', async () => {

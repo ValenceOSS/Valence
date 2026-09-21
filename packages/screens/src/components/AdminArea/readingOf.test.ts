@@ -10,6 +10,7 @@ const entry = (libraryId: string, kind: string): ScanEntry => ({
   processed: null,
   total: null,
   jobId: 'job-1',
+  isStopping: false,
 });
 
 const progress = (...entries: ScanEntry[]) =>

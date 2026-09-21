@@ -1,3 +1,4 @@
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import type {
   MediaRequestKind,
@@ -12,11 +13,13 @@ type CatalogueSources = {
     musicBrainzId: string,
     kind: MusicRequestKind,
   ) => Promise<RequestCatalogue | null>;
+  describeBookForRequest: (openLibraryId: number) => Promise<RequestCatalogue | null>;
 };
 
 /**
- * What the catalogue says of something asked for: TMDB of a film or a series, by its TMDB id, and
- * MusicBrainz of an artist or an album, by its MusicBrainz id.
+ * What the catalogue says of something asked for: TMDB of a film or a series, by its TMDB id,
+ * MusicBrainz of an artist or an album, by its MusicBrainz id, and Open Library of a book, by its
+ * Open Library id.
  *
  * @param sources - How each catalogue is asked.
  * @param asked - What was asked for, and the id its kind is found by.
@@ -29,8 +32,15 @@ const catalogueForRequest = (
     kind: MediaRequestKind;
     tmdbId?: number | null | undefined;
     musicBrainzId?: string | null | undefined;
+    openLibraryId?: number | null | undefined;
   },
 ): Promise<RequestCatalogue | null> => {
+  if (isBookRequest(asked.kind)) {
+    return asked.openLibraryId === undefined || asked.openLibraryId === null
+      ? Promise.resolve(null)
+      : sources.describeBookForRequest(asked.openLibraryId);
+  }
+
   if (isMusicRequest(asked.kind)) {
     return asked.musicBrainzId === undefined || asked.musicBrainzId === null
       ? Promise.resolve(null)

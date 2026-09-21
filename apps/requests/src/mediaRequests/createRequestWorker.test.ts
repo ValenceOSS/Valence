@@ -272,6 +272,29 @@ describe('createRequestWorker', () => {
       expect(searched).toEqual([]);
     });
 
+    it('never searches by itself for a book, which is added to the library by hand', async () => {
+      const { worker, searched } = aWorker({
+        requests: [
+          aMediaRequest({
+            kind: 'book',
+            tmdbId: null,
+            openLibraryId: 21_277_329,
+            title: 'Project Hail Mary',
+            artistName: 'Andy Weir',
+            libraryId: 'books',
+            libraryPath: '/media/Books',
+          }),
+        ],
+        items: [aRequestItem({ state: 'waiting', airDate: null })],
+      });
+
+      await worker.tick();
+      await worker.searchMissing();
+      await worker.pollFeeds();
+
+      expect(searched).toEqual([]);
+    });
+
     it('leaves a request waiting on approval alone', async () => {
       const { worker, searched } = aWorker({
         requests: [aMediaRequest({ approval: 'awaiting' })],

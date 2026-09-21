@@ -10,6 +10,10 @@ describe('describeJobStatus', () => {
     expect(describeJobStatus('running')).toEqual({ label: 'Running', tone: 'busy' });
   });
 
+  it('says stopping for work that has been told to stop and has not, in the colour that needs a look', () => {
+    expect(describeJobStatus('stopping')).toEqual({ label: 'Stopping', tone: 'warning' });
+  });
+
   it('calls finished and completed work the same thing', () => {
     expect(describeJobStatus('finished')).toEqual({ label: 'Done', tone: 'success' });
     expect(describeJobStatus('completed')).toEqual({ label: 'Done', tone: 'success' });

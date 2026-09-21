@@ -26,6 +26,9 @@ const sources = () => {
     describeMusicForRequest: vi.fn<CatalogueSources['describeMusicForRequest']>(() =>
       Promise.resolve(null),
     ),
+    describeBookForRequest: vi.fn<CatalogueSources['describeBookForRequest']>(() =>
+      Promise.resolve(null),
+    ),
   };
 
   return given satisfies CatalogueSources;
@@ -47,7 +50,18 @@ describe('catalogueForRequest', () => {
 
     expect(await catalogueForRequest(asked, { kind: 'film', musicBrainzId: 'wall' })).toBeNull();
     expect(await catalogueForRequest(asked, { kind: 'artist', tmdbId: 1 })).toBeNull();
+    expect(await catalogueForRequest(asked, { kind: 'book', tmdbId: 1 })).toBeNull();
     expect(asked.describeForRequest).not.toHaveBeenCalled();
     expect(asked.describeMusicForRequest).not.toHaveBeenCalled();
+    expect(asked.describeBookForRequest).not.toHaveBeenCalled();
+  });
+
+  it('asks Open Library of a book, by its Open Library id', async () => {
+    const asked = sources();
+
+    await catalogueForRequest(asked, { kind: 'book', openLibraryId: 21_277_329 });
+
+    expect(asked.describeBookForRequest).toHaveBeenCalledWith(21_277_329);
+    expect(asked.describeForRequest).not.toHaveBeenCalled();
   });
 });

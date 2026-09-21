@@ -140,6 +140,80 @@ describe('AddLibraryDialog', () => {
     expect(onCreated).toHaveBeenCalledWith(films);
   });
 
+  it('adds anime as a library of shows under its own name', async () => {
+    const actor = userEvent.setup();
+    render(<AddLibraryDialog isOpen onClose={vi.fn()} onCreated={vi.fn()} />);
+
+    await actor.click(screen.getByRole('button', { name: 'Anime' }));
+    await fillForm(actor);
+    await actor.click(screen.getByRole('button', { name: 'Add library' }));
+
+    await waitFor(() => {
+      expect(createLibraryMock).toHaveBeenCalledWith({
+        name: 'Films',
+        kind: 'shows',
+        flavour: 'Anime',
+        path: '/media/films',
+      });
+    });
+  });
+
+  it('adds manga as a library of books under its own name', async () => {
+    const actor = userEvent.setup();
+    render(<AddLibraryDialog isOpen onClose={vi.fn()} onCreated={vi.fn()} />);
+
+    await actor.click(screen.getByRole('button', { name: 'Manga' }));
+    await fillForm(actor);
+    await actor.click(screen.getByRole('button', { name: 'Add library' }));
+
+    await waitFor(() => {
+      expect(createLibraryMock).toHaveBeenCalledWith({
+        name: 'Films',
+        kind: 'books',
+        flavour: 'Manga',
+        path: '/media/films',
+      });
+    });
+  });
+
+  it('adds a custom type, read like one of the built-in kinds', async () => {
+    const actor = userEvent.setup();
+    render(<AddLibraryDialog isOpen onClose={vi.fn()} onCreated={vi.fn()} />);
+
+    await actor.click(screen.getByRole('button', { name: 'Custom' }));
+    await actor.type(screen.getByLabelText('Type name'), '  Documentaries ');
+    await actor.click(screen.getByRole('button', { name: 'Reads like movies' }));
+    await fillForm(actor);
+    await actor.click(screen.getByRole('button', { name: 'Add library' }));
+
+    await waitFor(() => {
+      expect(createLibraryMock).toHaveBeenCalledWith({
+        name: 'Films',
+        kind: 'movies',
+        flavour: 'Documentaries',
+        path: '/media/films',
+      });
+    });
+  });
+
+  it('asks for a name for a custom type before adding it', async () => {
+    const actor = userEvent.setup();
+    render(<AddLibraryDialog isOpen onClose={vi.fn()} onCreated={vi.fn()} />);
+
+    await actor.click(screen.getByRole('button', { name: 'Custom' }));
+    await fillForm(actor);
+    await actor.click(screen.getByRole('button', { name: 'Add library' }));
+
+    expect(await screen.findByText('Say what kind of library this is.')).toBeInTheDocument();
+    expect(createLibraryMock).not.toHaveBeenCalled();
+  });
+
+  it('offers no type name until the type is custom', () => {
+    render(<AddLibraryDialog isOpen onClose={vi.fn()} onCreated={vi.fn()} />);
+
+    expect(screen.queryByLabelText('Type name')).not.toBeInTheDocument();
+  });
+
   it('shows the server error and keeps the dialog open', async () => {
     createLibraryMock.mockRejectedValue(new Error('The path is not a readable directory.'));
     const onCreated = vi.fn();

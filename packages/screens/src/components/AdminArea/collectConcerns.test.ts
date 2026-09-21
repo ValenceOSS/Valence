@@ -10,6 +10,7 @@ const healthyOverview = (overrides: Partial<AdminOverview> = {}): AdminOverview 
   settings: {
     hasCatalogueKey: true,
     hasAudioDbKey: false,
+    hasOmdbKey: false,
     cookieSecure: true,
     hardwareAccel: '',
     previewQuality: 'high' as const,
@@ -58,7 +59,7 @@ const healthyMonitor = (
     graphics: null,
     artefacts: null,
   },
-  queue: { concurrency: 1, queued: 0, running: 0, jobs },
+  queue: { concurrency: 1, paused: false, queued: 0, running: 0, jobs },
   sessions: 0,
   logs: [],
   cache: null,
@@ -497,6 +498,7 @@ describe('collectConcerns', () => {
           settings: {
             hasCatalogueKey: false,
             hasAudioDbKey: false,
+            hasOmdbKey: false,
             cookieSecure: true,
             hardwareAccel: '',
             previewQuality: 'high' as const,
@@ -690,6 +692,7 @@ describe('collectConcerns', () => {
         settings: {
           hasCatalogueKey: false,
           hasAudioDbKey: false,
+          hasOmdbKey: false,
           cookieSecure: true,
           hardwareAccel: '',
           previewQuality: 'high' as const,

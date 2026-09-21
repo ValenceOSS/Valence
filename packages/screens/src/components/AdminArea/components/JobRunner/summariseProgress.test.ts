@@ -14,6 +14,7 @@ const entry = (
   total,
   item: null,
   jobId: 'job-1',
+  isStopping: false,
 });
 
 describe('summariseProgress', () => {
@@ -27,6 +28,7 @@ describe('summariseProgress', () => {
       processed: 3,
       total: 10,
       item: null,
+      isStopping: false,
     });
   });
 
@@ -36,6 +38,7 @@ describe('summariseProgress', () => {
       processed: 7,
       total: 16,
       item: null,
+      isStopping: false,
     });
   });
 
@@ -45,6 +48,7 @@ describe('summariseProgress', () => {
       processed: 1,
       total: 40,
       item: null,
+      isStopping: false,
     });
   });
 
@@ -60,6 +64,7 @@ describe('summariseProgress', () => {
       processed: null,
       total: null,
       item: null,
+      isStopping: false,
     });
   });
 
@@ -69,6 +74,7 @@ describe('summariseProgress', () => {
       processed: 3,
       total: 4,
       item: null,
+      isStopping: false,
     });
   });
 
@@ -78,6 +84,7 @@ describe('summariseProgress', () => {
       processed: null,
       total: null,
       item: null,
+      isStopping: false,
     });
   });
 
@@ -87,6 +94,7 @@ describe('summariseProgress', () => {
       processed: 2,
       total: 4,
       item: null,
+      isStopping: false,
     });
   });
 });

@@ -1,5 +1,9 @@
 import { createRoute, z } from '@hono/zod-openapi';
-import { FolderListingSchema } from '@ValenceContracts/schemas/Folder';
+import {
+  CreateFolderRequestSchema,
+  FolderListingSchema,
+  FolderSchema,
+} from '@ValenceContracts/schemas/Folder';
 
 const FolderError = z.object({ error: z.string() }).openapi('FolderError');
 
@@ -31,4 +35,41 @@ const listFoldersRoute = createRoute({
   },
 });
 
-export { listFoldersRoute };
+const createFolderRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/folders',
+  tags: ['Admin'],
+  summary: 'Make a new folder inside one on the server, to have somewhere to keep a library',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: CreateFolderRequestSchema.openapi('CreateFolder') },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'The folder that was made',
+      content: { 'application/json': { schema: FolderSchema.openapi('CreatedFolder') } },
+    },
+    400: {
+      description: 'A parent that does not start from the root, or a name that is not one name',
+      content: { 'application/json': { schema: FolderError } },
+    },
+    403: {
+      description:
+        'Not somebody who may add a library, or a place Valence may not write, such as a disk mounted read-only',
+      content: { 'application/json': { schema: FolderError } },
+    },
+    404: {
+      description: 'No such folder to make it in',
+      content: { 'application/json': { schema: FolderError } },
+    },
+    409: {
+      description: 'Something of that name is already there',
+      content: { 'application/json': { schema: FolderError } },
+    },
+  },
+});
+
+export { createFolderRoute, listFoldersRoute };

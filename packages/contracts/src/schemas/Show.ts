@@ -25,6 +25,14 @@ const CatalogueEpisodeSchema = z.object({
   title: z.string(),
   stillUrl: z.string().nullish(),
   overview: z.string().nullish(),
+  airDate: z.string().nullish(),
+});
+
+const NextEpisodeSchema = z.object({
+  seasonNumber: z.number().int().nonnegative(),
+  episodeNumber: z.number().int().positive(),
+  title: z.string(),
+  airDate: z.string(),
 });
 
 const SeasonShapeSchema = z.object({
@@ -38,9 +46,15 @@ const ShowDetailSchema = ShowSummarySchema.extend({
   shape: z.array(SeasonShapeSchema).nullish(),
   extras: z.array(MediaSummarySchema).optional(),
   trailerKey: z.string().nullish(),
+  status: z.string().nullish(),
+  nextEpisode: NextEpisodeSchema.nullish(),
 });
 
 const ShowListSchema = z.object({ shows: z.array(ShowSummarySchema) });
+
+const ComingUpSchema = z.object({
+  shows: z.array(z.object({ show: ShowSummarySchema, episode: NextEpisodeSchema })),
+});
 
 type CatalogueEpisode = z.infer<typeof CatalogueEpisodeSchema>;
 type SeasonShape = z.infer<typeof SeasonShapeSchema>;
@@ -48,6 +62,15 @@ type ShowSummary = z.infer<typeof ShowSummarySchema>;
 type ShowSeason = z.infer<typeof ShowSeasonSchema>;
 type ShowDetail = z.infer<typeof ShowDetailSchema>;
 
-export type { CatalogueEpisode, SeasonShape, ShowDetail, ShowSeason, ShowSummary };
+type ComingUp = z.infer<typeof ComingUpSchema>;
 
-export { ShowSummarySchema, ShowSeasonSchema, SeasonShapeSchema, ShowDetailSchema, ShowListSchema };
+export type { CatalogueEpisode, ComingUp, SeasonShape, ShowDetail, ShowSeason, ShowSummary };
+
+export {
+  ComingUpSchema,
+  ShowSummarySchema,
+  ShowSeasonSchema,
+  SeasonShapeSchema,
+  ShowDetailSchema,
+  ShowListSchema,
+};

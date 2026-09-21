@@ -1,4 +1,6 @@
 import { Badge } from '@ValenceUI/Badge';
+import { Button } from '@ValenceUI/Button';
+import { runQueuedJobNow } from '@ValenceClient/admin/fetchAdmin';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -27,7 +29,8 @@ const ORDER: Readonly<Record<Job['state'], number>> = {
  * @param title - What the job is called.
  * @param isOpen - Whether the dialog is showing.
  * @param progress - How far along each piece of work says it is, where it says.
- * @param tasks - The queue's tasks that belong to this job.
+ * @param tasks - The queue's tasks that belong to this job. One that is still waiting can be started
+ *   now, past the limit on how many run at once and past a pause.
  * @param onClose - Called when the dialog is dismissed.
  */
 const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningWorkDialogProps) => {
@@ -43,9 +46,23 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
       </span>
 
       {task.state === 'queued' ? (
-        <Badge size="sm" tone="quiet">
-          Waiting
-        </Badge>
+        <>
+          <Button
+            variant="ghost"
+            size="xs"
+            label={`Run ${task.subject} now`}
+            hasTooltip={false}
+            onClick={() => {
+              void runQueuedJobNow(task.id);
+            }}
+          >
+            Run now
+          </Button>
+
+          <Badge size="sm" tone="quiet">
+            Waiting
+          </Badge>
+        </>
       ) : (
         <Badge size="sm" tone={describeJobStatus(task.state).tone}>
           {describeJobStatus(task.state).label}
@@ -86,7 +103,15 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
                 processed={entry.processed}
                 total={entry.total}
                 item={entry.item ?? null}
+                isStopping={entry.isStopping === true}
               />
+
+              {entry.isStopping === true ? (
+                <p className="text-xs text-text-muted">
+                  Finishing what it has already started, then it will stop. What is still queued
+                  behind it is left undone until it is run again.
+                </p>
+              ) : null}
             </div>
           ))}
 

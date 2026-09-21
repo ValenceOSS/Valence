@@ -5,6 +5,10 @@ const NOTHING_FOUND = () => Promise.resolve(new Map<string, string>());
 const NO_DISCOVERY: Discovery = {
   browse: () => Promise.resolve({ matches: [], hasMore: false }),
   studios: () => Promise.resolve([]),
+  genres: () => Promise.resolve([]),
+  bookShelves: () => Promise.resolve([]),
+  searchBooks: () => Promise.resolve([]),
+  describeBook: () => Promise.resolve(null),
   charts: () => Promise.resolve({ albums: [], artists: [] }),
   describeTitle: () => Promise.resolve(null),
   describeMusic: () => Promise.resolve(null),
@@ -16,6 +20,7 @@ const NO_DISCOVERY: Discovery = {
     albums: NOTHING_FOUND,
     artistsNamed: NOTHING_FOUND,
     albumsNamed: NOTHING_FOUND,
+    booksNamed: NOTHING_FOUND,
   },
 };
 

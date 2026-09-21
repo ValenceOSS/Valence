@@ -22,6 +22,7 @@ const recordFromDraft = (
   kind: draft.kind,
   tmdbId: draft.tmdbId,
   musicBrainzId: draft.musicBrainzId,
+  openLibraryId: draft.openLibraryId,
   ...requestFactsOf(draft.catalogue),
   libraryId: draft.libraryId,
   libraryPath: draft.libraryPath,

@@ -8,6 +8,7 @@ type AddLibraryDialogProps = {
 
 type AddLibraryFormErrors = {
   name?: string;
+  flavour?: string;
   path?: string;
   submit?: string;
 };

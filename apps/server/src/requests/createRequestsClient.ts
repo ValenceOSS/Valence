@@ -468,6 +468,9 @@ const createRequestsClient = ({
     retryRequest: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/retry`, readRequest, { method: 'POST' }),
 
+    fulfilRequest: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/fulfil`, readRequest, { method: 'POST' }),
+
     requestArrived: (id: string, mediaId: string): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/arrived`, readRequest, { method: 'POST', body: { mediaId } }),
 

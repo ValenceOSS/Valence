@@ -5,6 +5,7 @@ import { createMusicPlayer } from './createMusicPlayer';
 import type { MusicPlayer } from './createMusicPlayer';
 
 let made: MusicPlayer | null = null;
+let element: HTMLAudioElement | null = null;
 
 /**
  * The window's music player, made the first time anything asks for it.
@@ -22,6 +23,7 @@ const theMusicPlayer = (): MusicPlayer => {
   const audio = new Audio();
 
   audio.preload = 'auto';
+  element = audio;
 
   made = createMusicPlayer({
     audio,
@@ -40,11 +42,23 @@ const theMusicPlayer = (): MusicPlayer => {
 };
 
 /**
+ * The audio element the window's player plays through, for whatever needs to listen to it.
+ *
+ * @returns The element, made along with the player if nothing had asked for either yet.
+ */
+const theMusicAudio = (): HTMLAudioElement => {
+  theMusicPlayer();
+
+  return element ?? new Audio();
+};
+
+/**
  * Forgets the window's player, so a test starts from nothing.
  */
 const forgetTheMusicPlayer = (): void => {
   made?.stop();
   made = null;
+  element = null;
 };
 
-export { forgetTheMusicPlayer, theMusicPlayer };
+export { forgetTheMusicPlayer, theMusicAudio, theMusicPlayer };

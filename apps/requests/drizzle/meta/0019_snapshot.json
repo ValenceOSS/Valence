@@ -1,5 +1,5 @@
 {
-  "id": "98e5ffdf-511c-48c9-a542-f27524bc3ed8",
+  "id": "3f7106e2-8034-4d5b-bbee-f1750e50e87a",
   "prevId": "069f1b54-3acb-4bd0-845c-0044dd43d9c8",
   "version": "7",
   "dialect": "postgresql",
@@ -419,6 +419,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "open_library_id": {
+          "name": "open_library_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "title": {
           "name": "title",
           "type": "text",
@@ -585,6 +591,11 @@
           "name": "media_request_music",
           "nullsNotDistinct": false,
           "columns": ["kind", "music_brainz_id"]
+        },
+        "media_request_book": {
+          "name": "media_request_book",
+          "nullsNotDistinct": false,
+          "columns": ["kind", "open_library_id"]
         }
       },
       "policies": {},
@@ -708,27 +719,6 @@
         },
         "library_ids": {
           "name": "library_ids",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "is_default": {
-          "name": "is_default",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "role_ids": {
-          "name": "role_ids",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "account_ids": {
-          "name": "account_ids",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true,

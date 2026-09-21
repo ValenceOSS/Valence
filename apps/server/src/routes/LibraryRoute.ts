@@ -11,6 +11,7 @@ import {
 import {
   ShowListSchema as ShowListContract,
   ShowDetailSchema as ShowDetailContract,
+  ComingUpSchema as ComingUpContract,
 } from '@ValenceContracts/schemas/Show';
 
 const Library = LibrarySchema.openapi('Library');
@@ -22,11 +23,13 @@ const Forbidden = z.object({ error: z.string() }).openapi('LibraryForbidden');
 
 const ShowListSchema = ShowListContract.openapi('ShowList');
 const ShowDetailSchema = ShowDetailContract.openapi('ShowDetail');
+const ComingUpSchema = ComingUpContract.openapi('ComingUp');
 
 const CreateLibraryRequest = z
   .object({
     name: z.string().min(1).max(100),
     kind: z.enum(LIBRARY_KINDS),
+    flavour: z.string().trim().min(1).max(40).nullable().optional(),
     path: z.string().min(1),
   })
   .openapi('CreateLibraryRequest');
@@ -451,6 +454,24 @@ const getShowRoute = createRoute({
   },
 });
 
+const comingUpRoute = createRoute({
+  method: 'get',
+  path: '/api/coming-up',
+  tags: ['Library'],
+  summary:
+    'Read the programmes the viewer can watch that have an episode still to air, soonest first',
+  responses: {
+    200: {
+      description: 'Each programme, with the next episode to air',
+      content: { 'application/json': { schema: ComingUpSchema } },
+    },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+    },
+  },
+});
+
 const resetLibraryRoute = createRoute({
   method: 'post',
   path: '/api/libraries/{id}/reset',
@@ -529,6 +550,7 @@ export {
   deleteLibraryRoute,
   listShowsRoute,
   getShowRoute,
+  comingUpRoute,
   runningScansRoute,
   correctMatchRoute,
   forgetCorrectionRoute,

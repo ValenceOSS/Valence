@@ -147,6 +147,10 @@
       "@ValenceUI/SectionBar": ["./packages/ui/src/components/SectionBar/SectionBar.tsx"],
       "@ValenceUI/SettingsMenu": ["./packages/ui/src/components/SettingsMenu/SettingsMenu.tsx"],
       "@ValenceUI/Skeleton": ["./packages/ui/src/components/Skeleton/Skeleton.tsx"],
+      "@ValenceUI/SpectrumBars": ["./packages/ui/src/components/SpectrumBars/SpectrumBars.tsx"],
+      "@ValenceUI/SpectrumBars.types": [
+        "./packages/ui/src/components/SpectrumBars/SpectrumBars.types.ts"
+      ],
       "@ValenceUI/SettingList": ["./packages/ui/src/components/SettingList/SettingList.tsx"],
       "@ValenceUI/SettingList.types": [
         "./packages/ui/src/components/SettingList/SettingList.types.ts"
@@ -218,6 +222,7 @@
       "@ValenceUI/VirtualGrid.types": [
         "./packages/ui/src/components/VirtualGrid/VirtualGrid.types.ts"
       ],
+      "@ValenceUI/VirtualStrip": ["./packages/ui/src/components/VirtualStrip/VirtualStrip.tsx"],
       "@ValenceUI/columnsIn": ["./packages/ui/src/components/VirtualGrid/columnsIn.ts"],
       "@ValenceUI/cn": ["./packages/ui/src/functions/cn.ts"],
       "@ValenceUI/useHasScrolledPast": ["./packages/ui/src/functions/useHasScrolledPast.ts"],

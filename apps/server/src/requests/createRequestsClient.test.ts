@@ -697,6 +697,7 @@ describe('createRequestsClient with requests for films and series', () => {
     kind: 'film' as const,
     tmdbId: 438631,
     musicBrainzId: null,
+    openLibraryId: null,
     title: 'Dune',
     artistName: null,
     year: 2021,
@@ -762,6 +763,7 @@ describe('createRequestsClient with requests for films and series', () => {
       one.client.approveRequest(REQUEST.id),
       one.client.refuseRequest(REQUEST.id, 'No room'),
       one.client.retryRequest(REQUEST.id),
+      one.client.fulfilRequest(REQUEST.id),
       one.client.requestArrived(REQUEST.id, 'media-1'),
       one.client.updateRequestCatalogue(REQUEST.id, { catalogue: { title: 'Dune', year: 2021 } }),
     ]) {
@@ -774,6 +776,7 @@ describe('createRequestsClient with requests for films and series', () => {
       `POST http://requests:8421/api/requests/${REQUEST.id}/approve`,
       `POST http://requests:8421/api/requests/${REQUEST.id}/refuse`,
       `POST http://requests:8421/api/requests/${REQUEST.id}/retry`,
+      `POST http://requests:8421/api/requests/${REQUEST.id}/fulfil`,
       `POST http://requests:8421/api/requests/${REQUEST.id}/arrived`,
       `PUT http://requests:8421/api/requests/${REQUEST.id}/catalogue`,
     ]);
@@ -851,6 +854,7 @@ describe('createRequestsClient with requests for films and series', () => {
           kind: 'film',
           tmdbId: 438631,
           musicBrainzId: null,
+          openLibraryId: null,
           libraryId: 'films',
         },
       ]).client.followedRequests(),

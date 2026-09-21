@@ -19,20 +19,20 @@ Caddyfile, no configuration file of any kind: everything is settings.
 `compose.yaml` reads these. Set them in Dockge's environment editor, or replace
 each `${...}` in the file itself.
 
-| Setting              | Required | What it is                                                                                                                                         |
-| -------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POSTGRES_PASSWORD`  | yes      | Any long random string. Only Valence ever uses it.                                                                                                 |
-| `BETTER_AUTH_SECRET` | yes      | At least 32 characters. Sign-in cookies are sealed with it, so changing it later signs everybody out.                                              |
-| `PUBLIC_URL`         | yes      | Where a browser reaches Valence — the proxy's address, not the NAS's. `https://valence.example.com`                                                |
-| `MEDIA_PATH`         | yes      | The library on the host. `/mnt/tank/media`                                                                                                         |
-| `VALENCE_PORT`       | no       | The port on the host, 8420 by default. This is what the proxy points at.                                                                           |
-| `TZ`                 | no       | UTC by default. Scheduled jobs keep this clock, so "daily at 03:00" means 3am here rather than 3am UTC.                                            |
-| `MEDIA_JOBS`         | no       | Files probed at once during a scan, 4 by default.                                                                                                  |
-| `CATALOGUE_API_KEY`  | no       | A TMDB key. Without one, titles come from filenames and nothing fetches posters, descriptions or cast.                                             |
-| `COOKIE_SECURE`      | no       | True by default, which is right behind HTTPS. Set it false only when testing over plain HTTP, or sign-in will appear to succeed and then not hold. |
-| `RENDER_GROUP_ID`    | no       | The group owning `/dev/dri/renderD128`, 44 by default. `ls -n /dev/dri` says which.                                                                |
-| `PROFILE_IMAGE_DIR`  | no       | Where profile pictures are kept, `/config/profiles` by default. Wherever you point it, a volume must be mapped there — see below.                  |
-| `MEDIA_ACCESS`       | no       | `:ro` by default, which is how a media server should run. Set it to an empty string to mount media read and write, which only re-encoding needs.   |
+| Setting              | Required | What it is                                                                                                                                                                                         |
+| -------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_PASSWORD`  | yes      | Any long random string. Only Valence ever uses it.                                                                                                                                                 |
+| `BETTER_AUTH_SECRET` | yes      | At least 32 characters. Sign-in cookies are sealed with it, so changing it later signs everybody out.                                                                                              |
+| `PUBLIC_URL`         | yes      | Where a browser reaches Valence — the proxy's address, not the NAS's. `https://valence.example.com`                                                                                                |
+| `MEDIA_PATH`         | yes      | The library on the host. `/mnt/tank/media`                                                                                                                                                         |
+| `VALENCE_PORT`       | no       | The port on the host, 8420 by default. This is what the proxy points at.                                                                                                                           |
+| `TZ`                 | no       | UTC by default. Scheduled jobs keep this clock, so "daily at 03:00" means 3am here rather than 3am UTC.                                                                                            |
+| `MEDIA_JOBS`         | no       | Files probed at once during a scan, 4 by default.                                                                                                                                                  |
+| `CATALOGUE_API_KEY`  | no       | A TMDB key. Without one, titles come from filenames and nothing fetches posters, descriptions or cast.                                                                                             |
+| `COOKIE_SECURE`      | no       | True by default, which is right behind HTTPS. Set it false only when testing over plain HTTP, or sign-in will appear to succeed and then not hold.                                                 |
+| `RENDER_GROUP_ID`    | no       | The group owning `/dev/dri/renderD128`, 44 by default. `ls -n /dev/dri` says which.                                                                                                                |
+| `PROFILE_IMAGE_DIR`  | no       | Where profile pictures are kept, `/config/profiles` by default. Wherever you point it, a volume must be mapped there — see below.                                                                  |
+| `MEDIA_ACCESS`       | no       | `:ro` by default, which is how a media server should run. Set it to an empty string to mount media read and write, which re-encoding, uploading media and making folders from the admin page need. |
 
 Two good ways to make a secret:
 
@@ -66,6 +66,10 @@ and write. Leave it alone otherwise; Valence checks before it starts an encode
 and says plainly that the folder is read only, rather than failing part way
 through two hours of work.
 
+Uploading media from the admin page and making folders in its folder browser write to the
+same mount, so they need it too. Where the mount is read only they say so, and say what to
+change.
+
 Two things worth knowing before you turn it on:
 
 - **Replacing a file is the only thing in Valence that destroys your own media.**
@@ -86,7 +90,7 @@ from source rather than from the image:
 
 - `VALENCE_WRITE_ROOTS` tells the media service which directories it may write
   finished encodes into, as a colon-separated list — the image sets it to
-  `/media`. It is deliberately separate from the directories it may *read*, and
+  `/media`. It is deliberately separate from the directories it may _read_, and
   deliberately empty-means-nowhere: reading a file somebody asked to watch and
   writing over the top of it are not the same permission, and a service with no
   authentication of its own should not treat them as though they were. Without

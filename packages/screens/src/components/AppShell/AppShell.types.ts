@@ -1,4 +1,5 @@
 import type { MoodLight } from '@ValenceUI/MoodBackground.types';
+import type { NavBarChoices } from '@ValenceUI/NavBar.types';
 import type { ReactNode } from 'react';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 
@@ -35,6 +36,7 @@ type AppShellProps = {
   onOpenSearch: () => void;
   onSurprise?: (only?: LibraryKind) => void;
   libraryKinds?: LibraryKind[];
+  libraryChoices?: Partial<Record<'films' | 'shows', NavBarChoices>>;
   stocked?: ShellSection[];
   mayRequest?: boolean;
   onOpenFavourites?: () => void;

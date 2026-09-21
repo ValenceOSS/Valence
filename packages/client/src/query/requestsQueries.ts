@@ -18,11 +18,12 @@ import {
 import {
   fetchAskable,
   fetchCatalogueBrowse,
+  fetchCatalogueGenres,
   fetchDiscover,
   fetchRequestProgress,
   searchAskable,
 } from '@ValenceClient/requests/fetchAskable';
-import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
+import type { CatalogueBrowse, CatalogueFilters } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { ProfileKind } from '@ValenceContracts/schemas/QualityProfile';
@@ -258,14 +259,45 @@ const discover = (isEnabled = true) =>
  *
  * @param browsing - Which list, of which kind, and whose studio where one was chosen.
  * @param isEnabled - Whether to ask at all.
+ * @param filters - What to narrow it by: a genre, a span of years, a least rating.
  * @returns The query.
  */
-const catalogueBrowse = (browsing: CatalogueBrowse, isEnabled = true) =>
+const catalogueBrowse = (
+  browsing: CatalogueBrowse,
+  isEnabled = true,
+  filters: CatalogueFilters = {},
+) =>
   infiniteQueryOptions({
-    queryKey: [...REQUESTS, 'browse', browsing.kind, browsing.list, browsing.studio],
-    queryFn: ({ pageParam }) => fetchCatalogueBrowse(browsing, pageParam),
+    queryKey: [
+      ...REQUESTS,
+      'browse',
+      browsing.kind,
+      browsing.list,
+      browsing.studio,
+      filters.genre ?? null,
+      filters.yearFrom ?? null,
+      filters.yearTo ?? null,
+      filters.minRating ?? null,
+    ],
+    queryFn: ({ pageParam }) => fetchCatalogueBrowse(browsing, pageParam, filters),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
+    staleTime: DISCOVER_KEPT_MS,
+    enabled: isEnabled,
+  });
+
+/**
+ * The genres a list of films or series can be narrowed to. They change with the catalogue's own
+ * revisions, not with anything a viewer does, so they are kept for as long as the shelves are.
+ *
+ * @param kind - Whether it is films or series.
+ * @param isEnabled - Whether to ask at all.
+ * @returns The query.
+ */
+const catalogueGenres = (kind: CatalogueBrowse['kind'], isEnabled = true) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'genres', kind],
+    queryFn: () => fetchCatalogueGenres(kind),
     staleTime: DISCOVER_KEPT_MS,
     enabled: isEnabled,
   });
@@ -333,6 +365,7 @@ const requestsQueries = {
   seriesSeasons,
   discover,
   catalogueBrowse,
+  catalogueGenres,
   askableSearch,
   askable,
   requestProgress,

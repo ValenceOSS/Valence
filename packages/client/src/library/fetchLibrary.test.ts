@@ -94,6 +94,19 @@ describe('createLibrary', () => {
     await expect(createLibrary(input)).resolves.toMatchObject({ name: 'Films' });
   });
 
+  it('sends the type of library along with the rest', async () => {
+    fetchMock.mockResolvedValue(ok(library));
+
+    await createLibrary({ ...input, kind: 'books', flavour: 'Manga' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/libraries',
+      expect.objectContaining({
+        body: JSON.stringify({ ...input, kind: 'books', flavour: 'Manga' }),
+      }),
+    );
+  });
+
   it('sends the request body as json', async () => {
     fetchMock.mockResolvedValue(ok(library));
 

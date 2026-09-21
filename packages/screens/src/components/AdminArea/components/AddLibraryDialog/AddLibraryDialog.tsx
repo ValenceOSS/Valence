@@ -10,10 +10,13 @@ import { Icon } from '@ValenceUI/Icon';
 import { Folder as FolderIcon } from '@keyline-icons/react';
 import { FolderBrowser } from '@ValenceScreens/components/AdminArea/components/FolderBrowser/FolderBrowser';
 import { SELECTABLE_LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
+import { LIBRARY_PRESETS } from './LIBRARY_PRESETS';
 import { createLibrary } from '@ValenceClient/library/fetchLibrary';
 import { validateAddLibraryForm } from './validateAddLibraryForm';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { AddLibraryDialogProps, AddLibraryFormErrors } from './AddLibraryDialog.types';
+
+const CUSTOM = 'custom';
 
 const KIND_LABELS: Record<LibraryKind, string> = {
   movies: 'Movies',
@@ -35,7 +38,9 @@ const KIND_LABELS: Record<LibraryKind, string> = {
  */
 const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps) => {
   const [name, setName] = useState('');
-  const [kind, setKind] = useState<LibraryKind>('movies');
+  const [preset, setPreset] = useState<string>('movies');
+  const [customKind, setCustomKind] = useState<LibraryKind>('shows');
+  const [flavour, setFlavour] = useState('');
   const [path, setPath] = useState('');
   const [errors, setErrors] = useState<AddLibraryFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,7 +48,9 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
 
   const reset = () => {
     setName('');
-    setKind('movies');
+    setPreset('movies');
+    setCustomKind('shows');
+    setFlavour('');
     setPath('');
     setErrors({});
     setIsBrowsing(false);
@@ -55,7 +62,12 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
   };
 
   const submit = async () => {
-    const found = validateAddLibraryForm({ name, path });
+    const isCustom = preset === CUSTOM;
+    const found = validateAddLibraryForm({
+      name,
+      path,
+      ...(isCustom ? { flavour } : {}),
+    });
 
     setErrors(found);
 
@@ -66,7 +78,19 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
     setIsSubmitting(true);
 
     try {
-      const library = await createLibrary({ name, kind, path });
+      const chosen = LIBRARY_PRESETS.find((entry) => entry.id === preset);
+      const library = await createLibrary(
+        isCustom
+          ? { name, kind: customKind, flavour: flavour.trim(), path }
+          : {
+              name,
+              kind: chosen?.kind ?? 'movies',
+              ...(chosen?.flavour === null || chosen === undefined
+                ? {}
+                : { flavour: chosen.flavour }),
+              path,
+            },
+      );
 
       onCreated(library);
       reset();
@@ -91,23 +115,57 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
           {...(errors.name === undefined ? {} : { error: errors.name })}
         />
 
-        <FormField label="Kind" description="What this library holds, which decides how it reads.">
+        <FormField
+          label="Type"
+          description="What this library holds, which decides how it reads and what it is called."
+        >
           <div className="flex flex-wrap gap-2">
-            {SELECTABLE_LIBRARY_KINDS.map((entry) => (
+            {[...LIBRARY_PRESETS, { id: CUSTOM, label: 'Custom' }].map((entry) => (
               <Button
-                key={entry}
+                key={entry.id}
                 size="sm"
-                variant={entry === kind ? 'primary' : 'secondary'}
-                aria-pressed={entry === kind}
+                variant={entry.id === preset ? 'primary' : 'secondary'}
+                aria-pressed={entry.id === preset}
                 onClick={() => {
-                  setKind(entry);
+                  setPreset(entry.id);
                 }}
               >
-                {KIND_LABELS[entry]}
+                {entry.label}
               </Button>
             ))}
           </div>
         </FormField>
+
+        {preset === CUSTOM ? (
+          <>
+            <TextField
+              label="Type name"
+              value={flavour}
+              onValueChange={setFlavour}
+              placeholder="Documentaries"
+              description="What to call this kind of library."
+              {...(errors.flavour === undefined ? {} : { error: errors.flavour })}
+            />
+
+            <FormField label="Reads like" description="Which of the built-in kinds it is read as.">
+              <div className="flex flex-wrap gap-2">
+                {SELECTABLE_LIBRARY_KINDS.map((entry) => (
+                  <Button
+                    key={entry}
+                    size="sm"
+                    variant={entry === customKind ? 'primary' : 'secondary'}
+                    aria-pressed={entry === customKind}
+                    onClick={() => {
+                      setCustomKind(entry);
+                    }}
+                  >
+                    {`Reads like ${KIND_LABELS[entry].toLowerCase()}`}
+                  </Button>
+                ))}
+              </div>
+            </FormField>
+          </>
+        ) : null}
 
         <div className="flex flex-col gap-3">
           <div className="flex items-end gap-2">

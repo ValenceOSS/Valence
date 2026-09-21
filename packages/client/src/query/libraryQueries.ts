@@ -4,7 +4,7 @@ import {
   fetchLibraryItems,
   fetchMediaDetail,
 } from '@ValenceClient/library/fetchLibrary';
-import { fetchShows, fetchShow } from '@ValenceClient/library/fetchShows';
+import { fetchComingUp, fetchShows, fetchShow } from '@ValenceClient/library/fetchShows';
 import { fetchFacets } from '@ValenceClient/library/fetchFacets';
 import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPerson';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
@@ -86,6 +86,19 @@ const show = (libraryId: string | null, showId: string | null) =>
   });
 
 /**
+ * The programmes with an episode still to air, soonest first. Kept for ten minutes, since what is
+ * coming up changes by the day and the catalogue behind it is read only every few hours.
+ *
+ * @returns The query.
+ */
+const comingUp = () =>
+  queryOptions({
+    queryKey: [...LIBRARY, 'coming-up'],
+    queryFn: () => fetchComingUp(),
+    staleTime: 10 * 60 * 1000,
+  });
+
+/**
  * What a library can be filtered by — its genres, its years, its ratings.
  *
  * @returns The query.
@@ -157,6 +170,7 @@ const libraryQueries = {
   detail,
   shows,
   show,
+  comingUp,
   facets,
   person,
   credits,

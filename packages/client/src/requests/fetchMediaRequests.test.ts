@@ -13,6 +13,7 @@ import {
   refuseMediaRequest,
   removeMediaRequest,
   retryMediaRequest,
+  fulfilMediaRequest,
   searchMissing,
 } from './fetchMediaRequests';
 
@@ -21,6 +22,7 @@ const REQUEST = {
   kind: 'film',
   tmdbId: 438631,
   musicBrainzId: null,
+  openLibraryId: null,
   title: 'Dune',
   artistName: null,
   year: 2021,
@@ -99,6 +101,7 @@ describe('fetchMediaRequests', () => {
       approveMediaRequest(REQUEST.id),
       refuseMediaRequest(REQUEST.id, 'No room'),
       retryMediaRequest(REQUEST.id),
+      fulfilMediaRequest(REQUEST.id),
       pickMediaRelease(REQUEST.id, RELEASE),
     ]) {
       expect((await sending).value).toEqual(REQUEST);
@@ -110,6 +113,7 @@ describe('fetchMediaRequests', () => {
       `POST /api/requests/media/${REQUEST.id}/approve`,
       `POST /api/requests/media/${REQUEST.id}/refuse`,
       `POST /api/requests/media/${REQUEST.id}/retry`,
+      `POST /api/requests/media/${REQUEST.id}/fulfil`,
       `POST /api/requests/media/${REQUEST.id}/pick`,
     ]);
   });

@@ -31,6 +31,7 @@ const OVERVIEW: AdminOverview = {
   settings: {
     hasCatalogueKey: false,
     hasAudioDbKey: false,
+    hasOmdbKey: false,
     trustedOrigins: ['http://localhost:5173'],
     cookieSecure: false,
     hardwareAccel: '',
@@ -85,6 +86,7 @@ const MONITOR: Monitor = {
   },
   queue: {
     concurrency: 2,
+    paused: false,
     queued: 1,
     running: 1,
     jobs: [
@@ -376,6 +378,7 @@ const monitorArrives = (reading: JsonValue) => {
 };
 
 beforeEach(() => {
+  window.localStorage.clear();
   fetchMock.mockReset();
   fetchMock.mockImplementation(respondWith());
   resetScanCoordinator();
@@ -1284,6 +1287,124 @@ describe('AdminArea', () => {
     await goTo(actor, 'Libraries');
 
     expect(await screen.findByText(/No libraries yet/)).toBeInTheDocument();
+  });
+
+  describe('setting up a new server', () => {
+    const withNoLibraries = () => {
+      fetchMock.mockImplementation((input: string, init?: RequestInit) =>
+        input.includes('/api/libraries') && init?.method !== 'POST'
+          ? Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+          : respondWith()(input, init),
+      );
+    };
+
+    it('lays out what a server needs on the overview, starting with what is missing', async () => {
+      renderInAnAddress(<TheAdmin />);
+
+      const guide = await screen.findByRole('region', { name: 'Get Valence set up' });
+
+      expect(within(guide).getByText('Add a metadata key').closest('li')).toHaveAttribute(
+        'aria-current',
+        'step',
+      );
+    });
+
+    it('does not repeat in the banner what the guide already says', async () => {
+      renderInAnAddress(<TheAdmin />);
+
+      await screen.findByRole('region', { name: 'Get Valence set up' });
+
+      expect(screen.queryByText('No metadata catalogue key is set')).not.toBeInTheDocument();
+    });
+
+    it('takes a server with nothing on it to the libraries page, once', async () => {
+      withNoLibraries();
+
+      const onPanel = vi.fn();
+
+      renderInAnAddress(<TheAdmin onPanel={onPanel} />);
+
+      await waitFor(() => {
+        expect(onPanel).toHaveBeenCalledWith('libraries');
+      });
+
+      expect(await screen.findByText(/No libraries yet/)).toBeInTheDocument();
+      expect(window.localStorage.getItem('valence.setupGuideVisited')).toBe('true');
+    });
+
+    it('does not send somebody there again once they have been', async () => {
+      withNoLibraries();
+      window.localStorage.setItem('valence.setupGuideVisited', 'true');
+
+      const onPanel = vi.fn();
+
+      renderInAnAddress(<TheAdmin onPanel={onPanel} />);
+
+      await screen.findByRole('region', { name: 'Get Valence set up' });
+
+      expect(onPanel).not.toHaveBeenCalled();
+    });
+
+    it('starts adding a library from the guide beside the empty list', async () => {
+      withNoLibraries();
+      window.localStorage.setItem('valence.setupGuideVisited', 'true');
+
+      const actor = userEvent.setup();
+
+      renderInAnAddress(<TheAdmin panel="libraries" />);
+
+      const guide = await screen.findByRole('region', { name: 'Get Valence set up' });
+
+      await actor.click(within(guide).getByRole('button', { name: 'Add library' }));
+
+      expect(await screen.findByRole('dialog', { name: 'Add a library' })).toBeInTheDocument();
+    });
+
+    it('opens the settings from the guide, where the key is entered', async () => {
+      const actor = userEvent.setup();
+
+      renderInAnAddress(<TheAdmin />);
+
+      await actor.click(await screen.findByRole('button', { name: 'Enter it in Settings' }));
+
+      expect(await screen.findByLabelText('Catalogue key')).toBeInTheDocument();
+    });
+
+    it('can be put away, and stays away', async () => {
+      const actor = userEvent.setup();
+
+      renderInAnAddress(<TheAdmin />);
+
+      await actor.click(await screen.findByRole('button', { name: 'Hide' }));
+
+      expect(screen.queryByRole('region', { name: 'Get Valence set up' })).not.toBeInTheDocument();
+      expect(window.localStorage.getItem('valence.setupGuideHidden')).toBe('true');
+    });
+
+    it('tells a server that is set up nothing at all', async () => {
+      fetchMock.mockImplementation((input: string, init?: RequestInit) =>
+        input.includes('/api/libraries') && init?.method !== 'POST'
+          ? Promise.resolve({
+              ok: true,
+              json: () =>
+                Promise.resolve(
+                  LIBRARIES.map((library) => ({
+                    ...library,
+                    lastScannedAt: '2026-01-01T00:00:00.000Z',
+                  })),
+                ),
+            })
+          : respondWith({
+              ...OVERVIEW,
+              settings: { ...OVERVIEW.settings, hasCatalogueKey: true },
+            })(input, init),
+      );
+
+      renderInAnAddress(<TheAdmin />);
+
+      expect(await screen.findByText('42%')).toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: 'Get Valence set up' })).not.toBeInTheDocument();
+    });
   });
 
   describe('the acceleration badge', () => {

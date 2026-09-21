@@ -45,6 +45,7 @@ const LibrarySchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(100),
   kind: LibraryKindSchema,
+  flavour: z.string().max(40).nullable().optional(),
   path: z.string().min(1),
   itemCount: z.number().int().nonnegative(),
   lastScannedAt: z.string().datetime().nullable(),
@@ -112,6 +113,11 @@ const MediaMetadataSchema = z.object({
   seasonNumber: z.number().int().nullish(),
   episodeNumber: z.number().int().nullish(),
   externalId: z.string().nullish(),
+  releaseDate: z.string().nullish(),
+  budget: z.number().nonnegative().nullish(),
+  revenue: z.number().nonnegative().nullish(),
+  status: z.string().nullish(),
+  rottenTomatoes: z.number().int().min(0).max(100).nullish(),
 });
 
 const PreviewMomentSchema = z.object({

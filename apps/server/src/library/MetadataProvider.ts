@@ -1,8 +1,14 @@
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
+import type { NextEpisode } from '@ValenceServer/library/nextEpisodeOf';
 import type { Person } from '@ValenceContracts/schemas/Person';
 import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
-import type { CatalogueList, CatalogueStudio } from '@ValenceContracts/schemas/CatalogueTitle';
+import type {
+  CatalogueFilters,
+  CatalogueGenre,
+  CatalogueList,
+  CatalogueStudio,
+} from '@ValenceContracts/schemas/CatalogueTitle';
 
 type MediaFacts = {
   path: string;
@@ -41,6 +47,12 @@ type Metadata = {
   logoUrl?: string;
   externalId?: string;
   trailerKey?: string;
+  releaseDate?: string;
+  budget?: number;
+  revenue?: number;
+  status?: string;
+  imdbId?: string;
+  rottenTomatoes?: number;
 };
 
 type CatalogueMatch = {
@@ -57,6 +69,7 @@ type CatalogueBrowsing = {
   kind: 'tv' | 'movie';
   page: number;
   studio: string | null;
+  filters?: CatalogueFilters;
 };
 
 type CataloguePaged = { matches: CatalogueMatch[]; hasMore: boolean };
@@ -82,19 +95,23 @@ type SeriesShape = {
       title: string;
       stillUrl: string | null;
       overview: string | null;
+      airDate?: string | null;
     }[];
   }[];
+  status?: string | null;
 };
 
 type MetadataProvider = {
   name: string;
   describe: (facts: MediaFacts) => Promise<Metadata | null>;
   describeSeries?: (externalId: string) => Promise<SeriesShape | null>;
+  describeNextEpisode?: (externalId: string) => Promise<NextEpisode | null>;
   readLogoUrl?: (options: { externalId: string; isSeries: boolean }) => Promise<string | null>;
   readPerson?: (personId: number) => Promise<Person | null>;
   search?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   browse?: (browsing: CatalogueBrowsing) => Promise<CataloguePaged>;
   studios?: () => Promise<CatalogueStudio[]>;
+  genres?: (kind: 'tv' | 'movie') => Promise<CatalogueGenre[]>;
   describeTitle?: (
     externalId: string,
     kind: 'tv' | 'movie',
@@ -104,6 +121,42 @@ type MetadataProvider = {
     kind: 'tv' | 'movie',
   ) => Promise<RequestCatalogue | null>;
   forgetAnswers?: () => void;
+};
+
+/**
+ * Asks each metadata provider in turn which episode of a series airs next, taking the first that
+ * knows.
+ *
+ * @param providers - The providers to ask, in order of preference.
+ * @param externalId - The catalogue's identifier for the programme.
+ * @param onProblem - Told when a provider fails, so a request can carry on without it.
+ * @returns The next episode to air, or null where nobody knows of one.
+ */
+const resolveNextEpisode = async (
+  providers: MetadataProvider[],
+  externalId: string,
+  onProblem?: (provider: string, reason: string) => void,
+): Promise<NextEpisode | null> => {
+  for (const provider of providers) {
+    if (provider.describeNextEpisode === undefined) {
+      continue;
+    }
+
+    try {
+      const found = await provider.describeNextEpisode(externalId);
+
+      if (found !== null) {
+        return found;
+      }
+    } catch (error) {
+      onProblem?.(
+        provider.name,
+        error instanceof Error ? describeFailure(error) : 'Provider failed.',
+      );
+    }
+  }
+
+  return null;
 };
 
 /**
@@ -190,4 +243,4 @@ export type {
   SeriesShape,
 };
 
-export { resolveMetadata, resolveSeriesShape };
+export { resolveMetadata, resolveNextEpisode, resolveSeriesShape };

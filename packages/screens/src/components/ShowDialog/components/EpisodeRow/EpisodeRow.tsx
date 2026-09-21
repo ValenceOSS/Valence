@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { Info as InfoIcon } from '@keyline-icons/react';
+import { Info as InfoIcon, Check as CheckIcon } from '@keyline-icons/react';
 import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -23,6 +23,7 @@ const stillUrl = (mediaId: string): string => `/api/media/${mediaId}/image/backd
  * @param onInspect - Told to open the page about it.
  * @param watchedFraction - How far through it this viewer is.
  * @param resumeSeconds - Where they left it.
+ * @param airs - When it aired, in words, where the catalogue dates it.
  */
 const EpisodeRow = ({
   episode,
@@ -30,6 +31,7 @@ const EpisodeRow = ({
   onInspect,
   watchedFraction,
   resumeSeconds,
+  airs,
 }: EpisodeRowProps) => (
   <div className="group/episode flex items-center gap-3 py-3">
     <Button
@@ -63,7 +65,17 @@ const EpisodeRow = ({
           <Icon of={PlayFilledIcon} size={20} tone="scrim" />
         </span>
 
-        {watchedFraction === undefined ? null : (
+        {watchedFraction === undefined || watchedFraction < 1 ? null : (
+          <span
+            role="img"
+            aria-label="Watched"
+            className="absolute bottom-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-scrim"
+          >
+            <Icon of={CheckIcon} size={12} tone="scrim" />
+          </span>
+        )}
+
+        {watchedFraction === undefined || watchedFraction >= 1 ? null : (
           <span className="absolute inset-x-0 bottom-0 h-1 bg-shade/50">
             <span
               className="block h-full bg-primary"
@@ -77,6 +89,7 @@ const EpisodeRow = ({
         <span className="truncate text-sm font-medium text-text">{episode.title}</span>
         <span className="font-body text-xs text-text-muted">
           {formatDuration(episode.durationSeconds)}
+          {airs === undefined || airs === '' ? '' : ` · ${airs}`}
           {resumeSeconds === undefined ? '' : ` · ${formatDuration(resumeSeconds)} in`}
         </span>
       </span>

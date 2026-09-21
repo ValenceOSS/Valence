@@ -2,9 +2,17 @@ import type { ReactNode } from 'react';
 import type { MotionValue } from 'motion/react';
 import type { IconGesture } from '@ValenceUI/AnimatedIcon.types';
 
+type NavBarChoices = {
+  label: string;
+  options: readonly { id: string; label: string }[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+};
+
 type NavBarItem = {
   id: string;
   label: string;
+  choices?: NavBarChoices;
   icon?: ReactNode;
   activeIcon?: ReactNode;
   gesture?: IconGesture;
@@ -39,4 +47,4 @@ type NavBarProps = {
   className?: string;
 };
 
-export type { NavBarAction, NavBarItem, NavBarProps };
+export type { NavBarAction, NavBarChoices, NavBarItem, NavBarProps };

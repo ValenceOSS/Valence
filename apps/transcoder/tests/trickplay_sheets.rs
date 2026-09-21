@@ -15,12 +15,15 @@ use axum::http::{Request, StatusCode};
 use http_body_util::BodyExt;
 use tower::ServiceExt;
 
+use valence_transcoder::capability::{Capabilities, VerifiedEncoder};
+use valence_transcoder::media::VideoRange;
 use valence_transcoder::monitor::{Journal, Monitor};
 use valence_transcoder::preview::PreviewRegistry;
 use valence_transcoder::queue::WorkQueue;
 use valence_transcoder::router::{create_router, AppState};
 use valence_transcoder::session::{SessionConfig, SessionRegistry};
-use valence_transcoder::trickplay::TrickplayRegistry;
+use valence_transcoder::transcode_plan::HardwareAccel;
+use valence_transcoder::trickplay::{SheetSource, TrickplayRegistry, TrickplayRequest};
 
 mod common;
 
@@ -340,4 +343,106 @@ async fn asking_twice_at_once_renders_one_set_rather_than_two() {
 
     assert_eq!(index["id"], other["id"]);
     assert_eq!(index["sheets"], other["sheets"]);
+}
+
+/// An ffmpeg that refuses anything it is asked to decode on a device, the way a
+/// driver with no decoder for the file refuses it, and tallies each refusal.
+///
+/// Matched on `-hwaccel` with spaces around it, so `-hwaccel_output_format`
+/// beside it does not count twice.
+fn ffmpeg_refusing_hardware(directory: &std::path::Path) -> (String, PathBuf) {
+    use std::os::unix::fs::PermissionsExt;
+
+    std::fs::create_dir_all(directory).expect("creates the directory");
+
+    let tally = directory.join("refusals");
+    let script = directory.join("ffmpeg-refusing");
+
+    std::fs::write(
+        &script,
+        format!(
+            "#!/bin/sh\ncase \" $* \" in *\" -hwaccel \"*) echo refused >> {tally}\n\
+             echo 'Failed to create frame context for reverse mapping: -38.' >&2\n\
+             exit 1 ;; esac\nexec {real} \"$@\"\n",
+            tally = tally.display(),
+            real = ffmpeg(),
+        ),
+    )
+    .expect("writes the wrapper");
+
+    std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755))
+        .expect("makes the wrapper executable");
+
+    (script.to_string_lossy().into_owned(), tally)
+}
+
+/// A machine whose JPEG encoder is on the device, which is every Intel iGPU.
+fn intel() -> Capabilities {
+    Capabilities {
+        encoders: vec![VerifiedEncoder {
+            codec: "mjpeg".to_owned(),
+            encoder: "mjpeg_vaapi".to_owned(),
+            accel: HardwareAccel::Vaapi,
+            verified: true,
+        }],
+        hardware_accels: vec![HardwareAccel::Vaapi],
+        ..Capabilities::default()
+    }
+}
+
+/// An iGPU has no MPEG-4 part 2 decoder, so every Xvid film in a library fails
+/// this way: ffmpeg decodes in software anyway, walks into a filter chain built
+/// for frames on the device, and writes nothing.
+///
+/// The encoder being verified says nothing about it. Only running the render
+/// finds out, so the render has to be able to run again without the hardware.
+#[tokio::test]
+async fn draws_the_sheets_in_software_when_the_device_will_not_take_the_file() {
+    let root = std::env::temp_dir().join("valence-test-trickplay-refused");
+    let _ = std::fs::remove_dir_all(&root);
+
+    let (ffmpeg_path, refusals) = ffmpeg_refusing_hardware(&root.join("bin"));
+    let capabilities = intel();
+    let source = source_file();
+
+    let index = valence_transcoder::trickplay::generate(
+        valence_transcoder::trickplay::Tools {
+            ffmpeg: &ffmpeg_path,
+            device: valence_transcoder::transcode_plan::DEFAULT_DEVICE,
+            capabilities: &capabilities,
+        },
+        &root,
+        &TrickplayRequest {
+            input_path: source.to_string_lossy().into_owned(),
+            interval_seconds: 4,
+            ..TrickplayRequest::default()
+        },
+        SheetSource {
+            width: 640,
+            height: 360,
+            duration_seconds: 12.0,
+            bit_depth: Some(8),
+            frames_per_second: Some(25.0),
+            range: VideoRange::Sdr,
+        },
+        Some(HardwareAccel::Vaapi),
+    )
+    .await
+    .expect("renders the sheets without the hardware");
+
+    assert_eq!(
+        runs_recorded(&refusals),
+        1,
+        "the device was asked once, and only once"
+    );
+    assert!(
+        !index.sheets.is_empty(),
+        "no sheets were drawn after the device refused the file"
+    );
+
+    for sheet in &index.sheets {
+        let path = root.join("trickplay").join(&index.id).join(sheet);
+
+        assert!(path.exists(), "{sheet} is indexed but not on disk");
+    }
 }

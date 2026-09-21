@@ -32,6 +32,7 @@ import {
   changeMediaRequest,
   decideMediaRequests,
   removeMediaRequest,
+  fulfilMediaRequest,
   retryMediaRequest,
   searchMissing,
 } from '@ValenceClient/requests/fetchMediaRequests';
@@ -333,9 +334,20 @@ const MediaRequestsPanel = () => {
                           label: 'Search again now',
                           detail: 'Tries again whatever failed, too.',
                           icon: <Icon of={RotateCwIcon} size={15} />,
-                          isDisabled: !isApproved || IN_HAND.has(request.state),
+                          isDisabled:
+                            !isApproved || IN_HAND.has(request.state) || request.kind === 'book',
                           onChoose: () => {
                             act(request, () => retryMediaRequest(request.id));
+                          },
+                        },
+                        {
+                          id: 'fulfil',
+                          label: 'Mark as added',
+                          detail: 'Say it has been met, such as a book you added to the library.',
+                          icon: <Icon of={CheckIcon} size={15} />,
+                          isDisabled: !isApproved || request.state === 'available',
+                          onChoose: () => {
+                            act(request, () => fulfilMediaRequest(request.id));
                           },
                         },
                         {

@@ -1,4 +1,5 @@
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
+import type { QueueControl } from '@ValenceServer/transcoder/TranscoderClient';
 import type { RunningJob } from '@ValenceServer/jobs/JobQueue';
 import type { CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import { OpenAPIHono, z } from '@hono/zod-openapi';
@@ -73,6 +74,7 @@ import {
   getMediaRoute,
   listShowsRoute,
   getShowRoute,
+  comingUpRoute,
   scanLibraryRoute,
   scanStateRoute,
   runningScansRoute,
@@ -85,7 +87,12 @@ import {
   deleteLibraryRoute,
   regeneratePreviewsRoute,
 } from './routes/LibraryRoute';
-import { listFoldersRoute } from '@ValenceServer/routes/FolderRoute';
+import { createFolderRoute, listFoldersRoute } from '@ValenceServer/routes/FolderRoute';
+import { createFolder } from '@ValenceServer/folders/createFolder';
+import { uploadMediaRoute } from '@ValenceServer/routes/UploadRoute';
+import { planUpload } from '@ValenceServer/uploads/planUpload';
+import { createUploadDisk } from '@ValenceServer/uploads/createUploadDisk';
+import type { UploadDisk } from '@ValenceServer/uploads/UploadDisk';
 import { listFolders } from '@ValenceServer/folders/listFolders';
 import { createFolderDisk } from '@ValenceServer/folders/createFolderDisk';
 import type { FolderDisk } from '@ValenceServer/folders/FolderDisk';
@@ -211,6 +218,10 @@ import {
   adminJobDefinitionsRoute,
   adminRunJobRoute,
   adminCancelJobRoute,
+  adminQueueConcurrencyRoute,
+  adminQueuePauseRoute,
+  adminQueueResumeRoute,
+  adminQueueRunNowRoute,
   adminJobSchedulesRoute,
   adminAddJobTriggerRoute,
   adminRemoveJobTriggerRoute,
@@ -251,12 +262,14 @@ import {
   refuseMediaRequestRoute,
   removeMediaRequestRoute,
   retryMediaRequestRoute,
+  fulfilMediaRequestRoute,
   draftReleasesRoute,
   searchMissingRoute,
   seriesSeasonsRoute,
   musicCatalogueRoute,
   discoverRoute,
   catalogueBrowseRoute,
+  catalogueGenresRoute,
   decideMediaRequestsRoute,
   liftMediaBlockRoute,
   mediaRequestBlocklistRoute,
@@ -409,6 +422,7 @@ import type {
   RequestCatalogue,
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { profilesOnOffer } from '@ValenceContracts/functions/profilesOnOffer';
 import type { ProfileKind, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
@@ -418,7 +432,7 @@ import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
 import { workOf } from '@ValenceServer/requests/workOf';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
-import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
+import { bookAsTitle, discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
 import { progressOf } from '@ValenceServer/requests/progressOf';
@@ -649,6 +663,7 @@ type CreateAppOptions = {
   measureStorage?: () => Promise<StorageCount>;
   readImage?: (url: string) => Promise<{ body: ArrayBuffer; contentType: string } | null>;
   folderDisk?: FolderDisk;
+  uploadDisk?: UploadDisk;
   isTranscoderReachable?: () => Promise<boolean>;
   transcoderAddress?: string;
   listRunningJobs?: () => RunningJob[];
@@ -656,12 +671,14 @@ type CreateAppOptions = {
   requests?: RequestsMonitor | null;
   requestsClient?: RequestsClient | null;
   cancelJob?: (jobId: string) => Promise<boolean>;
+  controlQueue?: QueueControl | null;
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   describeForRequest?: (tmdbId: number, kind: VideoRequestKind) => Promise<RequestCatalogue | null>;
   describeMusicForRequest?: (
     musicBrainzId: string,
     kind: MusicRequestKind,
   ) => Promise<RequestCatalogue | null>;
+  describeBookForRequest?: (openLibraryId: number) => Promise<RequestCatalogue | null>;
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
   discovery?: Discovery;
   realtime?: RealtimePublisher;
@@ -720,15 +737,18 @@ const createApp = ({
   readImage,
   isTranscoderReachable = () => Promise.resolve(false),
   folderDisk = createFolderDisk(),
+  uploadDisk = createUploadDisk(),
   transcoderAddress = '',
   listRunningJobs = () => [],
   jobDefinitions = JOB_DEFINITIONS,
   requests = null,
   requestsClient = null,
   cancelJob = () => Promise.resolve(false),
+  controlQueue = null,
   searchCatalogue = () => Promise.resolve([]),
   describeForRequest = () => Promise.resolve(null),
   describeMusicForRequest = () => Promise.resolve(null),
+  describeBookForRequest = () => Promise.resolve(null),
   searchMusicCatalogue = () => Promise.resolve([]),
   discovery = NO_DISCOVERY,
   permissions = createMemoryPermissionService(),
@@ -1022,7 +1042,14 @@ const createApp = ({
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    const created = await library.create(context.req.valid('json'));
+    const { name, kind, path, flavour } = context.req.valid('json');
+
+    const created = await library.create({
+      name,
+      kind,
+      path,
+      ...(flavour === undefined ? {} : { flavour }),
+    });
 
     if (created === null) {
       return context.json({ error: 'That path is not a readable directory.' }, 400);
@@ -1047,6 +1074,41 @@ const createApp = ({
         return context.json({ error: 'There is no such folder.' }, 404);
       case 'unreadable':
         return context.json({ error: 'Valence is not allowed to read that folder.' }, 403);
+    }
+  });
+
+  app.openapi(createFolderRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.create'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { path, name } = context.req.valid('json');
+    const made = await createFolder(folderDisk, path, name);
+
+    switch (made.kind) {
+      case 'created':
+        return context.json(made.folder, 201);
+      case 'relative':
+        return context.json({ error: 'Give the whole path, starting from the root.' }, 400);
+      case 'badName':
+        return context.json(
+          { error: 'A folder’s name is a single name, with no slashes in it.' },
+          400,
+        );
+      case 'exists':
+        return context.json({ error: 'There is already something called that.' }, 409);
+      case 'missing':
+        return context.json({ error: 'There is no such folder to make it in.' }, 404);
+      case 'readOnly':
+        return context.json(
+          {
+            error:
+              'That disk is read-only to Valence. Give it read-write access to make folders there.',
+          },
+          403,
+        );
+      case 'denied':
+        return context.json({ error: 'Valence is not allowed to make a folder there.' }, 403);
     }
   });
 
@@ -1153,6 +1215,16 @@ const createApp = ({
     return context.json(show, 200);
   });
 
+  app.openapi(comingUpRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    return context.json({ shows: await library.comingUp(viewer) }, 200);
+  });
+
   app.openapi(getMediaRoute, async (context) => {
     const item = await library.getMedia(context.req.valid('param').id);
 
@@ -1161,6 +1233,67 @@ const createApp = ({
     }
 
     return context.json(item, 200);
+  });
+
+  app.openapi(uploadMediaRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const target = (await library.list(viewer)).find(
+      (entry) => entry.id === context.req.valid('param').id,
+    );
+
+    if (target === undefined) {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    const relativePath = context.req.valid('query').path;
+    const plan = planUpload(target.path, relativePath, target.kind);
+
+    if (plan.kind === 'badPath') {
+      return context.json(
+        { error: 'A file goes at a plain path inside the library, with no dots or empty names.' },
+        400,
+      );
+    }
+
+    if (plan.kind === 'refused') {
+      return context.json({ error: 'That is not something this library reads.' }, 415);
+    }
+
+    const body = context.req.raw.body;
+
+    if (body === null) {
+      return context.json({ error: 'No file was sent.' }, 400);
+    }
+
+    const written = await uploadDisk.write(plan.destination, body);
+
+    switch (written.kind) {
+      case 'written':
+        return context.json({ path: relativePath, bytes: written.bytes }, 201);
+      case 'exists':
+        return context.json({ error: 'There is already a file called that.' }, 409);
+      case 'readOnly':
+        return context.json(
+          {
+            error:
+              'That disk is read-only to Valence. Give it read-write access to upload media there.',
+          },
+          403,
+        );
+      case 'denied':
+        return context.json({ error: 'Valence is not allowed to write there.' }, 403);
+      case 'failed':
+        return context.json({ error: 'The file could not be written.' }, 500);
+    }
   });
 
   app.openapi(scanLibraryRoute, async (context) => {
@@ -2418,6 +2551,7 @@ const createApp = ({
         settings: {
           hasCatalogueKey: current.catalogueApiKey !== '',
           hasAudioDbKey: current.audioDbKey !== '',
+          hasOmdbKey: current.omdbKey !== '',
           hardwareAccel: current.hardwareAccel,
           previewQuality: current.previewQuality,
           certificationRegion: current.certificationRegion,
@@ -2465,6 +2599,7 @@ const createApp = ({
     const updated = await settings.write({
       ...(patch.catalogueApiKey === undefined ? {} : { catalogueApiKey: patch.catalogueApiKey }),
       ...(patch.audioDbKey === undefined ? {} : { audioDbKey: patch.audioDbKey }),
+      ...(patch.omdbKey === undefined ? {} : { omdbKey: patch.omdbKey }),
       ...(patch.hardwareAccel === undefined ? {} : { hardwareAccel: patch.hardwareAccel }),
       ...(patch.previewQuality === undefined ? {} : { previewQuality: patch.previewQuality }),
       ...(patch.certificationRegion === undefined
@@ -2503,6 +2638,7 @@ const createApp = ({
       {
         hasCatalogueKey: updated.catalogueApiKey !== '',
         hasAudioDbKey: updated.audioDbKey !== '',
+        hasOmdbKey: updated.omdbKey !== '',
         trustedOrigins: updated.trustedOrigins,
         cookieSecure: updated.cookieSecure,
         hardwareAccel: updated.hardwareAccel,
@@ -2708,6 +2844,66 @@ const createApp = ({
     return (await cancelJob(jobId))
       ? context.json({ jobId }, 202)
       : context.json({ error: 'Nothing is running under that id.' }, 404);
+  });
+
+  app.openapi(adminQueueConcurrencyRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { concurrency } = context.req.valid('json');
+
+    try {
+      await controlQueue?.setConcurrency(concurrency);
+    } catch {
+      return context.json({ error: 'The media service could not be reached.' }, 502);
+    }
+
+    return context.json({ concurrency }, 200);
+  });
+
+  app.openapi(adminQueuePauseRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    try {
+      await controlQueue?.pause();
+    } catch {
+      return context.json({ error: 'The media service could not be reached.' }, 502);
+    }
+
+    return context.json({ isPaused: true as const }, 200);
+  });
+
+  app.openapi(adminQueueResumeRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    try {
+      await controlQueue?.resume();
+    } catch {
+      return context.json({ error: 'The media service could not be reached.' }, 502);
+    }
+
+    return context.json({ isPaused: false as const }, 200);
+  });
+
+  app.openapi(adminQueueRunNowRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { jobId } = context.req.valid('param');
+
+    try {
+      return (await controlQueue?.runNow(jobId)) === true
+        ? context.json({ jobId }, 202)
+        : context.json({ error: 'No such job is waiting.' }, 404);
+    } catch {
+      return context.json({ error: 'The media service could not be reached.' }, 502);
+    }
   });
 
   app.openapi(adminJobHistoryRoute, async (context) => {
@@ -4073,7 +4269,10 @@ const createApp = ({
     { kind: 'drafted'; draft: MediaRequestDraft } | { kind: 'refused'; status: 400; error: string };
 
   const catalogueFor = (asked: Parameters<typeof catalogueForRequest>[1]) =>
-    catalogueForRequest({ describeForRequest, describeMusicForRequest }, asked);
+    catalogueForRequest(
+      { describeForRequest, describeMusicForRequest, describeBookForRequest },
+      asked,
+    );
 
   /**
    * What the requests service is told of something asked for: the catalogue's facts, the library
@@ -4131,6 +4330,7 @@ const createApp = ({
         kind: asked.kind,
         tmdbId: asked.tmdbId ?? null,
         musicBrainzId: asked.musicBrainzId ?? null,
+        openLibraryId: asked.openLibraryId ?? null,
         seasons: asked.seasons,
         releaseTypes:
           asked.releaseTypes ?? (isMusicRequest(asked.kind) ? await defaultReleaseTypes() : null),
@@ -4306,7 +4506,7 @@ const createApp = ({
     }
 
     const [discovered, requested] = await Promise.all([
-      discoverShelves(discovery, may),
+      discoverShelves(discovery, { ...may, books: may.video }),
       everyRequest(),
     ]);
 
@@ -4325,7 +4525,8 @@ const createApp = ({
   });
 
   app.openapi(catalogueBrowseRoute, async (context) => {
-    const { kind, list, studio, page } = context.req.valid('query');
+    const { kind, list, studio, page, genre, yearFrom, yearTo, minRating } =
+      context.req.valid('query');
 
     if (requestsClient === null) {
       return context.json(REQUESTING_OFF, 404);
@@ -4342,6 +4543,12 @@ const createApp = ({
       kind: kind === 'film' ? 'movie' : 'tv',
       page,
       studio: studio ?? null,
+      filters: {
+        ...(genre === undefined ? {} : { genre }),
+        ...(yearFrom === undefined ? {} : { yearFrom }),
+        ...(yearTo === undefined ? {} : { yearTo }),
+        ...(minRating === undefined ? {} : { minRating }),
+      },
     });
 
     const titles = browsed.matches.map((match) => ({
@@ -4364,6 +4571,23 @@ const createApp = ({
     );
   });
 
+  app.openapi(catalogueGenresRoute, async (context) => {
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    return context.json(
+      await discovery.genres(context.req.valid('query').kind === 'film' ? 'movie' : 'tv'),
+      200,
+    );
+  });
+
   app.openapi(catalogueSearchRoute, async (context) => {
     const { query, kind } = context.req.valid('query');
 
@@ -4377,25 +4601,27 @@ const createApp = ({
       return context.json(NOT_YOURS, 403);
     }
 
-    const found: UnstoodTitle[] = isMusicRequest(kind)
-      ? (await searchMusicCatalogue(query, kind)).map((hit) => ({
-          kind: hit.kind,
-          id: hit.musicBrainzId,
-          title: hit.title,
-          subtitle: hit.artist ?? hit.disambiguation,
-          year: hit.year,
-          overview: null,
-          posterUrl: hit.coverUrl,
-        }))
-      : (await searchCatalogue(query, kind === 'film' ? 'movie' : 'tv')).map((match) => ({
-          kind,
-          id: match.externalId,
-          title: match.title,
-          subtitle: null,
-          year: match.year,
-          overview: match.overview,
-          posterUrl: match.posterUrl,
-        }));
+    const found: UnstoodTitle[] = isBookRequest(kind)
+      ? (await discovery.searchBooks(query)).map(bookAsTitle)
+      : isMusicRequest(kind)
+        ? (await searchMusicCatalogue(query, kind)).map((hit) => ({
+            kind: hit.kind,
+            id: hit.musicBrainzId,
+            title: hit.title,
+            subtitle: hit.artist ?? hit.disambiguation,
+            year: hit.year,
+            overview: null,
+            posterUrl: hit.coverUrl,
+          }))
+        : (await searchCatalogue(query, kind === 'film' ? 'movie' : 'tv')).map((match) => ({
+            kind,
+            id: match.externalId,
+            title: match.title,
+            subtitle: null,
+            year: match.year,
+            overview: match.overview,
+            posterUrl: match.posterUrl,
+          }));
 
     return context.json(await standTitles(found, discovery.lookup, await everyRequest()), 200);
   });
@@ -4576,6 +4802,16 @@ const createApp = ({
   app.openapi(retryMediaRequestRoute, async (context) => {
     const answer = await throughRequests(context.req.raw.headers, (client) =>
       client.retryRequest(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(fulfilMediaRequestRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.fulfilRequest(context.req.valid('param').id),
     );
 
     return answer.kind === 'answered'

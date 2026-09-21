@@ -36,6 +36,7 @@ const AdminSettingsSchema = z
   .object({
     hasCatalogueKey: z.boolean(),
     hasAudioDbKey: z.boolean(),
+    hasOmdbKey: z.boolean(),
     trustedOrigins: z.array(z.string()),
     cookieSecure: z.boolean(),
     hardwareAccel: z.string(),
@@ -121,6 +122,7 @@ const AdminSettingsRequestSchema = z
   .object({
     catalogueApiKey: z.string().optional(),
     audioDbKey: z.string().optional(),
+    omdbKey: z.string().optional(),
     hardwareAccel: z.string().optional(),
     previewQuality: z.enum(PREVIEW_QUALITIES).optional(),
     certificationRegion: z.string().length(2).optional(),
@@ -428,6 +430,106 @@ const adminCancelJobRoute = createRoute({
   },
 });
 
+const adminQueueConcurrencyRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/jobs/queue/concurrency',
+  tags: ['Admin'],
+  summary: 'Change how many background jobs run at once',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({ concurrency: z.number().int().min(1).max(64) }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'The queue now runs this many at once',
+      content: { 'application/json': { schema: z.object({ concurrency: z.number() }) } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+    502: {
+      description: 'The media service could not be reached',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
+const adminQueuePauseRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/jobs/queue/pause',
+  tags: ['Admin'],
+  summary: 'Hold back background jobs that have not started',
+  responses: {
+    200: {
+      description: 'Waiting jobs are held back until the queue is resumed',
+      content: { 'application/json': { schema: z.object({ isPaused: z.literal(true) }) } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+    502: {
+      description: 'The media service could not be reached',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
+const adminQueueResumeRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/jobs/queue/resume',
+  tags: ['Admin'],
+  summary: 'Let held-back background jobs start again',
+  responses: {
+    200: {
+      description: 'Waiting jobs start again',
+      content: { 'application/json': { schema: z.object({ isPaused: z.literal(false) }) } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+    502: {
+      description: 'The media service could not be reached',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
+const adminQueueRunNowRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/jobs/queue/jobs/{jobId}/run-now',
+  tags: ['Admin'],
+  summary: 'Start one waiting background job now, past the limit and any pause',
+  request: {
+    params: z.object({ jobId: z.coerce.number().int().positive() }),
+  },
+  responses: {
+    202: {
+      description: 'The job was told to start',
+      content: { 'application/json': { schema: z.object({ jobId: z.number() }) } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+    404: {
+      description: 'No such job is waiting',
+      content: { 'application/json': { schema: AdminError } },
+    },
+    502: {
+      description: 'The media service could not be reached',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
 const AdminJobTriggerSchema = z
   .object({
     id: z.string(),
@@ -667,6 +769,10 @@ export {
   adminJobDefinitionsRoute,
   adminRunJobRoute,
   adminCancelJobRoute,
+  adminQueueConcurrencyRoute,
+  adminQueuePauseRoute,
+  adminQueueResumeRoute,
+  adminQueueRunNowRoute,
   adminJobSchedulesRoute,
   adminAddJobTriggerRoute,
   adminRemoveJobTriggerRoute,

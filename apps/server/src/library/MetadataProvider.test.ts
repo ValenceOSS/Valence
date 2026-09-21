@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { resolveMetadata, resolveSeriesShape } from './MetadataProvider';
+import { resolveMetadata, resolveNextEpisode, resolveSeriesShape } from './MetadataProvider';
 import { createFilenameMetadataProvider } from './createFilenameMetadataProvider';
 import type { MediaFacts, MetadataProvider } from './MetadataProvider';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
@@ -148,5 +148,54 @@ describe('resolveSeriesShape', () => {
 
   it('has no shape when nothing could describe the series', async () => {
     await expect(resolveSeriesShape([named('filenames')], '5')).resolves.toBeNull();
+  });
+});
+
+describe('resolveNextEpisode', () => {
+  const NEXT = { seasonNumber: 2, episodeNumber: 4, title: 'Four', airDate: '2026-10-01' };
+
+  const named = (name: string, describeNextEpisode?: MetadataProvider['describeNextEpisode']) => ({
+    name,
+    describe: () => Promise.resolve(null),
+    ...(describeNextEpisode === undefined ? {} : { describeNextEpisode }),
+  });
+
+  it('takes the first next episode a provider knows of', async () => {
+    await expect(
+      resolveNextEpisode([named('catalogue', () => Promise.resolve(NEXT))], '5'),
+    ).resolves.toEqual(NEXT);
+  });
+
+  it('skips a provider that cannot say, and asks the next when one knows of none', async () => {
+    const providers = [
+      named('filenames'),
+      named('one', () => Promise.resolve(null)),
+      named('two', () => Promise.resolve(NEXT)),
+    ];
+
+    await expect(resolveNextEpisode(providers, '5')).resolves.toEqual(NEXT);
+  });
+
+  it('reports a provider that failed and carries on without it', async () => {
+    const problems: string[] = [];
+
+    await expect(
+      resolveNextEpisode(
+        [
+          named('one', () => Promise.reject(new Error('down'))),
+          named('two', () => Promise.resolve(NEXT)),
+        ],
+        '5',
+        (provider, reason) => {
+          problems.push(`${provider}: ${reason}`);
+        },
+      ),
+    ).resolves.toEqual(NEXT);
+
+    expect(problems).toEqual(['one: down']);
+  });
+
+  it('knows of none where nobody does', async () => {
+    await expect(resolveNextEpisode([named('filenames')], '5')).resolves.toBeNull();
   });
 });
