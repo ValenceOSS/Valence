@@ -20,35 +20,64 @@ const EPISODE: RequestItem = {
   updatedAt: '2026-09-19T00:00:00.000Z',
 };
 
+const TODAY = '2026-09-20';
+
+const BEFORE_RELEASE = '2021-01-01';
+
 describe('describeRequestBadge', () => {
   it('says what a request waits for', () => {
     expect(describeRequestBadge(aMediaRequest({ state: 'awaitingApproval' })).label).toBe(
       'Awaiting approval',
     );
-    expect(describeRequestBadge(aMediaRequest({ state: 'waiting' })).detail).toBe(
+    expect(describeRequestBadge(aMediaRequest({ state: 'waiting' }), BEFORE_RELEASE).detail).toBe(
       'Held until 3 Dec 2021, when its quality profile says it is out.',
     );
     expect(
-      describeRequestBadge(aMediaRequest({ state: 'waiting', releaseDate: null })).detail,
-    ).toBeNull();
+      describeRequestBadge(aMediaRequest({ state: 'waiting', releaseDate: null }), TODAY).label,
+    ).toBe('Queued to search');
     expect(
-      describeRequestBadge(aMediaRequest({ state: 'waiting', kind: 'series', items: [EPISODE] }))
-        .detail,
+      describeRequestBadge(
+        aMediaRequest({ state: 'waiting', kind: 'series', items: [EPISODE] }),
+        TODAY,
+      ).detail,
     ).toBe('The next episode airs 2 Oct 2026.');
     expect(
       describeRequestBadge(
         aMediaRequest({ state: 'waiting', kind: 'series', items: [{ ...EPISODE, airDate: null }] }),
+        TODAY,
       ).detail,
     ).toBe('Waiting for the next episode to be announced.');
     expect(
-      describeRequestBadge(aMediaRequest({ state: 'waiting', kind: 'artist', items: [EPISODE] }))
-        .detail,
+      describeRequestBadge(
+        aMediaRequest({ state: 'waiting', kind: 'artist', items: [EPISODE] }),
+        TODAY,
+      ).detail,
     ).toBe('Out 2 Oct 2026.');
     expect(
       describeRequestBadge(
         aMediaRequest({ state: 'waiting', kind: 'album', items: [{ ...EPISODE, airDate: null }] }),
+        TODAY,
       ).detail,
     ).toBe('Waiting for the next album to be announced.');
+  });
+
+  it('says what has come out is queued for a search, not that it is not out yet', () => {
+    expect(describeRequestBadge(aMediaRequest({ state: 'waiting' }), '2022-01-01')).toMatchObject({
+      label: 'Queued to search',
+      tone: 'waiting',
+    });
+    expect(
+      describeRequestBadge(
+        aMediaRequest({ state: 'waiting', kind: 'series', items: [EPISODE] }),
+        '2026-10-02',
+      ).label,
+    ).toBe('Queued to search');
+  });
+
+  it('says a request whose films or episodes are not known yet is being looked up', () => {
+    expect(
+      describeRequestBadge(aMediaRequest({ state: 'waiting', kind: 'series', items: [] }), TODAY),
+    ).toMatchObject({ label: 'Looking it up', tone: 'busy' });
   });
 
   it('says what went wrong, or what is on its way', () => {

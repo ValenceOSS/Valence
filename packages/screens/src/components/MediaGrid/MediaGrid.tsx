@@ -71,7 +71,7 @@ const MediaGrid = ({
             : { resumeSeconds: Math.floor(resumeFor(media.id) ?? 0) })}
           onPlay={onPlay}
           onInspect={onInspect}
-          isSeries={isSeries}
+          isSeries={typeof isSeries === 'function' ? isSeries(media) : isSeries}
           shape={shape}
           {...(onOpenShow === undefined ? {} : { onOpenShow })}
           {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}

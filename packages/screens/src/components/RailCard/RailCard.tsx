@@ -85,6 +85,8 @@ const fitInside = (top: number, height: number): number => {
  *   is looking at — and pressing it opens the programme rather than that one episode.
  * @param shape - Whether the card stands upright on the film's poster or lies flat on its backdrop.
  *   Either way, what opens over it is the wide preview, grown wide enough to be watched.
+ *   A card that stands for a whole programme is always upright, on the programme's poster, whatever
+ *   was asked.
  */
 const RailCard = ({
   media,
@@ -98,8 +100,10 @@ const RailCard = ({
   onToggleKept,
   onHide,
   isSeries = false,
-  shape = 'wide',
+  shape: askedShape = 'wide',
 }: RailCardProps) => {
+  const shape = isSeries ? 'poster' : askedShape;
+
   const inspect = () => {
     if (isSeries && onOpenShow !== undefined) {
       onOpenShow(media);

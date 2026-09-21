@@ -61,6 +61,36 @@ if (!('ResizeObserver' in globalThis)) {
   globalThis.ResizeObserver = LayoutlessResizeObserver;
 }
 
+class LayoutlessIntersectionObserver implements IntersectionObserver {
+  readonly root = null;
+
+  readonly rootMargin = '';
+
+  readonly scrollMargin = '';
+
+  readonly thresholds: readonly number[] = [];
+
+  observe(): void {
+    return undefined;
+  }
+
+  unobserve(): void {
+    return undefined;
+  }
+
+  disconnect(): void {
+    return undefined;
+  }
+
+  takeRecords(): IntersectionObserverEntry[] {
+    return [];
+  }
+}
+
+if (!('IntersectionObserver' in globalThis)) {
+  globalThis.IntersectionObserver = LayoutlessIntersectionObserver;
+}
+
 /**
  * Answers questions about the display, on a jsdom that has none.
  *

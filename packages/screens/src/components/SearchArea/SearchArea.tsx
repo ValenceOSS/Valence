@@ -13,8 +13,8 @@ import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';
 import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
 import { readGridSize, saveGridSize } from '@ValenceScreens/library/gridSizePreference';
-import { buildFilterOptions } from './buildFilterOptions';
-import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
+import { useLibraryFilters } from '@ValenceScreens/library/useLibraryFilters';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { SearchAreaProps, SearchKind } from './SearchArea.types';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
@@ -29,6 +29,9 @@ import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 
 const SETTLE_MILLISECONDS = 250;
 
+const isAProgramme = (media: MediaSummary): boolean =>
+  media.seriesTitle !== null && media.seriesTitle !== undefined;
+
 const PAGE_SIZE = 60;
 
 const KINDS: { id: SearchKind; label: string }[] = [
@@ -38,20 +41,6 @@ const KINDS: { id: SearchKind; label: string }[] = [
   { id: 'music', label: 'Music' },
   { id: 'books', label: 'Books' },
 ];
-
-const NO_FACETS: LibraryFacets = { genres: [], decades: [], maxRating: 0 };
-
-const DECADE = 10;
-
-/**
- * Reads a chip's value back as a number, since chips deal in strings and everything downstream of
- * them is arithmetic.
- *
- * @param value - The chip's value, or nothing where none is chosen.
- * @returns The number, or nothing.
- */
-const asNumber = (value: string | null): number | undefined =>
-  value === null ? undefined : Number(value);
 
 /**
  * Searching the libraries, and narrowing them. A field on its own answers "what is this called", and
@@ -74,6 +63,8 @@ const asNumber = (value: string | null): number | undefined =>
  * @param onAsk - Told which title not in the library was chosen, where somebody may ask for one;
  *   without it, only the library is searched.
  * @param onHide - Told to hide something from this viewer.
+ * @param onOpenShow - Told to open the programme a result stands for, since a result that is an
+ *   episode is drawn as its programme and opening it should list every episode, not play that one.
  */
 const SearchArea = ({
   search,
@@ -88,13 +79,12 @@ const SearchArea = ({
   isKept,
   onToggleKept,
   onHide,
+  onOpenShow,
   onOpenBook,
   onAsk,
 }: SearchAreaProps) => {
   const [kind, setKind] = useState<SearchKind>('everything');
-  const [decade, setDecade] = useState<string | null>(null);
-  const [minRating, setMinRating] = useState<string | null>(null);
-  const [minYourStars, setMinYourStars] = useState<string | null>(null);
+  const filters = useLibraryFilters({ genre, onGenreChange });
   const [size, setSize] = useState(readGridSize);
   const [liveSearch, setLiveSearch] = useState(search);
   const prefersReducedMotion = useReducedMotionConfig();
@@ -121,11 +111,6 @@ const SearchArea = ({
     };
   }, [liveSearch, search]);
 
-  const asking = useQuery(libraryQueries.facets());
-  const facets = asking.data ?? NO_FACETS;
-
-  const options = useMemo(() => buildFilterOptions(facets), [facets]);
-
   const reportItems = useRef(onItemsLoaded);
 
   reportItems.current = onItemsLoaded;
@@ -137,19 +122,15 @@ const SearchArea = ({
     [libraries.data],
   );
 
-  const asked = useMemo(() => {
-    const startsAt = asNumber(decade);
-
-    return {
+  const asked = useMemo(
+    () => ({
       ...(liveSearch.trim() === '' ? {} : { search: liveSearch }),
       ...(kind === 'films' || kind === 'shows' ? { kind } : {}),
-      ...(genre === null ? {} : { genre }),
-      ...(startsAt === undefined ? {} : { yearFrom: startsAt, yearTo: startsAt + DECADE - 1 }),
-      ...(minRating === null ? {} : { minRating: Number(minRating) }),
-      ...(minYourStars === null ? {} : { minYourStars: Number(minYourStars) }),
+      ...filters.asked,
       limit: PAGE_SIZE,
-    };
-  }, [liveSearch, kind, genre, decade, minRating, minYourStars]);
+    }),
+    [liveSearch, kind, filters.asked],
+  );
 
   const [settled, setSettled] = useState(asked);
 
@@ -217,52 +198,7 @@ const SearchArea = ({
     }
   }, [items, isReading]);
 
-  const narrowed = [decade, minRating, minYourStars].filter((chosen) => chosen !== null).length;
-
-  const isNarrowed =
-    kind !== 'everything' || genre !== null || liveSearch.trim() !== '' || narrowed > 0;
-
-  const clearFilters = () => {
-    onGenreChange(null);
-    setDecade(null);
-    setMinRating(null);
-    setMinYourStars(null);
-  };
-
-  const filterGroups = [
-    { name: 'Genre', prefix: 'genre:', options: options.genres },
-    { name: 'Decade', prefix: 'decade:', options: options.decades },
-    { name: 'Rating', prefix: 'rating:', options: options.ratings },
-    { name: 'Your rating', prefix: 'yours:', options: options.yourStars },
-  ]
-    .map((group) => ({
-      name: group.name,
-      isSingle: true,
-      options: group.options.map((option) => ({
-        id: `${group.prefix}${option.value}`,
-        label: option.label,
-      })),
-    }))
-    .filter((group) => group.options.length > 0);
-
-  const filterSelected = new Set(
-    [
-      genre === null ? null : `genre:${genre}`,
-      decade === null ? null : `decade:${decade}`,
-      minRating === null ? null : `rating:${minRating}`,
-      minYourStars === null ? null : `yours:${minYourStars}`,
-    ].filter((id) => id !== null),
-  );
-
-  const changeFilters = (next: ReadonlySet<string>) => {
-    const pick = (prefix: string): string | null =>
-      [...next].find((id) => id.startsWith(prefix))?.slice(prefix.length) ?? null;
-
-    onGenreChange(pick('genre:'));
-    setDecade(pick('decade:'));
-    setMinRating(pick('rating:'));
-    setMinYourStars(pick('yours:'));
-  };
+  const isNarrowed = kind !== 'everything' || filters.selected.size > 0 || liveSearch.trim() !== '';
 
   return (
     <motion.div
@@ -313,27 +249,27 @@ const SearchArea = ({
               }}
             />
 
-            {filterGroups.length === 0 ? null : (
+            {filters.groups.length === 0 ? null : (
               <FilterMenu
                 label="Filter the library"
                 hasLabel
-                groups={filterGroups}
-                selected={filterSelected}
-                onChange={changeFilters}
+                groups={filters.groups}
+                selected={filters.selected}
+                onChange={filters.change}
               />
             )}
           </div>
 
           <AppliedFilters
-            groups={filterGroups}
-            selected={filterSelected}
+            groups={filters.groups}
+            selected={filters.selected}
             onRemove={(id) => {
-              const next = new Set(filterSelected);
+              const next = new Set(filters.selected);
 
               next.delete(id);
-              changeFilters(next);
+              filters.change(next);
             }}
-            onClear={clearFilters}
+            onClear={filters.clear}
           />
         </motion.div>
       </div>
@@ -370,7 +306,7 @@ const SearchArea = ({
 
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            key={[kind, genre, decade, minRating, minYourStars].join(':')}
+            key={[kind, ...filters.selected].join(':')}
             variants={staggerVariants}
             initial="hidden"
             animate="shown"
@@ -401,6 +337,9 @@ const SearchArea = ({
                     size={size}
                     onPlay={onPlay}
                     onInspect={onInspect}
+                    isSeries={isAProgramme}
+                    shape="poster"
+                    {...(onOpenShow === undefined ? {} : { onOpenShow })}
                     {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
                     {...(resumeFor === undefined ? {} : { resumeFor })}
                     {...(isKept === undefined ? {} : { isKept })}

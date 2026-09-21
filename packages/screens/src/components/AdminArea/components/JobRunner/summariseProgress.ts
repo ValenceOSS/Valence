@@ -7,6 +7,7 @@ type ProgressSummary = {
   processed: number | null;
   total: number | null;
   item: string | null;
+  isStopping: boolean;
 };
 
 /**
@@ -46,9 +47,10 @@ const summariseProgress = (entries: ScanEntry[]): ProgressSummary | null => {
   const phase = onStage[0]?.phase ?? null;
   const counted = onStage.filter((entry) => entry.processed !== null && entry.total !== null);
   const item = onStage.length === 1 ? (onStage[0]?.item ?? null) : null;
+  const isStopping = entries.some((entry) => entry.isStopping);
 
   if (counted.length === 0) {
-    return { phase, processed: null, total: null, item };
+    return { phase, processed: null, total: null, item, isStopping };
   }
 
   return {
@@ -56,6 +58,7 @@ const summariseProgress = (entries: ScanEntry[]): ProgressSummary | null => {
     processed: counted.reduce((sum, entry) => sum + (entry.processed ?? 0), 0),
     total: counted.reduce((sum, entry) => sum + (entry.total ?? 0), 0),
     item,
+    isStopping,
   };
 };
 

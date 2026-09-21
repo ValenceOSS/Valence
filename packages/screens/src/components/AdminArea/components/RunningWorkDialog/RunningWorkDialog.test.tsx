@@ -56,6 +56,23 @@ describe('RunningWorkDialog', () => {
     expect(runQueuedJobNow).toHaveBeenCalledWith(2);
   });
 
+  it('says a job that has been asked to stop is finishing what it began, and leaving the rest', () => {
+    render(
+      <RunningWorkDialog
+        title="Scan Movies"
+        isOpen
+        progress={[
+          { label: 'Scan Movies', phase: 'probing', processed: 3, total: 10, isStopping: true },
+        ]}
+        tasks={[task()]}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Stopping')).toBeInTheDocument();
+    expect(screen.getByText(/Finishing what it has already started/)).toBeInTheDocument();
+  });
+
   it('counts what is running and what is waiting', () => {
     render(
       <RunningWorkDialog

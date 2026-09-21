@@ -96,6 +96,18 @@ describe('MediaCard', () => {
     expect(container.querySelector('svg')).not.toBeInTheDocument();
   });
 
+  it('ticks a card that has been watched all the way through, and draws no bar over it', () => {
+    render(<MediaCard title="Arrival" subtitle="2016" watchedFraction={1} onSelect={vi.fn()} />);
+
+    expect(screen.getByRole('img', { name: 'Watched' })).toBeInTheDocument();
+  });
+
+  it('draws a bar, and no tick, for something only part watched', () => {
+    render(<MediaCard title="Arrival" subtitle="2016" watchedFraction={0.4} onSelect={vi.fn()} />);
+
+    expect(screen.queryByRole('img', { name: 'Watched' })).not.toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MediaCard.displayName).toBe('MediaCard');
   });

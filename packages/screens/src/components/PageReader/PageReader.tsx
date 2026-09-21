@@ -7,6 +7,7 @@ import { Slider } from '@ValenceUI/Slider';
 import { bookPageUrl } from '@ValenceClient/books/fetchBooks';
 import { groupHolding, spreadsFor } from '@ValenceScreens/reading/spreadsFor';
 import {
+  MOST_GAP,
   readReaderPreferences,
   writeReaderPreferences,
 } from '@ValenceScreens/reading/readerPreferences';
@@ -14,32 +15,17 @@ import type { ReaderPreferences } from '@ValenceScreens/reading/readerPreference
 import { CLOSEST, distanceBetween, heldWithin, scaleFrom } from '@ValenceScreens/reading/pinch';
 import { useChromeThatHides } from '@ValenceScreens/reading/useChromeThatHides';
 import { useTurnKeys } from '@ValenceScreens/reading/useTurnKeys';
+import { usePageWarming } from '@ValenceScreens/reading/usePageWarming';
+import { widthFor } from '@ValenceScreens/reading/widthFor';
 import { ReaderChrome } from '@ValenceScreens/components/ReaderChrome/ReaderChrome';
+import { SpreadStage } from '@ValenceScreens/components/SpreadStage/SpreadStage';
+import { ScrollingPages } from '@ValenceScreens/components/ScrollingPages/ScrollingPages';
 import { ReaderPanel } from '@ValenceScreens/components/ReaderPanel/ReaderPanel';
 import { ReaderPicker } from '@ValenceScreens/components/ReaderPicker/ReaderPicker';
 import { readPanelPinned, writePanelPinned } from '@ValenceScreens/reading/panelPreference';
 import type { PageReaderProps } from './PageReader.types';
 
 const A_SWIPE = 48;
-
-const PRELOAD = 4;
-
-const WIDEST = 3840;
-
-const A_LOOK = 2.5;
-
-/**
- * How wide to ask for a page, in real pixels rather than the ones a browser counts in.
- *
- * @param across - How many pages are shown at once.
- * @returns The width to ask the server for.
- */
-const widthFor = (across: number): number => {
-  const screen = typeof window === 'undefined' ? 1280 : window.innerWidth;
-  const density = typeof window === 'undefined' ? 1 : Math.min(window.devicePixelRatio, 3);
-
-  return Math.min(Math.round((screen * density) / Math.max(across, 1)), WIDEST);
-};
 
 /**
  * Names a spread of pages the way somebody would say it: one page, or two with a dash between.
@@ -118,7 +104,7 @@ const PageReader = ({
       startAtPage,
     ),
   );
-  const { isShown: isChromeShown, wake } = useChromeThatHides();
+  const { isShown: isChromeShown, wake, keep } = useChromeThatHides();
   const [isPanelPinned, setIsPanelPinned] = useState(readPanelPinned);
   const [isPanelOpen, setIsPanelOpen] = useState(isPanelPinned);
   const startedAt = useRef<number | null>(null);
@@ -139,8 +125,9 @@ const PageReader = ({
   );
 
   const showing = groups[Math.min(at, Math.max(groups.length - 1, 0))] ?? [];
-  const isLast = at >= groups.length - 1;
-  const first = showing[0];
+  const [visiblePage, setVisiblePage] = useState(startAtPage);
+  const isLast = settings.isScrolling ? visiblePage >= pageCount - 1 : at >= groups.length - 1;
+  const first = settings.isScrolling ? visiblePage : showing[0];
   const report = useRef(onPageChange);
 
   useEffect(() => {
@@ -152,6 +139,10 @@ const PageReader = ({
       report.current?.(first, isLast);
     }
   }, [first, isLast]);
+
+  useEffect(() => {
+    setVisiblePage(0);
+  }, [chapterId]);
 
   useEffect(() => {
     setScale(CLOSEST);
@@ -167,7 +158,7 @@ const PageReader = ({
 
   const turn = useCallback(
     (by: number) => {
-      wake();
+      keep();
 
       setAt((was) => {
         const next = was + by;
@@ -195,7 +186,7 @@ const PageReader = ({
         return next;
       });
     },
-    [groups.length, onChapterChange, ordering, wake, which],
+    [groups.length, onChapterChange, ordering, keep, which],
   );
 
   const forward = useCallback(() => {
@@ -224,16 +215,9 @@ const PageReader = ({
     setWide((was) => (was.has(page) ? was : new Set([...was, page])));
   };
 
-  const preloading = useMemo(
-    () =>
-      groups
-        .slice(at + 1, at + 1 + PRELOAD)
-        .flat()
-        .map((page) => bookPageUrl(book.id, chapterId, page, widthFor(showing.length))),
-    [groups, at, book.id, chapterId, showing.length],
+  usePageWarming(first ?? 0, pageCount, (page) =>
+    bookPageUrl(book.id, chapterId, page, widthFor(settings.isDouble ? 2 : 1)),
   );
-
-  const ordered = settings.direction === 'rightToLeft' ? [...showing].reverse() : showing;
 
   return (
     <div
@@ -298,16 +282,12 @@ const PageReader = ({
 
         (wentLeft === isRightToLeft ? back : forward)();
       }}
-      onDoubleClick={() => {
-        setScale((was) => (was > CLOSEST ? CLOSEST : A_LOOK));
-        setMoved({ x: 0, y: 0 });
-        wake();
-      }}
     >
       <ReaderChrome
         title={`${book.title} — ${chapter?.title ?? ''}`}
         isShown={isChromeShown}
         isRightToLeft={settings.direction === 'rightToLeft'}
+        isScrolling={settings.isScrolling}
         onForward={forward}
         onBack={back}
         onClose={onClose}
@@ -389,130 +369,202 @@ const PageReader = ({
             }
           >
             <SettingList>
-              <SettingRow title="Pages">
-                <SegmentedRow
-                  label="Pages"
-                  size="sm"
-                  items={[
-                    { id: 'single', label: 'One' },
-                    { id: 'double', label: 'Two' },
-                  ]}
-                  value={settings.isDouble ? 'double' : 'single'}
-                  onSelect={(id) => {
-                    change({ isDouble: id === 'double' });
-                  }}
-                />
-              </SettingRow>
-
-              {settings.isDouble ? (
-                <SettingRow title="Cover on its own" description="Pairing starts after page one">
-                  <Switch
-                    label="Cover on its own"
-                    isLabelHidden
-                    isOn={settings.isOffset}
-                    onToggle={() => {
-                      change({ isOffset: !settings.isOffset });
-                    }}
-                  />
-                </SettingRow>
-              ) : null}
-
-              <SettingRow title="Fit">
-                <SegmentedRow
-                  label="Fit"
-                  size="sm"
-                  items={[
-                    { id: 'both', label: 'Screen' },
-                    { id: 'width', label: 'Width' },
-                    { id: 'height', label: 'Height' },
-                  ]}
-                  value={settings.fit}
-                  onSelect={(id) => {
-                    change({ fit: id === 'width' ? 'width' : id === 'height' ? 'height' : 'both' });
-                  }}
-                />
-              </SettingRow>
-
               <SettingRow
-                title="Reading direction"
-                {...(book.direction === 'rightToLeft'
-                  ? { description: 'Right to left is how manga is read' }
+                title="Layout"
+                {...(settings.isScrolling
+                  ? { description: 'One long strip, as a webtoon is read' }
                   : {})}
               >
                 <SegmentedRow
-                  label="Reading direction"
+                  label="Layout"
                   size="sm"
                   items={[
-                    { id: 'leftToRight', label: 'Left to right' },
-                    { id: 'rightToLeft', label: 'Right to left' },
+                    { id: 'pages', label: 'Pages' },
+                    { id: 'scroll', label: 'Scroll' },
                   ]}
-                  value={settings.direction}
+                  value={settings.isScrolling ? 'scroll' : 'pages'}
                   onSelect={(id) => {
-                    change({ direction: id === 'rightToLeft' ? 'rightToLeft' : 'leftToRight' });
+                    change({ isScrolling: id === 'scroll' });
                   }}
                 />
               </SettingRow>
+
+              {settings.isScrolling ? null : (
+                <>
+                  <SettingRow title="Pages">
+                    <SegmentedRow
+                      label="Pages"
+                      size="sm"
+                      items={[
+                        { id: 'single', label: 'One' },
+                        { id: 'double', label: 'Two' },
+                      ]}
+                      value={settings.isDouble ? 'double' : 'single'}
+                      onSelect={(id) => {
+                        change({ isDouble: id === 'double' });
+                      }}
+                    />
+                  </SettingRow>
+
+                  {settings.isDouble ? (
+                    <SettingRow
+                      title="Cover on its own"
+                      description="Pairing starts after page one"
+                    >
+                      <Switch
+                        label="Cover on its own"
+                        isLabelHidden
+                        isOn={settings.isOffset}
+                        onToggle={() => {
+                          change({ isOffset: !settings.isOffset });
+                        }}
+                      />
+                    </SettingRow>
+                  ) : null}
+
+                  {settings.isDouble ? (
+                    <SettingRow
+                      title="Gap between pages"
+                      description={`${settings.gap.toString()} px`}
+                    >
+                      <Slider
+                        label="Gap between pages"
+                        value={settings.gap}
+                        max={MOST_GAP}
+                        onValueChange={(next) => {
+                          change({ gap: next });
+                        }}
+                        className="w-40"
+                      />
+                    </SettingRow>
+                  ) : null}
+
+                  <SettingRow title="Animate turning pages">
+                    <Switch
+                      label="Animate turning pages"
+                      isLabelHidden
+                      isOn={settings.isAnimated}
+                      onToggle={() => {
+                        change({ isAnimated: !settings.isAnimated });
+                      }}
+                    />
+                  </SettingRow>
+
+                  <SettingRow title="Fit">
+                    <SegmentedRow
+                      label="Fit"
+                      size="sm"
+                      items={[
+                        { id: 'both', label: 'Screen' },
+                        { id: 'width', label: 'Width' },
+                        { id: 'height', label: 'Height' },
+                      ]}
+                      value={settings.fit}
+                      onSelect={(id) => {
+                        change({
+                          fit: id === 'width' ? 'width' : id === 'height' ? 'height' : 'both',
+                        });
+                      }}
+                    />
+                  </SettingRow>
+
+                  <SettingRow
+                    title="Reading direction"
+                    {...(book.direction === 'rightToLeft'
+                      ? { description: 'Right to left is how manga is read' }
+                      : {})}
+                  >
+                    <SegmentedRow
+                      label="Reading direction"
+                      size="sm"
+                      items={[
+                        { id: 'leftToRight', label: 'Left to right' },
+                        { id: 'rightToLeft', label: 'Right to left' },
+                      ]}
+                      value={settings.direction}
+                      onSelect={(id) => {
+                        change({ direction: id === 'rightToLeft' ? 'rightToLeft' : 'leftToRight' });
+                      }}
+                    />
+                  </SettingRow>
+                </>
+              )}
             </SettingList>
           </ReaderPanel>
         }
         footer={
-          <>
-            <Slider
-              label="Page"
-              tone="overlay"
-              value={at}
-              max={Math.max(groups.length - 1, 0)}
-              onValueChange={(value) => {
-                setAt(value);
-                wake();
-              }}
-              className="flex-1"
-            />
-
-            <span className="w-24 shrink-0 text-right text-xs tabular-nums text-on-scrim/80">
-              {showing.length === 0
-                ? '—'
-                : `${((showing[0] ?? 0) + 1).toString()} / ${pageCount.toString()}`}
+          settings.isScrolling ? (
+            <span className="ml-auto text-xs tabular-nums text-on-scrim/80">
+              {`${(visiblePage + 1).toString()} / ${pageCount.toString()}`}
             </span>
-          </>
+          ) : (
+            <>
+              <Slider
+                label="Page"
+                tone="overlay"
+                value={at}
+                max={Math.max(groups.length - 1, 0)}
+                onValueChange={(value) => {
+                  setAt(value);
+                  wake();
+                }}
+                className="flex-1"
+              />
+
+              <span className="w-24 shrink-0 text-right text-xs tabular-nums text-on-scrim/80">
+                {showing.length === 0
+                  ? '—'
+                  : `${((showing[0] ?? 0) + 1).toString()} / ${pageCount.toString()}`}
+              </span>
+            </>
+          )
         }
       >
-        <div
-          className="flex h-full w-full items-center justify-center"
-          style={{
-            transform: `translate3d(${moved.x.toString()}px, ${moved.y.toString()}px, 0) scale(${scale.toString()})`,
-            transition:
-              pinch.current === null && dragged.current === null ? 'transform 120ms' : 'none',
-          }}
-        >
-          {ordered.map((page) => (
-            <img
-              key={page}
-              src={bookPageUrl(book.id, chapterId, page, widthFor(showing.length))}
-              alt={`Page ${(page + 1).toString()}`}
-              onLoad={(event) => {
-                noted(page, event.currentTarget);
-              }}
-              className={[
-                'select-none',
-                settings.fit === 'width' ? 'w-full object-contain' : '',
-                settings.fit === 'height' ? 'h-full object-contain' : '',
-                settings.fit === 'both' ? 'max-h-full max-w-full object-contain' : '',
-              ].join(' ')}
-            />
-          ))}
-        </div>
-      </ReaderChrome>
+        {settings.isScrolling ? (
+          <ScrollingPages
+            bookId={book.id}
+            chapterId={chapterId}
+            pageCount={pageCount}
+            startAtPage={startAtPage}
+            hasNextChapter={which < ordering.length - 1}
+            onPageChange={setVisiblePage}
+            onNextChapter={() => {
+              const after = ordering[which + 1];
 
-      <div className="hidden">
-        {preloading.map((address) => (
-          <img key={address} src={address} alt="" />
-        ))}
-      </div>
+              if (after !== undefined) {
+                onChapterChange(after.id);
+              }
+            }}
+            onTap={wake}
+          />
+        ) : (
+          <div
+            className="flex h-full w-full items-center justify-center"
+            style={{
+              transform: `translate3d(${moved.x.toString()}px, ${moved.y.toString()}px, 0) scale(${scale.toString()})`,
+              transition:
+                pinch.current === null && dragged.current === null ? 'transform 120ms' : 'none',
+            }}
+          >
+            <SpreadStage
+              spreads={groups}
+              spreadAt={Math.min(at, Math.max(groups.length - 1, 0))}
+              bookId={book.id}
+              chapterId={chapterId}
+              across={settings.isDouble ? 2 : 1}
+              fit={settings.fit}
+              gap={settings.gap}
+              isRightToLeft={settings.direction === 'rightToLeft'}
+              isAnimated={settings.isAnimated}
+              onLoaded={noted}
+            />
+          </div>
+        )}
+      </ReaderChrome>
     </div>
   );
 };
 
 PageReader.displayName = 'PageReader';
 
-export { PageReader, widthFor };
+export { PageReader };
