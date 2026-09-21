@@ -124,7 +124,7 @@ const LibrariesPanel = ({
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex items-center gap-2">
               <span className="truncate font-medium text-text">{row.original.name}</span>
-              <Badge size="sm">{row.original.kind}</Badge>
+              <Badge size="sm">{row.original.flavour ?? row.original.kind}</Badge>
             </span>
 
             <span className="truncate text-xs text-text-muted" title={row.original.path}>

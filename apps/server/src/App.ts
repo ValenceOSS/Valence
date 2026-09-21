@@ -1026,7 +1026,14 @@ const createApp = ({
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    const created = await library.create(context.req.valid('json'));
+    const { name, kind, path, flavour } = context.req.valid('json');
+
+    const created = await library.create({
+      name,
+      kind,
+      path,
+      ...(flavour === undefined ? {} : { flavour }),
+    });
 
     if (created === null) {
       return context.json({ error: 'That path is not a readable directory.' }, 400);

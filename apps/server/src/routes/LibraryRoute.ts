@@ -27,6 +27,7 @@ const CreateLibraryRequest = z
   .object({
     name: z.string().min(1).max(100),
     kind: z.enum(LIBRARY_KINDS),
+    flavour: z.string().trim().min(1).max(40).nullable().optional(),
     path: z.string().min(1),
   })
   .openapi('CreateLibraryRequest');

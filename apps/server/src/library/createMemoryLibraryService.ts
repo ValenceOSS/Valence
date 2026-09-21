@@ -320,6 +320,7 @@ const createMemoryLibraryService = (
       id: randomUUID(),
       name: input.name,
       kind: input.kind,
+      flavour: input.flavour ?? null,
       path: input.path,
       itemCount: 0,
       lastScannedAt: null,
