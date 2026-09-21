@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
 type Page = { items: MediaSummary[]; total: number };
 type Options = { kind?: string; order?: string; ids?: string[]; limit?: number };
 
-const fetchLibraries = vi.fn<() => Promise<{ id: string }[]>>();
+const fetchLibraries = vi.fn<() => Promise<{ id: string; kind?: string }[]>>();
 const fetchLibraryItems = vi.fn<(libraryId: string, options?: Options) => Promise<Page>>();
 
 const findBooks = vi.fn<(query: { ids?: readonly string[] }) => Promise<Book[]>>();
@@ -91,6 +91,40 @@ describe('BrowseArea', () => {
         expect.objectContaining({ kind: 'shows' }),
       );
     });
+  });
+
+  it('keeps the films to the one library that was chosen', async () => {
+    fetchLibraries.mockResolvedValue([
+      { id: 'library-1', kind: 'movies' },
+      { id: 'library-2', kind: 'movies' },
+    ]);
+
+    renderInAnAddress(
+      <BrowseArea kind="films" libraryId="library-2" onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    await waitFor(() => {
+      expect(fetchLibraryItems).toHaveBeenCalledWith('library-2', expect.anything());
+    });
+
+    expect(fetchLibraryItems).not.toHaveBeenCalledWith('library-1', expect.anything());
+  });
+
+  it('reads across every library when the one chosen is of another kind', async () => {
+    fetchLibraries.mockResolvedValue([
+      { id: 'library-1', kind: 'movies' },
+      { id: 'library-2', kind: 'shows' },
+    ]);
+
+    renderInAnAddress(
+      <BrowseArea kind="films" libraryId="library-2" onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    await waitFor(() => {
+      expect(fetchLibraryItems).toHaveBeenCalledWith('library-1', expect.anything());
+    });
+
+    expect(fetchLibraryItems).toHaveBeenCalledWith('library-2', expect.anything());
   });
 
   it('asks for the newest first on the page about newness', async () => {

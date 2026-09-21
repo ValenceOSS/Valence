@@ -45,6 +45,57 @@ describe('NavBar', () => {
     expect(within(bar).getByRole('button', { name: 'Search' })).toBeInTheDocument();
   });
 
+  it('offers a choice of library beside a place that has more than one, and tells what is chosen', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <NavBar
+        {...props}
+        items={[
+          { id: 'home', label: 'Home' },
+          {
+            id: 'films',
+            label: 'Films',
+            choices: {
+              label: 'Which films library',
+              options: [
+                { id: 'all', label: 'All film libraries' },
+                { id: 'lib-4k', label: '4K films' },
+              ],
+              selectedId: 'all',
+              onSelect,
+            },
+          },
+        ]}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Which films library' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /4K films/ }));
+
+    expect(onSelect).toHaveBeenCalledWith('lib-4k');
+  });
+
+  it('offers no choice beside a place that has only the one library', () => {
+    render(<NavBar {...props} />);
+
+    expect(screen.queryByRole('button', { name: /Which/ })).not.toBeInTheDocument();
+  });
+
+  it('gives the icon of the place somebody is on room to draw, so its stroke is not cut off', () => {
+    const { container } = render(
+      <NavBar
+        {...props}
+        items={[{ id: 'home', label: 'Home', icon: <svg data-testid="glyph" /> }]}
+      />,
+    );
+
+    expect(
+      container.querySelector('[data-testid="glyph"]')?.closest('span.overflow-hidden'),
+    ).toHaveClass('md:w-[22px]', 'md:px-0.5');
+  });
+
   it('runs along the top of the window rather than floating at its foot', () => {
     const { container } = render(<NavBar {...props} />);
 
