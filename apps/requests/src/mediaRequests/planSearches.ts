@@ -13,6 +13,12 @@ type Plannable = Pick<RequestItemRecord, 'id' | 'season' | 'episode' | 'airDate'
  * than one episode of it wanted, as a whole, since a season is usually released as one; and any
  * other episode on its own. An album is searched among the indexers' music, by its artist and title.
  *
+ * Where what is wanted spans more than one season, the whole run is asked for first, without a
+ * season named — which is what a `tvsearch` with no season returns, and what every pack of several
+ * seasons or of the complete run is found by. It goes first so that a pack answering for the lot
+ * is weighed before the seasons are asked for one at a time; whether one is worth taking is for
+ * the judge to say, not the search.
+ *
  * @param request - What was asked for.
  * @param items - All its films or episodes, so a season is only searched whole once all of it aired.
  * @param wanted - The ones to search for.
@@ -61,7 +67,12 @@ const planSearches = (
     ...new Set(wanted.flatMap((item) => (item.season === null ? [] : [item.season]))),
   ];
 
-  return seasons
+  const wholeRun: PlannedSearch[] =
+    seasons.length > 1
+      ? [{ search: { query, mode: 'tv' }, itemIds: wanted.map((item) => item.id) }]
+      : [];
+
+  const bySeason = seasons
     .toSorted((left, right) => left - right)
     .flatMap((season): PlannedSearch[] => {
       const inSeason = wanted.filter((item) => item.season === season);
@@ -89,6 +100,8 @@ const planSearches = (
             ],
       );
     });
+
+  return [...wholeRun, ...bySeason];
 };
 
 export type { PlannedSearch };

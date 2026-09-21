@@ -163,6 +163,25 @@ services:
       # check. http://flaresolverr:8191 with the flaresolverr profile below.
       FLARESOLVERR_URL: ${FLARESOLVERR_URL:-}
 
+      # Optional: lets this service ask the transcoder what a file it has just
+      # filed actually is, so the name it is filed under says the resolution,
+      # codec and audio the file really has rather than the ones its release
+      # name claimed. Left empty, the name is taken at its word, which is what
+      # it was before and is right most of the time.
+      #
+      # The transcoder lives inside the valence container and talks over a unix
+      # socket, which nothing outside that container can reach, so switching
+      # this on is three settings rather than one:
+      #
+      #   On valence:   VALENCE_TRANSCODER_ADDR: 0.0.0.0:8420
+      #                 TRANSCODER_URL: http://127.0.0.1:8420
+      #   Here:         TRANSCODER_URL: http://valence:8420
+      #
+      # Only the stack's own network can reach that port either way — it is not
+      # published — but it is a port where there was none, so it is off unless
+      # you ask for it.
+      TRANSCODER_URL: ${REQUESTS_TRANSCODER_URL:-}
+
       # Where the indexer catalogue comes from: a GitHub repository of Cardigann
       # definitions, fetched daily. Prowlarr's, unless you point it elsewhere.
       DEFINITIONS_REPOSITORY: ${DEFINITIONS_REPOSITORY:-Prowlarr/Indexers}

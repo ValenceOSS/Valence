@@ -32,6 +32,7 @@ import { createDatabaseRequestItemStore } from '@ValenceRequests/mediaRequests/c
 import { createDatabaseRequestLogStore } from '@ValenceRequests/mediaRequests/createDatabaseRequestLogStore';
 import { createRequestRoutes } from '@ValenceRequests/mediaRequests/createRequestRoutes';
 import { createRequestService } from '@ValenceRequests/mediaRequests/createRequestService';
+import { createProbeClient } from '@ValenceRequests/media/createProbeClient';
 import { createRequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
 import { z } from 'zod';
 
@@ -153,6 +154,7 @@ const requestWorker = createRequestWorker({
   events,
   log: requestLog,
   say,
+  probe: createProbeClient(env.TRANSCODER_URL),
 });
 
 const mediaRequests = createRequestService({

@@ -19,6 +19,10 @@ const EnvSchema = z.object({
     .string()
     .default('')
     .transform((value) => value.trim().replace(/\/+$/, '')),
+  TRANSCODER_URL: z
+    .string()
+    .default('')
+    .transform((value) => value.trim().replace(/\/+$/, '')),
 });
 
 type Env = z.infer<typeof EnvSchema>;

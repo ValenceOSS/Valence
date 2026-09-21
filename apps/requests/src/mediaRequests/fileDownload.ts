@@ -1,4 +1,4 @@
-import { unlink } from 'node:fs/promises';
+import { rename, unlink } from 'node:fs/promises';
 import { dirname, extname } from 'node:path';
 import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
 import { VIDEO_FILE_EXTENSIONS } from '@ValenceContracts/constants/VIDEO_FILE_EXTENSIONS';
@@ -6,10 +6,13 @@ import { findDownloadedFiles } from '@ValenceRequests/mediaRequests/findDownload
 import { libraryFileOf } from '@ValenceRequests/mediaRequests/libraryFileOf';
 import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
 import { qualityTagOf } from '@ValenceRequests/mediaRequests/qualityTagOf';
+import { qualityFromProbe } from '@ValenceRequests/media/qualityFromProbe';
 import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
 import type { DownloadedFile } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
+import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
+import type { ProbeClient } from '@ValenceRequests/media/createProbeClient';
 
 type Fileable = Pick<
   RequestItemRecord,
@@ -35,31 +38,31 @@ const extensionOf = (name: string): string => extname(name).slice(1).toLowerCase
 const stemOf = (name: string): string => name.slice(0, name.length - extname(name).length);
 
 /**
- * What a video is, for its own name to say: read from the file's name, and from the name of the
- * release it came in for whatever its own name leaves out — which a pack's files often do, being
- * numbered and nothing more, while the release around them names the lot.
+ * What a video is said to be, by its own name and by the name of the release it came in — which
+ * answers for whatever its own leaves out, a pack's files often being numbered and nothing more
+ * while the release around them names the lot.
  *
  * @param videoName - The video file's name.
  * @param releaseTitle - The name of the release it came in, where it is known.
- * @returns The tag, as `qualityTagOf` gives it.
+ * @returns What the names say it is.
  */
-const qualityOf = (videoName: string, releaseTitle: string | null): string => {
+const saidOf = (videoName: string, releaseTitle: string | null): ParsedRelease => {
   const own = parseReleaseName(stemOf(videoName));
 
   if (releaseTitle === null) {
-    return qualityTagOf(own);
+    return own;
   }
 
   const release = parseReleaseName(releaseTitle);
 
-  return qualityTagOf({
+  return {
     ...own,
     resolution: own.resolution ?? release.resolution,
     source: own.source ?? release.source,
     codec: own.codec ?? release.codec,
     audio: own.audio.length === 0 ? release.audio : own.audio,
     audioChannels: own.audioChannels ?? release.audioChannels,
-  });
+  };
 };
 
 /**
@@ -124,6 +127,7 @@ const videoFor = (
  * @param items - The films or episodes the download was fetched for.
  * @param contentPath - Where the download is, as this service sees it.
  * @param isKeepingSource - Whether the download must keep its files, as a seeding torrent must.
+ * @param probe - How to ask what a filed video actually is; answers nothing where none is set up.
  * @returns Where each was filed, and which could not be found in it.
  */
 const fileDownload = async (
@@ -131,6 +135,7 @@ const fileDownload = async (
   items: readonly Fileable[],
   contentPath: string,
   isKeepingSource: boolean,
+  probe: ProbeClient = () => Promise.resolve(null),
 ): Promise<Filed> => {
   const files = await findDownloadedFiles(contentPath);
   const videos = files.filter(isFeature);
@@ -145,15 +150,27 @@ const fileDownload = async (
       continue;
     }
 
-    const destination = libraryFileOf(
-      request,
-      item,
-      extensionOf(video.name),
-      qualityOf(video.name, item.releaseTitle),
-    );
+    const said = saidOf(video.name, item.releaseTitle);
+    const extension = extensionOf(video.name);
+    const placed = libraryFileOf(request, item, extension, qualityTagOf(said));
     const videoStem = stemOf(video.name);
 
-    await placeFile(video.path, destination, isKeepingSource);
+    await placeFile(video.path, placed, isKeepingSource);
+
+    const probed = await probe(placed);
+    const destination =
+      probed === null
+        ? placed
+        : libraryFileOf(
+            request,
+            item,
+            extension,
+            qualityTagOf({ ...said, ...qualityFromProbe(probed) }),
+          );
+
+    if (destination !== placed) {
+      await rename(placed, destination);
+    }
 
     for (const subtitle of files.filter(
       (file) =>
