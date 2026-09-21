@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ReaderChrome } from './ReaderChrome';
 
 /**
@@ -32,6 +32,10 @@ const draw = (overrides: Partial<Parameters<typeof ReaderChrome>[0]> = {}) => {
 
   return handlers;
 };
+
+afterEach(() => {
+  Reflect.deleteProperty(document, 'fullscreenEnabled');
+});
 
 describe('ReaderChrome', () => {
   it('shows the title, the page and the footer, and keeps the panel away until asked', () => {
@@ -115,5 +119,37 @@ describe('ReaderChrome', () => {
     draw({ isShown: false, isPanelOpen: true, isPanelPinned: true });
 
     expect(screen.getByRole('banner', { hidden: true })).not.toHaveClass('pointer-events-none');
+  });
+
+  it('has no edges to turn from where the page is a strip to scroll', () => {
+    draw({ isScrolling: true });
+
+    expect(screen.queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Previous page' })).not.toBeInTheDocument();
+  });
+  it('offers no full screen where the browser will not allow it', () => {
+    Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: false });
+    draw();
+
+    expect(screen.queryByRole('button', { name: 'Fill the screen' })).not.toBeInTheDocument();
+  });
+
+  it('offers to fill the screen where the browser will allow it', () => {
+    Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: true });
+    draw();
+
+    expect(screen.getByRole('button', { name: 'Fill the screen' })).toBeInTheDocument();
+  });
+
+  it('draws an arrow in each edge, faded with the bars but still pressable', async () => {
+    const { onForward } = draw({ isShown: false });
+
+    const next = screen.getByRole('button', { name: 'Next page' });
+
+    expect(next.querySelector('svg')).toHaveClass('opacity-0');
+
+    await userEvent.click(next);
+
+    expect(onForward).toHaveBeenCalledOnce();
   });
 });

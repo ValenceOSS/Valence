@@ -6,6 +6,8 @@ const STORAGE_KEY = 'valence.reader';
 
 const FITS = ['width', 'height', 'both'] as const;
 
+const MOST_GAP = 64;
+
 const FitSchema = z.enum(FITS);
 
 const PreferencesSchema = z.object({
@@ -13,6 +15,9 @@ const PreferencesSchema = z.object({
   isOffset: z.boolean(),
   fit: FitSchema,
   direction: z.enum(['rightToLeft', 'leftToRight']),
+  isScrolling: z.boolean().default(false),
+  isAnimated: z.boolean().default(true),
+  gap: z.number().int().min(0).max(MOST_GAP).default(0),
 });
 
 type ReaderFit = z.infer<typeof FitSchema>;
@@ -26,6 +31,12 @@ type ReaderPreferences = z.infer<typeof PreferencesSchema>;
  * same person wants two pages on a desktop and one on a phone, and a setting that followed them
  * between the two would be wrong in one of them every time.
  *
+ * Reading straight down a long strip, as a webtoon is read, is a way of reading like any other and
+ * is remembered the same way, off unless somebody has turned it on.
+ *
+ * Whether turning a page is animated, and how much room to leave between the two pages of a
+ * spread, are remembered the same way: animated, and none, until somebody says otherwise.
+ *
  * The book's own direction is the starting point where nothing has been saved — manga right to left,
  * everything else the other way — and whatever somebody chooses after that is theirs.
  *
@@ -36,7 +47,17 @@ const readReaderPreferences = (direction: ReadingDirection): ReaderPreferences =
   const held = platformInUse().store.read(STORAGE_KEY);
   const read = PreferencesSchema.safeParse(held === null ? null : JSON.parse(held));
 
-  return read.success ? read.data : { isDouble: false, isOffset: true, fit: 'both', direction };
+  return read.success
+    ? read.data
+    : {
+        isDouble: false,
+        isOffset: true,
+        fit: 'both',
+        direction,
+        isScrolling: false,
+        isAnimated: true,
+        gap: 0,
+      };
 };
 
 /**
@@ -50,4 +71,4 @@ const writeReaderPreferences = (preferences: ReaderPreferences): void => {
 
 export type { ReaderFit, ReaderPreferences };
 
-export { FITS, STORAGE_KEY, readReaderPreferences, writeReaderPreferences };
+export { FITS, MOST_GAP, STORAGE_KEY, readReaderPreferences, writeReaderPreferences };
