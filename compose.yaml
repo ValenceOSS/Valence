@@ -33,6 +33,14 @@ services:
     environment:
       DATABASE_URL: postgres://valence:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/valence
 
+      # Before an upgrade changes the database, Valence copies it to this folder, which is inside the
+      # `config` volume and so is kept. Migrations only go forward, so this copy is the way back to
+      # an older release: stop Valence, then run
+      #   docker compose run --rm valence node apps/server/dist/Rollback.js --list
+      # and the same with `--restore` to put the newest back, then start the older image.
+      # BACKUP_BEFORE_MIGRATE=false turns the copy off; BACKUPS_KEPT is how many to keep.
+      BACKUPS_KEPT: ${BACKUPS_KEPT:-3}
+
       # Sign-in cookies are sealed with this. Changing it signs everybody out.
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET, at least 32 characters}
 

@@ -167,4 +167,56 @@ describe('migrateToLatest', () => {
       }),
     ).rejects.toThrow('0070_b');
   });
+
+  it('takes its way back before the first migration runs', async () => {
+    const order: string[] = [];
+
+    await migrateToLatest({
+      pending: () => Promise.resolve(['0001_a']),
+      beforeApply: () => {
+        order.push('snapshot');
+
+        return Promise.resolve();
+      },
+      apply: () => {
+        order.push('apply');
+
+        return Promise.resolve();
+      },
+      isAllowed: true,
+      say: said().say,
+    });
+
+    expect(order).toEqual(['snapshot', 'apply']);
+  });
+
+  it('does not migrate when the way back could not be kept', async () => {
+    const apply = vi.fn(() => Promise.resolve());
+
+    await expect(
+      migrateToLatest({
+        pending: () => Promise.resolve(['0001_a']),
+        beforeApply: () => Promise.reject(new Error('disk full')),
+        apply,
+        isAllowed: true,
+        say: said().say,
+      }),
+    ).rejects.toThrow('disk full');
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  it('refuses to start over a database a newer release has migrated', async () => {
+    const apply = vi.fn(() => Promise.resolve());
+
+    await expect(
+      migrateToLatest({
+        pending: () => Promise.resolve([]),
+        newer: () => Promise.resolve([9]),
+        apply,
+        isAllowed: true,
+        say: said().say,
+      }),
+    ).rejects.toThrow('a newer Valence has used it');
+    expect(apply).not.toHaveBeenCalled();
+  });
 });

@@ -9,6 +9,12 @@ const EnvSchema = z.object({
     .enum(['true', 'false'])
     .default('true')
     .transform((value) => value === 'true'),
+  BACKUP_BEFORE_MIGRATE: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+  BACKUP_DIR: z.string().min(1).default('/config/backups'),
+  BACKUPS_KEPT: z.coerce.number().int().positive().default(3),
   BETTER_AUTH_SECRET: z.string().min(32).default('development-secret-change-me-in-production'),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:8420'),
   TRUSTED_ORIGINS: z

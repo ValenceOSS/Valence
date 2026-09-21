@@ -49,6 +49,8 @@ import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { createDatabaseHiddenService } from '@ValenceServer/hiding/createDatabaseHiddenService';
 import { createDatabase } from '@ValenceServer/db/Database';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { createSnapshotBeforeMigrating } from '@ValenceServer/db/createSnapshotBeforeMigrating';
+import { findNewerMigrations } from '@ValenceServer/db/findNewerMigrations';
 import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
 import { migrateToLatest } from '@ValenceServer/db/migrateToLatest';
 import { createMissedMigrationApplier } from '@ValenceServer/db/createMissedMigrationApplier';
@@ -308,6 +310,21 @@ await migrateToLatest({
     }),
   apply: () => migrate(db, { migrationsFolder: MIGRATIONS_FOLDER }),
   applyMissed: createMissedMigrationApplier(db, MIGRATIONS_FOLDER),
+  newer: () =>
+    findNewerMigrations({
+      readJournal: () => readFile(MIGRATION_JOURNAL, 'utf8'),
+      readAppliedAt: readAppliedStamps,
+    }),
+  beforeApply: createSnapshotBeforeMigrating({
+    databaseUrl: env.DATABASE_URL,
+    folder: env.BACKUP_DIR,
+    keep: env.BACKUPS_KEPT,
+    isEnabled: env.BACKUP_BEFORE_MIGRATE,
+    readAppliedAt: readAppliedStamps,
+    say: (_level, line) => {
+      process.stdout.write(`${line}\n`);
+    },
+  }),
   isAllowed: env.MIGRATE_ON_START,
   say: (_level, line) => {
     process.stdout.write(`${line}\n`);
