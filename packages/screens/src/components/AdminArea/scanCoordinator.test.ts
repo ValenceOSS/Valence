@@ -11,6 +11,7 @@ import {
   getSnapshot,
   resumeRunning,
   resetForTests,
+  stopJobs,
 } from './scanCoordinator';
 import type { Library } from '@ValenceContracts/schemas/Library';
 
@@ -20,6 +21,7 @@ const regenerateLibraryPreviewsMock = vi.hoisted(() => vi.fn());
 const readScanStateMock = vi.hoisted(() => vi.fn());
 const runJobMock = vi.hoisted(() => vi.fn());
 const fetchRunningScansMock = vi.hoisted(() => vi.fn());
+const cancelJobMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   scanLibrary: scanLibraryMock,
@@ -31,6 +33,7 @@ vi.mock('@ValenceClient/library/fetchLibrary', () => ({
 vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   runJob: runJobMock,
   fetchRunningScans: fetchRunningScansMock,
+  cancelJob: cancelJobMock,
 }));
 
 beforeEach(() => {
@@ -42,6 +45,7 @@ beforeEach(() => {
   runJobMock.mockReset();
   fetchRunningScansMock.mockReset();
   fetchRunningScansMock.mockResolvedValue([]);
+  cancelJobMock.mockReset().mockResolvedValue(true);
 });
 
 const LIBRARY: Library = {
@@ -306,6 +310,80 @@ describe('a page opened while a scan is already running', () => {
     await resumeRunning();
 
     expect(getSnapshot().progress.size).toBe(0);
+  });
+});
+
+describe('stopping a job', () => {
+  const keepRunning = async () => {
+    fetchRunningScansMock.mockResolvedValue([
+      {
+        jobId: 'job-9',
+        kind: 'scan',
+        libraryId: 'library-1',
+        phase: 'probing',
+        processed: 3,
+        total: 12,
+      },
+    ]);
+
+    let finish: () => void = () => {
+      return;
+    };
+
+    readScanStateMock.mockReturnValue(
+      new Promise((resolve) => {
+        finish = () => {
+          resolve({ jobId: 'job-9', state: 'completed', phase: null, processed: 12, total: 12 });
+        };
+      }),
+    );
+
+    const running = resumeRunning();
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    return { finish, running };
+  };
+
+  it('says a run has been asked to stop the moment it is, and asks the server to stop it', async () => {
+    const { finish, running } = await keepRunning();
+
+    await stopJobs('scan');
+
+    expect(cancelJobMock).toHaveBeenCalledWith('job-9');
+    expect(getSnapshot().progress.get('library-1:scan')?.isStopping).toBe(true);
+
+    finish();
+    await running;
+  });
+
+  it('goes on saying it is stopping while the run finishes what it had begun', async () => {
+    const { finish, running } = await keepRunning();
+
+    await stopJobs('scan');
+
+    expect(getSnapshot().progress.get('library-1:scan')).toMatchObject({
+      processed: 3,
+      isStopping: true,
+    });
+
+    finish();
+    await running;
+
+    expect(getSnapshot().progress.has('library-1:scan')).toBe(false);
+  });
+
+  it('leaves runs of other kinds running as they were', async () => {
+    const { finish, running } = await keepRunning();
+
+    await stopJobs('reset');
+
+    expect(cancelJobMock).not.toHaveBeenCalled();
+    expect(getSnapshot().progress.get('library-1:scan')?.isStopping).toBe(false);
+
+    finish();
+    await running;
   });
 });
 

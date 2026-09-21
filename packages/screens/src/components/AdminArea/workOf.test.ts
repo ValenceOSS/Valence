@@ -10,6 +10,7 @@ const entry = (libraryId: string, kind: string): ScanEntry => ({
   processed: null,
   total: null,
   jobId: null,
+  isStopping: false,
 });
 
 describe('workOf', () => {

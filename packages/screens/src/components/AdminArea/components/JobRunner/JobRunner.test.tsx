@@ -296,6 +296,7 @@ describe('JobRunner', () => {
           total: 4,
           item: null,
           jobId: 'job-1',
+          isStopping: false,
         },
       ],
     ]);
@@ -328,6 +329,7 @@ describe('JobRunner', () => {
           total: 4,
           item: null,
           jobId: 'job-1',
+          isStopping: false,
         },
       ],
       [
@@ -340,6 +342,7 @@ describe('JobRunner', () => {
           total: 6,
           item: null,
           jobId: 'job-1',
+          isStopping: false,
         },
       ],
     ]);
@@ -374,6 +377,7 @@ describe('JobRunner', () => {
           total: 4,
           item: null,
           jobId: 'job-1',
+          isStopping: false,
         },
       ],
     ]);
@@ -419,6 +423,7 @@ describe('JobRunner', () => {
                 total: 4,
                 item: null,
                 jobId: 'job-1',
+                isStopping: false,
               },
             ],
           ])
@@ -492,6 +497,7 @@ describe('JobRunner', () => {
           total: 4,
           item: null,
           jobId: 'job-1',
+          isStopping: false,
         },
       ],
     ]);
@@ -543,6 +549,7 @@ describe('JobRunner', () => {
           total: 4,
           item: null,
           jobId: 'job-1',
+          isStopping: false,
         },
       ],
     ]);
@@ -621,6 +628,7 @@ describe('JobRunner', () => {
           total: 10,
           item: null,
           jobId: 'job-1',
+          isStopping: false,
         },
       ],
     ]);
@@ -670,6 +678,7 @@ describe('JobRunner', () => {
           total: 4,
           item: null,
           jobId: 'job-42',
+          isStopping: false,
         },
       ],
     ]);
@@ -716,6 +725,7 @@ describe('JobRunner', () => {
           total: 4,
           item: null,
           jobId: 'job-42',
+          isStopping: false,
         },
       ],
     ]);

@@ -86,7 +86,15 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
                 processed={entry.processed}
                 total={entry.total}
                 item={entry.item ?? null}
+                isStopping={entry.isStopping === true}
               />
+
+              {entry.isStopping === true ? (
+                <p className="text-xs text-text-muted">
+                  Finishing what it has already started, then it will stop. What is still queued
+                  behind it is left undone until it is run again.
+                </p>
+              ) : null}
             </div>
           ))}
 

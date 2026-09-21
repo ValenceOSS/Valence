@@ -24,8 +24,17 @@ const PHASE_LABELS: Record<string, string> = {
  * @param processed - How many files it has got through, where it counts them.
  * @param total - How many there are in all, where that is known.
  * @param item - What it is working on this moment, where it says.
+ * @param isStopping - Whether it has been asked to stop and has not yet, in which case the bar says so
+ *   instead of what it is on, since it is finishing what it had begun and starting nothing new.
  */
-const ScanProgressBar = ({ label, phase, processed, total, item }: ScanProgressBarProps) => {
+const ScanProgressBar = ({
+  label,
+  phase,
+  processed,
+  total,
+  item,
+  isStopping = false,
+}: ScanProgressBarProps) => {
   const isKnown = processed !== null && total !== null;
   const fraction = !isKnown || total === 0 ? 0 : Math.min(processed / total, 1);
   const isEmpty = isKnown && total === 0;
@@ -40,7 +49,9 @@ const ScanProgressBar = ({ label, phase, processed, total, item }: ScanProgressB
         : {})}
       className="flex shrink-0 items-center gap-2"
     >
-      {phaseLabel === null ? null : (
+      {isStopping ? (
+        <span className="shrink-0 text-xs text-warning">Stopping</span>
+      ) : phaseLabel === null ? null : (
         <span className="shrink-0 text-xs text-text-muted">{phaseLabel}</span>
       )}
 
