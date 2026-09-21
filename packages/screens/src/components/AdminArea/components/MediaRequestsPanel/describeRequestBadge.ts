@@ -17,19 +17,63 @@ const nextAirDate = (request: MediaRequest): string | null =>
     .toSorted()[0] ?? null;
 
 /**
+ * Whether a film, episode or album has come out, by the same rule the worker uses to promote it:
+ * one with a day is out on that day, and one with none is out if it is not part of a season.
+ *
+ * @param item - The film, episode or album.
+ * @param today - Today, as a calendar day.
+ * @returns Whether it is out.
+ */
+const isOut = (item: MediaRequest['items'][number], today: string): boolean =>
+  item.airDate === null ? item.season === null : item.airDate <= today;
+
+/**
+ * Today, as a calendar day.
+ *
+ * @returns Such as `2026-09-21`.
+ */
+const calendarToday = (): string => new Date().toISOString().slice(0, 10);
+
+/**
  * Says where a request has got to, as a badge and the line beneath it: what it waits for, what
  * went wrong, or what is on its way.
  *
+ * Something that is out but not yet searched for is not "not out yet": a request is approved
+ * waiting, and the worker promotes what is out a moment later, so somebody looking in that moment
+ * is told it is queued for a search rather than that it has not been released.
+ *
  * @param request - The request.
+ * @param today - Today, as a calendar day, for deciding what has come out.
  * @returns The badge's words and tone, and the line beneath it where there is one.
  */
-const describeRequestBadge = (request: MediaRequest): StateBadge => {
+const describeRequestBadge = (request: MediaRequest, today = calendarToday()): StateBadge => {
   switch (request.state) {
     case 'awaitingApproval':
       return { ...STATUS_LOOK.attention, label: 'Awaiting approval', detail: null };
     case 'refused':
       return { ...STATUS_LOOK.failed, label: 'Refused', detail: request.refusedBecause };
     case 'waiting': {
+      if (request.kind !== 'film' && request.items.length === 0) {
+        return {
+          ...STATUS_LOOK.working,
+          label: 'Looking it up',
+          detail: 'Finding out what there is to fetch.',
+        };
+      }
+
+      const isOutNow =
+        request.kind === 'film'
+          ? request.releaseDate === null || request.releaseDate <= today
+          : request.items.some((item) => item.state === 'waiting' && isOut(item, today));
+
+      if (isOutNow) {
+        return {
+          ...STATUS_LOOK.queued,
+          label: 'Queued to search',
+          detail: 'It is out, and will be searched for in a moment.',
+        };
+      }
+
       if (request.kind === 'film') {
         return {
           ...STATUS_LOOK.queued,

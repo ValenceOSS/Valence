@@ -67,6 +67,17 @@ describe('RequestsPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('has a tab for music, kept in the address like the others', async () => {
+    renderInAShell(<RequestsPage />);
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Music' }));
+
+    await vi.waitFor(() => {
+      expect(window.location.search).toContain('view=music');
+    });
+    expect(screen.getByRole('tab', { name: 'Music' })).toHaveAttribute('aria-selected', 'true');
+  });
+
   it('shows your own requests where the address asks for them', () => {
     window.history.replaceState(null, '', '/requests?view=mine');
 
