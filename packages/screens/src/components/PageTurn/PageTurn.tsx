@@ -1,12 +1,7 @@
-import { motion } from 'motion/react';
+import { useEffect, useRef } from 'react';
+import { animate, motion, useMotionValue, useTransform } from 'motion/react';
 import type { ReactNode } from 'react';
 import type { PageTurnProps } from './PageTurn.types';
-
-const TURN_SECONDS = 0.6;
-
-const LIT = 'brightness(1)';
-
-const SHADED = 'brightness(0.6)';
 
 /**
  * The turning of a page in a book open at two, done as a book does it: one leaf, hinged along the
@@ -19,11 +14,17 @@ const SHADED = 'brightness(0.6)';
  * swinging left; on the left for one read right to left, swinging right. Going back is the same leaf
  * swung back the other way.
  *
+ * The shading as the leaf turns is drawn over each face rather than as a filter on the leaf, because
+ * a filter flattens the leaf and its two faces into one plane, and the face that should be turned
+ * away shows through — the page seen changes at the wrong moment.
+ *
  * @param from - The two pages that were showing, in reading order.
  * @param to - The two pages that arrive, in reading order.
  * @param isAdvancing - Whether the reader is going on, rather than back.
  * @param isRightToLeft - Whether the book is read right to left.
  * @param gap - The room, in pixels, between the two pages.
+ * @param seconds - How long the leaf takes. Changed while it is turning, it carries on from where it
+ *   has got to at the new pace, which is how somebody turning quickly makes it quicker.
  * @param renderPage - Draws one page.
  * @param onDone - Called once the leaf has landed.
  */
@@ -33,6 +34,7 @@ const PageTurn = ({
   isAdvancing,
   isRightToLeft,
   gap,
+  seconds,
   renderPage,
   onDone,
 }: PageTurnProps) => {
@@ -40,49 +42,50 @@ const PageTurn = ({
   const later = isAdvancing ? to : from;
   const swing = isRightToLeft ? 180 : -180;
   const half = `${(gap / 2).toString()}px`;
+  const rotate = useMotionValue(isAdvancing ? 0 : swing);
+  const shade = useTransform(rotate, (angle) => 0.45 * Math.sin((Math.PI * Math.abs(angle)) / 180));
+  const finished = useRef(onDone);
 
-  const leaf = (front: number | undefined, back: number | undefined): ReactNode => (
-    <motion.div
-      initial={{ rotateY: isAdvancing ? 0 : swing }}
-      animate={{
-        rotateY: isAdvancing ? swing : 0,
-        filter: [LIT, SHADED, LIT],
-      }}
-      transition={{ duration: TURN_SECONDS, ease: 'easeInOut' }}
-      onAnimationComplete={onDone}
-      className={`absolute inset-y-0 z-10 flex w-1/2 ${isRightToLeft ? 'left-0' : 'right-0'}`}
-      style={{
-        transformStyle: 'preserve-3d',
-        transformOrigin: isRightToLeft ? 'right center' : 'left center',
-      }}
-    >
-      <div
-        className={`absolute inset-0 flex items-center ${isRightToLeft ? 'justify-end' : 'justify-start'}`}
-        style={{
-          backfaceVisibility: 'hidden',
-          padding: `0 ${half}`,
-        }}
-      >
-        {front === undefined ? null : renderPage(front)}
-      </div>
+  useEffect(() => {
+    finished.current = onDone;
+  });
 
-      <div
-        className={`absolute inset-0 flex items-center ${isRightToLeft ? 'justify-start' : 'justify-end'}`}
-        style={{
-          backfaceVisibility: 'hidden',
-          transform: 'rotateY(180deg)',
-          padding: `0 ${half}`,
-        }}
-      >
-        {back === undefined ? null : renderPage(back)}
-      </div>
-    </motion.div>
-  );
+  useEffect(() => {
+    const turning = animate(rotate, isAdvancing ? swing : 0, {
+      duration: seconds,
+      ease: 'easeInOut',
+      onComplete: () => {
+        finished.current();
+      },
+    });
+
+    return () => {
+      turning.stop();
+    };
+  }, [rotate, isAdvancing, swing, seconds]);
 
   const [earlierFirst, earlierSecond] = earlier;
   const [laterFirst, laterSecond] = later;
   const onLeft = isRightToLeft ? laterSecond : earlierFirst;
   const onRight = isRightToLeft ? earlierFirst : laterSecond;
+
+  const face = (page: number | undefined, isBack: boolean): ReactNode => (
+    <div
+      className={`absolute inset-0 flex items-center ${isBack === isRightToLeft ? 'justify-start' : 'justify-end'}`}
+      style={{
+        backfaceVisibility: 'hidden',
+        padding: `0 ${half}`,
+        ...(isBack ? { transform: 'rotateY(180deg)' } : {}),
+      }}
+    >
+      {page === undefined ? null : renderPage(page)}
+      <motion.div
+        aria-hidden
+        style={{ opacity: shade }}
+        className="pointer-events-none absolute inset-0 bg-shade"
+      />
+    </div>
+  );
 
   return (
     <div className="relative flex h-full w-full" style={{ perspective: '2400px' }}>
@@ -94,7 +97,17 @@ const PageTurn = ({
         {onRight === undefined ? null : renderPage(onRight)}
       </div>
 
-      {leaf(earlierSecond, laterFirst)}
+      <motion.div
+        className={`absolute inset-y-0 z-10 flex w-1/2 ${isRightToLeft ? 'left-0' : 'right-0'}`}
+        style={{
+          rotateY: rotate,
+          transformStyle: 'preserve-3d',
+          transformOrigin: isRightToLeft ? 'right center' : 'left center',
+        }}
+      >
+        {face(earlierSecond, false)}
+        {face(laterFirst, true)}
+      </motion.div>
     </div>
   );
 };

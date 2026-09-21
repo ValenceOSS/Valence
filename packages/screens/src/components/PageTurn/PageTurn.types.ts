@@ -6,6 +6,7 @@ type PageTurnProps = {
   isAdvancing: boolean;
   isRightToLeft: boolean;
   gap: number;
+  seconds: number;
   renderPage: (page: number) => ReactNode;
   onDone: () => void;
 };

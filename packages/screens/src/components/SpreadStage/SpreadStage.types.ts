@@ -1,7 +1,7 @@
 import type { ReaderFit } from '@ValenceScreens/reading/readerPreferences';
 
 type SpreadStageProps = {
-  pages: readonly number[];
+  spreads: readonly (readonly number[])[];
   spreadAt: number;
   bookId: string;
   chapterId: string;

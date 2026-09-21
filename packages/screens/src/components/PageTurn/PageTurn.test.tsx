@@ -10,6 +10,7 @@ const draw = (overrides: Partial<Parameters<typeof PageTurn>[0]> = {}) =>
       isAdvancing
       isRightToLeft={false}
       gap={0}
+      seconds={0.5}
       renderPage={(page) => <span key={page}>{`p${page.toString()}`}</span>}
       onDone={vi.fn()}
       {...overrides}

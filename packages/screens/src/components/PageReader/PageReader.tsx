@@ -547,8 +547,8 @@ const PageReader = ({
             }}
           >
             <SpreadStage
-              pages={showing}
-              spreadAt={at}
+              spreads={groups}
+              spreadAt={Math.min(at, Math.max(groups.length - 1, 0))}
               bookId={book.id}
               chapterId={chapterId}
               across={settings.isDouble ? 2 : 1}
