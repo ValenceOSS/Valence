@@ -59,6 +59,7 @@ import type {
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
 import { createExpiringCache } from './createExpiringCache';
 import { resolveSeriesShape } from './MetadataProvider';
+import { nextEpisodeOf } from '@ValenceServer/library/nextEpisodeOf';
 import { regeneratePreviews } from './regeneratePreviews';
 import { generateTrickplay } from './generateTrickplay';
 import { rebuildItemArtefacts } from './rebuildItemArtefacts';
@@ -1602,6 +1603,10 @@ const createDatabaseLibraryService = ({
           seriesTitle: row.seriesTitle,
           seasonNumber: row.seasonNumber,
           episodeNumber: row.episodeNumber,
+          releaseDate: row.releaseDate,
+          budget: row.budget,
+          revenue: row.revenue,
+          status: row.catalogueStatus,
         },
       });
 
@@ -2030,7 +2035,14 @@ const createDatabaseLibraryService = ({
 
       const whole = { ...detail, extras, trailerKey: cover?.trailerKey ?? null };
 
-      return shape === null ? whole : { ...whole, shape: shape.seasons };
+      return shape === null
+        ? whole
+        : {
+            ...whole,
+            shape: shape.seasons,
+            status: shape.status ?? null,
+            nextEpisode: nextEpisodeOf(shape.seasons, new Date().toISOString().slice(0, 10)),
+          };
     },
   };
 

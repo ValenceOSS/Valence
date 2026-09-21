@@ -14,6 +14,7 @@ import type {
   Metadata,
   MetadataProvider,
 } from './MetadataProvider';
+import { releaseFactsOf } from '@ValenceServer/library/releaseFactsOf';
 import { readCertifications } from '@ValenceServer/library/readCertifications';
 import { readRequestCatalogue } from '@ValenceServer/library/readRequestCatalogue';
 
@@ -117,6 +118,7 @@ const SeasonResponseSchema = z.object({
         name: z.string().optional(),
         overview: z.string().optional(),
         still_path: z.string().nullish(),
+        air_date: z.string().nullish(),
       }),
     )
     .default([]),
@@ -137,6 +139,10 @@ const DetailResponseSchema = z.object({
   poster_path: z.string().nullish(),
   backdrop_path: z.string().nullish(),
   vote_average: z.number().optional(),
+  budget: z.number().nonnegative().optional(),
+  revenue: z.number().nonnegative().optional(),
+  status: z.string().optional(),
+  imdb_id: z.string().nullish(),
   genres: z.array(z.object({ name: z.string() })).default([]),
   seasons: z
     .array(
@@ -703,6 +709,7 @@ const createCatalogueMetadataProvider = ({
           ...(poster === null ? {} : { posterUrl: poster }),
           ...(backdrop === null ? {} : { backdropUrl: backdrop }),
           ...(trailerKey === null ? {} : { trailerKey }),
+          ...releaseFactsOf(detail, episode?.air_date ?? null),
         };
       };
 
@@ -1043,12 +1050,17 @@ const createCatalogueMetadataProvider = ({
                     episode.overview === undefined || episode.overview === ''
                       ? null
                       : episode.overview,
+                  airDate: episode.air_date ?? null,
                 })),
           };
         }),
       );
 
-      return { seasons };
+      return {
+        seasons,
+        status:
+          detail.data.status === undefined || detail.data.status === '' ? null : detail.data.status,
+      };
     },
   };
 };

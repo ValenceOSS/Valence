@@ -94,4 +94,16 @@ describe('EpisodeRow', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(EpisodeRow.displayName).toBe('EpisodeRow');
   });
+
+  it('says when it aired, beside how long it runs, where the catalogue dates it', () => {
+    render(<EpisodeRow episode={episode} onPlay={vi.fn()} airs="Aired 2 Jan 2024" />);
+
+    expect(screen.getByText(/Aired 2 Jan 2024/)).toBeInTheDocument();
+  });
+
+  it('says nothing of a date it was not given', () => {
+    render(<EpisodeRow episode={episode} onPlay={vi.fn()} />);
+
+    expect(screen.queryByText(/Aired|Airs/)).not.toBeInTheDocument();
+  });
 });

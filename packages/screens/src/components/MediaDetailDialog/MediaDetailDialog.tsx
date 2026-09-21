@@ -47,6 +47,7 @@ import { PreviewMomentPicker } from '@ValenceScreens/components/PreviewMomentPic
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
 import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
 import { scrollToTopOf } from '@ValenceScreens/navigation/scrollToTopOf';
+import { TitleDetails } from '@ValenceScreens/components/TitleDetails/TitleDetails';
 import { RatingPanel } from '@ValenceScreens/components/RatingPanel/RatingPanel';
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
@@ -361,6 +362,13 @@ const MediaDetailDialog = ({
                 </span>
               )}
             </section>
+
+            <TitleDetails
+              releaseDate={metadata?.releaseDate}
+              status={metadata?.status}
+              budget={metadata?.budget}
+              revenue={metadata?.revenue}
+            />
 
             <section className="flex flex-col gap-3">
               {isLoading ? (

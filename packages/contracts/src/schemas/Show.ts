@@ -25,6 +25,14 @@ const CatalogueEpisodeSchema = z.object({
   title: z.string(),
   stillUrl: z.string().nullish(),
   overview: z.string().nullish(),
+  airDate: z.string().nullish(),
+});
+
+const NextEpisodeSchema = z.object({
+  seasonNumber: z.number().int().nonnegative(),
+  episodeNumber: z.number().int().positive(),
+  title: z.string(),
+  airDate: z.string(),
 });
 
 const SeasonShapeSchema = z.object({
@@ -38,6 +46,8 @@ const ShowDetailSchema = ShowSummarySchema.extend({
   shape: z.array(SeasonShapeSchema).nullish(),
   extras: z.array(MediaSummarySchema).optional(),
   trailerKey: z.string().nullish(),
+  status: z.string().nullish(),
+  nextEpisode: NextEpisodeSchema.nullish(),
 });
 
 const ShowListSchema = z.object({ shows: z.array(ShowSummarySchema) });

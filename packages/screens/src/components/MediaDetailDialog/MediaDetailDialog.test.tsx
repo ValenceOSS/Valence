@@ -310,6 +310,33 @@ describe('MediaDetailDialog', () => {
     expect(await screen.findByText(/metadata provider supplies the cast/)).toBeInTheDocument();
   });
 
+  it('states when it came out, what it cost and what it took, where the catalogue said', async () => {
+    detailMock.mockResolvedValue(
+      detail({
+        releaseDate: '2021-09-15',
+        status: 'Released',
+        budget: 165_000_000,
+        revenue: 402_000_000,
+      }),
+    );
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    expect(await screen.findByText('15 Sept 2021')).toBeInTheDocument();
+    expect(screen.getByText('$165M')).toBeInTheDocument();
+    expect(screen.getByText('$402M')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Details' })).toBeInTheDocument();
+  });
+
+  it('gives no details heading where the catalogue said none of it', async () => {
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(detailMock).toHaveBeenCalled();
+    });
+
+    expect(screen.queryByRole('heading', { name: 'Details' })).not.toBeInTheDocument();
+  });
+
   it('says why there is no synopsis rather than showing an empty paragraph', async () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 

@@ -256,6 +256,57 @@ describe('createCatalogueMetadataProvider', () => {
     expect(found?.backdropUrl).toContain('/w1280/backdrop.jpg');
   });
 
+  it('keeps when a film came out, what it cost and made, whether it is out, and its id elsewhere', async () => {
+    const { instance } = provider({
+      '/search/movie': SEARCH,
+      '/movie/329': {
+        ...DETAIL,
+        budget: 47_000_000,
+        revenue: 203_000_000,
+        status: 'Released',
+        imdb_id: 'tt2543164',
+      },
+    });
+
+    await expect(instance.describe(facts('/media/Arrival (2016).mkv'))).resolves.toMatchObject({
+      releaseDate: '2016-11-10',
+      budget: 47_000_000,
+      revenue: 203_000_000,
+      status: 'Released',
+      imdbId: 'tt2543164',
+    });
+  });
+
+  it('leaves out a budget the catalogue gives as nothing', async () => {
+    const { instance } = provider({
+      '/search/movie': SEARCH,
+      '/movie/329': { ...DETAIL, budget: 0, revenue: 0 },
+    });
+
+    const found = await instance.describe(facts('/media/Arrival (2016).mkv'));
+
+    expect(found).not.toHaveProperty('budget');
+    expect(found).not.toHaveProperty('revenue');
+  });
+
+  it('dates an episode by the day it aired', async () => {
+    const { instance } = provider({
+      '/search/tv': { results: [{ id: 5, name: 'Some Show', first_air_date: '2019-01-01' }] },
+      '/tv/5': { id: 5, name: 'Some Show', first_air_date: '2019-01-01', genres: [] },
+      '/tv/5/season/1': { episodes: [{ episode_number: 2, name: 'Two', air_date: '2019-01-15' }] },
+    });
+
+    await expect(
+      instance.describe(
+        facts('/media/Some Show/Season 1/Some.Show.S01E02.mkv', {
+          seriesTitle: 'Some Show',
+          seasonNumber: 1,
+          episodeNumber: 2,
+        }),
+      ),
+    ).resolves.toMatchObject({ releaseDate: '2019-01-15' });
+  });
+
   it('searches by the year in the filename, so remakes do not win', async () => {
     const { instance, calls } = provider({ '/search/movie': SEARCH, '/movie/329': DETAIL });
 
@@ -647,8 +698,34 @@ describe('reading the shape of a series', () => {
               title: 'Pilot',
               stillUrl: 'https://image.tmdb.org/t/p/w780/still.jpg',
               overview: 'It begins.',
+              airDate: null,
             },
-            { episodeNumber: 2, title: 'Biscuits', stillUrl: null, overview: null },
+            { episodeNumber: 2, title: 'Biscuits', stillUrl: null, overview: null, airDate: null },
+          ],
+        },
+      ],
+      status: null,
+    });
+  });
+
+  it('keeps the day each episode aired, and whether the series is still running', async () => {
+    const { instance } = provider({
+      '/tv/5/season/1': {
+        episodes: [
+          { episode_number: 1, name: 'Pilot', air_date: '2020-10-02' },
+          { episode_number: 2, name: 'Biscuits' },
+        ],
+      },
+      '/tv/5': { ...SERIES, status: 'Returning Series' },
+    });
+
+    await expect(instance.describeSeries?.('5')).resolves.toMatchObject({
+      status: 'Returning Series',
+      seasons: [
+        {
+          episodes: [
+            { episodeNumber: 1, airDate: '2020-10-02' },
+            { episodeNumber: 2, airDate: null },
           ],
         },
       ],
