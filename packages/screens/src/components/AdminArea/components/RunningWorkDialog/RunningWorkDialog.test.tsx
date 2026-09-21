@@ -1,7 +1,13 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { runQueuedJobNow } from '@ValenceClient/admin/fetchAdmin';
 import { RunningWorkDialog } from './RunningWorkDialog';
 import type { Job } from '@ValenceClient/admin/fetchAdmin';
+
+vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
+  runQueuedJobNow: vi.fn().mockResolvedValue(true),
+}));
 
 const task = (overrides: Partial<Job> = {}): Job => ({
   id: 1,
@@ -30,6 +36,24 @@ describe('RunningWorkDialog', () => {
 
     expect(screen.getByText('Movie.mkv')).toBeInTheDocument();
     expect(screen.getByText('Other.mkv')).toBeInTheDocument();
+  });
+
+  it('offers to start a waiting task now, past the limit, and only a waiting one', async () => {
+    render(
+      <RunningWorkDialog
+        title="Generate missing previews"
+        isOpen
+        progress={[]}
+        tasks={[task({ id: 1 }), task({ id: 2, subject: 'Other.mkv', state: 'queued' })]}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByRole('button', { name: /now$/ })).toHaveLength(1);
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Run Other.mkv now' }));
+
+    expect(runQueuedJobNow).toHaveBeenCalledWith(2);
   });
 
   it('says a job that has been asked to stop is finishing what it began, and leaving the rest', () => {

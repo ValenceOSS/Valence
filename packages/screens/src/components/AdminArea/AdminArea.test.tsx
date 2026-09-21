@@ -85,6 +85,7 @@ const MONITOR: Monitor = {
   },
   queue: {
     concurrency: 2,
+    paused: false,
     queued: 1,
     running: 1,
     jobs: [

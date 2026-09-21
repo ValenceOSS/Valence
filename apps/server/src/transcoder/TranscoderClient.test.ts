@@ -464,6 +464,38 @@ describe('every question the client asks the media service', () => {
     expect(asked[0]?.url).toContain('/monitor');
   });
 
+  it('asks the queue to run a different number at once', async () => {
+    const { client, asked } = scripted({ body: {} });
+
+    await client.controlQueue.setConcurrency(3);
+
+    expect(asked[0]?.url).toContain('/queue/concurrency');
+    expect(asked[0]?.init?.body).toBe(JSON.stringify({ concurrency: 3 }));
+  });
+
+  it('pauses the queue, and resumes it', async () => {
+    const { client, asked } = scripted({ body: {} });
+
+    await client.controlQueue.pause();
+    await client.controlQueue.resume();
+
+    expect(asked.map((one) => one.url.replace(/^.*\/queue/, '/queue'))).toEqual([
+      '/queue/pause',
+      '/queue/resume',
+    ]);
+  });
+
+  it('tells one waiting job to start now, and says whether there was one', async () => {
+    const found = scripted({ body: {} });
+
+    await expect(found.client.controlQueue.runNow(7)).resolves.toBe(true);
+    expect(found.asked[0]?.url).toContain('/queue/jobs/7/run-now');
+
+    const missing = scripted({ ok: false, status: 404 });
+
+    await expect(missing.client.controlQueue.runNow(7)).resolves.toBe(false);
+  });
+
   it('raises what the service refused, with the status it refused it with', async () => {
     const { client } = scripted({ ok: false, status: 503 });
 

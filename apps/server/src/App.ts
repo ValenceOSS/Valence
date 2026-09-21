@@ -1,4 +1,5 @@
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
+import type { QueueControl } from '@ValenceServer/transcoder/TranscoderClient';
 import type { RunningJob } from '@ValenceServer/jobs/JobQueue';
 import type { CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import { OpenAPIHono, z } from '@hono/zod-openapi';
@@ -211,6 +212,10 @@ import {
   adminJobDefinitionsRoute,
   adminRunJobRoute,
   adminCancelJobRoute,
+  adminQueueConcurrencyRoute,
+  adminQueuePauseRoute,
+  adminQueueResumeRoute,
+  adminQueueRunNowRoute,
   adminJobSchedulesRoute,
   adminAddJobTriggerRoute,
   adminRemoveJobTriggerRoute,
@@ -653,6 +658,7 @@ type CreateAppOptions = {
   requests?: RequestsMonitor | null;
   requestsClient?: RequestsClient | null;
   cancelJob?: (jobId: string) => Promise<boolean>;
+  controlQueue?: QueueControl | null;
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   describeForRequest?: (tmdbId: number, kind: VideoRequestKind) => Promise<RequestCatalogue | null>;
   describeMusicForRequest?: (
@@ -723,6 +729,7 @@ const createApp = ({
   requests = null,
   requestsClient = null,
   cancelJob = () => Promise.resolve(false),
+  controlQueue = null,
   searchCatalogue = () => Promise.resolve([]),
   describeForRequest = () => Promise.resolve(null),
   describeMusicForRequest = () => Promise.resolve(null),
@@ -2705,6 +2712,66 @@ const createApp = ({
     return (await cancelJob(jobId))
       ? context.json({ jobId }, 202)
       : context.json({ error: 'Nothing is running under that id.' }, 404);
+  });
+
+  app.openapi(adminQueueConcurrencyRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { concurrency } = context.req.valid('json');
+
+    try {
+      await controlQueue?.setConcurrency(concurrency);
+    } catch {
+      return context.json({ error: 'The media service could not be reached.' }, 502);
+    }
+
+    return context.json({ concurrency }, 200);
+  });
+
+  app.openapi(adminQueuePauseRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    try {
+      await controlQueue?.pause();
+    } catch {
+      return context.json({ error: 'The media service could not be reached.' }, 502);
+    }
+
+    return context.json({ isPaused: true as const }, 200);
+  });
+
+  app.openapi(adminQueueResumeRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    try {
+      await controlQueue?.resume();
+    } catch {
+      return context.json({ error: 'The media service could not be reached.' }, 502);
+    }
+
+    return context.json({ isPaused: false as const }, 200);
+  });
+
+  app.openapi(adminQueueRunNowRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { jobId } = context.req.valid('param');
+
+    try {
+      return (await controlQueue?.runNow(jobId)) === true
+        ? context.json({ jobId }, 202)
+        : context.json({ error: 'No such job is waiting.' }, 404);
+    } catch {
+      return context.json({ error: 'The media service could not be reached.' }, 502);
+    }
   });
 
   app.openapi(adminJobHistoryRoute, async (context) => {

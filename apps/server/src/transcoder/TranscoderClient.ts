@@ -298,6 +298,13 @@ type SessionSpec = {
 
 type AudioRenditionKbps = 96 | 160 | 320;
 
+type QueueControl = {
+  setConcurrency: (concurrency: number) => Promise<void>;
+  pause: () => Promise<void>;
+  resume: () => Promise<void>;
+  runNow: (jobId: number) => Promise<boolean>;
+};
+
 type Transcoder = {
   isReachable: () => Promise<boolean>;
   probe: (path: string) => Promise<MediaProbe>;
@@ -356,6 +363,8 @@ type Transcoder = {
   heartbeatSession: (id: string, isPlaying: boolean) => Promise<boolean>;
   capabilities: () => Promise<TranscoderCapabilities>;
 };
+
+type TranscoderWithQueueControl = Transcoder & { controlQueue: QueueControl };
 
 type TranscoderFile = {
   body: ArrayBuffer;
@@ -476,7 +485,7 @@ const createTranscoderClient = ({
   baseUrl,
   fetchImpl,
   streamFetchImpl,
-}: CreateTranscoderClientOptions): Transcoder => {
+}: CreateTranscoderClientOptions): TranscoderWithQueueControl => {
   const socketPath = readSocketPath(baseUrl);
   const origin = socketPath === null ? baseUrl : 'http://transcoder.local';
   const wsOrigin = origin.replace(/^http/, 'ws');
@@ -613,7 +622,27 @@ const createTranscoderClient = ({
     return response;
   };
 
+  const controlQueue: QueueControl = {
+    setConcurrency: async (concurrency) => {
+      await postJson('/queue/concurrency', { concurrency });
+    },
+    pause: async () => {
+      await postJson('/queue/pause', {});
+    },
+    resume: async () => {
+      await postJson('/queue/resume', {});
+    },
+    runNow: async (jobId) => {
+      const response = await call2(`${origin}/queue/jobs/${jobId.toString()}/run-now`, {
+        method: 'POST',
+      });
+
+      return response.ok;
+    },
+  };
+
   return {
+    controlQueue,
     isReachable: async () => {
       const response = await Promise.race([
         call2(`${origin}/health`).catch(() => null),
@@ -776,6 +805,8 @@ const createTranscoderClient = ({
 };
 
 export type {
+  QueueControl,
+  TranscoderWithQueueControl,
   AudioRenditionKbps,
   FetchLike,
   HttpResponse,

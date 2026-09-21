@@ -11,12 +11,12 @@
 use std::collections::{HashMap, VecDeque};
 use std::error::Error;
 use std::future::Future;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
-use tokio::sync::{Mutex, Semaphore};
+use tokio::sync::{watch, Mutex, Notify, Semaphore};
 
 /// How many finished items are remembered.
 ///
@@ -130,6 +130,8 @@ impl JobRecord {
 pub struct QueueSnapshot {
     /// How many may run at once.
     pub concurrency: usize,
+    /// Whether work waiting in the queue is being held back rather than started.
+    pub paused: bool,
     pub queued: usize,
     pub running: usize,
     /// Recent work, newest first.
@@ -201,7 +203,11 @@ impl Drop for Abandonment {
 #[derive(Clone)]
 pub struct WorkQueue {
     permits: Arc<Semaphore>,
-    concurrency: usize,
+    concurrency: Arc<AtomicUsize>,
+    /// Whether waiting work is held back. Work already running is left to finish.
+    paused: Arc<watch::Sender<bool>>,
+    /// Work waiting to be told to go now, by its id, whatever the ceiling says.
+    overrides: Arc<Mutex<HashMap<u64, Arc<Notify>>>>,
     /// Kinds of work that wait in a lane of their own rather than in the main
     /// one, by name.
     lanes: Arc<HashMap<String, Arc<Semaphore>>>,
@@ -221,7 +227,9 @@ impl WorkQueue {
 
         Self {
             permits: Arc::new(Semaphore::new(concurrency)),
-            concurrency,
+            concurrency: Arc::new(AtomicUsize::new(concurrency)),
+            paused: Arc::new(watch::channel(false).0),
+            overrides: Arc::new(Mutex::new(HashMap::new())),
             lanes: Arc::new(HashMap::new()),
             jobs: Arc::new(Mutex::new(VecDeque::new())),
             next_id: Arc::new(AtomicU64::new(1)),
@@ -311,7 +319,13 @@ impl WorkQueue {
             .get(job.kind())
             .map_or(&self.permits, |held| held);
 
-        let permit = lane.acquire().await;
+        let go_now = Arc::new(Notify::new());
+
+        self.overrides.lock().await.insert(id, Arc::clone(&go_now));
+
+        let permit = self.wait_for_a_turn(lane, &go_now).await;
+
+        self.overrides.lock().await.remove(&id);
 
         self.amend(id, |job| {
             job.state = JobState::Running;
@@ -347,12 +361,79 @@ impl WorkQueue {
         outcome
     }
 
+    /// Waits until this work may start: not while the queue is paused, and then
+    /// for a place under the ceiling — unless somebody has said to go now, in
+    /// which case it starts at once and holds no place, since it was never
+    /// given one.
+    async fn wait_for_a_turn<'a>(
+        &self,
+        lane: &'a Arc<Semaphore>,
+        go_now: &Notify,
+    ) -> Option<tokio::sync::SemaphorePermit<'a>> {
+        let mut paused = self.paused.subscribe();
+
+        tokio::select! {
+            () = go_now.notified() => return None,
+            _ = paused.wait_for(|held| !*held) => {}
+        }
+
+        tokio::select! {
+            () = go_now.notified() => None,
+            permit = lane.acquire() => permit.ok(),
+        }
+    }
+
+    /// How many pieces of work may run at once from now on.
+    ///
+    /// Raising it lets waiting work start at once. Lowering it takes effect as
+    /// work finishes: what is already running is never cut short to make the
+    /// number true, the extra places are simply not handed on again.
+    pub fn set_concurrency(&self, concurrency: usize) {
+        let wanted = concurrency.max(1);
+        let before = self.concurrency.swap(wanted, Ordering::AcqRel);
+
+        if wanted > before {
+            self.permits.add_permits(wanted - before);
+        } else if wanted < before {
+            let permits = Arc::clone(&self.permits);
+            let surplus = u32::try_from(before - wanted).unwrap_or(u32::MAX);
+
+            tokio::spawn(async move {
+                if let Ok(held) = permits.acquire_many(surplus).await {
+                    held.forget();
+                }
+            });
+        }
+    }
+
+    /// Holds back work that has not started. Work already running finishes.
+    pub fn pause(&self) {
+        self.paused.send_replace(true);
+    }
+
+    /// Lets waiting work start again.
+    pub fn resume(&self) {
+        self.paused.send_replace(false);
+    }
+
+    /// Starts one waiting piece of work now, past both the ceiling and a pause.
+    ///
+    /// # Returns
+    ///
+    /// Whether there was such work still waiting to be told.
+    pub async fn run_now(&self, id: u64) -> bool {
+        let waiting = self.overrides.lock().await.get(&id).cloned();
+
+        waiting.map(|go_now| go_now.notify_one()).is_some()
+    }
+
     /// What the queue is doing and what it has recently done.
     pub async fn snapshot(&self) -> QueueSnapshot {
         let jobs = self.jobs.lock().await.iter().cloned().collect::<Vec<_>>();
 
         QueueSnapshot {
-            concurrency: self.concurrency,
+            concurrency: self.concurrency.load(Ordering::Acquire),
+            paused: *self.paused.borrow(),
             queued: jobs
                 .iter()
                 .filter(|job| job.state == JobState::Queued)
@@ -735,5 +816,183 @@ timestamps up by eye"
             .iter()
             .all(|job| job.state != JobState::Running));
         assert!(settled.jobs.iter().all(|job| job.finished_at_ms.is_some()));
+    }
+
+    /// Work that finishes when told to, so a test can hold places in the queue.
+    async fn held_until(gate: tokio::sync::oneshot::Receiver<()>) -> Result<u8, std::io::Error> {
+        let _ = gate.await;
+
+        Ok(1)
+    }
+
+    async fn settle() {
+        tokio::time::sleep(Duration::from_millis(40)).await;
+    }
+
+    #[tokio::test]
+    async fn holds_waiting_work_while_paused_and_starts_it_on_resume() {
+        let queue = WorkQueue::new(1);
+
+        queue.pause();
+
+        let waiting = tokio::spawn({
+            let queue = queue.clone();
+
+            async move {
+                let outcome: Result<u8, std::io::Error> = queue
+                    .run(thumbnails("film.mkv"), None, async { Ok(1) })
+                    .await;
+
+                outcome
+            }
+        });
+
+        settle().await;
+
+        let held = queue.snapshot().await;
+
+        assert!(held.paused);
+        assert_eq!(held.queued, 1, "paused work waits rather than starting");
+        assert_eq!(held.running, 0);
+
+        queue.resume();
+
+        assert_eq!(waiting.await.expect("joined").expect("ran"), 1);
+        assert!(!queue.snapshot().await.paused);
+    }
+
+    #[tokio::test]
+    async fn lets_running_work_finish_while_paused() {
+        let queue = WorkQueue::new(1);
+        let (open, gate) = tokio::sync::oneshot::channel();
+
+        let running = tokio::spawn({
+            let queue = queue.clone();
+
+            async move {
+                queue
+                    .run(thumbnails("film.mkv"), None, held_until(gate))
+                    .await
+            }
+        });
+
+        settle().await;
+        queue.pause();
+        let _ = open.send(());
+
+        assert_eq!(running.await.expect("joined").expect("ran"), 1);
+    }
+
+    #[tokio::test]
+    async fn starts_one_waiting_job_now_past_the_ceiling() {
+        let queue = WorkQueue::new(1);
+        let (open, gate) = tokio::sync::oneshot::channel();
+
+        let first = tokio::spawn({
+            let queue = queue.clone();
+
+            async move {
+                queue
+                    .run(thumbnails("first.mkv"), None, held_until(gate))
+                    .await
+            }
+        });
+
+        settle().await;
+
+        let second = tokio::spawn({
+            let queue = queue.clone();
+
+            async move {
+                let outcome: Result<u8, std::io::Error> = queue
+                    .run(thumbnails("second.mkv"), None, async { Ok(2) })
+                    .await;
+
+                outcome
+            }
+        });
+
+        settle().await;
+
+        assert_eq!(queue.snapshot().await.queued, 1);
+        assert!(
+            queue.run_now(2).await,
+            "the second job was waiting to be told"
+        );
+        assert_eq!(second.await.expect("joined").expect("ran"), 2);
+        assert_eq!(
+            queue.snapshot().await.running,
+            1,
+            "the first is still holding its place: the second ran beside it"
+        );
+
+        let _ = open.send(());
+        let _ = first.await;
+    }
+
+    #[tokio::test]
+    async fn says_no_when_the_job_is_not_waiting() {
+        let queue = WorkQueue::new(1);
+
+        let _: Result<u8, std::io::Error> = queue
+            .run(thumbnails("film.mkv"), None, async { Ok(1) })
+            .await;
+
+        assert!(!queue.run_now(1).await, "it has already run");
+        assert!(!queue.run_now(99).await, "there never was such a job");
+    }
+
+    #[tokio::test]
+    async fn starts_waiting_work_when_the_ceiling_is_raised() {
+        let queue = WorkQueue::new(1);
+        let (open_first, first_gate) = tokio::sync::oneshot::channel();
+        let (open_second, second_gate) = tokio::sync::oneshot::channel();
+
+        let first = tokio::spawn({
+            let queue = queue.clone();
+
+            async move {
+                queue
+                    .run(thumbnails("first.mkv"), None, held_until(first_gate))
+                    .await
+            }
+        });
+        let second = tokio::spawn({
+            let queue = queue.clone();
+
+            async move {
+                queue
+                    .run(thumbnails("second.mkv"), None, held_until(second_gate))
+                    .await
+            }
+        });
+
+        settle().await;
+
+        let before = queue.snapshot().await;
+
+        assert_eq!((before.running, before.queued), (1, 1));
+
+        queue.set_concurrency(2);
+        settle().await;
+
+        let after = queue.snapshot().await;
+
+        assert_eq!(after.concurrency, 2);
+        assert_eq!((after.running, after.queued), (2, 0));
+
+        let _ = open_first.send(());
+        let _ = open_second.send(());
+        let _ = first.await;
+        let _ = second.await;
+    }
+
+    #[tokio::test]
+    async fn never_runs_less_than_one_at_a_time() {
+        let queue = WorkQueue::new(3);
+
+        queue.set_concurrency(0);
+
+        assert_eq!(queue.snapshot().await.concurrency, 1);
     }
 }

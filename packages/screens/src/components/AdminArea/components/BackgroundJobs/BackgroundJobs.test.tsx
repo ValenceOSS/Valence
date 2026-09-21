@@ -33,7 +33,7 @@ const monitor = (jobs: Job[]): Monitor => ({
     graphics: null,
     artefacts: null,
   },
-  queue: { concurrency: 1, queued: 0, running: jobs.length, jobs },
+  queue: { concurrency: 1, paused: false, queued: 0, running: jobs.length, jobs },
   sessions: 0,
   logs: [],
   cache: null,

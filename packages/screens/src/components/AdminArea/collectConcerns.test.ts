@@ -58,7 +58,7 @@ const healthyMonitor = (
     graphics: null,
     artefacts: null,
   },
-  queue: { concurrency: 1, queued: 0, running: 0, jobs },
+  queue: { concurrency: 1, paused: false, queued: 0, running: 0, jobs },
   sessions: 0,
   logs: [],
   cache: null,
