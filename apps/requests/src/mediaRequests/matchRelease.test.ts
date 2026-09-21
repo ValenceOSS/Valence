@@ -26,7 +26,8 @@ const held = (
   request: Parameters<typeof matchRelease>[0],
   items: Parameters<typeof matchRelease>[1],
   name: string,
-) => matchRelease(request, items, parseReleaseName(name)).map((item) => item.id);
+  madeAt: string | null = null,
+) => matchRelease(request, items, parseReleaseName(name), madeAt).map((item) => item.id);
 
 describe('matchRelease', () => {
   it('matches a film by its title and a year near enough', () => {
@@ -70,6 +71,32 @@ describe('matchRelease', () => {
       '2x1',
     ]);
     expect(held(SEVERANCE, items, 'Silo.S01E02.1080p.WEB.H264-GRP')).toEqual([]);
+  });
+
+  it('credits a whole run only with what had aired the day it was made', () => {
+    const daredevil = { kind: 'series' as const, title: 'Daredevil', aliases: [], year: 2015 };
+    const items = [
+      { id: '1x1', season: 1, episode: 1, airDate: '2015-04-10' },
+      { id: '1x2', season: 1, episode: 2, airDate: '2015-04-17' },
+      { id: '4x1', season: 4, episode: 1, airDate: '2024-03-05' },
+    ];
+    const pack = 'Daredevil.COMPLETE.SERIES.1080p.WEB-DL-GRP';
+
+    expect(held(daredevil, items, pack, '2018-10-20')).toEqual(['1x1', '1x2']);
+    expect(held(daredevil, items, pack, '2024-06-01')).toEqual(['1x1', '1x2', '4x1']);
+    expect(held(daredevil, items, pack)).toEqual(['1x1', '1x2', '4x1']);
+  });
+
+  it('credits a whole season only with what had aired the day it was made', () => {
+    const items = [
+      { id: '1x1', season: 1, episode: 1, airDate: '2022-02-18' },
+      { id: '1x2', season: 1, episode: 2, airDate: '2022-02-25' },
+    ];
+
+    expect(held(SEVERANCE, items, 'Severance.S01.1080p.WEB-DL-GRP', '2022-02-20')).toEqual(['1x1']);
+    expect(held(SEVERANCE, items, 'Severance.S01E02.1080p.WEB-DL-GRP', '2022-02-20')).toEqual([
+      '1x2',
+    ]);
   });
 
   it('matches an episode by the day it aired', () => {

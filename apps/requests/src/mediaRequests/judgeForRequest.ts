@@ -40,6 +40,10 @@ type JudgedForRequest = {
  * A release picked by hand is matched by its numbers alone, or an album by its title alone, since
  * whoever picked it knows what it is better than its name does.
  *
+ * A release claiming a whole season or a whole run is credited only with the episodes that had
+ * aired the day it was made, so a pack of a show that has since come back does not answer for the
+ * seasons that followed it.
+ *
  * A profile that names no preferred language takes the one its library is set to, which is what
  * makes the setting worth having: an operator who has already said their films are in German
  * should not have to say it again on every profile.
@@ -78,6 +82,7 @@ const judgeForRequest = ({
           isTitleChecked ? request : { ...request, title: parsed.title, aliases: [] },
           items,
           isTitleChecked ? parsed : { ...parsed, year: null },
+          release.publishedAt?.slice(0, 10) ?? null,
         );
 
     if (covered.length === 0) {
