@@ -7,7 +7,7 @@ import { fetchIndexers, searchReleases } from '@ValenceClient/requests/fetchInde
 import { fetchCatalogue, fetchDefinition } from '@ValenceClient/requests/fetchDefinitions';
 import { fetchDownloadClients } from '@ValenceClient/requests/fetchDownloadClients';
 import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
-import { fetchProfiles } from '@ValenceClient/requests/fetchProfiles';
+import { fetchProfiles, fetchProfilesOnOffer } from '@ValenceClient/requests/fetchProfiles';
 import {
   fetchRequestBlocklist,
   fetchMediaRequestLog,
@@ -25,6 +25,7 @@ import {
 import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
+import type { ProfileKind } from '@ValenceContracts/schemas/QualityProfile';
 
 const REQUESTS = ['requests'] as const;
 
@@ -149,6 +150,20 @@ const profiles = () =>
   queryOptions({
     queryKey: [...REQUESTS, 'profiles'],
     queryFn: () => fetchProfiles(),
+  });
+
+/**
+ * The qualities somebody may ask at, for one kind of request.
+ *
+ * @param kind - Whether the request is for music or for video.
+ * @param isEnabled - Whether to ask at all, which a dialog that is shut does not.
+ * @returns The query.
+ */
+const profilesOnOffer = (kind: ProfileKind, isEnabled = true) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'profiles', 'onOffer', kind],
+    queryFn: () => fetchProfilesOnOffer(kind),
+    enabled: isEnabled,
   });
 
 /**
@@ -310,6 +325,7 @@ const requestsQueries = {
   downloadClients,
   downloadQueue,
   profiles,
+  profilesOnOffer,
   mediaRequests,
   mediaRequestReleases,
   mediaRequestLog,

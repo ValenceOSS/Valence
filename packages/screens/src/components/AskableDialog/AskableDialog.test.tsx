@@ -7,12 +7,20 @@ import { AskableDialog } from './AskableDialog';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type * as Askable from '@ValenceClient/requests/fetchAskable';
 import type * as Requests from '@ValenceClient/requests/fetchMediaRequests';
+import type { ProfilesOnOffer } from '@ValenceContracts/schemas/QualityProfile';
 
 const fetchAskable = vi.fn<typeof Askable.fetchAskable>();
 const askForMedia = vi.fn<typeof Requests.askForMedia>();
+const fetchProfilesOnOffer = vi.fn<() => Promise<ProfilesOnOffer>>();
+
+const aQuality = (id: string, name: string) => ({ id, name, kind: 'video' as const });
 
 vi.mock('@ValenceClient/requests/fetchAskable', () => ({
   fetchAskable: (...given: Parameters<typeof Askable.fetchAskable>) => fetchAskable(...given),
+}));
+
+vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
+  fetchProfilesOnOffer: () => fetchProfilesOnOffer(),
 }));
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
@@ -50,6 +58,7 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
 beforeEach(() => {
   fetchAskable.mockReset().mockResolvedValue(aTitle());
   askForMedia.mockReset().mockResolvedValue({ value: aMediaRequest(), refusal: null });
+  fetchProfilesOnOffer.mockReset().mockResolvedValue({ choices: [], forcedId: null });
 });
 
 /**
@@ -77,6 +86,72 @@ describe('AskableDialog', () => {
       expect(askForMedia).toHaveBeenCalledWith({ kind: 'film', tmdbId: 438631 });
     });
     expect(fetchAskable).toHaveBeenCalledWith('film', '438631');
+  });
+
+  it('asks which quality to look for, once there is more than one to choose between', async () => {
+    fetchProfilesOnOffer.mockResolvedValue({
+      choices: [aQuality('uhd', '4K'), aQuality('hd', '1080p')],
+      forcedId: null,
+    });
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
+    await userEvent.click(await screen.findByRole('button', { name: '1080p' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith({
+        kind: 'film',
+        tmdbId: 438631,
+        profileId: 'hd',
+      });
+    });
+  });
+
+  it('does not ask where there is only one quality to ask at', async () => {
+    fetchProfilesOnOffer.mockResolvedValue({ choices: [aQuality('hd', '1080p')], forcedId: null });
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith({ kind: 'film', tmdbId: 438631 });
+    });
+  });
+
+  it('does not ask where the server asks at one quality and no other', async () => {
+    fetchProfilesOnOffer.mockResolvedValue({
+      choices: [aQuality('hd', '1080p'), aQuality('uhd', '4K')],
+      forcedId: 'hd',
+    });
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith({ kind: 'film', tmdbId: 438631 });
+    });
+  });
+
+  it('asks for nothing when the quality prompt is dismissed', async () => {
+    fetchProfilesOnOffer.mockResolvedValue({
+      choices: [aQuality('uhd', '4K'), aQuality('hd', '1080p')],
+      forcedId: null,
+    });
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Request' }));
+
+    const prompt = await screen.findByRole('dialog', { name: 'Which quality for Dune?' });
+
+    expect(within(prompt).getByRole('heading', { name: 'Ask for Dune' })).toBeInTheDocument();
+
+    await userEvent.click(within(prompt).getByRole('button', { name: 'Close' }));
+
+    expect(askForMedia).not.toHaveBeenCalled();
   });
 
   it('asks for the seasons of a series chosen', async () => {

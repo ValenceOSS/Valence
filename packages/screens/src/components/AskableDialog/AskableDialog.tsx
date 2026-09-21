@@ -21,6 +21,7 @@ import { RELEASE_TYPE_NAMES } from '@ValenceScreens/components/AdminArea/RELEASE
 import { CastGrid } from '@ValenceScreens/components/MediaDetailDialog/components/CastGrid/CastGrid';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
+import { ChooseQualityDialog } from '@ValenceScreens/components/AskableDialog/components/ChooseQualityDialog/ChooseQualityDialog';
 import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
 import { describeAskableFacts } from './describeAskableFacts';
 import { describeStanding } from './describeStanding';
@@ -32,6 +33,8 @@ import type { AskableDialogProps } from './AskableDialog.types';
 import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
 
 const FOLLOWED_EVERY_MS = 5000;
+
+type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
 
 /**
  * What to ask for a title as it stands: a film as it is, a series with the seasons chosen, an
@@ -92,6 +95,14 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const going = request === null ? null : progressOfRequest(request, progress.data ?? []);
   const me = useQuery(sessionQueries.who());
   const [isCancelling, setIsCancelling] = useState(false);
+  const [choosing, setChoosing] = useState<Choosing | null>(null);
+  const offered = useQuery(
+    requestsQueries.profilesOnOffer(
+      title !== null && isMusicRequest(title.kind) ? 'music' : 'video',
+      title?.standing.status === 'askable',
+    ),
+  );
+  const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const mayCancel =
     request !== null &&
     request.requestedBy.id === me.data?.id &&
@@ -121,6 +132,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
       .finally(() => {
         setIsAsking(false);
       });
+  };
+
+  const ask = (asked: MediaRequestAsk, onAsked: () => void = () => undefined) => {
+    if (choices.length < 2) {
+      send(asked, onAsked);
+
+      return;
+    }
+
+    setChoosing({ asked, onAsked });
   };
 
   return (
@@ -275,7 +296,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                               size="xs"
                               isLoading={isAsking}
                               onClick={() => {
-                                send({ kind: 'album', musicBrainzId: album.id }, () => {
+                                ask({ kind: 'album', musicBrainzId: album.id }, () => {
                                   setAskedAlbums(new Set([...askedAlbums, album.id]));
                                 });
                               }}
@@ -312,7 +333,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                     isDisabled: !isReady,
                     isLoading: isAsking,
                     onChoose: () => {
-                      send(askingFor(title, seasons, releaseTypes));
+                      ask(askingFor(title, seasons, releaseTypes));
                     },
                   }
                 : undefined
@@ -329,6 +350,25 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
           </Button>
         ) : null}
       </DialogFooter>
+
+      <ChooseQualityDialog
+        title={title?.title ?? 'this'}
+        choices={choices}
+        isOpen={choosing !== null}
+        isAsking={isAsking}
+        onChoose={(profileId) => {
+          const waiting = choosing;
+
+          setChoosing(null);
+
+          if (waiting !== null) {
+            send({ ...waiting.asked, profileId }, waiting.onAsked);
+          }
+        }}
+        onClose={() => {
+          setChoosing(null);
+        }}
+      />
 
       <ConfirmDialog
         title={`Cancel ${title?.title ?? 'this request'}?`}
