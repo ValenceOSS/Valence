@@ -98,7 +98,8 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "executableName": "valence"
     },
     "copyright": "Copyright © Valence contributors",
     "nsis": {
