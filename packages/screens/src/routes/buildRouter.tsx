@@ -6,6 +6,7 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import { z } from 'zod';
+import { ObservabilitySearchSchema } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import { readSearch } from '@ValenceClient/navigation/readSearch';
 import { ValenceRoot } from '@ValenceScreens/components/ValenceRoot/ValenceRoot';
 import { SignedIn } from '@ValenceScreens/components/SignedIn/SignedIn';
@@ -68,10 +69,7 @@ const BROWSABLE = ['/shows', '/films', '/new', '/favourites'] as const;
 
 const ADMIN_DEFAULT_PANEL = 'overview';
 
-const adminSearch = z.object({
-  job: z.string().optional(),
-  view: z.enum(['logs', 'jobs', 'health', 'run']).optional(),
-});
+const adminSearch = z.object({ job: z.string().optional(), ...ObservabilitySearchSchema.shape });
 
 const deviceSearch = z.object({ user_code: z.string().optional() });
 

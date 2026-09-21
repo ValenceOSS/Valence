@@ -1,12 +1,11 @@
-import type { ObservabilityView } from './ObservabilityPage.types';
-
-const VIEWS: readonly ObservabilityView[] = ['logs', 'jobs', 'health', 'run'];
+import { OBSERVABILITY_VIEWS } from '@ValenceClient/admin/ObservabilitySearchSchema';
+import type { ObservabilityView } from '@ValenceClient/admin/ObservabilitySearchSchema';
 
 /**
- * Reads which view of the logs and jobs page an address asked to open on.
+ * Reads which view of the jobs and logs page an address asked to open on.
  *
- * The page is served at `/admin/logs` now, and what used to be `/admin/jobs` opens its job runs, so
- * a link or a bookmark made before the two were joined still lands where it meant to.
+ * The page is served at `/admin/jobs` now, and what used to be `/admin/logs` opens its log, so a
+ * link or a bookmark made before the two were joined still lands where it meant to.
  *
  * @param view - What the address's `view` said, if it said anything.
  * @param panel - Which panel the address named.
@@ -16,6 +15,6 @@ const readObservabilityView = (
   view: string | undefined,
   panel: string | undefined,
 ): ObservabilityView | undefined =>
-  VIEWS.find((one) => one === view) ?? (panel === 'jobs' ? 'jobs' : undefined);
+  OBSERVABILITY_VIEWS.find((one) => one === view) ?? (panel === 'logs' ? 'logs' : undefined);
 
 export { readObservabilityView };

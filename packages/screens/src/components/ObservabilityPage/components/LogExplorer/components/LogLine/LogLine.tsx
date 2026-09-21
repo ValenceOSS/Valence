@@ -42,6 +42,7 @@ const SHORT = 8;
  * @param onOpen - Told to open the record in full.
  * @param onCopy - Told to copy the line as text.
  * @param onTrace - Told a job's id, to follow everything that job did.
+ * @param describeKind - Says a kind of job in words, so it is not shown as the code it is.
  */
 const LogLine = ({
   record,
@@ -53,6 +54,7 @@ const LogLine = ({
   onOpen,
   onCopy,
   onTrace,
+  describeKind,
 }: LogLineProps) => {
   const look = describeLogLevel(record.level);
   const context = CONTEXT_FIELDS.flatMap(([field, key, name]) => {
@@ -142,7 +144,7 @@ const LogLine = ({
                 },
                 ...context.map(({ key, name, value }) => ({
                   id: key,
-                  label: `${name} ${key === 'kind' || value.length <= SHORT ? value : `${value.slice(0, SHORT)}…`}`,
+                  label: `${name} ${key === 'kind' ? describeKind(value) : value.length <= SHORT ? value : `${value.slice(0, SHORT)}…`}`,
                   onChoose: () => {
                     onFilter(logFilterId(key, value));
                   },
@@ -189,8 +191,10 @@ const LogLine = ({
                       onFilter(logFilterId(key, value));
                     }}
                   >
-                    <span className="text-text-muted">{key}</span>{' '}
-                    <span className="font-mono">{value}</span>
+                    <span className="text-text-muted">{name}</span>{' '}
+                    <span className={key === 'kind' ? '' : 'font-mono'}>
+                      {key === 'kind' ? describeKind(value) : value}
+                    </span>
                   </Button>
                 </li>
               ))}

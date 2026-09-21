@@ -1,10 +1,8 @@
 import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
-import type { JobDefinition } from '@ValenceClient/admin/fetchAdmin';
 
-type JobHealthProps = {
-  definitions: JobDefinition[];
+type TimeRangeMenuProps = {
   search: ObservabilitySearch;
   onSearchChange: (change: ObservabilitySearch) => void;
 };
 
-export type { JobHealthProps };
+export type { TimeRangeMenuProps };

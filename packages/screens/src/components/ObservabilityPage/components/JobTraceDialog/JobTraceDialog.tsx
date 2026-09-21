@@ -11,6 +11,7 @@ import { TimeBars } from '@ValenceUI/TimeBars';
 import { notify } from '@ValenceUI/notify';
 import { LOG_LEVELS } from '@ValenceContracts/schemas/Log';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
+import { describeJobKind } from '@ValenceClient/admin/describeJobKind';
 import { describeElapsed } from '@ValenceClient/admin/describeElapsed';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
 import { describeLogSpan, describeLogTick } from '@ValenceClient/admin/describeLogTick';
@@ -68,7 +69,8 @@ const JobTraceDialog = ({
   const run = askedRun.data ?? null;
   const lines = askedLines.data?.records ?? [];
   const bars = askedBars.data;
-  const label = definitions.find((one) => one.kind === run?.kind)?.label ?? run?.kind ?? 'Job run';
+  const labels = new Map(definitions.map((one) => [one.kind, one.label]));
+  const label = run === null ? 'Job run' : describeJobKind(run.kind, labels);
   const status = run === null ? null : describeJobStatus(run.status);
   const startedAt = run?.startedAtMs ?? run?.createdAtMs ?? lines[0]?.atMs ?? 0;
   const tookMs =

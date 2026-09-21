@@ -55,7 +55,7 @@ const ADMIN_SECTIONS = [
     items: [
       { id: 'activity', label: 'Sessions', icon: ActivityIcon, activeIcon: ActivityFilledIcon },
       { id: 'shares', label: 'Links', icon: LinkIcon, activeIcon: LinkFilledIcon },
-      { id: 'logs', label: 'Logs & jobs', icon: TerminalIcon, activeIcon: TerminalFilledIcon },
+      { id: 'jobs', label: 'Jobs & logs', icon: TerminalIcon, activeIcon: TerminalFilledIcon },
     ],
   },
   {

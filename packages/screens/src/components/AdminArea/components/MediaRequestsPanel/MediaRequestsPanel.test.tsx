@@ -123,7 +123,7 @@ describe('MediaRequestsPanel', () => {
 
     await screen.findByText('Dune (2021)');
     await user.click(screen.getByRole('button', { name: 'Filter the requests' }));
-    await user.click(screen.getByRole('checkbox', { name: 'Series' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Series' }));
 
     expect(screen.queryByText('Dune (2021)')).not.toBeInTheDocument();
     expect(screen.getByText('Severance (2022)')).toBeInTheDocument();

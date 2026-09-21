@@ -1,3 +1,4 @@
+import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import type {
   JobDefinition,
   JobTrigger,
@@ -8,8 +9,6 @@ import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import type { ScanEntry } from '@ValenceScreens/components/AdminArea/scanCoordinator';
 
-type ObservabilityView = 'logs' | 'jobs' | 'health' | 'run';
-
 type ObservabilityPageProps = {
   definitions: JobDefinition[];
   libraries: Library[];
@@ -18,7 +17,8 @@ type ObservabilityPageProps = {
   viewingJobKind: string | null;
   schedules: Map<string, JobTrigger[]>;
   schedulesTimezone?: string | null;
-  initialView?: ObservabilityView;
+  search?: ObservabilitySearch;
+  onSearchChange?: (change: ObservabilitySearch) => void;
   onRun: (kind: string, libraryIds?: string[], parts?: LibraryPart[]) => void;
   onStop: (kind: string) => void;
   onOpenSchedule: (kind: string) => void;
@@ -27,4 +27,4 @@ type ObservabilityPageProps = {
   onRemoveTrigger: (kind: string, triggerId: string) => void;
 };
 
-export type { ObservabilityPageProps, ObservabilityView };
+export type { ObservabilityPageProps };

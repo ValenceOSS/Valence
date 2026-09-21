@@ -1,12 +1,11 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
   ChevronDown as ChevronDownIcon,
-  Clock as ClockIcon,
   Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Search as SearchIcon,
 } from '@keyline-icons/react';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
@@ -17,6 +16,7 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { StatStrip } from '@ValenceUI/StatStrip';
 import { TextField } from '@ValenceUI/TextField';
+import { Well } from '@ValenceUI/Well';
 import { HoverCard } from '@ValenceUI/HoverCard';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -27,13 +27,19 @@ import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-quer
 import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
 import { describeRunIssues } from './describeRunIssues';
 import { describeRunSubject } from './describeRunSubject';
+import { useAnchoredNow } from '@ValenceScreens/admin/useAnchoredNow';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { watchJobs } from '@ValenceClient/admin/fetchAdmin';
+import { describeWords } from '@ValenceClient/admin/describeWords';
+import { describeJobKind } from '@ValenceClient/admin/describeJobKind';
 import { describeElapsed } from '@ValenceClient/admin/describeElapsed';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
-import { LOG_RANGES, logRangeStart } from '@ValenceClient/admin/logRanges';
+import { defaultLogView } from '@ValenceClient/admin/defaultLogView';
+import { logRangeStart } from '@ValenceClient/admin/logRanges';
+import { logSearchFromView } from '@ValenceClient/admin/logSearchFromView';
+import { logViewFromSearch } from '@ValenceClient/admin/logViewFromSearch';
+import { TimeRangeMenu } from '@ValenceScreens/components/ObservabilityPage/components/TimeRangeMenu/TimeRangeMenu';
 import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
-import type { LogRangeId } from '@ValenceClient/admin/logRanges';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type {
   JobRunPage,
@@ -45,6 +51,8 @@ import type { JobHistoryProps } from './JobHistory.types';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 
 const PAGE = 200;
+
+const TYPING_MS = 350;
 
 const ROWS_PER_PAGE = 10;
 
@@ -92,17 +100,6 @@ const describeWhen = (record: JobRunRecord): string => {
 };
 
 /**
- * Names a job run's kind in words, from what the server offers to run it by hand, falling back to
- * the identifier itself for a kind that runs only on a schedule or that this page does not know.
- *
- * @param kind - The job run's kind, as the server reports it.
- * @param labels - What each kind is called, keyed by kind.
- * @returns What to call it.
- */
-const describeRunKind = (kind: string, labels: ReadonlyMap<string, string>): string =>
-  labels.get(kind) ?? kind;
-
-/**
  * The persisted record of what pg-boss has actually run: not only what the queue is doing this
  * instant, but what happened, searchable and kept once the job itself is long gone. This is the
  * answer to the Jobs page looking empty while work was genuinely happening — the queue only ever
@@ -111,12 +108,16 @@ const describeRunKind = (kind: string, labels: ReadonlyMap<string, string>): str
  * @param definitions - The jobs the server offers, for naming a run's kind in words.
  * @param libraries - The libraries a run's subject can name, so it is shown by name.
  * @param working - What the queue is working on, for showing what a running run is made of.
+ * @param search - What the address says the runs are narrowed to and ordered by.
+ * @param onSearchChange - Told each change, to write into the address.
  * @param onViewLogs - Called with a run's id, to open the log filtered to it.
  */
 const JobHistoryPanel = ({
   definitions,
   libraries,
   working,
+  search,
+  onSearchChange,
   onViewLogs,
   onTrace,
 }: JobHistoryProps) => {
@@ -129,24 +130,59 @@ const JobHistoryPanel = ({
     [definitions],
   );
 
-  const [typed, setTyped] = useState('');
-  const [range, setRange] = useState<LogRangeId>('7d');
-  const [sort, setSort] = useState<JobRunSort>('newest');
-  const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
-  const [anchor, setAnchor] = useState(() => Date.now());
+  const { rq, rstatus, rsort, range, from, until } = search;
+  const shared = useMemo(() => logViewFromSearch(search), [search]);
+  const rkind = shared.view.jobKinds[0];
+  const sort: JobRunSort = rsort ?? 'newest';
+  const [typed, setTyped] = useState(rq ?? '');
+  const said = useRef(rq ?? '');
+  const [anchor, setAnchor] = useAnchoredNow(range);
 
-  const kindChoice = [...chosen].find((id) => id.startsWith('kind:'))?.slice(5) ?? null;
-  const statusChoice = [...chosen].find((id) => id.startsWith('status:'))?.slice(7) ?? null;
+  const chosen = useMemo<ReadonlySet<string>>(
+    () =>
+      new Set([
+        ...(rstatus === undefined ? [] : [`status:${rstatus}`]),
+        ...(rkind === undefined ? [] : [`kind:${rkind}`]),
+      ]),
+    [rstatus, rkind],
+  );
+
+  useEffect(() => {
+    if ((rq ?? '') !== said.current) {
+      said.current = rq ?? '';
+      setTyped(rq ?? '');
+    }
+  }, [rq]);
+
+  useEffect(() => {
+    const words = typed.trim();
+
+    if (words === said.current) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      said.current = words;
+      onSearchChange({ rq: words === '' ? undefined : words });
+      setAnchor();
+    }, TYPING_MS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [typed, onSearchChange]);
+
   const query = useMemo(
     () => ({
       limit: PAGE,
       sort,
-      search: typed.trim(),
-      sinceMs: logRangeStart(range, anchor),
-      kind: kindChoice,
-      status: STATUSES.find((status) => status === statusChoice) ?? null,
+      search: rq ?? '',
+      sinceMs: from ?? logRangeStart(range ?? defaultLogView().range, anchor),
+      untilMs: until ?? null,
+      kind: rkind ?? null,
+      status: rstatus ?? null,
     }),
-    [typed, range, sort, anchor, kindChoice, statusChoice],
+    [rq, range, from, until, sort, anchor, rkind, rstatus],
   );
   const askedHistory = useQuery({
     ...adminQueries.jobHistory(query),
@@ -245,13 +281,13 @@ const JobHistoryPanel = ({
       {
         id: 'kind',
         header: 'Job',
-        accessorFn: (record) => describeRunKind(record.kind, labels),
+        accessorFn: (record) => describeJobKind(record.kind, labels),
         cell: ({ row }) => (
           <span
             className="block max-w-[10rem] truncate text-text-muted"
-            title={describeRunKind(row.original.kind, labels)}
+            title={describeJobKind(row.original.kind, labels)}
           >
-            {describeRunKind(row.original.kind, labels)}
+            {describeJobKind(row.original.kind, labels)}
           </span>
         ),
       },
@@ -273,7 +309,7 @@ const JobHistoryPanel = ({
                 variant="subtle"
                 size="none"
                 isIconOnly
-                label={`What ${describeRunKind(row.original.kind, labels)} is doing`}
+                label={`What ${describeJobKind(row.original.kind, labels)} is doing`}
                 onClick={() => {
                   setOpenWorkFor(row.original.id);
                 }}
@@ -287,9 +323,13 @@ const JobHistoryPanel = ({
       {
         id: 'subject',
         header: 'Subject',
-        accessorFn: (record) => describeRunSubject(record.subject, libraries).name,
+        accessorFn: (record) => describeRunSubject(record.subject, libraries, record.kind).name,
         cell: ({ row }) => {
-          const { name, library } = describeRunSubject(row.original.subject, libraries);
+          const { name, library } = describeRunSubject(
+            row.original.subject,
+            libraries,
+            row.original.kind,
+          );
 
           return (
             <span className="flex max-w-[12rem] min-w-0 flex-col">
@@ -368,17 +408,22 @@ const JobHistoryPanel = ({
           }
 
           return (
-            <span className="block w-44">
+            <span className="flex w-52 flex-col gap-1.5">
+              <span className="flex items-baseline justify-between gap-3 whitespace-nowrap text-xs">
+                <span className="truncate text-text-muted">{describeWords(progress.phase)}</span>
+
+                <span className="tabular-nums text-text">
+                  <AnimatedNumber value={progress.processed} />
+                  <span className="text-text-muted"> of </span>
+                  <AnimatedNumber value={progress.total} />
+                </span>
+              </span>
+
               <ProgressBar
-                label={`${describeRunKind(row.original.kind, labels)} progress`}
+                isFull
+                label={`${describeJobKind(row.original.kind, labels)} progress`}
                 value={row.original.status === 'completed' ? progress.total : progress.processed}
                 max={Math.max(progress.total, 1)}
-                readout={
-                  <span className="tabular-nums">
-                    {progress.phase} <AnimatedNumber value={progress.processed} />/
-                    <AnimatedNumber value={progress.total} />
-                  </span>
-                }
               />
             </span>
           );
@@ -406,7 +451,7 @@ const JobHistoryPanel = ({
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${describeRunKind(row.original.kind, labels)}`}
+              label={`Actions for ${describeJobKind(row.original.kind, labels)}`}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
@@ -458,38 +503,7 @@ const JobHistoryPanel = ({
           onValueChange={setTyped}
         />
 
-        <OptionMenu
-          label="Time range"
-          triggerShape="field"
-          className="w-auto"
-          groups={[
-            {
-              name: 'Time range',
-              selectedId: range,
-              onSelect: (id) => {
-                const found = LOG_RANGES.find((one) => one.id === id);
-
-                if (found !== undefined) {
-                  setRange(found.id);
-                  setAnchor(Date.now());
-                }
-              },
-              options: LOG_RANGES.filter((one) => one.id !== '15m').map((one) => ({
-                id: one.id,
-                label: one.label,
-              })),
-            },
-          ]}
-          trigger={
-            <>
-              <Icon of={ClockIcon} size={15} className="shrink-0" />
-              <span className="truncate">
-                {LOG_RANGES.find((one) => one.id === range)?.label ?? 'Time'}
-              </span>
-              <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
-            </>
-          }
-        />
+        <TimeRangeMenu search={search} onSearchChange={onSearchChange} />
 
         <OptionMenu
           label="Order"
@@ -503,7 +517,7 @@ const JobHistoryPanel = ({
                 const found = SORTS.find((one) => one.id === id);
 
                 if (found !== undefined) {
-                  setSort(found.id);
+                  onSearchChange({ rsort: found.id === 'newest' ? undefined : found.id });
                 }
               },
               options: SORTS.map((one) => ({ id: one.id, label: one.label, detail: one.detail })),
@@ -522,50 +536,65 @@ const JobHistoryPanel = ({
           hasLabel
           groups={groups}
           selected={chosen}
-          onChange={setChosen}
+          onChange={(next) => {
+            const status = STATUSES.find((one) => next.has(`status:${one}`));
+            const kind = definitions.find((one) => next.has(`kind:${one.kind}`))?.kind;
+
+            onSearchChange({
+              rstatus: status,
+              ...logSearchFromView(
+                { ...shared.view, jobKinds: kind === undefined ? [] : [kind] },
+                shared.text,
+              ),
+            });
+          }}
         />
       </div>
 
-      <StatStrip
-        label="How the job runs stand"
-        items={[
-          { id: 'running', label: 'Running now', value: counts.running.toLocaleString() },
-          { id: 'completed', label: 'Completed', value: counts.completed.toLocaleString() },
-          {
-            id: 'failed',
-            label: 'Failed',
-            value: counts.failed.toLocaleString(),
-            isAlarming: counts.failed > 0,
-          },
-        ]}
-      />
+      <Well>
+        <StatStrip
+          label="How the job runs stand"
+          items={[
+            { id: 'running', label: 'Running now', value: counts.running.toLocaleString() },
+            { id: 'completed', label: 'Completed', value: counts.completed.toLocaleString() },
+            {
+              id: 'failed',
+              label: 'Failed',
+              value: counts.failed.toLocaleString(),
+              isAlarming: counts.failed > 0,
+            },
+          ]}
+        />
+      </Well>
 
-      <DataTable
-        label="What pg-boss has run"
-        columns={columns}
-        rows={records}
-        getRowId={(record) => record.id}
-        onChooseRow={(record) => {
-          onTrace(record.id);
-        }}
-        height="fill"
-        pageSize={ROWS_PER_PAGE}
-        emptyMessage={
-          askedHistory.isError
-            ? 'Job history could not be read from the server.'
-            : askedHistory.isPending
-              ? 'Reading job history…'
-              : 'No job runs match this.'
-        }
-      />
+      <Well isFlush className="p-1">
+        <DataTable
+          label="What pg-boss has run"
+          columns={columns}
+          rows={records}
+          getRowId={(record) => record.id}
+          onChooseRow={(record) => {
+            onTrace(record.id);
+          }}
+          height="fill"
+          pageSize={ROWS_PER_PAGE}
+          emptyMessage={
+            askedHistory.isError
+              ? 'Job history could not be read from the server.'
+              : askedHistory.isPending
+                ? 'Reading job history…'
+                : 'No job runs match this.'
+          }
+        />
+      </Well>
 
       <RunningWorkDialog
-        title={openWork === undefined ? '' : describeRunKind(openWork.kind, labels)}
+        title={openWork === undefined ? '' : describeJobKind(openWork.kind, labels)}
         isOpen={openWork !== undefined}
         progress={
           openWork === undefined || openWork.progress === null
             ? []
-            : [{ label: describeRunKind(openWork.kind, labels), ...openWork.progress }]
+            : [{ label: describeJobKind(openWork.kind, labels), ...openWork.progress }]
         }
         tasks={working.filter((task) => task.correlationId === openWorkFor)}
         onClose={() => {

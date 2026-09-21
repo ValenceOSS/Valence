@@ -4,11 +4,11 @@ import type { LogView } from './logView.types';
 const LOG_PAGE_SIZE = 200;
 
 /**
- * What the log explorer shows before anybody has asked for anything: the last hour, every level,
+ * What the log explorer shows before anybody has asked for anything: the last day, every level,
  * newest first.
  */
 const defaultLogView = (): LogView => ({
-  range: '1h',
+  range: '24h',
   zoom: null,
   levels: [...LOG_LEVELS],
   sources: [],

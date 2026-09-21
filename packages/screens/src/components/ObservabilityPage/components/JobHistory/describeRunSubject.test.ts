@@ -18,18 +18,34 @@ const MOVIES: Library = {
 
 describe('describeRunSubject', () => {
   it('names a library by its name rather than its identifier', () => {
-    expect(describeRunSubject(MOVIES.id, [MOVIES])).toEqual({ name: 'Movies', library: MOVIES });
+    expect(describeRunSubject(MOVIES.id, [MOVIES], 'library.scan')).toEqual({
+      name: 'Movies',
+      library: MOVIES,
+    });
   });
 
   it('leaves a subject that names no library as it was written', () => {
-    expect(describeRunSubject('nightly', [MOVIES])).toEqual({ name: 'nightly', library: null });
+    expect(describeRunSubject('nightly', [MOVIES], 'library.scan')).toEqual({
+      name: 'nightly',
+      library: null,
+    });
   });
 
-  it('shows a dash where a run had no subject', () => {
-    expect(describeRunSubject(null, [MOVIES])).toEqual({ name: '—', library: null });
+  it.each([
+    ['library.scan', 'Every library'],
+    ['library.detectSegments.scheduled', 'Every library'],
+    ['server.checkDiskSpace', 'This server'],
+    ['requests.scanFolder', 'Requests'],
+    ['catalogue.rematch', 'The catalogue'],
+    ['something.else', 'Everything'],
+  ])('says a %s run with no subject was about %s', (kind, said) => {
+    expect(describeRunSubject(null, [MOVIES], kind)).toEqual({ name: said, library: null });
   });
 
-  it('falls back to the identifier for a library that has since been removed', () => {
-    expect(describeRunSubject(MOVIES.id, [])).toEqual({ name: MOVIES.id, library: null });
+  it('says so for a library that has since been removed, rather than showing its code', () => {
+    expect(describeRunSubject(MOVIES.id, [], 'library.scan')).toEqual({
+      name: 'A library that has been removed',
+      library: null,
+    });
   });
 });

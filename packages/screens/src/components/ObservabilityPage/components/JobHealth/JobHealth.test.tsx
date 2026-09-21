@@ -3,6 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchJobStats } from '@ValenceClient/admin/fetchJobStats';
+import { ObservabilitySearchHost } from '@ValenceScreens/testing/ObservabilitySearchHost';
 import { JobHealth } from './JobHealth';
 import type { JobDefinition } from '@ValenceClient/admin/fetchAdmin';
 
@@ -36,7 +37,11 @@ const draw = () =>
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}
     >
-      <JobHealth definitions={DEFINITIONS} />
+      <ObservabilitySearchHost>
+        {(search, update) => (
+          <JobHealth definitions={DEFINITIONS} search={search} onSearchChange={update} />
+        )}
+      </ObservabilitySearchHost>
     </QueryClientProvider>,
   );
 
@@ -70,7 +75,7 @@ describe('JobHealth', () => {
     const table = screen.getByRole('table', { name: 'How each kind of job has gone' });
 
     expect(within(table).getByText('Scan for changes')).toBeInTheDocument();
-    expect(within(table).getAllByText('catalogue.rematch')).toHaveLength(2);
+    expect(within(table).getByText('Rematch')).toBeInTheDocument();
     expect(within(table).getByText('99%')).toBeInTheDocument();
     expect(within(table).getByText('80%')).toBeInTheDocument();
   });
@@ -99,21 +104,21 @@ describe('JobHealth', () => {
     expect(within(strip).getByText('97.2%')).toBeInTheDocument();
   });
 
-  it('asks about the last week to begin with, and about the period chosen after', async () => {
+  it('asks about the last day to begin with, and about the range chosen after', async () => {
     draw();
     await screen.findByText('Scan for changes');
 
     const first = vi.mocked(fetchJobStats).mock.calls[0]?.[0] ?? 0;
 
-    expect(Date.now() - first).toBeGreaterThan(6.9 * 86_400_000);
+    expect(Date.now() - first).toBeLessThan(1.1 * 86_400_000);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Period' }));
-    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Last 24 hours' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Time range' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Last 7 days' }));
 
     await vi.waitFor(() => {
       const last = vi.mocked(fetchJobStats).mock.calls.at(-1)?.[0] ?? 0;
 
-      expect(Date.now() - last).toBeLessThan(1.1 * 86_400_000);
+      expect(Date.now() - last).toBeGreaterThan(6.9 * 86_400_000);
     });
   });
 

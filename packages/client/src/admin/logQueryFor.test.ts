@@ -5,12 +5,12 @@ import { logFacetsQueryFor, logHistogramQueryFor, logQueryFor } from './logQuery
 const NOW = 100_000_000;
 
 describe('logQueryFor', () => {
-  it('asks for the last hour, every level, newest first, by default', () => {
+  it('asks for the last day, every level, newest first, by default', () => {
     expect(logQueryFor(defaultLogView(), NOW)).toStrictEqual({
       levels: ['debug', 'info', 'warn', 'error'],
       sources: [],
       search: '',
-      sinceMs: NOW - 3_600_000,
+      sinceMs: NOW - 86_400_000,
       untilMs: null,
       jobId: null,
       jobKinds: [],
@@ -82,6 +82,6 @@ describe('logHistogramQueryFor', () => {
 describe('logFacetsQueryFor', () => {
   it('ranks the same records, with no bars to count them into', () => {
     expect(logFacetsQueryFor(defaultLogView(), NOW)).not.toHaveProperty('buckets');
-    expect(logFacetsQueryFor(defaultLogView(), NOW).sinceMs).toBe(NOW - 3_600_000);
+    expect(logFacetsQueryFor(defaultLogView(), NOW).sinceMs).toBe(NOW - 86_400_000);
   });
 });

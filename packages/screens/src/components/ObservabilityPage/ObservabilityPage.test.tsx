@@ -130,16 +130,70 @@ beforeEach(() => {
 });
 
 describe('ObservabilityPage', () => {
-  it('opens on the log, under a heading that says it is logs and jobs together', async () => {
+  it('opens on the jobs, under a heading that says it is jobs and logs together', async () => {
     renderPage(<ObservabilityPage {...props} />);
 
-    expect(screen.getByRole('heading', { name: 'Logs & jobs' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Jobs & logs' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Jobs', selected: true })).toBeInTheDocument();
+    expect(await screen.findByText('no such encoder')).toBeInTheDocument();
+  });
+
+  it('lists the jobs first and the logs second', () => {
+    renderPage(<ObservabilityPage {...props} />);
+
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toStrictEqual([
+      'Jobs',
+      'Logs',
+      'Health',
+      'Run & schedule',
+    ]);
+  });
+
+  it('opens on the log where the address says so', async () => {
+    renderPage(<ObservabilityPage {...props} search={{ view: 'logs' }} />);
+
     expect(screen.getByRole('tab', { name: 'Logs', selected: true })).toBeInTheDocument();
     expect(await screen.findByText('No log lines match this')).toBeInTheDocument();
   });
 
+  it('writes the view opened into the address, leaving it bare for the jobs', async () => {
+    const onSearchChange = vi.fn();
+    const user = userEvent.setup();
+
+    renderPage(<ObservabilityPage {...props} onSearchChange={onSearchChange} />);
+    await user.click(screen.getByRole('tab', { name: 'Health' }));
+
+    expect(onSearchChange).toHaveBeenLastCalledWith({ view: 'health' });
+
+    await user.click(screen.getByRole('tab', { name: 'Jobs' }));
+
+    expect(onSearchChange).toHaveBeenLastCalledWith({ view: undefined });
+  });
+
+  it('keeps the range chosen on one view when another is opened', async () => {
+    const user = userEvent.setup();
+
+    renderPage(<ObservabilityPage {...props} />);
+    await user.click(await screen.findByRole('button', { name: 'Time range' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Everything kept' }));
+    await user.click(screen.getByRole('tab', { name: 'Logs' }));
+
+    expect(await screen.findByRole('button', { name: 'Time range' })).toHaveTextContent(
+      'Everything kept',
+    );
+    await vi.waitFor(() => {
+      expect(vi.mocked(fetchLogs).mock.calls.at(-1)?.[0]).toMatchObject({ sinceMs: null });
+    });
+
+    await user.click(screen.getByRole('tab', { name: 'Health' }));
+
+    expect(await screen.findByRole('button', { name: 'Time range' })).toHaveTextContent(
+      'Everything kept',
+    );
+  });
+
   it('opens on the view an address asked for', async () => {
-    renderPage(<ObservabilityPage {...props} initialView="health" />);
+    renderPage(<ObservabilityPage {...props} search={{ view: 'health' }} />);
 
     expect(screen.getByRole('tab', { name: 'Health', selected: true })).toBeInTheDocument();
     await screen.findByText('No job has run in this time.');
@@ -151,7 +205,7 @@ describe('ObservabilityPage', () => {
 
     renderPage(<ObservabilityPage {...props} />);
 
-    for (const name of ['Logs', 'Job runs', 'Health', 'Run & schedule']) {
+    for (const name of ['Jobs', 'Logs', 'Health', 'Run & schedule']) {
       await user.click(screen.getByRole('tab', { name }));
 
       expect(screen.getByRole('tab', { name, selected: true })).toBeInTheDocument();
@@ -244,7 +298,6 @@ describe('ObservabilityPage', () => {
     });
 
     renderPage(<ObservabilityPage {...props} />);
-    await user.click(screen.getByRole('tab', { name: 'Job runs' }));
     await user.click(await screen.findByText('no such encoder'));
 
     expect(await screen.findByText('Run run-1')).toBeInTheDocument();
@@ -262,7 +315,7 @@ describe('ObservabilityPage', () => {
   it('is one card, with no card inside it', async () => {
     const { container } = renderPage(<ObservabilityPage {...props} />);
 
-    await screen.findByText('No log lines match this');
+    await screen.findByText('no such encoder');
 
     expect(container.querySelectorAll('.valence-card-shell')).toHaveLength(1);
     expect(container.querySelectorAll('.valence-card-face')).toHaveLength(1);
@@ -271,7 +324,7 @@ describe('ObservabilityPage', () => {
   it('has no blue button anywhere on it', async () => {
     const { container } = renderPage(<ObservabilityPage {...props} />);
 
-    await screen.findByText('No log lines match this');
+    await screen.findByText('no such encoder');
 
     expect(
       container.querySelectorAll('button.bg-accent, button[class*="bg-accent/"]'),

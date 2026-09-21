@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   ChevronDown as ChevronDownIcon,
-  Clock as ClockIcon,
   Copy as CopyIcon,
   Download as DownloadIcon,
   MoreHorizontal as MoreHorizontalIcon,
@@ -17,6 +16,7 @@ import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { BarList } from '@ValenceUI/BarList';
 import { Button } from '@ValenceUI/Button';
 import { HeadedSection } from '@ValenceUI/HeadedSection';
+import { Well } from '@ValenceUI/Well';
 import { FilterMenu } from '@ValenceUI/FilterMenu';
 import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
@@ -26,10 +26,9 @@ import { TimeBars } from '@ValenceUI/TimeBars';
 import { notify } from '@ValenceUI/notify';
 import { LOG_LEVELS, LOG_SOURCES } from '@ValenceContracts/schemas/Log';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
-import { defaultLogView } from '@ValenceClient/admin/defaultLogView';
+import { describeJobKind } from '@ValenceClient/admin/describeJobKind';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
 import { describeLogSpan, describeLogTick } from '@ValenceClient/admin/describeLogTick';
-import { LOG_RANGES } from '@ValenceClient/admin/logRanges';
 import { logLineAsText } from '@ValenceClient/admin/logLineAsText';
 import {
   logFacetsQueryFor,
@@ -37,13 +36,17 @@ import {
   logQueryFor,
 } from '@ValenceClient/admin/logQueryFor';
 import { logsAsText } from '@ValenceClient/admin/logsAsText';
+import { logSearchFromView } from '@ValenceClient/admin/logSearchFromView';
+import { logViewFromSearch } from '@ValenceClient/admin/logViewFromSearch';
 import { logViewFromSelection } from '@ValenceClient/admin/logViewFromSelection';
 import { logFilterId, logViewSelection } from '@ValenceClient/admin/logViewSelection';
+import { useAnchoredNow } from '@ValenceScreens/admin/useAnchoredNow';
 import { downloadText } from '@ValenceScreens/admin/downloadText';
 import { applyTypedSearch } from '@ValenceScreens/admin/applyTypedSearch';
 import { describeLogLevel } from '@ValenceScreens/admin/describeLogLevel';
 import { LogDetailDialog } from '@ValenceScreens/components/ObservabilityPage/components/LogDetailDialog/LogDetailDialog';
 import { LogLine } from './components/LogLine/LogLine';
+import { TimeRangeMenu } from '@ValenceScreens/components/ObservabilityPage/components/TimeRangeMenu/TimeRangeMenu';
 import { LevelToggles } from './components/LevelToggles/LevelToggles';
 import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
 import type { LogView } from '@ValenceClient/admin/logView.types';
@@ -51,6 +54,8 @@ import type { LogLevel, LogRecord, LogSort } from '@ValenceContracts/schemas/Log
 import type { LogExplorerProps } from './LogExplorer.types';
 
 const LIVE_EVERY_MS = 3000;
+
+const TYPING_MS = 350;
 
 const SORTS: readonly { id: LogSort; label: string; detail: string }[] = [
   { id: 'newest', label: 'Newest first', detail: 'What just happened' },
@@ -78,28 +83,36 @@ const writeToClipboard = async (text: string): Promise<void> => {
  * lines are kept on screen while the answer is fetched rather than blinking away.
  *
  * @param definitions - The jobs the server offers, for offering their kinds as filters.
- * @param initialJobId - A job to narrow to as soon as the explorer opens, from elsewhere in the admin
- *   area asking to see one job's log.
- * @param onInitialJobIdConsumed - Told once `initialJobId` has been picked up.
+ * @param search - What the address says the log is narrowed to, ordered by and zoomed to.
+ * @param onSearchChange - Told each change, to write into the address.
  * @param onTraceJob - Told a job's id, to follow everything that job did.
  * @param copy - How text reaches the clipboard.
  * @param download - How a file is handed over.
  */
 const LogExplorer = ({
   definitions,
-  initialJobId = null,
-  onInitialJobIdConsumed,
+  search,
+  onSearchChange,
   onTraceJob,
   copy = writeToClipboard,
   download = downloadText,
 }: LogExplorerProps) => {
-  const [view, setView] = useState<LogView>(() => ({
-    ...defaultLogView(),
-    ids: initialJobId === null ? {} : { jobId: initialJobId },
-    range: initialJobId === null ? '1h' : 'all',
-  }));
-  const [typed, setTyped] = useState('');
-  const [anchor, setAnchor] = useState(() => Date.now());
+  const { q, range, from, until, sort } = search;
+  const parsed = useMemo(
+    () =>
+      logViewFromSearch({
+        ...(q === undefined ? {} : { q }),
+        ...(range === undefined ? {} : { range }),
+        ...(from === undefined ? {} : { from }),
+        ...(until === undefined ? {} : { until }),
+        ...(sort === undefined ? {} : { sort }),
+      }),
+    [q, range, from, until, sort],
+  );
+  const view = parsed.view;
+  const [typed, setTyped] = useState(parsed.text);
+  const said = useRef(parsed.text);
+  const [anchor, setAnchor] = useAnchoredNow(range);
   const [isLive, setIsLive] = useState(false);
   const [isWrapped, setIsWrapped] = useState(false);
   const [hasTime, setHasTime] = useState(true);
@@ -107,21 +120,31 @@ const LogExplorer = ({
   const [reading, setReading] = useState<LogRecord | null>(null);
 
   useEffect(() => {
-    if (initialJobId === null) {
+    if (parsed.text !== said.current) {
+      said.current = parsed.text;
+      setTyped(parsed.text);
+    }
+  }, [parsed.text]);
+
+  useEffect(() => {
+    const words = typed.trim();
+
+    if (words === said.current) {
       return;
     }
 
-    setView((was) => ({
-      ...was,
-      ids: { ...was.ids, jobId: initialJobId },
-      range: 'all',
-      zoom: null,
-    }));
-    setAnchor(Date.now());
-    onInitialJobIdConsumed?.();
-  }, [initialJobId, onInitialJobIdConsumed]);
+    const timer = setTimeout(() => {
+      said.current = words;
+      onSearchChange(logSearchFromView(view, words));
+      setAnchor();
+    }, TYPING_MS);
 
-  const shown = useMemo<LogView>(() => ({ ...view, search: typed.trim() }), [view, typed]);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [typed, view, onSearchChange]);
+
+  const shown = useMemo<LogView>(() => ({ ...view, search: parsed.text }), [view, parsed.text]);
   const asked = useMemo(
     () => ({
       records: logQueryFor(shown, anchor),
@@ -194,8 +217,9 @@ const LogExplorer = ({
   }, [canWatchTheEnd, hasNextPage, isFetchingNextPage, fetchNextPage, records.length]);
 
   const change = (next: LogView) => {
-    setView(next);
-    setAnchor(Date.now());
+    said.current = typed.trim();
+    onSearchChange(logSearchFromView(next, typed.trim()));
+    setAnchor();
   };
 
   const narrowTo = (filterId: string) => {
@@ -258,7 +282,7 @@ const LogExplorer = ({
         name: 'Job',
         options: kindOptions.map((kind) => ({
           id: logFilterId('kind', kind),
-          label: labels.get(kind) ?? kind,
+          label: describeJobKind(kind, labels),
         })),
       },
       ...(identifiers.length === 0 ? [] : [{ name: 'Identifier', options: identifiers }]),
@@ -272,11 +296,6 @@ const LogExplorer = ({
       notify.worked('Copied to the clipboard.');
     });
   };
-
-  const rangeLabel =
-    view.zoom === null
-      ? (LOG_RANGES.find((range) => range.id === view.range)?.label ?? 'Time')
-      : 'Zoomed in';
 
   const lines = records.flatMap((record, at) => {
     const previous = records[at - 1];
@@ -322,6 +341,7 @@ const LogExplorer = ({
           });
         }}
         onTrace={onTraceJob}
+        describeKind={(kind) => describeJobKind(kind, labels)}
       />,
     ];
   });
@@ -344,37 +364,14 @@ const LogExplorer = ({
             setTyped(applied.typed);
 
             if (applied.view !== view) {
-              change(applied.view);
+              said.current = applied.typed.trim();
+              onSearchChange(logSearchFromView(applied.view, applied.typed.trim()));
+              setAnchor();
             }
           }}
         />
 
-        <OptionMenu
-          label="Time range"
-          triggerShape="field"
-          className="w-auto"
-          groups={[
-            {
-              name: 'Time range',
-              selectedId: view.zoom === null ? view.range : '',
-              onSelect: (id) => {
-                const range = LOG_RANGES.find((one) => one.id === id);
-
-                if (range !== undefined) {
-                  change({ ...view, range: range.id, zoom: null });
-                }
-              },
-              options: LOG_RANGES.map((range) => ({ id: range.id, label: range.label })),
-            },
-          ]}
-          trigger={
-            <>
-              <Icon of={ClockIcon} size={15} className="shrink-0" />
-              <span className="truncate">{rangeLabel}</span>
-              <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
-            </>
-          }
-        />
+        <TimeRangeMenu search={search} onSearchChange={onSearchChange} />
 
         <OptionMenu
           label="Order"
@@ -435,7 +432,7 @@ const LogExplorer = ({
           isIconOnly
           label="Read the log again"
           onClick={() => {
-            setAnchor(Date.now());
+            setAnchor();
           }}
         >
           <Icon of={RefreshCwIcon} size={16} />
@@ -527,7 +524,7 @@ const LogExplorer = ({
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
+      <Well className="flex flex-col gap-3">
         <LevelToggles
           histogram={histogram}
           levels={view.levels}
@@ -561,10 +558,11 @@ const LogExplorer = ({
             }}
           />
         )}
-      </div>
+      </Well>
 
       <div className="grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <HeadedSection
+          isInset
           title="Log lines"
           actions={
             <span aria-live="polite" className="text-xs tabular-nums text-text-muted">
@@ -620,7 +618,7 @@ const LogExplorer = ({
         </HeadedSection>
 
         <div className="flex flex-col gap-6">
-          <HeadedSection title="Top sources">
+          <HeadedSection isInset title="Top sources">
             <BarList
               label="Sources that logged the most"
               heading="Source"
@@ -636,7 +634,7 @@ const LogExplorer = ({
             />
           </HeadedSection>
 
-          <HeadedSection title="Top jobs">
+          <HeadedSection isInset title="Top jobs">
             <BarList
               label="Kinds of job that logged the most"
               heading="Job"
@@ -644,8 +642,7 @@ const LogExplorer = ({
               emptyMessage="No job logged in this time."
               items={(askedFacets.data?.jobKinds ?? []).map((facet) => ({
                 id: logFilterId('kind', facet.value),
-                label: labels.get(facet.value) ?? facet.value,
-                ...(labels.has(facet.value) ? { detail: facet.value } : {}),
+                label: describeJobKind(facet.value, labels),
                 value: facet.events,
               }))}
               chosen={selection}

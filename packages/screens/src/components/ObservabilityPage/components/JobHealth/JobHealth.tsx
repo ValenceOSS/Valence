@@ -1,13 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { ChevronDown as ChevronDownIcon, Clock as ClockIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { HeadedSection } from '@ValenceUI/HeadedSection';
-import { Icon } from '@ValenceUI/Icon';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { StatStrip } from '@ValenceUI/StatStrip';
+import { useAnchoredNow } from '@ValenceScreens/admin/useAnchoredNow';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
+import { defaultLogView } from '@ValenceClient/admin/defaultLogView';
+import { logRangeStart } from '@ValenceClient/admin/logRanges';
+import { TimeRangeMenu } from '@ValenceScreens/components/ObservabilityPage/components/TimeRangeMenu/TimeRangeMenu';
+import { describeJobKind } from '@ValenceClient/admin/describeJobKind';
 import { describeElapsed } from '@ValenceClient/admin/describeElapsed';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
 import { successRate, toneOfSuccessRate } from '@ValenceScreens/admin/successRate';
@@ -17,11 +19,7 @@ import type { JobHealthProps } from './JobHealth.types';
 
 const DAY_MS = 86_400_000;
 
-const WINDOWS = [
-  { id: '1', label: 'Last 24 hours', ms: DAY_MS },
-  { id: '7', label: 'Last 7 days', ms: 7 * DAY_MS },
-  { id: '30', label: 'Last 30 days', ms: 30 * DAY_MS },
-] as const;
+const KEPT_MS = 30 * DAY_MS;
 
 const describeRate = (rate: number | null): string =>
   rate === null ? '—' : `${(Math.floor(rate * 1000) / 10).toString()}%`;
@@ -35,11 +33,16 @@ const describeRate = (rate: number | null): string =>
  * here before anybody notices what it was meant to have done and did not.
  *
  * @param definitions - The jobs the server offers, for naming each kind in words.
+ * @param search - What the address says the health is read over.
+ * @param onSearchChange - Told each change, to write into the address.
  */
-const JobHealth = ({ definitions }: JobHealthProps) => {
-  const [period, setPeriod] = useState<(typeof WINDOWS)[number]['id']>('7');
-  const [anchor] = useState(() => Date.now());
-  const sinceMs = anchor - (WINDOWS.find((one) => one.id === period)?.ms ?? DAY_MS);
+const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
+  const [anchor] = useAnchoredNow(search.range);
+
+  const sinceMs =
+    search.from ??
+    logRangeStart(search.range ?? defaultLogView().range, anchor) ??
+    anchor - KEPT_MS;
   const asked = useQuery({ ...adminQueries.jobStats(sinceMs), placeholderData: keepPreviousData });
   const kinds = useMemo(() => asked.data?.kinds ?? [], [asked.data]);
   const labels = useMemo(
@@ -63,11 +66,10 @@ const JobHealth = ({ definitions }: JobHealthProps) => {
       {
         id: 'kind',
         header: 'Job',
-        accessorFn: (kind) => labels.get(kind.kind) ?? kind.kind,
+        accessorFn: (kind) => describeJobKind(kind.kind, labels),
         cell: ({ row }) => (
-          <span className="flex flex-col">
-            <span className="text-text">{labels.get(row.original.kind) ?? row.original.kind}</span>
-            <span className="text-xs text-text-muted">{row.original.kind}</span>
+          <span className="text-text" title={row.original.kind}>
+            {describeJobKind(row.original.kind, labels)}
           </span>
         ),
       },
@@ -149,35 +151,9 @@ const JobHealth = ({ definitions }: JobHealthProps) => {
   return (
     <div className="flex flex-col gap-6">
       <HeadedSection
+        isInset
         title="How the jobs are doing"
-        actions={
-          <OptionMenu
-            label="Period"
-            triggerShape="field"
-            className="w-auto"
-            groups={[
-              {
-                name: 'Period',
-                selectedId: period,
-                onSelect: (id) => {
-                  const found = WINDOWS.find((one) => one.id === id);
-
-                  if (found !== undefined) {
-                    setPeriod(found.id);
-                  }
-                },
-                options: WINDOWS.map((one) => ({ id: one.id, label: one.label })),
-              },
-            ]}
-            trigger={
-              <>
-                <Icon of={ClockIcon} size={15} className="shrink-0" />
-                <span className="truncate">{WINDOWS.find((one) => one.id === period)?.label}</span>
-                <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
-              </>
-            }
-          />
-        }
+        actions={<TimeRangeMenu search={search} onSearchChange={onSearchChange} />}
       >
         <StatStrip
           label="How the jobs are doing overall"
@@ -205,7 +181,7 @@ const JobHealth = ({ definitions }: JobHealthProps) => {
         />
       </HeadedSection>
 
-      <HeadedSection title="By kind of job">
+      <HeadedSection isInset title="By kind of job">
         <DataTable
           label="How each kind of job has gone"
           columns={columns}

@@ -2,9 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { ObservabilitySearchHost } from '@ValenceScreens/testing/ObservabilitySearchHost';
 import { JobHistory } from './JobHistory';
 import { fetchJobHistory, fetchJobHistoryIssues, watchJobs } from '@ValenceClient/admin/fetchAdmin';
 import type { ReactElement } from 'react';
+import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import type * as FetchAdmin from '@ValenceClient/admin/fetchAdmin';
 import type { JobDefinition } from '@ValenceClient/admin/fetchAdmin';
 import type {
@@ -82,6 +84,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -94,11 +98,13 @@ describe('JobHistory', () => {
     expect(screen.queryByText('library.regeneratePreviews')).not.toBeInTheDocument();
   });
 
-  it('falls back to the raw kind for a run this page has no label for', async () => {
+  it('puts the kind of a run into words where this page has no label for it', async () => {
     askedHistory.mockResolvedValue(page([record({ kind: 'catalogue.rematch' })]));
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -107,7 +113,7 @@ describe('JobHistory', () => {
       />,
     );
 
-    expect(await screen.findByText('catalogue.rematch')).toBeInTheDocument();
+    expect(await screen.findByText('Rematch')).toBeInTheDocument();
   });
 
   it('shows the subject, status and progress of a run', async () => {
@@ -115,6 +121,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -136,6 +144,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -152,6 +162,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -168,6 +180,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -184,6 +198,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -213,6 +229,8 @@ describe('JobHistory', () => {
 
       renderHistory(
         <JobHistory
+          search={{}}
+          onSearchChange={vi.fn()}
           definitions={DEFINITIONS}
           libraries={[]}
           working={[]}
@@ -245,6 +263,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -274,6 +294,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -298,6 +320,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -327,6 +351,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -353,6 +379,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -385,6 +413,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -411,6 +441,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[
@@ -455,6 +487,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -475,6 +509,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[
           {
@@ -514,6 +550,8 @@ describe('JobHistory', () => {
 
     renderHistory(
       <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
         definitions={DEFINITIONS}
         libraries={[]}
         working={[]}
@@ -537,18 +575,24 @@ describe('JobHistory', () => {
   });
 
   describe('finding a run', () => {
-    const drawHistory = (onTrace = vi.fn()) =>
+    const drawHistory = (onTrace = vi.fn(), initial: ObservabilitySearch = {}) =>
       renderHistory(
-        <JobHistory
-          definitions={DEFINITIONS}
-          libraries={[]}
-          working={[]}
-          onViewLogs={vi.fn()}
-          onTrace={onTrace}
-        />,
+        <ObservabilitySearchHost initial={initial}>
+          {(search, update) => (
+            <JobHistory
+              definitions={DEFINITIONS}
+              libraries={[]}
+              working={[]}
+              search={search}
+              onSearchChange={update}
+              onViewLogs={vi.fn()}
+              onTrace={onTrace}
+            />
+          )}
+        </ObservabilitySearchHost>,
       );
 
-    it('asks for the last seven days, newest first, with nothing filtered, to begin with', async () => {
+    it('asks for the last day, newest first, with nothing filtered, to begin with', async () => {
       askedHistory.mockResolvedValue(page([record()]));
 
       drawHistory();
@@ -557,7 +601,7 @@ describe('JobHistory', () => {
       const asked = askedHistory.mock.calls.at(-1)?.[0];
 
       expect(asked).toMatchObject({ sort: 'newest', search: '', kind: null, status: null });
-      expect(asked?.sinceMs ?? 0).toBeLessThan(Date.now() - 6.9 * 86_400_000);
+      expect(asked?.sinceMs ?? 0).toBeGreaterThan(Date.now() - 1.1 * 86_400_000);
     });
 
     it('lets the server search, by job, library, error or run id', async () => {
@@ -578,11 +622,40 @@ describe('JobHistory', () => {
       drawHistory();
       await screen.findByText('Generate missing previews');
       await userEvent.click(screen.getByRole('button', { name: 'Filter job runs' }));
-      await userEvent.click(await screen.findByRole('checkbox', { name: 'Failed' }));
+      await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Failed' }));
 
       await waitFor(() => {
         expect(askedHistory.mock.calls.at(-1)?.[0]).toMatchObject({ status: 'failed' });
       });
+    });
+
+    it('shares the kind of job with the log, through the address', async () => {
+      askedHistory.mockResolvedValue(page([record()]));
+
+      drawHistory(vi.fn(), { q: 'kind:library.regeneratePreviews' });
+      await screen.findByText('Generate missing previews');
+
+      expect(askedHistory.mock.calls.at(-1)?.[0]).toMatchObject({
+        kind: 'library.regeneratePreviews',
+      });
+    });
+
+    it('asks for a stretch zoomed to on the log', async () => {
+      askedHistory.mockResolvedValue(page([record()]));
+
+      drawHistory(vi.fn(), { range: 'all', from: 1000, until: 9000 });
+      await screen.findByText('Generate missing previews');
+
+      expect(askedHistory.mock.calls.at(-1)?.[0]).toMatchObject({ sinceMs: 1000, untilMs: 9000 });
+    });
+
+    it('reads everything kept where the range chosen has no start', async () => {
+      askedHistory.mockResolvedValue(page([record()]));
+
+      drawHistory(vi.fn(), { range: 'all' });
+      await screen.findByText('Generate missing previews');
+
+      expect(askedHistory.mock.calls.at(-1)?.[0]).toMatchObject({ sinceMs: null });
     });
 
     it('changes the order', async () => {

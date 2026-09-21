@@ -30,6 +30,7 @@ const draw = (over: Partial<LogLineProps> = {}) => {
     onOpen: vi.fn(),
     onCopy: vi.fn(),
     onTrace: vi.fn(),
+    describeKind: (kind: string) => (kind === 'library.scan' ? 'Scan for changes' : kind),
   };
 
   render(
@@ -146,7 +147,9 @@ describe('LogLine', () => {
     expect(await screen.findByRole('menuitem', { name: 'Only error lines' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Only scanner' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Job job-abcd…' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Kind of job library.scan' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('menuitem', { name: 'Kind of job Scan for changes' }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /^Media/ })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('menuitem', { name: 'Only scanner' }));

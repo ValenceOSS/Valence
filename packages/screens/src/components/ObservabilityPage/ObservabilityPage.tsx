@@ -10,7 +10,9 @@ import { TabPanel } from '@ValenceUI/TabPanel';
 import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
+import { OBSERVABILITY_VIEWS } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import { setQueuePaused } from '@ValenceClient/admin/fetchAdmin';
+import { useObservabilitySearch } from '@ValenceScreens/admin/useObservabilitySearch';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { JobRunner } from '@ValenceScreens/components/AdminArea/components/JobRunner/JobRunner';
 import { JobSchedulePage } from '@ValenceScreens/components/AdminArea/components/JobSchedulePage/JobSchedulePage';
@@ -20,9 +22,8 @@ import { JobHistory } from './components/JobHistory/JobHistory';
 import { JobTraceDialog } from './components/JobTraceDialog/JobTraceDialog';
 import { LogExplorer } from './components/LogExplorer/LogExplorer';
 import { QueueConcurrency } from './components/QueueConcurrency/QueueConcurrency';
-import type { ObservabilityPageProps, ObservabilityView } from './ObservabilityPage.types';
-
-const VIEWS = ['logs', 'jobs', 'health', 'run'] as const satisfies readonly ObservabilityView[];
+import type { ObservabilityView } from '@ValenceClient/admin/ObservabilitySearchSchema';
+import type { ObservabilityPageProps } from './ObservabilityPage.types';
 
 /**
  * Whether a string the tab row handed back actually names one of this page's views.
@@ -30,10 +31,11 @@ const VIEWS = ['logs', 'jobs', 'health', 'run'] as const satisfies readonly Obse
  * @param value - What was chosen.
  * @returns Whether it names a view.
  */
-const isView = (value: string): value is ObservabilityView => VIEWS.some((view) => view === value);
+const isView = (value: string): value is ObservabilityView =>
+  OBSERVABILITY_VIEWS.some((view) => view === value);
 
 /**
- * Everything the server has to say about itself, on one page: the log, the jobs it has run, how the
+ * Everything the server has to say about itself, on one page: the jobs it has run, the log, how the
  * jobs are doing and how to run and schedule them. It replaces the two pages that used to show the
  * log and the jobs apart — an operator asking "why did the scan fail" no longer has to carry a job's
  * id from one to the other.
@@ -53,7 +55,8 @@ const isView = (value: string): value is ObservabilityView => VIEWS.some((view) 
  * @param viewingJobKind - The job whose schedule is open, if any.
  * @param schedules - What makes each job run on its own.
  * @param schedulesTimezone - The zone a clock trigger is read in.
- * @param initialView - Which view to open on.
+ * @param search - What the address says: which view is open, and what each is narrowed to.
+ * @param onSearchChange - Told each change, to write into the address.
  * @param onRun - Called with the job to start, the libraries to start it on for one that takes them,
  *   and the parts to clear for the one that clears them.
  * @param onStop - Called with the job to stop.
@@ -70,7 +73,8 @@ const ObservabilityPage = ({
   viewingJobKind,
   schedules,
   schedulesTimezone = null,
-  initialView = 'logs',
+  search: given = {},
+  onSearchChange,
   onRun,
   onStop,
   onOpenSchedule,
@@ -78,10 +82,10 @@ const ObservabilityPage = ({
   onAddTrigger,
   onRemoveTrigger,
 }: ObservabilityPageProps) => {
-  const [view, setView] = useState<ObservabilityView>(initialView);
-  const [logFocus, setLogFocus] = useState<string | null>(null);
+  const [search, update] = useObservabilitySearch(given, onSearchChange);
+  const view = search.view ?? 'jobs';
   const [tracing, setTracing] = useState<string | null>(null);
-  const travel = useTravelDirection([...VIEWS], view);
+  const travel = useTravelDirection([...OBSERVABILITY_VIEWS], view);
   const working = useMemo(() => monitor?.queue.jobs ?? [], [monitor]);
   const failures = working.filter((job) => job.state === 'failed').length;
   const viewing =
@@ -89,15 +93,20 @@ const ObservabilityPage = ({
       ? null
       : (definitions.find((definition) => definition.kind === viewingJobKind) ?? null);
 
-  const showLogFor = useCallback((jobId: string) => {
-    setTracing(null);
-    setLogFocus(jobId);
-    setView('logs');
-  }, []);
-
-  const forgetLogFocus = useCallback(() => {
-    setLogFocus(null);
-  }, []);
+  const showLogFor = useCallback(
+    (jobId: string) => {
+      setTracing(null);
+      update({
+        view: 'logs',
+        q: `job:${jobId}`,
+        range: 'all',
+        from: undefined,
+        until: undefined,
+        sort: undefined,
+      });
+    },
+    [update],
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -141,12 +150,12 @@ const ObservabilityPage = ({
         value={view}
         onValueChange={(next) => {
           if (isView(next)) {
-            setView(next);
+            update({ view: next === 'jobs' ? undefined : next });
           }
         }}
       >
         <PanelCard
-          title="Logs & jobs"
+          title="Jobs & logs"
           actions={
             <>
               <span className="text-xs text-text-muted">
@@ -197,8 +206,8 @@ const ObservabilityPage = ({
               groups={[
                 {
                   items: [
+                    { id: 'jobs', label: 'Jobs' },
                     { id: 'logs', label: 'Logs' },
-                    { id: 'jobs', label: 'Job runs' },
                     { id: 'health', label: 'Health' },
                     { id: 'run', label: 'Run & schedule' },
                   ],
@@ -207,27 +216,29 @@ const ObservabilityPage = ({
             />
           }
         >
-          <TabPanel value="logs" travel={travel}>
-            <LogExplorer
-              definitions={definitions}
-              initialJobId={logFocus}
-              onInitialJobIdConsumed={forgetLogFocus}
-              onTraceJob={setTracing}
-            />
-          </TabPanel>
-
           <TabPanel value="jobs" travel={travel}>
             <JobHistory
               definitions={definitions}
               libraries={libraries}
               working={working}
+              search={search}
+              onSearchChange={update}
               onViewLogs={showLogFor}
               onTrace={setTracing}
             />
           </TabPanel>
 
+          <TabPanel value="logs" travel={travel}>
+            <LogExplorer
+              definitions={definitions}
+              search={search}
+              onSearchChange={update}
+              onTraceJob={setTracing}
+            />
+          </TabPanel>
+
           <TabPanel value="health" travel={travel}>
-            <JobHealth definitions={definitions} />
+            <JobHealth definitions={definitions} search={search} onSearchChange={update} />
           </TabPanel>
 
           <TabPanel value="run" travel={travel}>

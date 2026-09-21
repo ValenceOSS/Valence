@@ -1,3 +1,5 @@
+import { ObservabilitySearchSchema } from '@ValenceClient/admin/ObservabilitySearchSchema';
+import { mergeObservabilitySearch } from '@ValenceClient/admin/mergeObservabilitySearch';
 import { readObservabilityView } from '@ValenceScreens/components/ObservabilityPage/readObservabilityView';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
@@ -36,9 +38,11 @@ import {
 const AdminPage = () => {
   const go = useNavigate();
   const { panel } = useParams({ strict: false });
-  const { job, view } = useSearch({ strict: false });
+  const search = useSearch({ strict: false });
+  const { job } = search;
   const { mayAdminister, isLoading } = useWhatIMayDo();
-  const initialView = readObservabilityView(view, panel);
+  const observability = ObservabilitySearchSchema.parse(search);
+  const view = readObservabilityView(observability.view, panel);
   const [isCollapsed, setIsCollapsed] = useState(readSidebarCollapsed);
 
   const requesting = useQuery(requestsQueries.availability());
@@ -46,7 +50,7 @@ const AdminPage = () => {
   const showing =
     sections
       .flatMap((section) => section.items)
-      .find((one) => one.id === (panel === 'jobs' ? 'logs' : panel))?.id ?? 'overview';
+      .find((one) => one.id === (panel === 'logs' ? 'jobs' : panel))?.id ?? 'overview';
 
   const asked = useQuery(adminQueries.overview());
   const overview = asked.data ?? null;
@@ -176,12 +180,23 @@ const AdminPage = () => {
                 void go({ to: '/admin/$panel', params: { panel: next } });
               }}
               initialJob={job ?? null}
-              {...(initialView === undefined ? {} : { initialView })}
+              observability={{ ...observability, ...(view === undefined ? {} : { view }) }}
+              onObservabilityChange={(change) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: showing },
+                  search: {
+                    ...(job === undefined ? {} : { job }),
+                    ...mergeObservabilitySearch(observability, change),
+                  },
+                  replace: true,
+                });
+              }}
               onJobChange={(next) => {
                 void go({
                   to: '/admin/$panel',
                   params: { panel: showing },
-                  search: { job: next ?? undefined },
+                  search: { ...observability, ...(next === null ? {} : { job: next }) },
                 });
               }}
             />

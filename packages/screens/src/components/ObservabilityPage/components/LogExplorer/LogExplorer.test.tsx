@@ -5,9 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchLogFacets } from '@ValenceClient/admin/fetchLogFacets';
 import { fetchLogHistogram } from '@ValenceClient/admin/fetchLogHistogram';
 import { fetchLogs } from '@ValenceClient/admin/fetchLogs';
+import { ObservabilitySearchHost } from '@ValenceScreens/testing/ObservabilitySearchHost';
 import { LogExplorer } from './LogExplorer';
 import type { ReactElement } from 'react';
 import type { JobDefinition } from '@ValenceClient/admin/fetchAdmin';
+import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import type { LogRecord } from '@ValenceContracts/schemas/Log';
 import type { LogExplorerProps } from './LogExplorer.types';
 
@@ -68,17 +70,26 @@ const FACETS = {
   jobKinds: [{ value: 'library.scan', events: 25 }],
 };
 
-const draw = (over: Partial<LogExplorerProps> = {}): ReactElement => (
+const draw = (
+  over: Partial<Omit<LogExplorerProps, 'search' | 'onSearchChange'>> = {},
+  initial: ObservabilitySearch = {},
+): ReactElement => (
   <QueryClientProvider
     client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}
   >
-    <LogExplorer
-      definitions={DEFINITIONS}
-      onTraceJob={vi.fn()}
-      copy={() => Promise.resolve()}
-      download={vi.fn()}
-      {...over}
-    />
+    <ObservabilitySearchHost initial={initial}>
+      {(search, update) => (
+        <LogExplorer
+          definitions={DEFINITIONS}
+          search={search}
+          onSearchChange={update}
+          onTraceJob={vi.fn()}
+          copy={() => Promise.resolve()}
+          download={vi.fn()}
+          {...over}
+        />
+      )}
+    </ObservabilitySearchHost>
   </QueryClientProvider>
 );
 
@@ -96,7 +107,7 @@ afterEach(() => {
 });
 
 describe('LogExplorer', () => {
-  it('lists the lines of the last hour, newest first, every level', async () => {
+  it('lists the lines of the last day, newest first, every level', async () => {
     render(draw());
 
     expect(await screen.findByText('Could not read file a')).toBeInTheDocument();
@@ -107,7 +118,7 @@ describe('LogExplorer', () => {
       limit: 200,
       jobId: null,
     });
-    expect(lastLogQuery()?.sinceMs).toBeGreaterThan(Date.now() - 3_700_000);
+    expect(lastLogQuery()?.sinceMs).toBeGreaterThan(Date.now() - 86_500_000);
   });
 
   it('says how many events there were, and how many at each level', async () => {
@@ -426,15 +437,65 @@ describe('LogExplorer', () => {
     vi.useRealTimers();
   });
 
-  it('opens on the log of one job where it was asked to, and says the request was taken up', async () => {
-    const onInitialJobIdConsumed = vi.fn();
-
-    render(draw({ initialJobId: 'job-9', onInitialJobIdConsumed }));
+  it('opens on the log of one job where the address says so', async () => {
+    render(draw({}, { q: 'job:job-9', range: 'all' }));
 
     await waitFor(() => {
       expect(lastLogQuery()).toMatchObject({ jobId: 'job-9', sinceMs: null });
     });
-    expect(onInitialJobIdConsumed).toHaveBeenCalled();
+  });
+
+  it('writes what it is narrowed to into the address', async () => {
+    const onChange = vi.fn();
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ObservabilitySearchHost onChange={onChange}>
+          {(search, update) => (
+            <LogExplorer
+              definitions={DEFINITIONS}
+              search={search}
+              onSearchChange={update}
+              onTraceJob={vi.fn()}
+            />
+          )}
+        </ObservabilitySearchHost>
+      </QueryClientProvider>,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: /^jobs\s*10/ }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ q: 'source:jobs' }));
+  });
+
+  it('is narrowed by what the address says, and writes the words typed after a moment', async () => {
+    const onChange = vi.fn();
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ObservabilitySearchHost initial={{ q: 'level:error unreadable' }} onChange={onChange}>
+          {(search, update) => (
+            <LogExplorer
+              definitions={DEFINITIONS}
+              search={search}
+              onSearchChange={update}
+              onTraceJob={vi.fn()}
+            />
+          )}
+        </ObservabilitySearchHost>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByRole('searchbox', { name: 'Search the log' })).toHaveValue(
+      'unreadable',
+    );
+
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search the log' }), ' file');
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({ q: 'level:error unreadable file' }),
+      );
+    });
   });
 
   it('copies and downloads the lines shown, and only where there are some', async () => {

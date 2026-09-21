@@ -7,7 +7,6 @@ import { TabPanel } from '@ValenceUI/TabPanel';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
 import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
 import { ObservabilityPage } from '@ValenceScreens/components/ObservabilityPage/ObservabilityPage';
-import type { ObservabilityView } from '@ValenceScreens/components/ObservabilityPage/ObservabilityPage.types';
 import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
 import { EncodingPanel } from './components/EncodingPanel/EncodingPanel';
 import { MediaPanel } from './components/MediaPanel/MediaPanel';
@@ -131,7 +130,8 @@ const PANEL_ORDER = ADMIN_PANELS.map((one) => one.id);
  * @param panel - Which panel is open, which the dialog around this holds.
  * @param onPanel - Told which panel to open.
  * @param initialJob - The job whose schedule to open, where the address named one.
- * @param initialView - Which view of the logs and jobs page to open on, where the address named one.
+ * @param observability - What the address says the jobs and logs page is showing and narrowed to.
+ * @param onObservabilityChange - Called with each change to it, to write into the address.
  * @param onJobChange - Called with the job whose schedule was opened, or null on going back.
  */
 const AdminArea = ({
@@ -139,7 +139,8 @@ const AdminArea = ({
   panel,
   onPanel,
   initialJob,
-  initialView,
+  observability,
+  onObservabilityChange,
   onJobChange,
 }: AdminAreaProps) => {
   const cache = useQueryClient();
@@ -156,10 +157,6 @@ const AdminArea = ({
   } = useSyncExternalStore(subscribeToScans, getScanSnapshot);
   const [createdWebhook, setCreatedWebhook] = useState<CreatedWebhook | null>(null);
   const [openHistoryId, setOpenHistoryId] = useState<string | null>(null);
-  const [jump, setJump] = useState<{ view: ObservabilityView; nonce: number }>({
-    view: initialView ?? 'logs',
-    nonce: 0,
-  });
 
   const [busyClientId, setBusyClientId] = useState<string | null>(null);
   const [isChoosingReencode, setIsChoosingReencode] = useState(false);
@@ -265,14 +262,6 @@ const AdminArea = ({
 
   const showPanel = useCallback(
     (next: string) => {
-      if (next === 'jobs') {
-        setJump((was) => ({ view: 'jobs', nonce: was.nonce + 1 }));
-        onPanel('logs');
-        setViewingJobKind(null);
-
-        return;
-      }
-
       const found = ADMIN_PANELS.find((candidate) => candidate.id === next);
 
       if (found === undefined) {
@@ -1024,10 +1013,12 @@ const AdminArea = ({
             />
           </TabPanel>
 
-          <TabPanel value="logs" travel={travel}>
+          <TabPanel value="jobs" travel={travel}>
             <ObservabilityPage
-              key={jump.nonce}
-              initialView={jump.view}
+              {...(observability === undefined ? {} : { search: observability })}
+              {...(onObservabilityChange === undefined
+                ? {}
+                : { onSearchChange: onObservabilityChange })}
               definitions={jobDefinitions}
               libraries={libraries}
               progress={scanProgress}

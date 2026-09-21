@@ -10,6 +10,7 @@ type LogLineProps = {
   onOpen: () => void;
   onCopy: () => void;
   onTrace: (jobId: string) => void;
+  describeKind: (kind: string) => string;
 };
 
 export type { LogLineProps };
