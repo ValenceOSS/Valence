@@ -16,6 +16,9 @@
       "@ValenceUI/ActionMenu.types": [
         "./packages/ui/src/components/ActionMenu/ActionMenu.types.ts"
       ],
+      "@ValenceUI/AppliedFilters": [
+        "./packages/ui/src/components/AppliedFilters/AppliedFilters.tsx"
+      ],
       "@ValenceUI/AnimatedNumber": [
         "./packages/ui/src/components/AnimatedNumber/AnimatedNumber.tsx"
       ],

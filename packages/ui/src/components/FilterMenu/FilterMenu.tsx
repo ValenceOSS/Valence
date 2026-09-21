@@ -19,29 +19,49 @@ import type { FilterMenuProps } from './FilterMenu.types';
  *   ticking another takes the first off — for a choice such as a decade, where two at once would
  *   mean nothing.
  * @param selected - The ids of the choices that are ticked.
+ * @param hasLabel - Whether the button says "Filters" beside its icon, where it stands on its own
+ *   rather than in a strip of icons.
  * @param onChange - Told the ids that are ticked after each change.
  */
-const FilterMenu = ({ label, groups, selected, onChange }: FilterMenuProps) => (
+const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: FilterMenuProps) => (
   <PopoverPanel
     label={label}
     side="bottom"
     align="end"
     className="w-64"
+    triggerLook={hasLabel ? 'button' : 'icon'}
     trigger={
-      <span className="relative flex">
-        <Icon
-          of={FilterIcon}
-          whenActive={FilterFilledIcon}
-          isActive={selected.size > 0}
-          size={18}
-        />
+      hasLabel ? (
+        <>
+          <Icon
+            of={FilterIcon}
+            whenActive={FilterFilledIcon}
+            isActive={selected.size > 0}
+            size={16}
+          />
+          Filters
+          {selected.size === 0 ? null : (
+            <Badge tone="accent" size="sm">
+              <AnimatedNumber value={selected.size} />
+            </Badge>
+          )}
+        </>
+      ) : (
+        <span className="relative flex">
+          <Icon
+            of={FilterIcon}
+            whenActive={FilterFilledIcon}
+            isActive={selected.size > 0}
+            size={18}
+          />
 
-        {selected.size === 0 ? null : (
-          <Badge tone="accent" size="sm" className="absolute -right-2.5 -top-2.5">
-            <AnimatedNumber value={selected.size} />
-          </Badge>
-        )}
-      </span>
+          {selected.size === 0 ? null : (
+            <Badge tone="accent" size="sm" className="absolute -right-2.5 -top-2.5">
+              <AnimatedNumber value={selected.size} />
+            </Badge>
+          )}
+        </span>
+      )
     }
   >
     <div className="flex flex-col gap-4 p-1">

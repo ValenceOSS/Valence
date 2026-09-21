@@ -13,6 +13,7 @@ type FilterMenuProps = {
   label: string;
   groups: readonly FilterGroup[];
   selected: ReadonlySet<string>;
+  hasLabel?: boolean;
   onChange: (next: ReadonlySet<string>) => void;
 };
 

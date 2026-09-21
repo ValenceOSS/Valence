@@ -80,6 +80,17 @@ describe('PopoverPanel', () => {
     expect((await screen.findByText('Season one')).closest('.valence-float')).not.toBeNull();
   });
 
+  it('draws its control as a standard button where it is asked to, with room for a word', () => {
+    render(
+      <PopoverPanel label="Filters" triggerLook="button" trigger={<span>Filters</span>}>
+        x
+      </PopoverPanel>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Filters' })).toHaveClass('h-8', 'px-2.5');
+    expect(screen.getByRole('button', { name: 'Filters' })).not.toHaveClass('size-10');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(PopoverPanel.displayName).toBe('PopoverPanel');
   });

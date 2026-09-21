@@ -198,7 +198,11 @@ describe('SearchArea', () => {
       />,
     );
 
-    expect(await screen.findByRole('button', { name: 'Science fiction' })).toBeInTheDocument();
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: 'Filter the library' }));
+
+    expect(await screen.findByRole('checkbox', { name: 'Science fiction' })).toBeInTheDocument();
   });
 
   it('shows what it found', async () => {
@@ -235,23 +239,23 @@ describe('SearchArea', () => {
     expect(await screen.findByText(/Taking one of the filters off/)).toBeInTheDocument();
   });
 
-  it('clears what was asked on request', async () => {
-    const onSearchChange = vi.fn();
+  it('takes the genre off on request, from the chip that says it is on', async () => {
+    const onGenreChange = vi.fn();
     const user = userEvent.setup();
 
     renderInAnAddress(
       <SearchArea
-        search="arrival"
-        onSearchChange={onSearchChange}
-        genre={null}
-        onGenreChange={vi.fn()}
+        search=""
+        onSearchChange={vi.fn()}
+        genre="Science fiction"
+        onGenreChange={onGenreChange}
         onPlay={vi.fn()}
         onInspect={vi.fn()}
       />,
     );
-    await user.click(await screen.findByRole('button', { name: /Clear/ }));
+    await user.click(await screen.findByRole('button', { name: 'Clear all' }));
 
-    expect(onSearchChange).toHaveBeenCalledWith('');
+    expect(onGenreChange).toHaveBeenCalledWith(null);
   });
 
   it('draws a programme once rather than once per episode', async () => {
@@ -402,11 +406,9 @@ describe('SearchArea', () => {
     await user.click(await screen.findByRole('button', { name: 'Filter the library' }));
     await user.click(await screen.findByRole('checkbox', { name: '1990s' }));
     await user.keyboard('{Escape}');
-    await user.click(await screen.findByRole('button', { name: /^Clear$/ }));
+    await user.click(await screen.findByRole('button', { name: 'Clear all' }));
 
-    expect(await screen.findByRole('button', { name: 'Filter the library' })).not.toHaveTextContent(
-      '1',
-    );
+    expect(screen.queryByRole('list', { name: 'Applied filters' })).not.toBeInTheDocument();
   });
 
   it('offers nothing that would only lead to an empty page', async () => {
