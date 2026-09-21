@@ -73,17 +73,16 @@ jobs:
 
       # The app's own package.json says 0.0.0, since versions are cut by release-please rather than
       # written into packages. The installer is named for the release it belongs to, so the version
-      # is handed to the builder instead.
-      - name: Work out the version to stamp on it
-        id: version
+      # is written into this checkout's copy before it is built. Not passed as a builder flag: a
+      # dotted `-c.extraMetadata.version` is split apart on the way through PowerShell.
+      - name: Stamp the release's version on it
         shell: bash
+        working-directory: apps/desktop
         run: |
-          tag="${TAG}"
-
-          if [ -n "$tag" ]; then
-            echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          if [ -n "$TAG" ]; then
+            npm pkg set version="${TAG#v}"
           else
-            echo "version=0.0.0-dev" >> "$GITHUB_OUTPUT"
+            npm pkg set version="0.0.0-dev"
           fi
         env:
           TAG: ${{ inputs.tag }}
@@ -92,9 +91,7 @@ jobs:
 
       # No signing identity is discovered: there is none, and looking for one on a runner only
       # produces a warning per attempt.
-      - run: >-
-          pnpm --filter @valence/desktop exec electron-builder ${{ matrix.flags }} --publish never
-          -c.extraMetadata.version=${{ steps.version.outputs.version }}
+      - run: pnpm --filter @valence/desktop exec electron-builder ${{ matrix.flags }} --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
