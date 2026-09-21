@@ -21,6 +21,12 @@ name: CI
 # its 491 files kept climbing well past where everything else, @valence/server's larger suite
 # included, had finished and stayed flat.
 #
+# Every job after the first sits out the changes that cannot affect it. The first job asks the
+# workspace which packages a pull request touches, counting the packages that depend on them, and
+# the rest read its answer: a change to the docs site runs the docs tests and nothing else, a change
+# to the transcoder runs Rust and nothing else, and a change to the root configuration, or a push to
+# main, runs everything.
+#
 # The media pipeline is deliberately not here. It wants a Debian container, a Rust build and three
 # minutes of encoding, and lives in media-pipeline.yml to run when it earns its keep.
 
@@ -39,35 +45,87 @@ jobs:
   # out the changes that cannot affect them. A push to main answers yes to everything: main is what
   # releases are cut from, and a cheap job skipped there saves a minute and risks the thing every
   # other rule here exists to prevent.
-  touched:
-    name: What this change touches
+  #
+  # The workspace answers which packages are affected, counting the ones that depend on a changed
+  # one, so this file holds no list of who depends on whom to keep in step with the packages. It
+  # needs the history to compare against but not an install, which is what makes it cheap enough
+  # to be worth asking. A change to a file at the root, other than the notes and the workflows that
+  # belong to other pipelines, reads as touching the workspace itself, and that runs everything.
+  changes:
+    name: Detect changed areas
     runs-on: ubuntu-latest
     outputs:
-      transcoder: ${{ steps.what.outputs.transcoder }}
+      code: ${{ steps.what.outputs.code }}
+      packages: ${{ steps.what.outputs.packages }}
+      screens: ${{ steps.what.outputs.screens }}
+      rust: ${{ steps.what.outputs.rust }}
     steps:
-      # The list of files comes from the API rather than a clone: this job exists to save minutes,
-      # and fetching the whole history to answer one question would spend them.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+
       - id: what
         env:
-          GH_TOKEN: ${{ github.token }}
-          NUMBER: ${{ github.event.pull_request.number }}
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.base_ref }}
         run: |
-          if [ -z "$NUMBER" ]; then
-            echo 'transcoder=true' >> "$GITHUB_OUTPUT"
+          testable='["@valence/contracts","@valence/core","@valence/plugin-sdk","@valence/tools","@valence/ui","@valence/client","@valence/server","@valence/requests","@valence/web","@valence/desktop","@valence/landing","@valence/docs"]'
+
+          if [ "$EVENT" != "pull_request" ]; then
+            {
+              echo 'code=true'
+              echo "packages=$testable"
+              echo 'screens=true'
+              echo 'rust=true'
+            } >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          changed=$(gh api "repos/${{ github.repository }}/pulls/$NUMBER/files" --paginate --jq '.[].filename')
-          echo "$changed"
+          git fetch --no-tags origin "$BASE"
+
+          affected=$(pnpm ls --filter "...[origin/$BASE]" --depth -1 --json \
+            --changed-files-ignore-pattern='**/*.md' \
+            --changed-files-ignore-pattern='.github/workflows/dev-image.yml' \
+            --changed-files-ignore-pattern='.github/workflows/nightly-image.yml' \
+            --changed-files-ignore-pattern='.github/workflows/prune-images.yml' \
+            --changed-files-ignore-pattern='.github/workflows/media-pipeline.yml' \
+            --changed-files-ignore-pattern='.github/workflows/release.yml' \
+            --changed-files-ignore-pattern='.github/workflows/release-please.yml' \
+            --changed-files-ignore-pattern='release-please-config.json' \
+            --changed-files-ignore-pattern='.release-please-manifest.json' \
+            | jq -r '.[].name')
+          echo "$affected"
+
+          if echo "$affected" | grep -qx 'valence'; then
+            {
+              echo 'code=true'
+              echo "packages=$testable"
+              echo 'screens=true'
+            } >> "$GITHUB_OUTPUT"
+          else
+            if echo "$affected" | grep -vx '@valence/transcoder' | grep -q .; then
+              echo 'code=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'code=false' >> "$GITHUB_OUTPUT"
+            fi
+            echo "packages=$(echo "$affected" | jq -R . | jq -sc --argjson testable "$testable" '[.[] | select(. as $name | $testable | index($name))]')" >> "$GITHUB_OUTPUT"
+            echo "screens=$(echo "$affected" | grep -qx '@valence/screens' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          fi
+
+          changed=$(git diff --name-only "origin/$BASE...HEAD")
 
           if echo "$changed" | grep -qE '^(apps/transcoder/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)'; then
-            echo 'transcoder=true' >> "$GITHUB_OUTPUT"
+            echo 'rust=true' >> "$GITHUB_OUTPUT"
           else
-            echo 'transcoder=false' >> "$GITHUB_OUTPUT"
+            echo 'rust=false' >> "$GITHUB_OUTPUT"
           fi
 
   lint:
-    name: Lint and schema
+    name: Lint and migration check
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -90,7 +148,9 @@ jobs:
       - run: pnpm db:check
 
   build:
-    name: Build every package once
+    name: Build shared packages
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -126,7 +186,7 @@ jobs:
 
   typecheck:
     name: Typecheck
-    needs: build
+    needs: [changes, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -149,25 +209,14 @@ jobs:
       - run: pnpm typecheck
 
   test:
-    name: Test (${{ matrix.package }})
-    needs: build
+    name: Test ${{ matrix.package }}
+    needs: [changes, build]
+    if: needs.changes.outputs.packages != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        package:
-          - '@valence/contracts'
-          - '@valence/core'
-          - '@valence/plugin-sdk'
-          - '@valence/tools'
-          - '@valence/ui'
-          - '@valence/client'
-          - '@valence/server'
-          - '@valence/requests'
-          - '@valence/web'
-          - '@valence/desktop'
-          - '@valence/landing'
-          - '@valence/docs'
+        package: ${{ fromJSON(needs.changes.outputs.packages) }}
     steps:
       - uses: actions/checkout@v7
 
@@ -189,8 +238,9 @@ jobs:
       - run: pnpm turbo run test --filter=${{ matrix.package }}
 
   test-screens:
-    name: Test (@valence/screens, shard ${{ matrix.shard }}/4)
-    needs: build
+    name: Test @valence/screens (shard ${{ matrix.shard }} of 4)
+    needs: [changes, build]
+    if: needs.changes.outputs.screens == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -223,10 +273,10 @@ jobs:
       - run: pnpm --filter @valence/screens exec vitest run --shard=${{ matrix.shard }}/4
 
   rust:
-    name: Transcoder lint and tests
+    name: Rust format, lint and test
     runs-on: ubuntu-latest
-    needs: touched
-    if: needs.touched.outputs.transcoder == 'true'
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     # On pull requests as well, which it did not used to be. The case for skipping them was that the
     # pre-push hook has already run cargo clippy and cargo test on the machine the change was
     # written on — which is true, and the machine is exactly the problem. A test reading a child's

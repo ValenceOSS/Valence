@@ -34,7 +34,7 @@ permissions:
 
 jobs:
   verify:
-    name: Everything must pass first
+    name: Verify the TypeScript packages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -66,7 +66,7 @@ jobs:
   # This is also where the pull request gate's speed is paid back. Those tests do not run on every
   # branch, so a release is the moment they must.
   verify-rust:
-    name: The transcoder must pass too
+    name: Verify the transcoder
     runs-on: ubuntu-latest
     container:
       image: debian:bookworm-slim
@@ -194,7 +194,7 @@ jobs:
           provenance: false
 
   artefacts:
-    name: What is worth downloading
+    name: Package the release files
     needs: [verify, verify-rust]
     runs-on: ubuntu-latest
     steps:
@@ -231,7 +231,7 @@ jobs:
           if-no-files-found: warn
 
   publish:
-    name: Release
+    name: Publish the release
     needs: [image, artefacts]
     runs-on: ubuntu-latest
     steps:
@@ -276,7 +276,7 @@ jobs:
   # release carries under a desktop or mobile extension is listed, and a heading with nothing under
   # it is left out, so the announcement never promises a build that was not made.
   announce:
-    name: Tell Discord
+    name: Announce on Discord
     needs: [image, publish]
     runs-on: ubuntu-latest
     steps:
