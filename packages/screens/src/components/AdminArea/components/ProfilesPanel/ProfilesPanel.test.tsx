@@ -75,9 +75,7 @@ describe('ProfilesPanel', () => {
       expect(within(rowOf('HD')).getByText('Films, A library that has gone')).toBeInTheDocument();
     });
     expect(within(rowOf('HD')).getByText('1080p · Blu-ray')).toBeInTheDocument();
-    expect(within(rowOf('HD')).getByText('Films and series')).toBeInTheDocument();
     expect(within(rowOf('Lossless')).getByText('Every library')).toBeInTheDocument();
-    expect(within(rowOf('Lossless')).getByText('Music')).toBeInTheDocument();
   });
 
   it('keeps the profiles for films and series apart from the ones for music', async () => {

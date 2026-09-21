@@ -8,7 +8,7 @@ describe('describeProfile', () => {
   it('says what a video profile takes, and that it does not upgrade', () => {
     expect(describeProfile(HD)).toEqual({
       takes: '1080p, 720p · Blu-ray, WEB-DL',
-      upgrades: 'Does not upgrade',
+      upgrades: 'No',
     });
     expect(describeProfile({ ...HD, sources: [] }).takes).toBe('1080p, 720p');
   });
@@ -21,7 +21,7 @@ describe('describeProfile', () => {
         isUpgrading: true,
         upgradeUntilMusicQuality: 'flac',
       }),
-    ).toEqual({ takes: 'FLAC', upgrades: 'Upgrades until FLAC' });
+    ).toEqual({ takes: 'FLAC', upgrades: 'Until FLAC' });
     expect(
       describeProfile({
         ...HD,
@@ -29,9 +29,7 @@ describe('describeProfile', () => {
         upgradeUntilResolution: '1080p',
         upgradeUntilSource: 'bluray',
       }).upgrades,
-    ).toBe('Upgrades until 1080p Blu-ray');
-    expect(describeProfile({ ...HD, isUpgrading: true }).upgrades).toBe(
-      'Upgrades to the best there is',
-    );
+    ).toBe('Until 1080p Blu-ray');
+    expect(describeProfile({ ...HD, isUpgrading: true }).upgrades).toBe('To the best there is');
   });
 });

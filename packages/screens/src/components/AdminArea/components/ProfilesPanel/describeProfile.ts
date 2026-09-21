@@ -25,10 +25,10 @@ const describeProfile = (profile: QualityProfile): { takes: string; upgrades: st
         ? [named(profile.resolutions), named(profile.sources)].filter(Boolean).join(' · ')
         : named(profile.musicQualities),
     upgrades: !profile.isUpgrading
-      ? 'Does not upgrade'
+      ? 'No'
       : until === ''
-        ? 'Upgrades to the best there is'
-        : `Upgrades until ${until}`,
+        ? 'To the best there is'
+        : `Until ${until}`,
   };
 };
 

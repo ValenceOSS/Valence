@@ -8,7 +8,6 @@ import {
   Plus as PlusIcon,
 } from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
-import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -64,12 +63,7 @@ const ProfilesPanel = () => {
         accessorFn: (profile) => profile.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="truncate font-medium text-text">{row.original.name}</span>
-              <Badge size="sm">
-                {row.original.kind === 'video' ? 'Films and series' : 'Music'}
-              </Badge>
-            </span>
+            <span className="truncate font-medium text-text">{row.original.name}</span>
 
             <span className="truncate text-xs text-text-muted">
               {describeProfile(row.original).takes}
