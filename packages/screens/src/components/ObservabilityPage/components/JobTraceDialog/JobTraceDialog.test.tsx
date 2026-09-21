@@ -143,6 +143,61 @@ describe('JobTraceDialog', () => {
     });
   });
 
+  describe('while the run is still going', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('keeps reading what it logs, and how far it has got', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.mocked(fetchJobRun)
+        .mockResolvedValueOnce(
+          run({
+            status: 'running',
+            finishedAtMs: null,
+            progress: { phase: 'files', processed: 1, total: 50 },
+          }),
+        )
+        .mockResolvedValue(
+          run({
+            status: 'running',
+            finishedAtMs: null,
+            progress: { phase: 'files', processed: 30, total: 50 },
+          }),
+        );
+      vi.mocked(fetchLogs)
+        .mockResolvedValueOnce({ records: [line('a', 400)], total: 1 })
+        .mockResolvedValue({
+          records: [line('a', 400), line('c', 3000, { message: 'Read another folder' })],
+          total: 2,
+        });
+      draw();
+
+      expect(await screen.findByText('Line a')).toBeInTheDocument();
+      expect(screen.queryByText('Read another folder')).not.toBeInTheDocument();
+
+      await vi.advanceTimersByTimeAsync(2100);
+
+      expect(await screen.findByText('Read another folder')).toBeInTheDocument();
+      expect(
+        (await screen.findByRole('progressbar', { name: 'Scan for changes progress' }))
+          .parentElement,
+      ).toHaveTextContent('Files · 30 of 50');
+    });
+
+    it('stops asking once it has finished', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      draw();
+
+      expect(await screen.findByText('Line a')).toBeInTheDocument();
+
+      await vi.advanceTimersByTimeAsync(6000);
+
+      expect(fetchLogs).toHaveBeenCalledTimes(1);
+      expect(fetchJobRun).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('says how it failed', async () => {
     vi.mocked(fetchJobRun).mockResolvedValue(
       run({ status: 'failed', errorMessage: 'no such encoder' }),

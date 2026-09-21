@@ -5,7 +5,7 @@ import {
   Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
 } from '@keyline-icons/react';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
@@ -61,6 +61,8 @@ const ROWS_PER_PAGE = 10;
 const REFRESH_THROTTLE_MS = 1_000;
 
 const NOTHING_RUN: JobRunRecord[] = [];
+
+const runId = (record: JobRunRecord): string => record.id;
 
 const STATUSES = [
   'queued',
@@ -208,24 +210,76 @@ const JobHistoryPanel = ({
     completed: records.filter((record) => record.status === 'completed').length,
     failed: records.filter((record) => record.status === 'failed').length,
   };
-  const groups: FilterGroup[] = [
-    {
-      name: 'Status',
-      isSingle: true,
-      options: STATUS_FILTER_OPTIONS.map((option) => ({
-        id: `status:${option.id}`,
-        label: option.label,
-      })),
+  const groups = useMemo<FilterGroup[]>(
+    () => [
+      {
+        name: 'Status',
+        isSingle: true,
+        options: STATUS_FILTER_OPTIONS.map((option) => ({
+          id: `status:${option.id}`,
+          label: option.label,
+        })),
+      },
+      {
+        name: 'Job',
+        isSingle: true,
+        options: definitions.map((definition) => ({
+          id: `kind:${definition.kind}`,
+          label: definition.label,
+        })),
+      },
+    ],
+    [definitions],
+  );
+  const filterView = shared.view;
+  const filterText = shared.text;
+  const changeFilters = useCallback(
+    (next: ReadonlySet<string>) => {
+      const status = STATUSES.find((one) => next.has(`status:${one}`));
+      const kind = definitions.find((one) => next.has(`kind:${one.kind}`))?.kind;
+
+      onSearchChange({
+        rstatus: status,
+        ...logSearchFromView(
+          { ...filterView, jobKinds: kind === undefined ? [] : [kind] },
+          filterText,
+        ),
+      });
     },
-    {
-      name: 'Job',
-      isSingle: true,
-      options: definitions.map((definition) => ({
-        id: `kind:${definition.kind}`,
-        label: definition.label,
-      })),
+    [definitions, filterText, filterView, onSearchChange],
+  );
+  const sortGroups = useMemo(
+    () => [
+      {
+        name: 'Order',
+        selectedId: sort,
+        onSelect: (id: string) => {
+          const found = SORTS.find((one) => one.id === id);
+
+          if (found !== undefined) {
+            onSearchChange({ rsort: found.id === 'newest' ? undefined : found.id });
+          }
+        },
+        options: SORTS.map((one) => ({ id: one.id, label: one.label, detail: one.detail })),
+      },
+    ],
+    [sort, onSearchChange],
+  );
+  const sortTrigger = useMemo(
+    () => (
+      <>
+        <span className="truncate">{SORTS.find((one) => one.id === sort)?.label}</span>
+        <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
+      </>
+    ),
+    [sort],
+  );
+  const traceRun = useCallback(
+    (record: JobRunRecord) => {
+      onTrace(record.id);
     },
-  ];
+    [onTrace],
+  );
 
   useEffect(() => {
     let pending: ReturnType<typeof setTimeout> | null = null;
@@ -530,26 +584,8 @@ const JobHistoryPanel = ({
           label="Order"
           triggerShape="field"
           className="w-auto"
-          groups={[
-            {
-              name: 'Order',
-              selectedId: sort,
-              onSelect: (id) => {
-                const found = SORTS.find((one) => one.id === id);
-
-                if (found !== undefined) {
-                  onSearchChange({ rsort: found.id === 'newest' ? undefined : found.id });
-                }
-              },
-              options: SORTS.map((one) => ({ id: one.id, label: one.label, detail: one.detail })),
-            },
-          ]}
-          trigger={
-            <>
-              <span className="truncate">{SORTS.find((one) => one.id === sort)?.label}</span>
-              <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
-            </>
-          }
+          groups={sortGroups}
+          trigger={sortTrigger}
         />
 
         <FilterMenu
@@ -557,18 +593,7 @@ const JobHistoryPanel = ({
           hasLabel
           groups={groups}
           selected={chosen}
-          onChange={(next) => {
-            const status = STATUSES.find((one) => next.has(`status:${one}`));
-            const kind = definitions.find((one) => next.has(`kind:${one.kind}`))?.kind;
-
-            onSearchChange({
-              rstatus: status,
-              ...logSearchFromView(
-                { ...shared.view, jobKinds: kind === undefined ? [] : [kind] },
-                shared.text,
-              ),
-            });
-          }}
+          onChange={changeFilters}
         />
       </div>
 
@@ -601,10 +626,8 @@ const JobHistoryPanel = ({
           label="What pg-boss has run"
           columns={columns}
           rows={records}
-          getRowId={(record) => record.id}
-          onChooseRow={(record) => {
-            onTrace(record.id);
-          }}
+          getRowId={runId}
+          onChooseRow={traceRun}
           height="fill"
           pageSize={ROWS_PER_PAGE}
           emptyMessage={

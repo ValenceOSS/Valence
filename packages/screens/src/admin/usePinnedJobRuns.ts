@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { z } from 'zod';
 
 const KEY = 'valence.pinnedJobRuns';
@@ -24,7 +24,8 @@ const readPinned = (): string[] => {
  * Only the most recent twenty are kept, since a run is forgotten by the server after a month and a
  * pin on one that is gone would only sit here for ever.
  *
- * @returns The ids of the pinned runs, and the way to pin or unpin one.
+ * @returns The ids of the pinned runs, the same set until one is pinned or unpinned so that what is
+ *   built from it is not built afresh on every draw, and the way to pin or unpin one.
  */
 const usePinnedJobRuns = (): {
   pinned: ReadonlySet<string>;
@@ -48,7 +49,9 @@ const usePinnedJobRuns = (): {
     });
   }, []);
 
-  return { pinned: new Set(ids), toggle };
+  const pinned = useMemo(() => new Set(ids), [ids]);
+
+  return { pinned, toggle };
 };
 
 export { usePinnedJobRuns };
