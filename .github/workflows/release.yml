@@ -268,3 +268,70 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag || github.ref_name }}
+
+  # Tells the community a release exists. The webhook belongs to the channel it is announced in, so
+  # choosing the channel is choosing the webhook, and nothing in this file names one.
+  #
+  # The download links are read off the release itself rather than written here: whatever the
+  # release carries under a desktop or mobile extension is listed, and a heading with nothing under
+  # it is left out, so the announcement never promises a build that was not made.
+  announce:
+    name: Tell Discord
+    needs: [image, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Announce the release
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "DISCORD_RELEASE_WEBHOOK is not set; nothing to announce."
+            exit 0
+          fi
+
+          release_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+          changelog_url="https://github.com/$GITHUB_REPOSITORY/blob/$TAG/CHANGELOG.md"
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${GITHUB_REPOSITORY#*/}"
+          version="${TAG#v}"
+
+          assets="$(gh release view "$TAG" --json assets)"
+
+          links() {
+            echo "$assets" | jq -r --arg pattern "$1" '
+              .assets[] | select(.name | test($pattern; "i")) | "[\(.name)](\(.url))"
+            ' | paste -sd '\n' -
+          }
+
+          desktop="$(links '\.(dmg|exe|msi|AppImage|deb|rpm)$')"
+          mobile="$(links '\.(apk|aab|ipa)$')"
+          docker="\`docker pull $image:$version\`"
+
+          jq -n \
+            --arg tag "$TAG" \
+            --arg release_url "$release_url" \
+            --arg changelog_url "$changelog_url" \
+            --arg desktop "$desktop" \
+            --arg mobile "$mobile" \
+            --arg docker "$docker" '
+            {
+              username: "Valence",
+              embeds: [{
+                title: "Valence \($tag) is out",
+                url: $release_url,
+                color: 5793266,
+                description: "Read what changed in the [release notes](\($release_url)) or the [changelog](\($changelog_url)).",
+                fields: ([
+                  (if $desktop == "" then empty else {name: "Desktop", value: $desktop} end),
+                  (if $mobile == "" then empty else {name: "Mobile", value: $mobile} end),
+                  {name: "Docker", value: $docker}
+                ])
+              }]
+            }' > payload.json
+
+          curl --fail --silent --show-error \
+            -H "Content-Type: application/json" \
+            -d @payload.json \
+            "$WEBHOOK"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+          GH_REPO: ${{ github.repository }}
