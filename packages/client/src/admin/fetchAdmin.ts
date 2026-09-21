@@ -170,6 +170,7 @@ const MonitorSchema = z.object({
     loadAverage: z.number(),
     disks: z.array(DiskUseSchema).default([]),
     graphics: GraphicsUseSchema.nullable().default(null),
+    graphicsNotes: z.array(z.string()).default([]),
   }),
   cache: z
     .object({

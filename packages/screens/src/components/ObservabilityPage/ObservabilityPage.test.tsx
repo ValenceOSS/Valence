@@ -93,6 +93,7 @@ const reading = (jobs: Job[], queue: Partial<Monitor['queue']> = {}): Monitor =>
     loadAverage: 0,
     disks: [],
     graphics: null,
+    graphicsNotes: [],
     artefacts: null,
   },
   queue: { concurrency: 2, paused: false, queued: 0, running: jobs.length, jobs, ...queue },
