@@ -16,6 +16,7 @@ type SearchAreaProps = {
   isKept?: (mediaId: string) => boolean;
   onToggleKept?: (media: MediaSummary) => void;
   onHide?: (media: MediaSummary) => void;
+  onOpenShow?: (media: MediaSummary) => void;
   onOpenBook?: (book: Book) => void;
   onAsk?: (asking: string) => void;
 };

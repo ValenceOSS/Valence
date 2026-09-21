@@ -29,6 +29,7 @@ const scanning = (overrides: Partial<ScanEntry> = {}): ScanEntry =>
     total: 10,
     item: null,
     jobId: 'job-1',
+    isStopping: false,
     ...overrides,
   }) satisfies ScanEntry;
 

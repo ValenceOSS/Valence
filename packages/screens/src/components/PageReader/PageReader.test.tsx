@@ -63,6 +63,8 @@ const draw = (overrides: Partial<Parameters<typeof PageReader>[0]> = {}) =>
 const shown = (): string => screen.getByRole('img', { name: /^Page/ }).getAttribute('alt') ?? '';
 
 beforeEach(() => {
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 800 });
+  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 600 });
   forgetPlatform();
   held.clear();
   installPlatform({
@@ -86,6 +88,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  Reflect.deleteProperty(HTMLElement.prototype, 'offsetHeight');
+  Reflect.deleteProperty(HTMLElement.prototype, 'offsetWidth');
   forgetPlatform();
 });
 
@@ -204,6 +208,70 @@ describe('PageReader', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Two' }));
 
     expect(held.get('valence.reader')).toContain('"isDouble":true');
+  });
+
+  it('does not zoom the page when it is double clicked', async () => {
+    draw();
+
+    const page = screen.getByRole('img', { name: 'Page 1' });
+
+    await userEvent.dblClick(page);
+
+    expect(page.closest<HTMLElement>('[style*="translate3d"]')?.style.transform).toContain(
+      'scale(1)',
+    );
+  });
+
+  it('offers a gap between the two pages of a spread only while two are showing', async () => {
+    draw();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+
+    expect(screen.queryByRole('slider', { name: 'Gap between pages' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Two' }));
+
+    expect(screen.getByRole('slider', { name: 'Gap between pages' })).toBeInTheDocument();
+  });
+
+  it('remembers whether turning a page is animated', async () => {
+    draw();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Animate turning pages' }));
+
+    expect(held.get('valence.reader')).toContain('"isAnimated":false');
+  });
+
+  it('lays the chapter down as one strip to scroll, and remembers that', async () => {
+    draw();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Scroll' }));
+
+    expect(screen.getByRole('img', { name: 'Page 1' })).toBeInTheDocument();
+    expect(screen.getAllByRole('img', { name: /^Page \d+$/ }).length).toBeLessThanOrEqual(10);
+    expect(held.get('valence.reader')).toContain('"isScrolling":true');
+  });
+
+  it('offers the way on to the next chapter at the foot of the strip', async () => {
+    const onChapterChange = vi.fn();
+
+    draw({ onChapterChange });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Scroll' }));
+    const strip = screen
+      .getByRole('img', { name: 'Page 1' })
+      .closest<HTMLElement>('[role="presentation"]');
+
+    if (strip === null) {
+      throw new Error('The strip was not drawn.');
+    }
+
+    await userEvent.click(within(strip).getByRole('button', { name: 'Next chapter' }));
+
+    expect(onChapterChange).toHaveBeenCalledWith('two');
   });
 
   it('says in the panel which book, which chapter and which page', async () => {

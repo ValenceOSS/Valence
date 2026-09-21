@@ -10,6 +10,7 @@ import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useHidden } from '@ValenceClient/library/useHidden';
 import { ConfirmHiding } from '@ValenceScreens/components/ConfirmHiding/ConfirmHiding';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
+import { showSlug } from '@ValenceCore/functions/showSlug';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 
 /**
@@ -56,6 +57,13 @@ const SearchPage = () => {
           go({ asking });
         }}
         onItemsLoaded={rememberItems}
+        onOpenShow={(media) => {
+          const series = media.seriesId ?? showSlug(media.seriesTitle ?? '');
+
+          if (series !== '') {
+            go({ show: series });
+          }
+        }}
         watchedFractionFor={(mediaId) => {
           const found = progress.get(mediaId);
 

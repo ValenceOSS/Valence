@@ -275,7 +275,7 @@ const BrowseArea = ({
                 items={items}
                 size={size}
                 isSeries={kind === 'shows'}
-                shape={kind === 'films' ? 'poster' : 'wide'}
+                shape={kind === 'films' || kind === 'shows' ? 'poster' : 'wide'}
                 {...(onOpenShow === undefined ? {} : { onOpenShow })}
                 onPlay={onPlay}
                 onInspect={onInspect}

@@ -340,6 +340,7 @@ const LibrariesPanel = ({
           processed: entry.processed,
           total: entry.total,
           item: entry.item,
+          isStopping: entry.isStopping,
         }))}
         tasks={working.filter(
           (job) =>

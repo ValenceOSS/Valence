@@ -6,6 +6,7 @@ type RunningProgress = {
   processed: number | null;
   total: number | null;
   item?: string | null;
+  isStopping?: boolean;
 };
 
 type RunningWorkDialogProps = {

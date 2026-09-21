@@ -45,4 +45,30 @@ describe('useChromeThatHides', () => {
 
     expect(result.current.isShown).toBe(true);
   });
+
+  it('does not bring hidden controls back when only kept', () => {
+    const { result } = renderHook(() => useChromeThatHides());
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    act(() => {
+      result.current.keep();
+    });
+
+    expect(result.current.isShown).toBe(false);
+  });
+
+  it('keeps showing controls a moment longer when kept', () => {
+    const { result } = renderHook(() => useChromeThatHides());
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+      result.current.keep();
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(result.current.isShown).toBe(true);
+  });
 });

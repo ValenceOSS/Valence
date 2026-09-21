@@ -166,8 +166,11 @@ const JobRunner = ({
 
           return (
             <span className="flex items-center gap-1.5">
-              <Badge size="sm" tone={describeJobStatus('running').tone}>
-                {describeJobStatus('running').label}
+              <Badge
+                size="sm"
+                tone={describeJobStatus(summary.isStopping ? 'stopping' : 'running').tone}
+              >
+                {describeJobStatus(summary.isStopping ? 'stopping' : 'running').label}
               </Badge>
 
               <Button
@@ -210,7 +213,8 @@ const JobRunner = ({
                         live.current.askOrRun(row.original);
                       },
                     },
-                    ...(live.current.summaryFor(row.original.kind) === null
+                    ...(live.current.summaryFor(row.original.kind) === null ||
+                    live.current.summaryFor(row.original.kind)?.isStopping === true
                       ? []
                       : [
                           {
