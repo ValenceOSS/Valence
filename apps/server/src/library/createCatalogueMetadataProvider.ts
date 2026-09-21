@@ -148,6 +148,14 @@ const DetailResponseSchema = z.object({
   revenue: z.number().nonnegative().optional(),
   status: z.string().optional(),
   imdb_id: z.string().nullish(),
+  next_episode_to_air: z
+    .object({
+      air_date: z.string().nullish(),
+      season_number: z.number().int(),
+      episode_number: z.number().int(),
+      name: z.string().optional(),
+    })
+    .nullish(),
   genres: z.array(z.object({ name: z.string() })).default([]),
   seasons: z
     .array(
@@ -1040,6 +1048,32 @@ const createCatalogueMetadataProvider = ({
       );
 
       return readRequestCatalogue(detail, seasons, (path) => imageUrl(imageBaseUrl, path, 'w342'));
+    },
+
+    describeNextEpisode: async (externalId) => {
+      const key = await readApiKey();
+
+      if (key === null || key === '') {
+        return null;
+      }
+
+      const detail = DetailResponseSchema.safeParse(await request(`/tv/${externalId}`, key, {}));
+      const next = detail.success ? (detail.data.next_episode_to_air ?? null) : null;
+
+      return next === null ||
+        next.air_date === undefined ||
+        next.air_date === null ||
+        next.air_date === ''
+        ? null
+        : {
+            seasonNumber: next.season_number,
+            episodeNumber: next.episode_number,
+            title:
+              next.name === undefined || next.name === ''
+                ? `Episode ${next.episode_number.toString()}`
+                : next.name,
+            airDate: next.air_date,
+          };
     },
 
     describeSeries: async (externalId) => {

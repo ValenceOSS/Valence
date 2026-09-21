@@ -656,6 +656,8 @@ const createMemoryLibraryService = (
 
   readPerson: (personId) => Promise.resolve(state.people?.[personId] ?? null),
 
+  comingUp: () => Promise.resolve([]),
+
   listShows: (viewer, libraryId) =>
     Promise.resolve(
       state.libraries.some((entry) => entry.id === libraryId) && reaches(state, viewer, libraryId)

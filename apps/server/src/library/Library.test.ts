@@ -1110,6 +1110,64 @@ describe('asking for work against a library that is not there', () => {
   });
 });
 
+describe('what is coming up', () => {
+  const NEXT = { seasonNumber: 2, episodeNumber: 4, title: 'Four', airDate: '2999-01-01' };
+
+  const SHOW = {
+    id: 'ted-lasso',
+    libraryId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+    title: 'Ted Lasso',
+    seasonCount: 3,
+    episodeCount: 30,
+    latestAddedAt: '2026-09-01T00:00:00.000Z',
+    coverMediaId: '9c858901-8a57-4791-81fe-4c455b099bc9',
+    seriesId: null,
+  };
+
+  const appOf = (comingUp: () => Promise<{ show: typeof SHOW; episode: typeof NEXT }[]>) => {
+    const { auth, settings, store } = createMemoryAuth();
+    const permissions = createMemoryPermissionService();
+    const library = createMemoryLibraryService();
+
+    return signedInApp(
+      createApp({
+        auth,
+        settings,
+        permissions,
+        countUsers: () => Promise.resolve(1),
+        promoteToAdmin: () => Promise.resolve(null),
+        library: { ...library, comingUp },
+        subtitles: createMemorySubtitleService(),
+        segments: createMemorySegmentService(),
+        progress: createMemoryWatchProgressService(),
+        favourites: createMemoryFavouriteService(),
+        ratings: createMemoryRatingService(),
+        playback: createMemoryPlaybackService(),
+      }),
+      { store, permissions, isAdministrator: false },
+    );
+  };
+
+  it('lists the programmes with an episode still to air, with the episode', async () => {
+    const app = appOf(() => Promise.resolve([{ show: SHOW, episode: NEXT }]));
+
+    const response = await app.request(`${BASE}/api/coming-up`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      shows: [
+        { show: { title: 'Ted Lasso' }, episode: { episodeNumber: 4, airDate: '2999-01-01' } },
+      ],
+    });
+  });
+
+  it('lists nothing where nothing is coming', async () => {
+    const app = appOf(() => Promise.resolve([]));
+
+    expect(await (await app.request(`${BASE}/api/coming-up`)).json()).toEqual({ shows: [] });
+  });
+});
+
 describe('adding a library', () => {
   it('refuses a path that is not a readable directory', async () => {
     const { auth, settings, store } = createMemoryAuth();

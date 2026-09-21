@@ -74,6 +74,7 @@ import {
   getMediaRoute,
   listShowsRoute,
   getShowRoute,
+  comingUpRoute,
   scanLibraryRoute,
   scanStateRoute,
   runningScansRoute,
@@ -1205,6 +1206,16 @@ const createApp = ({
     }
 
     return context.json(show, 200);
+  });
+
+  app.openapi(comingUpRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    return context.json({ shows: await library.comingUp(viewer) }, 200);
   });
 
   app.openapi(getMediaRoute, async (context) => {

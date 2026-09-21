@@ -1,7 +1,7 @@
 import { readFromServerOrAbsent } from '@ValenceClient/query/readFromServerOrAbsent';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { ShowListSchema, ShowDetailSchema } from '@ValenceContracts/schemas/Show';
-import type { ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
+import { ComingUpSchema, ShowListSchema, ShowDetailSchema } from '@ValenceContracts/schemas/Show';
+import type { ComingUp, ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
 
 /**
  * Reads the programmes in a library, grouped by the server so that a page of sixty things is sixty
@@ -26,4 +26,13 @@ const fetchShow = async (libraryId: string, showId: string): Promise<ShowDetail 
   return readFromServerOrAbsent(`/api/libraries/${libraryId}/shows/${showId}`, ShowDetailSchema);
 };
 
-export { fetchShows, fetchShow };
+/**
+ * Reads the programmes this viewer can watch that have an episode still to air, soonest first, each
+ * with the episode and the day it airs.
+ *
+ * @returns The programmes and their next episodes.
+ */
+const fetchComingUp = async (): Promise<ComingUp['shows']> =>
+  (await readFromServer('/api/coming-up', ComingUpSchema)).shows;
+
+export { fetchComingUp, fetchShows, fetchShow };
