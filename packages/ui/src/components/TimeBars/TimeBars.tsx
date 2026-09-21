@@ -163,10 +163,13 @@ const TimeBars = ({
         {shown === undefined || shown === null || over === null ? null : (
           <div
             role="tooltip"
-            className="pointer-events-none absolute -top-2 z-10 min-w-40 -translate-y-full rounded-md bg-text px-2.5 py-1.5 font-body text-xs text-surface shadow-lg"
+            className="pointer-events-none absolute top-1 z-10 min-w-40 rounded-md bg-text px-2.5 py-1.5 font-body text-xs text-surface shadow-lg"
             style={{
               left: `${(((over + 0.5) / bars.length) * 100).toFixed(2)}%`,
-              transform: `translate(${over > bars.length / 2 ? '-100%' : '0'}, -100%)`,
+              transform:
+                over > bars.length / 2
+                  ? 'translateX(calc(-100% - 0.75rem))'
+                  : 'translateX(0.75rem)',
             }}
           >
             <p className="mb-1 font-medium">

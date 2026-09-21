@@ -12,6 +12,7 @@ import type { ProgressBarProps } from './ProgressBar.types';
  * @param max - The total to measure against, defaulting to a hundred.
  * @param children - Anything to draw beneath the bar, such as what is being worked on now.
  * @param readout - The figure to show beside the bar, where a caller wants one of its own.
+ * @param isFull - Whether the bar takes the whole width it is given, rather than its own short length.
  * @param className - Extra classes for the caller's own layout.
  */
 const ProgressBar = ({
@@ -20,9 +21,10 @@ const ProgressBar = ({
   max = 100,
   children,
   readout,
+  isFull = false,
   className,
 }: ProgressBarProps) => (
-  <div className={cn('flex shrink-0 items-center gap-2', className)}>
+  <div className={cn('flex items-center gap-2', isFull ? 'w-full' : 'shrink-0', className)}>
     {children}
 
     <RadixProgress.Root
@@ -30,7 +32,10 @@ const ProgressBar = ({
       max={max}
       aria-label={label}
       data-slot="progress"
-      className="block h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-track"
+      className={cn(
+        'block h-1.5 overflow-hidden rounded-full bg-track',
+        isFull ? 'w-full' : 'w-20 shrink-0',
+      )}
     >
       <RadixProgress.Indicator
         style={value === null ? undefined : { width: `${((value / max) * 100).toString()}%` }}

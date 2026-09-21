@@ -4,6 +4,7 @@ type HeadedSectionProps = {
   title: string;
   actions?: ReactNode;
   children: ReactNode;
+  isInset?: boolean;
   className?: string;
 };
 

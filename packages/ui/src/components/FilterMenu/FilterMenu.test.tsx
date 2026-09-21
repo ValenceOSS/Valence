@@ -33,7 +33,7 @@ describe('FilterMenu', () => {
       />,
     );
 
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitemcheckbox')).not.toBeInTheDocument();
   });
 
   it('offers every choice under the name of its group', async () => {
@@ -50,7 +50,7 @@ describe('FilterMenu', () => {
 
     expect(screen.getByText('Kind')).toBeInTheDocument();
     expect(screen.getByText('Status')).toBeInTheDocument();
-    expect(screen.getAllByRole('checkbox')).toHaveLength(3);
+    expect(screen.getAllByRole('menuitemcheckbox')).toHaveLength(3);
   });
 
   it('adds a choice to the ones already ticked, rather than replacing them', async () => {
@@ -67,7 +67,7 @@ describe('FilterMenu', () => {
 
     const user = await open();
 
-    await user.click(screen.getByRole('checkbox', { name: 'Filed' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Filed' }));
 
     expect(onChange).toHaveBeenCalledWith(new Set(['kind:film', 'status:filed']));
   });
@@ -86,7 +86,7 @@ describe('FilterMenu', () => {
 
     const user = await open();
 
-    await user.click(screen.getByRole('checkbox', { name: 'Film' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Film' }));
 
     expect(onChange).toHaveBeenCalledWith(new Set(['status:filed']));
   });
@@ -107,7 +107,7 @@ describe('FilterMenu', () => {
 
     const user = await open();
 
-    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Clear filters' }));
 
     expect(onChange).toHaveBeenCalledWith(new Set());
   });
@@ -135,9 +135,77 @@ describe('FilterMenu', () => {
 
     const user = await open();
 
-    await user.click(screen.getByRole('checkbox', { name: '2000s' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: '2000s' }));
 
     expect(onChange).toHaveBeenCalledWith(new Set(['decade:2000']));
+  });
+
+  it('puts a tick at the end of each choice that is in force, and only those', async () => {
+    render(
+      <FilterMenu
+        label="Filter requests"
+        groups={GROUPS}
+        selected={new Set(['kind:film'])}
+        onChange={vi.fn()}
+      />,
+    );
+
+    await open();
+
+    expect(screen.getByRole('menuitemcheckbox', { name: 'Film' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(screen.getByRole('menuitemcheckbox', { name: 'Series' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+  });
+
+  it('stays open as choices are made, so several can be picked in one go', async () => {
+    render(
+      <FilterMenu
+        label="Filter requests"
+        groups={GROUPS}
+        selected={new Set()}
+        onChange={vi.fn()}
+      />,
+    );
+
+    const user = await open();
+
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Film' }));
+
+    expect(screen.getByRole('menuitemcheckbox', { name: 'Series' })).toBeInTheDocument();
+  });
+
+  it('offers no way to clear where nothing is in force', async () => {
+    render(
+      <FilterMenu
+        label="Filter requests"
+        groups={GROUPS}
+        selected={new Set()}
+        onChange={vi.fn()}
+      />,
+    );
+
+    await open();
+
+    expect(screen.queryByRole('menuitem', { name: 'Clear filters' })).not.toBeInTheDocument();
+  });
+
+  it('says Filters beside the icon where it stands on its own', () => {
+    render(
+      <FilterMenu
+        hasLabel
+        label="Filter requests"
+        groups={GROUPS}
+        selected={new Set()}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Filter requests' })).toHaveTextContent('Filters');
   });
 
   it('sets a display name so devtools can identify it', () => {

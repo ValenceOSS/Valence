@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { Well } from '@ValenceUI/Well';
 import { cn } from '@ValenceUI/cn';
 import type { HeadedSectionProps } from './HeadedSection.types';
 
@@ -10,9 +11,16 @@ import type { HeadedSectionProps } from './HeadedSection.types';
  * @param title - What the section is.
  * @param actions - Controls for the section, set at the end of its heading.
  * @param children - The section's content.
+ * @param isInset - Whether the content sits in a darker rounded well, for a chart, list or table.
  * @param className - Extra classes for the caller's own layout.
  */
-const HeadedSection = ({ title, actions, children, className }: HeadedSectionProps) => {
+const HeadedSection = ({
+  title,
+  actions,
+  children,
+  isInset = false,
+  className,
+}: HeadedSectionProps) => {
   const headingId = useId();
 
   return (
@@ -30,7 +38,7 @@ const HeadedSection = ({ title, actions, children, className }: HeadedSectionPro
         )}
       </header>
 
-      {children}
+      {isInset ? <Well className="flex min-h-0 flex-1 flex-col">{children}</Well> : children}
     </section>
   );
 };

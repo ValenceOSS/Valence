@@ -103,6 +103,19 @@ describe('TimeBars', () => {
     expect(tip).toHaveTextContent('4');
   });
 
+  it('lays the note over the chart beside the bar, on the side that has room', () => {
+    draw();
+
+    fireEvent.pointerMove(chart(), { clientX: 10 });
+
+    expect(chart().parentElement).toContainElement(screen.getByRole('tooltip'));
+    expect(screen.getByRole('tooltip').style.transform).toBe('translateX(0.75rem)');
+
+    fireEvent.pointerMove(chart(), { clientX: 90 });
+
+    expect(screen.getByRole('tooltip').style.transform).toBe('translateX(calc(-100% - 0.75rem))');
+  });
+
   it('follows the pointer from bar to bar and forgets it when it leaves', () => {
     draw({ formatSpan: (from) => `from ${from.toString()}` });
 

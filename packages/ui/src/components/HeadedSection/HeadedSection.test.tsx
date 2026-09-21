@@ -35,6 +35,19 @@ describe('HeadedSection', () => {
     expect(container.querySelector('.valence-card-shell, .valence-card-face')).toBeNull();
   });
 
+  it('sets the content in a well where it is asked to', () => {
+    render(
+      <HeadedSection title="Lines" isInset>
+        <p>Content</p>
+      </HeadedSection>,
+    );
+
+    expect(screen.getByText('Content').parentElement).toHaveClass(
+      'rounded-xl',
+      'bg-[var(--card-shell)]',
+    );
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(HeadedSection.displayName).toBe('HeadedSection');
   });

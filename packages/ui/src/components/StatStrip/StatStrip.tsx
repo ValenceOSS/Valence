@@ -22,7 +22,7 @@ const StatStrip = ({ items, label, className }: StatStripProps) => (
     {items.map((item) => (
       <div
         key={item.id}
-        className="relative flex min-h-24 flex-col gap-1 overflow-hidden border-[var(--surface-line)] px-4 py-2 first:pl-0 sm:border-l sm:first:border-l-0"
+        className="relative flex flex-col gap-1 overflow-hidden border-[var(--surface-line)] px-4 py-1 first:pl-0 sm:border-l sm:first:border-l-0"
       >
         {item.history === undefined ? null : (
           <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 opacity-30">
@@ -36,7 +36,7 @@ const StatStrip = ({ items, label, className }: StatStripProps) => (
 
         <dd
           className={cn(
-            'relative text-2xl font-semibold tabular-nums leading-none tracking-tight',
+            'relative text-xl font-semibold tabular-nums leading-none tracking-tight',
             item.isAlarming === true ? 'text-danger' : 'text-text',
           )}
         >
