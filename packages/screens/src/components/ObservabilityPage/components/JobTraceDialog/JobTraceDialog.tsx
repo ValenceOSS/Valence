@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -28,6 +29,8 @@ const LINES = 500;
 
 const BARS = 40;
 
+const LIVE_EVERY_MS = 2000;
+
 const writeToClipboard = async (text: string): Promise<void> => {
   await navigator.clipboard.writeText(text);
 };
@@ -54,7 +57,15 @@ const JobTraceDialog = ({
   onOpenInLogs,
   copy = writeToClipboard,
 }: JobTraceDialogProps) => {
-  const askedRun = useQuery(adminQueries.jobRun(jobRunId));
+  const cache = useQueryClient();
+  const askedRun = useQuery({
+    ...adminQueries.jobRun(jobRunId),
+    refetchInterval: ({ state }) =>
+      state.data?.status === 'running' || state.data?.status === 'queued' ? LIVE_EVERY_MS : false,
+  });
+  const isRunning = askedRun.data?.status === 'running';
+  const isLive = isRunning || askedRun.data?.status === 'queued';
+  const liveEvery = isLive ? LIVE_EVERY_MS : false;
   const askedLines = useQuery({
     ...adminQueries.logs({
       jobId: jobRunId,
@@ -63,14 +74,29 @@ const JobTraceDialog = ({
       limit: LINES,
     }),
     enabled: jobRunId !== null,
+    refetchInterval: liveEvery,
   });
   const askedBars = useQuery({
     ...adminQueries.logHistogram({ jobId: jobRunId, levels: [...LOG_LEVELS], buckets: BARS }),
     enabled: jobRunId !== null,
+    refetchInterval: liveEvery,
   });
-  const askedIssues = useQuery(adminQueries.jobHistoryIssues(jobRunId));
-  const isRunning = askedRun.data?.status === 'running';
+  const askedIssues = useQuery({
+    ...adminQueries.jobHistoryIssues(jobRunId),
+    refetchInterval: liveEvery,
+  });
   const now = useTicking(isRunning);
+  const wasLive = useRef(false);
+
+  useEffect(() => {
+    if (wasLive.current && !isLive) {
+      void cache.invalidateQueries({ queryKey: [...adminQueries.key, 'logs'] });
+      void cache.invalidateQueries({ queryKey: [...adminQueries.key, 'logHistogram'] });
+      void cache.invalidateQueries({ queryKey: [...adminQueries.key, 'jobHistoryIssues'] });
+    }
+
+    wasLive.current = isLive;
+  }, [cache, isLive]);
 
   const run = askedRun.data ?? null;
   const lines = askedLines.data?.records ?? [];

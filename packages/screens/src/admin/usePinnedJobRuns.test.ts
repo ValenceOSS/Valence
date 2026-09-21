@@ -12,6 +12,21 @@ describe('usePinnedJobRuns', () => {
     expect(renderHook(() => usePinnedJobRuns()).result.current.pinned.size).toBe(0);
   });
 
+  it('hands back the same set until something is pinned, so what is built from it holds', () => {
+    const { result, rerender } = renderHook(() => usePinnedJobRuns());
+    const before = result.current.pinned;
+
+    rerender();
+
+    expect(result.current.pinned).toBe(before);
+
+    act(() => {
+      result.current.toggle('run-1');
+    });
+
+    expect(result.current.pinned).not.toBe(before);
+  });
+
   it('pins a run, and unpins it when it is toggled again', () => {
     const { result } = renderHook(() => usePinnedJobRuns());
 
