@@ -26,7 +26,6 @@ import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { DownloadDialog } from '@ValenceScreens/components/DownloadDialog/DownloadDialog';
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -38,6 +37,7 @@ import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPrevi
 import { scrollToTopOf } from '@ValenceScreens/navigation/scrollToTopOf';
 import { RatingPanel } from '@ValenceScreens/components/RatingPanel/RatingPanel';
 import { pickUpFrom } from './pickUpFrom';
+import { SeasonPicker } from './components/SeasonPicker/SeasonPicker';
 import { EpisodeRow } from './components/EpisodeRow/EpisodeRow';
 import { MissingRow } from './components/MissingRow/MissingRow';
 import { findGaps } from '@ValenceCore/functions/findGaps';
@@ -277,20 +277,7 @@ const ShowDialog = ({
               </h3>
 
               {seasons.length < 2 && (gaps?.seasons ?? []).length === 0 ? null : (
-                <SegmentedRow
-                  size="sm"
-                  tone="accent"
-                  label="Which season"
-                  items={chooseFrom.map((one) => ({
-                    id: String(one.seasonNumber ?? 'specials'),
-                    label: nameSeason(one.seasonNumber),
-                    ...(one.isHeld ? {} : { isAbsent: true }),
-                  }))}
-                  value={String(showing ?? 'specials')}
-                  onSelect={(chosen) => {
-                    setChosenSeason(chosen === 'specials' ? null : Number(chosen));
-                  }}
-                />
+                <SeasonPicker seasons={chooseFrom} value={showing} onChange={setChosenSeason} />
               )}
             </header>
 
