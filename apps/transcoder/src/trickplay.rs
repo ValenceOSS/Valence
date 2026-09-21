@@ -681,6 +681,22 @@ async fn draw_sheets(
     Ok(sheets)
 }
 
+/// Clears what a failed attempt left behind, so the next one starts on nothing.
+///
+/// The single thumbnails are only swept once they have been gathered, so a run
+/// that dies in the first pass leaves its own behind. Gathering those into the
+/// software attempt's sheets would put half of one render under the scrub bar.
+async fn clear_attempt(directory: &Path, subject: &str) {
+    if let Err(error) = tokio::fs::remove_dir_all(directory).await {
+        tracing::warn!(
+            target: "trickplay",
+            %error,
+            subject = %subject,
+            "could not clear a failed trickplay attempt"
+        );
+    }
+}
+
 /// Clears the single thumbnails away once they have been gathered into sheets.
 ///
 /// A two hour film leaves seven hundred of them, and nothing reads them again.
@@ -884,6 +900,17 @@ impl TrickplayRegistry {
 /// worth no more than no sheet at all, and it would otherwise be kept for as
 /// long as the file stays in the library.
 ///
+/// The retry covers the decoder as much as the encoder, which is what makes it
+/// worth keeping. A device advertises one JPEG encoder for every file in a
+/// library, and its decoder speaks for a handful of codecs: an Intel iGPU has
+/// no MPEG-4 part 2 decoder at all, so every Xvid film in a library fails the
+/// same way. `FFmpeg` does not refuse at the decoder either, it drops
+/// to software there and carries on into a filter chain built for frames on the
+/// device, which is where it stops — "Failed to create frame context for
+/// reverse mapping", and nothing written. There is no capability to read that
+/// would have predicted it, because what Valence probes is which encoders run,
+/// not which files the decoder will take.
+///
 /// # Errors
 ///
 /// Returns [`TrickplayError`] when the directory cannot be made, ffmpeg cannot
@@ -931,32 +958,44 @@ pub async fn generate(
         .await
         .map_err(TrickplayError::Directory)?;
 
-    let drawn = draw_sheets(
-        ffmpeg,
-        device,
-        request,
-        tile_height,
-        source,
-        accel,
-        capabilities,
-        &directory,
-    )
-    .await;
+    let mut attempt = accel.filter(|found| *found != HardwareAccel::None);
 
-    let sheets = match drawn {
-        Ok(sheets) => sheets,
-        Err(failure) => {
-            if let Err(error) = tokio::fs::remove_dir_all(&directory).await {
-                tracing::warn!(
-                    target: "trickplay",
-                    %error,
-                    subject = %id,
-                    "could not clear a failed trickplay attempt"
-                );
-            }
+    let sheets = loop {
+        let drawn = draw_sheets(
+            ffmpeg,
+            device,
+            request,
+            tile_height,
+            source,
+            attempt,
+            capabilities,
+            &directory,
+        )
+        .await;
 
+        let failure = match drawn {
+            Ok(sheets) => break sheets,
+            Err(failure) => failure,
+        };
+
+        clear_attempt(&directory, &id).await;
+
+        if attempt.is_none() {
             return Err(failure);
         }
+
+        tracing::warn!(
+            target: "trickplay",
+            subject = %id,
+            "accelerated sheets for {} failed, retrying in software: {failure}",
+            request.input_path
+        );
+
+        attempt = None;
+
+        tokio::fs::create_dir_all(&directory)
+            .await
+            .map_err(TrickplayError::Directory)?;
     };
 
     tokio::fs::write(
