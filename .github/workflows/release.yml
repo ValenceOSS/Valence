@@ -51,12 +51,18 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm lint
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
 
       - run: pnpm typecheck
 
       - run: pnpm db:check
 
-      - run: pnpm test
+      # Two packages at a time. Turbo sizes itself to the machine and every package's own runner sizes
+      # itself the same way, so every suite at once on one GitHub runner is thrashing rather than
+      # parallelism, and a test that takes one second alone takes past its timeout in the crowd. That
+      # is why the pull request gate gives each package a runner, which a release does not need to.
+      - run: pnpm turbo run test --concurrency=2
 
   # A job of its own, because it needs a different operating system. The transcoder's tests decode
   # against the FFmpeg Valence ships, which is packaged for Debian and wants libraries the runner's
