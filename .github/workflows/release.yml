@@ -236,9 +236,18 @@ jobs:
           path: release/
           if-no-files-found: warn
 
+  # The desktop app's installers, built by the workflow that owns that and attached below. A job that
+  # calls a workflow rather than a step, so its artefacts are this run's like any other job's.
+  desktop:
+    name: Desktop app
+    needs: [verify]
+    uses: ./.github/workflows/desktop.yml
+    with:
+      tag: ${{ inputs.tag || github.ref_name }}
+
   publish:
     name: Publish the release
-    needs: [image, artefacts]
+    needs: [image, artefacts, desktop]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -249,6 +258,11 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: release-artefacts
+          path: release
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: valence-desktop-windows
           path: release
 
       # The release already exists: release-please created it and tagged it. What it cannot write

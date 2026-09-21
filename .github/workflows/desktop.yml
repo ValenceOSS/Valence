@@ -1,0 +1,89 @@
+name: Desktop app
+
+# Builds the desktop app's installers, so a change to it is known to package and a release has
+# something to attach.
+#
+# A workflow of its own, called by release.yml, because it needs a different operating system and
+# because a change to the desktop app should be able to prove it still packages without cutting a
+# release. It builds; it does not publish. release.yml takes what it produced and hangs it on the
+# release, so the one place that writes to a release stays the one that already does.
+#
+# Windows only for now. The installer is not signed: there is no certificate to sign it with, so
+# Windows SmartScreen will warn on first run until there is.
+
+on:
+  pull_request:
+    paths:
+      - 'apps/desktop/**'
+      - '.github/workflows/desktop.yml'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The release tag to build, or leave empty to build the branch as it is
+        required: false
+        default: ''
+  workflow_call:
+    inputs:
+      tag:
+        description: The release tag to build
+        required: false
+        type: string
+        default: ''
+
+concurrency:
+  group: desktop-${{ github.ref }}-${{ inputs.tag }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Build the Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The app's own package.json says 0.0.0, since versions are cut by release-please rather than
+      # written into packages. The installer is named for the release it belongs to, so the version
+      # is handed to the builder instead.
+      - name: Work out the version to stamp on it
+        id: version
+        shell: bash
+        run: |
+          tag="${TAG}"
+
+          if [ -n "$tag" ]; then
+            echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.0.0-dev" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          TAG: ${{ inputs.tag }}
+
+      - run: pnpm --filter @valence/desktop exec electron-vite build
+
+      # No signing identity is discovered: there is none, and looking for one on a runner only
+      # produces a warning per attempt.
+      - run: >-
+          pnpm --filter @valence/desktop exec electron-builder --win --x64 --publish never
+          -c.extraMetadata.version=${{ steps.version.outputs.version }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: valence-desktop-windows
+          path: apps/desktop/release/Valence-Setup-*.exe
+          if-no-files-found: error

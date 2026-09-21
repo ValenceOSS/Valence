@@ -1,10 +1,22 @@
 ---
 title: Desktop app
-description: What the Valence desktop app is, how it finds your server, what it adds over a browser and how to build it from source.
+description: What the desktop app is, how it finds your server, where to get the Windows installer and how to build it yourself.
 order: 7
 ---
 
 The desktop app is an Electron application that gives Valence a window of its own on macOS, Windows and Linux. It is a window onto a server and nothing more: it does not run a server, keep a library or replace the browser client's role. Everything you see is the same application the web client runs. You still need a running Valence server to use it.
+
+## Getting it
+
+Each release attaches a Windows installer, `Valence-Setup-<version>.exe`, on the [releases page](https://github.com/ValenceOSS/Valence/releases). It is built for 64 bit Windows and lets you choose where to install it.
+
+<Callout title="The installer is not signed yet" tone="warning">
+  There is no code signing certificate, so Windows SmartScreen may warn that the publisher is
+  unknown the first time you run it. Choose **More info**, then **Run anyway**, if you downloaded it
+  from the releases page of this repository.
+</Callout>
+
+There is no macOS or Linux download yet. Those you build from source, as described at the end of this page.
 
 ## What it is
 
