@@ -22,6 +22,8 @@ import { createDownloadClientService } from '@ValenceRequests/downloads/createDo
 import { createDownloadQueue } from '@ValenceRequests/downloads/createDownloadQueue';
 import { createDownloadRoutes } from '@ValenceRequests/downloads/createDownloadRoutes';
 import { createDatabaseProfileStore } from '@ValenceRequests/profiles/createDatabaseProfileStore';
+import { seedStarterProfiles } from '@ValenceRequests/profiles/seedStarterProfiles';
+import { createDatabaseSettingStore } from '@ValenceRequests/stores/createDatabaseSettingStore';
 import { createProfileRoutes } from '@ValenceRequests/profiles/createProfileRoutes';
 import { createProfileService } from '@ValenceRequests/profiles/createProfileService';
 import { createDatabaseBlockedReleaseStore } from '@ValenceRequests/mediaRequests/createDatabaseBlockedReleaseStore';
@@ -33,6 +35,8 @@ import { createRequestService } from '@ValenceRequests/mediaRequests/createReque
 import { createRequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
+
+const PROFILES_SEEDED_AT = 'profilesSeededAt';
 
 const env = readEnv(process.env);
 const { db, pool } = createDatabase(env.DATABASE_URL);
@@ -100,6 +104,18 @@ const downloadClients = createDownloadClientService({
 });
 
 const profiles = createProfileService({ store: createDatabaseProfileStore(db) });
+
+const settings = createDatabaseSettingStore(db);
+
+const seeded = await seedStarterProfiles({
+  profiles,
+  wasSeeded: async () => (await settings.read(PROFILES_SEEDED_AT)) !== null,
+  remember: () => settings.write(PROFILES_SEEDED_AT, new Date().toISOString()),
+});
+
+if (seeded.length > 0) {
+  say(`Started with the ${seeded.join(', ')} quality profiles.`);
+}
 
 const sentDownloads = createDatabaseSentDownloadStore(db);
 
