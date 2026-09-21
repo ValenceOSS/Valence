@@ -1,4 +1,5 @@
 import { cn } from '@ValenceUI/cn';
+import { useActiveHeading } from '@ValenceDocs/components/DocPageView/components/OnThisPage/useActiveHeading';
 import type { PageHeading } from '@ValenceDocs/components/DocPageView/components/DocContent/readHeadings';
 
 type OnThisPageProps = {
@@ -10,8 +11,10 @@ type OnThisPageProps = {
  *
  * @param headings - The page's headings.
  */
-const OnThisPage = ({ headings }: OnThisPageProps) =>
-  headings.length < 2 ? null : (
+const OnThisPage = ({ headings }: OnThisPageProps) => {
+  const active = useActiveHeading(headings);
+
+  return headings.length < 2 ? null : (
     <nav
       aria-label="On this page"
       className="sticky top-24 hidden max-h-[calc(100dvh-8rem)] w-56 shrink-0 self-start overflow-y-auto xl:block"
@@ -25,9 +28,13 @@ const OnThisPage = ({ headings }: OnThisPageProps) =>
           <li key={heading.id}>
             <a
               href={`#${heading.id}`}
+              aria-current={heading.id === active ? 'location' : undefined}
               className={cn(
-                'block text-sm text-text-muted transition-colors hover:text-text',
+                '-ml-px block border-l-2 py-0.5 text-sm transition-colors',
                 heading.level === 2 ? 'pl-3' : 'pl-6',
+                heading.id === active
+                  ? 'border-accent font-medium text-accent'
+                  : 'border-transparent text-text-muted hover:text-text',
               )}
             >
               {heading.text}
@@ -37,6 +44,7 @@ const OnThisPage = ({ headings }: OnThisPageProps) =>
       </ul>
     </nav>
   );
+};
 
 OnThisPage.displayName = 'OnThisPage';
 

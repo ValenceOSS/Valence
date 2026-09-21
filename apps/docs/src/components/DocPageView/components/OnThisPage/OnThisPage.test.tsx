@@ -22,4 +22,25 @@ describe('OnThisPage', () => {
 
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
   });
+
+  it('marks the last section where the page is scrolled to its end', () => {
+    render(
+      <>
+        <h2 id="a">First</h2>
+        <h2 id="b">Second</h2>
+        <OnThisPage
+          headings={[
+            { id: 'a', text: 'First', level: 2 },
+            { id: 'b', text: 'Second', level: 2 },
+          ]}
+        />
+      </>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Second' })).toHaveAttribute(
+      'aria-current',
+      'location',
+    );
+    expect(screen.getByRole('link', { name: 'First' })).not.toHaveAttribute('aria-current');
+  });
 });
