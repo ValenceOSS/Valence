@@ -28,7 +28,7 @@ describe('AppliedFilters', () => {
     );
 
     for (const item of screen.getAllByRole('listitem')) {
-      expect(item).toHaveClass('flex');
+      expect(item).toHaveClass('flex', 'h-7', 'items-center');
     }
   });
 

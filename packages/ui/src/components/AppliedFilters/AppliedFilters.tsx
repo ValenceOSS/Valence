@@ -29,7 +29,7 @@ const AppliedFilters = ({ groups, selected, onRemove, onClear }: AppliedFiltersP
   return (
     <ul aria-label="Applied filters" className="flex flex-wrap items-center gap-2">
       {applied.map((filter) => (
-        <li key={filter.id} className="flex">
+        <li key={filter.id} className="flex h-7 items-center">
           <Button
             variant="glossy"
             size="xs"
@@ -45,7 +45,7 @@ const AppliedFilters = ({ groups, selected, onRemove, onClear }: AppliedFiltersP
         </li>
       ))}
 
-      <li className="flex">
+      <li className="flex h-7 items-center">
         <Button variant="subtle" size="xs" onClick={onClear}>
           Clear all
         </Button>

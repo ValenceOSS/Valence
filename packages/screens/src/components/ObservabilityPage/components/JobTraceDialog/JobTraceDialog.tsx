@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
@@ -13,6 +14,9 @@ import { LOG_LEVELS } from '@ValenceContracts/schemas/Log';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { describeJobKind } from '@ValenceClient/admin/describeJobKind';
 import { describeElapsed } from '@ValenceClient/admin/describeElapsed';
+import { describeWords } from '@ValenceClient/admin/describeWords';
+import { useTicking } from '@ValenceScreens/admin/useTicking';
+import { ElapsedTime } from '@ValenceScreens/components/ElapsedTime/ElapsedTime';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
 import { describeLogSpan, describeLogTick } from '@ValenceClient/admin/describeLogTick';
 import { logsAsText } from '@ValenceClient/admin/logsAsText';
@@ -65,6 +69,8 @@ const JobTraceDialog = ({
     enabled: jobRunId !== null,
   });
   const askedIssues = useQuery(adminQueries.jobHistoryIssues(jobRunId));
+  const isRunning = askedRun.data?.status === 'running';
+  const now = useTicking(isRunning);
 
   const run = askedRun.data ?? null;
   const lines = askedLines.data?.records ?? [];
@@ -124,18 +130,22 @@ const JobTraceDialog = ({
                     {run.finishedAtMs === null ? 'Running for' : 'Took'}
                   </dt>
                   <dd className="tabular-nums text-text">
-                    {tookMs === null
-                      ? run.startedAtMs === null
-                        ? '—'
-                        : describeElapsed(Date.now() - run.startedAtMs)
-                      : describeElapsed(tookMs)}
+                    {tookMs === null ? (
+                      run.startedAtMs === null ? (
+                        '—'
+                      ) : (
+                        <ElapsedTime ms={Math.max(0, now - run.startedAtMs)} />
+                      )
+                    ) : (
+                      <ElapsedTime ms={tookMs} />
+                    )}
                   </dd>
                 </div>
 
                 <div className="flex flex-col gap-0.5">
                   <dt className="text-xs text-text-muted">Lines logged</dt>
                   <dd className="tabular-nums text-text">
-                    {(askedLines.data?.total ?? 0).toLocaleString()}
+                    <AnimatedNumber value={askedLines.data?.total ?? 0} />
                   </dd>
                 </div>
               </dl>
@@ -145,7 +155,13 @@ const JobTraceDialog = ({
                   label={`${label} progress`}
                   value={progress.total === 0 ? null : progress.processed}
                   max={Math.max(progress.total, 1)}
-                  readout={`${progress.phase} · ${progress.processed.toLocaleString()} of ${progress.total.toLocaleString()}`}
+                  readout={
+                    <span>
+                      {describeWords(progress.phase)} ·{' '}
+                      <AnimatedNumber value={progress.processed} /> of{' '}
+                      <AnimatedNumber value={progress.total} />
+                    </span>
+                  }
                 />
               )}
 

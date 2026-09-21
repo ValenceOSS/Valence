@@ -17,7 +17,88 @@ const ROWS: Library[] = [
   { name: 'Shows', items: 38 },
 ];
 
+const MANY: Library[] = Array.from({ length: 12 }, (_, at) => ({
+  name: `Library ${(at + 1).toString()}`,
+  items: at,
+}));
+
 describe('DataTable', () => {
+  describe('paging', () => {
+    it('stays on the page it is on when the rows are read again', async () => {
+      const user = userEvent.setup();
+      const { rerender } = render(
+        <DataTable label="Libraries" columns={COLUMNS} rows={MANY} pageSize={5} />,
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Next page' }));
+
+      expect(screen.getByText('Library 6')).toBeInTheDocument();
+
+      rerender(
+        <DataTable
+          label="Libraries"
+          columns={COLUMNS}
+          rows={MANY.map((library) => ({ ...library }))}
+          pageSize={5}
+        />,
+      );
+
+      expect(screen.getByText('Library 6')).toBeInTheDocument();
+      expect(screen.queryByText('Library 1')).not.toBeInTheDocument();
+    });
+
+    it('comes back to the last page there is when the rows shrink beneath it', async () => {
+      const user = userEvent.setup();
+      const { rerender } = render(
+        <DataTable label="Libraries" columns={COLUMNS} rows={MANY} pageSize={5} />,
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Next page' }));
+      await user.click(screen.getByRole('button', { name: 'Next page' }));
+
+      rerender(
+        <DataTable label="Libraries" columns={COLUMNS} rows={MANY.slice(0, 7)} pageSize={5} />,
+      );
+
+      expect(screen.getByText('Library 6')).toBeInTheDocument();
+      expect(screen.getByText('Page 2 of 2', { exact: false })).toBeInTheDocument();
+    });
+
+    it('goes back to the first page when the order is changed', async () => {
+      const user = userEvent.setup();
+
+      render(<DataTable label="Libraries" columns={COLUMNS} rows={MANY} pageSize={5} />);
+      await user.click(screen.getByRole('button', { name: 'Next page' }));
+      await user.click(
+        screen.getByRole('columnheader', { name: /Items/ }).querySelector('button')!,
+      );
+
+      expect(screen.getByText('Page 1 of 3', { exact: false })).toBeInTheDocument();
+    });
+
+    it('shows the page the caller keeps, and tells it each time the page changes', async () => {
+      const user = userEvent.setup();
+      const onPageChange = vi.fn();
+
+      render(
+        <DataTable
+          label="Libraries"
+          columns={COLUMNS}
+          rows={MANY}
+          pageSize={5}
+          page={1}
+          onPageChange={onPageChange}
+        />,
+      );
+
+      expect(screen.getByText('Library 6')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Next page' }));
+
+      expect(onPageChange).toHaveBeenCalledWith(2);
+    });
+  });
+
   it('draws the filter mark white rather than blue once a filter is applied', async () => {
     const user = userEvent.setup();
 

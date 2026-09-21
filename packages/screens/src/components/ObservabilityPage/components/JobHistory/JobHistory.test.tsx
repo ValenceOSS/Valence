@@ -690,7 +690,7 @@ describe('JobHistory', () => {
 
       drawHistory();
 
-      expect(await screen.findByText('took 5 s')).toBeInTheDocument();
+      expect(await screen.findByText(/^took/)).toHaveTextContent('took 5 s');
     });
 
     it('draws how far a run got as a bar, not only as numbers', async () => {
@@ -701,6 +701,64 @@ describe('JobHistory', () => {
       expect(
         await screen.findByRole('progressbar', { name: 'Generate missing previews progress' }),
       ).toBeInTheDocument();
+    });
+
+    it('pins a run to the top from its menu, marks it, and keeps it there', async () => {
+      askedHistory.mockResolvedValue(
+        page([
+          record({ id: 'a', errorMessage: 'first one' }),
+          record({ id: 'b', errorMessage: 'second one' }),
+        ]),
+      );
+
+      const onTrace = vi.fn();
+
+      drawHistory(onTrace);
+      await screen.findByText('second one');
+
+      const rows = () => screen.getAllByRole('row').slice(1);
+
+      expect(rows()[0]).toHaveTextContent('first one');
+
+      const menus = screen.getAllByRole('button', {
+        name: 'Actions for Generate missing previews',
+      });
+
+      await userEvent.click(menus[1] ?? menus[0]!);
+      await userEvent.click(await screen.findByRole('menuitem', { name: 'Pin to the top' }));
+
+      expect(rows()[0]).toHaveTextContent('second one');
+      expect(screen.getByLabelText('Pinned to the top')).toBeInTheDocument();
+      expect(onTrace).not.toHaveBeenCalled();
+    });
+
+    it('unpins a run from its menu', async () => {
+      window.localStorage.setItem('valence.pinnedJobRuns', '["b"]');
+      askedHistory.mockResolvedValue(
+        page([
+          record({ id: 'a', errorMessage: 'first one' }),
+          record({ id: 'b', errorMessage: 'second one' }),
+        ]),
+      );
+
+      drawHistory();
+      await screen.findByText('second one');
+
+      const first = screen.getAllByRole('button', {
+        name: 'Actions for Generate missing previews',
+      })[0];
+
+      expect(first).toBeDefined();
+
+      if (first !== undefined) {
+        await userEvent.click(first);
+      }
+
+      await userEvent.click(await screen.findByRole('menuitem', { name: 'Unpin from the top' }));
+
+      expect(screen.getAllByRole('row').slice(1)[0]).toHaveTextContent('first one');
+
+      window.localStorage.clear();
     });
 
     it('traces a run from its menu', async () => {

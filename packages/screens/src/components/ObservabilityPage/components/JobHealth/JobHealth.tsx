@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { HeadedSection } from '@ValenceUI/HeadedSection';
@@ -10,7 +11,7 @@ import { defaultLogView } from '@ValenceClient/admin/defaultLogView';
 import { logRangeStart } from '@ValenceClient/admin/logRanges';
 import { TimeRangeMenu } from '@ValenceScreens/components/ObservabilityPage/components/TimeRangeMenu/TimeRangeMenu';
 import { describeJobKind } from '@ValenceClient/admin/describeJobKind';
-import { describeElapsed } from '@ValenceClient/admin/describeElapsed';
+import { ElapsedTime } from '@ValenceScreens/components/ElapsedTime/ElapsedTime';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
 import { successRate, toneOfSuccessRate } from '@ValenceScreens/admin/successRate';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
@@ -21,8 +22,16 @@ const DAY_MS = 86_400_000;
 
 const KEPT_MS = 30 * DAY_MS;
 
-const describeRate = (rate: number | null): string =>
-  rate === null ? '—' : `${(Math.floor(rate * 1000) / 10).toString()}%`;
+const showRate = (rate: number | null) =>
+  rate === null ? (
+    '—'
+  ) : (
+    <AnimatedNumber
+      value={Math.floor(rate * 1000) / 10}
+      suffix="%"
+      format={{ maximumFractionDigits: 1 }}
+    />
+  );
 
 /**
  * Says how reliable and how quick each kind of job has been over a stretch of time — the service
@@ -82,7 +91,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
 
           return (
             <Badge size="sm" tone={toneOfSuccessRate(rate)}>
-              {describeRate(rate)}
+              {showRate(rate)}
             </Badge>
           );
         },
@@ -93,8 +102,14 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
         accessorFn: (kind) => kind.runs,
         cell: ({ row }) => (
           <span className="tabular-nums text-text-muted">
-            {row.original.runs.toLocaleString()}
-            {row.original.running > 0 ? ` (${row.original.running.toString()} running)` : ''}
+            <AnimatedNumber value={row.original.runs} />
+            {row.original.running > 0 ? (
+              <>
+                {' ('}
+                <AnimatedNumber value={row.original.running} suffix=" running" />
+                {')'}
+              </>
+            ) : null}
           </span>
         ),
       },
@@ -108,7 +123,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
               row.original.failed > 0 ? 'tabular-nums text-danger' : 'tabular-nums text-text-muted'
             }
           >
-            {row.original.failed.toLocaleString()}
+            <AnimatedNumber value={row.original.failed} />
           </span>
         ),
       },
@@ -118,7 +133,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
         accessorFn: (kind) => kind.medianMs ?? -1,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
-            {row.original.medianMs === null ? '—' : describeElapsed(row.original.medianMs)}
+            {row.original.medianMs === null ? '—' : <ElapsedTime ms={row.original.medianMs} />}
           </span>
         ),
       },
@@ -128,7 +143,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
         accessorFn: (kind) => kind.slowestMs ?? -1,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
-            {row.original.slowestMs === null ? '—' : describeElapsed(row.original.slowestMs)}
+            {row.original.slowestMs === null ? '—' : <ElapsedTime ms={row.original.slowestMs} />}
           </span>
         ),
       },
@@ -158,24 +173,24 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
         <StatStrip
           label="How the jobs are doing overall"
           items={[
-            { id: 'runs', label: 'Runs', value: totals.runs.toLocaleString() },
+            { id: 'runs', label: 'Runs', value: <AnimatedNumber value={totals.runs} /> },
             {
               id: 'rate',
               label: 'Finished well',
-              value: describeRate(overall),
+              value: showRate(overall),
               isAlarming: overall !== null && overall < 0.9,
               detail: 'Of the runs that have ended',
             },
             {
               id: 'failed',
               label: 'Failed',
-              value: totals.failed.toLocaleString(),
+              value: <AnimatedNumber value={totals.failed} />,
               isAlarming: totals.failed > 0,
             },
             {
               id: 'slowest',
               label: 'Slowest run',
-              value: totals.slowest === 0 ? '—' : describeElapsed(totals.slowest),
+              value: totals.slowest === 0 ? '—' : <ElapsedTime ms={totals.slowest} />,
             },
           ]}
         />
@@ -187,6 +202,10 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
           columns={columns}
           rows={kinds}
           getRowId={(kind) => kind.kind}
+          page={(search.hpage ?? 1) - 1}
+          onPageChange={(next) => {
+            onSearchChange({ hpage: next === 0 ? undefined : next + 1 });
+          }}
           height="fill"
           pageSize={12}
           emptyMessage={

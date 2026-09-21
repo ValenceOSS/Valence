@@ -11,6 +11,7 @@ import {
   X as XIcon,
 } from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { BarList } from '@ValenceUI/BarList';
 import { Button } from '@ValenceUI/Button';
@@ -564,7 +565,7 @@ const LogExplorer = ({
           title="Log lines"
           actions={
             <span aria-live="polite" className="text-xs tabular-nums text-text-muted">
-              {`Showing ${records.length.toLocaleString()} of ${total.toLocaleString()}`}
+              Showing <AnimatedNumber value={records.length} /> of <AnimatedNumber value={total} />
             </span>
           }
         >

@@ -160,7 +160,9 @@ describe('LogExplorer', () => {
 
     render(draw());
 
-    expect(await screen.findByText('Showing 1 of 1,204')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/^Showing/)).toHaveTextContent('Showing 1 of 1,204');
+    });
   });
 
   describe('scrolling', () => {

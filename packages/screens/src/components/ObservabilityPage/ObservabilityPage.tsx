@@ -22,7 +22,10 @@ import { JobHistory } from './components/JobHistory/JobHistory';
 import { JobTraceDialog } from './components/JobTraceDialog/JobTraceDialog';
 import { LogExplorer } from './components/LogExplorer/LogExplorer';
 import { QueueConcurrency } from './components/QueueConcurrency/QueueConcurrency';
-import type { ObservabilityView } from '@ValenceClient/admin/ObservabilitySearchSchema';
+import type {
+  ObservabilitySearch,
+  ObservabilityView,
+} from '@ValenceClient/admin/ObservabilitySearchSchema';
 import type { ObservabilityPageProps } from './ObservabilityPage.types';
 
 /**
@@ -82,7 +85,17 @@ const ObservabilityPage = ({
   onAddTrigger,
   onRemoveTrigger,
 }: ObservabilityPageProps) => {
-  const [search, update] = useObservabilitySearch(given, onSearchChange);
+  const [search, hold] = useObservabilitySearch(given, onSearchChange);
+  const update = useCallback(
+    (change: ObservabilitySearch) => {
+      const isOnlyMovingAbout = Object.keys(change).every((key) =>
+        ['view', 'rpage', 'hpage'].includes(key),
+      );
+
+      hold(isOnlyMovingAbout ? change : { ...change, rpage: undefined, hpage: undefined });
+    },
+    [hold],
+  );
   const view = search.view ?? 'jobs';
   const [tracing, setTracing] = useState<string | null>(null);
   const travel = useTravelDirection([...OBSERVABILITY_VIEWS], view);

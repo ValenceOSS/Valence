@@ -87,9 +87,9 @@ describe('JobHealth', () => {
 
     const table = screen.getByRole('table', { name: 'How each kind of job has gone' });
 
-    expect(within(table).getByText('1.4 s')).toBeInTheDocument();
-    expect(within(table).getByText('2 min 5 s')).toBeInTheDocument();
-    expect(within(table).getByText('9 s')).toBeInTheDocument();
+    expect(table).toHaveTextContent('1.4 s');
+    expect(table).toHaveTextContent('2 min 5 s');
+    expect(table).toHaveTextContent('9 s');
   });
 
   it('adds it all up for the strip above', async () => {

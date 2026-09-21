@@ -112,14 +112,15 @@ describe('JobTraceDialog', () => {
   it('says how it ended and how long it took', async () => {
     draw();
 
-    expect(await screen.findByText('2 min 5 s')).toBeInTheDocument();
-    expect(screen.getByText('Took')).toBeInTheDocument();
+    expect((await screen.findByText('Took')).nextElementSibling).toHaveTextContent('2 min 5 s');
   });
 
   it('says how far it got', async () => {
     draw();
 
-    expect(await screen.findByText(/files · 40 of 50/)).toBeInTheDocument();
+    expect(
+      (await screen.findByRole('progressbar', { name: 'Scan for changes progress' })).parentElement,
+    ).toHaveTextContent('Files · 40 of 50');
   });
 
   it('reads what it logged in order, each line with how long after the start', async () => {

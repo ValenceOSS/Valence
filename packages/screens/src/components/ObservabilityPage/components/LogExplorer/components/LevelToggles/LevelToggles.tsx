@@ -1,3 +1,4 @@
+import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Button } from '@ValenceUI/Button';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { describeLogLevel } from '@ValenceScreens/admin/describeLogLevel';
@@ -36,7 +37,7 @@ const LevelToggles = ({ histogram, levels, isReading, onToggle }: LevelTogglesPr
     >
       <p className="text-sm text-text-muted">
         <span className="text-lg font-semibold tabular-nums text-text">
-          {events.toLocaleString()}
+          <AnimatedNumber value={events} />
         </span>{' '}
         events
       </p>
@@ -63,7 +64,9 @@ const LevelToggles = ({ histogram, levels, isReading, onToggle }: LevelTogglesPr
                   style={{ background: isOn ? look.colour : 'var(--surface-active)' }}
                 />
                 {look.label}
-                <span className="tabular-nums text-text-muted">{count.toLocaleString()}</span>
+                <span className="tabular-nums text-text-muted">
+                  <AnimatedNumber value={count} />
+                </span>
               </Button>
             </li>
           );

@@ -1,3 +1,4 @@
+import { Bookmark as BookmarkFilledIcon } from '@keyline-icons/react/fill';
 import { Icon } from '@ValenceUI/Icon';
 import {
   ChevronDown as ChevronDownIcon,
@@ -26,12 +27,14 @@ import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-quer
 import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
 import { describeRunIssues } from './describeRunIssues';
 import { describeRunSubject } from './describeRunSubject';
+import { pinFirst } from '@ValenceScreens/admin/pinFirst';
+import { usePinnedJobRuns } from '@ValenceScreens/admin/usePinnedJobRuns';
 import { useAnchoredNow } from '@ValenceScreens/admin/useAnchoredNow';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { watchJobs } from '@ValenceClient/admin/fetchAdmin';
 import { describeWords } from '@ValenceClient/admin/describeWords';
 import { describeJobKind } from '@ValenceClient/admin/describeJobKind';
-import { describeElapsed } from '@ValenceClient/admin/describeElapsed';
+import { ElapsedTime } from '@ValenceScreens/components/ElapsedTime/ElapsedTime';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
 import { defaultLogView } from '@ValenceClient/admin/defaultLogView';
 import { logRangeStart } from '@ValenceClient/admin/logRanges';
@@ -189,7 +192,12 @@ const JobHistoryPanel = ({
   });
   const askedIssues = useQuery(adminQueries.jobHistoryIssues(openIssuesFor));
 
-  const records = askedHistory.data?.records ?? NOTHING_RUN;
+  const { pinned, toggle: togglePin } = usePinnedJobRuns();
+  const fetched = askedHistory.data?.records ?? NOTHING_RUN;
+  const records = useMemo(
+    () => pinFirst(fetched, pinned, (record) => record.id),
+    [fetched, pinned],
+  );
   const issues = askedIssues.data ?? [];
   const openRun = records.find((record) => record.id === openIssuesFor);
   const failure = openRun?.errorMessage ?? null;
@@ -283,11 +291,18 @@ const JobHistoryPanel = ({
         enableSorting: false,
         accessorFn: (record) => describeJobKind(record.kind, labels),
         cell: ({ row }) => (
-          <span
-            className="block max-w-[10rem] truncate text-text-muted"
-            title={describeJobKind(row.original.kind, labels)}
-          >
-            {describeJobKind(row.original.kind, labels)}
+          <span className="flex max-w-[12rem] items-center gap-1.5 text-text-muted">
+            {pinned.has(row.original.id) ? (
+              <Icon
+                of={BookmarkFilledIcon}
+                size={14}
+                label="Pinned to the top"
+                className="shrink-0"
+              />
+            ) : null}
+            <span className="truncate" title={describeJobKind(row.original.kind, labels)}>
+              {describeJobKind(row.original.kind, labels)}
+            </span>
           </span>
         ),
       },
@@ -438,7 +453,7 @@ const JobHistoryPanel = ({
             <span>{describeWhen(row.original)}</span>
             {row.original.startedAtMs === null || row.original.finishedAtMs === null ? null : (
               <span className="text-xs">
-                {`took ${describeElapsed(row.original.finishedAtMs - row.original.startedAtMs)}`}
+                took <ElapsedTime ms={row.original.finishedAtMs - row.original.startedAtMs} />
               </span>
             )}
           </span>
@@ -456,6 +471,13 @@ const JobHistoryPanel = ({
               groups={[
                 {
                   items: [
+                    {
+                      id: 'pin',
+                      label: pinned.has(row.original.id) ? 'Unpin from the top' : 'Pin to the top',
+                      onChoose: () => {
+                        togglePin(row.original.id);
+                      },
+                    },
                     {
                       id: 'trace',
                       label: 'Trace this run',
@@ -485,7 +507,7 @@ const JobHistoryPanel = ({
         ),
       },
     ],
-    [labels, libraries, onViewLogs, onTrace],
+    [labels, libraries, onViewLogs, onTrace, pinned, togglePin],
   );
 
   return (
@@ -554,12 +576,20 @@ const JobHistoryPanel = ({
         <StatStrip
           label="How the job runs stand"
           items={[
-            { id: 'running', label: 'Running now', value: counts.running.toLocaleString() },
-            { id: 'completed', label: 'Completed', value: counts.completed.toLocaleString() },
+            {
+              id: 'running',
+              label: 'Running now',
+              value: <AnimatedNumber value={counts.running} />,
+            },
+            {
+              id: 'completed',
+              label: 'Completed',
+              value: <AnimatedNumber value={counts.completed} />,
+            },
             {
               id: 'failed',
               label: 'Failed',
-              value: counts.failed.toLocaleString(),
+              value: <AnimatedNumber value={counts.failed} />,
               isAlarming: counts.failed > 0,
             },
           ]}
