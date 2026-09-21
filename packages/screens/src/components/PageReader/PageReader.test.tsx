@@ -239,6 +239,36 @@ describe('PageReader', () => {
     expect(held.get('valence.reader')).toContain('"isAnimated":false');
   });
 
+  it('lays the chapter down as one strip to scroll, and remembers that', async () => {
+    draw();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Scroll' }));
+
+    expect(screen.getAllByRole('img', { name: /^Page \d+$/ })).toHaveLength(10);
+    expect(held.get('valence.reader')).toContain('"isScrolling":true');
+  });
+
+  it('offers the way on to the next chapter at the foot of the strip', async () => {
+    const onChapterChange = vi.fn();
+
+    draw({ onChapterChange });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Bring out the panel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Scroll' }));
+    const strip = screen
+      .getByRole('img', { name: 'Page 1' })
+      .closest<HTMLElement>('[role="presentation"]');
+
+    if (strip === null) {
+      throw new Error('The strip was not drawn.');
+    }
+
+    await userEvent.click(within(strip).getByRole('button', { name: 'Next chapter' }));
+
+    expect(onChapterChange).toHaveBeenCalledWith('two');
+  });
+
   it('says in the panel which book, which chapter and which page', async () => {
     draw();
 

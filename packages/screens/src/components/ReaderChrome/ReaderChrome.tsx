@@ -42,6 +42,8 @@ const OPENING = { duration: VALENCE_TOKENS.duration.slow, ease: VALENCE_TOKENS.e
  * @param title - What is being read.
  * @param isShown - Whether the bars are showing.
  * @param isRightToLeft - Whether the book is read right to left, which swaps the edges.
+ * @param isScrolling - Whether the page is a strip to be scrolled, in which case there are no edges
+ *   to turn from, and they would only be in the way of the scrolling.
  * @param panel - The reader's side panel.
  * @param isPanelOpen - Whether the panel is out.
  * @param isPanelPinned - Whether the panel stays beside the page.
@@ -57,6 +59,7 @@ const ReaderChrome = ({
   title,
   isShown,
   isRightToLeft,
+  isScrolling = false,
   panel,
   isPanelOpen,
   isPanelPinned,
@@ -122,47 +125,51 @@ const ReaderChrome = ({
         <div className={cn('relative flex min-h-0 flex-1 overflow-hidden', className)}>
           {children}
 
-          <div className="absolute inset-y-0 left-0 flex w-1/3">
-            <Button
-              variant="bare"
-              size="none"
-              hasTooltip={false}
-              label={isRightToLeft ? 'Next page' : 'Previous page'}
-              className="h-full w-full items-center justify-start px-4"
-              onClick={isRightToLeft ? onForward : onBack}
-            >
-              <Icon
-                of={ChevronLeftIcon}
-                size={32}
-                tone="scrim"
-                className={cn(
-                  'drop-shadow-lg transition-opacity duration-[var(--duration-fast)]',
-                  isShown ? 'opacity-100' : 'opacity-0',
-                )}
-              />
-            </Button>
-          </div>
+          {isScrolling ? null : (
+            <>
+              <div className="absolute inset-y-0 left-0 flex w-1/3">
+                <Button
+                  variant="bare"
+                  size="none"
+                  hasTooltip={false}
+                  label={isRightToLeft ? 'Next page' : 'Previous page'}
+                  className="h-full w-full items-center justify-start px-4"
+                  onClick={isRightToLeft ? onForward : onBack}
+                >
+                  <Icon
+                    of={ChevronLeftIcon}
+                    size={32}
+                    tone="scrim"
+                    className={cn(
+                      'drop-shadow-lg transition-opacity duration-[var(--duration-fast)]',
+                      isShown ? 'opacity-100' : 'opacity-0',
+                    )}
+                  />
+                </Button>
+              </div>
 
-          <div className="absolute inset-y-0 right-0 flex w-1/3">
-            <Button
-              variant="bare"
-              size="none"
-              hasTooltip={false}
-              label={isRightToLeft ? 'Previous page' : 'Next page'}
-              className="h-full w-full items-center justify-end px-4"
-              onClick={isRightToLeft ? onBack : onForward}
-            >
-              <Icon
-                of={ChevronRightIcon}
-                size={32}
-                tone="scrim"
-                className={cn(
-                  'drop-shadow-lg transition-opacity duration-[var(--duration-fast)]',
-                  isShown ? 'opacity-100' : 'opacity-0',
-                )}
-              />
-            </Button>
-          </div>
+              <div className="absolute inset-y-0 right-0 flex w-1/3">
+                <Button
+                  variant="bare"
+                  size="none"
+                  hasTooltip={false}
+                  label={isRightToLeft ? 'Previous page' : 'Next page'}
+                  className="h-full w-full items-center justify-end px-4"
+                  onClick={isRightToLeft ? onBack : onForward}
+                >
+                  <Icon
+                    of={ChevronRightIcon}
+                    size={32}
+                    tone="scrim"
+                    className={cn(
+                      'drop-shadow-lg transition-opacity duration-[var(--duration-fast)]',
+                      isShown ? 'opacity-100' : 'opacity-0',
+                    )}
+                  />
+                </Button>
+              </div>
+            </>
+          )}
         </div>
 
         <footer

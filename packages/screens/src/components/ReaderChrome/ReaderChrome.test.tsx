@@ -121,6 +121,12 @@ describe('ReaderChrome', () => {
     expect(screen.getByRole('banner', { hidden: true })).not.toHaveClass('pointer-events-none');
   });
 
+  it('has no edges to turn from where the page is a strip to scroll', () => {
+    draw({ isScrolling: true });
+
+    expect(screen.queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Previous page' })).not.toBeInTheDocument();
+  });
   it('offers no full screen where the browser will not allow it', () => {
     Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: false });
     draw();

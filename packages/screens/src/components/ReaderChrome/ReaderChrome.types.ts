@@ -4,6 +4,7 @@ type ReaderChromeProps = {
   title: string;
   isShown: boolean;
   isRightToLeft: boolean;
+  isScrolling?: boolean;
   panel: ReactNode;
   isPanelOpen: boolean;
   isPanelPinned: boolean;
