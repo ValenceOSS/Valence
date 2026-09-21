@@ -25,6 +25,8 @@ import { askingOf } from '@ValenceScreens/requests/askingOf';
 import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
 import { describeRequestFilters } from '@ValenceScreens/requests/describeRequestFilters';
 import { filterRequests } from '@ValenceScreens/requests/filterRequests';
+import { costOfRequest } from '@ValenceScreens/requests/costOfRequest';
+import { describeDownloadCost } from '@ValenceScreens/requests/describeDownloadCost';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsListProps } from './RequestsList.types';
 
@@ -32,7 +34,8 @@ import type { RequestsListProps } from './RequestsList.types';
  * The requests on this server, newest first, with where each has got to — waiting on approval,
  * refused and why, not out yet, being searched for, arriving — who asked for it, which library it
  * is for, the quality it is judged at, and, while any is downloading, how far it has got, how fast
- * and how long is left, read again every couple of seconds.
+ * and how long is left, read again every couple of seconds. Once it has arrived, what it cost takes
+ * the progress bar's place: how much was downloaded, and how long the wait was.
  *
  * Everybody's or only your own, depending on what the server sends: it answers with the whole house
  * to whoever may see it and with one person's to everybody else, so there is nothing to decide
@@ -134,6 +137,8 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
           const badge = describeRequestBadge(request);
           const said = describeRequestProgress(request);
           const going = progressOfRequest(request, progress.data ?? []);
+          const spent = costOfRequest(request);
+          const cost = describeDownloadCost(spent.bytes, spent.seconds);
 
           return (
             <Card key={request.id} as="li" className="flex flex-wrap items-start gap-4">
@@ -189,6 +194,10 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                 )}
                 {badge.detail === null ? null : (
                   <span className="break-words text-xs text-text-muted">{badge.detail}</span>
+                )}
+
+                {going !== null || cost === null ? null : (
+                  <span className="text-xs text-text-muted">{cost}</span>
                 )}
 
                 {going === null ? null : (

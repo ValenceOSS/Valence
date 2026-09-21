@@ -148,6 +148,13 @@
       "when": 1789955049920,
       "tag": "0020_the_language_it_is_wanted_in",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789957235295,
+      "tag": "0021_what_the_download_cost",
+      "breakpoints": true
     }
   ]
 }

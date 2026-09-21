@@ -64,6 +64,8 @@ const showMediaRequest = (
       downloadId: item.downloadId,
       filePath: item.filePath,
       score: item.score,
+      downloadedBytes: item.downloadedBytes,
+      downloadSeconds: item.downloadSeconds,
       lastSearchedAt: item.lastSearchedAt,
       updatedAt: item.updatedAt,
     })),

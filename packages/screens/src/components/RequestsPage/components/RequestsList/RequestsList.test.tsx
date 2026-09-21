@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { aMediaRequest } from '@ValenceScreens/testing/aMediaRequest';
+import { aRequestItem } from '@ValenceScreens/testing/aRequestItem';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { RequestsList } from './RequestsList';
 import type * as Requests from '@ValenceClient/requests/fetchMediaRequests';
@@ -153,6 +154,28 @@ describe('RequestsList', () => {
     renderInAnAddress(<RequestsList onAsk={vi.fn()} onOpen={vi.fn()} />);
 
     expect(await screen.findByText('Nothing has been asked for yet')).toBeInTheDocument();
+  });
+
+  it('says what a request cost once it has arrived', async () => {
+    fetchMediaRequests.mockResolvedValue([
+      {
+        ...MINE,
+        state: 'available',
+        mediaId: 'media-1',
+        items: [aRequestItem({ downloadedBytes: 1.4 * 1024 ** 3, downloadSeconds: 720 })],
+      },
+    ]);
+
+    renderInAnAddress(<RequestsList onAsk={vi.fn()} onOpen={vi.fn()} />);
+
+    expect(await screen.findByText('1.4 GB in 12 min')).toBeInTheDocument();
+  });
+
+  it('says nothing about cost for a request that has brought nothing yet', async () => {
+    renderInAnAddress(<RequestsList onAsk={vi.fn()} onOpen={vi.fn()} />);
+
+    expect(await screen.findByText('Dune (2021)')).toBeInTheDocument();
+    expect(screen.queryByText(/GB in/)).not.toBeInTheDocument();
   });
 
   it('says why a request of yours was refused', async () => {

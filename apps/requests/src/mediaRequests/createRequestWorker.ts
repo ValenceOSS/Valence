@@ -18,6 +18,7 @@ import { parseReleaseName } from '@ValenceRequests/releases/parseReleaseName';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
 import { wantsUpgrade } from '@ValenceRequests/mediaRequests/wantsUpgrade';
 import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
+import { downloadFacts } from '@ValenceRequests/mediaRequests/downloadFacts';
 import type {
   IndexerSearchReport,
   Release,
@@ -655,6 +656,7 @@ const createRequestWorker = ({
                 filedTitle: item.releaseTitle,
                 filedScore: item.score,
                 attempts: 0,
+                ...downloadFacts(download),
               }));
         }
 

@@ -59,6 +59,8 @@ const SEVERANCE = aMediaRequest({
       downloadId: null,
       filePath: null,
       score: null,
+      downloadedBytes: null,
+      downloadSeconds: null,
       lastSearchedAt: null,
       updatedAt: '2026-09-19T00:00:00.000Z',
     },

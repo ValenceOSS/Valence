@@ -152,6 +152,8 @@ const RequestItemSchema = z.object({
   downloadId: z.string().uuid().nullable(),
   filePath: z.string().nullable(),
   score: z.number().nullable(),
+  downloadedBytes: z.number().nonnegative().nullable(),
+  downloadSeconds: z.number().nonnegative().nullable(),
   lastSearchedAt: z.string().datetime().nullable(),
   updatedAt: z.string().datetime(),
 });

@@ -1,0 +1,2 @@
+ALTER TABLE "valence_requests"."request_item" ADD COLUMN "downloaded_bytes" double precision;--> statement-breakpoint
+ALTER TABLE "valence_requests"."request_item" ADD COLUMN "download_seconds" double precision;
