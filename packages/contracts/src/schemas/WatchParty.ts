@@ -8,8 +8,6 @@ const PARTY_POWERS = ['playPause', 'seek', 'changeWhatIsPlaying', 'invite', 'man
 
 const PartyRoleSchema = z.enum(PARTY_ROLES);
 
-const PartyPowerSchema = z.enum(PARTY_POWERS);
-
 const PartyKindSchema = z.enum(PARTY_KINDS);
 
 type PartyRole = (typeof PARTY_ROLES)[number];
@@ -169,7 +167,6 @@ export {
   PARTY_ROLES,
   PARTY_POWERS,
   PartyRoleSchema,
-  PartyPowerSchema,
   PartyMemberSchema,
   WatchPartySchema,
   PartyCommandSchema,

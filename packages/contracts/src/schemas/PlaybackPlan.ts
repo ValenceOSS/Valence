@@ -91,7 +91,6 @@ const PlaybackPlanSchema = z.object({
   subtitles: SubtitleDecisionSchema,
 });
 
-export type ReasonCode = z.infer<typeof ReasonCodeSchema>;
 export type Reason = z.infer<typeof ReasonSchema>;
 export type ContainerDecision = z.infer<typeof ContainerDecisionSchema>;
 export type VideoDecision = z.infer<typeof VideoDecisionSchema>;

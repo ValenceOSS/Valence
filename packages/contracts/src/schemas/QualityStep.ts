@@ -29,8 +29,6 @@ const COMPRESSED_AUDIO_THRESHOLD_HEIGHT = 720;
 const COMPRESSED_AUDIO_MAX_BITRATE_KBPS = 128;
 
 export type QualityStepId = z.infer<typeof QualityStepIdSchema>;
-export type QualityStep = (typeof QUALITY_STEPS)[number];
-
 export {
   QUALITY_STEP_IDS,
   QualityStepIdSchema,

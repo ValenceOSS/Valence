@@ -59,8 +59,6 @@ const DeviceProfileSchema = z.object({
   transcodingProfiles: z.array(TranscodingProfileSchema).min(1),
 });
 
-export type DirectPlayProfile = z.infer<typeof DirectPlayProfileSchema>;
-export type TranscodingProfile = z.infer<typeof TranscodingProfileSchema>;
 export type DeviceProfile = z.infer<typeof DeviceProfileSchema>;
 
 export { DeviceProfileSchema, DirectPlayProfileSchema, TranscodingProfileSchema };

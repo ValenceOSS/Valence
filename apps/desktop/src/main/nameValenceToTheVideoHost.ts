@@ -44,4 +44,4 @@ const nameValenceToTheVideoHost = (headers: Record<string, string>): Record<stri
   Referer: `${AS}/`,
 });
 
-export { isAVideoHost, nameValenceToTheVideoHost, AS };
+export { isAVideoHost, nameValenceToTheVideoHost };

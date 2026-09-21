@@ -594,8 +594,4 @@ const createCardigannIndexer = ({
   return { search, login, captcha, download, categories };
 };
 
-type CardigannIndexer = ReturnType<typeof createCardigannIndexer>;
-
-export type { CardigannIndexer };
-
 export { createCardigannIndexer };

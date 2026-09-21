@@ -1068,7 +1068,7 @@ describe('AdminArea', () => {
     await chooseLibraryAction(actor, 'Reset and rebuild');
 
     expect(
-      await screen.findByRole('dialog', { name: 'Reset and rebuild every library' }),
+      await screen.findByRole('dialog', { name: 'Reset and rebuild every library?' }),
     ).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalledWith(
       expect.stringContaining('/reset'),
@@ -1085,7 +1085,7 @@ describe('AdminArea', () => {
     await chooseLibraryAction(actor, 'Reset and rebuild');
 
     const dialog = await screen.findByRole('dialog', {
-      name: 'Reset and rebuild every library',
+      name: 'Reset and rebuild every library?',
     });
 
     await actor.click(within(dialog).getByRole('button', { name: 'Reset and rebuild' }));
@@ -1106,7 +1106,7 @@ describe('AdminArea', () => {
     await chooseLibraryAction(actor, 'Reset and rebuild');
 
     const dialog = await screen.findByRole('dialog', {
-      name: 'Reset and rebuild every library',
+      name: 'Reset and rebuild every library?',
     });
 
     await actor.click(within(dialog).getByRole('button', { name: 'Cancel' }));

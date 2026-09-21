@@ -131,25 +131,17 @@ type QueuedDownload = z.infer<typeof QueuedDownloadSchema>;
 type DownloadClientState = z.infer<typeof DownloadClientStateSchema>;
 type DownloadQueue = z.infer<typeof DownloadQueueSchema>;
 type ReleaseSend = z.input<typeof ReleaseSendSchema>;
-type DownloadRemoval = z.input<typeof DownloadRemovalSchema>;
-type DownloadFiling = z.infer<typeof DownloadFilingSchema>;
-type DownloadFilingOrder = z.infer<typeof DownloadFilingOrderSchema>;
 type ServiceEvent = z.infer<typeof ServiceEventSchema>;
-type ServiceEventKind = ServiceEvent['kind'];
 type DownloadStreamFrame = z.infer<typeof DownloadStreamFrameSchema>;
 
 export type {
   DownloadClientState,
   DownloadQueue,
-  DownloadFiling,
-  DownloadFilingOrder,
-  DownloadRemoval,
   DownloadStreamFrame,
   QueuedDownload,
   QueuedDownloadState,
   ReleaseSend,
   ServiceEvent,
-  ServiceEventKind,
 };
 
 export {

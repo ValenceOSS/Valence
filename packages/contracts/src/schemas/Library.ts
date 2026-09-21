@@ -153,12 +153,9 @@ export type LibraryFacets = z.infer<typeof LibraryFacetsSchema>;
 export type LibraryKind = z.infer<typeof LibraryKindSchema>;
 export type ExtraKind = z.infer<typeof ExtraKindSchema>;
 export type Library = z.infer<typeof LibrarySchema>;
-export type UpdateLibraryRequest = z.infer<typeof UpdateLibraryRequestSchema>;
 export type MediaSummary = z.infer<typeof MediaSummarySchema>;
 export type MediaPage = z.infer<typeof MediaPageSchema>;
 export type MediaDetail = z.infer<typeof MediaDetailSchema>;
-export type MediaMetadata = z.infer<typeof MediaMetadataSchema>;
-export type CastMember = z.infer<typeof CastMemberSchema>;
 export type ScanResult = z.infer<typeof ScanResultSchema>;
 export type PreviewMoment = z.infer<typeof PreviewMomentSchema>;
 

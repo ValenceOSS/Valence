@@ -27,4 +27,4 @@ const logsAsText = (records: readonly LogRecord[]): string =>
     .map(logLineAsText)
     .join('\n')}\n`;
 
-export { logsAsText, WARNING };
+export { logsAsText };

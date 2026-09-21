@@ -72,4 +72,4 @@ const readMotion = (said: string): Motion => MotionSchema.parse(said);
 
 export type { Motion };
 
-export { STORAGE_KEY, MOTIONS, chooseMotion, chosenMotion, readMotion, whenMotionChanges };
+export { chooseMotion, chosenMotion, readMotion, whenMotionChanges };

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPartyClient } from './createPartyClient';
 import { whereTheRoomIs } from '@ValenceCore/functions/whereTheRoomIs';
 import { whoIsHoldingUp } from '@ValenceCore/functions/whoIsHoldingUp';
@@ -43,6 +43,54 @@ type WatchPartyState = {
   loosen: (how: { everyoneMaySeek?: boolean; everyoneMayPlayPause?: boolean }) => void;
 };
 
+type RoomClock = {
+  referenceSeconds: number | null;
+  waitingFor: readonly string[];
+  jitterMs: number;
+};
+
+const NOTHING_HEARD: RoomClock = { referenceSeconds: null, waitingFor: [], jitterMs: 0 };
+
+/**
+ * Where the room is, read at the moment the room spoke.
+ *
+ * The clock is read here rather than while rendering, and it is read when a message arrives rather
+ * than a render later: somebody joining a party decides where to start from the first answer they
+ * get, and an answer that arrives one render after they have already started is an answer that
+ * starts them in the wrong place.
+ *
+ * @param party - The party as the server last described it.
+ * @param command - The last command, which a timekeeper older than it cannot yet speak for.
+ * @param meConnectionId - This tab's connection, which is never followed.
+ * @param held - The party client, for the offset between this clock and the room's.
+ * @returns What to report about the room.
+ */
+const readRoom = (
+  party: WatchParty | null,
+  command: SequencedCommand | null,
+  meConnectionId: string | null,
+  held: PartyClient | null,
+): RoomClock => {
+  const roomMs = Date.now() + (held?.offsetMs() ?? 0);
+  const timekeeper = party?.members.find((member) => member.connectionId === party.timekeeperId);
+  const isWorthFollowing =
+    timekeeper !== undefined &&
+    timekeeper.connectionId !== meConnectionId &&
+    timekeeper.isReady &&
+    (command === null || timekeeper.reportedAtMs >= command.atMs);
+
+  return {
+    referenceSeconds: isWorthFollowing ? whereTheRoomIs(timekeeper, roomMs) : null,
+    waitingFor:
+      party === null
+        ? []
+        : whoIsHoldingUp(party.members, party.timekeeperId, roomMs, command?.atMs ?? null).map(
+            (member) => member.name,
+          ),
+    jitterMs: held?.jitterMs() ?? 0,
+  };
+};
+
 /**
  * Holds this tab's watch party, if it is in one.
  *
@@ -59,18 +107,31 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
   const [refusal, setRefusal] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [passwordWanted, setPasswordWanted] = useState<PasswordWanted | null>(null);
+  const [room, setRoom] = useState<RoomClock>(NOTHING_HEARD);
   const partyRef = useRef<PartyClient | null>(null);
   const inPartyRef = useRef<string | null>(null);
   const waitingToJoinRef = useRef<{ partyId: string; password?: string } | null>(null);
+  const toldRef = useRef<{ party: WatchParty | null; command: SequencedCommand | null }>({
+    party: null,
+    command: null,
+  });
 
   useEffect(() => {
     const held = createPartyClient({
       client,
       watcher: {
         onParty: (told) => {
-          setParty(told.members.length === 0 ? null : told);
+          const now = told.members.length === 0 ? null : told;
+
+          toldRef.current = { ...toldRef.current, party: now };
+          setParty(now);
+          setRoom(readRoom(now, toldRef.current.command, client.connectionId(), held));
         },
-        onCommand: setCommand,
+        onCommand: (told) => {
+          toldRef.current = { ...toldRef.current, command: told };
+          setCommand(told);
+          setRoom(readRoom(toldRef.current.party, told, client.connectionId(), held));
+        },
         onNotice: (told) => {
           setNotice(`${told.byName} removed you from the watch party.`);
         },
@@ -109,13 +170,15 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
     };
   }, [client]);
 
+  const hasParty = party !== null;
+
   useEffect(() => {
-    if (party === null) {
+    if (!hasParty) {
       return;
     }
 
     return partyRef.current?.watchClock();
-  }, [party === null]);
+  }, [hasParty]);
 
   useEffect(() => {
     inPartyRef.current = party?.id ?? null;
@@ -134,37 +197,6 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
   );
 
   const meConnectionId = client.connectionId();
-
-  const referenceSeconds = useMemo(() => {
-    const timekeeper = party?.members.find((member) => member.connectionId === party.timekeeperId);
-
-    if (timekeeper === undefined || timekeeper.connectionId === meConnectionId) {
-      return null;
-    }
-
-    if (!timekeeper.isReady) {
-      return null;
-    }
-
-    if (command !== null && timekeeper.reportedAtMs < command.atMs) {
-      return null;
-    }
-
-    return whereTheRoomIs(timekeeper, Date.now() + (partyRef.current?.offsetMs() ?? 0));
-  }, [party, command, meConnectionId]);
-
-  const waitingFor = useMemo(
-    () =>
-      party === null
-        ? []
-        : whoIsHoldingUp(
-            party.members,
-            party.timekeeperId,
-            Date.now() + (partyRef.current?.offsetMs() ?? 0),
-            command?.atMs ?? null,
-          ).map((member) => member.name),
-    [party, command],
-  );
 
   const open = useCallback((mediaId: string, kind?: PartyKind) => {
     partyRef.current?.open(mediaId, kind);
@@ -235,9 +267,9 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
     notice,
     passwordWanted,
     meConnectionId,
-    referenceSeconds,
-    waitingFor,
-    jitterMs: partyRef.current?.jitterMs() ?? 0,
+    referenceSeconds: room.referenceSeconds,
+    waitingFor: room.waitingFor,
+    jitterMs: room.jitterMs,
     open,
     join,
     leave,
@@ -255,4 +287,4 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
 
 export type { WatchPartyState };
 
-export { useWatchParty, ASK_THE_CLOCK_EVERY_MS };
+export { useWatchParty };

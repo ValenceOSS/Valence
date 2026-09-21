@@ -16,11 +16,6 @@ const GetSessionResponseSchema = z
   })
   .nullable();
 
-const SignInRequestSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-});
-
 const SignInResponseSchema = z.union([
   z.object({
     twoFactorRedirect: z.literal(true),
@@ -34,8 +29,4 @@ const SignInResponseSchema = z.union([
 ]);
 
 export type SessionUser = z.infer<typeof SessionUserSchema>;
-export type GetSessionResponse = z.infer<typeof GetSessionResponseSchema>;
-export type SignInRequest = z.infer<typeof SignInRequestSchema>;
-export type SignInResponse = z.infer<typeof SignInResponseSchema>;
-
-export { SessionUserSchema, GetSessionResponseSchema, SignInRequestSchema, SignInResponseSchema };
+export { SessionUserSchema, GetSessionResponseSchema, SignInResponseSchema };

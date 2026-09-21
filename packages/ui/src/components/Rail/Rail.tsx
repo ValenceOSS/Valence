@@ -1,3 +1,4 @@
+import { Children } from 'react';
 import { motion } from 'motion/react';
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -69,7 +70,7 @@ const Rail = ({
   className,
 }: RailProps) => {
   const { trackRef, pages, isAtStart, isAtEnd, measure, scrollTo } =
-    usePagedScroller<HTMLUListElement>([children]);
+    usePagedScroller<HTMLUListElement>(Children.count(children));
 
   const hasPages = pages.count > 1;
 

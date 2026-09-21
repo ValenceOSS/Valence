@@ -189,4 +189,4 @@ export type {
   RenditionVideo,
 };
 
-export { SEGMENT_SECONDS, planReencodeSpec };
+export { planReencodeSpec };

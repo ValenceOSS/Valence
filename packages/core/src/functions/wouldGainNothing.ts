@@ -43,4 +43,4 @@ const wouldGainNothing = (item: MediaItem, settings: ReencodeSettings): boolean 
   return estimated > item.sizeBytes * WORTH_DOING;
 };
 
-export { WORTH_DOING, wouldGainNothing };
+export { wouldGainNothing };

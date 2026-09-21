@@ -5,12 +5,10 @@ import {
   CreatedShareSchema,
   NewShareSchema,
   ShareListSchema,
-  ShareSchema,
 } from '@ValenceContracts/schemas/Share';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
 import { BookSchema } from '@ValenceContracts/schemas/Book';
 
-const Share = ShareSchema.openapi('Share');
 const ShareList = ShareListSchema.openapi('ShareList');
 const CreatedShare = CreatedShareSchema.openapi('CreatedShare');
 const NewShare = NewShareSchema.openapi('NewShare');
@@ -163,6 +161,4 @@ export {
   revokeShareRoute,
   revokeAnybodysShareRoute,
   openShareRoute,
-  Share,
-  OpenedShare,
 };

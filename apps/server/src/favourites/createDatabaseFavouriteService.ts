@@ -79,4 +79,4 @@ const createDatabaseFavouriteService = (db: ValenceDatabase): FavouriteService =
   },
 });
 
-export { createDatabaseFavouriteService, LIMIT };
+export { createDatabaseFavouriteService };

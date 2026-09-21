@@ -107,11 +107,9 @@ const keepLookingForAValence = (
 };
 
 export {
-  GIVE_EACH_MILLISECONDS,
   LOOK_AGAIN_EVERY_MS,
   STOP_LOOKING_AFTER_MS,
   WHERE_ONE_USUALLY_IS,
-  isAValence,
   keepLookingForAValence,
   lookForAValence,
 };

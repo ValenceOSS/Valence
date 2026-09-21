@@ -90,7 +90,7 @@ const LibraryBrowser = ({
   const [appliedSearch, setAppliedSearch] = useState('');
 
   const askedFor = useQuery(libraryQueries.all());
-  const libraries = askedFor.data ?? [];
+  const libraries = useMemo(() => askedFor.data ?? [], [askedFor.data]);
 
   const watchable = useMemo(
     () => libraries.filter((entry) => WATCHABLE.has(entry.kind)).map((entry) => entry.id),
@@ -108,7 +108,7 @@ const LibraryBrowser = ({
 
   const sample = useQuery(libraryQueries.across(watchable, { search: '', limit: HERO_SAMPLE }));
 
-  const heroItems = sample.data ?? [];
+  const heroItems = useMemo(() => sample.data ?? [], [sample.data]);
 
   const heroPicks = useMemo(() => pickFeatured(heroItems, HERO_COUNT), [heroItems]);
 
@@ -120,6 +120,7 @@ const LibraryBrowser = ({
 
   const [end, setEnd] = useState<HTMLDivElement | null>(null);
   const [reached, setReached] = useState(0);
+  const [openedAt] = useState(() => Date.now());
 
   useEffect(() => {
     if (end === null || !isHome || !hasMore || isReadingMore) {
@@ -147,15 +148,17 @@ const LibraryBrowser = ({
     };
   }, [end, isHome, hasMore, isReadingMore, showMore, reached]);
 
-  const rails = isHome ? home.rails : groupIntoRails(items, Date.now(), progress);
+  const rails = isHome ? home.rails : groupIntoRails(items, openedAt, progress);
   const shown = rails.flatMap((rail) => rail.items);
   const shownKey = shown.map((media) => media.id).join(',');
 
   const reportItems = useRef(onItemsLoaded);
   const shownRef = useRef(shown);
 
-  reportItems.current = onItemsLoaded;
-  shownRef.current = shown;
+  useEffect(() => {
+    reportItems.current = onItemsLoaded;
+    shownRef.current = shown;
+  });
 
   useEffect(() => {
     if (shownRef.current.length > 0) {
@@ -181,7 +184,9 @@ const LibraryBrowser = ({
 
   const tellTheScreen = useRef(onReading);
 
-  tellTheScreen.current = onReading;
+  useEffect(() => {
+    tellTheScreen.current = onReading;
+  });
 
   useEffect(() => {
     tellTheScreen.current?.(isReading);

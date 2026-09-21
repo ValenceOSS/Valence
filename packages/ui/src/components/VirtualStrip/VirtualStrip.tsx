@@ -38,7 +38,9 @@ const VirtualStrip = ({
 }: VirtualStripProps) => {
   const scroller = useRef<HTMLDivElement>(null);
   const report = useRef(onIndexChange);
+  const scrollTo = useRef<(index: number, options: { align: 'start' }) => void>(() => {});
 
+  // oxlint-disable-next-line react/incompatible-library -- TanStack Virtual hands back functions it rebuilds every render, so React Compiler will not memoise this component. Nothing here is passed on to something that is memoised, and the alternative is not having a virtualiser.
   const virtualiser = useVirtualizer({
     count,
     getScrollElement: () => scroller.current,
@@ -48,11 +50,12 @@ const VirtualStrip = ({
 
   useEffect(() => {
     report.current = onIndexChange;
+    scrollTo.current = virtualiser.scrollToIndex;
   });
 
   useEffect(() => {
     if (startAtIndex > 0) {
-      virtualiser.scrollToIndex(Math.min(startAtIndex, count - 1), { align: 'start' });
+      scrollTo.current(Math.min(startAtIndex, count - 1), { align: 'start' });
     }
   }, [count, startAtIndex]);
 

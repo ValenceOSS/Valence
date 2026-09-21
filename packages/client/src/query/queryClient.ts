@@ -65,4 +65,4 @@ const buildQueryClient = (): QueryClient => {
   return client;
 };
 
-export { buildQueryClient, STALE_FOR_MS, KEPT_FOR_MS };
+export { buildQueryClient };

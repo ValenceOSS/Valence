@@ -151,4 +151,3 @@ const createMemoryPermissionService = (
 };
 
 export { createMemoryPermissionService };
-export type { MemoryState as MemoryPermissionState };

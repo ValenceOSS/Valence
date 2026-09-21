@@ -123,4 +123,4 @@ const createDatabaseRatingService = (db: ValenceDatabase): RatingService => ({
   },
 });
 
-export { createDatabaseRatingService, LIMIT };
+export { createDatabaseRatingService };

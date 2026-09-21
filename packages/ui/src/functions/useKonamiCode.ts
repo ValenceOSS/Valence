@@ -45,7 +45,9 @@ const useKonamiCode = (onEntered: () => void): void => {
   const atRef = useRef(0);
   const enteredRef = useRef(onEntered);
 
-  enteredRef.current = onEntered;
+  useEffect(() => {
+    enteredRef.current = onEntered;
+  });
 
   useEffect(() => {
     const hear = (event: KeyboardEvent) => {

@@ -350,4 +350,4 @@ const parseAdvancedSubStation = (source: string): AssScript => {
 
 export type { AssCue, AssMargins, AssScript, AssSpan };
 
-export { DEFAULT_HEIGHT, DEFAULT_WIDTH, PLAIN_STYLE, parseAdvancedSubStation };
+export { parseAdvancedSubStation };

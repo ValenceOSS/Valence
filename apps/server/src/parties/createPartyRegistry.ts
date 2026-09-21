@@ -503,10 +503,4 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
 
 export type { PartyRegistry, Joining, Issued, Joined, Removed, Asking };
 
-export {
-  createPartyRegistry,
-  REFUSED_NOT_ALLOWED,
-  REFUSED_NOT_IN,
-  REFUSED_ONESELF,
-  REFUSED_UNKNOWN,
-};
+export { createPartyRegistry };

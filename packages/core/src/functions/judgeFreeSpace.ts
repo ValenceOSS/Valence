@@ -1,8 +1,6 @@
 const TIGHT_SHARE_OF_WHAT_IS_LEFT = 0.6;
 
-const VERDICTS = ['fits', 'tight', 'willNotFit', 'unknown'] as const;
-
-type SpaceVerdict = (typeof VERDICTS)[number];
+type SpaceVerdict = 'fits' | 'tight' | 'willNotFit' | 'unknown';
 
 type JudgeFreeSpaceOptions = {
   bytes: number | null;
@@ -37,4 +35,4 @@ const judgeFreeSpace = ({ bytes, freeBytes }: JudgeFreeSpaceOptions): SpaceVerdi
 
 export type { JudgeFreeSpaceOptions, SpaceVerdict };
 
-export { VERDICTS, judgeFreeSpace };
+export { judgeFreeSpace };

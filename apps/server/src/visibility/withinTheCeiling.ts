@@ -85,4 +85,4 @@ const withinTheCeiling = (db: ValenceDatabase, viewer: Viewer): SQL | undefined 
   return and(notExists(named(DENY)), or(exists(named(ALLOW)), withinIt));
 };
 
-export { ALLOW, DENY, withinTheCeiling };
+export { withinTheCeiling };

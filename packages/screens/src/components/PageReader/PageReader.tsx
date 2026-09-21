@@ -112,6 +112,7 @@ const PageReader = ({
   const [moved, setMoved] = useState({ x: 0, y: 0 });
   const pinch = useRef<{ from: number; base: number } | null>(null);
   const dragged = useRef<{ x: number; y: number; from: { x: number; y: number } } | null>(null);
+  const [isBeingMoved, setIsBeingMoved] = useState(false);
 
   const groups = useMemo(
     () =>
@@ -229,12 +230,14 @@ const PageReader = ({
         if (one !== undefined && other !== undefined) {
           pinch.current = { from: distanceBetween(one, other), base: scale };
           startedAt.current = null;
+          setIsBeingMoved(true);
 
           return;
         }
 
         if (scale > CLOSEST && one !== undefined) {
           dragged.current = { x: one.clientX, y: one.clientY, from: moved };
+          setIsBeingMoved(true);
 
           return;
         }
@@ -270,6 +273,7 @@ const PageReader = ({
         pinch.current = null;
         dragged.current = null;
         startedAt.current = null;
+        setIsBeingMoved(false);
 
         if (from === null || to === null || Math.abs(to - from) < A_SWIPE) {
           wake();
@@ -542,8 +546,7 @@ const PageReader = ({
             className="flex h-full w-full items-center justify-center"
             style={{
               transform: `translate3d(${moved.x.toString()}px, ${moved.y.toString()}px, 0) scale(${scale.toString()})`,
-              transition:
-                pinch.current === null && dragged.current === null ? 'transform 120ms' : 'none',
+              transition: isBeingMoved ? 'none' : 'transform 120ms',
             }}
           >
             <SpreadStage

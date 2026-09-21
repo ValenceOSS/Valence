@@ -17,7 +17,6 @@ const CreateFolderRequestSchema = z.object({
   name: z.string().min(1).max(255),
 });
 
-export type CreateFolderRequest = z.infer<typeof CreateFolderRequestSchema>;
 export type Folder = z.infer<typeof FolderSchema>;
 export type FolderListing = z.infer<typeof FolderListingSchema>;
 

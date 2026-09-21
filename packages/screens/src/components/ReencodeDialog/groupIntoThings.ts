@@ -81,4 +81,4 @@ const groupIntoThings = (items: readonly MediaSummary[]): FileGroup[] => {
 
 export type { FileGroup };
 
-export { groupIntoThings, thingOf, titleOf };
+export { groupIntoThings };

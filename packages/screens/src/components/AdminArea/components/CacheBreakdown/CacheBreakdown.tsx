@@ -6,6 +6,8 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { cacheRows } from './cacheRows';
 import type { CacheBreakdownProps } from './CacheBreakdown.types';
+import { useTicking } from '@ValenceScreens/clock/useTicking';
+import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 
 /**
  * What Valence itself is keeping on the disk, a kind at a time: preview clips, scrub thumbnails,
@@ -26,6 +28,7 @@ const CacheBreakdown = ({
   liveSessions,
   library,
 }: CacheBreakdownProps) => {
+  const now = useTicking(A_CAPTION_AGES_EVERY);
   const rows = cacheRows(cache, artwork, liveSessions, library, bookPages);
   const total =
     (cache === null ? 0 : cache.previews.bytes + cache.trickplay.bytes) +
@@ -74,7 +77,7 @@ const CacheBreakdown = ({
           ? 'Counting what is on the disk.'
           : `${formatBytes(total)} of Valence's own files · counted ${describeSince(
               new Date(cache?.atMs ?? artwork?.atMs ?? 0).toISOString(),
-              Date.now(),
+              now,
             )}`}
       </p>
     </div>

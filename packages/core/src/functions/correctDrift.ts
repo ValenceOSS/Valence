@@ -66,4 +66,4 @@ const correctDrift = ({ behindByMs, jitterMs, isSeeking, isStalled }: Drift): Co
 
 export type { Drift, Correction };
 
-export { correctDrift, deadBandFor, DEAD_BAND_MS, SNAP_BEYOND_MS, MOST_RATE_CHANGE };
+export { correctDrift, deadBandFor, SNAP_BEYOND_MS, MOST_RATE_CHANGE };

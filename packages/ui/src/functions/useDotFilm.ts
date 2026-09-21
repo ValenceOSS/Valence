@@ -20,7 +20,9 @@ const useDotFilm = (isPlaying: boolean, onEnd: () => void): DotFieldFrame | null
   const [film, setFilm] = useState<DotFieldFilm | null>(null);
   const endRef = useRef(onEnd);
 
-  endRef.current = onEnd;
+  useEffect(() => {
+    endRef.current = onEnd;
+  });
 
   useEffect(() => {
     if (!isPlaying) {

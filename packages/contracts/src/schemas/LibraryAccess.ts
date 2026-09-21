@@ -38,7 +38,6 @@ const SetExceptionSchema = z.object({
 const LibraryAccessSchema = z.object({ libraries: z.array(LibraryReachSchema) });
 
 type LibraryReach = z.infer<typeof LibraryReachSchema>;
-type AgeException = z.infer<typeof AgeExceptionSchema>;
 type ExceptionHolder = z.infer<typeof ExceptionHolderSchema>;
 
 /**
@@ -72,7 +71,7 @@ const wouldLeaveNothing = (libraries: readonly LibraryReach[], libraryId: string
   libraries.filter((shelf) => shelf.mayView && shelf.id !== libraryId).length === 0 &&
   libraries.some((shelf) => shelf.id === libraryId && shelf.mayView);
 
-export type { AgeException, ExceptionHolder, LibraryReach };
+export type { ExceptionHolder, LibraryReach };
 
 export {
   LibraryReachSchema,

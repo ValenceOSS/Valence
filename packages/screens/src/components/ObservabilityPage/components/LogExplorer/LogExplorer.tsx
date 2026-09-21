@@ -142,7 +142,7 @@ const LogExplorer = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [typed, view, onSearchChange]);
+  }, [typed, view, onSearchChange, setAnchor]);
 
   const shown = useMemo<LogView>(() => ({ ...view, search: parsed.text }), [view, parsed.text]);
   const asked = useMemo(

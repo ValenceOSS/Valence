@@ -424,4 +424,4 @@ const createDatabaseProfileService = (
   };
 };
 
-export { createDatabaseProfileService, LIMIT };
+export { createDatabaseProfileService };

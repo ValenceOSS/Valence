@@ -41,8 +41,4 @@ const createClientCaller =
     }
   };
 
-type ClientCaller = ReturnType<typeof createClientCaller>;
-
-export type { ClientCaller };
-
 export { createClientCaller };

@@ -401,7 +401,7 @@ const AdminArea = ({
       tellOutcome(`${label} finished.`, failureOfAnswer(taken, `${label} could not be started.`));
       await reloadLibraries();
     },
-    [jobDefinitions, libraries],
+    [jobDefinitions, libraries, reloadLibraries],
   );
 
   const reloadSchedules = async () =>

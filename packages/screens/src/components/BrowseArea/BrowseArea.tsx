@@ -115,7 +115,9 @@ const BrowseArea = ({
 
   const reportItems = useRef(onItemsLoaded);
 
-  reportItems.current = onItemsLoaded;
+  useEffect(() => {
+    reportItems.current = onItemsLoaded;
+  });
 
   const libraries = useQuery(libraryQueries.all());
 

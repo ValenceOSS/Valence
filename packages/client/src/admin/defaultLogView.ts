@@ -19,4 +19,4 @@ const defaultLogView = (): LogView => ({
   limit: LOG_PAGE_SIZE,
 });
 
-export { defaultLogView, LOG_PAGE_SIZE };
+export { defaultLogView };

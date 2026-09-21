@@ -29,8 +29,6 @@ const DownloadOfferSchema = z.object({
 });
 
 type DownloadOffer = z.infer<typeof DownloadOfferSchema>;
-type DownloadOption = z.infer<typeof DownloadOptionSchema>;
-
 /**
  * Reads an offer the server sent, and treats one it cannot read as no offer at all.
  *
@@ -249,7 +247,7 @@ const setHolding = async (
   return response !== null && response.ok;
 };
 
-export type { DownloadOffer, DownloadOption };
+export type { DownloadOffer };
 
 export {
   askForDownload,

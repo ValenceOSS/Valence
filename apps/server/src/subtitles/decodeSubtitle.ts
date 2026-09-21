@@ -120,4 +120,4 @@ const decodeSubtitle = (bytes: Uint8Array, language: string | null): DecodedSubt
 
 export type { DecidedBy, DecodedSubtitle };
 
-export { CHARSET_BY_LANGUAGE, FALLBACK_CHARSET, decodeSubtitle };
+export { CHARSET_BY_LANGUAGE, decodeSubtitle };

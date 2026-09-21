@@ -82,4 +82,4 @@ const refuseReencode = ({
 
 export type { ReencodeConditions };
 
-export { CANNOT_CARRY_SUBTITLES, refuseReencode };
+export { refuseReencode };

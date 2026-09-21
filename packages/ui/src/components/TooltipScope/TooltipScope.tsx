@@ -26,4 +26,4 @@ const TooltipScope = ({ children }: TooltipScopeProps) => (
 
 TooltipScope.displayName = 'TooltipScope';
 
-export { TooltipScope, SKIP_DELAY_MILLISECONDS };
+export { TooltipScope };

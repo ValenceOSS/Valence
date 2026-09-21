@@ -13,6 +13,8 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import type { NotificationBellProps } from './NotificationBell.types';
+import { useTicking } from '@ValenceScreens/clock/useTicking';
+import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 
 const COUNTED_UP_TO = 9;
 
@@ -39,7 +41,7 @@ const NotificationBell = ({
   onClearAll,
   onFollow,
 }: NotificationBellProps) => {
-  const now = Date.now();
+  const now = useTicking(A_CAPTION_AGES_EVERY);
 
   return (
     <PopoverPanel

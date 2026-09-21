@@ -11,7 +11,7 @@ import {
   RotateCw as RotateCwIcon,
   Settings as SettingsIcon,
 } from '@keyline-icons/react';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { UploadMediaDialog } from '@ValenceScreens/components/AdminArea/components/UploadMediaDialog/UploadMediaDialog';
 import { AdminSetupGuide } from '@ValenceScreens/components/AdminArea/components/AdminSetupGuide/AdminSetupGuide';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
@@ -26,7 +26,6 @@ import { cn } from '@ValenceUI/cn';
 import { describeScanResult } from '@ValenceClient/admin/describeScanResult';
 import { AddLibraryDialog } from '@ValenceScreens/components/AdminArea/components/AddLibraryDialog/AddLibraryDialog';
 import { LibrarySettingsDialog } from '@ValenceScreens/components/AdminArea/components/LibrarySettingsDialog/LibrarySettingsDialog';
-import { ResetLibrariesDialog } from '@ValenceScreens/components/AdminArea/components/ResetLibrariesDialog/ResetLibrariesDialog';
 import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
 import { describeScanKind } from '@ValenceScreens/components/AdminArea/describeScanKind';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
@@ -98,28 +97,6 @@ const LibrariesPanel = ({
     libraries.length === 0 ||
     libraries.some((entry) => readingOf(progress, entry.id) !== undefined);
 
-  const live = useRef({
-    progress,
-    onScan,
-    onRegeneratePreviews,
-    setSettingsLibraryId,
-    setDeleting,
-    setRereading,
-    setWatching,
-    setUploadingTo,
-  });
-
-  live.current = {
-    progress,
-    onScan,
-    onRegeneratePreviews,
-    setSettingsLibraryId,
-    setDeleting,
-    setRereading,
-    setWatching,
-    setUploadingTo,
-  };
-
   const columns = useMemo<DataTableColumn<Library>[]>(
     () => [
       {
@@ -180,7 +157,7 @@ const LibrariesPanel = ({
         header: 'State',
         enableSorting: false,
         cell: ({ row }) => {
-          const busy = workOf(live.current.progress, row.original.id);
+          const busy = workOf(progress, row.original.id);
 
           if (busy.length === 0) {
             return (
@@ -193,7 +170,7 @@ const LibrariesPanel = ({
           return (
             <span className="flex items-center gap-1.5">
               <Badge size="sm" tone={STATUS_LOOK.working.tone}>
-                {readingOf(live.current.progress, row.original.id) === undefined
+                {readingOf(progress, row.original.id) === undefined
                   ? STATUS_LOOK.working.label
                   : 'Reading'}
               </Badge>
@@ -204,7 +181,7 @@ const LibrariesPanel = ({
                 isIconOnly
                 label={`What ${row.original.name} is doing`}
                 onClick={() => {
-                  live.current.setWatching(row.original);
+                  setWatching(row.original);
                 }}
               >
                 <Icon of={InfoIcon} size={15} />
@@ -229,9 +206,9 @@ const LibrariesPanel = ({
                       id: 'scan',
                       label: 'Scan for changes',
                       icon: <Icon of={RefreshCwIcon} size={15} />,
-                      isDisabled: readingOf(live.current.progress, row.original.id) !== undefined,
+                      isDisabled: readingOf(progress, row.original.id) !== undefined,
                       onChoose: () => {
-                        live.current.onScan(row.original.id);
+                        onScan(row.original.id);
                       },
                     },
                     {
@@ -239,16 +216,16 @@ const LibrariesPanel = ({
                       label: 'Upload media',
                       icon: <Icon of={FileArrowUpIcon} size={15} />,
                       onChoose: () => {
-                        live.current.setUploadingTo(row.original);
+                        setUploadingTo(row.original);
                       },
                     },
                     {
                       id: 'reread',
                       label: 'Read every file again',
                       icon: <Icon of={RotateCwIcon} size={15} />,
-                      isDisabled: readingOf(live.current.progress, row.original.id) !== undefined,
+                      isDisabled: readingOf(progress, row.original.id) !== undefined,
                       onChoose: () => {
-                        live.current.setRereading(row.original);
+                        setRereading(row.original);
                       },
                     },
                     ...(row.original.kind === 'movies' || row.original.kind === 'shows'
@@ -257,10 +234,9 @@ const LibrariesPanel = ({
                             id: 'previews',
                             label: 'Generate missing previews',
                             icon: <Icon of={ImagesIcon} size={15} />,
-                            isDisabled:
-                              readingOf(live.current.progress, row.original.id) !== undefined,
+                            isDisabled: readingOf(progress, row.original.id) !== undefined,
                             onChoose: () => {
-                              live.current.onRegeneratePreviews(row.original.id);
+                              onRegeneratePreviews(row.original.id);
                             },
                           },
                         ]
@@ -274,7 +250,7 @@ const LibrariesPanel = ({
                       label: 'Library settings',
                       icon: <Icon of={SettingsIcon} size={15} />,
                       onChoose: () => {
-                        live.current.setSettingsLibraryId(row.original.id);
+                        setSettingsLibraryId(row.original.id);
                       },
                     },
                   ],
@@ -287,7 +263,7 @@ const LibrariesPanel = ({
                       icon: <Icon of={BinIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
-                        live.current.setDeleting(row.original);
+                        setDeleting(row.original);
                       },
                     },
                   ],
@@ -298,7 +274,7 @@ const LibrariesPanel = ({
         ),
       },
     ],
-    [],
+    [onScan, onRegeneratePreviews, progress],
   );
 
   return (
@@ -469,9 +445,13 @@ const LibrariesPanel = ({
         }}
       />
 
-      <ResetLibrariesDialog
+      <ConfirmDialog
+        title="Reset and rebuild every library?"
+        detail="Every item in every library will be deleted, then probed and added again from scratch. Watch progress and marked intros for those items go with them. This cannot be undone."
+        confirmLabel="Reset and rebuild"
+        isDestructive
+        isBusy={isResettingAll}
         isOpen={isConfirmingReset}
-        isResetting={isResettingAll}
         onClose={() => {
           setIsConfirmingReset(false);
         }}

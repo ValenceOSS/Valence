@@ -17,9 +17,7 @@ const MediaSegmentSchema = z.object({
 
 type MediaSegment = z.infer<typeof MediaSegmentSchema>;
 type SegmentKind = z.infer<typeof SegmentKindSchema>;
-type SegmentSource = z.infer<typeof SegmentSourceSchema>;
-
-export type { MediaSegment, SegmentKind, SegmentSource };
+export type { MediaSegment, SegmentKind };
 
 export {
   MediaSegmentSchema,

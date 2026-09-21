@@ -60,4 +60,4 @@ const toSpanStyle = (span: SubtitleSpan): CSSProperties => {
   };
 };
 
-export { KNOWN_FONTS, LARGEST, SMALLEST, toSpanStyle };
+export { LARGEST, SMALLEST, toSpanStyle };

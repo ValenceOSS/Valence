@@ -68,4 +68,4 @@ const redactSecrets = (text: string): string =>
     .replace(ASSIGNED_SECRET, `$1$2${HIDDEN}`)
     .replace(LOOSELY_ASSIGNED_SECRET, `$1$3${HIDDEN}`);
 
-export { redactSecrets, HIDDEN };
+export { redactSecrets };

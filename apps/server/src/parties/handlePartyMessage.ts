@@ -264,4 +264,4 @@ const handlePartyMessage = (
 
 export type { PartySpeaker, PartyBinding };
 
-export { handlePartyMessage, asPartyJson, tellEveryone };
+export { handlePartyMessage, tellEveryone };

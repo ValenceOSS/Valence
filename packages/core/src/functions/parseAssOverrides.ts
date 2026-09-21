@@ -134,4 +134,4 @@ const parseAssOverrides = (block: string, isLegacy: boolean): AssOverrides => {
 
 export type { AssOverrides, AssTextStyle };
 
-export { BOLD_FROM, parseAssOverrides };
+export { parseAssOverrides };

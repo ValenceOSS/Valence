@@ -178,7 +178,7 @@ const JobHistoryPanel = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [typed, onSearchChange]);
+  }, [typed, onSearchChange, setAnchor]);
 
   const page = (search.rpage ?? 1) - 1;
   const narrowing = useMemo(

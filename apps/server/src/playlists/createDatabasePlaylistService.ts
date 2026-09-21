@@ -503,4 +503,4 @@ const createDatabasePlaylistService = (
   };
 };
 
-export { createDatabasePlaylistService, kindOf };
+export { createDatabasePlaylistService };

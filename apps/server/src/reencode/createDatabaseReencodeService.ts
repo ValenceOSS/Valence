@@ -818,4 +818,4 @@ const createDatabaseReencodeService = ({
 
 export type { CreateDatabaseReencodeServiceOptions, ReencodeMedia, ReencodeSubject };
 
-export { SAMPLE_SECONDS, createDatabaseReencodeService };
+export { createDatabaseReencodeService };

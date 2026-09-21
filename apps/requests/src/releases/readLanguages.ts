@@ -46,4 +46,4 @@ const readLanguages = (spaced: string): string[] =>
     .filter(([, words]) => words.some((word) => new RegExp(`\\b${word}\\b`, 'i').test(spaced)))
     .map(([code]) => code);
 
-export { LANGUAGE_WORDS, readLanguages };
+export { readLanguages };

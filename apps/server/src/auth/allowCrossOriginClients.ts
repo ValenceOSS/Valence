@@ -69,4 +69,4 @@ const allowCrossOriginClients = ({ trustedOrigins }: AllowCrossOriginClientsOpti
     context.res.headers.set('Access-Control-Expose-Headers', [...exposed].join(', '));
   });
 
-export { allowCrossOriginClients, ALLOWED_HEADERS, EXPOSED_HEADERS };
+export { allowCrossOriginClients };

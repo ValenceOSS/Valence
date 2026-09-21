@@ -105,4 +105,4 @@ const readPlaybackHealth = (element: HTMLVideoElement, frameSkewSeconds = 0): Pl
   };
 };
 
-export { readPlaybackHealth, encodedSeconds, bufferedAhead, streamStart };
+export { readPlaybackHealth, encodedSeconds, bufferedAhead };

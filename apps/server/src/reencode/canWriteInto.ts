@@ -32,4 +32,4 @@ const canWriteInto = async (directory: string): Promise<boolean> => {
   }
 };
 
-export { PROBE_NAME, canWriteInto };
+export { canWriteInto };

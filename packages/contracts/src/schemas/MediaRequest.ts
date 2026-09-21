@@ -300,25 +300,19 @@ type CatalogueAlbum = z.infer<typeof CatalogueAlbumSchema>;
 type MusicCatalogueHit = z.infer<typeof MusicCatalogueHitSchema>;
 type RequestItemState = (typeof REQUEST_ITEM_STATES)[number];
 type MediaRequestState = (typeof MEDIA_REQUEST_STATES)[number];
-type RequestApproval = (typeof REQUEST_APPROVALS)[number];
 type CatalogueEpisode = z.infer<typeof CatalogueEpisodeSchema>;
 type RequestCatalogue = z.infer<typeof RequestCatalogueSchema>;
 type RequestCatalogueDraft = z.input<typeof RequestCatalogueSchema>;
-type Requester = z.infer<typeof RequesterSchema>;
 type MediaRequestAsk = z.input<typeof MediaRequestAskSchema>;
 type MediaRequestDraft = z.input<typeof MediaRequestDraftSchema>;
 type RequestItem = z.infer<typeof RequestItemSchema>;
 type MediaRequest = z.infer<typeof MediaRequestSchema>;
 type MediaRequestChange = z.infer<typeof MediaRequestChangeSchema>;
-type MediaRequestDecision = z.infer<typeof MediaRequestDecisionSchema>;
 type MediaRequestDecided = z.infer<typeof MediaRequestDecidedSchema>;
 type BlockedRelease = z.infer<typeof BlockedReleaseSchema>;
-type MediaRequestRefusal = z.input<typeof MediaRequestRefusalSchema>;
 type MediaRequestRevision = z.input<typeof MediaRequestRevisionSchema>;
 type MediaRequestAdded = z.infer<typeof MediaRequestAddedSchema>;
-type MediaRequestPick = z.infer<typeof MediaRequestPickSchema>;
 type RequestCatalogueUpdate = z.input<typeof RequestCatalogueUpdateSchema>;
-type MediaRequestArrival = z.infer<typeof MediaRequestArrivalSchema>;
 type FollowedRequest = z.infer<typeof FollowedRequestSchema>;
 type MissingSearch = z.infer<typeof MissingSearchSchema>;
 type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;
@@ -334,27 +328,21 @@ export type {
   SeasonStanding,
   FollowedRequest,
   MediaRequest,
-  MediaRequestArrival,
   MediaRequestAdded,
   MediaRequestAsk,
   MediaRequestChange,
   MediaRequestDecided,
-  MediaRequestDecision,
   MediaRequestDraft,
   MediaRequestKind,
-  MediaRequestPick,
-  MediaRequestRefusal,
   MediaRequestRevision,
   MediaRequestState,
   MissingSearch,
   MusicCatalogueHit,
   MusicRequestKind,
   ReleaseType,
-  RequestApproval,
   RequestCatalogue,
   RequestCatalogueDraft,
   RequestCatalogueUpdate,
-  Requester,
   RequestItem,
   RequestItemState,
   RequestLogEntry,

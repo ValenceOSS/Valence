@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { describeElapsed } from '@ValenceScreens/components/AdminArea/describeElapsed';
@@ -44,20 +44,18 @@ const BackgroundJobsTable = ({
 }: BackgroundJobsProps) => {
   const arrived = monitor?.queue.jobs ?? NOTHING_QUEUED;
   const saying = describeQueue(arrived);
-  const held = useRef(arrived);
-  const saidRef = useRef(saying);
-  const hasRead = useRef(false);
+  const [shown, setShown] = useState({ saying, rows: arrived });
+  const [hasRead, setHasRead] = useState(monitor !== null);
 
-  if (saidRef.current !== saying) {
-    held.current = arrived;
-    saidRef.current = saying;
+  if (shown.saying !== saying) {
+    setShown({ saying, rows: arrived });
   }
 
-  if (monitor !== null) {
-    hasRead.current = true;
+  if (monitor !== null && !hasRead) {
+    setHasRead(true);
   }
 
-  const rows = held.current;
+  const rows = shown.rows;
 
   const columns = useMemo<DataTableColumn<Job>[]>(
     () => [
@@ -141,7 +139,7 @@ const BackgroundJobsTable = ({
       label="Background jobs"
       columns={columns}
       rows={rows}
-      emptyMessage={hasRead.current ? 'Nothing queued.' : 'Reading the queue…'}
+      emptyMessage={hasRead ? 'Nothing queued.' : 'Reading the queue…'}
       growsOnScroll={growsOnScroll}
       {...(pageSize === undefined ? {} : { pageSize })}
     />

@@ -6,7 +6,7 @@ import {
   Stop as StopIcon,
 } from '@keyline-icons/react';
 import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -112,22 +112,6 @@ const JobRunner = ({
     (definition) => definition.needsLibrary && summaryFor(definition.kind) !== null,
   );
 
-  const live = useRef({
-    summaryFor,
-    askOrRun,
-    ask,
-    onOpenSchedule,
-    isBusyWithALibrary,
-  });
-
-  live.current = {
-    summaryFor,
-    askOrRun,
-    ask,
-    onOpenSchedule,
-    isBusyWithALibrary,
-  };
-
   const columns = useMemo<DataTableColumn<JobDefinition>[]>(
     () => [
       {
@@ -154,7 +138,7 @@ const JobRunner = ({
         header: 'State',
         enableSorting: false,
         cell: ({ row }) => {
-          const summary = live.current.summaryFor(row.original.kind);
+          const summary = summaryFor(row.original.kind);
 
           if (summary === null) {
             return (
@@ -207,14 +191,14 @@ const JobRunner = ({
                       isDestructive: row.original.destructive,
                       isDisabled:
                         row.original.needsLibrary &&
-                        live.current.isBusyWithALibrary &&
-                        live.current.summaryFor(row.original.kind) === null,
+                        isBusyWithALibrary &&
+                        summaryFor(row.original.kind) === null,
                       onChoose: () => {
-                        live.current.askOrRun(row.original);
+                        askOrRun(row.original);
                       },
                     },
-                    ...(live.current.summaryFor(row.original.kind) === null ||
-                    live.current.summaryFor(row.original.kind)?.isStopping === true
+                    ...(summaryFor(row.original.kind) === null ||
+                    summaryFor(row.original.kind)?.isStopping === true
                       ? []
                       : [
                           {
@@ -223,7 +207,7 @@ const JobRunner = ({
                             icon: <Icon of={StopIcon} size={15} />,
                             isDestructive: true,
                             onChoose: () => {
-                              live.current.ask(row.original);
+                              ask(row.original);
                             },
                           },
                         ]),
@@ -235,7 +219,7 @@ const JobRunner = ({
                             label: 'Edit schedule',
                             icon: <Icon of={CalendarIcon} size={15} />,
                             onChoose: () => {
-                              live.current.onOpenSchedule(row.original.kind);
+                              onOpenSchedule(row.original.kind);
                             },
                           },
                         ]),
@@ -247,7 +231,7 @@ const JobRunner = ({
         ),
       },
     ],
-    [],
+    [ask, summaryFor, onOpenSchedule, askOrRun, isBusyWithALibrary],
   );
 
   return (

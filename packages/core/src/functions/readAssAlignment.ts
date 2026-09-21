@@ -39,4 +39,4 @@ const readAssAlignment = (raw: string, isLegacy: boolean): number | null => {
   return value >= 1 && value <= 9 ? value : null;
 };
 
-export { BOTTOM_CENTRE, LEGACY_ALIGNMENTS, readAssAlignment };
+export { BOTTOM_CENTRE, readAssAlignment };

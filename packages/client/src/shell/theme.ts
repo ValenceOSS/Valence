@@ -73,4 +73,4 @@ const readTheme = (said: string): Theme => ThemeSchema.parse(said);
 
 export type { Theme };
 
-export { STORAGE_KEY, THEMES, chooseTheme, chosenTheme, readTheme, whenThemeChanges };
+export { chooseTheme, chosenTheme, readTheme, whenThemeChanges };

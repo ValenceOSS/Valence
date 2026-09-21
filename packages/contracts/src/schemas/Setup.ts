@@ -27,10 +27,7 @@ const SetupResultSchema = z.object({
 const SetupErrorSchema = z.object({ error: z.string() });
 
 export type SetupStatus = z.infer<typeof SetupStatusSchema>;
-export type SetupAdmin = z.infer<typeof SetupAdminSchema>;
 export type SetupRequest = z.infer<typeof SetupRequestSchema>;
-export type SetupResult = z.infer<typeof SetupResultSchema>;
-
 export {
   SetupStatusSchema,
   SetupAdminSchema,

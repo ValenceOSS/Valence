@@ -141,11 +141,4 @@ const sendWatchedOffline = async (): Promise<number> => {
 
 export type { WatchedOffline };
 
-export {
-  STORAGE_KEY,
-  WRITE_EVERY_SECONDS,
-  forgetWatchedOffline,
-  rememberWatchedOffline,
-  sendWatchedOffline,
-  watchedOffline,
-};
+export { forgetWatchedOffline, rememberWatchedOffline, sendWatchedOffline, watchedOffline };

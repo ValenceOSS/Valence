@@ -288,7 +288,6 @@ type ActiveSession = z.infer<typeof ActiveSessionSchema>;
 type JobDefinition = z.infer<typeof JobDefinitionSchema>;
 type ScheduleTrigger = z.infer<typeof ScheduleTriggerSchema>;
 type JobTrigger = z.infer<typeof JobTriggerSchema>;
-type JobSchedule = z.infer<typeof JobScheduleSchema>;
 type JobSchedules = z.infer<typeof JobSchedulesSchema>;
 
 const RunningScansSchema = z.object({
@@ -1043,7 +1042,6 @@ export type {
   HardwareChain,
   Job,
   JobDefinition,
-  JobSchedule,
   JobSchedules,
   JobTrigger,
   Monitor,

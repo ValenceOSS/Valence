@@ -17,4 +17,4 @@ const WIDTH = 960;
 const frameAt = (id: string, side: ReviewSide, atSeconds: number): string =>
   `/api/reencodes/${id}/frame?side=${side}&seconds=${Math.max(0, Math.floor(atSeconds)).toString()}&width=${WIDTH.toString()}`;
 
-export { WIDTH, frameAt };
+export { frameAt };

@@ -212,4 +212,4 @@ const createSidecarSubtitleService = ({
   };
 };
 
-export { createSidecarSubtitleService, listFiles };
+export { createSidecarSubtitleService };

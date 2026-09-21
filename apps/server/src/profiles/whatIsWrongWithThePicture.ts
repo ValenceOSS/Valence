@@ -87,7 +87,6 @@ const whatIsWrongWithThePicture = async (
 export type { PictureFault, PictureLimits };
 
 export {
-  ACCEPTED,
   MOST_BYTES,
   MOST_PIXELS_AN_EDGE,
   FACE_LIMITS,

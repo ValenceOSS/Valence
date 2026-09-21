@@ -6,7 +6,7 @@ import {
   Search as SearchIcon,
   Tape as TapeIcon,
 } from '@keyline-icons/react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -87,10 +87,6 @@ const MediaPanel = ({
     [media, search],
   );
 
-  const live = useRef({ rebuilding, rebuilt, onCorrect, onChooseMoment, onReencode, ask });
-
-  live.current = { rebuilding, rebuilt, onCorrect, onChooseMoment, onReencode, ask };
-
   const columns = useMemo<DataTableColumn<MediaSummary>[]>(
     () => [
       {
@@ -169,15 +165,15 @@ const MediaPanel = ({
                     {
                       id: 'rebuild',
                       label:
-                        live.current.rebuilding === row.original.id
+                        rebuilding === row.original.id
                           ? 'Rebuilding…'
-                          : live.current.rebuilt.has(row.original.id)
+                          : rebuilt.has(row.original.id)
                             ? 'Will rebuild'
                             : 'Rebuild previews',
                       icon: <Icon of={RefreshCwIcon} size={15} />,
-                      isDisabled: live.current.rebuilding === row.original.id,
+                      isDisabled: rebuilding === row.original.id,
                       onChoose: () => {
-                        live.current.ask(row.original);
+                        ask(row.original);
                       },
                     },
                     {
@@ -185,7 +181,7 @@ const MediaPanel = ({
                       label: 'Wrong match?',
                       icon: <Icon of={SearchIcon} size={15} />,
                       onChoose: () => {
-                        live.current.onCorrect(row.original);
+                        onCorrect(row.original);
                       },
                     },
                     {
@@ -193,10 +189,10 @@ const MediaPanel = ({
                       label: 'Choose the preview moment',
                       icon: <Icon of={FilmIcon} size={15} />,
                       onChoose: () => {
-                        live.current.onChooseMoment(row.original);
+                        onChooseMoment(row.original);
                       },
                     },
-                    ...(live.current.onReencode === undefined
+                    ...(onReencode === undefined
                       ? []
                       : [
                           {
@@ -204,7 +200,7 @@ const MediaPanel = ({
                             label: 'Re-encode\u2026',
                             icon: <Icon of={TapeIcon} size={15} />,
                             onChoose: () => {
-                              live.current.onReencode?.(row.original);
+                              onReencode(row.original);
                             },
                           },
                         ]),
@@ -216,7 +212,7 @@ const MediaPanel = ({
         ),
       },
     ],
-    [],
+    [ask, rebuilt, onCorrect, onReencode, onChooseMoment, rebuilding],
   );
 
   return (

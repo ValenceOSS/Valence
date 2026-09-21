@@ -43,4 +43,4 @@ const buildLogReadQuery = (db: ValenceDatabase, query: LogQuery) =>
     .limit(query.limit)
     .offset(query.offset);
 
-export { buildLogReadQuery, orderingFor };
+export { buildLogReadQuery };

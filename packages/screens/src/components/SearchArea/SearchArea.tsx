@@ -95,7 +95,9 @@ const SearchArea = ({
 
   const reportSearchChange = useRef(onSearchChange);
 
-  reportSearchChange.current = onSearchChange;
+  useEffect(() => {
+    reportSearchChange.current = onSearchChange;
+  });
 
   useEffect(() => {
     if (liveSearch === search) {
@@ -113,7 +115,9 @@ const SearchArea = ({
 
   const reportItems = useRef(onItemsLoaded);
 
-  reportItems.current = onItemsLoaded;
+  useEffect(() => {
+    reportItems.current = onItemsLoaded;
+  });
 
   const libraries = useQuery(libraryQueries.all());
 

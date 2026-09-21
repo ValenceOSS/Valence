@@ -12,8 +12,8 @@ afterEach(() => {
 });
 
 describe('useTicking', () => {
-  it('brings the moment up to date every second while something is counting', () => {
-    const { result } = renderHook(() => useTicking(true));
+  it('brings the moment up to date on the interval it was given', () => {
+    const { result } = renderHook(() => useTicking(1000));
 
     act(() => {
       vi.advanceTimersByTime(3000);
@@ -22,8 +22,18 @@ describe('useTicking', () => {
     expect(result.current).toBe(4000);
   });
 
+  it('follows a slower interval where a caption counts minutes rather than seconds', () => {
+    const { result } = renderHook(() => useTicking(250));
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(result.current).toBe(2000);
+  });
+
   it('keeps no timer where nothing is counting', () => {
-    const { result } = renderHook(() => useTicking(false));
+    const { result } = renderHook(() => useTicking(1000, false));
 
     act(() => {
       vi.advanceTimersByTime(3000);
@@ -32,8 +42,18 @@ describe('useTicking', () => {
     expect(result.current).toBe(1000);
   });
 
+  it('counts without being asked to, because a caption is usually always ageing', () => {
+    const { result } = renderHook(() => useTicking(1000));
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(result.current).toBe(2000);
+  });
+
   it('stops when what was counting stops', () => {
-    const { result, rerender } = renderHook(({ on }) => useTicking(on), {
+    const { result, rerender } = renderHook(({ on }) => useTicking(1000, on), {
       initialProps: { on: true },
     });
 
@@ -46,15 +66,5 @@ describe('useTicking', () => {
     });
 
     expect(result.current).toBe(3000);
-  });
-
-  it('follows the interval it is given', () => {
-    const { result } = renderHook(() => useTicking(true, 250));
-
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
-
-    expect(result.current).toBe(2000);
   });
 });

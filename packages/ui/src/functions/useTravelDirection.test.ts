@@ -39,7 +39,7 @@ describe('useTravelDirection', () => {
     rerender({ at: 'one' });
     rerender({ at: 'one' });
 
-    expect(result.current).toBe(1);
+    expect(result.current).toBe(-1);
   });
 
   it('treats a tab it does not know as forwards rather than throwing', () => {

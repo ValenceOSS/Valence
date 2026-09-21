@@ -29,7 +29,9 @@ const useWeighing = (
 ): void => {
   const live = useRef(onWeigh);
 
-  live.current = onWeigh;
+  useEffect(() => {
+    live.current = onWeigh;
+  });
 
   useEffect(() => {
     if (!isOpen) {
@@ -46,4 +48,4 @@ const useWeighing = (
   }, [isOpen, mediaIds, settings]);
 };
 
-export { WEIGH_AFTER_MS, useWeighing };
+export { useWeighing };

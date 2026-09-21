@@ -36,4 +36,4 @@ const artworkFetchedForTheSystem = async (path: string): Promise<string | null> 
   return picture === null ? null : URL.createObjectURL(picture);
 };
 
-export { ACCEPTED, artworkFetchedForTheSystem, artworkTheSystemAccepts };
+export { artworkFetchedForTheSystem, artworkTheSystemAccepts };

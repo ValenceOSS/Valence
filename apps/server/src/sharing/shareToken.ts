@@ -21,4 +21,4 @@ const makeShareToken = (): string => randomBytes(TOKEN_BYTES).toString('base64ur
  */
 const hashShareToken = (token: string): string => createHash('sha256').update(token).digest('hex');
 
-export { makeShareToken, hashShareToken, TOKEN_BYTES };
+export { makeShareToken, hashShareToken };

@@ -20,6 +20,4 @@ type LibraryBrowserProps = {
   onReading?: (isReading: boolean) => void;
 };
 
-type BrowserState = 'loading' | 'ready' | 'unreachable';
-
-export type { BrowserState, LibraryBrowserProps };
+export type { LibraryBrowserProps };

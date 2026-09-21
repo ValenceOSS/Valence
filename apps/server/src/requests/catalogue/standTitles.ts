@@ -150,4 +150,4 @@ const standTitles = async (
   });
 };
 
-export { bookKey, standTitles };
+export { standTitles };
