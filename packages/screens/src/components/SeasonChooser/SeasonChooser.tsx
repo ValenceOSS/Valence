@@ -1,16 +1,14 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { DataTable } from '@ValenceUI/DataTable';
 import { FormField } from '@ValenceUI/FormField';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Switch } from '@ValenceUI/Switch';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import type { CatalogueSeason } from '@ValenceContracts/schemas/MediaRequest';
+import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { SeasonChooserProps } from './SeasonChooser.types';
-
-const HEAD_CELL =
-  'px-3 py-2 text-left text-xs font-medium uppercase tracking-[0.14em] text-text-muted sm:px-5';
-
-const CELL = 'px-3 py-3 align-middle sm:px-5';
 
 /**
  * Which seasons are ticked, where every one of them is what null means.
@@ -30,93 +28,98 @@ const tickedOf = (seasons: number[] | null, listed: readonly CatalogueSeason[]):
  * a series still running goes on being fetched as it airs. Ticking them one by one comes to the
  * same thing, which is what a person ticking all of them means.
  *
- * The rows are drawn here rather than by `DataTable` so that each switch stays the same element as
- * it is pressed. A table built from column definitions rebuilds them whenever what is ticked
- * changes, which takes the switch away mid-press and loses both its animation and the press.
- *
  * @param tmdbId - The series' catalogue id.
  * @param seasons - The seasons chosen, or null for every one.
  * @param onChange - Told the seasons as they change.
  */
 const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
   const listed = useQuery(requestsQueries.seriesSeasons(tmdbId));
-  const rows = listed.data ?? [];
-  const ticked = tickedOf(seasons, rows);
+  const rows = useMemo(() => listed.data ?? [], [listed.data]);
+  const ticked = useMemo(() => tickedOf(seasons, rows), [seasons, rows]);
   const isEveryOne = rows.length > 0 && ticked.length === rows.length;
 
-  const take = (season: number, isTaken: boolean) => {
-    const next = isTaken
-      ? ticked.filter((one) => one !== season)
-      : [...ticked, season].toSorted((left, right) => left - right);
+  const columns = useMemo<DataTableColumn<CatalogueSeason>[]>(
+    () => [
+      {
+        id: 'take',
+        enableSorting: false,
+        header: () => (
+          <Switch
+            label="Every season"
+            isLabelHidden
+            isOn={isEveryOne}
+            onToggle={() => {
+              onChange(isEveryOne ? [] : null);
+            }}
+          />
+        ),
+        cell: ({ row }) => {
+          const isTaken = ticked.includes(row.original.season);
 
-    onChange(next.length === rows.length ? null : next);
-  };
+          return (
+            <Switch
+              label={nameSeason(row.original.season)}
+              isLabelHidden
+              isOn={isTaken}
+              onToggle={() => {
+                const next = isTaken
+                  ? ticked.filter((season) => season !== row.original.season)
+                  : [...ticked, row.original.season];
+
+                onChange(
+                  next.length === rows.length ? null : next.toSorted((left, right) => left - right),
+                );
+              }}
+            />
+          );
+        },
+      },
+      {
+        id: 'season',
+        header: 'Season',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <span className="whitespace-nowrap text-sm text-text">
+            {nameSeason(row.original.season)}
+          </span>
+        ),
+      },
+      {
+        id: 'episodes',
+        header: 'Episodes',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <span className="text-sm text-text-muted">{row.original.episodeCount.toString()}</span>
+        ),
+      },
+      {
+        id: 'aired',
+        header: 'First aired',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <span className="whitespace-nowrap text-sm text-text-muted">
+            {row.original.firstAired === null ? '—' : row.original.firstAired.slice(0, 4)}
+          </span>
+        ),
+      },
+    ],
+    [isEveryOne, onChange, rows, ticked],
+  );
 
   return (
     <FormField label="Seasons">
       {listed.data === undefined ? (
         <Spinner isCentered label="Asking the catalogue for its seasons" size="sm" />
-      ) : rows.length === 0 ? (
-        <p className="py-4 text-center font-body text-sm text-text-muted">
-          The catalogue lists no seasons for this series.
-        </p>
       ) : (
         <div className="flex flex-col gap-2">
-          <div className="valence-rail max-h-64 overflow-y-auto rounded-md border border-[var(--surface-line)]">
-            <table className="w-full border-collapse text-sm" aria-label="Which seasons">
-              <thead>
-                <tr className="sticky top-0 z-10 bg-[var(--card-face)]">
-                  <th scope="col" className={`${HEAD_CELL} w-0`}>
-                    <Switch
-                      label="Every season"
-                      isLabelHidden
-                      isOn={isEveryOne}
-                      onToggle={() => {
-                        onChange(isEveryOne ? [] : null);
-                      }}
-                    />
-                  </th>
-                  <th scope="col" className={HEAD_CELL}>
-                    Season
-                  </th>
-                  <th scope="col" className={HEAD_CELL}>
-                    Episodes
-                  </th>
-                  <th scope="col" className={HEAD_CELL}>
-                    First aired
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {rows.map((one) => {
-                  const isTaken = ticked.includes(one.season);
-
-                  return (
-                    <tr key={one.season} className="border-t border-[var(--surface-line)]">
-                      <td className={`${CELL} w-0`}>
-                        <Switch
-                          label={nameSeason(one.season)}
-                          isLabelHidden
-                          isOn={isTaken}
-                          onToggle={() => {
-                            take(one.season, isTaken);
-                          }}
-                        />
-                      </td>
-                      <td className={`${CELL} whitespace-nowrap text-text`}>
-                        {nameSeason(one.season)}
-                      </td>
-                      <td className={`${CELL} text-text-muted`}>{one.episodeCount.toString()}</td>
-                      <td className={`${CELL} whitespace-nowrap text-text-muted`}>
-                        {one.firstAired === null ? '—' : one.firstAired.slice(0, 4)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            label="Which seasons"
+            columns={columns}
+            rows={rows}
+            getRowId={(one) => one.season.toString()}
+            height="compact"
+            emptyMessage="The catalogue lists no seasons for this series."
+          />
 
           <p className="text-xs text-text-muted">
             {isEveryOne

@@ -18,6 +18,28 @@ const ROWS: Library[] = [
 ];
 
 describe('DataTable', () => {
+  it('keeps a cell the same element when the columns are rebuilt around it', () => {
+    const columnsFor = (tick: string): DataTableColumn<Library>[] => [
+      {
+        id: 'name',
+        header: 'Name',
+        enableSorting: false,
+        cell: () => <button type="button">{tick}</button>,
+      },
+    ];
+
+    const { rerender } = render(
+      <DataTable label="Libraries" columns={columnsFor('one')} rows={ROWS.slice(0, 1)} />,
+    );
+
+    const before = screen.getByRole('button');
+
+    rerender(<DataTable label="Libraries" columns={columnsFor('two')} rows={ROWS.slice(0, 1)} />);
+
+    expect(screen.getByRole('button')).toBe(before);
+    expect(before).toHaveTextContent('two');
+  });
+
   it('draws the filter mark white rather than blue once a filter is applied', async () => {
     const user = userEvent.setup();
 
