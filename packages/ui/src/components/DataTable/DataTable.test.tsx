@@ -66,6 +66,15 @@ describe('DataTable', () => {
     expect(screen.getByRole('columnheader', { name: /Name/ })).toHaveClass('sticky');
   });
 
+  it('rounds the outer corners of its heading, so it sits inside a rounded container', () => {
+    render(<DataTable label="Library roots" columns={COLUMNS} rows={ROWS} />);
+
+    const headings = screen.getAllByRole('columnheader');
+
+    expect(headings[0]).toHaveClass('first:rounded-tl-lg');
+    expect(headings[headings.length - 1]).toHaveClass('last:rounded-tr-lg');
+  });
+
   it('caps its height, or takes the room its parent gives it', () => {
     const { rerender } = render(<DataTable label="Library roots" columns={COLUMNS} rows={ROWS} />);
     const scroller = () => screen.getByRole('table').parentElement;

@@ -136,7 +136,7 @@ const DataTable = <Row extends RowData>({
                     <th
                       key={header.id}
                       scope="col"
-                      className="sticky top-0 z-20 bg-[var(--card-face)] px-3 py-2 text-left text-xs font-medium uppercase tracking-[0.14em] text-text-muted sm:px-5"
+                      className="sticky top-0 z-20 bg-[var(--card-face)] px-3 py-2 first:rounded-tl-lg last:rounded-tr-lg text-left text-xs font-medium uppercase tracking-[0.14em] text-text-muted sm:px-5"
                     >
                       <div className="flex items-center gap-1">
                         {header.isPlaceholder ? null : canSort ? (
