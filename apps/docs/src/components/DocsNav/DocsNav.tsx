@@ -1,4 +1,7 @@
 import { Link } from '@tanstack/react-router';
+import { motion } from 'motion/react';
+import { groupVariants } from '@ValenceUI/animations/reveal';
+import { RevealItem } from '@ValenceUI/RevealItem';
 import type { NavSection } from '@ValenceDocs/content/DocPage.types';
 
 type DocsNavProps = {
@@ -20,17 +23,27 @@ const DocsNav = ({ sections, onNavigate }: DocsNavProps) => (
           {section.title}
         </p>
 
-        {section.items.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            {...(onNavigate === undefined ? {} : { onClick: onNavigate })}
-            className="rounded-lg px-3 py-1.5 text-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-text"
-            activeProps={{ className: 'bg-accent/10 font-medium text-accent hover:text-accent' }}
-          >
-            {item.title}
-          </Link>
-        ))}
+        <motion.ul
+          initial="hidden"
+          animate="shown"
+          variants={groupVariants}
+          className="flex flex-col gap-1"
+        >
+          {section.items.map((item, index) => (
+            <RevealItem key={item.path} index={index} className="list-none">
+              <Link
+                to={item.path}
+                {...(onNavigate === undefined ? {} : { onClick: onNavigate })}
+                className="block rounded-lg px-3 py-1.5 text-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-text"
+                activeProps={{
+                  className: 'bg-accent/10 font-medium text-accent hover:text-accent',
+                }}
+              >
+                {item.title}
+              </Link>
+            </RevealItem>
+          ))}
+        </motion.ul>
       </div>
     ))}
   </nav>

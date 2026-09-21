@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { DocsSearch } from '@ValenceDocs/components/DocsSearch/DocsSearch';
 import { renderInDocsRouter } from '@ValenceDocs/testing/renderInDocsRouter';
 import type { DocPage } from '@ValenceDocs/content/DocPage.types';
@@ -16,34 +16,53 @@ const page = (path: string, title: string): DocPage => ({
 });
 
 describe('DocsSearch', () => {
-  it('reads the pages on first use and finds a match', async () => {
+  beforeAll(() => {
+    Element.prototype.scrollIntoView = () => undefined;
+  });
+
+  it('opens a palette listing every page from the button', async () => {
+    const user = userEvent.setup();
+
+    await renderInDocsRouter(() => (
+      <DocsSearch pages={[page('/install/a', 'Alpha'), page('/install/b', 'Beta')]} sources={{}} />
+    ));
+
+    expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: 'Search the documentation' }));
+
+    expect(await screen.findByText('Alpha')).toBeInTheDocument();
+    expect(screen.getByText('Beta')).toBeInTheDocument();
+  });
+
+  it('opens from Ctrl and K', async () => {
+    const user = userEvent.setup();
+
+    await renderInDocsRouter(() => (
+      <DocsSearch pages={[page('/install/a', 'Alpha')]} sources={{}} />
+    ));
+    await user.keyboard('{Control>}k{/Control}');
+
+    expect(await screen.findByRole('combobox')).toBeInTheDocument();
+  });
+
+  it('reads the pages on first use and finds a match in their text', async () => {
     const read = vi.fn(() => Promise.resolve('---\ntitle: X\n---\nPut nginx in front of it.'));
     const user = userEvent.setup();
 
     await renderInDocsRouter(() => (
       <DocsSearch
-        pages={[page('/install/reverse-proxy', 'Reverse proxy')]}
+        pages={[page('/install/reverse-proxy', 'Reverse proxy'), page('/install/b', 'Other')]}
         sources={{ './install/reverse-proxy.mdx': read }}
       />
     ));
 
     expect(read).not.toHaveBeenCalled();
 
-    await user.type(await screen.findByRole('searchbox'), 'nginx');
+    await user.click(await screen.findByRole('button', { name: 'Search the documentation' }));
+    await user.type(await screen.findByRole('combobox'), 'nginx');
 
-    expect(await screen.findByRole('link', { name: /Reverse proxy/ })).toHaveAttribute(
-      'href',
-      '/install/reverse-proxy',
-    );
-  });
-
-  it('says when nothing matches', async () => {
-    const user = userEvent.setup();
-
-    await renderInDocsRouter(() => <DocsSearch pages={[page('/install/a', 'A')]} sources={{}} />);
-
-    await user.type(await screen.findByRole('searchbox'), 'zzz');
-
-    expect(await screen.findByText('Nothing matches that.')).toBeInTheDocument();
+    expect(await screen.findByText('Reverse proxy')).toBeInTheDocument();
+    expect(screen.queryByText('Other')).not.toBeInTheDocument();
   });
 });

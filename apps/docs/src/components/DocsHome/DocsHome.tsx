@@ -1,4 +1,8 @@
 import { Link } from '@tanstack/react-router';
+import { motion } from 'motion/react';
+import { groupVariants } from '@ValenceUI/animations/reveal';
+import { Reveal } from '@ValenceUI/Reveal';
+import { RevealItem } from '@ValenceUI/RevealItem';
 import { Logo } from '@ValenceUI/Logo';
 import { Card } from '@ValenceUI/Card';
 import { NAVIGATION } from '@ValenceDocs/content/NAVIGATION';
@@ -25,33 +29,48 @@ type DocsHomeProps = {
 const DocsHome = ({ sections = NAVIGATION }: DocsHomeProps) => (
   <div className="mx-auto flex max-w-5xl flex-col gap-12 px-6 py-16 lg:px-12">
     <header className="flex flex-col gap-5">
-      <Logo size={48} isSolid />
+      <Reveal>
+        <Logo size={48} isSolid />
+      </Reveal>
 
-      <h1 className="text-5xl font-bold tracking-tight text-text">Valence documentation</h1>
+      <Reveal delay={0.06}>
+        <h1 className="text-5xl font-bold tracking-tight text-text">Valence documentation</h1>
+      </Reveal>
 
-      <p className="max-w-2xl text-lg leading-8 text-text-muted">
-        Everything about running, using and building on Valence, the self-hosted streaming platform
-        for the library you already own.
-      </p>
+      <Reveal delay={0.12}>
+        <p className="max-w-2xl text-lg leading-8 text-text-muted">
+          Everything about running, using and building on Valence, the self-hosted streaming
+          platform for the library you already own.
+        </p>
+      </Reveal>
     </header>
 
-    <div className="grid gap-4 sm:grid-cols-2">
-      {sections.map((section) => {
+    <motion.ul
+      initial="hidden"
+      animate="shown"
+      variants={groupVariants}
+      className="grid gap-4 sm:grid-cols-2"
+    >
+      {sections.map((section, index) => {
         const [first] = section.items;
 
         return first === undefined ? null : (
-          <Link key={section.id} to={first.path} className="block">
-            <Card isInteractive padding="lg" className="flex h-full flex-col gap-2">
-              <span className="text-lg font-semibold text-text">{section.title}</span>
-              <span className="text-sm leading-6 text-text-muted">{BLURBS[section.id] ?? ''}</span>
-              <span className="mt-2 text-xs text-text-muted">
-                {section.items.length.toString()} pages
-              </span>
-            </Card>
-          </Link>
+          <RevealItem key={section.id} index={index + 3} className="list-none">
+            <Link to={first.path} className="block h-full">
+              <Card isInteractive padding="lg" className="flex h-full flex-col gap-2">
+                <span className="text-lg font-semibold text-text">{section.title}</span>
+                <span className="text-sm leading-6 text-text-muted">
+                  {BLURBS[section.id] ?? ''}
+                </span>
+                <span className="mt-2 text-xs text-text-muted">
+                  {section.items.length.toString()} pages
+                </span>
+              </Card>
+            </Link>
+          </RevealItem>
         );
       })}
-    </div>
+    </motion.ul>
   </div>
 );
 

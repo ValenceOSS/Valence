@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Badge } from '@ValenceUI/Badge';
+import { Reveal } from '@ValenceUI/Reveal';
 import { NAVIGATION } from '@ValenceDocs/content/NAVIGATION';
 import { findNeighbours } from '@ValenceDocs/content/findNeighbours';
 import { lazyContent } from '@ValenceDocs/content/lazyContent';
@@ -32,23 +33,27 @@ const DocPageView = ({ page }: DocPageViewProps) => {
   return (
     <div className="flex gap-12 px-6 py-10 lg:px-12">
       <article className="min-w-0 max-w-3xl flex-1">
-        <Badge>{page.sectionTitle}</Badge>
+        <Reveal key={`${page.path}-header`}>
+          <Badge>{page.sectionTitle}</Badge>
 
-        <h1 className="mt-4 text-4xl font-bold tracking-tight text-text">{page.title}</h1>
+          <h1 className="mt-4 text-4xl font-bold tracking-tight text-text">{page.title}</h1>
 
-        <p className="mt-3 text-lg leading-8 text-text-muted">{page.description}</p>
+          <p className="mt-3 text-lg leading-8 text-text-muted">{page.description}</p>
+        </Reveal>
 
-        <Suspense
-          fallback={
-            <div className="flex justify-center py-24">
-              <Spinner label="Loading the page" />
-            </div>
-          }
-        >
-          <DocContent Content={lazyContent(page)} onHeadings={setHeadings} />
-        </Suspense>
+        <Reveal key={`${page.path}-body`} delay={0.1}>
+          <Suspense
+            fallback={
+              <div className="flex justify-center py-24">
+                <Spinner label="Loading the page" />
+              </div>
+            }
+          >
+            <DocContent Content={lazyContent(page)} onHeadings={setHeadings} />
+          </Suspense>
 
-        <PageNeighbours {...findNeighbours(NAVIGATION, page.path)} />
+          <PageNeighbours {...findNeighbours(NAVIGATION, page.path)} />
+        </Reveal>
       </article>
 
       <OnThisPage headings={headings} />
