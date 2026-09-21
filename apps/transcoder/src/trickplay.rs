@@ -22,7 +22,7 @@ use crate::integrity::decodes;
 use crate::media::VideoRange;
 use crate::render_registry::RenderRegistry;
 use crate::steps_aside::steps_aside;
-use crate::transcode_plan::{HardwareAccel, HardwarePipeline};
+use crate::transcode_plan::{tone_map_format, HardwareAccel, HardwarePipeline};
 
 /// Written only when every sheet is on disk.
 ///
@@ -409,9 +409,12 @@ fn extract_filters(
 
     match onto_the_device {
         Some((_, pipeline, _)) => {
+            let mut carried = None;
+
             if source.range != VideoRange::Sdr {
                 if let Some(mapper) = pipeline.tone_map {
                     filters.push(mapper.to_owned());
+                    carried = tone_map_format(mapper);
                 }
             }
 
@@ -436,7 +439,7 @@ fn extract_filters(
             if !draws_on_the_device {
                 filters.push(format!(
                     "hwdownload,format={}",
-                    pipeline.download_format_for(source.bit_depth)
+                    carried.unwrap_or_else(|| pipeline.download_format_for(source.bit_depth))
                 ));
             }
         }
@@ -1594,6 +1597,69 @@ otherwise start a second one"
 
         assert!(chain.contains("hwdownload,format=p010le"), "{chain}");
         assert!(!chain.contains(":format=nv12"), "{chain}");
+    }
+
+    /// The download names what the tone mapper left, not what the decoder made.
+    ///
+    /// A ten-bit HDR source decodes to `p010le` surfaces, so the download asked
+    /// for `p010le` — but `tonemap_cuda` has already converted them to
+    /// `yuv420p` by the time it runs, a frames context holds one format, and
+    /// ffmpeg refuses: "Invalid output format p010le for hwframe download".
+    /// Every sheet for every HDR film on an NVIDIA card was lost to it.
+    ///
+    /// Measured on an RTX 5080 against a 2160p HDR HEVC source.
+    #[test]
+    fn comes_down_as_the_tone_mapper_left_it() {
+        let arguments = extract_arguments(
+            &request(),
+            180,
+            SheetSource {
+                bit_depth: Some(10),
+                ..source_of(VideoRange::Hdr10)
+            },
+            Some((HardwareAccel::Nvenc, "")),
+            &SheetEncoder::Software,
+            Path::new("/cache"),
+        );
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(chain.contains("tonemap_cuda"), "{chain}");
+        assert!(chain.contains("hwdownload,format=yuv420p"), "{chain}");
+        assert!(!chain.contains("hwdownload,format=p010le"), "{chain}");
+    }
+
+    /// The same fault on the backend whose mapper leaves `nv12` instead.
+    ///
+    /// `tonemap_vaapi` converts to `nv12`, so the download that follows it must
+    /// say `nv12` however deep the source was. It escaped notice because VAAPI
+    /// usually draws on the device and skips the download entirely; a build
+    /// without the compositor takes this path and hit the same refusal.
+    #[test]
+    fn comes_down_as_vaapi_left_it_too() {
+        let arguments = extract_arguments(
+            &request(),
+            180,
+            SheetSource {
+                bit_depth: Some(10),
+                ..source_of(VideoRange::Hdr10)
+            },
+            Some((HardwareAccel::Vaapi, "")),
+            &SheetEncoder::Software,
+            Path::new("/cache"),
+        );
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(chain.contains("tonemap_vaapi"), "{chain}");
+        assert!(chain.contains("hwdownload,format=nv12"), "{chain}");
+        assert!(!chain.contains("hwdownload,format=p010le"), "{chain}");
     }
 
     #[test]
