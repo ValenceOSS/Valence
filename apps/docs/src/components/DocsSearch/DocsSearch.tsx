@@ -78,7 +78,18 @@ const DocsSearch = ({ pages, sources }: DocsSearchProps) => {
           text: read === undefined ? page.description : toSearchText(await read()),
         };
       }),
-    ).then(setEntries);
+    )
+      .then(setEntries)
+      .catch(() => {
+        setEntries(
+          pages.map((page) => ({
+            path: page.path,
+            title: page.title,
+            sectionTitle: page.sectionTitle,
+            text: page.description,
+          })),
+        );
+      });
   }, [entries, isOpen, pages, sources]);
 
   const groups = groupResults(

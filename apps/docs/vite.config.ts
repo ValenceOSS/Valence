@@ -41,6 +41,10 @@ const RESOLVED_FRONTMATTER_VIRTUAL_ID = `\0${FRONTMATTER_VIRTUAL_ID}`;
 
 const CONTENT_FOLDER = join(import.meta.dirname, 'src', 'content');
 
+const SOURCES_VIRTUAL_ID = 'virtual:doc-sources';
+
+const RESOLVED_SOURCES_VIRTUAL_ID = `\0${SOURCES_VIRTUAL_ID}`;
+
 const FRONTMATTER_BLOCK = /^---\n(?<yaml>[\s\S]*?)\n---/u;
 
 /**
@@ -82,13 +86,48 @@ const docFrontmatter = (): Plugin => ({
   },
 });
 
+/**
+ * Reads the text of every page into one module, for search to load the first time it is used.
+ *
+ * The pages cannot be imported as raw text, since the MDX plugin compiles a page whatever it is
+ * asked for, so their source is read from the files here and kept out of the first download.
+ */
+const docSources = (): Plugin => ({
+  name: 'valence-doc-sources',
+
+  resolveId: (id) => (id === SOURCES_VIRTUAL_ID ? RESOLVED_SOURCES_VIRTUAL_ID : undefined),
+
+  load: async (id) => {
+    if (id !== RESOLVED_SOURCES_VIRTUAL_ID) {
+      return undefined;
+    }
+
+    const found: Record<string, string> = {};
+
+    for (const section of await readdir(CONTENT_FOLDER, { withFileTypes: true })) {
+      if (section.isDirectory()) {
+        for (const file of await readdir(join(CONTENT_FOLDER, section.name))) {
+          if (file.endsWith('.mdx')) {
+            found[`./${section.name}/${file}`] = await readFile(
+              join(CONTENT_FOLDER, section.name, file),
+              'utf8',
+            );
+          }
+        }
+      }
+    }
+
+    return `export default ${JSON.stringify(found)};`;
+  },
+});
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: [documentation(), docFrontmatter(), react(), tailwindcss()],
+  plugins: [documentation(), docFrontmatter(), docSources(), react(), tailwindcss()],
   server: {
     port: 5175,
     host: true,
   },
 });
 
-export { docFrontmatter, documentation };
+export { docFrontmatter, docSources, documentation };

@@ -41,6 +41,7 @@ const CommandPalette = ({
         <Icon of={SearchIcon} size={18} tone="muted" />
 
         <Command.Input
+          autoFocus
           value={query}
           onValueChange={onQueryChange}
           placeholder={placeholder}

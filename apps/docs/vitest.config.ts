@@ -1,10 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import { docFrontmatter, documentation } from './vite.config.ts';
+import { docFrontmatter, docSources, documentation } from './vite.config.ts';
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: [documentation(), docFrontmatter(), react()],
+  plugins: [documentation(), docFrontmatter(), docSources(), react()],
   test: {
     environment: 'jsdom',
     globals: true,
