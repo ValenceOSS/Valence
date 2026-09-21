@@ -238,9 +238,13 @@ jobs:
 
   # The desktop app's installers, built by the workflow that owns that and attached below. A job that
   # calls a workflow rather than a step, so its artefacts are this run's like any other job's.
+  #
+  # Last, after every check and every other build has passed. Three runners, one of them a macOS one,
+  # are the most expensive thing a release does and there is no point starting them for a release that
+  # is already going to fail.
   desktop:
     name: Desktop app
-    needs: [verify]
+    needs: [verify, verify-rust, image, artefacts]
     uses: ./.github/workflows/desktop.yml
     with:
       tag: ${{ inputs.tag || github.ref_name }}
