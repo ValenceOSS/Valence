@@ -28,6 +28,7 @@ const REQUEST = {
   posterUrl: null,
   libraryId: 'films',
   profileId: null,
+  profileName: null,
   isPickedByHand: false,
   state: 'wanted',
   problem: null,
