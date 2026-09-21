@@ -104,10 +104,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
   const trailerKey = title?.trailerKey ?? null;
   const offered = useQuery(
-    requestsQueries.profilesOnOffer(
-      title !== null && isMusicRequest(title.kind) ? 'music' : 'video',
-      title?.standing.status === 'askable',
-    ),
+    requestsQueries.profilesOnOffer(title?.kind ?? 'film', title?.standing.status === 'askable'),
   );
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const mayCancel =

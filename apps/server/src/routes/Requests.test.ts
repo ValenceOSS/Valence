@@ -2209,7 +2209,7 @@ describe('requests for films and series, through the server', () => {
       return built;
     };
 
-    const offered = async (ask: Awaited<ReturnType<typeof build>>['ask'], kind = 'video') => {
+    const offered = async (ask: Awaited<ReturnType<typeof build>>['ask'], kind = 'film') => {
       const response = await ask(`/api/requests/profiles?kind=${kind}`);
 
       expect(response.status).toBe(200);
@@ -2240,7 +2240,7 @@ describe('requests for films and series, through the server', () => {
 
       const { ask } = await asking(['requests.ask', 'requests.askMusic']);
 
-      expect((await offered(ask, 'music')).choices).toEqual([
+      expect((await offered(ask, 'artist')).choices).toEqual([
         { id: UHD, name: 'Lossless', kind: 'music' },
       ]);
     });
@@ -2351,10 +2351,49 @@ describe('requests for films and series, through the server', () => {
       expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ profileId: UHD });
     });
 
+    it('offers a profile written for one library only where that library is asked about', async () => {
+      const SHOWS = {
+        ...FILMS,
+        id: '2b7c9e1d-4f6a-4c8b-9d0e-1f2a3b4c5d6e',
+        name: 'Shows',
+        kind: 'shows' as const,
+        path: '/media/Shows',
+      };
+
+      PROFILES.push(
+        aProfile(HD, 'Films only', { libraryIds: [FILMS.id] }),
+        aProfile(UHD, 'Shows only', { libraryIds: [SHOWS.id] }),
+      );
+
+      const built = await build({
+        isOn: true,
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+        describeForRequest: () => Promise.resolve(DUNE),
+        libraries: [FILMS, SHOWS],
+      });
+
+      expect((await offered(built.ask, 'film')).choices.map((one) => one.name)).toEqual([
+        'Films only',
+      ]);
+      expect((await offered(built.ask, 'series')).choices.map((one) => one.name)).toEqual([
+        'Shows only',
+      ]);
+    });
+
+    it('offers a profile naming no library whatever is being asked for', async () => {
+      PROFILES.push(aProfile(HD, 'Anything'));
+
+      const { ask } = await asking();
+
+      expect((await offered(ask, 'film')).choices.map((one) => one.name)).toEqual(['Anything']);
+      expect((await offered(ask, 'series')).choices.map((one) => one.name)).toEqual(['Anything']);
+    });
+
     it('refuses to say what is on offer to somebody who may not ask at all', async () => {
       const { ask } = await build({ isOn: true, granted: [], service: aWillingKeeper });
 
-      expect((await ask('/api/requests/profiles?kind=video')).status).toBe(403);
+      expect((await ask('/api/requests/profiles?kind=film')).status).toBe(403);
     });
   });
 });

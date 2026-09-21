@@ -144,6 +144,22 @@ describe('ProfileEditor', () => {
     });
   });
 
+  it('leaves a profile naming no library, which offers it for all of them', async () => {
+    const user = userEvent.setup();
+
+    open();
+
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'UHD');
+
+    expect(await screen.findByRole('checkbox', { name: 'Every library' })).toBeChecked();
+
+    await user.click(screen.getByRole('button', { name: 'Add profile' }));
+
+    await waitFor(() => {
+      expect(addProfile).toHaveBeenCalledWith(expect.objectContaining({ libraryIds: [] }));
+    });
+  });
+
   it('keeps a profile to the roles and people named on it', async () => {
     const user = userEvent.setup();
 

@@ -26,7 +26,6 @@ import {
 import type { CatalogueBrowse, CatalogueFilters } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
-import type { ProfileKind } from '@ValenceContracts/schemas/QualityProfile';
 
 const REQUESTS = ['requests'] as const;
 
@@ -154,13 +153,13 @@ const profiles = () =>
   });
 
 /**
- * The qualities somebody may ask at, for one kind of request.
+ * The qualities somebody may ask at for something.
  *
- * @param kind - Whether the request is for music or for video.
+ * @param kind - What is being asked for.
  * @param isEnabled - Whether to ask at all, which a dialog that is shut does not.
  * @returns The query.
  */
-const profilesOnOffer = (kind: ProfileKind, isEnabled = true) =>
+const profilesOnOffer = (kind: MediaRequestKind, isEnabled = true) =>
   queryOptions({
     queryKey: [...REQUESTS, 'profiles', 'onOffer', kind],
     queryFn: () => fetchProfilesOnOffer(kind),

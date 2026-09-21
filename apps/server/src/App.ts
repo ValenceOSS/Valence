@@ -416,6 +416,7 @@ import type {
   MediaRequest,
   MediaRequestAsk,
   MediaRequestDraft,
+  MediaRequestKind,
   MusicCatalogueHit,
   MusicRequestKind,
   ReleaseType,
@@ -424,8 +425,8 @@ import type {
 } from '@ValenceContracts/schemas/MediaRequest';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
-import { profilesOnOffer } from '@ValenceContracts/functions/profilesOnOffer';
-import type { ProfileKind, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { isForLibrary, profilesOnOffer } from '@ValenceContracts/functions/profilesOnOffer';
+import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import { libraryKindOf } from '@ValenceContracts/functions/libraryKindOf';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
@@ -4138,9 +4139,21 @@ const createApp = ({
    * @param kind - Whether the request is for music or for video.
    * @returns What to offer them, or why it could not be worked out.
    */
+  const libraryForRequest = async (kind: MediaRequestKind, libraryId?: string) => {
+    const wanted = libraryKindOf(kind);
+    const libraries = (await library.list(asTheServer)).filter(
+      (entry) => entry.kind === wanted && entry.takesRequests,
+    );
+
+    return libraryId === undefined
+      ? libraries[0]
+      : libraries.find((entry) => entry.id === libraryId);
+  };
+
   const profilesFor = async (
     headers: Headers,
-    kind: ProfileKind,
+    kind: MediaRequestKind,
+    libraryId: string | undefined,
     allowed: readonly Permission[] = [...ASKERS, ...APPROVERS],
   ) => {
     const session = await readSessionOnce(auth, headers);
@@ -4159,22 +4172,28 @@ const createApp = ({
       name: profile.name,
       kind: profile.kind,
     });
+    const profileKind = isMusicRequest(kind) ? 'music' : 'video';
+    const into = (await libraryForRequest(kind, libraryId))?.id ?? null;
 
     if (await requires(headers, 'requests.manage')) {
       return {
         kind: 'answered' as const,
         value: {
-          choices: answer.value.filter((profile) => profile.kind === kind).map(asChoice),
+          choices: answer.value
+            .filter((profile) => profile.kind === profileKind && isForLibrary(profile, into))
+            .map(asChoice),
           forcedId: null,
         },
       };
     }
 
     const held = await permissions.rolesFor(session.user.id);
-    const offered = profilesOnOffer(answer.value, kind, {
-      accountId: session.user.id,
-      roleIds: held.map((role) => role.id),
-    });
+    const offered = profilesOnOffer(
+      answer.value,
+      profileKind,
+      { accountId: session.user.id, roleIds: held.map((role) => role.id) },
+      into,
+    );
 
     return {
       kind: 'answered' as const,
@@ -4237,7 +4256,7 @@ const createApp = ({
     | { kind: 'refused'; status: 400 | 403 | 404 | 502; error: string }
   > => {
     const isMusic = isMusicRequest(asked.kind);
-    const offered = await profilesFor(headers, isMusic ? 'music' : 'video', [
+    const offered = await profilesFor(headers, asked.kind, asked.libraryId, [
       isMusic ? 'requests.askMusic' : 'requests.ask',
       ...APPROVERS,
     ]);
@@ -4917,7 +4936,8 @@ const createApp = ({
   });
 
   app.openapi(profilesOnOfferRoute, async (context) => {
-    const answer = await profilesFor(context.req.raw.headers, context.req.valid('query').kind);
+    const { kind, libraryId } = context.req.valid('query');
+    const answer = await profilesFor(context.req.raw.headers, kind, libraryId);
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)

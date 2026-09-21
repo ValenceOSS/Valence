@@ -23,7 +23,6 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { addProfile, changeProfile } from '@ValenceClient/requests/fetchProfiles';
 import { QualitySizes } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/components/QualitySizes/QualitySizes';
 import { AskerPicker } from '@ValenceScreens/components/AdminArea/components/AskerPicker/AskerPicker';
-import { LibraryPicker } from '@ValenceScreens/components/AdminArea/components/LibraryPicker/LibraryPicker';
 import { RankedChoices } from '@ValenceScreens/components/AdminArea/components/RankedChoices/RankedChoices';
 import { QUALITY_NAMES } from '@ValenceScreens/components/AdminArea/QUALITY_NAMES';
 import { formFor, readProfileForm } from './readProfileForm';
@@ -493,12 +492,19 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
             detail={
               forKind.length === 0
                 ? `There are no ${isVideo ? 'film or series' : 'music'} libraries yet.`
-                : 'The libraries whose requests are judged against this profile, unless a request names another.'
+                : 'Which libraries offer this profile when somebody asks. Tick none and it is offered for all of them.'
             }
           >
             {forKind.length === 0 ? null : (
-              <LibraryPicker
-                libraries={forKind}
+              <AskerPicker
+                legend="Libraries"
+                everyLabel="Every library"
+                askers={forKind.map((entry) => ({
+                  id: entry.id,
+                  name: entry.name,
+                  detail:
+                    entry.itemCount === 1 ? '1 item' : `${entry.itemCount.toLocaleString()} items`,
+                }))}
                 chosen={new Set(form.libraryIds)}
                 onChange={(chosen) => {
                   change({ libraryIds: [...chosen] });

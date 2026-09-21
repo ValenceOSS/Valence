@@ -28,6 +28,22 @@ describe('chooseProfile', () => {
     ).toBeNull();
   });
 
+  it('takes a profile that names no library where none names this one', () => {
+    const anywhere = aProfile({ id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301', libraryIds: [] });
+
+    expect(chooseProfile({ kind: 'film', profileId: null, libraryId: 'films' }, [anywhere])).toBe(
+      anywhere,
+    );
+  });
+
+  it('prefers the profile written for this library over one written for all of them', () => {
+    const anywhere = aProfile({ id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301', libraryIds: [] });
+
+    expect(
+      chooseProfile({ kind: 'film', profileId: null, libraryId: 'films' }, [anywhere, LIBRARYS]),
+    ).toBe(LIBRARYS);
+  });
+
   it('takes a music profile for an artist or an album', () => {
     expect(
       chooseProfile({ kind: 'artist', profileId: null, libraryId: 'films' }, [LIBRARYS, MUSIC]),

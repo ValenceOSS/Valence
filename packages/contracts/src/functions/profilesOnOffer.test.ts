@@ -105,6 +105,60 @@ describe('profilesOnOffer', () => {
     expect(profilesOnOffer(profiles, 'video', anybody).forcedId).toBe('1080p');
   });
 
+  it('offers a profile that names no library for any library', () => {
+    const offered = profilesOnOffer([aProfile('1080p', 'video')], 'video', anybody, 'films');
+
+    expect(offered.choices.map((profile) => profile.id)).toEqual(['1080p']);
+  });
+
+  it('offers a profile only for the libraries it names', () => {
+    const profiles = [
+      aProfile('films-only', 'video', { libraryIds: ['films'] }),
+      aProfile('shows-only', 'video', { libraryIds: ['shows'] }),
+    ];
+
+    expect(
+      profilesOnOffer(profiles, 'video', anybody, 'films').choices.map((one) => one.id),
+    ).toEqual(['films-only']);
+    expect(
+      profilesOnOffer(profiles, 'video', anybody, 'shows').choices.map((one) => one.id),
+    ).toEqual(['shows-only']);
+  });
+
+  it('offers a catch-all alongside the profile written for the library', () => {
+    const offered = profilesOnOffer(
+      [aProfile('any', 'video'), aProfile('films-only', 'video', { libraryIds: ['films'] })],
+      'video',
+      anybody,
+      'films',
+    );
+
+    expect(offered.choices.map((profile) => profile.id)).toEqual(['any', 'films-only']);
+  });
+
+  it('offers everything of the kind where no library is known', () => {
+    const offered = profilesOnOffer(
+      [aProfile('films-only', 'video', { libraryIds: ['films'] })],
+      'video',
+      anybody,
+    );
+
+    expect(offered.choices.map((profile) => profile.id)).toEqual(['films-only']);
+  });
+
+  it('forces a default only where it applies, leaving other libraries free', () => {
+    const profiles = [
+      aProfile('4K', 'video', { isDefault: true, libraryIds: ['films'] }),
+      aProfile('1080p', 'video', { libraryIds: ['shows'] }),
+    ];
+
+    expect(profilesOnOffer(profiles, 'video', anybody, 'films').forcedId).toBe('4K');
+    expect(profilesOnOffer(profiles, 'video', anybody, 'shows')).toEqual({
+      choices: [profiles[1]],
+      forcedId: null,
+    });
+  });
+
   it('offers nothing where every profile is gated away', () => {
     const offered = profilesOnOffer(
       [aProfile('2160p', 'video', { roleIds: ['trusted'] })],

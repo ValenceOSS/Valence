@@ -7,8 +7,8 @@ import {
 } from '@ValenceContracts/schemas/QualityProfile';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { Sent } from '@ValenceClient/requests/sendToRequests';
+import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type {
-  ProfileKind,
   ProfilesOnOffer,
   QualityProfile,
   QualityProfileChange,
@@ -20,15 +20,15 @@ const PROFILES = '/api/admin/requests/profiles';
 const ON_OFFER = '/api/requests/profiles';
 
 /**
- * Reads the qualities somebody may ask at, and the one they are given no say over.
+ * Reads the qualities somebody may ask at for something, and the one they are given no say over.
  *
- * Not the admin list: that is every profile on the server, and what is wanted here is the few a
- * particular person may choose between.
+ * Asked by what is being requested rather than by kind of profile, because the answer depends on
+ * the library it would be filed into, and only the server knows which that is.
  *
- * @param kind - Whether the request is for music or for video.
+ * @param kind - What is being asked for.
  * @returns What to offer, and whichever profile overrides the offer.
  */
-const fetchProfilesOnOffer = (kind: ProfileKind): Promise<ProfilesOnOffer> =>
+const fetchProfilesOnOffer = (kind: MediaRequestKind): Promise<ProfilesOnOffer> =>
   readFromServer(`${ON_OFFER}?kind=${kind}`, ProfilesOnOfferSchema);
 
 /**
