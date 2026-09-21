@@ -7,8 +7,9 @@ import {
 } from '@ValenceScreens/components/AdminArea/setupGuidePreference';
 
 afterEach(() => {
-  window.localStorage.clear();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  window.localStorage.clear();
 });
 
 describe('the setup guide preference', () => {
@@ -29,12 +30,11 @@ describe('the setup guide preference', () => {
   });
 
   it('shows the guide, and does not redirect, where the device will not remember anything', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+    const blocked = () => {
       throw new Error('blocked');
-    });
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
+    };
+
+    vi.stubGlobal('localStorage', { getItem: blocked, setItem: blocked });
 
     expect(isSetupGuideHidden()).toBe(false);
     expect(hasBeenTakenToSetup()).toBe(true);
