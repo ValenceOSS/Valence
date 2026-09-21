@@ -481,6 +481,65 @@ describe('createRequestWorker', () => {
       expect((await blocked.list())[0]?.reason).toBe('It stalled, with nobody to fetch it from');
     });
 
+    it('gives up on a torrent that never learned what it holds', async () => {
+      const { worker, blocked } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        sent: [
+          aSentDownload({
+            sizeBytes: null,
+            doneBytes: null,
+            progress: 0,
+            sentAt: '2026-09-18T23:50:00.000Z',
+          }),
+        ],
+      });
+
+      await worker.tick();
+
+      expect((await blocked.list())[0]?.reason).toBe(
+        'Nobody would tell it what it holds, so it never started',
+      );
+    });
+
+    it('gives up on a download too slow ever to arrive, and says how slow', async () => {
+      const { worker, blocked, remove } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        sent: [
+          aSentDownload({
+            sizeBytes: 1_000_000_000,
+            doneBytes: 1_000_000,
+            progress: 0.001,
+            sentAt: '2026-09-18T23:00:00.000Z',
+          }),
+        ],
+      });
+
+      await worker.tick();
+
+      expect((await blocked.list())[0]?.reason).toBe(
+        'At the rate it is going it would take another 42 days',
+      );
+      expect(remove).toHaveBeenCalledWith(aSentDownload().id, true);
+    });
+
+    it('leaves a download alone that has nearly arrived, however slow it has become', async () => {
+      const { worker, blocked } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        sent: [
+          aSentDownload({
+            sizeBytes: 1_000_000_000,
+            doneBytes: 999_000_000,
+            progress: 0.999,
+            sentAt: '2026-09-18T14:00:00.000Z',
+          }),
+        ],
+      });
+
+      await worker.tick();
+
+      expect(await blocked.list()).toEqual([]);
+    });
+
     it('wants a film again whose download was taken out', async () => {
       const { worker, items, send } = aWorker({
         items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
