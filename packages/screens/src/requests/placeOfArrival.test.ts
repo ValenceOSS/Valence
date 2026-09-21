@@ -12,4 +12,12 @@ describe('placeOfArrival', () => {
     });
     expect(placeOfArrival('artist', 'a2')).toMatchObject({ listen: 'album:a2' });
   });
+
+  it('opens a book in the reading section', () => {
+    expect(placeOfArrival('book', 'b1')).toEqual({
+      section: 'read',
+      book: 'b1',
+      asking: null,
+    });
+  });
 });

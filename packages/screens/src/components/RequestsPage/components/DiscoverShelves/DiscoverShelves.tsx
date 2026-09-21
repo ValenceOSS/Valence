@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { AskableMusicShelf } from '@ValenceScreens/components/RequestsPage/components/AskableMusicShelf/AskableMusicShelf';
 import { StudiosRail } from '@ValenceScreens/components/RequestsPage/components/StudiosRail/StudiosRail';
@@ -17,6 +18,16 @@ import type { DiscoverShelvesProps } from './DiscoverShelves.types';
  */
 const isMusicShelf = (shelf: CatalogueShelf): boolean =>
   shelf.titles.every((title) => isMusicRequest(title.kind));
+
+/**
+ * Whether a shelf holds books, which have a tab of their own and are drawn there rather than among
+ * the posters of the films.
+ *
+ * @param shelf - The shelf.
+ * @returns Whether everything on it is a book.
+ */
+const isBookShelf = (shelf: CatalogueShelf): boolean =>
+  shelf.titles.every((title) => isBookRequest(title.kind));
 
 /**
  * The Discover side of the Requests page, in the spirit of Overseerr: shelves of films and series
@@ -53,7 +64,7 @@ const DiscoverShelves = ({ onAsk, onBrowse, onBrowseStudio }: DiscoverShelvesPro
   return (
     <div className="flex flex-col gap-10">
       {shelves
-        .filter((shelf) => !isMusicShelf(shelf))
+        .filter((shelf) => !isMusicShelf(shelf) && !isBookShelf(shelf))
         .map((shelf) => (
           <TitleShelf key={shelf.id} shelf={shelf} onAsk={onAsk} onBrowse={onBrowse} />
         ))}

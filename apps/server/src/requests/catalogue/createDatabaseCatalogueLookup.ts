@@ -1,7 +1,8 @@
 import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
-import { mediaItem, musicAlbum, musicArtist, series } from '@ValenceServer/db/Schema';
+import { book, mediaItem, musicAlbum, musicArtist, series } from '@ValenceServer/db/Schema';
+import { nameKey } from '@ValenceServer/music/nameKey';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
-import type { CatalogueLookup } from '@ValenceServer/requests/catalogue/CatalogueLookup';
+import type { CatalogueLookup, NamedBook } from '@ValenceServer/requests/catalogue/CatalogueLookup';
 
 /**
  * Pairs rows up by their key, the first of each kept, where any were asked about at all.
@@ -31,8 +32,8 @@ const byKey = async (
 
 /**
  * The libraries, looked into for what a catalogue lists: films and series by their catalogue ids,
- * artists by their MusicBrainz ids or names, and albums by their release groups or by their artist
- * and title together.
+ * artists by their MusicBrainz ids or names, albums by their release groups or by their artist
+ * and title together, and books by their author and title together.
  *
  * @param db - The database.
  * @returns The lookup.
@@ -100,6 +101,38 @@ const createDatabaseCatalogueLookup = (db: ValenceDatabase): CatalogueLookup => 
         .innerJoin(musicArtist, eq(musicArtist.id, musicAlbum.artistId))
         .where(inArray(sql`${musicArtist.nameKey} || '/' || ${musicAlbum.titleKey}`, wanted)),
     ),
+
+  booksNamed: async (wanted: readonly NamedBook[]) => {
+    if (wanted.length === 0) {
+      return new Map();
+    }
+
+    const held = await db
+      .select({ id: book.id, title: book.title, authors: book.authors })
+      .from(book)
+      .where(
+        inArray(sql`lower(${book.title})`, [
+          ...new Set(wanted.map((one) => one.title.toLowerCase())),
+        ]),
+      );
+
+    const keys = new Set(wanted.map((one) => one.key));
+    const found = new Map<string, string>();
+
+    for (const row of held) {
+      const authors = Array.isArray(row.authors) ? row.authors : [];
+
+      for (const author of authors) {
+        const key = `${nameKey(typeof author === 'string' ? author : '')}/${nameKey(row.title)}`;
+
+        if (keys.has(key) && !found.has(key)) {
+          found.set(key, row.id);
+        }
+      }
+    }
+
+    return found;
+  },
 });
 
 export { createDatabaseCatalogueLookup };

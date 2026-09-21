@@ -210,6 +210,12 @@ import { createDatabaseMusicService } from '@ValenceServer/music/createDatabaseM
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
 import { createMusicArtwork } from '@ValenceServer/music/createMusicArtwork';
 import { createMusicDevices } from '@ValenceServer/music/createMusicDevices';
+import { describeBookForRequest } from '@ValenceServer/requests/openLibrary/describeBookForRequest';
+import { describeOpenLibraryBook } from '@ValenceServer/requests/openLibrary/describeOpenLibraryBook';
+import { readOpenLibraryShelves } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
+import { searchOpenLibrary } from '@ValenceServer/requests/openLibrary/searchOpenLibrary';
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
+import type { OpenLibraryShelf } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
 import { createMusicWeb } from '@ValenceServer/music/web/createMusicWeb';
 import { enrichMusicLibrary } from '@ValenceServer/music/web/enrichMusicLibrary';
 import { createMusicFileSystem } from '@ValenceServer/music/createMusicFileSystem';
@@ -769,6 +775,8 @@ const musicWeb = createMusicWeb({
     'www.theaudiodb.com': 2100,
     'lrclib.net': 250,
     'api.deezer.com': 250,
+    'openlibrary.org': 1000,
+    'covers.openlibrary.org': 250,
   },
 });
 
@@ -1277,7 +1285,7 @@ const jobs = await createJobQueue({
                   request.musicBrainzId,
                   filed.folder,
                 )
-            : request.tmdbId === null
+            : isBookRequest(request.kind) || request.tmdbId === null
               ? null
               : await libraryService.findByCatalogueId(
                   filed.libraryId,
@@ -1322,7 +1330,7 @@ const jobs = await createJobQueue({
           jobs.reportProgress(jobId, 'asking the catalogue', done, followed.value.length);
 
           const catalogue = await catalogueForRequest(
-            { describeForRequest, describeMusicForRequest },
+            { describeForRequest, describeMusicForRequest, describeBookForRequest: describeBook },
             request,
           );
           const libraryPath = libraries.find((entry) => entry.id === request.libraryId)?.path;
@@ -2026,6 +2034,10 @@ const CHARTS_LIVE_FOR_MS = 6 * 60 * 60 * 1000;
 
 const charted = createExpiringCache<Promise<DeezerCharts>>(CHARTS_LIVE_FOR_MS);
 
+const shelved = createExpiringCache<Promise<OpenLibraryShelf[]>>(CHARTS_LIVE_FOR_MS);
+
+const describeBook = (openLibraryId: number) => describeBookForRequest(musicWeb, openLibraryId);
+
 const studioed = createExpiringCache<Promise<CatalogueStudio[]>>(CHARTS_LIVE_FOR_MS);
 
 const ALBUM_PAGES_SHOWN = 3;
@@ -2098,6 +2110,21 @@ const discovery: Discovery = {
     keeping(described, `${kind}:${musicBrainzId}`, () =>
       describeMusicForRequest(musicBrainzId, kind, ALBUM_PAGES_SHOWN),
     ),
+  bookShelves: () => {
+    const kept = shelved.get('books');
+
+    if (kept !== undefined) {
+      return kept;
+    }
+
+    const reading = readOpenLibraryShelves(musicWeb);
+
+    shelved.set('books', reading);
+
+    return reading;
+  },
+  searchBooks: (query) => searchOpenLibrary(musicWeb, query),
+  describeBook: (openLibraryId) => describeOpenLibraryBook(musicWeb, openLibraryId),
   findOnMusicBrainz: (kind, deezerId) =>
     keeping(foundOnMusicBrainz, `${kind}:${deezerId.toString()}`, () =>
       findOnMusicBrainz(musicWeb, kind, deezerId),
@@ -2110,6 +2137,7 @@ const LINKS_TO_ARRIVALS: Record<MediaRequestKind, (mediaId: string) => string> =
   series: (mediaId) => `/?show=${mediaId}`,
   artist: (mediaId) => `/music?listen=album:${mediaId}`,
   album: (mediaId) => `/music?listen=album:${mediaId}`,
+  book: (mediaId) => `/?book=${mediaId}`,
 };
 
 /**
@@ -2742,6 +2770,7 @@ const app = createApp({
   controlQueue: transcoder.controlQueue,
   describeForRequest,
   describeMusicForRequest,
+  describeBookForRequest: describeBook,
   searchMusicCatalogue: (query, kind) => searchMusicCatalogue(musicWeb, query, kind),
   discovery,
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),

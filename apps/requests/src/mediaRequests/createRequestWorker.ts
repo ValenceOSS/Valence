@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import { fileAlbum } from '@ValenceRequests/mediaRequests/fileAlbum';
@@ -103,6 +104,7 @@ const LIBRARY_KINDS_OF: Record<MediaRequestRecord['kind'], LibraryKind> = {
   series: 'shows',
   artist: 'music',
   album: 'music',
+  book: 'books',
 };
 
 const IN_FLIGHT = new Set<RequestItemRecord['state']>([
@@ -275,7 +277,9 @@ const createRequestWorker = ({
   };
 
   const searchedByItself = async (): Promise<Found[]> =>
-    (await approved()).filter((found) => !found.request.isPickedByHand);
+    (await approved()).filter(
+      (found) => !found.request.isPickedByHand && !isBookRequest(found.request.kind),
+    );
 
   const profileFor = async (request: MediaRequestRecord): Promise<QualityProfile> =>
     chooseProfile(request, await profiles.list()) ??
@@ -926,6 +930,10 @@ const createRequestWorker = ({
         return [{ query: artist, mode: 'music', artist }];
       case 'album':
         return [{ query: `${artist} ${query}`, mode: 'music', artist, album: query }];
+      case 'book':
+        return [
+          { query: request.artistName === null ? query : `${query} ${artist}`, mode: 'book' },
+        ];
     }
   };
 

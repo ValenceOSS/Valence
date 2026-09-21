@@ -9,6 +9,7 @@ import type * as Requests from '@ValenceClient/requests/fetchMediaRequests';
 const fetchMediaRequests = vi.fn<typeof Requests.fetchMediaRequests>();
 const approveMediaRequest = vi.fn<typeof Requests.approveMediaRequest>();
 const retryMediaRequest = vi.fn<typeof Requests.retryMediaRequest>();
+const fulfilMediaRequest = vi.fn<typeof Requests.fulfilMediaRequest>();
 const removeMediaRequest = vi.fn<typeof Requests.removeMediaRequest>();
 const searchMissing = vi.fn<typeof Requests.searchMissing>();
 const fetchMediaRequestReleases = vi.fn<typeof Requests.fetchMediaRequestReleases>();
@@ -20,6 +21,7 @@ vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   fetchMediaRequests: () => fetchMediaRequests(),
   approveMediaRequest: (id: string) => approveMediaRequest(id),
   retryMediaRequest: (id: string) => retryMediaRequest(id),
+  fulfilMediaRequest: (id: string) => fulfilMediaRequest(id),
   removeMediaRequest: (id: string) => removeMediaRequest(id),
   searchMissing: () => searchMissing(),
   fetchMediaRequestReleases: (id: string) => fetchMediaRequestReleases(id),
@@ -69,6 +71,7 @@ beforeEach(() => {
   fetchMediaRequests.mockReset().mockResolvedValue([DUNE, SEVERANCE]);
   approveMediaRequest.mockReset().mockResolvedValue({ value: DUNE, refusal: null });
   retryMediaRequest.mockReset().mockResolvedValue({ value: DUNE, refusal: null });
+  fulfilMediaRequest.mockReset().mockResolvedValue({ value: DUNE, refusal: null });
   removeMediaRequest.mockReset().mockResolvedValue(null);
   searchMissing.mockReset().mockResolvedValue({
     value: { searched: 2, startedAt: '2026-09-19T00:00:00.000Z' },
@@ -220,6 +223,49 @@ describe('MediaRequestsPanel', () => {
     await waitFor(() => {
       expect(changeMediaRequest).toHaveBeenCalledWith(DUNE.id, { isPickedByHand: false });
     });
+  });
+
+  it('says a request has been met by hand, as for a book added to the library', async () => {
+    const user = userEvent.setup();
+    const book = aMediaRequest({
+      id: '6ba7b810-9dad-11d1-80b4-00c04fd430c7',
+      kind: 'book',
+      tmdbId: null,
+      openLibraryId: 21_277_329,
+      title: 'Project Hail Mary',
+      state: 'waiting',
+    });
+
+    fetchMediaRequests.mockResolvedValue([book]);
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await choose(user, 'Project Hail Mary', /Mark as added/);
+
+    await waitFor(() => {
+      expect(fulfilMediaRequest).toHaveBeenCalledWith(book.id);
+    });
+  });
+
+  it('does not offer to search again for a book, since a book is never searched for', async () => {
+    const user = userEvent.setup();
+
+    fetchMediaRequests.mockResolvedValue([
+      aMediaRequest({
+        kind: 'book',
+        tmdbId: null,
+        openLibraryId: 5,
+        title: 'Emma',
+        state: 'waiting',
+      }),
+    ]);
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await user.click(await screen.findByRole('button', { name: 'Actions for Emma' }));
+
+    expect(await screen.findByRole('menuitem', { name: /Search again now/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
   });
 
   it('says why an action was refused', async () => {

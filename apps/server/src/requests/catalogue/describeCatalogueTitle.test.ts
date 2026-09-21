@@ -46,6 +46,20 @@ const sources = () => {
     findOnMusicBrainz: vi.fn<DescriptionSources['findOnMusicBrainz']>((_kind, deezerId) =>
       Promise.resolve(deezerId === 2 ? PINK_FLOYD : null),
     ),
+    describeBook: vi.fn<DescriptionSources['describeBook']>((openLibraryId) =>
+      Promise.resolve(
+        openLibraryId === 21_277_329
+          ? {
+              title: 'Project Hail Mary',
+              year: 2021,
+              overview: 'A lone astronaut wakes up.',
+              posterUrl: 'https://covers.openlibrary.org/b/id/1-M.jpg',
+              authors: ['Andy Weir'],
+              subjects: ['Science fiction'],
+            }
+          : null,
+      ),
+    ),
   };
 
   return given satisfies DescriptionSources;
@@ -84,5 +98,32 @@ describe('describeCatalogueTitle', () => {
     expect(await describeCatalogueTitle(asked, 'album', 'deezer-9')).toBeNull();
     expect(await describeCatalogueTitle(asked, 'album', 'deezer-nonsense')).toBeNull();
     expect(asked.describeMusic).not.toHaveBeenCalled();
+  });
+
+  it('describes a book with its authors, subjects and cover, by its Open Library number', async () => {
+    const asked = sources();
+
+    expect(await describeCatalogueTitle(asked, 'book', '21277329')).toMatchObject({
+      kind: 'book',
+      id: '21277329',
+      title: 'Project Hail Mary',
+      subtitle: 'Andy Weir',
+      year: 2021,
+      overview: 'A lone astronaut wakes up.',
+      genres: ['Science fiction'],
+      authors: ['Andy Weir'],
+      musicBrainzId: null,
+      backdropUrl: null,
+    });
+    expect(asked.describeBook).toHaveBeenCalledWith(21_277_329);
+  });
+
+  it('finds nothing of a book Open Library does not know, or an id that is not a number', async () => {
+    const asked = sources();
+
+    expect(await describeCatalogueTitle(asked, 'book', '5')).toBeNull();
+    expect(await describeCatalogueTitle(asked, 'book', 'OL5W')).toBeNull();
+    expect(await describeCatalogueTitle(asked, 'book', '-3')).toBeNull();
+    expect(asked.describeBook).toHaveBeenCalledTimes(1);
   });
 });

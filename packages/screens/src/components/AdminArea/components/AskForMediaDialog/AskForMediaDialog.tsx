@@ -87,6 +87,7 @@ const LATER_PICKS: Readonly<Record<MediaRequestKind, string>> = {
   series: ' Later episodes wait for a pick too.',
   artist: ' Later albums wait for a pick too.',
   album: '',
+  book: '',
 };
 
 const PICKING = [

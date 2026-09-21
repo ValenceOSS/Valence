@@ -19,7 +19,8 @@ const LETTING_GO = new Set<RequestItemRecord['state']>(['waiting', 'wanted', 'fa
 
 /**
  * Everything a request asks for, by what the catalogue says: the film, the episodes of the seasons
- * asked for, the artist's albums of the kinds asked for, or the album.
+ * asked for, the artist's albums of the kinds asked for, the album, or the book, which is wanted
+ * at once since a book has no release to wait for.
  *
  * @param request - The request.
  * @param catalogue - What the catalogue knows.
@@ -57,6 +58,16 @@ const wantedOf = (
           title,
           airDate,
         }));
+    case 'book':
+      return [
+        {
+          musicBrainzId: null,
+          season: null,
+          episode: null,
+          title: request.title,
+          airDate: null,
+        },
+      ];
     case 'artist':
     case 'album':
       return catalogue.albums

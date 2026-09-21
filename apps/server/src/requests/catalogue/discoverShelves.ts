@@ -5,6 +5,8 @@ import type {
   CatalogueMatch,
   CataloguePaged,
 } from '@ValenceServer/library/MetadataProvider';
+import type { OpenLibraryBook } from '@ValenceServer/requests/openLibrary/OpenLibraryBook';
+import type { OpenLibraryShelf } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
 import type { DeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
 import type {
   CatalogueBrowse,
@@ -23,6 +25,7 @@ type ShelfSources = {
   browse: (browsing: CatalogueBrowsing) => Promise<CataloguePaged>;
   studios: () => Promise<CatalogueStudio[]>;
   charts: () => Promise<DeezerCharts>;
+  bookShelves: () => Promise<OpenLibraryShelf[]>;
 };
 
 const VIDEO_SHELVES: readonly {
@@ -38,6 +41,23 @@ const VIDEO_SHELVES: readonly {
   { id: 'coming-films', title: 'Coming soon', list: 'upcoming', kind: 'movie' },
   { id: 'airing-series', title: 'On the air', list: 'upcoming', kind: 'tv' },
 ];
+
+/**
+ * A book Open Library listed, as a title to ask for. It goes by its Open Library number, and says
+ * who wrote it where a title says who made it.
+ *
+ * @param book - What Open Library listed.
+ * @returns It as a title.
+ */
+const bookAsTitle = (book: OpenLibraryBook): UnstoodTitle => ({
+  kind: 'book',
+  id: book.openLibraryId.toString(),
+  title: book.title,
+  subtitle: book.author,
+  year: book.year,
+  overview: null,
+  posterUrl: book.coverUrl,
+});
 
 /**
  * A film or series the catalogue listed, as a title to ask for.
@@ -58,7 +78,8 @@ const titleOf = (match: CatalogueMatch): UnstoodTitle => ({
 /**
  * The shelves of things to ask for: films and series trending, popular and coming from the
  * catalogue for somebody who may ask for them, and the albums and artists most listened to for
- * somebody who may ask for music. A shelf with nothing on it is left out.
+ * somebody who may ask for music, and what is being read and the best known of a few subjects for
+ * somebody who may ask for books. A shelf with nothing on it is left out.
  *
  * @param sources - Where each shelf is read from.
  * @param may - What the viewer may ask for.
@@ -66,9 +87,9 @@ const titleOf = (match: CatalogueMatch): UnstoodTitle => ({
  */
 const discoverShelves = async (
   sources: ShelfSources,
-  may: { video: boolean; music: boolean },
+  may: { video: boolean; music: boolean; books: boolean },
 ): Promise<{ shelves: UnstoodShelf[]; studios: CatalogueStudio[] }> => {
-  const [video, studios, charts] = await Promise.all([
+  const [video, studios, charts, bookShelves] = await Promise.all([
     may.video
       ? Promise.all(
           VIDEO_SHELVES.map(async (shelf) => ({
@@ -87,6 +108,7 @@ const discoverShelves = async (
       : Promise.resolve([]),
     may.video ? sources.studios() : Promise.resolve([]),
     may.music ? sources.charts() : Promise.resolve({ albums: [], artists: [] }),
+    may.books ? sources.bookShelves() : Promise.resolve([]),
   ]);
 
   const shelves = [
@@ -119,6 +141,12 @@ const discoverShelves = async (
         posterUrl: artist.pictureUrl,
       })),
     },
+    ...bookShelves.map((shelf) => ({
+      id: shelf.id,
+      title: shelf.title,
+      browse: null,
+      titles: shelf.books.map(bookAsTitle),
+    })),
   ].filter((shelf) => shelf.titles.length > 0);
 
   return { shelves, studios };
@@ -126,4 +154,4 @@ const discoverShelves = async (
 
 export type { ShelfSources, UnstoodShelf };
 
-export { discoverShelves };
+export { bookAsTitle, discoverShelves };

@@ -1,12 +1,17 @@
 import { z } from 'zod';
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { ReleaseSchema } from './Indexer';
 
-const MEDIA_REQUEST_KINDS = ['film', 'series', 'artist', 'album'] as const;
+const MEDIA_REQUEST_KINDS = ['film', 'series', 'artist', 'album', 'book'] as const;
 
 const MediaRequestKindSchema = z.enum(MEDIA_REQUEST_KINDS);
 
 const MUSIC_REQUEST_KINDS = ['artist', 'album'] as const;
+
+const BOOK_REQUEST_KINDS = ['book'] as const;
+
+const OpenLibraryIdSchema = z.number().int().positive();
 
 const RELEASE_TYPES = ['album', 'ep', 'single', 'live', 'compilation'] as const;
 
@@ -80,7 +85,7 @@ const SeasonsSchema = z.array(z.number().int().nonnegative()).max(200).nullable(
 
 /**
  * Says where a request lacks the id its kind is found by: a TMDB id for a film or a series, a
- * MusicBrainz id for an artist or an album.
+ * MusicBrainz id for an artist or an album, an Open Library id for a book.
  *
  * @param asked - The request.
  * @param context - Where to say so.
@@ -90,19 +95,23 @@ const needsItsId = (
     kind: MediaRequestKind;
     tmdbId?: number | null | undefined;
     musicBrainzId?: string | null | undefined;
+    openLibraryId?: number | null | undefined;
   },
   context: z.RefinementCtx,
 ): void => {
+  const isBook = isBookRequest(asked.kind);
   const isMusic = isMusicRequest(asked.kind);
-  const id = isMusic ? asked.musicBrainzId : asked.tmdbId;
+  const id = isBook ? asked.openLibraryId : isMusic ? asked.musicBrainzId : asked.tmdbId;
 
   if (id === undefined || id === null) {
     context.addIssue({
       code: 'custom',
-      path: [isMusic ? 'musicBrainzId' : 'tmdbId'],
-      message: isMusic
-        ? 'Music is asked for by its MusicBrainz id.'
-        : 'A film or series is asked for by its TMDB id.',
+      path: [isBook ? 'openLibraryId' : isMusic ? 'musicBrainzId' : 'tmdbId'],
+      message: isBook
+        ? 'A book is asked for by its Open Library id.'
+        : isMusic
+          ? 'Music is asked for by its MusicBrainz id.'
+          : 'A film or series is asked for by its TMDB id.',
     });
   }
 };
@@ -112,6 +121,7 @@ const MediaRequestAskSchema = z
     kind: MediaRequestKindSchema,
     tmdbId: z.number().int().positive().optional(),
     musicBrainzId: MusicBrainzIdSchema.optional(),
+    openLibraryId: OpenLibraryIdSchema.optional(),
     seasons: SeasonsSchema.default(null),
     releaseTypes: ReleaseTypesSchema.optional(),
     libraryId: z.string().uuid().optional(),
@@ -126,6 +136,7 @@ const MediaRequestDraftSchema = z
     kind: MediaRequestKindSchema,
     tmdbId: z.number().int().positive().nullable().default(null),
     musicBrainzId: MusicBrainzIdSchema.nullable().default(null),
+    openLibraryId: OpenLibraryIdSchema.nullable().default(null),
     libraryId: z.string().min(1),
     libraryPath: z.string().min(1),
     profileId: z.string().uuid().nullable().default(null),
@@ -160,6 +171,7 @@ const MediaRequestSchema = z.object({
   kind: MediaRequestKindSchema,
   tmdbId: z.number().int().positive().nullable(),
   musicBrainzId: MusicBrainzIdSchema.nullable(),
+  openLibraryId: OpenLibraryIdSchema.nullable(),
   title: z.string(),
   artistName: z.string().nullable(),
   year: z.number().int().nullable(),
@@ -238,6 +250,7 @@ const FollowedRequestSchema = z.object({
   kind: MediaRequestKindSchema,
   tmdbId: z.number().int().positive().nullable(),
   musicBrainzId: MusicBrainzIdSchema.nullable(),
+  openLibraryId: OpenLibraryIdSchema.nullable(),
   libraryId: z.string(),
 });
 
@@ -271,7 +284,8 @@ const MissingSearchSchema = z.object({
 
 type MediaRequestKind = (typeof MEDIA_REQUEST_KINDS)[number];
 type MusicRequestKind = (typeof MUSIC_REQUEST_KINDS)[number];
-type VideoRequestKind = Exclude<MediaRequestKind, MusicRequestKind>;
+type BookRequestKind = (typeof BOOK_REQUEST_KINDS)[number];
+type VideoRequestKind = Exclude<MediaRequestKind, MusicRequestKind | BookRequestKind>;
 type ReleaseType = (typeof RELEASE_TYPES)[number];
 type CatalogueAlbum = z.infer<typeof CatalogueAlbumSchema>;
 type MusicCatalogueHit = z.infer<typeof MusicCatalogueHitSchema>;
@@ -303,6 +317,7 @@ type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
 
 export type {
   BlockedRelease,
+  BookRequestKind,
   CatalogueAlbum,
   CatalogueEpisode,
   CatalogueSeason,
@@ -336,6 +351,7 @@ export type {
 };
 
 export {
+  BOOK_REQUEST_KINDS,
   MEDIA_REQUEST_KINDS,
   MEDIA_REQUEST_STATES,
   MUSIC_REQUEST_KINDS,
@@ -358,6 +374,7 @@ export {
   MediaRequestDraftSchema,
   MediaRequestKindSchema,
   MediaRequestPickSchema,
+  OpenLibraryIdSchema,
   MediaRequestRefusalSchema,
   MediaRequestRevisionSchema,
   MediaRequestSchema,

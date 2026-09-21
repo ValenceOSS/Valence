@@ -7,5 +7,6 @@ describe('libraryKindOf', () => {
     expect(libraryKindOf('series')).toBe('shows');
     expect(libraryKindOf('artist')).toBe('music');
     expect(libraryKindOf('album')).toBe('music');
+    expect(libraryKindOf('book')).toBe('books');
   });
 });

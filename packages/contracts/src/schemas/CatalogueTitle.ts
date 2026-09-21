@@ -82,9 +82,10 @@ const CatalogueTitleDetailSchema = CatalogueTitleSchema.extend({
   runtimeMinutes: z.number().int().positive().nullable(),
   cast: z.array(CatalogueCreditSchema),
   albums: z.array(CatalogueAlbumSchema),
+  authors: z.array(z.string()).default([]),
 });
 
-const CATALOGUE_SEARCH_KINDS = ['film', 'series', 'artist', 'album'] as const;
+const CATALOGUE_SEARCH_KINDS = ['film', 'series', 'artist', 'album', 'book'] as const;
 
 const RequestProgressSchema = z.object({
   downloadId: z.string().uuid(),

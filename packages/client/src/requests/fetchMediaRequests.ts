@@ -149,6 +149,16 @@ const retryMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
   sendToRequests(`${REQUESTS}/${id}/retry`, 'POST', undefined, readRequest);
 
 /**
+ * Says a request has been met by hand — a book somebody added to the library themselves — so it
+ * stops waiting.
+ *
+ * @param id - Which.
+ * @returns The request, or why not.
+ */
+const fulfilMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
+  sendToRequests(`${REQUESTS}/${id}/fulfil`, 'POST', undefined, readRequest);
+
+/**
  * Searches for a request by hand, every release judged.
  *
  * @param id - Which.
@@ -243,6 +253,7 @@ export {
   fetchMediaRequests,
   fetchSeriesSeasons,
   findReleasesFor,
+  fulfilMediaRequest,
   liftRequestBlock,
   pickMediaRelease,
   refuseMediaRequest,

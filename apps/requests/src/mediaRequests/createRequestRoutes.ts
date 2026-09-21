@@ -115,6 +115,10 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     answer(await service.retry(context.req.param('id'))),
   );
 
+  routes.post('/requests/:id/fulfil', async (context) =>
+    answer(await service.fulfil(context.req.param('id'))),
+  );
+
   routes.post('/requests/:id/arrived', async (context) => {
     const arrival = await readBody(context.req.raw, MediaRequestArrivalSchema);
 

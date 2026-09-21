@@ -19,6 +19,7 @@ const showMediaRequest = (
   kind: record.kind,
   tmdbId: record.tmdbId,
   musicBrainzId: record.musicBrainzId,
+  openLibraryId: record.openLibraryId,
   title: record.title,
   artistName: record.artistName,
   year: record.year,

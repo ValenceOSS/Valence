@@ -1,0 +1,2 @@
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "open_library_id" integer;--> statement-breakpoint
+ALTER TABLE "valence_requests"."media_request" ADD CONSTRAINT "media_request_book" UNIQUE("kind","open_library_id");

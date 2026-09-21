@@ -43,6 +43,7 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
   runtimeMinutes: 155,
   cast: [{ name: 'Zendaya', role: 'Chani', photoUrl: null }],
   albums: [],
+  authors: [],
   standing: ASKABLE,
   ...overrides,
 });
@@ -64,6 +65,33 @@ const open = (asking = 'film:438631') => {
 };
 
 describe('AskableDialog', () => {
+  it('shows a book with its author and subjects, and asks for it by its Open Library number', async () => {
+    fetchAskable.mockResolvedValue(
+      aTitle({
+        kind: 'book',
+        id: '21277329',
+        title: 'Project Hail Mary',
+        subtitle: 'Andy Weir',
+        year: 2021,
+        runtimeMinutes: null,
+        genres: ['Science fiction'],
+        cast: [],
+        authors: ['Andy Weir'],
+      }),
+    );
+
+    open('book:21277329');
+
+    expect(await screen.findByRole('heading', { name: 'Project Hail Mary' })).toBeInTheDocument();
+    expect(screen.getByText('Andy Weir · 2021 · Science fiction')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Request' }));
+
+    await waitFor(() => {
+      expect(askForMedia).toHaveBeenCalledWith({ kind: 'book', openLibraryId: 21_277_329 });
+    });
+  });
+
   it('shows what a film is and who is in it, and asks for it', async () => {
     open();
 
