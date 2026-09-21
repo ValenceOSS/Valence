@@ -445,6 +445,7 @@ describe('job history and load history endpoints', () => {
           total: 1,
         });
       },
+      interruptRunning: () => Promise.resolve(0),
       readOne: (jobRunId) =>
         Promise.resolve(
           jobRunId === 'run-1'

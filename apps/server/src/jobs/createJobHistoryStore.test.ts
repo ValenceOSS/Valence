@@ -5,6 +5,7 @@ import {
   asMilliseconds,
   asRecord,
   buildReadQuery,
+  buildInterruptQuery,
   buildStatsQuery,
 } from './createJobHistoryStore';
 
@@ -206,5 +207,29 @@ describe('asMilliseconds', () => {
 
   it('has nothing for what is not a number', () => {
     expect(asMilliseconds('soon')).toBeNull();
+  });
+});
+
+describe('buildInterruptQuery', () => {
+  const queryFor = (reason: string) => {
+    const { db } = createDatabase(NOWHERE);
+
+    return buildInterruptQuery(db, reason).toSQL();
+  };
+
+  it('stops every run still marked as running or waiting, and no other', () => {
+    const { sql: text } = queryFor('why');
+
+    expect(text).toContain('update "job_run" set "status" = $1');
+    expect(text).toContain("\"status\" in ('running', 'queued')");
+  });
+
+  it('marks them failed, saying why', () => {
+    expect(queryFor('The server restarted').params).toContain('failed');
+    expect(queryFor('The server restarted').params).toContain('The server restarted');
+  });
+
+  it('says which runs it stopped', () => {
+    expect(queryFor('why').sql).toContain('returning "id"');
   });
 });
