@@ -23,7 +23,7 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { notify } from '@ValenceUI/notify';
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { RunningWorkDialog } from '@ValenceScreens/components/AdminArea/components/RunningWorkDialog/RunningWorkDialog';
 import { describeRunIssues } from './describeRunIssues';
 import { describeRunSubject } from './describeRunSubject';
@@ -52,8 +52,6 @@ import type {
 import type { JobHistoryProps } from './JobHistory.types';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 
-const PAGE = 200;
-
 const TYPING_MS = 350;
 
 const ROWS_PER_PAGE = 10;
@@ -63,6 +61,12 @@ const REFRESH_THROTTLE_MS = 1_000;
 const NOTHING_RUN: JobRunRecord[] = [];
 
 const runId = (record: JobRunRecord): string => record.id;
+
+const STATUSES_COUNTED = [
+  'running',
+  'completed',
+  'failed',
+] as const satisfies readonly JobRunStatus[];
 
 const STATUSES = [
   'queued',
@@ -176,29 +180,62 @@ const JobHistoryPanel = ({
     };
   }, [typed, onSearchChange]);
 
-  const query = useMemo(
+  const page = (search.rpage ?? 1) - 1;
+  const narrowing = useMemo(
     () => ({
-      limit: PAGE,
       sort,
       search: rq ?? '',
       sinceMs: from ?? logRangeStart(range ?? defaultLogView().range, anchor),
       untilMs: until ?? null,
       kind: rkind ?? null,
-      status: rstatus ?? null,
     }),
-    [rq, range, from, until, sort, anchor, rkind, rstatus],
+    [rq, range, from, until, sort, anchor, rkind],
+  );
+  const query = useMemo(
+    () => ({
+      ...narrowing,
+      status: rstatus ?? null,
+      limit: ROWS_PER_PAGE,
+      offset: page * ROWS_PER_PAGE,
+    }),
+    [narrowing, rstatus, page],
   );
   const askedHistory = useQuery({
     ...adminQueries.jobHistory(query),
     placeholderData: keepPreviousData,
   });
+  const [askedRunning, askedCompleted, askedFailed] = useQueries({
+    queries: STATUSES_COUNTED.map((status) => ({
+      ...adminQueries.jobHistory({ ...narrowing, status, limit: 1, offset: 0 }),
+      placeholderData: keepPreviousData,
+    })),
+  });
   const askedIssues = useQuery(adminQueries.jobHistoryIssues(openIssuesFor));
 
   const { pinned, toggle: togglePin } = usePinnedJobRuns();
   const fetched = askedHistory.data?.records ?? NOTHING_RUN;
+  const isUnnarrowed = rq === undefined && rstatus === undefined && rkind === undefined;
+  const askedPinned = useQueries({
+    queries: [...pinned].map((id) => adminQueries.jobRun(page === 0 && isUnnarrowed ? id : null)),
+  });
+  const pinnedElsewhere = useMemo(
+    () =>
+      askedPinned.flatMap((asked) =>
+        asked.data === undefined || asked.data === null ? [] : [asked.data],
+      ),
+    [askedPinned],
+  );
   const records = useMemo(
-    () => pinFirst(fetched, pinned, (record) => record.id),
-    [fetched, pinned],
+    () =>
+      pinFirst(
+        [
+          ...pinnedElsewhere.filter((run) => !fetched.some((record) => record.id === run.id)),
+          ...fetched,
+        ],
+        pinned,
+        (record) => record.id,
+      ),
+    [fetched, pinned, pinnedElsewhere],
   );
   const issues = askedIssues.data ?? [];
   const openRun = records.find((record) => record.id === openIssuesFor);
@@ -206,9 +243,9 @@ const JobHistoryPanel = ({
   const issuesText = describeRunIssues(failure, issues);
   const openWork = records.find((record) => record.id === openWorkFor);
   const counts = {
-    running: records.filter((record) => record.status === 'running').length,
-    completed: records.filter((record) => record.status === 'completed').length,
-    failed: records.filter((record) => record.status === 'failed').length,
+    running: askedRunning?.data?.total ?? 0,
+    completed: askedCompleted?.data?.total ?? 0,
+    failed: askedFailed?.data?.total ?? 0,
   };
   const groups = useMemo<FilterGroup[]>(
     () => [
@@ -626,6 +663,11 @@ const JobHistoryPanel = ({
           label="What pg-boss has run"
           columns={columns}
           rows={records}
+          totalRows={askedHistory.data?.total ?? records.length}
+          page={page}
+          onPageChange={(next) => {
+            onSearchChange({ rpage: next === 0 ? undefined : next + 1 });
+          }}
           getRowId={runId}
           onChooseRow={traceRun}
           height="fill"

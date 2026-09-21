@@ -65,6 +65,9 @@ const HEIGHT_CLASSES = {
  * @param label - What the table lists, read out to anybody who cannot see it.
  * @param columns - The columns, each saying how to read a row and whether it can be sorted by.
  * @param rows - The things to list.
+ * @param totalRows - How many rows there are in all, where the caller holds only the page being
+ *   shown and reads each one from a server. The table then pages by this count rather than by the
+ *   rows it was given, and shows them as they come instead of cutting a page out of them.
  * @param emptyMessage - What to say when there are none, rather than showing an empty grid.
  * @param onChooseRow - Told which row was pressed, where rows lead somewhere.
  * @param getRowId - Names a row by what it is about rather than where it sits, so a row a person
@@ -84,6 +87,7 @@ const DataTable = <Row extends RowData>({
   label,
   columns,
   rows,
+  totalRows,
   emptyMessage = 'Nothing here yet.',
   onChooseRow,
   getRowId,
@@ -101,7 +105,8 @@ const DataTable = <Row extends RowData>({
   const [shown, setShown] = useState(pageSize);
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
 
-  const lastPage = Math.max(0, Math.ceil(rows.length / pageSize) - 1);
+  const everyRow = totalRows ?? rows.length;
+  const lastPage = Math.max(0, Math.ceil(everyRow / pageSize) - 1);
   const page = Math.min(givenPage ?? ownPage, lastPage);
 
   const setPage = (next: number) => {
@@ -125,6 +130,7 @@ const DataTable = <Row extends RowData>({
     features: dataTableFeatures,
     data: rows,
     columns,
+    manualPagination: totalRows !== undefined,
     ...(getRowId === undefined ? {} : { getRowId }),
     state: {
       sorting,
@@ -149,7 +155,8 @@ const DataTable = <Row extends RowData>({
     },
   });
 
-  const pageCount = table.getPageCount();
+  const pageCount =
+    totalRows === undefined ? table.getPageCount() : Math.max(1, Math.ceil(totalRows / pageSize));
 
   return (
     <div className={cn('flex flex-col pb-3', className)}>
@@ -295,7 +302,7 @@ const DataTable = <Row extends RowData>({
       ) : pageCount <= 1 ? null : (
         <div className="flex items-center justify-between gap-4 px-5 pt-3">
           <p className="font-body text-xs text-text-muted">
-            {`Page ${(page + 1).toString()} of ${pageCount.toString()} · ${rows.length.toString()} in total`}
+            {`Page ${(page + 1).toString()} of ${pageCount.toString()} · ${everyRow.toString()} in total`}
           </p>
 
           <div className="flex items-center gap-1.5">

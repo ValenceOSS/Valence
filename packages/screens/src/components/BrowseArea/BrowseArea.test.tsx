@@ -7,7 +7,7 @@ import type { Book } from '@ValenceContracts/schemas/Book';
 import userEvent from '@testing-library/user-event';
 
 type Page = { items: MediaSummary[]; total: number };
-type Options = { kind?: string; order?: string; ids?: string[]; limit?: number };
+type Options = { kind?: string; order?: string; ids?: string[]; limit?: number; offset?: number };
 
 const fetchLibraries = vi.fn<() => Promise<{ id: string; kind?: string }[]>>();
 const fetchFacets =
@@ -134,6 +134,28 @@ describe('BrowseArea', () => {
     });
 
     expect(fetchLibraryItems).toHaveBeenCalledWith('library-2', expect.anything());
+  });
+
+  it('reads on past the first page, so a library larger than one page is listed whole', async () => {
+    fetchLibraryItems.mockImplementation((_libraryId, options) => {
+      const offset = options?.offset ?? 0;
+
+      return Promise.resolve({
+        items: Array.from({ length: Math.min(200, 350 - offset) }, (_, at) =>
+          item(`film-${(offset + at).toString()}`, `Film ${(offset + at).toString()}`),
+        ),
+        total: 350,
+      });
+    });
+
+    renderInAnAddress(<BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(fetchLibraryItems).toHaveBeenCalledWith(
+        'library-1',
+        expect.objectContaining({ offset: 200 }),
+      );
+    });
   });
 
   it('asks for the newest first on the page about newness', async () => {

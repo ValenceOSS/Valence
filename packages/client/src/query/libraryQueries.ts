@@ -5,6 +5,7 @@ import {
   fetchMediaDetail,
 } from '@ValenceClient/library/fetchLibrary';
 import { fetchComingUp, fetchShows, fetchShow } from '@ValenceClient/library/fetchShows';
+import { readEveryItem } from '@ValenceClient/library/readEveryItem';
 import { fetchFacets } from '@ValenceClient/library/fetchFacets';
 import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPerson';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
@@ -164,12 +165,41 @@ const across = (libraryIds: readonly string[], options: ListItemsOptions = {}) =
     enabled: libraryIds.length > 0,
   });
 
+/**
+ * Everything that matches a question in every library at once, however many that is, for the pages
+ * that list a whole library rather than a taste of it.
+ *
+ * Asked as one query for the same reason as `across`, and answering with nothing for a library that
+ * fails for the same reason too.
+ *
+ * @param libraryIds - The libraries to ask.
+ * @param options - What is being asked of each, without a limit, since a limit is what this is for
+ *   not having.
+ * @returns The query.
+ */
+const everything = (
+  libraryIds: readonly string[],
+  options: Omit<ListItemsOptions, 'limit' | 'offset'> = {},
+) =>
+  queryOptions({
+    queryKey: [...LIBRARY, 'everything', [...libraryIds].sort(), options],
+    queryFn: async () => {
+      const shelves = await Promise.all(
+        libraryIds.map((libraryId) => readEveryItem(libraryId, options).catch(() => [])),
+      );
+
+      return shelves.flat();
+    },
+    enabled: libraryIds.length > 0,
+  });
+
 const libraryQueries = {
   all,
   items,
   detail,
   shows,
   show,
+  everything,
   comingUp,
   facets,
   person,

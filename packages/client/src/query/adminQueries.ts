@@ -38,8 +38,6 @@ const ADMIN = ['admin'] as const;
 
 const WATCHED_EVERY_MS = 5000;
 
-const MOST_LOG_LINES_LOADED = 2000;
-
 /**
  * What the server is doing at a glance.
  *
@@ -137,8 +135,7 @@ const logs = (query: Partial<LogQuery>) =>
 /**
  * The log read a page after another, for a list that loads more as it is scrolled.
  *
- * Reading stops at a couple of thousand lines, past which a list that long is not being read but
- * scrolled through: the operator is better served by narrowing what they are looking at.
+ * There is no ceiling: it reads on for as long as the list is scrolled and there are lines left.
  *
  * @param query - What to look for, how to order it and how many records make a page.
  * @returns The query.
@@ -151,9 +148,7 @@ const logPages = (query: Partial<LogQuery>) =>
     getNextPageParam: (last, pages) => {
       const loaded = pages.reduce((sum, page) => sum + page.records.length, 0);
 
-      return last.records.length > 0 && loaded < last.total && loaded < MOST_LOG_LINES_LOADED
-        ? loaded
-        : undefined;
+      return last.records.length > 0 && loaded < last.total ? loaded : undefined;
     },
   });
 

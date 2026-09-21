@@ -248,7 +248,7 @@ describe('JobHistory', () => {
 
       await vi.advanceTimersByTimeAsync(1_000);
 
-      expect(askedHistory).toHaveBeenCalledTimes(1);
+      expect(askedHistory.mock.calls.filter(([query]) => query?.limit !== 1)).toHaveLength(1);
     } finally {
       vi.useRealTimers();
     }
@@ -591,9 +591,18 @@ describe('JobHistory', () => {
       drawHistory();
       await screen.findByText('Generate missing previews');
 
-      const asked = askedHistory.mock.calls.at(-1)?.[0];
+      const asked = askedHistory.mock.calls
+        .map(([query]) => query)
+        .findLast((query) => query?.limit !== 1);
 
-      expect(asked).toMatchObject({ sort: 'newest', search: '', kind: null, status: null });
+      expect(asked).toMatchObject({
+        sort: 'newest',
+        search: '',
+        kind: null,
+        status: null,
+        limit: 10,
+        offset: 0,
+      });
       expect(asked?.sinceMs ?? 0).toBeGreaterThan(Date.now() - 1.1 * 86_400_000);
     });
 
@@ -664,14 +673,16 @@ describe('JobHistory', () => {
       });
     });
 
-    it('counts the runs in view by how they ended', async () => {
-      askedHistory.mockResolvedValue(
-        page([
-          record({ id: 'a', status: 'running' }),
-          record({ id: 'b', status: 'completed' }),
-          record({ id: 'c', status: 'completed' }),
-          record({ id: 'd', status: 'failed' }),
-        ]),
+    it('counts every run that matches by how it ended, not only the ones on the page', async () => {
+      const totalOf = (status: string | null | undefined): number =>
+        status === 'completed' ? 2 : status === 'running' || status === 'failed' ? 1 : 0;
+
+      askedHistory.mockImplementation((query) =>
+        Promise.resolve(
+          query?.limit === 1
+            ? { records: [], total: totalOf(query.status) }
+            : page([record({ id: 'a', status: 'running' })]),
+        ),
       );
 
       drawHistory();

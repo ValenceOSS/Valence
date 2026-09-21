@@ -215,12 +215,20 @@ describe('adminQueries', () => {
       expect(getNextPageParam(empty, [empty], 0, [0])).toBeUndefined();
     });
 
-    it('stops reading at a couple of thousand lines', () => {
+    it('reads on until every line has been read, however many that is', () => {
       const { getNextPageParam } = adminQueries.logPages({});
       const full = page(1000, 20_000);
 
       expect(getNextPageParam(full, [full], 0, [0])).toBe(1000);
-      expect(getNextPageParam(full, [full, full], 0, [0, 1000])).toBeUndefined();
+      expect(getNextPageParam(full, [full, full], 0, [0, 1000])).toBe(2000);
+      expect(
+        getNextPageParam(
+          full,
+          Array.from({ length: 20 }, () => full),
+          0,
+          [0],
+        ),
+      ).toBeUndefined();
     });
   });
 
