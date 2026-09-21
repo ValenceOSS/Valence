@@ -1072,6 +1072,34 @@ pub struct HardwarePipeline {
     /// surfaces are twice the size, which is why eight-bit films survived it.
     /// The number is the one this build already uses to composite on `QSV`.
     pub upload: &'static str,
+    /// Whether this backend's encoder will take the device's own frames.
+    ///
+    /// Not the same question as [`Self::encodes_from_device`], which is whether
+    /// it *has* to. `h264_vaapi` and `h264_qsv` must be handed surfaces;
+    /// `h264_nvenc` need not be, but takes CUDA frames directly and is fastest
+    /// that way. Folding the two together kept every NVENC preview off the
+    /// device: the frames came down to be tone mapped on the processor and went
+    /// back up inside the encoder, where playback — which already feeds
+    /// `h264_nvenc` from `scale_cuda` — never leaves the card.
+    ///
+    /// Measured on an RTX 5080 against a 2160p HDR film: a 24 second preview
+    /// took 12.3 seconds coming down and 1.6 staying up.
+    ///
+    /// `VideoToolbox` and `RKMPP` are left as they were, unmeasured.
+    pub takes_device_frames: bool,
+    /// Whether this backend's decoder may skip the frames nothing refers to.
+    ///
+    /// `-skip_frame noref` drops only frames no other frame is predicted from,
+    /// so every frame that survives is still decoded correctly and lands within
+    /// a frame or two of where it was asked for. That is a different request
+    /// from the `nokey` a software decoder is given: keyframes alone can sit
+    /// seconds apart, and a scrub preview drawn from them shows the wrong shot.
+    ///
+    /// Only `NVDEC` is asked. `QSV` hangs the device when told to skip frames,
+    /// and the others have not been measured, so they decode every frame as
+    /// before. Measured on an RTX 5080: 1.6 to 1.9 times faster, with 97 to 98
+    /// percent of thumbnails matching the ones drawn from every frame.
+    pub skips_unreferenced_frames: bool,
     /// What `-hwaccel` this backend decodes with, which is not always its own.
     ///
     /// `QSV` decodes with `VAAPI`. Asking for `-hwaccel qsv` selects the `QSV`
@@ -1152,6 +1180,8 @@ impl HardwareAccel {
                 encodes_from_device: false,
                 narrows_to_eight_bit: None,
                 upload: "hwupload",
+                takes_device_frames: false,
+                skips_unreferenced_frames: false,
             }),
             Self::Nvenc => Some(HardwarePipeline {
                 output_format: "cuda",
@@ -1170,6 +1200,8 @@ impl HardwareAccel {
                 encodes_from_device: false,
                 narrows_to_eight_bit: Some("format=nv12"),
                 upload: "hwupload",
+                takes_device_frames: true,
+                skips_unreferenced_frames: true,
             }),
             Self::Qsv => Some(HardwarePipeline {
                 output_format: "qsv",
@@ -1186,6 +1218,8 @@ impl HardwareAccel {
                 encodes_from_device: true,
                 narrows_to_eight_bit: Some("format=nv12"),
                 upload: "hwupload=extra_hw_frames=64",
+                takes_device_frames: true,
+                skips_unreferenced_frames: false,
             }),
             Self::Vaapi => Some(HardwarePipeline {
                 output_format: "vaapi",
@@ -1202,6 +1236,8 @@ impl HardwareAccel {
                 encodes_from_device: true,
                 narrows_to_eight_bit: Some("format=nv12"),
                 upload: "hwupload",
+                takes_device_frames: true,
+                skips_unreferenced_frames: false,
             }),
             Self::Rkmpp => Some(HardwarePipeline {
                 output_format: "drm_prime",
@@ -1218,6 +1254,8 @@ impl HardwareAccel {
                 encodes_from_device: false,
                 narrows_to_eight_bit: Some("format=nv12"),
                 upload: "hwupload",
+                takes_device_frames: false,
+                skips_unreferenced_frames: false,
             }),
             Self::None | Self::Amf => None,
         }

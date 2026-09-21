@@ -382,9 +382,16 @@ pub struct Source {
 /// Everything the chain does has to have a hardware answer, or the frames come
 /// down for the one thing that does not and there was no point keeping them up.
 /// A scaler there is, so the questions are the encoder and the conversion: an
-/// encoder that reads system memory wants them down anyway, and an HDR film
-/// needs a converter on the device, which is `tonemap_vaapi` on VAAPI and an
-/// option on the scaler on QSV.
+/// encoder that will not take the device's frames wants them down anyway, and
+/// an HDR film needs a converter on the device, which is `tonemap_vaapi` on
+/// VAAPI, an option on the scaler on QSV and `tonemap_cuda` on NVENC.
+///
+/// Whether the encoder *takes* them, not whether it *needs* them. `h264_nvenc`
+/// reads system memory when handed it, and this once asked
+/// [`HardwarePipeline::encodes_from_device`] instead — so every NVENC preview
+/// came down to be tone mapped on the processor and went back up inside the
+/// encoder, at eight times the cost. See
+/// [`HardwarePipeline::takes_device_frames`].
 ///
 /// The size has to be known, because no hardware scaler takes the
 /// `min(iw,1280)` expression the software one does — it wants a number, and
@@ -402,7 +409,7 @@ fn stays_on_the_device(
     let (_, pipeline, _) = onto_the_device?;
     let (width, height) = source.size?;
 
-    if !pipeline.encodes_from_device {
+    if !pipeline.takes_device_frames {
         return None;
     }
 
@@ -1123,6 +1130,67 @@ mod tests {
         assert!(chain.starts_with("tonemap_vaapi"), "{chain}");
         assert!(!chain.contains("hwdownload"), "{chain}");
         assert!(!chain.contains("zscale"), "{chain}");
+    }
+
+    /// `h264_nvenc` takes CUDA frames, so an HDR clip never leaves the card.
+    ///
+    /// It used to come down to be tone mapped on the processor and go back up
+    /// inside the encoder: 12.3 seconds for a 24 second clip of a 2160p film,
+    /// against 1.6 staying up. The chain is the one playback already uses.
+    #[test]
+    fn keeps_an_hdr_clip_on_the_card_for_nvenc() {
+        let arguments = preview_arguments(
+            &request(),
+            600,
+            Source {
+                range: VideoRange::Hdr10,
+                bit_depth: Some(10),
+                size: Some((3840, 1608)),
+            },
+            ToneMapping::Zscale,
+            &PreviewEncoder::Hardware("h264_nvenc".to_owned()),
+            Some((HardwareAccel::Nvenc, "")),
+            Path::new("/cache/preview.mp4"),
+        );
+
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(chain.starts_with("tonemap_cuda"), "{chain}");
+        assert!(chain.contains("scale_cuda="), "{chain}");
+        assert!(chain.ends_with(":format=nv12"), "{chain}");
+        assert!(!chain.contains("hwdownload"), "{chain}");
+        assert!(!chain.contains("zscale"), "{chain}");
+    }
+
+    #[test]
+    fn keeps_an_sdr_clip_on_the_card_for_nvenc() {
+        let arguments = preview_arguments(
+            &request(),
+            600,
+            Source {
+                range: VideoRange::Sdr,
+                bit_depth: Some(10),
+                size: Some((1920, 1080)),
+            },
+            ToneMapping::Zscale,
+            &PreviewEncoder::Hardware("h264_nvenc".to_owned()),
+            Some((HardwareAccel::Nvenc, "")),
+            Path::new("/cache/preview.mp4"),
+        );
+
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(chain.starts_with("scale_cuda="), "{chain}");
+        assert!(!chain.contains("hwdownload"), "{chain}");
+        assert!(!chain.contains("hwupload"), "{chain}");
     }
 
     /// A backend that reads system memory wants the frames down regardless, so

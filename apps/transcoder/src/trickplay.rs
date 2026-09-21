@@ -392,10 +392,11 @@ fn extract_filters(
     onto_the_device: Option<(HardwareAccel, HardwarePipeline, &str)>,
     draws_on_the_device: bool,
 ) -> Vec<String> {
-    let skips_to_keyframes = onto_the_device.is_none();
+    let decodes_every_frame =
+        onto_the_device.is_some_and(|(_, pipeline, _)| !pipeline.skips_unreferenced_frames);
     let mut filters = Vec::new();
 
-    if !skips_to_keyframes {
+    if decodes_every_frame {
         filters.push(format!(
             "setpts=N/{:.3}/TB",
             source
@@ -480,12 +481,19 @@ fn extract_filters(
 /// every one of them will do, and `QSV` does not merely refuse it: it hangs the
 /// device, which resets it and takes down whatever else was using it.
 ///
+/// `NVDEC` is asked for less instead: `-skip_frame noref`, which drops only
+/// the frames nothing is predicted from. See
+/// [`HardwarePipeline::skips_unreferenced_frames`].
+///
 /// Where every frame is decoded, the timestamps are rebuilt from the frame
 /// count before they are sampled. A container that lies about its timestamps —
 /// and plenty do — otherwise hands `fps` a clock that jumps, and what comes out
 /// is thumbnails that do not land where the index says they do. Jellyfin
 /// inserts the same filter immediately before `fps`, and only in this mode,
 /// because skipping to keyframes takes its timing from the keyframes instead.
+/// Skipping unreferenced frames is the same: a count of the frames kept is no
+/// longer a clock, so `NVDEC` trusts the container's timestamps as software
+/// decoding already does — the price of decoding a third of the frames.
 ///
 /// `-fps_mode passthrough` for the same reason at the other end: the muxer is
 /// told to write exactly the frames it is given rather than making up a
@@ -526,6 +534,11 @@ pub fn extract_arguments(
 
     if let Some((found, pipeline, device)) = onto_the_device {
         arguments.extend(found.filter_device_arguments(device));
+
+        if pipeline.skips_unreferenced_frames {
+            arguments.push("-skip_frame".to_owned());
+            arguments.push("noref".to_owned());
+        }
 
         if found.ffmpeg_flag().is_some() {
             arguments.push("-hwaccel".to_owned());
@@ -1092,6 +1105,53 @@ otherwise start a second one"
         assert!(arguments
             .windows(2)
             .any(|pair| pair == ["-hwaccel", "vaapi"]));
+    }
+
+    fn on_nvenc() -> Vec<String> {
+        extract_arguments(
+            &request(),
+            180,
+            source_of(VideoRange::Sdr),
+            Some((HardwareAccel::Nvenc, "")),
+            &SheetEncoder::Software,
+            Path::new("/cache"),
+        )
+    }
+
+    /// `NVDEC` drops what nothing refers to, and never skips to keyframes.
+    ///
+    /// Keyframes alone put 48 to 74 percent of thumbnails on the wrong shot in
+    /// the files this was measured against. Unreferenced frames can go without
+    /// that, and the option has to come before the input to reach the decoder.
+    #[test]
+    fn asks_nvdec_to_skip_only_the_frames_nothing_refers_to() {
+        let arguments = on_nvenc();
+        let skip = arguments
+            .windows(2)
+            .position(|pair| pair == ["-skip_frame", "noref"])
+            .expect("asks to skip unreferenced frames");
+        let input = arguments
+            .iter()
+            .position(|argument| argument == "-i")
+            .expect("an input");
+
+        assert!(skip < input, "{arguments:?}");
+        assert!(
+            !arguments.iter().any(|argument| argument == "nokey"),
+            "{arguments:?}"
+        );
+    }
+
+    #[test]
+    fn trusts_the_container_clock_where_nvdec_skips_frames() {
+        let chain = on_nvenc()
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(!chain.contains("setpts"), "{chain}");
+        assert!(chain.starts_with("fps=1/"), "{chain}");
     }
 
     #[test]
