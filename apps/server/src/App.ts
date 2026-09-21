@@ -86,7 +86,8 @@ import {
   deleteLibraryRoute,
   regeneratePreviewsRoute,
 } from './routes/LibraryRoute';
-import { listFoldersRoute } from '@ValenceServer/routes/FolderRoute';
+import { createFolderRoute, listFoldersRoute } from '@ValenceServer/routes/FolderRoute';
+import { createFolder } from '@ValenceServer/folders/createFolder';
 import { listFolders } from '@ValenceServer/folders/listFolders';
 import { createFolderDisk } from '@ValenceServer/folders/createFolderDisk';
 import type { FolderDisk } from '@ValenceServer/folders/FolderDisk';
@@ -1058,6 +1059,41 @@ const createApp = ({
         return context.json({ error: 'There is no such folder.' }, 404);
       case 'unreadable':
         return context.json({ error: 'Valence is not allowed to read that folder.' }, 403);
+    }
+  });
+
+  app.openapi(createFolderRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.create'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { path, name } = context.req.valid('json');
+    const made = await createFolder(folderDisk, path, name);
+
+    switch (made.kind) {
+      case 'created':
+        return context.json(made.folder, 201);
+      case 'relative':
+        return context.json({ error: 'Give the whole path, starting from the root.' }, 400);
+      case 'badName':
+        return context.json(
+          { error: 'A folder’s name is a single name, with no slashes in it.' },
+          400,
+        );
+      case 'exists':
+        return context.json({ error: 'There is already something called that.' }, 409);
+      case 'missing':
+        return context.json({ error: 'There is no such folder to make it in.' }, 404);
+      case 'readOnly':
+        return context.json(
+          {
+            error:
+              'That disk is read-only to Valence. Give it read-write access to make folders there.',
+          },
+          403,
+        );
+      case 'denied':
+        return context.json({ error: 'Valence is not allowed to make a folder there.' }, 403);
     }
   });
 
