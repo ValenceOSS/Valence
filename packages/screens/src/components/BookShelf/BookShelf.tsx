@@ -13,11 +13,18 @@ import type { BookShelfProps } from './BookShelf.types';
  * One rail per library rather than one rail for everything, because a household that keeps its manga
  * and its novels apart did that on purpose and a single shelf would undo it.
  *
+ * Given one library to keep to, it shows that shelf alone, so the navigation bar's choice of library
+ * narrows the page; a library that is not a books library is ignored rather than leaving nothing.
+ *
  * @param onOpen - Told which book somebody wants to read.
+ * @param libraryId - One library to keep the page to, or nothing for every one.
  */
-const BookShelf = ({ onOpen, onAddLibrary }: BookShelfProps) => {
+const BookShelf = ({ onOpen, onAddLibrary, libraryId = null }: BookShelfProps) => {
   const asked = useQuery(libraryQueries.all());
-  const shelves = (asked.data ?? []).filter((library) => library.kind === 'books');
+  const every = (asked.data ?? []).filter((library) => library.kind === 'books');
+  const shelves = every.some((library) => library.id === libraryId)
+    ? every.filter((library) => library.id === libraryId)
+    : every;
 
   const onEachShelf = useQueries({
     queries: shelves.map((library) => bookQueries.inLibrary(library.id)),

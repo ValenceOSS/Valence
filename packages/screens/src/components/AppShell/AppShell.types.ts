@@ -36,7 +36,7 @@ type AppShellProps = {
   onOpenSearch: () => void;
   onSurprise?: (only?: LibraryKind) => void;
   libraryKinds?: LibraryKind[];
-  libraryChoices?: Partial<Record<'films' | 'shows', NavBarChoices>>;
+  libraryChoices?: Partial<Record<'films' | 'shows' | 'read', NavBarChoices>>;
   stocked?: ShellSection[];
   mayRequest?: boolean;
   onOpenFavourites?: () => void;
