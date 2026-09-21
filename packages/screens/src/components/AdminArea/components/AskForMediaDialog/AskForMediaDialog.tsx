@@ -1,3 +1,4 @@
+import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronsUpDown as ChevronsUpDownIcon, Search as SearchIcon } from '@keyline-icons/react';
@@ -215,6 +216,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
           return;
         }
 
+        notify.worked('Asked for it.');
         onAsked(value);
         setChosen(null);
         setMatches(null);

@@ -1,3 +1,5 @@
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { failureOfMissing } from '@ValenceScreens/admin/failureOf';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
@@ -132,6 +134,11 @@ const OverviewPanel = ({
 
     try {
       const measured = await measureStorage();
+
+      tellOutcome(
+        'Counted the storage again.',
+        failureOfMissing(measured, 'The storage could not be counted.'),
+      );
 
       if (measured !== null) {
         setCounted(measured);

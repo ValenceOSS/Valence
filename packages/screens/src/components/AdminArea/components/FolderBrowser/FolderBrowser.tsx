@@ -1,3 +1,4 @@
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -77,10 +78,14 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
       const made = await createFolder(chosen, newName);
 
       await cache.invalidateQueries({ queryKey: adminQueries.folders(chosen).queryKey });
+      tellOutcome(`Made the folder ${newName}.`, null);
       stopNaming();
       setAt(made.path);
     } catch (error) {
-      setProblem(error instanceof Error ? error.message : 'The folder could not be made.');
+      const said = error instanceof Error ? error.message : 'The folder could not be made.';
+
+      setProblem(said);
+      tellOutcome('', said);
     } finally {
       setIsMaking(false);
     }

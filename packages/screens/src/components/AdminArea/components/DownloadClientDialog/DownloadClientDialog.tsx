@@ -1,3 +1,4 @@
+import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -118,6 +119,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
           return;
         }
 
+        notify.worked(client === null ? `Added ${value.name}.` : `Saved ${value.name}.`);
         onSaved(value);
         onClose();
       })

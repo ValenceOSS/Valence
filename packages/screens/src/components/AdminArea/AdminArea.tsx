@@ -93,6 +93,12 @@ import {
 import { notify } from '@ValenceUI/notify';
 import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
 import { followRunningJobs } from './followRunningJobs';
+import {
+  failureOfAnswer,
+  failureOfMissing,
+  failureOfRefusal,
+} from '@ValenceScreens/admin/failureOf';
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type {
   Reencode,
@@ -332,41 +338,67 @@ const AdminArea = ({
     ]);
   };
 
+  const nameOfLibrary = (libraryId: string): string =>
+    libraries.find((library) => library.id === libraryId)?.name ?? 'The library';
+
   const rescan = async (libraryId: string, force = false) => {
-    await startScan(libraryId, force);
+    const name = nameOfLibrary(libraryId);
+    const taken = await startScan(libraryId, force);
+
+    tellOutcome(
+      force ? `Read every file of ${name} again.` : `Scanned ${name}.`,
+      failureOfAnswer(taken, `${name} could not be scanned.`),
+    );
     await reloadLibraries();
   };
 
   const rescanAll = async () => {
-    await startScanAll(libraries);
+    const taken = await startScanAll(libraries);
+
+    tellOutcome(
+      'Read every file of every library again.',
+      failureOfAnswer(taken, 'Not every library could be read again.'),
+    );
     await reloadLibraries();
   };
 
   const resetAll = async () => {
-    await startResetAll(libraries);
+    const taken = await startResetAll(libraries);
+
+    tellOutcome(
+      'Rebuilt every library.',
+      failureOfAnswer(taken, 'Not every library could be rebuilt.'),
+    );
     await reloadLibraries();
   };
 
   const regeneratePreviews = async (libraryId: string) => {
-    await startRegeneratePreviews(libraryId);
+    const name = nameOfLibrary(libraryId);
+    const taken = await startRegeneratePreviews(libraryId);
+
+    tellOutcome(
+      `Generated the missing previews of ${name}.`,
+      failureOfAnswer(taken, `The previews of ${name} could not be generated.`),
+    );
   };
 
   const runJob = useCallback(
     async (kind: string, libraryIds?: string[], parts?: LibraryPart[]) => {
       const definition = jobDefinitions.find((candidate) => candidate.kind === kind);
+      const label = definition?.label ?? kind;
       const chosen =
         libraryIds === undefined
           ? libraries
           : libraries.filter((library) => libraryIds.includes(library.id));
 
-      if (parts !== undefined) {
-        await clearPartsOfAll(kind, chosen, parts);
-      } else if (definition?.needsLibrary === true) {
-        await runDefinedJobAll(kind, chosen);
-      } else {
-        await runDefinedJob(kind);
-      }
+      const taken =
+        parts !== undefined
+          ? await clearPartsOfAll(kind, chosen, parts)
+          : definition?.needsLibrary === true
+            ? await runDefinedJobAll(kind, chosen)
+            : await runDefinedJob(kind);
 
+      tellOutcome(`${label} finished.`, failureOfAnswer(taken, `${label} could not be started.`));
       await reloadLibraries();
     },
     [jobDefinitions, libraries],
@@ -378,7 +410,12 @@ const AdminArea = ({
   const addTrigger = async (kind: string, trigger: ScheduleTrigger) => {
     const added = await addJobTrigger(kind, trigger);
 
-    if (added === null) {
+    const isAdded = tellOutcome(
+      'Schedule added.',
+      failureOfMissing(added, 'That schedule could not be added.'),
+    );
+
+    if (added === null || !isAdded) {
       await reloadSchedules();
 
       return;
@@ -412,7 +449,14 @@ const AdminArea = ({
           },
     );
 
-    if (!(await removeJobTrigger(kind, triggerId))) {
+    const removed = await removeJobTrigger(kind, triggerId);
+
+    if (
+      !tellOutcome(
+        'Schedule removed.',
+        failureOfAnswer(removed, 'That schedule could not be removed.'),
+      )
+    ) {
       await reloadSchedules();
     }
   };
@@ -437,15 +481,28 @@ const AdminArea = ({
     [runJob],
   );
 
-  const stopJob = useCallback((kind: string) => {
-    void stopJobs(kind);
-  }, []);
+  const stopJob = useCallback(
+    (kind: string) => {
+      const label = jobDefinitions.find((candidate) => candidate.kind === kind)?.label ?? kind;
+
+      void stopJobs(kind).then((stopped) => {
+        tellOutcome(
+          `Asked ${label} to stop.`,
+          failureOfAnswer(stopped, `${label} could not be stopped.`),
+        );
+      });
+    },
+    [jobDefinitions],
+  );
 
   const stopStream = async (clientId: string) => {
     setBusyClientId(clientId);
 
     try {
-      await stopSession(clientId);
+      tellOutcome(
+        'Stopped that stream.',
+        failureOfAnswer(await stopSession(clientId), 'That stream could not be stopped.'),
+      );
       await reloadSessions();
     } finally {
       setBusyClientId(null);
@@ -456,7 +513,10 @@ const AdminArea = ({
     setBusyClientId(clientId);
 
     try {
-      await pauseSession(clientId);
+      tellOutcome(
+        'Paused that stream.',
+        failureOfAnswer(await pauseSession(clientId), 'That stream could not be paused.'),
+      );
       await reloadSessions();
     } finally {
       setBusyClientId(null);
@@ -467,7 +527,10 @@ const AdminArea = ({
     setBusyClientId(clientId);
 
     try {
-      await messageSession(clientId, text);
+      tellOutcome(
+        'Sent the message.',
+        failureOfAnswer(await messageSession(clientId, text), 'The message could not be sent.'),
+      );
     } finally {
       setBusyClientId(null);
     }
@@ -477,7 +540,10 @@ const AdminArea = ({
     setBusyClientId(clientId);
 
     try {
-      await resumeSession(clientId);
+      tellOutcome(
+        'Resumed that stream.',
+        failureOfAnswer(await resumeSession(clientId), 'That stream could not be resumed.'),
+      );
       await reloadSessions();
     } finally {
       setBusyClientId(null);
@@ -857,7 +923,15 @@ const AdminArea = ({
                   setChoosingMoment(item);
                 });
               }}
-              onRebuildArtefacts={async (item) => (await rebuildArtefacts(item.id)) !== null}
+              onRebuildArtefacts={async (item) =>
+                tellOutcome(
+                  `Rebuilding the previews of ${item.title}.`,
+                  failureOfMissing(
+                    await rebuildArtefacts(item.id),
+                    `The previews of ${item.title} could not be rebuilt.`,
+                  ),
+                )
+              }
               onReencode={(item) => {
                 setIsChoosingReencode(true);
                 void weighReencode([item.id], {
@@ -876,7 +950,13 @@ const AdminArea = ({
               reencodes={reencodes}
               onReview={setReviewing}
               onStop={async (one) => {
-                const stopped = await cancelReencode(one.id);
+                const stopped = tellOutcome(
+                  'Stopped the re-encode.',
+                  failureOfAnswer(
+                    await cancelReencode(one.id),
+                    'That re-encode could not be stopped.',
+                  ),
+                );
 
                 await reloadReencodes();
 
@@ -973,7 +1053,7 @@ const AdminArea = ({
               onCreate={async (webhook) => {
                 const { created, refusal } = await createWebhook(webhook);
 
-                if (refusal === null) {
+                if (tellOutcome('Webhook created.', failureOfRefusal(refusal))) {
                   setCreatedWebhook(created);
                   await reloadWebhooks();
                 }
@@ -983,7 +1063,7 @@ const AdminArea = ({
               onEdit={async (id, change) => {
                 const refusal = await changeWebhook(id, change);
 
-                if (refusal === null) {
+                if (tellOutcome('Webhook saved.', failureOfRefusal(refusal))) {
                   await reloadWebhooks();
                 }
 
@@ -993,22 +1073,37 @@ const AdminArea = ({
                 setCreatedWebhook(null);
               }}
               onSetEnabled={(id, enabled) => {
-                void setWebhookEnabled(id, enabled).then(reloadWebhooks);
+                void setWebhookEnabled(id, enabled).then((refusal) => {
+                  tellOutcome(
+                    enabled ? 'Webhook turned on.' : 'Webhook turned off.',
+                    failureOfRefusal(refusal),
+                  );
+
+                  return reloadWebhooks();
+                });
               }}
               onDelete={(id) => {
-                void deleteWebhook(id).then(reloadWebhooks);
+                void deleteWebhook(id).then((refusal) => {
+                  tellOutcome('Webhook deleted.', failureOfRefusal(refusal));
+
+                  return reloadWebhooks();
+                });
               }}
               onTest={(id) => {
-                void testWebhook(id);
+                void testWebhook(id).then((refusal) => {
+                  tellOutcome('Sent a test delivery.', failureOfRefusal(refusal));
+                });
               }}
               deliveries={deliveries}
               openHistoryId={openHistoryId}
               isHistoryLoading={isHistoryLoading}
               onOpenHistory={setOpenHistoryId}
               onRedeliver={(subscriptionId, deliveryId) => {
-                void redeliverWebhook(subscriptionId, deliveryId).then(() =>
-                  reloadDeliveries(subscriptionId),
-                );
+                void redeliverWebhook(subscriptionId, deliveryId).then((refusal) => {
+                  tellOutcome('Delivered it again.', failureOfRefusal(refusal));
+
+                  return reloadDeliveries(subscriptionId);
+                });
               }}
             />
           </TabPanel>
@@ -1088,10 +1183,15 @@ const AdminArea = ({
         onWeigh={weighReencode}
         onStart={async (mediaIds, settings) => {
           const started = await startReencodes(mediaIds, settings);
+          const isStarted = started !== null && started.started.length > 0;
 
+          tellOutcome(
+            'Started re-encoding.',
+            failureOfAnswer(isStarted, 'Nothing could be re-encoded.'),
+          );
           await reloadReencodes();
 
-          return started !== null && started.started.length > 0;
+          return isStarted;
         }}
         onClose={() => {
           setIsChoosingReencode(false);
@@ -1102,14 +1202,20 @@ const AdminArea = ({
       <ReencodeReview
         reencode={reviewing}
         onConfirm={async (id) => {
-          const done = await confirmReencode(id);
+          const done = tellOutcome(
+            'Kept the new encode and removed the original.',
+            failureOfAnswer(await confirmReencode(id), 'That could not be confirmed.'),
+          );
 
           await Promise.all([reloadReencodes(), loadAll()]);
 
           return done;
         }}
         onReject={async (id) => {
-          const done = await rejectReencode(id);
+          const done = tellOutcome(
+            'Put the original back.',
+            failureOfAnswer(await rejectReencode(id), 'That could not be put back.'),
+          );
 
           await Promise.all([reloadReencodes(), loadAll()]);
 

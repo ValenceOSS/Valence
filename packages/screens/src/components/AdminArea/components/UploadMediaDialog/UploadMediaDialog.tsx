@@ -1,3 +1,4 @@
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { useState } from 'react';
 import { FileArrowUp as FileArrowUpIcon, Folder as FolderIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
@@ -97,6 +98,15 @@ const UploadMediaDialog = ({ library, onClose, onUploaded }: UploadMediaDialogPr
 
     setIsUploading(false);
     setHasFinished(true);
+
+    const failed = items.filter((one) => one.status !== 'done').length - uploaded;
+
+    tellOutcome(
+      `Uploaded ${uploaded.toString()} ${uploaded === 1 ? 'file' : 'files'} to ${library.name}.`,
+      uploaded === 0 || failed > 0
+        ? `${failed.toString()} ${failed === 1 ? 'file' : 'files'} could not be uploaded.`
+        : null,
+    );
 
     if (uploaded > 0) {
       onUploaded(library);

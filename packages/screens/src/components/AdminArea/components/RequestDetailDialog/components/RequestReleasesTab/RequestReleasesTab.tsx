@@ -1,3 +1,4 @@
+import { notify } from '@ValenceUI/notify';
 import { useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -35,6 +36,7 @@ const RequestReleasesTab = ({ request, onPicked }: RequestReleasesTabProps) => {
             return;
           }
 
+          notify.worked('Fetching that release.');
           onPicked(value);
         })
         .finally(() => {

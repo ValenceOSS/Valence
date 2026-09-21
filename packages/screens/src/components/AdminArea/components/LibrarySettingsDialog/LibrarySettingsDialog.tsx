@@ -1,3 +1,4 @@
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
 import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
 import { useState } from 'react';
@@ -99,6 +100,7 @@ const LibrarySettingsDialog = ({
   };
 
   const finish = (updated: Library) => {
+    tellOutcome(`Saved the settings of ${updated.name}.`, null);
     onUpdated(updated);
     reset();
     onClose();
@@ -131,7 +133,10 @@ const LibrarySettingsDialog = ({
         finish(updated);
       }
     } catch (thrown) {
-      setError(thrown instanceof Error ? thrown.message : 'The library could not be updated.');
+      const said = thrown instanceof Error ? thrown.message : 'The library could not be updated.';
+
+      setError(said);
+      tellOutcome('', said);
     } finally {
       setIsSaving(false);
     }

@@ -1,3 +1,5 @@
+import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -96,12 +98,14 @@ const MediaRequestsPanel = () => {
   );
 
   const act = useCallback(
-    (request: MediaRequest, doing: () => Promise<{ refusal: Refusal }>) => {
+    (request: MediaRequest, doing: () => Promise<{ refusal: Refusal }>, done: string) => {
       setBusyId(request.id);
       setSaid(null);
 
       void doing()
         .then(({ refusal }) => {
+          tellOutcome(done, failureOfRefusal(refusal));
+
           if (refusal !== null) {
             setSaid({ text: refusal.message, isProblem: true });
           }
@@ -337,7 +341,11 @@ const MediaRequestsPanel = () => {
                           isDisabled:
                             !isApproved || IN_HAND.has(request.state) || request.kind === 'book',
                           onChoose: () => {
-                            act(request, () => retryMediaRequest(request.id));
+                            act(
+                              request,
+                              () => retryMediaRequest(request.id),
+                              `Searching again for ${request.title}.`,
+                            );
                           },
                         },
                         {
@@ -347,7 +355,11 @@ const MediaRequestsPanel = () => {
                           icon: <Icon of={CheckIcon} size={15} />,
                           isDisabled: !isApproved || request.state === 'available',
                           onChoose: () => {
-                            act(request, () => fulfilMediaRequest(request.id));
+                            act(
+                              request,
+                              () => fulfilMediaRequest(request.id),
+                              `Marked ${request.title} as added.`,
+                            );
                           },
                         },
                         {
@@ -369,10 +381,15 @@ const MediaRequestsPanel = () => {
                             : 'Stops searching for it by itself.',
                           icon: <Icon of={HandPointerRightIcon} size={15} />,
                           onChoose: () => {
-                            act(request, () =>
-                              changeMediaRequest(request.id, {
-                                isPickedByHand: !request.isPickedByHand,
-                              }),
+                            act(
+                              request,
+                              () =>
+                                changeMediaRequest(request.id, {
+                                  isPickedByHand: !request.isPickedByHand,
+                                }),
+                              request.isPickedByHand
+                                ? `${request.title} will be fetched automatically.`
+                                : `${request.title} will only be fetched when picked.`,
                             );
                           },
                         },
@@ -554,7 +571,11 @@ const MediaRequestsPanel = () => {
           setRemoving(null);
 
           if (gone !== null) {
-            act(gone, async () => ({ refusal: await removeMediaRequest(gone.id) }));
+            act(
+              gone,
+              async () => ({ refusal: await removeMediaRequest(gone.id) }),
+              `Forgot ${gone.title}.`,
+            );
           }
         }}
       />

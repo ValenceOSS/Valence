@@ -1,3 +1,4 @@
+import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -56,6 +57,7 @@ const RefuseRequestDialog = ({
           return;
         }
 
+        notify.worked(`Refused ${request.title}.`);
         setReason('');
         onRefused(value);
         onClose();

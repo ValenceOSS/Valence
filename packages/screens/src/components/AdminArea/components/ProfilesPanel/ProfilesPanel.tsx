@@ -1,3 +1,5 @@
+import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -177,6 +179,7 @@ const ProfilesPanel = () => {
           if (gone !== null) {
             void removeProfile(gone.id)
               .then((refusal) => {
+                tellOutcome(`Removed ${gone.name}.`, failureOfRefusal(refusal));
                 setProblem(refusal?.message ?? null);
               })
               .then(reread);

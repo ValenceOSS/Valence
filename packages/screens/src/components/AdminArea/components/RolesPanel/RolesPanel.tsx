@@ -1,3 +1,5 @@
+import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
@@ -121,10 +123,11 @@ const RolesPanel = () => {
   }, [selectedRoleId, roles, accounts]);
 
   const act = useCallback(
-    async (run: () => Promise<Refusal>) => {
+    async (run: () => Promise<Refusal>, done: string) => {
       const outcome = await run();
 
       setRefusal(outcome);
+      tellOutcome(done, failureOfRefusal(outcome));
 
       if (outcome === null) {
         await reload();
@@ -184,6 +187,7 @@ const RolesPanel = () => {
 
       if (outcome !== null) {
         setRefusal(outcome);
+        tellOutcome('', failureOfRefusal(outcome));
         return;
       }
     }
@@ -203,6 +207,7 @@ const RolesPanel = () => {
 
       if (outcome !== null) {
         setRefusal(outcome);
+        tellOutcome('', failureOfRefusal(outcome));
         return;
       }
     }
@@ -216,11 +221,13 @@ const RolesPanel = () => {
 
       if (outcome !== null) {
         setRefusal(outcome);
+        tellOutcome('', failureOfRefusal(outcome));
         return;
       }
     }
 
     setRefusal(null);
+    tellOutcome('Role saved.', null);
     await reload();
   }, [
     selected,
@@ -428,14 +435,20 @@ const RolesPanel = () => {
             onChoose: () => {
               const position = Number.parseInt(newRolePosition, 10);
 
-              void act(() =>
-                createRole({
-                  name: newRoleName,
-                  position: Number.isNaN(position) ? NEW_ROLE_POSITION : position,
-                  color: newRoleColor,
-                  permissions: newRolePermissions,
-                }),
-              ).then(() => {
+              void act(
+                () =>
+                  createRole({
+                    name: newRoleName,
+                    position: Number.isNaN(position) ? NEW_ROLE_POSITION : position,
+                    color: newRoleColor,
+                    permissions: newRolePermissions,
+                  }),
+                `Created the ${newRoleName} role.`,
+              ).then((made) => {
+                if (made !== null) {
+                  return;
+                }
+
                 setNewRoleName('');
                 setNewRolePosition(NEW_ROLE_POSITION.toString());
                 setNewRolePermissions([]);
@@ -467,7 +480,7 @@ const RolesPanel = () => {
           setDeleting(null);
 
           if (role !== null) {
-            void act(() => deleteRole(role.id));
+            void act(() => deleteRole(role.id), `Deleted the ${role.name} role.`);
           }
         }}
       />

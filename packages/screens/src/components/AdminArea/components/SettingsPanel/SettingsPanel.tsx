@@ -1,3 +1,5 @@
+import { failureOfAnswer } from '@ValenceScreens/admin/failureOf';
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
 import {
   ChevronsUpDown as ChevronsUpDownIcon,
@@ -125,6 +127,10 @@ const SettingsPanel = ({
                   setAccel(id);
 
                   void saveHardwareAccel(id).then((saved) => {
+                    tellOutcome(
+                      'Hardware encoding saved.',
+                      failureOfAnswer(saved, 'Hardware encoding could not be saved.'),
+                    );
                     if (saved) {
                       onHardwareAccelSaved();
                     }
@@ -162,6 +168,10 @@ const SettingsPanel = ({
                   setRegion(id);
 
                   void saveCertificationRegion(id).then((saved) => {
+                    tellOutcome(
+                      'Certification region saved.',
+                      failureOfAnswer(saved, 'The certification region could not be saved.'),
+                    );
                     if (saved) {
                       onCertificationRegionSaved();
                     }
@@ -205,6 +215,10 @@ const SettingsPanel = ({
               setQuality(chosen.data);
 
               void savePreviewQuality(chosen.data).then((saved) => {
+                tellOutcome(
+                  'Preview quality saved.',
+                  failureOfAnswer(saved, 'Preview quality could not be saved.'),
+                );
                 if (saved) {
                   onPreviewQualitySaved();
                 }
@@ -233,6 +247,10 @@ const SettingsPanel = ({
               setRoundness(chosen.data);
 
               void saveRoundness(chosen.data).then((saved) => {
+                tellOutcome(
+                  'Roundness saved.',
+                  failureOfAnswer(saved, 'Roundness could not be saved.'),
+                );
                 if (saved) {
                   onRoundnessSaved?.();
                 }
@@ -255,6 +273,10 @@ const SettingsPanel = ({
               setShowsFaces(next);
 
               void saveShowsProfilesBeforeSignIn(next).then((saved) => {
+                tellOutcome(
+                  'Sign-in screen saved.',
+                  failureOfAnswer(saved, 'The sign-in screen could not be changed.'),
+                );
                 if (saved) {
                   onProfileVisibilitySaved();
 
@@ -294,10 +316,12 @@ const SettingsPanel = ({
 
                   if ('problem' in answer) {
                     setSplashscreenProblem(answer.problem);
+                    tellOutcome('', answer.problem);
 
                     return;
                   }
 
+                  tellOutcome('Splashscreen saved.', null);
                   setSplashscreen(answer.splashscreen);
                   onSplashscreenSaved();
                 });
@@ -318,6 +342,11 @@ const SettingsPanel = ({
 
                   void removeSplashscreen().then((removed) => {
                     setIsChangingSplashscreen(false);
+
+                    tellOutcome(
+                      'Splashscreen removed.',
+                      failureOfAnswer(removed, 'The splashscreen could not be removed.'),
+                    );
 
                     if (removed) {
                       setSplashscreen(null);
@@ -360,6 +389,10 @@ const SettingsPanel = ({
               setFetchesTrailers(next);
 
               void saveFetchesCatalogueTrailers(next).then((saved) => {
+                tellOutcome(
+                  'Trailer setting saved.',
+                  failureOfAnswer(saved, 'The trailer setting could not be saved.'),
+                );
                 if (saved) {
                   onCatalogueTrailersSaved();
 
@@ -386,6 +419,10 @@ const SettingsPanel = ({
               setFetchesMusic(next);
 
               void saveFetchesMusicDetails(next).then((saved) => {
+                tellOutcome(
+                  'Music details setting saved.',
+                  failureOfAnswer(saved, 'The music details setting could not be saved.'),
+                );
                 if (saved) {
                   onMusicDetailsSaved?.();
 
@@ -428,6 +465,10 @@ const SettingsPanel = ({
               setIsSavingAudioDbKey(true);
 
               void saveAudioDbKey(audioDbKey).then((saved) => {
+                tellOutcome(
+                  'TheAudioDB key saved.',
+                  failureOfAnswer(saved, 'The TheAudioDB key could not be saved.'),
+                );
                 setIsSavingAudioDbKey(false);
 
                 if (saved) {
@@ -454,6 +495,10 @@ const SettingsPanel = ({
                 setReleaseTypes(next);
 
                 void saveRequestReleaseTypes(next).then((saved) => {
+                  tellOutcome(
+                    'Release types saved.',
+                    failureOfAnswer(saved, 'The release types could not be saved.'),
+                  );
                   if (saved) {
                     onReleaseTypesSaved?.();
 
@@ -495,6 +540,10 @@ const SettingsPanel = ({
               setIsSaving(true);
 
               void saveCatalogueKey(catalogueKey).then((saved) => {
+                tellOutcome(
+                  'Catalogue key saved.',
+                  failureOfAnswer(saved, 'The catalogue key could not be saved.'),
+                );
                 setIsSaving(false);
 
                 if (saved) {
@@ -548,6 +597,10 @@ const SettingsPanel = ({
               setIsSavingOmdbKey(true);
 
               void saveOmdbKey(omdbKey).then((saved) => {
+                tellOutcome(
+                  'OMDb key saved.',
+                  failureOfAnswer(saved, 'The OMDb key could not be saved.'),
+                );
                 setIsSavingOmdbKey(false);
 
                 if (saved) {
