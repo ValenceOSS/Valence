@@ -66,7 +66,16 @@
     ],
     "mac": {
       "category": "public.app-category.entertainment",
-      "icon": "build/icon-macos.png"
+      "icon": "build/icon-macos.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ]
     },
     "win": {
       "icon": "build/icon.png",
@@ -81,13 +90,27 @@
     },
     "linux": {
       "icon": "build/icon.png",
-      "category": "AudioVideo"
+      "category": "AudioVideo",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     },
     "copyright": "Copyright © Valence contributors",
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "artifactName": "Valence-Setup-${version}.${ext}"
+    },
+    "dmg": {
+      "artifactName": "Valence-${version}-${arch}.${ext}"
+    },
+    "appImage": {
+      "artifactName": "Valence-${version}.${ext}"
     }
   }
 }

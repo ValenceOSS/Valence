@@ -262,7 +262,8 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          name: valence-desktop-windows
+          pattern: valence-desktop-*
+          merge-multiple: true
           path: release
 
       # The release already exists: release-please created it and tagged it. What it cannot write

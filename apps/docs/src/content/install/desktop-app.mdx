@@ -1,6 +1,6 @@
 ---
 title: Desktop app
-description: What the desktop app is, how it finds your server, where to get the Windows installer and how to build it yourself.
+description: What the desktop app is, how it finds your server, where to download it for each platform and how to build it yourself.
 order: 7
 ---
 
@@ -8,15 +8,23 @@ The desktop app is an Electron application that gives Valence a window of its ow
 
 ## Getting it
 
-Each release attaches a Windows installer, `Valence-Setup-<version>.exe`, on the [releases page](https://github.com/ValenceOSS/Valence/releases). It is built for 64 bit Windows and lets you choose where to install it.
+Each release attaches the desktop app for the three platforms on the [releases page](https://github.com/ValenceOSS/Valence/releases).
 
-<Callout title="The installer is not signed yet" tone="warning">
-  There is no code signing certificate, so Windows SmartScreen may warn that the publisher is
-  unknown the first time you run it. Choose **More info**, then **Run anyway**, if you downloaded it
+| Platform | File                                                          | Notes                                                          |
+| :------- | :------------------------------------------------------------ | :------------------------------------------------------------- |
+| Windows  | `Valence-Setup-<version>.exe`                                 | 64 bit. An installer that lets you choose where to install it. |
+| macOS    | `Valence-<version>-arm64.dmg` and `Valence-<version>-x64.dmg` | `arm64` for Apple silicon, `x64` for Intel.                    |
+| Linux    | `Valence-<version>.AppImage`                                  | 64 bit. Mark it executable, then run it.                       |
+
+<Callout title="The apps are not signed yet" tone="warning">
+  There are no code signing certificates, so Windows SmartScreen may warn that the publisher is
+  unknown, and macOS Gatekeeper may refuse to open the app on a double click. On Windows choose
+  **More info**, then **Run anyway**. On macOS open it from the context menu with **Open**, or allow
+  it under **Privacy and Security** in System Settings. Only do either for a file you downloaded
   from the releases page of this repository.
 </Callout>
 
-There is no macOS or Linux download yet. Those you build from source, as described at the end of this page.
+You can also build it yourself, as described at the end of this page.
 
 ## What it is
 
