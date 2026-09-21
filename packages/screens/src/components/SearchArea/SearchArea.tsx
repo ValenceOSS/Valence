@@ -408,6 +408,7 @@ const SearchArea = ({
                     onPlay={onPlay}
                     onInspect={onInspect}
                     isSeries={isAProgramme}
+                    shape="poster"
                     {...(onOpenShow === undefined ? {} : { onOpenShow })}
                     {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
                     {...(resumeFor === undefined ? {} : { resumeFor })}

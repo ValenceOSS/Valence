@@ -299,6 +299,18 @@ describe('a card that stands upright', () => {
     expect(container.querySelector('.aspect-\\[2\\/3\\]')).not.toBeNull();
   });
 
+  it("stands a card for a whole programme on the programme's poster, whatever shape was asked", () => {
+    const { container } = renderInAnAddress(
+      <RailCard media={MEDIA} isSeries shape="wide" onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    expect(container.querySelector('img')).toHaveAttribute(
+      'src',
+      `/api/media/${MEDIA.id}/image/poster`,
+    );
+    expect(container.querySelector('.aspect-video')).toBeNull();
+  });
+
   it('lies flat on the backdrop unless asked otherwise', () => {
     const { container } = renderInAnAddress(
       <RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />,

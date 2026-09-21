@@ -226,9 +226,9 @@ describe('how a page of the library is laid out', () => {
     expect(screen.queryByText('Everything that stands on its own.')).not.toBeInTheDocument();
   });
 
-  it('stands films upright on their posters', async () => {
+  it.each(['films', 'shows'] as const)('stands the %s page upright, on posters', async (kind) => {
     const { container } = renderInAnAddress(
-      <BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />,
+      <BrowseArea kind={kind} onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
 
     await screen.findByRole('button', { name: /Arrival/ });
@@ -237,9 +237,9 @@ describe('how a page of the library is laid out', () => {
     expect(container.querySelector('.aspect-video')).toBeNull();
   });
 
-  it.each(['shows', 'new'] as const)('lays the %s page flat, on backdrops', async (kind) => {
+  it('lays the new page flat, on backdrops', async () => {
     const { container } = renderInAnAddress(
-      <BrowseArea kind={kind} onPlay={vi.fn()} onInspect={vi.fn()} />,
+      <BrowseArea kind="new" onPlay={vi.fn()} onInspect={vi.fn()} />,
     );
 
     await screen.findByRole('button', { name: /Arrival/ });
