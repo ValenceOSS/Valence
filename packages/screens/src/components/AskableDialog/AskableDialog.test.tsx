@@ -51,6 +51,7 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
   runtimeMinutes: 155,
   cast: [{ name: 'Zendaya', role: 'Chani', photoUrl: null }],
   albums: [],
+  trailerKey: null,
   standing: ASKABLE,
   ...overrides,
 });
@@ -86,6 +87,28 @@ describe('AskableDialog', () => {
       expect(askForMedia).toHaveBeenCalledWith({ kind: 'film', tmdbId: 438631 });
     });
     expect(fetchAskable).toHaveBeenCalledWith('film', '438631');
+  });
+
+  it('plays the trailer of something not in the library yet', async () => {
+    fetchAskable.mockResolvedValue(aTitle({ trailerKey: 'abc123' }));
+
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Watch the trailer' }));
+
+    const playing = await screen.findByRole('dialog', { name: 'Dune, the trailer' });
+
+    expect(within(playing).getByTitle('Dune, the trailer')).toHaveAttribute(
+      'src',
+      'https://www.youtube-nocookie.com/embed/abc123?rel=0&modestbranding=1',
+    );
+  });
+
+  it('offers no trailer where the catalogue knows of none', async () => {
+    open();
+
+    expect(await screen.findByRole('heading', { name: 'Dune' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Watch the trailer' })).not.toBeInTheDocument();
   });
 
   it('asks which quality to look for, once there is more than one to choose between', async () => {

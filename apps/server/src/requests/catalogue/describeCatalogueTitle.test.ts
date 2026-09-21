@@ -26,6 +26,7 @@ const sources = () => {
         genres: ['Drama'],
         runtimeMinutes: 55,
         cast: [{ name: 'Adam Scott', role: 'Mark S.', photoUrl: null }],
+        trailerKey: 'abc123',
       }),
     ),
     describeMusic: vi.fn<DescriptionSources['describeMusic']>(() =>

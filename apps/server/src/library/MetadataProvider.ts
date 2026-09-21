@@ -70,6 +70,7 @@ type CatalogueDescription = {
   genres: string[];
   runtimeMinutes: number | null;
   cast: { name: string; role: string | null; photoUrl: string | null }[];
+  trailerKey: string | null;
 };
 
 type SeriesShape = {

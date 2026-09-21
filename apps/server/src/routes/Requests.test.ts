@@ -1608,6 +1608,7 @@ describe('requests for films and series, through the server', () => {
               genres: ['Science Fiction'],
               runtimeMinutes: 155,
               cast: [],
+              trailerKey: null,
             }
           : null,
       ),

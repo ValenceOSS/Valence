@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { MusicNote as MusicNoteIcon, X as XIcon } from '@keyline-icons/react';
+import { MusicNote as MusicNoteIcon, Tape as TapeIcon, X as XIcon } from '@keyline-icons/react';
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { DownloadProgressReadout } from '@ValenceScreens/components/DownloadProgressReadout/DownloadProgressReadout';
 import { Badge } from '@ValenceUI/Badge';
@@ -8,6 +8,7 @@ import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Dialog } from '@ValenceUI/Dialog';
+import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { Icon } from '@ValenceUI/Icon';
@@ -27,6 +28,7 @@ import { describeAskableFacts } from './describeAskableFacts';
 import { describeStanding } from './describeStanding';
 import { readAsking } from './readAsking';
 import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
+import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskableDialogProps } from './AskableDialog.types';
@@ -96,6 +98,8 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const me = useQuery(sessionQueries.who());
   const [isCancelling, setIsCancelling] = useState(false);
   const [choosing, setChoosing] = useState<Choosing | null>(null);
+  const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
+  const trailerKey = title?.trailerKey ?? null;
   const offered = useQuery(
     requestsQueries.profilesOnOffer(
       title !== null && isMusicRequest(title.kind) ? 'music' : 'video',
@@ -221,6 +225,21 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                     {title.title}
                   </h2>
                   <span className="text-sm text-on-scrim/75">{describeAskableFacts(title)}</span>
+
+                  {trailerKey === null ? null : (
+                    <span>
+                      <Button
+                        variant="overlay"
+                        size="sm"
+                        onClick={() => {
+                          setIsWatchingTrailer(true);
+                        }}
+                      >
+                        <Icon of={TapeIcon} size={16} />
+                        Watch the trailer
+                      </Button>
+                    </span>
+                  )}
                   {going === null ? null : (
                     <ProgressBar
                       label={`How much of ${title.title} has arrived`}
@@ -350,6 +369,24 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
           </Button>
         ) : null}
       </DialogFooter>
+
+      <Dialog
+        label={`${title?.title ?? 'This'}, the trailer`}
+        isOpen={isWatchingTrailer && trailerKey !== null}
+        className="sm:w-[min(64rem,94vw)]"
+        onClose={() => {
+          setIsWatchingTrailer(false);
+        }}
+      >
+        <DialogContent className="p-0">
+          {trailerKey === null ? null : (
+            <EmbeddedVideo
+              label={`${title?.title ?? 'This'}, the trailer`}
+              src={catalogueTrailerUrl(trailerKey)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <ChooseQualityDialog
         title={title?.title ?? 'this'}
