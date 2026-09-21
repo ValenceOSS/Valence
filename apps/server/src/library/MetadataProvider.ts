@@ -51,6 +51,7 @@ type Metadata = {
   revenue?: number;
   status?: string;
   imdbId?: string;
+  rottenTomatoes?: number;
 };
 
 type CatalogueMatch = {

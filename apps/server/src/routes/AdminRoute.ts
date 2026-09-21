@@ -36,6 +36,7 @@ const AdminSettingsSchema = z
   .object({
     hasCatalogueKey: z.boolean(),
     hasAudioDbKey: z.boolean(),
+    hasOmdbKey: z.boolean(),
     trustedOrigins: z.array(z.string()),
     cookieSecure: z.boolean(),
     hardwareAccel: z.string(),
@@ -121,6 +122,7 @@ const AdminSettingsRequestSchema = z
   .object({
     catalogueApiKey: z.string().optional(),
     audioDbKey: z.string().optional(),
+    omdbKey: z.string().optional(),
     hardwareAccel: z.string().optional(),
     previewQuality: z.enum(PREVIEW_QUALITIES).optional(),
     certificationRegion: z.string().length(2).optional(),

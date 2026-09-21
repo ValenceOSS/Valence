@@ -368,6 +368,7 @@ const MediaDetailDialog = ({
               status={metadata?.status}
               budget={metadata?.budget}
               revenue={metadata?.revenue}
+              rottenTomatoes={metadata?.rottenTomatoes}
             />
 
             <section className="flex flex-col gap-3">

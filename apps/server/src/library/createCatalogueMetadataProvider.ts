@@ -129,7 +129,7 @@ const SeasonResponseSchema = z.object({
     .default([]),
 });
 
-const CERTIFICATES = 'credits,release_dates,content_ratings';
+const CERTIFICATES = 'credits,release_dates,content_ratings,external_ids';
 
 const CERTIFICATES_AND_VIDEOS = `${CERTIFICATES},videos`;
 
@@ -148,6 +148,7 @@ const DetailResponseSchema = z.object({
   revenue: z.number().nonnegative().optional(),
   status: z.string().optional(),
   imdb_id: z.string().nullish(),
+  external_ids: z.object({ imdb_id: z.string().nullish() }).optional(),
   genres: z.array(z.object({ name: z.string() })).default([]),
   seasons: z
     .array(

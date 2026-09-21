@@ -55,6 +55,7 @@ const OVERVIEW = {
   settings: {
     hasCatalogueKey: true,
     hasAudioDbKey: false,
+    hasOmdbKey: false,
     trustedOrigins: ['http://localhost:5173'],
     cookieSecure: false,
     hardwareAccel: '',

@@ -32,6 +32,10 @@ const saveAudioDbKey = vi.hoisted(() =>
   vi.fn<(key: string) => Promise<boolean>>(() => Promise.resolve(true)),
 );
 
+const saveOmdbKey = vi.hoisted(() =>
+  vi.fn<(key: string) => Promise<boolean>>(() => Promise.resolve(true)),
+);
+
 const saveSplashscreen = vi.hoisted(() =>
   vi.fn<(file: File) => Promise<{ splashscreen: string } | { problem: string }>>(),
 );
@@ -48,6 +52,7 @@ vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,
   saveAudioDbKey,
+  saveOmdbKey,
   saveSplashscreen,
   removeSplashscreen,
 }));
@@ -57,6 +62,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
   settings: {
     hasCatalogueKey: false,
     hasAudioDbKey: false,
+    hasOmdbKey: false,
     cookieSecure: false,
     trustedOrigins: ['http://localhost:8420'],
     hardwareAccel: '',
@@ -714,5 +720,78 @@ describe('whose age certificates to read', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save the TheAudioDB key' }));
 
     expect(saveAudioDbKey).toHaveBeenCalledWith('my-key');
+  });
+
+  it('saves an OMDb key, and says titles carry no Rotten Tomatoes score without one', async () => {
+    const onCatalogueKeySaved = vi.fn();
+
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={onCatalogueKeySaved}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/adds each title’s Rotten Tomatoes score/)).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText('OMDb key'), 'omdb-key');
+    await userEvent.click(screen.getByRole('button', { name: 'Save the OMDb key' }));
+
+    expect(saveOmdbKey).toHaveBeenCalledWith('omdb-key');
+    await waitFor(() => {
+      expect(onCatalogueKeySaved).toHaveBeenCalled();
+    });
+  });
+
+  it('says a key is set once one is, and where scores come from', () => {
+    render(
+      <SettingsPanel
+        overview={overview({ hasOmdbKey: true })}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/Scores fill in as titles are scanned again/)).toBeInTheDocument();
+  });
+
+  it('opens the page a free OMDb key is made on', async () => {
+    const open = vi.fn();
+
+    vi.stubGlobal('open', open);
+
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Get a free key' }));
+
+    expect(open).toHaveBeenCalledWith(
+      'https://www.omdbapi.com/apikey.aspx',
+      '_blank',
+      'noopener,noreferrer',
+    );
+
+    vi.unstubAllGlobals();
   });
 });

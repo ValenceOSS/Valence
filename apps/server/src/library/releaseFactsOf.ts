@@ -7,6 +7,7 @@ type ReleaseDetail = {
   revenue?: number | undefined;
   status?: string | undefined;
   imdb_id?: string | null | undefined;
+  external_ids?: { imdb_id?: string | null | undefined } | undefined;
 };
 
 /**
@@ -27,15 +28,14 @@ const releaseFactsOf = (
   airDate: string | null,
 ): Pick<Metadata, 'releaseDate' | 'budget' | 'revenue' | 'status' | 'imdbId'> => {
   const released = airDate ?? detail.release_date ?? detail.first_air_date ?? '';
+  const imdbId = detail.imdb_id ?? detail.external_ids?.imdb_id ?? '';
 
   return {
     ...(released === '' ? {} : { releaseDate: released }),
     ...(detail.budget === undefined || detail.budget <= 0 ? {} : { budget: detail.budget }),
     ...(detail.revenue === undefined || detail.revenue <= 0 ? {} : { revenue: detail.revenue }),
     ...(detail.status === undefined || detail.status === '' ? {} : { status: detail.status }),
-    ...(detail.imdb_id === undefined || detail.imdb_id === null || detail.imdb_id === ''
-      ? {}
-      : { imdbId: detail.imdb_id }),
+    ...(imdbId === '' ? {} : { imdbId }),
   };
 };
 

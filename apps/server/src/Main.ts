@@ -114,6 +114,7 @@ type ViewingData = Extract<WebhookPayload, { event: 'playback.started' }>['data'
 
 type SessionData = Extract<WebhookPayload, { event: 'session.started' }>['data'];
 import { runScanPhases } from '@ValenceServer/library/runScanPhases';
+import { withRottenTomatoes } from '@ValenceServer/library/withRottenTomatoes';
 import { createCatalogueMetadataProvider } from '@ValenceServer/library/createCatalogueMetadataProvider';
 import { createFilenameMetadataProvider } from '@ValenceServer/library/createFilenameMetadataProvider';
 import { createMediaFileSystem } from '@ValenceServer/library/createMediaFileSystem';
@@ -326,6 +327,7 @@ const settings = createDatabaseSettingsStore({
     requestReleaseTypes: ['album'],
     fetchesMusicDetails: false,
     audioDbKey: '',
+    omdbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
     reencodesAwaitingReviewCap: 5,
@@ -1908,7 +1910,15 @@ const libraryService = createDatabaseLibraryService({
   transcoder,
   forcedAccel: async () => (await settings.read()).hardwareAccel,
   jobs,
-  providers: [catalogueProvider, createFilenameMetadataProvider()],
+  providers: [
+    withRottenTomatoes(catalogueProvider, {
+      readApiKey: async () => (await settings.read()).omdbKey,
+      onProblem: (reason) => {
+        log.error('catalogue', `ratings: ${reason}`);
+      },
+    }),
+    createFilenameMetadataProvider(),
+  ],
   books: bookService,
   images: { forget: (url) => images.forget(url) },
   music: {

@@ -52,6 +52,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
   settings: {
     hasCatalogueKey: true,
     hasAudioDbKey: false,
+    hasOmdbKey: false,
     cookieSecure: true,
     hardwareAccel: '',
     previewQuality: 'high' as const,
