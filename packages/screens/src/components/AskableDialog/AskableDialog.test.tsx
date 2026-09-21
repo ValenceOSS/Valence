@@ -254,11 +254,11 @@ describe('AskableDialog', () => {
 
     open('series:95396');
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Only some seasons' }));
+    await userEvent.click(await screen.findByRole('switch', { name: 'Every season' }));
 
     expect(screen.getByRole('button', { name: 'Request' })).toBeDisabled();
 
-    await userEvent.click(await screen.findByRole('checkbox', { name: /Season 2/ }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Season 2' }));
     await userEvent.click(screen.getByRole('button', { name: 'Request' }));
 
     await waitFor(() => {

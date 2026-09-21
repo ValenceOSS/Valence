@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -19,31 +19,68 @@ beforeEach(() => {
   ]);
 });
 
+/**
+ * The row naming a season.
+ */
+const rowOf = (name: string) =>
+  screen.getAllByRole('row').find((row) => row.textContent.includes(name)) ?? document.body;
+
 describe('SeasonChooser', () => {
-  it('asks for every season until only some are wanted', async () => {
+  it('lists a season a row, with its episodes and the year it began', async () => {
+    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={null} onChange={vi.fn()} />);
+
+    expect(await screen.findByText('Season 1')).toBeInTheDocument();
+    expect(within(rowOf('Season 1')).getByText('9')).toBeInTheDocument();
+    expect(within(rowOf('Season 1')).getByText('2022')).toBeInTheDocument();
+    expect(within(rowOf('Specials')).getByText('—')).toBeInTheDocument();
+  });
+
+  it('takes every season until one is dropped', async () => {
     const onChange = vi.fn();
 
     renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={null} onChange={onChange} />);
 
-    expect(screen.queryByRole('list', { name: 'Which seasons' })).not.toBeInTheDocument();
-    expect(fetchSeriesSeasons).not.toHaveBeenCalled();
+    expect(await screen.findByText('Every season, and any that come later.')).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Season 1' })).toBeChecked();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Only some seasons' }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Specials' }));
 
-    expect(onChange).toHaveBeenCalledWith([]);
+    expect(onChange).toHaveBeenLastCalledWith([1, 2]);
   });
 
-  it('ticks seasons as the catalogue lists them, specials among them', async () => {
+  it('comes back to every season once the last one is taken', async () => {
     const onChange = vi.fn();
 
-    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={[2]} onChange={onChange} />);
+    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={[0, 2]} onChange={onChange} />);
 
-    await userEvent.click(await screen.findByRole('checkbox', { name: /Specials/ }));
+    expect(await screen.findByText('2 of 3 seasons.')).toBeInTheDocument();
 
-    expect(onChange).toHaveBeenLastCalledWith([0, 2]);
-    expect(screen.getByRole('checkbox', { name: /Season 1/ })).toHaveAccessibleDescription(
-      '9 episodes · 2022',
+    await userEvent.click(screen.getByRole('switch', { name: 'Season 1' }));
+
+    expect(onChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('takes the lot, and drops the lot, from the header', async () => {
+    const onChange = vi.fn();
+    const { rerender } = renderInAnAddress(
+      <SeasonChooser tmdbId={95396} seasons={[2]} onChange={onChange} />,
     );
+
+    await userEvent.click(await screen.findByRole('switch', { name: 'Every season' }));
+
+    expect(onChange).toHaveBeenLastCalledWith(null);
+
+    rerender(<SeasonChooser tmdbId={95396} seasons={null} onChange={onChange} />);
+
+    await userEvent.click(screen.getByRole('switch', { name: 'Every season' }));
+
+    expect(onChange).toHaveBeenLastCalledWith([]);
+  });
+
+  it('says when nothing is taken yet', async () => {
+    renderInAnAddress(<SeasonChooser tmdbId={95396} seasons={[]} onChange={vi.fn()} />);
+
+    expect(await screen.findByText('No season is taken yet.')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

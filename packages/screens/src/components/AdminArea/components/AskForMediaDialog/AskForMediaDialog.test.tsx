@@ -215,16 +215,13 @@ describe('AskForMediaDialog', () => {
     await user.type(screen.getByRole('textbox', { name: 'Search for a series' }), 'Severance');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Severance \(2022\)/ }));
-    await user.click(screen.getByRole('button', { name: 'Only some seasons' }));
+    await user.click(await screen.findByRole('switch', { name: 'Every season' }));
 
     expect(screen.getByRole('button', { name: 'Ask for it' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Specials' })).not.toBeChecked();
 
-    await user.click(await screen.findByRole('checkbox', { name: /Specials/ }));
-    await user.click(screen.getByRole('checkbox', { name: /Season 2/ }));
-    await user.click(screen.getByRole('checkbox', { name: /Specials/ }));
-    await user.click(screen.getByRole('checkbox', { name: /Season 1/ }));
-
-    expect(screen.getByText('9 episodes · 2022')).toBeInTheDocument();
+    await user.click(screen.getByRole('switch', { name: 'Season 1' }));
+    await user.click(screen.getByRole('switch', { name: 'Season 2' }));
 
     await user.click(screen.getByRole('button', { name: 'Ask for it' }));
 
