@@ -60,6 +60,18 @@ describe('isDarkInk', () => {
     expect(isDarkInk(document.createElement('img'))).toBe(false);
   });
 
+  it('reads a saturated red logo as light, since it stands out against black by colour rather than luminance', () => {
+    aCanvasOf(214, 21, 40, 255);
+
+    expect(isDarkInk(document.createElement('img'))).toBe(false);
+  });
+
+  it('still reads navy lettering as dark, since a dark colour has no bright channel to save it', () => {
+    aCanvasOf(20, 24, 60, 255);
+
+    expect(isDarkInk(document.createElement('img'))).toBe(true);
+  });
+
   it('counts only what is drawn, so a transparent ground says nothing either way', () => {
     aCanvasOf(0, 0, 0, 0);
 
