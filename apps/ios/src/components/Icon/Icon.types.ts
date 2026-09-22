@@ -1,12 +1,17 @@
-import type { theGlyphs } from '@ValencePhone/theme/theGlyphs';
+import type { ComponentType } from 'react';
 
-type GlyphName = keyof typeof theGlyphs;
+type GlyphProps = {
+  size: number;
+  colour: string;
+};
+
+type Glyph = ComponentType<GlyphProps>;
 
 type IconProps = {
-  of: GlyphName;
+  of: Glyph;
   size?: number;
   colour: string;
   label?: string;
 };
 
-export type { GlyphName, IconProps };
+export type { Glyph, GlyphProps, IconProps };

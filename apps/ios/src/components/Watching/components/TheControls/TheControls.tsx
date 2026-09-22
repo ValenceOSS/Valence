@@ -2,6 +2,12 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
+import { Pause } from '@ValencePhone/glyphs/Pause';
+import { Play } from '@ValencePhone/glyphs/Play';
+import { RotateCcw } from '@ValencePhone/glyphs/RotateCcw';
+import { RotateCw } from '@ValencePhone/glyphs/RotateCw';
+import { Settings } from '@ValencePhone/glyphs/Settings';
+import { X } from '@ValencePhone/glyphs/X';
 import { Slider } from '@ValencePhone/components/Slider/Slider';
 import { asAClock } from '@ValencePhone/components/Watching/asAClock';
 import type { TheControlsProps } from './TheControls.types';
@@ -136,7 +142,7 @@ const TheControls = ({
         ]}
       >
         <Button tone="bare" label="Stop watching" onPress={onClose}>
-          <Icon of="X" size={26} colour={OVER_THE_PICTURE} />
+          <Icon of={X} size={26} colour={OVER_THE_PICTURE} />
         </Button>
 
         <View style={styles.said}>
@@ -148,7 +154,7 @@ const TheControls = ({
         </View>
 
         <Button tone="bare" label="Subtitles, audio and quality" onPress={onSettings}>
-          <Icon of="Settings" size={26} colour={OVER_THE_PICTURE} />
+          <Icon of={Settings} size={26} colour={OVER_THE_PICTURE} />
         </Button>
       </View>
 
@@ -161,14 +167,14 @@ const TheControls = ({
           }}
         >
           <View style={[styles.step, styles.reach]}>
-            <Icon of="RotateCcw" size={40} colour={OVER_THE_PICTURE} />
+            <Icon of={RotateCcw} size={40} colour={OVER_THE_PICTURE} />
             <Text style={styles.stepHowFar}>{A_STEP}</Text>
           </View>
         </Button>
 
         <Button tone="bare" label={isPlaying ? 'Pause' : 'Play'} onPress={onPlayPause}>
           <View style={styles.reach}>
-            <Icon of={isPlaying ? 'Pause' : 'Play'} size={62} colour={OVER_THE_PICTURE} />
+            <Icon of={isPlaying ? Pause : Play} size={62} colour={OVER_THE_PICTURE} />
           </View>
         </Button>
 
@@ -180,7 +186,7 @@ const TheControls = ({
           }}
         >
           <View style={[styles.step, styles.reach]}>
-            <Icon of="RotateCw" size={40} colour={OVER_THE_PICTURE} />
+            <Icon of={RotateCw} size={40} colour={OVER_THE_PICTURE} />
             <Text style={styles.stepHowFar}>{A_STEP}</Text>
           </View>
         </Button>

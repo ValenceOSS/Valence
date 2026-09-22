@@ -1,30 +1,28 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { theGlyphsAsWritten } from './theGlyphsAsWritten';
-import { theGlyphsToDraw } from './theGlyphsToDraw';
 
-const WHERE = resolve(
-  import.meta.dirname,
-  '..',
-  '..',
-  'apps',
-  'ios',
-  'src',
-  'theme',
-  'theGlyphs.ts',
-);
+const WHERE = resolve(import.meta.dirname, '..', '..', 'apps', 'ios', 'src', 'glyphs');
 
 describe('the phone’s glyphs', () => {
   it('are the ones the set draws today, rather than the ones it drew when they were written', () => {
-    expect(readFileSync(WHERE, 'utf8')).toBe(theGlyphsAsWritten());
+    for (const [name, contents] of theGlyphsAsWritten()) {
+      expect(readFileSync(join(WHERE, name), 'utf8')).toBe(contents);
+    }
   });
 
-  it('hold every glyph the phone asks for', () => {
-    const written = readFileSync(WHERE, 'utf8');
+  it('are each their own module, named for what they draw', () => {
+    for (const [name] of theGlyphsAsWritten()) {
+      expect(readFileSync(join(WHERE, name), 'utf8')).toContain(
+        `export { ${name.replace('.tsx', '')} };`,
+      );
+    }
+  });
 
-    for (const name of theGlyphsToDraw) {
-      expect(written).toContain(`${name}: '<svg`);
+  it('hold no markup, only shapes', () => {
+    for (const [name] of theGlyphsAsWritten()) {
+      expect(readFileSync(join(WHERE, name), 'utf8')).not.toContain('<svg');
     }
   });
 });

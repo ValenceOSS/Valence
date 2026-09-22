@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
+import { describeSkip, fetchSegments, skippableAt } from '@ValenceClient/playback/fetchSegments';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import {
   heartbeatPlaybackSession,
@@ -30,6 +31,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { TheControls } from '@ValencePhone/components/Watching/components/TheControls/TheControls';
 import { TheChoices } from '@ValencePhone/components/Watching/components/TheChoices/TheChoices';
+import { TheSkip } from '@ValencePhone/components/Watching/components/TheSkip/TheSkip';
 import { TheSubtitles } from '@ValencePhone/components/Watching/components/TheSubtitles/TheSubtitles';
 import { useTheSubtitles } from '@ValencePhone/components/Watching/useTheSubtitles';
 import { howBigToDrawIt } from '@ValencePhone/components/Watching/howBigToDrawIt';
@@ -62,6 +64,10 @@ const styles = StyleSheet.create({
  *
  * The stream is negotiated before anything is drawn, because what the server sends back is the
  * answer to what this phone said it could take — and the address to play is not known until it has.
+ *
+ * Where a film has its intro or its credits marked, going past them is offered while they are
+ * playing and at no other time. That offer is drawn whether the controls are up or not, because it
+ * is the one thing here somebody is waiting for rather than looking for.
  *
  * iOS is told it may place a two channel soundtrack around somebody wearing headphones, which it
  * will not do unless asked and which no React Native package asks for it. Said once the film has
@@ -142,6 +148,10 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   const tracks = useQuery({
     queryKey: ['subtitles', mediaId],
     queryFn: () => fetchSubtitleTracks(mediaId),
+  });
+  const marked = useQuery({
+    queryKey: ['segments', mediaId],
+    queryFn: () => fetchSegments(mediaId),
   });
   const [reading, setReading] = useState(SUBTITLES_OFF);
   const beingRead = (tracks.data ?? []).find((track) => track.id === reading) ?? null;
@@ -368,6 +378,8 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
     };
   }, [sessionId, mediaId, player]);
 
+  const skippable = skippableAt(marked.data ?? [], ticking.currentTime);
+
   if (refusal !== null) {
     return (
       <Screen centres>
@@ -414,6 +426,15 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
           setAreControlsUp((up) => !up);
         }}
       />
+
+      {skippable === null ? null : (
+        <TheSkip
+          says={describeSkip(skippable)}
+          onSkip={() => {
+            player.seekBy(skippable.endSeconds - ticking.currentTime);
+          }}
+        />
+      )}
 
       <TheSubtitles
         cues={cues}

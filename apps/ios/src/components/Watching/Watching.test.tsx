@@ -1,6 +1,7 @@
 import { act, fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchMediaDetail } from '@ValenceClient/library/fetchLibrary';
+import { fetchSegments } from '@ValenceClient/playback/fetchSegments';
 import {
   heartbeatPlaybackSession,
   startPlaybackSession,
@@ -18,6 +19,10 @@ import type { ReactNode } from 'react';
 
 jest.mock('@ValenceClient/playback/startPlaybackSession');
 jest.mock('@ValenceClient/library/fetchLibrary');
+jest.mock('@ValenceClient/playback/fetchSegments', () => ({
+  ...jest.requireActual<object>('@ValenceClient/playback/fetchSegments'),
+  fetchSegments: jest.fn(),
+}));
 
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   REPORT_EVERY_MILLISECONDS: 10_000,
@@ -557,5 +562,74 @@ describe('Watching', () => {
     });
 
     expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+  });
+
+  it('offers to skip an intro while it is playing', async () => {
+    jest
+      .mocked(fetchSegments)
+      .mockResolvedValue([
+        { kind: 'intro', startSeconds: 400, endSeconds: 500, source: 'manual' as const },
+      ]);
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    theFakePlayer.currentTime = 405;
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Skip Intro')).toBeTruthy();
+    });
+  });
+
+  it('offers nothing where a film has nothing marked', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    expect(drawn.queryByLabelText('Skip Intro')).toBeNull();
+  });
+
+  it('offers nothing long after the thing it would skip', async () => {
+    jest
+      .mocked(fetchSegments)
+      .mockResolvedValue([
+        { kind: 'intro', startSeconds: 400, endSeconds: 500, source: 'manual' as const },
+      ]);
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    theFakePlayer.currentTime = 480;
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    expect(drawn.queryByLabelText('Skip Intro')).toBeNull();
+  });
+
+  it('goes to the end of what it skipped, not a fixed distance', async () => {
+    jest
+      .mocked(fetchSegments)
+      .mockResolvedValue([
+        { kind: 'credits', startSeconds: 400, endSeconds: 500, source: 'manual' as const },
+      ]);
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    theFakePlayer.currentTime = 405;
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Skip Credits')).toBeTruthy();
+    });
+
+    await userEvent.press(drawn.getByLabelText('Skip Credits'));
+
+    expect(theFakePlayer.currentTime).toBe(500);
   });
 });

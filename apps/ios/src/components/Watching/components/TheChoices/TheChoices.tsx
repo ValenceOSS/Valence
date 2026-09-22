@@ -2,6 +2,8 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
+import { Check } from '@ValencePhone/glyphs/Check';
+import { X } from '@ValencePhone/glyphs/X';
 import type { TheChoicesProps } from './TheChoices.types';
 
 const OVER_THE_PICTURE = '#ffffff';
@@ -76,7 +78,7 @@ const TheChoices = ({ sets, onClose }: TheChoicesProps) => {
             <Text style={styles.topWord}>Settings</Text>
 
             <Button tone="bare" label="Close the settings" onPress={onClose}>
-              <Icon of="X" size={22} colour={OVER_THE_PICTURE} />
+              <Icon of={X} size={22} colour={OVER_THE_PICTURE} />
             </Button>
           </View>
 
@@ -104,7 +106,7 @@ const TheChoices = ({ sets, onClose }: TheChoicesProps) => {
                     )}
 
                     {choice.id === set.chosen ? (
-                      <Icon of="Check" size={18} colour={OVER_THE_PICTURE} />
+                      <Icon of={Check} size={18} colour={OVER_THE_PICTURE} />
                     ) : null}
                   </View>
                 </Button>
