@@ -1,6 +1,8 @@
 import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
+import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
+import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 import { QualityPreferenceSchema } from '@ValenceClient/playback/qualityPreference';
@@ -11,6 +13,9 @@ const AS_SENT = 'original';
 
 type WhatThereIsToChoose = {
   streams: readonly AudioStream[];
+  subtitles: readonly SubtitleTrack[];
+  chosenSubtitle: string;
+  onSubtitle: (trackId: string) => void;
   media: MediaDetail | null;
   chosenAudio: number | null;
   chosenQuality: QualityPreference;
@@ -27,9 +32,13 @@ type WhatThereIsToChoose = {
  * film is fetched again from where they had got to.
  *
  * A set with one thing in it is left out. Offering somebody a choice between one option and nothing
- * is not a choice, and a film with a single soundtrack should not have a menu saying so.
+ * is not a choice, and a film with a single soundtrack should not have a menu saying so. Subtitles
+ * are the exception, because off is a real answer there and one track plus off is a real choice.
  *
  * @param streams - The soundtracks the file carries.
+ * @param subtitles - The subtitle tracks there are to read.
+ * @param chosenSubtitle - Which is being read, or off.
+ * @param onSubtitle - Told which one they want.
  * @param media - The file itself, which decides what qualities are worth offering.
  * @param chosenAudio - Which soundtrack is playing, or none chosen and the file's own default.
  * @param chosenQuality - What was asked for, or the file as it is.
@@ -39,6 +48,9 @@ type WhatThereIsToChoose = {
  */
 const theChoicesOn = ({
   streams,
+  subtitles,
+  chosenSubtitle,
+  onSubtitle,
   media,
   chosenAudio,
   chosenQuality,
@@ -46,6 +58,22 @@ const theChoicesOn = ({
   onQuality,
 }: WhatThereIsToChoose): ASetOfChoices[] => {
   const sets: ASetOfChoices[] = [];
+
+  if (subtitles.length > 0) {
+    sets.push({
+      heading: 'Subtitles',
+      chosen: chosenSubtitle,
+      choices: [
+        { id: SUBTITLES_OFF, label: 'Off' },
+        ...subtitles.map((track) => ({
+          id: track.id,
+          label: track.label,
+          detail: track.format.toUpperCase(),
+        })),
+      ],
+      onChoose: onSubtitle,
+    });
+  }
 
   if (streams.length > 1) {
     sets.push({

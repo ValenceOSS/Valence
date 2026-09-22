@@ -4,6 +4,7 @@ import { useEvent } from 'expo';
 import { useQuery } from '@tanstack/react-query';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import {
   heartbeatPlaybackSession,
@@ -28,6 +29,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { TheControls } from '@ValencePhone/components/Watching/components/TheControls/TheControls';
 import { TheChoices } from '@ValencePhone/components/Watching/components/TheChoices/TheChoices';
+import { TheSubtitles } from '@ValencePhone/components/Watching/components/TheSubtitles/TheSubtitles';
+import { useTheSubtitles } from '@ValencePhone/components/Watching/useTheSubtitles';
 import { howBigToDrawIt } from '@ValencePhone/components/Watching/howBigToDrawIt';
 import { usePinchToFill } from '@ValencePhone/components/Watching/usePinchToFill';
 import { theChoicesOn } from '@ValencePhone/components/Watching/theChoicesOn';
@@ -127,9 +130,17 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
     from: number;
     audioStreamIndex?: number;
     requestedQuality?: QualityPreference;
+    subtitleStreamIndex?: number | undefined;
   }>({ from: startSeconds });
   const clientId = platformInUse().thisClientId();
   const title = useQuery(libraryQueries.detail(mediaId));
+  const tracks = useQuery({
+    queryKey: ['subtitles', mediaId],
+    queryFn: () => fetchSubtitleTracks(mediaId),
+  });
+  const [reading, setReading] = useState(SUBTITLES_OFF);
+  const beingRead = (tracks.data ?? []).find((track) => track.id === reading) ?? null;
+  const cues = useTheSubtitles(mediaId, reading, beingRead?.delivery === 'burnIn', asking.from);
 
   useEffect(() => {
     let started: string | null = null;
@@ -144,6 +155,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
       Math.floor(asking.from),
       asking.audioStreamIndex,
       asking.requestedQuality,
+      asking.subtitleStreamIndex,
     ).then((outcome) => {
       if (outcome.kind === 'failed') {
         setRefusal(outcome.reason);
@@ -213,6 +225,28 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
     setAreControlsUp(true);
     setLastTouched(Date.now());
   }, []);
+
+  const readInstead = useCallback(
+    (trackId: string) => {
+      const wanted = (tracks.data ?? []).find((track) => track.id === trackId) ?? null;
+
+      setReading(trackId);
+      setIsChoosing(false);
+
+      const burning = wanted?.delivery === 'burnIn' ? (wanted.streamIndex ?? undefined) : undefined;
+
+      if (burning === asking.subtitleStreamIndex) {
+        return;
+      }
+
+      setAsking((asked) => ({
+        ...asked,
+        subtitleStreamIndex: burning,
+        from: player.currentTime,
+      }));
+    },
+    [tracks.data, asking.subtitleStreamIndex, player],
+  );
 
   const askAgain = useCallback(
     (changed: { audioStreamIndex?: number; requestedQuality?: QualityPreference }) => {
@@ -371,6 +405,12 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
         }}
       />
 
+      <TheSubtitles
+        cues={cues}
+        atSeconds={ticking.currentTime}
+        isClearOfTheControls={areControlsDrawn}
+      />
+
       {areControlsDrawn ? (
         <TheControls
           fade={fade}
@@ -409,6 +449,9 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
         <TheChoices
           sets={theChoicesOn({
             streams: title.data?.audioStreams ?? [],
+            subtitles: tracks.data ?? [],
+            chosenSubtitle: reading,
+            onSubtitle: readInstead,
             media: title.data ?? null,
             chosenAudio: asking.audioStreamIndex ?? null,
             chosenQuality: asking.requestedQuality ?? 'original',

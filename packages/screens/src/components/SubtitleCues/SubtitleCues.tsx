@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchSubtitleCues } from '@ValenceClient/playback/fetchSubtitleCues';
-import { asSubtitleLines } from '@ValenceScreens/playback/asSubtitleLines';
+import { asSubtitleLines } from '@ValenceClient/playback/asSubtitleLines';
 import { linesAt } from '@ValenceScreens/playback/linesAt';
 import { toCuePlacement } from '@ValenceScreens/playback/toCuePlacement';
 import { toSpanStyle } from '@ValenceScreens/playback/toSpanStyle';

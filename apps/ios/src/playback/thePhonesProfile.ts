@@ -3,7 +3,7 @@ import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import { describeThisPhone } from '@ValencePhone/platform/describeThisPhone';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 
-const STEREO = 2;
+const EVERY_CHANNEL_IT_DECODES = 8;
 
 const HEVC_LEVEL = 153;
 
@@ -26,9 +26,12 @@ const H264_LEVEL = 52;
  * runs on, and there is no way from here to tell which phone this is — so the ones that have it take
  * a transcode they did not need rather than the ones that do not taking a film they cannot play.
  *
- * Audio is claimed at two channels. A phone's speakers are two, and a server that knows that mixes
- * six down to them properly rather than sending six and leaving the dialogue somewhere the phone
- * cannot put it.
+ * Audio is claimed at every channel this phone decodes rather than at the two its speakers have.
+ * Asking for two had the server fold six down before sending them, which sounds the same out of
+ * the speakers and throws away the only thing headphones could have done something with: a phone
+ * handed six channels puts them around somebody wearing AirPods, and a phone handed two has
+ * nothing to place. Folding down for the speakers is something iOS does anyway, and it does it
+ * knowing what it is playing out of.
  *
  * @returns What to negotiate with.
  */
@@ -41,7 +44,7 @@ const thePhonesProfile = (): DeviceProfile => {
     name: describeThisPhone(),
     maxWidth: Math.round(Math.max(screen.width, screen.height) * density),
     maxHeight: Math.round(Math.min(screen.width, screen.height) * density),
-    maxAudioChannels: STEREO,
+    maxAudioChannels: EVERY_CHANNEL_IT_DECODES,
     supportedVideoRanges: ['SDR', 'HDR10', 'HLG'],
     tenBitVideoCodecs: ['hevc'],
     maxVideoLevels: { h264: H264_LEVEL, hevc: HEVC_LEVEL },

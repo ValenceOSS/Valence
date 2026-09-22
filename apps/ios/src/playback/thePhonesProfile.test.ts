@@ -21,8 +21,12 @@ describe('thePhonesProfile', () => {
     expect(thePhonesProfile().directPlayProfiles[0]?.videoCodecs).not.toContain('av1');
   });
 
-  it('asks for two channels, which is what a phone has to put them through', () => {
-    expect(thePhonesProfile().maxAudioChannels).toBe(2);
+  it('asks for every channel it can decode, so headphones have something to place', () => {
+    expect(thePhonesProfile().maxAudioChannels).toBe(8);
+  });
+
+  it('does not ask the server to fold the sound down, which iOS does better and later', () => {
+    expect(thePhonesProfile().maxAudioChannels).toBeGreaterThan(2);
   });
 
   it('takes ten-bit hevc, which is most of what a library holds in hdr', () => {

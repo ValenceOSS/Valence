@@ -101,6 +101,7 @@ describe('Watching', () => {
         0,
         undefined,
         undefined,
+        undefined,
       );
     });
   });
@@ -215,6 +216,7 @@ describe('Watching', () => {
         expect.anything(),
         expect.any(String),
         1234,
+        undefined,
         undefined,
         undefined,
       );

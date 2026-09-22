@@ -1,4 +1,4 @@
-import { parseWebVtt } from '@ValenceScreens/playback/parseWebVtt';
+import { parseWebVtt } from '@ValenceClient/playback/parseWebVtt';
 import type { SubtitleCue } from '@ValenceClient/playback/fetchSubtitleCues';
 
 const PLAIN_MARGINS = { left: 0, right: 0, vertical: 0 };

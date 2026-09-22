@@ -2,6 +2,7 @@ import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import { theChoicesOn } from './theChoicesOn';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
+import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 
 const aStream = (index: number, language: string, isDefault = false): AudioStream =>
   AudioStreamSchema.parse({
@@ -32,8 +33,26 @@ const aFilm = (width: number, height: number) =>
     metadata: { hasPoster: false, hasBackdrop: false, hasLogo: false },
   });
 
+const aTrack = (
+  id: string,
+  label: string,
+  delivery: 'text' | 'burnIn' = 'text',
+): SubtitleTrack => ({
+  id,
+  language: 'eng',
+  label,
+  format: 'srt',
+  isForced: false,
+  isHearingImpaired: false,
+  delivery,
+  streamIndex: null,
+});
+
 const asking = {
   media: aFilm(3840, 2160),
+  subtitles: [],
+  chosenSubtitle: 'off',
+  onSubtitle: jest.fn(),
   chosenAudio: null,
   chosenQuality: 'original' as const,
   onAudio: jest.fn(),
@@ -115,5 +134,65 @@ describe('theChoicesOn', () => {
 
   it('says nothing at all about a film nothing is known about yet', () => {
     expect(theChoicesOn({ ...asking, media: null, streams: [] })).toEqual([]);
+  });
+
+  it('says nothing about subtitles for a film that has none', () => {
+    const sets = theChoicesOn({ ...asking, streams: [aStream(1, 'eng', true)] });
+
+    expect(sets.map((set) => set.heading)).not.toContain('Subtitles');
+  });
+
+  it('offers a single track, since off is the other half of that choice', () => {
+    const sets = theChoicesOn({
+      ...asking,
+      subtitles: [aTrack('one', 'English')],
+      streams: [aStream(1, 'eng', true)],
+    });
+
+    expect(sets.find((set) => set.heading === 'Subtitles')?.choices).toHaveLength(2);
+  });
+
+  it('offers off first, since that is where everybody starts', () => {
+    const sets = theChoicesOn({
+      ...asking,
+      subtitles: [aTrack('one', 'English')],
+      streams: [aStream(1, 'eng', true)],
+    });
+
+    expect(sets.find((set) => set.heading === 'Subtitles')?.choices[0]).toMatchObject({
+      id: 'off',
+      label: 'Off',
+    });
+  });
+
+  it('says what kind each track is, since one may be a picture and another words', () => {
+    const sets = theChoicesOn({
+      ...asking,
+      subtitles: [aTrack('one', 'English')],
+      streams: [aStream(1, 'eng', true)],
+    });
+
+    expect(sets.find((set) => set.heading === 'Subtitles')?.choices[1]?.detail).toBe('SRT');
+  });
+
+  it('marks the one being read', () => {
+    const sets = theChoicesOn({
+      ...asking,
+      chosenSubtitle: 'one',
+      subtitles: [aTrack('one', 'English')],
+      streams: [aStream(1, 'eng', true)],
+    });
+
+    expect(sets.find((set) => set.heading === 'Subtitles')?.chosen).toBe('one');
+  });
+
+  it('puts subtitles before sound, which is the order people look for them in', () => {
+    const sets = theChoicesOn({
+      ...asking,
+      subtitles: [aTrack('one', 'English')],
+      streams: [aStream(1, 'jpn', true), aStream(2, 'eng')],
+    });
+
+    expect(sets.map((set) => set.heading)).toEqual(['Subtitles', 'Audio', 'Quality']);
   });
 });

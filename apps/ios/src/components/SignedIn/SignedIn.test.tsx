@@ -174,6 +174,7 @@ describe('SignedIn', () => {
         0,
         undefined,
         undefined,
+        undefined,
       );
     });
   });
