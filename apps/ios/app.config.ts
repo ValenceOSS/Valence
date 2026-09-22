@@ -12,9 +12,14 @@ const config: ExpoConfig = {
     supportsTablet: false,
     infoPlist: {
       UIBackgroundModes: ['audio'],
+      NSLocalNetworkUsageDescription:
+        'Valence needs this to reach a server on your own network, which is where a self-hosted one usually is.',
     },
   },
-  plugins: [['expo-build-properties', { ios: { deploymentTarget: '18.0' } }]],
+  plugins: [
+    ['expo-build-properties', { ios: { deploymentTarget: '18.0' } }],
+    './plugins/withTheSceneLifecycle',
+  ],
 };
 
 export default config;

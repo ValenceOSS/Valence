@@ -12,6 +12,7 @@
     "jest.config.ts",
     "jest.setup.ts",
     "jest.beforeEach.ts",
+    "plugins/**/*.ts",
     "jest-expo.d.ts",
     "react-native-cookies.d.ts",
     "src/**/*.ts",
