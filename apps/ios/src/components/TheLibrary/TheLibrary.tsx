@@ -1,191 +1,223 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
-import { byLastWatched } from '@ValenceClient/playback/byLastWatched';
-import { isWorthResuming, watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
+import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { useLibraryFilters } from '@ValenceClient/library/useLibraryFilters';
+import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
-import { theArtworkFor } from '@ValencePhone/components/APoster/theArtworkFor';
-import { onThisServer } from '@ValencePhone/platform/onThisServer';
-import { Button } from '@ValencePhone/components/Button/Button';
-import { CarryOn } from '@ValencePhone/components/TheLibrary/components/CarryOn/CarryOn';
 import { APosterGrid } from '@ValencePhone/components/APosterGrid/APosterGrid';
+import { Button } from '@ValencePhone/components/Button/Button';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { TextField } from '@ValencePhone/components/TextField/TextField';
+import { Words } from '@ValencePhone/components/Words/Words';
+import { ACard } from '@ValencePhone/components/TheLibrary/components/ACard/ACard';
+import { TheFilters } from '@ValencePhone/components/TheLibrary/components/TheFilters/TheFilters';
+import { TheHome } from '@ValencePhone/components/TheLibrary/components/TheHome/TheHome';
 import { TheResults } from '@ValencePhone/components/TheLibrary/components/TheResults/TheResults';
 import { useSettled } from '@ValencePhone/hooks/useSettled';
-import { Words } from '@ValencePhone/components/Words/Words';
+import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
-import type { TheLibraryProps } from './TheLibrary.types';
-import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
+import type { TheLibraryProps } from './TheLibrary.types';
 
-type Cell = { kind: 'film'; media: MediaSummary } | { kind: 'programme'; programme: ShowSummary };
-
-const theFractionOf = (progress: WatchProgress | undefined): number =>
-  progress === undefined ? 0 : watchedFraction(progress);
-
-const AS_MANY_AS_A_ROW_HOLDS = 20;
-
-const WHAT_A_PHONE_PLAYS: ReadonlySet<string> = new Set(['movies', 'shows']);
+type Cell = { kind: 'media'; media: MediaSummary } | { kind: 'programme'; programme: ShowSummary };
 
 const HOLD_STILL_FOR = 250;
 
+const EVERY = 'every';
+
 /**
- * What is in this household's libraries.
+ * What is in this household's libraries, laid out as the web's are: a home page of shelves, and
+ * films and programmes each as a grid of their own.
  *
- * It opens on whatever somebody was part way through, drawn from every library rather than the one
- * showing, because they came back for a film and not for a tab.
+ * Films and programmes each take the web's filters, and where there is more than one library of a
+ * kind, a choice of which. Only libraries a phone can play are offered: music and books wait for
+ * players of their own.
  *
- * Which library is showing is held here rather than asked of the server, and the first one is
- * chosen as soon as the list arrives: a phone opening on a list of library names asks somebody to
- * make a choice before showing them anything, and the answer is almost always the first one.
+ * Programmes are read as the list of programmes while nothing is filtered, which is one request,
+ * and as their episodes gathered into programmes once something is, since genre and year belong to
+ * the episodes.
  *
- * Searching replaces everything below the box with what was found, across every library rather
- * than the one showing, and puts it all back when the box is cleared.
- *
- * Only libraries a phone can play are offered. Music and books have players of their own that
- * this client does not have yet, and a tab of albums that open in a film player is worse than no
- * tab at all.
- *
- * A library of programmes is drawn a programme to a card rather than an episode to a card. A
- * series of ten seasons is otherwise two hundred posters of the same picture, and the one somebody
- * wanted is somewhere in the middle of them.
+ * Searching looks through every library at once and puts the rest back when the box is cleared.
  *
  * @param onLookAt - Told which title somebody wants to see more of.
  * @param onLookAtShow - Told which programme, in which library.
  */
 const TheLibrary = ({ onLookAt, onLookAtShow }: TheLibraryProps) => {
-  const everyLibrary = useQuery(libraryQueries.all());
-  const libraries = {
-    ...everyLibrary,
-    data: everyLibrary.data?.filter((library) => WHAT_A_PHONE_PLAYS.has(library.kind)),
-  };
-  const watched = useQuery(viewingQueries.progress());
   const colours = useTheColours();
-  const [chosen, setChosen] = useState<string | null>(null);
+  const libraries = useQuery(libraryQueries.all());
+  const watched = useQuery(viewingQueries.progress());
+  const filters = useLibraryFilters();
+  const [part, setPart] = useState('home');
+  const [chosen, setChosen] = useState(EVERY);
   const [typed, setTyped] = useState('');
   const searchingFor = useSettled(typed.trim(), HOLD_STILL_FOR);
-  const showing = chosen ?? libraries.data?.[0]?.id ?? null;
-  const isProgrammes =
-    (libraries.data ?? []).find((library) => library.id === showing)?.kind === 'shows';
-  const films = useQuery({
-    ...libraryQueries.everything(showing === null ? [] : [showing]),
-    enabled: showing !== null && !isProgrammes,
-  });
-  const programmes = useQuery({
-    ...libraryQueries.shows(showing),
-    enabled: showing !== null && isProgrammes,
-  });
-  const isWaiting = isProgrammes ? programmes.isPending : films.isPending;
-  const isEmpty = isProgrammes
-    ? programmes.data !== undefined && programmes.data.length === 0
-    : films.data !== undefined && films.data.length === 0;
   const howFar = byMediaId(watched.data ?? []);
-  const unfinished = (watched.data ?? []).filter(isWorthResuming).map((one) => one.mediaId);
-  const carryingOn = useQuery({
-    ...libraryQueries.across(
-      (libraries.data ?? []).map((library) => library.id),
-      { ids: unfinished, limit: AS_MANY_AS_A_ROW_HOLDS },
-    ),
-    enabled: unfinished.length > 0 && (libraries.data ?? []).length > 0,
+  const films = (libraries.data ?? []).filter((library) => library.kind === 'movies');
+  const programmes = (libraries.data ?? []).filter((library) => library.kind === 'shows');
+  const watchable = [...films, ...programmes].map((library) => library.id);
+  const ofThisKind = part === 'films' ? films : part === 'shows' ? programmes : [];
+  const reading = chosen === EVERY ? ofThisKind.map((library) => library.id) : [chosen];
+  const isFiltered = filters.selected.size > 0;
+  const parts = [
+    { id: 'home', label: 'Home' },
+    ...(films.length > 0 ? [{ id: 'films', label: 'Films' }] : []),
+    ...(programmes.length > 0 ? [{ id: 'shows', label: 'Shows' }] : []),
+  ];
+
+  const everything = useQuery({
+    ...libraryQueries.everything(reading, {
+      kind: part === 'shows' ? 'shows' : 'films',
+      ...filters.asked,
+    }),
+    enabled: reading.length > 0 && (part === 'films' || isFiltered),
+  });
+  const programmeLists = useQueries({
+    queries: reading.map((libraryId) => ({
+      ...libraryQueries.shows(libraryId),
+      enabled: part === 'shows' && !isFiltered,
+    })),
   });
 
   const cells: readonly Cell[] =
-    searchingFor !== ''
+    searchingFor !== '' || part === 'home'
       ? []
-      : isProgrammes
-        ? (programmes.data ?? []).map((programme) => ({ kind: 'programme', programme }))
-        : (films.data ?? []).map((media) => ({ kind: 'film', media }));
+      : part === 'shows' && !isFiltered
+        ? programmeLists
+            .flatMap((list) => list.data ?? [])
+            .sort((left, right) => left.title.localeCompare(right.title))
+            .map((programme) => ({ kind: 'programme', programme }))
+        : (part === 'shows' ? collapseToShows(everything.data ?? []) : (everything.data ?? [])).map(
+            (media) => ({ kind: 'media', media }),
+          );
+  const isWaiting =
+    part === 'shows' && !isFiltered
+      ? programmeLists.some((list) => list.isPending)
+      : everything.isPending && everything.fetchStatus !== 'idle';
+
+  const header = (
+    <>
+      <Words size="title">Library</Words>
+
+      {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
+
+      <TextField
+        label="Search"
+        value={typed}
+        onValueChange={setTyped}
+        placeholder="Search"
+        keyboard="search"
+      />
+
+      {searchingFor !== '' ? (
+        <TheResults
+          asked={searchingFor}
+          libraryIds={watchable}
+          howFarThrough={(mediaId) => {
+            const known = howFar.get(mediaId);
+
+            return known === undefined ? 0 : watchedFraction(known);
+          }}
+          onLookAt={onLookAt}
+          onLookAtShow={onLookAtShow}
+        />
+      ) : (
+        <>
+          <SegmentedRow
+            label="What to show"
+            items={parts}
+            value={part}
+            onSelect={(next) => {
+              setPart(next);
+              setChosen(EVERY);
+              filters.clear();
+            }}
+          />
+
+          {ofThisKind.length > 1 ? (
+            <SegmentedRow
+              label="Which library"
+              items={[
+                { id: EVERY, label: 'All' },
+                ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
+              ]}
+              value={chosen}
+              onSelect={setChosen}
+            />
+          ) : null}
+
+          {part === 'home' ? null : (
+            <TheFilters
+              groups={filters.groups}
+              selected={filters.selected}
+              onChange={filters.change}
+              onClear={filters.clear}
+            />
+          )}
+
+          {isWaiting ? <ActivityIndicator color={colours.textMuted} /> : null}
+
+          {part !== 'home' && !isWaiting && cells.length === 0 ? (
+            <Words tone="muted">
+              {isFiltered ? 'Nothing matches those.' : 'Nothing in here yet.'}
+            </Words>
+          ) : null}
+        </>
+      )}
+    </>
+  );
+
+  if (part === 'home' && searchingFor === '') {
+    return (
+      <TheHome
+        header={header}
+        watchable={watchable}
+        onLookAt={onLookAt}
+        onLookAtShow={onLookAtShow}
+      />
+    );
+  }
 
   return (
     <APosterGrid
+      header={header}
       items={cells}
-      keyOf={(cell) => (cell.kind === 'film' ? cell.media.id : cell.programme.id)}
-      drawn={(cell) =>
-        cell.kind === 'programme' ? (
-          <Button
-            tone="bare"
-            label={cell.programme.title}
-            onPress={() => {
-              onLookAtShow(cell.programme.libraryId, cell.programme.id);
-            }}
-          >
-            <APoster
-              title={cell.programme.title}
-              year={cell.programme.year ?? null}
-              artwork={onThisServer(`/api/media/${cell.programme.coverMediaId}/image/poster`)}
-            />
-          </Button>
-        ) : (
-          <Button
-            tone="bare"
-            label={cell.media.title}
-            onPress={() => {
-              onLookAt(cell.media.id);
-            }}
-          >
-            <APoster
-              title={cell.media.title}
-              year={cell.media.year}
-              artwork={theArtworkFor(cell.media)}
-              watched={theFractionOf(howFar.get(cell.media.id))}
-            />
-          </Button>
-        )
-      }
-      header={
-        <>
-          <Words size="title">Library</Words>
+      keyOf={(cell) => (cell.kind === 'media' ? cell.media.id : cell.programme.id)}
+      drawn={(cell) => {
+        if (cell.kind === 'programme') {
+          return (
+            <Button
+              tone="bare"
+              label={cell.programme.title}
+              onPress={() => {
+                onLookAtShow(cell.programme.libraryId, cell.programme.id);
+              }}
+            >
+              <APoster
+                title={cell.programme.title}
+                year={cell.programme.year ?? null}
+                artwork={onThisServer(`/api/media/${cell.programme.coverMediaId}/image/poster`)}
+              />
+            </Button>
+          );
+        }
 
-          {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
+        const known = howFar.get(cell.media.id);
 
-          <TextField
-            label="Search"
-            value={typed}
-            onValueChange={setTyped}
-            placeholder="Search"
-            keyboard="search"
+        return (
+          <ACard
+            media={cell.media}
+            asProgramme={part === 'shows'}
+            watched={known === undefined ? 0 : watchedFraction(known)}
+            onLookAt={onLookAt}
+            onLookAtShow={onLookAtShow}
           />
-
-          {searchingFor === '' ? (
-            <>
-              <CarryOn
-                items={[...(carryingOn.data ?? [])].sort(byLastWatched(howFar))}
-                howFarThrough={(mediaId) => theFractionOf(howFar.get(mediaId))}
-                onLookAt={onLookAt}
-              />
-
-              <SegmentedRow
-                label="Library"
-                items={(libraries.data ?? []).map((library) => ({
-                  id: library.id,
-                  label: library.name,
-                }))}
-                value={showing}
-                onSelect={setChosen}
-              />
-
-              {isWaiting && showing !== null ? (
-                <ActivityIndicator color={colours.textMuted} />
-              ) : null}
-
-              {isEmpty ? <Words tone="muted">Nothing in here yet.</Words> : null}
-            </>
-          ) : (
-            <TheResults
-              asked={searchingFor}
-              libraryIds={(libraries.data ?? []).map((library) => library.id)}
-              howFarThrough={(mediaId) => theFractionOf(howFar.get(mediaId))}
-              onLookAt={onLookAt}
-              onLookAtShow={onLookAtShow}
-            />
-          )}
-        </>
-      }
+        );
+      }}
     />
   );
 };

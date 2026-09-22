@@ -1,9 +1,9 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
-type CarryOnProps = {
+type TheFeaturedProps = {
   items: readonly MediaSummary[];
-  howFarThrough: (mediaId: string) => number;
   onLookAt: (mediaId: string) => void;
+  onLookAtShow: (libraryId: string, showId: string) => void;
 };
 
-export type { CarryOnProps };
+export type { TheFeaturedProps };
