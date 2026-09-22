@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useEvent, useEventListener } from 'expo';
 import { useQuery } from '@tanstack/react-query';
-import { Animated, Easing, Image, LayoutAnimation, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Info, Play, Volume2, VolumeX } from 'lucide-react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -43,9 +43,7 @@ const RISES_OVER = 550;
 
 const ONE_AFTER_ANOTHER = 90;
 
-const FADES_BEFORE_FOLDING = 350;
-
-const FOLDS_OVER = 450;
+const FOLDS_OVER = 600;
 
 const PARTS = 4;
 
@@ -53,6 +51,8 @@ const styles = StyleSheet.create({
   buttons: { flexDirection: 'row', gap: 10, marginTop: 8 },
   facts: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
+  folds: { overflow: 'hidden' },
+  unfolded: { left: 0, position: 'absolute', right: 0, top: 0 },
   foot: {
     bottom: 0,
     gap: 8,
@@ -122,6 +122,7 @@ const AFeature = ({
   const [showing] = useState(() => new Animated.Value(0));
   const [rising] = useState(() => Array.from({ length: PARTS }, () => new Animated.Value(0)));
   const [telling] = useState(() => new Animated.Value(1));
+  const [toldHigh, setToldHigh] = useState<number | null>(null);
   const title = media.seriesTitle ?? media.title;
   const overview = detail.data?.metadata.overview ?? null;
 
@@ -178,13 +179,10 @@ const AFeature = ({
     const folding = setTimeout(() => {
       Animated.timing(telling, {
         toValue: 0,
-        duration: FADES_BEFORE_FOLDING,
-        easing: Easing.inOut(Easing.quad),
-        useNativeDriver: true,
+        duration: FOLDS_OVER,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: false,
       }).start(() => {
-        LayoutAnimation.configureNext(
-          LayoutAnimation.create(FOLDS_OVER, LayoutAnimation.Types.easeInEaseOut),
-        );
         setIsTelling(false);
       });
     }, TELL_FOR);
@@ -340,12 +338,38 @@ const AFeature = ({
           </Animated.View>
 
           {overview === null || overview === '' || !isTelling ? null : (
-            <Animated.View style={{ opacity: telling }}>
-              <Animated.View style={risingOf(2)}>
-                <Words tone="onArtwork" lines={3}>
-                  {overview}
-                </Words>
-              </Animated.View>
+            <Animated.View
+              style={[
+                styles.folds,
+                {
+                  opacity: telling,
+                  ...(toldHigh === null
+                    ? {}
+                    : {
+                        height: telling.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, toldHigh],
+                        }),
+                      }),
+                },
+              ]}
+            >
+              <View
+                style={styles.unfolded}
+                onLayout={(event) => {
+                  const { height } = event.nativeEvent.layout;
+
+                  if (height > 0 && toldHigh !== height) {
+                    setToldHigh(height);
+                  }
+                }}
+              >
+                <Animated.View style={risingOf(2)}>
+                  <Words tone="onArtwork" lines={3}>
+                    {overview}
+                  </Words>
+                </Animated.View>
+              </View>
             </Animated.View>
           )}
 
