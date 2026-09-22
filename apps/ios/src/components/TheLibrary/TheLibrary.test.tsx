@@ -173,8 +173,8 @@ describe('TheLibrary', () => {
 
     await waitFor(() => {
       expect(
-        drawn.getByRole('progressbar', { name: 'How far through Arrival', value: { now: 50 } }),
-      ).toBeTruthy();
+        drawn.getAllByRole('progressbar', { name: 'How far through Arrival', value: { now: 50 } }),
+      ).not.toHaveLength(0);
     });
   });
 
@@ -189,5 +189,60 @@ describe('TheLibrary', () => {
     });
 
     expect(drawn.queryByRole('progressbar')).toBeNull();
+  });
+
+  it('opens on what somebody was part way through', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
+    jest.mocked(fetchWatchProgress).mockResolvedValue([
+      {
+        mediaId: aTitle('Arrival').id,
+        positionSeconds: 3480,
+        durationSeconds: 6960,
+        isFinished: false,
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
+
+    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByText('Continue watching')).toBeTruthy();
+    });
+  });
+
+  it('says nothing about carrying on to a household that has not started anything', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
+
+    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
+    });
+
+    expect(drawn.queryByText('Continue watching')).toBeNull();
+  });
+
+  it('leaves out what they have finished', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
+    jest.mocked(fetchWatchProgress).mockResolvedValue([
+      {
+        mediaId: aTitle('Arrival').id,
+        positionSeconds: 6960,
+        durationSeconds: 6960,
+        isFinished: true,
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
+
+    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
+    });
+
+    expect(drawn.queryByText('Continue watching')).toBeNull();
   });
 });

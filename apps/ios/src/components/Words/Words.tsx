@@ -4,14 +4,17 @@ import type { WordsProps } from './Words.types';
 
 const styles = StyleSheet.create({
   body: { fontSize: 15 },
+  heading: { fontSize: 19, fontWeight: '700', letterSpacing: -0.2 },
   small: { fontSize: 12 },
   title: { fontSize: 30, fontWeight: '700', letterSpacing: -0.5 },
 });
 
 /**
- * Anything written on a phone, at one of the three sizes there turned out to be.
+ * Anything written on a phone, at one of the four sizes there turned out to be.
  *
- * Three rather than a scale, because a scale invites a fourth and then the screens stop agreeing.
+ * Four rather than a scale, because a scale invites a fifth and then the screens stop agreeing. The
+ * fourth arrived with rows: a row needs a name that is clearly not the page's own, and neither the
+ * page's title nor the words under it would do.
  *
  * @param children - What it says.
  * @param tone - How much it wants to be read.
@@ -26,7 +29,13 @@ const Words = ({ children, tone = 'plain', size = 'body', lines }: WordsProps) =
   return (
     <Text
       style={[
-        size === 'title' ? styles.title : size === 'small' ? styles.small : styles.body,
+        size === 'title'
+          ? styles.title
+          : size === 'heading'
+            ? styles.heading
+            : size === 'small'
+              ? styles.small
+              : styles.body,
         { color: colour },
       ]}
       {...(lines === undefined ? {} : { numberOfLines: lines })}

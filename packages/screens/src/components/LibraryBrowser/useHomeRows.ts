@@ -7,6 +7,7 @@ import { homeRows, MIN_ROW, ROW_LIMIT } from '@ValenceClient/library/homeRows';
 import { pickForYou } from '@ValenceClient/library/pickForYou';
 import { tasteOf } from '@ValenceClient/library/tasteOf';
 import { isWorthResuming } from '@ValenceContracts/schemas/WatchProgress';
+import { byLastWatched } from '@ValenceClient/playback/byLastWatched';
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
@@ -52,18 +53,6 @@ const encoreTitle = (
 
   return order === 'newest' ? `New in ${genre}` : `${genre} A–Z`;
 };
-
-/**
- * Orders things by when somebody last had them on, most recent first.
- *
- * @param progress - How far through each thing they are, and when they last were.
- * @returns A comparison to sort by.
- */
-const byLastWatched =
-  (progress: Map<string, WatchProgress>) =>
-  (left: MediaSummary, right: MediaSummary): number =>
-    (Date.parse(progress.get(right.id)?.updatedAt ?? '') || 0) -
-    (Date.parse(progress.get(left.id)?.updatedAt ?? '') || 0);
 
 /**
  * Orders things newest first, by when they were added.
