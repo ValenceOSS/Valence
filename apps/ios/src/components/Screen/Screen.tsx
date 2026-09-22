@@ -1,13 +1,12 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
+import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
 import type { ScreenProps } from './Screen.types';
-
-const EDGE = 20;
 
 const styles = StyleSheet.create({
   centred: { flex: 1, gap: 16, justifyContent: 'center' },
-  inside: { gap: 20, paddingHorizontal: EDGE },
+  inside: { gap: 20, paddingHorizontal: SCREEN_EDGE },
   whole: { flex: 1 },
 });
 
@@ -27,7 +26,7 @@ const Screen = ({ children, scrolls = false, centres = false }: ScreenProps) => 
   const colours = useTheColours();
   const room = useSafeAreaInsets();
   const ground = { backgroundColor: colours.surface };
-  const spacing = { paddingBottom: room.bottom + EDGE, paddingTop: room.top + EDGE };
+  const spacing = { paddingBottom: room.bottom + SCREEN_EDGE, paddingTop: room.top + SCREEN_EDGE };
 
   if (!scrolls) {
     return (

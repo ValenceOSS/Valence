@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -11,7 +11,7 @@ import { theArtworkFor } from '@ValencePhone/components/APoster/theArtworkFor';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { CarryOn } from '@ValencePhone/components/TheLibrary/components/CarryOn/CarryOn';
-import { Screen } from '@ValencePhone/components/Screen/Screen';
+import { APosterGrid } from '@ValencePhone/components/APosterGrid/APosterGrid';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { TextField } from '@ValencePhone/components/TextField/TextField';
 import { TheResults } from '@ValencePhone/components/TheLibrary/components/TheResults/TheResults';
@@ -20,6 +20,10 @@ import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheLibraryProps } from './TheLibrary.types';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { ShowSummary } from '@ValenceContracts/schemas/Show';
+
+type Cell = { kind: 'film'; media: MediaSummary } | { kind: 'programme'; programme: ShowSummary };
 
 const theFractionOf = (progress: WatchProgress | undefined): number =>
   progress === undefined ? 0 : watchedFraction(progress);
@@ -29,10 +33,6 @@ const AS_MANY_AS_A_ROW_HOLDS = 20;
 const WHAT_A_PHONE_PLAYS: ReadonlySet<string> = new Set(['movies', 'shows']);
 
 const HOLD_STILL_FOR = 250;
-
-const styles = StyleSheet.create({
-  shelf: { flexDirection: 'row', flexWrap: 'wrap', gap: 18 },
-});
 
 /**
  * What is in this household's libraries.
@@ -94,89 +94,99 @@ const TheLibrary = ({ onLookAt, onLookAtShow }: TheLibraryProps) => {
     enabled: unfinished.length > 0 && (libraries.data ?? []).length > 0,
   });
 
+  const cells: readonly Cell[] =
+    searchingFor !== ''
+      ? []
+      : isProgrammes
+        ? (programmes.data ?? []).map((programme) => ({ kind: 'programme', programme }))
+        : (films.data ?? []).map((media) => ({ kind: 'film', media }));
+
   return (
-    <Screen scrolls>
-      <Words size="title">Library</Words>
-
-      {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
-
-      <TextField
-        label="Search"
-        value={typed}
-        onValueChange={setTyped}
-        placeholder="Search"
-        keyboard="search"
-      />
-
-      {searchingFor === '' ? (
+    <APosterGrid
+      items={cells}
+      keyOf={(cell) => (cell.kind === 'film' ? cell.media.id : cell.programme.id)}
+      drawn={(cell) =>
+        cell.kind === 'programme' ? (
+          <Button
+            tone="bare"
+            label={cell.programme.title}
+            onPress={() => {
+              onLookAtShow(cell.programme.libraryId, cell.programme.id);
+            }}
+          >
+            <APoster
+              title={cell.programme.title}
+              year={cell.programme.year ?? null}
+              artwork={onThisServer(`/api/media/${cell.programme.coverMediaId}/image/poster`)}
+            />
+          </Button>
+        ) : (
+          <Button
+            tone="bare"
+            label={cell.media.title}
+            onPress={() => {
+              onLookAt(cell.media.id);
+            }}
+          >
+            <APoster
+              title={cell.media.title}
+              year={cell.media.year}
+              artwork={theArtworkFor(cell.media)}
+              watched={theFractionOf(howFar.get(cell.media.id))}
+            />
+          </Button>
+        )
+      }
+      header={
         <>
-          <CarryOn
-            items={[...(carryingOn.data ?? [])].sort(byLastWatched(howFar))}
-            howFarThrough={(mediaId) => theFractionOf(howFar.get(mediaId))}
-            onLookAt={onLookAt}
+          <Words size="title">Library</Words>
+
+          {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
+
+          <TextField
+            label="Search"
+            value={typed}
+            onValueChange={setTyped}
+            placeholder="Search"
+            keyboard="search"
           />
 
-          <SegmentedRow
-            label="Library"
-            items={(libraries.data ?? []).map((library) => ({
-              id: library.id,
-              label: library.name,
-            }))}
-            value={showing}
-            onSelect={setChosen}
-          />
+          {searchingFor === '' ? (
+            <>
+              <CarryOn
+                items={[...(carryingOn.data ?? [])].sort(byLastWatched(howFar))}
+                howFarThrough={(mediaId) => theFractionOf(howFar.get(mediaId))}
+                onLookAt={onLookAt}
+              />
 
-          {isWaiting && showing !== null ? <ActivityIndicator color={colours.textMuted} /> : null}
+              <SegmentedRow
+                label="Library"
+                items={(libraries.data ?? []).map((library) => ({
+                  id: library.id,
+                  label: library.name,
+                }))}
+                value={showing}
+                onSelect={setChosen}
+              />
 
-          {isEmpty ? <Words tone="muted">Nothing in here yet.</Words> : null}
+              {isWaiting && showing !== null ? (
+                <ActivityIndicator color={colours.textMuted} />
+              ) : null}
 
-          <View style={styles.shelf}>
-            {(isProgrammes ? (programmes.data ?? []) : []).map((programme) => (
-              <Button
-                key={programme.id}
-                tone="bare"
-                label={programme.title}
-                onPress={() => {
-                  onLookAtShow(programme.libraryId, programme.id);
-                }}
-              >
-                <APoster
-                  title={programme.title}
-                  year={programme.year ?? null}
-                  artwork={onThisServer(`/api/media/${programme.coverMediaId}/image/poster`)}
-                />
-              </Button>
-            ))}
-
-            {(isProgrammes ? [] : (films.data ?? [])).map((media) => (
-              <Button
-                key={media.id}
-                tone="bare"
-                label={media.title}
-                onPress={() => {
-                  onLookAt(media.id);
-                }}
-              >
-                <APoster
-                  title={media.title}
-                  year={media.year}
-                  artwork={theArtworkFor(media)}
-                  watched={theFractionOf(howFar.get(media.id))}
-                />
-              </Button>
-            ))}
-          </View>
+              {isEmpty ? <Words tone="muted">Nothing in here yet.</Words> : null}
+            </>
+          ) : (
+            <TheResults
+              asked={searchingFor}
+              libraryIds={(libraries.data ?? []).map((library) => library.id)}
+              howFarThrough={(mediaId) => theFractionOf(howFar.get(mediaId))}
+              onLookAt={onLookAt}
+              onLookAtShow={onLookAtShow}
+            />
+          )}
         </>
-      ) : (
-        <TheResults
-          asked={searchingFor}
-          libraryIds={(libraries.data ?? []).map((library) => library.id)}
-          howFarThrough={(mediaId) => theFractionOf(howFar.get(mediaId))}
-          onLookAt={onLookAt}
-          onLookAtShow={onLookAtShow}
-        />
-      )}
-    </Screen>
+      }
+    />
   );
 };
 

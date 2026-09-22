@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
+import { POSTER_WIDTH } from '@ValencePhone/components/APoster/POSTER_WIDTH';
 import { HowFar } from '@ValencePhone/components/HowFar/HowFar';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { APosterProps } from './APoster.types';
-
-const WIDTH = 104;
 
 const RATIO = 3 / 2;
 
@@ -15,11 +14,11 @@ const styles = StyleSheet.create({
   standIn: { alignItems: 'center', justifyContent: 'center', padding: 8 },
   tile: {
     borderRadius: 12,
-    height: WIDTH * RATIO,
+    height: POSTER_WIDTH * RATIO,
     overflow: 'hidden',
-    width: WIDTH,
+    width: POSTER_WIDTH,
   },
-  whole: { gap: 6, width: WIDTH },
+  whole: { gap: 6, width: POSTER_WIDTH },
 });
 
 /**
