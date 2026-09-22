@@ -236,8 +236,8 @@ const AFeature = ({
   };
 
   const facts = [
-    media.year === null ? null : media.year.toString(),
     media.rating === null || media.rating === undefined ? null : `★ ${media.rating.toFixed(1)}`,
+    media.year === null ? null : media.year.toString(),
     media.seriesTitle === null || media.seriesTitle === undefined
       ? howLongItRuns(media.durationSeconds)
       : null,
