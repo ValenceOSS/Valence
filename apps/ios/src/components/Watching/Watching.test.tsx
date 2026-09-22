@@ -477,6 +477,10 @@ describe('Watching', () => {
       jest.advanceTimersByTime(5000);
     });
 
+    await act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
     expect(drawn.queryByLabelText('Stop watching')).toBeNull();
   });
 
@@ -533,5 +537,23 @@ describe('Watching', () => {
     });
 
     expect(theFakePlayer.showNowPlayingNotification).toBe(true);
+  });
+
+  it('is still drawn while it is fading, so it does not vanish mid-fade', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    await act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+
+    expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
   });
 });

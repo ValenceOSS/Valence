@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Animated, StyleSheet, View } from 'react-native';
 import { useEvent } from 'expo';
 import { useQuery } from '@tanstack/react-query';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -38,6 +38,10 @@ const LOOK_EVERY = 1000;
 
 const LEAVE_THEM_UP_FOR = 3500;
 
+const FADING_IN = 160;
+
+const FADING_OUT = 240;
+
 const HOW_OFTEN_IT_SAYS_WHERE_IT_IS = 0.25;
 
 const styles = StyleSheet.create({
@@ -56,6 +60,11 @@ const styles = StyleSheet.create({
  *
  * This is the one screen a phone is turned for, and it turns itself: almost everything a household
  * watches was shot wide, and a phone held upright shows it as a strip across the middle.
+ *
+ * Whether the controls are wanted and whether they are still drawn are two questions: they are let
+ * go of once the fade has had time to finish, rather than when it says it has. The fade is run off
+ * the main thread so it does not stutter against a playing film, and a thing running over there
+ * cannot be waited on over here.
  *
  * It fills the screen from the moment it opens, and its controls are Valence's own rather than the
  * system's. The system's are good but they are a closed box: nothing can be drawn over them and
@@ -92,6 +101,8 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   const whereTheyGotTo = useRef<{ positionSeconds: number; durationSeconds: number } | null>(null);
   const picture = useRef<VideoViewRef | null>(null);
   const [areControlsUp, setAreControlsUp] = useState(true);
+  const [areControlsDrawn, setAreControlsDrawn] = useState(true);
+  const [fade] = useState(() => new Animated.Value(1));
   const [lastTouched, setLastTouched] = useState(0);
   const [isChoosing, setIsChoosing] = useState(false);
   const [asking, setAsking] = useState<{
@@ -217,6 +228,30 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   }, []);
 
   useEffect(() => {
+    if (areControlsUp) {
+      setAreControlsDrawn(true);
+    }
+
+    Animated.timing(fade, {
+      toValue: areControlsUp ? 1 : 0,
+      duration: areControlsUp ? FADING_IN : FADING_OUT,
+      useNativeDriver: true,
+    }).start();
+
+    if (areControlsUp) {
+      return;
+    }
+
+    const gone = setTimeout(() => {
+      setAreControlsDrawn(false);
+    }, FADING_OUT);
+
+    return () => {
+      clearTimeout(gone);
+    };
+  }, [areControlsUp, fade]);
+
+  useEffect(() => {
     if (!areControlsUp || !moving.isPlaying || isChoosing) {
       return;
     }
@@ -302,8 +337,9 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
         }}
       />
 
-      {areControlsUp ? (
+      {areControlsDrawn ? (
         <TheControls
+          fade={fade}
           title={title.data?.title ?? ''}
           year={title.data?.year ?? null}
           isPlaying={moving.isPlaying}

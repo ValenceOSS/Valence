@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
@@ -71,6 +71,9 @@ const styles = StyleSheet.create({
  * Nothing but the controls themselves takes a touch, so a tap on the picture reaches what is
  * behind this and puts it away — which is what a tap on a playing film means everywhere else.
  *
+ * It fades rather than appearing. Controls that snap on over a moving picture read as a fault in
+ * the picture, and ones that snap off take a moment of the film with them.
+ *
  * The middle row is centred on the screen rather than between the other two, because those two are
  * different heights and centring between them puts the play button above the middle of the film.
  *
@@ -79,6 +82,7 @@ const styles = StyleSheet.create({
  * the sake of something it never reaches, which is how a phone with a screen this size ends up
  * drawing a picture the size of an older one's.
  *
+ * @param fade - How far in or out it is, which whoever decides it is showing keeps hold of.
  * @param title - What is playing.
  * @param year - When it came out, where that is known.
  * @param isPlaying - Whether the picture is moving.
@@ -93,6 +97,7 @@ const styles = StyleSheet.create({
  * @param onSettings - Told they want the rest of it.
  */
 const TheControls = ({
+  fade,
   title,
   year,
   isPlaying,
@@ -109,9 +114,12 @@ const TheControls = ({
   const room = useSafeAreaInsets();
 
   return (
-    <View
+    <Animated.View
       pointerEvents="box-none"
-      style={[styles.whole, { paddingBottom: room.bottom + 12, paddingTop: room.top + 12 }]}
+      style={[
+        styles.whole,
+        { opacity: fade, paddingBottom: room.bottom + 12, paddingTop: room.top + 12 },
+      ]}
     >
       <View
         pointerEvents="box-none"
@@ -190,7 +198,7 @@ const TheControls = ({
           <Text style={styles.clock}>{`−${asAClock(Math.max(runsFor - at, 0))}`}</Text>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 

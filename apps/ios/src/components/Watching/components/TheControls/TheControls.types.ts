@@ -1,4 +1,7 @@
+import type { Animated } from 'react-native';
+
 type TheControlsProps = {
+  fade: Animated.Value;
   title: string;
   year: number | null;
   isPlaying: boolean;

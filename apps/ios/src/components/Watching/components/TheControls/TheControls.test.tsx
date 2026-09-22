@@ -1,9 +1,11 @@
 import { render, userEvent } from '@testing-library/react-native';
+import { Animated } from 'react-native';
 import { TheControls } from './TheControls';
 import type { TheControlsProps } from './TheControls.types';
 
 const theControls = (overrides: Partial<TheControlsProps> = {}) => (
   <TheControls
+    fade={new Animated.Value(1)}
     title="Arrival"
     year={2016}
     isPlaying
