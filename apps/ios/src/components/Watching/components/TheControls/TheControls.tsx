@@ -16,10 +16,12 @@ const ARRIVED = 'rgba(255, 255, 255, 0.5)';
 
 const A_STEP = 10;
 
+const EDGE = 16;
+
 const styles = StyleSheet.create({
   clock: { color: OVER_THE_PICTURE, fontSize: 13, fontVariant: ['tabular-nums'] },
-  foot: { gap: 2, paddingHorizontal: 16 },
-  head: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingHorizontal: 12 },
+  foot: { gap: 2 },
+  head: { alignItems: 'center', flexDirection: 'row', gap: 14 },
   middle: { alignItems: 'center', flexDirection: 'row', gap: 44, justifyContent: 'center' },
   step: { alignItems: 'center', justifyContent: 'center' },
   stepHowFar: {
@@ -52,6 +54,10 @@ const styles = StyleSheet.create({
  * It is drawn white on a scrim rather than in the theme, because what it sits on is a film and not
  * a page, and a light theme over a dark scene is unreadable either way round.
  *
+ * It is held off all four edges rather than the two a page worries about. This screen is the one
+ * turned sideways, and sideways the notch and the rounded corners are on the left and the right —
+ * a close button in the corner of a page is in the cutout on a film.
+ *
  * @param title - What is playing.
  * @param isPlaying - Whether the picture is moving.
  * @param at - How far in they are.
@@ -80,7 +86,17 @@ const TheControls = ({
   const room = useSafeAreaInsets();
 
   return (
-    <View style={[styles.whole, { paddingBottom: room.bottom + 8, paddingTop: room.top + 8 }]}>
+    <View
+      style={[
+        styles.whole,
+        {
+          paddingBottom: room.bottom + EDGE,
+          paddingLeft: room.left + EDGE,
+          paddingRight: room.right + EDGE,
+          paddingTop: room.top + EDGE,
+        },
+      ]}
+    >
       <View style={styles.head}>
         <Button tone="bare" label="Stop watching" onPress={onClose}>
           <Icon of="X" size={26} colour={OVER_THE_PICTURE} />
@@ -91,7 +107,7 @@ const TheControls = ({
         </Text>
 
         <Button tone="bare" label="Subtitles, audio and quality" onPress={onSettings}>
-          <Icon of="Settings" size={24} colour={OVER_THE_PICTURE} />
+          <Icon of="Settings" size={26} colour={OVER_THE_PICTURE} />
         </Button>
       </View>
 
