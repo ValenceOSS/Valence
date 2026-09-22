@@ -255,6 +255,7 @@
       "@ValenceUI/useIsPageCovered": ["./packages/ui/src/functions/useIsPageCovered.ts"],
       "@ValenceUI/usePagedScroller": ["./packages/ui/src/functions/usePagedScroller.ts"],
       "@ValenceUI/usePortalContainer": ["./packages/ui/src/functions/usePortalContainer.ts"],
+      "@ValenceUI/windowBarHeight": ["./packages/ui/src/functions/windowBarHeight.ts"],
       "@ValenceUI/useSlidingHighlight": ["./packages/ui/src/functions/useSlidingHighlight.ts"],
       "@ValenceWeb/*": ["./apps/web/src/*"]
     }

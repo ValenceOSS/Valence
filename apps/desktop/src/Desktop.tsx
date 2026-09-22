@@ -4,6 +4,7 @@ import { buildRouter } from '@ValenceScreens/routes/buildRouter';
 import { ConnectToServer } from '@ValenceScreens/components/ConnectToServer/ConnectToServer';
 import { useAppliedTheme } from '@ValenceScreens/theme/useAppliedTheme';
 import { WindowBar } from '@ValenceScreens/components/WindowBar/WindowBar';
+import { TitleBar } from '@ValenceScreens/components/TitleBar/TitleBar';
 import { rememberServerAddress, serverAddress } from '@ValenceClient/session/serverAddress';
 import { useServerIsLost } from '@ValenceClient/offline/useServerIsLost';
 import '@ValenceDesktop/TheWindow.types';
@@ -75,11 +76,16 @@ const Desktop = () => {
 
   return (
     <>
-      <WindowBar />
+      {document.documentElement.dataset['valencePlatform'] === 'darwin' ? (
+        <WindowBar />
+      ) : (
+        <TitleBar title="Valence" />
+      )}
 
       {chosen === null || isLost ? (
         <ConnectToServer
           found={found}
+          {...(window.valence.servers === undefined ? {} : { reach: window.valence.servers.reach })}
           {...(chosen === null ? {} : { startWith: chosen, couldNotReach: chosen })}
           onConnected={(address) => {
             rememberServerAddress(address);

@@ -11,6 +11,10 @@ const HOST = 'app';
 
 const ORIGIN = `${SCHEME}://${HOST}`;
 
+const SLICE_BYTES = 2 * 1024 * 1024;
+
+const OPEN_ENDED = /^bytes=(\d+)-$/;
+
 const CARRIED = ['accept', 'content-type', 'range', 'x-valence-profile', 'authorization'];
 
 const POLICY = [
@@ -92,6 +96,70 @@ const worthCarrying = (from: Headers): Record<string, string> => {
 };
 
 /**
+ * Turns a request for the rest of a file into a request for the next slice of it.
+ *
+ * A video element asks for a film from where it is to the end, reads what it needs, and moves on.
+ * In a browser that ends the download. Here the download belongs to this process, which is not told
+ * the page has moved on, so it carries on fetching a whole film nobody is reading — and a server
+ * that speaks HTTP/1.1 gives each client six connections, so six of those leave nothing for anything
+ * else. Asked for a slice, the server answers with a slice, the connection comes free, and the video
+ * element asks for the next one when it wants it, which it already knows how to do.
+ *
+ * @param range - The range the page asked for, if any.
+ * @returns The range to ask the server for.
+ */
+const aSliceOf = (range: string | undefined): string | undefined => {
+  const from = range === undefined ? null : OPEN_ENDED.exec(range);
+
+  if (from === null) {
+    return range;
+  }
+
+  const start = Number(from[1]);
+
+  return `bytes=${start.toString()}-${(start + SLICE_BYTES - 1).toString()}`;
+};
+
+/**
+ * Hands an answer on in a body that, when given up on, gives up on the server as well.
+ *
+ * @param answer - What the server said.
+ * @param letGo - What to do when the page stops reading.
+ * @returns The answer to give the page.
+ */
+const untilLetGo = (answer: Response, letGo: () => void): Response => {
+  if (answer.body === null) {
+    return answer;
+  }
+
+  const reader = answer.body.getReader();
+  const headers = new Headers(answer.headers);
+
+  headers.delete('content-encoding');
+  headers.delete('content-length');
+
+  const body = new ReadableStream<Uint8Array>({
+    pull: async (controller) => {
+      const read = await reader.read();
+
+      if (read.done) {
+        controller.close();
+
+        return;
+      }
+
+      controller.enqueue(read.value);
+    },
+    cancel: () => {
+      letGo();
+      void reader.cancel();
+    },
+  });
+
+  return new Response(body, { status: answer.status, statusText: answer.statusText, headers });
+};
+
+/**
  * The headers to send the server, for a request this process is making on the window's behalf.
  *
  * Says the request comes from the server it is going to, because out here it does. Anything that
@@ -109,10 +177,12 @@ const worthCarrying = (from: Headers): Record<string, string> => {
  * @param origin - The server being asked.
  * @returns What to send onward.
  */
-const askingAs = (from: Headers, origin: string): Record<string, string> => ({
-  ...worthCarrying(from),
-  origin,
-});
+const askingAs = (from: Headers, origin: string): Record<string, string> => {
+  const carried = worthCarrying(from);
+  const range = aSliceOf(carried['range']);
+
+  return { ...carried, ...(range === undefined ? {} : { range }), origin };
+};
 
 /**
  * Answers as the server would when it cannot be asked.
@@ -209,6 +279,7 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
       try {
         return await net.fetch(onward, {
           method: request.method,
+          signal: request.signal,
           headers: worthCarrying(request.headers),
         });
       } catch {
@@ -225,9 +296,16 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
 
       const sent = request.body === null ? null : await request.arrayBuffer();
 
+      const upstream = new AbortController();
+
+      request.signal.addEventListener('abort', () => {
+        upstream.abort();
+      });
+
       try {
         const answer = await net.fetch(onward.toString(), {
           method: request.method,
+          signal: upstream.signal,
           headers: askingAs(request.headers, onward.origin),
           ...(sent === null || sent.byteLength === 0 ? {} : { body: sent }),
           credentials: 'include',
@@ -235,8 +313,14 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
 
         reach.noteReached();
 
-        return answer;
+        return untilLetGo(answer, () => {
+          upstream.abort();
+        });
       } catch {
+        if (upstream.signal.aborted) {
+          return said(499, 'The page stopped waiting.');
+        }
+
         reach.noteMissed();
 
         return said(503, `Valence could not be reached at ${server}.`);
@@ -251,6 +335,7 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
       try {
         return await net.fetch(onward, {
           method: request.method,
+          signal: request.signal,
           headers: worthCarrying(request.headers),
         });
       } catch {
@@ -275,4 +360,12 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
   });
 };
 
-export { ORIGIN, askingAs, claimTheScheme, serveTheApplication, worthCarrying };
+export {
+  ORIGIN,
+  aSliceOf,
+  untilLetGo,
+  askingAs,
+  claimTheScheme,
+  serveTheApplication,
+  worthCarrying,
+};

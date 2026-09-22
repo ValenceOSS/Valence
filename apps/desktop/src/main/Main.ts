@@ -19,8 +19,17 @@ import {
   THE_SERVER_ADDRESS,
   theServerAddress,
 } from '@ValenceDesktop/main/theServerAddress';
-import { FOUND_A_VALENCE, WHAT_WAS_FOUND } from '@ValenceDesktop/main/discoveryChannels';
-import { keepLookingForAValence, lookForAValence } from '@ValenceDesktop/main/lookForAValence';
+import {
+  FOUND_A_VALENCE,
+  IS_THIS_A_VALENCE,
+  WHAT_WAS_FOUND,
+} from '@ValenceDesktop/main/discoveryChannels';
+import {
+  GIVE_ONE_NAMED_MILLISECONDS,
+  isAValence,
+  keepLookingForAValence,
+  lookForAValence,
+} from '@ValenceDesktop/main/lookForAValence';
 import { carryOldKeysOver } from '@ValenceClient/platform/carryOldKeysOver';
 import { thePreferenceFile } from '@ValenceDesktop/main/thePreferenceFile';
 import { showTheApplication } from '@ValenceDesktop/main/showTheApplication';
@@ -182,6 +191,10 @@ const start = async (): Promise<void> => {
   ipcMain.on(WHAT_WAS_FOUND, (event) => {
     event.returnValue = whatWasFound;
   });
+
+  ipcMain.handle(IS_THIS_A_VALENCE, async (_event, address: JsonValue) =>
+    typeof address === 'string' ? isAValence(address, GIVE_ONE_NAMED_MILLISECONDS) : false,
+  );
 
   const changeServer = () => {
     forgetTheServerAddress();

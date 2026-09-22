@@ -73,7 +73,7 @@ const AdminPage = () => {
 
   if (isLoading || !mayAdminister) {
     return (
-      <div className="flex h-dvh items-center justify-center">
+      <div className="mt-[var(--valence-window-bar)] flex h-[calc(100dvh-var(--valence-window-bar))] items-center justify-center">
         <Spinner size="lg" label="Reading what you may do" />
       </div>
     );
@@ -86,7 +86,7 @@ const AdminPage = () => {
         void go({ to: '/admin/$panel', params: { panel: next } });
       }}
     >
-      <div className="relative flex h-dvh overflow-hidden bg-surface">
+      <div className="relative mt-[var(--valence-window-bar)] flex h-[calc(100dvh-var(--valence-window-bar))] overflow-hidden bg-surface">
         {isCollapsed ? null : (
           <Button
             variant="bare"
@@ -101,7 +101,7 @@ const AdminPage = () => {
         )}
 
         <Sidebar
-          className="fixed inset-y-0 left-0 z-40 md:static md:z-auto"
+          className="fixed bottom-0 left-0 top-[var(--valence-window-bar)] z-40 md:static md:z-auto"
           label="Server"
           brand={
             <Button

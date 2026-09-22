@@ -130,7 +130,7 @@ const MusicVisualiser = ({ player: given }: MusicVisualiserProps) => {
           exit={{ opacity: 0 }}
           transition={FADING}
           className={cn(
-            'fixed inset-0 z-[40] overflow-hidden bg-scrim text-on-scrim',
+            'fixed inset-x-0 bottom-0 top-[var(--valence-window-bar)] z-[40] overflow-hidden bg-scrim text-on-scrim',
             !isShown && 'cursor-none',
           )}
           onPointerMove={wake}

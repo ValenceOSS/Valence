@@ -2,6 +2,7 @@ import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 type ServersFound = {
   alreadyFound: string[];
+  reach: (address: string) => Promise<boolean>;
   whenFound: (listener: (address: string) => void) => () => void;
 };
 

@@ -402,6 +402,10 @@ body {
   --valence-window-bar: 0px;
 }
 
+:root[data-valence-desktop='true']:not([data-valence-platform='darwin']) {
+  --valence-window-bar: 2.25rem;
+}
+
 .valence-below-the-bar {
   position: fixed;
   inset: var(--valence-window-bar) 0 0 0;

@@ -3,7 +3,10 @@ import * as RadixTooltip from '@radix-ui/react-tooltip';
 import { tooltipScopeContext } from '@ValenceUI/tooltipScopeContext';
 import { cn } from '@ValenceUI/cn';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
+import { windowBarHeight } from '@ValenceUI/windowBarHeight';
 import type { TooltipProps } from './Tooltip.types';
+
+const COLLISION_PADDING = 8;
 
 const DELAY_MILLISECONDS = 450;
 
@@ -81,7 +84,12 @@ const Tooltip = ({
           aria-hidden
           side={side}
           sideOffset={8}
-          collisionPadding={8}
+          collisionPadding={{
+            top: COLLISION_PADDING + windowBarHeight(),
+            right: COLLISION_PADDING,
+            bottom: COLLISION_PADDING,
+            left: COLLISION_PADDING,
+          }}
           data-slot="tooltip-content"
           className={cn(
             'z-50 max-w-[18rem] rounded-sm bg-text px-2.5 py-1.5 text-xs font-medium leading-4 text-balance text-surface',
