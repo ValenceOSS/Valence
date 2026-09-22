@@ -23,8 +23,9 @@ import { EmptyLibrary } from '@ValenceScreens/components/LibraryBrowser/componen
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
-import { useHomeRows } from '@ValenceScreens/components/LibraryBrowser/useHomeRows';
+import { useHomeRows } from '@ValenceClient/library/useHomeRows';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
+import { useShell } from '@ValenceClient/shell/useShell';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { LibraryBrowserProps } from './LibraryBrowser.types';
 
@@ -87,6 +88,7 @@ const LibraryBrowser = ({
   onReading,
 }: LibraryBrowserProps) => {
   const { go } = usePlace();
+  const { user } = useShell();
   const [appliedSearch, setAppliedSearch] = useState('');
 
   const askedFor = useQuery(libraryQueries.all());
@@ -115,7 +117,7 @@ const LibraryBrowser = ({
   const watched = useQuery(viewingQueries.progress());
   const progress = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
 
-  const home = useHomeRows(watchable, progress, isHome, !watched.isLoading);
+  const home = useHomeRows(user.id, watchable, progress, isHome, !watched.isLoading);
   const { hasMore, isReadingMore, showMore } = home;
 
   const [end, setEnd] = useState<HTMLDivElement | null>(null);

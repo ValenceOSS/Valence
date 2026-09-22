@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
-import { useShell } from '@ValenceClient/shell/useShell';
 import { homeRows, MIN_ROW, ROW_LIMIT } from '@ValenceClient/library/homeRows';
 import { pickForYou } from '@ValenceClient/library/pickForYou';
 import { tasteOf } from '@ValenceClient/library/tasteOf';
@@ -100,6 +99,7 @@ const byRating = (left: MediaSummary, right: MediaSummary): number =>
  *   to ask for and whether some are being asked for now; and how to ask for the next few.
  */
 const useHomeRows = (
+  userId: string,
   watchable: readonly string[],
   progress: Map<string, WatchProgress>,
   isActive: boolean,
@@ -111,15 +111,14 @@ const useHomeRows = (
   isReadingMore: boolean;
   showMore: () => void;
 } => {
-  const { user } = useShell();
   const canAsk = isActive && watchable.length > 0;
   const [genreLimit, setGenreLimit] = useState(FIRST_GENRES);
   const [decadeLimit, setDecadeLimit] = useState(0);
   const [encoreLimit, setEncoreLimit] = useState(0);
 
-  const favourites = useQuery(viewingQueries.favourites(user.id));
+  const favourites = useQuery(viewingQueries.favourites(userId));
   const ratings = useQuery({
-    ...viewingQueries.ratings(user.id),
+    ...viewingQueries.ratings(userId),
     select: (given) =>
       given.flatMap((rating) =>
         rating.mediaId !== null && rating.stars >= LIKED_STARS ? [rating.mediaId] : [],
