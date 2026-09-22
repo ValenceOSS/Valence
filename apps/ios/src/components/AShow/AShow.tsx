@@ -63,7 +63,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
 
   if (asking.isPending) {
     return (
-      <Screen centres>
+      <Screen centres onBack={onBack}>
         <ActivityIndicator color={colours.textMuted} />
       </Screen>
     );
@@ -73,11 +73,8 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
 
   if (show === undefined || show === null) {
     return (
-      <Screen centres>
+      <Screen centres onBack={onBack}>
         <Words tone="danger">That programme could not be read.</Words>
-        <Button tone="quiet" onPress={onBack}>
-          Back
-        </Button>
       </Screen>
     );
   }
@@ -112,7 +109,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
   ].filter((fact) => fact !== null);
 
   return (
-    <Screen scrolls>
+    <Screen scrolls onBack={onBack}>
       <Image
         style={[styles.backdrop, { backgroundColor: colours.surfaceRaised }]}
         source={{ uri: onThisServer(`/api/media/${show.coverMediaId}/image/backdrop`) }}
@@ -238,10 +235,6 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
           ),
         )}
       </View>
-
-      <Button tone="quiet" onPress={onBack}>
-        Back
-      </Button>
     </Screen>
   );
 };

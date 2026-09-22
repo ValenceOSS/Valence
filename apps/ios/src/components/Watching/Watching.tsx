@@ -398,18 +398,15 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
 
   if (refusal !== null) {
     return (
-      <Screen centres>
+      <Screen centres onBack={onDone}>
         <Words tone="danger">{refusal}</Words>
-        <Button tone="quiet" onPress={onDone}>
-          Back
-        </Button>
       </Screen>
     );
   }
 
   if (source === null) {
     return (
-      <Screen centres>
+      <Screen centres onBack={onDone}>
         <ActivityIndicator color={colours.textMuted} />
       </Screen>
     );

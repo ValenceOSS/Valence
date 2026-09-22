@@ -19,7 +19,6 @@ import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { AnAskable } from '@ValencePhone/components/AnAskable/AnAskable';
 import { APerson } from '@ValencePhone/components/APerson/APerson';
 import { AShow } from '@ValencePhone/components/AShow/AShow';
-import { Button } from '@ValencePhone/components/Button/Button';
 import { ATitle } from '@ValencePhone/components/ATitle/ATitle';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { StillWatching } from '@ValencePhone/components/StillWatching/StillWatching';
@@ -208,11 +207,8 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         );
       case 'series':
         return sought === null ? (
-          <Screen centres>
+          <Screen centres onBack={back}>
             <ActivityIndicator />
-            <Button tone="quiet" onPress={back}>
-              Back
-            </Button>
           </Screen>
         ) : (
           <AShow

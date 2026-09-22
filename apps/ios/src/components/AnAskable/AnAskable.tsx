@@ -96,7 +96,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
 
   if (asking.isPending) {
     return (
-      <Screen centres>
+      <Screen centres onBack={onBack}>
         <ActivityIndicator color={colours.textMuted} />
       </Screen>
     );
@@ -104,11 +104,8 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
 
   if (title === undefined) {
     return (
-      <Screen centres>
+      <Screen centres onBack={onBack}>
         <Words tone="danger">That title could not be read.</Words>
-        <Button tone="quiet" onPress={onBack}>
-          Back
-        </Button>
       </Screen>
     );
   }
@@ -119,7 +116,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
     request !== null && request.requestedBy.id === who.data?.id && !HAS_ARRIVED.has(request.state);
 
   return (
-    <Screen scrolls>
+    <Screen scrolls onBack={onBack}>
       {title.backdropUrl === null ? null : (
         <Image
           style={[styles.backdrop, { backgroundColor: colours.surfaceRaised }]}
@@ -191,10 +188,6 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
       ) : null}
 
       {title.overview === null ? null : <Words tone="muted">{title.overview}</Words>}
-
-      <Button tone="quiet" onPress={onBack}>
-        Back
-      </Button>
     </Screen>
   );
 };

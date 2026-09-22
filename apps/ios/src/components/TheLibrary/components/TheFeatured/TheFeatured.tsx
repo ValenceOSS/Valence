@@ -10,17 +10,19 @@ import { AFeature } from '@ValencePhone/components/TheLibrary/components/TheFeat
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheFeaturedProps } from './TheFeatured.types';
 
+const GAP = 12;
+
 const MOVE_ON_AFTER = 28_000;
 
 const styles = StyleSheet.create({
   dot: { borderRadius: 3, height: 6, width: 6 },
   dots: { flexDirection: 'row', gap: 6, justifyContent: 'center' },
-  whole: { gap: 10, marginHorizontal: -SCREEN_EDGE },
+  whole: { gap: 10 },
 });
 
 /**
- * A handful of things from the library, the width of the screen, one to a swipe, as the web's home
- * opens on: each plays a clip of itself once it has been showing a moment, and the next comes round
+ * A handful of things from the library, large rounded cards one to a swipe, as the web's home opens
+ * on: each plays a clip of itself once it has been showing a moment, and the next comes round
  * when the clip ends, or after a while where there is none.
  *
  * @param items - What to feature.
@@ -35,7 +37,8 @@ const TheFeatured = ({ items, onWatch, onLookAt, onLookAtShow }: TheFeaturedProp
   const progress = byMediaId(watched.data ?? []);
   const [at, setAt] = useState(0);
   const pager = useRef<ScrollView>(null);
-  const step = width;
+  const across = width - SCREEN_EDGE * 2;
+  const step = across + GAP;
 
   const showNext = () => {
     const next = items.length === 0 ? 0 : (at + 1) % items.length;
@@ -70,8 +73,10 @@ const TheFeatured = ({ items, onWatch, onLookAt, onLookAtShow }: TheFeaturedProp
       <ScrollView
         ref={pager}
         horizontal
-        pagingEnabled
+        snapToInterval={step}
+        decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: GAP }}
         onMomentumScrollEnd={(event) => {
           setAt(Math.round(event.nativeEvent.contentOffset.x / step));
         }}
@@ -83,7 +88,7 @@ const TheFeatured = ({ items, onWatch, onLookAt, onLookAtShow }: TheFeaturedProp
             <AFeature
               key={media.id}
               media={media}
-              width={width}
+              width={across}
               isShowing={index === at}
               resumeAt={resumeFor(progress, media.id)}
               onEnded={showNext}

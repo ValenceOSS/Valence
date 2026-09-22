@@ -69,7 +69,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
 
   if (asking.isPending) {
     return (
-      <Screen centres>
+      <Screen centres onBack={onBack}>
         <ActivityIndicator color={colours.textMuted} />
       </Screen>
     );
@@ -77,11 +77,8 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
 
   if (title === undefined || title === null) {
     return (
-      <Screen centres>
+      <Screen centres onBack={onBack}>
         <Words tone="danger">That title could not be read.</Words>
-        <Button tone="quiet" onPress={onBack}>
-          Back
-        </Button>
       </Screen>
     );
   }
@@ -109,7 +106,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   const details = describeTitleDetails(metadata);
 
   return (
-    <Screen scrolls>
+    <Screen scrolls onBack={onBack}>
       {metadata.hasBackdrop ? (
         <Image
           style={[styles.backdrop, { backgroundColor: colours.surfaceRaised }]}
@@ -296,10 +293,6 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
           ))}
         </AShelf>
       )}
-
-      <Button tone="quiet" onPress={onBack}>
-        Back
-      </Button>
     </Screen>
   );
 };

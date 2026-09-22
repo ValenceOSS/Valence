@@ -38,7 +38,7 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
 
   if (person.isPending) {
     return (
-      <Screen centres>
+      <Screen centres onBack={onBack}>
         <ActivityIndicator color={colours.textMuted} />
       </Screen>
     );
@@ -51,7 +51,7 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
   ];
 
   return (
-    <Screen scrolls>
+    <Screen scrolls onBack={onBack}>
       <View style={styles.top}>
         <View style={[styles.portrait, { backgroundColor: colours.surfaceRaised }]}>
           {who?.portraitUrl === null || who === null ? null : (
@@ -108,10 +108,6 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
             ))}
           </AShelf>
         ))}
-
-      <Button tone="quiet" onPress={onBack}>
-        Back
-      </Button>
     </Screen>
   );
 };

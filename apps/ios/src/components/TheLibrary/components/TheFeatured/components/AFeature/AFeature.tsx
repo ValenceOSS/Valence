@@ -10,12 +10,12 @@ import { readSoundPreference, saveSoundPreference } from '@ValenceClient/playbac
 import { AScrim } from '@ValencePhone/components/AScrim/AScrim';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
-import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { howLongItRuns } from '@ValencePhone/components/ATitle/howLongItRuns';
 import { hushThePlayer } from '@ValencePhone/playback/hushThePlayer';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValencePhone/platform/theCookiesThisPhoneHolds';
+import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { VideoSource } from 'expo-video';
 import type { AFeatureProps } from './AFeature.types';
 
@@ -52,8 +52,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     gap: 8,
     left: 0,
-    paddingBottom: 22,
-    paddingHorizontal: SCREEN_EDGE,
+    paddingBottom: 18,
+    paddingHorizontal: 18,
     position: 'absolute',
     right: 0,
   },
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   sound: { padding: 14, position: 'absolute', right: 6, top: 6 },
-  whole: { overflow: 'hidden' },
+  whole: { borderRadius: 20, overflow: 'hidden' },
 });
 
 /**
@@ -106,6 +106,7 @@ const AFeature = ({
   onPlay,
   onMoreInfo,
 }: AFeatureProps) => {
+  const colours = useTheColours();
   const detail = useQuery(libraryQueries.detail(media.id));
   const [clip, setClip] = useState<VideoSource | null>(null);
   const [isTelling, setIsTelling] = useState(true);
@@ -235,7 +236,12 @@ const AFeature = ({
 
   return (
     <Button tone="bare" label={title} onPress={onMoreInfo}>
-      <View style={[styles.whole, { height: width * TALL, width }]}>
+      <View
+        style={[
+          styles.whole,
+          { backgroundColor: colours.surfaceRaised, height: width * TALL, width },
+        ]}
+      >
         <Animated.View style={[styles.fills, { transform: [{ scale: arriving }] }]}>
           {media.hasBackdrop ? (
             <Image
