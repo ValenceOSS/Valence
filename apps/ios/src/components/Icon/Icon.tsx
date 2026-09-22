@@ -20,15 +20,16 @@ const HOW_HEAVY = 2;
  * @param colour - What colour to draw it, since these are the one thing here that does not inherit.
  * @param label - What it means, where nothing beside it says; without one it is passed over by
  *   anybody who cannot see it, since the words beside it already said it.
+ * @param isFilled - Whether its shape is filled in, as a kept heart or a given star is.
  */
-const Icon = ({ of: Glyph, size = 24, colour, label }: IconProps) =>
+const Icon = ({ of: Glyph, size = 24, colour, label, isFilled = false }: IconProps) =>
   label === undefined ? (
     <View accessibilityElementsHidden>
-      <Glyph size={size} color={colour} strokeWidth={HOW_HEAVY} />
+      <Glyph size={size} color={colour} strokeWidth={HOW_HEAVY} fill={isFilled ? colour : 'none'} />
     </View>
   ) : (
     <View accessible accessibilityRole="image" accessibilityLabel={label}>
-      <Glyph size={size} color={colour} strokeWidth={HOW_HEAVY} />
+      <Glyph size={size} color={colour} strokeWidth={HOW_HEAVY} fill={isFilled ? colour : 'none'} />
     </View>
   );
 

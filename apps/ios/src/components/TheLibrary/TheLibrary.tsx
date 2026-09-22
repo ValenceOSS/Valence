@@ -13,7 +13,7 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { TextField } from '@ValencePhone/components/TextField/TextField';
 import { Words } from '@ValencePhone/components/Words/Words';
-import { ACard } from '@ValencePhone/components/TheLibrary/components/ACard/ACard';
+import { ACard } from '@ValencePhone/components/ACard/ACard';
 import { TheFilters } from '@ValencePhone/components/TheLibrary/components/TheFilters/TheFilters';
 import { TheHome } from '@ValencePhone/components/TheLibrary/components/TheHome/TheHome';
 import { TheResults } from '@ValencePhone/components/TheLibrary/components/TheResults/TheResults';

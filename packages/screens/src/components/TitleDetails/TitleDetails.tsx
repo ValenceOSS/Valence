@@ -1,5 +1,4 @@
-import { formatCalendarDate } from '@ValenceCore/functions/formatCalendarDate';
-import { formatMoney } from '@ValenceCore/functions/formatMoney';
+import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
 import type { TitleDetailsProps } from './TitleDetails.types';
 
 /**
@@ -21,23 +20,7 @@ const TitleDetails = ({
   revenue,
   rottenTomatoes,
 }: TitleDetailsProps) => {
-  const facts: { label: string; value: string }[] = [
-    ...(releaseDate === undefined || releaseDate === null || releaseDate === ''
-      ? []
-      : [{ label: 'Released', value: formatCalendarDate(releaseDate) }]),
-    ...(status === undefined || status === null || status === ''
-      ? []
-      : [{ label: 'Status', value: status }]),
-    ...(budget === undefined || budget === null || budget <= 0
-      ? []
-      : [{ label: 'Budget', value: formatMoney(budget) }]),
-    ...(revenue === undefined || revenue === null || revenue <= 0
-      ? []
-      : [{ label: 'Box office', value: formatMoney(revenue) }]),
-    ...(rottenTomatoes === undefined || rottenTomatoes === null
-      ? []
-      : [{ label: 'Rotten Tomatoes', value: `${rottenTomatoes.toString()}%` }]),
-  ];
+  const facts = describeTitleDetails({ releaseDate, status, budget, revenue, rottenTomatoes });
 
   if (facts.length === 0) {
     return null;

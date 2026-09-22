@@ -5,6 +5,7 @@ type IconProps = {
   size?: number;
   colour: string;
   label?: string;
+  isFilled?: boolean;
 };
 
 export type { IconProps };

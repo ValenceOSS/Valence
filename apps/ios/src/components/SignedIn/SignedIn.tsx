@@ -17,6 +17,7 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { signOut } from '@ValenceClient/session/auth';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { AnAskable } from '@ValencePhone/components/AnAskable/AnAskable';
+import { APerson } from '@ValencePhone/components/APerson/APerson';
 import { AShow } from '@ValencePhone/components/AShow/AShow';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { ATitle } from '@ValencePhone/components/ATitle/ATitle';
@@ -82,6 +83,7 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     null,
   );
   const [seeking, setSeeking] = useState<string | null>(null);
+  const [person, setPerson] = useState<number | null>(null);
   const sought = useTheProgrammeOf(seeking);
   const requesting = useQuery(requestsQueries.availability());
   const { may } = useWhatIMayDo();
@@ -178,6 +180,27 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     );
   }
 
+  if (person !== null) {
+    return (
+      <APerson
+        key={person}
+        personId={person}
+        onLookAt={(mediaId) => {
+          setPerson(null);
+          setLooking(mediaId);
+        }}
+        onLookAtShow={(libraryId, showId) => {
+          setPerson(null);
+          setLooking(null);
+          setProgramme({ libraryId, showId });
+        }}
+        onBack={() => {
+          setPerson(null);
+        }}
+      />
+    );
+  }
+
   if (seeking !== null) {
     return sought === null ? (
       <Screen centres>
@@ -206,8 +229,14 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   if (looking !== null) {
     return (
       <ATitle
+        key={looking}
         mediaId={looking}
         onWatch={choose}
+        onLookAtPerson={setPerson}
+        onLookAtShow={(libraryId, showId) => {
+          setLooking(null);
+          setProgramme({ libraryId, showId });
+        }}
         onBack={() => {
           setLooking(null);
         }}

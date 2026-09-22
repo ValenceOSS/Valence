@@ -68,7 +68,15 @@ describe('ATitle', () => {
     jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
 
     const drawn = await render(
-      around(<ATitle mediaId="one" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -80,7 +88,15 @@ describe('ATitle', () => {
     jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
 
     const drawn = await render(
-      around(<ATitle mediaId="one" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -92,7 +108,15 @@ describe('ATitle', () => {
     jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
 
     const drawn = await render(
-      around(<ATitle mediaId="one" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -105,7 +129,15 @@ describe('ATitle', () => {
 
     const onWatch = jest.fn();
     const drawn = await render(
-      around(<ATitle mediaId="one" onWatch={onWatch} onBack={jest.fn()} />),
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={onWatch}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -121,7 +153,15 @@ describe('ATitle', () => {
     jest.mocked(fetchMediaDetail).mockRejectedValue(new Error('gone'));
 
     const drawn = await render(
-      around(<ATitle mediaId="one" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -134,7 +174,15 @@ describe('ATitle', () => {
 
     const onBack = jest.fn();
     const drawn = await render(
-      around(<ATitle mediaId="one" onWatch={jest.fn()} onBack={onBack} />),
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={onBack}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -151,7 +199,15 @@ describe('ATitle', () => {
     partWayThrough(4200);
 
     const drawn = await render(
-      around(<ATitle mediaId="one" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -165,7 +221,15 @@ describe('ATitle', () => {
 
     const onWatch = jest.fn();
     const drawn = await render(
-      around(<ATitle mediaId="one" onWatch={onWatch} onBack={jest.fn()} />),
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={onWatch}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -183,7 +247,15 @@ describe('ATitle', () => {
 
     const onWatch = jest.fn();
     const drawn = await render(
-      around(<ATitle mediaId="one" onWatch={onWatch} onBack={jest.fn()} />),
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={onWatch}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -200,7 +272,15 @@ describe('ATitle', () => {
     partWayThrough(3);
 
     const drawn = await render(
-      around(<ATitle mediaId="one" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {

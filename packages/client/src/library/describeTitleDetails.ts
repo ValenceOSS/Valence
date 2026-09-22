@@ -1,0 +1,41 @@
+import { formatCalendarDate } from '@ValenceCore/functions/formatCalendarDate';
+import { formatMoney } from '@ValenceCore/functions/formatMoney';
+
+/**
+ * The facts about a title worth a line each — when it came out, how it stands, what it cost and made,
+ * what the critics thought — leaving out whichever the catalogue does not know.
+ *
+ * @param metadata - What the catalogue says about it.
+ * @returns A label and a value for each fact known.
+ */
+const describeTitleDetails = ({
+  releaseDate,
+  status,
+  budget,
+  revenue,
+  rottenTomatoes,
+}: {
+  releaseDate?: string | null | undefined;
+  status?: string | null | undefined;
+  budget?: number | null | undefined;
+  revenue?: number | null | undefined;
+  rottenTomatoes?: number | null | undefined;
+}): { label: string; value: string }[] => [
+  ...(releaseDate === undefined || releaseDate === null || releaseDate === ''
+    ? []
+    : [{ label: 'Released', value: formatCalendarDate(releaseDate) }]),
+  ...(status === undefined || status === null || status === ''
+    ? []
+    : [{ label: 'Status', value: status }]),
+  ...(budget === undefined || budget === null || budget <= 0
+    ? []
+    : [{ label: 'Budget', value: formatMoney(budget) }]),
+  ...(revenue === undefined || revenue === null || revenue <= 0
+    ? []
+    : [{ label: 'Box office', value: formatMoney(revenue) }]),
+  ...(rottenTomatoes === undefined || rottenTomatoes === null
+    ? []
+    : [{ label: 'Rotten Tomatoes', value: `${rottenTomatoes.toString()}%` }]),
+];
+
+export { describeTitleDetails };

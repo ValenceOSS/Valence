@@ -14,7 +14,7 @@ import { APoster } from '@ValencePhone/components/APoster/APoster';
 import { AShelf } from '@ValencePhone/components/AShelf/AShelf';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
-import { ACard } from '@ValencePhone/components/TheLibrary/components/ACard/ACard';
+import { ACard } from '@ValencePhone/components/ACard/ACard';
 import { TheFeatured } from '@ValencePhone/components/TheLibrary/components/TheFeatured/TheFeatured';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
