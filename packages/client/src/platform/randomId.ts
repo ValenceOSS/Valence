@@ -15,9 +15,17 @@ const UUID_VARIANT_BYTE = 8;
  * layout is assembled from it directly: the version nibble in byte 6, the
  * variant bits in byte 8.
  *
+ * Whether there is one at all is asked of `globalThis` before anything is
+ * named, because a host without Web Crypto makes naming it a reference error —
+ * the guard meant to survive a missing method was itself the thing that threw.
+ *
  * @returns A version 4 UUID.
  */
 const randomId = (): string => {
+  if (!('crypto' in globalThis)) {
+    throw new Error('This client has no Web Crypto, which its host is meant to provide.');
+  }
+
   if (typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }

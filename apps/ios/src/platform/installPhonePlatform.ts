@@ -2,6 +2,7 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
 import { describeThisPhone } from '@ValencePhone/platform/describeThisPhone';
 import { giveThisPhoneAnOrigin } from '@ValencePhone/platform/giveThisPhoneAnOrigin';
+import { giveThisPhoneCrypto } from '@ValencePhone/platform/giveThisPhoneCrypto';
 import { thePhonesReach } from '@ValencePhone/platform/thePhonesReach';
 import { thePhonesSocket } from '@ValencePhone/platform/thePhonesSocket';
 import { thePhonesStore } from '@ValencePhone/platform/thePhonesStore';
@@ -25,6 +26,7 @@ import { thisPhonesId } from '@ValencePhone/platform/thisPhonesId';
 const installPhonePlatform = (held: Map<string, string>): void => {
   const store = thePhonesStore(held);
 
+  giveThisPhoneCrypto();
   giveThisPhoneAnOrigin(store);
 
   installPlatform({
