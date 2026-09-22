@@ -14,6 +14,7 @@ import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow
 import { Words } from '@ValencePhone/components/Words/Words';
 import { ACard } from '@ValencePhone/components/ACard/ACard';
 import { AirPlayButton } from '@ValencePhone/components/AirPlayButton/AirPlayButton';
+import { TheBell } from '@ValencePhone/components/TheBell/TheBell';
 import { TheMark } from '@ValencePhone/components/TheMark/TheMark';
 import { TheFilters } from '@ValencePhone/components/TheLibrary/components/TheFilters/TheFilters';
 import { TheHome } from '@ValencePhone/components/TheLibrary/components/TheHome/TheHome';
@@ -28,7 +29,7 @@ type Cell = { kind: 'media'; media: MediaSummary } | { kind: 'programme'; progra
 const EVERY = 'every';
 
 const styles = StyleSheet.create({
-  bar: { alignItems: 'center', flexDirection: 'row', gap: 16 },
+  bar: { alignItems: 'center', flexDirection: 'row', gap: 10 },
   parts: { flex: 1 },
 });
 
@@ -47,8 +48,9 @@ const styles = StyleSheet.create({
  * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told which title somebody wants to see more of.
  * @param onLookAtShow - Told which programme, in which library.
+ * @param onNotifications - Told somebody wants to see what the server has told them.
  */
-const TheLibrary = ({ onWatch, onLookAt, onLookAtShow }: TheLibraryProps) => {
+const TheLibrary = ({ onWatch, onLookAt, onLookAtShow, onNotifications }: TheLibraryProps) => {
   const colours = useTheColours();
   const libraries = useQuery(libraryQueries.all());
   const watched = useQuery(viewingQueries.progress());
@@ -115,6 +117,7 @@ const TheLibrary = ({ onWatch, onLookAt, onLookAtShow }: TheLibraryProps) => {
             }}
           />
         </View>
+        <TheBell onPress={onNotifications} />
         <AirPlayButton />
       </View>
 

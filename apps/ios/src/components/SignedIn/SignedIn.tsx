@@ -24,6 +24,7 @@ import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { StillWatching } from '@ValencePhone/components/StillWatching/StillWatching';
 import { TheAccount } from '@ValencePhone/components/TheAccount/TheAccount';
 import { TheLibrary } from '@ValencePhone/components/TheLibrary/TheLibrary';
+import { TheNotifications } from '@ValencePhone/components/TheNotifications/TheNotifications';
 import { TheRequests } from '@ValencePhone/components/TheRequests/TheRequests';
 import { TheSearch } from '@ValencePhone/components/TheSearch/TheSearch';
 import { TheTabs } from '@ValencePhone/components/TheTabs/TheTabs';
@@ -246,6 +247,8 @@ const SignedIn = ({ onOut }: SignedInProps) => {
             onBack={back}
           />
         );
+      case 'notifications':
+        return <TheNotifications onOpen={open} onBack={back} />;
     }
   }
 
@@ -275,7 +278,14 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         }
       />
     ) : (
-      <TheLibrary onWatch={choose} onLookAt={lookAt} onLookAtShow={lookAtShow} />
+      <TheLibrary
+        onWatch={choose}
+        onLookAt={lookAt}
+        onLookAtShow={lookAtShow}
+        onNotifications={() => {
+          open({ kind: 'notifications' });
+        }}
+      />
     );
 
   return (
