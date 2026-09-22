@@ -3,7 +3,7 @@ import type { AFadedEdgeProps, NativeFadedEdgesProps } from './AFadedEdge.types'
 
 const TheFade = requireNativeView<NativeFadedEdgesProps>('ValenceFadedEdges');
 
-const FILLS = { flex: 1 } as const satisfies NativeFadedEdgesProps['style'];
+const ACROSS = { alignSelf: 'stretch' } as const satisfies NativeFadedEdgesProps['style'];
 
 /**
  * Whatever is inside, faded out over its leading and trailing edges rather than cut off square.
@@ -13,7 +13,7 @@ const FILLS = { flex: 1 } as const satisfies NativeFadedEdgesProps['style'];
  * @param children - What fades.
  */
 const AFadedEdge = ({ leading, trailing, children }: AFadedEdgeProps) => (
-  <TheFade leading={leading} trailing={trailing} style={FILLS}>
+  <TheFade leading={leading} trailing={trailing} style={ACROSS}>
     {children}
   </TheFade>
 );

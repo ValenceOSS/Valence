@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useEvent, useEventListener } from 'expo';
 import { useQuery } from '@tanstack/react-query';
-import { Animated, Easing, Image, LayoutAnimation, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Info, Play, Volume2, VolumeX } from 'lucide-react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
   buttons: { flexDirection: 'row', gap: 10, marginTop: 8 },
   facts: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
+  folds: { overflow: 'hidden' },
   foot: {
     bottom: 0,
     gap: 8,
@@ -119,6 +120,8 @@ const AFeature = ({
   const [arriving] = useState(() => new Animated.Value(ARRIVES_FROM));
   const [showing] = useState(() => new Animated.Value(0));
   const [rising] = useState(() => Array.from({ length: PARTS }, () => new Animated.Value(0)));
+  const [telling] = useState(() => new Animated.Value(1));
+  const [toldHeight, setToldHeight] = useState<number | null>(null);
   const title = media.seriesTitle ?? media.title;
   const overview = detail.data?.metadata.overview ?? null;
 
@@ -170,23 +173,27 @@ const AFeature = ({
         }
       });
     }, SETTLE_FOR);
-    const telling = setTimeout(() => {
-      LayoutAnimation.configureNext(
-        LayoutAnimation.create(
-          FOLDS_OVER,
-          LayoutAnimation.Types.easeInEaseOut,
-          LayoutAnimation.Properties.opacity,
-        ),
-      );
-      setIsTelling(false);
+    telling.setValue(1);
+
+    const folding = setTimeout(() => {
+      Animated.timing(telling, {
+        toValue: 0,
+        duration: FOLDS_OVER,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: false,
+      }).start(({ finished }) => {
+        if (finished) {
+          setIsTelling(false);
+        }
+      });
     }, TELL_FOR);
 
     return () => {
       moved.abort();
       clearTimeout(settling);
-      clearTimeout(telling);
+      clearTimeout(folding);
     };
-  }, [isShowing, media.id, arriving, rising]);
+  }, [isShowing, media.id, arriving, rising, telling]);
 
   const player = useVideoPlayer(clip, (ready) => {
     ready.muted = isMuted;
@@ -332,10 +339,32 @@ const AFeature = ({
           </Animated.View>
 
           {overview === null || overview === '' || !isTelling ? null : (
-            <Animated.View style={risingOf(2)}>
-              <Words tone="onArtwork" lines={3}>
-                {overview}
-              </Words>
+            <Animated.View
+              style={[
+                styles.folds,
+                {
+                  opacity: telling,
+                  ...(toldHeight === null
+                    ? {}
+                    : {
+                        height: telling.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, toldHeight],
+                        }),
+                      }),
+                },
+              ]}
+            >
+              <Animated.View
+                style={risingOf(2)}
+                onLayout={(event) => {
+                  setToldHeight(event.nativeEvent.layout.height);
+                }}
+              >
+                <Words tone="onArtwork" lines={3}>
+                  {overview}
+                </Words>
+              </Animated.View>
             </Animated.View>
           )}
 

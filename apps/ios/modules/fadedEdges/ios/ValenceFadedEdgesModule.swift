@@ -25,6 +25,9 @@ public class ValenceFadedEdgesModule: Module {
 }
 
 /// Holds whatever React Native puts inside it, masked by a sideways gradient.
+///
+/// The mask is laid on again at every layout, because React Native clears a view's mask when it
+/// updates the view, and a mask set once would be gone after the first update.
 public class ValenceFadedEdgesView: ExpoView {
   private let fade = CAGradientLayer()
 
@@ -63,6 +66,11 @@ public class ValenceFadedEdgesView: ExpoView {
 
     CATransaction.begin()
     CATransaction.setDisableActions(true)
+
+    if layer.mask !== fade {
+      layer.mask = fade
+    }
+
     fade.frame = bounds
     fade.locations = [0, NSNumber(value: start), NSNumber(value: end), 1]
     CATransaction.commit()

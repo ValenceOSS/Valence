@@ -10,7 +10,7 @@ type NativeFadedEdgesProps = {
   leading: number;
   trailing: number;
   children: ReactNode;
-  style: { flex: 1 };
+  style: { alignSelf: 'stretch' };
 };
 
 export type { AFadedEdgeProps, NativeFadedEdgesProps };
