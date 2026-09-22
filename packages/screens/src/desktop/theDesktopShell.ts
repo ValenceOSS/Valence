@@ -19,7 +19,18 @@ type WhatIsBeingWatched = {
   party: { id: string; size: number } | null;
 };
 
-type WhatIsBeingDone = WhatIsBeingWatched | { kind: 'browsing' };
+type WhatIsBeingListened = {
+  kind: 'listening';
+  title: string;
+  artists: string[];
+  startedAt: number;
+  endsAt: number | null;
+  isPaused: boolean;
+  artwork: string | null;
+  party: { id: string; size: number } | null;
+};
+
+type WhatIsBeingDone = WhatIsBeingWatched | WhatIsBeingListened | { kind: 'browsing' };
 
 /**
  * Whether these pages are being shown inside Valence's own window rather than a browser.
@@ -62,6 +73,6 @@ const nowWatching = (doing: WhatIsBeingDone | null): void => {
   document.dispatchEvent(new CustomEvent(NOW_WATCHING, { detail: doing }));
 };
 
-export type { WhatIsBeingDone, WhatIsBeingWatched };
+export type { WhatIsBeingDone, WhatIsBeingListened, WhatIsBeingWatched };
 
 export { askForADifferentServer, isTheDesktopClient, nowWatching };

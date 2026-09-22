@@ -74,7 +74,7 @@ describe('ProfileSettings', () => {
   it('offers no way to show Discord status outside the desktop client', () => {
     render(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
 
-    expect(screen.queryByText('Show what I am watching on Discord')).not.toBeInTheDocument();
+    expect(screen.queryByText('Show what I am playing on Discord')).not.toBeInTheDocument();
   });
 
   it('offers it on the desktop client, since only it can reach Discord', () => {
@@ -82,6 +82,6 @@ describe('ProfileSettings', () => {
 
     render(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
 
-    expect(screen.getByText('Show what I am watching on Discord')).toBeInTheDocument();
+    expect(screen.getByText('Show what I am playing on Discord')).toBeInTheDocument();
   });
 });

@@ -230,11 +230,11 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
 
       {canShowOnDiscord() ? (
         <SettingRow
-          title="Show what I am watching on Discord"
-          description="The title, and the series and episode where there is one, appear in your Discord status while something is playing. It needs Valence open on the same machine as Discord."
+          title="Show what I am playing on Discord"
+          description="The title, and the series and episode or the artist where there is one, appear in your Discord status while something is playing. It needs Valence open on the same machine as Discord."
         >
           <Switch
-            label="Show what I am watching on Discord"
+            label="Show what I am playing on Discord"
             isLabelHidden
             isOn={draft?.showsWhatIamWatching ?? false}
             disabled={!isReady}

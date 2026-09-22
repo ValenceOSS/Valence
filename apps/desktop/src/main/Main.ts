@@ -269,7 +269,7 @@ const start = async (): Promise<void> => {
     }
   });
 
-  const discord = tellDiscord(app.getPath('temp'), app.getVersion());
+  const discord = tellDiscord(app.getPath('temp'));
 
   ipcMain.on(NOW_WATCHING, (_event, said: JsonValue) => {
     discord.about(whatIsPlaying(JsonValueSchema.catch(null).parse(said)));

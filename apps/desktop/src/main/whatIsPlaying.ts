@@ -22,6 +22,19 @@ const WhatIsPlayingSchema = z.discriminatedUnion('kind', [
       .nullable()
       .catch(null),
   }),
+  z.object({
+    kind: z.literal('listening'),
+    title: z.string().min(1).max(200),
+    artists: z.array(z.string().min(1).max(200)).max(20),
+    startedAt: z.number().int().nonnegative(),
+    endsAt: z.number().int().nonnegative().nullable(),
+    isPaused: z.boolean().catch(false),
+    artwork: z.string().url().nullable().catch(null),
+    party: z
+      .object({ id: z.string().min(1).max(100), size: z.number().int().min(1).max(100) })
+      .nullable()
+      .catch(null),
+  }),
   z.object({ kind: z.literal('browsing') }),
 ]);
 
