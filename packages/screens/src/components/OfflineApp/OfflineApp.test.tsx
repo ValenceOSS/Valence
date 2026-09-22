@@ -8,6 +8,8 @@ import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { Reachability } from '@ValenceClient/platform/Platform.types';
 import { OfflineApp } from './OfflineApp';
 
+vi.mock('@ValenceClient/session/auth', () => ({ signOut: vi.fn().mockResolvedValue(true) }));
+
 const aFile = (over: Partial<HeldFile> = {}): HeldFile => ({
   downloadId: '00000000-0000-4000-8000-000000000001',
   mediaId: '00000000-0000-4000-8000-000000000002',

@@ -649,7 +649,13 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
           )}
 
           {!isTheDesktopClient() ? null : (
-            <Button variant="ghost" size="sm" onClick={askForADifferentServer}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                void askForADifferentServer();
+              }}
+            >
               Use a different server
             </Button>
           )}
