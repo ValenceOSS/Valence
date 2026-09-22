@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
 /**
  * Everything about one film or episode, as the web's page about it: its artwork, what it is, a way
  * to watch it — from the start, from where somebody stopped, or in another version — and the rest:
- * keeping it, rating it, its trailer, hiding it, who is in it, the details the catalogue knows and
+ * favouriting it, rating it, its trailer, hiding it, who is in it, the details the catalogue knows and
  * whatever extras came with it.
  *
  * An episode offers its programme, found in its library by name, since that is what an episode
@@ -181,7 +181,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
       <View style={styles.actions}>
         <Button
           tone="bare"
-          label={isKept ? 'Kept' : 'Keep'}
+          label="Favourite"
           isChosen={isKept}
           onPress={() => {
             favourites.toggle(mediaId);
@@ -189,7 +189,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
         >
           <View style={styles.action}>
             <Icon of={Heart} colour={isKept ? colours.danger : colours.text} isFilled={isKept} />
-            <Words size="small">{isKept ? 'Kept' : 'Keep'}</Words>
+            <Words size="small">Favourite</Words>
           </View>
         </Button>
 
