@@ -22,6 +22,7 @@ const aFakePlatform = (overrides: Partial<Platform> = {}): Platform => {
         kept.delete(key);
       },
     },
+    serverAddress: () => null,
     describeThisClient: () => 'A test',
     openSocket: () => ({ send: () => {}, close: () => {} }),
     thisClientId: () => 'client-1',

@@ -47,10 +47,24 @@ const platformInUse = (): Platform => {
 };
 
 /**
+ * What the application is running on, or nothing where no client has said yet.
+ *
+ * The forgiving twin of `platformInUse`, and it exists for one case: something that has to work
+ * both before and after a client installs itself. Asking where the server is, is that case —
+ * better-auth is handed a base at the moment this package is imported, which is before any host
+ * has run, and a throw there would take the application down on the way up.
+ *
+ * Everything else should use `platformInUse` and fail loudly, which is the point of it.
+ *
+ * @returns The platform, or nothing.
+ */
+const platformIfAny = (): Platform | null => installed;
+
+/**
  * Forgets the installed platform, so that one test cannot be answered by another test's.
  */
 const forgetPlatform = (): void => {
   installed = null;
 };
 
-export { installPlatform, platformInUse, forgetPlatform };
+export { installPlatform, platformInUse, platformIfAny, forgetPlatform };

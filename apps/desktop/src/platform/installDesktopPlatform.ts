@@ -16,6 +16,7 @@ import { theDesktopsReach } from '@ValenceDesktop/platform/theDesktopsReach';
 const installDesktopPlatform = (): void => {
   installPlatform({
     store: theDesktopsStore(),
+    serverAddress: () => null,
     describeThisClient: () => describeThisDesktop(navigator.userAgent),
     thisClientId: thisWindowsId,
     thisClientKind: () => 'desktop',

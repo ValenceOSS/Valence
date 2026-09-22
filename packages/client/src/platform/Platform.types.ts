@@ -26,6 +26,7 @@ type ClientKind = 'browser' | 'desktop' | 'tv';
 
 type Platform = {
   store: DeviceStore;
+  serverAddress: () => string | null;
   describeThisClient: () => string;
   thisClientId: () => string;
   thisClientKind: () => ClientKind;

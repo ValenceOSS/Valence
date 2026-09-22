@@ -77,6 +77,7 @@ beforeEach(() => {
         held.delete(key);
       },
     },
+    serverAddress: () => null,
     describeThisClient: () => 'Valence',
     thisClientKind: () => 'browser',
     canKeepFiles: () => true,

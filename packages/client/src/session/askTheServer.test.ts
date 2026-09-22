@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PLACEHOLDER, askTheServer, theAuthBase } from './askTheServer';
+import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 
 const fetchMock = vi.fn<(input: string | Request, init?: RequestInit) => Promise<Response>>();
 
@@ -74,5 +76,66 @@ describe('a request that arrives already built', () => {
     await askTheServer(built);
 
     expect(fetchMock).toHaveBeenCalledWith(built, undefined);
+  });
+});
+
+describe('a client that was not served by its Valence', () => {
+  afterEach(() => {
+    forgetPlatform();
+  });
+
+  it('sends a path to the server it was told about, having no page to resolve against', async () => {
+    installPlatform(aFakePlatform({ serverAddress: () => 'http://192.168.1.36:8420' }));
+
+    await askTheServer('/api/profiles/everyone');
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('http://192.168.1.36:8420/api/profiles/everyone');
+  });
+
+  it('rebuilds what the library built on the placeholder onto that server', async () => {
+    installPlatform(aFakePlatform({ serverAddress: () => 'http://192.168.1.36:8420' }));
+
+    await askTheServer(new Request(`${PLACEHOLDER}/api/auth/get-session`));
+
+    const asked = fetchMock.mock.calls[0]?.[0];
+
+    expect(asked instanceof Request ? asked.url : String(asked)).toBe(
+      'http://192.168.1.36:8420/api/auth/get-session',
+    );
+  });
+
+  it('asks again each time, so a different server is asked without a restart', async () => {
+    let address = 'http://one.local:8420';
+
+    installPlatform(aFakePlatform({ serverAddress: () => address }));
+
+    await askTheServer('/api/health');
+    address = 'http://two.local:8420';
+    await askTheServer('/api/health');
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('http://one.local:8420/api/health');
+    expect(fetchMock.mock.calls[1]?.[0]).toBe('http://two.local:8420/api/health');
+  });
+
+  it('leaves a whole address alone, wherever it was aimed', async () => {
+    installPlatform(aFakePlatform({ serverAddress: () => 'http://192.168.1.36:8420' }));
+
+    await askTheServer('https://images.example/poster.jpg');
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://images.example/poster.jpg');
+  });
+
+  it('leaves a client that was served by its Valence asking as it always did', async () => {
+    installPlatform(aFakePlatform());
+
+    await askTheServer('/api/profiles/everyone');
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/profiles/everyone');
+  });
+
+  it('manages before any client has said what it is', async () => {
+    await askTheServer('/api/health');
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/health');
   });
 });
