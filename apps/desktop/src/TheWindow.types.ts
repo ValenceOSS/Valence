@@ -1,9 +1,12 @@
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 
 type ServersFound = {
   alreadyFound: string[];
   reach: (address: string) => Promise<boolean>;
   whenFound: (listener: (address: string) => void) => () => void;
+  alreadyNearby: NearbyValence[];
+  whenNearbyChanges: (listener: (nearby: NearbyValence[]) => void) => () => void;
 };
 
 type Preferences = {

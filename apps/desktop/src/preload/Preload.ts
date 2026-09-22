@@ -5,8 +5,12 @@ import { z } from 'zod';
 import {
   FOUND_A_VALENCE,
   IS_THIS_A_VALENCE,
+  NEARBY_CHANGED,
+  WHAT_IS_NEARBY,
   WHAT_WAS_FOUND,
 } from '@ValenceDesktop/main/discoveryChannels';
+import { NearbyValenceSchema } from '@ValenceContracts/schemas/NearbyValence';
+import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import {
@@ -41,6 +45,10 @@ const HeldSchema = z.record(z.string(), z.string()).catch({});
 const held = HeldSchema.parse(ipcRenderer.sendSync(READ_EVERYTHING));
 
 const alreadyFound = z.array(z.string()).catch([]).parse(ipcRenderer.sendSync(WHAT_WAS_FOUND));
+
+const NearbySchema = z.array(NearbyValenceSchema).catch([]);
+
+const alreadyNearby = NearbySchema.parse(ipcRenderer.sendSync(WHAT_IS_NEARBY));
 
 const alreadyAvailable = AvailableUpdateSchema.nullable()
   .catch(null)
@@ -161,6 +169,18 @@ contextBridge.exposeInMainWorld('valence', {
 
       return () => {
         ipcRenderer.removeListener(FOUND_A_VALENCE, told);
+      };
+    },
+    alreadyNearby,
+    whenNearbyChanges: (listener: (nearby: NearbyValence[]) => void) => {
+      const told = (_event: IpcRendererEvent, said: JsonValue) => {
+        listener(NearbySchema.parse(said));
+      };
+
+      ipcRenderer.on(NEARBY_CHANGED, told);
+
+      return () => {
+        ipcRenderer.removeListener(NEARBY_CHANGED, told);
       };
     },
   },

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
+import { describeTheBuild } from '@ValenceScreens/about/describeTheBuild';
 
 /**
  * What this build of Valence is, and what the server answering it is running, sat in the corner of
@@ -14,21 +15,14 @@ import { aboutQueries } from '@ValenceClient/query/aboutQueries';
  * server.
  */
 const BuildInfoFooter = () => {
-  const info = theBuildInfo();
   const server = useQuery(aboutQueries.server());
+  const line = describeTheBuild(theBuildInfo(), server.data?.commit ?? null);
 
-  const parts = [
-    info === null
-      ? null
-      : `Valence ${info.version} (${info.commit}) · ${info.arch} · Electron ${info.electron} · Chromium ${info.chrome}`,
-    server.data === undefined ? null : `Server ${server.data.commit}`,
-  ].filter((part) => part !== null);
-
-  if (parts.length === 0) {
+  if (line === null) {
     return null;
   }
 
-  return <p className="shrink-0 whitespace-nowrap text-xs text-text-muted">{parts.join(' · ')}</p>;
+  return <p className="shrink-0 whitespace-nowrap text-xs text-text-muted">{line}</p>;
 };
 
 BuildInfoFooter.displayName = 'BuildInfoFooter';

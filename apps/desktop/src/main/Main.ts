@@ -23,8 +23,12 @@ import {
 import {
   FOUND_A_VALENCE,
   IS_THIS_A_VALENCE,
+  NEARBY_CHANGED,
+  WHAT_IS_NEARBY,
   WHAT_WAS_FOUND,
 } from '@ValenceDesktop/main/discoveryChannels';
+import { listenForValences } from '@ValenceDesktop/main/listenForValences';
+import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import {
   GIVE_ONE_NAMED_MILLISECONDS,
   isAValence,
@@ -96,6 +100,39 @@ let stopLooking: (() => void) | null = null;
 
 let whatWasFound: string[] = [];
 
+let whatIsNearby: NearbyValence[] = [];
+
+/**
+ * Offers a server found on this machine to the screen that asks which Valence is somebody's.
+ *
+ * @param address - Where it answered.
+ */
+const offerFromThisMachine = (address: string): void => {
+  if (whatWasFound.includes(address)) {
+    return;
+  }
+
+  whatWasFound = [...whatWasFound, address];
+
+  if (theWindow !== null && !theWindow.isDestroyed()) {
+    theWindow.webContents.send(FOUND_A_VALENCE, address);
+  }
+};
+
+/**
+ * Offers what is heard on the network to the same screen, as the whole of what is there now — so a
+ * server that said goodbye leaves it as surely as one that announced itself arrives.
+ *
+ * @param nearby - Every server on the network that has answered and not yet said goodbye.
+ */
+const offerFromTheNetwork = (nearby: NearbyValence[]): void => {
+  whatIsNearby = nearby;
+
+  if (theWindow !== null && !theWindow.isDestroyed()) {
+    theWindow.webContents.send(NEARBY_CHANGED, nearby);
+  }
+};
+
 /**
  * Finds this machine's Valence, and offers it rather than deciding with it.
  *
@@ -113,28 +150,16 @@ const findAValence = async (): Promise<void> => {
     return;
   }
 
-  const offer = (address: string): void => {
-    if (whatWasFound.includes(address)) {
-      return;
-    }
-
-    whatWasFound = [...whatWasFound, address];
-
-    if (theWindow !== null && !theWindow.isDestroyed()) {
-      theWindow.webContents.send(FOUND_A_VALENCE, address);
-    }
-  };
-
   const here = await lookForAValence();
 
   if (here !== null) {
-    offer(here);
+    offerFromThisMachine(here);
 
     return;
   }
 
   stopLooking?.();
-  stopLooking = keepLookingForAValence(offer);
+  stopLooking = keepLookingForAValence(offerFromThisMachine);
 };
 
 /**
@@ -202,6 +227,17 @@ const start = async (): Promise<void> => {
   ipcMain.on(WHAT_WAS_FOUND, (event) => {
     event.returnValue = whatWasFound;
   });
+
+  ipcMain.on(WHAT_IS_NEARBY, (event) => {
+    event.returnValue = whatIsNearby;
+  });
+
+  const stopListening = listenForValences({
+    onChange: offerFromTheNetwork,
+    onThisMachine: offerFromThisMachine,
+  });
+
+  app.on('will-quit', stopListening);
 
   ipcMain.handle(IS_THIS_A_VALENCE, async (_event, address: JsonValue) =>
     typeof address === 'string' ? isAValence(address, GIVE_ONE_NAMED_MILLISECONDS) : false,
