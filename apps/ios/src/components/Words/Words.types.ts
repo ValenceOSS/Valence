@@ -5,6 +5,7 @@ type WordsProps = {
   tone?: 'plain' | 'muted' | 'danger' | 'accent' | 'onArtwork' | 'onBright';
   size?: 'title' | 'heading' | 'body' | 'small';
   lines?: number;
+  isSelectable?: boolean;
 };
 
 export type { WordsProps };

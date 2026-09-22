@@ -24,8 +24,15 @@ const styles = StyleSheet.create({
  * @param tone - How much it wants to be read.
  * @param size - How large it is.
  * @param lines - How many lines it may take before it is cut short.
+ * @param isSelectable - Whether it can be held to select and copy, as a key or a code can.
  */
-const Words = ({ children, tone = 'plain', size = 'body', lines }: WordsProps) => {
+const Words = ({
+  children,
+  tone = 'plain',
+  size = 'body',
+  lines,
+  isSelectable = false,
+}: WordsProps) => {
   const colours = useTheColours();
   const colour =
     tone === 'muted'
@@ -53,6 +60,7 @@ const Words = ({ children, tone = 'plain', size = 'body', lines }: WordsProps) =
         { color: colour },
       ]}
       {...(lines === undefined ? {} : { numberOfLines: lines })}
+      selectable={isSelectable}
     >
       {children}
     </Text>

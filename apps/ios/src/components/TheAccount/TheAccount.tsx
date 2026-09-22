@@ -9,11 +9,13 @@ import { TheDevices } from '@ValencePhone/components/TheAccount/components/TheDe
 import { TheDownloads } from '@ValencePhone/components/TheAccount/components/TheDownloads/TheDownloads';
 import { TheHidden } from '@ValencePhone/components/TheAccount/components/TheHidden/TheHidden';
 import { TheHistory } from '@ValencePhone/components/TheAccount/components/TheHistory/TheHistory';
+import { TheSecurity } from '@ValencePhone/components/TheAccount/components/TheSecurity/TheSecurity';
 import { TheProfile } from '@ValencePhone/components/TheAccount/components/TheProfile/TheProfile';
 import type { TheAccountProps } from './TheAccount.types';
 
 const PANELS = [
   { id: 'profile', label: 'Profile' },
+  { id: 'security', label: 'Security' },
   { id: 'devices', label: 'Devices' },
   { id: 'downloads', label: 'Downloads' },
   { id: 'history', label: 'History' },
@@ -21,7 +23,7 @@ const PANELS = [
 ] as const;
 
 /**
- * Somebody's own account: how they appear, where they are signed in, what they have downloaded,
+ * Somebody's own account: how they appear, how they sign in, where they are signed in, what they have downloaded,
  * watched and hidden, and the way out.
  *
  * @param onOut - Told to sign out.
@@ -39,9 +41,17 @@ const TheAccount = ({ onOut, onWatchHeld }: TheAccountProps) => {
         <Words tone="muted">{who.data.email}</Words>
       )}
 
-      <SegmentedRow label="What to change" items={PANELS} value={panel} onSelect={setPanel} />
+      <SegmentedRow
+        label="What to change"
+        scrolls
+        items={PANELS}
+        value={panel}
+        onSelect={setPanel}
+      />
 
-      {panel === 'devices' ? (
+      {panel === 'security' ? (
+        <TheSecurity />
+      ) : panel === 'devices' ? (
         <TheDevices />
       ) : panel === 'downloads' ? (
         <TheDownloads onWatch={onWatchHeld} />
