@@ -17,6 +17,7 @@ import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
 import { ACard } from '@ValencePhone/components/ACard/ACard';
 import { TheFeatured } from '@ValencePhone/components/TheLibrary/components/TheFeatured/TheFeatured';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
+import { usePullToRefresh } from '@ValencePhone/hooks/usePullToRefresh';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
 import type { TheHomeProps } from './TheHome.types';
@@ -49,6 +50,7 @@ type AShelfOf = { kind: 'rail'; rail: Rail } | { kind: 'comingUp' };
 const TheHome = ({ header, watchable, onLookAt, onLookAtShow }: TheHomeProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
+  const pulling = usePullToRefresh();
   const who = useQuery(sessionQueries.who());
   const watched = useQuery(viewingQueries.progress());
   const progress = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
@@ -137,6 +139,7 @@ const TheHome = ({ header, watchable, onLookAt, onLookAtShow }: TheHomeProps) =>
       }}
       style={[styles.whole, { backgroundColor: colours.surface }]}
       keyboardShouldPersistTaps="handled"
+      refreshControl={pulling}
     />
   );
 };

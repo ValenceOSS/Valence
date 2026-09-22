@@ -6,6 +6,7 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { UseAPasskey } from '@ValencePhone/components/UseAPasskey/UseAPasskey';
 import { Words } from '@ValencePhone/components/Words/Words';
+import { useTheServer } from '@ValencePhone/hooks/useTheServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheWayInProps } from './TheWayIn.types';
 
@@ -25,6 +26,7 @@ const styles = StyleSheet.create({
 const TheWayIn = ({ onPicked, onIn, onElsewhere }: TheWayInProps) => {
   const asking = useQuery(sessionQueries.wayIn());
   const colours = useTheColours();
+  const server = useTheServer();
 
   return (
     <Screen scrolls>
@@ -33,7 +35,20 @@ const TheWayIn = ({ onPicked, onIn, onElsewhere }: TheWayInProps) => {
       {asking.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
 
       {asking.isError ? (
-        <Words tone="danger">That server did not answer.</Words>
+        <>
+          <Words>{`Can’t reach ${server.address ?? 'your server'}.`}</Words>
+          <Words tone="muted">
+            It may be restarting. Valence tries again every few seconds, or pull down to try now.
+          </Words>
+          <Button
+            onPress={() => {
+              server.tryNow();
+              void asking.refetch();
+            }}
+          >
+            Try again
+          </Button>
+        </>
       ) : (
         <View style={styles.faces}>
           {(asking.data?.profiles ?? []).map((profile) => (

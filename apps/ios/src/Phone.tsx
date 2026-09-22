@@ -8,6 +8,7 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { installPhonePlatform } from '@ValencePhone/platform/installPhonePlatform';
 import { whatThePhoneRemembers } from '@ValencePhone/platform/whatThePhoneRemembers';
 import { holdThisPhoneUpright } from '@ValencePhone/platform/holdThisPhoneUpright';
+import { refetchWhenThePhoneWakes } from '@ValencePhone/platform/refetchWhenThePhoneWakes';
 import { THE_SERVER_ADDRESS } from '@ValencePhone/platform/THE_SERVER_ADDRESS';
 import { theColours } from '@ValencePhone/theme/theColours';
 import { TheHousehold } from '@ValencePhone/components/TheHousehold/TheHousehold';
@@ -48,6 +49,7 @@ const Phone = () => {
 
   useEffect(() => {
     void holdThisPhoneUpright();
+    refetchWhenThePhoneWakes();
     void whatThePhoneRemembers().then((held) => {
       installPhonePlatform(held);
       setAddress(platformInUse().serverAddress());

@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { usePullToRefresh } from '@ValencePhone/hooks/usePullToRefresh';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
 import type { ScreenProps } from './Screen.types';
@@ -25,6 +26,7 @@ const styles = StyleSheet.create({
 const Screen = ({ children, scrolls = false, centres = false }: ScreenProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
+  const pulling = usePullToRefresh();
   const ground = { backgroundColor: colours.surface };
   const spacing = { paddingBottom: room.bottom + SCREEN_EDGE, paddingTop: room.top + SCREEN_EDGE };
 
@@ -37,7 +39,11 @@ const Screen = ({ children, scrolls = false, centres = false }: ScreenProps) => 
   }
 
   return (
-    <ScrollView style={[styles.whole, ground]} contentContainerStyle={[styles.inside, spacing]}>
+    <ScrollView
+      style={[styles.whole, ground]}
+      contentContainerStyle={[styles.inside, spacing]}
+      refreshControl={pulling}
+    >
       {children}
     </ScrollView>
   );
