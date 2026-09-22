@@ -1,9 +1,12 @@
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 
 type ServersFound = {
   alreadyFound: string[];
   reach: (address: string) => Promise<boolean>;
   whenFound: (listener: (address: string) => void) => () => void;
+  alreadyNearby: NearbyValence[];
+  whenNearbyChanges: (listener: (nearby: NearbyValence[]) => void) => () => void;
 };
 
 type Preferences = {
@@ -43,6 +46,10 @@ type AboutTheBuild = {
   chrome: string;
 };
 
+type DesktopNotifications = {
+  setBadge: (count: number) => void;
+};
+
 declare global {
   interface Window {
     valence: {
@@ -52,6 +59,7 @@ declare global {
       reach: Reach;
       update: UpdateChecks;
       about: AboutTheBuild;
+      notifications: DesktopNotifications;
       servers?: ServersFound;
     };
   }
@@ -60,6 +68,7 @@ declare global {
 export type {
   AboutTheBuild,
   AvailableUpdate,
+  DesktopNotifications,
   FilesHeld,
   Preferences,
   Reach,

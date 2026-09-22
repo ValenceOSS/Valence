@@ -7,7 +7,16 @@ import { MoodBackground } from '@ValenceUI/MoodBackground';
 import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
 import { readServerAddress } from '@ValenceClient/session/readServerAddress';
 import { reachServer } from './reachServer';
+import { ServerChoices } from './components/ServerChoices/ServerChoices';
 import type { ConnectToServerProps } from './ConnectToServer.types';
+
+/**
+ * An address as somebody would say it, without the part a browser adds for them.
+ *
+ * @param address - The address.
+ * @returns It, less its scheme.
+ */
+const withoutScheme = (address: string): string => address.replace(/^https?:\/\//u, '');
 
 /**
  * Asks which Valence this client is for, which a client that serves its own pages has no way of
@@ -32,11 +41,25 @@ import type { ConnectToServerProps } from './ConnectToServer.types';
  * while watching another — so it is offered rather than assumed, and the box is still there for
  * anybody whose Valence is somewhere else.
  *
+ * So is a server another machine on the network announced, under its own heading and by the name it
+ * announced, since somebody choosing between the one on this machine and the one across the room
+ * wants to know which is which. Both have answered before being offered, so pressing one connects.
+ *
+ * So, too, is one this client was pointed at before, since typing an address twice is typing it once
+ * too many. Those have not necessarily answered lately, so pressing one tries it the way the box
+ * would, and says so where it no longer answers. One already offered as found is not offered again.
+ *
+ * The foot names this build, where the client has one, for whoever is about to report that something
+ * here did not work.
+ *
  * @param onConnected - Told the address, once something answered at it.
  * @param startWith - What to put in the box, for somebody being asked again.
  * @param couldNotReach - The address that stopped answering, where that is why they are here.
  * @param reach - How to ask whether a Valence is there, which a test replaces.
  * @param found - Servers already found on this machine, which have answered before being offered.
+ * @param nearby - Servers heard on the network, which have answered before being offered.
+ * @param recent - Servers this client was pointed at before, the latest first.
+ * @param build - What this build is, in the one line a bug report wants.
  */
 const ConnectToServer = ({
   onConnected,
@@ -44,6 +67,9 @@ const ConnectToServer = ({
   couldNotReach,
   reach = reachServer,
   found = [],
+  nearby = [],
+  recent = [],
+  build = null,
 }: ConnectToServerProps) => {
   const [typed, setTyped] = useState(startWith);
   const [problem, setProblem] = useState<string | null>(
@@ -56,6 +82,23 @@ const ConnectToServer = ({
 
   const arrives = revealTransition(prefersReducedMotion);
 
+  const tryAddress = async (address: string) => {
+    setProblem(null);
+    setAsking(true);
+
+    const answered = await reach(address);
+
+    setAsking(false);
+
+    if (!answered) {
+      setProblem(`Nothing answered at ${address}. Check the address and that Valence is running.`);
+
+      return;
+    }
+
+    onConnected(address);
+  };
+
   const connect = async () => {
     const read = readServerAddress(typed);
 
@@ -65,26 +108,13 @@ const ConnectToServer = ({
       return;
     }
 
-    setProblem(null);
-    setAsking(true);
-
-    const answered = await reach(read.address);
-
-    setAsking(false);
-
-    if (!answered) {
-      setProblem(
-        `Nothing answered at ${read.address}. Check the address and that Valence is running.`,
-      );
-
-      return;
-    }
-
-    onConnected(read.address);
+    await tryAddress(read.address);
   };
 
+  const offered = new Set([...found, ...nearby.map((one) => one.address)]);
+
   return (
-    <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-hidden px-6 py-16">
+    <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-y-auto px-6 pb-28 pt-16">
       <MoodBackground hasGrid isDrifting />
 
       <motion.div
@@ -109,30 +139,35 @@ const ConnectToServer = ({
           <p className="text-sm text-text-muted">The address you would open in a browser.</p>
         </motion.div>
 
-        {found.length === 0 ? null : (
-          <motion.div
-            variants={revealVariants(prefersReducedMotion)}
-            transition={arrives}
-            className="flex w-full max-w-sm flex-col items-center gap-3"
-          >
-            <p className="text-sm text-text-muted">Found on this machine</p>
+        <ServerChoices
+          title="Found on this machine"
+          choices={found.map((address) => ({ address, label: withoutScheme(address) }))}
+          onChoose={onConnected}
+          isDisabled={asking}
+        />
 
-            {found.map((address) => (
-              <Button
-                key={address}
-                type="button"
-                variant="secondary"
-                size="lg"
-                className="w-full"
-                onClick={() => {
-                  onConnected(address);
-                }}
-              >
-                {address.replace(/^https?:\/\//, '')}
-              </Button>
-            ))}
-          </motion.div>
-        )}
+        <ServerChoices
+          title="Found on your network"
+          choices={nearby.map((one) => ({
+            address: one.address,
+            label: one.name,
+            detail: withoutScheme(one.address),
+          }))}
+          onChoose={onConnected}
+          isDisabled={asking}
+        />
+
+        <ServerChoices
+          title="Recently used"
+          choices={recent
+            .filter((address) => !offered.has(address))
+            .map((address) => ({ address, label: withoutScheme(address) }))}
+          onChoose={(address) => {
+            setTyped(address);
+            void tryAddress(address);
+          }}
+          isDisabled={asking}
+        />
 
         <motion.form
           noValidate
@@ -160,7 +195,9 @@ const ConnectToServer = ({
         </motion.form>
       </motion.div>
 
-      <p className="absolute bottom-8 text-xs tracking-[0.2em] text-text-muted/60">© Valence</p>
+      <p className="absolute inset-x-6 bottom-8 truncate text-center text-xs text-text-muted/60">
+        {build ?? '© Valence'}
+      </p>
     </main>
   );
 };

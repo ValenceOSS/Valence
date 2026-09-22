@@ -19,6 +19,8 @@ import { isAppAddress } from '@ValenceServer/web/isAppAddress';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { and, count, eq, gt, isNull, lt, lte, sql } from 'drizzle-orm';
 import { createApp } from './App';
+import { announceOnTheNetwork } from '@ValenceServer/discovery/announceOnTheNetwork';
+import { stopAnnouncingOnExit } from '@ValenceServer/discovery/stopAnnouncingOnExit';
 import { createRealtimeRegistry } from '@ValenceServer/realtime/createRealtimeRegistry';
 import { createRealtimeHandler } from '@ValenceServer/realtime/createRealtimeHandler';
 import { createRealtimeClock } from '@ValenceServer/realtime/createRealtimeClock';
@@ -3257,6 +3259,16 @@ const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
 
   log.info('server', `API reference at ${origin}/api/reference`);
   log.info('server', `Media service dialled at ${env.TRANSCODER_URL}`);
+
+  if (env.ANNOUNCE_ON_NETWORK) {
+    stopAnnouncingOnExit(
+      announceOnTheNetwork(info.port, (message) => {
+        log.warn('server', message);
+      }),
+    );
+
+    log.info('server', 'Announced on the local network, for clients there to find');
+  }
 });
 
 nodeWebSocket.injectWebSocket(server);

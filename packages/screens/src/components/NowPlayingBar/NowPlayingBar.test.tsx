@@ -1,6 +1,6 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { startQueue } from '@ValenceClient/music/playQueue';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
@@ -37,6 +37,11 @@ beforeEach(() => {
   devices.fetchMusicDevices.mockResolvedValue([]);
   setMusicPanel(null);
   setListeningParty(null);
+  window.history.pushState(null, '', '/music');
+});
+
+afterEach(() => {
+  window.history.pushState(null, '', '/');
 });
 
 const inAParty = (overrides: Partial<ListeningParty> = {}): ListeningParty => ({
@@ -62,15 +67,15 @@ const inAParty = (overrides: Partial<ListeningParty> = {}): ListeningParty => ({
 });
 
 describe('NowPlayingBar', () => {
-  it('is not there while nothing is playing', () => {
+  it('is not there while nothing is playing, off the music page', () => {
+    window.history.pushState(null, '', '/');
+
     renderInAnAddress(<NowPlayingBar player={aFakeMusicPlayer().player} />);
 
     expect(screen.queryByRole('region', { name: 'Now playing' })).not.toBeInTheDocument();
   });
 
   it('is there on the music page even while nothing is playing, with every control at rest', () => {
-    window.history.pushState(null, '', '/music');
-
     renderInAnAddress(<NowPlayingBar player={aFakeMusicPlayer().player} />);
 
     expect(screen.getByRole('region', { name: 'Now playing' })).toBeInTheDocument();
@@ -78,8 +83,41 @@ describe('NowPlayingBar', () => {
     expect(screen.getByRole('button', { name: 'Play' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+  });
+
+  it('shrinks to a corner away from the music page while something is playing', () => {
+    window.history.pushState(null, '', '/');
+
+    renderInAnAddress(<NowPlayingBar player={playing().player} />);
+
+    expect(screen.queryByRole('region', { name: 'Now playing' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open Track 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+  });
+
+  it('pauses from the corner without leaving the page', async () => {
+    const actor = userEvent.setup();
+    const music = playing();
 
     window.history.pushState(null, '', '/');
+
+    renderInAnAddress(<NowPlayingBar player={music.player} />);
+
+    await actor.click(screen.getByRole('button', { name: 'Pause' }));
+
+    expect(music.player.pause).toHaveBeenCalled();
+  });
+
+  it('takes somebody to the music page from the corner', async () => {
+    const actor = userEvent.setup();
+
+    window.history.pushState(null, '', '/');
+
+    renderInAnAddress(<NowPlayingBar player={playing().player} />);
+
+    await actor.click(screen.getByRole('button', { name: 'Open Track 1' }));
+
+    expect(window.location.pathname).toBe('/music');
   });
 
   it('carries the lyrics, queue and devices in a menu for a screen with no room for their buttons', async () => {

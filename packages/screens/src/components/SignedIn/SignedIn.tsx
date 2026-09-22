@@ -15,6 +15,12 @@ import { useWatchParty } from '@ValenceClient/party/useWatchParty';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { householdQueries } from '@ValenceClient/query/householdQueries';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import {
+  allowRealtimeClientToStart,
+  getRealtimeClient,
+} from '@ValenceClient/realtime/getRealtimeClient';
+import { aDormantRealtimeClient } from '@ValenceClient/realtime/aDormantRealtimeClient';
+import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
@@ -51,13 +57,17 @@ const SignedIn = ({ title }: SignedInProps) => {
   const session = useQuery(sessionQueries.who());
   const user = session.data ?? null;
 
+  allowRealtimeClientToStart(user !== null);
+
+  useFreshFromTheSocket(user === null ? null : getRealtimeClient());
+
   const [known, setKnown] = useState(new Map<string, MediaSummary>());
   const [reported, setReported] = useState(new Map<string, WatchProgress>());
   const [startOverride, setStartOverride] = useState<StartOverride>(null);
   const [moodLights, setMoodLights] = useState<MoodLight[]>([]);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
 
-  const watchParty = useWatchParty();
+  const watchParty = useWatchParty(user === null ? aDormantRealtimeClient() : getRealtimeClient());
 
   const [isPageReading, setIsPageReading] = useState(false);
 
@@ -77,6 +87,8 @@ const SignedIn = ({ title }: SignedInProps) => {
   const setUp = settingUp.data ?? null;
 
   const unfinished = setUp === null || setUp.isOnboarded ? null : setUp.household;
+
+  const watched = useQuery({ ...viewingQueries.progress(), enabled: user !== null });
 
   const isWaiting = session.isPending || isPageReading || (user !== null && settingUp.isPending);
 
@@ -100,10 +112,8 @@ const SignedIn = ({ title }: SignedInProps) => {
     };
   }, [isWaiting, phase]);
 
-  useBrowsingPresence();
+  useBrowsingPresence(user !== null);
   useTellTheServerWhatIsHeld();
-
-  const watched = useQuery(viewingQueries.progress());
 
   const progress = useMemo(() => {
     const held = byMediaId(watched.data ?? []);
@@ -282,6 +292,7 @@ const SignedIn = ({ title }: SignedInProps) => {
             known,
             rememberItems,
             progress,
+            isProgressReady: !watched.isPending,
             reportProgress,
             readProgress,
             startOverride,
@@ -303,6 +314,7 @@ const SignedIn = ({ title }: SignedInProps) => {
       known,
       rememberItems,
       progress,
+      watched.isPending,
       reportProgress,
       readProgress,
       startOverride,

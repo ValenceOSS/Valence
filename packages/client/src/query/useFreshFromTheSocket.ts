@@ -21,12 +21,23 @@ type SaysWhatChanged = Pick<RealtimeClient, 'subscribe' | 'onResumed'>;
  * A reconnection invalidates everything, because a tab that was asleep missed whatever happened
  * while it was gone and has no way to find out what.
  *
- * @param client - Whatever says what changed, which is the shared socket.
+ * Nothing here is worth knowing before somebody is signed in — a socket opened to watch for changes
+ * nobody may see yet is a connection with nothing to say, held open against a server that has
+ * already refused everything else this tab asked it before it had a session. Passed `null`, this
+ * listens for nothing and leaves the shared socket unopened, rather than starting it the moment
+ * anything on the page happens to mount.
+ *
+ * @param client - Whatever says what changed, which is the shared socket, or `null` where there is
+ *   nobody signed in yet to hear about a change.
  */
-const useFreshFromTheSocket = (client: SaysWhatChanged = getRealtimeClient()): void => {
+const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClient()): void => {
   const cache = useQueryClient();
 
   useEffect(() => {
+    if (client === null) {
+      return;
+    }
+
     const stopWatching = [
       client.subscribe('media', () => {
         void cache.invalidateQueries({ queryKey: libraryQueries.key });

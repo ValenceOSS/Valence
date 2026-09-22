@@ -1,3 +1,5 @@
+import { signOut } from '@ValenceClient/session/auth';
+
 const MARK = 'valenceDesktop';
 
 const CHANGE_SERVER = 'valence:change-server';
@@ -19,7 +21,18 @@ type WhatIsBeingWatched = {
   party: { id: string; size: number } | null;
 };
 
-type WhatIsBeingDone = WhatIsBeingWatched | { kind: 'browsing' };
+type WhatIsBeingListened = {
+  kind: 'listening';
+  title: string;
+  artists: string[];
+  startedAt: number;
+  endsAt: number | null;
+  isPaused: boolean;
+  artwork: string | null;
+  party: { id: string; size: number } | null;
+};
+
+type WhatIsBeingDone = WhatIsBeingWatched | WhatIsBeingListened | { kind: 'browsing' };
 
 /**
  * Whether these pages are being shown inside Valence's own window rather than a browser.
@@ -36,12 +49,21 @@ type WhatIsBeingDone = WhatIsBeingWatched | { kind: 'browsing' };
 const isTheDesktopClient = (): boolean => document.documentElement.dataset[MARK] === 'true';
 
 /**
- * Asks the window to point itself at a different server.
+ * Ends whatever this device was signed into there, and asks the window to point itself at a
+ * different server.
  *
- * The only thing these pages can ask of the client showing them, and the one thing the server cannot
- * do for itself: a browser is already wherever it was opened, and a window is not.
+ * The server does not hear about a window pointed elsewhere — as far as it knows, this device
+ * simply stopped asking. Ending the session properly first is the difference between that and
+ * actually signing out: the one thing left behind otherwise is a cookie that still works, sitting on
+ * a server nobody here is looking at any more, waiting for whoever changes the address back.
+ *
+ * Signed out before the window is asked to move, rather than alongside it, because the address that
+ * request needs is the one about to be forgotten — asked after, there would be nothing left to sign
+ * out of.
  */
-const askForADifferentServer = (): void => {
+const askForADifferentServer = async (): Promise<void> => {
+  await signOut();
+
   document.dispatchEvent(new CustomEvent(CHANGE_SERVER));
 };
 
@@ -62,6 +84,6 @@ const nowWatching = (doing: WhatIsBeingDone | null): void => {
   document.dispatchEvent(new CustomEvent(NOW_WATCHING, { detail: doing }));
 };
 
-export type { WhatIsBeingDone, WhatIsBeingWatched };
+export type { WhatIsBeingDone, WhatIsBeingListened, WhatIsBeingWatched };
 
 export { askForADifferentServer, isTheDesktopClient, nowWatching };

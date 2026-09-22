@@ -76,6 +76,9 @@ importers:
       better-auth:
         specifier: ^1.7.4
         version: 1.7.4(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(better-sqlite3@12.11.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@electric-sql/pglite@0.5.8)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/pg@8.23.1)(better-sqlite3@12.11.1)(kysely@0.29.4)(pg@8.23.0))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@4.1.11)(vue@3.5.43(typescript@5.9.3))
+      bonjour-service:
+        specifier: ^1.4.4
+        version: 1.4.4
       conf:
         specifier: ^15.1.0
         version: 15.1.0
@@ -419,6 +422,9 @@ importers:
       better-auth:
         specifier: ^1.7.4
         version: 1.7.4(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(better-sqlite3@12.11.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@electric-sql/pglite@0.5.8)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/pg@8.23.1)(better-sqlite3@12.11.1)(kysely@0.29.4)(pg@8.23.0))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@4.1.11)(vue@3.5.43(typescript@5.9.3))
+      bonjour-service:
+        specifier: ^1.4.4
+        version: 1.4.4
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@electric-sql/pglite@0.5.8)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/pg@8.23.1)(better-sqlite3@12.11.1)(kysely@0.29.4)(pg@8.23.0)
@@ -3102,6 +3108,12 @@ packages:
     resolution:
       {
         integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==,
+      }
+
+  '@leichtgewicht/ip-codec@2.0.5':
+    resolution:
+      {
+        integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==,
       }
 
   '@levischuck/tiny-cbor@0.2.11':
@@ -6210,6 +6222,12 @@ packages:
         integrity: sha512-3aRg6/JxfffFD+OlOjOFR3Vo79l39ooBTFucxx+MT3dhCtzn3EmiUPQo+6/OZuI2jbXi3YKgmiTFBgChQMwIRQ==,
       }
 
+  bonjour-service@1.4.4:
+    resolution:
+      {
+        integrity: sha512-jCZcVv7eoc4QesRscwEZtSROBen+6LpKAmBIsQYQrsAeVHLyMXWX/t6eIV5KiRZYNUBl8eVqImEEMQ8L5+c/Kw==,
+      }
+
   boolbase@1.0.0:
     resolution:
       {
@@ -7025,6 +7043,13 @@ packages:
       {
         integrity: sha512-O3zJUFUYHJKgzPqioHxfxzBzlSC1eXCSr79gMSBKBP5AgjjpmrydMsMLotEg9fAJF36vdUncb+4ndRNxoPdlSQ==,
       }
+
+  dns-packet@5.6.1:
+    resolution:
+      {
+        integrity: sha512-l4gcSouhcgIKRvyy99RNVOgxXiicE+2jZoNmaNmZ6JXiGajBOJAesk1OBlJuM5k2c+eudGdLxDqXuPCKIj6kpw==,
+      }
+    engines: { node: '>=6' }
 
   dom-accessibility-api@0.5.16:
     resolution:
@@ -9717,6 +9742,13 @@ packages:
         integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==,
       }
 
+  multicast-dns@7.2.5:
+    resolution:
+      {
+        integrity: sha512-2eznPJP8z2BFLX50tf0LuODrpINqP1RVIm/CObbTcBRITQgmC/TjcREF1NeTBzIcR5XO/ukWo+YHOjBbFwIupg==,
+      }
+    hasBin: true
+
   mupdf@1.28.1:
     resolution:
       {
@@ -11319,6 +11351,12 @@ packages:
     resolution:
       {
         integrity: sha512-wxVoanmDeavXie1vu2JaQ3WIc3JZnWAOYFBsJyATaVsXsycKYUflGsyBmrRSnoCpZJpwPyr38VpgSUlQ8CbFxg==,
+      }
+
+  thunky@1.1.0:
+    resolution:
+      {
+        integrity: sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==,
       }
 
   tiny-async-pool@1.3.0:
@@ -13487,6 +13525,8 @@ snapshots:
       keyv: 5.6.0
 
   '@keyv/serialize@1.1.1': {}
+
+  '@leichtgewicht/ip-codec@2.0.5': {}
 
   '@levischuck/tiny-cbor@0.2.11': {}
 
@@ -15695,6 +15735,11 @@ snapshots:
 
   bn.js@4.12.5: {}
 
+  bonjour-service@1.4.4:
+    dependencies:
+      fast-deep-equal: 3.1.3
+      multicast-dns: 7.2.5
+
   boolbase@1.0.0: {}
 
   boolean@3.2.0:
@@ -16174,6 +16219,10 @@ snapshots:
     transitivePeerDependencies:
       - electron-builder-squirrel-windows
       - supports-color
+
+  dns-packet@5.6.1:
+    dependencies:
+      '@leichtgewicht/ip-codec': 2.0.5
 
   dom-accessibility-api@0.5.16: {}
 
@@ -18078,6 +18127,11 @@ snapshots:
 
   ms@2.1.3: {}
 
+  multicast-dns@7.2.5:
+    dependencies:
+      dns-packet: 5.6.1
+      thunky: 1.1.0
+
   mupdf@1.28.1: {}
 
   music-metadata@11.15.0:
@@ -19184,6 +19238,8 @@ snapshots:
       rimraf: 2.6.3
 
   temporal-spec@1.0.1: {}
+
+  thunky@1.1.0: {}
 
   tiny-async-pool@1.3.0:
     dependencies:

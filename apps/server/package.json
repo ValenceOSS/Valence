@@ -27,6 +27,7 @@
     "@valence/core": "workspace:*",
     "@valence/plugin-sdk": "workspace:*",
     "better-auth": "^1.7.4",
+    "bonjour-service": "^1.4.4",
     "drizzle-orm": "^0.45.2",
     "fflate": "^0.8.3",
     "hono": "^4.13.7",

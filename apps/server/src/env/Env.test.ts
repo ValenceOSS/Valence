@@ -39,6 +39,11 @@ describe('readEnv', () => {
     expect(env.REQUESTS_SECRET).toBe('');
   });
 
+  it('announces itself on the network unless told not to', () => {
+    expect(readEnv({}).ANNOUNCE_ON_NETWORK).toBe(true);
+    expect(readEnv({ ANNOUNCE_ON_NETWORK: 'false' }).ANNOUNCE_ON_NETWORK).toBe(false);
+  });
+
   it('drops a trailing slash from where the requests service answers', () => {
     expect(readEnv({ REQUESTS_URL: ' http://requests:8421/ ' }).REQUESTS_URL).toBe(
       'http://requests:8421',

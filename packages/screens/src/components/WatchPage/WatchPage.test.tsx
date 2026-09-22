@@ -75,9 +75,41 @@ describe('WatchPage', () => {
     expect(screen.getByText('playing Arrival from 1800')).toBeInTheDocument();
   });
 
+  it('waits for the saved position before starting, rather than beginning at the top', () => {
+    renderInAShell(<WatchPage />, {
+      known,
+      isProgressReady: false,
+      progress: new Map([
+        [
+          ARRIVAL.id,
+          {
+            mediaId: ARRIVAL.id,
+            positionSeconds: 1800.6,
+            durationSeconds: 6960,
+            isFinished: false,
+            updatedAt: '2026-08-10T00:00:00.000Z',
+          },
+        ],
+      ]),
+    });
+
+    expect(screen.getByRole('status', { name: 'Loading Valence' })).toBeInTheDocument();
+    expect(drawn.player).toBeNull();
+  });
+
   it('starts where it was told to instead, when something asked for a position', () => {
     renderInAShell(<WatchPage />, {
       known,
+      startOverride: { mediaId: ARRIVAL.id, seconds: 42 },
+    });
+
+    expect(screen.getByText('playing Arrival from 42')).toBeInTheDocument();
+  });
+
+  it('does not wait for the saved position when something already asked for one', () => {
+    renderInAShell(<WatchPage />, {
+      known,
+      isProgressReady: false,
       startOverride: { mediaId: ARRIVAL.id, seconds: 42 },
     });
 

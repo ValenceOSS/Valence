@@ -16,6 +16,7 @@ vi.mock('@ValenceScreens/notifications/subscribeToPush', () => ({
 }));
 
 vi.mock('@ValenceClient/realtime/getRealtimeClient', () => ({
+  allowRealtimeClientToStart: () => undefined,
   getRealtimeClient: () => ({
     start: () => undefined,
     stop: () => undefined,

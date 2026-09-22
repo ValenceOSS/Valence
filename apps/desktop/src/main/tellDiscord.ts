@@ -35,10 +35,9 @@ type Presence = {
  * @param temporary - Where this machine keeps this user's temporary files, which is where Discord
  *   listens on a Mac. Passed in rather than read from the environment, which does not always carry
  *   it.
- * @param version - Which Valence this is, for the picture to say when somebody rests on it.
  * @returns How to say what is playing, and how to stop.
  */
-const tellDiscord = (temporary: string, version: string): Presence => {
+const tellDiscord = (temporary: string): Presence => {
   let socket: Socket | null = null;
   let ready = false;
   let waiting: WhatIsPlaying | null = null;
@@ -52,7 +51,7 @@ const tellDiscord = (temporary: string, version: string): Presence => {
     send(FRAME, {
       cmd: 'SET_ACTIVITY',
       nonce: `${Date.now().toString()}`,
-      args: { pid: process.pid, activity: aDiscordActivity(playing, version) },
+      args: { pid: process.pid, activity: aDiscordActivity(playing) },
     });
   };
 

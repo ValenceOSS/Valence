@@ -16,6 +16,7 @@ import {
   Mic as MicFilledIcon,
   Users as UsersFilledIcon,
 } from '@keyline-icons/react/fill';
+import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
@@ -33,7 +34,9 @@ import { AUDIO_QUALITIES, AudioQualitySchema } from '@ValenceContracts/schemas/M
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
+import { MusicMiniPlayer } from '@ValenceScreens/components/MusicMiniPlayer/MusicMiniPlayer';
 import { setMusicImmersive, useMusicImmersive } from '@ValenceScreens/music/musicImmersive';
 import { keepBarRoom } from '@ValenceScreens/music/keepBarRoom';
 import { setMusicPanel, useMusicPanel } from '@ValenceScreens/music/musicPanel';
@@ -42,6 +45,7 @@ import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import { useMusicSession } from '@ValenceScreens/music/useMusicSession';
+import { useDiscordMusicPresence } from '@ValenceScreens/playback/useDiscordMusicPresence';
 import { idleWhatIsPlaying } from '@ValenceScreens/music/idleWhatIsPlaying';
 import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
 import { describeAudioQuality } from '@ValenceScreens/music/describeAudioQuality';
@@ -97,18 +101,53 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const isStill = prefersReducedMotion === true;
   const arriving = revealTransition(prefersReducedMotion, 'heavy');
+  const whoIsWatching = useQuery(profileQueries.watching());
 
   useMusicSession(state, player);
 
+  useDiscordMusicPresence({
+    playing,
+    isAllowed: whoIsWatching.data?.showsWhatIamWatching ?? false,
+    party:
+      listening === null ? null : { id: listening.party.id, size: listening.party.members.length },
+  });
+
   const isIdle = playing === null;
+  const isFollowing = listening !== null && !listening.mayChoose;
 
   if (isImmersive || (isIdle && place.section !== 'music')) {
     return <AnimatePresence>{null}</AnimatePresence>;
   }
 
+  if (!isIdle && place.section !== 'music') {
+    return (
+      <MusicMiniPlayer
+        shown={playing}
+        onOpen={() => {
+          go({ section: 'music' });
+        }}
+        onTogglePlay={() => {
+          if (isFollowing) {
+            listening.send({
+              kind: playing.isPlaying ? 'pause' : 'play',
+              atSeconds: playing.positionSeconds,
+            });
+
+            return;
+          }
+
+          if (playing.isPlaying) {
+            player.pause();
+          } else {
+            player.resume();
+          }
+        }}
+      />
+    );
+  }
+
   const shown = playing ?? idleWhatIsPlaying(state.volume);
 
-  const isFollowing = listening !== null && !listening.mayChoose;
   const isLiked = favourites.isKept(shown.trackId);
   const volume = state.isMuted ? 0 : shown.volume;
 

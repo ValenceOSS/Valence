@@ -64,4 +64,34 @@ describe('whatIsPlaying', () => {
 
     expect(read?.kind === 'watching' ? read.party : null).toEqual({ id: 'a-party', size: 3 });
   });
+
+  it('reads a track, which carries who made it rather than a series', () => {
+    const track = {
+      kind: 'listening',
+      title: 'How Not To Drown',
+      artists: ['CHVRCHES', 'Robert Smith'],
+      startedAt: 1_755_000_000_000,
+      endsAt: 1_755_000_331_000,
+      isPaused: false,
+      artwork: null,
+      party: null,
+    };
+
+    expect(whatIsPlaying(track)).toEqual(track);
+  });
+
+  it('refuses more names on a track than anybody would list', () => {
+    const track = {
+      kind: 'listening',
+      title: 'How Not To Drown',
+      artists: Array.from({ length: 21 }, (_, at) => `Artist ${at.toString()}`),
+      startedAt: 1_755_000_000_000,
+      endsAt: null,
+      isPaused: false,
+      artwork: null,
+      party: null,
+    };
+
+    expect(whatIsPlaying(track)).toBeNull();
+  });
 });

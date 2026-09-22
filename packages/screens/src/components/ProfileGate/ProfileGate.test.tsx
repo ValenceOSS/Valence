@@ -27,6 +27,7 @@ const many = (count: number): ViewerProfile[] =>
 vi.mock('@ValenceClient/session/auth', () => ({
   authenticateWithPasskey: vi.fn(),
   signInWithEmail: vi.fn(),
+  signOut: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock('@ValenceScreens/passkeys/isPasskeySupported', () => ({

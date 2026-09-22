@@ -1,3 +1,5 @@
+import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
+
 const SERVICE_WORKER_PATH = '/push-worker.js';
 
 /**
@@ -40,9 +42,18 @@ const toBase64Url = (buffer: ArrayBuffer | null): string => {
  * Whether this browser can be woken at all, which needs a service worker, the push machinery and a
  * secure context. Asked before offering push, since a switch that cannot do anything is worse than
  * no switch.
+ *
+ * The desktop client answers no regardless of what the APIs themselves say. Electron carries them —
+ * Chromium does, and nothing strips them out — but nothing here ever registers the worker they would
+ * need, so a switch that offered them would toggle and do nothing. It does not need to: the window
+ * itself notifies locally the moment something arrives, on a socket that is open for as long as the
+ * application is, which is the whole reason push exists for a browser tab that closes.
  */
 const canReceivePush = (): boolean =>
-  'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  !isTheDesktopClient() &&
+  'serviceWorker' in navigator &&
+  'PushManager' in window &&
+  'Notification' in window;
 
 /**
  * Asks this browser to accept push messages and tells the server where to knock, so a notification

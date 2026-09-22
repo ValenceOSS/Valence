@@ -5,6 +5,7 @@ import { renderTheApp } from '@ValenceScreens/testing/renderTheApp';
 const fetchMock = vi.fn();
 
 vi.mock('@ValenceClient/realtime/getRealtimeClient', () => ({
+  allowRealtimeClientToStart: () => undefined,
   getRealtimeClient: () => ({
     start: () => undefined,
     stop: () => undefined,

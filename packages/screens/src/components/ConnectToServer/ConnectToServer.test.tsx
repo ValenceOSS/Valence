@@ -188,3 +188,126 @@ describe('what it found on this machine', () => {
     expect(screen.getByLabelText('Server address')).toBeInTheDocument();
   });
 });
+
+describe('what it heard on the network', () => {
+  const MEDIA_BOX = { address: 'http://192.168.1.224:8420', name: 'Valence on media-box' };
+
+  it('offers a server announced elsewhere on the network, by the name it announced', () => {
+    render(<ConnectToServer onConnected={vi.fn()} nearby={[MEDIA_BOX]} />);
+
+    const heard = screen.getByRole('region', { name: 'Found on your network' });
+
+    expect(heard).toHaveTextContent('Valence on media-box');
+    expect(heard).toHaveTextContent('192.168.1.224:8420');
+  });
+
+  it('connects to it when pressed, since it answered before it was offered', async () => {
+    const onConnected = vi.fn();
+    const reach = answering();
+
+    render(<ConnectToServer onConnected={onConnected} reach={reach} nearby={[MEDIA_BOX]} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /Valence on media-box/u }));
+
+    expect(onConnected).toHaveBeenCalledWith('http://192.168.1.224:8420');
+    expect(reach).not.toHaveBeenCalled();
+  });
+
+  it('keeps it apart from the one on this machine', () => {
+    render(
+      <ConnectToServer
+        onConnected={vi.fn()}
+        found={['http://localhost:8420']}
+        nearby={[MEDIA_BOX]}
+      />,
+    );
+
+    expect(screen.getByRole('region', { name: 'Found on this machine' })).not.toHaveTextContent(
+      'media-box',
+    );
+  });
+});
+
+describe('what it was pointed at before', () => {
+  it('offers the servers used before, so nobody types an address twice', () => {
+    render(<ConnectToServer onConnected={vi.fn()} recent={['https://demo.getvalence.app']} />);
+
+    expect(screen.getByRole('region', { name: 'Recently used' })).toHaveTextContent(
+      'demo.getvalence.app',
+    );
+  });
+
+  it('tries one when pressed, since it may not have answered in a while', async () => {
+    const onConnected = vi.fn();
+    const reach = answering();
+
+    render(
+      <ConnectToServer
+        onConnected={onConnected}
+        reach={reach}
+        recent={['https://demo.getvalence.app']}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'demo.getvalence.app' }));
+
+    await waitFor(() => {
+      expect(onConnected).toHaveBeenCalledWith('https://demo.getvalence.app');
+    });
+    expect(reach).toHaveBeenCalledWith('https://demo.getvalence.app');
+  });
+
+  it('says so where one used before no longer answers, and leaves it in the box to correct', async () => {
+    const onConnected = vi.fn();
+
+    render(
+      <ConnectToServer
+        onConnected={onConnected}
+        reach={vi.fn(() => Promise.resolve(false))}
+        recent={['https://demo.getvalence.app']}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'demo.getvalence.app' }));
+
+    expect(
+      await screen.findByText(/nothing answered at https:\/\/demo\.getvalence\.app/i),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Server address')).toHaveValue('https://demo.getvalence.app');
+    expect(onConnected).not.toHaveBeenCalled();
+  });
+
+  it('does not offer one again that is already offered as found', () => {
+    render(
+      <ConnectToServer
+        onConnected={vi.fn()}
+        found={['http://localhost:8420']}
+        recent={['http://localhost:8420']}
+      />,
+    );
+
+    expect(screen.queryByRole('region', { name: 'Recently used' })).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'localhost:8420' })).toHaveLength(1);
+  });
+});
+
+describe('the foot', () => {
+  it('names this build, for whoever is about to report something', () => {
+    render(
+      <ConnectToServer
+        onConnected={vi.fn()}
+        build="Valence 1.2.0 (2ae1bc1) · arm64 · Electron 33.0.0 · Chromium 130.0.0"
+      />,
+    );
+
+    expect(
+      screen.getByText('Valence 1.2.0 (2ae1bc1) · arm64 · Electron 33.0.0 · Chromium 130.0.0'),
+    ).toBeInTheDocument();
+  });
+
+  it('signs itself where there is no build to name', () => {
+    render(<ConnectToServer onConnected={vi.fn()} />);
+
+    expect(screen.getByText('© Valence')).toBeInTheDocument();
+  });
+});
