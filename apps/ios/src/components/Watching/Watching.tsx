@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, StyleSheet, View } from 'react-native';
-import { useEvent } from 'expo';
+import { useEvent, useEventListener } from 'expo';
 import { useQuery } from '@tanstack/react-query';
+import { FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
@@ -108,6 +109,9 @@ const styles = StyleSheet.create({
  * seeked to instead: a transcode begins at the segment they asked for, while a file sent untouched
  * begins where every file does.
  *
+ * Something watched to within its credits is written down as finished, which is what takes it off
+ * the list of things to carry on with and counts it as seen.
+ *
  * Where they have got to is sampled every second and written down every ten, and the last sample
  * is what goes down on the way out rather than a fresh reading: the player is released before this
  * screen's own tidying runs, so asking it anything then is asking a thing that is already gone.
@@ -119,8 +123,9 @@ const styles = StyleSheet.create({
  * @param mediaId - What to watch.
  * @param startSeconds - Where to begin.
  * @param onDone - Told they have stopped watching.
+ * @param onEnded - Told the film has played to its end, so whoever opened it can decide what follows.
  */
-const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
+const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps) => {
   const colours = useTheColours();
   const [source, setSource] = useState<VideoSource | null>(null);
   const [seekTo, setSeekTo] = useState(0);
@@ -230,6 +235,10 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
 
   const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
   const loaded = useEvent(player, 'sourceLoad');
+
+  useEventListener(player, 'playToEnd', () => {
+    onEnded?.();
+  });
   const ticking = useEvent(player, 'timeUpdate', {
     currentTime: player.currentTime,
     bufferedPosition: player.bufferedPosition,
@@ -363,7 +372,14 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
       const seen = whereTheyGotTo.current;
 
       if (seen !== null) {
-        void reportWatchProgress(mediaId, seen, { isLeaving });
+        void reportWatchProgress(
+          mediaId,
+          {
+            ...seen,
+            isFinished: seen.positionSeconds >= seen.durationSeconds - FINISHED_WITHIN_SECONDS,
+          },
+          { isLeaving },
+        );
       }
     };
 

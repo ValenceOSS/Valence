@@ -1,4 +1,4 @@
-import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { act, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -9,6 +9,11 @@ import {
   fetchMediaDetail,
 } from '@ValenceClient/library/fetchLibrary';
 import { startPlaybackSession } from '@ValenceClient/playback/startPlaybackSession';
+import { fetchShow, fetchShows } from '@ValenceClient/library/fetchShows';
+import { fetchProfiles } from '@ValenceClient/profiles/fetchProfiles';
+import { ShowDetailSchema } from '@ValenceContracts/schemas/Show';
+import { PROFILE_COLOURS, ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
+import { theFakePlayer } from '@ValencePhone/testing/theFakePlayer';
 import {
   LibrarySchema,
   MediaDetailSchema,
@@ -20,6 +25,8 @@ import type { ReactNode } from 'react';
 jest.mock('@ValenceClient/session/auth');
 jest.mock('@ValenceClient/library/fetchLibrary');
 jest.mock('@ValenceClient/playback/startPlaybackSession');
+jest.mock('@ValenceClient/library/fetchShows');
+jest.mock('@ValenceClient/profiles/fetchProfiles');
 
 const A_SESSION = {
   id: 'MllMpJgdqC9rKsdlZjN23KwuRYubAfQF',
@@ -198,6 +205,188 @@ describe('SignedIn', () => {
 
     await waitFor(() => {
       expect(drawn.getByText('Sign out')).toBeTruthy();
+    });
+  });
+
+  describe('when an episode plays to its end', () => {
+    const SHOWS = { ...A_LIBRARY, kind: 'shows' as const };
+
+    const anEpisode = (n: number) =>
+      MediaSummarySchema.parse({
+        id: `3fa85f64-5717-4562-b3fc-2c963f66af0${n.toString()}`,
+        libraryId: A_LIBRARY.id,
+        title: `Episode ${n.toString()}`,
+        year: null,
+        durationSeconds: 2640,
+        width: 1920,
+        height: 1080,
+        videoCodec: 'hevc',
+        videoRange: 'SDR',
+        addedAt: '2026-01-01T00:00:00.000Z',
+        seriesTitle: 'Severance',
+        seasonNumber: 1,
+        episodeNumber: n,
+      });
+
+    const THREE = [anEpisode(1), anEpisode(2), anEpisode(3)];
+
+    const asksAfter = (askStillWatchingAfter: number) => {
+      jest.mocked(fetchProfiles).mockResolvedValue([
+        ViewerProfileSchema.parse({
+          id: '3fa85f64-5717-4562-b3fc-2c963f66afb1',
+          name: 'Dan',
+          colour: PROFILE_COLOURS[0],
+          avatar: { kind: 'initial' },
+          askStillWatchingAfter,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        }),
+      ]);
+    };
+
+    const intoTheFirstEpisode = async () => {
+      jest.mocked(fetchLibraries).mockResolvedValue([SHOWS]);
+      jest.mocked(fetchShows).mockResolvedValue([
+        {
+          id: 'severance',
+          libraryId: A_LIBRARY.id,
+          title: 'Severance',
+          seasonCount: 1,
+          episodeCount: 3,
+          latestAddedAt: '2026-01-01T00:00:00.000Z',
+          coverMediaId: THREE[0]!.id,
+          seriesId: null,
+        },
+      ]);
+      jest.mocked(fetchShow).mockResolvedValue(
+        ShowDetailSchema.parse({
+          id: 'severance',
+          libraryId: A_LIBRARY.id,
+          title: 'Severance',
+          seasonCount: 1,
+          episodeCount: 3,
+          latestAddedAt: '2026-01-01T00:00:00.000Z',
+          coverMediaId: THREE[0]!.id,
+          seasons: [{ seasonNumber: 1, episodes: THREE }],
+        }),
+      );
+      jest.mocked(startPlaybackSession).mockResolvedValue({
+        kind: 'started',
+        session: {
+          sessionId: 'a-session',
+          delivery: { kind: 'direct', url: '/file' },
+          mode: 'Direct play',
+          plan: {
+            mediaId: THREE[0]!.id,
+            container: {
+              kind: 'passthrough',
+              reason: { code: 'ClientSupportsSource', detail: '' },
+            },
+            video: { kind: 'passthrough', reason: { code: 'ClientSupportsSource', detail: '' } },
+            audio: {
+              kind: 'passthrough',
+              streamIndex: 1,
+              reason: { code: 'ClientSupportsSource', detail: '' },
+            },
+            subtitles: { kind: 'none', reason: { code: 'ClientSupportsSource', detail: '' } },
+          },
+          warnings: [],
+          reuse: null,
+        },
+      });
+
+      const drawn = await render(around(<SignedIn onOut={jest.fn()} />));
+
+      await waitFor(() => {
+        expect(drawn.getByLabelText('Severance')).toBeTruthy();
+      });
+      await userEvent.press(drawn.getByLabelText('Severance'));
+      await waitFor(() => {
+        expect(drawn.getByLabelText('Episode 1')).toBeTruthy();
+      });
+      await userEvent.press(drawn.getByLabelText('Episode 1'));
+      await waitFor(() => {
+        expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+      });
+
+      return drawn;
+    };
+
+    const itEnds = async () => {
+      await act(() => {
+        theFakePlayer.say('playToEnd', { isPlaying: false });
+      });
+    };
+
+    it('plays the next one in the season', async () => {
+      asksAfter(0);
+
+      await intoTheFirstEpisode();
+      await itEnds();
+
+      await waitFor(() => {
+        expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[0]).toBe(THREE[1]!.id);
+      });
+    });
+
+    it('asks first once as many have followed as the profile allows', async () => {
+      asksAfter(1);
+
+      const drawn = await intoTheFirstEpisode();
+
+      await itEnds();
+      await waitFor(() => {
+        expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[0]).toBe(THREE[1]!.id);
+      });
+      await waitFor(() => {
+        expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+      });
+      await itEnds();
+
+      await waitFor(() => {
+        expect(drawn.getByText('Are you still watching?')).toBeTruthy();
+      });
+    });
+
+    it('asks instead of playing, not over the top of something already started', async () => {
+      asksAfter(1);
+
+      const drawn = await intoTheFirstEpisode();
+
+      await itEnds();
+      await waitFor(() => {
+        expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+      });
+
+      const startedBefore = jest.mocked(startPlaybackSession).mock.calls.length;
+
+      await itEnds();
+      await waitFor(() => {
+        expect(drawn.getByText('Are you still watching?')).toBeTruthy();
+      });
+
+      expect(jest.mocked(startPlaybackSession).mock.calls.length).toBe(startedBefore);
+    });
+
+    it('carries on when they say they are still there', async () => {
+      asksAfter(1);
+
+      const drawn = await intoTheFirstEpisode();
+
+      await itEnds();
+      await waitFor(() => {
+        expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+      });
+      await itEnds();
+      await waitFor(() => {
+        expect(drawn.getByText('Still watching')).toBeTruthy();
+      });
+
+      await userEvent.press(drawn.getByText('Still watching'));
+
+      await waitFor(() => {
+        expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[0]).toBe(THREE[2]!.id);
+      });
     });
   });
 });

@@ -2,6 +2,7 @@ import { theFakePlayer as mockPlayer } from '@ValencePhone/testing/theFakePlayer
 import type { FakePlayer } from '@ValencePhone/testing/theFakePlayer';
 
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
+import { useEffect as mockUseEffect } from 'react';
 import type { ReactNode } from 'react';
 
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
@@ -32,6 +33,19 @@ jest.mock('expo-screen-orientation', () => ({
 jest.mock('expo', () => ({
   ...jest.requireActual<object>('expo'),
   requireOptionalNativeModule: () => null,
+  useEventListener: (
+    player: { addListener: (of: string, told: () => void) => { remove: () => void } },
+    of: string,
+    told: () => void,
+  ) => {
+    mockUseEffect(() => {
+      const listening = player.addListener(of, told);
+
+      return () => {
+        listening.remove();
+      };
+    });
+  },
 }));
 
 jest.mock('@react-native-cookies/cookies', () => ({

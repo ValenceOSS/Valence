@@ -23,6 +23,8 @@ const theFractionOf = (progress: WatchProgress | undefined): number =>
 
 const AS_MANY_AS_A_ROW_HOLDS = 20;
 
+const WHAT_A_PHONE_PLAYS: ReadonlySet<string> = new Set(['movies', 'shows']);
+
 const styles = StyleSheet.create({
   shelf: { flexDirection: 'row', flexWrap: 'wrap', gap: 18 },
 });
@@ -37,6 +39,10 @@ const styles = StyleSheet.create({
  * chosen as soon as the list arrives: a phone opening on a list of library names asks somebody to
  * make a choice before showing them anything, and the answer is almost always the first one.
  *
+ * Only libraries a phone can play are offered. Music and books have players of their own that
+ * this client does not have yet, and a tab of albums that open in a film player is worse than no
+ * tab at all.
+ *
  * A library of programmes is drawn a programme to a card rather than an episode to a card. A
  * series of ten seasons is otherwise two hundred posters of the same picture, and the one somebody
  * wanted is somewhere in the middle of them.
@@ -46,7 +52,11 @@ const styles = StyleSheet.create({
  * @param onOut - Told once somebody has signed out.
  */
 const TheLibrary = ({ onLookAt, onLookAtShow, onOut }: TheLibraryProps) => {
-  const libraries = useQuery(libraryQueries.all());
+  const everyLibrary = useQuery(libraryQueries.all());
+  const libraries = {
+    ...everyLibrary,
+    data: everyLibrary.data?.filter((library) => WHAT_A_PHONE_PLAYS.has(library.kind)),
+  };
   const watched = useQuery(viewingQueries.progress());
   const colours = useTheColours();
   const [chosen, setChosen] = useState<string | null>(null);

@@ -247,7 +247,7 @@ describe('Watching', () => {
 
     expect(reportWatchProgress).toHaveBeenCalledWith(
       'a-film',
-      { positionSeconds: 420, durationSeconds: 6960 },
+      { positionSeconds: 420, durationSeconds: 6960, isFinished: false },
       { isLeaving: false },
     );
   });
@@ -293,7 +293,7 @@ describe('Watching', () => {
 
     expect(reportWatchProgress).toHaveBeenCalledWith(
       'a-film',
-      { positionSeconds: 420, durationSeconds: 6960 },
+      { positionSeconds: 420, durationSeconds: 6960, isFinished: false },
       { isLeaving: true },
     );
   });
@@ -631,5 +631,48 @@ describe('Watching', () => {
     await userEvent.press(drawn.getByLabelText('Skip Credits'));
 
     expect(theFakePlayer.currentTime).toBe(500);
+  });
+
+  it('writes a film down as finished once it is into its credits', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    theFakePlayer.currentTime = 6900;
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    await act(() => {
+      jest.advanceTimersByTime(11_000);
+    });
+
+    expect(reportWatchProgress).toHaveBeenCalledWith(
+      'a-film',
+      { positionSeconds: 6900, durationSeconds: 6960, isFinished: true },
+      { isLeaving: false },
+    );
+  });
+
+  it('says when the film has played to its end, so what follows can be decided', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const onEnded = jest.fn();
+    const drawn = await render(
+      around(<Watching mediaId="a-film" onDone={jest.fn()} onEnded={onEnded} />),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    await act(() => {
+      theFakePlayer.say('playToEnd', { isPlaying: false });
+    });
+
+    expect(onEnded).toHaveBeenCalled();
   });
 });

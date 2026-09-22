@@ -329,4 +329,26 @@ describe('TheLibrary', () => {
 
     expect(onLookAtShow).toHaveBeenCalledWith('one', 'severance');
   });
+
+  it('offers only what a phone can play, rather than albums that open in a film player', async () => {
+    jest
+      .mocked(fetchLibraries)
+      .mockResolvedValue([
+        aLibrary('one', 'Films'),
+        { ...aLibrary('two', 'Music'), kind: 'music' },
+        { ...aLibrary('three', 'Books'), kind: 'books' },
+      ]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
+
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getByText('Films')).toBeTruthy();
+    });
+
+    expect(drawn.queryByText('Music')).toBeNull();
+    expect(drawn.queryByText('Books')).toBeNull();
+  });
 });
