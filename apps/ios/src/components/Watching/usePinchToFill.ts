@@ -16,12 +16,10 @@ const isTwoFingered = (event: GestureResponderEvent): boolean =>
   event.nativeEvent.touches.length >= 2;
 
 /**
- * Pinching a film between the three sizes it can be drawn at.
+ * Pinching a film between the two sizes it can be drawn at.
  *
- * Which somebody wants is a matter of taste and of the phone they hold, so all three are a pinch
- * away, as they are in every other video on a phone. One step per pinch, and the fingers' distance
- * is re-based each time one lands, so a single long pinch walks through them rather than needing
- * three separate ones.
+ * Which somebody wants is a matter of taste and of the phone they hold, so both are a pinch away,
+ * as they are in every other video on a phone.
  *
  * The gesture is claimed before anything underneath sees it, which is the whole reason this is a
  * capture. A second finger landing on a film would otherwise also read as a tap, and the controls
@@ -54,7 +52,7 @@ const usePinchToFill = (): PinchedToFill => {
       }
 
       startedApart.current = nowApart;
-      setHowClose((from) => theNextWayIn(from, way));
+      setHowClose(theNextWayIn(way));
     },
     onPanResponderRelease: () => {
       startedApart.current = null;

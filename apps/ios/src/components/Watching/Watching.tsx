@@ -202,7 +202,6 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   });
 
   const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
-  const shot = useEvent(player, 'videoTrackChange', { videoTrack: player.videoTrack ?? null });
   const ticking = useEvent(player, 'timeUpdate', {
     currentTime: player.currentTime,
     bufferedPosition: player.bufferedPosition,
@@ -248,11 +247,11 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
 
   useEffect(() => {
     Animated.timing(howBig, {
-      toValue: howBigToDrawIt(howClose, screen, room, shot.videoTrack?.size ?? null),
+      toValue: howBigToDrawIt(howClose, screen, room),
       duration: ZOOMING,
       useNativeDriver: true,
     }).start();
-  }, [howClose, screen, room, shot.videoTrack, howBig]);
+  }, [howClose, screen, room, howBig]);
 
   useEffect(() => {
     if (areControlsUp) {
