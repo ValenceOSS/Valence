@@ -7,27 +7,13 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { Switch } from '@ValenceUI/Switch';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
+import { SEASON_STANDING_NAMES } from '@ValenceClient/requests/SEASON_STANDING_NAMES';
+import { theSeasonsTicked } from '@ValenceClient/requests/theSeasonsTicked';
+import { tickASeason } from '@ValenceClient/requests/tickASeason';
 import type { CatalogueSeason, SeasonStanding } from '@ValenceContracts/schemas/MediaRequest';
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { SeasonChooserProps } from './SeasonChooser.types';
-
-/**
- * Which seasons are ticked, where every one of them is what null means.
- *
- * @param seasons - The seasons chosen, or null for every one.
- * @param listed - Every season the catalogue lists.
- * @returns The season numbers ticked.
- */
-const tickedOf = (seasons: number[] | null, listed: readonly CatalogueSeason[]): number[] =>
-  seasons ?? listed.map((one) => one.season);
-
-const STANDING_NAMES: Readonly<Record<SeasonStanding, string>> = {
-  askable: 'Not requested',
-  requested: 'Requested',
-  partly: 'Partly here',
-  library: 'In the library',
-};
 
 const STANDING_TONES: Readonly<Record<SeasonStanding, BadgeTone>> = {
   askable: 'quiet',
@@ -53,7 +39,7 @@ const STANDING_TONES: Readonly<Record<SeasonStanding, BadgeTone>> = {
 const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
   const listed = useQuery(requestsQueries.seriesSeasons(tmdbId));
   const rows = useMemo(() => listed.data ?? [], [listed.data]);
-  const ticked = useMemo(() => tickedOf(seasons, rows), [seasons, rows]);
+  const ticked = useMemo(() => theSeasonsTicked(seasons, rows), [seasons, rows]);
   const isEveryOne = rows.length > 0 && ticked.length === rows.length;
 
   const columns = useMemo<DataTableColumn<CatalogueSeason>[]>(
@@ -80,13 +66,7 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
               isLabelHidden
               isOn={isTaken}
               onToggle={() => {
-                const next = isTaken
-                  ? ticked.filter((season) => season !== row.original.season)
-                  : [...ticked, row.original.season];
-
-                onChange(
-                  next.length === rows.length ? null : next.toSorted((left, right) => left - right),
-                );
+                onChange(tickASeason(seasons, rows, row.original.season));
               }}
             />
           );
@@ -126,12 +106,12 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
         enableSorting: false,
         cell: ({ row }) => (
           <Badge size="sm" tone={STANDING_TONES[row.original.standing]}>
-            {STANDING_NAMES[row.original.standing]}
+            {SEASON_STANDING_NAMES[row.original.standing]}
           </Badge>
         ),
       },
     ],
-    [isEveryOne, onChange, rows, ticked],
+    [isEveryOne, onChange, rows, seasons, ticked],
   );
 
   return (

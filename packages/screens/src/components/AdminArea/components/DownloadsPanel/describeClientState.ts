@@ -1,5 +1,5 @@
 import type { DownloadClientState } from '@ValenceContracts/schemas/DownloadQueue';
-import type { StateBadge } from '@ValenceScreens/components/AdminArea/StateBadge';
+import type { StateBadge } from '@ValenceClient/status/StateBadge';
 
 /**
  * Says how a download client is, as a badge and the line beneath it: switched off, not asked yet,

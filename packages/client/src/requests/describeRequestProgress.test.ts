@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { aMediaRequest } from '@ValenceScreens/testing/aMediaRequest';
-import { describeRequestProgress } from './describeRequestProgress';
+import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
+import { describeRequestProgress } from '@ValenceClient/requests/describeRequestProgress';
 import type { RequestItem, RequestItemState } from '@ValenceContracts/schemas/MediaRequest';
 
 /**

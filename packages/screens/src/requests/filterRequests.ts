@@ -1,4 +1,4 @@
-import { describeRequestBadge } from '@ValenceScreens/components/AdminArea/components/MediaRequestsPanel/describeRequestBadge';
+import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 
 const NOT_JUDGED = 'quality:';

@@ -1,5 +1,5 @@
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
-import type { StateBadge } from '@ValenceScreens/components/AdminArea/StateBadge';
+import type { StateBadge } from '@ValenceClient/status/StateBadge';
 
 /**
  * Says how an indexer is, as a badge and the line beneath it: turned off by Valence and why,

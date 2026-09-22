@@ -1,4 +1,4 @@
-import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
+import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 
 /**

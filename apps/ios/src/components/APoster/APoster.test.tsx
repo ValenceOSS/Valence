@@ -56,6 +56,12 @@ describe('APoster', () => {
     expect(drawn.queryByText('2016')).toBeNull();
   });
 
+  it('says where it stands, where it was told', async () => {
+    const drawn = await render(<APoster {...asDrawn(aTitle())} note="Requested" />);
+
+    expect(drawn.getByText('Requested')).toBeTruthy();
+  });
+
   it('stands the name in where there is no artwork', async () => {
     const drawn = await render(<APoster {...asDrawn(aTitle({ hasPoster: false }))} />);
 

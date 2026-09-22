@@ -1,7 +1,7 @@
-import { describeCalendarDay } from './describeCalendarDay';
+import { describeCalendarDay } from '@ValenceClient/requests/describeCalendarDay';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
-import type { StateBadge } from '@ValenceScreens/components/AdminArea/StateBadge';
-import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
+import type { StateBadge } from '@ValenceClient/status/StateBadge';
+import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 
 /**
  * The day the next of a series' episodes airs, or an artist's albums comes out, where the

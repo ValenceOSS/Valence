@@ -1,4 +1,4 @@
-import { RELEASE_TYPE_NAMES } from '@ValenceScreens/components/AdminArea/RELEASE_TYPE_NAMES';
+import { RELEASE_TYPE_NAMES } from '@ValenceClient/requests/RELEASE_TYPE_NAMES';
 import type { MusicCatalogueHit } from '@ValenceContracts/schemas/MediaRequest';
 
 /**

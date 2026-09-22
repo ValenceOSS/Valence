@@ -1,4 +1,4 @@
-import type { BadgeTone } from '@ValenceUI/Badge.types';
+import type { StatusTone } from '@ValenceClient/status/StatusTone';
 
 const STATUS_LOOK = {
   queued: { label: 'Queued', tone: 'waiting' },
@@ -6,6 +6,6 @@ const STATUS_LOOK = {
   attention: { label: 'Needs attention', tone: 'warning' },
   done: { label: 'Done', tone: 'success' },
   failed: { label: 'Failed', tone: 'danger' },
-} as const satisfies Record<string, { label: string; tone: BadgeTone }>;
+} as const satisfies Record<string, { label: string; tone: StatusTone }>;
 
 export { STATUS_LOOK };

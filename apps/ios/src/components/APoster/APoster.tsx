@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
+import { HowFar } from '@ValencePhone/components/HowFar/HowFar';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { APosterProps } from './APoster.types';
@@ -9,7 +10,7 @@ const WIDTH = 104;
 const RATIO = 3 / 2;
 
 const styles = StyleSheet.create({
-  howFar: { bottom: 0, flexDirection: 'row', height: 3, left: 0, position: 'absolute', right: 0 },
+  howFar: { bottom: 0, left: 0, position: 'absolute', right: 0 },
   poster: { height: '100%', width: '100%' },
   standIn: { alignItems: 'center', justifyContent: 'center', padding: 8 },
   tile: {
@@ -35,8 +36,9 @@ const styles = StyleSheet.create({
  * @param year - When it came out, where that is known.
  * @param artwork - Where its picture is, or nothing where it has none.
  * @param watched - How much of it has been seen, as a fraction, where any of it has.
+ * @param note - A word about where it stands, such as whether it is already here.
  */
-const APoster = ({ title, year = null, artwork, watched = 0 }: APosterProps) => {
+const APoster = ({ title, year = null, artwork, watched = 0, note = null }: APosterProps) => {
   const [isMissing, setIsMissing] = useState(false);
   const colours = useTheColours();
 
@@ -61,15 +63,8 @@ const APoster = ({ title, year = null, artwork, watched = 0 }: APosterProps) => 
         )}
 
         {watched > 0 ? (
-          <View
-            style={[styles.howFar, { backgroundColor: colours.border }]}
-            accessible
-            accessibilityRole="progressbar"
-            accessibilityLabel={`How far through ${title}`}
-            accessibilityValue={{ min: 0, max: 100, now: Math.round(watched * 100) }}
-          >
-            <View style={{ backgroundColor: colours.accent, flex: watched }} />
-            <View style={{ flex: 1 - watched }} />
+          <View style={styles.howFar}>
+            <HowFar fraction={watched} label={`How far through ${title}`} />
           </View>
         ) : null}
       </View>
@@ -81,6 +76,12 @@ const APoster = ({ title, year = null, artwork, watched = 0 }: APosterProps) => 
       {year === null ? null : (
         <Words size="small" tone="muted">
           {year}
+        </Words>
+      )}
+
+      {note === null ? null : (
+        <Words size="small" tone="accent" lines={1}>
+          {note}
         </Words>
       )}
     </View>

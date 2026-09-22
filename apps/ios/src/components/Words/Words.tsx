@@ -24,7 +24,13 @@ const styles = StyleSheet.create({
 const Words = ({ children, tone = 'plain', size = 'body', lines }: WordsProps) => {
   const colours = useTheColours();
   const colour =
-    tone === 'muted' ? colours.textMuted : tone === 'danger' ? colours.danger : colours.text;
+    tone === 'muted'
+      ? colours.textMuted
+      : tone === 'danger'
+        ? colours.danger
+        : tone === 'accent'
+          ? colours.accent
+          : colours.text;
 
   return (
     <Text

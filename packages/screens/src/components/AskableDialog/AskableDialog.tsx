@@ -24,16 +24,16 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
 import { ChooseQualityDialog } from '@ValenceScreens/components/AskableDialog/components/ChooseQualityDialog/ChooseQualityDialog';
 import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
-import { describeAskableFacts } from './describeAskableFacts';
-import { describeStanding } from './describeStanding';
+import { describeAskableFacts } from '@ValenceClient/requests/describeAskableFacts';
+import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { readAsking } from './readAsking';
-import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
+import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
 import { groupReleases } from '@ValenceScreens/requests/groupReleases';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskableDialogProps } from './AskableDialog.types';
-import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
+import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 
 const FOLLOWED_EVERY_MS = 5000;
 

@@ -1,5 +1,5 @@
 import { RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
-import { RELEASE_TYPE_NAMES } from '@ValenceScreens/components/AdminArea/RELEASE_TYPE_NAMES';
+import { RELEASE_TYPE_NAMES } from '@ValenceClient/requests/RELEASE_TYPE_NAMES';
 import type { CatalogueAlbum, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 
 type ReleaseGroup = {

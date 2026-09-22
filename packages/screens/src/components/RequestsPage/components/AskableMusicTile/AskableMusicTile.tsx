@@ -1,4 +1,4 @@
-import { describeStanding } from '@ValenceScreens/components/AskableDialog/describeStanding';
+import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { askingOf } from '@ValenceScreens/requests/askingOf';

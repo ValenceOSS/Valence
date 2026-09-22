@@ -1,6 +1,6 @@
-import type { BadgeTone } from '@ValenceUI/Badge.types';
+import type { StatusTone } from '@ValenceClient/status/StatusTone';
 import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
-import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
+import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 
 /**
  * Says where a title stands, as a badge: in the library already, somewhere along being fetched, or
@@ -11,7 +11,7 @@ import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
  */
 const describeStanding = (
   standing: CatalogueStanding,
-): { label: string; tone: BadgeTone } | null => {
+): { label: string; tone: StatusTone } | null => {
   if (standing.status === 'library') {
     return { ...STATUS_LOOK.done, label: 'In your library' };
   }

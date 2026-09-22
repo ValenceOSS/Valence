@@ -15,7 +15,7 @@ import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { TextField } from '@ValencePhone/components/TextField/TextField';
 import { TheResults } from '@ValencePhone/components/TheLibrary/components/TheResults/TheResults';
-import { useSettled } from '@ValencePhone/components/TheLibrary/useSettled';
+import { useSettled } from '@ValencePhone/hooks/useSettled';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheLibraryProps } from './TheLibrary.types';

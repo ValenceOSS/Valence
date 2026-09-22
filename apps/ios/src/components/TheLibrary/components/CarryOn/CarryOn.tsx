@@ -1,14 +1,8 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { AShelf } from '@ValencePhone/components/AShelf/AShelf';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
 import { theArtworkFor } from '@ValencePhone/components/APoster/theArtworkFor';
 import { Button } from '@ValencePhone/components/Button/Button';
-import { Words } from '@ValencePhone/components/Words/Words';
 import type { CarryOnProps } from './CarryOn.types';
-
-const styles = StyleSheet.create({
-  row: { gap: 14 },
-  whole: { gap: 10 },
-});
 
 /**
  * What somebody was part way through, most recent first, as a row they scroll across.
@@ -30,33 +24,25 @@ const CarryOn = ({ items, howFarThrough, onLookAt }: CarryOnProps) => {
   }
 
   return (
-    <View style={styles.whole}>
-      <Words size="heading">Continue watching</Words>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.row}
-      >
-        {items.map((media) => (
-          <Button
-            key={media.id}
-            tone="bare"
-            label={media.title}
-            onPress={() => {
-              onLookAt(media.id);
-            }}
-          >
-            <APoster
-              title={media.title}
-              year={media.year}
-              artwork={theArtworkFor(media)}
-              watched={howFarThrough(media.id)}
-            />
-          </Button>
-        ))}
-      </ScrollView>
-    </View>
+    <AShelf title="Continue watching">
+      {items.map((media) => (
+        <Button
+          key={media.id}
+          tone="bare"
+          label={media.title}
+          onPress={() => {
+            onLookAt(media.id);
+          }}
+        >
+          <APoster
+            title={media.title}
+            year={media.year}
+            artwork={theArtworkFor(media)}
+            watched={howFarThrough(media.id)}
+          />
+        </Button>
+      ))}
+    </AShelf>
   );
 };
 

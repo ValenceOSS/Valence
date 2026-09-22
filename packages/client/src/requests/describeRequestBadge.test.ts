@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { aMediaRequest } from '@ValenceScreens/testing/aMediaRequest';
-import { describeRequestBadge } from './describeRequestBadge';
+import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
+import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import type { RequestItem } from '@ValenceContracts/schemas/MediaRequest';
 
 const EPISODE: RequestItem = {

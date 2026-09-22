@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeAskableFacts } from './describeAskableFacts';
+import { describeAskableFacts } from '@ValenceClient/requests/describeAskableFacts';
 
 describe('describeAskableFacts', () => {
   it('says the year, the running time and the first few genres', () => {

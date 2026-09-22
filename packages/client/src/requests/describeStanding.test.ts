@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeStanding } from './describeStanding';
+import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
 
 /**

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Clapperboard, Inbox } from 'lucide-react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -11,23 +13,40 @@ import {
   STILL_WATCHING_OFF,
 } from '@ValenceContracts/schemas/StillWatching';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { signOut } from '@ValenceClient/session/auth';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
+import { AnAskable } from '@ValencePhone/components/AnAskable/AnAskable';
 import { AShow } from '@ValencePhone/components/AShow/AShow';
+import { Button } from '@ValencePhone/components/Button/Button';
 import { ATitle } from '@ValencePhone/components/ATitle/ATitle';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { StillWatching } from '@ValencePhone/components/StillWatching/StillWatching';
 import { TheLibrary } from '@ValencePhone/components/TheLibrary/TheLibrary';
+import { TheRequests } from '@ValencePhone/components/TheRequests/TheRequests';
+import { TheTabs } from '@ValencePhone/components/TheTabs/TheTabs';
+import { useTheProgrammeOf } from '@ValencePhone/components/SignedIn/useTheProgrammeOf';
 import { Watching } from '@ValencePhone/components/Watching/Watching';
 import type { SignedInProps } from './SignedIn.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { CatalogueBrowseKind } from '@ValenceContracts/schemas/CatalogueTitle';
+
+const styles = StyleSheet.create({
+  whole: { flex: 1 },
+});
 
 /**
  * What a phone shows once somebody is through: the library, a title or a programme out of it, or
  * something playing.
  *
  * Where they are is held here rather than in an address, because a phone has no address bar and
- * three screens do not need a router to tell them apart. It will when there are more.
+ * a handful of screens do not need a router to tell them apart. It will when there are more.
+ *
+ * The library and requests are tabs along the bottom, and the tab for requests is only there for
+ * somebody this server lets ask. Anything opened from either covers the tabs until they go back.
+ * Something asked for that has arrived opens in the library from its page, and a programme is
+ * found by the series it became, since that is all a request knows of it.
  *
  * Coming out of the player throws away what was known about how far through everything is, because
  * the thing they just watched is the one entry that is now wrong.
@@ -62,6 +81,20 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   );
   const watcher = useQuery(profileQueries.watching());
   const episodes = series.data?.seasons.flatMap((season) => season.episodes) ?? [];
+  const [part, setPart] = useState('library');
+  const [askingFor, setAskingFor] = useState<{ kind: CatalogueBrowseKind; id: string } | null>(
+    null,
+  );
+  const [seeking, setSeeking] = useState<string | null>(null);
+  const sought = useTheProgrammeOf(seeking);
+  const requesting = useQuery(requestsQueries.availability());
+  const { may } = useWhatIMayDo();
+  const room = useSafeAreaInsets();
+  const mayRequest = requesting.data?.isEnabled === true && may('requests.ask');
+  const tabs = [
+    { id: 'library', label: 'Library', icon: Clapperboard },
+    ...(mayRequest ? [{ id: 'requests', label: 'Requests', icon: Inbox }] : []),
+  ];
 
   const choose = (mediaId: string, startSeconds: number) => {
     setCarriedOn(0);
@@ -149,6 +182,31 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     );
   }
 
+  if (seeking !== null) {
+    return sought === null ? (
+      <Screen centres>
+        <ActivityIndicator />
+        <Button
+          tone="quiet"
+          onPress={() => {
+            setSeeking(null);
+          }}
+        >
+          Back
+        </Button>
+      </Screen>
+    ) : (
+      <AShow
+        libraryId={sought.libraryId}
+        showId={sought.showId}
+        onWatch={choose}
+        onBack={() => {
+          setSeeking(null);
+        }}
+      />
+    );
+  }
+
   if (looking !== null) {
     return (
       <ATitle
@@ -161,16 +219,57 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     );
   }
 
+  if (askingFor !== null) {
+    return (
+      <AnAskable
+        key={`${askingFor.kind}:${askingFor.id}`}
+        kind={askingFor.kind}
+        id={askingFor.id}
+        onOpen={(kind, mediaId) => {
+          if (kind === 'film') {
+            setLooking(mediaId);
+          } else {
+            setSeeking(mediaId);
+          }
+        }}
+        onBack={() => {
+          setAskingFor(null);
+        }}
+      />
+    );
+  }
+
+  const showing =
+    part === 'requests' && mayRequest ? (
+      <TheRequests
+        onAsk={(kind, id) => {
+          setAskingFor({ kind, id });
+        }}
+      />
+    ) : (
+      <TheLibrary
+        onLookAt={setLooking}
+        onLookAtShow={(libraryId, showId) => {
+          setProgramme({ libraryId, showId });
+        }}
+        onOut={() => {
+          void signOut().then(onOut);
+        }}
+      />
+    );
+
+  if (tabs.length === 1) {
+    return showing;
+  }
+
   return (
-    <TheLibrary
-      onLookAt={setLooking}
-      onLookAtShow={(libraryId, showId) => {
-        setProgramme({ libraryId, showId });
-      }}
-      onOut={() => {
-        void signOut().then(onOut);
-      }}
-    />
+    <View style={styles.whole}>
+      <SafeAreaInsetsContext.Provider value={{ ...room, bottom: 0 }}>
+        <View style={styles.whole}>{showing}</View>
+      </SafeAreaInsetsContext.Provider>
+
+      <TheTabs tabs={tabs} value={mayRequest ? part : 'library'} onSelect={setPart} />
+    </View>
   );
 };
 

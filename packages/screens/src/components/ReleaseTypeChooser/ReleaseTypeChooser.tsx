@@ -1,7 +1,7 @@
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { FormField } from '@ValenceUI/FormField';
 import { RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
-import { RELEASE_TYPE_NAMES } from '@ValenceScreens/components/AdminArea/RELEASE_TYPE_NAMES';
+import { RELEASE_TYPE_NAMES } from '@ValenceClient/requests/RELEASE_TYPE_NAMES';
 import type { ReleaseTypeChooserProps } from './ReleaseTypeChooser.types';
 
 /**

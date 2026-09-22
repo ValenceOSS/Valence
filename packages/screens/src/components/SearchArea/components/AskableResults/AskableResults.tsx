@@ -4,7 +4,7 @@ import { Rail } from '@ValenceUI/Rail';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
-import { describeStanding } from '@ValenceScreens/components/AskableDialog/describeStanding';
+import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
