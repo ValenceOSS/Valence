@@ -4,6 +4,7 @@ import { extname, join } from 'node:path';
 import { and, asc, eq } from 'drizzle-orm';
 import { drawAvatar, isAvatarStyle } from './drawAvatar';
 import { extensionFor, whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
+import { pickOneFaceEach } from './pickOneFaceEach';
 import { viewerProfile, user } from '@ValenceServer/db/Schema';
 import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlaylistsOf';
 import {
@@ -290,33 +291,11 @@ const createDatabaseProfileService = (
         .leftJoin(viewerProfile, eq(viewerProfile.userId, user.id))
         .orderBy(asc(user.createdAt));
 
-      const seen = new Set<string>();
       const everyone: ViewerProfile[] = [];
 
-      for (const row of rows) {
-        if (seen.has(row.userId)) {
-          continue;
-        }
-
-        seen.add(row.userId);
-
-        const found = row.profile;
-
+      for (const row of pickOneFaceEach(rows)) {
         everyone.push(
-          found === null
-            ? await ensure(row.userId, row.userName)
-            : toProfile({
-                id: found.id,
-                name: found.name,
-                colour: found.colour,
-                avatarStyle: found.avatarStyle,
-                avatarSeed: found.avatarSeed,
-                photoPath: found.photoPath,
-                showsWhatIamWatching: found.showsWhatIamWatching,
-                askStillWatchingAfter: found.askStillWatchingAfter,
-                createdAt: found.createdAt,
-                updatedAt: found.updatedAt,
-              }),
+          row.profile === null ? await ensure(row.userId, row.userName) : toProfile(row.profile),
         );
       }
 
