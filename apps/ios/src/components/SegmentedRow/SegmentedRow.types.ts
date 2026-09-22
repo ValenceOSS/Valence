@@ -9,6 +9,7 @@ type SegmentedRowProps = {
   value: string | null;
   onSelect: (id: string) => void;
   isGlass?: boolean;
+  scrolls?: boolean;
 };
 
 export type { Segment, SegmentedRowProps };

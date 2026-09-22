@@ -108,6 +108,7 @@ const TheLibrary = ({ onWatch, onLookAt, onLookAtShow, onNotifications }: TheLib
           <SegmentedRow
             label="What to show"
             isGlass
+            scrolls
             items={parts}
             value={part}
             onSelect={(next) => {
