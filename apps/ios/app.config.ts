@@ -9,6 +9,7 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'automatic',
   ios: {
     bundleIdentifier: 'app.valence.phone',
+    icon: '../../design/valence-icon.icon',
     supportsTablet: false,
     infoPlist: {
       UIBackgroundModes: ['audio'],
