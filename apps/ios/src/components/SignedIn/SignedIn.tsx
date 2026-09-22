@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator } from 'react-native';
 import { CircleUser, Clapperboard, Inbox } from 'lucide-react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -32,10 +31,6 @@ import { Watching } from '@ValencePhone/components/Watching/Watching';
 import type { SignedInProps } from './SignedIn.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { CatalogueBrowseKind } from '@ValenceContracts/schemas/CatalogueTitle';
-
-const styles = StyleSheet.create({
-  whole: { flex: 1 },
-});
 
 /**
  * What a phone shows once somebody is through: the library, a title or a programme out of it, or
@@ -90,7 +85,6 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const sought = useTheProgrammeOf(seeking);
   const requesting = useQuery(requestsQueries.availability());
   const { may } = useWhatIMayDo();
-  const room = useSafeAreaInsets();
   const mayRequest = requesting.data?.isEnabled === true && may('requests.ask');
   const tabs = [
     { id: 'library', label: 'Library', icon: Clapperboard },
@@ -264,17 +258,13 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     );
 
   return (
-    <View style={styles.whole}>
-      <SafeAreaInsetsContext.Provider value={{ ...room, bottom: 0 }}>
-        <View style={styles.whole}>{showing}</View>
-      </SafeAreaInsetsContext.Provider>
-
-      <TheTabs
-        tabs={tabs}
-        value={part === 'requests' && !mayRequest ? 'library' : part}
-        onSelect={setPart}
-      />
-    </View>
+    <TheTabs
+      tabs={tabs}
+      value={part === 'requests' && !mayRequest ? 'library' : part}
+      onSelect={setPart}
+    >
+      {showing}
+    </TheTabs>
   );
 };
 

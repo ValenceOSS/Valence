@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react-native';
 
 type ATab = {
@@ -10,6 +11,7 @@ type TheTabsProps = {
   tabs: readonly ATab[];
   value: string;
   onSelect: (id: string) => void;
+  children: ReactNode;
 };
 
 export type { ATab, TheTabsProps };
