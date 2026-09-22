@@ -1,5 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
-import { titleLogoUrl } from '@ValenceScreens/library/titleLogoUrl';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
+import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
   ArrowUTurnRight as ArrowUTurnRightIcon,
@@ -61,17 +62,6 @@ const ORIGINAL_VERSION = 'Original';
 const CAST_PLACEHOLDERS = 5;
 
 const LOGO_BOX = 'max-h-[16svh] w-auto max-w-[min(70vw,26rem)] object-contain object-left';
-
-/**
- * Builds the address an item's artwork is served from, served by Valence rather than by the catalogue so
- * that a library keeps working when the catalogue does not.
- *
- * @param mediaId - The item.
- * @param kind - Which artwork.
- * @returns The address to load.
- */
-const artworkUrl = (mediaId: string, kind: 'poster' | 'backdrop'): string =>
-  `/api/media/${mediaId}/image/${kind}`;
 
 /**
  * Everything known about one item, for deciding whether to watch it: what it is about, who is in it,

@@ -1,5 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
-import { titleLogoUrl } from '@ValenceScreens/library/titleLogoUrl';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
+import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import { Info as InfoIcon } from '@keyline-icons/react';
 import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
@@ -45,14 +46,6 @@ const LOGO_BOX = [
   'max-h-[22svh] w-auto max-w-[min(76vw,36rem)] object-contain object-left',
   'drop-shadow-[var(--shadow-legible)]',
 ].join(' ');
-
-/**
- * Builds the address an item's backdrop is served from, which is what the hero is drawn over.
- *
- * @param mediaId - The item.
- * @returns The address to load.
- */
-const artworkUrl = (mediaId: string): string => `/api/media/${mediaId}/image/backdrop`;
 
 /**
  * The screen a library opens with: one thing in a card beneath the bar, its own artwork behind it,
@@ -252,7 +245,7 @@ const Hero = ({
           >
             <MediaPreview
               mediaId={featured.id}
-              backdropUrl={featured.hasBackdrop ? artworkUrl(featured.id) : null}
+              backdropUrl={featured.hasBackdrop ? artworkUrl(featured.id, 'backdrop') : null}
               durationSeconds={featured.durationSeconds}
               settleMilliseconds={PREVIEW_SETTLE_MILLISECONDS}
               restsOnPause

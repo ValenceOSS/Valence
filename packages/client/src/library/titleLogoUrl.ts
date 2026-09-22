@@ -1,3 +1,5 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
+
 /**
  * Builds the address a title's logo is served from — the lettering as its designer set it.
  *
@@ -8,6 +10,6 @@
  * @param mediaId - The item.
  * @returns The address to load.
  */
-const titleLogoUrl = (mediaId: string): string => `/api/media/${mediaId}/image/logo?at=full`;
+const titleLogoUrl = (mediaId: string): string => `${artworkUrl(mediaId, 'logo')}?at=full`;
 
 export { titleLogoUrl };

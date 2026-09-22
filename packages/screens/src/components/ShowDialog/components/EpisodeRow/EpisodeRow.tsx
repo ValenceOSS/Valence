@@ -1,18 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { Info as InfoIcon, Check as CheckIcon } from '@keyline-icons/react';
 import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { EpisodeRowProps } from './EpisodeRow.types';
-
-/**
- * Builds the address an episode's still is served from, so a row is chosen by what somebody remembers
- * seeing rather than by its number.
- *
- * @param mediaId - The episode.
- * @returns The address to load.
- */
-const stillUrl = (mediaId: string): string => `/api/media/${mediaId}/image/backdrop`;
 
 /**
  * One episode in a list of them: its number, its name, how long it runs, what it is about, and how
@@ -54,7 +46,7 @@ const EpisodeRow = ({
       <span className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-lg bg-surface-raised ring-1 ring-line sm:w-36">
         {!episode.hasBackdrop ? null : (
           <img
-            src={stillUrl(episode.id)}
+            src={artworkUrl(episode.id, 'backdrop')}
             alt=""
             loading="lazy"
             className="h-full w-full object-cover"
