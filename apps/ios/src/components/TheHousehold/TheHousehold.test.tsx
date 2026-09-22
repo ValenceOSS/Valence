@@ -1,12 +1,14 @@
 import { render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchSession } from '@ValenceClient/session/auth';
+import { fetchLibraries, fetchLibraryItems } from '@ValenceClient/library/fetchLibrary';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { TheHousehold } from './TheHousehold';
 import type { ReactNode } from 'react';
 
 jest.mock('@ValenceClient/session/auth');
+jest.mock('@ValenceClient/library/fetchLibrary');
 
 const A_SESSION = {
   id: 'MllMpJgdqC9rKsdlZjN23KwuRYubAfQF',
@@ -24,6 +26,8 @@ const around = (children: ReactNode) => (
 beforeEach(() => {
   installPlatform(aFakePlatform({ serverAddress: () => 'http://one.local:8420' }));
   jest.mocked(fetchSession).mockReset();
+  jest.mocked(fetchLibraries).mockReset().mockResolvedValue([]);
+  jest.mocked(fetchLibraryItems).mockReset().mockResolvedValue({ items: [], total: 0 });
   globalThis.fetch = jest
     .fn()
     .mockResolvedValue(new Response(JSON.stringify({ profiles: [], splashscreen: null })));
@@ -50,7 +54,7 @@ describe('TheHousehold', () => {
     const drawn = await render(around(<TheHousehold onElsewhere={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Hello, Dan')).toBeTruthy();
+      expect(drawn.getByText('Library')).toBeTruthy();
     });
   });
 
@@ -60,7 +64,7 @@ describe('TheHousehold', () => {
     const drawn = await render(around(<TheHousehold onElsewhere={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.queryByText(/^Hello/)).toBeNull();
+      expect(drawn.queryByText('Library')).toBeNull();
       expect(drawn.getByText('Who is watching?')).toBeTruthy();
     });
   });

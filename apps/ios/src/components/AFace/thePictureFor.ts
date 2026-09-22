@@ -1,5 +1,5 @@
 import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
-import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
 /**
@@ -12,7 +12,6 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
  * @param profile - Whose picture to read.
  * @returns The address to load it from.
  */
-const thePictureFor = (profile: ViewerProfile): string =>
-  `${platformInUse().serverAddress() ?? ''}${profileAvatarUrl(profile)}`;
+const thePictureFor = (profile: ViewerProfile): string => onThisServer(profileAvatarUrl(profile));
 
 export { thePictureFor };
