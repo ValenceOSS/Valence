@@ -52,6 +52,8 @@ const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
 const LOOK_EVERY = 1000;
 
+const ASK_FOR_FRAMES_AGAIN_EVERY = 10_000;
+
 const LEAVE_THEM_UP_FOR = 3500;
 
 const FADING_IN = 160;
@@ -126,6 +128,9 @@ const styles = StyleSheet.create({
  * answering. A session left open is a transcode still running on somebody's server for a film
  * nobody is watching.
  *
+ * Thumbnails for the scrubber are asked for again every few seconds until they exist, since the
+ * first time a film is asked about the server only starts making them.
+ *
  * Whoever runs the server is obeyed as on the web: stopped, the film stops and says why; paused, it
  * pauses and holds the reason over the picture; a message of theirs is held there too until it is
  * dismissed; and resumed, it plays on.
@@ -167,6 +172,7 @@ const Watching = ({
     queryKey: ['playback', 'trickplay', mediaId],
     queryFn: () => fetchTrickplay(mediaId),
     staleTime: Infinity,
+    refetchInterval: (query) => (query.state.data === null ? ASK_FOR_FRAMES_AGAIN_EVERY : false),
   });
   const [rate, setRate] = useState(1);
   const [subtitleOffset, setSubtitleOffset] = useState(0);

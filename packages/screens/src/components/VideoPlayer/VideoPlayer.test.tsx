@@ -650,6 +650,44 @@ describe('VideoPlayer', () => {
     expect(screen.queryByRole('img', { name: /Preview at/ })).not.toBeInTheDocument();
   });
 
+  it('asks for previews again until the server has finished drawing them', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    trickplayMock.mockResolvedValue(null);
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await act(async () => {
+      await vi.waitFor(() => expect(trickplayMock).toHaveBeenCalledTimes(1));
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10_000);
+    });
+
+    expect(trickplayMock).toHaveBeenCalledTimes(2);
+
+    vi.useRealTimers();
+  });
+
+  it('stops asking for previews once the player has closed', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    trickplayMock.mockResolvedValue(null);
+    const { unmount } = renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await act(async () => {
+      await vi.waitFor(() => expect(trickplayMock).toHaveBeenCalledTimes(1));
+    });
+
+    unmount();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+
+    expect(trickplayMock).toHaveBeenCalledTimes(1);
+
+    vi.useRealTimers();
+  });
+
   it("drops the previous item's thumbnails when another is played", async () => {
     trickplayMock.mockResolvedValue({
       width: 320,

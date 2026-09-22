@@ -126,6 +126,8 @@ const STALL_BEFORE_SAYING_SO_MS = 400;
 
 const PLAYER_TOASTS = 'player';
 
+const ASK_FOR_FRAMES_AGAIN_EVERY_MS = 10_000;
+
 const ADMIN_NOTICE = 'admin-notice';
 
 const PARTY_NOTICE = 'party-notice';
@@ -1035,11 +1037,23 @@ const VideoPlayer = ({
     setSegments([]);
     setSelectedAudioIndex(null);
 
-    void fetchTrickplay(media.id).then((found) => {
-      if (!abandoned) {
+    let askingAgain: ReturnType<typeof setTimeout> | null = null;
+
+    const askForFrames = () => {
+      void fetchTrickplay(media.id).then((found) => {
+        if (abandoned) {
+          return;
+        }
+
         setTrickplay(found);
-      }
-    });
+
+        if (found === null) {
+          askingAgain = setTimeout(askForFrames, ASK_FOR_FRAMES_AGAIN_EVERY_MS);
+        }
+      });
+    };
+
+    askForFrames();
 
     void cache
       .ensureQueryData(libraryQueries.detail(media.id))
@@ -1084,6 +1098,10 @@ const VideoPlayer = ({
 
     return () => {
       abandoned = true;
+
+      if (askingAgain !== null) {
+        clearTimeout(askingAgain);
+      }
     };
   }, [media.id, cache]);
 
