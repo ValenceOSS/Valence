@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
@@ -23,6 +23,8 @@ import type { WatchingProps } from './Watching.types';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
+const LOOK_EVERY = 1000;
+
 const styles = StyleSheet.create({
   picture: { backgroundColor: '#000000', flex: 1 },
 });
@@ -41,6 +43,10 @@ const styles = StyleSheet.create({
  * seeked to instead: a transcode begins at the segment they asked for, while a file sent untouched
  * begins where every file does.
  *
+ * Where they have got to is sampled every second and written down every ten, and the last sample
+ * is what goes down on the way out rather than a fresh reading: the player is released before this
+ * screen's own tidying runs, so asking it anything then is asking a thing that is already gone.
+ *
  * The session is ended on the way out, including where they left before the server had finished
  * answering. A session left open is a transcode still running on somebody's server for a film
  * nobody is watching.
@@ -55,6 +61,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   const [seekTo, setSeekTo] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
+  const whereTheyGotTo = useRef<{ positionSeconds: number; durationSeconds: number } | null>(null);
   const clientId = platformInUse().thisClientId();
 
   useEffect(() => {
@@ -130,16 +137,21 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
       return;
     }
 
-    const bookmark = (isLeaving: boolean) => {
-      if (player.duration <= 0) {
-        return;
+    const looking = setInterval(() => {
+      if (player.duration > 0) {
+        whereTheyGotTo.current = {
+          positionSeconds: player.currentTime,
+          durationSeconds: player.duration,
+        };
       }
+    }, LOOK_EVERY);
 
-      void reportWatchProgress(
-        mediaId,
-        { positionSeconds: player.currentTime, durationSeconds: player.duration },
-        { isLeaving },
-      );
+    const bookmark = (isLeaving: boolean) => {
+      const seen = whereTheyGotTo.current;
+
+      if (seen !== null) {
+        void reportWatchProgress(mediaId, seen, { isLeaving });
+      }
     };
 
     const saving = setInterval(() => {
@@ -147,6 +159,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
     }, REPORT_EVERY_MILLISECONDS);
 
     return () => {
+      clearInterval(looking);
       clearInterval(saving);
       bookmark(true);
     };

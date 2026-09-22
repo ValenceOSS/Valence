@@ -245,12 +245,18 @@ describe('Watching', () => {
   });
 
   it('writes it down on the way out, where the phone is being put away', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
     const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
 
     await waitFor(() => {
       expect(drawn.getByText('Done')).toBeTruthy();
+    });
+
+    await act(() => {
+      jest.advanceTimersByTime(1000);
     });
 
     await drawn.unmount();
@@ -286,5 +292,19 @@ describe('Watching', () => {
     });
 
     expect(theFakePlayer.currentTime).toBe(420);
+  });
+
+  it('says nothing on the way out about a film it never saw playing', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(drawn.getByText('Done')).toBeTruthy();
+    });
+
+    await drawn.unmount();
+
+    expect(reportWatchProgress).not.toHaveBeenCalled();
   });
 });
