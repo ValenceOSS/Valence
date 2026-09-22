@@ -31,7 +31,7 @@ type DeviceGrant = {
 type DeviceGrantOutcome =
   | { kind: 'waiting' }
   | { kind: 'slowDown' }
-  | { kind: 'signedIn' }
+  | { kind: 'signedIn'; token: string }
   | { kind: 'refused' }
   | { kind: 'expired' }
   | { kind: 'failed'; reason: string };
@@ -406,6 +406,10 @@ const startDeviceGrant = async (): Promise<DeviceGrant | null> => {
  * Polled rather than pushed. A television that has not signed in has no account for a realtime
  * message to be addressed to, and the grant already names a rate to ask at.
  *
+ * Once it is approved, what comes back carries the session's token as well as the cookie the server
+ * sets beside it. A browser has no use for it; an app that keeps no cookies signs every request with
+ * it instead.
+ *
  * @param deviceCode - The code the grant was started with, which is not the one on screen.
  * @returns Where the grant has got to.
  */
@@ -419,7 +423,7 @@ const askWhetherTheDeviceMayIn = async (deviceCode: string): Promise<DeviceGrant
   }
 
   if (answer.error === null) {
-    return { kind: 'signedIn' };
+    return { kind: 'signedIn', token: answer.data.access_token };
   }
 
   const why = whyItWasRefused(answer.error);
