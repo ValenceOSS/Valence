@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { TrickplayFrame } from './TrickplayFrame';
-import type { Trickplay } from '@ValenceScreens/playback/fetchTrickplay';
+import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 
 const trickplay: Trickplay = {
   width: 320,

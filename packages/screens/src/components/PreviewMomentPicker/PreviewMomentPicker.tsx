@@ -10,9 +10,9 @@ import { RangeSlider } from '@ValenceUI/RangeSlider';
 import { clipEnd } from './clipEnd';
 import { limitClip } from './limitClip';
 import { clearPreviewMoment, setPreviewMoment } from '@ValenceClient/library/fetchLibrary';
-import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
+import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
 import { TrickplayFrame } from '@ValenceScreens/components/VideoPlayer/components/TrickplayFrame/TrickplayFrame';
-import type { Trickplay } from '@ValenceScreens/playback/fetchTrickplay';
+import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 import type { PreviewMomentPickerProps } from './PreviewMomentPicker.types';
 
 const AUTOMATIC_POSITION = 0.2;

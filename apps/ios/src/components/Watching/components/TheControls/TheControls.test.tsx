@@ -12,6 +12,7 @@ const theControls = (overrides: Partial<TheControlsProps> = {}) => (
     at={251}
     runsFor={6960}
     buffered={900}
+    trickplay={null}
     onPlayPause={jest.fn()}
     onSkip={jest.fn()}
     onSeek={jest.fn()}

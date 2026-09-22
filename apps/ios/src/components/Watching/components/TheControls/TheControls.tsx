@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Pause, Play, RotateCcw, RotateCw, Settings, X } from 'lucide-react-native';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
+import { TheFrameAt } from '@ValencePhone/components/Watching/components/TheFrameAt/TheFrameAt';
 import { Slider } from '@ValencePhone/components/Slider/Slider';
 import { asAClock } from '@ValencePhone/components/Watching/asAClock';
 import type { TheControlsProps } from './TheControls.types';
@@ -21,9 +23,13 @@ const A_STEP = 10;
 
 const EDGE = 24;
 
+const FRAME_WIDE = 168;
+
 const styles = StyleSheet.create({
   clock: { color: OVER_THE_PICTURE, fontSize: 13, fontVariant: ['tabular-nums'] },
   foot: { gap: 2, paddingHorizontal: EDGE },
+  frameAt: { alignItems: 'center', bottom: '100%', gap: 4, marginBottom: 8, position: 'absolute' },
+  frameClock: { color: '#ffffff', fontSize: 13, fontVariant: ['tabular-nums'], fontWeight: '600' },
   head: { alignItems: 'center', flexDirection: 'row', gap: 14 },
   middle: {
     alignItems: 'center',
@@ -94,6 +100,7 @@ const styles = StyleSheet.create({
  * @param at - How far in they are.
  * @param runsFor - How long it runs.
  * @param buffered - How much of it has arrived.
+ * @param trickplay - The film's thumbnails, to show the moment being scrubbed to, where it has any.
  * @param onPlayPause - Told to stop or start it.
  * @param onSkip - Told to jump, in seconds, forwards or back.
  * @param onSeek - Told where they scrubbed to.
@@ -109,6 +116,7 @@ const TheControls = ({
   at,
   runsFor,
   buffered,
+  trickplay,
   onPlayPause,
   onSkip,
   onSeek,
@@ -117,6 +125,8 @@ const TheControls = ({
   onSettings,
 }: TheControlsProps) => {
   const room = useSafeAreaInsets();
+  const [scrubbingTo, setScrubbingTo] = useState<number | null>(null);
+  const [lineWide, setLineWide] = useState(0);
 
   return (
     <Animated.View
@@ -187,7 +197,33 @@ const TheControls = ({
         </Button>
       </View>
 
-      <View style={styles.foot} pointerEvents="box-none">
+      <View
+        style={styles.foot}
+        pointerEvents="box-none"
+        onLayout={(event) => {
+          setLineWide(event.nativeEvent.layout.width - EDGE * 2);
+        }}
+      >
+        {trickplay === null || scrubbingTo === null || runsFor <= 0 ? null : (
+          <View
+            style={[
+              styles.frameAt,
+              {
+                left:
+                  EDGE +
+                  Math.min(
+                    Math.max((scrubbingTo / runsFor) * lineWide - FRAME_WIDE / 2, 0),
+                    Math.max(lineWide - FRAME_WIDE, 0),
+                  ),
+              },
+            ]}
+            pointerEvents="none"
+          >
+            <TheFrameAt trickplay={trickplay} seconds={scrubbingTo} wide={FRAME_WIDE} />
+            <Text style={styles.frameClock}>{asAClock(scrubbingTo)}</Text>
+          </View>
+        )}
+
         <Slider
           label={`Seek through ${title}`}
           value={at}
@@ -196,8 +232,14 @@ const TheControls = ({
           colour={OVER_THE_PICTURE}
           restColour={THE_REST}
           aheadColour={ARRIVED}
-          onScrubbing={onTouched}
-          onScrubbed={onSeek}
+          onScrubbing={(to) => {
+            setScrubbingTo(to);
+            onTouched();
+          }}
+          onScrubbed={(to) => {
+            setScrubbingTo(null);
+            onSeek(to);
+          }}
         />
 
         <View style={styles.times}>

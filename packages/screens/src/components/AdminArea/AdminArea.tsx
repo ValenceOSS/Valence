@@ -92,7 +92,7 @@ import {
   stopJobs,
 } from './scanCoordinator';
 import { notify } from '@ValenceUI/notify';
-import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
+import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
 import { followRunningJobs } from './followRunningJobs';
 import {
   failureOfAnswer,

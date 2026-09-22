@@ -3,11 +3,11 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useHasScrubPreviews } from './useHasScrubPreviews';
 import type { ReactNode } from 'react';
-import type * as FetchTrickplay from '@ValenceScreens/playback/fetchTrickplay';
+import type * as FetchTrickplay from '@ValenceClient/playback/fetchTrickplay';
 
 const asked = vi.hoisted(() => ({ fetchTrickplay: vi.fn() }));
 
-vi.mock('@ValenceScreens/playback/fetchTrickplay', async (importOriginal) => ({
+vi.mock('@ValenceClient/playback/fetchTrickplay', async (importOriginal) => ({
   ...(await importOriginal<typeof FetchTrickplay>()),
   fetchTrickplay: asked.fetchTrickplay,
 }));

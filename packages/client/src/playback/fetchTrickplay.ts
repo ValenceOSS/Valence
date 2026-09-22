@@ -85,6 +85,20 @@ const readRectangle = (
  * @param indexUrl - Where the sheets are served from.
  * @returns The thumbnails, in order.
  */
+/**
+ * Where a thumbnail sheet is, from its name as the index gives it and where the index itself is:
+ * beside the index where the name is bare, as a web page would read it, and as given where it is
+ * already a path or a whole address.
+ *
+ * @param name - The sheet, as the index names it.
+ * @param indexUrl - Where the index was read from.
+ * @returns Where the sheet is.
+ */
+const besideTheIndex = (name: string, indexUrl: string): string =>
+  name.startsWith('/') || /^[a-z]+:/u.test(name)
+    ? name
+    : `${indexUrl.slice(0, indexUrl.lastIndexOf('/') + 1)}${name}`;
+
 const parseTrickplayIndex = (vtt: string, indexUrl: string): Thumbnail[] => {
   const thumbnails: Thumbnail[] = [];
   const lines = vtt.split(/\r?\n/);
@@ -106,7 +120,7 @@ const parseTrickplayIndex = (vtt: string, indexUrl: string): Thumbnail[] => {
     thumbnails.push({
       startSeconds,
       endSeconds,
-      sheetUrl: new URL(rectangle.name, new URL(indexUrl, window.location.origin)).toString(),
+      sheetUrl: besideTheIndex(rectangle.name, indexUrl),
       x: rectangle.x,
       y: rectangle.y,
       width: rectangle.width,

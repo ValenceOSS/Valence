@@ -9,6 +9,7 @@ import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetc
 import { describeSkip, fetchSegments, skippableAt } from '@ValenceClient/playback/fetchSegments';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
+import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
 import { setThePace } from '@ValencePhone/playback/setThePace';
 import {
   heartbeatPlaybackSession,
@@ -150,6 +151,11 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
   const [lastTouched, setLastTouched] = useState(0);
   const [isChoosing, setIsChoosing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const frames = useQuery({
+    queryKey: ['playback', 'trickplay', mediaId],
+    queryFn: () => fetchTrickplay(mediaId),
+    staleTime: Infinity,
+  });
   const [rate, setRate] = useState(1);
   const [subtitleOffset, setSubtitleOffset] = useState(0);
   const [asking, setAsking] = useState<{
@@ -519,6 +525,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
           at={ticking.currentTime}
           runsFor={player.duration}
           buffered={ticking.bufferedPosition}
+          trickplay={frames.data ?? null}
           onPlayPause={() => {
             keepThemUp();
 
