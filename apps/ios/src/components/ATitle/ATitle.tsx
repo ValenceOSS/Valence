@@ -22,6 +22,7 @@ import { TheStars } from '@ValencePhone/components/TheStars/TheStars';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { howLongItRuns } from '@ValencePhone/components/ATitle/howLongItRuns';
 import { useConfirmHiding } from '@ValencePhone/hooks/useConfirmHiding';
+import { useTheProgrammeOfEpisode } from '@ValencePhone/hooks/useTheProgrammeOfEpisode';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { ATitleProps } from './ATitle.types';
@@ -60,11 +61,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   const [version, setVersion] = useState<string | null>(null);
   const title = asking.data;
   const seriesTitle = title?.metadata.seriesTitle ?? null;
-  const programmes = useQuery({
-    ...libraryQueries.shows(title?.libraryId ?? null),
-    enabled: seriesTitle !== null,
-  });
-  const programme = (programmes.data ?? []).find((one) => one.title === seriesTitle) ?? null;
+  const programme = useTheProgrammeOfEpisode(mediaId);
   const playing = version ?? mediaId;
   const carryOnAt = resumeFor(byMediaId(watched.data ?? []), playing);
 

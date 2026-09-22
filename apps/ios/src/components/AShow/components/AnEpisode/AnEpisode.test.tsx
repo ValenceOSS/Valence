@@ -18,13 +18,29 @@ const THE_PILOT = MediaSummarySchema.parse({
 
 describe('AnEpisode', () => {
   it('says which episode it is first, since that is what people look for', async () => {
-    const drawn = await render(<AnEpisode episode={THE_PILOT} watched={0} onWatch={jest.fn()} />);
+    const drawn = await render(
+      <AnEpisode
+        episode={THE_PILOT}
+        watched={0}
+        onWatch={jest.fn()}
+        airs=""
+        onLookAt={jest.fn()}
+      />,
+    );
 
     expect(drawn.getByText('1')).toBeTruthy();
   });
 
   it('says what it is called and how long it runs', async () => {
-    const drawn = await render(<AnEpisode episode={THE_PILOT} watched={0} onWatch={jest.fn()} />);
+    const drawn = await render(
+      <AnEpisode
+        episode={THE_PILOT}
+        watched={0}
+        onWatch={jest.fn()}
+        airs=""
+        onLookAt={jest.fn()}
+      />,
+    );
 
     expect(drawn.getByText('Pilot')).toBeTruthy();
     expect(drawn.getByText('44m')).toBeTruthy();
@@ -32,7 +48,9 @@ describe('AnEpisode', () => {
 
   it('plays it in one press, since they have already chosen', async () => {
     const onWatch = jest.fn();
-    const drawn = await render(<AnEpisode episode={THE_PILOT} watched={0} onWatch={onWatch} />);
+    const drawn = await render(
+      <AnEpisode episode={THE_PILOT} watched={0} onWatch={onWatch} airs="" onLookAt={jest.fn()} />,
+    );
 
     await userEvent.press(drawn.getByLabelText('Pilot'));
 
@@ -41,7 +59,13 @@ describe('AnEpisode', () => {
 
   it('manages an episode nobody numbered', async () => {
     const drawn = await render(
-      <AnEpisode episode={{ ...THE_PILOT, episodeNumber: null }} watched={0} onWatch={jest.fn()} />,
+      <AnEpisode
+        episode={{ ...THE_PILOT, episodeNumber: null }}
+        watched={0}
+        onWatch={jest.fn()}
+        airs=""
+        onLookAt={jest.fn()}
+      />,
     );
 
     expect(drawn.getByText('Pilot')).toBeTruthy();

@@ -1,5 +1,8 @@
 import { StyleSheet, View } from 'react-native';
+import { Info } from 'lucide-react-native';
 import { Button } from '@ValencePhone/components/Button/Button';
+import { HowFar } from '@ValencePhone/components/HowFar/HowFar';
+import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { howLongItRuns } from '@ValencePhone/components/ATitle/howLongItRuns';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
@@ -8,54 +11,61 @@ import type { AnEpisodeProps } from './AnEpisode.types';
 const WATCHED_ENOUGH = 0.95;
 
 const styles = StyleSheet.create({
+  about: { padding: 10 },
   facts: { flex: 1, gap: 3 },
-  howFar: { borderRadius: 2, flexDirection: 'row', height: 3, marginTop: 4, overflow: 'hidden' },
   number: { minWidth: 28 },
+  play: { flex: 1 },
   row: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingVertical: 12 },
+  whole: { alignItems: 'center', flexDirection: 'row' },
 });
 
 /**
- * One episode, as a line in a season rather than as a poster.
- *
- * Episodes are read in order and chosen by where somebody is up to, which is a list's job, not a
- * wall's. The number comes first because it is what people look for; the name and the length
- * follow, and a line underneath says how far through it they got.
- *
- * One press plays it. Somebody opening a programme has already decided what they are watching,
- * and a page in between asking whether they are sure is a page in the way.
+ * One episode in a programme's list: its number, its title, how long it runs and how much of it
+ * has been seen. Pressing it plays it; the button beside it opens its own page.
  *
  * @param episode - The episode.
- * @param watched - How much of it they have seen, as a fraction.
+ * @param watched - How much of it has been seen, as a fraction.
+ * @param airs - When it aired, where the catalogue says.
  * @param onWatch - Told to play it.
+ * @param onLookAt - Told to open its page.
  */
-const AnEpisode = ({ episode, watched, onWatch }: AnEpisodeProps) => {
+const AnEpisode = ({ episode, watched, airs, onWatch, onLookAt }: AnEpisodeProps) => {
   const colours = useTheColours();
   const isDone = watched >= WATCHED_ENOUGH;
 
   return (
-    <Button tone="bare" label={episode.title} onPress={onWatch}>
-      <View style={styles.row}>
-        <View style={styles.number}>
-          <Words tone="muted">{episode.episodeNumber ?? '·'}</Words>
-        </View>
-
-        <View style={styles.facts}>
-          <Words lines={2} tone={isDone ? 'muted' : 'plain'}>
-            {episode.title}
-          </Words>
-          <Words size="small" tone="muted">
-            {howLongItRuns(episode.durationSeconds)}
-          </Words>
-
-          {watched > 0 && !isDone ? (
-            <View style={[styles.howFar, { backgroundColor: colours.border }]}>
-              <View style={{ backgroundColor: colours.accent, flex: watched }} />
-              <View style={{ flex: 1 - watched }} />
+    <View style={styles.whole}>
+      <View style={styles.play}>
+        <Button tone="bare" label={episode.title} onPress={onWatch}>
+          <View style={styles.row}>
+            <View style={styles.number}>
+              <Words tone="muted">{episode.episodeNumber ?? '·'}</Words>
             </View>
-          ) : null}
-        </View>
+
+            <View style={styles.facts}>
+              <Words lines={2} tone={isDone ? 'muted' : 'plain'}>
+                {episode.title}
+              </Words>
+              <Words size="small" tone="muted">
+                {[howLongItRuns(episode.durationSeconds), airs === '' ? null : airs]
+                  .filter((part) => part !== null)
+                  .join(' · ')}
+              </Words>
+
+              {watched > 0 && !isDone ? (
+                <HowFar fraction={watched} label={`How far through ${episode.title}`} />
+              ) : null}
+            </View>
+          </View>
+        </Button>
       </View>
-    </Button>
+
+      <Button tone="bare" label={`About ${episode.title}`} onPress={onLookAt}>
+        <View style={styles.about}>
+          <Icon of={Info} size={20} colour={colours.textMuted} />
+        </View>
+      </Button>
+    </View>
   );
 };
 

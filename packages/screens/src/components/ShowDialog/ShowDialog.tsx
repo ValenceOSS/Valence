@@ -13,7 +13,6 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
-import { inSeasonOrder } from '@ValenceCore/functions/inSeasonOrder';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { ActionBar } from '@ValenceUI/ActionBar';
@@ -36,11 +35,11 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
 import { scrollToTopOf } from '@ValenceScreens/navigation/scrollToTopOf';
 import { RatingPanel } from '@ValenceScreens/components/RatingPanel/RatingPanel';
-import { pickUpFrom } from './pickUpFrom';
+import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import { SeasonPicker } from './components/SeasonPicker/SeasonPicker';
 import { EpisodeRow } from './components/EpisodeRow/EpisodeRow';
 import { MissingRow } from './components/MissingRow/MissingRow';
-import { findGaps } from '@ValenceCore/functions/findGaps';
+import { laySeasonsOut } from '@ValenceClient/library/laySeasonsOut';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import type { ShowDialogProps } from './ShowDialog.types';
 
@@ -136,12 +135,14 @@ const ShowDialog = ({
   const lettered =
     seasons.flatMap((one) => one.episodes).find((episode) => episode.hasLogo) ?? null;
   const carryingOn = detail === null ? null : pickUpFrom(detail, { resumeFor, isFinished });
-  const gaps = detail === null ? null : findGaps(detail);
-
-  const chooseFrom = [
-    ...seasons.map((one) => ({ seasonNumber: one.seasonNumber, isHeld: true })),
-    ...(gaps?.seasons ?? []).map((number) => ({ seasonNumber: number, isHeld: false })),
-  ].sort((left, right) => inSeasonOrder(left.seasonNumber, right.seasonNumber));
+  const today = new Date().toISOString().slice(0, 10);
+  const laidOut =
+    detail === null
+      ? { choices: [], showing: null, rows: [] }
+      : laySeasonsOut(detail, chosenSeason, today);
+  const chooseFrom = laidOut.choices;
+  const { showing } = laidOut;
+  const inOrder = laidOut.rows;
 
   const heldEpisodes = seasons.flatMap((one) => one.episodes);
 
@@ -149,47 +150,6 @@ const ShowDialog = ({
     watchedFractionFor !== undefined &&
     heldEpisodes.length > 0 &&
     heldEpisodes.every((episode) => (watchedFractionFor(episode.id) ?? 0) >= 1);
-
-  const chosen = chooseFrom.find((one) => one.seasonNumber === chosenSeason) ?? chooseFrom[0];
-  const showing = chosen?.seasonNumber ?? null;
-  const season = seasons.find((one) => one.seasonNumber === showing) ?? {
-    seasonNumber: showing,
-    episodes: [],
-  };
-
-  const listedHere = (detail?.shape ?? []).find((one) => one.seasonNumber === (showing ?? -1));
-
-  const missingHere =
-    chosen?.isHeld === false
-      ? (listedHere?.episodes.map((one) => one.episodeNumber) ?? [])
-      : (gaps?.episodes.get(showing ?? -1) ?? []);
-
-  const today = new Date().toISOString().slice(0, 10);
-
-  const airsOf = (episodeNumber: number): string => {
-    const airDate = listedHere?.episodes.find(
-      (one) => one.episodeNumber === episodeNumber,
-    )?.airDate;
-
-    return airDate === undefined || airDate === null ? '' : describeAirDate(airDate, today);
-  };
-
-  const inOrder = [
-    ...season.episodes.map((episode) => ({
-      key: episode.id,
-      at: episode.episodeNumber ?? 0,
-      episode,
-      listed: null,
-      airs: airsOf(episode.episodeNumber ?? 0),
-    })),
-    ...missingHere.map((number) => ({
-      key: `missing-${number.toString()}`,
-      at: number,
-      episode: null,
-      listed: listedHere?.episodes.find((one) => one.episodeNumber === number) ?? null,
-      airs: airsOf(number),
-    })),
-  ].sort((left, right) => left.at - right.at);
 
   return (
     <Dialog label={shown.title} isOpen={show !== null} onClose={onClose} size="stage">
@@ -316,7 +276,7 @@ const ShowDialog = ({
                 Episodes
               </h3>
 
-              {seasons.length < 2 && (gaps?.seasons ?? []).length === 0 ? null : (
+              {chooseFrom.length < 2 ? null : (
                 <SeasonPicker seasons={chooseFrom} value={showing} onChange={setChosenSeason} />
               )}
             </header>

@@ -28,17 +28,18 @@ import { TheLibrary } from '@ValencePhone/components/TheLibrary/TheLibrary';
 import { TheRequests } from '@ValencePhone/components/TheRequests/TheRequests';
 import { TheTabs } from '@ValencePhone/components/TheTabs/TheTabs';
 import { useTheProgrammeOf } from '@ValencePhone/components/SignedIn/useTheProgrammeOf';
+import { useTheProgrammeOfEpisode } from '@ValencePhone/hooks/useTheProgrammeOfEpisode';
 import { Watching } from '@ValencePhone/components/Watching/Watching';
-import type { SignedInProps } from './SignedIn.types';
+import type { APage, SignedInProps } from './SignedIn.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { CatalogueBrowseKind } from '@ValenceContracts/schemas/CatalogueTitle';
 
 /**
  * What a phone shows once somebody is through: the library, a title or a programme out of it, or
  * something playing.
  *
- * Where they are is held here rather than in an address, because a phone has no address bar and
- * a handful of screens do not need a router to tell them apart. It will when there are more.
+ * Where they are is held here as a stack of pages rather than in an address, because a phone has no
+ * address bar: a title, a programme, a person or something to ask for is laid over whatever opened
+ * it, and going back takes the top one off.
  *
  * The library, requests and the account are tabs along the bottom, and the tab for requests is only there for
  * somebody this server lets ask. Anything opened from either covers the tabs until they go back.
@@ -68,23 +69,17 @@ const SignedIn = ({ onOut }: SignedInProps) => {
 
   useEffect(() => watchPresence(), []);
   const cache = useQueryClient();
-  const [looking, setLooking] = useState<string | null>(null);
-  const [programme, setProgramme] = useState<{ libraryId: string; showId: string } | null>(null);
+  const [pages, setPages] = useState<readonly APage[]>([]);
   const [watching, setWatching] = useState<{ mediaId: string; startSeconds: number } | null>(null);
   const [carriedOn, setCarriedOn] = useState(0);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
-  const series = useQuery(
-    libraryQueries.show(programme?.libraryId ?? null, programme?.showId ?? null),
-  );
+  const [part, setPart] = useState('library');
+  const top = pages.at(-1) ?? null;
+  const sought = useTheProgrammeOf(top?.kind === 'series' ? top.seriesId : null);
+  const holding = useTheProgrammeOfEpisode(watching?.mediaId ?? null);
+  const series = useQuery(libraryQueries.show(holding?.libraryId ?? null, holding?.id ?? null));
   const watcher = useQuery(profileQueries.watching());
   const episodes = series.data?.seasons.flatMap((season) => season.episodes) ?? [];
-  const [part, setPart] = useState('library');
-  const [askingFor, setAskingFor] = useState<{ kind: CatalogueBrowseKind; id: string } | null>(
-    null,
-  );
-  const [seeking, setSeeking] = useState<string | null>(null);
-  const [person, setPerson] = useState<number | null>(null);
-  const sought = useTheProgrammeOf(seeking);
   const requesting = useQuery(requestsQueries.availability());
   const { may } = useWhatIMayDo();
   const mayRequest = requesting.data?.isEnabled === true && may('requests.ask');
@@ -93,6 +88,22 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     ...(mayRequest ? [{ id: 'requests', label: 'Requests', icon: Inbox, symbol: 'tray' }] : []),
     { id: 'account', label: 'Account', icon: CircleUser, symbol: 'person.crop.circle' },
   ];
+
+  const open = (page: APage) => {
+    setPages((was) => [...was, page]);
+  };
+
+  const back = () => {
+    setPages((was) => was.slice(0, -1));
+  };
+
+  const lookAt = (mediaId: string) => {
+    open({ kind: 'title', mediaId });
+  };
+
+  const lookAtShow = (libraryId: string, showId: string) => {
+    open({ kind: 'show', libraryId, showId });
+  };
 
   const choose = (mediaId: string, startSeconds: number) => {
     setCarriedOn(0);
@@ -167,108 +178,84 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     );
   }
 
-  if (programme !== null) {
-    return (
-      <AShow
-        libraryId={programme.libraryId}
-        showId={programme.showId}
-        onWatch={choose}
-        onBack={() => {
-          setProgramme(null);
-        }}
-      />
-    );
-  }
-
-  if (person !== null) {
-    return (
-      <APerson
-        key={person}
-        personId={person}
-        onLookAt={(mediaId) => {
-          setPerson(null);
-          setLooking(mediaId);
-        }}
-        onLookAtShow={(libraryId, showId) => {
-          setPerson(null);
-          setLooking(null);
-          setProgramme({ libraryId, showId });
-        }}
-        onBack={() => {
-          setPerson(null);
-        }}
-      />
-    );
-  }
-
-  if (seeking !== null) {
-    return sought === null ? (
-      <Screen centres>
-        <ActivityIndicator />
-        <Button
-          tone="quiet"
-          onPress={() => {
-            setSeeking(null);
-          }}
-        >
-          Back
-        </Button>
-      </Screen>
-    ) : (
-      <AShow
-        libraryId={sought.libraryId}
-        showId={sought.showId}
-        onWatch={choose}
-        onBack={() => {
-          setSeeking(null);
-        }}
-      />
-    );
-  }
-
-  if (looking !== null) {
-    return (
-      <ATitle
-        key={looking}
-        mediaId={looking}
-        onWatch={choose}
-        onLookAtPerson={setPerson}
-        onLookAtShow={(libraryId, showId) => {
-          setLooking(null);
-          setProgramme({ libraryId, showId });
-        }}
-        onBack={() => {
-          setLooking(null);
-        }}
-      />
-    );
-  }
-
-  if (askingFor !== null) {
-    return (
-      <AnAskable
-        key={`${askingFor.kind}:${askingFor.id}`}
-        kind={askingFor.kind}
-        id={askingFor.id}
-        onOpen={(kind, mediaId) => {
-          if (kind === 'film') {
-            setLooking(mediaId);
-          } else {
-            setSeeking(mediaId);
-          }
-        }}
-        onBack={() => {
-          setAskingFor(null);
-        }}
-      />
-    );
+  if (top !== null) {
+    switch (top.kind) {
+      case 'title':
+        return (
+          <ATitle
+            key={`${pages.length.toString()}:${top.mediaId}`}
+            mediaId={top.mediaId}
+            onWatch={choose}
+            onLookAtPerson={(personId) => {
+              open({ kind: 'person', personId });
+            }}
+            onLookAtShow={lookAtShow}
+            onBack={back}
+          />
+        );
+      case 'show':
+        return (
+          <AShow
+            key={`${pages.length.toString()}:${top.showId}`}
+            libraryId={top.libraryId}
+            showId={top.showId}
+            onWatch={choose}
+            onLookAt={lookAt}
+            onBack={back}
+          />
+        );
+      case 'series':
+        return sought === null ? (
+          <Screen centres>
+            <ActivityIndicator />
+            <Button tone="quiet" onPress={back}>
+              Back
+            </Button>
+          </Screen>
+        ) : (
+          <AShow
+            key={`${pages.length.toString()}:${sought.showId}`}
+            libraryId={sought.libraryId}
+            showId={sought.showId}
+            onWatch={choose}
+            onLookAt={lookAt}
+            onBack={back}
+          />
+        );
+      case 'person':
+        return (
+          <APerson
+            key={`${pages.length.toString()}:${top.personId.toString()}`}
+            personId={top.personId}
+            onLookAt={lookAt}
+            onLookAtShow={lookAtShow}
+            onBack={back}
+          />
+        );
+      case 'asking':
+        return (
+          <AnAskable
+            key={`${pages.length.toString()}:${top.about}:${top.id}`}
+            kind={top.about}
+            id={top.id}
+            onOpen={(kind, mediaId) => {
+              open(
+                kind === 'film'
+                  ? { kind: 'title', mediaId }
+                  : { kind: 'series', seriesId: mediaId },
+              );
+            }}
+            onBack={back}
+          />
+        );
+    }
   }
 
   const showing =
     part === 'requests' && mayRequest ? (
       <TheRequests
-        onAsk={(kind, id) => {
-          setAskingFor({ kind, id });
+        onAsk={(about, id) => {
+          open({ kind: 'asking', about, id });
         }}
       />
     ) : part === 'account' ? (
@@ -278,12 +265,7 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         }}
       />
     ) : (
-      <TheLibrary
-        onLookAt={setLooking}
-        onLookAtShow={(libraryId, showId) => {
-          setProgramme({ libraryId, showId });
-        }}
-      />
+      <TheLibrary onLookAt={lookAt} onLookAtShow={lookAtShow} />
     );
 
   return (

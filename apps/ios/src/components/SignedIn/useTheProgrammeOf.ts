@@ -21,7 +21,7 @@ const useTheProgrammeOf = (
   });
   const found = lists
     .flatMap((list) => list.data ?? [])
-    .find((programme) => programme.seriesId === seriesId);
+    .find((programme) => programme.seriesId === seriesId || programme.id === seriesId);
 
   return found === undefined || seriesId === null
     ? null

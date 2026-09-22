@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pickUpFrom } from './pickUpFrom';
+import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 

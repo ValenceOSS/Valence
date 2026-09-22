@@ -65,7 +65,15 @@ describe('AShow', () => {
     jest.mocked(fetchShow).mockResolvedValue(TWO_SEASONS);
 
     const drawn = await render(
-      around(<AShow libraryId="l" showId="s" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -77,7 +85,15 @@ describe('AShow', () => {
     jest.mocked(fetchShow).mockResolvedValue(TWO_SEASONS);
 
     const drawn = await render(
-      around(<AShow libraryId="l" showId="s" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -93,7 +109,15 @@ describe('AShow', () => {
       );
 
     const drawn = await render(
-      around(<AShow libraryId="l" showId="s" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -116,7 +140,15 @@ describe('AShow', () => {
     ]);
 
     const drawn = await render(
-      around(<AShow libraryId="l" showId="s" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -128,7 +160,15 @@ describe('AShow', () => {
     jest.mocked(fetchShow).mockResolvedValue(TWO_SEASONS);
 
     const drawn = await render(
-      around(<AShow libraryId="l" showId="s" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -154,7 +194,15 @@ describe('AShow', () => {
 
     const onWatch = jest.fn();
     const drawn = await render(
-      around(<AShow libraryId="l" showId="s" onWatch={onWatch} onBack={jest.fn()} />),
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={onWatch}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -171,7 +219,15 @@ describe('AShow', () => {
 
     const onWatch = jest.fn();
     const drawn = await render(
-      around(<AShow libraryId="l" showId="s" onWatch={onWatch} onBack={jest.fn()} />),
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={onWatch}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -187,7 +243,15 @@ describe('AShow', () => {
     jest.mocked(fetchShow).mockResolvedValue(null);
 
     const drawn = await render(
-      around(<AShow libraryId="l" showId="s" onWatch={jest.fn()} onBack={jest.fn()} />),
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
