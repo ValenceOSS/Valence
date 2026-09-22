@@ -13,10 +13,10 @@ describe('describeQualityBadges', () => {
           { codec: 'truehd', channels: 8, isAtmos: true },
         ],
       }),
-    ).toEqual(['4K', 'Dolby Vision', 'Dolby Atmos', '7.1']);
+    ).toEqual(['4K', 'DV', 'Atmos', '7.1']);
   });
 
-  it('names an ordinary HD film with a 5.1 Dolby Digital track', () => {
+  it('names an ordinary HD film with a 5.1 Dolby Digital track by its short name', () => {
     expect(
       describeQualityBadges({
         width: 1920,
@@ -24,7 +24,7 @@ describe('describeQualityBadges', () => {
         videoRange: 'SDR',
         audioStreams: [{ codec: 'ac3', channels: 6, isAtmos: false }],
       }),
-    ).toEqual(['HD', 'Dolby Digital', '5.1']);
+    ).toEqual(['HD', 'DD', '5.1']);
   });
 
   it('says nothing about stereo, which everything has', () => {
@@ -43,5 +43,19 @@ describe('describeQualityBadges', () => {
       'HD',
       'HDR10',
     ]);
+  });
+
+  it('spells Dolby out where there is room', () => {
+    expect(
+      describeQualityBadges(
+        {
+          width: 3840,
+          height: 2160,
+          videoRange: 'DolbyVision',
+          audioStreams: [{ codec: 'eac3', channels: 6, isAtmos: true }],
+        },
+        true,
+      ),
+    ).toEqual(['4K', 'Dolby Vision', 'Dolby Atmos', '5.1']);
   });
 });

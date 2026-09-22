@@ -133,12 +133,15 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
       <Words tone="muted">{facts.join(' · ')}</Words>
 
       <TheBadges
-        badges={describeQualityBadges({
-          width: title.width,
-          height: title.height,
-          videoRange: title.videoRange,
-          audioStreams: title.audioStreams,
-        })}
+        badges={describeQualityBadges(
+          {
+            width: title.width,
+            height: title.height,
+            videoRange: title.videoRange,
+            audioStreams: title.audioStreams,
+          },
+          true,
+        )}
       />
 
       {(metadata.genres ?? []).length === 0 ? null : (
