@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { byMediaId } from '@ValenceClient/playback/watchProgress';
+import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
@@ -9,6 +12,10 @@ import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheLibraryProps } from './TheLibrary.types';
+import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
+
+const theFractionOf = (progress: WatchProgress | undefined): number =>
+  progress === undefined ? 0 : watchedFraction(progress);
 
 const styles = StyleSheet.create({
   shelf: { flexDirection: 'row', flexWrap: 'wrap', gap: 18 },
@@ -26,10 +33,12 @@ const styles = StyleSheet.create({
  */
 const TheLibrary = ({ onLookAt, onOut }: TheLibraryProps) => {
   const libraries = useQuery(libraryQueries.all());
+  const watched = useQuery(viewingQueries.progress());
   const colours = useTheColours();
   const [chosen, setChosen] = useState<string | null>(null);
   const showing = chosen ?? libraries.data?.[0]?.id ?? null;
   const page = useQuery(libraryQueries.items(showing));
+  const howFar = byMediaId(watched.data ?? []);
 
   return (
     <Screen scrolls>
@@ -60,7 +69,7 @@ const TheLibrary = ({ onLookAt, onOut }: TheLibraryProps) => {
               onLookAt(media.id);
             }}
           >
-            <APoster media={media} />
+            <APoster media={media} watched={theFractionOf(howFar.get(media.id))} />
           </Button>
         ))}
       </View>

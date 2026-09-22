@@ -54,4 +54,18 @@ describe('APoster', () => {
 
     expect(drawn.getAllByText('Arrival').length).toBe(2);
   });
+
+  it('draws nothing across the foot of something nobody has started', async () => {
+    const drawn = await render(<APoster media={aTitle()} />);
+
+    expect(drawn.queryByRole('progressbar')).toBeNull();
+  });
+
+  it('says how far through it somebody is, rather than only drawing it', async () => {
+    const drawn = await render(<APoster media={aTitle()} watched={0.6} />);
+
+    expect(
+      drawn.getByRole('progressbar', { name: 'How far through Arrival', value: { now: 60 } }),
+    ).toBeTruthy();
+  });
 });

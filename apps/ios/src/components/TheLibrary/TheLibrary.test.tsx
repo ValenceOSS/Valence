@@ -3,11 +3,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { fetchLibraries, fetchLibraryItems } from '@ValenceClient/library/fetchLibrary';
+import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { TheLibrary } from './TheLibrary';
 import type { ReactNode } from 'react';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 
 jest.mock('@ValenceClient/library/fetchLibrary');
+jest.mock('@ValenceClient/playback/watchProgress', () => ({
+  ...jest.requireActual<object>('@ValenceClient/playback/watchProgress'),
+  fetchWatchProgress: jest.fn(),
+}));
 
 const aLibrary = (id: string, name: string): Library => ({
   id,
@@ -50,6 +55,7 @@ beforeEach(() => {
   installPlatform(aFakePlatform({ serverAddress: () => 'http://one.local:8420' }));
   jest.mocked(fetchLibraries).mockReset();
   jest.mocked(fetchLibraryItems).mockReset();
+  jest.mocked(fetchWatchProgress).mockReset().mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -148,5 +154,40 @@ describe('TheLibrary', () => {
     await userEvent.press(drawn.getByLabelText('Arrival'));
 
     expect(onLookAt).toHaveBeenCalledWith(aTitle('Arrival').id);
+  });
+
+  it('shows how far through something a viewer already is', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
+    jest.mocked(fetchWatchProgress).mockResolvedValue([
+      {
+        mediaId: aTitle('Arrival').id,
+        positionSeconds: 3480,
+        durationSeconds: 6960,
+        isFinished: false,
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
+
+    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(
+        drawn.getByRole('progressbar', { name: 'How far through Arrival', value: { now: 50 } }),
+      ).toBeTruthy();
+    });
+  });
+
+  it('draws nothing across something nobody has started', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
+
+    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
+    });
+
+    expect(drawn.queryByRole('progressbar')).toBeNull();
   });
 });

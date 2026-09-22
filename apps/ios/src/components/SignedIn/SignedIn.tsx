@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { signOut } from '@ValenceClient/session/auth';
 import { ATitle } from '@ValencePhone/components/ATitle/ATitle';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
@@ -16,6 +17,9 @@ import type { SignedInProps } from './SignedIn.types';
  * Where they are is held here rather than in an address, because a phone has no address bar and
  * three screens do not need a router to tell them apart. It will when there are more.
  *
+ * Coming out of the player throws away what was known about how far through everything is, because
+ * the thing they just watched is the one entry that is now wrong.
+ *
  * Waits for the session before drawing any of it, because every request they make depends on being
  * signed in and a library drawn first would ask a question it cannot have the answer to.
  *
@@ -23,8 +27,9 @@ import type { SignedInProps } from './SignedIn.types';
  */
 const SignedIn = ({ onOut }: SignedInProps) => {
   const session = useQuery(sessionQueries.who());
+  const cache = useQueryClient();
   const [looking, setLooking] = useState<string | null>(null);
-  const [watching, setWatching] = useState<string | null>(null);
+  const [watching, setWatching] = useState<{ mediaId: string; startSeconds: number } | null>(null);
 
   if (session.isPending) {
     return (
@@ -37,9 +42,11 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   if (watching !== null) {
     return (
       <Watching
-        mediaId={watching}
+        mediaId={watching.mediaId}
+        startSeconds={watching.startSeconds}
         onDone={() => {
           setWatching(null);
+          void cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey });
         }}
       />
     );
@@ -49,7 +56,9 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     return (
       <ATitle
         mediaId={looking}
-        onWatch={setWatching}
+        onWatch={(mediaId, startSeconds) => {
+          setWatching({ mediaId, startSeconds });
+        }}
         onBack={() => {
           setLooking(null);
         }}

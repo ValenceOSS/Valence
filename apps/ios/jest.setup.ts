@@ -1,3 +1,6 @@
+import { theFakePlayer as mockPlayer } from '@ValencePhone/testing/theFakePlayer';
+import type { FakePlayer } from '@ValencePhone/testing/theFakePlayer';
+
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 import type { ReactNode } from 'react';
 
@@ -21,8 +24,14 @@ jest.mock('expo-network', () => ({
   addNetworkStateListener: () => ({ remove: () => undefined }),
 }));
 
-jest.mock('expo-video', () => {
-  const theOnlyPlayer = { play: () => undefined, pause: () => undefined, playing: true };
+jest.mock('expo-video', () => ({
+  useVideoPlayer: (source: string | null, ready?: (player: FakePlayer) => void) => {
+    if (source !== null && source !== mockPlayer.source) {
+      mockPlayer.source = source;
+      ready?.(mockPlayer);
+    }
 
-  return { useVideoPlayer: () => theOnlyPlayer, VideoView: () => null };
-});
+    return mockPlayer;
+  },
+  VideoView: () => null,
+}));

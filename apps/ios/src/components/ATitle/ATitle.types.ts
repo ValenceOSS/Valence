@@ -1,6 +1,6 @@
 type ATitleProps = {
   mediaId: string;
-  onWatch: (mediaId: string) => void;
+  onWatch: (mediaId: string, startSeconds: number) => void;
   onBack: () => void;
 };
 

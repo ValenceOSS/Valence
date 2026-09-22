@@ -10,6 +10,7 @@ const WIDTH = 104;
 const RATIO = 3 / 2;
 
 const styles = StyleSheet.create({
+  howFar: { bottom: 0, flexDirection: 'row', height: 3, left: 0, position: 'absolute', right: 0 },
   poster: { height: '100%', width: '100%' },
   standIn: { alignItems: 'center', justifyContent: 'center', padding: 8 },
   tile: {
@@ -25,9 +26,13 @@ const styles = StyleSheet.create({
  * Draws one title as its poster, falling back to its name where there is no artwork or the server
  * cannot produce it.
  *
+ * How far through it somebody is, is drawn as a line across the foot and said out loud as a
+ * percentage, because a line is nothing to anybody who cannot see it.
+ *
  * @param media - The title to draw.
+ * @param watched - How much of it has been seen, as a fraction, where any of it has.
  */
-const APoster = ({ media }: APosterProps) => {
+const APoster = ({ media, watched = 0 }: APosterProps) => {
   const [isMissing, setIsMissing] = useState(false);
   const colours = useTheColours();
   const artwork = theArtworkFor(media);
@@ -51,6 +56,19 @@ const APoster = ({ media }: APosterProps) => {
             accessibilityIgnoresInvertColors
           />
         )}
+
+        {watched > 0 ? (
+          <View
+            style={[styles.howFar, { backgroundColor: colours.border }]}
+            accessible
+            accessibilityRole="progressbar"
+            accessibilityLabel={`How far through ${media.title}`}
+            accessibilityValue={{ min: 0, max: 100, now: Math.round(watched * 100) }}
+          >
+            <View style={{ backgroundColor: colours.accent, flex: watched }} />
+            <View style={{ flex: 1 - watched }} />
+          </View>
+        ) : null}
       </View>
 
       <Words size="small" lines={2}>
