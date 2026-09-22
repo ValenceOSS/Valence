@@ -62,9 +62,14 @@ const config: Config = {
     '^.+\\.[jt]sx?$': ['babel-jest', { presets: ['babel-preset-expo'] }],
     '^.+\\.mjs$': ['babel-jest', { presets: ['babel-preset-expo'] }],
   },
-  moduleNameMapper: theWorkspaceAliases(),
+  moduleNameMapper: {
+    '^react$': '<rootDir>/node_modules/react',
+    '^react/(.*)$': '<rootDir>/node_modules/react/$1',
+    ...theWorkspaceAliases(),
+  },
   transformIgnorePatterns: whatNeedsCompiling(),
   setupFiles: ['<rootDir>/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/jest.beforeEach.ts'],
   testMatch: ['<rootDir>/src/**/*.test.ts', '<rootDir>/src/**/*.test.tsx'],
   coverageReporters: ['text', 'json-summary'],
 };

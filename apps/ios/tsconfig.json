@@ -11,6 +11,7 @@
     "app.config.ts",
     "jest.config.ts",
     "jest.setup.ts",
+    "jest.beforeEach.ts",
     "jest-expo.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx"

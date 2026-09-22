@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -8,11 +8,20 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { installPhonePlatform } from '@ValencePhone/platform/installPhonePlatform';
 import { whatThePhoneRemembers } from '@ValencePhone/platform/whatThePhoneRemembers';
 import { THE_SERVER_ADDRESS } from '@ValencePhone/platform/THE_SERVER_ADDRESS';
+import { theColours } from '@ValencePhone/theme/theColours';
 import { TheHousehold } from '@ValencePhone/components/TheHousehold/TheHousehold';
 import { WhereIsYourValence } from '@ValencePhone/components/WhereIsYourValence/WhereIsYourValence';
-import { Screen } from '@ValencePhone/components/Screen/Screen';
 
 const answers = buildQueryClient();
+
+const styles = StyleSheet.create({
+  beforeAnybodyKnows: {
+    alignItems: 'center',
+    backgroundColor: theColours.dark.surface,
+    flex: 1,
+    justifyContent: 'center',
+  },
+});
 
 /**
  * Valence on a phone.
@@ -24,6 +33,9 @@ const answers = buildQueryClient();
  *
  * Which screen follows is a question of whether this phone knows where its Valence is, not of
  * whether anybody is signed in. A phone with no server has nothing to sign in to.
+ *
+ * What it holds the screen with is drawn dark and without the theme, because the theme is a
+ * preference and the preference is in the storage being read. There is nothing yet to ask.
  */
 const Phone = () => {
   const [isReady, setIsReady] = useState(false);
@@ -40,12 +52,10 @@ const Phone = () => {
 
   if (!isReady) {
     return (
-      <SafeAreaProvider>
-        <Screen centres>
-          <ActivityIndicator />
-        </Screen>
-        <StatusBar style="auto" />
-      </SafeAreaProvider>
+      <View style={styles.beforeAnybodyKnows}>
+        <ActivityIndicator color={theColours.dark.textMuted} />
+        <StatusBar style="light" />
+      </View>
     );
   }
 
