@@ -400,10 +400,16 @@ body {
 
 :root {
   --valence-window-bar: 0px;
+  --valence-window-bar-clearance: 0.5rem;
 }
 
-:root[data-valence-desktop='true']:not([data-valence-platform='darwin']) {
-  --valence-window-bar: 2.25rem;
+:root[data-valence-desktop='true'] {
+  --valence-window-bar: 2rem;
+}
+
+:root[data-valence-platform='win32'],
+:root[data-valence-platform='linux'] {
+  --valence-window-bar-clearance: 9rem;
 }
 
 .valence-below-the-bar {
@@ -575,11 +581,11 @@ body[data-scroll-locked] .valence-navbar {
 }
 
 [data-valence-desktop='true'] .valence-shell {
-  --nav-clearance: 6.25rem;
+  --nav-clearance: calc(4rem + var(--valence-window-bar));
 }
 
 [data-valence-desktop='true'] .valence-navbar {
-  padding-top: 2.25rem;
+  padding-top: var(--valence-window-bar);
 }
 
 .valence-sheet {

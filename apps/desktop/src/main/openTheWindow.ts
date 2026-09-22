@@ -11,7 +11,7 @@ const MINIMUM_HEIGHT = 560;
 
 const IS_MAC = process.platform === 'darwin';
 
-const CONTROLS = { color: '#00000000', symbolColor: '#ffffff', height: 36 };
+const CONTROLS = { color: '#00000000', symbolColor: '#ffffff', height: 32 };
 
 /**
  * Opens the one window this client is, and puts the application in it.
