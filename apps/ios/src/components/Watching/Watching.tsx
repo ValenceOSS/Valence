@@ -42,7 +42,6 @@ const HOW_OFTEN_IT_SAYS_WHERE_IT_IS = 0.25;
 
 const styles = StyleSheet.create({
   picture: { backgroundColor: '#000000', flex: 1 },
-  tapToShow: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
 });
 
 /**
@@ -294,17 +293,14 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
         contentFit="contain"
       />
 
-      <View style={styles.tapToShow}>
-        <Button
-          tone="bare"
-          label={areControlsUp ? 'Hide the controls' : 'Show the controls'}
-          onPress={() => {
-            setAreControlsUp((up) => !up);
-          }}
-        >
-          <View style={styles.tapToShow} />
-        </Button>
-      </View>
+      <Button
+        tone="bare"
+        fills
+        label={areControlsUp ? 'Hide the controls' : 'Show the controls'}
+        onPress={() => {
+          setAreControlsUp((up) => !up);
+        }}
+      />
 
       {areControlsUp ? (
         <TheControls

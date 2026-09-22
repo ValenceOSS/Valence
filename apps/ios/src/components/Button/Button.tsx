@@ -5,6 +5,7 @@ import type { ButtonProps } from './Button.types';
 const styles = StyleSheet.create({
   accent: { alignItems: 'center', borderRadius: 14, padding: 16 },
   bare: {},
+  fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   pressed: { opacity: 0.75 },
   quiet: { alignItems: 'center', paddingVertical: 12 },
   word: { fontSize: 16, fontWeight: '600' },
@@ -24,6 +25,8 @@ const styles = StyleSheet.create({
  * @param children - What it says.
  * @param onPress - What it does.
  * @param tone - Whether it is the thing to press, a thing that can be, or only the press itself.
+ * @param fills - Whether it takes up the whole of whatever holds it, for a press area with no
+ *   shape of its own — the picture a film is playing on, which is pressed to put the controls away.
  * @param isBusy - Whether what it started is still going.
  * @param isDisabled - Whether it can be pressed at all.
  * @param isChosen - Whether this is the one currently picked, where it is one of several.
@@ -33,6 +36,7 @@ const Button = ({
   children,
   onPress,
   tone = 'accent',
+  fills = false,
   isBusy = false,
   isDisabled = false,
   isChosen,
@@ -54,6 +58,7 @@ const Button = ({
       onPress={onPress}
       style={({ pressed }) => [
         isBare ? styles.bare : isAccent ? styles.accent : styles.quiet,
+        fills && styles.fills,
         isAccent && { backgroundColor: colours.accent },
         pressed && styles.pressed,
         isDisabled && styles.pressed,

@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 
 type ButtonProps = {
-  children: ReactNode;
+  children?: ReactNode;
   onPress: () => void;
   tone?: 'accent' | 'quiet' | 'bare';
+  fills?: boolean;
   isBusy?: boolean;
   isDisabled?: boolean;
   isChosen?: boolean;

@@ -109,7 +109,10 @@ const TheControls = ({
   const room = useSafeAreaInsets();
 
   return (
-    <View style={[styles.whole, { paddingBottom: room.bottom + 12, paddingTop: room.top + 12 }]}>
+    <View
+      pointerEvents="box-none"
+      style={[styles.whole, { paddingBottom: room.bottom + 12, paddingTop: room.top + 12 }]}
+    >
       <View
         pointerEvents="box-none"
         style={[
