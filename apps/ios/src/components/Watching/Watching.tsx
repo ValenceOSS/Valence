@@ -18,6 +18,7 @@ import {
   reportWatchProgress,
 } from '@ValenceClient/playback/watchProgress';
 import { thePhonesProfile } from '@ValencePhone/playback/thePhonesProfile';
+import { spatialiseEvenStereo } from '@ValencePhone/playback/spatialiseEvenStereo';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValencePhone/platform/theCookiesThisPhoneHolds';
 import { holdThisPhoneUpright } from '@ValencePhone/platform/holdThisPhoneUpright';
@@ -61,6 +62,10 @@ const styles = StyleSheet.create({
  *
  * The stream is negotiated before anything is drawn, because what the server sends back is the
  * answer to what this phone said it could take — and the address to play is not known until it has.
+ *
+ * iOS is told it may place a two channel soundtrack around somebody wearing headphones, which it
+ * will not do unless asked and which no React Native package asks for it. Said once the film has
+ * loaded, because it is said about the film rather than about the application.
  *
  * Whatever comes back is handed to the system's own player rather than driven from here. It is the
  * thing on this platform that knows about picture-in-picture, the lock screen and the route the
@@ -214,6 +219,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   });
 
   const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
+  const loaded = useEvent(player, 'sourceLoad');
   const ticking = useEvent(player, 'timeUpdate', {
     currentTime: player.currentTime,
     bufferedPosition: player.bufferedPosition,
@@ -278,6 +284,10 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
       void holdThisPhoneUpright();
     };
   }, []);
+
+  useEffect(() => {
+    spatialiseEvenStereo(player);
+  }, [player, loaded]);
 
   useEffect(() => {
     Animated.timing(howBig, {

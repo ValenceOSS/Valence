@@ -29,6 +29,11 @@ jest.mock('expo-screen-orientation', () => ({
   OrientationLock: { ALL: 1, PORTRAIT_UP: 3, LANDSCAPE: 5, LANDSCAPE_LEFT: 6 },
 }));
 
+jest.mock('expo', () => ({
+  ...jest.requireActual<object>('expo'),
+  requireOptionalNativeModule: () => null,
+}));
+
 jest.mock('@react-native-cookies/cookies', () => ({
   get: jest.fn(() => Promise.resolve({})),
 }));
