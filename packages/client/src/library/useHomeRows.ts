@@ -6,7 +6,6 @@ import { homeRows, MIN_ROW, ROW_LIMIT } from '@ValenceClient/library/homeRows';
 import { pickForYou } from '@ValenceClient/library/pickForYou';
 import { tasteOf } from '@ValenceClient/library/tasteOf';
 import { isWorthResuming } from '@ValenceContracts/schemas/WatchProgress';
-import { byLastWatched } from '@ValenceClient/playback/byLastWatched';
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
@@ -54,6 +53,18 @@ const encoreTitle = (
 };
 
 /**
+ * Orders things by when somebody last had them on, most recent first.
+ *
+ * @param progress - How far through each thing they are, and when they last were.
+ * @returns A comparison to sort by.
+ */
+const byLastWatched =
+  (progress: Map<string, WatchProgress>) =>
+  (left: MediaSummary, right: MediaSummary): number =>
+    (Date.parse(progress.get(right.id)?.updatedAt ?? '') || 0) -
+    (Date.parse(progress.get(left.id)?.updatedAt ?? '') || 0);
+
+/**
  * Orders things newest first, by when they were added.
  *
  * @param left - One thing.
@@ -91,6 +102,7 @@ const byRating = (left: MediaSummary, right: MediaSummary): number =>
  * again once they are together — otherwise the first library's newest would fill the row before
  * the second's newest were looked at.
  *
+ * @param viewerId - Whose front page it is, whose favourites and ratings decide what is offered.
  * @param watchable - The libraries holding something to watch.
  * @param progress - How far through each thing this viewer is.
  * @param isActive - Whether the rows are wanted at all, which they are not while somebody searches.
@@ -99,7 +111,7 @@ const byRating = (left: MediaSummary, right: MediaSummary): number =>
  *   to ask for and whether some are being asked for now; and how to ask for the next few.
  */
 const useHomeRows = (
-  userId: string,
+  viewerId: string,
   watchable: readonly string[],
   progress: Map<string, WatchProgress>,
   isActive: boolean,
@@ -116,9 +128,9 @@ const useHomeRows = (
   const [decadeLimit, setDecadeLimit] = useState(0);
   const [encoreLimit, setEncoreLimit] = useState(0);
 
-  const favourites = useQuery(viewingQueries.favourites(userId));
+  const favourites = useQuery(viewingQueries.favourites(viewerId));
   const ratings = useQuery({
-    ...viewingQueries.ratings(userId),
+    ...viewingQueries.ratings(viewerId),
     select: (given) =>
       given.flatMap((rating) =>
         rating.mediaId !== null && rating.stars >= LIKED_STARS ? [rating.mediaId] : [],

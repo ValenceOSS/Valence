@@ -6,7 +6,7 @@ import { Words } from '@ValencePhone/components/Words/Words';
 import { Asked } from '@ValencePhone/components/TheRequests/components/Asked/Asked';
 import { Discovered } from '@ValencePhone/components/TheRequests/components/Discovered/Discovered';
 import { Found } from '@ValencePhone/components/TheRequests/components/Found/Found';
-import { useSettled } from '@ValencePhone/hooks/useSettled';
+import { useSettled } from '@ValenceClient/timing/useSettled';
 import type { TheRequestsProps } from './TheRequests.types';
 
 const HOLD_STILL_FOR = 400;

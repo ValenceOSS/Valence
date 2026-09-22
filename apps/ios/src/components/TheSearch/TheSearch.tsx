@@ -9,7 +9,7 @@ import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow
 import { TextField } from '@ValencePhone/components/TextField/TextField';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { TheResults } from '@ValencePhone/components/TheSearch/components/TheResults/TheResults';
-import { useSettled } from '@ValencePhone/hooks/useSettled';
+import { useSettled } from '@ValenceClient/timing/useSettled';
 import type { TheSearchProps } from './TheSearch.types';
 
 const HOLD_STILL_FOR = 250;

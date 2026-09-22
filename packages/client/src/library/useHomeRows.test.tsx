@@ -6,8 +6,6 @@ import type { ReactNode } from 'react';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
-const VIEWER = 'viewer-1';
-
 const { itemsMock, facetsMock, favouritesMock, ratingsMock } = vi.hoisted(() => ({
   itemsMock: vi.fn(),
   facetsMock: vi.fn(),
@@ -26,6 +24,8 @@ vi.mock('@ValenceClient/library/fetchRatings', () => ({
   fetchHouseholdRating: vi.fn(),
   setRating: vi.fn(),
 }));
+
+const VIEWER = 'viewer-1';
 
 const LIBRARY = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 
@@ -69,9 +69,9 @@ const halfWay = (mediaId: string): WatchProgress => ({
 });
 
 /**
- * Draws the hook with a cache of its own.
+ * Draws the hook inside a cache of its own.
  */
-const inTheShell = ({ children }: { children: ReactNode }) => <CacheScope>{children}</CacheScope>;
+const inACache = ({ children }: { children: ReactNode }) => <CacheScope>{children}</CacheScope>;
 
 /**
  * A library that answers each question the rows ask with the films given for it.
@@ -116,7 +116,7 @@ beforeEach(() => {
 describe('useHomeRows', () => {
   it('asks for nothing while somebody is searching, since the rows are not wanted then', async () => {
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), false, true), {
-      wrapper: inTheShell,
+      wrapper: inACache,
     });
 
     await waitFor(() => {
@@ -141,7 +141,7 @@ describe('useHomeRows', () => {
     const { result } = renderHook(
       () =>
         useHomeRows(VIEWER, [LIBRARY], new Map([['watching', halfWay('watching')]]), true, true),
-      { wrapper: inTheShell },
+      { wrapper: inACache },
     );
 
     await waitFor(() => {
@@ -165,7 +165,7 @@ describe('useHomeRows', () => {
     });
 
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
-      wrapper: inTheShell,
+      wrapper: inACache,
     });
 
     await waitFor(() => {
@@ -186,7 +186,7 @@ describe('useHomeRows', () => {
     });
 
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
-      wrapper: inTheShell,
+      wrapper: inACache,
     });
 
     await waitFor(() => {
@@ -202,7 +202,7 @@ describe('useHomeRows', () => {
     aLibrary({ recent: films('new', 30, 'Comedy') });
 
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
-      wrapper: inTheShell,
+      wrapper: inACache,
     });
 
     await waitFor(() => {
@@ -211,9 +211,7 @@ describe('useHomeRows', () => {
   });
 
   it('asks the server for a handful of things per row rather than the whole library', async () => {
-    renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
-      wrapper: inTheShell,
-    });
+    renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), { wrapper: inACache });
 
     await waitFor(() => {
       expect(itemsMock).toHaveBeenCalledWith(
@@ -234,7 +232,7 @@ describe('useHomeRows', () => {
     facetsMock.mockResolvedValue({ genres, decades: [], maxRating: 10 });
 
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
-      wrapper: inTheShell,
+      wrapper: inACache,
     });
 
     await waitFor(() => {
@@ -274,7 +272,7 @@ describe('useHomeRows', () => {
     });
 
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
-      wrapper: inTheShell,
+      wrapper: inACache,
     });
 
     await waitFor(() => {
@@ -298,7 +296,7 @@ describe('useHomeRows', () => {
     aLibrary({ byGenre: { Drama: films('drama', 5, 'Drama') } });
 
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
-      wrapper: inTheShell,
+      wrapper: inACache,
     });
 
     await waitFor(() => {
@@ -324,7 +322,7 @@ describe('useHomeRows', () => {
     aLibrary({ byGenre: { Drama: films('drama', 2, 'Drama') } });
 
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
-      wrapper: inTheShell,
+      wrapper: inACache,
     });
 
     await waitFor(() => {
@@ -336,7 +334,7 @@ describe('useHomeRows', () => {
 
   it('says it is still reading until the first rows have arrived', async () => {
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
-      wrapper: inTheShell,
+      wrapper: inACache,
     });
 
     expect(result.current.isReading).toBe(true);
@@ -348,7 +346,7 @@ describe('useHomeRows', () => {
 
   it('waits for what somebody has watched before choosing what to offer them', () => {
     const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, false), {
-      wrapper: inTheShell,
+      wrapper: inACache,
     });
 
     expect(result.current.isReading).toBe(true);
