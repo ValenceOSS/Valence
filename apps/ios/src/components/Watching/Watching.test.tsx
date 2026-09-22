@@ -1,4 +1,6 @@
-import { act, render, userEvent, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { fetchMediaDetail } from '@ValenceClient/library/fetchLibrary';
 import {
   heartbeatPlaybackSession,
   startPlaybackSession,
@@ -12,8 +14,10 @@ import { theFakePlayer } from '@ValencePhone/testing/theFakePlayer';
 import { Watching } from './Watching';
 import type { StartedSession, StartOutcome } from '@ValenceClient/playback/startPlaybackSession';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
+import type { ReactNode } from 'react';
 
 jest.mock('@ValenceClient/playback/startPlaybackSession');
+jest.mock('@ValenceClient/library/fetchLibrary');
 
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   REPORT_EVERY_MILLISECONDS: 10_000,
@@ -29,6 +33,12 @@ const A_PLAN: PlaybackPlan = {
   audio: { kind: 'passthrough', streamIndex: 1, reason },
   subtitles: { kind: 'none', reason },
 };
+
+const around = (children: ReactNode) => (
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    {children}
+  </QueryClientProvider>
+);
 
 const started = (delivery: StartedSession['delivery']): StartOutcome => ({
   kind: 'started',
@@ -52,6 +62,10 @@ beforeEach(() => {
   jest.mocked(reportWatchProgress).mockReset().mockResolvedValue();
   jest.mocked(get).mockReset().mockResolvedValue({});
   jest.mocked(lockAsync).mockReset().mockResolvedValue();
+  jest
+    .mocked(fetchMediaDetail)
+    .mockReset()
+    .mockReturnValue(new Promise(() => undefined));
   theFakePlayer.currentTime = 420;
   theFakePlayer.duration = 6960;
 });
@@ -61,12 +75,13 @@ afterEach(() => {
 });
 
 describe('Watching', () => {
-  it('says it is asking, rather than showing a black rectangle', async () => {
+  it('waits without words, since there is nothing to say yet', async () => {
     jest.mocked(startPlaybackSession).mockReturnValue(new Promise(() => undefined));
 
-    const drawn = await render(<Watching mediaId="one" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
 
-    expect(drawn.getByText('Asking the server for this one…')).toBeTruthy();
+    expect(drawn.queryByLabelText('Stop watching')).toBeNull();
+    expect(drawn.queryByText(/asking/iu)).toBeNull();
   });
 
   it('tells the server what this phone can decode', async () => {
@@ -76,7 +91,7 @@ describe('Watching', () => {
         started({ kind: 'hls', manifestUrl: '/api/playback/a-session/master.m3u8' }),
       );
 
-    await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+    await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
 
     await waitFor(() => {
       expect(startPlaybackSession).toHaveBeenCalledWith(
@@ -91,7 +106,7 @@ describe('Watching', () => {
   it('says why, where the server would not play it', async () => {
     jest.mocked(startPlaybackSession).mockResolvedValue(refused('That file has no video in it.'));
 
-    const drawn = await render(<Watching mediaId="one" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
 
     await waitFor(() => {
       expect(drawn.getByText('That file has no video in it.')).toBeTruthy();
@@ -102,7 +117,7 @@ describe('Watching', () => {
     jest.mocked(startPlaybackSession).mockResolvedValue(refused('No.'));
 
     const onDone = jest.fn();
-    const drawn = await render(<Watching mediaId="one" onDone={onDone} />);
+    const drawn = await render(around(<Watching mediaId="one" onDone={onDone} />));
 
     await waitFor(() => {
       expect(drawn.getByText('Back')).toBeTruthy();
@@ -118,10 +133,10 @@ describe('Watching', () => {
       .mocked(startPlaybackSession)
       .mockResolvedValue(started({ kind: 'direct', url: '/api/playback/a-session/file' }));
 
-    const drawn = await render(<Watching mediaId="one" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     await drawn.unmount();
@@ -140,7 +155,7 @@ describe('Watching', () => {
       }),
     );
 
-    const drawn = await render(<Watching mediaId="one" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
 
     await drawn.unmount();
 
@@ -158,10 +173,10 @@ describe('Watching', () => {
       .mocked(startPlaybackSession)
       .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8' }));
 
-    const drawn = await render(<Watching mediaId="one" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     await act(() => {
@@ -174,10 +189,10 @@ describe('Watching', () => {
   it('tells presence it has stopped, rather than leaving a viewer on the sessions page', async () => {
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
-    const drawn = await render(<Watching mediaId="one" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     await drawn.unmount();
@@ -190,7 +205,7 @@ describe('Watching', () => {
       .mocked(startPlaybackSession)
       .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8' }));
 
-    await render(<Watching mediaId="a-film" startSeconds={1234.6} onDone={jest.fn()} />);
+    await render(around(<Watching mediaId="a-film" startSeconds={1234.6} onDone={jest.fn()} />));
 
     await waitFor(() => {
       expect(startPlaybackSession).toHaveBeenCalledWith(
@@ -209,10 +224,10 @@ describe('Watching', () => {
       .mocked(startPlaybackSession)
       .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8' }));
 
-    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     await act(() => {
@@ -235,10 +250,10 @@ describe('Watching', () => {
 
     theFakePlayer.duration = 0;
 
-    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     await act(() => {
@@ -253,10 +268,10 @@ describe('Watching', () => {
 
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
-    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     await act(() => {
@@ -275,10 +290,12 @@ describe('Watching', () => {
   it('winds a whole file on itself, since the server sent all of it', async () => {
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
-    const drawn = await render(<Watching mediaId="a-film" startSeconds={600} onDone={jest.fn()} />);
+    const drawn = await render(
+      around(<Watching mediaId="a-film" startSeconds={600} onDone={jest.fn()} />),
+    );
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     expect(theFakePlayer.currentTime).toBe(600);
@@ -289,10 +306,12 @@ describe('Watching', () => {
       .mocked(startPlaybackSession)
       .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8' }));
 
-    const drawn = await render(<Watching mediaId="a-film" startSeconds={600} onDone={jest.fn()} />);
+    const drawn = await render(
+      around(<Watching mediaId="a-film" startSeconds={600} onDone={jest.fn()} />),
+    );
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     expect(theFakePlayer.currentTime).toBe(420);
@@ -301,10 +320,10 @@ describe('Watching', () => {
   it('says nothing on the way out about a film it never saw playing', async () => {
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
-    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     await drawn.unmount();
@@ -318,10 +337,10 @@ describe('Watching', () => {
     });
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
-    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     expect(theFakePlayer.sentWith).toEqual({ Cookie: 'valence.session_token=abc' });
@@ -330,72 +349,185 @@ describe('Watching', () => {
   it('asks anyway where this phone holds nothing to send', async () => {
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
-    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     expect(theFakePlayer.sentWith).toBeNull();
   });
 
-  it('fills the screen on its own, which is how a video opens on a phone', async () => {
+  it('turns the phone sideways, since that is the shape of what is playing', async () => {
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
-    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+    await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
 
-    await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
-    });
-
-    expect(theFakePlayer.isFullscreen).toBe(true);
-  });
-
-  it('is done with the film once they have left the screen it filled', async () => {
-    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
-
-    const onDone = jest.fn();
-
-    await render(<Watching mediaId="a-film" onDone={onDone} />);
-
-    await waitFor(() => {
-      expect(theFakePlayer.leaveFullscreen).not.toBeNull();
-    });
-
-    await act(() => {
-      theFakePlayer.leaveFullscreen?.();
-    });
-
-    expect(onDone).toHaveBeenCalled();
-  });
-
-  it('fills nothing while it is still asking the server', async () => {
-    jest.mocked(startPlaybackSession).mockReturnValue(new Promise(() => undefined));
-
-    await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
-
-    expect(theFakePlayer.isFullscreen).toBe(false);
-  });
-
-  it('lets the phone be turned, which nothing else here does', async () => {
-    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
-
-    await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
-
-    expect(lockAsync).toHaveBeenCalledWith(OrientationLock.ALL);
+    expect(lockAsync).toHaveBeenCalledWith(OrientationLock.LANDSCAPE);
   });
 
   it('puts the phone back upright on the way out', async () => {
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
-    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Done')).toBeTruthy();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
     await drawn.unmount();
 
     expect(lockAsync).toHaveBeenLastCalledWith(OrientationLock.PORTRAIT_UP);
+  });
+
+  it('stops watching when they say so', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const onDone = jest.fn();
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={onDone} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    await userEvent.press(drawn.getByLabelText('Stop watching'));
+
+    expect(onDone).toHaveBeenCalled();
+  });
+
+  it('stops the picture when they ask it to', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Pause')).toBeTruthy();
+    });
+
+    await userEvent.press(drawn.getByLabelText('Pause'));
+
+    expect(theFakePlayer.playing).toBe(false);
+  });
+
+  it('offers to start it again once it is stopped', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Pause')).toBeTruthy();
+    });
+
+    await act(() => {
+      theFakePlayer.playing = false;
+      theFakePlayer.say('playingChange', { isPlaying: false });
+    });
+
+    expect(drawn.getByLabelText('Play')).toBeTruthy();
+  });
+
+  it('goes back ten seconds when asked', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    theFakePlayer.currentTime = 100;
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Back 10 seconds')).toBeTruthy();
+    });
+
+    await userEvent.press(drawn.getByLabelText('Back 10 seconds'));
+
+    expect(theFakePlayer.currentTime).toBe(90);
+  });
+
+  it('goes forward ten seconds when asked', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    theFakePlayer.currentTime = 100;
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Forward 10 seconds')).toBeTruthy();
+    });
+
+    await userEvent.press(drawn.getByLabelText('Forward 10 seconds'));
+
+    expect(theFakePlayer.currentTime).toBe(110);
+  });
+
+  it('gets out of the way while a film is playing', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    await act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+
+    expect(drawn.queryByLabelText('Stop watching')).toBeNull();
+  });
+
+  it('stays where it is while a film is stopped, since they are looking at it', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    await act(() => {
+      theFakePlayer.playing = false;
+      theFakePlayer.say('playingChange', { isPlaying: false });
+    });
+
+    await act(() => {
+      jest.advanceTimersByTime(20_000);
+    });
+
+    expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+  });
+
+  it('comes back when the picture is touched', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    await act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+
+    await fireEvent.press(drawn.getByLabelText('Show the controls'));
+
+    expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+  });
+
+  it('tells the phone to keep showing what is playing on the lock screen', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    expect(theFakePlayer.showNowPlayingNotification).toBe(true);
   });
 });

@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useEvent } from 'expo';
+import { useQuery } from '@tanstack/react-query';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import {
   heartbeatPlaybackSession,
@@ -17,11 +20,12 @@ import { thePhonesProfile } from '@ValencePhone/playback/thePhonesProfile';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValencePhone/platform/theCookiesThisPhoneHolds';
 import { holdThisPhoneUpright } from '@ValencePhone/platform/holdThisPhoneUpright';
-import { letThisPhoneTurn } from '@ValencePhone/platform/letThisPhoneTurn';
+import { turnThisPhoneSideways } from '@ValencePhone/platform/turnThisPhoneSideways';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
+import { TheControls } from '@ValencePhone/components/Watching/components/TheControls/TheControls';
 import type { WatchingProps } from './Watching.types';
 import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
 
@@ -29,8 +33,13 @@ const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
 const LOOK_EVERY = 1000;
 
+const LEAVE_THEM_UP_FOR = 3500;
+
+const HOW_OFTEN_IT_SAYS_WHERE_IT_IS = 0.25;
+
 const styles = StyleSheet.create({
   picture: { backgroundColor: '#000000', flex: 1 },
+  tapToShow: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
 });
 
 /**
@@ -43,13 +52,14 @@ const styles = StyleSheet.create({
  * thing on this platform that knows about picture-in-picture, the lock screen and the route the
  * sound is going out by, and reimplementing any of that in JavaScript would be worse at all three.
  *
- * This is the one screen a phone may be turned on, and it is allowed rather than forced: a film
- * shot wide is better sideways and somebody lying down is not.
+ * This is the one screen a phone is turned for, and it turns itself: almost everything a household
+ * watches was shot wide, and a phone held upright shows it as a strip across the middle.
  *
- * It goes full screen of its own accord and leaving it is leaving the film, which is how a video
- * opens everywhere else on a phone. Nobody pressing play on a film wants a small picture in the
- * middle of a page and a second button to press before it fills the screen. What is behind it is
- * drawn anyway, so a phone that refuses to go full screen still plays rather than showing black.
+ * It fills the screen from the moment it opens, and its controls are Valence's own rather than the
+ * system's. The system's are good but they are a closed box: nothing can be drawn over them and
+ * nothing added to them, and a subtitle track or a quality this server can send is a thing they
+ * have never heard of. They also show nothing to pick between, because what this server sends is
+ * one rendition with one sound on it.
  *
  * It is handed this phone's cookies with it. Everything else on here is asked for through the
  * system's own networking, which attaches them; the player builds its own requests and is not told
@@ -79,7 +89,9 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   const [refusal, setRefusal] = useState<string | null>(null);
   const whereTheyGotTo = useRef<{ positionSeconds: number; durationSeconds: number } | null>(null);
   const picture = useRef<VideoViewRef | null>(null);
+  const [areControlsUp, setAreControlsUp] = useState(true);
   const clientId = platformInUse().thisClientId();
+  const title = useQuery(libraryQueries.detail(mediaId));
 
   useEffect(() => {
     let started: string | null = null;
@@ -133,12 +145,28 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   }, [mediaId, startSeconds, clientId]);
 
   const player = useVideoPlayer(source, (ready) => {
+    ready.timeUpdateEventInterval = HOW_OFTEN_IT_SAYS_WHERE_IT_IS;
+    ready.showNowPlayingNotification = true;
+    ready.staysActiveInBackground = true;
+
     if (seekTo > 0) {
       ready.currentTime = seekTo;
     }
 
     ready.play();
   });
+
+  const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
+  const ticking = useEvent(player, 'timeUpdate', {
+    currentTime: player.currentTime,
+    bufferedPosition: player.bufferedPosition,
+    currentLiveTimestamp: null,
+    currentOffsetFromLive: null,
+  });
+
+  const keepThemUp = useCallback(() => {
+    setAreControlsUp(true);
+  }, []);
 
   useEffect(() => {
     if (sessionId === null) {
@@ -156,7 +184,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   }, [sessionId, clientId, player]);
 
   useEffect(() => {
-    void letThisPhoneTurn();
+    void turnThisPhoneSideways();
 
     return () => {
       void holdThisPhoneUpright();
@@ -164,12 +192,18 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   }, []);
 
   useEffect(() => {
-    if (source === null) {
+    if (!areControlsUp || !moving.isPlaying) {
       return;
     }
 
-    void picture.current?.enterFullscreen();
-  }, [source]);
+    const going = setTimeout(() => {
+      setAreControlsUp(false);
+    }, LEAVE_THEM_UP_FOR);
+
+    return () => {
+      clearTimeout(going);
+    };
+  }, [areControlsUp, moving.isPlaying, ticking.currentTime]);
 
   useEffect(() => {
     if (sessionId === null) {
@@ -219,7 +253,6 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
     return (
       <Screen centres>
         <ActivityIndicator color={colours.textMuted} />
-        <Words tone="muted">Asking the server for this one…</Words>
       </Screen>
     );
   }
@@ -231,13 +264,51 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
         style={styles.picture}
         player={player}
         allowsPictureInPicture
-        nativeControls
+        nativeControls={false}
         contentFit="contain"
-        onFullscreenExit={onDone}
       />
-      <Button tone="quiet" onPress={onDone}>
-        Done
-      </Button>
+
+      <View style={styles.tapToShow}>
+        <Button
+          tone="bare"
+          label={areControlsUp ? 'Hide the controls' : 'Show the controls'}
+          onPress={() => {
+            setAreControlsUp((up) => !up);
+          }}
+        >
+          <View style={styles.tapToShow} />
+        </Button>
+      </View>
+
+      {areControlsUp ? (
+        <TheControls
+          title={title.data?.title ?? ''}
+          isPlaying={moving.isPlaying}
+          at={ticking.currentTime}
+          runsFor={player.duration}
+          buffered={ticking.bufferedPosition}
+          onPlayPause={() => {
+            keepThemUp();
+
+            if (moving.isPlaying) {
+              player.pause();
+            } else {
+              player.play();
+            }
+          }}
+          onSkip={(by) => {
+            keepThemUp();
+            player.seekBy(by);
+          }}
+          onSeek={(to) => {
+            keepThemUp();
+            player.seekBy(to - ticking.currentTime);
+          }}
+          onTouched={keepThemUp}
+          onClose={onDone}
+          onSettings={keepThemUp}
+        />
+      ) : null}
     </View>
   );
 };

@@ -26,7 +26,7 @@ jest.mock('expo-network', () => ({
 
 jest.mock('expo-screen-orientation', () => ({
   lockAsync: jest.fn(() => Promise.resolve()),
-  OrientationLock: { ALL: 1, PORTRAIT_UP: 3 },
+  OrientationLock: { ALL: 1, PORTRAIT_UP: 3, LANDSCAPE: 5, LANDSCAPE_LEFT: 6 },
 }));
 
 jest.mock('@react-native-cookies/cookies', () => ({
@@ -46,22 +46,5 @@ jest.mock('expo-video', () => ({
 
     return mockPlayer;
   },
-  VideoView: (props: {
-    onFullscreenExit?: () => void;
-    ref?: { current: { enterFullscreen: () => Promise<void> } | null };
-  }) => {
-    mockPlayer.leaveFullscreen = props.onFullscreenExit ?? null;
-
-    if (props.ref !== undefined) {
-      props.ref.current = {
-        enterFullscreen: () => {
-          mockPlayer.isFullscreen = true;
-
-          return Promise.resolve();
-        },
-      };
-    }
-
-    return null;
-  },
+  VideoView: () => null,
 }));

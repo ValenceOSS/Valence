@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "lint:comments": "tsx comments/checkComments.ts",
+    "glyphs": "tsx phoneGlyphs/writeThePhonesGlyphs.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
