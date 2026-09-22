@@ -265,7 +265,17 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         }}
       />
     ) : (
-      <TheLibrary onLookAt={lookAt} onLookAtShow={lookAtShow} />
+      <TheLibrary
+        onLookAt={lookAt}
+        onLookAtShow={lookAtShow}
+        onAsk={
+          mayRequest
+            ? (about, id) => {
+                open({ kind: 'asking', about, id });
+              }
+            : null
+        }
+      />
     );
 
   return (

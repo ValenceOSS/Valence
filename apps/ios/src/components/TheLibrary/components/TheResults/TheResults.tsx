@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
-import { APoster } from '@ValencePhone/components/APoster/APoster';
-import { theArtworkFor } from '@ValencePhone/components/APoster/theArtworkFor';
-import { Button } from '@ValencePhone/components/Button/Button';
+import { ACard } from '@ValencePhone/components/ACard/ACard';
+import { ACatalogueCard } from '@ValencePhone/components/ACatalogueCard/ACatalogueCard';
+import { AShelf } from '@ValencePhone/components/AShelf/AShelf';
 import { Words } from '@ValencePhone/components/Words/Words';
-import { whatAResultOpens } from '@ValencePhone/components/TheLibrary/components/TheResults/whatAResultOpens';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheResultsProps } from './TheResults.types';
 
@@ -17,17 +17,16 @@ const styles = StyleSheet.create({
 });
 
 /**
- * What a search found, across every library a phone can play.
+ * What the library holds under what somebody typed, a programme once however many of its episodes
+ * match, and — for somebody who may ask for things — the films and programmes of that name the
+ * library does not have yet, to ask for.
  *
- * Asked of all of them at once rather than of the tab that happened to be showing, because
- * somebody searching for a film does not know or care which library it is in. A programme turns up
- * once however many of its episodes matched, and opens as the programme.
- *
- * @param asked - What was searched for.
+ * @param asked - What they typed.
  * @param libraryIds - Where to look.
- * @param howFarThrough - How much of each they have seen, as a fraction.
- * @param onLookAt - Told which film they want.
- * @param onLookAtShow - Told which programme they want, in which library.
+ * @param howFarThrough - How much of each thing they have seen.
+ * @param onLookAt - Told to open a title.
+ * @param onLookAtShow - Told to open a programme.
+ * @param onAsk - Told to open something to ask for, or null for somebody who may not.
  */
 const TheResults = ({
   asked,
@@ -35,10 +34,16 @@ const TheResults = ({
   howFarThrough,
   onLookAt,
   onLookAtShow,
+  onAsk,
 }: TheResultsProps) => {
   const colours = useTheColours();
   const found = useQuery(
     libraryQueries.across(libraryIds, { search: asked, limit: AS_MANY_AS_ARE_WORTH_SHOWING }),
+  );
+  const films = useQuery(requestsQueries.askableSearch(asked, 'film', onAsk !== null));
+  const programmes = useQuery(requestsQueries.askableSearch(asked, 'series', onAsk !== null));
+  const askable = [...(films.data ?? []), ...(programmes.data ?? [])].filter(
+    (title) => title.standing.status !== 'library',
   );
 
   if (found.isPending) {
@@ -47,40 +52,33 @@ const TheResults = ({
 
   const results = collapseToShows(found.data ?? []);
 
-  if (results.length === 0) {
-    return <Words tone="muted">{`Nothing called “${asked}”.`}</Words>;
-  }
-
   return (
-    <View style={styles.shelf}>
-      {results.map((media) => {
-        const opens = whatAResultOpens(media);
-        const called =
-          opens.kind === 'programme' ? (media.seriesTitle ?? media.title) : media.title;
-
-        return (
-          <Button
-            key={media.id}
-            tone="bare"
-            label={called}
-            onPress={() => {
-              if (opens.kind === 'programme') {
-                onLookAtShow(opens.libraryId, opens.showId);
-              } else {
-                onLookAt(opens.mediaId);
-              }
-            }}
-          >
-            <APoster
-              title={called}
-              year={opens.kind === 'programme' ? null : media.year}
-              artwork={theArtworkFor(media)}
-              watched={opens.kind === 'programme' ? 0 : howFarThrough(media.id)}
+    <>
+      {results.length === 0 ? (
+        <Words tone="muted">{`Nothing called “${asked}” in the library.`}</Words>
+      ) : (
+        <View style={styles.shelf}>
+          {results.map((media) => (
+            <ACard
+              key={media.id}
+              media={media}
+              asProgramme
+              watched={howFarThrough(media.id)}
+              onLookAt={onLookAt}
+              onLookAtShow={onLookAtShow}
             />
-          </Button>
-        );
-      })}
-    </View>
+          ))}
+        </View>
+      )}
+
+      {onAsk === null || askable.length === 0 ? null : (
+        <AShelf title="Not in your library yet">
+          {askable.map((title) => (
+            <ACatalogueCard key={`${title.kind}:${title.id}`} title={title} onAsk={onAsk} />
+          ))}
+        </AShelf>
+      )}
+    </>
   );
 };
 

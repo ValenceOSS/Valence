@@ -3,7 +3,7 @@ import { ActivityIndicator } from 'react-native';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { AShelf } from '@ValencePhone/components/AShelf/AShelf';
 import { Words } from '@ValencePhone/components/Words/Words';
-import { ACatalogueCard } from '@ValencePhone/components/TheRequests/components/ACatalogueCard/ACatalogueCard';
+import { ACatalogueCard } from '@ValencePhone/components/ACatalogueCard/ACatalogueCard';
 import { whatAPhoneAsksFor } from '@ValencePhone/components/TheRequests/whatAPhoneAsksFor';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { DiscoveredProps } from './Discovered.types';

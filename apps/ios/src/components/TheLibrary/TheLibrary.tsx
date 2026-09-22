@@ -42,12 +42,14 @@ const EVERY = 'every';
  * and as their episodes gathered into programmes once something is, since genre and year belong to
  * the episodes.
  *
- * Searching looks through every library at once and puts the rest back when the box is cleared.
+ * Searching looks through every library at once, and through the catalogue for somebody who may
+ * ask for what it does not have, and puts the rest back when the box is cleared.
  *
  * @param onLookAt - Told which title somebody wants to see more of.
  * @param onLookAtShow - Told which programme, in which library.
+ * @param onAsk - Told to open something to ask for, or null for somebody who may not.
  */
-const TheLibrary = ({ onLookAt, onLookAtShow }: TheLibraryProps) => {
+const TheLibrary = ({ onLookAt, onLookAtShow, onAsk }: TheLibraryProps) => {
   const colours = useTheColours();
   const libraries = useQuery(libraryQueries.all());
   const watched = useQuery(viewingQueries.progress());
@@ -124,6 +126,7 @@ const TheLibrary = ({ onLookAt, onLookAtShow }: TheLibraryProps) => {
           }}
           onLookAt={onLookAt}
           onLookAtShow={onLookAtShow}
+          onAsk={onAsk}
         />
       ) : (
         <>

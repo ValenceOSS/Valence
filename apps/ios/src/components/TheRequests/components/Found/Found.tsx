@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { Words } from '@ValencePhone/components/Words/Words';
-import { ACatalogueCard } from '@ValencePhone/components/TheRequests/components/ACatalogueCard/ACatalogueCard';
+import { ACatalogueCard } from '@ValencePhone/components/ACatalogueCard/ACatalogueCard';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { FoundProps } from './Found.types';
 
