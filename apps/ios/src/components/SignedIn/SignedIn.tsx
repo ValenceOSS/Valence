@@ -87,9 +87,9 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const { may } = useWhatIMayDo();
   const mayRequest = requesting.data?.isEnabled === true && may('requests.ask');
   const tabs = [
-    { id: 'library', label: 'Library', icon: Clapperboard },
-    ...(mayRequest ? [{ id: 'requests', label: 'Requests', icon: Inbox }] : []),
-    { id: 'account', label: 'Account', icon: CircleUser },
+    { id: 'library', label: 'Library', icon: Clapperboard, symbol: 'film.stack' },
+    ...(mayRequest ? [{ id: 'requests', label: 'Requests', icon: Inbox, symbol: 'tray' }] : []),
+    { id: 'account', label: 'Account', icon: CircleUser, symbol: 'person.crop.circle' },
   ];
 
   const choose = (mediaId: string, startSeconds: number) => {

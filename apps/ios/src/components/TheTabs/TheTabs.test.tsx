@@ -3,8 +3,8 @@ import { Clapperboard, Inbox } from 'lucide-react-native';
 import { TheTabs } from './TheTabs';
 
 const TABS = [
-  { id: 'library', label: 'Library', icon: Clapperboard },
-  { id: 'requests', label: 'Requests', icon: Inbox },
+  { id: 'library', label: 'Library', icon: Clapperboard, symbol: 'film.stack' },
+  { id: 'requests', label: 'Requests', icon: Inbox, symbol: 'tray' },
 ] as const;
 
 describe('TheTabs', () => {

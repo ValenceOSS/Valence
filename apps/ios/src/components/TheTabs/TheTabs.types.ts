@@ -5,6 +5,7 @@ type ATab = {
   id: string;
   label: string;
   icon: LucideIcon;
+  symbol: string;
 };
 
 type TheTabsProps = {
