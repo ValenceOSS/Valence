@@ -24,6 +24,14 @@ type Reachability = {
 
 type ClientKind = 'browser' | 'desktop' | 'tv';
 
+type BuildInfo = {
+  version: string;
+  commit: string;
+  arch: string;
+  electron: string;
+  chrome: string;
+};
+
 type Platform = {
   store: DeviceStore;
   describeThisClient: () => string;
@@ -33,6 +41,7 @@ type Platform = {
   held: HeldFiles;
   reachability: Reachability;
   openSocket: Connect;
+  buildInfo: () => BuildInfo | null;
 };
 
-export type { ClientKind, DeviceStore, HeldFiles, Platform, Reachability };
+export type { BuildInfo, ClientKind, DeviceStore, HeldFiles, Platform, Reachability };

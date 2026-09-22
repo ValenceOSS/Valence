@@ -51,6 +51,14 @@ const theWindowOffers = (found: string[]): void => {
       whenChanged: () => () => {},
     },
     reach: { now: () => true, whenChanged: () => () => {} },
+    update: { alreadyAvailable: null, whenAvailable: () => () => {}, install: () => {} },
+    about: {
+      version: '1.2.0',
+      commit: '2ae1bc1',
+      arch: 'arm64',
+      electron: '33.0.0',
+      chrome: '130.0.0',
+    },
     servers: { alreadyFound: found, reach: () => Promise.resolve(true), whenFound: () => () => {} },
   };
 };
@@ -132,6 +140,15 @@ describe('Desktop', () => {
     });
 
     expect(asking()).toBeNull();
+  });
+
+  it('shows a release found before this screen had mounted to hear about it, not only one found after', async () => {
+    aClient({}, 'http://valence.example');
+    window.valence.update.alreadyAvailable = { version: 'v1.2.0' };
+
+    render(<Desktop />);
+
+    expect(await screen.findByRole('button', { name: /Update available/u })).toBeInTheDocument();
   });
 
   it('asks again where the chosen server stopped answering and nothing is on this device', async () => {

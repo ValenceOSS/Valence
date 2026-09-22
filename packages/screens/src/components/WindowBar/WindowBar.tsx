@@ -1,26 +1,46 @@
+import { Button } from '@ValenceUI/Button';
+import { Icon } from '@ValenceUI/Icon';
+import { Download as DownloadIcon } from '@keyline-icons/react';
 import type { WindowBarProps } from './WindowBar.types';
 
 /**
- * The strip along the top of the window that picks it up, and draws nothing.
+ * The strip a frameless window draws along its own top, where the system would otherwise put one.
  *
- * A window with no frame has nowhere to be grabbed by, so something has to volunteer — but that is
- * the whole of the job. A bar that also said what the application was and offered a way back was
- * saying things the screen underneath already says better, and it cost every page the height of it.
+ * Every desktop platform needs somewhere to pick the window up by. Windows and Linux draw their own
+ * minimise, maximise and close over the top right, transparent, so this shows through behind them.
+ * macOS draws its traffic lights over the top left the same way. Either way this asks nothing of the
+ * page under it beyond the room reserved for it — it draws a surface and nothing on it, so nothing
+ * here is announced to somebody looking at anything but the window itself, unless there is a
+ * release worth their pressing it for.
  *
- * So it is transparent, empty, and out of the flow: the page runs to the top of the window and this
- * lies over it. The cost is that the top of the page cannot be clicked, which is the same bargain
- * every frameless application makes and the reason the operating system puts its own controls there.
+ * The one thing it will say sits at the top right, clear of the traffic lights macOS draws at the
+ * top left. On macOS that is the whole of the clearance it needs, since nothing else is drawn over
+ * the top right there — on Windows and Linux, where the system's own controls are, `--valence-
+ * window-bar-clearance` widens to leave room for them instead. It is marked `no-drag` so a press
+ * reaches it rather than moving the window, which is the one place in this whole strip that has to
+ * answer a click instead of a grab.
  *
- * @param height - How deep the grabbable strip is. Worth raising where something at the top of a
- *   page would otherwise be the only thing to take hold of.
+ * @param updateVersion - The version waiting to be installed, or nothing where none is.
+ * @param onInstallUpdate - Told to install it and restart, once there is one downloaded to install.
  */
-const WindowBar = ({ height = '2.25rem' }: WindowBarProps) => (
+const WindowBar = ({ updateVersion, onInstallUpdate }: WindowBarProps) => (
   <div
-    aria-hidden
     data-slot="window-bar"
-    style={{ height }}
-    className="fixed inset-x-0 top-0 z-[60] [-webkit-app-region:drag]"
-  />
+    className="fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-end bg-surface pr-[var(--valence-window-bar-clearance)] [-webkit-app-region:drag]"
+  >
+    {updateVersion === undefined ? null : (
+      <Button
+        variant="ghost"
+        size="xs"
+        hasTooltip={false}
+        onClick={onInstallUpdate}
+        className="h-6 gap-1 px-2 text-[0.6875rem] uppercase tracking-wide text-on-scrim opacity-70 hover:opacity-100 [-webkit-app-region:no-drag]"
+      >
+        <Icon of={DownloadIcon} size={13} />
+        Update available
+      </Button>
+    )}
+  </div>
 );
 
 WindowBar.displayName = 'WindowBar';

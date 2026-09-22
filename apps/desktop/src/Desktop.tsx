@@ -4,7 +4,7 @@ import { buildRouter } from '@ValenceScreens/routes/buildRouter';
 import { ConnectToServer } from '@ValenceScreens/components/ConnectToServer/ConnectToServer';
 import { useAppliedTheme } from '@ValenceScreens/theme/useAppliedTheme';
 import { WindowBar } from '@ValenceScreens/components/WindowBar/WindowBar';
-import { TitleBar } from '@ValenceScreens/components/TitleBar/TitleBar';
+import type { AvailableUpdate } from '@ValenceDesktop/TheWindow.types';
 import { rememberServerAddress, serverAddress } from '@ValenceClient/session/serverAddress';
 import { useServerIsLost } from '@ValenceClient/offline/useServerIsLost';
 import '@ValenceDesktop/TheWindow.types';
@@ -60,6 +60,9 @@ const Desktop = () => {
   const [found, setFound] = useState<readonly string[]>(
     () => window.valence.servers?.alreadyFound ?? [],
   );
+  const [update, setUpdate] = useState<AvailableUpdate | null>(
+    () => window.valence.update.alreadyAvailable,
+  );
   const isLost = useServerIsLost();
 
   useAppliedTheme();
@@ -72,15 +75,20 @@ const Desktop = () => {
     [],
   );
 
+  useEffect(() => window.valence.update.whenAvailable(setUpdate), []);
+
   const chosen = server === null || server === '' ? null : server;
 
   return (
     <>
-      {document.documentElement.dataset['valencePlatform'] === 'darwin' ? (
-        <WindowBar />
-      ) : (
-        <TitleBar title="Valence" />
-      )}
+      <WindowBar
+        {...(update === null ? {} : { updateVersion: update.version })}
+        onInstallUpdate={() => {
+          if (update !== null) {
+            window.valence.update.install();
+          }
+        }}
+      />
 
       {chosen === null || isLost ? (
         <ConnectToServer

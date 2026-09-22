@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import { answerAboutPreferences } from '@ValenceDesktop/main/answerAboutPreferences';
 import {
   CHANGE_SERVER,
@@ -40,7 +41,15 @@ import { theHeldFolder } from '@ValenceDesktop/main/theHeldFolder';
 import { theHeldIndex } from '@ValenceDesktop/main/theHeldIndex';
 import { theHeldLibrary } from '@ValenceDesktop/main/theHeldLibrary';
 import { theServerReach } from '@ValenceDesktop/main/theServerReach';
+import { checkForUpdate } from '@ValenceDesktop/main/checkForUpdate';
+import {
+  INSTALL_THE_UPDATE,
+  UPDATE_AVAILABLE,
+  WHAT_UPDATE_IS_KNOWN,
+} from '@ValenceDesktop/main/updateChannels';
+import type { AvailableUpdate } from '@ValenceDesktop/main/checkForUpdate';
 import type { AskingTheServer } from '@ValenceDesktop/main/keepADownload';
+import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
 
 const WHERE_IT_HAS_ALWAYS_BEEN = 'Valence';
 
@@ -215,6 +224,50 @@ const start = async (): Promise<void> => {
   theDockIcon();
 
   ipcMain.on(CHANGE_SERVER, changeServer);
+
+  let knownUpdate: AvailableUpdate | null = null;
+
+  const markUpdateKnown = (update: AvailableUpdate): void => {
+    knownUpdate = update;
+
+    if (theWindow !== null && !theWindow.isDestroyed()) {
+      theWindow.webContents.send(UPDATE_AVAILABLE, update);
+    }
+  };
+
+  if (app.isPackaged) {
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = false;
+
+    const testFeed = process.env.VALENCE_UPDATE_FEED_URL;
+
+    if (testFeed !== undefined) {
+      autoUpdater.setFeedURL({ provider: 'generic', url: testFeed });
+    }
+
+    const updates = checkForUpdate({
+      updater: autoUpdater,
+      onReadyToInstall: markUpdateKnown,
+    });
+
+    app.on('will-quit', () => {
+      updates.stop();
+    });
+  }
+
+  ipcMain.on(WHAT_UPDATE_IS_KNOWN, (event) => {
+    event.returnValue = knownUpdate;
+  });
+
+  ipcMain.on(WHAT_VERSION_THIS_IS, (event) => {
+    event.returnValue = app.getVersion();
+  });
+
+  ipcMain.on(INSTALL_THE_UPDATE, () => {
+    if (knownUpdate !== null) {
+      autoUpdater.quitAndInstall();
+    }
+  });
 
   const discord = tellDiscord(app.getPath('temp'), app.getVersion());
 

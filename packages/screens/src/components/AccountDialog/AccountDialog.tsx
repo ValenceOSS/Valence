@@ -14,6 +14,7 @@ import { notify } from '@ValenceUI/notify';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { AccountArea } from '@ValenceScreens/components/AccountArea/AccountArea';
+import { BuildInfoFooter } from '@ValenceScreens/components/AccountDialog/components/BuildInfoFooter/BuildInfoFooter';
 import { ACCOUNT_PANELS } from '@ValenceScreens/components/AccountArea/accountPanels';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { saveProfile, uploadProfilePhoto } from '@ValenceClient/profiles/fetchProfiles';
@@ -181,28 +182,34 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
         </DialogContent>
 
         <DialogFooter>
-          <Button
-            variant="danger"
-            onClick={() => {
-              void leave();
-            }}
-          >
-            <Icon of={DoorOpenIcon} size={16} />
-            Sign out
-          </Button>
+          <div className="flex w-full items-center gap-3">
+            <BuildInfoFooter />
 
-          {showing !== 'profile' ? null : (
-            <Button
-              variant="confirm"
-              isLoading={isSaving}
-              disabled={!isChanged}
-              onClick={() => {
-                void save();
-              }}
-            >
-              Save
-            </Button>
-          )}
+            <div className="ml-auto flex gap-3">
+              <Button
+                variant="danger"
+                onClick={() => {
+                  void leave();
+                }}
+              >
+                <Icon of={DoorOpenIcon} size={16} />
+                Sign out
+              </Button>
+
+              {showing !== 'profile' ? null : (
+                <Button
+                  variant="confirm"
+                  isLoading={isSaving}
+                  disabled={!isChanged}
+                  onClick={() => {
+                    void save();
+                  }}
+                >
+                  Save
+                </Button>
+              )}
+            </div>
+          </div>
         </DialogFooter>
       </Tabs>
     </Dialog>

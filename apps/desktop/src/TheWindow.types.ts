@@ -25,6 +25,24 @@ type Reach = {
   whenChanged: (listener: (isReachable: boolean) => void) => () => void;
 };
 
+type AvailableUpdate = {
+  version: string;
+};
+
+type UpdateChecks = {
+  alreadyAvailable: AvailableUpdate | null;
+  whenAvailable: (listener: (update: AvailableUpdate) => void) => () => void;
+  install: () => void;
+};
+
+type AboutTheBuild = {
+  version: string;
+  commit: string;
+  arch: string;
+  electron: string;
+  chrome: string;
+};
+
 declare global {
   interface Window {
     valence: {
@@ -32,9 +50,19 @@ declare global {
       goToTheServer: () => void;
       held: FilesHeld;
       reach: Reach;
+      update: UpdateChecks;
+      about: AboutTheBuild;
       servers?: ServersFound;
     };
   }
 }
 
-export type { FilesHeld, Preferences, Reach, ServersFound };
+export type {
+  AboutTheBuild,
+  AvailableUpdate,
+  FilesHeld,
+  Preferences,
+  Reach,
+  ServersFound,
+  UpdateChecks,
+};
