@@ -4,6 +4,7 @@ import type { ButtonProps } from './Button.types';
 
 const styles = StyleSheet.create({
   accent: { alignItems: 'center', borderRadius: 14, padding: 16 },
+  bare: {},
   pressed: { opacity: 0.75 },
   quiet: { alignItems: 'center', paddingVertical: 12 },
   word: { fontSize: 16, fontWeight: '600' },
@@ -17,11 +18,15 @@ const styles = StyleSheet.create({
  * `<button>` — a control that draws itself is a control that drifts, and a household looking at two
  * clients should not be able to tell which one somebody built first.
  *
+ * A bare one draws nothing and says nothing about what it holds, which is how a poster or a pill
+ * becomes pressable without a second component learning how to take a press.
+ *
  * @param children - What it says.
  * @param onPress - What it does.
- * @param tone - Whether it is the thing to press or merely a thing that can be.
+ * @param tone - Whether it is the thing to press, a thing that can be, or only the press itself.
  * @param isBusy - Whether what it started is still going.
  * @param isDisabled - Whether it can be pressed at all.
+ * @param isChosen - Whether this is the one currently picked, where it is one of several.
  * @param label - What it is called, where what it says is not enough.
  */
 const Button = ({
@@ -30,19 +35,25 @@ const Button = ({
   tone = 'accent',
   isBusy = false,
   isDisabled = false,
+  isChosen,
   label,
 }: ButtonProps) => {
   const colours = useTheColours();
   const isAccent = tone === 'accent';
+  const isBare = tone === 'bare';
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled || isBusy, busy: isBusy }}
+      accessibilityState={{
+        disabled: isDisabled || isBusy,
+        busy: isBusy,
+        ...(isChosen === undefined ? {} : { selected: isChosen }),
+      }}
       disabled={isDisabled || isBusy}
       onPress={onPress}
       style={({ pressed }) => [
-        isAccent ? styles.accent : styles.quiet,
+        isBare ? styles.bare : isAccent ? styles.accent : styles.quiet,
         isAccent && { backgroundColor: colours.accent },
         pressed && styles.pressed,
         isDisabled && styles.pressed,
@@ -51,6 +62,8 @@ const Button = ({
     >
       {isBusy ? (
         <ActivityIndicator color={isAccent ? colours.accentContrast : colours.accent} />
+      ) : isBare ? (
+        children
       ) : (
         <Text
           style={[

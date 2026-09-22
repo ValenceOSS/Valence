@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { AFace } from '@ValencePhone/components/AFace/AFace';
 import { Button } from '@ValencePhone/components/Button/Button';
@@ -10,7 +10,6 @@ import type { TheWayInProps } from './TheWayIn.types';
 
 const styles = StyleSheet.create({
   faces: { flexDirection: 'row', flexWrap: 'wrap', gap: 24 },
-  pressed: { opacity: 0.7 },
 });
 
 /**
@@ -34,17 +33,16 @@ const TheWayIn = ({ onPicked, onElsewhere }: TheWayInProps) => {
       ) : (
         <View style={styles.faces}>
           {(asking.data?.profiles ?? []).map((profile) => (
-            <Pressable
+            <Button
               key={profile.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Sign in as ${profile.name}`}
-              style={({ pressed }) => [pressed && styles.pressed]}
+              tone="bare"
+              label={`Sign in as ${profile.name}`}
               onPress={() => {
                 onPicked(profile);
               }}
             >
               <AFace profile={profile} />
-            </Pressable>
+            </Button>
           ))}
         </View>
       )}
