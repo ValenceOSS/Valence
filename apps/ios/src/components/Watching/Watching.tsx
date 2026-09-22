@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, StyleSheet, View } from 'react-native';
 import { useEvent, useEventListener } from 'expo';
 import { useQuery } from '@tanstack/react-query';
 import { FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
@@ -8,6 +8,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { describeSkip, fetchSegments, skippableAt } from '@ValenceClient/playback/fetchSegments';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import {
   heartbeatPlaybackSession,
   sendPresenceHeartbeat,
@@ -32,6 +33,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { TheControls } from '@ValencePhone/components/Watching/components/TheControls/TheControls';
 import { TheChoices } from '@ValencePhone/components/Watching/components/TheChoices/TheChoices';
+import { TheNotice } from '@ValencePhone/components/Watching/components/TheNotice/TheNotice';
 import { TheSkip } from '@ValencePhone/components/Watching/components/TheSkip/TheSkip';
 import { TheSubtitles } from '@ValencePhone/components/Watching/components/TheSubtitles/TheSubtitles';
 import { useTheSubtitles } from '@ValencePhone/components/Watching/useTheSubtitles';
@@ -120,6 +122,10 @@ const styles = StyleSheet.create({
  * answering. A session left open is a transcode still running on somebody's server for a film
  * nobody is watching.
  *
+ * Whoever runs the server is obeyed as on the web: stopped, the film stops and says why; paused, it
+ * pauses and holds the reason over the picture; a message of theirs is held there too until it is
+ * dismissed; and resumed, it plays on.
+ *
  * @param mediaId - What to watch.
  * @param startSeconds - Where to begin.
  * @param onDone - Told they have stopped watching.
@@ -142,6 +148,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
   const [howBig] = useState(() => new Animated.Value(1));
   const [lastTouched, setLastTouched] = useState(0);
   const [isChoosing, setIsChoosing] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const [asking, setAsking] = useState<{
     from: number;
     audioStreamIndex?: number;
@@ -394,6 +401,38 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
     };
   }, [sessionId, mediaId, player]);
 
+  useEffect(
+    () =>
+      onPresenceEvent((event) => {
+        if (event.kind === 'stopped') {
+          player.pause();
+          Alert.alert('Playback was stopped', event.reason);
+          onDone();
+
+          return;
+        }
+
+        if (event.kind === 'paused') {
+          player.pause();
+          setNotice(event.reason);
+
+          return;
+        }
+
+        if (event.kind === 'message') {
+          setNotice(event.text);
+
+          return;
+        }
+
+        if (event.kind === 'resumed') {
+          setNotice(null);
+          player.play();
+        }
+      }),
+    [player, onDone],
+  );
+
   const skippable = skippableAt(marked.data ?? [], ticking.currentTime);
 
   if (refusal !== null) {
@@ -445,6 +484,15 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
           says={describeSkip(skippable)}
           onSkip={() => {
             player.seekBy(skippable.endSeconds - ticking.currentTime);
+          }}
+        />
+      )}
+
+      {notice === null ? null : (
+        <TheNotice
+          says={notice}
+          onDismiss={() => {
+            setNotice(null);
           }}
         />
       )}
