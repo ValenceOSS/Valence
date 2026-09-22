@@ -57,6 +57,10 @@ const asking = {
   chosenQuality: 'original' as const,
   onAudio: jest.fn(),
   onQuality: jest.fn(),
+  rate: 1,
+  onRate: jest.fn(),
+  subtitleOffset: 0,
+  onSubtitleOffset: jest.fn(),
 };
 
 describe('theChoicesOn', () => {

@@ -2,6 +2,10 @@ import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
+import { PLAYBACK_RATES } from '@ValenceClient/playback/PLAYBACK_RATES';
+import { SUBTITLE_STEP_SECONDS } from '@ValenceClient/playback/SUBTITLE_STEP_SECONDS';
+import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
+import { describeSubtitleOffset } from '@ValenceClient/playback/describeSubtitleOffset';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
@@ -10,6 +14,13 @@ import type { QualityPreference } from '@ValenceClient/playback/qualityPreferenc
 import type { ASetOfChoices } from '@ValencePhone/components/Watching/components/TheChoices/TheChoices.types';
 
 const AS_SENT = 'original';
+
+const FURTHEST_NUDGE = 6;
+
+const NUDGES = Array.from(
+  { length: FURTHEST_NUDGE * 2 + 1 },
+  (_, at) => (at - FURTHEST_NUDGE) * SUBTITLE_STEP_SECONDS,
+);
 
 type WhatThereIsToChoose = {
   streams: readonly AudioStream[];
@@ -21,6 +32,10 @@ type WhatThereIsToChoose = {
   chosenQuality: QualityPreference;
   onAudio: (streamIndex: number) => void;
   onQuality: (quality: QualityPreference) => void;
+  rate: number;
+  onRate: (rate: number) => void;
+  subtitleOffset: number;
+  onSubtitleOffset: (seconds: number) => void;
 };
 
 /**
@@ -56,6 +71,10 @@ const theChoicesOn = ({
   chosenQuality,
   onAudio,
   onQuality,
+  rate,
+  onRate,
+  subtitleOffset,
+  onSubtitleOffset,
 }: WhatThereIsToChoose): ASetOfChoices[] => {
   const sets: ASetOfChoices[] = [];
 
@@ -72,6 +91,20 @@ const theChoicesOn = ({
         })),
       ],
       onChoose: onSubtitle,
+    });
+  }
+
+  if (subtitles.length > 0 && chosenSubtitle !== SUBTITLES_OFF) {
+    sets.push({
+      heading: 'Subtitle timing',
+      chosen: subtitleOffset.toString(),
+      choices: NUDGES.map((nudge) => ({
+        id: nudge.toString(),
+        label: describeSubtitleOffset(nudge),
+      })),
+      onChoose: (id) => {
+        onSubtitleOffset(Number(id));
+      },
     });
   }
 
@@ -121,6 +154,18 @@ const theChoicesOn = ({
       },
     });
   }
+
+  sets.push({
+    heading: 'Speed',
+    chosen: rate.toString(),
+    choices: PLAYBACK_RATES.map((one) => ({
+      id: one.toString(),
+      label: describePlaybackRate(one),
+    })),
+    onChoose: (id) => {
+      onRate(Number(id));
+    },
+  });
 
   return sets;
 };

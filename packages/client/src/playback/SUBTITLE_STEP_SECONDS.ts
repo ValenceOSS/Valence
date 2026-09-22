@@ -1,0 +1,3 @@
+const SUBTITLE_STEP_SECONDS = 0.25;
+
+export { SUBTITLE_STEP_SECONDS };

@@ -9,6 +9,7 @@ import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetc
 import { describeSkip, fetchSegments, skippableAt } from '@ValenceClient/playback/fetchSegments';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
+import { setThePace } from '@ValencePhone/playback/setThePace';
 import {
   heartbeatPlaybackSession,
   sendPresenceHeartbeat,
@@ -149,6 +150,8 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
   const [lastTouched, setLastTouched] = useState(0);
   const [isChoosing, setIsChoosing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [rate, setRate] = useState(1);
+  const [subtitleOffset, setSubtitleOffset] = useState(0);
   const [asking, setAsking] = useState<{
     from: number;
     audioStreamIndex?: number;
@@ -401,6 +404,10 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
     };
   }, [sessionId, mediaId, player]);
 
+  useEffect(() => {
+    setThePace(player, rate);
+  }, [player, rate]);
+
   useEffect(
     () =>
       onPresenceEvent((event) => {
@@ -499,7 +506,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
 
       <TheSubtitles
         cues={cues}
-        atSeconds={ticking.currentTime}
+        atSeconds={ticking.currentTime - subtitleOffset}
         isClearOfTheControls={areControlsDrawn}
       />
 
@@ -553,6 +560,10 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
             onQuality: (requestedQuality) => {
               askAgain({ requestedQuality });
             },
+            rate,
+            onRate: setRate,
+            subtitleOffset,
+            onSubtitleOffset: setSubtitleOffset,
           })}
           onClose={() => {
             setIsChoosing(false);
