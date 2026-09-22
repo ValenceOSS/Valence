@@ -38,7 +38,8 @@ reference, not a substitute for reading it.
    enforces it.
 9. **No raw SVG anywhere.** Icons come from `@keyline-icons/react` and are
    drawn by `@ValenceUI/Icon`, never by the renderer directly.
-10. **Every function and component has a co-located Vitest test.**
+10. **Every function and component has a co-located Vitest test** — except
+    `apps/ios`, which uses `jest-expo` for the same reason it exists.
 11. **Conventional Commits.**
 
 ## File layout

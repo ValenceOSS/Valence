@@ -4,9 +4,16 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "lib": ["ES2023"],
-    "types": ["react-native"]
+    "types": ["react-native", "jest"]
   },
-  "include": ["index.ts", "app.config.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "include": [
+    "index.ts",
+    "app.config.ts",
+    "jest.config.ts",
+    "jest-expo.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
   "references": [
     {
       "path": "../../packages/client"

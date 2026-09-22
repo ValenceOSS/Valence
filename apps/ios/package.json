@@ -7,7 +7,8 @@
     "dev": "expo start",
     "ios": "expo run:ios",
     "prebuild": "expo prebuild --platform ios --clean",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.102.8",
@@ -15,11 +16,18 @@
     "@valence/contracts": "workspace:*",
     "@valence/core": "workspace:*",
     "expo": "^57.0.24",
+    "expo-build-properties": "^57.0.21",
     "expo-status-bar": "^57.0.0",
     "react": "19.2.3",
     "react-native": "0.86.3"
   },
   "devDependencies": {
-    "@types/react": "~19.2.4"
+    "@testing-library/react-native": "^14.0.1",
+    "@types/jest": "^30.0.0",
+    "@types/react": "~19.2.4",
+    "jest": "^30.5.2",
+    "jest-expo": "^57.0.5",
+    "react-test-renderer": "^19.3.0",
+    "zod": "^4.6.4"
   }
 }

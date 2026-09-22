@@ -548,6 +548,12 @@ functions/formatDuration.test.ts
   usually an accessibility defect in the component, not a testing problem.
 - Coverage thresholds are enforced in CI and are not lowered to make a build
   pass. Raising them is a PR of its own.
+- `apps/ios` is tested with `jest-expo` rather than Vitest, co-located the same
+  way. Vitest cannot read the Flow syntax React Native ships and a Babel
+  transform in front of it does not take; `jest-expo` carries the React Native
+  preset, the native mocks and the transform already. It emits the same
+  `json-summary` coverage the rest of the repository does, so nothing
+  downstream has to know which runner ran.
 - Rust code is tested with `cargo test`. Negotiation logic in particular is
   tested as pure functions over data: no media files, no FFmpeg.
 - Tests that need media fixtures skip with an actionable

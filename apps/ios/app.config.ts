@@ -14,6 +14,7 @@ const config: ExpoConfig = {
       UIBackgroundModes: ['audio'],
     },
   },
+  plugins: [['expo-build-properties', { ios: { deploymentTarget: '18.0' } }]],
 };
 
 export default config;
