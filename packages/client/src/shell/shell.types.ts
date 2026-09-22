@@ -19,6 +19,7 @@ type Shell = {
   known: ReadonlyMap<string, MediaSummary>;
   rememberItems: (items: MediaSummary[]) => void;
   progress: ReadonlyMap<string, WatchProgress>;
+  isProgressReady: boolean;
   reportProgress: (entry: WatchProgress) => void;
   readProgress: () => Promise<void>;
   startOverride: StartOverride;

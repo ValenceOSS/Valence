@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { SetupWizard } from '@ValenceScreens/components/SetupWizard/SetupWizard';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
 import type { AppProps } from './App.types';
 
 /**
@@ -18,8 +17,6 @@ import type { AppProps } from './App.types';
  */
 const App = ({ initialTitle = 'Valence' }: AppProps) => {
   const cache = useQueryClient();
-
-  useFreshFromTheSocket();
 
   const server = useQuery(sessionQueries.setup());
   const status = server.data ?? null;

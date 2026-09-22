@@ -15,11 +15,13 @@ import { isTheDesktopClient, nowWatching } from '@ValenceScreens/desktop/theDesk
  * beyond saying the same thing about the same moment.
  *
  * Nothing is said at all where the profile did not ask for it, or in a browser, which has nothing to
- * say it to.
+ * say it to, or where nobody has signed in yet to have a profile to ask.
+ *
+ * @param isSignedIn - Whether there is a profile to read the setting from at all.
  */
-const useBrowsingPresence = (): void => {
-  const asked = useQuery(profileQueries.watching());
-  const isAllowed = asked.data?.showsWhatIamWatching ?? false;
+const useBrowsingPresence = (isSignedIn: boolean): void => {
+  const asked = useQuery({ ...profileQueries.watching(), enabled: isSignedIn });
+  const isAllowed = isSignedIn && (asked.data?.showsWhatIamWatching ?? false);
 
   useEffect(() => {
     if (!isAllowed || !isTheDesktopClient()) {

@@ -24,6 +24,7 @@ const aShell = (instead: Partial<Shell> = {}): Shell => ({
   known: new Map(),
   rememberItems: () => undefined,
   progress: new Map(),
+  isProgressReady: true,
   reportProgress: () => undefined,
   readProgress: () => Promise.resolve(),
   startOverride: null,
