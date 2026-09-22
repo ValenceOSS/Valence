@@ -86,6 +86,24 @@ const createMemoryDownloadService = (
 
     refresh: (profileId) => Promise.resolve(state.downloads[profileId] ?? []),
 
+    readFile: (profileId, id) => {
+      const ready = (state.downloads[profileId] ?? []).find(
+        (one) => one.id === id && one.state === 'ready',
+      );
+
+      return Promise.resolve(
+        ready === undefined
+          ? null
+          : {
+              body: new Blob([`the film ${ready.mediaId}`]).stream(),
+              contentType: 'video/mp4',
+              status: 200,
+              contentRange: null,
+              contentLength: null,
+            },
+      );
+    },
+
     forget: (profileId, id) => {
       state.downloads[profileId] = (state.downloads[profileId] ?? []).filter(
         (one) => one.id !== id,

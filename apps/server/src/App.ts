@@ -63,6 +63,7 @@ import {
   listHoldingsRoute,
   offerDownloadRoute,
   releaseDownloadRoute,
+  readDownloadRoute,
 } from './routes/DownloadRoute';
 import { healthRoute } from './routes/HealthRoute';
 import {
@@ -5898,6 +5899,26 @@ const createApp = ({
       await downloads.forget(profileId, context.req.valid('param').id);
 
       return context.body(null, 204);
+    });
+
+    app.openapi(readDownloadRoute, async (context) => {
+      const profileId = await readProfileId(context.req.raw.headers);
+
+      if (profileId === null) {
+        return context.json({ error: 'Nobody is signed in.' }, 401);
+      }
+
+      const file = await downloads.readFile(
+        profileId,
+        context.req.valid('param').id,
+        context.req.header('range') ?? null,
+      );
+
+      if (file === null) {
+        return context.json({ error: 'Nothing prepared under that name.' }, 404);
+      }
+
+      return context.body(file.body, file.status === 206 ? 206 : 200, forwardedFileHeaders(file));
     });
 
     app.openapi(listHoldingsRoute, async (context) => {

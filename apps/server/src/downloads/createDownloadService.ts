@@ -18,6 +18,8 @@ import type { Download, DownloadQuality, Holding } from '@ValenceContracts/schem
 import type { DownloadOffer, DownloadService } from './DownloadService';
 import type { MediaForDownload } from './MediaForDownload';
 
+const DOWNLOAD_NAME = 'download.mp4';
+
 const SEGMENT_SECONDS = 4;
 
 /**
@@ -448,6 +450,27 @@ const createDownloadService = ({
           ),
         ),
       );
+    },
+
+    readFile: async (profileId, id, range) => {
+      const rows = await db
+        .select({ renditionId: preparedDownload.renditionId })
+        .from(preparedDownload)
+        .where(
+          and(
+            eq(preparedDownload.profileId, profileId),
+            eq(preparedDownload.id, id),
+            eq(preparedDownload.state, 'ready'),
+          ),
+        )
+        .limit(1);
+      const row = rows[0];
+
+      if (row === undefined || row.renditionId === '') {
+        return null;
+      }
+
+      return transcoder.readDownloadFile(row.renditionId, DOWNLOAD_NAME, range).catch(() => null);
     },
 
     forget: async (profileId, id) => {
