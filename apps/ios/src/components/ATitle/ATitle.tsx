@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Image, Linking, StyleSheet, View } from 'react-native';
-import { Film, Heart, EyeOff } from 'lucide-react-native';
+import { CircleCheck, Download, EyeOff, Film, Heart } from 'lucide-react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -10,6 +10,8 @@ import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useHidden } from '@ValenceClient/library/useHidden';
+import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
+import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { EXTRA_KIND_LABELS } from '@ValenceContracts/schemas/Library';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
@@ -24,6 +26,7 @@ import { TheStars } from '@ValencePhone/components/TheStars/TheStars';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { howLongItRuns } from '@ValencePhone/components/ATitle/howLongItRuns';
 import { useConfirmHiding } from '@ValencePhone/hooks/useConfirmHiding';
+import { askToKeepOnThisPhone } from '@ValencePhone/downloads/askToKeepOnThisPhone';
 import { useTheProgrammeOfEpisode } from '@ValencePhone/hooks/useTheProgrammeOfEpisode';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
@@ -41,8 +44,8 @@ const styles = StyleSheet.create({
 /**
  * Everything about one film or episode, as the web's page about it: its artwork, what it is, a way
  * to watch it — from the start, from where somebody stopped, or in another version — and the rest:
- * favouriting it, rating it, its trailer, hiding it, who is in it, the details the catalogue knows and
- * whatever extras came with it.
+ * favouriting it, downloading it to the phone, rating it, its trailer, hiding it, who is in it, the
+ * details the catalogue knows and whatever extras came with it.
  *
  * An episode offers its programme, found in its library by name, since that is what an episode
  * knows of it.
@@ -60,6 +63,12 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   const watching = useWatchingProfile();
   const favourites = useFavourites(watching);
   const hiding = useHidden(watching);
+  const cache = useQueryClient();
+  const held = useHeldFiles().find((file) => file.mediaId === mediaId) ?? null;
+  const preparing =
+    useQuery(downloadQueries.all()).data?.find(
+      (download) => download.mediaId === mediaId && download.state === 'preparing',
+    ) ?? null;
   const [version, setVersion] = useState<string | null>(null);
   const title = asking.data;
   const seriesTitle = title?.metadata.seriesTitle ?? null;
@@ -215,6 +224,37 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
             </View>
           </Button>
         )}
+
+        <Button
+          tone="bare"
+          label={held === null ? 'Download' : held.state === 'here' ? 'Downloaded' : 'Downloading'}
+          isDisabled={held !== null || preparing !== null}
+          onPress={() => {
+            void askToKeepOnThisPhone(mediaId, title.title).then(async (isAsked) => {
+              if (isAsked) {
+                await cache.invalidateQueries({ queryKey: downloadQueries.all().queryKey });
+              }
+            });
+          }}
+        >
+          <View style={styles.action}>
+            <Icon
+              of={held?.state === 'here' ? CircleCheck : Download}
+              colour={held?.state === 'here' ? colours.accent : colours.text}
+            />
+            <Words size="small">
+              {held === null
+                ? preparing === null
+                  ? 'Download'
+                  : `Preparing ${Math.round(preparing.progress * 100).toString()}%`
+                : held.state === 'here'
+                  ? 'Downloaded'
+                  : held.ofBytes === null || held.ofBytes === 0
+                    ? 'Downloading'
+                    : `${Math.round((held.bytes / held.ofBytes) * 100).toString()}%`}
+            </Words>
+          </View>
+        </Button>
 
         <Button
           tone="bare"

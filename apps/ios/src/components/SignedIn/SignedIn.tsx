@@ -33,6 +33,11 @@ import { TheTabs } from '@ValencePhone/components/TheTabs/TheTabs';
 import { useTheProgrammeOf } from '@ValencePhone/components/SignedIn/useTheProgrammeOf';
 import { useTheProgrammeOfEpisode } from '@ValencePhone/hooks/useTheProgrammeOfEpisode';
 import { Watching } from '@ValencePhone/components/Watching/Watching';
+import { WatchingHeld } from '@ValencePhone/components/WatchingHeld/WatchingHeld';
+import { useFetchWhatThisPhoneAskedFor } from '@ValencePhone/downloads/useFetchWhatThisPhoneAskedFor';
+import { useTellTheServerWhatIsHeld } from '@ValenceClient/downloads/useTellTheServerWhatIsHeld';
+import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
+import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { APage, SignedInProps } from './SignedIn.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
@@ -71,10 +76,16 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const session = useQuery(sessionQueries.who());
 
   useEffect(() => watchPresence(), []);
+  useEffect(() => {
+    void sendWatchedOffline();
+  }, []);
+  useTellTheServerWhatIsHeld();
+  useFetchWhatThisPhoneAskedFor();
   const cache = useQueryClient();
   const [pages, setPages] = useState<readonly APage[]>([]);
   const [watching, setWatching] = useState<{ mediaId: string; startSeconds: number } | null>(null);
   const [carriedOn, setCarriedOn] = useState(0);
+  const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
   const [part, setPart] = useState('library');
   const top = pages.at(-1) ?? null;
@@ -166,6 +177,17 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         }}
         onStop={() => {
           setAskingAbout(null);
+        }}
+      />
+    );
+  }
+
+  if (watchingHeld !== null) {
+    return (
+      <WatchingHeld
+        file={watchingHeld}
+        onDone={() => {
+          setWatchingHeld(null);
         }}
       />
     );
@@ -271,6 +293,7 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         onOut={() => {
           void signOut().then(onOut);
         }}
+        onWatchHeld={setWatchingHeld}
       />
     ) : part === 'search' ? (
       <TheSearch

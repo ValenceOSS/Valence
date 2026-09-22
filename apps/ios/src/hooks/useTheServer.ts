@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { whicheverAnswers } from '@ValencePhone/platform/whicheverAnswers';
 
 const ANSWERS = ['phone', 'server-answers'] as const;
@@ -13,7 +14,8 @@ const WHILE_HERE = 30000;
  * Whether this phone's Valence is answering, asked every few seconds while it is not and now and
  * then while it is.
  *
- * The moment it answers again after going quiet, everything is asked for afresh, so a server that
+ * The moment it answers again after going quiet, it is told how far somebody got in anything they
+ * watched from the phone meanwhile, and everything is asked for afresh, so a server that
  * restarted puts the app back as it was without anybody pressing anything.
  *
  * @returns Where the server is, whether it has gone quiet, and a way to ask it now.
@@ -32,6 +34,7 @@ const useTheServer = (): { address: string | null; isAway: boolean; tryNow: () =
 
   useEffect(() => {
     if (wasAway.current && !isAway && answers.data === true) {
+      void sendWatchedOffline();
       void cache.invalidateQueries({ predicate: (query) => query.queryKey[0] !== ANSWERS[0] });
     }
 

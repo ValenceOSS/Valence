@@ -1,11 +1,11 @@
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
-import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
 import { describeThisPhone } from '@ValencePhone/platform/describeThisPhone';
 import { giveThisPhoneAnOrigin } from '@ValencePhone/platform/giveThisPhoneAnOrigin';
 import { giveThisPhoneCrypto } from '@ValencePhone/platform/giveThisPhoneCrypto';
 import { thePhonesReach } from '@ValencePhone/platform/thePhonesReach';
 import { thePhonesSocket } from '@ValencePhone/platform/thePhonesSocket';
 import { thePhonesStore } from '@ValencePhone/platform/thePhonesStore';
+import { thePhonesHeldFiles } from '@ValencePhone/platform/thePhonesHeldFiles';
 import { theServerThisPhoneWatches } from '@ValencePhone/platform/theServerThisPhoneWatches';
 import { thisPhonesId } from '@ValencePhone/platform/thisPhonesId';
 
@@ -35,8 +35,8 @@ const installPhonePlatform = (held: Map<string, string>): void => {
     describeThisClient: describeThisPhone,
     thisClientId: () => thisPhonesId(store),
     thisClientKind: () => 'phone',
-    canKeepFiles: () => false,
-    held: noFilesAreKept(),
+    canKeepFiles: () => true,
+    held: thePhonesHeldFiles(store),
     reachability: thePhonesReach(),
     openSocket: thePhonesSocket(store),
     buildInfo: () => null,
