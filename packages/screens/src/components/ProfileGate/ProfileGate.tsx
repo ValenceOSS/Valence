@@ -272,7 +272,7 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
   }
 
   return (
-    <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-hidden px-6 py-16">
+    <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-y-auto px-6 pb-28 pt-16">
       <WayInBackground
         splashscreen={splashscreen}
         lights={chosen === null ? [] : [{ color: chosen.colour }]}
@@ -282,7 +282,10 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
         initial={{ opacity: 0 }}
         animate={{ opacity: isTitleOver ? 1 : 0 }}
         transition={{ duration: 0.4 }}
-        className={cn('absolute right-6 top-6', isTitleOver ? '' : 'pointer-events-none')}
+        className={cn(
+          'absolute right-6 top-[calc(1.5rem+var(--valence-window-bar))]',
+          isTitleOver ? '' : 'pointer-events-none',
+        )}
       >
         <SegmentedRow
           size="sm"
