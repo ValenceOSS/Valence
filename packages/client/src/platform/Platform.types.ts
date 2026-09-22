@@ -22,7 +22,7 @@ type Reachability = {
   whenChanged: (listener: (isReachable: boolean) => void) => () => void;
 };
 
-type ClientKind = 'browser' | 'desktop' | 'tv';
+type ClientKind = 'browser' | 'desktop' | 'tv' | 'phone';
 
 type Platform = {
   store: DeviceStore;

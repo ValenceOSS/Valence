@@ -64,6 +64,7 @@ const config: Config = {
   },
   moduleNameMapper: theWorkspaceAliases(),
   transformIgnorePatterns: whatNeedsCompiling(),
+  setupFiles: ['<rootDir>/jest.setup.ts'],
   testMatch: ['<rootDir>/src/**/*.test.ts', '<rootDir>/src/**/*.test.tsx'],
   coverageReporters: ['text', 'json-summary'],
 };
