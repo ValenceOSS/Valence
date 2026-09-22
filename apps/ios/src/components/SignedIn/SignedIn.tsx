@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
+import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { signOut } from '@ValenceClient/session/auth';
 import { TheLibrary } from '@ValencePhone/components/TheLibrary/TheLibrary';
@@ -18,7 +19,11 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const session = useQuery(sessionQueries.who());
 
   if (session.isPending) {
-    return <ActivityIndicator color="#f6fbf9" />;
+    return (
+      <Screen centres>
+        <ActivityIndicator />
+      </Screen>
+    );
   }
 
   return (

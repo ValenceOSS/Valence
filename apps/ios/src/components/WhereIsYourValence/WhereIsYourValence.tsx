@@ -1,22 +1,9 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Button } from '@ValencePhone/components/Button/Button';
+import { Screen } from '@ValencePhone/components/Screen/Screen';
+import { TextField } from '@ValencePhone/components/TextField/TextField';
+import { Words } from '@ValencePhone/components/Words/Words';
 import type { WhereIsYourValenceProps } from './WhereIsYourValence.types';
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#0e0e0e', gap: 16 },
-  title: { color: '#f6fbf9', fontSize: 28, fontWeight: '600' },
-  hint: { color: '#9aa0a6', fontSize: 14 },
-  field: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    color: '#f6fbf9',
-    fontSize: 16,
-    padding: 16,
-  },
-  button: { backgroundColor: '#3a8ee8', borderRadius: 12, padding: 16, alignItems: 'center' },
-  buttonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
-  refusal: { color: '#e8503a', fontSize: 14 },
-});
 
 /**
  * Asks where this household's Valence is, which a phone cannot work out for itself.
@@ -28,34 +15,31 @@ const WhereIsYourValence = ({ onChosen, refusal = null }: WhereIsYourValenceProp
   const [typed, setTyped] = useState('');
 
   return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>Where is your Valence?</Text>
-      <Text style={styles.hint}>The address you open it on, such as http://192.168.1.10:8420</Text>
+    <Screen centres>
+      <Words size="title">Where is your Valence?</Words>
+      <Words tone="muted">The address you open it on, such as http://192.168.1.10:8420</Words>
 
-      <TextInput
-        style={styles.field}
+      <TextField
+        label="Server address"
         value={typed}
-        onChangeText={setTyped}
+        onValueChange={setTyped}
         placeholder="http://"
-        placeholderTextColor="#6b7176"
-        autoCapitalize="none"
-        autoCorrect={false}
-        keyboardType="url"
-        accessibilityLabel="Server address"
+        keyboard="url"
+        onSubmit={() => {
+          onChosen(typed.trim());
+        }}
       />
 
-      {refusal === null ? null : <Text style={styles.refusal}>{refusal}</Text>}
+      {refusal === null ? null : <Words tone="danger">{refusal}</Words>}
 
-      <Pressable
-        style={styles.button}
-        accessibilityRole="button"
+      <Button
         onPress={() => {
           onChosen(typed.trim());
         }}
       >
-        <Text style={styles.buttonText}>Connect</Text>
-      </Pressable>
-    </View>
+        Connect
+      </Button>
+    </Screen>
   );
 };
 

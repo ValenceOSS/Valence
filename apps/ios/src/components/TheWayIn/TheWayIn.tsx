@@ -1,16 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { AFace } from '@ValencePhone/components/AFace/AFace';
+import { Button } from '@ValencePhone/components/Button/Button';
+import { Screen } from '@ValencePhone/components/Screen/Screen';
+import { Words } from '@ValencePhone/components/Words/Words';
+import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheWayInProps } from './TheWayIn.types';
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0e0e0e' },
-  inside: { padding: 24, gap: 24, paddingTop: 96 },
-  title: { color: '#f6fbf9', fontSize: 28, fontWeight: '600' },
-  faces: { flexDirection: 'row', flexWrap: 'wrap', gap: 20 },
-  trouble: { color: '#e8503a', fontSize: 14 },
-  again: { color: '#3a8ee8', fontSize: 14 },
+  faces: { flexDirection: 'row', flexWrap: 'wrap', gap: 24 },
+  pressed: { opacity: 0.7 },
 });
 
 /**
@@ -21,15 +21,16 @@ const styles = StyleSheet.create({
  */
 const TheWayIn = ({ onPicked, onElsewhere }: TheWayInProps) => {
   const asking = useQuery(sessionQueries.wayIn());
+  const colours = useTheColours();
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.inside}>
-      <Text style={styles.title}>Who is watching?</Text>
+    <Screen scrolls>
+      <Words size="title">Who is watching?</Words>
 
-      {asking.isPending ? <ActivityIndicator color="#f6fbf9" /> : null}
+      {asking.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
 
       {asking.isError ? (
-        <Text style={styles.trouble}>That server did not answer.</Text>
+        <Words tone="danger">That server did not answer.</Words>
       ) : (
         <View style={styles.faces}>
           {(asking.data?.profiles ?? []).map((profile) => (
@@ -37,6 +38,7 @@ const TheWayIn = ({ onPicked, onElsewhere }: TheWayInProps) => {
               key={profile.id}
               accessibilityRole="button"
               accessibilityLabel={`Sign in as ${profile.name}`}
+              style={({ pressed }) => [pressed && styles.pressed]}
               onPress={() => {
                 onPicked(profile);
               }}
@@ -47,10 +49,10 @@ const TheWayIn = ({ onPicked, onElsewhere }: TheWayInProps) => {
         </View>
       )}
 
-      <Pressable accessibilityRole="button" onPress={onElsewhere}>
-        <Text style={styles.again}>Use a different server</Text>
-      </Pressable>
-    </ScrollView>
+      <Button tone="quiet" onPress={onElsewhere}>
+        Use a different server
+      </Button>
+    </Screen>
   );
 };
 

@@ -1,30 +1,12 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { View } from 'react-native';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
 import { AFace } from '@ValencePhone/components/AFace/AFace';
+import { Button } from '@ValencePhone/components/Button/Button';
+import { Screen } from '@ValencePhone/components/Screen/Screen';
+import { TextField } from '@ValencePhone/components/TextField/TextField';
+import { Words } from '@ValencePhone/components/Words/Words';
 import type { AskForThePasswordProps } from './AskForThePassword.types';
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
-  field: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    color: '#f6fbf9',
-    fontSize: 16,
-    padding: 16,
-    width: '100%',
-  },
-  button: {
-    alignItems: 'center',
-    backgroundColor: '#3a8ee8',
-    borderRadius: 12,
-    padding: 16,
-    width: '100%',
-  },
-  buttonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
-  refusal: { color: '#e8503a', fontSize: 14 },
-  back: { color: '#9aa0a6', fontSize: 14 },
-});
 
 /**
  * Asks for the password of the face somebody picked.
@@ -64,44 +46,37 @@ const AskForThePassword = ({ profile, onIn, onBack }: AskForThePasswordProps) =>
   };
 
   return (
-    <View style={styles.screen}>
-      <AFace profile={profile} />
+    <Screen centres>
+      <View style={{ alignItems: 'center' }}>
+        <AFace profile={profile} />
+      </View>
 
-      <TextInput
-        style={styles.field}
+      <TextField
+        label="Password"
         value={password}
-        onChangeText={setPassword}
+        onValueChange={setPassword}
         placeholder="Password"
-        placeholderTextColor="#6b7176"
-        secureTextEntry
-        autoCapitalize="none"
-        accessibilityLabel="Password"
-        onSubmitEditing={() => {
+        isSecret
+        onSubmit={() => {
           void tryIt();
         }}
       />
 
-      {refusal === null ? null : <Text style={styles.refusal}>{refusal}</Text>}
+      {refusal === null ? null : <Words tone="danger">{refusal}</Words>}
 
-      <Pressable
-        style={styles.button}
-        accessibilityRole="button"
-        disabled={isTrying}
+      <Button
+        isBusy={isTrying}
         onPress={() => {
           void tryIt();
         }}
       >
-        {isTrying ? (
-          <ActivityIndicator color="#ffffff" />
-        ) : (
-          <Text style={styles.buttonText}>Sign in</Text>
-        )}
-      </Pressable>
+        Sign in
+      </Button>
 
-      <Pressable accessibilityRole="button" onPress={onBack}>
-        <Text style={styles.back}>Somebody else</Text>
-      </Pressable>
-    </View>
+      <Button tone="quiet" onPress={onBack}>
+        Somebody else
+      </Button>
+    </Screen>
   );
 };
 

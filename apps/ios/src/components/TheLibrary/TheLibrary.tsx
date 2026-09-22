@@ -1,23 +1,19 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
+import { Button } from '@ValencePhone/components/Button/Button';
+import { Screen } from '@ValencePhone/components/Screen/Screen';
+import { Words } from '@ValencePhone/components/Words/Words';
+import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheLibraryProps } from './TheLibrary.types';
 
 const styles = StyleSheet.create({
-  chosen: { backgroundColor: '#3a8ee8' },
-  chosenName: { color: '#ffffff' },
-  empty: { color: '#9aa0a6', fontSize: 14 },
-  inside: { gap: 20, padding: 20, paddingTop: 72 },
-  out: { color: '#3a8ee8', fontSize: 14, paddingTop: 8 },
-  screen: { flex: 1, backgroundColor: '#0e0e0e' },
-  shelf: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  tab: { backgroundColor: '#1a1a1a', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
-  tabName: { color: '#f6fbf9', fontSize: 13 },
+  pressed: { opacity: 0.7 },
+  shelf: { flexDirection: 'row', flexWrap: 'wrap', gap: 18 },
+  tab: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
   tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  title: { color: '#f6fbf9', fontSize: 28, fontWeight: '600' },
-  trouble: { color: '#e8503a', fontSize: 14 },
 });
 
 /**
@@ -31,37 +27,46 @@ const styles = StyleSheet.create({
  */
 const TheLibrary = ({ onOut }: TheLibraryProps) => {
   const libraries = useQuery(libraryQueries.all());
+  const colours = useTheColours();
   const [chosen, setChosen] = useState<string | null>(null);
   const showing = chosen ?? libraries.data?.[0]?.id ?? null;
   const page = useQuery(libraryQueries.items(showing));
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.inside}>
-      <Text style={styles.title}>Library</Text>
+    <Screen scrolls>
+      <Words size="title">Library</Words>
 
-      {libraries.isError ? <Text style={styles.trouble}>Those could not be read.</Text> : null}
+      {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
 
       <View style={styles.tabs}>
         {(libraries.data ?? []).map((library) => (
           <Pressable
             key={library.id}
             accessibilityRole="button"
-            style={[styles.tab, library.id === showing && styles.chosen]}
+            accessibilityState={{ selected: library.id === showing }}
+            style={({ pressed }) => [
+              styles.tab,
+              {
+                backgroundColor: library.id === showing ? colours.accent : colours.surfaceRaised,
+                borderColor: library.id === showing ? colours.accent : colours.border,
+              },
+              pressed && styles.pressed,
+            ]}
             onPress={() => {
               setChosen(library.id);
             }}
           >
-            <Text style={[styles.tabName, library.id === showing && styles.chosenName]}>
+            <Words size="small" tone={library.id === showing ? 'plain' : 'muted'}>
               {library.name}
-            </Text>
+            </Words>
           </Pressable>
         ))}
       </View>
 
-      {page.isPending && showing !== null ? <ActivityIndicator color="#f6fbf9" /> : null}
+      {page.isPending && showing !== null ? <ActivityIndicator color={colours.textMuted} /> : null}
 
       {page.data !== undefined && page.data.items.length === 0 ? (
-        <Text style={styles.empty}>Nothing in here yet.</Text>
+        <Words tone="muted">Nothing in here yet.</Words>
       ) : null}
 
       <View style={styles.shelf}>
@@ -70,10 +75,10 @@ const TheLibrary = ({ onOut }: TheLibraryProps) => {
         ))}
       </View>
 
-      <Pressable accessibilityRole="button" onPress={onOut}>
-        <Text style={styles.out}>Sign out</Text>
-      </Pressable>
-    </ScrollView>
+      <Button tone="quiet" onPress={onOut}>
+        Sign out
+      </Button>
+    </Screen>
   );
 };
 

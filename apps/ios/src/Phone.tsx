@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { buildQueryClient } from '@ValenceClient/query/queryClient';
@@ -9,12 +10,9 @@ import { whatThePhoneRemembers } from '@ValencePhone/platform/whatThePhoneRememb
 import { THE_SERVER_ADDRESS } from '@ValencePhone/platform/THE_SERVER_ADDRESS';
 import { TheHousehold } from '@ValencePhone/components/TheHousehold/TheHousehold';
 import { WhereIsYourValence } from '@ValencePhone/components/WhereIsYourValence/WhereIsYourValence';
+import { Screen } from '@ValencePhone/components/Screen/Screen';
 
 const answers = buildQueryClient();
-
-const styles = StyleSheet.create({
-  waiting: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0e0e0e' },
-});
 
 /**
  * Valence on a phone.
@@ -42,33 +40,37 @@ const Phone = () => {
 
   if (!isReady) {
     return (
-      <View style={styles.waiting}>
-        <ActivityIndicator color="#f6fbf9" />
-        <StatusBar style="light" />
-      </View>
+      <SafeAreaProvider>
+        <Screen centres>
+          <ActivityIndicator />
+        </Screen>
+        <StatusBar style="auto" />
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <QueryClientProvider client={answers}>
-      {address === null || isAsking ? (
-        <WhereIsYourValence
-          onChosen={(chosen) => {
-            platformInUse().store.write(THE_SERVER_ADDRESS, chosen);
-            setAddress(chosen);
-            setIsAsking(false);
-            void answers.invalidateQueries();
-          }}
-        />
-      ) : (
-        <TheHousehold
-          onElsewhere={() => {
-            setIsAsking(true);
-          }}
-        />
-      )}
-      <StatusBar style="light" />
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={answers}>
+        {address === null || isAsking ? (
+          <WhereIsYourValence
+            onChosen={(chosen) => {
+              platformInUse().store.write(THE_SERVER_ADDRESS, chosen);
+              setAddress(chosen);
+              setIsAsking(false);
+              void answers.invalidateQueries();
+            }}
+          />
+        ) : (
+          <TheHousehold
+            onElsewhere={() => {
+              setIsAsking(true);
+            }}
+          />
+        )}
+        <StatusBar style="auto" />
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 };
 
