@@ -13,6 +13,7 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { ACard } from '@ValencePhone/components/ACard/ACard';
+import { AirPlayButton } from '@ValencePhone/components/AirPlayButton/AirPlayButton';
 import { TheMark } from '@ValencePhone/components/TheMark/TheMark';
 import { TheFilters } from '@ValencePhone/components/TheLibrary/components/TheFilters/TheFilters';
 import { TheHome } from '@ValencePhone/components/TheLibrary/components/TheHome/TheHome';
@@ -104,6 +105,7 @@ const TheLibrary = ({ onWatch, onLookAt, onLookAtShow }: TheLibraryProps) => {
         <View style={styles.parts}>
           <SegmentedRow
             label="What to show"
+            isGlass
             items={parts}
             value={part}
             onSelect={(next) => {
@@ -113,6 +115,7 @@ const TheLibrary = ({ onWatch, onLookAt, onLookAtShow }: TheLibraryProps) => {
             }}
           />
         </View>
+        <AirPlayButton />
       </View>
 
       {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}

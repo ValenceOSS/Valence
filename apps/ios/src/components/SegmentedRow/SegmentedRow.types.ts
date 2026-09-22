@@ -8,6 +8,7 @@ type SegmentedRowProps = {
   items: readonly Segment[];
   value: string | null;
   onSelect: (id: string) => void;
+  isGlass?: boolean;
 };
 
 export type { Segment, SegmentedRowProps };
