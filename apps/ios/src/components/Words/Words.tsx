@@ -2,6 +2,10 @@ import { StyleSheet, Text } from 'react-native';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { WordsProps } from './Words.types';
 
+const ON_ARTWORK = '#ffffff';
+
+const ON_BRIGHT = '#000000';
+
 const styles = StyleSheet.create({
   body: { fontSize: 15 },
   heading: { fontSize: 19, fontWeight: '700', letterSpacing: -0.2 },
@@ -30,7 +34,11 @@ const Words = ({ children, tone = 'plain', size = 'body', lines }: WordsProps) =
         ? colours.danger
         : tone === 'accent'
           ? colours.accent
-          : colours.text;
+          : tone === 'onArtwork'
+            ? ON_ARTWORK
+            : tone === 'onBright'
+              ? ON_BRIGHT
+              : colours.text;
 
   return (
     <Text

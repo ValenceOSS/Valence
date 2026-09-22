@@ -1,48 +1,65 @@
-import { useState } from 'react';
-import { Image, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
-import { Button } from '@ValencePhone/components/Button/Button';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { byMediaId } from '@ValenceClient/playback/watchProgress';
+import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
-import { Words } from '@ValencePhone/components/Words/Words';
-import { onThisServer } from '@ValencePhone/platform/onThisServer';
+import { AFeature } from '@ValencePhone/components/TheLibrary/components/TheFeatured/components/AFeature/AFeature';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheFeaturedProps } from './TheFeatured.types';
 
-const GAP = 12;
+const MOVE_ON_AFTER = 28_000;
 
 const styles = StyleSheet.create({
-  backdrop: { height: '100%', width: '100%' },
-  card: { aspectRatio: 16 / 9, borderRadius: 16, overflow: 'hidden' },
-  dots: { flexDirection: 'row', gap: 6, justifyContent: 'center' },
   dot: { borderRadius: 3, height: 6, width: 6 },
-  foot: { bottom: 0, gap: 2, left: 0, padding: 14, position: 'absolute', right: 0 },
-  logo: { height: 48, width: '60%' },
-  shade: {
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    bottom: 0,
-    height: '45%',
-    left: 0,
-    position: 'absolute',
-    right: 0,
-  },
-  whole: { gap: 10 },
+  dots: { flexDirection: 'row', gap: 6, justifyContent: 'center' },
+  whole: { gap: 10, marginHorizontal: -SCREEN_EDGE },
 });
 
 /**
- * A handful of things from the library, large, one to a swipe, as the web's home opens on.
- *
- * Each shows its logo where the library has one and its name where it does not, over its backdrop.
- * An episode is shown as its programme and opens it.
+ * A handful of things from the library, the width of the screen, one to a swipe, as the web's home
+ * opens on: each plays a clip of itself once it has been showing a moment, and the next comes round
+ * when the clip ends, or after a while where there is none.
  *
  * @param items - What to feature.
+ * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
  */
-const TheFeatured = ({ items, onLookAt, onLookAtShow }: TheFeaturedProps) => {
+const TheFeatured = ({ items, onWatch, onLookAt, onLookAtShow }: TheFeaturedProps) => {
   const colours = useTheColours();
   const { width } = useWindowDimensions();
+  const watched = useQuery(viewingQueries.progress());
+  const progress = byMediaId(watched.data ?? []);
   const [at, setAt] = useState(0);
-  const across = width - SCREEN_EDGE * 2;
+  const pager = useRef<ScrollView>(null);
+  const step = width;
+
+  const showNext = () => {
+    const next = items.length === 0 ? 0 : (at + 1) % items.length;
+
+    pager.current?.scrollTo({ x: next * step, animated: true });
+    setAt(next);
+  };
+
+  useEffect(() => {
+    if (items.length < 2) {
+      return;
+    }
+
+    const moving = setTimeout(() => {
+      const next = (at + 1) % items.length;
+
+      pager.current?.scrollTo({ x: next * step, animated: true });
+      setAt(next);
+    }, MOVE_ON_AFTER);
+
+    return () => {
+      clearTimeout(moving);
+    };
+  }, [at, items.length, step]);
 
   if (items.length === 0) {
     return null;
@@ -51,67 +68,36 @@ const TheFeatured = ({ items, onLookAt, onLookAtShow }: TheFeaturedProps) => {
   return (
     <View style={styles.whole}>
       <ScrollView
+        ref={pager}
         horizontal
-        snapToInterval={across + GAP}
-        decelerationRate="fast"
+        pagingEnabled
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: GAP }}
         onMomentumScrollEnd={(event) => {
-          setAt(Math.round(event.nativeEvent.contentOffset.x / (across + GAP)));
+          setAt(Math.round(event.nativeEvent.contentOffset.x / step));
         }}
       >
-        {items.map((media) => {
+        {items.map((media, index) => {
           const showId = showIdOf(media);
-          const title = showId === null ? media.title : (media.seriesTitle ?? media.title);
 
           return (
-            <Button
+            <AFeature
               key={media.id}
-              tone="bare"
-              label={title}
-              onPress={() => {
+              media={media}
+              width={width}
+              isShowing={index === at}
+              resumeAt={resumeFor(progress, media.id)}
+              onEnded={showNext}
+              onPlay={() => {
+                onWatch(media.id, resumeFor(progress, media.id) ?? 0);
+              }}
+              onMoreInfo={() => {
                 if (showId === null) {
                   onLookAt(media.id);
                 } else {
                   onLookAtShow(media.libraryId, showId);
                 }
               }}
-            >
-              <View
-                style={[styles.card, { backgroundColor: colours.surfaceRaised, width: across }]}
-              >
-                {media.hasBackdrop ? (
-                  <Image
-                    style={styles.backdrop}
-                    source={{ uri: onThisServer(`/api/media/${media.id}/image/backdrop`) }}
-                    accessibilityIgnoresInvertColors
-                  />
-                ) : null}
-
-                <View style={styles.shade} />
-
-                <View style={styles.foot}>
-                  {media.hasLogo ? (
-                    <Image
-                      style={styles.logo}
-                      resizeMode="contain"
-                      source={{ uri: onThisServer(`/api/media/${media.id}/image/logo?at=full`) }}
-                      accessibilityLabel={title}
-                    />
-                  ) : (
-                    <Words size="heading" lines={2}>
-                      {title}
-                    </Words>
-                  )}
-
-                  {media.year === null ? null : (
-                    <Words size="small" tone="muted">
-                      {media.year}
-                    </Words>
-                  )}
-                </View>
-              </View>
-            </Button>
+            />
           );
         })}
       </ScrollView>

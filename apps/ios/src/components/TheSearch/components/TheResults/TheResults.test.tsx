@@ -35,6 +35,7 @@ const theResults = (onLookAt = jest.fn(), onLookAtShow = jest.fn()) =>
   around(
     <TheResults
       asked="arr"
+      kind={null}
       libraryIds={['one']}
       howFarThrough={() => 0}
       onLookAt={onLookAt}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
-import { CircleUser, Clapperboard, Inbox } from 'lucide-react-native';
+import { CircleUser, Clapperboard, Inbox, Search } from 'lucide-react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -26,6 +26,7 @@ import { StillWatching } from '@ValencePhone/components/StillWatching/StillWatch
 import { TheAccount } from '@ValencePhone/components/TheAccount/TheAccount';
 import { TheLibrary } from '@ValencePhone/components/TheLibrary/TheLibrary';
 import { TheRequests } from '@ValencePhone/components/TheRequests/TheRequests';
+import { TheSearch } from '@ValencePhone/components/TheSearch/TheSearch';
 import { TheTabs } from '@ValencePhone/components/TheTabs/TheTabs';
 import { useTheProgrammeOf } from '@ValencePhone/components/SignedIn/useTheProgrammeOf';
 import { useTheProgrammeOfEpisode } from '@ValencePhone/hooks/useTheProgrammeOfEpisode';
@@ -41,7 +42,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
  * address bar: a title, a programme, a person or something to ask for is laid over whatever opened
  * it, and going back takes the top one off.
  *
- * The library, requests and the account are tabs along the bottom, and the tab for requests is only there for
+ * The library, search, requests and the account are tabs along the bottom, and the tab for requests is only there for
  * somebody this server lets ask. Anything opened from either covers the tabs until they go back.
  * Something asked for that has arrived opens in the library from its page, and a programme is
  * found by the series it became, since that is all a request knows of it.
@@ -85,6 +86,7 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const mayRequest = requesting.data?.isEnabled === true && may('requests.ask');
   const tabs = [
     { id: 'library', label: 'Library', icon: Clapperboard, symbol: 'film.stack' },
+    { id: 'search', label: 'Search', icon: Search, symbol: 'magnifyingglass' },
     ...(mayRequest ? [{ id: 'requests', label: 'Requests', icon: Inbox, symbol: 'tray' }] : []),
     { id: 'account', label: 'Account', icon: CircleUser, symbol: 'person.crop.circle' },
   ];
@@ -264,8 +266,8 @@ const SignedIn = ({ onOut }: SignedInProps) => {
           void signOut().then(onOut);
         }}
       />
-    ) : (
-      <TheLibrary
+    ) : part === 'search' ? (
+      <TheSearch
         onLookAt={lookAt}
         onLookAtShow={lookAtShow}
         onAsk={
@@ -276,6 +278,8 @@ const SignedIn = ({ onOut }: SignedInProps) => {
             : null
         }
       />
+    ) : (
+      <TheLibrary onWatch={choose} onLookAt={lookAt} onLookAtShow={lookAtShow} />
     );
 
   return (

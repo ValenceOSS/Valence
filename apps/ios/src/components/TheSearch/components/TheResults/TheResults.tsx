@@ -22,6 +22,7 @@ const styles = StyleSheet.create({
  * library does not have yet, to ask for.
  *
  * @param asked - What they typed.
+ * @param kind - Films or programmes only, or null for both.
  * @param libraryIds - Where to look.
  * @param howFarThrough - How much of each thing they have seen.
  * @param onLookAt - Told to open a title.
@@ -30,6 +31,7 @@ const styles = StyleSheet.create({
  */
 const TheResults = ({
   asked,
+  kind,
   libraryIds,
   howFarThrough,
   onLookAt,
@@ -38,13 +40,22 @@ const TheResults = ({
 }: TheResultsProps) => {
   const colours = useTheColours();
   const found = useQuery(
-    libraryQueries.across(libraryIds, { search: asked, limit: AS_MANY_AS_ARE_WORTH_SHOWING }),
+    libraryQueries.across(libraryIds, {
+      search: asked,
+      limit: AS_MANY_AS_ARE_WORTH_SHOWING,
+      ...(kind === null ? {} : { kind }),
+    }),
   );
-  const films = useQuery(requestsQueries.askableSearch(asked, 'film', onAsk !== null));
-  const programmes = useQuery(requestsQueries.askableSearch(asked, 'series', onAsk !== null));
-  const askable = [...(films.data ?? []), ...(programmes.data ?? [])].filter(
-    (title) => title.standing.status !== 'library',
+  const films = useQuery(
+    requestsQueries.askableSearch(asked, 'film', onAsk !== null && kind !== 'shows'),
   );
+  const programmes = useQuery(
+    requestsQueries.askableSearch(asked, 'series', onAsk !== null && kind !== 'films'),
+  );
+  const askable = [
+    ...(kind === 'shows' ? [] : (films.data ?? [])),
+    ...(kind === 'films' ? [] : (programmes.data ?? [])),
+  ].filter((title) => title.standing.status !== 'library');
 
   if (found.isPending) {
     return <ActivityIndicator color={colours.textMuted} />;

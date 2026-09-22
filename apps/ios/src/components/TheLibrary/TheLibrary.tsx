@@ -11,13 +11,10 @@ import { APoster } from '@ValencePhone/components/APoster/APoster';
 import { APosterGrid } from '@ValencePhone/components/APosterGrid/APosterGrid';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
-import { TextField } from '@ValencePhone/components/TextField/TextField';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { ACard } from '@ValencePhone/components/ACard/ACard';
 import { TheFilters } from '@ValencePhone/components/TheLibrary/components/TheFilters/TheFilters';
 import { TheHome } from '@ValencePhone/components/TheLibrary/components/TheHome/TheHome';
-import { TheResults } from '@ValencePhone/components/TheLibrary/components/TheResults/TheResults';
-import { useSettled } from '@ValencePhone/hooks/useSettled';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -25,8 +22,6 @@ import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { TheLibraryProps } from './TheLibrary.types';
 
 type Cell = { kind: 'media'; media: MediaSummary } | { kind: 'programme'; programme: ShowSummary };
-
-const HOLD_STILL_FOR = 250;
 
 const EVERY = 'every';
 
@@ -42,22 +37,17 @@ const EVERY = 'every';
  * and as their episodes gathered into programmes once something is, since genre and year belong to
  * the episodes.
  *
- * Searching looks through every library at once, and through the catalogue for somebody who may
- * ask for what it does not have, and puts the rest back when the box is cleared.
- *
+ * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told which title somebody wants to see more of.
  * @param onLookAtShow - Told which programme, in which library.
- * @param onAsk - Told to open something to ask for, or null for somebody who may not.
  */
-const TheLibrary = ({ onLookAt, onLookAtShow, onAsk }: TheLibraryProps) => {
+const TheLibrary = ({ onWatch, onLookAt, onLookAtShow }: TheLibraryProps) => {
   const colours = useTheColours();
   const libraries = useQuery(libraryQueries.all());
   const watched = useQuery(viewingQueries.progress());
   const filters = useLibraryFilters();
   const [part, setPart] = useState('home');
   const [chosen, setChosen] = useState(EVERY);
-  const [typed, setTyped] = useState('');
-  const searchingFor = useSettled(typed.trim(), HOLD_STILL_FOR);
   const howFar = byMediaId(watched.data ?? []);
   const films = (libraries.data ?? []).filter((library) => library.kind === 'movies');
   const programmes = (libraries.data ?? []).filter((library) => library.kind === 'shows');
@@ -86,7 +76,7 @@ const TheLibrary = ({ onLookAt, onLookAtShow, onAsk }: TheLibraryProps) => {
   });
 
   const cells: readonly Cell[] =
-    searchingFor !== '' || part === 'home'
+    part === 'home'
       ? []
       : part === 'shows' && !isFiltered
         ? programmeLists
@@ -107,78 +97,52 @@ const TheLibrary = ({ onLookAt, onLookAtShow, onAsk }: TheLibraryProps) => {
 
       {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
 
-      <TextField
-        label="Search"
-        value={typed}
-        onValueChange={setTyped}
-        placeholder="Search"
-        keyboard="search"
+      <SegmentedRow
+        label="What to show"
+        items={parts}
+        value={part}
+        onSelect={(next) => {
+          setPart(next);
+          setChosen(EVERY);
+          filters.clear();
+        }}
       />
 
-      {searchingFor !== '' ? (
-        <TheResults
-          asked={searchingFor}
-          libraryIds={watchable}
-          howFarThrough={(mediaId) => {
-            const known = howFar.get(mediaId);
-
-            return known === undefined ? 0 : watchedFraction(known);
-          }}
-          onLookAt={onLookAt}
-          onLookAtShow={onLookAtShow}
-          onAsk={onAsk}
+      {ofThisKind.length > 1 ? (
+        <SegmentedRow
+          label="Which library"
+          items={[
+            { id: EVERY, label: 'All' },
+            ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
+          ]}
+          value={chosen}
+          onSelect={setChosen}
         />
-      ) : (
-        <>
-          <SegmentedRow
-            label="What to show"
-            items={parts}
-            value={part}
-            onSelect={(next) => {
-              setPart(next);
-              setChosen(EVERY);
-              filters.clear();
-            }}
-          />
+      ) : null}
 
-          {ofThisKind.length > 1 ? (
-            <SegmentedRow
-              label="Which library"
-              items={[
-                { id: EVERY, label: 'All' },
-                ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
-              ]}
-              value={chosen}
-              onSelect={setChosen}
-            />
-          ) : null}
-
-          {part === 'home' ? null : (
-            <TheFilters
-              groups={filters.groups}
-              selected={filters.selected}
-              onChange={filters.change}
-              onClear={filters.clear}
-            />
-          )}
-
-          {isWaiting ? <ActivityIndicator color={colours.textMuted} /> : null}
-
-          {part !== 'home' && !isWaiting && cells.length === 0 ? (
-            <Words tone="muted">
-              {isFiltered ? 'Nothing matches those.' : 'Nothing in here yet.'}
-            </Words>
-          ) : null}
-        </>
+      {part === 'home' ? null : (
+        <TheFilters
+          groups={filters.groups}
+          selected={filters.selected}
+          onChange={filters.change}
+          onClear={filters.clear}
+        />
       )}
+
+      {isWaiting ? <ActivityIndicator color={colours.textMuted} /> : null}
+
+      {part !== 'home' && !isWaiting && cells.length === 0 ? (
+        <Words tone="muted">{isFiltered ? 'Nothing matches those.' : 'Nothing in here yet.'}</Words>
+      ) : null}
     </>
   );
 
-  if (part === 'home' && searchingFor === '') {
+  if (part === 'home') {
     return (
       <TheHome
         header={header}
         watchable={watchable}
+        onWatch={onWatch}
         onLookAt={onLookAt}
         onLookAtShow={onLookAtShow}
       />

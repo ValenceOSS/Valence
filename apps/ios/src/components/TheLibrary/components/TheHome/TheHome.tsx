@@ -44,10 +44,11 @@ type AShelfOf = { kind: 'rail'; rail: Rail } | { kind: 'comingUp' };
  *
  * @param header - What sits above it all and scrolls away with it.
  * @param watchable - The libraries holding films and programmes.
+ * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
  */
-const TheHome = ({ header, watchable, onLookAt, onLookAtShow }: TheHomeProps) => {
+const TheHome = ({ header, watchable, onWatch, onLookAt, onLookAtShow }: TheHomeProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
   const pulling = usePullToRefresh();
@@ -118,7 +119,12 @@ const TheHome = ({ header, watchable, onLookAt, onLookAtShow }: TheHomeProps) =>
       ListHeaderComponent={
         <View style={styles.header}>
           {header}
-          <TheFeatured items={featured} onLookAt={onLookAt} onLookAtShow={onLookAtShow} />
+          <TheFeatured
+            items={featured}
+            onWatch={onWatch}
+            onLookAt={onLookAt}
+            onLookAtShow={onLookAtShow}
+          />
           {home.isReading ? <ActivityIndicator color={colours.textMuted} /> : null}
         </View>
       }
