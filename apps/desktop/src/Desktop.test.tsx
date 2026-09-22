@@ -1,10 +1,12 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import type { Platform, Reachability } from '@ValenceClient/platform/Platform.types';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
+import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import '@ValenceDesktop/TheWindow.types';
 
 vi.mock('@ValenceScreens/routes/buildRouter', () => ({ buildRouter: () => ({}) }));
@@ -39,7 +41,7 @@ const unreachable: Reachability = {
   whenChanged: () => () => {},
 };
 
-const theWindowOffers = (found: string[]): void => {
+const theWindowOffers = (found: string[], nearby: NearbyValence[] = []): void => {
   window.valence = {
     preferences: { held: {}, write: () => {}, forget: () => {} },
     goToTheServer: () => {},
@@ -51,9 +53,32 @@ const theWindowOffers = (found: string[]): void => {
       whenChanged: () => () => {},
     },
     reach: { now: () => true, whenChanged: () => () => {} },
-    servers: { alreadyFound: found, reach: () => Promise.resolve(true), whenFound: () => () => {} },
+    update: { alreadyAvailable: null, whenAvailable: () => () => {}, install: () => {} },
+    about: {
+      version: '1.2.0',
+      commit: '2ae1bc1',
+      arch: 'arm64',
+      electron: '33.0.0',
+      chrome: '130.0.0',
+    },
+    notifications: { setBadge: () => {} },
+    servers: {
+      alreadyFound: found,
+      reach: () => Promise.resolve(true),
+      whenFound: () => () => {},
+      alreadyNearby: nearby,
+      whenNearbyChanges: (listener) => {
+        tellNearby = listener;
+
+        return () => {
+          tellNearby = () => undefined;
+        };
+      },
+    },
   };
 };
+
+let tellNearby: (nearby: NearbyValence[]) => void = () => undefined;
 
 const aClient = (
   overrides: Partial<Platform> = {},
@@ -100,6 +125,50 @@ describe('Desktop', () => {
     });
   });
 
+  it('offers a server heard on the network, including one heard after the screen was drawn', async () => {
+    theWindowOffers([], [{ address: 'http://192.168.1.224:8420', name: 'Valence on media-box' }]);
+    aClient();
+
+    render(<Desktop />);
+
+    expect(screen.getByRole('button', { name: /Valence on media-box/u })).toBeInTheDocument();
+
+    act(() => {
+      tellNearby([{ address: 'http://192.168.1.30:8420', name: 'Valence on attic' }]);
+    });
+
+    expect(await screen.findByRole('button', { name: /Valence on attic/u })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Valence on media-box/u })).toBeNull();
+  });
+
+  it('offers the servers this client was pointed at before', () => {
+    aClient();
+    rememberServerAddress('https://demo.getvalence.app');
+    rememberServerAddress(null);
+
+    render(<Desktop />);
+
+    expect(screen.getByRole('button', { name: 'demo.getvalence.app' })).toBeInTheDocument();
+  });
+
+  it('names this build at the foot of the screen that asks', () => {
+    aClient({
+      buildInfo: () => ({
+        version: '1.2.0',
+        commit: '2ae1bc1',
+        arch: 'arm64',
+        electron: '33.0.0',
+        chrome: '130.0.0',
+      }),
+    });
+
+    render(<Desktop />);
+
+    expect(
+      screen.getByText('Valence 1.2.0 (2ae1bc1) · arm64 · Electron 33.0.0 · Chromium 130.0.0'),
+    ).toBeInTheDocument();
+  });
+
   it('asks for an address where nothing was found on this machine', () => {
     aClient();
 
@@ -132,6 +201,15 @@ describe('Desktop', () => {
     });
 
     expect(asking()).toBeNull();
+  });
+
+  it('shows a release found before this screen had mounted to hear about it, not only one found after', async () => {
+    aClient({}, 'http://valence.example');
+    window.valence.update.alreadyAvailable = { version: 'v1.2.0' };
+
+    render(<Desktop />);
+
+    expect(await screen.findByRole('button', { name: /Update available/u })).toBeInTheDocument();
   });
 
   it('asks again where the chosen server stopped answering and nothing is on this device', async () => {

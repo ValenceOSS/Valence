@@ -39,6 +39,9 @@ const installPhonePlatform = (held: Map<string, string>): void => {
     held: noFilesAreKept(),
     reachability: thePhonesReach(),
     openSocket: thePhonesSocket(store),
+    buildInfo: () => null,
+    notifyLocally: () => {},
+    setUnreadBadge: () => {},
   });
 };
 

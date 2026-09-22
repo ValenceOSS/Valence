@@ -39,7 +39,7 @@ const aProfile = (showsWhatIamWatching: boolean): ViewerProfile => ({
 
 const draw = () => {
   const Showing = () => {
-    useBrowsingPresence();
+    useBrowsingPresence(true);
 
     return null;
   };

@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@keyline-icons/react": "^1.0.0",
     "@tanstack/react-query": "^5.102.8",
     "@tanstack/react-router": "^1.170.35",
     "@valence/client": "workspace:*",
@@ -23,7 +24,9 @@
     "@valence/screens": "workspace:*",
     "@valence/ui": "workspace:*",
     "better-auth": "^1.7.4",
+    "bonjour-service": "^1.4.4",
     "conf": "^15.1.0",
+    "electron-updater": "^6.8.9",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "zod": "^4.6.4"
@@ -64,12 +67,24 @@
       "dist-preload/**",
       "package.json"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "ValenceOSS",
+      "repo": "Valence"
+    },
     "mac": {
       "category": "public.app-category.entertainment",
-      "icon": "build/icon-macos.png",
+      "icon": "build/icon.icon",
       "target": [
         {
           "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
           "arch": [
             "arm64",
             "x64"

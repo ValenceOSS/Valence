@@ -30,6 +30,9 @@ const aFakePlatform = (overrides: Partial<Platform> = {}): Platform => {
     canKeepFiles: () => true,
     held: noFilesAreKept(),
     reachability: alwaysReachable(),
+    buildInfo: () => null,
+    notifyLocally: () => {},
+    setUnreadBadge: () => {},
     ...overrides,
   };
 };

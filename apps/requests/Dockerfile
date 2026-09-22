@@ -10,11 +10,19 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY tsconfig.base.json tsconfig.json tsconfig.paths.json ./
 COPY packages/contracts ./packages/contracts
+COPY packages/core ./packages/core
 COPY apps/requests ./apps/requests
 RUN pnpm install --frozen-lockfile --filter @valence/requests...
 
 # Bundled for the same reason the server is: the imports are path aliases Node cannot resolve.
 RUN pnpm --filter @valence/requests bundle
+
+# An alias whose package was not copied in above does not fail the bundle: esbuild cannot resolve
+# it, takes it for a package from npm, and leaves the import for Node to find at start-up. So the
+# build refuses one here instead, where it is a failed build rather than a service that will not start.
+RUN if grep -Eo "from ?[\"']@Valence[A-Za-z]+/[^\"']+" apps/requests/dist/Main.js; then \
+      echo "unbundled path alias in apps/requests/dist/Main.js; copy its package into the build stage" >&2; exit 1; \
+    fi
 
 FROM node:24-bookworm-slim AS runtime
 
@@ -25,6 +33,7 @@ RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/contracts ./packages/contracts
+COPY packages/core ./packages/core
 COPY apps/requests/package.json ./apps/requests/package.json
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @valence/requests...
 

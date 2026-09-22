@@ -5,7 +5,16 @@ import type { Language, ProseComment } from './findProseComments';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 
-const SKIPPED = new Set(['node_modules', 'target', 'dist', '.git', '.turbo', '.astro', 'coverage']);
+const SKIPPED = new Set([
+  'node_modules',
+  'target',
+  'dist',
+  'build',
+  '.git',
+  '.turbo',
+  '.astro',
+  'coverage',
+]);
 
 const LANGUAGES: Record<string, Language> = {
   '.rs': 'rust',

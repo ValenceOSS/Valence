@@ -92,7 +92,9 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
             <Button
               variant={isReachable ? 'ghost' : 'primary'}
               size="sm"
-              onClick={askForADifferentServer}
+              onClick={() => {
+                void askForADifferentServer();
+              }}
             >
               <Icon of={HardDriveIcon} size={15} />
               Change server

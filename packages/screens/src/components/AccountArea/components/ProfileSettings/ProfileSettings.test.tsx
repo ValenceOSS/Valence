@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { chooseTheme, chosenTheme } from '@ValenceClient/shell/theme';
+import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { ProfileSettings } from './ProfileSettings';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileDraft } from './ProfileSettings.types';
@@ -68,5 +69,19 @@ describe('ProfileSettings', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(ProfileSettings.displayName).toBe('ProfileSettings');
+  });
+
+  it('offers no way to show Discord status outside the desktop client', () => {
+    render(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
+
+    expect(screen.queryByText('Show what I am playing on Discord')).not.toBeInTheDocument();
+  });
+
+  it('offers it on the desktop client, since only it can reach Discord', () => {
+    installATestClient({ thisClientKind: () => 'desktop' });
+
+    render(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
+
+    expect(screen.getByText('Show what I am playing on Discord')).toBeInTheDocument();
   });
 });

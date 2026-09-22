@@ -12,6 +12,7 @@ import { useMotion } from '@ValenceClient/shell/useMotion';
 import { readMotion } from '@ValenceClient/shell/motion';
 import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
 import { Switch } from '@ValenceUI/Switch';
+import { canShowOnDiscord } from '@ValenceClient/discord/canShowOnDiscord';
 import { PROFILE_COLOURS, AVATAR_STYLES } from '@ValenceContracts/schemas/ViewerProfile';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { STILL_WATCHING_CHOICES } from '@ValenceClient/profiles/STILL_WATCHING_CHOICES';
@@ -220,20 +221,22 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
         />
       </SettingRow>
 
-      <SettingRow
-        title="Show what I am watching on Discord"
-        description="The title, and the series and episode where there is one, appear in your Discord status while something is playing. It needs Valence open on the same machine as Discord."
-      >
-        <Switch
-          label="Show what I am watching on Discord"
-          isLabelHidden
-          isOn={draft?.showsWhatIamWatching ?? false}
-          disabled={!isReady}
-          onToggle={() => {
-            onDraft({ showsWhatIamWatching: !(draft?.showsWhatIamWatching ?? false) });
-          }}
-        />
-      </SettingRow>
+      {canShowOnDiscord() ? (
+        <SettingRow
+          title="Show what I am playing on Discord"
+          description="The title, and the series and episode or the artist where there is one, appear in your Discord status while something is playing. It needs Valence open on the same machine as Discord."
+        >
+          <Switch
+            label="Show what I am playing on Discord"
+            isLabelHidden
+            isOn={draft?.showsWhatIamWatching ?? false}
+            disabled={!isReady}
+            onToggle={() => {
+              onDraft({ showsWhatIamWatching: !(draft?.showsWhatIamWatching ?? false) });
+            }}
+          />
+        </SettingRow>
+      ) : null}
     </>
   );
 };

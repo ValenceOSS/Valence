@@ -253,6 +253,8 @@ import {
   readSubtitleRoute,
 } from '@ValenceServer/routes/SubtitleRoute';
 import { setupStatusRoute, setupCompleteRoute } from './routes/SetupRoute';
+import { aboutRoute } from './routes/AboutRoute';
+import { serverBuildInfo } from '@ValenceServer/about/serverBuildInfo';
 import { JOB_DEFINITIONS, RESET_LIBRARY_JOB } from '@ValenceServer/jobs/jobDefinitions';
 import type { JobDefinition } from '@ValenceServer/jobs/jobDefinitions';
 import {
@@ -990,6 +992,8 @@ const createApp = ({
   app.all('/api/auth/one-time-token/*', createOneTimeTokenBlock());
 
   app.on(['GET', 'POST'], '/api/auth/*', (context) => auth.handler(context.req.raw));
+
+  app.openapi(aboutRoute, (context) => context.json(serverBuildInfo(), 200));
 
   app.openapi(setupStatusRoute, async (context) => {
     const detectedOrigin = new URL(context.req.url).origin;

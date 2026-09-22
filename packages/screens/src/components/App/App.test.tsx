@@ -20,6 +20,7 @@ const socket = vi.hoisted(() => ({
 }));
 
 vi.mock('@ValenceClient/realtime/getRealtimeClient', () => ({
+  allowRealtimeClientToStart: () => undefined,
   getRealtimeClient: () => ({
     start: () => {},
     stop: () => {},

@@ -1,6 +1,10 @@
 const WATCHING = 3;
 
-const LOGO = 'valence';
+const LISTENING = 2;
+
+const LOGO = 'valence-desktop';
+
+const VALENCE = 'Valence';
 
 const BROWSING = 'Browsing the library';
 
@@ -27,37 +31,47 @@ type WhatIsPlaying =
       artwork: string | null;
       party: { id: string; size: number } | null;
     }
+  | {
+      kind: 'listening';
+      title: string;
+      artists: string[];
+      startedAt: number;
+      endsAt: number | null;
+      isPaused: boolean;
+      artwork: string | null;
+      party: { id: string; size: number } | null;
+    }
   | { kind: 'browsing' };
 
 type DiscordActivity = {
   type: number;
+  name?: string;
   details: string;
   state?: string;
   timestamps?: { start: number; end?: number };
-  assets: { large_image: string; large_text: string; small_image: string; small_text: string };
+  assets: {
+    large_image: string;
+    large_text: string;
+    small_image?: string;
+    small_text?: string;
+  };
   party?: { id: string; size: [number, number] };
   buttons?: { label: string; url: string }[];
 };
 
 /**
- * Names the badge that says what is happening, which is the small picture over the corner of the
- * large one.
+ * Says what the small picture over the corner of a track's own cover means, once somebody rests on
+ * it.
  *
- * It said which platform this was before, which is a thing nobody looking at somebody else's status
- * wants to know. What they want is whether it is moving.
+ * Only a track wears this badge. Watching and browsing already draw the Valence logo large and
+ * plain, and a badge over a logo is the platform naming itself twice in the one status that already
+ * says which one this is — the badge over a cover earns its place by telling somebody apart what a
+ * plain picture cannot: whether the thing under it is actually moving.
  *
- * @param playing - What is happening.
- * @returns The asset to draw small, and what it says when somebody rests on it.
+ * @param isPaused - Whether the track has stopped.
+ * @returns What the badge says when somebody rests on it.
  */
-const theBadgeFor = (playing: WhatIsPlaying): { image: string; text: string } => {
-  if (playing.kind === 'browsing') {
-    return { image: 'valencesearch', text: 'Browsing' };
-  }
-
-  return playing.isPaused
-    ? { image: 'valencepause', text: 'Paused' }
-    : { image: 'valenceplay', text: 'Playing' };
-};
+const theBadgeTextFor = (isPaused: boolean): string => (isPaused ? 'Paused' : 'Playing');
 
 /**
  * Says how many other people are watching this together.
@@ -80,7 +94,51 @@ const theCompanyIn = (party: { id: string; size: number } | null): string | null
 };
 
 /**
- * The picture to draw large, where there is one Discord can fetch and it is safe to name.
+ * Names who made a track the way somebody would say it aloud, rather than the way a database lists
+ * it.
+ *
+ * @param artists - The names on the track, in the catalogue's own order.
+ * @returns The names joined for reading, or nothing where the catalogue named nobody.
+ */
+const theArtistsIn = (artists: string[]): string | null => {
+  if (artists.length === 0) {
+    return null;
+  }
+
+  if (artists.length === 1) {
+    return artists[0] ?? null;
+  }
+
+  const last = artists[artists.length - 1];
+  const rest = artists.slice(0, -1);
+
+  return `${rest.join(', ')} & ${last}`;
+};
+
+/**
+ * Builds the line under the details, combining what is playing with who it is playing with and
+ * whether it has stopped, in the one order Discord draws them.
+ *
+ * @param line - What is playing, where there is a line of its own to say it on.
+ * @param party - The party, where there is one.
+ * @param isPaused - Whether it is stopped.
+ * @returns The line to draw, or nothing where there is nothing to say.
+ */
+const theStateLine = (
+  line: string | null,
+  party: { id: string; size: number } | null,
+  isPaused: boolean,
+): string | undefined => {
+  const together = theCompanyIn(party);
+  const body = [line, together].filter((part) => part !== null).join(BETWEEN);
+  const said = body === '' ? null : body;
+
+  return (isPaused ? (said === null ? PAUSED : `${PAUSED} — ${said}`) : said) ?? undefined;
+};
+
+/**
+ * The picture to draw large for something watched, where there is one Discord can fetch and it is
+ * safe to name.
  *
  * Discord draws artwork from a registered asset or from a URL it proxies for itself, which means the
  * address is fetched by Discord rather than by whoever sees the status. It is still an address this
@@ -101,6 +159,28 @@ const theArtworkFor = (artwork: string | null): string | undefined => {
   return asked !== null && asked.protocol === 'https:' && asked.hostname === ARTWORK_HOST
     ? artwork
     : undefined;
+};
+
+/**
+ * The picture to draw large for a track, on the same terms as {@link theArtworkFor} but without the
+ * one restriction that does not apply to it.
+ *
+ * A film's poster comes from TMDB, a public host anybody could already be pointed at — an album's
+ * cover comes from the server playing it, which this profile chose to publish the address of the
+ * moment it asked to show what it is playing at all. There is no host left worth naming here, only
+ * the one already named by every other line on the card.
+ *
+ * @param artwork - The address the page offered, where it offered one.
+ * @returns The picture to draw, or nothing to fall back to the logo.
+ */
+const theTracksArtworkFor = (artwork: string | null): string | undefined => {
+  if (artwork === null) {
+    return undefined;
+  }
+
+  const asked = URL.parse(artwork);
+
+  return asked !== null && asked.protocol === 'https:' ? artwork : undefined;
 };
 
 /**
@@ -138,35 +218,60 @@ const theArtworkFor = (artwork: string | null): string | undefined => {
  * figure, because it is what the card leads with. The field is still sent: it is true, it costs
  * nothing, and wherever Discord does draw it, it will be right.
  *
+ * Listening is named after who made the track rather than after Valence, the way the badge over an
+ * artist's own picture would be — Discord draws the header from the activity's own name where one is
+ * given, and the honest header for a song is who is singing it, not which application is playing it.
+ *
  * @param playing - What is happening, or nothing where the status should come down.
- * @param version - Which Valence this is, which is what the picture says when somebody rests on it.
  * @returns The activity to send, or nothing to clear it.
  */
-const aDiscordActivity = (
-  playing: WhatIsPlaying | null,
-  version: string,
-): DiscordActivity | null => {
+const aDiscordActivity = (playing: WhatIsPlaying | null): DiscordActivity | null => {
   if (playing === null) {
     return null;
   }
-
-  const badge = theBadgeFor(playing);
-  const named = `Valence v${version}`;
 
   if (playing.kind === 'browsing') {
     return {
       type: WATCHING,
       details: BROWSING,
-      assets: {
-        large_image: LOGO,
-        large_text: named,
-        small_image: badge.image,
-        small_text: badge.text,
-      },
+      assets: { large_image: LOGO, large_text: VALENCE },
     };
   }
 
-  const artwork = theArtworkFor(playing.artwork);
+  const timestamps = playing.isPaused
+    ? {}
+    : {
+        timestamps: {
+          start: Math.floor(playing.startedAt / A_SECOND),
+          ...(playing.endsAt === null ? {} : { end: Math.floor(playing.endsAt / A_SECOND) }),
+        },
+      };
+  const party: Pick<DiscordActivity, 'party'> =
+    playing.party === null
+      ? {}
+      : { party: { id: playing.party.id, size: [playing.party.size, playing.party.size] } };
+
+  if (playing.kind === 'listening') {
+    const artists = theArtistsIn(playing.artists);
+    const state = theStateLine(artists, playing.party, playing.isPaused);
+
+    return {
+      type: LISTENING,
+      ...(artists === null ? {} : { name: artists }),
+      details: playing.title,
+      ...(state === undefined ? {} : { state }),
+      ...timestamps,
+      assets: {
+        large_image: theTracksArtworkFor(playing.artwork) ?? LOGO,
+        large_text: VALENCE,
+        small_image: LOGO,
+        small_text: theBadgeTextFor(playing.isPaused),
+      },
+      ...party,
+    };
+  }
+
+  const assets = { large_image: theArtworkFor(playing.artwork) ?? LOGO, large_text: VALENCE };
 
   const episode =
     typeof playing.season === 'number' && typeof playing.episode === 'number'
@@ -182,32 +287,15 @@ const aDiscordActivity = (
         };
 
   const line = playing.series === null ? null : (episode ?? playing.title);
-  const together = theCompanyIn(playing.party);
-  const body = [line, together].filter((part) => part !== null).join(BETWEEN);
-  const said = body === '' ? null : body;
-  const state = playing.isPaused ? (said === null ? PAUSED : `${PAUSED} — ${said}`) : said;
+  const state = theStateLine(line, playing.party, playing.isPaused);
 
   return {
     type: WATCHING,
     details: playing.series ?? playing.title,
-    ...(state === null ? {} : { state }),
-    ...(playing.isPaused
-      ? {}
-      : {
-          timestamps: {
-            start: Math.floor(playing.startedAt / A_SECOND),
-            ...(playing.endsAt === null ? {} : { end: Math.floor(playing.endsAt / A_SECOND) }),
-          },
-        }),
-    assets: {
-      large_image: artwork ?? LOGO,
-      large_text: named,
-      small_image: badge.image,
-      small_text: badge.text,
-    },
-    ...(playing.party === null
-      ? {}
-      : { party: { id: playing.party.id, size: [playing.party.size, playing.party.size] } }),
+    ...(state === undefined ? {} : { state }),
+    ...timestamps,
+    assets,
+    ...party,
     ...(tmdb === null ? {} : { buttons: [tmdb] }),
   };
 };

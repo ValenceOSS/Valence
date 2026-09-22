@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import { answerAboutPreferences } from '@ValenceDesktop/main/answerAboutPreferences';
 import {
   CHANGE_SERVER,
@@ -22,8 +23,12 @@ import {
 import {
   FOUND_A_VALENCE,
   IS_THIS_A_VALENCE,
+  NEARBY_CHANGED,
+  WHAT_IS_NEARBY,
   WHAT_WAS_FOUND,
 } from '@ValenceDesktop/main/discoveryChannels';
+import { listenForValences } from '@ValenceDesktop/main/listenForValences';
+import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import {
   GIVE_ONE_NAMED_MILLISECONDS,
   isAValence,
@@ -40,7 +45,17 @@ import { theHeldFolder } from '@ValenceDesktop/main/theHeldFolder';
 import { theHeldIndex } from '@ValenceDesktop/main/theHeldIndex';
 import { theHeldLibrary } from '@ValenceDesktop/main/theHeldLibrary';
 import { theServerReach } from '@ValenceDesktop/main/theServerReach';
+import { checkForUpdate } from '@ValenceDesktop/main/checkForUpdate';
+import {
+  INSTALL_THE_UPDATE,
+  UPDATE_AVAILABLE,
+  WHAT_UPDATE_IS_KNOWN,
+} from '@ValenceDesktop/main/updateChannels';
+import type { AvailableUpdate } from '@ValenceDesktop/main/checkForUpdate';
 import type { AskingTheServer } from '@ValenceDesktop/main/keepADownload';
+import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
+import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
+import { z } from 'zod';
 
 const WHERE_IT_HAS_ALWAYS_BEEN = 'Valence';
 
@@ -85,6 +100,39 @@ let stopLooking: (() => void) | null = null;
 
 let whatWasFound: string[] = [];
 
+let whatIsNearby: NearbyValence[] = [];
+
+/**
+ * Offers a server found on this machine to the screen that asks which Valence is somebody's.
+ *
+ * @param address - Where it answered.
+ */
+const offerFromThisMachine = (address: string): void => {
+  if (whatWasFound.includes(address)) {
+    return;
+  }
+
+  whatWasFound = [...whatWasFound, address];
+
+  if (theWindow !== null && !theWindow.isDestroyed()) {
+    theWindow.webContents.send(FOUND_A_VALENCE, address);
+  }
+};
+
+/**
+ * Offers what is heard on the network to the same screen, as the whole of what is there now — so a
+ * server that said goodbye leaves it as surely as one that announced itself arrives.
+ *
+ * @param nearby - Every server on the network that has answered and not yet said goodbye.
+ */
+const offerFromTheNetwork = (nearby: NearbyValence[]): void => {
+  whatIsNearby = nearby;
+
+  if (theWindow !== null && !theWindow.isDestroyed()) {
+    theWindow.webContents.send(NEARBY_CHANGED, nearby);
+  }
+};
+
 /**
  * Finds this machine's Valence, and offers it rather than deciding with it.
  *
@@ -102,28 +150,16 @@ const findAValence = async (): Promise<void> => {
     return;
   }
 
-  const offer = (address: string): void => {
-    if (whatWasFound.includes(address)) {
-      return;
-    }
-
-    whatWasFound = [...whatWasFound, address];
-
-    if (theWindow !== null && !theWindow.isDestroyed()) {
-      theWindow.webContents.send(FOUND_A_VALENCE, address);
-    }
-  };
-
   const here = await lookForAValence();
 
   if (here !== null) {
-    offer(here);
+    offerFromThisMachine(here);
 
     return;
   }
 
   stopLooking?.();
-  stopLooking = keepLookingForAValence(offer);
+  stopLooking = keepLookingForAValence(offerFromThisMachine);
 };
 
 /**
@@ -192,6 +228,17 @@ const start = async (): Promise<void> => {
     event.returnValue = whatWasFound;
   });
 
+  ipcMain.on(WHAT_IS_NEARBY, (event) => {
+    event.returnValue = whatIsNearby;
+  });
+
+  const stopListening = listenForValences({
+    onChange: offerFromTheNetwork,
+    onThisMachine: offerFromThisMachine,
+  });
+
+  app.on('will-quit', stopListening);
+
   ipcMain.handle(IS_THIS_A_VALENCE, async (_event, address: JsonValue) =>
     typeof address === 'string' ? isAValence(address, GIVE_ONE_NAMED_MILLISECONDS) : false,
   );
@@ -216,7 +263,55 @@ const start = async (): Promise<void> => {
 
   ipcMain.on(CHANGE_SERVER, changeServer);
 
-  const discord = tellDiscord(app.getPath('temp'), app.getVersion());
+  let knownUpdate: AvailableUpdate | null = null;
+
+  const markUpdateKnown = (update: AvailableUpdate): void => {
+    knownUpdate = update;
+
+    if (theWindow !== null && !theWindow.isDestroyed()) {
+      theWindow.webContents.send(UPDATE_AVAILABLE, update);
+    }
+  };
+
+  if (app.isPackaged) {
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = false;
+
+    const testFeed = process.env.VALENCE_UPDATE_FEED_URL;
+
+    if (testFeed !== undefined) {
+      autoUpdater.setFeedURL({ provider: 'generic', url: testFeed });
+    }
+
+    const updates = checkForUpdate({
+      updater: autoUpdater,
+      onReadyToInstall: markUpdateKnown,
+    });
+
+    app.on('will-quit', () => {
+      updates.stop();
+    });
+  }
+
+  ipcMain.on(WHAT_UPDATE_IS_KNOWN, (event) => {
+    event.returnValue = knownUpdate;
+  });
+
+  ipcMain.on(WHAT_VERSION_THIS_IS, (event) => {
+    event.returnValue = app.getVersion();
+  });
+
+  ipcMain.on(INSTALL_THE_UPDATE, () => {
+    if (knownUpdate !== null) {
+      autoUpdater.quitAndInstall();
+    }
+  });
+
+  ipcMain.on(SET_UNREAD_BADGE, (_event, count) => {
+    app.setBadgeCount(z.number().int().nonnegative().catch(0).parse(count));
+  });
+
+  const discord = tellDiscord(app.getPath('temp'));
 
   ipcMain.on(NOW_WATCHING, (_event, said: JsonValue) => {
     discord.about(whatIsPlaying(JsonValueSchema.catch(null).parse(said)));

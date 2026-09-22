@@ -142,4 +142,20 @@ describe('useFreshFromTheSocket', () => {
 
     expect(getRealtimeClient).toHaveBeenCalled();
   });
+
+  it('listens for nothing where there is nobody signed in yet to hear about a change', () => {
+    getRealtimeClient.mockClear();
+
+    renderHook(
+      () => {
+        useFreshFromTheSocket(null);
+      },
+      {
+        wrapper: ({ children }: { children: ReactNode }) =>
+          createElement(QueryClientProvider, { client: cache }, children),
+      },
+    );
+
+    expect(getRealtimeClient).not.toHaveBeenCalled();
+  });
 });

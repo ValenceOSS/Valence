@@ -4,8 +4,15 @@ import { buildRouter } from '@ValenceScreens/routes/buildRouter';
 import { ConnectToServer } from '@ValenceScreens/components/ConnectToServer/ConnectToServer';
 import { useAppliedTheme } from '@ValenceScreens/theme/useAppliedTheme';
 import { WindowBar } from '@ValenceScreens/components/WindowBar/WindowBar';
-import { TitleBar } from '@ValenceScreens/components/TitleBar/TitleBar';
-import { rememberServerAddress, serverAddress } from '@ValenceClient/session/serverAddress';
+import type { AvailableUpdate } from '@ValenceDesktop/TheWindow.types';
+import {
+  recentServerAddresses,
+  rememberServerAddress,
+  serverAddress,
+} from '@ValenceClient/session/serverAddress';
+import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
+import { describeTheBuild } from '@ValenceScreens/about/describeTheBuild';
+import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import { useServerIsLost } from '@ValenceClient/offline/useServerIsLost';
 import '@ValenceDesktop/TheWindow.types';
 
@@ -33,8 +40,10 @@ const router = buildRouter('Valence');
  * downloads in particular is an empty room on a machine that has never been given anywhere to fetch
  * from. What it offers on that screen is found by the process that owns the window — a page served
  * from a scheme of its own cannot go knocking on `localhost` to see what answers, and would be
- * refused for being somebody else's origin. Where nothing is found it is the same screen with the
- * box alone, because somebody whose server is on another machine still has to be asked.
+ * refused for being somebody else's origin. The same process hears the servers that announce
+ * themselves on the network, which a page has no socket to hear with either. Where nothing is found
+ * it is the same screen with the box alone, because somebody whose server is elsewhere still has to
+ * be asked — though what they were pointed at before is offered too, being on this device already.
  *
  * An address that no longer answers is asked about again, but only where there is nothing on this
  * device. Offline mode is built around a shelf of downloads, and offering it an empty shelf is
@@ -60,6 +69,13 @@ const Desktop = () => {
   const [found, setFound] = useState<readonly string[]>(
     () => window.valence.servers?.alreadyFound ?? [],
   );
+  const [nearby, setNearby] = useState<readonly NearbyValence[]>(
+    () => window.valence.servers?.alreadyNearby ?? [],
+  );
+  const [recent] = useState(recentServerAddresses);
+  const [update, setUpdate] = useState<AvailableUpdate | null>(
+    () => window.valence.update.alreadyAvailable,
+  );
   const isLost = useServerIsLost();
 
   useAppliedTheme();
@@ -72,19 +88,29 @@ const Desktop = () => {
     [],
   );
 
+  useEffect(() => window.valence.servers?.whenNearbyChanges(setNearby), []);
+
+  useEffect(() => window.valence.update.whenAvailable(setUpdate), []);
+
   const chosen = server === null || server === '' ? null : server;
 
   return (
     <>
-      {document.documentElement.dataset['valencePlatform'] === 'darwin' ? (
-        <WindowBar />
-      ) : (
-        <TitleBar title="Valence" />
-      )}
+      <WindowBar
+        {...(update === null ? {} : { updateVersion: update.version })}
+        onInstallUpdate={() => {
+          if (update !== null) {
+            window.valence.update.install();
+          }
+        }}
+      />
 
       {chosen === null || isLost ? (
         <ConnectToServer
           found={found}
+          nearby={nearby}
+          recent={recent}
+          build={describeTheBuild(theBuildInfo(), null)}
           {...(window.valence.servers === undefined ? {} : { reach: window.valence.servers.reach })}
           {...(chosen === null ? {} : { startWith: chosen, couldNotReach: chosen })}
           onConnected={(address) => {

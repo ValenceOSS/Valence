@@ -14,6 +14,7 @@ import type { ShareSubject } from '@ValenceScreens/components/ShareDialog/ShareD
 import { StillWatchingDialog } from '@ValenceScreens/components/StillWatchingDialog/StillWatchingDialog';
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
+import { useDeviceNotifications } from '@ValenceScreens/notifications/useDeviceNotifications';
 import {
   clearNotifications,
   markNotificationsRead,
@@ -115,6 +116,16 @@ const ValenceShell = () => {
 
   const held = useQuery(notificationQueries.inbox());
   const inbox = held.data ?? NOTHING_WAITING;
+
+  useDeviceNotifications({
+    notifications: inbox.notifications,
+    unread: inbox.unread,
+    onOpen: (link) => {
+      if (link !== null) {
+        window.location.assign(link);
+      }
+    },
+  });
 
   const howToPush = useQuery(notificationQueries.settings());
   const pushKey = howToPush.data?.pushPublicKey ?? '';

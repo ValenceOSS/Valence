@@ -47,6 +47,10 @@ const EnvSchema = z.object({
     .transform((value) => value === 'true'),
   AUTH_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().default(60),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(60),
+  ANNOUNCE_ON_NETWORK: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
 });
 
 type Env = z.infer<typeof EnvSchema>;

@@ -261,7 +261,7 @@ const MediaRequestsPanel = () => {
               </Badge>
 
               {badge.detail === null ? null : (
-                <span className="break-all text-xs text-text-muted">{badge.detail}</span>
+                <span className="break-words text-xs text-text-muted">{badge.detail}</span>
               )}
             </span>
           );

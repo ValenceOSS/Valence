@@ -28,6 +28,7 @@ const WatchPage = () => {
     title,
     known,
     progress,
+    isProgressReady,
     reportProgress,
     readProgress,
     startOverride,
@@ -119,6 +120,10 @@ const WatchPage = () => {
   );
 
   if (playing === null) {
+    return <SplashScreen name={title} label={`Loading ${title}`} />;
+  }
+
+  if (!isProgressReady && startOverride?.mediaId !== playing.id) {
     return <SplashScreen name={title} label={`Loading ${title}`} />;
   }
 

@@ -275,135 +275,137 @@ const LibraryBrowser = ({
   const hasSheet = hasHero && heroItems.length > 0;
 
   return (
-    <motion.div
-      variants={staggerVariants}
-      initial="hidden"
-      animate="shown"
-      exit="gone"
-      className="flex flex-col gap-8"
-    >
+    <>
       <BackToTop />
 
-      {hasSheet ? (
-        <Hero
-          items={heroPicks}
-          staysBehind
-          onPlay={(media, startSeconds) => {
-            if (onWatch === undefined) {
-              onPlay(media);
-            } else {
-              onWatch(media, startSeconds);
-            }
-          }}
-          resumeFor={(mediaId) => resumeFor(progress, mediaId)}
-          onInspect={(media) => {
-            if (media.seriesId !== null && onShow !== undefined) {
-              onShow(media.seriesId);
-
-              return;
-            }
-
-            onPlay(media);
-          }}
-          {...(onFeatureChange === undefined ? {} : { onFeatureChange })}
-          {...(onPalette === undefined ? {} : { onPalette })}
-        />
-      ) : null}
-
-      <section
-        {...(hasSheet ? { 'data-meets-bar': '' } : {})}
-        className={cn(
-          'flex flex-col gap-5 px-4 sm:px-6',
-          hasSheet
-            ? 'valence-sheet relative z-10 min-h-[calc(100svh-var(--nav-clearance,0px))] pb-16 pt-8'
-            : '',
-        )}
+      <motion.div
+        variants={staggerVariants}
+        initial="hidden"
+        animate="shown"
+        exit="gone"
+        className="flex flex-col gap-8"
       >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={appliedSearch}
-            variants={staggerVariants}
-            initial="hidden"
-            animate="shown"
-            exit="gone"
-          >
-            {rails.length === 0 ? (
-              <EmptyLibrary
-                search={appliedSearch}
-                libraryName={null}
-                hasContentElsewhere={heroItems.length > 0}
-                canManage={onAddLibrary !== undefined}
-                {...(onAddLibrary === undefined ? {} : { onManage: onAddLibrary })}
-              />
-            ) : (
-              <div className="flex flex-col gap-10">
-                {isHome && onShow !== undefined ? <ComingUp onOpenShow={onShow} /> : null}
+        {hasSheet ? (
+          <Hero
+            items={heroPicks}
+            staysBehind
+            onPlay={(media, startSeconds) => {
+              if (onWatch === undefined) {
+                onPlay(media);
+              } else {
+                onWatch(media, startSeconds);
+              }
+            }}
+            resumeFor={(mediaId) => resumeFor(progress, mediaId)}
+            onInspect={(media) => {
+              if (media.seriesId !== null && onShow !== undefined) {
+                onShow(media.seriesId);
 
-                {rails.map(({ showOf, ...rail }) => (
-                  <Rail
-                    key={rail.id}
-                    title={rail.title}
-                    sizesCards
-                    className="-mx-4 sm:-mx-6"
-                    {...(showOf === undefined || onOpenShow === undefined
-                      ? {}
-                      : {
-                          onOpenTitle: () => {
-                            onOpenShow(showOf);
-                          },
-                        })}
-                  >
-                    {rail.items.map((media, at) => (
-                      <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
-                        <RailCard
-                          media={media}
-                          {...(progress.has(media.id)
-                            ? {
-                                watchedFraction: watchedFraction(
-                                  progress.get(media.id) ?? {
-                                    mediaId: media.id,
-                                    positionSeconds: 0,
-                                    durationSeconds: media.durationSeconds,
-                                    isFinished: false,
-                                    updatedAt: media.addedAt,
-                                  },
-                                ),
+                return;
+              }
+
+              onPlay(media);
+            }}
+            {...(onFeatureChange === undefined ? {} : { onFeatureChange })}
+            {...(onPalette === undefined ? {} : { onPalette })}
+          />
+        ) : null}
+
+        <section
+          {...(hasSheet ? { 'data-meets-bar': '' } : {})}
+          className={cn(
+            'flex flex-col gap-5 px-4 sm:px-6',
+            hasSheet
+              ? 'valence-sheet relative z-10 min-h-[calc(100svh-var(--nav-clearance,0px))] pb-16 pt-8'
+              : '',
+          )}
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={appliedSearch}
+              variants={staggerVariants}
+              initial="hidden"
+              animate="shown"
+              exit="gone"
+            >
+              {rails.length === 0 ? (
+                <EmptyLibrary
+                  search={appliedSearch}
+                  libraryName={null}
+                  hasContentElsewhere={heroItems.length > 0}
+                  canManage={onAddLibrary !== undefined}
+                  {...(onAddLibrary === undefined ? {} : { onManage: onAddLibrary })}
+                />
+              ) : (
+                <div className="flex flex-col gap-10">
+                  {isHome && onShow !== undefined ? <ComingUp onOpenShow={onShow} /> : null}
+
+                  {rails.map(({ showOf, ...rail }) => (
+                    <Rail
+                      key={rail.id}
+                      title={rail.title}
+                      sizesCards
+                      className="-mx-4 sm:-mx-6"
+                      {...(showOf === undefined || onOpenShow === undefined
+                        ? {}
+                        : {
+                            onOpenTitle: () => {
+                              onOpenShow(showOf);
+                            },
+                          })}
+                    >
+                      {rail.items.map((media, at) => (
+                        <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
+                          <RailCard
+                            media={media}
+                            {...(progress.has(media.id)
+                              ? {
+                                  watchedFraction: watchedFraction(
+                                    progress.get(media.id) ?? {
+                                      mediaId: media.id,
+                                      positionSeconds: 0,
+                                      durationSeconds: media.durationSeconds,
+                                      isFinished: false,
+                                      updatedAt: media.addedAt,
+                                    },
+                                  ),
+                                }
+                              : {})}
+                            {...(resumeFor(progress, media.id) === null
+                              ? {}
+                              : { resumeSeconds: Math.floor(resumeFor(progress, media.id) ?? 0) })}
+                            onPlay={(media, startSeconds) => {
+                              if (onWatch === undefined) {
+                                onPlay(media);
+
+                                return;
                               }
-                            : {})}
-                          {...(resumeFor(progress, media.id) === null
-                            ? {}
-                            : { resumeSeconds: Math.floor(resumeFor(progress, media.id) ?? 0) })}
-                          onPlay={(media, startSeconds) => {
-                            if (onWatch === undefined) {
-                              onPlay(media);
 
-                              return;
-                            }
+                              onWatch(media, startSeconds);
+                            }}
+                            onInspect={onPlay}
+                            {...(onOpenShow === undefined ? {} : { onOpenShow })}
+                            {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}
+                            {...(onToggleKept === undefined ? {} : { onToggleKept })}
+                            {...(onHide === undefined ? {} : { onHide })}
+                          />
+                        </RevealItem>
+                      ))}
+                    </Rail>
+                  ))}
 
-                            onWatch(media, startSeconds);
-                          }}
-                          onInspect={onPlay}
-                          {...(onOpenShow === undefined ? {} : { onOpenShow })}
-                          {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}
-                          {...(onToggleKept === undefined ? {} : { onToggleKept })}
-                          {...(onHide === undefined ? {} : { onHide })}
-                        />
-                      </RevealItem>
-                    ))}
-                  </Rail>
-                ))}
-
-                {isHome && hasMore ? (
-                  <div ref={setEnd} className="flex h-16 items-center justify-center">
-                    {isReadingMore ? <Spinner size="sm" label="Finding more to watch" /> : null}
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </section>
-    </motion.div>
+                  {isHome && hasMore ? (
+                    <div ref={setEnd} className="flex h-16 items-center justify-center">
+                      {isReadingMore ? <Spinner size="sm" label="Finding more to watch" /> : null}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </section>
+      </motion.div>
+    </>
   );
 };
 

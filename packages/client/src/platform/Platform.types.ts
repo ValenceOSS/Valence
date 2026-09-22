@@ -23,6 +23,20 @@ type Reachability = {
   whenChanged: (listener: (isReachable: boolean) => void) => () => void;
 };
 
+type BuildInfo = {
+  version: string;
+  commit: string;
+  arch: string;
+  electron: string;
+  chrome: string;
+};
+
+type LocalNotice = {
+  title: string;
+  body: string;
+  onOpen?: () => void;
+};
+
 type Platform = {
   store: DeviceStore;
   serverAddress: () => string | null;
@@ -33,6 +47,9 @@ type Platform = {
   held: HeldFiles;
   reachability: Reachability;
   openSocket: Connect;
+  buildInfo: () => BuildInfo | null;
+  notifyLocally: (notice: LocalNotice) => void;
+  setUnreadBadge: (count: number) => void;
 };
 
-export type { ClientKind, DeviceStore, HeldFiles, Platform, Reachability };
+export type { BuildInfo, ClientKind, DeviceStore, HeldFiles, LocalNotice, Platform, Reachability };

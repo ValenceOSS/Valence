@@ -85,6 +85,9 @@ beforeEach(() => {
     reachability: alwaysReachable(),
     thisClientId: () => 'a-client',
     openSocket: () => ({ send: () => {}, close: () => {} }),
+    buildInfo: () => null,
+    notifyLocally: () => {},
+    setUnreadBadge: () => {},
   });
 });
 

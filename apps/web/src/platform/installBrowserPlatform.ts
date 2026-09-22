@@ -10,6 +10,11 @@ import { openRealtimeSocket } from '@ValenceWeb/realtime/openRealtimeSocket';
 /**
  * Tells the application it is running in a browser, which is the first thing that has to happen —
  * before anything reads a preference or says who is watching.
+ *
+ * A browser answers nothing about notifying locally or badging itself: a tab already has the real
+ * mechanism for both, a service worker's own push event and (where a browser offers it) the Badging
+ * API, and a second notification fired from the page itself would only ever be a duplicate of one
+ * the worker already showed.
  */
 const installBrowserPlatform = (): void => {
   installPlatform({
@@ -22,6 +27,9 @@ const installBrowserPlatform = (): void => {
     held: noFilesAreKept(),
     reachability: theBrowsersReach(),
     openSocket: openRealtimeSocket,
+    buildInfo: () => null,
+    notifyLocally: () => {},
+    setUnreadBadge: () => {},
   });
 };
 
