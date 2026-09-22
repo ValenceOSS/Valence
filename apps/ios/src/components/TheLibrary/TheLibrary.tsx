@@ -13,6 +13,9 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { CarryOn } from '@ValencePhone/components/TheLibrary/components/CarryOn/CarryOn';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
+import { TextField } from '@ValencePhone/components/TextField/TextField';
+import { TheResults } from '@ValencePhone/components/TheLibrary/components/TheResults/TheResults';
+import { useSettled } from '@ValencePhone/components/TheLibrary/useSettled';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheLibraryProps } from './TheLibrary.types';
@@ -24,6 +27,8 @@ const theFractionOf = (progress: WatchProgress | undefined): number =>
 const AS_MANY_AS_A_ROW_HOLDS = 20;
 
 const WHAT_A_PHONE_PLAYS: ReadonlySet<string> = new Set(['movies', 'shows']);
+
+const HOLD_STILL_FOR = 250;
 
 const styles = StyleSheet.create({
   shelf: { flexDirection: 'row', flexWrap: 'wrap', gap: 18 },
@@ -38,6 +43,9 @@ const styles = StyleSheet.create({
  * Which library is showing is held here rather than asked of the server, and the first one is
  * chosen as soon as the list arrives: a phone opening on a list of library names asks somebody to
  * make a choice before showing them anything, and the answer is almost always the first one.
+ *
+ * Searching replaces everything below the box with what was found, across every library rather
+ * than the one showing, and puts it all back when the box is cleared.
  *
  * Only libraries a phone can play are offered. Music and books have players of their own that
  * this client does not have yet, and a tab of albums that open in a film player is worse than no
@@ -60,6 +68,8 @@ const TheLibrary = ({ onLookAt, onLookAtShow, onOut }: TheLibraryProps) => {
   const watched = useQuery(viewingQueries.progress());
   const colours = useTheColours();
   const [chosen, setChosen] = useState<string | null>(null);
+  const [typed, setTyped] = useState('');
+  const searchingFor = useSettled(typed.trim(), HOLD_STILL_FOR);
   const showing = chosen ?? libraries.data?.[0]?.id ?? null;
   const isProgrammes =
     (libraries.data ?? []).find((library) => library.id === showing)?.kind === 'shows';
@@ -91,59 +101,82 @@ const TheLibrary = ({ onLookAt, onLookAtShow, onOut }: TheLibraryProps) => {
 
       {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
 
-      <CarryOn
-        items={[...(carryingOn.data ?? [])].sort(byLastWatched(howFar))}
-        howFarThrough={(mediaId) => theFractionOf(howFar.get(mediaId))}
-        onLookAt={onLookAt}
+      <TextField
+        label="Search"
+        value={typed}
+        onValueChange={setTyped}
+        placeholder="Search"
+        keyboard="search"
       />
 
-      <SegmentedRow
-        label="Library"
-        items={(libraries.data ?? []).map((library) => ({ id: library.id, label: library.name }))}
-        value={showing}
-        onSelect={setChosen}
-      />
+      {searchingFor === '' ? (
+        <>
+          <CarryOn
+            items={[...(carryingOn.data ?? [])].sort(byLastWatched(howFar))}
+            howFarThrough={(mediaId) => theFractionOf(howFar.get(mediaId))}
+            onLookAt={onLookAt}
+          />
 
-      {isWaiting && showing !== null ? <ActivityIndicator color={colours.textMuted} /> : null}
+          <SegmentedRow
+            label="Library"
+            items={(libraries.data ?? []).map((library) => ({
+              id: library.id,
+              label: library.name,
+            }))}
+            value={showing}
+            onSelect={setChosen}
+          />
 
-      {isEmpty ? <Words tone="muted">Nothing in here yet.</Words> : null}
+          {isWaiting && showing !== null ? <ActivityIndicator color={colours.textMuted} /> : null}
 
-      <View style={styles.shelf}>
-        {(isProgrammes ? (programmes.data ?? []) : []).map((programme) => (
-          <Button
-            key={programme.id}
-            tone="bare"
-            label={programme.title}
-            onPress={() => {
-              onLookAtShow(programme.libraryId, programme.id);
-            }}
-          >
-            <APoster
-              title={programme.title}
-              year={programme.year ?? null}
-              artwork={onThisServer(`/api/media/${programme.coverMediaId}/image/poster`)}
-            />
-          </Button>
-        ))}
+          {isEmpty ? <Words tone="muted">Nothing in here yet.</Words> : null}
 
-        {(isProgrammes ? [] : (page.data?.items ?? [])).map((media) => (
-          <Button
-            key={media.id}
-            tone="bare"
-            label={media.title}
-            onPress={() => {
-              onLookAt(media.id);
-            }}
-          >
-            <APoster
-              title={media.title}
-              year={media.year}
-              artwork={theArtworkFor(media)}
-              watched={theFractionOf(howFar.get(media.id))}
-            />
-          </Button>
-        ))}
-      </View>
+          <View style={styles.shelf}>
+            {(isProgrammes ? (programmes.data ?? []) : []).map((programme) => (
+              <Button
+                key={programme.id}
+                tone="bare"
+                label={programme.title}
+                onPress={() => {
+                  onLookAtShow(programme.libraryId, programme.id);
+                }}
+              >
+                <APoster
+                  title={programme.title}
+                  year={programme.year ?? null}
+                  artwork={onThisServer(`/api/media/${programme.coverMediaId}/image/poster`)}
+                />
+              </Button>
+            ))}
+
+            {(isProgrammes ? [] : (page.data?.items ?? [])).map((media) => (
+              <Button
+                key={media.id}
+                tone="bare"
+                label={media.title}
+                onPress={() => {
+                  onLookAt(media.id);
+                }}
+              >
+                <APoster
+                  title={media.title}
+                  year={media.year}
+                  artwork={theArtworkFor(media)}
+                  watched={theFractionOf(howFar.get(media.id))}
+                />
+              </Button>
+            ))}
+          </View>
+        </>
+      ) : (
+        <TheResults
+          asked={searchingFor}
+          libraryIds={(libraries.data ?? []).map((library) => library.id)}
+          howFarThrough={(mediaId) => theFractionOf(howFar.get(mediaId))}
+          onLookAt={onLookAt}
+          onLookAtShow={onLookAtShow}
+        />
+      )}
 
       <Button tone="quiet" onPress={onOut}>
         Sign out

@@ -351,4 +351,33 @@ describe('TheLibrary', () => {
     expect(drawn.queryByText('Music')).toBeNull();
     expect(drawn.queryByText('Books')).toBeNull();
   });
+
+  it('shows what was searched for in place of the shelf', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest
+      .mocked(fetchLibraryItems)
+      .mockImplementation((_library, options) =>
+        Promise.resolve(
+          options?.search === 'Arrival'
+            ? { items: [aTitle('Arrival')], total: 1 }
+            : { items: [aTitle('Heat')], total: 1 },
+        ),
+      );
+
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Heat')).toBeTruthy();
+    });
+
+    await userEvent.type(drawn.getByLabelText('Search'), 'Arrival');
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
+    });
+
+    expect(drawn.queryByLabelText('Heat')).toBeNull();
+  });
 });

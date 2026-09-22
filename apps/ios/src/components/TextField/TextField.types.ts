@@ -4,7 +4,7 @@ type TextFieldProps = {
   onValueChange: (value: string) => void;
   placeholder?: string;
   isSecret?: boolean;
-  keyboard?: 'default' | 'url';
+  keyboard?: 'default' | 'url' | 'search';
   onSubmit?: () => void;
 };
 

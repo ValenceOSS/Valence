@@ -37,6 +37,8 @@ const TextField = ({
       autoCapitalize="none"
       autoCorrect={false}
       keyboardType={keyboard === 'url' ? 'url' : 'default'}
+      returnKeyType={keyboard === 'search' ? 'search' : 'default'}
+      clearButtonMode={keyboard === 'search' ? 'while-editing' : 'never'}
       onChangeText={onValueChange}
       placeholderTextColor={colours.textMuted}
       secureTextEntry={isSecret}
