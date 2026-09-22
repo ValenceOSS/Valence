@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
+import { theArtworkFor } from '@ValencePhone/components/APoster/theArtworkFor';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Words } from '@ValencePhone/components/Words/Words';
 import type { CarryOnProps } from './CarryOn.types';
@@ -46,7 +47,12 @@ const CarryOn = ({ items, howFarThrough, onLookAt }: CarryOnProps) => {
               onLookAt(media.id);
             }}
           >
-            <APoster media={media} watched={howFarThrough(media.id)} />
+            <APoster
+              title={media.title}
+              year={media.year}
+              artwork={theArtworkFor(media)}
+              watched={howFarThrough(media.id)}
+            />
           </Button>
         ))}
       </ScrollView>

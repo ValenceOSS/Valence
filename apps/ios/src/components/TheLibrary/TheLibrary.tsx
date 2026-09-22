@@ -7,6 +7,8 @@ import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { byLastWatched } from '@ValenceClient/playback/byLastWatched';
 import { isWorthResuming, watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
+import { theArtworkFor } from '@ValencePhone/components/APoster/theArtworkFor';
+import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { CarryOn } from '@ValencePhone/components/TheLibrary/components/CarryOn/CarryOn';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
@@ -35,16 +37,34 @@ const styles = StyleSheet.create({
  * chosen as soon as the list arrives: a phone opening on a list of library names asks somebody to
  * make a choice before showing them anything, and the answer is almost always the first one.
  *
+ * A library of programmes is drawn a programme to a card rather than an episode to a card. A
+ * series of ten seasons is otherwise two hundred posters of the same picture, and the one somebody
+ * wanted is somewhere in the middle of them.
+ *
  * @param onLookAt - Told which title somebody wants to see more of.
+ * @param onLookAtShow - Told which programme, in which library.
  * @param onOut - Told once somebody has signed out.
  */
-const TheLibrary = ({ onLookAt, onOut }: TheLibraryProps) => {
+const TheLibrary = ({ onLookAt, onLookAtShow, onOut }: TheLibraryProps) => {
   const libraries = useQuery(libraryQueries.all());
   const watched = useQuery(viewingQueries.progress());
   const colours = useTheColours();
   const [chosen, setChosen] = useState<string | null>(null);
   const showing = chosen ?? libraries.data?.[0]?.id ?? null;
-  const page = useQuery(libraryQueries.items(showing));
+  const isProgrammes =
+    (libraries.data ?? []).find((library) => library.id === showing)?.kind === 'shows';
+  const page = useQuery({
+    ...libraryQueries.items(showing),
+    enabled: showing !== null && !isProgrammes,
+  });
+  const programmes = useQuery({
+    ...libraryQueries.shows(showing),
+    enabled: showing !== null && isProgrammes,
+  });
+  const isWaiting = isProgrammes ? programmes.isPending : page.isPending;
+  const isEmpty = isProgrammes
+    ? programmes.data !== undefined && programmes.data.length === 0
+    : page.data !== undefined && page.data.items.length === 0;
   const howFar = byMediaId(watched.data ?? []);
   const unfinished = (watched.data ?? []).filter(isWorthResuming).map((one) => one.mediaId);
   const carryingOn = useQuery({
@@ -74,14 +94,29 @@ const TheLibrary = ({ onLookAt, onOut }: TheLibraryProps) => {
         onSelect={setChosen}
       />
 
-      {page.isPending && showing !== null ? <ActivityIndicator color={colours.textMuted} /> : null}
+      {isWaiting && showing !== null ? <ActivityIndicator color={colours.textMuted} /> : null}
 
-      {page.data !== undefined && page.data.items.length === 0 ? (
-        <Words tone="muted">Nothing in here yet.</Words>
-      ) : null}
+      {isEmpty ? <Words tone="muted">Nothing in here yet.</Words> : null}
 
       <View style={styles.shelf}>
-        {(page.data?.items ?? []).map((media) => (
+        {(isProgrammes ? (programmes.data ?? []) : []).map((programme) => (
+          <Button
+            key={programme.id}
+            tone="bare"
+            label={programme.title}
+            onPress={() => {
+              onLookAtShow(programme.libraryId, programme.id);
+            }}
+          >
+            <APoster
+              title={programme.title}
+              year={programme.year ?? null}
+              artwork={onThisServer(`/api/media/${programme.coverMediaId}/image/poster`)}
+            />
+          </Button>
+        ))}
+
+        {(isProgrammes ? [] : (page.data?.items ?? [])).map((media) => (
           <Button
             key={media.id}
             tone="bare"
@@ -90,7 +125,12 @@ const TheLibrary = ({ onLookAt, onOut }: TheLibraryProps) => {
               onLookAt(media.id);
             }}
           >
-            <APoster media={media} watched={theFractionOf(howFar.get(media.id))} />
+            <APoster
+              title={media.title}
+              year={media.year}
+              artwork={theArtworkFor(media)}
+              watched={theFractionOf(howFar.get(media.id))}
+            />
           </Button>
         ))}
       </View>

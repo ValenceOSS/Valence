@@ -1,7 +1,7 @@
-import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-
 type APosterProps = {
-  media: MediaSummary;
+  title: string;
+  year?: number | null;
+  artwork: string | null;
   watched?: number;
 };
 

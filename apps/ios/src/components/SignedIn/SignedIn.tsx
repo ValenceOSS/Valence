@@ -5,6 +5,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { signOut } from '@ValenceClient/session/auth';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
+import { AShow } from '@ValencePhone/components/AShow/AShow';
 import { ATitle } from '@ValencePhone/components/ATitle/ATitle';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { TheLibrary } from '@ValencePhone/components/TheLibrary/TheLibrary';
@@ -12,8 +13,8 @@ import { Watching } from '@ValencePhone/components/Watching/Watching';
 import type { SignedInProps } from './SignedIn.types';
 
 /**
- * What a phone shows once somebody is through: the library, a title out of it, or that title
- * playing.
+ * What a phone shows once somebody is through: the library, a title or a programme out of it, or
+ * something playing.
  *
  * Where they are is held here rather than in an address, because a phone has no address bar and
  * three screens do not need a router to tell them apart. It will when there are more.
@@ -37,6 +38,7 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   useEffect(() => watchPresence(), []);
   const cache = useQueryClient();
   const [looking, setLooking] = useState<string | null>(null);
+  const [programme, setProgramme] = useState<{ libraryId: string; showId: string } | null>(null);
   const [watching, setWatching] = useState<{ mediaId: string; startSeconds: number } | null>(null);
 
   if (session.isPending) {
@@ -60,6 +62,21 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     );
   }
 
+  if (programme !== null) {
+    return (
+      <AShow
+        libraryId={programme.libraryId}
+        showId={programme.showId}
+        onWatch={(mediaId, startSeconds) => {
+          setWatching({ mediaId, startSeconds });
+        }}
+        onBack={() => {
+          setProgramme(null);
+        }}
+      />
+    );
+  }
+
   if (looking !== null) {
     return (
       <ATitle
@@ -77,6 +94,9 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   return (
     <TheLibrary
       onLookAt={setLooking}
+      onLookAtShow={(libraryId, showId) => {
+        setProgramme({ libraryId, showId });
+      }}
       onOut={() => {
         void signOut().then(onOut);
       }}

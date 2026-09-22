@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
-import { theArtworkFor } from '@ValencePhone/components/APoster/theArtworkFor';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { APosterProps } from './APoster.types';
@@ -29,13 +28,17 @@ const styles = StyleSheet.create({
  * How far through it somebody is, is drawn as a line across the foot and said out loud as a
  * percentage, because a line is nothing to anybody who cannot see it.
  *
- * @param media - The title to draw.
+ * It draws what it is given rather than working it out from a film, so a programme — which has no
+ * file of its own and borrows its picture from an episode — is drawn by the same thing.
+ *
+ * @param title - What it is called.
+ * @param year - When it came out, where that is known.
+ * @param artwork - Where its picture is, or nothing where it has none.
  * @param watched - How much of it has been seen, as a fraction, where any of it has.
  */
-const APoster = ({ media, watched = 0 }: APosterProps) => {
+const APoster = ({ title, year = null, artwork, watched = 0 }: APosterProps) => {
   const [isMissing, setIsMissing] = useState(false);
   const colours = useTheColours();
-  const artwork = theArtworkFor(media);
 
   return (
     <View style={styles.whole}>
@@ -43,7 +46,7 @@ const APoster = ({ media, watched = 0 }: APosterProps) => {
         {artwork === null || isMissing ? (
           <View style={[styles.tile, styles.standIn]}>
             <Words size="small" tone="muted" lines={4}>
-              {media.title}
+              {title}
             </Words>
           </View>
         ) : (
@@ -62,7 +65,7 @@ const APoster = ({ media, watched = 0 }: APosterProps) => {
             style={[styles.howFar, { backgroundColor: colours.border }]}
             accessible
             accessibilityRole="progressbar"
-            accessibilityLabel={`How far through ${media.title}`}
+            accessibilityLabel={`How far through ${title}`}
             accessibilityValue={{ min: 0, max: 100, now: Math.round(watched * 100) }}
           >
             <View style={{ backgroundColor: colours.accent, flex: watched }} />
@@ -72,12 +75,12 @@ const APoster = ({ media, watched = 0 }: APosterProps) => {
       </View>
 
       <Words size="small" lines={2}>
-        {media.title}
+        {title}
       </Words>
 
-      {media.year === null ? null : (
+      {year === null ? null : (
         <Words size="small" tone="muted">
-          {media.year}
+          {year}
         </Words>
       )}
     </View>

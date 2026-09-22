@@ -4,11 +4,13 @@ import { forgetPlatform, installPlatform } from '@ValenceClient/platform/install
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { fetchLibraries, fetchLibraryItems } from '@ValenceClient/library/fetchLibrary';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
+import { fetchShows } from '@ValenceClient/library/fetchShows';
 import { TheLibrary } from './TheLibrary';
 import type { ReactNode } from 'react';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 
 jest.mock('@ValenceClient/library/fetchLibrary');
+jest.mock('@ValenceClient/library/fetchShows');
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/watchProgress'),
   fetchWatchProgress: jest.fn(),
@@ -56,6 +58,7 @@ beforeEach(() => {
   jest.mocked(fetchLibraries).mockReset();
   jest.mocked(fetchLibraryItems).mockReset();
   jest.mocked(fetchWatchProgress).mockReset().mockResolvedValue([]);
+  jest.mocked(fetchShows).mockReset().mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -69,7 +72,9 @@ describe('TheLibrary', () => {
       .mockResolvedValue([aLibrary('one', 'Films'), aLibrary('two', 'Shows')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
-    await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+    await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith('one', expect.anything());
@@ -80,7 +85,9 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
-    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
 
     await waitFor(() => {
       expect(drawn.getAllByText('Arrival').length).toBeGreaterThan(0);
@@ -93,7 +100,9 @@ describe('TheLibrary', () => {
       .mockResolvedValue([aLibrary('one', 'Films'), aLibrary('two', 'Shows')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
-    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
 
     await waitFor(() => {
       expect(drawn.getByText('Shows')).toBeTruthy();
@@ -110,7 +119,9 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
-    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
 
     await waitFor(() => {
       expect(drawn.getByText('Nothing in here yet.')).toBeTruthy();
@@ -121,7 +132,9 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraries).mockRejectedValue(new Error('refused'));
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
-    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
 
     await waitFor(() => {
       expect(drawn.getByText('Those could not be read.')).toBeTruthy();
@@ -133,7 +146,9 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
     const onOut = jest.fn();
-    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={onOut} />));
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={onOut} />),
+    );
 
     await userEvent.press(drawn.getByText('Sign out'));
 
@@ -145,7 +160,9 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
     const onLookAt = jest.fn();
-    const drawn = await render(around(<TheLibrary onLookAt={onLookAt} onOut={jest.fn()} />));
+    const drawn = await render(
+      around(<TheLibrary onLookAt={onLookAt} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
 
     await waitFor(() => {
       expect(drawn.getByLabelText('Arrival')).toBeTruthy();
@@ -169,7 +186,9 @@ describe('TheLibrary', () => {
       },
     ]);
 
-    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
 
     await waitFor(() => {
       expect(
@@ -182,7 +201,9 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
-    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
 
     await waitFor(() => {
       expect(drawn.getByLabelText('Arrival')).toBeTruthy();
@@ -204,7 +225,9 @@ describe('TheLibrary', () => {
       },
     ]);
 
-    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
 
     await waitFor(() => {
       expect(drawn.getByText('Continue watching')).toBeTruthy();
@@ -215,7 +238,9 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
-    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
 
     await waitFor(() => {
       expect(drawn.getByLabelText('Arrival')).toBeTruthy();
@@ -237,12 +262,71 @@ describe('TheLibrary', () => {
       },
     ]);
 
-    const drawn = await render(around(<TheLibrary onLookAt={jest.fn()} onOut={jest.fn()} />));
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
 
     await waitFor(() => {
       expect(drawn.getByLabelText('Arrival')).toBeTruthy();
     });
 
     expect(drawn.queryByText('Continue watching')).toBeNull();
+  });
+
+  it('draws a programme once, rather than once for every episode of it', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([{ ...aLibrary('one', 'Shows'), kind: 'shows' }]);
+    jest.mocked(fetchShows).mockResolvedValue([
+      {
+        id: 'severance',
+        libraryId: 'one',
+        title: 'Severance',
+        seasonCount: 2,
+        episodeCount: 19,
+        latestAddedAt: '2026-01-01T00:00:00.000Z',
+        coverMediaId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        seriesId: null,
+        year: 2022,
+      },
+    ]);
+
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getAllByText('Severance')).not.toHaveLength(0);
+    });
+
+    expect(fetchLibraryItems).not.toHaveBeenCalled();
+  });
+
+  it('opens the programme that was pressed', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([{ ...aLibrary('one', 'Shows'), kind: 'shows' }]);
+    jest.mocked(fetchShows).mockResolvedValue([
+      {
+        id: 'severance',
+        libraryId: 'one',
+        title: 'Severance',
+        seasonCount: 2,
+        episodeCount: 19,
+        latestAddedAt: '2026-01-01T00:00:00.000Z',
+        coverMediaId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        seriesId: null,
+        year: 2022,
+      },
+    ]);
+
+    const onLookAtShow = jest.fn();
+    const drawn = await render(
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={onLookAtShow} onOut={jest.fn()} />),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Severance')).toBeTruthy();
+    });
+
+    await userEvent.press(drawn.getByLabelText('Severance'));
+
+    expect(onLookAtShow).toHaveBeenCalledWith('one', 'severance');
   });
 });

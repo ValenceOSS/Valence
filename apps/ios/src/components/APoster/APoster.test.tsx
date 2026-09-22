@@ -2,6 +2,7 @@ import { render } from '@testing-library/react-native';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { APoster } from './APoster';
+import { theArtworkFor } from './theArtworkFor';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 const aTitle = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
@@ -30,39 +31,45 @@ afterEach(() => {
   forgetPlatform();
 });
 
+const asDrawn = (media: MediaSummary) => ({
+  title: media.title,
+  year: media.year,
+  artwork: theArtworkFor(media),
+});
+
 describe('APoster', () => {
   it('names the title', async () => {
-    const drawn = await render(<APoster media={aTitle()} />);
+    const drawn = await render(<APoster {...asDrawn(aTitle())} />);
 
     expect(drawn.getAllByText('Arrival').length).toBeGreaterThan(0);
   });
 
   it('says what year it is from', async () => {
-    const drawn = await render(<APoster media={aTitle()} />);
+    const drawn = await render(<APoster {...asDrawn(aTitle())} />);
 
     expect(drawn.getByText('2016')).toBeTruthy();
   });
 
   it('says nothing about a year nobody knows', async () => {
-    const drawn = await render(<APoster media={aTitle({ year: null })} />);
+    const drawn = await render(<APoster {...asDrawn(aTitle({ year: null }))} />);
 
     expect(drawn.queryByText('2016')).toBeNull();
   });
 
   it('stands the name in where there is no artwork', async () => {
-    const drawn = await render(<APoster media={aTitle({ hasPoster: false })} />);
+    const drawn = await render(<APoster {...asDrawn(aTitle({ hasPoster: false }))} />);
 
     expect(drawn.getAllByText('Arrival').length).toBe(2);
   });
 
   it('draws nothing across the foot of something nobody has started', async () => {
-    const drawn = await render(<APoster media={aTitle()} />);
+    const drawn = await render(<APoster {...asDrawn(aTitle())} />);
 
     expect(drawn.queryByRole('progressbar')).toBeNull();
   });
 
   it('says how far through it somebody is, rather than only drawing it', async () => {
-    const drawn = await render(<APoster media={aTitle()} watched={0.6} />);
+    const drawn = await render(<APoster {...asDrawn(aTitle())} watched={0.6} />);
 
     expect(
       drawn.getByRole('progressbar', { name: 'How far through Arrival', value: { now: 60 } }),
