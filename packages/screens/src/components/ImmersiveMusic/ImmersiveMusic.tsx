@@ -116,7 +116,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
               : { opacity: 0, scale: 1.02, transition: CLOSING }
           }
           transition={OPENING}
-          className="fixed inset-0 z-[35] overflow-hidden text-on-scrim"
+          className="fixed inset-x-0 bottom-0 top-[var(--valence-window-bar)] z-[35] overflow-hidden text-on-scrim"
         >
           <CoverGlow src={cover} className="absolute inset-0" />
 

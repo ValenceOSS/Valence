@@ -1,5 +1,7 @@
 const MARK = 'valenceDesktop';
 
+const PLATFORM = 'valencePlatform';
+
 /**
  * Marks a document as one this client is showing, as soon as there is a document to mark.
  *
@@ -11,13 +13,18 @@ const MARK = 'valenceDesktop';
  * So where the root is not there yet it is waited for rather than assumed. It arrives at the very
  * start of parsing, long before anything the server sent has run, which is what this has to beat.
  *
+ * The platform is marked alongside, because the window draws its own controls differently on each
+ * and the header has to leave room for whichever it drew.
+ *
  * @param within - The document to mark.
+ * @param platform - Which operating system the window is on.
  */
-const markTheDocument = (within: Document): void => {
+const markTheDocument = (within: Document, platform: string): void => {
   const root = within.querySelector('html');
 
   if (root !== null) {
     root.dataset[MARK] = 'true';
+    root.dataset[PLATFORM] = platform;
 
     return;
   }
@@ -30,6 +37,7 @@ const markTheDocument = (within: Document): void => {
     }
 
     arrived.dataset[MARK] = 'true';
+    arrived.dataset[PLATFORM] = platform;
     waiting.disconnect();
   });
 

@@ -51,7 +51,7 @@ const theWindowOffers = (found: string[]): void => {
       whenChanged: () => () => {},
     },
     reach: { now: () => true, whenChanged: () => () => {} },
-    servers: { alreadyFound: found, whenFound: () => () => {} },
+    servers: { alreadyFound: found, reach: () => Promise.resolve(true), whenFound: () => () => {} },
   };
 };
 

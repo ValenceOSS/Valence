@@ -2,7 +2,11 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { IpcRendererEvent } from 'electron';
 import { markTheDocument } from '@ValenceDesktop/preload/markTheDocument';
 import { z } from 'zod';
-import { FOUND_A_VALENCE, WHAT_WAS_FOUND } from '@ValenceDesktop/main/discoveryChannels';
+import {
+  FOUND_A_VALENCE,
+  IS_THIS_A_VALENCE,
+  WHAT_WAS_FOUND,
+} from '@ValenceDesktop/main/discoveryChannels';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import {
@@ -32,7 +36,7 @@ const alreadyFound = z.array(z.string()).catch([]).parse(ipcRenderer.sendSync(WH
 const canReachNow = (): boolean =>
   z.boolean().catch(true).parse(ipcRenderer.sendSync(CAN_REACH_NOW));
 
-markTheDocument(document);
+markTheDocument(document, process.platform);
 
 document.addEventListener('valence:change-server', () => {
   ipcRenderer.send(CHANGE_SERVER);
@@ -95,6 +99,11 @@ contextBridge.exposeInMainWorld('valence', {
   },
   servers: {
     alreadyFound,
+    reach: async (address: string): Promise<boolean> =>
+      z
+        .boolean()
+        .catch(false)
+        .parse(await ipcRenderer.invoke(IS_THIS_A_VALENCE, address)),
     whenFound: (listener: (address: string) => void) => {
       const told = (_event: IpcRendererEvent, address: string) => {
         listener(address);

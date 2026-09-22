@@ -13,6 +13,8 @@ const LOOK_AGAIN_EVERY_MS = 2000;
 
 const STOP_LOOKING_AFTER_MS = 60_000;
 
+const GIVE_ONE_NAMED_MILLISECONDS = 10_000;
+
 /**
  * Asks an address whether there is a Valence behind it.
  *
@@ -22,13 +24,17 @@ const STOP_LOOKING_AFTER_MS = 60_000;
  * the request for being somebody else's origin long before any server saw it.
  *
  * @param address - Where a Valence might be.
+ * @param allowMs - How long to wait for an answer.
  * @returns Whether one answered.
  */
-const isAValence = async (address: string): Promise<boolean> => {
+const isAValence = async (
+  address: string,
+  allowMs: number = GIVE_EACH_MILLISECONDS,
+): Promise<boolean> => {
   try {
     const answered = await net.fetch(`${address}/api/health`, {
       headers: { accept: 'application/json' },
-      signal: AbortSignal.timeout(GIVE_EACH_MILLISECONDS),
+      signal: AbortSignal.timeout(allowMs),
     });
 
     return answered.ok;
@@ -107,9 +113,11 @@ const keepLookingForAValence = (
 };
 
 export {
+  GIVE_ONE_NAMED_MILLISECONDS,
   LOOK_AGAIN_EVERY_MS,
   STOP_LOOKING_AFTER_MS,
   WHERE_ONE_USUALLY_IS,
+  isAValence,
   keepLookingForAValence,
   lookForAValence,
 };

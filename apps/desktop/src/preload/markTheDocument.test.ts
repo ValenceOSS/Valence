@@ -9,21 +9,29 @@ describe('markTheDocument', () => {
   it('marks a document that has already been parsed', () => {
     const within = document.implementation.createHTMLDocument();
 
-    markTheDocument(within);
+    markTheDocument(within, 'win32');
 
     expect(within.querySelector('html')?.dataset['valenceDesktop']).toBe('true');
   });
 
+  it('marks which platform the window is on, which decides where its controls are drawn', () => {
+    const within = document.implementation.createHTMLDocument();
+
+    markTheDocument(within, 'darwin');
+
+    expect(within.querySelector('html')?.dataset['valencePlatform']).toBe('darwin');
+  });
+
   it('does not throw where the page has not been parsed yet, which is when a preload runs', () => {
     expect(() => {
-      markTheDocument(anUnparsedDocument());
+      markTheDocument(anUnparsedDocument(), 'win32');
     }).not.toThrow();
   });
 
   it('marks the root once the parser puts one there', async () => {
     const within = anUnparsedDocument();
 
-    markTheDocument(within);
+    markTheDocument(within, 'win32');
 
     within.append(within.createElementNS(HTML, 'html'));
 
@@ -37,7 +45,7 @@ describe('markTheDocument', () => {
   it('stops watching once it has marked one, so nothing is left observing the document', async () => {
     const within = anUnparsedDocument();
 
-    markTheDocument(within);
+    markTheDocument(within, 'win32');
 
     within.append(within.createElementNS(HTML, 'html'));
 

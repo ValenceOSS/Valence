@@ -25,6 +25,7 @@ export default defineConfig({
     root: '.',
     resolve: { tsconfigPaths: true },
     plugins: [react(), tailwindcss()],
+    server: { hmr: { protocol: 'ws', host: 'localhost', port: 5174 } },
     build: { outDir: 'dist', target: 'chrome138', rollupOptions: { input: 'index.html' } },
   },
 });
