@@ -7,6 +7,7 @@
       "@ValenceDesktop/*": ["./apps/desktop/src/*"],
       "@ValenceDocs/*": ["./apps/docs/src/*"],
       "@ValenceLanding/*": ["./apps/landing/src/*"],
+      "@ValencePhone/*": ["./apps/ios/src/*"],
       "@ValenceSDK/*": ["./packages/plugin-sdk/src/*"],
       "@ValenceScreens/*": ["./packages/screens/src/*"],
       "@ValenceServer/*": ["./apps/server/src/*"],

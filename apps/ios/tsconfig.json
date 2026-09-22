@@ -1,0 +1,21 @@
+{
+  "extends": ["../../tsconfig.base.json", "../../tsconfig.paths.json"],
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2023"],
+    "types": ["react-native"]
+  },
+  "include": ["index.ts", "app.config.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "references": [
+    {
+      "path": "../../packages/client"
+    },
+    {
+      "path": "../../packages/contracts"
+    },
+    {
+      "path": "../../packages/core"
+    }
+  ]
+}
