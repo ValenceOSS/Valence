@@ -72,18 +72,18 @@ const TheLibrary = ({ onLookAt, onLookAtShow }: TheLibraryProps) => {
   const showing = chosen ?? libraries.data?.[0]?.id ?? null;
   const isProgrammes =
     (libraries.data ?? []).find((library) => library.id === showing)?.kind === 'shows';
-  const page = useQuery({
-    ...libraryQueries.items(showing),
+  const films = useQuery({
+    ...libraryQueries.everything(showing === null ? [] : [showing]),
     enabled: showing !== null && !isProgrammes,
   });
   const programmes = useQuery({
     ...libraryQueries.shows(showing),
     enabled: showing !== null && isProgrammes,
   });
-  const isWaiting = isProgrammes ? programmes.isPending : page.isPending;
+  const isWaiting = isProgrammes ? programmes.isPending : films.isPending;
   const isEmpty = isProgrammes
     ? programmes.data !== undefined && programmes.data.length === 0
-    : page.data !== undefined && page.data.items.length === 0;
+    : films.data !== undefined && films.data.length === 0;
   const howFar = byMediaId(watched.data ?? []);
   const unfinished = (watched.data ?? []).filter(isWorthResuming).map((one) => one.mediaId);
   const carryingOn = useQuery({
@@ -148,7 +148,7 @@ const TheLibrary = ({ onLookAt, onLookAtShow }: TheLibraryProps) => {
               </Button>
             ))}
 
-            {(isProgrammes ? [] : (page.data?.items ?? [])).map((media) => (
+            {(isProgrammes ? [] : (films.data ?? [])).map((media) => (
               <Button
                 key={media.id}
                 tone="bare"
