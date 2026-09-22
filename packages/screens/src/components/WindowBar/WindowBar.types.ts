@@ -1,5 +1,6 @@
 type WindowBarProps = {
-  height?: string;
+  updateVersion?: string;
+  onInstallUpdate?: () => void;
 };
 
 export type { WindowBarProps };

@@ -26,6 +26,14 @@ import {
   READ_EVERYTHING,
   WRITE_ONE,
 } from '@ValenceDesktop/main/preferenceChannels';
+import {
+  INSTALL_THE_UPDATE,
+  UPDATE_AVAILABLE,
+  WHAT_UPDATE_IS_KNOWN,
+} from '@ValenceDesktop/main/updateChannels';
+import { AvailableUpdateSchema } from '@ValenceDesktop/main/AvailableUpdateSchema';
+import type { AvailableUpdate } from '@ValenceDesktop/main/checkForUpdate';
+import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
 
 const HeldSchema = z.record(z.string(), z.string()).catch({});
 
@@ -33,8 +41,14 @@ const held = HeldSchema.parse(ipcRenderer.sendSync(READ_EVERYTHING));
 
 const alreadyFound = z.array(z.string()).catch([]).parse(ipcRenderer.sendSync(WHAT_WAS_FOUND));
 
+const alreadyAvailable = AvailableUpdateSchema.nullable()
+  .catch(null)
+  .parse(ipcRenderer.sendSync(WHAT_UPDATE_IS_KNOWN));
+
 const canReachNow = (): boolean =>
   z.boolean().catch(true).parse(ipcRenderer.sendSync(CAN_REACH_NOW));
+
+const thisVersion = z.string().catch('').parse(ipcRenderer.sendSync(WHAT_VERSION_THIS_IS));
 
 markTheDocument(document, process.platform);
 
@@ -96,6 +110,34 @@ contextBridge.exposeInMainWorld('valence', {
         ipcRenderer.removeListener(REACH_CHANGED, told);
       };
     },
+  },
+  update: {
+    alreadyAvailable,
+    whenAvailable: (listener: (update: AvailableUpdate) => void) => {
+      const told = (_event: IpcRendererEvent, update: JsonValue) => {
+        const parsed = AvailableUpdateSchema.safeParse(update);
+
+        if (parsed.success) {
+          listener(parsed.data);
+        }
+      };
+
+      ipcRenderer.on(UPDATE_AVAILABLE, told);
+
+      return () => {
+        ipcRenderer.removeListener(UPDATE_AVAILABLE, told);
+      };
+    },
+    install: () => {
+      ipcRenderer.send(INSTALL_THE_UPDATE);
+    },
+  },
+  about: {
+    version: thisVersion,
+    commit: __VALENCE_COMMIT__,
+    arch: process.arch,
+    electron: process.versions.electron,
+    chrome: process.versions.chrome,
   },
   servers: {
     alreadyFound,

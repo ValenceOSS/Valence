@@ -21,6 +21,7 @@ const installBrowserPlatform = (): void => {
     held: noFilesAreKept(),
     reachability: theBrowsersReach(),
     openSocket: openRealtimeSocket,
+    buildInfo: () => null,
   });
 };
 

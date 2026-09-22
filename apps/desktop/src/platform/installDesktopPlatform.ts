@@ -23,6 +23,7 @@ const installDesktopPlatform = (): void => {
     held: theDesktopsHeldFiles(),
     reachability: theDesktopsReach(),
     openSocket: theDesktopsSocket,
+    buildInfo: () => window.valence.about,
   });
 };
 
