@@ -15,11 +15,12 @@ type RequestCost = {
  * @param request - The request.
  * @returns How much arrived and how long the longest of it took, each null where nothing said.
  */
+const isGiven = (value: number | null | undefined): value is number =>
+  value !== null && value !== undefined;
+
 const costOfRequest = (request: Pick<MediaRequest, 'items'>): RequestCost => {
-  const sizes = request.items.map((item) => item.downloadedBytes).filter((bytes) => bytes !== null);
-  const waits = request.items
-    .map((item) => item.downloadSeconds)
-    .filter((seconds) => seconds !== null);
+  const sizes = request.items.map((item) => item.downloadedBytes).filter(isGiven);
+  const waits = request.items.map((item) => item.downloadSeconds).filter(isGiven);
 
   return {
     bytes: sizes.length === 0 ? null : sizes.reduce((total, bytes) => total + bytes, 0),
