@@ -16,6 +16,7 @@
     "plugins/**/*.ts",
     "jest-expo.d.ts",
     "react-native-cookies.d.ts",
+    "images.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx"
   ],

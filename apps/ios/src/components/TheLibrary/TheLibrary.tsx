@@ -13,6 +13,7 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { ACard } from '@ValencePhone/components/ACard/ACard';
+import { TheMark } from '@ValencePhone/components/TheMark/TheMark';
 import { TheFilters } from '@ValencePhone/components/TheLibrary/components/TheFilters/TheFilters';
 import { TheHome } from '@ValencePhone/components/TheLibrary/components/TheHome/TheHome';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
@@ -93,7 +94,7 @@ const TheLibrary = ({ onWatch, onLookAt, onLookAtShow }: TheLibraryProps) => {
 
   const header = (
     <>
-      <Words size="title">Library</Words>
+      <TheMark />
 
       {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
 
