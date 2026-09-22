@@ -47,13 +47,10 @@ const FOLDS_OVER = 550;
 
 const PARTS = 4;
 
-const PAST_THE_BARS = 1.35;
-
 const styles = StyleSheet.create({
   buttons: { flexDirection: 'row', gap: 10, marginTop: 8 },
   facts: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
-  pastTheBars: { transform: [{ scale: PAST_THE_BARS }] },
   foot: {
     bottom: 0,
     gap: 8,
@@ -91,9 +88,6 @@ const styles = StyleSheet.create({
  * blurred towards the foot where its logo, its facts and a few lines about it rise into view one
  * after another, with a way to play it and a way to read more. The lines about it fold away once
  * they have been read, and what is below them slides up into their place.
- *
- * The clip is drawn a little larger than the card, because a widescreen film is often kept in a
- * sixteen-by-nine frame with black bars above and below, which a tall card would otherwise show.
  *
  * The clip plays only while the title is the one showing, silent unless somebody turned the sound
  * on, which is remembered for the next.
@@ -263,7 +257,7 @@ const AFeature = ({
           {clip === null ? null : (
             <Animated.View style={[styles.fills, { opacity: showing }]}>
               <VideoView
-                style={[styles.fills, styles.pastTheBars]}
+                style={styles.fills}
                 player={player}
                 nativeControls={false}
                 contentFit="cover"
