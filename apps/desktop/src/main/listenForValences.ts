@@ -2,6 +2,7 @@ import { networkInterfaces } from 'node:os';
 import { Bonjour } from 'bonjour-service';
 import { VALENCE_SERVICE_TYPE } from '@ValenceContracts/constants/VALENCE_SERVICE_TYPE';
 import { isAValence } from '@ValenceDesktop/main/lookForAValence';
+import { nearbyValences } from '@ValenceClient/discovery/nearbyValences';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 
 const AN_IPV4_ADDRESS = /^\d{1,3}(?:\.\d{1,3}){3}$/u;
@@ -109,13 +110,7 @@ const listenForValences = ({
   ownAddresses = theseMachinesAddresses,
   browse = browseForValences,
 }: Listening): (() => void) => {
-  const heard = new Map<string, NearbyValence>();
-  const stillAnnounced = new Set<string>();
-
-  const tell = () => {
-    onChange([...heard.values()]);
-  };
-
+  const nearby = nearbyValences({ reach, onChange });
   const browsing = browse();
 
   browsing.whenUp((service) => {
@@ -129,30 +124,15 @@ const listenForValences = ({
     const isThisMachine = ownAddresses().has(where);
     const address = isThisMachine ? `http://localhost:${port}` : `http://${where}:${port}`;
 
-    stillAnnounced.add(service.name);
-
-    void reach(address).then((answered) => {
-      if (!answered || !stillAnnounced.has(service.name)) {
-        return;
-      }
-
-      if (isThisMachine) {
+    void nearby.arrived(service.name, address, !isThisMachine).then((answered) => {
+      if (answered && isThisMachine) {
         onThisMachine(address);
-
-        return;
       }
-
-      heard.set(service.name, { address, name: service.name });
-      tell();
     });
   });
 
   browsing.whenDown((service) => {
-    stillAnnounced.delete(service.name);
-
-    if (heard.delete(service.name)) {
-      tell();
-    }
+    nearby.left(service.name);
   });
 
   return () => {
