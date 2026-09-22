@@ -41,13 +41,18 @@ describe('installPhonePlatform', () => {
   });
 
   it('gives the phone an origin, so a path reaches the server', async () => {
-    const asked = jest.fn().mockResolvedValue(new Response('{}'));
+    const asked: string[] = [];
 
-    globalThis.fetch = asked;
+    globalThis.fetch = (input: string | Request | URL): Promise<Response> => {
+      asked.push(input instanceof Request ? input.url : String(input));
+
+      return Promise.resolve(new Response('{}'));
+    };
+
     installPhonePlatform(new Map([[THE_SERVER_ADDRESS, 'http://192.168.1.36:8420']]));
 
     await globalThis.fetch('/api/health');
 
-    expect(asked).toHaveBeenCalledWith('http://192.168.1.36:8420/api/health', undefined);
+    expect(asked[0]).toBe('http://192.168.1.36:8420/api/health');
   });
 });

@@ -2,6 +2,18 @@ import { giveThisPhoneAnOrigin } from './giveThisPhoneAnOrigin';
 import { THE_SERVER_ADDRESS } from './THE_SERVER_ADDRESS';
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
 
+type Asked = { url: string; init: RequestInit | undefined };
+
+const asked: Asked[] = [];
+
+const recording = (input: string | Request | URL, init?: RequestInit): Promise<Response> => {
+  asked.push({ url: input instanceof Request ? input.url : String(input), init });
+
+  return Promise.resolve(new Response('{}'));
+};
+
+const originOf = (at: number): string | null => new Headers(asked[at]?.init?.headers).get('origin');
+
 const aStore = (address: string | null): DeviceStore => {
   const held = new Map(address === null ? [] : [[THE_SERVER_ADDRESS, address]]);
 
@@ -16,69 +28,94 @@ const aStore = (address: string | null): DeviceStore => {
   };
 };
 
+const original = globalThis.fetch;
+
+beforeEach(() => {
+  asked.length = 0;
+  globalThis.fetch = recording;
+});
+
+afterEach(() => {
+  globalThis.fetch = original;
+});
+
 describe('giveThisPhoneAnOrigin', () => {
-  const original = globalThis.fetch;
-
-  afterEach(() => {
-    globalThis.fetch = original;
-  });
-
   it('sends a path to the server this phone watches', async () => {
-    const asked = jest.fn().mockResolvedValue(new Response('{}'));
-
-    globalThis.fetch = asked;
     giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
 
     await globalThis.fetch('/api/profiles/everyone');
 
-    expect(asked).toHaveBeenCalledWith('http://192.168.1.36:8420/api/profiles/everyone', undefined);
+    expect(asked[0]?.url).toBe('http://192.168.1.36:8420/api/profiles/everyone');
   });
 
   it('carries what the caller asked with', async () => {
-    const asked = jest.fn().mockResolvedValue(new Response('{}'));
-
-    globalThis.fetch = asked;
     giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
 
     await globalThis.fetch('/api/profiles', { method: 'POST' });
 
-    expect(asked).toHaveBeenCalledWith(expect.any(String), { method: 'POST' });
+    expect(asked[0]?.init).toMatchObject({ method: 'POST' });
+  });
+
+  it('keeps the headers the caller set', async () => {
+    giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
+
+    await globalThis.fetch('/api/profiles', { headers: { accept: 'application/json' } });
+
+    expect(new Headers(asked[0]?.init?.headers).get('accept')).toBe('application/json');
+  });
+
+  it('says the request came from the server, so signing out is not refused', async () => {
+    giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
+
+    await globalThis.fetch('/api/auth/sign-out', { method: 'POST' });
+
+    expect(originOf(0)).toBe('http://192.168.1.36:8420');
+  });
+
+  it('says where a request already built came from', async () => {
+    giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
+
+    const built = new Request('http://192.168.1.36:8420/api/auth/sign-out', { method: 'POST' });
+
+    await globalThis.fetch(built);
+
+    expect(built.headers.get('origin')).toBe('http://192.168.1.36:8420');
   });
 
   it('leaves a whole address where it was aimed', async () => {
-    const asked = jest.fn().mockResolvedValue(new Response('{}'));
-
-    globalThis.fetch = asked;
     giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
 
     await globalThis.fetch('https://images.example/poster.jpg');
 
-    expect(asked).toHaveBeenCalledWith('https://images.example/poster.jpg', undefined);
+    expect(asked[0]?.url).toBe('https://images.example/poster.jpg');
+  });
+
+  it('tells nothing aimed elsewhere where it came from', async () => {
+    giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
+
+    await globalThis.fetch('https://images.example/poster.jpg');
+
+    expect(originOf(0)).toBeNull();
   });
 
   it('asks again each time, so a different server is watched without a restart', async () => {
-    const asked = jest.fn().mockResolvedValue(new Response('{}'));
     const store = aStore('http://one.local:8420');
 
-    globalThis.fetch = asked;
     giveThisPhoneAnOrigin(store);
 
     await globalThis.fetch('/api/health');
     store.write(THE_SERVER_ADDRESS, 'http://two.local:8420');
     await globalThis.fetch('/api/health');
 
-    expect(asked).toHaveBeenNthCalledWith(1, 'http://one.local:8420/api/health', undefined);
-    expect(asked).toHaveBeenNthCalledWith(2, 'http://two.local:8420/api/health', undefined);
+    expect(asked[0]?.url).toBe('http://one.local:8420/api/health');
+    expect(asked[1]?.url).toBe('http://two.local:8420/api/health');
   });
 
   it('leaves a path alone before anybody has said where the server is', async () => {
-    const asked = jest.fn().mockResolvedValue(new Response('{}'));
-
-    globalThis.fetch = asked;
     giveThisPhoneAnOrigin(aStore(null));
 
     await globalThis.fetch('/api/health');
 
-    expect(asked).toHaveBeenCalledWith('/api/health', undefined);
+    expect(asked[0]?.url).toBe('/api/health');
   });
 });
