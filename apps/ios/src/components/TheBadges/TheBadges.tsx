@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { shortenedForAPhone } from '@ValencePhone/components/TheBadges/shortenedForAPhone';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheBadgesProps } from './TheBadges.types';
@@ -15,8 +16,9 @@ const styles = StyleSheet.create({
  *
  * @param badges - What to say.
  * @param isOnArtwork - Whether they sit on a picture, and so are drawn in white.
+ * @param isShort - Whether room is tight, and Dolby's formats go by their short names.
  */
-const TheBadges = ({ badges, isOnArtwork = false }: TheBadgesProps) => {
+const TheBadges = ({ badges, isOnArtwork = false, isShort = false }: TheBadgesProps) => {
   const colours = useTheColours();
 
   if (badges.length === 0) {
@@ -31,7 +33,7 @@ const TheBadges = ({ badges, isOnArtwork = false }: TheBadgesProps) => {
           style={[styles.badge, { borderColor: isOnArtwork ? ON_ARTWORK : colours.textMuted }]}
         >
           <Words size="small" tone={isOnArtwork ? 'onArtwork' : 'muted'}>
-            {badge}
+            {isShort ? shortenedForAPhone(badge) : badge}
           </Words>
         </View>
       ))}

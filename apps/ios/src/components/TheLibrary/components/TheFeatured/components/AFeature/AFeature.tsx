@@ -7,7 +7,7 @@ import { Info, Play, Volume2, VolumeX } from 'lucide-react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { readPreviewState } from '@ValenceClient/playback/readPreviewState';
 import { readSoundPreference, saveSoundPreference } from '@ValenceClient/playback/soundPreference';
-import { describeQualityBadges } from '@ValenceClient/library/describeQualityBadges';
+import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { AScrim } from '@ValencePhone/components/AScrim/AScrim';
 import { TheBadges } from '@ValencePhone/components/TheBadges/TheBadges';
 import { Button } from '@ValencePhone/components/Button/Button';
@@ -321,7 +321,8 @@ const AFeature = ({
             </Words>
             <TheBadges
               isOnArtwork
-              badges={describeQualityBadges({
+              isShort
+              badges={qualityBadges({
                 width: media.width,
                 height: media.height,
                 videoRange: media.videoRange,

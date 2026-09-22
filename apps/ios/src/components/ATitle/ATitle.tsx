@@ -6,7 +6,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
-import { describeQualityBadges } from '@ValenceClient/library/describeQualityBadges';
+import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useHidden } from '@ValenceClient/library/useHidden';
@@ -132,17 +132,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
 
       <Words tone="muted">{facts.join(' · ')}</Words>
 
-      <TheBadges
-        badges={describeQualityBadges(
-          {
-            width: title.width,
-            height: title.height,
-            videoRange: title.videoRange,
-            audioStreams: title.audioStreams,
-          },
-          true,
-        )}
-      />
+      <TheBadges badges={qualityBadges(title)} />
 
       {(metadata.genres ?? []).length === 0 ? null : (
         <Words size="small" tone="muted">
