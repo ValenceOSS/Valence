@@ -17,13 +17,22 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: The release tag to build, or leave empty to build the branch as it is
+        description: The release tag whose version to stamp on it, or leave empty for a development build
+        required: false
+        default: ''
+      ref:
+        description: Branch or commit to build the source from, where it should not be the tag itself
         required: false
         default: ''
   workflow_call:
     inputs:
       tag:
         description: The release tag to build
+        required: false
+        type: string
+        default: ''
+      ref:
+        description: Branch or commit to build the source from, where it should not be the tag itself
         required: false
         type: string
         default: ''
@@ -56,9 +65,12 @@ jobs:
             flags: --linux --x64
             files: apps/desktop/release/Valence-*.AppImage
     steps:
+      # The tag unless told otherwise. A release cut before the packaging was written cannot build
+      # its own desktop app, and `ref` is how one is built from source that can, still stamped with
+      # the release's version.
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ inputs.ref || inputs.tag }}
 
       - uses: pnpm/action-setup@v6
 
