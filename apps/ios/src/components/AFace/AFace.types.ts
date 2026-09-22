@@ -1,7 +1,8 @@
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
 type AFaceProps = {
-  profile: ViewerProfile;
+  profile: Pick<ViewerProfile, 'id' | 'updatedAt' | 'avatar' | 'name' | 'colour'>;
+  picked?: string | null;
 };
 
 export type { AFaceProps };

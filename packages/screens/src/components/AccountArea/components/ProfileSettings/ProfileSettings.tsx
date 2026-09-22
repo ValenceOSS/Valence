@@ -14,18 +14,11 @@ import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
 import { Switch } from '@ValenceUI/Switch';
 import { PROFILE_COLOURS, AVATAR_STYLES } from '@ValenceContracts/schemas/ViewerProfile';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
+import { STILL_WATCHING_CHOICES } from '@ValenceClient/profiles/STILL_WATCHING_CHOICES';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import type { ProfileSettingsProps } from './ProfileSettings.types';
 
 const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif,video/webm,video/mp4';
-
-const ASK_AFTER = [
-  { id: 'off', label: 'Never' },
-  { id: '2', label: '2' },
-  { id: '3', label: '3' },
-  { id: '4', label: '4' },
-  { id: '6', label: '6' },
-] as const;
 
 /**
  * Everything about how somebody appears: their name, their picture, the colour behind it, and how
@@ -213,7 +206,7 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           size="sm"
           tone="accent"
           label="Ask if you are still watching"
-          items={ASK_AFTER}
+          items={STILL_WATCHING_CHOICES}
           value={
             draft === null || draft.askStillWatchingAfter === STILL_WATCHING_OFF
               ? 'off'

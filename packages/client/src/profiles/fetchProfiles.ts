@@ -68,14 +68,19 @@ const saveProfile = async (
  * Uploads somebody's own photograph for a profile, which replaces whatever it was drawn as.
  *
  * @param profileId - The profile.
- * @param file - The photograph.
+ * @param photo - The photograph.
+ * @param type - What kind of picture it is, where the photograph does not say, as a phone's does not.
  * @returns The profile as it now stands, or why it was refused.
  */
-const uploadProfilePhoto = async (profileId: string, file: File): Promise<boolean> => {
+const uploadProfilePhoto = async (
+  profileId: string,
+  photo: Blob,
+  type = photo.type,
+): Promise<boolean> => {
   const response = await fetch(`/api/profiles/${profileId}/photo`, {
     method: 'PUT',
-    headers: { 'content-type': file.type },
-    body: file,
+    headers: { 'content-type': type },
+    body: photo,
   }).catch(() => null);
 
   return response !== null && response.ok;

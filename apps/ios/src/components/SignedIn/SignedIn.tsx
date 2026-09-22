@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Clapperboard, Inbox } from 'lucide-react-native';
+import { CircleUser, Clapperboard, Inbox } from 'lucide-react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -23,6 +23,7 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { ATitle } from '@ValencePhone/components/ATitle/ATitle';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { StillWatching } from '@ValencePhone/components/StillWatching/StillWatching';
+import { TheAccount } from '@ValencePhone/components/TheAccount/TheAccount';
 import { TheLibrary } from '@ValencePhone/components/TheLibrary/TheLibrary';
 import { TheRequests } from '@ValencePhone/components/TheRequests/TheRequests';
 import { TheTabs } from '@ValencePhone/components/TheTabs/TheTabs';
@@ -43,7 +44,7 @@ const styles = StyleSheet.create({
  * Where they are is held here rather than in an address, because a phone has no address bar and
  * a handful of screens do not need a router to tell them apart. It will when there are more.
  *
- * The library and requests are tabs along the bottom, and the tab for requests is only there for
+ * The library, requests and the account are tabs along the bottom, and the tab for requests is only there for
  * somebody this server lets ask. Anything opened from either covers the tabs until they go back.
  * Something asked for that has arrived opens in the library from its page, and a programme is
  * found by the series it became, since that is all a request knows of it.
@@ -94,6 +95,7 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const tabs = [
     { id: 'library', label: 'Library', icon: Clapperboard },
     ...(mayRequest ? [{ id: 'requests', label: 'Requests', icon: Inbox }] : []),
+    { id: 'account', label: 'Account', icon: CircleUser },
   ];
 
   const choose = (mediaId: string, startSeconds: number) => {
@@ -246,21 +248,20 @@ const SignedIn = ({ onOut }: SignedInProps) => {
           setAskingFor({ kind, id });
         }}
       />
+    ) : part === 'account' ? (
+      <TheAccount
+        onOut={() => {
+          void signOut().then(onOut);
+        }}
+      />
     ) : (
       <TheLibrary
         onLookAt={setLooking}
         onLookAtShow={(libraryId, showId) => {
           setProgramme({ libraryId, showId });
         }}
-        onOut={() => {
-          void signOut().then(onOut);
-        }}
       />
     );
-
-  if (tabs.length === 1) {
-    return showing;
-  }
 
   return (
     <View style={styles.whole}>
@@ -268,7 +269,11 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         <View style={styles.whole}>{showing}</View>
       </SafeAreaInsetsContext.Provider>
 
-      <TheTabs tabs={tabs} value={mayRequest ? part : 'library'} onSelect={setPart} />
+      <TheTabs
+        tabs={tabs}
+        value={part === 'requests' && !mayRequest ? 'library' : part}
+        onSelect={setPart}
+      />
     </View>
   );
 };

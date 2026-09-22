@@ -72,9 +72,7 @@ describe('TheLibrary', () => {
       .mockResolvedValue([aLibrary('one', 'Films'), aLibrary('two', 'Shows')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
-    await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
-    );
+    await render(around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />));
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenCalledWith('one', expect.anything());
@@ -86,7 +84,7 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {
@@ -101,7 +99,7 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {
@@ -120,7 +118,7 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {
@@ -133,7 +131,7 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {
@@ -141,28 +139,12 @@ describe('TheLibrary', () => {
     });
   });
 
-  it('offers a way out', async () => {
-    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
-    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
-
-    const onOut = jest.fn();
-    const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={onOut} />),
-    );
-
-    await userEvent.press(drawn.getByText('Sign out'));
-
-    expect(onOut).toHaveBeenCalled();
-  });
-
   it('tells whoever is listening which title somebody wants to see', async () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
     const onLookAt = jest.fn();
-    const drawn = await render(
-      around(<TheLibrary onLookAt={onLookAt} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
-    );
+    const drawn = await render(around(<TheLibrary onLookAt={onLookAt} onLookAtShow={jest.fn()} />));
 
     await waitFor(() => {
       expect(drawn.getByLabelText('Arrival')).toBeTruthy();
@@ -187,7 +169,7 @@ describe('TheLibrary', () => {
     ]);
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {
@@ -202,7 +184,7 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {
@@ -226,7 +208,7 @@ describe('TheLibrary', () => {
     ]);
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {
@@ -239,7 +221,7 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {
@@ -263,7 +245,7 @@ describe('TheLibrary', () => {
     ]);
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {
@@ -290,7 +272,7 @@ describe('TheLibrary', () => {
     ]);
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {
@@ -318,7 +300,7 @@ describe('TheLibrary', () => {
 
     const onLookAtShow = jest.fn();
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={onLookAtShow} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={onLookAtShow} />),
     );
 
     await waitFor(() => {
@@ -341,7 +323,7 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {
@@ -365,7 +347,7 @@ describe('TheLibrary', () => {
       );
 
     const drawn = await render(
-      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} onOut={jest.fn()} />),
+      around(<TheLibrary onLookAt={jest.fn()} onLookAtShow={jest.fn()} />),
     );
 
     await waitFor(() => {

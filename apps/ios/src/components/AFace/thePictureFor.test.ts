@@ -23,20 +23,20 @@ describe('thePictureFor', () => {
   it('gives the whole address, since the system fetches an image itself', () => {
     installPlatform(aFakePlatform({ serverAddress: () => 'http://192.168.1.36:8420' }));
 
-    expect(thePictureFor(aProfile()).startsWith('http://192.168.1.36:8420/api/profiles/')).toBe(
-      true,
-    );
+    expect(
+      (thePictureFor(aProfile())?.uri ?? '').startsWith('http://192.168.1.36:8420/api/profiles/'),
+    ).toBe(true);
   });
 
   it('carries the time the face changed, so a new picture is not read from the cache', () => {
     installPlatform(aFakePlatform({ serverAddress: () => 'http://192.168.1.36:8420' }));
 
-    expect(thePictureFor(aProfile())).toContain('v=2026-09-22T10');
+    expect(thePictureFor(aProfile())?.uri ?? '').toContain('v=2026-09-22T10');
   });
 
   it('manages on a client that is served by its own valence', () => {
     installPlatform(aFakePlatform());
 
-    expect(thePictureFor(aProfile()).startsWith('/api/profiles/')).toBe(true);
+    expect((thePictureFor(aProfile())?.uri ?? '').startsWith('/api/profiles/')).toBe(true);
   });
 });

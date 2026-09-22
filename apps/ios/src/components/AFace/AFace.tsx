@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { thePictureFor } from '@ValencePhone/components/AFace/thePictureFor';
+import { APicture } from '@ValencePhone/components/APicture/APicture';
 import { Words } from '@ValencePhone/components/Words/Words';
 import type { AFaceProps } from './AFace.types';
 
@@ -33,24 +34,27 @@ const styles = StyleSheet.create({
  * profile chose and that colour is the same in both themes.
  *
  * @param profile - Whose face to draw.
+ * @param picked - A photograph chosen on this phone and not yet sent, to show in its place.
  */
-const AFace = ({ profile }: AFaceProps) => {
-  const [isMissing, setIsMissing] = useState(false);
-  const showsPicture = profile.avatar.kind !== 'initial' && !isMissing;
+const AFace = ({ profile, picked = null }: AFaceProps) => {
+  const [missing, setMissing] = useState<string | null>(null);
+  const found = thePictureFor(profile, picked);
+  const picture = found === null || found.uri === missing ? null : found;
 
   return (
     <View style={styles.face}>
       <View
-        style={[styles.tile, { backgroundColor: showsPicture ? 'transparent' : profile.colour }]}
+        style={[
+          styles.tile,
+          { backgroundColor: picture?.isDrawn === false ? 'transparent' : profile.colour },
+        ]}
       >
-        {showsPicture ? (
-          <Image
-            style={styles.picture}
-            source={{ uri: thePictureFor(profile) }}
-            onError={() => {
-              setIsMissing(true);
+        {picture !== null ? (
+          <APicture
+            picture={picture}
+            onMissing={() => {
+              setMissing(picture.uri);
             }}
-            accessibilityIgnoresInvertColors
           />
         ) : (
           <Words>{profileInitial(profile.name)}</Words>

@@ -57,9 +57,8 @@ const styles = StyleSheet.create({
  *
  * @param onLookAt - Told which title somebody wants to see more of.
  * @param onLookAtShow - Told which programme, in which library.
- * @param onOut - Told once somebody has signed out.
  */
-const TheLibrary = ({ onLookAt, onLookAtShow, onOut }: TheLibraryProps) => {
+const TheLibrary = ({ onLookAt, onLookAtShow }: TheLibraryProps) => {
   const everyLibrary = useQuery(libraryQueries.all());
   const libraries = {
     ...everyLibrary,
@@ -177,10 +176,6 @@ const TheLibrary = ({ onLookAt, onLookAtShow, onOut }: TheLibraryProps) => {
           onLookAtShow={onLookAtShow}
         />
       )}
-
-      <Button tone="quiet" onPress={onOut}>
-        Sign out
-      </Button>
     </Screen>
   );
 };
