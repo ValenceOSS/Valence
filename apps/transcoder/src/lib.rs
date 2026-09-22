@@ -7,6 +7,7 @@
 #![cfg_attr(test, allow(clippy::expect_used, clippy::unwrap_used))]
 
 pub mod audio;
+pub mod bars;
 pub mod boundaries;
 pub mod cache_sweep;
 pub mod cache_usage;
