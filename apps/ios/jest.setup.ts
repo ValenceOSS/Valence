@@ -41,5 +41,22 @@ jest.mock('expo-video', () => ({
 
     return mockPlayer;
   },
-  VideoView: () => null,
+  VideoView: (props: {
+    onFullscreenExit?: () => void;
+    ref?: { current: { enterFullscreen: () => Promise<void> } | null };
+  }) => {
+    mockPlayer.leaveFullscreen = props.onFullscreenExit ?? null;
+
+    if (props.ref !== undefined) {
+      props.ref.current = {
+        enterFullscreen: () => {
+          mockPlayer.isFullscreen = true;
+
+          return Promise.resolve();
+        },
+      };
+    }
+
+    return null;
+  },
 }));

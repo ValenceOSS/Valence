@@ -21,7 +21,7 @@ import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { WatchingProps } from './Watching.types';
-import type { VideoSource } from 'expo-video';
+import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
@@ -40,6 +40,11 @@ const styles = StyleSheet.create({
  * Whatever comes back is handed to the system's own player rather than driven from here. It is the
  * thing on this platform that knows about picture-in-picture, the lock screen and the route the
  * sound is going out by, and reimplementing any of that in JavaScript would be worse at all three.
+ *
+ * It goes full screen of its own accord and leaving it is leaving the film, which is how a video
+ * opens everywhere else on a phone. Nobody pressing play on a film wants a small picture in the
+ * middle of a page and a second button to press before it fills the screen. What is behind it is
+ * drawn anyway, so a phone that refuses to go full screen still plays rather than showing black.
  *
  * It is handed this phone's cookies with it. Everything else on here is asked for through the
  * system's own networking, which attaches them; the player builds its own requests and is not told
@@ -68,6 +73,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
   const whereTheyGotTo = useRef<{ positionSeconds: number; durationSeconds: number } | null>(null);
+  const picture = useRef<VideoViewRef | null>(null);
   const clientId = platformInUse().thisClientId();
 
   useEffect(() => {
@@ -145,6 +151,14 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   }, [sessionId, clientId, player]);
 
   useEffect(() => {
+    if (source === null) {
+      return;
+    }
+
+    void picture.current?.enterFullscreen();
+  }, [source]);
+
+  useEffect(() => {
     if (sessionId === null) {
       return;
     }
@@ -200,11 +214,13 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   return (
     <View style={styles.picture}>
       <VideoView
+        ref={picture}
         style={styles.picture}
         player={player}
         allowsPictureInPicture
         nativeControls
         contentFit="contain"
+        onFullscreenExit={onDone}
       />
       <Button tone="quiet" onPress={onDone}>
         Done

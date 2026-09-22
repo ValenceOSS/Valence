@@ -336,4 +336,42 @@ describe('Watching', () => {
 
     expect(theFakePlayer.sentWith).toBeNull();
   });
+
+  it('fills the screen on its own, which is how a video opens on a phone', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(drawn.getByText('Done')).toBeTruthy();
+    });
+
+    expect(theFakePlayer.isFullscreen).toBe(true);
+  });
+
+  it('is done with the film once they have left the screen it filled', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const onDone = jest.fn();
+
+    await render(<Watching mediaId="a-film" onDone={onDone} />);
+
+    await waitFor(() => {
+      expect(theFakePlayer.leaveFullscreen).not.toBeNull();
+    });
+
+    await act(() => {
+      theFakePlayer.leaveFullscreen?.();
+    });
+
+    expect(onDone).toHaveBeenCalled();
+  });
+
+  it('fills nothing while it is still asking the server', async () => {
+    jest.mocked(startPlaybackSession).mockReturnValue(new Promise(() => undefined));
+
+    await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+
+    expect(theFakePlayer.isFullscreen).toBe(false);
+  });
 });

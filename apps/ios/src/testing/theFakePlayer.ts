@@ -6,6 +6,8 @@ type FakePlayer = {
   duration: number;
   source: string | null;
   sentWith: Record<string, string> | null;
+  leaveFullscreen: (() => void) | null;
+  isFullscreen: boolean;
 };
 
 const theFakePlayer: FakePlayer = {
@@ -16,6 +18,8 @@ const theFakePlayer: FakePlayer = {
   duration: 0,
   source: null,
   sentWith: null,
+  leaveFullscreen: null,
+  isFullscreen: false,
 };
 
 /**
@@ -27,6 +31,8 @@ const forgetTheFakePlayer = (): void => {
   theFakePlayer.duration = 0;
   theFakePlayer.source = null;
   theFakePlayer.sentWith = null;
+  theFakePlayer.leaveFullscreen = null;
+  theFakePlayer.isFullscreen = false;
 };
 
 export type { FakePlayer };
