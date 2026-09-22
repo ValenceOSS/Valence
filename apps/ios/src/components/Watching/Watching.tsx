@@ -15,11 +15,13 @@ import {
 } from '@ValenceClient/playback/watchProgress';
 import { thePhonesProfile } from '@ValencePhone/playback/thePhonesProfile';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
+import { theCookiesThisPhoneHolds } from '@ValencePhone/platform/theCookiesThisPhoneHolds';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { WatchingProps } from './Watching.types';
+import type { VideoSource } from 'expo-video';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
@@ -39,6 +41,10 @@ const styles = StyleSheet.create({
  * thing on this platform that knows about picture-in-picture, the lock screen and the route the
  * sound is going out by, and reimplementing any of that in JavaScript would be worse at all three.
  *
+ * It is handed this phone's cookies with it. Everything else on here is asked for through the
+ * system's own networking, which attaches them; the player builds its own requests and is not told
+ * to consult the jar, so without this a film is asked for by somebody the server does not know.
+ *
  * Where somebody is picking up part way, the server is asked to start there and a whole file is
  * seeked to instead: a transcode begins at the segment they asked for, while a file sent untouched
  * begins where every file does.
@@ -57,7 +63,7 @@ const styles = StyleSheet.create({
  */
 const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   const colours = useTheColours();
-  const [address, setAddress] = useState<string | null>(null);
+  const [source, setSource] = useState<VideoSource | null>(null);
   const [seekTo, setSeekTo] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
@@ -85,16 +91,22 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
         }
 
         const whole = outcome.session.delivery.kind === 'direct';
-
-        setSeekTo(whole ? startSeconds : 0);
-        setSessionId(started);
-        setAddress(
-          onThisServer(
-            outcome.session.delivery.kind === 'direct'
-              ? outcome.session.delivery.url
-              : outcome.session.delivery.manifestUrl,
-          ),
+        const uri = onThisServer(
+          outcome.session.delivery.kind === 'direct'
+            ? outcome.session.delivery.url
+            : outcome.session.delivery.manifestUrl,
         );
+        const wasStarted = started;
+
+        void theCookiesThisPhoneHolds(uri).then((cookie) => {
+          if (leftAlready) {
+            return;
+          }
+
+          setSeekTo(whole ? startSeconds : 0);
+          setSessionId(wasStarted);
+          setSource(cookie === null ? { uri } : { uri, headers: { Cookie: cookie } });
+        });
       },
     );
 
@@ -109,7 +121,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
     };
   }, [mediaId, startSeconds, clientId]);
 
-  const player = useVideoPlayer(address, (ready) => {
+  const player = useVideoPlayer(source, (ready) => {
     if (seekTo > 0) {
       ready.currentTime = seekTo;
     }
@@ -176,7 +188,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
     );
   }
 
-  if (address === null) {
+  if (source === null) {
     return (
       <Screen centres>
         <ActivityIndicator color={colours.textMuted} />

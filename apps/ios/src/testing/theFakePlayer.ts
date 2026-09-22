@@ -5,6 +5,7 @@ type FakePlayer = {
   currentTime: number;
   duration: number;
   source: string | null;
+  sentWith: Record<string, string> | null;
 };
 
 const theFakePlayer: FakePlayer = {
@@ -14,6 +15,7 @@ const theFakePlayer: FakePlayer = {
   currentTime: 0,
   duration: 0,
   source: null,
+  sentWith: null,
 };
 
 /**
@@ -24,6 +26,7 @@ const forgetTheFakePlayer = (): void => {
   theFakePlayer.currentTime = 0;
   theFakePlayer.duration = 0;
   theFakePlayer.source = null;
+  theFakePlayer.sentWith = null;
 };
 
 export type { FakePlayer };

@@ -24,10 +24,18 @@ jest.mock('expo-network', () => ({
   addNetworkStateListener: () => ({ remove: () => undefined }),
 }));
 
+jest.mock('@react-native-cookies/cookies', () => ({
+  get: jest.fn(() => Promise.resolve({})),
+}));
+
 jest.mock('expo-video', () => ({
-  useVideoPlayer: (source: string | null, ready?: (player: FakePlayer) => void) => {
-    if (source !== null && source !== mockPlayer.source) {
-      mockPlayer.source = source;
+  useVideoPlayer: (
+    source: { uri: string; headers?: Record<string, string> } | null,
+    ready?: (player: FakePlayer) => void,
+  ) => {
+    if (source !== null && source.uri !== mockPlayer.source) {
+      mockPlayer.source = source.uri;
+      mockPlayer.sentWith = source.headers ?? null;
       ready?.(mockPlayer);
     }
 

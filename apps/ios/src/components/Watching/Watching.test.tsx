@@ -6,6 +6,7 @@ import {
   stopWatching,
 } from '@ValenceClient/playback/startPlaybackSession';
 import { reportWatchProgress } from '@ValenceClient/playback/watchProgress';
+import { get } from '@react-native-cookies/cookies';
 import { theFakePlayer } from '@ValencePhone/testing/theFakePlayer';
 import { Watching } from './Watching';
 import type { StartedSession, StartOutcome } from '@ValenceClient/playback/startPlaybackSession';
@@ -48,6 +49,7 @@ beforeEach(() => {
   jest.mocked(stopWatching).mockReset().mockResolvedValue();
   jest.mocked(heartbeatPlaybackSession).mockReset().mockResolvedValue();
   jest.mocked(reportWatchProgress).mockReset().mockResolvedValue();
+  jest.mocked(get).mockReset().mockResolvedValue({});
   theFakePlayer.currentTime = 420;
   theFakePlayer.duration = 6960;
 });
@@ -306,5 +308,32 @@ describe('Watching', () => {
     await drawn.unmount();
 
     expect(reportWatchProgress).not.toHaveBeenCalled();
+  });
+
+  it('hands the player this phone\u2019s session, which it would not ask for itself', async () => {
+    jest.mocked(get).mockResolvedValue({
+      'valence.session_token': { name: 'valence.session_token', value: 'abc' },
+    });
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(drawn.getByText('Done')).toBeTruthy();
+    });
+
+    expect(theFakePlayer.sentWith).toEqual({ Cookie: 'valence.session_token=abc' });
+  });
+
+  it('asks anyway where this phone holds nothing to send', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(drawn.getByText('Done')).toBeTruthy();
+    });
+
+    expect(theFakePlayer.sentWith).toBeNull();
   });
 });
