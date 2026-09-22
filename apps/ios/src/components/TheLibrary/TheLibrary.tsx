@@ -1,19 +1,17 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
+import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheLibraryProps } from './TheLibrary.types';
 
 const styles = StyleSheet.create({
-  pressed: { opacity: 0.7 },
   shelf: { flexDirection: 'row', flexWrap: 'wrap', gap: 18 },
-  tab: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
-  tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });
 
 /**
@@ -23,9 +21,10 @@ const styles = StyleSheet.create({
  * chosen as soon as the list arrives: a phone opening on a list of library names asks somebody to
  * make a choice before showing them anything, and the answer is almost always the first one.
  *
+ * @param onLookAt - Told which title somebody wants to see more of.
  * @param onOut - Told once somebody has signed out.
  */
-const TheLibrary = ({ onOut }: TheLibraryProps) => {
+const TheLibrary = ({ onLookAt, onOut }: TheLibraryProps) => {
   const libraries = useQuery(libraryQueries.all());
   const colours = useTheColours();
   const [chosen, setChosen] = useState<string | null>(null);
@@ -38,30 +37,12 @@ const TheLibrary = ({ onOut }: TheLibraryProps) => {
 
       {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
 
-      <View style={styles.tabs}>
-        {(libraries.data ?? []).map((library) => (
-          <Pressable
-            key={library.id}
-            accessibilityRole="button"
-            accessibilityState={{ selected: library.id === showing }}
-            style={({ pressed }) => [
-              styles.tab,
-              {
-                backgroundColor: library.id === showing ? colours.accent : colours.surfaceRaised,
-                borderColor: library.id === showing ? colours.accent : colours.border,
-              },
-              pressed && styles.pressed,
-            ]}
-            onPress={() => {
-              setChosen(library.id);
-            }}
-          >
-            <Words size="small" tone={library.id === showing ? 'plain' : 'muted'}>
-              {library.name}
-            </Words>
-          </Pressable>
-        ))}
-      </View>
+      <SegmentedRow
+        label="Library"
+        items={(libraries.data ?? []).map((library) => ({ id: library.id, label: library.name }))}
+        value={showing}
+        onSelect={setChosen}
+      />
 
       {page.isPending && showing !== null ? <ActivityIndicator color={colours.textMuted} /> : null}
 
@@ -71,7 +52,16 @@ const TheLibrary = ({ onOut }: TheLibraryProps) => {
 
       <View style={styles.shelf}>
         {(page.data?.items ?? []).map((media) => (
-          <APoster key={media.id} media={media} />
+          <Button
+            key={media.id}
+            tone="bare"
+            label={media.title}
+            onPress={() => {
+              onLookAt(media.id);
+            }}
+          >
+            <APoster media={media} />
+          </Button>
         ))}
       </View>
 

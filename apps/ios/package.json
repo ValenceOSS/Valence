@@ -21,6 +21,7 @@
     "expo-device": "~57.0.2",
     "expo-network": "~57.0.2",
     "expo-status-bar": "^57.0.0",
+    "expo-video": "~57.0.4",
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0"

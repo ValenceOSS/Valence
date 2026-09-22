@@ -20,3 +20,9 @@ jest.mock('expo-network', () => ({
   getNetworkStateAsync: () => Promise.resolve({ isConnected: true, isInternetReachable: true }),
   addNetworkStateListener: () => ({ remove: () => undefined }),
 }));
+
+jest.mock('expo-video', () => {
+  const theOnlyPlayer = { play: () => undefined, pause: () => undefined, playing: true };
+
+  return { useVideoPlayer: () => theOnlyPlayer, VideoView: () => null };
+});
