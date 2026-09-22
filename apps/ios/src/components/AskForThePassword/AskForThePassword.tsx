@@ -6,6 +6,7 @@ import { AskForTheCode } from '@ValencePhone/components/AskForTheCode/AskForTheC
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { TextField } from '@ValencePhone/components/TextField/TextField';
+import { UseAPasskey } from '@ValencePhone/components/UseAPasskey/UseAPasskey';
 import { Words } from '@ValencePhone/components/Words/Words';
 import type { AskForThePasswordProps } from './AskForThePassword.types';
 
@@ -80,6 +81,8 @@ const AskForThePassword = ({ profile, onIn, onBack }: AskForThePasswordProps) =>
       >
         Sign in
       </Button>
+
+      <UseAPasskey label="Use a passkey instead" onIn={onIn} />
 
       <Button tone="quiet" onPress={onBack}>
         Somebody else

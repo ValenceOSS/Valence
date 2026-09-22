@@ -112,4 +112,12 @@ describe('AskForThePassword', () => {
 
     expect(onBack).toHaveBeenCalled();
   });
+
+  it('offers a passkey instead of the password', async () => {
+    const drawn = await render(
+      <AskForThePassword profile={A_FACE} onIn={jest.fn()} onBack={jest.fn()} />,
+    );
+
+    expect(drawn.getByRole('button', { name: 'Use a passkey instead' })).toBeTruthy();
+  });
 });

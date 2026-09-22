@@ -4,6 +4,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { AFace } from '@ValencePhone/components/AFace/AFace';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
+import { UseAPasskey } from '@ValencePhone/components/UseAPasskey/UseAPasskey';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheWayInProps } from './TheWayIn.types';
@@ -15,10 +16,13 @@ const styles = StyleSheet.create({
 /**
  * The way in: who lives here, drawn from the server this phone was told to watch.
  *
+ * A passkey is offered beside the faces rather than behind one, because it already says whose it is.
+ *
  * @param onPicked - Told whose face somebody chose.
+ * @param onIn - Told once somebody signed in without picking a face.
  * @param onElsewhere - Told that somebody wants to point this phone at a different server.
  */
-const TheWayIn = ({ onPicked, onElsewhere }: TheWayInProps) => {
+const TheWayIn = ({ onPicked, onIn, onElsewhere }: TheWayInProps) => {
   const asking = useQuery(sessionQueries.wayIn());
   const colours = useTheColours();
 
@@ -46,6 +50,8 @@ const TheWayIn = ({ onPicked, onElsewhere }: TheWayInProps) => {
           ))}
         </View>
       )}
+
+      <UseAPasskey label="Sign in with a passkey" onIn={onIn} />
 
       <Button tone="quiet" onPress={onElsewhere}>
         Use a different server

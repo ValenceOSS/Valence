@@ -42,7 +42,13 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
   }
 
   return picked === null ? (
-    <TheWayIn onPicked={setPicked} onElsewhere={onElsewhere} />
+    <TheWayIn
+      onPicked={setPicked}
+      onIn={() => {
+        void answers.invalidateQueries();
+      }}
+      onElsewhere={onElsewhere}
+    />
   ) : (
     <AskForThePassword
       profile={picked}
