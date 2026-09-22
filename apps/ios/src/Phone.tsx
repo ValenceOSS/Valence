@@ -7,6 +7,7 @@ import { buildQueryClient } from '@ValenceClient/query/queryClient';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { installPhonePlatform } from '@ValencePhone/platform/installPhonePlatform';
 import { whatThePhoneRemembers } from '@ValencePhone/platform/whatThePhoneRemembers';
+import { holdThisPhoneUpright } from '@ValencePhone/platform/holdThisPhoneUpright';
 import { THE_SERVER_ADDRESS } from '@ValencePhone/platform/THE_SERVER_ADDRESS';
 import { theColours } from '@ValencePhone/theme/theColours';
 import { TheHousehold } from '@ValencePhone/components/TheHousehold/TheHousehold';
@@ -36,6 +37,9 @@ const styles = StyleSheet.create({
  *
  * What it holds the screen with is drawn dark and without the theme, because the theme is a
  * preference and the preference is in the storage being read. There is nothing yet to ask.
+ *
+ * The phone is held upright from here on. Only a film is worth turning it for, and the screen
+ * showing one asks for that itself.
  */
 const Phone = () => {
   const [isReady, setIsReady] = useState(false);
@@ -43,6 +47,7 @@ const Phone = () => {
   const [isAsking, setIsAsking] = useState(false);
 
   useEffect(() => {
+    void holdThisPhoneUpright();
     void whatThePhoneRemembers().then((held) => {
       installPhonePlatform(held);
       setAddress(platformInUse().serverAddress());

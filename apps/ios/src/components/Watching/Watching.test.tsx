@@ -7,6 +7,7 @@ import {
 } from '@ValenceClient/playback/startPlaybackSession';
 import { reportWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { get } from '@react-native-cookies/cookies';
+import { lockAsync, OrientationLock } from 'expo-screen-orientation';
 import { theFakePlayer } from '@ValencePhone/testing/theFakePlayer';
 import { Watching } from './Watching';
 import type { StartedSession, StartOutcome } from '@ValenceClient/playback/startPlaybackSession';
@@ -50,6 +51,7 @@ beforeEach(() => {
   jest.mocked(heartbeatPlaybackSession).mockReset().mockResolvedValue();
   jest.mocked(reportWatchProgress).mockReset().mockResolvedValue();
   jest.mocked(get).mockReset().mockResolvedValue({});
+  jest.mocked(lockAsync).mockReset().mockResolvedValue();
   theFakePlayer.currentTime = 420;
   theFakePlayer.duration = 6960;
 });
@@ -373,5 +375,27 @@ describe('Watching', () => {
     await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
 
     expect(theFakePlayer.isFullscreen).toBe(false);
+  });
+
+  it('lets the phone be turned, which nothing else here does', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+
+    expect(lockAsync).toHaveBeenCalledWith(OrientationLock.ALL);
+  });
+
+  it('puts the phone back upright on the way out', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(<Watching mediaId="a-film" onDone={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(drawn.getByText('Done')).toBeTruthy();
+    });
+
+    await drawn.unmount();
+
+    expect(lockAsync).toHaveBeenLastCalledWith(OrientationLock.PORTRAIT_UP);
   });
 });

@@ -16,6 +16,8 @@ import {
 import { thePhonesProfile } from '@ValencePhone/playback/thePhonesProfile';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValencePhone/platform/theCookiesThisPhoneHolds';
+import { holdThisPhoneUpright } from '@ValencePhone/platform/holdThisPhoneUpright';
+import { letThisPhoneTurn } from '@ValencePhone/platform/letThisPhoneTurn';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
@@ -40,6 +42,9 @@ const styles = StyleSheet.create({
  * Whatever comes back is handed to the system's own player rather than driven from here. It is the
  * thing on this platform that knows about picture-in-picture, the lock screen and the route the
  * sound is going out by, and reimplementing any of that in JavaScript would be worse at all three.
+ *
+ * This is the one screen a phone may be turned on, and it is allowed rather than forced: a film
+ * shot wide is better sideways and somebody lying down is not.
  *
  * It goes full screen of its own accord and leaving it is leaving the film, which is how a video
  * opens everywhere else on a phone. Nobody pressing play on a film wants a small picture in the
@@ -149,6 +154,14 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
       clearInterval(beat);
     };
   }, [sessionId, clientId, player]);
+
+  useEffect(() => {
+    void letThisPhoneTurn();
+
+    return () => {
+      void holdThisPhoneUpright();
+    };
+  }, []);
 
   useEffect(() => {
     if (source === null) {

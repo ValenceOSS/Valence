@@ -24,6 +24,11 @@ jest.mock('expo-network', () => ({
   addNetworkStateListener: () => ({ remove: () => undefined }),
 }));
 
+jest.mock('expo-screen-orientation', () => ({
+  lockAsync: jest.fn(() => Promise.resolve()),
+  OrientationLock: { ALL: 1, PORTRAIT_UP: 3 },
+}));
+
 jest.mock('@react-native-cookies/cookies', () => ({
   get: jest.fn(() => Promise.resolve({})),
 }));
