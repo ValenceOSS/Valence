@@ -25,7 +25,7 @@ const theDockIcon = (): void => {
     return;
   }
 
-  app.dock?.setIcon(join(app.getAppPath(), 'build/icon-macos.png'));
+  app.dock?.setIcon(join(app.getAppPath(), 'build/icon-dev.png'));
 };
 
 export { theDockIcon };

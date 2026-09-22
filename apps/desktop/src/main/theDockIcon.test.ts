@@ -30,7 +30,7 @@ describe('theDockIcon', () => {
   it('puts Valence in the dock, which otherwise shows the engine it was run with', () => {
     theDockIcon();
 
-    expect(setIcon).toHaveBeenCalledWith('/an/app/build/icon-macos.png');
+    expect(setIcon).toHaveBeenCalledWith('/an/app/build/icon-dev.png');
   });
 
   it('asks for nothing once packaged, where the folder it would ask for is not carried', () => {
