@@ -6,6 +6,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
+import { describeQualityBadges } from '@ValenceClient/library/describeQualityBadges';
 import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useHidden } from '@ValenceClient/library/useHidden';
@@ -17,6 +18,7 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
+import { TheBadges } from '@ValencePhone/components/TheBadges/TheBadges';
 import { TheCast } from '@ValencePhone/components/TheCast/TheCast';
 import { TheStars } from '@ValencePhone/components/TheStars/TheStars';
 import { Words } from '@ValencePhone/components/Words/Words';
@@ -129,6 +131,15 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
       {seriesTitle === null ? null : <Words tone="muted">{seriesTitle}</Words>}
 
       <Words tone="muted">{facts.join(' · ')}</Words>
+
+      <TheBadges
+        badges={describeQualityBadges({
+          width: title.width,
+          height: title.height,
+          videoRange: title.videoRange,
+          audioStreams: title.audioStreams,
+        })}
+      />
 
       {(metadata.genres ?? []).length === 0 ? null : (
         <Words size="small" tone="muted">

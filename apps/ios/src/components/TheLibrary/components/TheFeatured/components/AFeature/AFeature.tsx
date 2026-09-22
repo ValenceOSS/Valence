@@ -7,7 +7,9 @@ import { Info, Play, Volume2, VolumeX } from 'lucide-react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { readPreviewState } from '@ValenceClient/playback/readPreviewState';
 import { readSoundPreference, saveSoundPreference } from '@ValenceClient/playback/soundPreference';
+import { describeQualityBadges } from '@ValenceClient/library/describeQualityBadges';
 import { AScrim } from '@ValencePhone/components/AScrim/AScrim';
+import { TheBadges } from '@ValencePhone/components/TheBadges/TheBadges';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Words } from '@ValencePhone/components/Words/Words';
@@ -47,6 +49,7 @@ const PARTS = 4;
 
 const styles = StyleSheet.create({
   buttons: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  facts: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   foot: {
     bottom: 0,
@@ -312,10 +315,19 @@ const AFeature = ({
             )}
           </Animated.View>
 
-          <Animated.View style={risingOf(1)}>
+          <Animated.View style={[styles.facts, risingOf(1)]}>
             <Words size="small" tone="onArtwork">
               {facts.join(' · ')}
             </Words>
+            <TheBadges
+              isOnArtwork
+              badges={describeQualityBadges({
+                width: media.width,
+                height: media.height,
+                videoRange: media.videoRange,
+                audioStreams: detail.data?.audioStreams,
+              })}
+            />
           </Animated.View>
 
           {overview === null || overview === '' || !isTelling ? null : (
