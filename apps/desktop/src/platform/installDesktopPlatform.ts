@@ -5,6 +5,7 @@ import { thisWindowsId } from '@ValenceDesktop/platform/thisWindowsId';
 import { theDesktopsSocket } from '@ValenceDesktop/platform/theDesktopsSocket';
 import { theDesktopsHeldFiles } from '@ValenceDesktop/platform/theDesktopsHeldFiles';
 import { theDesktopsReach } from '@ValenceDesktop/platform/theDesktopsReach';
+import { notifyLocally, setUnreadBadge } from '@ValenceDesktop/platform/theDesktopsNotifications';
 
 /**
  * Tells the application what it is running on, when what it is running on is this client.
@@ -24,6 +25,8 @@ const installDesktopPlatform = (): void => {
     reachability: theDesktopsReach(),
     openSocket: theDesktopsSocket,
     buildInfo: () => window.valence.about,
+    notifyLocally,
+    setUnreadBadge,
   });
 };
 

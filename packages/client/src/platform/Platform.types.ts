@@ -32,6 +32,12 @@ type BuildInfo = {
   chrome: string;
 };
 
+type LocalNotice = {
+  title: string;
+  body: string;
+  onOpen?: () => void;
+};
+
 type Platform = {
   store: DeviceStore;
   describeThisClient: () => string;
@@ -42,6 +48,8 @@ type Platform = {
   reachability: Reachability;
   openSocket: Connect;
   buildInfo: () => BuildInfo | null;
+  notifyLocally: (notice: LocalNotice) => void;
+  setUnreadBadge: (count: number) => void;
 };
 
-export type { BuildInfo, ClientKind, DeviceStore, HeldFiles, Platform, Reachability };
+export type { BuildInfo, ClientKind, DeviceStore, HeldFiles, LocalNotice, Platform, Reachability };

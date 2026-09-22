@@ -59,6 +59,15 @@ describe('canReceivePush', () => {
 
     expect(canReceivePush()).toBe(false);
   });
+
+  it('says no on the desktop client, whatever Electron carries', () => {
+    aBrowserThatCan();
+    document.documentElement.dataset['valenceDesktop'] = 'true';
+
+    expect(canReceivePush()).toBe(false);
+
+    delete document.documentElement.dataset['valenceDesktop'];
+  });
 });
 
 describe('subscribeToPush', () => {

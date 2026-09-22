@@ -59,6 +59,7 @@ const theWindowOffers = (found: string[]): void => {
       electron: '33.0.0',
       chrome: '130.0.0',
     },
+    notifications: { setBadge: () => {} },
     servers: { alreadyFound: found, reach: () => Promise.resolve(true), whenFound: () => () => {} },
   };
 };

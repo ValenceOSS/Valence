@@ -34,6 +34,7 @@ import {
 import { AvailableUpdateSchema } from '@ValenceDesktop/main/AvailableUpdateSchema';
 import type { AvailableUpdate } from '@ValenceDesktop/main/checkForUpdate';
 import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
+import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
 
 const HeldSchema = z.record(z.string(), z.string()).catch({});
 
@@ -138,6 +139,11 @@ contextBridge.exposeInMainWorld('valence', {
     arch: process.arch,
     electron: process.versions.electron,
     chrome: process.versions.chrome,
+  },
+  notifications: {
+    setBadge: (count: number) => {
+      ipcRenderer.send(SET_UNREAD_BADGE, count);
+    },
   },
   servers: {
     alreadyFound,

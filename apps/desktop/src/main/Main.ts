@@ -50,6 +50,8 @@ import {
 import type { AvailableUpdate } from '@ValenceDesktop/main/checkForUpdate';
 import type { AskingTheServer } from '@ValenceDesktop/main/keepADownload';
 import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
+import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
+import { z } from 'zod';
 
 const WHERE_IT_HAS_ALWAYS_BEEN = 'Valence';
 
@@ -267,6 +269,10 @@ const start = async (): Promise<void> => {
     if (knownUpdate !== null) {
       autoUpdater.quitAndInstall();
     }
+  });
+
+  ipcMain.on(SET_UNREAD_BADGE, (_event, count) => {
+    app.setBadgeCount(z.number().int().nonnegative().catch(0).parse(count));
   });
 
   const discord = tellDiscord(app.getPath('temp'));

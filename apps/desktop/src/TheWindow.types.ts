@@ -43,6 +43,10 @@ type AboutTheBuild = {
   chrome: string;
 };
 
+type DesktopNotifications = {
+  setBadge: (count: number) => void;
+};
+
 declare global {
   interface Window {
     valence: {
@@ -52,6 +56,7 @@ declare global {
       reach: Reach;
       update: UpdateChecks;
       about: AboutTheBuild;
+      notifications: DesktopNotifications;
       servers?: ServersFound;
     };
   }
@@ -60,6 +65,7 @@ declare global {
 export type {
   AboutTheBuild,
   AvailableUpdate,
+  DesktopNotifications,
   FilesHeld,
   Preferences,
   Reach,
