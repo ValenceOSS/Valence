@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
 import { AFace } from '@ValencePhone/components/AFace/AFace';
+import { AskForTheCode } from '@ValencePhone/components/AskForTheCode/AskForTheCode';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { TextField } from '@ValencePhone/components/TextField/TextField';
@@ -11,9 +12,9 @@ import type { AskForThePasswordProps } from './AskForThePassword.types';
 /**
  * Asks for the password of the face somebody picked.
  *
- * A second factor is not handled here and says so plainly rather than failing silently — an
- * account with one cannot get in from a phone yet, and being told that is better than a password
- * that appears to be wrong.
+ * An account with a second factor goes on to be asked for it once the password has been accepted,
+ * rather than the two being asked for together: somebody whose password was wrong should hear
+ * that, not be asked for a code they will then be refused over.
  *
  * @param profile - Whose face was picked.
  * @param onIn - Told once they are through.
@@ -23,6 +24,7 @@ const AskForThePassword = ({ profile, onIn, onBack }: AskForThePasswordProps) =>
   const [password, setPassword] = useState('');
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isTrying, setIsTrying] = useState(false);
+  const [wantsCode, setWantsCode] = useState(false);
 
   const tryIt = async () => {
     setIsTrying(true);
@@ -38,12 +40,18 @@ const AskForThePassword = ({ profile, onIn, onBack }: AskForThePasswordProps) =>
       return;
     }
 
-    setRefusal(
-      outcome.kind === 'needsCode'
-        ? 'This account asks for a code, which a phone cannot do yet.'
-        : outcome.reason,
-    );
+    if (outcome.kind === 'needsCode') {
+      setWantsCode(true);
+
+      return;
+    }
+
+    setRefusal(outcome.reason);
   };
+
+  if (wantsCode) {
+    return <AskForTheCode onIn={onIn} onBack={onBack} />;
+  }
 
   return (
     <Screen centres>

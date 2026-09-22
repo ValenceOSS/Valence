@@ -36,7 +36,8 @@ const TextField = ({
       accessibilityLabel={label}
       autoCapitalize="none"
       autoCorrect={false}
-      keyboardType={keyboard === 'url' ? 'url' : 'default'}
+      keyboardType={keyboard === 'url' ? 'url' : keyboard === 'code' ? 'number-pad' : 'default'}
+      textContentType={keyboard === 'code' ? 'oneTimeCode' : 'none'}
       returnKeyType={keyboard === 'search' ? 'search' : 'default'}
       clearButtonMode={keyboard === 'search' ? 'while-editing' : 'never'}
       onChangeText={onValueChange}

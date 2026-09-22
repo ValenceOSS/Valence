@@ -69,18 +69,21 @@ describe('AskForThePassword', () => {
     });
   });
 
-  it('says plainly that a second factor is not possible here yet', async () => {
+  it('goes on to ask for the code where the account has a second factor', async () => {
     jest.mocked(signInAsProfile).mockResolvedValue({ kind: 'needsCode' });
 
+    const onIn = jest.fn();
     const drawn = await render(
-      <AskForThePassword profile={A_FACE} onIn={jest.fn()} onBack={jest.fn()} />,
+      <AskForThePassword profile={A_FACE} onIn={onIn} onBack={jest.fn()} />,
     );
 
     await userEvent.press(drawn.getByText('Sign in'));
 
     await waitFor(() => {
-      expect(drawn.getByText(/asks for a code/)).toBeTruthy();
+      expect(drawn.getByLabelText('Authenticator code')).toBeTruthy();
     });
+
+    expect(onIn).not.toHaveBeenCalled();
   });
 
   it('does not say it is through where it was refused', async () => {
