@@ -14,15 +14,27 @@ const THE_REST = 'rgba(255, 255, 255, 0.3)';
 
 const ARRIVED = 'rgba(255, 255, 255, 0.5)';
 
+const QUIETLY = 'rgba(255, 255, 255, 0.65)';
+
 const A_STEP = 10;
 
-const EDGE = 16;
+const EDGE = 24;
 
 const styles = StyleSheet.create({
   clock: { color: OVER_THE_PICTURE, fontSize: 13, fontVariant: ['tabular-nums'] },
-  foot: { gap: 2 },
+  foot: { gap: 2, paddingHorizontal: EDGE },
   head: { alignItems: 'center', flexDirection: 'row', gap: 14 },
-  middle: { alignItems: 'center', flexDirection: 'row', gap: 44, justifyContent: 'center' },
+  middle: {
+    alignItems: 'center',
+    bottom: 0,
+    flexDirection: 'row',
+    gap: 44,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
   step: { alignItems: 'center', justifyContent: 'center' },
   stepHowFar: {
     color: OVER_THE_PICTURE,
@@ -31,7 +43,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   times: { flexDirection: 'row', justifyContent: 'space-between' },
-  title: { color: OVER_THE_PICTURE, flex: 1, fontSize: 15, fontWeight: '600' },
+  said: { alignItems: 'baseline', flex: 1, flexDirection: 'row', gap: 7 },
+  title: { color: OVER_THE_PICTURE, fontSize: 15, fontWeight: '600' },
+  year: { color: QUIETLY, fontSize: 13 },
   whole: {
     backgroundColor: SCRIM,
     bottom: 0,
@@ -54,11 +68,19 @@ const styles = StyleSheet.create({
  * It is drawn white on a scrim rather than in the theme, because what it sits on is a film and not
  * a page, and a light theme over a dark scene is unreadable either way round.
  *
- * It is held off all four edges rather than the two a page worries about. This screen is the one
- * turned sideways, and sideways the notch and the rounded corners are on the left and the right —
- * a close button in the corner of a page is in the cutout on a film.
+ * Nothing but the controls themselves takes a touch, so a tap on the picture reaches what is
+ * behind this and puts it away — which is what a tap on a playing film means everywhere else.
+ *
+ * The middle row is centred on the screen rather than between the other two, because those two are
+ * different heights and centring between them puts the play button above the middle of the film.
+ *
+ * Only the top row is held off the cutout. Sideways, the cutout is a band down the middle of one
+ * long edge and nothing else: holding everything off it would indent the scrubber by an inch for
+ * the sake of something it never reaches, which is how a phone with a screen this size ends up
+ * drawing a picture the size of an older one's.
  *
  * @param title - What is playing.
+ * @param year - When it came out, where that is known.
  * @param isPlaying - Whether the picture is moving.
  * @param at - How far in they are.
  * @param runsFor - How long it runs.
@@ -72,6 +94,7 @@ const styles = StyleSheet.create({
  */
 const TheControls = ({
   title,
+  year,
   isPlaying,
   at,
   runsFor,
@@ -86,32 +109,35 @@ const TheControls = ({
   const room = useSafeAreaInsets();
 
   return (
-    <View
-      style={[
-        styles.whole,
-        {
-          paddingBottom: room.bottom + EDGE,
-          paddingLeft: room.left + EDGE,
-          paddingRight: room.right + EDGE,
-          paddingTop: room.top + EDGE,
-        },
-      ]}
-    >
-      <View style={styles.head}>
+    <View style={[styles.whole, { paddingBottom: room.bottom + 12, paddingTop: room.top + 12 }]}>
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.head,
+          {
+            paddingLeft: Math.max(room.left, EDGE),
+            paddingRight: Math.max(room.right, EDGE),
+          },
+        ]}
+      >
         <Button tone="bare" label="Stop watching" onPress={onClose}>
           <Icon of="X" size={26} colour={OVER_THE_PICTURE} />
         </Button>
 
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
+        <View style={styles.said}>
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+
+          {year === null ? null : <Text style={styles.year}>{year}</Text>}
+        </View>
 
         <Button tone="bare" label="Subtitles, audio and quality" onPress={onSettings}>
           <Icon of="Settings" size={26} colour={OVER_THE_PICTURE} />
         </Button>
       </View>
 
-      <View style={styles.middle}>
+      <View style={styles.middle} pointerEvents="box-none">
         <Button
           tone="bare"
           label={`Back ${A_STEP.toString()} seconds`}
@@ -143,7 +169,7 @@ const TheControls = ({
         </Button>
       </View>
 
-      <View style={styles.foot}>
+      <View style={styles.foot} pointerEvents="box-none">
         <Slider
           label={`Seek through ${title}`}
           value={at}

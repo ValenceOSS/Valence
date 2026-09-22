@@ -26,8 +26,11 @@ import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { TheControls } from '@ValencePhone/components/Watching/components/TheControls/TheControls';
+import { TheChoices } from '@ValencePhone/components/Watching/components/TheChoices/TheChoices';
+import { theChoicesOn } from '@ValencePhone/components/Watching/theChoicesOn';
 import type { WatchingProps } from './Watching.types';
 import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
+import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
@@ -90,6 +93,13 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   const whereTheyGotTo = useRef<{ positionSeconds: number; durationSeconds: number } | null>(null);
   const picture = useRef<VideoViewRef | null>(null);
   const [areControlsUp, setAreControlsUp] = useState(true);
+  const [lastTouched, setLastTouched] = useState(0);
+  const [isChoosing, setIsChoosing] = useState(false);
+  const [asking, setAsking] = useState<{
+    from: number;
+    audioStreamIndex?: number;
+    requestedQuality?: QualityPreference;
+  }>({ from: startSeconds });
   const clientId = platformInUse().thisClientId();
   const title = useQuery(libraryQueries.detail(mediaId));
 
@@ -97,41 +107,48 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
     let started: string | null = null;
     let leftAlready = false;
 
-    void startPlaybackSession(mediaId, thePhonesProfile(), clientId, Math.floor(startSeconds)).then(
-      (outcome) => {
-        if (outcome.kind === 'failed') {
-          setRefusal(outcome.reason);
+    setSource(null);
 
-          return;
-        }
+    void startPlaybackSession(
+      mediaId,
+      thePhonesProfile(),
+      clientId,
+      Math.floor(asking.from),
+      asking.audioStreamIndex,
+      asking.requestedQuality,
+    ).then((outcome) => {
+      if (outcome.kind === 'failed') {
+        setRefusal(outcome.reason);
 
-        started = outcome.session.sessionId;
+        return;
+      }
 
+      started = outcome.session.sessionId;
+
+      if (leftAlready) {
+        void stopPlaybackSession(started, clientId);
+
+        return;
+      }
+
+      const whole = outcome.session.delivery.kind === 'direct';
+      const uri = onThisServer(
+        outcome.session.delivery.kind === 'direct'
+          ? outcome.session.delivery.url
+          : outcome.session.delivery.manifestUrl,
+      );
+      const wasStarted = started;
+
+      void theCookiesThisPhoneHolds(uri).then((cookie) => {
         if (leftAlready) {
-          void stopPlaybackSession(started, clientId);
-
           return;
         }
 
-        const whole = outcome.session.delivery.kind === 'direct';
-        const uri = onThisServer(
-          outcome.session.delivery.kind === 'direct'
-            ? outcome.session.delivery.url
-            : outcome.session.delivery.manifestUrl,
-        );
-        const wasStarted = started;
-
-        void theCookiesThisPhoneHolds(uri).then((cookie) => {
-          if (leftAlready) {
-            return;
-          }
-
-          setSeekTo(whole ? startSeconds : 0);
-          setSessionId(wasStarted);
-          setSource(cookie === null ? { uri } : { uri, headers: { Cookie: cookie } });
-        });
-      },
-    );
+        setSeekTo(whole ? asking.from : 0);
+        setSessionId(wasStarted);
+        setSource(cookie === null ? { uri } : { uri, headers: { Cookie: cookie } });
+      });
+    });
 
     return () => {
       leftAlready = true;
@@ -142,7 +159,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
 
       void stopWatching(clientId);
     };
-  }, [mediaId, startSeconds, clientId]);
+  }, [mediaId, asking, clientId]);
 
   const player = useVideoPlayer(source, (ready) => {
     ready.timeUpdateEventInterval = HOW_OFTEN_IT_SAYS_WHERE_IT_IS;
@@ -166,7 +183,16 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
 
   const keepThemUp = useCallback(() => {
     setAreControlsUp(true);
+    setLastTouched(Date.now());
   }, []);
+
+  const askAgain = useCallback(
+    (changed: { audioStreamIndex?: number; requestedQuality?: QualityPreference }) => {
+      setIsChoosing(false);
+      setAsking((asked) => ({ ...asked, ...changed, from: player.currentTime }));
+    },
+    [player],
+  );
 
   useEffect(() => {
     if (sessionId === null) {
@@ -192,7 +218,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   }, []);
 
   useEffect(() => {
-    if (!areControlsUp || !moving.isPlaying) {
+    if (!areControlsUp || !moving.isPlaying || isChoosing) {
       return;
     }
 
@@ -203,7 +229,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
     return () => {
       clearTimeout(going);
     };
-  }, [areControlsUp, moving.isPlaying, ticking.currentTime]);
+  }, [areControlsUp, moving.isPlaying, isChoosing, lastTouched]);
 
   useEffect(() => {
     if (sessionId === null) {
@@ -283,6 +309,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
       {areControlsUp ? (
         <TheControls
           title={title.data?.title ?? ''}
+          year={title.data?.year ?? null}
           isPlaying={moving.isPlaying}
           at={ticking.currentTime}
           runsFor={player.duration}
@@ -306,7 +333,30 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
           }}
           onTouched={keepThemUp}
           onClose={onDone}
-          onSettings={keepThemUp}
+          onSettings={() => {
+            setIsChoosing(true);
+          }}
+        />
+      ) : null}
+
+      {isChoosing ? (
+        <TheChoices
+          sets={theChoicesOn({
+            streams: title.data?.audioStreams ?? [],
+            media: title.data ?? null,
+            chosenAudio: asking.audioStreamIndex ?? null,
+            chosenQuality: asking.requestedQuality ?? 'original',
+            onAudio: (audioStreamIndex) => {
+              askAgain({ audioStreamIndex });
+            },
+            onQuality: (requestedQuality) => {
+              askAgain({ requestedQuality });
+            },
+          })}
+          onClose={() => {
+            setIsChoosing(false);
+            keepThemUp();
+          }}
         />
       ) : null}
     </View>

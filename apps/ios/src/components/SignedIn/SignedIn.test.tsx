@@ -172,6 +172,8 @@ describe('SignedIn', () => {
         expect.anything(),
         expect.any(String),
         0,
+        undefined,
+        undefined,
       );
     });
   });

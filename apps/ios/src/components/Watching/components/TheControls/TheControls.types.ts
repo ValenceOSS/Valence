@@ -1,5 +1,6 @@
 type TheControlsProps = {
   title: string;
+  year: number | null;
   isPlaying: boolean;
   at: number;
   runsFor: number;

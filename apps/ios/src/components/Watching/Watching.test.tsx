@@ -99,6 +99,8 @@ describe('Watching', () => {
         expect.objectContaining({ schemaVersion: 1 }),
         expect.any(String),
         0,
+        undefined,
+        undefined,
       );
     });
   });
@@ -213,6 +215,8 @@ describe('Watching', () => {
         expect.anything(),
         expect.any(String),
         1234,
+        undefined,
+        undefined,
       );
     });
   });

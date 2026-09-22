@@ -5,6 +5,7 @@ import type { TheControlsProps } from './TheControls.types';
 const theControls = (overrides: Partial<TheControlsProps> = {}) => (
   <TheControls
     title="Arrival"
+    year={2016}
     isPlaying
     at={251}
     runsFor={6960}
@@ -111,5 +112,18 @@ describe('TheControls', () => {
     const drawn = await render(theControls({ at: 0 }));
 
     expect(drawn.getByText('−1:56:00')).toBeTruthy();
+  });
+
+  it('says when it came out, as every other client does', async () => {
+    const drawn = await render(theControls());
+
+    expect(drawn.getByText('2016')).toBeTruthy();
+  });
+
+  it('says nothing about a year nobody recorded', async () => {
+    const drawn = await render(theControls({ year: null }));
+
+    expect(drawn.queryByText('2016')).toBeNull();
+    expect(drawn.getByText('Arrival')).toBeTruthy();
   });
 });
