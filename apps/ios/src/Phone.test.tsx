@@ -1,11 +1,18 @@
 import { render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
+import { fetchSession } from '@ValenceClient/session/auth';
 import { Phone } from './Phone';
+
+jest.mock('@ValenceClient/session/auth');
 
 beforeEach(async () => {
   await AsyncStorage.clear();
   forgetPlatform();
+  jest.mocked(fetchSession).mockResolvedValue(null);
+  globalThis.fetch = jest
+    .fn()
+    .mockResolvedValue(new Response(JSON.stringify({ profiles: [], splashscreen: null })));
 });
 
 describe('Phone', () => {

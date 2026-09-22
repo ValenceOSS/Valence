@@ -16,9 +16,10 @@ const styles = StyleSheet.create({
 /**
  * The way in: who lives here, drawn from the server this phone was told to watch.
  *
+ * @param onPicked - Told whose face somebody chose.
  * @param onElsewhere - Told that somebody wants to point this phone at a different server.
  */
-const TheWayIn = ({ onElsewhere }: TheWayInProps) => {
+const TheWayIn = ({ onPicked, onElsewhere }: TheWayInProps) => {
   const asking = useQuery(sessionQueries.wayIn());
 
   return (
@@ -32,7 +33,16 @@ const TheWayIn = ({ onElsewhere }: TheWayInProps) => {
       ) : (
         <View style={styles.faces}>
           {(asking.data?.profiles ?? []).map((profile) => (
-            <AFace key={profile.id} profile={profile} />
+            <Pressable
+              key={profile.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Sign in as ${profile.name}`}
+              onPress={() => {
+                onPicked(profile);
+              }}
+            >
+              <AFace profile={profile} />
+            </Pressable>
           ))}
         </View>
       )}

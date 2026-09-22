@@ -7,7 +7,7 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { installPhonePlatform } from '@ValencePhone/platform/installPhonePlatform';
 import { whatThePhoneRemembers } from '@ValencePhone/platform/whatThePhoneRemembers';
 import { THE_SERVER_ADDRESS } from '@ValencePhone/platform/THE_SERVER_ADDRESS';
-import { TheWayIn } from '@ValencePhone/components/TheWayIn/TheWayIn';
+import { TheHousehold } from '@ValencePhone/components/TheHousehold/TheHousehold';
 import { WhereIsYourValence } from '@ValencePhone/components/WhereIsYourValence/WhereIsYourValence';
 
 const answers = buildQueryClient();
@@ -61,7 +61,7 @@ const Phone = () => {
           }}
         />
       ) : (
-        <TheWayIn
+        <TheHousehold
           onElsewhere={() => {
             setIsAsking(true);
           }}

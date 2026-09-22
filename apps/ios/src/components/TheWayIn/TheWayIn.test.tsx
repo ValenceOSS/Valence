@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react-native';
+import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -41,7 +41,7 @@ describe('TheWayIn', () => {
   it('asks who is watching', async () => {
     answering({ profiles: [], splashscreen: null });
 
-    const drawn = await render(around(<TheWayIn onElsewhere={jest.fn()} />));
+    const drawn = await render(around(<TheWayIn onPicked={jest.fn()} onElsewhere={jest.fn()} />));
 
     expect(drawn.getByText('Who is watching?')).toBeTruthy();
   });
@@ -49,7 +49,7 @@ describe('TheWayIn', () => {
   it('draws a face for everybody who lives here', async () => {
     answering({ profiles: [A_FACE], splashscreen: null });
 
-    const drawn = await render(around(<TheWayIn onElsewhere={jest.fn()} />));
+    const drawn = await render(around(<TheWayIn onPicked={jest.fn()} onElsewhere={jest.fn()} />));
 
     await waitFor(() => {
       expect(drawn.getByText('Dan')).toBeTruthy();
@@ -59,7 +59,7 @@ describe('TheWayIn', () => {
   it('says so where the server did not answer, rather than showing nobody', async () => {
     globalThis.fetch = jest.fn().mockRejectedValue(new Error('unreachable'));
 
-    const drawn = await render(around(<TheWayIn onElsewhere={jest.fn()} />));
+    const drawn = await render(around(<TheWayIn onPicked={jest.fn()} onElsewhere={jest.fn()} />));
 
     await waitFor(() => {
       expect(drawn.getByText('That server did not answer.')).toBeTruthy();
@@ -69,8 +69,23 @@ describe('TheWayIn', () => {
   it('offers a way to point this phone somewhere else', async () => {
     answering({ profiles: [], splashscreen: null });
 
-    const drawn = await render(around(<TheWayIn onElsewhere={jest.fn()} />));
+    const drawn = await render(around(<TheWayIn onPicked={jest.fn()} onElsewhere={jest.fn()} />));
 
     expect(drawn.getByText('Use a different server')).toBeTruthy();
+  });
+
+  it('tells whoever is listening whose face was picked', async () => {
+    answering({ profiles: [A_FACE], splashscreen: null });
+
+    const onPicked = jest.fn();
+    const drawn = await render(around(<TheWayIn onPicked={onPicked} onElsewhere={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Sign in as Dan')).toBeTruthy();
+    });
+
+    await userEvent.press(drawn.getByLabelText('Sign in as Dan'));
+
+    expect(onPicked).toHaveBeenCalledWith(A_FACE);
   });
 });
