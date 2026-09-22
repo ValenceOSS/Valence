@@ -5,7 +5,8 @@ import { and, asc, eq } from 'drizzle-orm';
 import { drawAvatar, isAvatarStyle } from './drawAvatar';
 import { extensionFor, whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
 import { pickOneFaceEach } from './pickOneFaceEach';
-import { viewerProfile, user } from '@ValenceServer/db/Schema';
+import { pickTheAccountsFace } from './pickTheAccountsFace';
+import { viewerProfile, user, userProfile } from '@ValenceServer/db/Schema';
 import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlaylistsOf';
 import {
   STILL_WATCHING_DEFAULT,
@@ -15,6 +16,7 @@ import { ProfileColourSchema, PROFILE_COLOURS } from '@ValenceContracts/schemas/
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { ProfileService } from './ProfileService';
 import type { ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { StoredFace } from './pickTheAccountsFace';
 
 const MOVING_FORMATS = new Set(['.webm', '.mp4']);
 
@@ -98,6 +100,17 @@ const toProfile = (row: ProfileRow): ViewerProfile => ({
 });
 
 /**
+ * Turns a profile row and the row of the account holding it into what the contract carries, drawn
+ * with whichever of the two holds a face.
+ *
+ * @param profile - The profile as stored.
+ * @param household - The account's own picture columns, or nothing where it has no household row.
+ * @returns The profile, as the API describes one.
+ */
+const toAccountProfile = (profile: ProfileRow, household: StoredFace | null): ViewerProfile =>
+  toProfile({ ...profile, ...pickTheAccountsFace(household, profile) });
+
+/**
  * Turns a chosen avatar into the columns that hold it, so that choosing one kind clears whatever
  * the other kind had left behind.
  *
@@ -120,6 +133,14 @@ const avatarColumns = (
   }
 
   return null;
+};
+
+const HOUSEHOLD_FACE = {
+  userId: userProfile.userId,
+  photoPath: userProfile.photoPath,
+  avatarStyle: userProfile.avatarStyle,
+  avatarSeed: userProfile.avatarSeed,
+  updatedAt: userProfile.updatedAt,
 };
 
 const COLUMNS = {
@@ -150,12 +171,13 @@ const createDatabaseProfileService = (
 ): ProfileService => {
   const listFor = async (userId: string): Promise<ViewerProfile[]> => {
     const rows = await db
-      .select(COLUMNS)
+      .select({ profile: COLUMNS, household: HOUSEHOLD_FACE })
       .from(viewerProfile)
+      .leftJoin(userProfile, eq(userProfile.userId, viewerProfile.userId))
       .where(eq(viewerProfile.userId, userId))
       .orderBy(asc(viewerProfile.createdAt));
 
-    return rows.map(toProfile);
+    return rows.map((row) => toAccountProfile(row.profile, row.household));
   };
 
   /**
@@ -286,16 +308,20 @@ const createDatabaseProfileService = (
           userName: user.name,
           createdAt: user.createdAt,
           profile: COLUMNS,
+          household: HOUSEHOLD_FACE,
         })
         .from(user)
         .leftJoin(viewerProfile, eq(viewerProfile.userId, user.id))
+        .leftJoin(userProfile, eq(userProfile.userId, user.id))
         .orderBy(asc(user.createdAt));
 
       const everyone: ViewerProfile[] = [];
 
       for (const row of pickOneFaceEach(rows)) {
         everyone.push(
-          row.profile === null ? await ensure(row.userId, row.userName) : toProfile(row.profile),
+          row.profile === null
+            ? await ensure(row.userId, row.userName)
+            : toAccountProfile(row.profile, row.household),
         );
       }
 
@@ -325,8 +351,9 @@ const createDatabaseProfileService = (
 
     readAvatar: async (profileId) => {
       const rows = await db
-        .select(COLUMNS)
+        .select({ profile: COLUMNS, household: HOUSEHOLD_FACE })
         .from(viewerProfile)
+        .leftJoin(userProfile, eq(userProfile.userId, viewerProfile.userId))
         .where(eq(viewerProfile.id, profileId))
         .limit(1);
       const found = rows[0];
@@ -335,7 +362,8 @@ const createDatabaseProfileService = (
         return null;
       }
 
-      const choice = readAvatarChoice(found);
+      const face = pickTheAccountsFace(found.household, found.profile);
+      const choice = readAvatarChoice({ ...found.profile, ...face });
 
       if (choice.kind === 'drawn') {
         return {
@@ -344,13 +372,13 @@ const createDatabaseProfileService = (
         };
       }
 
-      if (choice.kind === 'photo' && found.photoPath !== null) {
-        const body = await readFile(join(photoDirectory, found.photoPath)).catch(() => null);
+      if (choice.kind === 'photo' && face.photoPath !== null) {
+        const body = await readFile(join(photoDirectory, face.photoPath)).catch(() => null);
 
         if (body !== null) {
           return {
             body,
-            contentType: PHOTO_CONTENT_TYPES[extname(found.photoPath)] ?? 'image/jpeg',
+            contentType: PHOTO_CONTENT_TYPES[extname(face.photoPath)] ?? 'image/jpeg',
           };
         }
       }
