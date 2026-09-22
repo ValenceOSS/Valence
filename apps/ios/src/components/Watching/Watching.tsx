@@ -24,9 +24,12 @@ import { turnThisPhoneSideways } from '@ValencePhone/platform/turnThisPhoneSidew
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { TheControls } from '@ValencePhone/components/Watching/components/TheControls/TheControls';
 import { TheChoices } from '@ValencePhone/components/Watching/components/TheChoices/TheChoices';
+import { howBigToDrawIt } from '@ValencePhone/components/Watching/howBigToDrawIt';
+import { usePinchToFill } from '@ValencePhone/components/Watching/usePinchToFill';
 import { theChoicesOn } from '@ValencePhone/components/Watching/theChoicesOn';
 import type { WatchingProps } from './Watching.types';
 import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
@@ -41,6 +44,8 @@ const LEAVE_THEM_UP_FOR = 3500;
 const FADING_IN = 160;
 
 const FADING_OUT = 240;
+
+const ZOOMING = 220;
 
 const HOW_OFTEN_IT_SAYS_WHERE_IT_IS = 0.25;
 
@@ -65,6 +70,15 @@ const styles = StyleSheet.create({
  * go of once the fade has had time to finish, rather than when it says it has. The fade is run off
  * the main thread so it does not stutter against a playing film, and a thing running over there
  * cannot be waited on over here.
+ *
+ * Two fingers pushed apart fill the screen with the picture and drawn together fit it inside,
+ * which is what a pinch does to a video everywhere else on a phone. Fitted means inside everything
+ * the phone has put over its screen, not merely letterboxed: the whole reason somebody pinches a
+ * film smaller is to get the cutout off it, and a picture that still runs under the cutout has not
+ * done the one thing it was asked. Filled gives that up on purpose in exchange for the bands.
+ *
+ * The gesture is taken before the picture sees it, so a second finger never also counts as a tap
+ * and brings the controls up.
  *
  * It fills the screen from the moment it opens, and its controls are Valence's own rather than the
  * system's. The system's are good but they are a closed box: nothing can be drawn over them and
@@ -103,6 +117,10 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   const [areControlsUp, setAreControlsUp] = useState(true);
   const [areControlsDrawn, setAreControlsDrawn] = useState(true);
   const [fade] = useState(() => new Animated.Value(1));
+  const { howClose, pinching } = usePinchToFill();
+  const room = useSafeAreaInsets();
+  const [screen, setScreen] = useState({ width: 0, height: 0 });
+  const [howBig] = useState(() => new Animated.Value(1));
   const [lastTouched, setLastTouched] = useState(0);
   const [isChoosing, setIsChoosing] = useState(false);
   const [asking, setAsking] = useState<{
@@ -184,6 +202,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   });
 
   const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
+  const shot = useEvent(player, 'videoTrackChange', { videoTrack: player.videoTrack ?? null });
   const ticking = useEvent(player, 'timeUpdate', {
     currentTime: player.currentTime,
     bufferedPosition: player.bufferedPosition,
@@ -226,6 +245,14 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
       void holdThisPhoneUpright();
     };
   }, []);
+
+  useEffect(() => {
+    Animated.timing(howBig, {
+      toValue: howBigToDrawIt(howClose, screen, room, shot.videoTrack?.size ?? null),
+      duration: ZOOMING,
+      useNativeDriver: true,
+    }).start();
+  }, [howClose, screen, room, shot.videoTrack, howBig]);
 
   useEffect(() => {
     if (areControlsUp) {
@@ -318,15 +345,23 @@ const Watching = ({ mediaId, startSeconds = 0, onDone }: WatchingProps) => {
   }
 
   return (
-    <View style={styles.picture}>
-      <VideoView
-        ref={picture}
-        style={styles.picture}
-        player={player}
-        allowsPictureInPicture
-        nativeControls={false}
-        contentFit="contain"
-      />
+    <View
+      style={styles.picture}
+      onLayout={({ nativeEvent }) => {
+        setScreen(nativeEvent.layout);
+      }}
+      {...pinching.panHandlers}
+    >
+      <Animated.View style={[styles.picture, { transform: [{ scale: howBig }] }]}>
+        <VideoView
+          ref={picture}
+          style={styles.picture}
+          player={player}
+          allowsPictureInPicture
+          nativeControls={false}
+          contentFit="contain"
+        />
+      </Animated.View>
 
       <Button
         tone="bare"

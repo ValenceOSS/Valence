@@ -28,13 +28,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     bottom: 0,
     flexDirection: 'row',
-    gap: 44,
+    gap: 56,
     justifyContent: 'center',
     left: 0,
     position: 'absolute',
     right: 0,
     top: 0,
   },
+  reach: { padding: 14 },
   step: { alignItems: 'center', justifyContent: 'center' },
   stepHowFar: {
     color: OVER_THE_PICTURE,
@@ -76,6 +77,9 @@ const styles = StyleSheet.create({
  *
  * The middle row is centred on the screen rather than between the other two, because those two are
  * different heights and centring between them puts the play button above the middle of the film.
+ *
+ * Each of the three reaches further than it is drawn. A thumb on a phone held sideways is nowhere
+ * near as precise as a cursor, and a control that has to be aimed at is one somebody misses.
  *
  * Only the top row is held off the cutout. Sideways, the cutout is a band down the middle of one
  * long edge and nothing else: holding everything off it would indent the scrubber by an inch for
@@ -156,14 +160,16 @@ const TheControls = ({
             onSkip(-A_STEP);
           }}
         >
-          <View style={styles.step}>
+          <View style={[styles.step, styles.reach]}>
             <Icon of="RotateCcw" size={40} colour={OVER_THE_PICTURE} />
             <Text style={styles.stepHowFar}>{A_STEP}</Text>
           </View>
         </Button>
 
         <Button tone="bare" label={isPlaying ? 'Pause' : 'Play'} onPress={onPlayPause}>
-          <Icon of={isPlaying ? 'Pause' : 'Play'} size={52} colour={OVER_THE_PICTURE} />
+          <View style={styles.reach}>
+            <Icon of={isPlaying ? 'Pause' : 'Play'} size={62} colour={OVER_THE_PICTURE} />
+          </View>
         </Button>
 
         <Button
@@ -173,7 +179,7 @@ const TheControls = ({
             onSkip(A_STEP);
           }}
         >
-          <View style={styles.step}>
+          <View style={[styles.step, styles.reach]}>
             <Icon of="RotateCw" size={40} colour={OVER_THE_PICTURE} />
             <Text style={styles.stepHowFar}>{A_STEP}</Text>
           </View>
