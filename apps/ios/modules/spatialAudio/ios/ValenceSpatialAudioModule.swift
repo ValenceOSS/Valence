@@ -41,28 +41,12 @@ public class ValenceSpatialAudioModule: Module {
 
   private static func allow(on item: AVPlayerItem?) {
     guard let item else {
-      NSLog("[Valence] spatial audio: nothing playing to say it about yet")
-
       return
     }
 
     item.allowedAudioSpatializationFormats = .monoStereoAndMultichannel
 
-    let session = AVAudioSession.sharedInstance()
-
-    do {
-      try session.setCategory(.playback, mode: .moviePlayback, policy: .longFormVideo)
-    } catch {
-      NSLog("[Valence] spatial audio: could not say this is long form video: %@", "\(error)")
-    }
-
-    NSLog(
-      "[Valence] spatial audio: allowed=%d policy=%d route=%@",
-      item.allowedAudioSpatializationFormats.rawValue,
-      session.routeSharingPolicy.rawValue,
-      session.currentRoute.outputs
-        .map { "\($0.portType.rawValue):spatial=\($0.isSpatialAudioEnabled)" }
-        .joined(separator: ",")
-    )
+    try? AVAudioSession.sharedInstance()
+      .setCategory(.playback, mode: .moviePlayback, policy: .longFormVideo)
   }
 }
