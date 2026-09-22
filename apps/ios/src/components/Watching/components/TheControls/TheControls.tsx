@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
-import { Pause, Play, RotateCcw, RotateCw, Settings, X } from 'lucide-react-native';
+import { ListVideo, Pause, Play, RotateCcw, RotateCw, Settings, X } from 'lucide-react-native';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { TheFrameAt } from '@ValencePhone/components/Watching/components/TheFrameAt/TheFrameAt';
 import { Slider } from '@ValencePhone/components/Slider/Slider';
@@ -107,6 +107,7 @@ const styles = StyleSheet.create({
  * @param onTouched - Told they are still there, so this does not fade out from under them.
  * @param onClose - Told they are done watching.
  * @param onSettings - Told they want the rest of it.
+ * @param onEpisodes - Told they want another episode, where this is one.
  */
 const TheControls = ({
   fade,
@@ -123,6 +124,7 @@ const TheControls = ({
   onTouched,
   onClose,
   onSettings,
+  onEpisodes,
 }: TheControlsProps) => {
   const room = useSafeAreaInsets();
   const [scrubbingTo, setScrubbingTo] = useState<number | null>(null);
@@ -157,6 +159,12 @@ const TheControls = ({
 
           {year === null ? null : <Text style={styles.year}>{year}</Text>}
         </View>
+
+        {onEpisodes === undefined ? null : (
+          <Button tone="bare" label="Episodes" onPress={onEpisodes}>
+            <Icon of={ListVideo} size={26} colour={OVER_THE_PICTURE} />
+          </Button>
+        )}
 
         <Button tone="bare" label="Subtitles, audio and quality" onPress={onSettings}>
           <Icon of={Settings} size={26} colour={OVER_THE_PICTURE} />

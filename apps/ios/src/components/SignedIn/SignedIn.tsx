@@ -12,6 +12,8 @@ import {
   STILL_WATCHING_OFF,
 } from '@ValenceContracts/schemas/StillWatching';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { byMediaId } from '@ValenceClient/playback/watchProgress';
+import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { signOut } from '@ValenceClient/session/auth';
@@ -80,6 +82,7 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const holding = useTheProgrammeOfEpisode(watching?.mediaId ?? null);
   const series = useQuery(libraryQueries.show(holding?.libraryId ?? null, holding?.id ?? null));
   const watcher = useQuery(profileQueries.watching());
+  const watched = useQuery(viewingQueries.progress());
   const episodes = series.data?.seasons.flatMap((season) => season.episodes) ?? [];
   const requesting = useQuery(requestsQueries.availability());
   const { may } = useWhatIMayDo();
@@ -176,6 +179,10 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         startSeconds={watching.startSeconds}
         onDone={stopWatchingIt}
         onEnded={whenItEnds}
+        seasons={series.data?.seasons ?? []}
+        onChooseEpisode={(chosen) => {
+          choose(chosen, resumeFor(byMediaId(watched.data ?? []), chosen) ?? 0);
+        }}
       />
     );
   }

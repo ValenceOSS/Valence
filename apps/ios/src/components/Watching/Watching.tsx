@@ -9,6 +9,8 @@ import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetc
 import { describeSkip, fetchSegments, skippableAt } from '@ValenceClient/playback/fetchSegments';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
+import { nameSeason } from '@ValenceClient/library/nameSeason';
+import { howLongItRuns } from '@ValencePhone/components/ATitle/howLongItRuns';
 import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
 import { setThePace } from '@ValencePhone/playback/setThePace';
 import {
@@ -132,8 +134,17 @@ const styles = StyleSheet.create({
  * @param startSeconds - Where to begin.
  * @param onDone - Told they have stopped watching.
  * @param onEnded - Told the film has played to its end, so whoever opened it can decide what follows.
+ * @param seasons - The programme's seasons, where this is an episode of one, to offer the others.
+ * @param onChooseEpisode - Told which other episode somebody picked.
  */
-const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps) => {
+const Watching = ({
+  mediaId,
+  startSeconds = 0,
+  onDone,
+  onEnded,
+  seasons = [],
+  onChooseEpisode,
+}: WatchingProps) => {
   const colours = useTheColours();
   const [source, setSource] = useState<VideoSource | null>(null);
   const [seekTo, setSeekTo] = useState(0);
@@ -150,6 +161,7 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
   const [howBig] = useState(() => new Animated.Value(1));
   const [lastTouched, setLastTouched] = useState(0);
   const [isChoosing, setIsChoosing] = useState(false);
+  const [isPickingAnEpisode, setIsPickingAnEpisode] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const frames = useQuery({
     queryKey: ['playback', 'trickplay', mediaId],
@@ -547,6 +559,40 @@ const Watching = ({ mediaId, startSeconds = 0, onDone, onEnded }: WatchingProps)
           onClose={onDone}
           onSettings={() => {
             setIsChoosing(true);
+          }}
+          onEpisodes={
+            onChooseEpisode === undefined || seasons.length === 0
+              ? undefined
+              : () => {
+                  setIsPickingAnEpisode(true);
+                }
+          }
+        />
+      ) : null}
+
+      {isPickingAnEpisode && onChooseEpisode !== undefined ? (
+        <TheChoices
+          sets={seasons.map((season) => ({
+            heading: nameSeason(season.seasonNumber),
+            chosen: mediaId,
+            choices: season.episodes.map((episode) => ({
+              id: episode.id,
+              label:
+                episode.episodeNumber === null || episode.episodeNumber === undefined
+                  ? episode.title
+                  : `${episode.episodeNumber.toString()}. ${episode.title}`,
+              detail: howLongItRuns(episode.durationSeconds),
+            })),
+            onChoose: (id) => {
+              setIsPickingAnEpisode(false);
+
+              if (id !== mediaId) {
+                onChooseEpisode(id);
+              }
+            },
+          }))}
+          onClose={() => {
+            setIsPickingAnEpisode(false);
           }}
         />
       ) : null}
