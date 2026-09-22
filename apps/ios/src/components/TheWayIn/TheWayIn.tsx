@@ -7,6 +7,7 @@ import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { UseAPasskey } from '@ValencePhone/components/UseAPasskey/UseAPasskey';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheServer } from '@ValencePhone/hooks/useTheServer';
+import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheWayInProps } from './TheWayIn.types';
 
@@ -22,11 +23,13 @@ const styles = StyleSheet.create({
  * @param onPicked - Told whose face somebody chose.
  * @param onIn - Told once somebody signed in without picking a face.
  * @param onElsewhere - Told that somebody wants to point this phone at a different server.
+ * @param onDownloads - Told somebody wants what this phone keeps, while the server cannot be reached.
  */
-const TheWayIn = ({ onPicked, onIn, onElsewhere }: TheWayInProps) => {
+const TheWayIn = ({ onPicked, onIn, onElsewhere, onDownloads }: TheWayInProps) => {
   const asking = useQuery(sessionQueries.wayIn());
   const colours = useTheColours();
   const server = useTheServer();
+  const kept = useHeldFiles().filter((file) => file.state === 'here');
 
   return (
     <Screen scrolls>
@@ -48,6 +51,12 @@ const TheWayIn = ({ onPicked, onIn, onElsewhere }: TheWayInProps) => {
           >
             Try again
           </Button>
+
+          {kept.length === 0 ? null : (
+            <Button tone="quiet" onPress={onDownloads}>
+              Watch your downloads
+            </Button>
+          )}
         </>
       ) : (
         <View style={styles.faces}>

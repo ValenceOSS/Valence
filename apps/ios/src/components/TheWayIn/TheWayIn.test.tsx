@@ -42,7 +42,14 @@ describe('TheWayIn', () => {
     answering({ profiles: [], splashscreen: null });
 
     const drawn = await render(
-      around(<TheWayIn onPicked={jest.fn()} onIn={jest.fn()} onElsewhere={jest.fn()} />),
+      around(
+        <TheWayIn
+          onPicked={jest.fn()}
+          onIn={jest.fn()}
+          onElsewhere={jest.fn()}
+          onDownloads={jest.fn()}
+        />,
+      ),
     );
 
     expect(drawn.getByText('Who is watching?')).toBeTruthy();
@@ -52,7 +59,14 @@ describe('TheWayIn', () => {
     answering({ profiles: [A_FACE], splashscreen: null });
 
     const drawn = await render(
-      around(<TheWayIn onPicked={jest.fn()} onIn={jest.fn()} onElsewhere={jest.fn()} />),
+      around(
+        <TheWayIn
+          onPicked={jest.fn()}
+          onIn={jest.fn()}
+          onElsewhere={jest.fn()}
+          onDownloads={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -64,7 +78,14 @@ describe('TheWayIn', () => {
     globalThis.fetch = jest.fn().mockRejectedValue(new Error('unreachable'));
 
     const drawn = await render(
-      around(<TheWayIn onPicked={jest.fn()} onIn={jest.fn()} onElsewhere={jest.fn()} />),
+      around(
+        <TheWayIn
+          onPicked={jest.fn()}
+          onIn={jest.fn()}
+          onElsewhere={jest.fn()}
+          onDownloads={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -76,7 +97,14 @@ describe('TheWayIn', () => {
     answering({ profiles: [], splashscreen: null });
 
     const drawn = await render(
-      around(<TheWayIn onPicked={jest.fn()} onIn={jest.fn()} onElsewhere={jest.fn()} />),
+      around(
+        <TheWayIn
+          onPicked={jest.fn()}
+          onIn={jest.fn()}
+          onElsewhere={jest.fn()}
+          onDownloads={jest.fn()}
+        />,
+      ),
     );
 
     expect(drawn.getByText('Use a different server')).toBeTruthy();
@@ -87,7 +115,14 @@ describe('TheWayIn', () => {
 
     const onPicked = jest.fn();
     const drawn = await render(
-      around(<TheWayIn onPicked={onPicked} onIn={jest.fn()} onElsewhere={jest.fn()} />),
+      around(
+        <TheWayIn
+          onPicked={onPicked}
+          onIn={jest.fn()}
+          onElsewhere={jest.fn()}
+          onDownloads={jest.fn()}
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -103,7 +138,14 @@ describe('TheWayIn', () => {
     answering({ profiles: [], splashscreen: null });
 
     const drawn = await render(
-      around(<TheWayIn onPicked={jest.fn()} onIn={jest.fn()} onElsewhere={jest.fn()} />),
+      around(
+        <TheWayIn
+          onPicked={jest.fn()}
+          onIn={jest.fn()}
+          onElsewhere={jest.fn()}
+          onDownloads={jest.fn()}
+        />,
+      ),
     );
 
     expect(drawn.getByRole('button', { name: 'Sign in with a passkey' })).toBeTruthy();
