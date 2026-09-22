@@ -1,5 +1,5 @@
 import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
-import type { FilterOption } from '@ValenceScreens/library/buildFilterOptions.types';
+import type { FilterOption } from '@ValenceClient/library/buildFilterOptions.types';
 
 const RATING_FLOORS = [6, 7, 8, 9];
 

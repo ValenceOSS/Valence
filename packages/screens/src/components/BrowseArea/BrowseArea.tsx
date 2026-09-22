@@ -25,7 +25,7 @@ import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { FilterMenu } from '@ValenceUI/FilterMenu';
-import { useLibraryFilters } from '@ValenceScreens/library/useLibraryFilters';
+import { useLibraryFilters } from '@ValenceClient/library/useLibraryFilters';
 
 const PAGE_SIZE = 120;
 

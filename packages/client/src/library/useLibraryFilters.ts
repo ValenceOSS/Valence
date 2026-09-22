@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { buildFilterOptions } from '@ValenceScreens/library/buildFilterOptions';
+import { buildFilterOptions } from '@ValenceClient/library/buildFilterOptions';
 import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
-import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
+import type { FilterGroup } from '@ValenceClient/library/FilterGroup';
 
 const NO_FACETS: LibraryFacets = { genres: [], decades: [], maxRating: 0 };
 

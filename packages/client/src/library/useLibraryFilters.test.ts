@@ -1,6 +1,6 @@
 import { act, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderHookInAnAddress } from '@ValenceScreens/testing/renderHookInAnAddress';
+import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
 import { useLibraryFilters } from './useLibraryFilters';
 import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
 
@@ -20,7 +20,7 @@ beforeEach(() => {
 
 describe('useLibraryFilters', () => {
   it('offers only what the libraries actually hold, in groups', async () => {
-    const { result } = renderHookInAnAddress(() => useLibraryFilters());
+    const { result } = renderHookInACache(() => useLibraryFilters());
 
     await waitFor(() => {
       expect(result.current.groups.map((group) => group.name)).toEqual([
@@ -43,7 +43,7 @@ describe('useLibraryFilters', () => {
   });
 
   it('asks for a decade as the years either side of it, and a rating as a floor', async () => {
-    const { result } = renderHookInAnAddress(() => useLibraryFilters());
+    const { result } = renderHookInACache(() => useLibraryFilters());
 
     await waitFor(() => {
       expect(result.current.groups).not.toHaveLength(0);
@@ -63,7 +63,7 @@ describe('useLibraryFilters', () => {
   });
 
   it('takes every filter off at once', () => {
-    const { result } = renderHookInAnAddress(() => useLibraryFilters());
+    const { result } = renderHookInACache(() => useLibraryFilters());
 
     act(() => {
       result.current.change(new Set(['decade:1990', 'yours:4']));
@@ -79,7 +79,7 @@ describe('useLibraryFilters', () => {
 
   it('leaves the genre to the caller where the caller keeps it', () => {
     const onGenreChange = vi.fn();
-    const { result } = renderHookInAnAddress(() =>
+    const { result } = renderHookInACache(() =>
       useLibraryFilters({ genre: 'Comedy', onGenreChange }),
     );
 
