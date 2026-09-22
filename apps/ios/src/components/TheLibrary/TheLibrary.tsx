@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -25,6 +25,11 @@ import type { TheLibraryProps } from './TheLibrary.types';
 type Cell = { kind: 'media'; media: MediaSummary } | { kind: 'programme'; programme: ShowSummary };
 
 const EVERY = 'every';
+
+const styles = StyleSheet.create({
+  bar: { alignItems: 'center', flexDirection: 'row', gap: 16 },
+  parts: { flex: 1 },
+});
 
 /**
  * What is in this household's libraries, laid out as the web's are: a home page of shelves, and
@@ -94,20 +99,23 @@ const TheLibrary = ({ onWatch, onLookAt, onLookAtShow }: TheLibraryProps) => {
 
   const header = (
     <>
-      <TheMark />
+      <View style={styles.bar}>
+        <TheMark />
+        <View style={styles.parts}>
+          <SegmentedRow
+            label="What to show"
+            items={parts}
+            value={part}
+            onSelect={(next) => {
+              setPart(next);
+              setChosen(EVERY);
+              filters.clear();
+            }}
+          />
+        </View>
+      </View>
 
       {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
-
-      <SegmentedRow
-        label="What to show"
-        items={parts}
-        value={part}
-        onSelect={(next) => {
-          setPart(next);
-          setChosen(EVERY);
-          filters.clear();
-        }}
-      />
 
       {ofThisKind.length > 1 ? (
         <SegmentedRow
