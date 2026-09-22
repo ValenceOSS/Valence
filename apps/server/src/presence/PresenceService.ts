@@ -1,3 +1,4 @@
+import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
@@ -35,6 +36,7 @@ type PresenceSession = {
   guestOf: string | null;
   viaShare: string | null;
   deviceLabel: string;
+  clientKind: ClientKind;
   address: string | null;
 };
 
@@ -48,6 +50,7 @@ type PresenceViewing = {
   profileId: string | null;
   profileName: string | null;
   deviceLabel: string;
+  clientKind: ClientKind;
   mediaId: string;
   mode: PlaybackMode;
   positionSeconds: number | null;
@@ -82,6 +85,7 @@ type PresenceArrival = {
   guestOf?: string | null;
   viaShare?: string | null;
   deviceLabel: string;
+  clientKind?: ClientKind;
   address?: string | null;
   send: (event: PresenceControlEvent) => void;
 };
@@ -141,6 +145,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
     profileId: entry.profileId,
     profileName: entry.profileName,
     deviceLabel: entry.deviceLabel,
+    clientKind: entry.clientKind,
     mediaId: playback.mediaId,
     mode: describePlaybackMode(playback.plan),
     positionSeconds: playback.health?.positionSeconds ?? null,
@@ -177,6 +182,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
       guestOf = null,
       viaShare = null,
       deviceLabel,
+      clientKind = 'browser',
       address = null,
       send,
     }) => {
@@ -199,6 +205,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
         guestOf,
         viaShare,
         deviceLabel,
+        clientKind,
         address,
       };
 

@@ -1,3 +1,4 @@
+import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import { FromClientSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { FromServer } from '@ValenceContracts/schemas/Realtime';
@@ -36,6 +37,7 @@ type PresenceBinding = {
     guestOf: string | null;
     viaShare: string | null;
     deviceLabel: string;
+    clientKind: ClientKind;
     address: string | null;
     send: (event: PresenceControl) => void;
   }) => void;
@@ -200,7 +202,7 @@ const createRealtimeHandler = ({
           return;
         }
 
-        const { clientId, deviceLabel } = read.data;
+        const { clientId, deviceLabel, clientKind } = read.data;
 
         const profileId =
           read.data.profileId === null ||
@@ -233,6 +235,7 @@ const createRealtimeHandler = ({
           guestOf: who.guestOf ?? null,
           viaShare: who.viaShare ?? null,
           deviceLabel: deviceLabel ?? 'Unknown device',
+          clientKind: clientKind ?? 'browser',
           address: who.address ?? null,
           send: (event) => {
             write({

@@ -2719,6 +2719,7 @@ const createApp = ({
           isGuest: entry.viaShare !== null,
           guestOf: entry.guestOf,
           deviceLabel: entry.deviceLabel,
+          clientKind: entry.clientKind,
           connectedAt: entry.connectedAt,
           playback: entry.playback,
           listening: await listeningOn(entry.clientId),

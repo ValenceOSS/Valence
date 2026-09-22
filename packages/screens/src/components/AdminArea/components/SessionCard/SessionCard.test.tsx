@@ -23,6 +23,7 @@ const IDLE_SESSION: ActiveSession = {
   isGuest: false,
   guestOf: null,
   deviceLabel: 'Living room TV',
+  clientKind: 'browser' as const,
   connectedAt: 1000,
   playback: null,
   listening: null,

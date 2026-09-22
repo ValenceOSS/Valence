@@ -1,3 +1,4 @@
+import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import type { Connect } from '@ValenceClient/realtime/createRealtimeClient';
 import type { HeldFile, WhatToKeep } from '@ValenceContracts/schemas/HeldFile';
 
@@ -21,8 +22,6 @@ type Reachability = {
   isReachable: () => boolean;
   whenChanged: (listener: (isReachable: boolean) => void) => () => void;
 };
-
-type ClientKind = 'browser' | 'desktop' | 'tv' | 'phone';
 
 type Platform = {
   store: DeviceStore;

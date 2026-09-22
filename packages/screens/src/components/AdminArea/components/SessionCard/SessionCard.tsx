@@ -39,7 +39,7 @@ const SessionCard = ({
   onMessage,
 }: SessionCardProps) => {
   const { playback, listening } = session;
-  const deviceGlyph = deviceIconFor(session.deviceLabel);
+  const deviceGlyph = deviceIconFor(session.deviceLabel, session.clientKind);
   const [isShowingStats, setIsShowingStats] = useState(false);
 
   const health =

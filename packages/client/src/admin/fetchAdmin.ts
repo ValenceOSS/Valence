@@ -5,6 +5,7 @@ import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { ListeningSessionSchema } from '@ValenceContracts/schemas/MusicRemote';
 import { z } from 'zod';
+import { ClientKindSchema } from '@ValenceContracts/schemas/ClientKind';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
@@ -207,6 +208,7 @@ const ActiveSessionSchema = z.object({
   isGuest: z.boolean().default(false),
   guestOf: z.string().nullable().default(null),
   deviceLabel: z.string(),
+  clientKind: ClientKindSchema.default('browser'),
   connectedAt: z.number(),
   playback: z
     .object({

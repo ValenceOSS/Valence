@@ -16,6 +16,7 @@ const entry = (
   viaShare: null,
   address: null,
   deviceLabel,
+  clientKind: 'browser',
   connectedAt: 0,
   playback: null,
 });

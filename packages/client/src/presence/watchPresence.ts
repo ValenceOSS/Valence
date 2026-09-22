@@ -27,6 +27,10 @@ const PresenceEventSchema = z.discriminatedUnion('kind', [
  * gone is noticed by the same thing that noticed it arrive, and there is no second stream that can
  * drift out of step with it.
  *
+ * What kind of client this is goes with it, because a list of sessions read by shape is read faster
+ * than one read by name, and guessing at the shape from the name gets a phone somebody called
+ * after themselves wrong.
+ *
  * @param client - The connection to watch over, which is the shared one unless a test says otherwise.
  * @returns The function that stops watching.
  */
@@ -43,6 +47,7 @@ const watchPresence = (client: RealtimeClient = getRealtimeClient()): (() => voi
     profileId: readCurrentProfile(),
     clientId: platformInUse().thisClientId(),
     deviceLabel: platformInUse().describeThisClient(),
+    clientKind: platformInUse().thisClientKind(),
   });
 
   return release;
