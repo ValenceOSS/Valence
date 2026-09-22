@@ -1,17 +1,10 @@
-import type { ComponentType } from 'react';
-
-type GlyphProps = {
-  size: number;
-  colour: string;
-};
-
-type Glyph = ComponentType<GlyphProps>;
+import type { LucideIcon } from 'lucide-react-native';
 
 type IconProps = {
-  of: Glyph;
+  of: LucideIcon;
   size?: number;
   colour: string;
   label?: string;
 };
 
-export type { Glyph, GlyphProps, IconProps };
+export type { IconProps };

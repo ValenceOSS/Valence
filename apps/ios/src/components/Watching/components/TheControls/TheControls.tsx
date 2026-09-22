@@ -1,13 +1,8 @@
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
+import { Pause, Play, RotateCcw, RotateCw, Settings, X } from 'lucide-react-native';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
-import { Pause } from '@ValencePhone/glyphs/Pause';
-import { Play } from '@ValencePhone/glyphs/Play';
-import { RotateCcw } from '@ValencePhone/glyphs/RotateCcw';
-import { RotateCw } from '@ValencePhone/glyphs/RotateCw';
-import { Settings } from '@ValencePhone/glyphs/Settings';
-import { X } from '@ValencePhone/glyphs/X';
 import { Slider } from '@ValencePhone/components/Slider/Slider';
 import { asAClock } from '@ValencePhone/components/Watching/asAClock';
 import type { TheControlsProps } from './TheControls.types';

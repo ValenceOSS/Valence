@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react-native';
+import { Pause, Play } from 'lucide-react-native';
 import { Icon } from './Icon';
-import { Pause } from '@ValencePhone/glyphs/Pause';
-import { Play } from '@ValencePhone/glyphs/Play';
 
 describe('Icon', () => {
   it('draws the glyph it was asked for', async () => {

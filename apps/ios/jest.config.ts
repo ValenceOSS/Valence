@@ -6,7 +6,14 @@ import type { Config } from 'jest';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 
-const PUBLISHED_AS_MODULES = ['better-auth', '@better-auth', '@better-fetch', 'nanostores', 'jose'];
+const PUBLISHED_AS_MODULES = [
+  'better-auth',
+  '@better-auth',
+  '@better-fetch',
+  'nanostores',
+  'jose',
+  'lucide-react-native',
+];
 
 const TypeScriptPathsSchema = z.object({
   compilerOptions: z.object({ paths: z.record(z.string(), z.array(z.string())) }),

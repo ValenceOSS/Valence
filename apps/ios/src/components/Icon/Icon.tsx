@@ -1,17 +1,19 @@
 import { View } from 'react-native';
 import type { IconProps } from './Icon.types';
 
+const HOW_HEAVY = 2;
+
 /**
- * Every glyph on a phone, drawn from the same set as every other client through one component.
+ * Every glyph on a phone, drawn through one component.
  *
- * A caller names the icon it wants and this decides how it is drawn, which is the same bargain the
- * browser client keeps — the set behind it has changed before, and everywhere that drew an icon
- * changed nothing but the name it asked for.
+ * A caller names the icon it wants and this decides how it is drawn. That indirection is the point,
+ * and it has earned itself already: the set behind it has changed once and every place that draws
+ * an icon changed nothing but the name it asked for.
  *
- * The set publishes components that return `<svg>`, which React Native has no element for, so the
- * shapes are lifted out of it at build time and written as components of the kind a phone does
- * have. They are generated rather than drawn by hand: a shape somebody typed is a shape nobody can
- * check against the set it came from.
+ * The set is Lucide rather than the one the browser client draws, because Lucide publishes a build
+ * for React Native and Keyline publishes only a build for browsers — its components return `<svg>`,
+ * which a phone has no element for. The two sets are drawn on the same grid at the same weight, so
+ * a household looking at both clients sees the same shapes.
  *
  * @param of - The icon.
  * @param size - How large it is drawn.
@@ -22,11 +24,11 @@ import type { IconProps } from './Icon.types';
 const Icon = ({ of: Glyph, size = 24, colour, label }: IconProps) =>
   label === undefined ? (
     <View accessibilityElementsHidden>
-      <Glyph size={size} colour={colour} />
+      <Glyph size={size} color={colour} strokeWidth={HOW_HEAVY} />
     </View>
   ) : (
     <View accessible accessibilityRole="image" accessibilityLabel={label}>
-      <Glyph size={size} colour={colour} />
+      <Glyph size={size} color={colour} strokeWidth={HOW_HEAVY} />
     </View>
   );
 
