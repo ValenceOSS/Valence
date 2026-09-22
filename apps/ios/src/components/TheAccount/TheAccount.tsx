@@ -6,16 +6,21 @@ import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { TheDevices } from '@ValencePhone/components/TheAccount/components/TheDevices/TheDevices';
+import { TheHidden } from '@ValencePhone/components/TheAccount/components/TheHidden/TheHidden';
+import { TheHistory } from '@ValencePhone/components/TheAccount/components/TheHistory/TheHistory';
 import { TheProfile } from '@ValencePhone/components/TheAccount/components/TheProfile/TheProfile';
 import type { TheAccountProps } from './TheAccount.types';
 
 const PANELS = [
   { id: 'profile', label: 'Profile' },
   { id: 'devices', label: 'Devices' },
+  { id: 'history', label: 'History' },
+  { id: 'hidden', label: 'Hidden' },
 ] as const;
 
 /**
- * Somebody's own account: how they appear, where they are signed in, and the way out.
+ * Somebody's own account: how they appear, where they are signed in, what they have watched and
+ * hidden, and the way out.
  *
  * @param onOut - Told to sign out.
  */
@@ -33,7 +38,15 @@ const TheAccount = ({ onOut }: TheAccountProps) => {
 
       <SegmentedRow label="What to change" items={PANELS} value={panel} onSelect={setPanel} />
 
-      {panel === 'devices' ? <TheDevices /> : <TheProfile />}
+      {panel === 'devices' ? (
+        <TheDevices />
+      ) : panel === 'history' ? (
+        <TheHistory />
+      ) : panel === 'hidden' ? (
+        <TheHidden />
+      ) : (
+        <TheProfile />
+      )}
 
       <Button tone="quiet" onPress={onOut}>
         Sign out
