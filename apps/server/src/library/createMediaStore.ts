@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, notInArray, sql } from 'drizzle-orm';
 import {
   mediaItem,
   mediaItemJob,
@@ -389,6 +389,20 @@ const createMediaStore = (
         .set({ parentId: parent.id })
         .where(and(eq(mediaItem.libraryId, libraryId), eq(mediaItem.path, link.path)));
     }
+  },
+
+  forgetStaleVersions: async (libraryId, stillVersions) => {
+    await db
+      .update(mediaItem)
+      .set({ parentId: null, versionLabel: null })
+      .where(
+        and(
+          eq(mediaItem.libraryId, libraryId),
+          isNull(mediaItem.extraKind),
+          isNotNull(mediaItem.parentId),
+          stillVersions.length === 0 ? undefined : notInArray(mediaItem.path, stillVersions),
+        ),
+      );
   },
 
   listOverrides: async (libraryId) => {

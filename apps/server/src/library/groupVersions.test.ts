@@ -74,4 +74,16 @@ describe('a film held as more than one cut of itself', () => {
     expect(found.has(trailer)).toBe(false);
     expect(found.size).toBe(1);
   });
+
+  it('leaves a programme’s episodes alone, though every one carries the folder’s name', () => {
+    const programme = '/media/shows/ted';
+
+    expect(
+      groupVersions([
+        `${programme}/ted - S01E01 - Just Say Yes WEBRip-1080p.mkv`,
+        `${programme}/ted - S01E02 - My Two Dads WEBRip-1080p.mkv`,
+        `${programme}/ted - S02E01 - Talk Dirty to Me WEBDL-1080p.mkv`,
+      ]).size,
+    ).toBe(0);
+  });
 });
