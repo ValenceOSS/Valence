@@ -2,6 +2,7 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { describeThisPhone } from '@ValencePhone/platform/describeThisPhone';
 import { giveThisPhoneAnOrigin } from '@ValencePhone/platform/giveThisPhoneAnOrigin';
 import { giveThisPhoneCrypto } from '@ValencePhone/platform/giveThisPhoneCrypto';
+import { thePhonesBuild } from '@ValencePhone/platform/thePhonesBuild';
 import { thePhonesReach } from '@ValencePhone/platform/thePhonesReach';
 import { thePhonesSocket } from '@ValencePhone/platform/thePhonesSocket';
 import { thePhonesStore } from '@ValencePhone/platform/thePhonesStore';
@@ -39,7 +40,7 @@ const installPhonePlatform = (held: Map<string, string>): void => {
     held: thePhonesHeldFiles(store),
     reachability: thePhonesReach(),
     openSocket: thePhonesSocket(store),
-    buildInfo: () => null,
+    buildInfo: thePhonesBuild,
     notifyLocally: () => {},
     setUnreadBadge: () => {},
   });

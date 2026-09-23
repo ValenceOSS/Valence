@@ -49,7 +49,7 @@ struct ATab: Record {
 }
 
 /// Holds a `UITabBar` the size of the view, and says how tall the bar wants to be so the screen above
-/// can leave room for it.
+/// can leave room for it. Its labels are set in Gilroy, the face the rest of Valence is set in.
 public class ValenceTabBarView: ExpoView, UITabBarDelegate {
   let onSelect = EventDispatcher()
   let onMeasure = EventDispatcher()
@@ -60,7 +60,15 @@ public class ValenceTabBarView: ExpoView, UITabBarDelegate {
   var tabs: [ATab] = [] {
     didSet {
       bar.items = tabs.enumerated().map { index, tab in
-        UITabBarItem(title: tab.title, image: UIImage(systemName: tab.symbol), tag: index)
+        let item = UITabBarItem(title: tab.title, image: UIImage(systemName: tab.symbol), tag: index)
+
+        if let face = UIFont(name: "Gilroy-Medium", size: 10),
+           let chosen = UIFont(name: "Gilroy-Semibold", size: 10) {
+          item.setTitleTextAttributes([.font: face], for: .normal)
+          item.setTitleTextAttributes([.font: chosen], for: .selected)
+        }
+
+        return item
       }
       showTheSelected()
     }

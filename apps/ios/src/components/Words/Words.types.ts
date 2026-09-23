@@ -6,6 +6,9 @@ type WordsProps = {
   size?: 'title' | 'heading' | 'body' | 'small';
   lines?: number;
   isSelectable?: boolean;
+  isCentred?: boolean;
+  isProse?: boolean;
+  isStrong?: boolean;
 };
 
 export type { WordsProps };

@@ -32,7 +32,7 @@ const TheBadges = ({ badges, isOnArtwork = false, isShort = false }: TheBadgesPr
           key={badge}
           style={[styles.badge, { borderColor: isOnArtwork ? ON_ARTWORK : colours.textMuted }]}
         >
-          <Words size="small" tone={isOnArtwork ? 'onArtwork' : 'muted'}>
+          <Words size="small" tone={isOnArtwork ? 'onArtwork' : 'muted'} isStrong>
             {isShort ? shortenedForAPhone(badge) : badge}
           </Words>
         </View>

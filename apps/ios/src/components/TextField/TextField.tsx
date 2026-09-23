@@ -1,9 +1,16 @@
 import { StyleSheet, TextInput } from 'react-native';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
+import { FONTS } from '@ValencePhone/theme/FONTS';
 import type { TextFieldProps } from './TextField.types';
 
 const styles = StyleSheet.create({
-  field: { borderRadius: 14, borderWidth: 1, fontSize: 16, padding: 16 },
+  field: {
+    borderRadius: 14,
+    borderWidth: 1,
+    fontFamily: FONTS.sans.regular,
+    fontSize: 16,
+    padding: 16,
+  },
 });
 
 /**

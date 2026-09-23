@@ -1,10 +1,39 @@
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { z } from 'zod';
 import { getDefaultConfig } from 'expo/metro-config.js';
 import type { MetroConfig } from 'expo/metro-config.js';
 
 const ONE_COPY = ['react', '@tanstack/react-query'] as const;
 
 const FROM_THE_PHONE = join(import.meta.dirname, 'package.json');
+
+const RELEASES = join(import.meta.dirname, '..', '..', '.release-please-manifest.json');
+
+const ReleasesSchema = z.object({ '.': z.string() });
+
+const UNRELEASED = '0.0.0';
+
+/**
+ * The version of Valence this phone is built from, as the last release recorded it.
+ *
+ * Read here, while the bundle is made, and handed to the bundle through a public environment
+ * variable, which Expo writes into the code in place of the name — a phone has no `package.json` to
+ * ask at runtime, and every one in the workspace says 0.0.0 anyway.
+ *
+ * @returns The version, or 0.0.0 where the record cannot be read.
+ */
+const releasedVersion = (): string => {
+  try {
+    const read = ReleasesSchema.safeParse(JSON.parse(readFileSync(RELEASES, 'utf8')));
+
+    return read.success ? read.data['.'] : UNRELEASED;
+  } catch {
+    return UNRELEASED;
+  }
+};
+
+process.env['EXPO_PUBLIC_VALENCE_VERSION'] = releasedVersion();
 
 const theDefaults: MetroConfig = getDefaultConfig(import.meta.dirname);
 
