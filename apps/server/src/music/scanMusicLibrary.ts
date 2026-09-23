@@ -79,6 +79,7 @@ type MusicStore = {
   ) => Promise<KeptArtist>;
   keepAlbum: (row: AlbumRow) => Promise<KeptAlbum>;
   keepTrack: (row: TrackRow) => Promise<void>;
+  forgetMissingArtwork?: (libraryId: string) => Promise<string[]>;
   setAlbumArtwork: (albumId: string, path: string) => Promise<void>;
   setArtistImage: (artistId: string, path: string) => Promise<void>;
   removeByPaths: (libraryId: string, paths: string[]) => Promise<number>;
@@ -121,7 +122,9 @@ const stemOf = (path: string): string => path.replace(/\.[^./]+$/, '');
  * Reads a library of music into artists, albums and tracks.
  *
  * Shaped like the scans that read films and books, and skipping in the same way: a file whose size
- * and time are what they were last time is left alone. What a track is comes from its tags rather
+ * and time are what they were last time is left alone. The exception is a record whose cover or artist picture
+ * has gone from the cache it was kept in: its tracks are read again, so a scan puts back what a
+ * cleared cache took, rather than leaving a blank tile nothing would ever fill. What a track is comes from its tags rather
  * than its path — artist, album, disc and track number are all there, and more reliably than any
  * folder convention — with the folder standing in for an album's name only where no tag names one.
  *
@@ -165,11 +168,16 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
       .map((file) => [stemOf(file.path), file.modifiedAtMs]),
   );
 
+  const unpictured = new Set(
+    force || isPartial ? [] : ((await store.forgetMissingArtwork?.(libraryId)) ?? []),
+  );
+
   const changed = found.filter((file) => {
     const already = stored.get(file.path);
 
     return (
       force ||
+      unpictured.has(file.path) ||
       already === undefined ||
       already.sizeBytes !== file.sizeBytes ||
       already.modifiedAtMs !== file.modifiedAtMs ||

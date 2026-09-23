@@ -251,6 +251,46 @@ describe('scanMusicLibrary', () => {
     expect(result.updated).toBe(1);
   });
 
+  it('reads an unchanged record again where its cover has gone from the cache', async () => {
+    const track = `${ALBUM}/01.flac`;
+    const { store } = memoryStore([storedAt(track)]);
+    const artwork = keptArtwork();
+    const readTags = vi.fn(() => Promise.resolve(tagsFor()));
+
+    const result = await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store: { ...store, forgetMissingArtwork: vi.fn(() => Promise.resolve([track])) },
+      artwork,
+      files: filesWith(
+        [fileAt(track)],
+        {},
+        { readTags, findFolderArt: () => Promise.resolve(`${ALBUM}/cover.jpg`) },
+      ),
+    });
+
+    expect(readTags).toHaveBeenCalledWith(track);
+    expect(result.updated).toBe(1);
+    expect(store.setAlbumArtwork).toHaveBeenCalled();
+  });
+
+  it('does not ask after lost covers on a scan of part of the library', async () => {
+    const track = `${ALBUM}/01.flac`;
+    const { store } = memoryStore([storedAt(track)]);
+    const forgetMissingArtwork = vi.fn(() => Promise.resolve([track]));
+
+    await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store: { ...store, forgetMissingArtwork },
+      artwork: keptArtwork(),
+      isPartial: true,
+      files: filesWith([fileAt(track)], { [track]: tagsFor() }),
+    });
+
+    expect(forgetMissingArtwork).not.toHaveBeenCalled();
+  });
+
   it('removes what is no longer on the disk and tidies away what that leaves empty', async () => {
     const { store } = memoryStore([storedAt('/music/gone.flac')]);
 
