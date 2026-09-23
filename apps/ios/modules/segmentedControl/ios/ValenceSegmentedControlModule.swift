@@ -49,14 +49,26 @@ final class ReselectingSegmentedControl: UISegmentedControl {
   }
 }
 
+/// A scroll view that can be swiped from anywhere across it, a segment included.
+///
+/// A scroll view leaves a touch that begins on a control to the control, so a
+/// finger that lands on a segment and swipes would never move the row.
+final class SwipeableAcross: UIScrollView {
+  override func touchesShouldCancel(in view: UIView) -> Bool {
+    true
+  }
+}
+
 /// A segmented control filling its bounds, or scrolling across them where it is
 /// wider, saying which segment was chosen.
 public class ValenceSegmentedControlView: ExpoView {
   let onChoose = EventDispatcher()
 
-  private let across = UIScrollView()
+  private let across = SwipeableAcross()
 
   private let control = ReselectingSegmentedControl()
+
+  private var isSwipeWired = false
 
   var labels: [String] = [] {
     didSet {
@@ -111,7 +123,7 @@ public class ValenceSegmentedControlView: ExpoView {
     super.layoutSubviews()
     across.frame = bounds
 
-    let widths = labels.map(widthOf)
+    let widths = naturalWidths()
     let wanted = widths.reduce(0, +)
     let isWider = wanted > bounds.width
 
@@ -122,12 +134,51 @@ public class ValenceSegmentedControlView: ExpoView {
     control.frame = CGRect(x: 0, y: 0, width: isWider ? wanted : bounds.width, height: bounds.height)
     across.contentSize = control.frame.size
     across.isScrollEnabled = isWider
+    letTheRowBeSwiped(isWider)
     showThePicked(widths)
   }
 
-  /// How wide a segment is drawn where the choices are wider than the room: its words, and room either side.
-  private func widthOf(_ label: String) -> CGFloat {
-    ceil((label as NSString).size(withAttributes: [.font: typeface]).width) + SEGMENT_ROOM
+  /// How wide each segment is when it has all the room its words want, as iOS
+  /// itself lays them out: the control's own natural width, shared out by words.
+  private func naturalWidths() -> [CGFloat] {
+    guard !labels.isEmpty else {
+      return []
+    }
+
+    for at in 0..<labels.count {
+      control.setWidth(0, forSegmentAt: at)
+    }
+
+    control.apportionsSegmentWidthsByContent = true
+
+    let natural = control.sizeThatFits(
+      CGSize(width: CGFloat.greatestFiniteMagnitude, height: bounds.height)
+    ).width
+    let words = labels.map { ceil(($0 as NSString).size(withAttributes: [.font: typeface]).width) }
+    let room = max((natural - words.reduce(0, +)) / CGFloat(labels.count), SEGMENT_ROOM)
+
+    control.apportionsSegmentWidthsByContent = false
+
+    return words.map { $0 + room }
+  }
+
+  /// Lets a swipe across the row move it rather than slide the control's glass,
+  /// where the row is wider than its room; a tap still picks a segment. The
+  /// control's own drags wait on the row's, once: where the row fits, its
+  /// scrolling is off, so its swipe fails at once and the glass slides as ever.
+  private func letTheRowBeSwiped(_ isWider: Bool) {
+    if !isSwipeWired {
+      let drags = (control.gestureRecognizers ?? []).filter { $0 is UIPanGestureRecognizer }
+
+      for drag in drags {
+        drag.require(toFail: across.panGestureRecognizer)
+      }
+
+      isSwipeWired = !drags.isEmpty
+    }
+
+    across.canCancelContentTouches = true
+    across.delaysContentTouches = isWider
   }
 
   /// Scrolls the segment picked into view, with a little of those beside it, where the control scrolls.
