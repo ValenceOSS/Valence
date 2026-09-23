@@ -1062,6 +1062,33 @@ describe('a library holding extras', () => {
     ]);
   });
 
+  it('keeps the version links of films under a folder the walk could not read', async () => {
+    const forgetStaleVersions = vi.fn().mockResolvedValue(undefined);
+
+    await harness({
+      found: [file(FILM)],
+      unreadable: ['/media/films/4K'],
+      existing: [stored(FILM), stored('/media/films/4K/Dune - Extended.mkv')],
+      forgetStaleVersions,
+    }).run();
+
+    expect(forgetStaleVersions).toHaveBeenCalledWith(LIBRARY_ID, [
+      '/media/films/4K/Dune - Extended.mkv',
+    ]);
+  });
+
+  it('never takes episodes numbered only by a number for versions of one another', async () => {
+    const linkExtras = vi.fn().mockResolvedValue(undefined);
+    const folder = '/media/shows/Bluey';
+
+    await harness({
+      found: [file(`${folder}/Bluey - 01.mkv`), file(`${folder}/Bluey - 02.mkv`)],
+      linkExtras,
+    }).run();
+
+    expect(linkExtras).not.toHaveBeenCalled();
+  });
+
   it('lets go of nothing on a scan of part of the library, which cannot see every version', async () => {
     const forgetStaleVersions = vi.fn().mockResolvedValue(undefined);
 
