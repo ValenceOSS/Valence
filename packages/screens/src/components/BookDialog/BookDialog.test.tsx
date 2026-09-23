@@ -29,12 +29,12 @@ const A_BOOK: Book = {
 /**
  * Serves the book, where somebody is in it, and nothing rated.
  */
-const serve = (readings: BookReading[] = []) => {
+const serve = (readings: BookReading[] = [], book: Book = A_BOOK) => {
   vi.stubGlobal(
     'fetch',
     vi.fn((input: string) => {
       const answers: Record<string, object> = {
-        [`/api/books/${BOOK_ID}`]: { book: A_BOOK, chapters: [] },
+        [`/api/books/${BOOK_ID}`]: { book, chapters: [] },
         '/api/reading': { readings },
         '/api/ratings': { ratings: [] },
         [`/api/books/${BOOK_ID}/rating/household`]: { average: null, count: 0 },
@@ -85,6 +85,21 @@ describe('BookDialog', () => {
     expect(screen.getByText('Jane Austen · 1813')).toBeInTheDocument();
     expect(screen.getByText('It is a truth universally acknowledged.')).toBeInTheDocument();
     expect(screen.getByText('Romance')).toBeInTheDocument();
+  });
+
+  it('says a book that is only heard is an audiobook, with nothing to read', async () => {
+    serve([], { ...A_BOOK, layout: 'audio', hasText: false, hasAudio: true });
+    open();
+
+    expect(await screen.findByText('Audiobook')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Read' })).toBeDisabled();
+  });
+
+  it('says a book that can be read and heard is both', async () => {
+    serve([], { ...A_BOOK, hasText: true, hasAudio: true });
+    open();
+
+    expect(await screen.findByText('Ebook and audiobook')).toBeInTheDocument();
   });
 
   it('offers to start a book nobody has opened', async () => {

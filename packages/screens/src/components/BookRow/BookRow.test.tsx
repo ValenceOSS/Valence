@@ -56,6 +56,18 @@ describe('BookRow', () => {
     expect(screen.getByText('1 chapter')).toBeInTheDocument();
   });
 
+  it('says a book that is only heard is an audiobook, where nobody named its author', () => {
+    render(
+      <BookRow
+        title="Books"
+        books={[{ ...A_BOOK, layout: 'audio', authors: null }]}
+        onOpen={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Audiobook')).toBeInTheDocument();
+  });
+
   it('opens the book chosen', async () => {
     const onOpen = vi.fn();
 

@@ -5,15 +5,18 @@ import type { Book } from '@ValenceContracts/schemas/Book';
 import type { BookRowProps } from './BookRow.types';
 
 /**
- * What goes under a book on a shelf: who wrote an ebook, or how many chapters a comic has.
+ * What goes under a book on a shelf: who wrote an ebook or an audiobook, or how many chapters a
+ * comic has.
  *
  * @param book - The book.
  * @returns The line under its cover.
  */
 const describeOnShelf = (book: Book): string =>
-  book.layout === 'reflow'
+  book.layout === 'reflow' || book.layout === 'audio'
     ? book.authors === null || book.authors.length === 0
-      ? 'Ebook'
+      ? book.layout === 'audio'
+        ? 'Audiobook'
+        : 'Ebook'
       : book.authors.join(', ')
     : book.chapterCount === 1
       ? '1 chapter'

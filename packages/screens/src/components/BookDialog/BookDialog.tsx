@@ -29,14 +29,19 @@ import type { BookDialogProps } from './BookDialog.types';
  * What kind of book something is, for the line above its title.
  *
  * @param book - The book.
- * @returns "Ebook", or how many chapters a comic has.
+ * @returns "Ebook" or "Audiobook" — both, where it can be read and heard — or how many chapters a
+ *   comic has.
  */
 const kindOf = (book: Book): string =>
-  book.layout === 'reflow'
-    ? 'Ebook'
-    : book.chapterCount === 1
-      ? 'One chapter'
-      : `${book.chapterCount.toString()} chapters`;
+  book.layout === 'audio'
+    ? 'Audiobook'
+    : book.layout === 'reflow'
+      ? book.hasAudio === true
+        ? 'Ebook and audiobook'
+        : 'Ebook'
+      : book.chapterCount === 1
+        ? 'One chapter'
+        : `${book.chapterCount.toString()} chapters`;
 
 /**
  * Everything a book can do, gathered where a film's are: its cover, who wrote it and what it is
@@ -210,7 +215,7 @@ const BookDialog = ({
               variant="confirm"
               size="lg"
               className="w-full"
-              disabled={book === null}
+              disabled={book === null || book.hasText === false}
               onClick={() => {
                 if (book !== null) {
                   onRead(book);
