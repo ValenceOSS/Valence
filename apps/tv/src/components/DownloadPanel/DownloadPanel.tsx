@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { partsOfDownload } from '@ValenceTv/requests/partsOfDownload';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { DownloadPanelProps } from './DownloadPanel.types';
@@ -8,10 +8,11 @@ const BAR_HEIGHT = 10;
 /**
  * A download in progress, given a panel of its own on a title's page: where it stands and how far
  * through it is in large figures, a bar across the whole panel filling as it arrives, and beneath,
- * how much has arrived, how fast and how long is left, each named. It is as wide as the page's
- * action rows and lines up with their words.
+ * how much has arrived, how fast and how long is left, each named, with a small spinner in the
+ * corner to say it is still working. It is as wide as the page's action rows and lines up with
+ * their words.
  *
- * @param label - Where the request stands, such as Downloading.
+ * @param label - Where the request stands, such as Downloading to library.
  * @param progress - How the download is going.
  */
 const DownloadPanel = ({ label, progress }: DownloadPanelProps) => {
@@ -36,7 +37,7 @@ const DownloadPanel = ({ label, progress }: DownloadPanelProps) => {
         <View style={{ flex: 1 - done }} />
       </View>
 
-      {facts.length === 0 ? null : (
+      <View style={styles.foot}>
         <View style={styles.facts}>
           {facts.map((fact) => (
             <View key={fact.name} style={styles.fact}>
@@ -47,7 +48,9 @@ const DownloadPanel = ({ label, progress }: DownloadPanelProps) => {
             </View>
           ))}
         </View>
-      )}
+
+        <ActivityIndicator size="small" color={tokens.colours.muted} />
+      </View>
     </View>
   );
 };
@@ -80,7 +83,13 @@ const styles = StyleSheet.create({
     borderRadius: BAR_HEIGHT / 2,
     backgroundColor: tokens.colours.accent,
   },
-  facts: { flexDirection: 'row', gap: tokens.space.lg, marginTop: tokens.space.xs },
+  foot: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    marginTop: tokens.space.xs,
+  },
+  facts: { flexDirection: 'row', gap: tokens.space.lg },
   fact: { gap: 2 },
   factName: { color: tokens.colours.muted, fontSize: tokens.type.small - 4 },
   factValue: { color: tokens.colours.text, fontSize: tokens.type.small, fontWeight: '600' },
