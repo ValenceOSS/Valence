@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, inArray, isNull, notExists, sql } from 'drizzle-orm';
+import { access } from 'node:fs/promises';
+import { and, eq, inArray, isNotNull, isNull, notExists, sql } from 'drizzle-orm';
 import {
   library,
   mediaItem,
@@ -52,6 +53,18 @@ const pruneEmpty = async (db: ValenceDatabase, libraryId: string): Promise<void>
     ),
   );
 };
+
+/**
+ * Whether a file is still where it was left.
+ *
+ * @param path - The file.
+ * @returns Whether it is there.
+ */
+const isThere = async (path: string): Promise<boolean> =>
+  access(path).then(
+    () => true,
+    () => false,
+  );
 
 /**
  * Where a music scan writes: artists, albums and tracks, each found by what makes it the same one
@@ -257,6 +270,64 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
         row.artistIds.map((artistId, position) => ({ mediaItemId: saved.id, artistId, position })),
       )
       .onConflictDoNothing();
+  },
+
+  forgetMissingArtwork: async (libraryId) => {
+    const albums = await db
+      .select({ id: musicAlbum.id, artistId: musicAlbum.artistId, path: musicAlbum.artworkPath })
+      .from(musicAlbum)
+      .where(and(eq(musicAlbum.libraryId, libraryId), isNotNull(musicAlbum.artworkPath)));
+    const artists = await db
+      .select({ id: musicArtist.id, path: musicArtist.imagePath })
+      .from(musicArtist)
+      .where(and(eq(musicArtist.libraryId, libraryId), isNotNull(musicArtist.imagePath)));
+    const lostAlbums: string[] = [];
+    const lostArtists = new Set<string>();
+
+    for (const album of albums) {
+      if (!(await isThere(album.path ?? ''))) {
+        lostAlbums.push(album.id);
+      }
+    }
+
+    for (const artist of artists) {
+      if (!(await isThere(artist.path ?? ''))) {
+        lostArtists.add(artist.id);
+      }
+    }
+
+    if (lostAlbums.length > 0) {
+      await db
+        .update(musicAlbum)
+        .set({ artworkPath: null, lookedUpAt: null })
+        .where(inArray(musicAlbum.id, lostAlbums));
+    }
+
+    if (lostArtists.size > 0) {
+      await db
+        .update(musicArtist)
+        .set({ imagePath: null, lookedUpAt: null })
+        .where(inArray(musicArtist.id, [...lostArtists]));
+    }
+
+    const wanted = [
+      ...new Set([
+        ...lostAlbums,
+        ...albums.filter((album) => lostArtists.has(album.artistId)).map((album) => album.id),
+      ]),
+    ];
+
+    if (wanted.length === 0) {
+      return [];
+    }
+
+    const tracks = await db
+      .select({ path: mediaItem.path })
+      .from(musicTrack)
+      .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId))
+      .where(inArray(musicTrack.albumId, wanted));
+
+    return tracks.map((track) => track.path);
   },
 
   setAlbumArtwork: async (albumId, path) => {
