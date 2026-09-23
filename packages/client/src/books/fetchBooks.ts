@@ -94,7 +94,7 @@ const fetchBooks = async (libraryId: string): Promise<Book[]> =>
  * @returns The book, or nothing where the shelf no longer holds it.
  */
 const fetchBook = (bookId: string): Promise<BookDetail | null> =>
-  readFromServerOrAbsent(`/api/books/${bookId}`, BookDetailSchema);
+  readFromServerOrAbsent(`/api/books/${bookId}`, BookDetailSchema, profileHeaders());
 
 /**
  * Where this profile is up to in a book.
@@ -103,7 +103,8 @@ const fetchBook = (bookId: string): Promise<BookDetail | null> =>
  * @returns Where they are in each chapter they have opened.
  */
 const fetchReadingProgress = async (bookId: string): Promise<ReadingProgress[]> =>
-  (await readFromServer(`/api/books/${bookId}/progress`, ProgressListSchema)).progress;
+  (await readFromServer(`/api/books/${bookId}/progress`, ProgressListSchema, profileHeaders()))
+    .progress;
 
 /**
  * Remembers where somebody is up to.
