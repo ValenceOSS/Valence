@@ -110,6 +110,7 @@ const EnterPassword = ({
       <View style={styles.form}>
         {needsCode ? (
           <TextField
+            key="code"
             label="The code from your authenticator"
             value={code}
             onChange={setCode}
@@ -121,6 +122,7 @@ const EnterPassword = ({
           />
         ) : (
           <TextField
+            key="password"
             label="Password"
             value={password}
             onChange={setPassword}
