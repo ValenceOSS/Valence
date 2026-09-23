@@ -13,7 +13,7 @@ import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { LikedCover } from '@ValenceScreens/components/LikedCover/LikedCover';
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 
 const SOURCE = { kind: 'liked', id: null, name: 'Liked Songs' } as const;
 

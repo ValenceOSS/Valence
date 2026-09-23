@@ -47,7 +47,7 @@ import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
 import { whatIsPlaying } from '@ValenceScreens/playback/whatIsPlaying';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
-import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
+import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
 import { popOutWithCaptions } from '@ValenceScreens/playback/popOutWithCaptions';
 import { captureFrame } from '@ValenceScreens/playback/captureFrame';
 import { readPlaybackHealth, bufferedAhead } from '@ValenceScreens/playback/readPlaybackHealth';
@@ -91,7 +91,7 @@ import { notify } from '@ValenceUI/notify';
 import { correctDrift } from '@ValenceCore/functions/correctDrift';
 import { whatToReport } from '@ValenceCore/functions/whatToReport';
 import { describeCommand } from '@ValenceClient/party/describeCommand';
-import type { Trickplay } from '@ValenceScreens/playback/fetchTrickplay';
+import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 import type { PoppedOut } from '@ValenceScreens/playback/popOutWithCaptions';
 import type { CastState } from '@ValenceScreens/playback/castPlayback.types';
 import { describePlaying } from './describePlaying';
@@ -104,6 +104,8 @@ import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { PlaybackHealth } from './components/StreamStats/StreamStats.types';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { PlayerState, VideoPlayerProps } from './VideoPlayer.types';
+import { PlayOnDialog } from '@ValenceScreens/components/PlayOnDialog/PlayOnDialog';
+import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 type FullscreenTarget = {
   requestFullscreen?: () => Promise<void>;
 };
@@ -308,6 +310,8 @@ const VideoPlayer = ({
   const poppedRef = useRef<PoppedOut | null>(null);
   const [isPoppedOut, setIsPoppedOut] = useState(false);
   const [castState, setCastState] = useState<CastState>('unavailable');
+  const [sendingAt, setSendingAt] = useState<number | null>(null);
+  const hasTelevision = useVideoDevices().some((device) => device.kind === 'tv');
 
   const [isBuffering, setIsBuffering] = useState(false);
   const [isSayingSo, setIsSayingSo] = useState(false);
@@ -1001,6 +1005,10 @@ const VideoPlayer = ({
             },
           });
 
+          return;
+        }
+
+        if (event.kind !== 'resumed') {
           return;
         }
 
@@ -2000,6 +2008,16 @@ const VideoPlayer = ({
                 setIsMuted((muted) => !muted);
               }}
               onToggleFullscreen={toggleFullscreen}
+              {...(hasTelevision
+                ? {
+                    onPlayOnTv: () => {
+                      const element = videoRef.current;
+
+                      element?.pause();
+                      setSendingAt(element?.currentTime ?? 0);
+                    },
+                  }
+                : {})}
               castState={castState}
               onCast={() => {
                 const element = videoRef.current;
@@ -2060,6 +2078,18 @@ const VideoPlayer = ({
           {problem ?? 'Playback failed.'}
         </p>
       ) : null}
+
+      <PlayOnDialog
+        media={sendingAt === null ? null : { id: media.id, title: media.title }}
+        startSeconds={sendingAt ?? 0}
+        onClose={() => {
+          setSendingAt(null);
+        }}
+        onSent={() => {
+          setSendingAt(null);
+          onClose();
+        }}
+      />
     </section>
   );
 };

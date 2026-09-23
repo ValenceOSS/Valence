@@ -1,5 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
-import { titleLogoUrl } from '@ValenceScreens/library/titleLogoUrl';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
+import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
   ArrowUTurnRight as ArrowUTurnRightIcon,
@@ -14,6 +15,7 @@ import {
   UserCheck as UserCheckIcon,
   Users as UsersIcon,
   X as XIcon,
+  Monitor as MonitorIcon,
 } from '@keyline-icons/react';
 import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
@@ -63,17 +65,6 @@ const CAST_PLACEHOLDERS = 5;
 const LOGO_BOX = 'max-h-[16svh] w-auto max-w-[min(70vw,26rem)] object-contain object-left';
 
 /**
- * Builds the address an item's artwork is served from, served by Valence rather than by the catalogue so
- * that a library keeps working when the catalogue does not.
- *
- * @param mediaId - The item.
- * @param kind - Which artwork.
- * @returns The address to load.
- */
-const artworkUrl = (mediaId: string, kind: 'poster' | 'backdrop'): string =>
-  `/api/media/${mediaId}/image/${kind}`;
-
-/**
  * Everything known about one item, for deciding whether to watch it: what it is about, who is in it,
  * how it was made, and where this viewer left it. Offers both carrying on and starting again, since
  * those are different intentions and only one of them can be the default.
@@ -93,6 +84,8 @@ const artworkUrl = (mediaId: string, kind: 'poster' | 'backdrop'): string =>
  * @param onOpenPerson - Told which performer to open from the cast, where opening one is offered.
  * @param onShare - Told to hand out a link to it, where this account may share at all.
  * @param onStartParty - Told to open a watch party on it, where this account may hold one.
+ * @param onPlayOn - Told to play it on one of this person's televisions instead, from where they
+ *   had got to, where one is open.
  */
 const MediaDetailDialog = ({
   media,
@@ -112,6 +105,7 @@ const MediaDetailDialog = ({
   onHide,
   onDecideForSomebody,
   onStartParty,
+  onPlayOn,
 }: MediaDetailDialogProps) => {
   const asked = useQuery(libraryQueries.detail(media?.id ?? null));
   const detail = useHeldWhileLeaving(asked.data ?? null, media !== null);
@@ -563,6 +557,22 @@ const MediaDetailDialog = ({
                   },
                 ]
               : []),
+            ...(onPlayOn === undefined
+              ? []
+              : [
+                  {
+                    id: 'play-on',
+                    isPinned: true,
+                    label: 'Play on TV',
+                    icon: <Icon of={MonitorIcon} size={18} />,
+                    onChoose: () => {
+                      onPlayOn(
+                        chosenVersion ?? shown,
+                        chosenVersion === null ? (shownResume ?? 0) : 0,
+                      );
+                    },
+                  },
+                ]),
             ...(onStartParty === undefined
               ? []
               : [

@@ -1,11 +1,4 @@
-import type { MusicCommand } from '@ValenceContracts/schemas/MusicRemote';
-
-type PresenceEvent =
-  | { kind: 'stopped'; reason: string }
-  | { kind: 'paused'; reason: string }
-  | { kind: 'resumed' }
-  | { kind: 'message'; text: string }
-  | { kind: 'music'; command: MusicCommand; fromClientId: string; fromLabel: string };
+import type { PresenceEvent } from '@ValenceClient/presence/PresenceEventSchema';
 
 type PresenceEventListener = (event: PresenceEvent) => void;
 

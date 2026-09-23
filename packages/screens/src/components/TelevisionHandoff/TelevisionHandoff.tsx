@@ -3,8 +3,8 @@ import { Button } from '@ValenceUI/Button';
 import { QrCode } from '@ValenceUI/QrCode';
 import { Spinner } from '@ValenceUI/Spinner';
 import { askWhetherTheDeviceMayIn, startDeviceGrant } from '@ValenceClient/session/auth';
-import { anAddressAPhoneCanReach } from '@ValenceScreens/session/anAddressAPhoneCanReach';
-import { whereToTypeTheCode } from '@ValenceScreens/session/whereToTypeTheCode';
+import { anAddressAPhoneCanReach } from '@ValenceClient/session/anAddressAPhoneCanReach';
+import { whereToTypeTheCode } from '@ValenceClient/session/whereToTypeTheCode';
 import type { DeviceGrant } from '@ValenceClient/session/auth';
 import type { TelevisionHandoffProps } from './TelevisionHandoff.types';
 

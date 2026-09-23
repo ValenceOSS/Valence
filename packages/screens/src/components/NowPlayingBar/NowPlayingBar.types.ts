@@ -1,4 +1,4 @@
-import type { MusicPlayer } from '@ValenceScreens/music/createMusicPlayer';
+import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 
 type NowPlayingBarProps = {
   player?: MusicPlayer;

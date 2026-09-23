@@ -1,11 +1,11 @@
 import { screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests';
 import { MusicHome } from './MusicHome';
 
-vi.mock('@ValenceScreens/music/theMusicPlayer', () => ({
+vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => aFakeMusicPlayer().player,
 }));
 

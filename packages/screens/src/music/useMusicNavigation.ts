@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
-import { readMusicView, writeMusicView } from './musicView';
-import type { MusicView } from './musicView';
+import { readMusicView, writeMusicView } from '@ValenceClient/music/musicView';
+import type { MusicView } from '@ValenceClient/music/musicView';
 
 /**
  * Which part of the music section is showing, and a way to show another.

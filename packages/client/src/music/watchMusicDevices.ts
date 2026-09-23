@@ -1,5 +1,5 @@
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
-import { PlaybackEventSchema } from '@ValenceContracts/schemas/MusicRemote';
+import { watchDeviceChanges } from '@ValenceClient/devices/watchDeviceChanges';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 
 /**
@@ -13,13 +13,6 @@ import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClien
 const watchMusicDevices = (
   onChanged: () => void,
   client: RealtimeClient = getRealtimeClient(),
-): (() => void) =>
-  client.subscribe('playback', (event) => {
-    const parsed = PlaybackEventSchema.safeParse(event.payload);
-
-    if (parsed.success && parsed.data.kind === 'musicDevicesChanged') {
-      onChanged();
-    }
-  });
+): (() => void) => watchDeviceChanges('musicDevicesChanged', onChanged, client);
 
 export { watchMusicDevices };

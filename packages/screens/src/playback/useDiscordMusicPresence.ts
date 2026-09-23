@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { isTheDesktopClient, nowWatching } from '@ValenceScreens/desktop/theDesktopShell';
 import { theTracksArtworkUrl } from '@ValenceScreens/music/theTracksArtworkUrl';
-import type { WhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import type { WhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 
 const A_SECOND = 1000;
 

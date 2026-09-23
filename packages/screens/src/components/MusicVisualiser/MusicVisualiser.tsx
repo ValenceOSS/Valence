@@ -12,10 +12,11 @@ import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { VisualiserStage } from '@ValenceUI/VisualiserStage';
 import { setMusicVisualiser, useMusicVisualiser } from '@ValenceScreens/music/musicVisualiser';
-import { theMusicAudio, theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import { theBrowserAudio } from '@ValenceScreens/music/theBrowserAudio';
 import { useAudioFrames } from '@ValenceScreens/music/useAudioFrames';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
-import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { VISUALISERS } from '@ValenceScreens/music/visualisers/VISUALISERS';
 import {
   readVisualiserChoice,
@@ -56,7 +57,10 @@ const MusicVisualiser = ({ player: given }: MusicVisualiserProps) => {
   const { isFullscreen, isAvailable, toggle } = useFullscreen(holder);
   const { isShown, wake } = useChromeThatHides();
   const isListeningFor = isOpen && shown !== null;
-  const { isListening, read } = useAudioFrames(isListeningFor ? theMusicAudio() : null, isOpen);
+  const { isListening, read } = useAudioFrames(
+    isListeningFor ? theBrowserAudio().audio : null,
+    isOpen,
+  );
   const visualiser = VISUALISERS[at] ?? VISUALISERS[0];
   const draw = useMemo(() => visualiser?.create(), [visualiser]);
 

@@ -1,5 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
-import { titleLogoUrl } from '@ValenceScreens/library/titleLogoUrl';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
+import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
   Download as DownloadIcon,
@@ -36,22 +37,13 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
 import { scrollToTopOf } from '@ValenceScreens/navigation/scrollToTopOf';
 import { RatingPanel } from '@ValenceScreens/components/RatingPanel/RatingPanel';
-import { pickUpFrom } from './pickUpFrom';
+import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import { SeasonPicker } from './components/SeasonPicker/SeasonPicker';
 import { EpisodeRow } from './components/EpisodeRow/EpisodeRow';
 import { MissingRow } from './components/MissingRow/MissingRow';
 import { findGaps } from '@ValenceCore/functions/findGaps';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import type { ShowDialogProps } from './ShowDialog.types';
-
-/**
- * Builds the address a programme's artwork is served from, which is one of its episodes' — a
- * programme is not stored anywhere and so has no artwork of its own.
- *
- * @param mediaId - The programme being drawn.
- * @returns The address to load.
- */
-const artworkUrl = (mediaId: string): string => `/api/media/${mediaId}/image/backdrop`;
 
 /**
  * A programme in full: its seasons, its episodes, where a viewer got to in each, and the episodes
@@ -196,7 +188,7 @@ const ShowDialog = ({
       <DialogContent className="p-3 sm:p-4">
         <ScrolledTitle
           title={shown.title}
-          artwork={artworkUrl(shown.coverMediaId)}
+          artwork={artworkUrl(shown.coverMediaId, 'backdrop')}
           isShowing={hasScrolledPast}
         >
           <Button isIconOnly variant="ghost" size="sm" label="Close" onClick={onClose}>
@@ -208,7 +200,7 @@ const ShowDialog = ({
           <div className="relative h-[34vh] min-h-[14rem] sm:h-[22rem]">
             <MediaPreview
               mediaId={shown.coverMediaId}
-              backdropUrl={artworkUrl(shown.coverMediaId)}
+              backdropUrl={artworkUrl(shown.coverMediaId, 'backdrop')}
               durationSeconds={0}
               fills
             />

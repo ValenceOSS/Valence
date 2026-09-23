@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { Rail } from '@ValenceUI/Rail';
 import { RevealItem } from '@ValenceUI/RevealItem';
@@ -34,7 +35,7 @@ const ComingUp = ({ onOpenShow }: ComingUpProps) => {
             shape="poster"
             title={show.title}
             subtitle={`S${episode.seasonNumber.toString()} E${episode.episodeNumber.toString()} · ${describeAirDate(episode.airDate, today)}`}
-            imageUrl={`/api/media/${show.coverMediaId}/image/poster`}
+            imageUrl={artworkUrl(show.coverMediaId, 'poster')}
             onSelect={() => {
               onOpenShow(show.seriesId ?? show.id);
             }}

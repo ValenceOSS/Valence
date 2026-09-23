@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import {
   artworkFetchedForTheSystem,
@@ -93,7 +94,7 @@ const useNowPlaying = ({
       });
     };
 
-    const poster = `/api/media/${id}/image/poster`;
+    const poster = artworkUrl(id, 'poster');
     const straight = hasPoster === true ? artworkTheSystemAccepts(poster) : null;
 
     describe(straight === null ? [] : POSTER_SIZES.map((sizes) => ({ src: straight, sizes })));

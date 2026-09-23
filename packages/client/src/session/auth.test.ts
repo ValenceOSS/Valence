@@ -3,6 +3,7 @@ import { forgetPlatform, installPlatform } from '@ValenceClient/platform/install
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { readCurrentProfile, writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import {
+  askWhetherTheDeviceMayIn,
   authenticateWithPasskey,
   deletePasskey,
   disableTwoFactor,
@@ -309,5 +310,37 @@ describe('two-factor', () => {
     fetchMock.mockResolvedValue(said({}, 401));
 
     await expect(disableTwoFactor('wrong')).resolves.toBe(false);
+  });
+});
+
+describe('askWhetherTheDeviceMayIn', () => {
+  it('hands back the session token once a phone has let the television in', async () => {
+    fetchMock.mockResolvedValue(
+      said({ access_token: 'a-session-token', token_type: 'Bearer', expires_in: 60, scope: '' }),
+    );
+
+    expect(await askWhetherTheDeviceMayIn('the-long-secret-one')).toEqual({
+      kind: 'signedIn',
+      token: 'a-session-token',
+    });
+    expect(asked()).toBe('/api/auth/device/token');
+  });
+
+  it('keeps waiting while nobody has answered on the phone yet', async () => {
+    fetchMock.mockResolvedValue(said({ error: 'authorization_pending' }, 400));
+
+    expect(await askWhetherTheDeviceMayIn('the-long-secret-one')).toEqual({ kind: 'waiting' });
+  });
+
+  it('asks less often when the server says it is being asked too often', async () => {
+    fetchMock.mockResolvedValue(said({ error: 'slow_down' }, 400));
+
+    expect(await askWhetherTheDeviceMayIn('the-long-secret-one')).toEqual({ kind: 'slowDown' });
+  });
+
+  it('says so when the phone said no', async () => {
+    fetchMock.mockResolvedValue(said({ error: 'access_denied' }, 400));
+
+    expect(await askWhetherTheDeviceMayIn('the-long-secret-one')).toEqual({ kind: 'refused' });
   });
 });

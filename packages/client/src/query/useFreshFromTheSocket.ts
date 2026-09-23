@@ -6,6 +6,7 @@ import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 
 type SaysWhatChanged = Pick<RealtimeClient, 'subscribe' | 'onResumed'>;
@@ -15,8 +16,9 @@ type SaysWhatChanged = Pick<RealtimeClient, 'subscribe' | 'onResumed'>;
  *
  * A cache is only as good as the moment it stops trusting itself, and the usual answer — a timer
  * that guesses — is the wrong one here: this application already holds a socket that says when the
- * library was scanned, when a notification arrived, when somebody's permissions changed. Being told
- * beats guessing, so the socket does the invalidating and the polling intervals go.
+ * library was scanned, when a notification arrived, when somebody's permissions changed, when a
+ * request moved along. Being told beats guessing, so the socket does the invalidating and the
+ * polling intervals go.
  *
  * A reconnection invalidates everything, because a tab that was asleep missed whatever happened
  * while it was gone and has no way to find out what.
@@ -51,6 +53,10 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
 
       client.subscribe('profile', () => {
         void cache.invalidateQueries({ queryKey: sessionQueries.key });
+      }),
+
+      client.subscribe('requests', () => {
+        void cache.invalidateQueries({ queryKey: requestsQueries.key });
       }),
 
       client.subscribe('sessions', () => {

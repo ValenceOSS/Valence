@@ -1,6 +1,7 @@
 import { FromClientSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { FromServer } from '@ValenceContracts/schemas/Realtime';
+import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { handlePartyMessage, tellEveryone } from '@ValenceServer/parties/handlePartyMessage';
 import type { RealtimeRegistry } from './createRealtimeRegistry';
@@ -36,6 +37,7 @@ type PresenceBinding = {
     guestOf: string | null;
     viaShare: string | null;
     deviceLabel: string;
+    clientKind: ClientKind | null;
     address: string | null;
     send: (event: PresenceControl) => void;
   }) => void;
@@ -67,9 +69,9 @@ const asPayload = (event: PresenceControl): JsonValue => {
     return { kind: 'message', text: event.text };
   }
 
-  if (event.kind === 'music') {
+  if (event.kind === 'music' || event.kind === 'video') {
     return {
-      kind: 'music',
+      kind: event.kind,
       command: event.command,
       fromClientId: event.fromClientId,
       fromLabel: event.fromLabel,
@@ -200,7 +202,7 @@ const createRealtimeHandler = ({
           return;
         }
 
-        const { clientId, deviceLabel } = read.data;
+        const { clientId, deviceLabel, clientKind } = read.data;
 
         const profileId =
           read.data.profileId === null ||
@@ -233,6 +235,7 @@ const createRealtimeHandler = ({
           guestOf: who.guestOf ?? null,
           viaShare: who.viaShare ?? null,
           deviceLabel: deviceLabel ?? 'Unknown device',
+          clientKind: clientKind ?? null,
           address: who.address ?? null,
           send: (event) => {
             write({

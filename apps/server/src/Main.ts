@@ -1,4 +1,5 @@
-import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import {
   copyFile,
@@ -215,6 +216,7 @@ import { createDatabaseMusicService } from '@ValenceServer/music/createDatabaseM
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
 import { createMusicArtwork } from '@ValenceServer/music/createMusicArtwork';
 import { createMusicDevices } from '@ValenceServer/music/createMusicDevices';
+import { createVideoDevices } from '@ValenceServer/video/createVideoDevices';
 import { describeBookForRequest } from '@ValenceServer/requests/openLibrary/describeBookForRequest';
 import { describeOpenLibraryBook } from '@ValenceServer/requests/openLibrary/describeOpenLibraryBook';
 import { readOpenLibraryShelves } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
@@ -839,6 +841,17 @@ const lookUpMusic = async (libraryId: string, jobId: string, isAgain: boolean): 
     `music looked up on the web: ${found.covers.toString()} covers, ${found.pictures.toString()} photographs, ${found.videos.toString()} videos, ${found.lyrics.toString()} lyrics`,
   );
 };
+
+const videoDevices = createVideoDevices({
+  presence,
+  onChanged: (accountId) => {
+    realtime.publish(
+      'playback',
+      { kind: 'videoDevicesChanged' },
+      { kind: 'accounts', accountIds: [accountId] },
+    );
+  },
+});
 
 const musicServices: MusicServices = {
   library: musicLibrary,
@@ -2206,6 +2219,7 @@ const sayARequestArrived = async (
   const { requestedBy } = arrived.value;
 
   log.info('requests', `${filed.title} is in the library, as ${requestedBy.name} asked`);
+  realtime.publish('requests', { changed: true }, { kind: 'everyone' });
 
   await events.publish({
     event: 'requests.available',
@@ -2568,6 +2582,7 @@ const app = createApp({
   splashscreen,
   books: bookService,
   music: musicServices,
+  videoDevices,
   streamBookFile: (path, range) => transcoder.readFile(path, range),
   promoteProfile: async ({ profileId, email, password }) => {
     const rows = await db
@@ -3025,6 +3040,8 @@ if (requestsClient !== null) {
       realtime.publish('downloads', queue, { kind: 'everyone' });
     },
     onEvent: (event) => {
+      realtime.publish('requests', { changed: true }, { kind: 'everyone' });
+
       switch (event.kind) {
         case 'started': {
           log.info('requests', `sent ${event.title} to ${event.clientName}`);
@@ -3125,7 +3142,7 @@ if (requestsClient !== null) {
   });
 }
 
-const WEB_ROOT = './apps/web/dist';
+const WEB_ROOT = relative(process.cwd(), fileURLToPath(new URL('../../web/dist', import.meta.url)));
 
 const nodeWebSocket = createNodeWebSocket({ app });
 

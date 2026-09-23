@@ -19,6 +19,7 @@ type MediaDetailDialogProps = {
   onHide?: (media: MediaSummary) => void;
   onDecideForSomebody?: (media: MediaSummary) => void;
   onStartParty?: (media: MediaSummary) => void;
+  onPlayOn?: (media: MediaSummary, startSeconds: number) => void;
 };
 
 export type { MediaDetailDialogProps };

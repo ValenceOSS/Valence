@@ -16,8 +16,8 @@ import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
+import { askingFor } from '@ValenceClient/requests/askingFor';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { CastGrid } from '@ValenceScreens/components/MediaDetailDialog/components/CastGrid/CastGrid';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
@@ -27,10 +27,9 @@ import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonCh
 import { describeAskableFacts } from './describeAskableFacts';
 import { describeStanding } from './describeStanding';
 import { readAsking } from './readAsking';
-import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
+import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
 import { groupReleases } from '@ValenceScreens/requests/groupReleases';
-import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskableDialogProps } from './AskableDialog.types';
 import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
@@ -38,34 +37,6 @@ import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
 const FOLLOWED_EVERY_MS = 5000;
 
 type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
-
-/**
- * What to ask for a title as it stands: a film as it is, a series with the seasons chosen, an
- * artist with the kinds of release chosen, an album as it is, a book by its Open Library number.
- *
- * @param title - The title.
- * @param seasons - The seasons chosen, for a series.
- * @param releaseTypes - The kinds of release chosen, for an artist.
- * @returns What to ask for.
- */
-const askingFor = (
-  title: CatalogueTitleDetail,
-  seasons: number[] | null,
-  releaseTypes: ReleaseType[],
-): MediaRequestAsk =>
-  isBookRequest(title.kind)
-    ? { kind: title.kind, openLibraryId: Number(title.id) }
-    : isMusicRequest(title.kind)
-      ? {
-          kind: title.kind,
-          musicBrainzId: title.musicBrainzId ?? title.id,
-          ...(title.kind === 'artist' ? { releaseTypes } : {}),
-        }
-      : {
-          kind: title.kind,
-          tmdbId: Number(title.id),
-          ...(title.kind === 'series' ? { seasons } : {}),
-        };
 
 /**
  * The page of a film, series, artist or album that can be asked for, opened from anywhere its
@@ -125,7 +96,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
     void askForMedia(asked)
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be asked for.');
+          setProblem(refusal?.message ?? 'That could not be requested.');
 
           return;
         }
@@ -401,7 +372,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
       <ConfirmDialog
         title={`Cancel ${title?.title ?? 'this request'}?`}
-        detail="It will not be fetched, and whatever it had started downloading is deleted. You can ask for it again whenever you like."
+        detail="It will not be fetched, and whatever it had started downloading is deleted. You can request it again whenever you like."
         confirmLabel="Cancel request"
         isDestructive
         isOpen={isCancelling}

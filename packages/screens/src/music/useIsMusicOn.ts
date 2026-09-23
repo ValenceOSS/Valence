@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
-import { theMusicPlayer } from './theMusicPlayer';
-import type { MusicPlayer } from './createMusicPlayer';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 
 /**
  * Whether music is coming out of this device's speakers right now — which is what anything else that

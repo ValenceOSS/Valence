@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
-import { aTrack } from '@ValenceScreens/testing/aTrack';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
+import { aTrack } from '@ValenceClient/testing/aTrack';
 import { useIsMusicOn } from './useIsMusicOn';
 
 describe('useIsMusicOn', () => {

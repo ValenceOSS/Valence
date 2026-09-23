@@ -6,6 +6,7 @@ packages:
   - 'apps/server'
   - 'apps/requests'
   - 'apps/transcoder'
+  - 'apps/tv'
   - 'packages/*'
   - 'tools'
 

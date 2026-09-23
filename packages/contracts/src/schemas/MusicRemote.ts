@@ -84,6 +84,7 @@ const PlaybackEventSchema = z.discriminatedUnion('kind', [
     fromLabel: z.string(),
   }),
   z.object({ kind: z.literal('musicDevicesChanged') }),
+  z.object({ kind: z.literal('videoDevicesChanged') }),
 ]);
 
 type MusicNowPlaying = z.infer<typeof MusicNowPlayingSchema>;

@@ -1,0 +1,27 @@
+{
+  "extends": ["../../tsconfig.base.json", "expo/tsconfig.base", "../../tsconfig.paths.json"],
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": ["jest", "node"]
+  },
+  "include": [
+    "index.ts",
+    "app.config.ts",
+    "metro.config.ts",
+    "jest.config.ts",
+    "jest.setup.ts",
+    "jest.beforeEach.ts",
+    "jest-expo.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "modules/**/*.ts",
+    "modules/**/*.tsx",
+    "plugins/**/*.ts"
+  ],
+  "exclude": ["node_modules", "ios", "android", "dist"]
+}

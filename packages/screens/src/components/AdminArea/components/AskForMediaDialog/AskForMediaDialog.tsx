@@ -211,7 +211,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
     void askForMedia({ ...asked, ...(release === null ? {} : { release }) })
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be asked for.');
+          setProblem(refusal?.message ?? 'That could not be requested.');
 
           return;
         }
@@ -390,7 +390,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               label="Release"
               description={
                 isPickedByHand
-                  ? `You pick from what the indexers have before anything is asked for.${LATER_PICKS[kind]}`
+                  ? `You pick from what the indexers have before anything is requested.${LATER_PICKS[kind]}`
                   : 'The best release by its quality is fetched as soon as one turns up.'
               }
             >
@@ -422,7 +422,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   onChoose: findReleases,
                 }
               : {
-                  label: 'Ask for it',
+                  label: 'Request it',
                   isDisabled: !isReady,
                   isLoading: isAsking,
                   onChoose: () => {

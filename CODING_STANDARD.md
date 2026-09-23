@@ -21,6 +21,32 @@ is `.gitignore`d, never hand-edited.
 
 No `.js`, `.jsx`, `.mjs`, or `.cjs` files are committed to the repository.
 
+### Swift, for Apple's own controls and nothing else
+
+**Swift is permitted inside the local native modules of an Apple-platform
+client — `apps/<client>/modules/<module>/ios/` — and nowhere else.** Today that
+means `apps/tv` and `apps/ios`. Some of what makes an app on those platforms
+feel like it belongs there is only reachable from Swift: tvOS's inline search
+keyboard with its dictation and suggestions is `UISearchContainerViewController`,
+and an iOS control drawn by SwiftUI is a SwiftUI view. A module that wraps one
+is written in the language that declares it, the same reason the transcoder is
+Rust, and scoped the same way.
+
+The cost is a third language to read, so the boundary is kept narrow:
+
+- A module wraps one system control or capability and exposes it to
+  TypeScript. It holds no screens, no application state and no requests to the
+  server. A screen reaches a native view through `requireNativeView` or a
+  module's functions, never through Swift of its own.
+- Each module is declared by its `expo-module.config.json` and the `.podspec`
+  CocoaPods reads. The podspec is Ruby because CocoaPods only reads Ruby; it
+  declares the module and does nothing else.
+- The Xcode project an app is built from is generated from its TypeScript
+  config on every prebuild and is `.gitignore`d, never hand-edited, like any
+  other build artifact.
+- A native module two clients need is one module, under rule 2, not a copy in
+  each app.
+
 ---
 
 ## 2. No duplication across modules
@@ -520,6 +546,12 @@ functions/formatDuration.test.ts
   usually an accessibility defect in the component, not a testing problem.
 - Coverage thresholds are enforced in CI and are not lowered to make a build
   pass. Raising them is a PR of its own.
+- `apps/tv` is tested with `jest-expo` rather than Vitest, co-located the same
+  way. Vitest cannot read the Flow syntax React Native ships and a Babel
+  transform in front of it does not take; `jest-expo` carries the React Native
+  preset, the native mocks and the transform already. It emits the same
+  `json-summary` coverage the rest of the repository does, so nothing
+  downstream has to know which runner ran.
 - Rust code is tested with `cargo test`. Negotiation logic in particular is
   tested as pure functions over data: no media files, no FFmpeg.
 - Tests that need media fixtures skip with an actionable

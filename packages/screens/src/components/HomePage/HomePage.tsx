@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { LibraryBrowser } from '@ValenceScreens/components/LibraryBrowser/LibraryBrowser';
-import { showSlug } from '@ValenceCore/functions/showSlug';
+import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
@@ -50,9 +50,9 @@ const HomePage = () => {
         hasHero
         onPalette={setMoodLights}
         onOpenShow={(media) => {
-          const series = media.seriesId ?? showSlug(media.seriesTitle ?? '');
+          const series = showIdOf(media);
 
-          if (series !== '') {
+          if (series !== null) {
             go({ show: series });
           }
         }}

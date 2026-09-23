@@ -3,7 +3,7 @@ import {
   forgetTheAudiobookPlayer,
   theAudiobookPlayer,
 } from '@ValenceScreens/listening/theAudiobookPlayer';
-import { forgetTheMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
+import { forgetTheMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 
 afterEach(() => {
   forgetTheAudiobookPlayer();

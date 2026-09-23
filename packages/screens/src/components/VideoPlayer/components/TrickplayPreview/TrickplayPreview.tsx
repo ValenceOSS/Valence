@@ -1,6 +1,6 @@
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { TrickplayFrame } from '@ValenceScreens/components/VideoPlayer/components/TrickplayFrame/TrickplayFrame';
-import { thumbnailAt } from '@ValenceScreens/playback/fetchTrickplay';
+import { thumbnailAt } from '@ValenceClient/playback/fetchTrickplay';
 import type { TrickplayPreviewProps } from './TrickplayPreview.types';
 
 /**

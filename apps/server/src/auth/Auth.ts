@@ -4,6 +4,8 @@ import { z } from 'zod';
 import type { DBAdapter, DBAdapterInstance } from 'better-auth';
 import type { SignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
 import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
+import { setSessionCookie } from 'better-auth/cookies';
+import { bearerWithoutACookie } from '@ValenceServer/auth/bearerWithoutACookie';
 import {
   admin,
   deviceAuthorization,
@@ -39,10 +41,17 @@ const RefusalSchema = z.instanceof(APIError);
 
 const VALENCE_APP_NAME = 'Valence';
 
+const DEVICE_TOKEN_PATH = '/device/token';
+
 /**
  * Builds the authentication layer: accounts, sessions, cookies, password resets and API keys, wired
  * to Valence's own database and settings. Everything about who somebody is comes from here rather than
  * being reimplemented per route.
+ *
+ * A television signed in from a phone is let in both ways a client can carry a session. The grant's
+ * answer is only a token, so the session cookie is set beside it for a television that is a browser,
+ * and the token itself is accepted as a bearer for one that is an app and keeps no cookies of its
+ * own. Without either, a television that finished signing in was left on the sign-in screen.
  *
  * @param options - The environment, the database, the settings store, whether cookies are secure,
  * and the hooks fired when an account is made, signs in, or asks for a reset.
@@ -105,13 +114,18 @@ const createAuth = ({
     },
     hooks: {
       after: createAuthMiddleware(async (context) => {
+        const session = context.context.newSession;
+
+        if (context.path === DEVICE_TOKEN_PATH && session !== null) {
+          await setSessionCookie(context, session);
+        }
+
         if (onSignInSettled === undefined) {
           return;
         }
 
         const refusal = RefusalSchema.safeParse(context.context.returned);
         const identifier = IdentifierSchema.safeParse(context.body);
-        const session = context.context.newSession;
 
         onSignInSettled({
           path: context.path,
@@ -139,6 +153,7 @@ const createAuth = ({
       twoFactor({ issuer: VALENCE_APP_NAME }),
       passkey({ rpName: VALENCE_APP_NAME }),
       deviceAuthorization({ expiresIn: '10m', interval: '5s' }),
+      bearerWithoutACookie(),
       jwt(),
       apiKey({ enableSessionForAPIKeys: true }),
       admin(),

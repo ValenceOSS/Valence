@@ -11,7 +11,7 @@ import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 import type * as SegmentsModule from '@ValenceClient/playback/fetchSegments';
 import type * as SubtitlesModule from '@ValenceClient/playback/fetchSubtitles';
-import type * as TrickplayModule from '@ValenceScreens/playback/fetchTrickplay';
+import type * as TrickplayModule from '@ValenceClient/playback/fetchTrickplay';
 import type * as CastSenderModule from '@ValenceScreens/playback/castSender';
 import type * as CastPlaybackModule from '@ValenceScreens/playback/castPlayback';
 
@@ -107,9 +107,9 @@ vi.mock('@ValenceClient/playback/fetchSubtitles', async () => {
   return { ...actual, fetchSubtitleTracks: subtitlesMock };
 });
 
-vi.mock('@ValenceScreens/playback/fetchTrickplay', async () => {
+vi.mock('@ValenceClient/playback/fetchTrickplay', async () => {
   const actual = await vi.importActual<typeof TrickplayModule>(
-    '@ValenceScreens/playback/fetchTrickplay',
+    '@ValenceClient/playback/fetchTrickplay',
   );
 
   return {
@@ -2107,6 +2107,51 @@ describe('when an administrator reaches into the stream', () => {
     await waitFor(() => {
       expect(screen.queryByText(/Tea is ready/)).not.toBeInTheDocument();
     });
+  });
+
+  it('does not start a paused film again for a command meant for the music or another device', async () => {
+    const { element } = await watching();
+    const isPaused = () => (element instanceof HTMLVideoElement ? element.paused : false);
+
+    act(() => {
+      emitPresenceEvent({ kind: 'paused', reason: 'Dinner.' });
+    });
+
+    expect(isPaused()).toBe(true);
+
+    act(() => {
+      emitPresenceEvent({
+        kind: 'music',
+        command: { kind: 'resume' },
+        fromClientId: 'phone',
+        fromLabel: 'iPhone',
+      });
+      emitPresenceEvent({
+        kind: 'video',
+        command: { kind: 'resume' },
+        fromClientId: 'phone',
+        fromLabel: 'iPhone',
+      });
+    });
+
+    expect(isPaused()).toBe(true);
+  });
+
+  it('starts a paused film again once the administrator lets it go', async () => {
+    const { element } = await watching();
+    const isPaused = () => (element instanceof HTMLVideoElement ? element.paused : true);
+
+    act(() => {
+      emitPresenceEvent({ kind: 'paused', reason: 'Dinner.' });
+    });
+
+    expect(isPaused()).toBe(true);
+
+    act(() => {
+      emitPresenceEvent({ kind: 'resumed' });
+    });
+
+    expect(isPaused()).toBe(false);
   });
 
   it('takes the note away again when the stream is let go', async () => {

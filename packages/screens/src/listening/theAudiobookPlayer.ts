@@ -1,6 +1,6 @@
 import { createAudiobookPlayer } from '@ValenceClient/books/createAudiobookPlayer';
 import { bookAudioUrl, saveListeningProgress } from '@ValenceClient/books/fetchListening';
-import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { takeTurns } from './takeTurns';
 import type { AudiobookPlayer } from '@ValenceClient/books/createAudiobookPlayer';
 

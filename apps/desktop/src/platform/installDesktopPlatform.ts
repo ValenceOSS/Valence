@@ -1,4 +1,5 @@
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { theBrowserAudio } from '@ValenceScreens/music/theBrowserAudio';
 import { theDesktopsStore } from '@ValenceDesktop/platform/theDesktopsStore';
 import { describeThisDesktop } from '@ValenceDesktop/platform/describeThisDesktop';
 import { thisWindowsId } from '@ValenceDesktop/platform/thisWindowsId';
@@ -27,6 +28,7 @@ const installDesktopPlatform = (): void => {
     buildInfo: () => window.valence.about,
     notifyLocally,
     setUnreadBadge,
+    musicAudio: theBrowserAudio,
   });
 };
 

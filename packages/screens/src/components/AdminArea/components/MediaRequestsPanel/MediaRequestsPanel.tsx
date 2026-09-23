@@ -448,7 +448,7 @@ const MediaRequestsPanel = () => {
             align="end"
             detail={
               <p className="max-w-xs text-xs leading-relaxed">
-                Every film, series, artist and album asked for, and where each has got to.
+                Every film, series, artist and album requested, and where each has got to.
                 Everything still wanted is searched for again every few hours by itself, and can be
                 searched for now with Refetch media.
               </p>
@@ -652,7 +652,7 @@ const MediaRequestsPanel = () => {
           }
           emptyMessage={
             requests.data.length === 0
-              ? 'Nothing has been asked for yet. Ask for a film, a series, an artist or an album to have it fetched and filed into its library.'
+              ? 'Nothing has been requested yet. Request a film, a series, an artist or an album to have it fetched and filed into its library.'
               : 'Nothing matches. Clear the filters or search for something else.'
           }
         />

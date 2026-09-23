@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { artworkTheSystemAccepts } from '@ValenceScreens/playback/artworkTheSystemAccepts';
+import type { MusicPlayer, MusicPlayerState } from '@ValenceClient/music/createMusicPlayer';
 import { claimTheSystemsControls } from '@ValenceScreens/playback/claimTheSystemsControls';
 import type { Claim } from '@ValenceScreens/playback/claimTheSystemsControls';
-import type { MusicPlayer, MusicPlayerState } from './createMusicPlayer';
 
 const ARTWORK_SIZES = ['256x256', '512x512'] as const;
 

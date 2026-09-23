@@ -1,4 +1,4 @@
-import type { Trickplay } from '@ValenceScreens/playback/fetchTrickplay';
+import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 
 type TrickplayPreviewProps = {
   trickplay: Trickplay | null;

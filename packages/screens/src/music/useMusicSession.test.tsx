@@ -1,10 +1,10 @@
 import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMusicSession } from '@ValenceScreens/music/useMusicSession';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { aFakeMediaSession } from '@ValenceScreens/testing/aFakeMediaSession';
-import { aTrack } from '@ValenceScreens/testing/aTrack';
-import type { MusicPlayerState } from '@ValenceScreens/music/createMusicPlayer';
+import { aTrack } from '@ValenceClient/testing/aTrack';
+import type { MusicPlayerState } from '@ValenceClient/music/createMusicPlayer';
 
 let session = aFakeMediaSession();
 

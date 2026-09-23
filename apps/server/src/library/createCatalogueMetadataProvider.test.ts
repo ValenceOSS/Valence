@@ -736,6 +736,7 @@ describe('reading the shape of a series', () => {
   const SERIES = {
     id: 5,
     name: 'Ted Lasso',
+    overview: 'An American coach takes on an English football club.',
     seasons: [{ season_number: 1, episode_count: 2 }],
   };
 
@@ -768,6 +769,7 @@ describe('reading the shape of a series', () => {
         },
       ],
       status: null,
+      overview: 'An American coach takes on an English football club.',
     });
   });
 

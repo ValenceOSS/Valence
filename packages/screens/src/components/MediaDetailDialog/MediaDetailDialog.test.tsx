@@ -8,7 +8,7 @@ import type { MediaDetail, MediaSummary } from '@ValenceContracts/schemas/Librar
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import type * as MotionReact from 'motion/react';
-import type * as FetchTrickplay from '@ValenceScreens/playback/fetchTrickplay';
+import type * as FetchTrickplay from '@ValenceClient/playback/fetchTrickplay';
 
 const motion = vi.hoisted(() => ({ isReduced: false }));
 
@@ -42,7 +42,7 @@ vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
 
 const scrubs = vi.hoisted(() => ({ areBuilt: true }));
 
-vi.mock('@ValenceScreens/playback/fetchTrickplay', async (importOriginal) => ({
+vi.mock('@ValenceClient/playback/fetchTrickplay', async (importOriginal) => ({
   ...(await importOriginal<typeof FetchTrickplay>()),
   fetchTrickplay: vi.fn(() =>
     Promise.resolve(scrubs.areBuilt ? { thumbnails: [], width: 320, height: 180 } : null),
@@ -886,5 +886,45 @@ describe('a film held as more than one cut of itself', () => {
     await actor.click(screen.getByRole('button', { name: /Play/ }));
 
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'version-1' }), 0);
+  });
+});
+
+describe('playing it on a television', () => {
+  it('offers no television where the caller has none to send to', async () => {
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await openTheMenu();
+
+    expect(screen.queryByText('Play on TV')).not.toBeInTheDocument();
+  });
+
+  it('sends it from where this person had got to', async () => {
+    const onPlayOn = vi.fn();
+
+    renderInAnAddress(
+      <MediaDetailDialog
+        media={summary}
+        resumeSeconds={754}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+        onPlayOn={onPlayOn}
+      />,
+    );
+
+    await userEvent.setup().click(await screen.findByText('Play on TV'));
+
+    expect(onPlayOn).toHaveBeenCalledWith(summary, 754);
+  });
+
+  it('sends it from the start where this person has not begun it', async () => {
+    const onPlayOn = vi.fn();
+
+    renderInAnAddress(
+      <MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} onPlayOn={onPlayOn} />,
+    );
+
+    await userEvent.setup().click(await screen.findByText('Play on TV'));
+
+    expect(onPlayOn).toHaveBeenCalledWith(summary, 0);
   });
 });

@@ -67,7 +67,7 @@ describe('signing a television in from a phone', () => {
   it('lets the television in once the phone has said yes', async () => {
     const onSignedIn = vi.fn();
 
-    askWhetherTheDeviceMayIn.mockResolvedValue({ kind: 'signedIn' });
+    askWhetherTheDeviceMayIn.mockResolvedValue({ kind: 'signedIn', token: 'a-session-token' });
 
     render(<TelevisionHandoff name="Valence" onSignedIn={onSignedIn} />);
 
@@ -157,7 +157,7 @@ describe('signing a television in from a phone', () => {
   it('stops asking once it has been let in, rather than polling a spent code', async () => {
     vi.useFakeTimers();
     startDeviceGrant.mockResolvedValue({ ...GRANT, intervalSeconds: 5 });
-    askWhetherTheDeviceMayIn.mockResolvedValue({ kind: 'signedIn' });
+    askWhetherTheDeviceMayIn.mockResolvedValue({ kind: 'signedIn', token: 'a-session-token' });
 
     render(<TelevisionHandoff name="Valence" onSignedIn={vi.fn()} />);
 

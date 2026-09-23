@@ -64,6 +64,7 @@ type PlayerControlsProps = {
   onSubtitleOffsetChange?: (seconds: number) => void;
   castState?: CastState;
   onCast?: () => void;
+  onPlayOnTv?: () => void;
   onPopOut?: () => void;
   isPoppedOut?: boolean;
   renderPreview?: (seconds: number) => ReactNode;

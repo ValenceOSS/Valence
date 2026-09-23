@@ -31,7 +31,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MoodLight } from '@ValenceUI/MoodBackground.types';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import type { StartOverride } from '@ValenceClient/shell/shell.types';
-import { useMusicRemote } from '@ValenceScreens/music/useMusicRemote';
+import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
 import { useListenAlong } from '@ValenceScreens/music/useListenAlong';
 import type { SignedInProps } from './SignedIn.types';
 

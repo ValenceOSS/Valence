@@ -8,10 +8,10 @@ import {
   SkipForward as SkipForwardFilledIcon,
 } from '@keyline-icons/react/fill';
 import { Icon } from '@ValenceUI/Icon';
-import { tracksFor } from './tracksFor';
+import { tracksFor } from '@ValenceClient/music/tracksFor';
 import type { ActionMenuGroup } from '@ValenceUI/ActionMenu.types';
-import type { MusicPlayer } from './createMusicPlayer';
-import type { MusicView } from './musicView';
+import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
+import type { MusicView } from '@ValenceClient/music/musicView';
 
 /**
  * What can be done to an album, an artist, a playlist or somebody's liked songs from wherever it is

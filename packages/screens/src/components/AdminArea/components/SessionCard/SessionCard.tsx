@@ -1,4 +1,5 @@
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { Icon } from '@ValenceUI/Icon';
 import {
   Info as InfoIcon,
@@ -60,7 +61,7 @@ const SessionCard = ({
       <span className="relative flex aspect-video w-24 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-[var(--surface-hover)]">
         {playback !== null && (playback.hasBackdrop || playback.hasPoster) ? (
           <img
-            src={`/api/media/${playback.mediaId}/image/${playback.hasBackdrop ? 'backdrop' : 'poster'}`}
+            src={artworkUrl(playback.mediaId, playback.hasBackdrop ? 'backdrop' : 'poster')}
             alt=""
             className="h-full w-full object-cover"
           />
