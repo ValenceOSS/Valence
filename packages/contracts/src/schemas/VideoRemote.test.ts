@@ -63,9 +63,9 @@ describe('VideoNowWatchingSchema', () => {
   });
 
   it('refuses a position before the start', () => {
-    expect(
-      VideoNowWatchingSchema.safeParse({ ...NOW_WATCHING, positionSeconds: -5 }).success,
-    ).toBe(false);
+    expect(VideoNowWatchingSchema.safeParse({ ...NOW_WATCHING, positionSeconds: -5 }).success).toBe(
+      false,
+    );
   });
 });
 
