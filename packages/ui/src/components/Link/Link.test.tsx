@@ -31,4 +31,22 @@ describe('Link', () => {
 
     expect(screen.getByRole('link', { name: 'X' })).toHaveClass('text-xs', 'underline');
   });
+
+  it('opens a whole address on this same site where it is', () => {
+    render(<Link href={`${window.location.origin}/admin/requests`}>Requests</Link>);
+
+    expect(screen.getByRole('link', { name: 'Requests' })).not.toHaveAttribute('target');
+  });
+
+  it('takes an address with no scheme of its own for another site where it names one', () => {
+    render(<Link href="//docs.getvalence.app/install/requesting">The docs</Link>);
+
+    expect(screen.getByRole('link', { name: 'The docs' })).toHaveAttribute('target', '_blank');
+  });
+
+  it('opens an address it cannot read where it is', () => {
+    render(<Link href="http://[not an address">Broken</Link>);
+
+    expect(screen.getByRole('link', { name: 'Broken' })).not.toHaveAttribute('target');
+  });
 });
