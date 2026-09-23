@@ -4,6 +4,7 @@ import { readValencePalette } from './plugins/readValencePalette.ts';
 import { readTheBuild } from './plugins/readTheBuild.ts';
 import { withTopShelf } from './plugins/withTopShelf.ts';
 import { withLaunchScreen } from './plugins/withLaunchScreen.ts';
+import { withPlainHttpToServers } from './plugins/withPlainHttpToServers.ts';
 
 const build = readTheBuild();
 
@@ -25,12 +26,18 @@ const config: ExpoConfig = {
       },
     },
   },
+  android: {
+    package: 'app.valence.tv',
+  },
   extra: { palette: readValencePalette(), build },
   plugins: [
     [
       '@react-native-tvos/config-tv',
       {
         isTV: true,
+        androidTVRequired: true,
+        androidTVBanner: './assets/android-tv/banner.png',
+        androidTVIcon: './assets/android-tv/icon.png',
         appleTVImages: {
           icon: './assets/tv-icons/icon.png',
           iconSmall: './assets/tv-icons/iconSmall.png',
@@ -48,4 +55,6 @@ const config: ExpoConfig = {
   ],
 };
 
-export default withLaunchScreen(withTopShelf(withTheSceneLifecycle(config)));
+export default withPlainHttpToServers(
+  withLaunchScreen(withTopShelf(withTheSceneLifecycle(config))),
+);
