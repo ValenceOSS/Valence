@@ -58,7 +58,13 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const seasons = useQuery({
     ...requestsQueries.seriesSeasons(kind === 'series' && title !== null ? Number(id) : null),
   });
-  const offered = useQuery(requestsQueries.profilesOnOffer(kind, isAskable));
+  const canRequest =
+    kind === 'film'
+      ? isAskable
+      : (seasons.data ?? []).some(
+          (season) => season.standing === 'askable' || season.standing === 'partly',
+        );
+  const offered = useQuery(requestsQueries.profilesOnOffer(kind, canRequest));
   const requestId = title?.standing.requestId ?? null;
   const requests = useQuery({ ...requestsQueries.mediaRequests(), enabled: requestId !== null });
   const request = requests.data?.find((one) => one.id === requestId) ?? null;
@@ -71,6 +77,12 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const [problem, setProblem] = useState<string | null>(null);
 
   const backdrop = title?.backdropUrl ?? null;
+
+  useEffect(() => {
+    if (!canRequest) {
+      setAsking(null);
+    }
+  }, [canRequest]);
 
   useEffect(() => {
     onLight(backdrop);
@@ -114,7 +126,9 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
     void askForMedia(asked)
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be asked for.');
+          setProblem(refusal?.message ?? 'That could not be requested.');
+          setAsking(null);
+          refresh();
 
           return;
         }
@@ -192,15 +206,15 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
       credits={starring.length === 0 ? [] : [`Starring ${starring.join(', ')}`]}
     >
       {going === null ? null : (
-        <DownloadPanel label={standing?.label ?? 'Downloading'} progress={going} />
+        <DownloadPanel label={standing?.label ?? 'Downloading to library'} progress={going} />
       )}
 
-      {asking !== null ? (
+      {asking !== null && canRequest ? (
         <>
           {choices.map((choice, at) => (
             <ActionRow
               key={choice.id}
-              label={`Ask for it in ${choice.name}`}
+              label={`Request in ${choice.name}`}
               icon={Plus}
               hasPreferredFocus={at === 0}
               onPress={() => {
@@ -237,7 +251,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
 
           {isAskable && kind === 'film' ? (
             <ActionRow
-              label={isBusy ? 'Asking…' : 'Request'}
+              label={isBusy ? 'Requesting…' : 'Request'}
               icon={Plus}
               hasPreferredFocus
               onPress={() => {
@@ -273,7 +287,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
             <ActionRow
               label={
                 isBusy
-                  ? 'Asking…'
+                  ? 'Requesting…'
                   : picked.size === 1
                     ? 'Request 1 season'
                     : `Request ${picked.size.toString()} seasons`
