@@ -112,6 +112,8 @@
       ],
       "@ValenceUI/Icon": ["./packages/ui/src/components/Icon/Icon.tsx"],
       "@ValenceUI/Icon.types": ["./packages/ui/src/components/Icon/Icon.types.ts"],
+      "@ValenceUI/Link": ["./packages/ui/src/components/Link/Link.tsx"],
+      "@ValenceUI/Link.types": ["./packages/ui/src/components/Link/Link.types.ts"],
       "@ValenceUI/Logo": ["./packages/ui/src/components/Logo/Logo.tsx"],
       "@ValenceUI/Logo.types": ["./packages/ui/src/components/Logo/Logo.types.ts"],
       "@ValenceUI/MaskFrames.types": ["./packages/ui/src/functions/MaskFrames.types.ts"],

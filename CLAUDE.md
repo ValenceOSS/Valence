@@ -33,7 +33,8 @@ reference, not a substitute for reading it.
    are fine. Untrusted input enters through a Zod schema.
 8. **One ValenceUI component owns each interactive element.** `<button>` lives in
    `Button`, text inputs in `TextField`, `<input type="file">` in `FilePicker`,
-   `<dialog>` in `Dialog`, `<iframe>` in `EmbeddedVideo` — and nowhere else,
+   `<dialog>` in `Dialog`, `<iframe>` in `EmbeddedVideo`, `<a>` in `Link` — and
+   nowhere else,
    including elsewhere in ValenceUI.
    Every other control composes one of those; there is no `IconButton`. ESLint
    enforces it.

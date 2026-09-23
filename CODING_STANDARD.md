@@ -402,6 +402,7 @@ Structural elements — `<div>`, `<span>`, `<section>`, `<ul>` — are fine.
 | `<input type="file">`                               | `FilePicker`    | composes `FilePicker`    |
 | `<dialog>`, focus trapping                          | `Dialog`        | composes `Dialog`        |
 | `<iframe>`                                          | `EmbeddedVideo` | composes `EmbeddedVideo` |
+| `<a>`                                               | `Link`          | composes `Link`          |
 
 **A control that is not one of those is a shape of one of those.** An icon
 button is `Button` with an icon and a label. A search box is `TextField` wearing
@@ -473,9 +474,12 @@ to it, and every one of those is a place a future theme will be wrong.
 ### How this is enforced
 
 ESLint fails the build on `<button>`, `<input>`, `<select>`, `<textarea>`,
-`<dialog>` and `<iframe>` anywhere in the repo. The exceptions are listed by
-filename in `eslint.config.ts`: the components that own those elements, and test
-files, where a raw element stands in for an arbitrary caller-supplied child.
+`<dialog>` and `<iframe>` anywhere in the repo, and on `<a>` anywhere in the app
+itself: `packages/ui`, `packages/screens`, `apps/web` and `apps/desktop`. The
+docs site and the landing page draw no ValenceUI, so they write their own links.
+The exceptions are listed by filename in `eslint.config.ts`: the components that
+own those elements, and test files, where a raw element stands in for an
+arbitrary caller-supplied child.
 
 Adding a filename to that list is not how you satisfy the rule. The list grows
 only when a new primitive gets an owner.

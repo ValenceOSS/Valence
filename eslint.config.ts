@@ -41,6 +41,68 @@ const LANDING_IMPORT_BANS = [
   RETIRED_ICON_SET_BAN,
 ];
 
+const SYNTAX_BANS = [
+  {
+    selector: 'JSXOpeningElement[name.name=/^(button|input|select|textarea|dialog|iframe)$/]',
+    message:
+      'Raw controls are banned. Compose Button, TextField, FilePicker, Dialog or EmbeddedVideo — see code standards section 9.',
+  },
+  {
+    selector: 'TSUnknownKeyword',
+    message: 'unknown is banned. Parse untrusted input through a Zod schema instead.',
+  },
+  {
+    selector: 'TSAsExpression[typeAnnotation.typeName.name!="const"]',
+    message: 'Type assertions are banned. Parse untrusted input through a Zod schema instead.',
+  },
+  {
+    selector:
+      'JSXOpeningElement[name.name="Icon"] > JSXAttribute[name.name="className"] > Literal[value=/\\btext-(text|text-muted|danger|on-scrim)\\b/]',
+    message:
+      'An icon is given its colour by tone, not by className. Use tone="muted" or tone="danger" — see code standards section 10.',
+  },
+  {
+    selector:
+      'JSXOpeningElement[name.name="Button"] > JSXAttribute[name.name="className"] > Literal[value=/\\bhover:text-text\\b/]',
+    message:
+      'A button that is muted until it is pointed at is variant="subtle", not a look in className — see code standards section 9.',
+  },
+  {
+    selector:
+      'JSXOpeningElement[name.name="Button"] > JSXAttribute[name.name="className"] > Literal[value=/(hover:bg-|\\bshadow-|\\btext-danger|\\bbg-surface|\\bborder\\b|rounded-full)/]',
+    message:
+      'A button takes its fill, border, corners and shadow from variant, isPill and the component around it, not className. Use variant="row", "glossy", "ghost", "danger" or "overlay" — see code standards section 9.',
+  },
+  {
+    selector: 'JSXOpeningElement[name.name=/^(?!AnimatedIcon$)[A-Z][A-Za-z0-9]+Icon$/]',
+    message:
+      'An icon is drawn by @ValenceUI/Icon — <Icon of={HomeIcon} /> — not rendered directly, so how it is drawn is decided in one file.',
+  },
+  {
+    selector:
+      'JSXOpeningElement[name.name="Skeleton"] > JSXAttribute[name.name="className"] > Literal[value=/\\brounded\\b/]',
+    message:
+      'A skeleton takes its corners from shape, not className. Use shape="soft" or shape="round".',
+  },
+  {
+    selector:
+      'JSXOpeningElement[name.name=/^(FaceCircle|ProfileFace|HouseholdFace)$/] > JSXAttribute[name.name="className"] Literal[value=/\\b(rounded|shadow)/]',
+    message:
+      'A face takes its corners and shadow from shape and isLifted, not className. Use shape="tile" or isLifted.',
+  },
+  {
+    selector:
+      'JSXOpeningElement[name.name=/^(MusicArtwork|GlassPanel|ActionMenu|PanelCard)$/] > JSXAttribute[name.name="className"] Literal[value=/(\\brounded|\\bshadow-|\\bring-|\\bborder\\b|\\bhover:bg-|\\bbg-)/]',
+    message:
+      'A component takes its corners, shadow, ring, edge and fill from its own props — shape, isLifted, isHighlighted, radius or look — not className.',
+  },
+];
+
+const ANCHOR_BAN = {
+  selector: 'JSXOpeningElement[name.name="a"]',
+  message: 'Raw links are banned in the app. Compose Link — see code standards section 9.',
+};
+
 export default tseslint.config(
   {
     ignores: [
@@ -77,64 +139,18 @@ export default tseslint.config(
           patterns: [...SHARED_IMPORT_BANS],
         },
       ],
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'JSXOpeningElement[name.name=/^(button|input|select|textarea|dialog|iframe)$/]',
-          message:
-            'Raw controls are banned. Compose Button, TextField, FilePicker, Dialog or EmbeddedVideo — see code standards section 9.',
-        },
-        {
-          selector: 'TSUnknownKeyword',
-          message: 'unknown is banned. Parse untrusted input through a Zod schema instead.',
-        },
-        {
-          selector: 'TSAsExpression[typeAnnotation.typeName.name!="const"]',
-          message:
-            'Type assertions are banned. Parse untrusted input through a Zod schema instead.',
-        },
-        {
-          selector:
-            'JSXOpeningElement[name.name="Icon"] > JSXAttribute[name.name="className"] > Literal[value=/\\btext-(text|text-muted|danger|on-scrim)\\b/]',
-          message:
-            'An icon is given its colour by tone, not by className. Use tone="muted" or tone="danger" — see code standards section 10.',
-        },
-        {
-          selector:
-            'JSXOpeningElement[name.name="Button"] > JSXAttribute[name.name="className"] > Literal[value=/\\bhover:text-text\\b/]',
-          message:
-            'A button that is muted until it is pointed at is variant="subtle", not a look in className — see code standards section 9.',
-        },
-        {
-          selector:
-            'JSXOpeningElement[name.name="Button"] > JSXAttribute[name.name="className"] > Literal[value=/(hover:bg-|\\bshadow-|\\btext-danger|\\bbg-surface|\\bborder\\b|rounded-full)/]',
-          message:
-            'A button takes its fill, border, corners and shadow from variant, isPill and the component around it, not className. Use variant="row", "glossy", "ghost", "danger" or "overlay" — see code standards section 9.',
-        },
-        {
-          selector: 'JSXOpeningElement[name.name=/^(?!AnimatedIcon$)[A-Z][A-Za-z0-9]+Icon$/]',
-          message:
-            'An icon is drawn by @ValenceUI/Icon — <Icon of={HomeIcon} /> — not rendered directly, so how it is drawn is decided in one file.',
-        },
-        {
-          selector:
-            'JSXOpeningElement[name.name="Skeleton"] > JSXAttribute[name.name="className"] > Literal[value=/\\brounded\\b/]',
-          message:
-            'A skeleton takes its corners from shape, not className. Use shape="soft" or shape="round".',
-        },
-        {
-          selector:
-            'JSXOpeningElement[name.name=/^(FaceCircle|ProfileFace|HouseholdFace)$/] > JSXAttribute[name.name="className"] Literal[value=/\\b(rounded|shadow)/]',
-          message:
-            'A face takes its corners and shadow from shape and isLifted, not className. Use shape="tile" or isLifted.',
-        },
-        {
-          selector:
-            'JSXOpeningElement[name.name=/^(MusicArtwork|GlassPanel|ActionMenu|PanelCard)$/] > JSXAttribute[name.name="className"] Literal[value=/(\\brounded|\\bshadow-|\\bring-|\\bborder\\b|\\bhover:bg-|\\bbg-)/]',
-          message:
-            'A component takes its corners, shadow, ring, edge and fill from its own props — shape, isLifted, isHighlighted, radius or look — not className.',
-        },
-      ],
+      'no-restricted-syntax': ['error', ...SYNTAX_BANS],
+    },
+  },
+  {
+    files: [
+      'packages/ui/**/*.tsx',
+      'packages/screens/**/*.tsx',
+      'apps/web/**/*.tsx',
+      'apps/desktop/**/*.tsx',
+    ],
+    rules: {
+      'no-restricted-syntax': ['error', ...SYNTAX_BANS, ANCHOR_BAN],
     },
   },
   {
@@ -190,6 +206,7 @@ export default tseslint.config(
       'packages/ui/src/components/TextField/TextField.tsx',
       'packages/ui/src/components/FilePicker/FilePicker.tsx',
       'packages/ui/src/components/EmbeddedVideo/EmbeddedVideo.tsx',
+      'packages/ui/src/components/Link/Link.tsx',
     ],
     rules: {
       'no-restricted-syntax': [

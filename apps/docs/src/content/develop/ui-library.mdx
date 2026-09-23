@@ -120,7 +120,7 @@ Conventions every component follows:
 
 ## One component owns each interactive element
 
-This is the rule that keeps the library coherent. A raw HTML control appears in exactly one component, and everything else composes it. ESLint fails the build on `<button>`, `<input>`, `<select>`, `<textarea>`, `<dialog>` and `<iframe>` anywhere else.
+This is the rule that keeps the library coherent. A raw HTML control appears in exactly one component, and everything else composes it. ESLint fails the build on `<a>`, `<button>`, `<input>`, `<select>`, `<textarea>`, `<dialog>` and `<iframe>` anywhere else.
 
 | Element                              | Owner           |
 | ------------------------------------ | --------------- |
@@ -129,6 +129,7 @@ This is the rule that keeps the library coherent. A raw HTML control appears in 
 | `<input type="file">`                | `FilePicker`    |
 | Dialog panel, overlay and focus trap | `Dialog`        |
 | `<iframe>`                           | `EmbeddedVideo` |
+| `<a>`                                | `Link`          |
 | `<video>`                            | `VideoSurface`  |
 
 A control that is not one of these is a shape of one of them. There is no `IconButton`: it is `Button` with an icon and a label, and `isIconOnly` makes it square. A search box is `TextField` without a box. A row of page markers, a bar of places and a menu of settings are all `Button`, painted differently.
@@ -251,21 +252,22 @@ The library has more than eighty components. The list below groups the main ones
 
 ### Controls and forms
 
-| Component                      | What it is for                                                                     |
-| ------------------------------ | ---------------------------------------------------------------------------------- |
-| `Button`                       | The one place a `<button>` is written. Everything pressable is this or composes it |
-| `TextField`                    | The one place a single line of text is typed. Owns label, description and error    |
-| `FilePicker`                   | The one place a file is chosen                                                     |
-| `FormField`                    | One thing a form asks for: what it is, what answering means and the control        |
-| `Checkbox`                     | A labelled checkbox for a choice that is part of a form                            |
-| `Switch`                       | A setting that is on or off and takes effect immediately                           |
-| `Slider`, `RangeSlider`        | One number from a range, or a smallest and largest                                 |
-| `StarRating`                   | A rating out of five, shown and optionally set                                     |
-| `SegmentedRow`                 | A set of choices drawn as one track rather than separate pills                     |
-| `OptionMenu`                   | A menu where exactly one choice is in force, such as a quality or a sort order     |
-| `ActionMenu`                   | A menu of things to do, such as rename, rescan or delete                           |
-| `FilterMenu`, `AppliedFilters` | Choosing several filters, and showing what a list is narrowed by                   |
-| `ContextMenu`                  | The menu that opens on right click or press and hold                               |
+| Component                      | What it is for                                                                          |
+| ------------------------------ | --------------------------------------------------------------------------------------- |
+| `Button`                       | The one place a `<button>` is written. Everything pressable is this or composes it      |
+| `Link`                         | The one place an `<a>` is written: a link that opens here, or another site in a new tab |
+| `TextField`                    | The one place a single line of text is typed. Owns label, description and error         |
+| `FilePicker`                   | The one place a file is chosen                                                          |
+| `FormField`                    | One thing a form asks for: what it is, what answering means and the control             |
+| `Checkbox`                     | A labelled checkbox for a choice that is part of a form                                 |
+| `Switch`                       | A setting that is on or off and takes effect immediately                                |
+| `Slider`, `RangeSlider`        | One number from a range, or a smallest and largest                                      |
+| `StarRating`                   | A rating out of five, shown and optionally set                                          |
+| `SegmentedRow`                 | A set of choices drawn as one track rather than separate pills                          |
+| `OptionMenu`                   | A menu where exactly one choice is in force, such as a quality or a sort order          |
+| `ActionMenu`                   | A menu of things to do, such as rename, rescan or delete                                |
+| `FilterMenu`, `AppliedFilters` | Choosing several filters, and showing what a list is narrowed by                        |
+| `ContextMenu`                  | The menu that opens on right click or press and hold                                    |
 
 ### Surfaces and overlays
 
