@@ -100,3 +100,127 @@ describe('fileBook', () => {
     });
   });
 });
+
+describe('fileBook, given a pack of several books', () => {
+  const TAGS: Record<string, { album: string; title: string; author: string }> = {
+    'Book 1-Red Rising.m4b': {
+      album: 'Red Rising (Unabridged)',
+      title: 'Red Rising (Unabridged)',
+      author: 'Pierce Brown',
+    },
+    'Book 2-Red Rising-Golden Son .m4b': {
+      album: 'Golden Son (Unabridged)',
+      title: 'Golden Son: Book II of the Red Rising Trilogy (Unabridged)',
+      author: 'Pierce Brown',
+    },
+    'Iron Gold (Unabridged).m4b': {
+      album: 'Iron Gold (Unabridged)',
+      title: 'Iron Gold (Unabridged)',
+      author: 'Pierce Brown',
+    },
+  };
+
+  const readTags = (path: string) => Promise.resolve(TAGS[path.split('/').at(-1) ?? ''] ?? null);
+
+  const aSaga = async (): Promise<string> => {
+    const folder = join(root, 'downloads', 'Pierce Brown-Red Rising-[1-5]');
+
+    for (const name of [
+      'Pierce Brown-Red Rising-#1-Red Rising/Book 1-Red Rising.m4b',
+      'Pierce Brown-Red Rising-#2-Golden Son/Book 2-Red Rising-Golden Son .m4b',
+      'Pierce Brown-Red Rising-#4-Iron Gold/Iron Gold (Unabridged).m4b',
+      'Pierce Brown-Red Rising-#4-Iron Gold/Iron Gold (Unabridged).jpg',
+      'Pierce Brown-Red Rising-#4-Iron Gold/Iron Gold (Unabridged).cue',
+    ]) {
+      await mkdir(join(folder, name, '..'), { recursive: true });
+      await writeFile(join(folder, name), name);
+    }
+
+    return folder;
+  };
+
+  it('files each book as its own, named by its own tags, each with only its own cover', async () => {
+    const saga = await aSaga();
+
+    const { filed } = await fileBook(
+      { libraryPath: join(root, 'Books'), title: 'Red Rising Saga Books 1-5', artistName: null },
+      [{ id: 'book', title: 'Red Rising Saga Books 1-5' }],
+      saga,
+      true,
+      { readTags },
+    );
+
+    expect(filed.get('book')).toBe(join(root, 'Books', 'Pierce Brown'));
+    expect(await filesUnder(join(root, 'Books'))).toEqual([
+      'Pierce Brown/Golden Son/Golden Son.m4b',
+      'Pierce Brown/Iron Gold/Iron Gold.m4b',
+      'Pierce Brown/Iron Gold/cover.jpg',
+      'Pierce Brown/Red Rising/Red Rising.m4b',
+    ]);
+  });
+
+  it('tells books in one folder apart by the albums they are tagged with', async () => {
+    const folder = join(root, 'downloads', 'Saga');
+
+    await mkdir(folder, { recursive: true });
+
+    for (const name of Object.keys(TAGS)) {
+      await writeFile(join(folder, name), name);
+    }
+
+    await fileBook(
+      { libraryPath: join(root, 'Books'), title: 'Saga', artistName: null },
+      [{ id: 'book', title: 'Saga' }],
+      folder,
+      false,
+      { readTags },
+    );
+
+    expect(await filesUnder(join(root, 'Books'))).toEqual([
+      'Pierce Brown/Golden Son/Golden Son.m4b',
+      'Pierce Brown/Iron Gold/Iron Gold.m4b',
+      'Pierce Brown/Red Rising/Red Rising.m4b',
+    ]);
+  });
+
+  it('tells untagged books apart by their folders', async () => {
+    const saga = await aSaga();
+
+    await fileBook(
+      { libraryPath: join(root, 'Books'), title: 'Saga', artistName: 'Pierce Brown' },
+      [{ id: 'book', title: 'Saga' }],
+      saga,
+      true,
+      { readTags: () => Promise.resolve(null) },
+    );
+
+    expect(await filesUnder(join(root, 'Books', 'Pierce Brown'))).toEqual([
+      'Pierce Brown-Red Rising-#1-Red Rising/Pierce Brown-Red Rising-#1-Red Rising.m4b',
+      'Pierce Brown-Red Rising-#2-Golden Son/Pierce Brown-Red Rising-#2-Golden Son.m4b',
+      'Pierce Brown-Red Rising-#4-Iron Gold/Pierce Brown-Red Rising-#4-Iron Gold.m4b',
+      'Pierce Brown-Red Rising-#4-Iron Gold/cover.jpg',
+    ]);
+  });
+
+  it('names a single book sent by hand by its tags, where it is asked to', async () => {
+    const download = await aDownload(['Iron Gold (Unabridged).m4b']);
+
+    const { filed } = await fileBook(
+      { libraryPath: join(root, 'Books'), title: 'Pierce Brown', artistName: 'Iron Gold' },
+      [{ id: 'book', title: 'Pierce Brown' }],
+      download,
+      true,
+      { isNamedByItsFiles: true, readTags },
+    );
+
+    expect(filed.get('book')).toBe(join(root, 'Books', 'Pierce Brown', 'Iron Gold'));
+  });
+
+  it('keeps a request’s own name for a single book', async () => {
+    const download = await aDownload(['Iron Gold (Unabridged).m4b']);
+
+    await fileBook(aRequest(), DUNE, download, true, { readTags });
+
+    expect(await filesUnder(join(root, 'Books'))).toEqual(['Frank Herbert/Dune/Dune.m4b']);
+  });
+});

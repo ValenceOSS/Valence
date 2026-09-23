@@ -791,6 +791,7 @@ const createRequestWorker = ({
       [{ id: 'book', title: book }],
       path,
       protocol === 'torrent',
+      { isNamedByItsFiles: true },
     );
 
     return filed.get('book') ?? null;

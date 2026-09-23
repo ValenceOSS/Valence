@@ -1,3 +1,4 @@
+import { audiobookTitleOf } from '@ValenceContracts/functions/audiobookTitleOf';
 import type { IAudioMetadata, IChapter } from 'music-metadata';
 import type { ChapterMark } from '@ValenceContracts/schemas/Book';
 import type { ListenBook } from './BookFile';
@@ -44,7 +45,8 @@ const marksOf = (chapters: readonly IChapter[], durationSeconds: number): Chapte
 /**
  * Reads an audiobook's file as a book to listen to: how long it lasts, the chapters it marks inside
  * itself, where it comes among the book's tracks, and what its tags say of the book — the album is
- * the book, whoever made the album wrote it, and the description or comment is its blurb. Its cover
+ * the book, called what the album and the title agree on without the shop's "(Unabridged)", whoever
+ * made the album wrote it, and the description or comment is its blurb. Its cover
  * is the picture it carries, the front cover where it names one.
  *
  * @param meta - What the file's tags and format say.
@@ -70,7 +72,7 @@ const audiobookFromMetadata = (meta: IAudioMetadata): ListenBook | null => {
     marks: marksOf(meta.format.chapters ?? [], durationSeconds),
     track: common.track.no,
     about: {
-      series: common.album ?? null,
+      series: common.album === undefined ? null : audiobookTitleOf(common),
       title: common.title ?? null,
       authors: author === null ? [] : [author],
       description,

@@ -51,6 +51,14 @@ describe('audiobookFromMetadata', () => {
     });
   });
 
+  it('calls the book what its album and title agree on, without the shop’s edition', () => {
+    const heard = audiobookFromMetadata(
+      metadata({ album: 'Red Rising, Book 5 - Dark Age', title: 'Dark Age (Unabridged)' }),
+    );
+
+    expect(heard?.about?.series).toBe('Dark Age');
+  });
+
   it('turns the chapters a file marks into seconds, each running to the next', () => {
     const heard = audiobookFromMetadata(
       metadata(
