@@ -1,5 +1,12 @@
-import { useMemo } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
@@ -7,10 +14,14 @@ import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { MediaCard } from '@ValenceTv/components/MediaCard/MediaCard';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
+import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { tokens } from '@ValenceTv/theme/tokens';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { CatalogueProps } from './Catalogue.types';
 
 const ACROSS = 6;
+
+const RESTS_AFTER_MS = 600;
 
 const TITLES = { films: 'Films', shows: 'Shows' } as const;
 
@@ -19,13 +30,39 @@ const TITLES = { films: 'Films', shows: 'Shows' } as const;
  * Shows pages have them.
  *
  * A programme is one poster however many episodes it has, and a film somebody is part-way through
- * says how far.
+ * says how far. The page is lit by its first poster once it arrives, and then by the poster the
+ * remote rests on, once it has rested there a moment rather than at every step. The posters are sized so six fill the width of the screen between its margins.
  *
  * @param kind - Films or shows.
  * @param watchable - The libraries holding something to watch.
  * @param onOpen - Told which title was chosen.
+ * @param onFeature - Told which title the remote has come to rest on, to light the page with it.
+ * @param upTo - The tab this page belongs under, which pressing up from the top row goes to.
  */
-const Catalogue = ({ kind, watchable, onOpen }: CatalogueProps) => {
+const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CatalogueProps) => {
+  const resting = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (resting.current !== null) {
+        clearTimeout(resting.current);
+      }
+    },
+    [],
+  );
+
+  const restOn = useCallback(
+    (media: MediaSummary) => {
+      if (resting.current !== null) {
+        clearTimeout(resting.current);
+      }
+
+      resting.current = setTimeout(() => {
+        onFeature(media);
+      }, RESTS_AFTER_MS);
+    },
+    [onFeature],
+  );
   const { progress } = useProgress();
   const everything = useQuery({
     ...libraryQueries.everything(watchable, { kind, order: 'title' }),
@@ -33,11 +70,26 @@ const Catalogue = ({ kind, watchable, onOpen }: CatalogueProps) => {
   });
 
   const room = useRoomToFill();
+  const screen = useWindowDimensions();
+  const cardWidth = Math.floor(
+    (screen.width - tokens.space.edge * 2 - tokens.space.md * (ACROSS - 1)) / ACROSS,
+  );
+  const upToBar = useHandOff('up', upTo);
 
   const items = useMemo(
     () => (kind === 'shows' ? collapseToShows(everything.data ?? []) : (everything.data ?? [])),
     [everything.data, kind],
   );
+
+  const first = items[0];
+  const hasLit = useRef(false);
+
+  useEffect(() => {
+    if (first !== undefined && !hasLit.current) {
+      hasLit.current = true;
+      onFeature(first);
+    }
+  }, [first, onFeature]);
 
   if (everything.isPending) {
     return (
@@ -69,14 +121,24 @@ const Catalogue = ({ kind, watchable, onOpen }: CatalogueProps) => {
           columnWrapperStyle={styles.row}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={<Text style={styles.title}>{TITLES[kind]}</Text>}
-          renderItem={({ item }) => {
+          renderItem={({ item, index }) => {
             const watched = progress.get(item.id);
 
             return (
               <MediaCard
                 media={item}
                 shape="poster"
+                width={cardWidth}
                 onPress={onOpen}
+                onFocus={() => {
+                  restOn(item);
+
+                  if (index < ACROSS) {
+                    upToBar.arrive();
+                  } else {
+                    upToBar.leave();
+                  }
+                }}
                 {...(watched === undefined || kind === 'shows'
                   ? {}
                   : { watchedFraction: watchedFraction(watched) })}
@@ -88,6 +150,8 @@ const Catalogue = ({ kind, watchable, onOpen }: CatalogueProps) => {
     </View>
   );
 };
+
+const Catalogue = memo(CataloguePage);
 
 Catalogue.displayName = 'Catalogue';
 

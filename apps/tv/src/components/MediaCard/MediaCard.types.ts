@@ -9,6 +9,8 @@ type MediaCardProps = {
   watchedFraction?: number;
   isEpisode?: boolean;
   hasPreferredFocus?: boolean;
+  isUrgent?: boolean;
+  width?: number;
   onFocus?: (media: MediaSummary) => void;
 };
 

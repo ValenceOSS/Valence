@@ -31,7 +31,7 @@ const EpisodeCard = ({
 }: EpisodeCardProps) => (
   <Focusable
     label={episode.title}
-    hasShadow
+    shadow={{ height: STILL_HEIGHT, cornerRadius: tokens.radii.xl }}
     onPress={() => {
       onPress(episode);
     }}

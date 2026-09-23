@@ -7,6 +7,7 @@ import { QrCode } from '@ValenceTv/components/QrCode/QrCode';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { holdTheSession } from '@ValenceTv/session/holdTheSession';
+import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { DeviceGrant } from '@ValenceClient/session/auth';
 import type { PhoneHandoffProps } from './PhoneHandoff.types';
@@ -99,6 +100,7 @@ const PhoneHandoff = ({ onSignedIn, onBack }: PhoneHandoffProps) => {
 
   return (
     <View style={styles.screen}>
+      <WayInBackdrop />
       <Text style={styles.title}>Sign in with your phone</Text>
 
       {grant === null ? (

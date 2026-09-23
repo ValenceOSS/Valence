@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 type TitleSpreadProps = {
-  mediaId: string;
+  mediaId: string | null;
   name: string;
   hasLogo: boolean;
   stillPath: string | null;

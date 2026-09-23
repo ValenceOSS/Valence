@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
 import { verifyTotp } from '@ValenceClient/session/auth';
 import { Face } from '@ValenceTv/components/Face/Face';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { holdTheSession } from '@ValenceTv/session/holdTheSession';
+import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
+import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
+import mark from '@ValenceTv/assets/valence-mark.png';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { EnterPasswordProps } from './EnterPassword.types';
 
@@ -14,10 +18,23 @@ import type { EnterPasswordProps } from './EnterPassword.types';
  * account asks for one too.
  *
  * @param profile - Who is signing in.
- * @param onSignedIn - Told once they are in.
+ * @param onSignedIn - Told once they are in, with where their face and Valence's mark are, for them
+ *   to fly on from.
  * @param onBack - Told when somebody would rather pick someone else.
+ * @param isArriving - Whether their face and the mark are still flying in, and so not yet drawn.
+ * @param onFaceAt - Told where their face sits here, for it to fly to.
+ * @param onMarkAt - Told where Valence's mark sits here, for it to fly to.
  */
-const EnterPassword = ({ profile, onSignedIn, onBack }: EnterPasswordProps) => {
+const EnterPassword = ({
+  profile,
+  onSignedIn,
+  onBack,
+  isArriving,
+  onFaceAt,
+  onMarkAt,
+}: EnterPasswordProps) => {
+  const face = useReportSpot(onFaceAt);
+  const markSpot = useReportSpot(onMarkAt);
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [needsCode, setNeedsCode] = useState(false);
@@ -33,7 +50,9 @@ const EnterPassword = ({ profile, onSignedIn, onBack }: EnterPasswordProps) => {
     }
 
     await holdTheSession();
-    onSignedIn();
+    const [faceAt, markAt] = await Promise.all([face.whereNow(), markSpot.whereNow()]);
+
+    onSignedIn({ face: faceAt, mark: markAt });
   };
 
   const signIn = async () => {
@@ -67,7 +86,24 @@ const EnterPassword = ({ profile, onSignedIn, onBack }: EnterPasswordProps) => {
 
   return (
     <View style={styles.screen}>
-      <Face profile={profile} size={200} />
+      <WayInBackdrop tint={profile.colour} />
+      <View
+        ref={markSpot.ref}
+        collapsable={false}
+        style={[styles.mark, isArriving && styles.hidden]}
+        onLayout={markSpot.onLayout}
+      >
+        <Image source={mark} style={MARK} contentFit="contain" />
+      </View>
+
+      <View
+        ref={face.ref}
+        collapsable={false}
+        style={isArriving && styles.hidden}
+        onLayout={face.onLayout}
+      >
+        <Face profile={profile} size={200} />
+      </View>
 
       <Text style={styles.name}>{profile.name}</Text>
 
@@ -116,7 +152,11 @@ const EnterPassword = ({ profile, onSignedIn, onBack }: EnterPasswordProps) => {
 
 EnterPassword.displayName = 'EnterPassword';
 
+const MARK = { width: 76, height: 56 };
+
 const styles = StyleSheet.create({
+  hidden: { opacity: 0 },
+  mark: { position: 'absolute', top: tokens.space.xl, alignSelf: 'center' },
   screen: {
     flex: 1,
     backgroundColor: tokens.colours.canvas,

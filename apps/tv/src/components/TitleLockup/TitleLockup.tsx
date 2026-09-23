@@ -11,14 +11,15 @@ const LOGO = { width: 640, height: 200 };
  * A title's name as its designer lettered it, or set in type where there is no logo or it will not
  * load.
  *
- * @param mediaId - The title whose logo it is.
+ * @param mediaId - The title whose logo it is, or nothing for a title the library does not
+ *   have, which is named in words.
  * @param name - What it is called.
  * @param hasLogo - Whether the server holds a logo for it.
  */
 const TitleLockup = ({ mediaId, name, hasLogo }: TitleLockupProps) => {
   const [hasNoLogo, setHasNoLogo] = useState(false);
 
-  if (!hasLogo || hasNoLogo) {
+  if (mediaId === null || !hasLogo || hasNoLogo) {
     return (
       <Text numberOfLines={2} style={styles.name}>
         {name}

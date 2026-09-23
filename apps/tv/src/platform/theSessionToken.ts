@@ -44,4 +44,15 @@ const signedHeaders = (): Record<string, string> => {
   return token === null ? {} : { authorization: `Bearer ${token}` };
 };
 
-export { keepTheSessionToken, signedHeaders, theSessionToken };
+/**
+ * The headers to fetch a picture or a file with: signed as whoever is signed in where it is served
+ * by this Valence, and bare where it comes from anywhere else, so the session never reaches a third
+ * party such as the film database a poster is served from.
+ *
+ * @param path - Where it is fetched from, a path on this Valence or a full address elsewhere.
+ * @returns The headers to send.
+ */
+const signedHeadersFor = (path: string): Record<string, string> =>
+  path.startsWith('/') ? signedHeaders() : {};
+
+export { keepTheSessionToken, signedHeaders, signedHeadersFor, theSessionToken };

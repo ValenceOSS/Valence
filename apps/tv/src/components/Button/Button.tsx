@@ -2,75 +2,45 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { withAlpha } from '@ValenceTv/theme/withAlpha';
 import type { ButtonProps, ButtonSize, ButtonVariant } from './Button.types';
 
-type Look = { face: string; edge: string; ink: string; focusedFace: string; focusedInk?: string };
+type Look = { face: string; edge: string; ink: string };
 
 const LOOKS: Record<ButtonVariant, Look> = {
-  primary: {
-    face: tokens.colours.accent,
-    edge: 'rgba(255,255,255,0.15)',
-    ink: tokens.colours.onAccent,
-    focusedFace: tokens.colours.accentHover,
-  },
+  primary: { face: '#ffffff', edge: 'transparent', ink: tokens.colours.onWhite },
   secondary: {
     face: tokens.colours.hover,
     edge: tokens.colours.line,
     ink: tokens.colours.text,
-    focusedFace: tokens.colours.active,
   },
   glossy: {
     face: tokens.colours.hover,
     edge: tokens.colours.line,
     ink: tokens.colours.text,
-    focusedFace: tokens.colours.active,
   },
-  confirm: {
-    face: '#ffffff',
-    edge: 'transparent',
-    ink: tokens.colours.onWhite,
-    focusedFace: '#ffffff',
-  },
-  overlay: {
-    face: 'rgba(0,0,0,0.35)',
-    edge: 'transparent',
-    ink: '#ffffff',
-    focusedFace: '#ffffff',
-    focusedInk: tokens.colours.onWhite,
-  },
-  soft: {
-    face: withAlpha(tokens.colours.accent, 0.15),
-    edge: 'transparent',
-    ink: tokens.colours.accent,
-    focusedFace: withAlpha(tokens.colours.accent, 0.25),
-  },
-  ghost: {
-    face: 'transparent',
-    edge: 'transparent',
-    ink: tokens.colours.text,
-    focusedFace: tokens.colours.hover,
-  },
+  confirm: { face: '#ffffff', edge: 'transparent', ink: tokens.colours.onWhite },
+  overlay: { face: 'rgba(128,128,128,0.5)', edge: 'transparent', ink: '#ffffff' },
+  soft: { face: tokens.colours.hover, edge: 'transparent', ink: tokens.colours.text },
+  ghost: { face: 'transparent', edge: 'transparent', ink: tokens.colours.text },
   danger: {
     face: tokens.colours.danger,
     edge: 'transparent',
     ink: tokens.colours.onAccent,
-    focusedFace: tokens.colours.danger,
   },
 };
+
+const RING_GAP = 4;
 
 const HEIGHTS: Record<ButtonSize, number> = { md: 72, lg: 80, xl: 88 };
 
 const TEXT: Record<ButtonSize, number> = { md: 26, lg: 28, xl: 32 };
 
 /**
- * ValenceUI's button, for a television: the same variants, the same shapes and the same colours as
- * the web's, sized for a room rather than a desk.
- *
- * Where the web lights a button when the pointer is over it and rings it when the keyboard is on it,
- * the television does both at once for whichever button the remote is on — the hover face, the ring,
- * and the lift everything on tvOS gives what is focused — since the remote is the pointer and the
- * keyboard both.
+ * ValenceUI's button, for a television: the same variants and shapes as the web's, sized for a room
+ * rather than a desk, and coloured as the television's own buttons are rather than the web's — none
+ * of them blue. The main action is white, the rest grey or see-through, and whichever the remote is
+ * on is ringed in white a little way outside its edge, so a white button shows it as well as a grey
+ * one. Every button keeps a clear ring of the same size, so moving the remote shifts nothing.
  *
  * @param label - What it says.
  * @param detail - A second, quieter line, such as where a server is.
@@ -85,6 +55,7 @@ const TEXT: Record<ButtonSize, number> = { md: 26, lg: 28, xl: 32 };
  * @param isDisabled - Whether it can be pressed.
  * @param isWide - Whether it fills its row.
  * @param hasPreferredFocus - Whether the remote starts here.
+ * @param ref - Handed the pressable element, for something that has to send the remote to it.
  */
 const Button = ({
   label,
@@ -100,12 +71,14 @@ const Button = ({
   isDisabled = false,
   isWide = false,
   hasPreferredFocus = false,
+  ref,
 }: ButtonProps) => {
   const look = LOOKS[variant];
   const isHeldOff = isDisabled || isLoading;
 
   return (
     <Focusable
+      ref={ref}
       label={detail === undefined ? label : `${label}, ${detail}`}
       onPress={onPress}
       {...(onFocus === undefined ? {} : { onFocus })}
@@ -116,34 +89,45 @@ const Button = ({
       style={isWide ? styles.wide : undefined}
     >
       {(isFocused) => {
-        const ink = isFocused ? (look.focusedInk ?? look.ink) : look.ink;
+        const corner = isPill ? tokens.radii.round : tokens.radii.lg;
 
         return (
           <View
             style={[
-              styles.face,
+              styles.ring,
               {
-                minHeight: HEIGHTS[size],
-                borderRadius: isPill ? tokens.radii.round : tokens.radii.md,
-                backgroundColor: isFocused ? look.focusedFace : look.face,
-                borderColor: isFocused ? tokens.colours.text : look.edge,
-                borderWidth: isFocused ? tokens.FOCUS_RING : 2,
+                borderRadius: corner + RING_GAP + tokens.FOCUS_RING,
+                borderColor: isFocused ? '#ffffff' : 'transparent',
               },
-              isHeldOff && styles.heldOff,
             ]}
           >
-            {isLoading ? <ActivityIndicator color={ink} /> : null}
+            <View
+              style={[
+                styles.face,
+                {
+                  minHeight: HEIGHTS[size],
+                  borderRadius: corner,
+                  backgroundColor: look.face,
+                  borderColor: look.edge,
+                },
+                isHeldOff && styles.heldOff,
+              ]}
+            >
+              {isLoading ? <ActivityIndicator color={look.ink} /> : null}
 
-            {icon === undefined || isLoading ? null : (
-              <Icon of={icon} colour={ink} size={Math.round(TEXT[size] * 1.1)} />
-            )}
-
-            <View style={styles.words}>
-              <Text style={[styles.label, { color: ink, fontSize: TEXT[size] }]}>{label}</Text>
-
-              {detail === undefined ? null : (
-                <Text style={[styles.detail, { color: ink }]}>{detail}</Text>
+              {icon === undefined || isLoading ? null : (
+                <Icon of={icon} colour={look.ink} size={Math.round(TEXT[size] * 1.1)} />
               )}
+
+              <View style={styles.words}>
+                <Text style={[styles.label, { color: look.ink, fontSize: TEXT[size] }]}>
+                  {label}
+                </Text>
+
+                {detail === undefined ? null : (
+                  <Text style={[styles.detail, { color: look.ink }]}>{detail}</Text>
+                )}
+              </View>
             </View>
           </View>
         );
@@ -156,7 +140,13 @@ Button.displayName = 'Button';
 
 const styles = StyleSheet.create({
   wide: { alignSelf: 'stretch' },
+  ring: {
+    borderWidth: tokens.FOCUS_RING,
+    padding: RING_GAP,
+    margin: -(RING_GAP + tokens.FOCUS_RING),
+  },
   face: {
+    borderWidth: 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

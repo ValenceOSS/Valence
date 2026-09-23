@@ -5,8 +5,6 @@ import { ProgressLine } from '@ValenceTv/components/ProgressLine/ProgressLine';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { ActionRowProps } from './ActionRow.types';
 
-const WIDTH = 640;
-
 const ICON_SIZE = 30;
 
 /**
@@ -30,7 +28,13 @@ const ActionRow = ({
   watchedFraction,
   hasPreferredFocus = false,
 }: ActionRowProps) => (
-  <Focusable label={label} onPress={onPress} hasPreferredFocus={hasPreferredFocus} scale={1.03}>
+  <Focusable
+    label={label}
+    onPress={onPress}
+    hasPreferredFocus={hasPreferredFocus}
+    scale={1}
+    isAnchoredLeft
+  >
     {(isFocused) => {
       const ink = isFocused ? tokens.colours.onWhite : tokens.colours.text;
 
@@ -59,7 +63,7 @@ ActionRow.displayName = 'ActionRow';
 
 const styles = StyleSheet.create({
   row: {
-    width: WIDTH,
+    width: tokens.ACTION_WIDTH,
     flexDirection: 'row',
     alignItems: 'center',
     gap: tokens.space.md,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
@@ -7,13 +7,9 @@ import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { ProgressLine } from '@ValenceTv/components/ProgressLine/ProgressLine';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { cardSizes } from './cardSizes';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
-
-const SIZES: Record<MediaCardShape, { width: number; height: number }> = {
-  wide: { width: 420, height: 236 },
-  poster: { width: 240, height: 360 },
-};
 
 /**
  * Which of a title's pictures suits a card of this shape, falling back to the other where it has
@@ -58,12 +54,18 @@ const whereItFalls = (media: MediaSummary): string => {
  * A card standing for a programme is named for the programme rather than the episode it happens to
  * be, and an episode somebody is part-way through says which one it is.
  *
+ * Only the name beneath changes as the remote lands on it and leaves, so the picture is built once
+ * and handed back unchanged each time, and landing on a card never draws its pictures again.
+ *
  * @param media - The title.
  * @param onPress - Told when it is chosen.
  * @param shape - Wide for backdrops, tall for posters.
  * @param watchedFraction - How far through it this viewer is, where they have started it.
  * @param isEpisode - Whether it stands for the episode itself rather than its programme.
  * @param hasPreferredFocus - Whether the remote starts here.
+ * @param isUrgent - Whether its pictures are fetched ahead of others, as the first shelf's are.
+ * @param width - How wide it is, where it is sized to fill a grid rather than drawn at its shape's own
+ *   size; it keeps its shape's proportions.
  * @param onFocus - Told when the remote lands on it.
  */
 const MediaCard = ({
@@ -73,18 +75,62 @@ const MediaCard = ({
   watchedFraction,
   isEpisode = false,
   hasPreferredFocus = false,
+  isUrgent = false,
+  width,
   onFocus,
 }: MediaCardProps) => {
-  const size = SIZES[shape];
+  const size = useMemo(() => {
+    const natural = cardSizes[shape];
+
+    return width === undefined
+      ? natural
+      : { width, height: Math.round((width * natural.height) / natural.width) };
+  }, [shape, width]);
   const name = media.seriesTitle ?? media.title;
   const [hasNoLogo, setHasNoLogo] = useState(false);
   const isLettered = shape === 'wide' && media.hasLogo && !hasNoLogo;
 
+  const picture = useMemo(
+    () => (
+      <View style={[styles.picture, size]}>
+        <Artwork
+          path={pictureFor(media, shape)}
+          isUrgent={isUrgent}
+          style={StyleSheet.absoluteFill}
+        />
+
+        {isLettered ? (
+          <>
+            <LinearGradient
+              colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
+              start={{ x: 0.5, y: 0.45 }}
+              end={{ x: 0.5, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <Artwork
+              path={titleLogoUrl(media.id)}
+              fit="contain"
+              anchor="left"
+              isUrgent={isUrgent}
+              style={styles.logo}
+              onMissing={() => {
+                setHasNoLogo(true);
+              }}
+            />
+          </>
+        ) : null}
+
+        {watchedFraction === undefined ? null : <ProgressLine fraction={watchedFraction} />}
+      </View>
+    ),
+    [media, shape, size, isLettered, isUrgent, watchedFraction],
+  );
+
   return (
     <Focusable
       label={name}
+      shadow={{ height: size.height, cornerRadius: tokens.radii.xl }}
       hasPreferredFocus={hasPreferredFocus}
-      hasShadow
       scale={1.1}
       onPress={() => {
         onPress(media);
@@ -95,31 +141,7 @@ const MediaCard = ({
     >
       {(isFocused) => (
         <View style={{ width: size.width }}>
-          <View style={[styles.picture, size]}>
-            <Artwork path={pictureFor(media, shape)} style={StyleSheet.absoluteFill} />
-
-            {isLettered ? (
-              <>
-                <LinearGradient
-                  colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
-                  start={{ x: 0.5, y: 0.45 }}
-                  end={{ x: 0.5, y: 1 }}
-                  style={StyleSheet.absoluteFill}
-                />
-                <Artwork
-                  path={titleLogoUrl(media.id)}
-                  fit="contain"
-                  anchor="left"
-                  style={styles.logo}
-                  onMissing={() => {
-                    setHasNoLogo(true);
-                  }}
-                />
-              </>
-            ) : null}
-
-            {watchedFraction === undefined ? null : <ProgressLine fraction={watchedFraction} />}
-          </View>
+          {picture}
 
           <Text
             numberOfLines={1}

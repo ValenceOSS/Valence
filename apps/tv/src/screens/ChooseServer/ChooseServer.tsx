@@ -1,14 +1,24 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
+import { Clock, Plus, Server } from '@keyline-icons/react';
 import { readServerAddress } from '@ValenceClient/session/readServerAddress';
 import { recentServerAddresses } from '@ValenceClient/session/serverAddress';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { isAValence } from '@ValenceTv/native/isAValence';
 import { listenForValences } from '@ValenceTv/native/listenForValences';
+import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
+import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { ServerCard } from '@ValenceTv/screens/ChooseServer/components/ServerCard/ServerCard';
+import mark from '@ValenceTv/assets/valence-mark.png';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import type { ChooseServerProps } from './ChooseServer.types';
+
+const MARK = { width: 110, height: 80 };
+
+const STAGGER_MS = 70;
 
 /**
  * An address as somebody would say it, without the part a browser adds for them.
@@ -19,12 +29,15 @@ import type { ChooseServerProps } from './ChooseServer.types';
 const withoutScheme = (address: string): string => address.replace(/^https?:\/\//u, '');
 
 /**
- * Asks which Valence this television is for, the first question a television can be asked.
+ * Asks which Valence this television is for, the first question a television can be asked, laid
+ * out as the faces are after it: Valence's mark and the question under a glow of its blue, and the
+ * servers to choose from as tiles in a row, rising into place one after another.
  *
  * What is heard on the network comes first, by the name each server announced, since pressing one
  * is all anybody wants to do with a remote. What this television used before comes next, and the
  * box last, for a server that is on another network or does not announce itself. A server typed or
  * remembered is asked before it is kept; one heard on the network answered before it was offered.
+ * Typing an address is a tile of its own, which swaps the row for the box to type it in.
  *
  * @param onChosen - Told the address, once something answered at it.
  * @param couldNotReach - The address that stopped answering, where that is why somebody is here.
@@ -37,6 +50,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
     couldNotReach === undefined ? null : `Valence at ${couldNotReach} could not be reached.`,
   );
   const [isAsking, setIsAsking] = useState(false);
+  const [isTyping, setIsTyping] = useState(couldNotReach !== undefined && recent.length === 0);
 
   useEffect(() => listenForValences(setNearby), []);
 
@@ -73,87 +87,163 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
   const used = recent.filter((address) => !heard.has(address));
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.inside}>
-      <Text style={styles.title}>Which Valence is yours?</Text>
+    <View style={styles.screen}>
+      <WayInBackdrop />
 
-      {nearby.length === 0 ? null : (
-        <View style={styles.group}>
-          <Text style={styles.heading}>Found on your network</Text>
-
-          {nearby.map((one, index) => (
-            <Button
-              key={one.address}
-              label={one.name}
-              variant="secondary"
-              detail={withoutScheme(one.address)}
-              isWide
-              hasPreferredFocus={index === 0}
-              onPress={() => {
-                onChosen(one.address);
-              }}
-            />
-          ))}
+      <FadeIn isFilling={false}>
+        <View style={styles.top}>
+          <Image source={mark} style={MARK} contentFit="contain" />
+          <Text style={styles.title}>Which Valence is yours?</Text>
+          <Text style={styles.lead}>Choose the server this Apple TV watches from.</Text>
         </View>
-      )}
+      </FadeIn>
 
-      {used.length === 0 ? null : (
-        <View style={styles.group}>
-          <Text style={styles.heading}>Recently used</Text>
-
-          {used.map((address, index) => (
-            <Button
-              key={address}
-              label={withoutScheme(address)}
-              variant="secondary"
-              isWide
-              isDisabled={isAsking}
-              hasPreferredFocus={nearby.length === 0 && index === 0}
-              onPress={() => {
-                void tryAddress(address);
-              }}
+      {isTyping ? (
+        <FadeIn isFilling={false}>
+          <View style={styles.typing}>
+            <TextField
+              label="Server address"
+              value={typed}
+              onChange={setTyped}
+              onSubmit={connect}
+              placeholder="192.168.1.10:8420"
+              keyboardType="url"
+              hasPreferredFocus
             />
-          ))}
-        </View>
+
+            {problem === null ? null : <Text style={styles.problem}>{problem}</Text>}
+
+            <View style={styles.typingActions}>
+              <View style={styles.half}>
+                <Button
+                  label={isAsking ? 'Looking for it…' : 'Connect'}
+                  variant="primary"
+                  isWide
+                  isDisabled={isAsking}
+                  onPress={connect}
+                />
+              </View>
+              <View style={styles.half}>
+                <Button
+                  label="Back"
+                  variant="secondary"
+                  isWide
+                  onPress={() => {
+                    setIsTyping(false);
+                    setProblem(null);
+                  }}
+                />
+              </View>
+            </View>
+          </View>
+        </FadeIn>
+      ) : (
+        <>
+          <ScrollView
+            horizontal
+            style={styles.row}
+            contentContainerStyle={styles.rowInside}
+            showsHorizontalScrollIndicator={false}
+          >
+            {nearby.map((one, index) => (
+              <FadeIn key={one.address} isFilling={false} delayMs={STAGGER_MS * index}>
+                <ServerCard
+                  name={one.name}
+                  address={withoutScheme(one.address)}
+                  icon={Server}
+                  isAvailable
+                  hasPreferredFocus={index === 0}
+                  onPress={() => {
+                    onChosen(one.address);
+                  }}
+                />
+              </FadeIn>
+            ))}
+
+            {used.map((address, index) => (
+              <FadeIn
+                key={address}
+                isFilling={false}
+                delayMs={STAGGER_MS * (nearby.length + index)}
+              >
+                <ServerCard
+                  name={withoutScheme(address)}
+                  address="Used before"
+                  icon={Clock}
+                  isDisabled={isAsking}
+                  hasPreferredFocus={nearby.length === 0 && index === 0}
+                  onPress={() => {
+                    void tryAddress(address);
+                  }}
+                />
+              </FadeIn>
+            ))}
+
+            <FadeIn isFilling={false} delayMs={STAGGER_MS * (nearby.length + used.length)}>
+              <ServerCard
+                name="Another address"
+                address="Type it in"
+                icon={Plus}
+                hasPreferredFocus={nearby.length === 0 && used.length === 0}
+                onPress={() => {
+                  setIsTyping(true);
+                }}
+              />
+            </FadeIn>
+          </ScrollView>
+
+          {problem === null ? null : (
+            <Text style={[styles.problem, styles.centred]}>{problem}</Text>
+          )}
+
+          <View style={styles.looking}>
+            {nearby.length === 0 ? (
+              <ActivityIndicator size="small" color={tokens.colours.muted} />
+            ) : (
+              <View style={styles.found} />
+            )}
+            <Text style={styles.lookingWords}>
+              {nearby.length === 0
+                ? 'Looking on your network…'
+                : nearby.length === 1
+                  ? 'Found 1 Valence on your network'
+                  : `Found ${nearby.length.toString()} on your network`}
+            </Text>
+          </View>
+        </>
       )}
-
-      <View style={styles.group}>
-        <TextField
-          label="Server address"
-          value={typed}
-          onChange={setTyped}
-          onSubmit={connect}
-          placeholder="192.168.1.10:8420"
-          keyboardType="url"
-          hasPreferredFocus={nearby.length === 0 && used.length === 0}
-        />
-
-        {problem === null ? null : <Text style={styles.problem}>{problem}</Text>}
-
-        <Button
-          label={isAsking ? 'Looking for it…' : 'Connect'}
-          variant="primary"
-          isWide
-          isDisabled={isAsking}
-          onPress={connect}
-        />
-      </View>
-    </ScrollView>
+    </View>
   );
 };
 
 ChooseServer.displayName = 'ChooseServer';
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tokens.colours.canvas },
-  inside: {
-    alignItems: 'center',
-    paddingVertical: tokens.space.xl,
+  screen: { flex: 1, justifyContent: 'center', gap: tokens.space.xl },
+  top: { alignItems: 'center', gap: tokens.space.md },
+  title: { color: tokens.colours.text, fontSize: tokens.type.hero, fontWeight: '700' },
+  lead: { color: tokens.colours.muted, fontSize: tokens.type.body },
+  row: { flexGrow: 0 },
+  rowInside: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: tokens.space.edge,
+    paddingVertical: tokens.space.lg,
     gap: tokens.space.lg,
   },
-  title: { color: tokens.colours.text, fontSize: tokens.type.hero, fontWeight: '700' },
-  group: { width: 820, gap: tokens.space.sm },
-  heading: { color: tokens.colours.muted, fontSize: tokens.type.small, textAlign: 'center' },
+  looking: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: tokens.space.sm,
+  },
+  found: { width: 12, height: 12, borderRadius: 6, backgroundColor: tokens.colours.success },
+  lookingWords: { color: tokens.colours.muted, fontSize: tokens.type.small },
+  typing: { width: 820, alignSelf: 'center', gap: tokens.space.md },
+  typingActions: { flexDirection: 'row', gap: tokens.space.md },
+  half: { flex: 1 },
   problem: { color: tokens.colours.danger, fontSize: tokens.type.small },
+  centred: { textAlign: 'center' },
 });
 
 export { ChooseServer };

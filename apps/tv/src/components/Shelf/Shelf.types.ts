@@ -9,6 +9,7 @@ type ShelfProps = {
   onOpen: (media: MediaSummary) => void;
   shape?: MediaCardShape;
   areEpisodes?: boolean;
+  isUrgent?: boolean;
   onFocus?: (media: MediaSummary) => void;
 };
 

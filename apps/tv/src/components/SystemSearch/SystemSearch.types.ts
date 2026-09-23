@@ -1,7 +1,5 @@
-import type { ComponentRef, ReactNode } from 'react';
-import type { TVFocusGuideView } from 'react-native';
-
-type UpTarget = ComponentRef<typeof TVFocusGuideView> | null;
+import type { ReactNode } from 'react';
+type UpTarget = number | null;
 
 type SystemSearchProps = {
   placeholder: string;

@@ -15,7 +15,7 @@ const colours = {
   accent: palette.accent,
   accentHover: palette.accentHover,
   onAccent: palette.accentContrast,
-  onWhite: palette.onWhite,
+  onWhite: '#000000',
   danger: palette.danger,
   success: palette.success,
   scrim: palette.scrim,
@@ -51,8 +51,19 @@ const type = {
 
 const FOCUS_SCALE = 1.08;
 
+const ACTION_WIDTH = 640;
+
 const FOCUS_RING = 3 * ACROSS_THE_ROOM;
 
-const tokens = { colours, space, radii, type, FOCUS_SCALE, FOCUS_RING, ACROSS_THE_ROOM };
+const tokens = {
+  colours,
+  space,
+  radii,
+  type,
+  FOCUS_SCALE,
+  ACTION_WIDTH,
+  FOCUS_RING,
+  ACROSS_THE_ROOM,
+};
 
 export { tokens };

@@ -1,5 +1,5 @@
 type TitleLockupProps = {
-  mediaId: string;
+  mediaId: string | null;
   name: string;
   hasLogo: boolean;
 };

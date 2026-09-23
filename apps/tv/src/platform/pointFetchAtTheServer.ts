@@ -26,7 +26,10 @@ const atTheServer = (asked: string): string => {
 };
 
 /**
- * Adds this television's session to a request's headers, unless the request already says who it is.
+ * Adds this television's session to a request's headers, unless the request already says who it is,
+ * and says the request comes from the server's own origin, as a page the server served would. The
+ * sign-in library refuses anything that changes a session — signing out, above all — without an
+ * origin it trusts, and a browser always sends one where a television sends none.
  *
  * @param given - The headers the request was made with.
  * @returns The headers to send.
@@ -38,6 +41,12 @@ const withTheSession = (given: HeadersInit | undefined): Headers => {
     if (!headers.has(name)) {
       headers.set(name, value);
     }
+  }
+
+  const origin = theServersOrigin();
+
+  if (origin !== null && !headers.has('origin')) {
+    headers.set('origin', origin);
   }
 
   return headers;

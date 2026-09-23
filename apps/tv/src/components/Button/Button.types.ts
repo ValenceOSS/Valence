@@ -1,3 +1,5 @@
+import type { Ref } from 'react';
+import type { View } from 'react-native';
 import type { KeylineIcon } from '@ValenceTv/components/Icon/Icon.types';
 
 type ButtonVariant =
@@ -10,6 +12,7 @@ type ButtonProps = {
   detail?: string;
   icon?: KeylineIcon;
   onPress: () => void;
+  ref?: Ref<View> | undefined;
   onFocus?: () => void;
   onBlur?: () => void;
   variant?: ButtonVariant;

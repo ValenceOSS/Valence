@@ -10,6 +10,8 @@ import {
 import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
 import { signedHeaders } from '@ValenceTv/platform/theSessionToken';
 import { theTvsProfile } from '@ValenceTv/playback/theTvsProfile';
+import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
+import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 
 type Session =
   | { kind: 'starting' }
@@ -17,6 +19,7 @@ type Session =
   | {
       kind: 'ready';
       source: { uri: string; headers: Record<string, string>; contentType: 'hls' | 'auto' };
+      started: StartedSession;
     };
 
 const SESSION_HEARTBEAT_MS = 30_000;
@@ -34,10 +37,12 @@ const PRESENCE_HEARTBEAT_MS = 15_000;
  * ends both, so the server is not left converting for an empty room.
  *
  * @param mediaId - What to play.
- * @param startSeconds - Where to start, which the server starts converting from.
+ * @param startSeconds - Where to start, which the server starts converting from; it is sent to the
+ *   whole second, since the server refuses anything finer.
  * @param isPlaying - Whether the player is playing right now, asked at each heartbeat.
  * @param audioStreamIndex - Which of the file's sound tracks to send, where somebody has chosen one;
  *   choosing another starts a new session, since the server converts the sound it was told to.
+ * @param requestedQuality - The most it should be sent at, or the original where nothing is asked.
  * @returns Whether the session is starting, failed and why, or ready with what the player opens.
  */
 const usePlaybackSession = (
@@ -45,6 +50,7 @@ const usePlaybackSession = (
   startSeconds: number,
   isPlaying: () => boolean,
   audioStreamIndex?: number,
+  requestedQuality?: QualityPreference,
 ): Session => {
   const [session, setSession] = useState<Session>({ kind: 'starting' });
   const asking = useRef(isPlaying);
@@ -65,8 +71,9 @@ const usePlaybackSession = (
       mediaId,
       theTvsProfile(),
       clientId,
-      startSeconds,
+      Math.floor(startSeconds),
       audioStreamIndex,
+      requestedQuality,
     ).then((outcome) => {
       if (outcome.kind === 'failed') {
         if (!isAbandoned) {
@@ -102,13 +109,16 @@ const usePlaybackSession = (
         }, PRESENCE_HEARTBEAT_MS),
       );
 
+      const uri = onTheServer(delivery.kind === 'hls' ? delivery.manifestUrl : delivery.url);
+
       setSession({
         kind: 'ready',
         source: {
-          uri: onTheServer(delivery.kind === 'hls' ? delivery.manifestUrl : delivery.url),
+          uri,
           headers: signedHeaders(),
           contentType: delivery.kind === 'hls' ? 'hls' : 'auto',
         },
+        started: outcome.session,
       });
     });
 
@@ -125,7 +135,7 @@ const usePlaybackSession = (
 
       void stopWatching(clientId);
     };
-  }, [mediaId, startSeconds, audioStreamIndex]);
+  }, [mediaId, startSeconds, audioStreamIndex, requestedQuality]);
 
   return session;
 };

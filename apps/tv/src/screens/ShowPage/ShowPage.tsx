@@ -57,7 +57,8 @@ const overviewOf = (show: ShowDetail, episode: MediaSummary): string | null =>
 /**
  * A programme's own page: everything about it beside its picture, the episode this viewer would
  * carry on with and what happens in it, the ways to watch — carry on, or start from the first — and
- * beneath, its seasons, landing on one showing its episodes.
+ * beneath, its seasons, landing on one showing its episodes. Each season's row starts from its
+ * first episode, rather than wherever the last season's was left.
  *
  * @param libraryId - The library the programme is in.
  * @param showId - The programme.
@@ -121,7 +122,9 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
       tagline={
         carryingOn === null ? null : `${placeOf(carryingOn.episode)} · ${carryingOn.episode.title}`
       }
-      overview={carryingOn === null ? null : overviewOf(show, carryingOn.episode)}
+      overview={
+        show.overview ?? (carryingOn === null ? null : overviewOf(show, carryingOn.episode))
+      }
       credits={[
         ...(starring.length === 0 ? [] : [`Starring ${starring.join(', ')}`]),
         ...(genres.length === 0 ? [] : [genres.join(', ')]),
@@ -137,6 +140,7 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
           )}
 
           <FlatList
+            key={current}
             horizontal
             data={episodes}
             keyExtractor={(episode) => episode.id}
@@ -199,7 +203,7 @@ const styles = StyleSheet.create({
   waiting: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   problem: { color: tokens.colours.muted, fontSize: tokens.type.body },
   below: { gap: tokens.space.sm, paddingBottom: tokens.space.xl },
-  seasons: { paddingHorizontal: tokens.space.edge - tokens.space.md },
+  seasons: { paddingHorizontal: tokens.space.edge },
   heading: {
     color: tokens.colours.text,
     fontSize: tokens.type.body,

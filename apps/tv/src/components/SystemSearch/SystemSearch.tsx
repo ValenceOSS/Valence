@@ -19,8 +19,9 @@ const RoomSchema = z.object({ width: z.number(), height: z.number() });
  * @param placeholder - What the search box says while empty.
  * @param onChangeText - Told what has been typed, each time it changes.
  * @param onResultsLayout - Told how much room the results have.
- * @param upTo - Where pressing up from the keyboard goes, since the search screen would keep the
- *   remote in the keyboard otherwise.
+ * @param upTo - The React tag of where pressing up from the keyboard goes, since the search screen
+ *   would keep the remote in the keyboard otherwise. A tag rather than the element itself, which is
+ *   far too large to hand across to the native side.
  * @param children - The results.
  */
 const SystemSearch = ({

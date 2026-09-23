@@ -1,11 +1,14 @@
+import { useCallback } from 'react';
 import { StyleSheet, TVFocusGuideView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Search } from '@keyline-icons/react';
 import { Film, Home, Monitor } from '@keyline-icons/react/fill';
 import { Face } from '@ValenceTv/components/Face/Face';
+import { Glass } from '@ValenceTv/components/Glass/Glass';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { TabBar } from '@ValenceTv/components/TabBar/TabBar';
+import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
 import { tokens } from '@ValenceTv/theme/tokens';
 import mark from '@ValenceTv/assets/valence-mark.png';
 import type { Tab } from '@ValenceTv/navigation/Tab';
@@ -25,84 +28,128 @@ const ROUND_SIZE = 60;
 
 /**
  * The bar that floats over the top of every part, as the television's own apps float theirs: a
- * capsule over whatever is behind it, holding the way to search, the parts there are, and the face
- * of whoever is watching, which opens their profile. Valence's mark sits apart at the left.
+ * capsule of Liquid Glass over whatever is behind it, holding the way to search, the parts there
+ * are, and the face of whoever is watching, which opens their profile. Valence's mark sits apart at
+ * the left.
+ *
+ * Landing on an item opens its part, search included, as the television's own tab bars do. The
+ * search screen does not take the remote as it opens; it waits for somebody to press down into it.
  *
  * @param current - The part showing.
- * @param onChoose - Told which part the remote moved to.
+ * @param onChoose - Told which part to show.
  * @param profile - Who is watching, whose face ends the capsule.
- * @param capsuleRef - Handed the capsule, for a screen that has to send the remote back up to it.
- * @param onInBar - Told when the remote comes into the capsule and when it leaves.
+ * @param itemRef - Handed each of the capsule's items by name — a tab, search or the face — for
+ *   anything below to send the remote straight up to the one it belongs under.
+ * @param onTabFocus - Told when the remote comes onto a tab and when it leaves one.
+ * @param isArriving - Whether the face and the mark are still flying into place, and so not yet
+ *   drawn here.
+ * @param onFaceAt - Told where the face sits, for it to fly to as somebody signs in.
+ * @param onMarkAt - Told where Valence's mark sits, for it to fly to as somebody signs in.
  */
-const TopBar = ({ current, onChoose, profile, capsuleRef, onInBar }: TopBarProps) => (
-  <View style={styles.bar} pointerEvents="box-none">
-    <Image source={mark} style={[MARK, styles.mark]} contentFit="contain" />
+const TopBar = ({
+  current,
+  onChoose,
+  profile,
+  itemRef,
+  onTabFocus,
+  isArriving,
+  onFaceAt,
+  onMarkAt,
+}: TopBarProps) => {
+  const faceSpot = useReportSpot(onFaceAt);
+  const markSpot = useReportSpot(onMarkAt);
+  const searchRef = useCallback(
+    (element: View | null) => {
+      itemRef('search', element);
+    },
+    [itemRef],
+  );
+  const faceRef = useCallback(
+    (element: View | null) => {
+      itemRef('account', element);
+    },
+    [itemRef],
+  );
 
-    <TVFocusGuideView ref={capsuleRef} autoFocus style={styles.capsule}>
-      <Focusable
-        label="Search"
-        scale={1.08}
-        onFocus={() => {
-          onChoose('search');
-          onInBar(true);
-        }}
-        onBlur={() => {
-          onInBar(false);
-        }}
-        onPress={() => {
-          onChoose('search');
-        }}
+  return (
+    <View style={styles.bar} pointerEvents="box-none">
+      <View
+        ref={markSpot.ref}
+        collapsable={false}
+        style={[styles.mark, isArriving && styles.hidden]}
+        onLayout={markSpot.onLayout}
       >
-        {(isFocused) => (
-          <View
-            style={[
-              styles.round,
-              current === 'search' && styles.current,
-              isFocused && styles.focused,
-            ]}
+        <Image source={mark} style={MARK} contentFit="contain" />
+      </View>
+
+      <Glass cornerRadius={tokens.radii.round} style={styles.glass}>
+        <TVFocusGuideView autoFocus style={styles.capsule}>
+          <Focusable
+            ref={searchRef}
+            label="Search"
+            scale={1.08}
+            onFocus={() => {
+              onChoose('search');
+            }}
+            onPress={() => {
+              onChoose('search');
+            }}
           >
-            <Icon
-              of={Search}
-              size={30}
-              colour={isFocused ? tokens.colours.onWhite : tokens.colours.text}
-            />
-          </View>
-        )}
-      </Focusable>
+            {(isFocused) => (
+              <View
+                style={[
+                  styles.round,
+                  current === 'search' && styles.current,
+                  isFocused && styles.focused,
+                ]}
+              >
+                <Icon
+                  of={Search}
+                  size={30}
+                  colour={isFocused ? tokens.colours.onWhite : tokens.colours.text}
+                />
+              </View>
+            )}
+          </Focusable>
 
-      <TabBar
-        tabs={TABS}
-        current={current}
-        onChoose={onChoose}
-        isStartingHere
-        onFocusChange={onInBar}
-      />
+          <TabBar
+            tabs={TABS}
+            current={current}
+            onChoose={onChoose}
+            isStartingHere
+            onFocusChange={onTabFocus}
+            itemRef={itemRef}
+          />
 
-      {profile === null ? null : (
-        <Focusable
-          label={`${profile.name}'s profile`}
-          scale={1.08}
-          onFocus={() => {
-            onChoose('account');
-            onInBar(true);
-          }}
-          onBlur={() => {
-            onInBar(false);
-          }}
-          onPress={() => {
-            onChoose('account');
-          }}
-        >
-          {(isFocused) => (
-            <View style={styles.face}>
-              <Face profile={profile} size={FACE_SIZE} isFocused={isFocused} isRound />
-            </View>
+          {profile === null ? null : (
+            <Focusable
+              ref={faceRef}
+              label={`${profile.name}'s profile`}
+              scale={1.08}
+              onFocus={() => {
+                onChoose('account');
+              }}
+              onPress={() => {
+                onChoose('account');
+              }}
+            >
+              {(isFocused) => (
+                <View
+                  ref={faceSpot.ref}
+                  collapsable={false}
+                  style={[styles.face, isArriving && styles.hidden]}
+                  onLayout={faceSpot.onLayout}
+                >
+                  <Face profile={profile} size={FACE_SIZE} isFocused={isFocused} isRound />
+                </View>
+              )}
+            </Focusable>
           )}
-        </Focusable>
-      )}
-    </TVFocusGuideView>
-  </View>
-);
+        </TVFocusGuideView>
+      </Glass>
+    </View>
+  );
+};
 
 TopBar.displayName = 'TopBar';
 
@@ -120,11 +167,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: tokens.space.xs,
     padding: tokens.space.xs,
-    borderRadius: tokens.radii.round,
-    backgroundColor: 'rgba(24,24,24,0.72)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
+  glass: { borderRadius: tokens.radii.round },
   round: {
     width: ROUND_SIZE,
     height: ROUND_SIZE,
@@ -135,6 +179,7 @@ const styles = StyleSheet.create({
   current: { backgroundColor: 'rgba(255,255,255,0.16)' },
   focused: { backgroundColor: '#ffffff' },
   face: { paddingHorizontal: 4 },
+  hidden: { opacity: 0 },
 });
 
 export { TopBar };
