@@ -647,7 +647,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
           episode={following}
           isAsking={decided.kind === 'ask'}
           onPlay={() => {
-            goNext(decided.kind === 'play');
+            goNext(false);
           }}
           onStay={() => {
             setIsUpNextAway(true);
