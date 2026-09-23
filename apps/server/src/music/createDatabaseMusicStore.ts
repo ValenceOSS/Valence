@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { access } from 'node:fs/promises';
 import { and, eq, inArray, isNotNull, isNull, notExists, sql } from 'drizzle-orm';
 import {
   library,
@@ -11,6 +10,7 @@ import {
 } from '@ValenceServer/db/Schema';
 import { nameKey } from './nameKey';
 import { sortNameFor } from './sortNameFor';
+import { isStillThere } from '@ValenceServer/music/isStillThere';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { MusicStore } from './scanMusicLibrary';
 import type { EnrichingStore } from './web/EnrichingStore';
@@ -53,18 +53,6 @@ const pruneEmpty = async (db: ValenceDatabase, libraryId: string): Promise<void>
     ),
   );
 };
-
-/**
- * Whether a file is still where it was left.
- *
- * @param path - The file.
- * @returns Whether it is there.
- */
-const isThere = async (path: string): Promise<boolean> =>
-  access(path).then(
-    () => true,
-    () => false,
-  );
 
 /**
  * Where a music scan writes: artists, albums and tracks, each found by what makes it the same one
@@ -285,13 +273,13 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
     const lostArtists = new Set<string>();
 
     for (const album of albums) {
-      if (!(await isThere(album.path ?? ''))) {
+      if (!(await isStillThere(album.path ?? ''))) {
         lostAlbums.push(album.id);
       }
     }
 
     for (const artist of artists) {
-      if (!(await isThere(artist.path ?? ''))) {
+      if (!(await isStillThere(artist.path ?? ''))) {
         lostArtists.add(artist.id);
       }
     }
@@ -310,12 +298,14 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
         .where(inArray(musicArtist.id, [...lostArtists]));
     }
 
-    const wanted = [
-      ...new Set([
-        ...lostAlbums,
-        ...albums.filter((album) => lostArtists.has(album.artistId)).map((album) => album.id),
-      ]),
-    ];
+    const theirAlbums =
+      lostArtists.size === 0
+        ? []
+        : await db
+            .select({ id: musicAlbum.id })
+            .from(musicAlbum)
+            .where(inArray(musicAlbum.artistId, [...lostArtists]));
+    const wanted = [...new Set([...lostAlbums, ...theirAlbums.map((album) => album.id)])];
 
     if (wanted.length === 0) {
       return [];
