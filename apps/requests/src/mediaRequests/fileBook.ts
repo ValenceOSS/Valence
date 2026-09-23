@@ -1,6 +1,7 @@
 import { basename, dirname, extname, join } from 'node:path';
 import { AUDIOBOOK_FILE_EXTENSIONS } from '@ValenceContracts/constants/AUDIOBOOK_FILE_EXTENSIONS';
 import { BOOK_FILE_FORMATS } from '@ValenceContracts/constants/BOOK_FILE_FORMATS';
+import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import { findDownloadedFiles } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
 import { safeFileName } from '@ValenceRequests/mediaRequests/safeFileName';
@@ -82,7 +83,11 @@ const fileBook = async (
   isKeepingSource: boolean,
 ): Promise<Filed> => {
   const files = await findDownloadedFiles(contentPath);
-  const texts = files.filter((file) => BOOK_FILE_FORMATS.has(extensionOf(file.name)));
+  const texts = files.filter((file) => {
+    const format = BOOK_FILE_FORMATS.get(extensionOf(file.name));
+
+    return format !== undefined && !isAudiobookFormat(format);
+  });
   const tracks = files
     .filter((file) => AUDIOBOOK_FILE_EXTENSIONS.has(extensionOf(file.name)))
     .toSorted((left, right) => IN_ORDER.compare(left.path, right.path));

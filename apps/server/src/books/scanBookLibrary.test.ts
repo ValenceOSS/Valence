@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { zipSync } from 'fflate';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { openAudiobook } from './openAudiobook';
 import { bookPathFor, scanBookLibrary } from './scanBookLibrary';
 import type {
   ArrivedBook,
@@ -12,6 +13,17 @@ import type {
   ScannedFile,
   StoredChapter,
 } from './scanBookLibrary';
+
+vi.mock('./openAudiobook', () => ({ openAudiobook: vi.fn() }));
+
+const aTrack = (durationSeconds: number, track: number | null, title: string | null = null) => ({
+  layout: 'audio' as const,
+  durationSeconds,
+  marks: [],
+  track,
+  about: { series: 'Dune', title, authors: ['Frank Herbert'], description: null },
+  readCover: () => Promise.resolve(null),
+});
 
 const A_PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1]);
 
@@ -92,6 +104,7 @@ beforeEach(() => {
   chapters.length = 0;
   held = [];
   removeByPaths.mockReset().mockResolvedValue(0);
+  vi.mocked(openAudiobook).mockReset().mockResolvedValue(aTrack(600, null));
   markScanned.mockReset().mockResolvedValue(undefined);
 });
 
@@ -361,5 +374,66 @@ describe('a comic that describes itself', () => {
     await scan([join(where, 'Loose Volume.cbz')]);
 
     expect(books[0]).toMatchObject({ title: 'Loose Volume', authors: [], overview: null });
+  });
+
+  it('reads an audiobook as a book to listen to, each track a chapter with its length', async () => {
+    vi.mocked(openAudiobook)
+      .mockResolvedValueOnce(aTrack(1200, null, 'Part One'))
+      .mockResolvedValueOnce(aTrack(900, null, 'Part Two'));
+
+    await scan([
+      join(where, 'Dune', '01 - Part One.mp3'),
+      join(where, 'Dune', '02 - Part Two.mp3'),
+    ]);
+
+    expect(books).toHaveLength(1);
+    expect(books[0]).toMatchObject({ title: 'Dune', layout: 'audio', authors: ['Frank Herbert'] });
+    expect(
+      chapters.map(({ number, title, format, durationSeconds, pageCount }) => ({
+        number,
+        title,
+        format,
+        durationSeconds,
+        pageCount,
+      })),
+    ).toEqual([
+      { number: 1, title: 'Part One', format: 'mp3', durationSeconds: 1200, pageCount: null },
+      { number: 2, title: 'Part Two', format: 'mp3', durationSeconds: 900, pageCount: null },
+    ]);
+  });
+
+  it('keeps the chapters an m4b marks inside itself', async () => {
+    vi.mocked(openAudiobook).mockResolvedValueOnce({
+      ...aTrack(3600, null),
+      marks: [{ title: 'Book One', startSeconds: 0, endSeconds: 3600 }],
+    });
+
+    await scan([join(where, 'Dune', 'Dune.m4b')]);
+
+    expect(chapters[0]).toMatchObject({
+      format: 'm4b',
+      marks: [{ title: 'Book One', startSeconds: 0, endSeconds: 3600 }],
+    });
+  });
+
+  it('orders tracks by their track number where their names do not say', async () => {
+    vi.mocked(openAudiobook).mockResolvedValueOnce(aTrack(60, 7));
+
+    await scan([join(where, 'Dune', 'Opening.mp3')]);
+
+    expect(chapters[0]?.number).toBe(7);
+  });
+
+  it('puts a book to read and the same book to hear together, laid out by its text', async () => {
+    const folder = join(where, 'Rent-A-Girlfriend (Digital)');
+
+    await scan([
+      join(folder, 'Audio Edition.m4b'),
+      join(folder, 'Rent-A-Girlfriend v01 (2020).cbz'),
+    ]);
+
+    expect(books).toHaveLength(1);
+    expect(books[0]?.layout).toBe('fixed');
+    expect(chapters.map((chapter) => chapter.format).toSorted()).toEqual(['cbz', 'm4b']);
   });
 });

@@ -843,7 +843,7 @@ const book = pgTable(
     uniqueIndex('book_path_idx').on(table.libraryId, table.path),
     index('book_library_idx').on(table.libraryId),
     index('book_title_idx').on(table.title),
-    check('book_layout_known', sql`${table.layout} in ('fixed', 'reflow')`),
+    check('book_layout_known', sql`${table.layout} in ('fixed', 'reflow', 'audio')`),
     check('book_direction_known', sql`${table.direction} in ('rightToLeft', 'leftToRight')`),
   ],
 );
@@ -860,6 +860,8 @@ const bookChapter = pgTable(
     title: text('title').notNull(),
     format: text('format').notNull(),
     pageCount: integer('pageCount'),
+    durationSeconds: real('durationSeconds'),
+    marks: jsonb('marks'),
     sizeBytes: bigint('sizeBytes', { mode: 'number' }).notNull(),
     modifiedAtMs: bigint('modifiedAtMs', { mode: 'number' }).notNull(),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
@@ -867,7 +869,10 @@ const bookChapter = pgTable(
   (table) => [
     uniqueIndex('book_chapter_path_idx').on(table.bookId, table.path),
     index('book_chapter_order_idx').on(table.bookId, table.number),
-    check('book_chapter_format_known', sql`${table.format} in ('cbz', 'cbr', 'pdf', 'epub')`),
+    check(
+      'book_chapter_format_known',
+      sql`${table.format} in ('cbz', 'cbr', 'pdf', 'epub', 'm4b', 'm4a', 'mp3', 'aac', 'ogg', 'opus', 'flac')`,
+    ),
   ],
 );
 

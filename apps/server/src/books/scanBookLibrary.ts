@@ -3,8 +3,8 @@ import { basename, dirname, relative, sep } from 'node:path';
 import { bookFormatOf, openBookFile } from './openBookFile';
 import { readBookTitleFromPath } from './readBookTitleFromPath';
 import { readChapterNumberFromPath } from './readChapterNumberFromPath';
-import { directionFor } from '@ValenceContracts/schemas/Book';
-import type { BookFormat, BookLayout } from '@ValenceContracts/schemas/Book';
+import { directionFor, isAudiobookFormat } from '@ValenceContracts/schemas/Book';
+import type { BookFormat, BookLayout, ChapterMark } from '@ValenceContracts/schemas/Book';
 import type { ScanResult } from '@ValenceContracts/schemas/Library';
 
 type ScanFindings = {
@@ -42,6 +42,8 @@ type ChapterRow = {
   title: string;
   format: BookFormat;
   pageCount: number | null;
+  durationSeconds: number | null;
+  marks: ChapterMark[];
   sizeBytes: number;
   modifiedAtMs: number;
 };
@@ -131,16 +133,24 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
   const found = walked.files.filter((file) => bookFormatOf(file.path) !== null);
   const stored = new Map((await store.listStored(libraryId)).map((row) => [row.path, row]));
 
-  const changed = found.filter((file) => {
-    const already = stored.get(file.path);
+  const isHeard = (file: ScannedFile): boolean => {
+    const format = bookFormatOf(file.path);
 
-    return (
-      force ||
-      already === undefined ||
-      already.sizeBytes !== file.sizeBytes ||
-      already.modifiedAtMs !== file.modifiedAtMs
-    );
-  });
+    return format !== null && isAudiobookFormat(format);
+  };
+
+  const changed = found
+    .filter((file) => {
+      const already = stored.get(file.path);
+
+      return (
+        force ||
+        already === undefined ||
+        already.sizeBytes !== file.sizeBytes ||
+        already.modifiedAtMs !== file.modifiedAtMs
+      );
+    })
+    .toSorted((one, other) => Number(isHeard(one)) - Number(isHeard(other)));
 
   const shelved = new Set([...stored.keys()].map((path) => bookPathFor(root, path)));
 
@@ -172,14 +182,16 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
     const bookPath = bookPathFor(root, file.path);
     const settled = layouts.get(bookPath);
 
-    if (settled !== undefined && settled !== opened.layout) {
+    if (opened.layout !== 'audio' && settled !== undefined && settled !== opened.layout) {
       failed += 1;
       onProblem?.(file.path, 'That book already reads another way, so this was left out of it.');
 
       continue;
     }
 
-    layouts.set(bookPath, opened.layout);
+    if (opened.layout !== 'audio') {
+      layouts.set(bookPath, opened.layout);
+    }
 
     if (!written.has(bookPath)) {
       const named = readBookTitleFromPath(basename(bookPath));
@@ -206,15 +218,20 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
     }
 
     const name = basename(file.path);
-    const number = readChapterNumberFromPath(name);
+    const number =
+      readChapterNumberFromPath(name) ?? (opened.layout === 'audio' ? opened.track : null);
 
     await store.upsertChapter(libraryId, {
       bookPath,
       path: file.path,
       number: number ?? 0,
-      title: readBookTitleFromPath(name).title,
+      title:
+        (opened.layout === 'audio' ? opened.about?.title : null) ??
+        readBookTitleFromPath(name).title,
       format,
       pageCount: opened.layout === 'fixed' ? opened.pageCount : null,
+      durationSeconds: opened.layout === 'audio' ? opened.durationSeconds : null,
+      marks: opened.layout === 'audio' ? opened.marks : [],
       sizeBytes: file.sizeBytes,
       modifiedAtMs: file.modifiedAtMs,
     });

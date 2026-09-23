@@ -1,8 +1,12 @@
 import { z } from 'zod';
 
-const BOOK_LAYOUTS = ['fixed', 'reflow'] as const;
+const BOOK_LAYOUTS = ['fixed', 'reflow', 'audio'] as const;
 
-const BOOK_FORMATS = ['cbz', 'cbr', 'pdf', 'epub'] as const;
+const TEXT_BOOK_FORMATS = ['cbz', 'cbr', 'pdf', 'epub'] as const;
+
+const AUDIOBOOK_FORMATS = ['m4b', 'm4a', 'mp3', 'aac', 'ogg', 'opus', 'flac'] as const;
+
+const BOOK_FORMATS = [...TEXT_BOOK_FORMATS, ...AUDIOBOOK_FORMATS] as const;
 
 const READING_DIRECTIONS = ['rightToLeft', 'leftToRight'] as const;
 
@@ -70,6 +74,12 @@ const BookFormatSchema = z.enum(BOOK_FORMATS);
 
 const ReadingDirectionSchema = z.enum(READING_DIRECTIONS);
 
+const ChapterMarkSchema = z.object({
+  title: z.string(),
+  startSeconds: z.number().nonnegative(),
+  endSeconds: z.number().nonnegative(),
+});
+
 const BookChapterSchema = z.object({
   id: z.string().uuid(),
   bookId: z.string().uuid(),
@@ -77,6 +87,8 @@ const BookChapterSchema = z.object({
   title: z.string(),
   format: BookFormatSchema,
   pageCount: z.number().int().positive().nullable(),
+  durationSeconds: z.number().nonnegative().nullable().optional(),
+  marks: z.array(ChapterMarkSchema).optional(),
   addedAt: z.string(),
 });
 
@@ -94,6 +106,8 @@ const BookSchema = z.object({
   posterUrl: z.string().url().nullish(),
   hasCover: z.boolean().default(false),
   chapterCount: z.number().int().nonnegative(),
+  hasText: z.boolean().optional(),
+  hasAudio: z.boolean().optional(),
   addedAt: z.string(),
   updatedAt: z.string(),
 });
@@ -157,11 +171,23 @@ const directionFor = (
   layout: z.infer<typeof BookLayoutSchema>,
 ): z.infer<typeof ReadingDirectionSchema> => (layout === 'fixed' ? 'rightToLeft' : 'leftToRight');
 
+const AUDIOBOOK_FORMAT_SET: ReadonlySet<string> = new Set(AUDIOBOOK_FORMATS);
+
+/**
+ * Whether a book's file is listened to rather than read.
+ *
+ * @param format - The file's format.
+ * @returns Whether it is an audiobook's.
+ */
+const isAudiobookFormat = (format: z.infer<typeof BookFormatSchema>): boolean =>
+  AUDIOBOOK_FORMAT_SET.has(format);
+
 export type BookLayout = z.infer<typeof BookLayoutSchema>;
 export type BookFormat = z.infer<typeof BookFormatSchema>;
 export type ReadingDirection = z.infer<typeof ReadingDirectionSchema>;
 export type Book = z.infer<typeof BookSchema>;
 export type BookChapter = z.infer<typeof BookChapterSchema>;
+export type ChapterMark = z.infer<typeof ChapterMarkSchema>;
 export type BookDetail = z.infer<typeof BookDetailSchema>;
 export type BookContents = z.infer<typeof BookContentsSchema>;
 export type ReadingProgress = z.infer<typeof ReadingProgressSchema>;
@@ -194,8 +220,12 @@ const bookPlaceIn = (href: string): { part: number; anchor: string | null } | nu
 };
 
 export {
+  AUDIOBOOK_FORMATS,
   BOOK_DOCUMENT_TAGS,
   BOOK_FORMATS,
+  TEXT_BOOK_FORMATS,
+  ChapterMarkSchema,
+  isAudiobookFormat,
   BOOK_LAYOUTS,
   READING_DIRECTIONS,
   BookChapterSchema,

@@ -5,12 +5,16 @@ import { book, bookChapter, library, readingProgress } from '@ValenceServer/db/S
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import {
+  AUDIOBOOK_FORMATS,
   BookFormatSchema,
   BookLayoutSchema,
+  ChapterMarkSchema,
   ReadingDirectionSchema,
+  isAudiobookFormat,
 } from '@ValenceContracts/schemas/Book';
 import { createBookPageCache } from './createBookPageCache';
 import { drawBookCover } from './drawBookCover';
+import { readFolderArt } from './readFolderArt';
 import { openBookFile } from './openBookFile';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -63,6 +67,8 @@ type BookService = BookStore & {
 
 const NamesSchema = z.array(z.string()).nullable().catch(null);
 
+const MarksSchema = z.array(ChapterMarkSchema).catch([]);
+
 /**
  * Reads a list of names out of whatever the database gave back for a JSON column.
  *
@@ -79,9 +85,10 @@ const namesIn = (held: JsonValue): string[] | null => NamesSchema.parse(held);
  *
  * @param row - The book as stored.
  * @param chapterCount - How many chapters are in it.
+ * @param heardCount - How many of those are listened to rather than read.
  * @returns The book.
  */
-const toBook = (row: typeof book.$inferSelect, chapterCount: number): Book => ({
+const toBook = (row: typeof book.$inferSelect, chapterCount: number, heardCount: number): Book => ({
   id: row.id,
   libraryId: row.libraryId,
   title: row.title,
@@ -95,6 +102,8 @@ const toBook = (row: typeof book.$inferSelect, chapterCount: number): Book => ({
   posterUrl: row.posterUrl,
   hasCover: chapterCount > 0,
   chapterCount,
+  hasText: chapterCount > heardCount,
+  hasAudio: heardCount > 0,
   addedAt: row.addedAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
 });
@@ -169,7 +178,7 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
           target: [book.libraryId, book.path],
           set: {
             title: row.title,
-            layout: row.layout,
+            ...(row.layout === 'audio' ? {} : { layout: row.layout, direction: row.direction }),
             year: row.year,
             updatedAt: new Date(),
             ...(row.authors.length === 0 ? {} : { authors: row.authors }),
@@ -202,6 +211,8 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
           title: row.title,
           format: row.format,
           pageCount: row.pageCount,
+          durationSeconds: row.durationSeconds,
+          marks: row.marks.length === 0 ? null : row.marks,
           sizeBytes: row.sizeBytes,
           modifiedAtMs: row.modifiedAtMs,
         })
@@ -212,6 +223,8 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
             title: row.title,
             format: row.format,
             pageCount: row.pageCount,
+            durationSeconds: row.durationSeconds,
+            marks: row.marks.length === 0 ? null : row.marks,
             sizeBytes: row.sizeBytes,
             modifiedAtMs: row.modifiedAtMs,
           },
@@ -277,7 +290,14 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
         rows.length === 0
           ? []
           : await db
-              .select({ bookId: bookChapter.bookId, count: count() })
+              .select({
+                bookId: bookChapter.bookId,
+                count: count(),
+                heard:
+                  sql<number>`count(*) filter (where ${inArray(bookChapter.format, [...AUDIOBOOK_FORMATS])})`.mapWith(
+                    Number,
+                  ),
+              })
               .from(bookChapter)
               .where(
                 inArray(
@@ -287,9 +307,11 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
               )
               .groupBy(bookChapter.bookId);
 
-      const howMany = new Map(counted.map((row) => [row.bookId, row.count]));
+      const howMany = new Map(counted.map((row) => [row.bookId, row]));
 
-      return rows.map((row) => toBook(row, howMany.get(row.id) ?? 0));
+      return rows.map((row) =>
+        toBook(row, howMany.get(row.id)?.count ?? 0, howMany.get(row.id)?.heard ?? 0),
+      );
     },
 
     canReach: async (viewer, bookId, chapterId) => {
@@ -328,7 +350,13 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
         .orderBy(asc(bookChapter.number));
 
       return {
-        book: toBook(row, chapters.length),
+        book: toBook(
+          row,
+          chapters.length,
+          chapters.filter((chapter) =>
+            isAudiobookFormat(BookFormatSchema.catch('cbz').parse(chapter.format)),
+          ).length,
+        ),
         chapters: chapters.map((chapter) => ({
           id: chapter.id,
           bookId: chapter.bookId,
@@ -336,6 +364,8 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
           title: chapter.title,
           format: BookFormatSchema.catch('cbz').parse(chapter.format),
           pageCount: chapter.pageCount,
+          durationSeconds: chapter.durationSeconds,
+          marks: MarksSchema.parse(JsonValueSchema.catch(null).parse(chapter.marks ?? null)),
           addedAt: chapter.addedAt.toISOString(),
         })),
       };
@@ -371,15 +401,33 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
     },
 
     readCover: async (bookId) => {
-      const [first] = await db
-        .select({ id: bookChapter.id, path: bookChapter.path, format: bookChapter.format })
+      const chapters = await db
+        .select({
+          id: bookChapter.id,
+          path: bookChapter.path,
+          format: bookChapter.format,
+          bookPath: book.path,
+        })
         .from(bookChapter)
+        .innerJoin(book, eq(book.id, bookChapter.bookId))
         .where(eq(bookChapter.bookId, bookId))
-        .orderBy(asc(bookChapter.number))
-        .limit(1);
+        .orderBy(asc(bookChapter.number));
+      const first =
+        chapters.find(
+          (chapter) => !isAudiobookFormat(BookFormatSchema.catch('cbz').parse(chapter.format)),
+        ) ?? chapters[0];
 
       if (first === undefined) {
         return null;
+      }
+
+      if (isAudiobookFormat(BookFormatSchema.catch('cbz').parse(first.format))) {
+        const opened = await openBookFile(first.path).catch(() => null);
+        const carried = opened?.layout === 'audio' ? await opened.readCover() : null;
+        const cover =
+          carried ?? (await readFolderArt(first.bookPath, first.bookPath !== first.path));
+
+        return cover === null ? null : drawBookCover(cover, COVER_WIDTH);
       }
 
       if (first.format !== 'epub') {
