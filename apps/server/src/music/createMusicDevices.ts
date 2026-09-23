@@ -1,14 +1,13 @@
+import { createDeviceRegistry } from '@ValenceServer/devices/createDeviceRegistry';
 import type {
   MusicCommand,
   MusicDevice,
   MusicNowPlaying,
 } from '@ValenceContracts/schemas/MusicRemote';
-import type { PresenceEntry, PresenceService } from '@ValenceServer/presence/PresenceService';
+import type { DeviceOwner } from '@ValenceServer/devices/createDeviceRegistry';
+import type { PresenceService } from '@ValenceServer/presence/PresenceService';
 
-type Listener = {
-  accountId: string;
-  profileId: string | null;
-};
+type Listener = DeviceOwner;
 
 type MusicDevicesOptions = {
   presence: Pick<PresenceService, 'list' | 'tell' | 'watch'>;
@@ -30,87 +29,32 @@ type MusicDevices = {
 
 /**
  * Every open copy of Valence one person has, and what each is playing — the list "play on another
- * device" is chosen from.
- *
- * A device is a connection presence already knows about, so a closed tab or a window that lost its
- * network leaves the list on its own. What a device is playing is whatever it last said, held here
- * in memory; nothing about it needs to outlive the server. Commands go to one connection through
- * presence, and only between devices of the same person — the same account, and the same profile
- * wherever a device has said which it is — so nobody can pause somebody else's music by guessing an
- * identifier. A window that has not yet said which profile it is counts as the account's, since a
- * freshly opened tab is still somebody's.
+ * device" is chosen from for music. Which devices are whose, and what each last said, is the
+ * shared device registry's; this adds what a song's report and a music command are.
  *
  * @param options - Presence, and who to tell when a profile's devices change.
  * @returns The registry.
  */
 const createMusicDevices = ({ presence, onChanged }: MusicDevicesOptions): MusicDevices => {
-  const playing = new Map<string, MusicNowPlaying>();
-  let known = new Map<string, string | null>();
-
-  const owned = ({ accountId, profileId }: Listener): PresenceEntry[] =>
-    presence
-      .list()
-      .filter(
-        (entry) =>
-          entry.accountId === accountId &&
-          (profileId === null || entry.profileId === null || entry.profileId === profileId),
-      );
-
-  presence.watch(() => {
-    const now = new Map(presence.list().map((entry) => [entry.clientId, entry.accountId]));
-    const touched = new Set<string>();
-
-    for (const [clientId, accountId] of known) {
-      if (!now.has(clientId)) {
-        playing.delete(clientId);
-
-        if (accountId !== null) {
-          touched.add(accountId);
-        }
-      }
-    }
-
-    for (const [clientId, accountId] of now) {
-      if (!known.has(clientId) && accountId !== null) {
-        touched.add(accountId);
-      }
-    }
-
-    known = now;
-
-    for (const accountId of touched) {
-      onChanged?.(accountId);
-    }
+  const devices = createDeviceRegistry<MusicNowPlaying>({
+    presence,
+    ...(onChanged === undefined ? {} : { onChanged }),
   });
 
   return {
     list: (listener) =>
-      owned(listener).map((entry) => ({
+      devices.owned(listener).map((entry) => ({
         clientId: entry.clientId,
         label: entry.deviceLabel,
-        nowPlaying: playing.get(entry.clientId) ?? null,
+        nowPlaying: devices.reportOf(entry.clientId),
       })),
 
-    report: (listener, clientId, nowPlaying) => {
-      if (!owned(listener).some((entry) => entry.clientId === clientId)) {
-        return false;
-      }
+    report: devices.report,
 
-      if (nowPlaying === null) {
-        playing.delete(clientId);
-      } else {
-        playing.set(clientId, nowPlaying);
-      }
-
-      onChanged?.(listener.accountId);
-
-      return true;
-    },
-
-    playingOn: (clientId) => playing.get(clientId) ?? null,
+    playingOn: devices.reportOf,
 
     order: (clientId, command) =>
-      playing.has(clientId) &&
+      devices.reportOf(clientId) !== null &&
       presence.tell(clientId, {
         kind: 'music',
         command,
@@ -118,23 +62,13 @@ const createMusicDevices = ({ presence, onChanged }: MusicDevicesOptions): Music
         fromLabel: 'An administrator',
       }),
 
-    command: (listener, fromClientId, toClientId, command) => {
-      const devices = owned(listener);
-      const target = devices.find((entry) => entry.clientId === toClientId);
-
-      if (target === undefined) {
-        return false;
-      }
-
-      const from = devices.find((entry) => entry.clientId === fromClientId);
-
-      return presence.tell(toClientId, {
+    command: (listener, fromClientId, toClientId, command) =>
+      devices.tell(listener, fromClientId, toClientId, (fromLabel) => ({
         kind: 'music',
         command,
         fromClientId,
-        fromLabel: from?.deviceLabel ?? 'Another device',
-      });
-    },
+        fromLabel,
+      })),
   };
 };
 

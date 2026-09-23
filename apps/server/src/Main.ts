@@ -215,6 +215,7 @@ import { createDatabaseMusicService } from '@ValenceServer/music/createDatabaseM
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
 import { createMusicArtwork } from '@ValenceServer/music/createMusicArtwork';
 import { createMusicDevices } from '@ValenceServer/music/createMusicDevices';
+import { createVideoDevices } from '@ValenceServer/video/createVideoDevices';
 import { describeBookForRequest } from '@ValenceServer/requests/openLibrary/describeBookForRequest';
 import { describeOpenLibraryBook } from '@ValenceServer/requests/openLibrary/describeOpenLibraryBook';
 import { readOpenLibraryShelves } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
@@ -839,6 +840,17 @@ const lookUpMusic = async (libraryId: string, jobId: string, isAgain: boolean): 
     `music looked up on the web: ${found.covers.toString()} covers, ${found.pictures.toString()} photographs, ${found.videos.toString()} videos, ${found.lyrics.toString()} lyrics`,
   );
 };
+
+const videoDevices = createVideoDevices({
+  presence,
+  onChanged: (accountId) => {
+    realtime.publish(
+      'playback',
+      { kind: 'videoDevicesChanged' },
+      { kind: 'accounts', accountIds: [accountId] },
+    );
+  },
+});
 
 const musicServices: MusicServices = {
   library: musicLibrary,
@@ -2569,6 +2581,7 @@ const app = createApp({
   splashscreen,
   books: bookService,
   music: musicServices,
+  videoDevices,
   promoteProfile: async ({ profileId, email, password }) => {
     const rows = await db
       .select({

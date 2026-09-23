@@ -459,6 +459,8 @@ import type { HistoryService } from '@ValenceServer/history/HistoryService';
 import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 
 import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
+import { registerVideoDeviceRoutes } from '@ValenceServer/video/registerVideoDeviceRoutes';
+import type { VideoDevices } from '@ValenceServer/video/createVideoDevices';
 import { registerReencodeRoutes } from '@ValenceServer/reencode/registerReencodeRoutes';
 import { listeningFor } from '@ValenceServer/music/listeningFor';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
@@ -635,6 +637,7 @@ type CreateAppOptions = {
   splashscreen?: SplashscreenStore;
   books?: BookService;
   music?: MusicServices;
+  videoDevices?: VideoDevices;
   reencodes?: ReencodeService;
   onReencodeQueued?: () => void;
   promoteProfile?: (request: {
@@ -730,6 +733,7 @@ const createApp = ({
   splashscreen = createMemorySplashscreenStore(),
   books,
   music,
+  videoDevices,
   reencodes,
   onReencodeQueued,
   promoteProfile,
@@ -6473,6 +6477,10 @@ const createApp = ({
 
   if (music !== undefined) {
     registerMusicRoutes(app, { viewerOf, music, requires });
+  }
+
+  if (videoDevices !== undefined) {
+    registerVideoDeviceRoutes(app, { viewerOf, devices: videoDevices });
   }
 
   if (reencodes !== undefined) {

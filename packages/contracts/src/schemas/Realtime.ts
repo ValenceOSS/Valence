@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ClientKindSchema } from './ClientKind';
 import { JsonValueSchema } from './JsonValue';
 import { PartyCommandSchema, PartyKindSchema, PartyRoleSchema } from './WatchParty';
 import type { Permission } from './Permission';
@@ -47,6 +48,7 @@ const IdentifySchema = z.object({
   profileId: z.string().uuid().nullable(),
   clientId: z.string().min(1).max(120).optional(),
   deviceLabel: z.string().min(1).max(120).optional(),
+  clientKind: ClientKindSchema.optional(),
 });
 
 const PongSchema = z.object({ kind: z.literal('pong') });

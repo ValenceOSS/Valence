@@ -26,10 +26,10 @@ import {
   updatePlaylistRoute,
 } from '@ValenceServer/routes/MusicRoute';
 import { renditionFor } from './renditionFor';
+import { deviceOwnerOf } from '@ValenceServer/devices/deviceOwnerOf';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { MusicServices } from './MusicServices';
-import type { Listener } from './createMusicDevices';
 
 type MusicRouteOptions = {
   viewerOf: (headers: Headers) => Promise<Viewer | null>;
@@ -49,16 +49,6 @@ const NO_PROFILE = { error: 'Choose a profile first.' } as const;
  */
 const profileOf = (viewer: Viewer | null): string | null =>
   viewer?.kind === 'account' ? viewer.profileId : null;
-
-/**
- * Who is listening, for telling their devices apart from everybody else's: the account, and the
- * profile where one has been chosen.
- *
- * @param viewer - Who is asking.
- * @returns The listener, or nothing where nobody is signed in.
- */
-const listenerOf = (viewer: Viewer | null): Listener | null =>
-  viewer?.kind === 'account' ? { accountId: viewer.accountId, profileId: viewer.profileId } : null;
 
 /**
  * Answers every music and playlist address: browsing, searching, streaming, lyrics, following
@@ -309,7 +299,7 @@ const registerMusicRoutes = (
   });
 
   app.openapi(listDevicesRoute, async (context) => {
-    const listener = listenerOf(await viewerOf(context.req.raw.headers));
+    const listener = deviceOwnerOf(await viewerOf(context.req.raw.headers));
 
     if (listener === null) {
       return context.json(NOBODY, 401);
@@ -319,7 +309,7 @@ const registerMusicRoutes = (
   });
 
   app.openapi(reportNowPlayingRoute, async (context) => {
-    const listener = listenerOf(await viewerOf(context.req.raw.headers));
+    const listener = deviceOwnerOf(await viewerOf(context.req.raw.headers));
 
     if (listener === null) {
       return context.json(NOBODY, 401);
@@ -333,7 +323,7 @@ const registerMusicRoutes = (
   });
 
   app.openapi(commandDeviceRoute, async (context) => {
-    const listener = listenerOf(await viewerOf(context.req.raw.headers));
+    const listener = deviceOwnerOf(await viewerOf(context.req.raw.headers));
 
     if (listener === null) {
       return context.json(NOBODY, 401);

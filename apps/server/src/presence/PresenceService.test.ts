@@ -793,6 +793,7 @@ describe('createPresenceService, telling somebody who is here', () => {
       guestOf: null,
       viaShare: null,
       deviceLabel: 'Chrome on Mac',
+      clientKind: null,
       address: '203.0.113.7',
     });
   });

@@ -3,6 +3,8 @@ import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackM
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { MusicCommand } from '@ValenceContracts/schemas/MusicRemote';
+import type { VideoCommand } from '@ValenceContracts/schemas/VideoRemote';
+import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 
 type PresencePlayback = {
   mediaId: string;
@@ -35,6 +37,7 @@ type PresenceSession = {
   guestOf: string | null;
   viaShare: string | null;
   deviceLabel: string;
+  clientKind: ClientKind | null;
   address: string | null;
 };
 
@@ -59,7 +62,8 @@ type PresenceControlEvent =
   | { kind: 'paused'; reason: string }
   | { kind: 'resumed' }
   | { kind: 'message'; text: string }
-  | { kind: 'music'; command: MusicCommand; fromClientId: string; fromLabel: string };
+  | { kind: 'music'; command: MusicCommand; fromClientId: string; fromLabel: string }
+  | { kind: 'video'; command: VideoCommand; fromClientId: string; fromLabel: string };
 
 type PresenceStartPlaybackInput = Omit<
   PresencePlayback,
@@ -82,6 +86,7 @@ type PresenceArrival = {
   guestOf?: string | null;
   viaShare?: string | null;
   deviceLabel: string;
+  clientKind?: ClientKind | null;
   address?: string | null;
   send: (event: PresenceControlEvent) => void;
 };
@@ -177,6 +182,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
       guestOf = null,
       viaShare = null,
       deviceLabel,
+      clientKind = null,
       address = null,
       send,
     }) => {
@@ -199,6 +205,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
         guestOf,
         viaShare,
         deviceLabel,
+        clientKind,
         address,
       };
 
