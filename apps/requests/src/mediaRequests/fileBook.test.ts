@@ -139,7 +139,7 @@ describe('fileBook, given a pack of several books', () => {
     return folder;
   };
 
-  it('files each book as its own, named by its own tags, each with only its own cover', async () => {
+  it('files each book as its own in its series, named by its tags, each with only its own cover', async () => {
     const saga = await aSaga();
 
     const { filed } = await fileBook(
@@ -150,12 +150,12 @@ describe('fileBook, given a pack of several books', () => {
       { readTags },
     );
 
-    expect(filed.get('book')).toBe(join(root, 'Books', 'Pierce Brown'));
+    expect(filed.get('book')).toBe(join(root, 'Books', 'Pierce Brown', 'Red Rising'));
     expect(await filesUnder(join(root, 'Books'))).toEqual([
-      'Pierce Brown/Golden Son/Golden Son.m4b',
-      'Pierce Brown/Iron Gold/Iron Gold.m4b',
-      'Pierce Brown/Iron Gold/cover.jpg',
-      'Pierce Brown/Red Rising/Red Rising.m4b',
+      'Pierce Brown/Red Rising/1 - Red Rising/Red Rising.m4b',
+      'Pierce Brown/Red Rising/2 - Golden Son/Golden Son.m4b',
+      'Pierce Brown/Red Rising/4 - Iron Gold/Iron Gold.m4b',
+      'Pierce Brown/Red Rising/4 - Iron Gold/cover.jpg',
     ]);
   });
 
@@ -183,7 +183,7 @@ describe('fileBook, given a pack of several books', () => {
     ]);
   });
 
-  it('tells untagged books apart by their folders', async () => {
+  it('tells untagged books apart by their folders, named and placed by them', async () => {
     const saga = await aSaga();
 
     await fileBook(
@@ -195,10 +195,10 @@ describe('fileBook, given a pack of several books', () => {
     );
 
     expect(await filesUnder(join(root, 'Books', 'Pierce Brown'))).toEqual([
-      'Pierce Brown-Red Rising-#1-Red Rising/Pierce Brown-Red Rising-#1-Red Rising.m4b',
-      'Pierce Brown-Red Rising-#2-Golden Son/Pierce Brown-Red Rising-#2-Golden Son.m4b',
-      'Pierce Brown-Red Rising-#4-Iron Gold/Pierce Brown-Red Rising-#4-Iron Gold.m4b',
-      'Pierce Brown-Red Rising-#4-Iron Gold/cover.jpg',
+      'Red Rising/1 - Red Rising/Red Rising.m4b',
+      'Red Rising/2 - Golden Son/Golden Son.m4b',
+      'Red Rising/4 - Iron Gold/Iron Gold.m4b',
+      'Red Rising/4 - Iron Gold/cover.jpg',
     ]);
   });
 
@@ -214,6 +214,28 @@ describe('fileBook, given a pack of several books', () => {
     );
 
     expect(filed.get('book')).toBe(join(root, 'Books', 'Pierce Brown', 'Iron Gold'));
+  });
+
+  it('files a book to read beside the same book to hear, already in its series', async () => {
+    await mkdir(join(root, 'Books', 'Pierce Brown', 'Red Rising', '2 - Golden Son'), {
+      recursive: true,
+    });
+
+    const download = await aDownload(['Golden Son.epub']);
+    const { filed } = await fileBook(
+      { libraryPath: join(root, 'Books'), title: 'Golden Son', artistName: 'Pierce Brown' },
+      [{ id: 'book', title: 'Golden Son' }],
+      download,
+      true,
+      { readTags },
+    );
+
+    expect(filed.get('book')).toBe(
+      join(root, 'Books', 'Pierce Brown', 'Red Rising', '2 - Golden Son'),
+    );
+    expect(await filesUnder(join(root, 'Books'))).toEqual([
+      'Pierce Brown/Red Rising/2 - Golden Son/Golden Son.epub',
+    ]);
   });
 
   it('keeps a request’s own name for a single book', async () => {

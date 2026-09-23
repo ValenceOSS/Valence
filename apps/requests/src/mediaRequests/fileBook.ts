@@ -4,9 +4,15 @@ import { audiobookTitleOf } from '@ValenceContracts/functions/audiobookTitleOf';
 import { AUDIOBOOK_FILE_EXTENSIONS } from '@ValenceContracts/constants/AUDIOBOOK_FILE_EXTENSIONS';
 import { BOOK_FILE_FORMATS } from '@ValenceContracts/constants/BOOK_FILE_FORMATS';
 import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
+import { findBookFolder } from '@ValenceRequests/mediaRequests/findBookFolder';
 import { findDownloadedFiles } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
 import { safeFileName } from '@ValenceRequests/mediaRequests/safeFileName';
+import {
+  placesInSeries,
+  seriesNameOf,
+  titleFromFolderName,
+} from '@ValenceRequests/mediaRequests/seriesOfPack';
 import type { DownloadedFile } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
@@ -15,7 +21,12 @@ type Fileable = Pick<RequestItemRecord, 'id' | 'title'>;
 
 type Filed = { filed: ReadonlyMap<string, string>; missing: readonly string[] };
 
-type SoundTags = { album: string | null; title: string | null; author: string | null };
+type SoundTags = {
+  album: string | null;
+  title: string | null;
+  author: string | null;
+  year?: number | null;
+};
 
 type Naming = {
   isNamedByItsFiles?: boolean;
@@ -27,6 +38,8 @@ type BookInDownload = {
   tracks: DownloadedFile[];
   title: string | null;
   author: string | null;
+  folder: string;
+  year: number | null;
 };
 
 const COVER = /^(cover|folder|front|poster)\.(jpe?g|png)$/i;
@@ -53,6 +66,7 @@ const readSoundTags = async (path: string): Promise<SoundTags | null> => {
       album: common.album ?? null,
       title: common.title ?? null,
       author: common.albumartist ?? common.artist ?? null,
+      year: common.year ?? null,
     };
   } catch {
     return null;
@@ -136,19 +150,20 @@ const booksInDownload = async (
   const tracks = files
     .filter((file) => AUDIOBOOK_FILE_EXTENSIONS.has(extensionOf(file.name)))
     .toSorted((left, right) => IN_ORDER.compare(left.path, right.path));
-  const heard = new Map<string, BookInDownload & { folder: string }>();
+  const heard = new Map<string, BookInDownload>();
 
   for (const track of tracks) {
     const tags = await readTags(track.path);
     const title = tags === null ? null : audiobookTitleOf(tags);
     const folder = bookFolderInDownload(track);
     const key = `${folder}\u0000${(tags?.album ?? '').toLowerCase()}`;
-    const book: BookInDownload & { folder: string } = heard.get(key) ?? {
+    const book: BookInDownload = heard.get(key) ?? {
       folder,
       texts: [],
       tracks: [],
       title,
       author: tags?.author ?? null,
+      year: tags?.year ?? null,
     };
 
     book.tracks.push(track);
@@ -166,6 +181,8 @@ const booksInDownload = async (
             tracks,
             title: books[0]?.title ?? null,
             author: books[0]?.author ?? null,
+            folder: books[0]?.folder ?? dirname(texts[0]?.path ?? ''),
+            year: books[0]?.year ?? null,
           },
         ];
   }
@@ -183,6 +200,8 @@ const booksInDownload = async (
         tracks: [],
         title: basename(text.name, extname(text.name)),
         author: null,
+        folder: dirname(text.path),
+        year: null,
       });
     }
   }
@@ -190,7 +209,7 @@ const booksInDownload = async (
   return [
     ...books.map((book) => ({
       ...book,
-      title: book.title ?? basename(book.folder),
+      title: book.title ?? titleFromFolderName(basename(book.folder)),
     })),
     ...alone,
   ];
@@ -257,7 +276,10 @@ const sharedFolderOf = (folders: readonly string[], libraryPath: string): string
  * book the library can open either way.
  *
  * A pack of several audiobooks — a series in one torrent — files each as a book of its own, named
- * by what its own tags say it is. So is a book sent by hand, whose release name is a poor guide to
+ * by what its own tags say it is, into its series in its author's folder and at its place there,
+ * `Author/Series/2 - Title`, as the library reads a series. A single book the library already has
+ * — the book to read, arriving after the book to hear — joins the folder it is kept in, so the
+ * library opens it either way. So is a book sent by hand, whose release name is a poor guide to
  * which part is the title and which the author; one fetched for a request keeps the request's.
  *
  * Cue sheets, checksums and notes are left behind: a cue names the file it describes, and a track
@@ -282,6 +304,23 @@ const fileBook = async (
   const files = await findDownloadedFiles(contentPath);
   const books = await booksInDownload(files, readTags);
   const isPack = books.length > 1;
+  const series = isPack
+    ? seriesNameOf(
+        [basename(contentPath), request.title],
+        [
+          ...new Set([
+            ...books.flatMap((book) => (book.author === null ? [] : [book.author])),
+            ...(request.artistName === null ? [] : [request.artistName]),
+          ]),
+        ],
+      )
+    : null;
+  const places = placesInSeries(
+    books.map((book) => ({
+      names: [basename(book.folder), ...[...book.tracks, ...book.texts].map((file) => file.name)],
+      year: book.year,
+    })),
+  );
   const filed = new Map<string, string>();
   const missing: string[] = [];
 
@@ -293,7 +332,7 @@ const fileBook = async (
 
     const folders: string[] = [];
 
-    for (const book of books) {
+    for (const [at, book] of books.entries()) {
       const byItsFiles = isPack || isNamedByItsFiles;
       const title =
         safeFileName((byItsFiles ? book.title : null) ?? '') ||
@@ -301,7 +340,16 @@ const fileBook = async (
         safeFileName(request.title) ||
         'Book';
       const author = (byItsFiles ? book.author : null) ?? request.artistName;
-      const folder = bookFolderOf(request.libraryPath, author, title);
+      const folder =
+        series === null
+          ? isPack
+            ? bookFolderOf(request.libraryPath, author, title)
+            : ((await findBookFolder(request.libraryPath, author, title)) ??
+              bookFolderOf(request.libraryPath, author, title))
+          : join(
+              bookFolderOf(request.libraryPath, author, series),
+              `${(places[at] ?? at + 1).toString()} - ${title}`,
+            );
       const { texts, tracks } = book;
 
       for (const text of texts) {
