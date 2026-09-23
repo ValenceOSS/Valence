@@ -420,7 +420,14 @@ const createIndexerService = ({
       const ranked = rankReleases(
         releases,
         releases.map((release) =>
-          judgeRelease(release, parseReleaseName(release.title), profile, search.runtimeMinutes),
+          judgeRelease(
+            release,
+            parseReleaseName(release.title),
+            profile,
+            search.runtimeMinutes,
+            undefined,
+            search.mode === 'book',
+          ),
         ),
         new Map(asking.map((record) => [record.id, record.priority])),
       );

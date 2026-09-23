@@ -3,6 +3,7 @@ import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import { fileAlbum } from '@ValenceRequests/mediaRequests/fileAlbum';
+import { fileBook } from '@ValenceRequests/mediaRequests/fileBook';
 import { fileDownload } from '@ValenceRequests/mediaRequests/fileDownload';
 import { judgeForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest';
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
@@ -73,6 +74,7 @@ type CreateRequestWorkerOptions = {
   file?: typeof fileDownload;
   probe?: ProbeClient;
   fileMusic?: typeof fileAlbum;
+  fileBooks?: typeof fileBook;
   now?: () => Date;
   schedule?: Schedule;
   tickEveryMs?: number;
@@ -217,6 +219,7 @@ const groupedByDownload = (
  * @param log - Where what each request did is kept, for whoever wants to see why.
  * @param file - How a finished download is filed.
  * @param fileMusic - How a finished download of music is filed.
+ * @param fileBooks - How a finished download of a book or an audiobook is filed.
  * @param now - The clock.
  * @param schedule - How to wait.
  * @param tickEveryMs - How often to move everything along.
@@ -244,6 +247,7 @@ const createRequestWorker = ({
   file = fileDownload,
   probe = () => Promise.resolve(null),
   fileMusic = fileAlbum,
+  fileBooks = fileBook,
   now = () => new Date(),
   schedule = waitThenRun,
   tickEveryMs = TICK_EVERY_MS,
@@ -668,7 +672,9 @@ const createRequestWorker = ({
       try {
         const { filed, missing } = await (isMusicRequest(request.kind)
           ? fileMusic(request, filing, path, download.protocol === 'torrent')
-          : file(request, filing, path, download.protocol === 'torrent', probe));
+          : isBookRequest(request.kind)
+            ? fileBooks(request, filing, path, download.protocol === 'torrent')
+            : file(request, filing, path, download.protocol === 'torrent', probe));
 
         for (const item of filing) {
           const path = filed.get(item.id);
@@ -696,7 +702,15 @@ const createRequestWorker = ({
         }
 
         const album = filing.find((item) => filed.has(item.id) && item.musicBrainzId !== null);
-        const folder = album === undefined ? libraryFolderOf(request) : (filed.get(album.id) ?? '');
+        const book = isBookRequest(request.kind)
+          ? filing.find((item) => filed.has(item.id))
+          : undefined;
+        const folder =
+          book !== undefined
+            ? (filed.get(book.id) ?? '')
+            : album === undefined
+              ? libraryFolderOf(request)
+              : (filed.get(album.id) ?? '');
 
         if (filed.size > 0) {
           await events.add({
@@ -763,6 +777,26 @@ const createRequestWorker = ({
     return filed.get('album') ?? null;
   };
 
+  const fileSentBook = async (
+    title: string,
+    libraryPath: string,
+    path: string,
+    protocol: Release['protocol'],
+  ): Promise<string | null> => {
+    const split = title.indexOf(' - ');
+    const author = split === -1 ? null : title.slice(0, split).trim();
+    const book = split === -1 ? title : title.slice(split + 3).trim();
+    const { filed } = await fileBooks(
+      { libraryPath, title: book, artistName: author },
+      [{ id: 'book', title: book }],
+      path,
+      protocol === 'torrent',
+      { isNamedByItsFiles: true },
+    );
+
+    return filed.get('book') ?? null;
+  };
+
   const fileSentByHand = async () => {
     const claimed = new Set(
       (await items.list()).flatMap((item) => (item.downloadId === null ? [] : [item.downloadId])),
@@ -774,9 +808,6 @@ const createRequestWorker = ({
         download.libraryPath !== null &&
         download.filedInto === null &&
         download.filingAttempts < MOST_FILING_ATTEMPTS &&
-        (download.libraryKind === 'movies' ||
-          download.libraryKind === 'shows' ||
-          download.libraryKind === 'music') &&
         !claimed.has(download.id),
     );
 
@@ -813,20 +844,24 @@ const createRequestWorker = ({
         const folder =
           download.libraryKind === 'music'
             ? await fileSentAlbum(parsed.title, into.libraryPath, path, download.protocol)
-            : await fileSentVideo(
-                into,
-                download.libraryKind,
-                parsed,
-                path,
-                download.protocol,
-                download.title,
-              );
+            : download.libraryKind === 'books'
+              ? await fileSentBook(parsed.title, into.libraryPath, path, download.protocol)
+              : await fileSentVideo(
+                  into,
+                  download.libraryKind,
+                  parsed,
+                  path,
+                  download.protocol,
+                  download.title,
+                );
 
         if (folder === null) {
           await couldNot(
             download.libraryKind === 'music'
               ? 'No track in it could be filed'
-              : 'No video in it could be filed',
+              : download.libraryKind === 'books'
+                ? 'No book in it could be filed'
+                : 'No video in it could be filed',
           );
           continue;
         }

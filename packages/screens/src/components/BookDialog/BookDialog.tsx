@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   BookOpen as BookOpenIcon,
+  Headphones as HeadphonesIcon,
   Heart as HeartIcon,
   Share as ShareIcon,
   X as XIcon,
@@ -29,14 +30,19 @@ import type { BookDialogProps } from './BookDialog.types';
  * What kind of book something is, for the line above its title.
  *
  * @param book - The book.
- * @returns "Ebook", or how many chapters a comic has.
+ * @returns "Ebook" or "Audiobook" — both, where it can be read and heard — or how many chapters a
+ *   comic has.
  */
 const kindOf = (book: Book): string =>
-  book.layout === 'reflow'
-    ? 'Ebook'
-    : book.chapterCount === 1
-      ? 'One chapter'
-      : `${book.chapterCount.toString()} chapters`;
+  book.layout === 'audio'
+    ? 'Audiobook'
+    : book.layout === 'reflow'
+      ? book.hasAudio === true
+        ? 'Ebook and audiobook'
+        : 'Ebook'
+      : book.chapterCount === 1
+        ? 'One chapter'
+        : `${book.chapterCount.toString()} chapters`;
 
 /**
  * Everything a book can do, gathered where a film's are: its cover, who wrote it and what it is
@@ -51,6 +57,7 @@ const kindOf = (book: Book): string =>
  * @param isKept - Whether this profile has kept it.
  * @param onClose - Told when it is dismissed.
  * @param onRead - Told to open the book in its reader.
+ * @param onListen - Told to start listening to the book, where it can be heard.
  * @param onToggleKept - Told to keep it, or stop.
  * @param onRate - Told what somebody gave it, or null to take their rating back.
  * @param onShare - Told to hand out a link to it, where this profile may.
@@ -60,6 +67,7 @@ const BookDialog = ({
   isKept,
   onClose,
   onRead,
+  onListen,
   onToggleKept,
   onRate,
   onShare,
@@ -69,6 +77,24 @@ const BookDialog = ({
   const book = asked.data?.book ?? null;
   const where = (reading.data ?? []).find((one) => one.book.id === bookId) ?? null;
   const isStarted = where !== null && !where.isFinished;
+  const mayListen = onListen !== undefined && book?.hasAudio === true;
+  const heard = useQuery({
+    ...bookQueries.listeningPlace(bookId ?? ''),
+    enabled: bookId !== null && mayListen,
+  });
+  const listenLabel =
+    heard.data === null || heard.data === undefined
+      ? 'Listen'
+      : heard.data.isFinished
+        ? 'Listen again'
+        : 'Continue listening';
+  const isOnlyHeard = mayListen && book.hasText === false;
+
+  const listen = () => {
+    if (asked.data !== undefined && asked.data !== null) {
+      onListen?.(asked.data);
+    }
+  };
 
   const actions: ActionBarAction[] =
     book === null
@@ -83,6 +109,17 @@ const BookDialog = ({
               onToggleKept(book);
             },
           },
+          ...(mayListen && !isOnlyHeard
+            ? [
+                {
+                  id: 'listen',
+                  isPinned: true,
+                  label: listenLabel,
+                  icon: <Icon of={HeadphonesIcon} size={18} />,
+                  onChoose: listen,
+                },
+              ]
+            : []),
           ...(onShare === undefined
             ? []
             : [
@@ -206,20 +243,31 @@ const BookDialog = ({
         <ActionBar
           label="More to do with this book"
           primary={
-            <Button
-              variant="confirm"
-              size="lg"
-              className="w-full"
-              disabled={book === null}
-              onClick={() => {
-                if (book !== null) {
-                  onRead(book);
-                }
-              }}
-            >
-              <Icon of={BookOpenIcon} size={18} />
-              {isStarted ? 'Continue reading' : where?.isFinished === true ? 'Read again' : 'Read'}
-            </Button>
+            isOnlyHeard ? (
+              <Button variant="confirm" size="lg" className="w-full" onClick={listen}>
+                <Icon of={HeadphonesIcon} size={18} />
+                {listenLabel}
+              </Button>
+            ) : (
+              <Button
+                variant="confirm"
+                size="lg"
+                className="w-full"
+                disabled={book === null || book.hasText === false}
+                onClick={() => {
+                  if (book !== null) {
+                    onRead(book);
+                  }
+                }}
+              >
+                <Icon of={BookOpenIcon} size={18} />
+                {isStarted
+                  ? 'Continue reading'
+                  : where?.isFinished === true
+                    ? 'Read again'
+                    : 'Read'}
+              </Button>
+            )
           }
           actions={actions}
         />

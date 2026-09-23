@@ -2583,6 +2583,7 @@ const app = createApp({
   books: bookService,
   music: musicServices,
   videoDevices,
+  streamBookFile: (path, range) => transcoder.readFile(path, range),
   promoteProfile: async ({ profileId, email, password }) => {
     const rows = await db
       .select({

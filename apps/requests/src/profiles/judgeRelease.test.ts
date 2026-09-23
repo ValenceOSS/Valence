@@ -27,6 +27,47 @@ const judge = (
 const GB = 1024 ** 3;
 
 describe('judgeRelease', () => {
+  it('takes a book or an audiobook without a resolution or an encoding, whatever its size', () => {
+    const judged = (title: string) =>
+      judgeRelease(
+        aRelease(title, { sizeBytes: 40 * GB }),
+        parseReleaseName(title),
+        aProfile(),
+        undefined,
+        undefined,
+        true,
+      );
+
+    expect(judged('Frank Herbert - Dune (Unabridged) [M4B]').isRejected).toBe(false);
+    expect(judged('Frank Herbert - Dune (1965) EPUB').rejections).toEqual([]);
+  });
+
+  it('refuses a video for a book', () => {
+    const judged = judgeRelease(
+      aRelease('Dune.2021.1080p.BluRay.x264'),
+      parseReleaseName('Dune.2021.1080p.BluRay.x264'),
+      aProfile(),
+      undefined,
+      undefined,
+      true,
+    );
+
+    expect(judged.rejections).toEqual(['It is a video, not a book']);
+  });
+
+  it('still refuses a book with a banned word, or that nobody seeds', () => {
+    const judged = judgeRelease(
+      aRelease('Dune AUDIOBOOK SAMPLE', { protocol: 'torrent', seeders: 0 }),
+      parseReleaseName('Dune AUDIOBOOK SAMPLE'),
+      aProfile({ bannedWords: ['sample'] }),
+      undefined,
+      undefined,
+      true,
+    );
+
+    expect(judged.rejections).toEqual(['It has “sample”, which is banned', 'Nobody is seeding it']);
+  });
+
   it('scores a release by how far up its resolution and source come, and says so', () => {
     expect(judge('Dune.2021.1080p.BluRay.x264-GRP')).toMatchObject({
       releaseId: 'Dune.2021.1080p.BluRay.x264-GRP',

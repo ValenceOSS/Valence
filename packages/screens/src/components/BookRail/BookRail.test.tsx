@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -83,6 +83,44 @@ describe('BookRail', () => {
     await userEvent.click(await screen.findByText('Pride and Prejudice'));
 
     expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: A_BOOK.id }));
+  });
+
+  it('gathers a series into one card, which opens onto its books in order', async () => {
+    const onOpen = vi.fn();
+    const saga = { name: 'Red Rising', position: null };
+
+    serve([
+      {
+        ...A_BOOK,
+        id: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0012',
+        title: 'Golden Son',
+        series: { ...saga, position: 2 },
+      },
+      A_BOOK,
+      {
+        ...A_BOOK,
+        id: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0011',
+        title: 'Red Rising',
+        series: { ...saga, position: 1 },
+      },
+    ]);
+
+    renderInAnAddress(<BookRail libraryId="shelf" title="Books" onOpen={onOpen} />);
+
+    await userEvent.click(await screen.findByText('2 books · Jane Austen'));
+
+    const dialog = await screen.findByRole('dialog');
+    const text = dialog.textContent;
+
+    expect(within(dialog).getByText('Book 1')).toBeInTheDocument();
+    expect(within(dialog).getByText('Book 2')).toBeInTheDocument();
+    expect(text.lastIndexOf('Red Rising')).toBeLessThan(text.indexOf('Golden Son'));
+
+    await userEvent.click(within(dialog).getByText('Golden Son'));
+
+    expect(onOpen).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0012' }),
+    );
   });
 
   it('draws nothing for an empty shelf', async () => {

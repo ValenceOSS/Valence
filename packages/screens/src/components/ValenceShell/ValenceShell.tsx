@@ -54,12 +54,15 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.types';
 import type { Inbox } from '@ValenceClient/notifications/fetchNotifications';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { AudiobookBar } from '@ValenceScreens/components/AudiobookBar/AudiobookBar';
 import { BookDialog } from '@ValenceScreens/components/BookDialog/BookDialog';
 import { PlayOnDialog } from '@ValenceScreens/components/PlayOnDialog/PlayOnDialog';
 import { VideoRemote } from '@ValenceScreens/components/VideoRemote/VideoRemote';
 import { VideoRemoteBar } from '@ValenceScreens/components/VideoRemoteBar/VideoRemoteBar';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import { onControlledDevice, readControlledDevice } from '@ValenceClient/video/controlledDevice';
+import { startListening } from '@ValenceScreens/listening/startListening';
+import { theAudiobookPlayer } from '@ValenceScreens/listening/theAudiobookPlayer';
 import { useSurprise } from '@ValenceScreens/library/useSurprise';
 import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
 
@@ -245,6 +248,7 @@ const ValenceShell = () => {
               setIsRemoteOpen(true);
             }}
           />
+          <AudiobookBar />
         </>
       }
       isFitted={place.section === 'music'}
@@ -485,6 +489,10 @@ const ValenceShell = () => {
         }}
         onRead={(book) => {
           void navigate({ to: '/read/$bookId', params: { bookId: book.id } });
+        }}
+        onListen={(detail) => {
+          go({ book: null });
+          void startListening(detail, theAudiobookPlayer());
         }}
         onToggleKept={(book) => {
           keptBooks.toggle(book.id);

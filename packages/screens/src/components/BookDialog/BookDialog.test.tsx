@@ -5,7 +5,12 @@ import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { BookDialog } from './BookDialog';
-import type { Book, BookReading } from '@ValenceContracts/schemas/Book';
+import type {
+  Book,
+  BookDetail,
+  BookReading,
+  ListeningProgress,
+} from '@ValenceContracts/schemas/Book';
 
 const BOOK_ID = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001';
 
@@ -27,15 +32,20 @@ const A_BOOK: Book = {
 };
 
 /**
- * Serves the book, where somebody is in it, and nothing rated.
+ * Serves the book, where somebody is in it and has got to hearing it, and nothing rated.
  */
-const serve = (readings: BookReading[] = []) => {
+const serve = (
+  readings: BookReading[] = [],
+  book: Book = A_BOOK,
+  heard: ListeningProgress | null = null,
+) => {
   vi.stubGlobal(
     'fetch',
     vi.fn((input: string) => {
       const answers: Record<string, object> = {
-        [`/api/books/${BOOK_ID}`]: { book: A_BOOK, chapters: [] },
+        [`/api/books/${BOOK_ID}`]: { book, chapters: [] },
         '/api/reading': { readings },
+        [`/api/books/${BOOK_ID}/listening`]: { progress: heard },
         '/api/ratings': { ratings: [] },
         [`/api/books/${BOOK_ID}/rating/household`]: { average: null, count: 0 },
       };
@@ -85,6 +95,71 @@ describe('BookDialog', () => {
     expect(screen.getByText('Jane Austen · 1813')).toBeInTheDocument();
     expect(screen.getByText('It is a truth universally acknowledged.')).toBeInTheDocument();
     expect(screen.getByText('Romance')).toBeInTheDocument();
+  });
+
+  it('says a book that is only heard is an audiobook, with nothing to read', async () => {
+    serve([], { ...A_BOOK, layout: 'audio', hasText: false, hasAudio: true });
+    open();
+
+    expect(await screen.findByText('Audiobook')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Read' })).toBeDisabled();
+  });
+
+  it('offers to listen to a book that is only heard, in place of reading it', async () => {
+    const onListen = vi.fn<(detail: BookDetail) => void>();
+
+    serve([], { ...A_BOOK, layout: 'audio', hasText: false, hasAudio: true });
+    open({ onListen });
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Listen' }));
+
+    expect(onListen.mock.calls[0]?.[0].book.id).toBe(BOOK_ID);
+    expect(screen.queryByRole('button', { name: 'Read' })).not.toBeInTheDocument();
+  });
+
+  it('offers to carry on listening where somebody left off, or to listen again', async () => {
+    const place = {
+      bookId: BOOK_ID,
+      chapterId: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c00cc',
+      positionSeconds: 30,
+      isFinished: false,
+      updatedAt: '2026-09-18T00:00:00.000Z',
+    };
+
+    serve([], { ...A_BOOK, layout: 'audio', hasText: false, hasAudio: true }, place);
+    open({ onListen: vi.fn() });
+
+    expect(await screen.findByRole('button', { name: 'Continue listening' })).toBeInTheDocument();
+  });
+
+  it('offers listening beside reading, for a book that can be both', async () => {
+    const onListen = vi.fn();
+
+    serve([], { ...A_BOOK, hasText: true, hasAudio: true });
+    open({ onListen });
+
+    await vi.waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Read' })).toBeEnabled();
+    });
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Listen' }));
+
+    expect(onListen).toHaveBeenCalled();
+  });
+
+  it('offers no listening where nothing is there to hear it with', async () => {
+    serve([], { ...A_BOOK, hasText: true, hasAudio: true });
+    open();
+
+    expect(await screen.findByRole('button', { name: 'Read' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Listen' })).not.toBeInTheDocument();
+  });
+
+  it('says a book that can be read and heard is both', async () => {
+    serve([], { ...A_BOOK, hasText: true, hasAudio: true });
+    open();
+
+    expect(await screen.findByText('Ebook and audiobook')).toBeInTheDocument();
   });
 
   it('offers to start a book nobody has opened', async () => {

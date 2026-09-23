@@ -31,7 +31,23 @@ vi.mock('@ValenceScreens/components/BookShelf/BookShelf', () => ({
   },
 }));
 
+vi.mock('@ValenceScreens/components/ContinueReading/ContinueReading', () => ({
+  ContinueReading: () => <p>reading</p>,
+}));
+
+vi.mock('@ValenceScreens/components/ContinueListening/ContinueListening', () => ({
+  ContinueListening: () => <p>listening</p>,
+}));
+
 describe('BooksPage', () => {
+  it('leads with what somebody is partway through reading, then hearing, then the shelf', () => {
+    renderInAShell(<BooksPage />);
+
+    const order = [...document.querySelectorAll('p')].map((each) => each.textContent);
+
+    expect(order).toEqual(['reading', 'listening', 'shelf']);
+  });
+
   it('names itself, as every other section does', () => {
     renderInAShell(<BooksPage />);
 

@@ -16,14 +16,16 @@ const ABSENT = 404;
  *
  * @param path - What to ask for.
  * @param schema - The shape the answer must be in.
+ * @param headers - Anything more to send with the request, such as which profile is asking.
  * @returns The answer, or nothing where the server said there is no such thing.
  */
 const readFromServerOrAbsent = async <Value>(
   path: string,
   schema: { parse: (body: JsonValue) => Value },
+  headers: Record<string, string> = {},
 ): Promise<Value | null> => {
   try {
-    return await readFromServer(path, schema);
+    return await readFromServer(path, schema, headers);
   } catch (error) {
     if (error instanceof RequestFailed && error.status === ABSENT) {
       return null;

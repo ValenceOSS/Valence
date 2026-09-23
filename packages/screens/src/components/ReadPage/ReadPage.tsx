@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -31,7 +32,10 @@ const ReadPage = () => {
   const read = useQuery(bookQueries.progress(id));
   const [chosen, setChosen] = useState<string | null>(null);
 
-  const chapters = useMemo(() => asked.data?.chapters ?? [], [asked.data]);
+  const chapters = useMemo(
+    () => (asked.data?.chapters ?? []).filter((chapter) => !isAudiobookFormat(chapter.format)),
+    [asked.data],
+  );
 
   const furthest = useMemo(() => {
     const held = read.data ?? [];

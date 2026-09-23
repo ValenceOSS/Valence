@@ -1,5 +1,8 @@
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
-import type { QueueControl } from '@ValenceServer/transcoder/TranscoderClient';
+import type {
+  QueueControl,
+  TranscoderStreamedFile,
+} from '@ValenceServer/transcoder/TranscoderClient';
 import type { RunningJob } from '@ValenceServer/jobs/JobQueue';
 import type { CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import { OpenAPIHono, z } from '@hono/zod-openapi';
@@ -461,6 +464,7 @@ import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
 import { registerVideoDeviceRoutes } from '@ValenceServer/video/registerVideoDeviceRoutes';
 import type { VideoDevices } from '@ValenceServer/video/createVideoDevices';
+import { registerListeningRoutes } from '@ValenceServer/books/registerListeningRoutes';
 import { registerReencodeRoutes } from '@ValenceServer/reencode/registerReencodeRoutes';
 import { listeningFor } from '@ValenceServer/music/listeningFor';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
@@ -636,6 +640,7 @@ type CreateAppOptions = {
   households?: HouseholdService;
   splashscreen?: SplashscreenStore;
   books?: BookService;
+  streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;
   videoDevices?: VideoDevices;
   reencodes?: ReencodeService;
@@ -732,6 +737,7 @@ const createApp = ({
   households,
   splashscreen = createMemorySplashscreenStore(),
   books,
+  streamBookFile,
   music,
   videoDevices,
   reencodes,
@@ -5178,10 +5184,9 @@ const createApp = ({
 
   app.openapi(sendReleaseRoute, async (context) => {
     const sending = context.req.valid('json');
-    const fileable =
-      sending.libraryKind === 'movies' || sending.libraryKind === 'shows'
-        ? (await library.list(asTheServer)).filter((entry) => entry.kind === sending.libraryKind)
-        : [];
+    const fileable = (await library.list(asTheServer)).filter(
+      (entry) => entry.kind === sending.libraryKind,
+    );
     const into =
       sending.libraryId === undefined
         ? fileable[0]
@@ -5200,15 +5205,13 @@ const createApp = ({
 
   app.openapi(fileQueuedDownloadRoute, async (context) => {
     const { libraryId } = context.req.valid('json');
-    const into = (await library.list(asTheServer)).find(
-      (entry) => entry.id === libraryId && (entry.kind === 'movies' || entry.kind === 'shows'),
-    );
+    const into = (await library.list(asTheServer)).find((entry) => entry.id === libraryId);
     const answer = await throughRequests(context.req.raw.headers, (client) =>
       into === undefined
         ? Promise.resolve({
             kind: 'refused' as const,
             status: 400 as const,
-            error: 'That is not a library of films or series.',
+            error: 'There is no such library.',
           })
         : client.fileDownload(context.req.valid('param').id, { id: into.id, path: into.path }),
     );
@@ -6661,6 +6664,16 @@ const createApp = ({
       'cache-control': 'private, max-age=604800, immutable',
     });
   });
+
+  if (books !== undefined && streamBookFile !== undefined) {
+    registerListeningRoutes(app, {
+      books,
+      viewerOf,
+      profileOf: readProfileId,
+      isInReach: bookInReach,
+      streamFile: streamBookFile,
+    });
+  }
 
   app.openapi(saveReadingProgressRoute, async (context) => {
     const profileId = await readProfileId(context.req.raw.headers);

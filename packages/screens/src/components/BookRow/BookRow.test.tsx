@@ -30,6 +30,61 @@ describe('BookRow', () => {
     expect(screen.getByText('Jane Austen')).toBeInTheDocument();
   });
 
+  it('keeps a series’ books apart where it is given nowhere to open a series', () => {
+    const series = { name: 'Emma and More', position: 1 };
+
+    render(
+      <BookRow
+        title="Continue reading"
+        books={[
+          { ...A_BOOK, series },
+          { ...A_BOOK, id: 'b2', title: 'Persuasion', series },
+        ]}
+        onOpen={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Emma')).toBeInTheDocument();
+    expect(screen.getByText('Persuasion')).toBeInTheDocument();
+    expect(screen.queryByText('Emma and More')).not.toBeInTheDocument();
+  });
+
+  it('opens a series from its card, which wears how many books it holds', async () => {
+    const onOpenSeries = vi.fn();
+    const series = { name: 'Emma and More', position: 1 };
+
+    render(
+      <BookRow
+        title="Books"
+        books={[
+          { ...A_BOOK, series },
+          { ...A_BOOK, id: 'b2', title: 'Persuasion', series: { ...series, position: 2 } },
+        ]}
+        onOpen={vi.fn()}
+        onOpenSeries={onOpenSeries}
+      />,
+    );
+
+    await userEvent.click(screen.getByText('Emma and More'));
+
+    expect(screen.getByText('2 books · Jane Austen')).toBeInTheDocument();
+    expect(onOpenSeries).toHaveBeenCalledWith(expect.objectContaining({ name: 'Emma and More' }));
+  });
+
+  it('puts a book’s place in its series above it, on a row of one series', () => {
+    render(
+      <BookRow
+        title="In order"
+        books={[{ ...A_BOOK, series: { name: 'Emma and More', position: 3 } }]}
+        isNumbered
+        onOpen={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Book 3')).toBeInTheDocument();
+    expect(screen.queryByText('1815')).not.toBeInTheDocument();
+  });
+
   it('says how far through a book somebody is, in place of who wrote it', () => {
     render(
       <BookRow
@@ -54,6 +109,18 @@ describe('BookRow', () => {
     );
 
     expect(screen.getByText('1 chapter')).toBeInTheDocument();
+  });
+
+  it('says a book that is only heard is an audiobook, where nobody named its author', () => {
+    render(
+      <BookRow
+        title="Books"
+        books={[{ ...A_BOOK, layout: 'audio', authors: null }]}
+        onOpen={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Audiobook')).toBeInTheDocument();
   });
 
   it('opens the book chosen', async () => {

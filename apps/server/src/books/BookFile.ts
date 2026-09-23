@@ -1,3 +1,5 @@
+import type { ChapterMark } from '@ValenceContracts/schemas/Book';
+
 type BookPageBytes = {
   bytes: Uint8Array;
   contentType: string;
@@ -21,6 +23,7 @@ type BookAbout = {
   title: string | null;
   authors: string[];
   description: string | null;
+  partOf?: { name: string; position: number | null } | null;
 };
 
 type FixedBook = {
@@ -40,13 +43,23 @@ type ReflowBook = {
   readCover: () => Promise<BookPageBytes | null>;
 };
 
-type OpenedBook = FixedBook | ReflowBook;
+type ListenBook = {
+  layout: 'audio';
+  durationSeconds: number;
+  marks: ChapterMark[];
+  track: number | null;
+  about?: BookAbout;
+  readCover: () => Promise<BookPageBytes | null>;
+};
+
+type OpenedBook = FixedBook | ReflowBook | ListenBook;
 
 export type {
   BookAbout,
   BookPageBytes,
   ContentsPlace,
   FixedBook,
+  ListenBook,
   OpenedBook,
   ReflowBook,
   SpineEntry,

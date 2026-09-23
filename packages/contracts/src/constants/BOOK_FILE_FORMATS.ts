@@ -7,6 +7,14 @@ const BOOK_FILE_FORMATS: ReadonlyMap<string, BookFormat> = new Map<string, BookF
   ['rar', 'cbr'],
   ['pdf', 'pdf'],
   ['epub', 'epub'],
+  ['m4b', 'm4b'],
+  ['m4a', 'm4a'],
+  ['mp3', 'mp3'],
+  ['aac', 'aac'],
+  ['ogg', 'ogg'],
+  ['oga', 'ogg'],
+  ['opus', 'opus'],
+  ['flac', 'flac'],
 ]);
 
 export { BOOK_FILE_FORMATS };
