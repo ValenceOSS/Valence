@@ -2,8 +2,8 @@ import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY
 import type { Library, LibraryKind } from '@ValenceContracts/schemas/Library';
 
 /**
- * Says where a release sent by hand ends up: a film or series is filed into the first library of
- * its kind once it has downloaded, and anything else stays in the client under its category.
+ * Says where a release sent by hand ends up: filed into the first library of its kind once it has
+ * downloaded, or kept in the client under its category where there is no such library.
  *
  * @param kind - What it is sent as.
  * @param libraries - The libraries there are.
@@ -16,10 +16,6 @@ const describeWhereItGoes = (
   category: string,
 ): string => {
   const { one } = LIBRARY_KIND_NAMES[kind];
-
-  if (kind !== 'movies' && kind !== 'shows') {
-    return `As ${one}, kept in the client under ${category}.`;
-  }
 
   const into = libraries.find((library) => library.kind === kind);
 

@@ -46,6 +46,7 @@ import {
 import { previewRequestFor } from './previewRequestFor';
 import { fetchLogos } from './fetchLogos';
 import { scanLibrary } from './scanLibrary';
+import { marksFromProbe } from '@ValenceServer/books/marksFromProbe';
 import { scanBookLibrary } from '@ValenceServer/books/scanBookLibrary';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import type { BookStore } from '@ValenceServer/books/scanBookLibrary';
@@ -695,6 +696,8 @@ const createDatabaseLibraryService = ({
       files,
       store: books,
       force,
+      readMarks: async (path, durationSeconds) =>
+        marksFromProbe((await transcoder.probe(path)).chapters, durationSeconds),
       ...(onProblem === undefined ? {} : { onProblem }),
       ...(onArrived === undefined
         ? {}
@@ -1835,6 +1838,10 @@ const createDatabaseLibraryService = ({
 
     runScanFolder: async (libraryId, folder, jobId) => {
       const found = await findLibrary(libraryId);
+
+      if (found?.kind === 'books') {
+        return scanBooks(found, false, jobId);
+      }
 
       if (found === null || (found.kind !== 'movies' && found.kind !== 'shows')) {
         return found?.kind === 'music'

@@ -1,3 +1,4 @@
+import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { albumsInRelease } from '@ValenceRequests/mediaRequests/albumsInRelease';
 import { matchRelease } from '@ValenceRequests/mediaRequests/matchRelease';
@@ -102,6 +103,7 @@ const judgeForRequest = ({
       judgedBy,
       request.runtimeMinutes ?? undefined,
       covered.length,
+      isBookRequest(request.kind),
     );
     const reason = blockedBecause.get(release.title);
     const isWholeRun = parsed.isCompleteSeries || parsed.seasons.length > 1;

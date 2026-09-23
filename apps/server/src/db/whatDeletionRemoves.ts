@@ -242,6 +242,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'isPersonal',
   },
   {
+    table: 'listening_progress',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
+  {
     table: 'prepared_download',
     column: 'profileId',
     owner: 'profile',

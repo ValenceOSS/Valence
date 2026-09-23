@@ -99,6 +99,25 @@ describe('ReadPage', () => {
     expect(await screen.findByRole('img', { name: 'Page 1' })).toBeInTheDocument();
   });
 
+  it('says there is nothing to read in a book that is only heard', async () => {
+    serve({ ...A_BOOK, layout: 'audio' }, [{ ...A_CHAPTER, format: 'm4b', durationSeconds: 3600 }]);
+
+    renderInAnAddress(<ReadPage />);
+
+    expect(await screen.findByText('Nothing in this book yet')).toBeInTheDocument();
+  });
+
+  it('opens the text of a book that can be heard as well, leaving the audio out', async () => {
+    serve({ ...A_BOOK, hasAudio: true }, [
+      { ...A_CHAPTER, id: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0003', number: 0, format: 'm4b' },
+      A_CHAPTER,
+    ]);
+
+    renderInAnAddress(<ReadPage />);
+
+    expect(await screen.findByText('It is a truth universally acknowledged.')).toBeInTheDocument();
+  });
+
   it('says so when a book has nothing in it yet', async () => {
     serve(A_BOOK, []);
 

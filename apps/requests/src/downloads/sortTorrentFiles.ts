@@ -1,4 +1,5 @@
 import { AUDIO_FILE_EXTENSIONS } from '@ValenceContracts/constants/AUDIO_FILE_EXTENSIONS';
+import { AUDIOBOOK_FILE_EXTENSIONS } from '@ValenceContracts/constants/AUDIOBOOK_FILE_EXTENSIONS';
 import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
 import { VIDEO_FILE_EXTENSIONS } from '@ValenceContracts/constants/VIDEO_FILE_EXTENSIONS';
 import { BOOK_FORMATS } from '@ValenceContracts/schemas/Book';
@@ -11,8 +12,16 @@ const WANTED: Readonly<Record<LibraryKind, ReadonlySet<string>>> = {
   movies: new Set([...VIDEO_FILE_EXTENSIONS, ...TEXT_SUBTITLE_EXTENSIONS]),
   shows: new Set([...VIDEO_FILE_EXTENSIONS, ...TEXT_SUBTITLE_EXTENSIONS]),
   music: new Set([...AUDIO_FILE_EXTENSIONS, 'jpg', 'jpeg', 'png']),
-  books: new Set(BOOK_FORMATS),
+  books: new Set([...BOOK_FORMATS, ...AUDIOBOOK_FILE_EXTENSIONS, 'cue', 'jpg', 'jpeg', 'png']),
 };
+
+const ALONGSIDE: ReadonlySet<string> = new Set([
+  ...TEXT_SUBTITLE_EXTENSIONS,
+  'cue',
+  'jpg',
+  'jpeg',
+  'png',
+]);
 
 const PROGRAMS: ReadonlySet<string> = new Set([
   'exe',
@@ -55,10 +64,13 @@ const extensionOf = (name: string): string => {
 
 /**
  * Sorts a torrent's files by what a library of its kind takes: videos and their subtitles for
- * films and series, tracks and their cover for music, books for books. Everything else — notes,
+ * films and series, tracks and their cover for music, and for books both what is read and what is
+ * listened to — an audiobook's tracks with their cover and the cue sheet saying where its chapters
+ * fall. Everything else — notes,
  * pictures, links, samples of the video — is not worth fetching. A program among them marks the
  * torrent as the kind of fake that passes for a film and runs something instead, and one with
- * nothing a library takes cannot be filed at all.
+ * nothing a library takes cannot be filed at all — subtitles, covers and cue sheets are kept with
+ * what they belong to, but are not something to file on their own.
  *
  * @param files - The torrent's files.
  * @param kind - The kind of library it is for.
@@ -73,7 +85,7 @@ const sortTorrentFiles = (files: readonly TorrentFile[], kind: LibraryKind): Sor
   return {
     unwanted: files.filter((file) => !isWanted(file)).map((file) => file.index),
     program: files.find((file) => PROGRAMS.has(extensionOf(file.name)))?.name ?? null,
-    hasWanted: files.some(isWanted),
+    hasWanted: files.some((file) => isWanted(file) && !ALONGSIDE.has(extensionOf(file.name))),
   };
 };
 

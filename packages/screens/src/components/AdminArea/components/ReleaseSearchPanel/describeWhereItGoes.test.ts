@@ -19,9 +19,12 @@ describe('describeWhereItGoes', () => {
     );
   });
 
-  it('keeps music and books in the client', () => {
+  it('files music and books into their own libraries too', () => {
     expect(describeWhereItGoes('music', LIBRARIES, 'valence-music')).toBe(
-      'As music, kept in the client under valence-music.',
+      'As music, filed into Albums once it has downloaded.',
+    );
+    expect(describeWhereItGoes('books', LIBRARIES, 'valence-books')).toBe(
+      'As a book. There is no library of books to file it into, so it stays in the client under valence-books.',
     );
   });
 });

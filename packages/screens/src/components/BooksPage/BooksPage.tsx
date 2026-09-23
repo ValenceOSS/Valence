@@ -3,6 +3,7 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { BookShelf } from '@ValenceScreens/components/BookShelf/BookShelf';
+import { ContinueListening } from '@ValenceScreens/components/ContinueListening/ContinueListening';
 import { ContinueReading } from '@ValenceScreens/components/ContinueReading/ContinueReading';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { Book } from '@ValenceContracts/schemas/Book';
@@ -13,7 +14,7 @@ import type { Book } from '@ValenceContracts/schemas/Book';
  * Choosing a book opens the dialog a film opens: what it is, how far through somebody is, what the
  * household made of it, and the ways to read it, keep it and share it — the button to read being the
  * largest thing in it. What somebody is partway through leads the page, the way a film half watched
- * leads the home page.
+ * leads the home page, and what they are partway through hearing comes after it.
  *
  * Laid out as the other sections are: its heading is there for anybody reading the page rather than
  * looking at it, since the bar along the top already says where you are, and a banner saying it
@@ -45,6 +46,8 @@ const BooksPage = () => {
         className="flex flex-col gap-5"
       >
         <ContinueReading onOpen={open} />
+
+        <ContinueListening onOpen={open} />
 
         <BookShelf
           onOpen={open}
