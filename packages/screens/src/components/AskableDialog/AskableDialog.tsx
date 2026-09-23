@@ -96,7 +96,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
     void askForMedia(asked)
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be asked for.');
+          setProblem(refusal?.message ?? 'That could not be requested.');
 
           return;
         }
@@ -372,7 +372,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
       <ConfirmDialog
         title={`Cancel ${title?.title ?? 'this request'}?`}
-        detail="It will not be fetched, and whatever it had started downloading is deleted. You can ask for it again whenever you like."
+        detail="It will not be fetched, and whatever it had started downloading is deleted. You can request it again whenever you like."
         confirmLabel="Cancel request"
         isDestructive
         isOpen={isCancelling}

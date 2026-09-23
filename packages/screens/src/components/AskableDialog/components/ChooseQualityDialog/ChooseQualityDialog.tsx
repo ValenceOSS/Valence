@@ -35,7 +35,7 @@ const ChooseQualityDialog = ({
   onClose,
 }: ChooseQualityDialogProps) => (
   <Dialog label={`Which quality for ${title}?`} isOpen={isOpen} onClose={onClose}>
-    <DialogTitle title={`Ask for ${title}`} detail="We’ll fetch the best release that fits." />
+    <DialogTitle title={`Request ${title}`} detail="We’ll fetch the best release that fits." />
 
     <DialogContent>
       <ul className="flex flex-col gap-2">

@@ -50,7 +50,7 @@ const RequestsPage = ({ onOpen, onLight }: RequestsPageProps) => {
       ) : shown.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.nothing}>Nothing has been asked for yet.</Text>
-          <Text style={styles.hint}>Find something in Search, and ask for it from its page.</Text>
+          <Text style={styles.hint}>Find something in Search, and request it from its page.</Text>
         </View>
       ) : (
         shown.map((request, at) => (

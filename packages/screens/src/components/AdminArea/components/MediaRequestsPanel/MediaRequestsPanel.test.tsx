@@ -356,6 +356,6 @@ describe('MediaRequestsPanel', () => {
 
     await user.click(await screen.findByRole('button', { name: /try again/i }));
 
-    expect(await screen.findByText(/Nothing has been asked for yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/Nothing has been requested yet/)).toBeInTheDocument();
   });
 });

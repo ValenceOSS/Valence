@@ -26,7 +26,7 @@ const nameTheStanding = (
       return { look: 'failed', label: 'Refused' };
     case 'downloading':
     case 'chosen':
-      return { look: 'working', label: 'Downloading' };
+      return { look: 'working', label: 'Downloading to library' };
     case 'filing':
     case 'filed':
     case 'available':
