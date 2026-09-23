@@ -13,9 +13,9 @@ reference, not a substitute for reading it.
 ## Non-negotiables
 
 1. **TypeScript and Rust only.** No JavaScript files, including config. The one
-   carve-out is Swift inside an Apple-platform client's native modules,
-   `apps/<client>/modules/<module>/ios/`, wrapping a system control for
-   TypeScript to use — see the standard for its limits.
+   carve-out is Swift and Kotlin inside a client's native modules,
+   `apps/<client>/modules/<module>/ios/` and `.../android/`, wrapping a system
+   control for TypeScript to use — see the standard for its limits.
 2. **No duplication across modules.** Needed twice means extracted and shared.
 3. **No `../` imports.** Use `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`,
    `@ValenceCore/*`, `@ValenceSDK/*`.

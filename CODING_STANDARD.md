@@ -21,16 +21,18 @@ is `.gitignore`d, never hand-edited.
 
 No `.js`, `.jsx`, `.mjs`, or `.cjs` files are committed to the repository.
 
-### Swift, for Apple's own controls and nothing else
+### Swift and Kotlin, for the platforms' own controls and nothing else
 
 **Swift is permitted inside the local native modules of an Apple-platform
-client — `apps/<client>/modules/<module>/ios/` — and nowhere else.** Today that
-means `apps/tv` and `apps/ios`. Some of what makes an app on those platforms
-feel like it belongs there is only reachable from Swift: tvOS's inline search
-keyboard with its dictation and suggestions is `UISearchContainerViewController`,
-and an iOS control drawn by SwiftUI is a SwiftUI view. A module that wraps one
-is written in the language that declares it, the same reason the transcoder is
-Rust, and scoped the same way.
+client — `apps/<client>/modules/<module>/ios/` — and Kotlin inside the same
+modules' Android side — `apps/<client>/modules/<module>/android/` — and neither
+anywhere else.** Today that means `apps/tv` and `apps/ios`. Some of what makes
+an app on those platforms feel like it belongs there is only reachable from the
+platform's own language: tvOS's inline search keyboard with its dictation and
+suggestions is `UISearchContainerViewController`, an iOS control drawn by
+SwiftUI is a SwiftUI view, and Android's service discovery and focus handling
+are Kotlin's. A module that wraps one is written in the language that declares
+it, the same reason the transcoder is Rust, and scoped the same way.
 
 The cost is a third language to read, so the boundary is kept narrow:
 
@@ -38,12 +40,15 @@ The cost is a third language to read, so the boundary is kept narrow:
   TypeScript. It holds no screens, no application state and no requests to the
   server. A screen reaches a native view through `requireNativeView` or a
   module's functions, never through Swift of its own.
-- Each module is declared by its `expo-module.config.json` and the `.podspec`
-  CocoaPods reads. The podspec is Ruby because CocoaPods only reads Ruby; it
-  declares the module and does nothing else.
-- The Xcode project an app is built from is generated from its TypeScript
-  config on every prebuild and is `.gitignore`d, never hand-edited, like any
-  other build artifact.
+- Each module is declared by its `expo-module.config.json`, the `.podspec`
+  CocoaPods reads and, where it has an Android side, the `build.gradle` Gradle
+  reads. The podspec is Ruby because CocoaPods only reads Ruby, and the Gradle
+  file is Gradle's; each declares the module and does nothing else.
+- The Xcode and Android projects an app is built from are generated from its
+  TypeScript config on every prebuild and are `.gitignore`d, never hand-edited,
+  like any other build artifact.
+- A module that exists on one platform only is optional to the other: the
+  TypeScript that uses it says what happens without it, rather than assuming it.
 - A native module two clients need is one module, under rule 2, not a copy in
   each app.
 
