@@ -103,11 +103,18 @@ const offerSeriesRoute = createRoute({
   method: 'post',
   path: '/api/series/{seriesId}/downloads/offer',
   tags: ['Downloads'],
-  summary: 'What a whole programme would cost, added up across its episodes',
+  summary: 'What a programme, or the episodes of it chosen, would cost, added up across them',
   request: {
     params: z.object({ seriesId: z.string() }),
     body: {
-      content: { 'application/json': { schema: z.object({ deviceProfile: DeviceProfileSchema }) } },
+      content: {
+        'application/json': {
+          schema: z.object({
+            deviceProfile: DeviceProfileSchema,
+            mediaIds: z.array(z.string()).optional(),
+          }),
+        },
+      },
     },
   },
   responses: {
@@ -130,7 +137,7 @@ const askForSeriesRoute = createRoute({
   method: 'post',
   path: '/api/series/{seriesId}/downloads',
   tags: ['Downloads'],
-  summary: 'Ask for every episode of a programme to be prepared',
+  summary: 'Ask for every episode of a programme, or the ones chosen, to be prepared',
   request: {
     params: z.object({ seriesId: z.string() }),
     body: {
@@ -139,6 +146,7 @@ const askForSeriesRoute = createRoute({
           schema: z.object({
             quality: DownloadQualitySchema,
             audioLanguages: z.array(z.string()).optional(),
+            mediaIds: z.array(z.string()).optional(),
           }),
         },
       },

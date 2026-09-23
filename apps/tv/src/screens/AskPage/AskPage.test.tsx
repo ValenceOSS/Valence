@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
-import { aMediaRequest } from '@ValenceScreens/testing/aMediaRequest';
+import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { AskPage } from '@ValenceTv/screens/AskPage/AskPage';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { CatalogueSeason } from '@ValenceContracts/schemas/MediaRequest';

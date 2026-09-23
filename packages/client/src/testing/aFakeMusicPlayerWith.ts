@@ -54,6 +54,7 @@ const aFakeMusicPlayerWith = (
     addToQueue: spy(),
     jumpTo: spy(),
     removeFromQueue: spy(),
+    clearUpNext: spy(),
     moveInQueue: spy(),
     setQuality: spy(),
     stop: spy(),

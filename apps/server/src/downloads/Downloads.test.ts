@@ -141,6 +141,46 @@ describe('downloads over HTTP', () => {
     expect(response.status).toBe(401);
   });
 
+  it('hands no file to somebody who is not signed in', async () => {
+    const { app } = build();
+
+    const response = await app.request(
+      `${BASE}/api/downloads/3fa85f64-5717-4562-b3fc-2c963f66afa6/file`,
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it('says there is nothing to fetch where nothing is ready under that name', async () => {
+    const { app } = build();
+    const cookie = await signedIn(app);
+
+    const response = await app.request(
+      `${BASE}/api/downloads/3fa85f64-5717-4562-b3fc-2c963f66afa6/file`,
+      { headers: { cookie, origin: BASE } },
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('hands over a file that is ready to its owner', async () => {
+    const { app, downloads } = build();
+    const cookie = await signedIn(app);
+    const asked = DownloadSchema.parse(await (await ask(app, cookie)).json());
+
+    for (const [profileId, held] of Object.entries(downloads.state.downloads)) {
+      downloads.state.downloads[profileId] = held.map((one) => ({ ...one, state: 'ready' }));
+    }
+
+    const response = await app.request(`${BASE}/api/downloads/${asked.id}/file`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('video/mp4');
+    expect(await response.text()).toBe(`the film ${MEDIA_ID}`);
+  });
+
   it('has nothing to say about a viewer who has asked for nothing', async () => {
     const { app } = build();
     const cookie = await signedIn(app);
@@ -231,6 +271,25 @@ describe('downloads over HTTP', () => {
     );
 
     expect(queued.downloads).toHaveLength(2);
+  });
+
+  it('queues only the episodes chosen, where some were', async () => {
+    const { app, downloads } = build();
+    const cookie = await signedIn(app);
+
+    downloads.state.episodes[SERIES_ID] = [MEDIA_ID, OTHER_MEDIA_ID];
+
+    const queued = DownloadListSchema.parse(
+      await (
+        await app.request(`${BASE}/api/series/${SERIES_ID}/downloads`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', cookie, origin: BASE },
+          body: JSON.stringify({ quality: '1080p', mediaIds: [OTHER_MEDIA_ID] }),
+        })
+      ).json(),
+    );
+
+    expect(queued.downloads.map((one) => one.mediaId)).toEqual([OTHER_MEDIA_ID]);
   });
 
   it('pauses one on request, so it stops without losing what it has done', async () => {

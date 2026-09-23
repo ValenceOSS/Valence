@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { aMediaRequest } from '@ValenceScreens/testing/aMediaRequest';
+import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { aRequestItem } from '@ValenceScreens/testing/aRequestItem';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { RequestsList } from './RequestsList';

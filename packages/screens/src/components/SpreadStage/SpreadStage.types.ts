@@ -1,4 +1,4 @@
-import type { ReaderFit } from '@ValenceScreens/reading/readerPreferences';
+import type { ReaderFit } from '@ValenceClient/books/readerPreferences';
 
 type SpreadStageProps = {
   spreads: readonly (readonly number[])[];

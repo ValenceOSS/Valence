@@ -36,7 +36,11 @@ import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { CaptionSettings } from '@ValenceScreens/components/VideoPlayer/components/CaptionSettings/CaptionSettings';
 import { EpisodeMenu } from '@ValenceScreens/components/VideoPlayer/components/EpisodeMenu/EpisodeMenu';
-import { SKIP_SECONDS, PLAYBACK_RATES, BOOST_STEPS } from './PlayerControls.types';
+import { SKIP_SECONDS, BOOST_STEPS } from './PlayerControls.types';
+import { PLAYBACK_RATES } from '@ValenceClient/playback/PLAYBACK_RATES';
+import { SUBTITLE_STEP_SECONDS } from '@ValenceClient/playback/SUBTITLE_STEP_SECONDS';
+import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
+import { describeSubtitleOffset } from '@ValenceClient/playback/describeSubtitleOffset';
 import type { PlayerControlsProps } from './PlayerControls.types';
 
 /**
@@ -65,8 +69,6 @@ const bitrateDetail = (maxVideoBitrateKbps: number): string =>
   maxVideoBitrateKbps >= 1000
     ? `up to ${(maxVideoBitrateKbps / 1000).toFixed(1)} Mbps`
     : `up to ${maxVideoBitrateKbps.toString()} kbps`;
-
-const SUBTITLE_STEP_SECONDS = 0.25;
 
 /**
  * The bar over the bottom of the video, and everything reachable from it: the scrubber and its
@@ -368,10 +370,7 @@ const PlayerControls = ({
                   id: 'timing',
                   label: 'Subtitle timing',
                   icon: <Icon of={ClockIcon} size={18} />,
-                  detail:
-                    subtitleOffsetSeconds === 0
-                      ? 'In time'
-                      : `${subtitleOffsetSeconds > 0 ? '+' : ''}${subtitleOffsetSeconds.toFixed(2)}s`,
+                  detail: describeSubtitleOffset(subtitleOffsetSeconds),
                   control: (
                     <span className="flex items-center gap-1">
                       <Button
@@ -441,7 +440,7 @@ const PlayerControls = ({
             },
             choices: PLAYBACK_RATES.map((rate) => ({
               id: rate.toString(),
-              label: rate === 1 ? 'Normal' : rateLabel(rate),
+              label: describePlaybackRate(rate),
             })),
           },
           {

@@ -11,6 +11,7 @@ import {
   deviceAuthorization,
   genericOAuth,
   jwt,
+  oneTimeToken,
   openAPI,
   twoFactor,
 } from 'better-auth/plugins';
@@ -155,6 +156,7 @@ const createAuth = ({
       deviceAuthorization({ expiresIn: '10m', interval: '5s' }),
       bearerWithoutACookie(),
       jwt(),
+      oneTimeToken({ disableClientRequest: true, storeToken: 'hashed', expiresIn: 3 }),
       apiKey({ enableSessionForAPIKeys: true }),
       admin(),
       genericOAuth({ config: [] }),

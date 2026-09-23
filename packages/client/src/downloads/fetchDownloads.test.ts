@@ -172,6 +172,22 @@ describe('askForSeries', () => {
 
     expect(await askForSeries('a-show', '1080p')).toEqual([]);
   });
+
+  it('names the episodes chosen, where some were', async () => {
+    fetchMock.mockResolvedValue(answering({ downloads: [A_DOWNLOAD] }));
+
+    await askForSeries('a-show', '1080p', [], ['one', 'two']);
+
+    expect(JSON.parse(String(sentOn(0).body))).toMatchObject({ mediaIds: ['one', 'two'] });
+  });
+
+  it('names none for the whole programme, so the server takes every episode', async () => {
+    fetchMock.mockResolvedValue(answering({ downloads: [A_DOWNLOAD] }));
+
+    await askForSeries('a-show', '1080p');
+
+    expect(JSON.parse(String(sentOn(0).body))).not.toHaveProperty('mediaIds');
+  });
 });
 
 describe('setDownloadPaused', () => {

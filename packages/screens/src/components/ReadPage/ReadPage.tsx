@@ -6,6 +6,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { saveReadingProgress } from '@ValenceClient/books/fetchBooks';
+import { whereToOpen } from '@ValenceClient/books/whereToOpen';
 import { PageReader } from '@ValenceScreens/components/PageReader/PageReader';
 import { TextReader } from '@ValenceScreens/components/TextReader/TextReader';
 
@@ -36,18 +37,11 @@ const ReadPage = () => {
     () => (asked.data?.chapters ?? []).filter((chapter) => !isAudiobookFormat(chapter.format)),
     [asked.data],
   );
-
-  const furthest = useMemo(() => {
-    const held = read.data ?? [];
-    const latest = [...held].sort(
-      (one, other) => Date.parse(other.updatedAt) - Date.parse(one.updatedAt),
-    )[0];
-
-    return latest ?? null;
-  }, [read.data]);
-
-  const chapterId = chosen ?? furthest?.chapterId ?? chapters[0]?.id ?? '';
-  const startAtPage = chosen === null && furthest !== null ? (furthest.pageNumber ?? 0) : 0;
+  const { chapterId, startAtPage, startAtFraction } = whereToOpen(
+    chapters,
+    read.data ?? [],
+    chosen,
+  );
 
   const remember = useCallback(
     (page: number, isFinished: boolean) => {
@@ -104,7 +98,7 @@ const ReadPage = () => {
         key={chapterId}
         book={asked.data.book}
         chapterId={chapterId}
-        startAt={furthest?.chapterId === chapterId ? (furthest.fraction ?? 0) : 0}
+        startAt={startAtFraction}
         onPlaceChange={rememberFraction}
         onClose={close}
       />

@@ -42,4 +42,16 @@ describe('randomId', () => {
 
     expect(randomId()).not.toBe(randomId());
   });
+
+  it('says which client is at fault where there is no Web Crypto at all', () => {
+    const had = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+
+    Reflect.deleteProperty(globalThis, 'crypto');
+
+    expect(() => randomId()).toThrow('host');
+
+    if (had !== undefined) {
+      Object.defineProperty(globalThis, 'crypto', had);
+    }
+  });
 });

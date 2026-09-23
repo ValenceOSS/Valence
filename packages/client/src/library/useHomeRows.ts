@@ -102,6 +102,10 @@ const byRating = (left: MediaSummary, right: MediaSummary): number =>
  * again once they are together — otherwise the first library's newest would fill the row before
  * the second's newest were looked at.
  *
+ * Past the genres and decades it goes on with the same genres in other orders and eras, each once:
+ * a row already shown is not shown again, and once every one has been, there are no more to ask
+ * for.
+ *
  * @param viewerId - Whose front page it is, whose favourites and ratings decide what is offered.
  * @param watchable - The libraries holding something to watch.
  * @param progress - How far through each thing this viewer is.
@@ -239,7 +243,23 @@ const useHomeRows = (
     const decade = everyDecade[Math.floor(step / across) % deep];
 
     return genre === undefined || decade === undefined ? null : { at, genre, order: null, decade };
-  }).filter((one) => one !== null);
+  })
+    .filter((one) => one !== null)
+    .filter(
+      (one, index, all) =>
+        all.findIndex(
+          (other) =>
+            other.genre === one.genre && other.order === one.order && other.decade === one.decade,
+        ) === index,
+    );
+
+  const encoreRoom =
+    2 *
+    Math.max(
+      Math.max(1, shownGenres.length) * ENCORE_ORDERS.length,
+      Math.max(1, everyGenre.length) * Math.max(1, everyDecade.length),
+    );
+  const hasMoreEncores = shownGenres.length > 0 && encoreLimit < encoreRoom;
 
   const byEncore = useQueries({
     queries: encores.map(({ genre, order, decade }) => ({
@@ -311,7 +331,7 @@ const useHomeRows = (
   return {
     rails,
     isReading,
-    hasMore: hasMoreGenres || hasMoreDecades || shownGenres.length > 0,
+    hasMore: hasMoreGenres || hasMoreDecades || hasMoreEncores,
     isReadingMore:
       byGenre.some((one) => one.isLoading) ||
       byDecade.some((one) => one.isLoading) ||

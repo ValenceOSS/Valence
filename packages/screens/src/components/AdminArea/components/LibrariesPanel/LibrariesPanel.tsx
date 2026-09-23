@@ -35,7 +35,7 @@ import type { LibrariesPanelProps } from './LibrariesPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { readingOf } from '@ValenceScreens/components/AdminArea/readingOf';
 import { workOf } from '@ValenceScreens/components/AdminArea/workOf';
-import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
+import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 
 /**
  * The folders Valence reads and what it is doing to them: adding one, scanning one or all of them,

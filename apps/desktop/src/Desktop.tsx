@@ -11,7 +11,7 @@ import {
   serverAddress,
 } from '@ValenceClient/session/serverAddress';
 import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
-import { describeTheBuild } from '@ValenceScreens/about/describeTheBuild';
+import { describeTheBuild } from '@ValenceClient/about/describeTheBuild';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import { useServerIsLost } from '@ValenceClient/offline/useServerIsLost';
 import '@ValenceDesktop/TheWindow.types';

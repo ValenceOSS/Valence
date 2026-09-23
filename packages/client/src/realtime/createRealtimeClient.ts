@@ -1,7 +1,7 @@
+import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import { FromServerSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { FromClient, RealtimeEvent, RealtimeTopic } from '@ValenceContracts/schemas/Realtime';
-import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 
 type Handlers = {
   onOpen: () => void;
@@ -27,8 +27,8 @@ type RealtimeClientOptions = {
 type Identity = {
   profileId?: string | null;
   clientId?: string;
-  deviceLabel?: string;
   clientKind?: ClientKind;
+  deviceLabel?: string;
 };
 
 type PartyMessage = Extract<FromClient, { kind: `party${string}` }>;

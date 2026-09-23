@@ -20,6 +20,7 @@ import { openRealtimeSocket } from '@ValenceWeb/realtime/openRealtimeSocket';
 const installBrowserPlatform = (): void => {
   installPlatform({
     store: theBrowsersStore(),
+    serverAddress: () => null,
     describeThisClient: describeThisBrowser,
     thisClientId: thisTabsId,
     thisClientKind: () => detectClientKind(navigator.userAgent),

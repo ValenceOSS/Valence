@@ -13,12 +13,12 @@ import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { forgetReading } from '@ValenceClient/books/fetchBooks';
 import { describeWhen } from '@ValenceClient/history/describeWhen';
 import { interleaveHistory } from '@ValenceClient/history/interleaveHistory';
-import { describeReadingPlace } from '@ValenceScreens/reading/describeReadingPlace';
+import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import type { BookReading } from '@ValenceContracts/schemas/Book';
 import type { Viewing } from '@ValenceContracts/schemas/Viewing';
 import type { HistoryPanelProps } from './HistoryPanel.types';
 import type { InfiniteData } from '@tanstack/react-query';
-import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
+import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 
 /**
  * Names something in the history that has since left the library, since a viewing outlives the file

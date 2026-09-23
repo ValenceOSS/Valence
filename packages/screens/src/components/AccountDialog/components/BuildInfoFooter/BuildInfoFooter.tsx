@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
-import { describeTheBuild } from '@ValenceScreens/about/describeTheBuild';
+import { describeTheBuild } from '@ValenceClient/about/describeTheBuild';
 
 /**
  * What this build of Valence is, and what the server answering it is running, sat in the corner of

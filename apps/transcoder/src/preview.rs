@@ -18,6 +18,7 @@ use sha2::{Digest, Sha256};
 use thiserror::Error;
 use tokio::process::Command;
 
+use crate::bars::{self, Bars};
 use crate::capability::Capabilities;
 use crate::chains::{runs_here, ChainShape};
 use crate::integrity::decodes;
@@ -47,7 +48,7 @@ const COMPLETE_MARKER: &str = ".complete";
 /// simply never read. Previews and sheets carry their own numbers, because
 /// changing how a clip is encoded is no reason to spend minutes a film redrawing
 /// thumbnails.
-const RECIPE: u32 = 1;
+const RECIPE: u32 = 2;
 
 /// How long a preview runs.
 ///
@@ -374,6 +375,12 @@ pub struct Source {
     /// is therefore what decides whether the clip can be cut without the frames
     /// ever leaving the device. Absent means they come down, as they always did.
     pub size: Option<(u32, u32)>,
+    /// The picture inside the black bars the film was stored with, where it has
+    /// some, which is cropped to before anything else is done to it.
+    ///
+    /// Cropping is a software filter, so a film with bars comes down off the
+    /// device to be cut. See [`crate::bars`].
+    pub bars: Option<Bars>,
 }
 
 /// Whether this clip can be cut without the frames ever leaving the device, and
@@ -450,7 +457,8 @@ fn preview_filters(
     let encodes_from_device =
         onto_the_device.is_some_and(|(_, pipeline, _)| pipeline.encodes_from_device);
 
-    if let Some((pipeline, (width, height))) = stays_on_the_device(onto_the_device, source, request)
+    if let Some((pipeline, (width, height))) =
+        stays_on_the_device(onto_the_device, source, request).filter(|_| source.bars.is_none())
     {
         if source.range != VideoRange::Sdr {
             if let Some(mapper) = pipeline.tone_map {
@@ -478,6 +486,10 @@ fn preview_filters(
             "hwdownload,format={}",
             pipeline.download_format_for(source.bit_depth)
         ));
+    }
+
+    if let Some(bars) = source.bars {
+        filters.push(bars.filter());
     }
 
     if source.range != VideoRange::Sdr {
@@ -678,6 +690,14 @@ pub async fn generate(
 
     let tone_mapping = capabilities.tone_mapping;
     let start = request.start_seconds(duration_seconds);
+    let measured = match source.size {
+        Some(frame) => bars::measure(tools.ffmpeg, &request.input_path, start, frame).await,
+        None => None,
+    };
+    let source = Source {
+        bars: measured,
+        ..source
+    };
     let mut chosen = preview_encoder(capabilities, request.hardware_accel);
 
     loop {
@@ -839,8 +859,8 @@ impl PreviewRegistry {
 #[cfg(test)]
 mod tests {
     use super::{
-        preview_arguments, preview_encoder, PreviewEncoder, PreviewQuality, PreviewRequest, Source,
-        RECIPE,
+        preview_arguments, preview_encoder, Bars, PreviewEncoder, PreviewQuality, PreviewRequest,
+        Source, RECIPE,
     };
     use crate::capability::{Capabilities, VerifiedEncoder};
     use crate::media::VideoRange;
@@ -959,6 +979,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Hardware("h264_videotoolbox".to_owned()),
@@ -985,6 +1006,7 @@ mod tests {
                     range,
                     bit_depth: Some(8),
                     size: None,
+                    bars: None,
                 },
                 ToneMapping::Zscale,
                 &PreviewEncoder::Hardware("h264_qsv".to_owned()),
@@ -1017,6 +1039,40 @@ mod tests {
         }
     }
 
+    /// A film kept inside black bars is cropped to its picture before it is
+    /// scaled, so a clip drawn on a card taller than it is wide carries no black
+    /// bands, and the crop comes before the scale so the picture keeps its width.
+    #[test]
+    fn crops_a_film_to_its_picture_before_scaling_it() {
+        let arguments = preview_arguments(
+            &request(),
+            600,
+            Source {
+                range: VideoRange::Sdr,
+                bit_depth: Some(8),
+                size: Some((1920, 1080)),
+                bars: Some(Bars {
+                    width: 1920,
+                    height: 804,
+                    x: 0,
+                    y: 138,
+                }),
+            },
+            ToneMapping::Zscale,
+            &PreviewEncoder::Software,
+            None,
+            Path::new("/cache/preview.mp4"),
+        );
+
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(chain.starts_with("crop=1920:804:0:138,scale="), "{chain}");
+    }
+
     /// No Intel part encodes ten-bit H.264, so the frames narrow on their way.
     #[test]
     fn narrows_a_ten_bit_film_before_it_reaches_the_encoder() {
@@ -1027,6 +1083,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(10),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Hardware("h264_qsv".to_owned()),
@@ -1056,6 +1113,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Hardware("h264_qsv".to_owned()),
@@ -1084,6 +1142,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(10),
                 size: Some((3840, 1600)),
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Hardware("h264_qsv".to_owned()),
@@ -1114,6 +1173,7 @@ mod tests {
                 range: VideoRange::Hdr10,
                 bit_depth: Some(10),
                 size: Some((3840, 2160)),
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Hardware("h264_vaapi".to_owned()),
@@ -1146,6 +1206,7 @@ mod tests {
                 range: VideoRange::Hdr10,
                 bit_depth: Some(10),
                 size: Some((3840, 1608)),
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Hardware("h264_nvenc".to_owned()),
@@ -1175,6 +1236,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(10),
                 size: Some((1920, 1080)),
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Hardware("h264_nvenc".to_owned()),
@@ -1204,6 +1266,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: Some((1920, 800)),
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Hardware("h264_videotoolbox".to_owned()),
@@ -1230,6 +1293,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Hardware("h264_qsv".to_owned()),
@@ -1270,6 +1334,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Software,
@@ -1292,6 +1357,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Software,
@@ -1318,6 +1384,7 @@ mod tests {
                     range: VideoRange::Sdr,
                     bit_depth: Some(8),
                     size: None,
+                    bars: None,
                 },
                 ToneMapping::Zscale,
                 &encoder,
@@ -1347,6 +1414,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Hardware("h264_qsv".to_owned()),
@@ -1370,6 +1438,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Hardware("h264_videotoolbox".to_owned()),
@@ -1391,6 +1460,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Software,
@@ -1413,6 +1483,7 @@ mod tests {
                 range: VideoRange::Hdr10,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Software,
@@ -1441,6 +1512,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Software,
@@ -1535,6 +1607,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Software,
@@ -1559,6 +1632,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             &PreviewEncoder::Software,
@@ -1601,6 +1675,7 @@ mod tests {
                 range: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
+                bars: None,
             },
             ToneMapping::Zscale,
             encoder,

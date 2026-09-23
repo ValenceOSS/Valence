@@ -7,7 +7,11 @@ services:
       POSTGRES_PASSWORD: valence
       POSTGRES_DB: valence
     volumes:
-      - db-data:/var/lib/postgresql/data
+      # /var/lib/postgresql rather than /var/lib/postgresql/data: from 18 the
+      # image keeps its data in a directory named for the major version, so a
+      # mount at the old path is left unused and the container refuses to start
+      # rather than quietly writing somewhere that is not kept.
+      - db-data:/var/lib/postgresql
     ports:
       - '5432:5432'
     healthcheck:

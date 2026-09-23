@@ -18,6 +18,7 @@ import { notifyLocally, setUnreadBadge } from '@ValenceDesktop/platform/theDeskt
 const installDesktopPlatform = (): void => {
   installPlatform({
     store: theDesktopsStore(),
+    serverAddress: () => null,
     describeThisClient: () => describeThisDesktop(navigator.userAgent),
     thisClientId: thisWindowsId,
     thisClientKind: () => 'desktop',
@@ -25,7 +26,11 @@ const installDesktopPlatform = (): void => {
     held: theDesktopsHeldFiles(),
     reachability: theDesktopsReach(),
     openSocket: theDesktopsSocket,
-    buildInfo: () => window.valence.about,
+    buildInfo: () => {
+      const { version, commit, arch, electron, chrome } = window.valence.about;
+
+      return { version, commit, runsOn: `${arch} · Electron ${electron} · Chromium ${chrome}` };
+    },
     notifyLocally,
     setUnreadBadge,
     musicAudio: theBrowserAudio,

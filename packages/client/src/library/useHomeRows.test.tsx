@@ -317,6 +317,56 @@ describe('useHomeRows', () => {
     });
   });
 
+  it('never offers the same row twice, however far somebody scrolls', async () => {
+    facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
+    aLibrary({ byGenre: { Drama: films('drama', 5, 'Drama') } });
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.some((rail) => rail.id === 'genre:Drama')).toBe(true);
+    });
+
+    for (let asked = 0; asked < 6; asked += 1) {
+      act(() => {
+        result.current.showMore();
+      });
+    }
+
+    await waitFor(() => {
+      expect(result.current.isReadingMore).toBe(false);
+    });
+
+    const titles = result.current.rails.map((rail) => rail.title);
+
+    expect(new Set(titles).size).toBe(titles.length);
+  });
+
+  it('stops offering more once every row there is has been shown', async () => {
+    facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
+    aLibrary({ byGenre: { Drama: films('drama', 5, 'Drama') } });
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.some((rail) => rail.id === 'genre:Drama')).toBe(true);
+    });
+
+    for (let asked = 0; asked < 6; asked += 1) {
+      act(() => {
+        result.current.showMore();
+      });
+    }
+
+    await waitFor(() => {
+      expect(result.current.hasMore).toBe(false);
+    });
+  });
+
   it('asks for nothing more where no row was worth showing in the first place', async () => {
     facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
     aLibrary({ byGenre: { Drama: films('drama', 2, 'Drama') } });

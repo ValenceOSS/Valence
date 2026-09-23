@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const CLIENT_KINDS = ['browser', 'desktop', 'tv'] as const;
+const CLIENT_KINDS = ['browser', 'desktop', 'tv', 'phone'] as const;
 
 const ClientKindSchema = z.enum(CLIENT_KINDS);
 

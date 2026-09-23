@@ -2,6 +2,9 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { fetchSeriesDownloadOffer } from '@ValenceClient/downloads/fetchDownloads';
 import { ShowDialog } from './ShowDialog';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
@@ -20,6 +23,11 @@ const fetchShowMock = vi.hoisted(() => vi.fn());
 vi.mock('@ValenceClient/library/fetchShows', () => ({
   fetchShow: fetchShowMock,
   fetchShows: vi.fn(),
+}));
+
+vi.mock('@ValenceClient/downloads/fetchDownloads', async () => ({
+  ...(await vi.importActual<object>('@ValenceClient/downloads/fetchDownloads')),
+  fetchSeriesDownloadOffer: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock('@ValenceScreens/components/MediaPreview/MediaPreview', () => ({
@@ -110,6 +118,89 @@ describe('ShowDialog', () => {
     await screen.findByRole('button', { name: /Play Episode 1/ });
 
     expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
+  });
+
+  describe('downloading', () => {
+    const PROGRAMME = { ...summary, seriesId: '5d3e2c1b-0a9f-4e8d-9c7b-6a5f4e3d2c1b' };
+
+    beforeEach(() => {
+      installPlatform(aFakePlatform({ canKeepFiles: () => true }));
+      vi.mocked(fetchSeriesDownloadOffer).mockClear();
+      fetchShowMock.mockResolvedValue(
+        detail([
+          { seasonNumber: 1, episodes: [1, 2] },
+          { seasonNumber: 2, episodes: [1, 2] },
+        ]),
+      );
+    });
+
+    const openTheMenu = async () => {
+      renderInAnAddress(<ShowDialog show={PROGRAMME} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+      const [opening] = await screen.findAllByRole('button', { name: 'Download' });
+
+      if (opening !== undefined) {
+        await userEvent.click(opening);
+      }
+    };
+
+    it('offers the season on screen, every season, or picking', async () => {
+      await openTheMenu();
+
+      expect(
+        await screen.findByRole('menuitem', { name: /Season 1 · 2 episodes/ }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('menuitem', { name: /Every season · 4 episodes/ }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: /Choose episodes/ })).toBeInTheDocument();
+    });
+
+    it('costs only the season chosen', async () => {
+      await openTheMenu();
+      await userEvent.click(await screen.findByRole('menuitem', { name: /Season 1 · 2 episodes/ }));
+
+      await waitFor(() => {
+        expect(fetchSeriesDownloadOffer).toHaveBeenCalledWith(
+          PROGRAMME.seriesId,
+          expect.anything(),
+          ['1-1', '1-2'],
+        );
+      });
+    });
+
+    it('costs only the episodes picked', async () => {
+      await openTheMenu();
+      await userEvent.click(await screen.findByRole('menuitem', { name: /Choose episodes/ }));
+
+      const picking = await screen.findByRole('dialog', { name: /Choose episodes/ });
+      const [secondOfTheSecond] = within(picking)
+        .getAllByRole('checkbox', { name: /Episode 2/ })
+        .slice(-1);
+
+      if (secondOfTheSecond !== undefined) {
+        await userEvent.click(secondOfTheSecond);
+      }
+
+      await userEvent.click(within(picking).getByRole('button', { name: 'Download 1 episode' }));
+
+      await waitFor(() => {
+        expect(fetchSeriesDownloadOffer).toHaveBeenCalledWith(
+          PROGRAMME.seriesId,
+          expect.anything(),
+          ['2-2'],
+        );
+      });
+    });
+
+    it('offers no download in a browser, which cannot be trusted to keep one', async () => {
+      installPlatform(aFakePlatform({ canKeepFiles: () => false }));
+      renderInAnAddress(<ShowDialog show={PROGRAMME} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+      await screen.findByRole('button', { name: /Play Episode 1/ });
+
+      expect(screen.queryByRole('button', { name: 'Download' })).not.toBeInTheDocument();
+    });
   });
 
   it('lists the episodes it holds', async () => {

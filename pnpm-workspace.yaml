@@ -1,5 +1,6 @@
 packages:
   - 'apps/desktop'
+  - 'apps/ios'
   - 'apps/docs'
   - 'apps/landing'
   - 'apps/web'
@@ -14,3 +15,12 @@ onlyBuiltDependencies:
   - electron
   - electron-winstaller
   - esbuild
+
+# react-native-tvos adds its television types to the module named react-native, looked up from
+# inside its own package. With the phone's react-native beside it in the workspace, that found the
+# phone's copy and the television lost its types. As a peer, the name is the television's own
+# react-native, which is react-native-tvos.
+packageExtensions:
+  react-native-tvos:
+    peerDependencies:
+      react-native: '*'

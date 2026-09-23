@@ -12,8 +12,9 @@ reference, not a substitute for reading it.
 
 ## Non-negotiables
 
-1. **TypeScript and Rust only.** No JavaScript files, including config. The one
-   carve-out is Swift inside an Apple-platform client's native modules,
+1. **TypeScript and Rust only.** No JavaScript files, including config. The
+   phone and TV clients are React Native under Expo, TypeScript like the rest.
+   The one carve-out is Swift inside an Apple-platform client's native modules,
    `apps/<client>/modules/<module>/ios/`, wrapping a system control for
    TypeScript to use — see the standard for its limits.
 2. **No duplication across modules.** Needed twice means extracted and shared.
@@ -38,7 +39,8 @@ reference, not a substitute for reading it.
    enforces it.
 9. **No raw SVG anywhere.** Icons come from `@keyline-icons/react` and are
    drawn by `@ValenceUI/Icon`, never by the renderer directly.
-10. **Every function and component has a co-located Vitest test.**
+10. **Every function and component has a co-located Vitest test** — except
+    `apps/ios`, which uses `jest-expo` for the same reason it exists.
 11. **Conventional Commits.**
 
 ## File layout
@@ -69,6 +71,7 @@ standalone functions. snake_case for Rust modules.
 | Media         | Rust + FFmpeg child process         |
 | UI            | Radix + Tailwind + CVA + Motion     |
 | Desktop       | Electron, a window onto the server  |
+| Phone         | Expo + React Native, no admin       |
 | Lint          | oxlint + ESLint + husky             |
 | Realtime      | One WebSocket, viewer + admin feeds |
 | Web state     | TanStack Query + TanStack Router    |
@@ -86,6 +89,7 @@ that runs it.
 | `packages/client`  | What Valence is: readers, queries, realtime, session, sharing   |
 | `packages/screens` | What Valence looks like: every screen, and the routes onto them |
 | `apps/web`         | What a browser is: entry, platform, socket, service worker      |
+| `apps/ios`         | What a phone is: entry, platform, and the screens it draws      |
 
 - **Neither package may import `@ValenceWeb/*`.** ESLint says so. Neither reaches
   into a client. `packages/client` may not import `@ValenceUI/*` either — it does

@@ -4,12 +4,9 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
+import { lyricStanding } from '@ValenceClient/music/lyricStanding';
 import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
 import type { LyricLinesProps } from './LyricLines.types';
-
-const BLUR_PER_LINE = 1.4;
-
-const BLUR_MOST = 6;
 
 const SCROLLING_KEYS: ReadonlySet<string> = new Set([
   'ArrowUp',
@@ -41,38 +38,6 @@ const scrollerOf = (line: HTMLElement): HTMLElement | null => {
   }
 
   return null;
-};
-
-/**
- * How a line stands, given where it is against the line being sung.
- *
- * @param index - The line.
- * @param at - The line being sung, or -1 where the words are not timed.
- * @param isSynced - Whether the words are timed at all.
- * @param isImmersive - Whether lines away from the one sung are blurred as well as dimmed.
- * @returns How visible, how large and how blurred to draw it.
- */
-const standingOf = (
-  index: number,
-  at: number,
-  isSynced: boolean,
-  isImmersive: boolean,
-): { opacity: number; scale: number; blur: number } => {
-  if (!isSynced) {
-    return { opacity: 0.9, scale: 1, blur: 0 };
-  }
-
-  if (index === at) {
-    return { opacity: 1, scale: 1, blur: 0 };
-  }
-
-  const away = Math.abs(index - at);
-
-  return {
-    opacity: index < at ? 0.35 : 0.6,
-    scale: 0.96,
-    blur: isImmersive ? Math.min(away * BLUR_PER_LINE, BLUR_MOST) : 0,
-  };
 };
 
 /**
@@ -159,7 +124,7 @@ const LyricLines = ({ lyrics, at, onSeek, look = 'page' }: LyricLinesProps) => {
       <ol ref={listRef} className="flex flex-col gap-4 sm:gap-6">
         {lyrics.lines.map((line, index) => {
           const { atMs } = line;
-          const standing = standingOf(index, at, lyrics.isSynced, look === 'immersive');
+          const standing = lyricStanding(index, at, lyrics.isSynced, look === 'immersive');
           const words = line.text === '' ? '♪' : line.text;
           const drawn = cn(
             'origin-left text-left font-bold leading-[1.12] tracking-[-0.025em]',
@@ -233,4 +198,4 @@ const LyricLines = ({ lyrics, at, onSeek, look = 'page' }: LyricLinesProps) => {
 
 LyricLines.displayName = 'LyricLines';
 
-export { LyricLines, standingOf };
+export { LyricLines };

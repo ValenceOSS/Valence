@@ -117,4 +117,68 @@ describe('ActionBar', () => {
 
     expect(container.firstElementChild).toHaveClass('items-center', 'justify-between');
   });
+
+  it('opens the choices of a pinned action that has them, rather than doing one thing', async () => {
+    const user = userEvent.setup();
+    const season = vi.fn();
+
+    render(
+      <ActionBar
+        label="More"
+        primary={<span>Play</span>}
+        actions={[
+          {
+            id: 'download',
+            label: 'Download',
+            isPinned: true,
+            onChoose: vi.fn(),
+            choices: [
+              { id: 'season', label: 'Season 1', onChoose: season },
+              { id: 'every', label: 'Every season', onChoose: vi.fn() },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    const [opening] = screen.getAllByRole('button', { name: 'Download' });
+
+    if (opening !== undefined) {
+      await user.click(opening);
+    }
+
+    await user.click(await screen.findByRole('menuitem', { name: /Season 1/ }));
+
+    expect(season).toHaveBeenCalled();
+  });
+
+  it('folds an action with choices into the menu as a group under its name', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ActionBar
+        label="More"
+        primary={<span>Play</span>}
+        actions={[
+          ...ACTIONS,
+          {
+            id: 'download',
+            label: 'Download',
+            onChoose: vi.fn(),
+            choices: [{ id: 'every', label: 'Every season', onChoose: vi.fn() }],
+          },
+        ]}
+      />,
+    );
+
+    const [menu] = screen.getAllByRole('button', { name: 'More' });
+
+    if (menu !== undefined) {
+      await user.click(menu);
+    }
+
+    expect(await screen.findByRole('menuitem', { name: /Every season/ })).toBeInTheDocument();
+    expect(screen.getByText('Download')).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Watch together/ })).toBeInTheDocument();
+  });
 });

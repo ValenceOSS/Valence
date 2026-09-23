@@ -7,6 +7,7 @@ import { useAppliedMotion } from '@ValenceScreens/motion/useAppliedMotion';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { App } from '@ValenceScreens/components/App/App';
 import { OfflineApp } from '@ValenceScreens/components/OfflineApp/OfflineApp';
+import { OpenInTheApp } from '@ValenceScreens/components/OpenInTheApp/OpenInTheApp';
 import type { ValenceRootProps } from './ValenceRoot.types';
 
 /**
@@ -47,7 +48,14 @@ const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
 
   return (
     <MotionConfig reducedMotion={howMuchMovement}>
-      {isOffline ? <OfflineApp title={initialTitle} /> : <App initialTitle={initialTitle} />}
+      {isOffline ? (
+        <OfflineApp title={initialTitle} />
+      ) : (
+        <>
+          <App initialTitle={initialTitle} />
+          <OpenInTheApp />
+        </>
+      )}
     </MotionConfig>
   );
 };

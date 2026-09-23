@@ -4,8 +4,8 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { DownloadQueueTable } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/DownloadQueueTable/DownloadQueueTable';
-import { describeRequestBadge } from '@ValenceScreens/components/AdminArea/components/MediaRequestsPanel/describeRequestBadge';
-import { describeRequestProgress } from '@ValenceScreens/components/AdminArea/components/MediaRequestsPanel/describeRequestProgress';
+import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
+import { describeRequestProgress } from '@ValenceClient/requests/describeRequestProgress';
 import type { RequestProgressTabProps } from './RequestProgressTab.types';
 
 /**

@@ -2,7 +2,7 @@ import { render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import { aMediaRequest } from '@ValenceScreens/testing/aMediaRequest';
+import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { RequestsPage } from '@ValenceTv/screens/RequestsPage/RequestsPage';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 

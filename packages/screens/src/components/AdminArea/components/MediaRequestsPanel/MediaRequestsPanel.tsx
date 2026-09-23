@@ -46,10 +46,10 @@ import { AskForMediaDialog } from '@ValenceScreens/components/AdminArea/componen
 import { ApproveRequestDialog } from '@ValenceScreens/components/AdminArea/components/ApproveRequestDialog/ApproveRequestDialog';
 import { RefuseRequestDialog } from '@ValenceScreens/components/AdminArea/components/RefuseRequestDialog/RefuseRequestDialog';
 import { RequestDetailDialog } from '@ValenceScreens/components/AdminArea/components/RequestDetailDialog/RequestDetailDialog';
-import { describeRequestBadge } from './describeRequestBadge';
+import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import { describeRequestFilters } from '@ValenceScreens/requests/describeRequestFilters';
 import { filterRequests } from '@ValenceScreens/requests/filterRequests';
-import { describeRequestProgress } from './describeRequestProgress';
+import { describeRequestProgress } from '@ValenceClient/requests/describeRequestProgress';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { RequestDetailTab } from '@ValenceScreens/components/AdminArea/components/RequestDetailDialog/RequestDetailDialog.types';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';

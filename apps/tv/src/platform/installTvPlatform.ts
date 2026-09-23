@@ -7,6 +7,7 @@ import { theTvsReach } from '@ValenceTv/platform/theTvsReach';
 import { theTvsSocket } from '@ValenceTv/platform/theTvsSocket';
 import { theTvsStore } from '@ValenceTv/platform/theTvsStore';
 import { thisTvsId } from '@ValenceTv/platform/thisTvsId';
+import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { theTvsMusicAudio } from '@ValenceTv/music/theTvsMusicAudio';
 
 /**
@@ -23,6 +24,7 @@ const installTvPlatform = (): void => {
 
   installPlatform({
     store: theTvsStore(),
+    serverAddress: theServersOrigin,
     describeThisClient: () => describeThisTv(Constants.deviceName ?? null),
     thisClientId: thisTvsId,
     thisClientKind: () => 'tv',

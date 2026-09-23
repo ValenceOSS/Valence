@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
+import { describeHiding } from '@ValenceClient/library/describeHiding';
 import type { ConfirmHidingProps } from './ConfirmHiding.types';
 
 /**
@@ -30,20 +31,8 @@ const ConfirmHiding = ({ hiding, onHidden }: ConfirmHidingProps) => {
 
   return (
     <ConfirmDialog
-      title={hiding.asking === null ? 'Hide this?' : `Hide ${hiding.asking.title}?`}
-      detail={
-        hiding.asking === null
-          ? ''
-          : `${
-              hiding.asking.kind === 'series'
-                ? 'Every episode of it disappears'
-                : hiding.asking.kind === 'library'
-                  ? 'Everything in it disappears'
-                  : 'It disappears'
-            } from your rows, your searches and the randomiser${
-              shared ? ', for you and for nobody else on this account' : ''
-            }. Bring it back from Hidden on your profile at any time.`
-      }
+      title={hiding.asking === null ? 'Hide this?' : describeHiding(hiding.asking, shared).title}
+      detail={hiding.asking === null ? '' : describeHiding(hiding.asking, shared).detail}
       confirmLabel="Hide it"
       isOpen={hiding.asking !== null}
       onClose={() => {

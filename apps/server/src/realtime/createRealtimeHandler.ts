@@ -1,7 +1,7 @@
+import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import { FromClientSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { FromServer } from '@ValenceContracts/schemas/Realtime';
-import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { handlePartyMessage, tellEveryone } from '@ValenceServer/parties/handlePartyMessage';
 import type { RealtimeRegistry } from './createRealtimeRegistry';

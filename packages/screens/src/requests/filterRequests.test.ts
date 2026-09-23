@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aMediaRequest } from '@ValenceScreens/testing/aMediaRequest';
+import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { filterRequests } from './filterRequests';
 
 const DUNE = aMediaRequest({ title: 'Dune', kind: 'film', state: 'awaitingApproval' });

@@ -6,6 +6,7 @@ import {
   nextIn,
   playNext,
   previousIn,
+  clearUpNext,
   moveInQueue,
   removeFromQueue,
   startQueue,
@@ -91,6 +92,7 @@ type MusicPlayer = {
   jumpTo: (at: number) => void;
   removeFromQueue: (at: number) => void;
   moveInQueue: (from: number, to: number) => void;
+  clearUpNext: () => void;
   setQuality: (quality: AudioQuality) => void;
   stop: () => void;
   leave: () => void;
@@ -567,6 +569,17 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       }
 
       change({ queue: moveInQueue(queue, from, to) });
+      tell(true);
+    },
+
+    clearUpNext: () => {
+      const { queue } = state;
+
+      if (queue === null || state.remote !== null) {
+        return;
+      }
+
+      change({ queue: clearUpNext(queue) });
       tell(true);
     },
 

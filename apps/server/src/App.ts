@@ -66,6 +66,7 @@ import {
   listHoldingsRoute,
   offerDownloadRoute,
   releaseDownloadRoute,
+  readDownloadRoute,
 } from './routes/DownloadRoute';
 import { healthRoute } from './routes/HealthRoute';
 import {
@@ -345,6 +346,10 @@ import type { BookService } from '@ValenceServer/books/createDatabaseBookService
 import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { createSessionGate } from '@ValenceServer/auth/createSessionGate';
 import { createBetterAuthAdminBlock } from '@ValenceServer/auth/createBetterAuthAdminBlock';
+import { createOneTimeTokenBlock } from '@ValenceServer/auth/createOneTimeTokenBlock';
+import { createPhoneHandBacks } from '@ValenceServer/phone/createPhoneHandBacks';
+import { theChallengeFor } from '@ValenceServer/phone/theChallengeFor';
+import { exchangeRoute, handBackRoute } from '@ValenceServer/routes/PhoneRoute';
 import { checkRoleChange } from '@ValenceServer/auth/checkRoleChange';
 import { checkAccountAction } from '@ValenceServer/auth/checkAccountAction';
 import type { AccountActionRefusal } from '@ValenceServer/auth/checkAccountAction';
@@ -994,6 +999,8 @@ const createApp = ({
   app.use('/api/*', refuseWhatIsOutOfReach);
 
   app.all('/api/auth/admin/*', createBetterAuthAdminBlock());
+
+  app.all('/api/auth/one-time-token/*', createOneTimeTokenBlock());
 
   app.on(['GET', 'POST'], '/api/auth/*', (context) => auth.handler(context.req.raw));
 
@@ -2733,6 +2740,7 @@ const createApp = ({
           isGuest: entry.viaShare !== null,
           guestOf: entry.guestOf,
           deviceLabel: entry.deviceLabel,
+          clientKind: entry.clientKind ?? 'browser',
           connectedAt: entry.connectedAt,
           playback: entry.playback,
           listening: await listeningOn(entry.clientId),
@@ -5848,9 +5856,11 @@ const createApp = ({
         return context.json({ error: 'Nobody is signed in.' }, 401);
       }
 
+      const { deviceProfile, mediaIds } = context.req.valid('json');
       const offer = await downloads.offerSeries(
         context.req.valid('param').seriesId,
-        context.req.valid('json').deviceProfile,
+        deviceProfile,
+        mediaIds,
       );
 
       return offer === null
@@ -5865,13 +5875,14 @@ const createApp = ({
         return context.json({ error: 'Nobody is signed in.' }, 401);
       }
 
-      const { quality, audioLanguages } = context.req.valid('json');
+      const { quality, audioLanguages, mediaIds } = context.req.valid('json');
 
       const queued = await downloads.askForSeries(
         profileId,
         context.req.valid('param').seriesId,
         quality,
         audioLanguages ?? [],
+        mediaIds,
       );
 
       return context.json({ downloads: queued }, 200);
@@ -5921,6 +5932,26 @@ const createApp = ({
       await downloads.forget(profileId, context.req.valid('param').id);
 
       return context.body(null, 204);
+    });
+
+    app.openapi(readDownloadRoute, async (context) => {
+      const profileId = await readProfileId(context.req.raw.headers);
+
+      if (profileId === null) {
+        return context.json({ error: 'Nobody is signed in.' }, 401);
+      }
+
+      const file = await downloads.readFile(
+        profileId,
+        context.req.valid('param').id,
+        context.req.header('range') ?? null,
+      );
+
+      if (file === null) {
+        return context.json({ error: 'Nothing prepared under that name.' }, 404);
+      }
+
+      return context.body(file.body, file.status === 206 ? 206 : 200, forwardedFileHeaders(file));
     });
 
     app.openapi(listHoldingsRoute, async (context) => {
@@ -6844,6 +6875,51 @@ const createApp = ({
     presence.stopPlayback(clientId);
 
     return context.body(null, 204);
+  });
+
+  const phoneHandBacks = createPhoneHandBacks();
+
+  app.openapi(handBackRoute, async (context) => {
+    const { challenge } = context.req.valid('json');
+    const minted = await auth.api
+      .generateOneTimeToken({ headers: context.req.raw.headers })
+      .catch(() => null);
+
+    if (minted === null) {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    phoneHandBacks.remember(minted.token, challenge);
+
+    return context.json(
+      { url: `valence://signed-in?code=${encodeURIComponent(minted.token)}` },
+      200,
+    );
+  });
+
+  app.openapi(exchangeRoute, async (context) => {
+    const { code, secret } = context.req.valid('json');
+    const challenge = phoneHandBacks.take(code);
+
+    if (challenge === null || challenge !== theChallengeFor(secret)) {
+      return context.json({ error: 'That sign-in has expired. Try again.' }, 401);
+    }
+
+    const signedIn = await auth.api
+      .verifyOneTimeToken({ body: { token: code }, asResponse: true })
+      .catch(() => null);
+
+    if (signedIn === null || !signedIn.ok) {
+      return context.json({ error: 'That sign-in has expired. Try again.' }, 401);
+    }
+
+    const answer = context.body(null, 200);
+
+    for (const cookie of signedIn.headers.getSetCookie()) {
+      answer.headers.append('set-cookie', cookie);
+    }
+
+    return answer;
   });
 
   app.doc('/api/openapi.json', {

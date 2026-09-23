@@ -269,8 +269,31 @@ describe('fetchActiveSessions', () => {
     answerWith([SESSION]);
 
     await expect(fetchActiveSessions()).resolves.toEqual([
-      { ...SESSION, listening: null, isGuest: false, guestOf: null, accountId: null },
+      {
+        ...SESSION,
+        listening: null,
+        isGuest: false,
+        guestOf: null,
+        accountId: null,
+        clientKind: 'browser',
+      },
     ]);
+  });
+
+  it('takes a session from a server that says nothing of its kind for a browser', async () => {
+    answerWith([SESSION]);
+
+    const [read] = await fetchActiveSessions();
+
+    expect(read?.clientKind).toBe('browser');
+  });
+
+  it('keeps the kind a server does say, so a phone is not drawn as a laptop', async () => {
+    answerWith([{ ...SESSION, clientKind: 'phone' }]);
+
+    const [read] = await fetchActiveSessions();
+
+    expect(read?.clientKind).toBe('phone');
   });
 
   it('reads whose account a tab belongs to, which is what groups it under one person', async () => {

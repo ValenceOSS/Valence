@@ -1,5 +1,4 @@
-import { formatCalendarDate } from '@ValenceCore/functions/formatCalendarDate';
-import { formatMoney } from '@ValenceCore/functions/formatMoney';
+import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
 import type { TitleDetailsProps } from './TitleDetails.types';
 
 /**
@@ -8,6 +7,7 @@ import type { TitleDetailsProps } from './TitleDetails.types';
  * whole thing not at all where it knew none of them, so a title it knew little about is not given a
  * row of dashes.
  *
+ * @param seriesTitle - The series it belongs to, where it is an episode.
  * @param releaseDate - The day it came out, or an episode aired, as a calendar date.
  * @param status - Where the catalogue says it stands, such as "Released".
  * @param budget - What it cost to make, in dollars.
@@ -15,29 +15,21 @@ import type { TitleDetailsProps } from './TitleDetails.types';
  * @param rottenTomatoes - Its Rotten Tomatoes score, as a percentage.
  */
 const TitleDetails = ({
+  seriesTitle,
   releaseDate,
   status,
   budget,
   revenue,
   rottenTomatoes,
 }: TitleDetailsProps) => {
-  const facts: { label: string; value: string }[] = [
-    ...(releaseDate === undefined || releaseDate === null || releaseDate === ''
-      ? []
-      : [{ label: 'Released', value: formatCalendarDate(releaseDate) }]),
-    ...(status === undefined || status === null || status === ''
-      ? []
-      : [{ label: 'Status', value: status }]),
-    ...(budget === undefined || budget === null || budget <= 0
-      ? []
-      : [{ label: 'Budget', value: formatMoney(budget) }]),
-    ...(revenue === undefined || revenue === null || revenue <= 0
-      ? []
-      : [{ label: 'Box office', value: formatMoney(revenue) }]),
-    ...(rottenTomatoes === undefined || rottenTomatoes === null
-      ? []
-      : [{ label: 'Rotten Tomatoes', value: `${rottenTomatoes.toString()}%` }]),
-  ];
+  const facts = describeTitleDetails({
+    seriesTitle,
+    releaseDate,
+    status,
+    budget,
+    revenue,
+    rottenTomatoes,
+  });
 
   if (facts.length === 0) {
     return null;

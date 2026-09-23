@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { platformIfAny } from '@ValenceClient/platform/installPlatform';
 
 const PLACEHOLDER = 'http://valence.invalid';
 
@@ -55,6 +56,27 @@ const asOurOwn = (input: string): string =>
   input.startsWith(PLACEHOLDER) ? input.slice(PLACEHOLDER.length) : input;
 
 /**
+ * Puts a path on whichever server this client watches.
+ *
+ * A client served by its own Valence needs nothing doing: the path resolves against the page it
+ * came from, which is the server. A client that was not served by anything — a phone, which has no
+ * page and no origin — has to be told, and says so through its platform. Without this every
+ * request it made would be a bare path with nothing to resolve against.
+ *
+ * Read at the moment of asking rather than once, because the address is not known when this module
+ * is imported and can change afterwards: somebody typing a different server is the same act as
+ * signing out.
+ *
+ * @param path - The path, as the caller wrote it.
+ * @returns Where to actually send it.
+ */
+const onOurServer = (path: string): string => {
+  const address = platformIfAny()?.serverAddress() ?? null;
+
+  return address === null || path.startsWith('http') ? path : new URL(path, address).toString();
+};
+
+/**
  * Sends what better-auth asked for, through the global `fetch` at the moment it is asked.
  *
  * Handed to the library rather than left to be found, for two reasons and no others: it reads the
@@ -80,12 +102,15 @@ const askTheServer = (input: string | URL | Request, init?: RequestInit): Promis
       return globalThis.fetch(input, init);
     }
 
-    const ours = new URL(asOurOwn(input.url), whereWeAre()?.origin ?? PLACEHOLDER);
+    const ours = new URL(
+      onOurServer(asOurOwn(input.url)),
+      whereWeAre()?.origin ?? platformIfAny()?.serverAddress() ?? PLACEHOLDER,
+    );
 
     return globalThis.fetch(new Request(ours, input), init);
   }
 
-  return globalThis.fetch(asOurOwn(String(input)), init);
+  return globalThis.fetch(onOurServer(asOurOwn(String(input))), init);
 };
 
 export { AUTH_BASE, PLACEHOLDER, askTheServer, theAuthBase };

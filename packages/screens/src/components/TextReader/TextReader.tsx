@@ -13,9 +13,10 @@ import { ReaderChrome } from '@ValenceScreens/components/ReaderChrome/ReaderChro
 import { ReaderPanel } from '@ValenceScreens/components/ReaderPanel/ReaderPanel';
 import { ReaderPicker } from '@ValenceScreens/components/ReaderPicker/ReaderPicker';
 import { readPanelPinned, writePanelPinned } from '@ValenceScreens/reading/panelPreference';
-import { contentsEntryAt } from '@ValenceScreens/reading/contentsEntryAt';
-import { fractionOfBook } from '@ValenceScreens/reading/fractionOfBook';
-import { placeInBook } from '@ValenceScreens/reading/placeInBook';
+import { contentsEntryAt } from '@ValenceClient/books/contentsEntryAt';
+import { TEXT_LOOK } from '@ValenceClient/books/TEXT_LOOK';
+import { fractionOfBook } from '@ValenceClient/books/fractionOfBook';
+import { placeInBook } from '@ValenceClient/books/placeInBook';
 import {
   TEXT_MARGINS,
   TEXT_PAGES,
@@ -23,10 +24,10 @@ import {
   TEXT_SPACINGS,
   readTextPreferences,
   writeTextPreferences,
-} from '@ValenceScreens/reading/textPreferences';
+} from '@ValenceClient/books/textPreferences';
 import { useChromeThatHides } from '@ValenceScreens/reading/useChromeThatHides';
 import { useTurnKeys } from '@ValenceScreens/reading/useTurnKeys';
-import type { TextPreferences } from '@ValenceScreens/reading/textPreferences';
+import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { TextReaderProps } from './TextReader.types';
 
 type Landing =
@@ -44,25 +45,6 @@ const TWO_COLUMNS_FROM = 960;
 const A_SWIPE = 48;
 
 const SLIDER_STEPS = 1000;
-
-const SIZE_PX: Record<TextPreferences['size'], number> = {
-  small: 16,
-  medium: 19,
-  large: 22,
-  larger: 26,
-};
-
-const LEADING: Record<TextPreferences['spacing'], number> = {
-  tight: 1.4,
-  normal: 1.6,
-  loose: 1.85,
-};
-
-const MARGIN: Record<TextPreferences['margins'], string> = {
-  narrow: '4%',
-  normal: '8%',
-  wide: '14%',
-};
 
 const PAGE: Record<TextPreferences['page'], string> = {
   light: 'bg-paper-light text-ink-light',
@@ -532,7 +514,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         <div
           className="flex h-full w-full flex-col"
           style={{
-            paddingInline: MARGIN[settings.margins],
+            paddingInline: `${(TEXT_LOOK.margin[settings.margins] * 100).toString()}%`,
             paddingBlock: '3.5rem',
           }}
         >
@@ -555,8 +537,8 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                   columnWidth: `${columnWidth.toString()}px`,
                   columnGap: `${GAP.toString()}px`,
                   columnFill: 'auto',
-                  fontSize: `${SIZE_PX[settings.size].toString()}px`,
-                  lineHeight: LEADING[settings.spacing],
+                  fontSize: `${TEXT_LOOK.size[settings.size].toString()}px`,
+                  lineHeight: TEXT_LOOK.leading[settings.spacing],
                   transform: `translateX(${(-page * step).toString()}px)`,
                   fontFamily: SERIF,
                 }}

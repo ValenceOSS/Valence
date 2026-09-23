@@ -11,6 +11,7 @@ const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   isGuest: false,
   guestOf: null,
   deviceLabel: 'Chrome on macOS',
+  clientKind: 'browser' as const,
   connectedAt: 0,
   playback: null,
   listening: null,

@@ -1,5 +1,5 @@
 import { render, userEvent } from '@testing-library/react-native';
-import { aMediaRequest } from '@ValenceScreens/testing/aMediaRequest';
+import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { RequestRow } from '@ValenceTv/screens/RequestsPage/components/RequestRow/RequestRow';
 import type { RequestProgress } from '@ValenceContracts/schemas/CatalogueTitle';
 

@@ -1,6 +1,6 @@
 import { Check as CheckIcon } from '@keyline-icons/react';
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
-import { describeStanding } from './describeStanding';
+import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import type { MediaCardCorner } from '@ValenceUI/MediaCard.types';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 

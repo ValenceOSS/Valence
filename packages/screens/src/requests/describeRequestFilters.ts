@@ -1,5 +1,5 @@
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
-import { describeRequestBadge } from '@ValenceScreens/components/AdminArea/components/MediaRequestsPanel/describeRequestBadge';
+import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
 

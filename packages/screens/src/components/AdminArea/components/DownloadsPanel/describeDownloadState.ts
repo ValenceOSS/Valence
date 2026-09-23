@@ -1,6 +1,6 @@
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
-import type { StateBadge } from '@ValenceScreens/components/AdminArea/StateBadge';
-import { STATUS_LOOK } from '@ValenceScreens/status/STATUS_LOOK';
+import type { StateBadge } from '@ValenceClient/status/StateBadge';
+import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 
 /**
  * Says how a download is, as a badge and the line beneath it, with the client's own reason

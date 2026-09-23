@@ -88,6 +88,7 @@ const LibraryBrowser = ({
   onReading,
 }: LibraryBrowserProps) => {
   const { go } = usePlace();
+  const { user } = useShell();
   const [appliedSearch, setAppliedSearch] = useState('');
 
   const askedFor = useQuery(libraryQueries.all());
@@ -116,7 +117,6 @@ const LibraryBrowser = ({
   const watched = useQuery(viewingQueries.progress());
   const progress = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
 
-  const { user } = useShell();
   const home = useHomeRows(user.id, watchable, progress, isHome, !watched.isLoading);
   const { hasMore, isReadingMore, showMore } = home;
 

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { theEpisodesAskedFor } from './theEpisodesAskedFor';
 import type { Download, DownloadQuality, Holding } from '@ValenceContracts/schemas/Download';
 import type { DownloadOffer, DownloadService } from './DownloadService';
 
@@ -23,8 +24,11 @@ const createMemoryDownloadService = (
 
     offer: (mediaId) => Promise.resolve(state.offers[mediaId] ?? null),
 
-    offerSeries: (seriesId) => {
-      const first = (state.episodes[seriesId] ?? [])[0];
+    offerSeries: (seriesId, _deviceProfile, mediaIds) => {
+      const first = theEpisodesAskedFor(
+        (state.episodes[seriesId] ?? []).map((id) => ({ id })),
+        mediaIds,
+      )[0]?.id;
 
       return Promise.resolve(first === undefined ? null : (state.offers[first] ?? null));
     },
@@ -59,11 +63,12 @@ const createMemoryDownloadService = (
       return Promise.resolve(made);
     },
 
-    askForSeries: (profileId, seriesId, quality, audioLanguages) =>
+    askForSeries: (profileId, seriesId, quality, audioLanguages, mediaIds) =>
       Promise.all(
-        (state.episodes[seriesId] ?? []).map(async (mediaId) =>
-          memory.ask(profileId, mediaId, quality, audioLanguages),
-        ),
+        theEpisodesAskedFor(
+          (state.episodes[seriesId] ?? []).map((id) => ({ id })),
+          mediaIds,
+        ).map(async ({ id }) => memory.ask(profileId, id, quality, audioLanguages)),
       ).then((asked) => asked.filter((one) => one !== null)),
 
     pause: (profileId, id) => {
@@ -85,6 +90,24 @@ const createMemoryDownloadService = (
     list: (profileId) => Promise.resolve(state.downloads[profileId] ?? []),
 
     refresh: (profileId) => Promise.resolve(state.downloads[profileId] ?? []),
+
+    readFile: (profileId, id) => {
+      const ready = (state.downloads[profileId] ?? []).find(
+        (one) => one.id === id && one.state === 'ready',
+      );
+
+      return Promise.resolve(
+        ready === undefined
+          ? null
+          : {
+              body: new Blob([`the film ${ready.mediaId}`]).stream(),
+              contentType: 'video/mp4',
+              status: 200,
+              contentRange: null,
+              contentLength: null,
+            },
+      );
+    },
 
     forget: (profileId, id) => {
       state.downloads[profileId] = (state.downloads[profileId] ?? []).filter(

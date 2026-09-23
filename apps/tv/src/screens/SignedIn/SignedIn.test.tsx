@@ -8,7 +8,7 @@ import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { LibrarySchema, MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { MusicAlbumSchema } from '@ValenceContracts/schemas/Music';
-import { aMediaRequest } from '@ValenceScreens/testing/aMediaRequest';
+import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { Button as mockButton } from '@ValenceTv/components/Button/Button';
 import { SignedIn } from '@ValenceTv/screens/SignedIn/SignedIn';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';

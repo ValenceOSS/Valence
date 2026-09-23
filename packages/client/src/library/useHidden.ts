@@ -14,7 +14,7 @@ type Hiding = {
   entries: Hidden[];
   isHidden: (subject: HiddenSubject) => boolean;
   asking: Asked | null;
-  ask: (media: MediaSummary) => void;
+  ask: (media: Pick<MediaSummary, 'id' | 'title' | 'seriesId' | 'seriesTitle'>) => void;
   askLibrary: (libraryId: string, name: string) => void;
   dismiss: () => void;
   confirm: () => void;

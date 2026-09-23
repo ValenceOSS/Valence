@@ -13,8 +13,6 @@ type AudioTrack = {
 
 const SKIP_SECONDS = 10;
 
-const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
-
 const BOOST_STEPS = [1, 1.5, 2, 3] as const;
 
 type PlayerControlsProps = {
@@ -73,4 +71,4 @@ type PlayerControlsProps = {
 
 export type { PlayerControlsProps };
 
-export { SKIP_SECONDS, PLAYBACK_RATES, BOOST_STEPS };
+export { SKIP_SECONDS, BOOST_STEPS };

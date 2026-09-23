@@ -21,7 +21,9 @@ type Hiding = {
  * @param media - What they pressed hide on.
  * @returns What to hide, and what to call it when asking.
  */
-const hidingSubjectOf = (media: MediaSummary): Hiding => {
+const hidingSubjectOf = (
+  media: Pick<MediaSummary, 'id' | 'title' | 'seriesId' | 'seriesTitle'>,
+): Hiding => {
   const seriesId = media.seriesId ?? null;
 
   if (seriesId === null) {

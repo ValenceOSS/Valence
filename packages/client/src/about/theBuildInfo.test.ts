@@ -18,9 +18,7 @@ describe('theBuildInfo', () => {
     const info = {
       version: '1.2.0',
       commit: '2ae1bc1',
-      arch: 'arm64',
-      electron: '33.0.0',
-      chrome: '130.0.0',
+      runsOn: 'arm64 · Electron 33.0.0 · Chromium 130.0.0',
     };
 
     installPlatform(aFakePlatform({ buildInfo: () => info }));

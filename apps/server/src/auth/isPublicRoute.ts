@@ -12,6 +12,7 @@ const PUBLIC_ROUTES: readonly PublicRoute[] = [
   { method: 'POST', path: /^\/api\/auth\// },
   { method: 'GET', path: /^\/api\/profiles\/avatars\/[^/]+$/ },
   { method: 'POST', path: /^\/api\/profiles\/[^/]+\/sign-in$/ },
+  { method: 'POST', path: /^\/api\/phone\/exchange$/ },
   { method: 'GET', path: /^\/api\/share\/[^/]+$/ },
   { method: 'GET', path: /^\/api\/openapi\.json$/ },
   { method: 'GET', path: /^\/api\/reference$/ },
