@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-import { and, asc, count, desc, eq, ilike, inArray, max, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, max, notExists, or, sql } from 'drizzle-orm';
 import {
   book,
   bookChapter,
@@ -281,6 +281,19 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
     },
 
     markScanned: async (libraryId) => {
+      await db
+        .delete(book)
+        .where(
+          and(
+            eq(book.libraryId, libraryId),
+            notExists(
+              db
+                .select({ id: bookChapter.id })
+                .from(bookChapter)
+                .where(eq(bookChapter.bookId, book.id)),
+            ),
+          ),
+        );
       await db.update(library).set({ lastScannedAt: new Date() }).where(eq(library.id, libraryId));
     },
 
