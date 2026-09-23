@@ -447,6 +447,14 @@ describe('a comic that describes itself', () => {
     expect(books[0]?.series).toEqual({ name: 'Red Rising Saga', position: 2 });
   });
 
+  it('names a track without the shop’s edition', async () => {
+    vi.mocked(openAudiobook).mockResolvedValueOnce(aTrack(600, null, 'Red Rising (Unabridged)'));
+
+    await scan([join(where, 'Pierce Brown', 'Red Rising', 'Red Rising.m4b')]);
+
+    expect(chapters[0]?.title).toBe('Red Rising');
+  });
+
   it('puts a book in its author’s folder in no series', async () => {
     await scan([join(where, 'Pierce Brown', 'Golden Son', 'Golden Son.m4b')]);
 

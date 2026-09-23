@@ -2,6 +2,7 @@ import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname, relative, sep } from 'node:path';
 import { bookFormatOf, openBookFile } from './openBookFile';
 import { seriesFromPath } from './seriesFromPath';
+import { audiobookTitleOf } from '@ValenceContracts/functions/audiobookTitleOf';
 import { readBookTitleFromPath } from './readBookTitleFromPath';
 import { readChapterNumberFromPath } from './readChapterNumberFromPath';
 import { directionFor, isAudiobookFormat } from '@ValenceContracts/schemas/Book';
@@ -242,7 +243,7 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
       path: file.path,
       number: number ?? 0,
       title:
-        (opened.layout === 'audio' ? opened.about?.title : null) ??
+        (opened.layout === 'audio' ? audiobookTitleOf({ title: opened.about?.title }) : null) ??
         readBookTitleFromPath(name).title,
       format,
       pageCount: opened.layout === 'fixed' ? opened.pageCount : null,
