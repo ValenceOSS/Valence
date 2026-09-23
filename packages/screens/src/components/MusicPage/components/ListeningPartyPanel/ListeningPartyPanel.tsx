@@ -6,8 +6,8 @@ import { useShell } from '@ValenceClient/shell/useShell';
 import { PartyPanel } from '@ValenceScreens/components/PartyPanel/PartyPanel';
 import { listeningInvitationTo } from '@ValenceScreens/party/listeningInvitationTo';
 import { useListeningParty } from '@ValenceScreens/music/listeningParty';
-import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { ListeningPartyPanelProps } from './ListeningPartyPanel.types';
 

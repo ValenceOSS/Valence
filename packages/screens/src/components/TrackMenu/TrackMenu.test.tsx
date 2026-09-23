@@ -2,8 +2,8 @@ import { screen, waitFor, renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
-import { aTrack } from '@ValenceScreens/testing/aTrack';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
+import { aTrack } from '@ValenceClient/testing/aTrack';
 import { setMusicVideo, useMusicVideo } from '@ValenceScreens/music/musicVideo';
 import { TrackMenu } from './TrackMenu';
 
@@ -20,7 +20,7 @@ const playlists = vi.hoisted(() => ({
   createPlaylist: vi.fn(),
 }));
 
-vi.mock('@ValenceScreens/music/theMusicPlayer', () => ({
+vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => fake.player,
 }));
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeAudioQuality } from './describeAudioQuality';
+import { describeAudioQuality } from '@ValenceClient/music/describeAudioQuality';
 
 const FLAC = { codec: 'flac', isLossless: true, bitrateKbps: 1400 };
 

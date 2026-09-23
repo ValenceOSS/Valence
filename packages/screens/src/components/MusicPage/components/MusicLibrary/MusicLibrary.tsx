@@ -20,9 +20,9 @@ import { isPlayingFrom } from '@ValenceScreens/music/isPlayingFrom';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { ReactNode } from 'react';
-import type { MusicView } from '@ValenceScreens/music/musicView';
+import type { MusicView } from '@ValenceClient/music/musicView';
 
 type Entry = {
   key: string;

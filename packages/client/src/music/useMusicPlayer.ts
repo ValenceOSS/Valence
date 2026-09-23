@@ -1,6 +1,6 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react';
-import { theMusicPlayer } from './theMusicPlayer';
-import type { MusicPlayer, MusicPlayerState } from './createMusicPlayer';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import type { MusicPlayer, MusicPlayerState } from '@ValenceClient/music/createMusicPlayer';
 
 type Following = {
   followsPosition?: boolean;

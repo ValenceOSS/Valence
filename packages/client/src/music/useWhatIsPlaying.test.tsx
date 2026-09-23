@@ -1,9 +1,9 @@
 import { waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { renderHookInAnAddress } from '@ValenceScreens/testing/renderHookInAnAddress';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
-import { aTrack } from '@ValenceScreens/testing/aTrack';
-import { useWhatIsPlaying } from './useWhatIsPlaying';
+import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
+import { aTrack } from '@ValenceClient/testing/aTrack';
+import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 
 const devices = vi.hoisted(() => ({ fetchMusicDevices: vi.fn() }));
 
@@ -11,9 +11,7 @@ vi.mock('@ValenceClient/music/musicDevices', () => devices);
 
 describe('useWhatIsPlaying', () => {
   it('shows nothing where nothing is playing', () => {
-    const { result } = renderHookInAnAddress(() =>
-      useWhatIsPlaying(aFakeMusicPlayer().player.read()),
-    );
+    const { result } = renderHookInACache(() => useWhatIsPlaying(aFakeMusicPlayer().player.read()));
 
     expect(result.current).toBeNull();
   });
@@ -25,7 +23,7 @@ describe('useWhatIsPlaying', () => {
       positionSeconds: 30,
     }).player.read();
 
-    const { result } = renderHookInAnAddress(() => useWhatIsPlaying(state));
+    const { result } = renderHookInACache(() => useWhatIsPlaying(state));
 
     expect(result.current).toMatchObject({
       title: 'Track 1',
@@ -60,7 +58,7 @@ describe('useWhatIsPlaying', () => {
       remote: { clientId: 'phone', label: 'iPhone' },
     }).player.read();
 
-    const { result } = renderHookInAnAddress(() => useWhatIsPlaying(state, () => 6000));
+    const { result } = renderHookInACache(() => useWhatIsPlaying(state, () => 6000));
 
     await waitFor(() => {
       expect(result.current).toMatchObject({

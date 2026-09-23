@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { gainFor } from '@ValenceCore/functions/gainFor';
-import { createMusicPlayer } from './createMusicPlayer';
-import type { AudioLike, MusicPlayerDeps } from './createMusicPlayer';
+import { createMusicPlayer } from '@ValenceClient/music/createMusicPlayer';
+import type { AudioLike, MusicPlayerDeps } from '@ValenceClient/music/createMusicPlayer';
 import type { MusicPreferences } from '@ValenceClient/music/musicPreferences';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 

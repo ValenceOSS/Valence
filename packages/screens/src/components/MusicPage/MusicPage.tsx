@@ -15,7 +15,7 @@ import {
 } from '@ValenceUI/animations/reveal';
 import { VALENCE_TOKENS } from '@ValenceUI/tokens';
 import { setMusicPanel, useMusicPanel } from '@ValenceScreens/music/musicPanel';
-import { writeMusicView } from '@ValenceScreens/music/musicView';
+import { writeMusicView } from '@ValenceClient/music/musicView';
 import { useRoomForThePanels } from '@ValenceScreens/music/useRoomForThePanels';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { AlbumView } from './components/AlbumView/AlbumView';
@@ -34,7 +34,7 @@ import { MusicSearchView } from './components/MusicSearchView/MusicSearchView';
 import { PlaylistView } from './components/PlaylistView/PlaylistView';
 import { PlaylistsView } from './components/PlaylistsView/PlaylistsView';
 import { QueuePanel } from './components/QueuePanel/QueuePanel';
-import type { MusicView } from '@ValenceScreens/music/musicView';
+import type { MusicView } from '@ValenceClient/music/musicView';
 
 const PANEL_TITLES = {
   queue: 'Queue',

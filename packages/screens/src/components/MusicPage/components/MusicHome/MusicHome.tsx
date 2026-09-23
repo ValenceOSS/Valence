@@ -11,7 +11,7 @@ import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLikedSongsTile } from '@ValenceScreens/music/useLikedSongsTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { MusicFeature } from './components/MusicFeature/MusicFeature';
-import type { MusicView } from '@ValenceScreens/music/musicView';
+import type { MusicView } from '@ValenceClient/music/musicView';
 
 const RECENT = 18;
 

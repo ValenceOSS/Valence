@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { MusicPlayer, MusicPlayerState } from '@ValenceScreens/music/createMusicPlayer';
+import type { MusicPlayer, MusicPlayerState } from '@ValenceClient/music/createMusicPlayer';
 
 const IDLE: MusicPlayerState = {
   queue: null,
@@ -55,6 +55,7 @@ const aFakeMusicPlayer = (
     moveInQueue: vi.fn(),
     setQuality: vi.fn(),
     stop: vi.fn(),
+    leave: vi.fn(),
     playOn: vi.fn(),
     playHere: vi.fn(),
     obey: vi.fn(),

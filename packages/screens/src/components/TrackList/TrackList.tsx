@@ -19,7 +19,7 @@ import { ExplicitMark } from '@ValenceScreens/components/ExplicitMark/ExplicitMa
 import { Equaliser } from '@ValenceScreens/components/Equaliser/Equaliser';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { TrackMenu } from '@ValenceScreens/components/TrackMenu/TrackMenu';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import type { TrackListProps } from './TrackList.types';
 

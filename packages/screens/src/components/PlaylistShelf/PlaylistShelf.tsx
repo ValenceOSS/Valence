@@ -2,7 +2,7 @@ import { fetchPlaylist } from '@ValenceClient/music/fetchPlaylists';
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { RevealItem } from '@ValenceUI/RevealItem';

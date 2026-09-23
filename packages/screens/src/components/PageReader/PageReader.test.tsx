@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { PageReader } from './PageReader';
 import type { Book, BookChapter } from '@ValenceContracts/schemas/Book';
@@ -67,27 +68,29 @@ beforeEach(() => {
   Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 600 });
   forgetPlatform();
   held.clear();
-  installPlatform({
-    store: {
-      read: (key) => held.get(key) ?? null,
-      write: (key, value) => {
-        held.set(key, value);
+  installPlatform(
+    aFakePlatform({
+      store: {
+        read: (key) => held.get(key) ?? null,
+        write: (key, value) => {
+          held.set(key, value);
+        },
+        forget: (key) => {
+          held.delete(key);
+        },
       },
-      forget: (key) => {
-        held.delete(key);
-      },
-    },
-    describeThisClient: () => 'Valence',
-    thisClientKind: () => 'browser',
-    canKeepFiles: () => true,
-    held: noFilesAreKept(),
-    reachability: alwaysReachable(),
-    thisClientId: () => 'a-client',
-    openSocket: () => ({ send: () => {}, close: () => {} }),
-    buildInfo: () => null,
-    notifyLocally: () => {},
-    setUnreadBadge: () => {},
-  });
+      describeThisClient: () => 'Valence',
+      thisClientKind: () => 'browser',
+      canKeepFiles: () => true,
+      held: noFilesAreKept(),
+      reachability: alwaysReachable(),
+      thisClientId: () => 'a-client',
+      openSocket: () => ({ send: () => {}, close: () => {} }),
+      buildInfo: () => null,
+      notifyLocally: () => {},
+      setUnreadBadge: () => {},
+    }),
+  );
 });
 
 afterEach(() => {

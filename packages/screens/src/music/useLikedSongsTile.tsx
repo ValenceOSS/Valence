@@ -1,7 +1,7 @@
 import { LikedCover } from '@ValenceScreens/components/LikedCover/LikedCover';
 import { musicMenuFor } from './musicMenuFor';
 import { useMusicNavigation } from './useMusicNavigation';
-import { useMusicPlayer } from './useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { MusicTileProps } from '@ValenceScreens/components/MusicTile/MusicTile.types';
 
 /**

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MusicMiniPlayer } from './MusicMiniPlayer';
-import type { WhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import type { WhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 
 const A_TRACK: WhatIsPlaying = {
   trackId: 'a-track',

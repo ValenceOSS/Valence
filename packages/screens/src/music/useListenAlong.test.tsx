@@ -1,8 +1,8 @@
 import { act, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { aShell } from '@ValenceClient/testing/aShell';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
-import { aTrack } from '@ValenceScreens/testing/aTrack';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
+import { aTrack } from '@ValenceClient/testing/aTrack';
 import { renderHookInAnAddress } from '@ValenceScreens/testing/renderHookInAnAddress';
 import { readListeningParty, setListeningParty } from './listeningParty';
 import { useListenAlong } from './useListenAlong';

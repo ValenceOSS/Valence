@@ -3,9 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { watchMusicDevices } from '@ValenceClient/music/watchMusicDevices';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
-import { theMusicPlayer } from './theMusicPlayer';
-import { useMusicPlayer } from './useMusicPlayer';
-import type { MusicPlayer } from './createMusicPlayer';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 
 /**
  * Lets this person's other devices drive this one, and keeps the list of them fresh.

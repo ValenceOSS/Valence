@@ -2,7 +2,7 @@ import { albumArtworkUrl, artistImageUrl } from '@ValenceClient/music/fetchMusic
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';

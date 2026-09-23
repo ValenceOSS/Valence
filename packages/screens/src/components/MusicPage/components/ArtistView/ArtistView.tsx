@@ -19,7 +19,7 @@ import { AlbumShelf } from '@ValenceScreens/components/AlbumShelf/AlbumShelf';
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { ArtistViewProps } from './ArtistView.types';
 
 /**

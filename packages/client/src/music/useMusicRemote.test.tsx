@@ -1,9 +1,9 @@
 import { waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
-import { renderHookInAnAddress } from '@ValenceScreens/testing/renderHookInAnAddress';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
-import { useMusicRemote } from './useMusicRemote';
+import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
+import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
 import type { MusicDevice } from '@ValenceContracts/schemas/MusicRemote';
 
 vi.mock('@ValenceClient/music/watchMusicDevices', () => ({
@@ -20,7 +20,7 @@ describe('useMusicRemote', () => {
   it('does what another of this person’s devices says', () => {
     const { player } = aFakeMusicPlayer();
 
-    renderHookInAnAddress(() => {
+    renderHookInACache(() => {
       useMusicRemote(player);
     });
 
@@ -37,7 +37,7 @@ describe('useMusicRemote', () => {
   it('ignores presence news that is not about music', () => {
     const { player } = aFakeMusicPlayer();
 
-    renderHookInAnAddress(() => {
+    renderHookInACache(() => {
       useMusicRemote(player);
     });
 
@@ -49,7 +49,7 @@ describe('useMusicRemote', () => {
   it('stops listening once gone', () => {
     const { player } = aFakeMusicPlayer();
 
-    const { unmount } = renderHookInAnAddress(() => {
+    const { unmount } = renderHookInACache(() => {
       useMusicRemote(player);
     });
 
@@ -87,7 +87,7 @@ describe('useMusicRemote', () => {
 
     const { player } = aFakeMusicPlayer({ remote: { clientId: 'phone', label: 'iPhone' } });
 
-    renderHookInAnAddress(() => {
+    renderHookInACache(() => {
       useMusicRemote(player);
     });
 
@@ -99,7 +99,7 @@ describe('useMusicRemote', () => {
   it('mirrors nothing while it plays here', async () => {
     const { player } = aFakeMusicPlayer();
 
-    renderHookInAnAddress(() => {
+    renderHookInACache(() => {
       useMusicRemote(player);
     });
 

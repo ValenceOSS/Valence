@@ -2,7 +2,7 @@ import { fetchAlbum, fetchArtist, fetchLiked } from '@ValenceClient/music/fetchM
 import { fetchPlaylist } from '@ValenceClient/music/fetchPlaylists';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { QueueSource } from '@ValenceClient/music/playQueue';
-import type { MusicView } from './musicView';
+import type { MusicView } from '@ValenceClient/music/musicView';
 
 type Playable = {
   tracks: MusicTrack[];

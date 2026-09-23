@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { readMusicView, writeMusicView } from './musicView';
-import type { MusicView } from './musicView';
+import { readMusicView, writeMusicView } from '@ValenceClient/music/musicView';
+import type { MusicView } from '@ValenceClient/music/musicView';
 
 const ID = '00000000-0000-4000-8000-000000000001';
 

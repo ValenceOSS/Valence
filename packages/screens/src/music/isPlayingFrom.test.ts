@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { startQueue } from '@ValenceClient/music/playQueue';
-import { aTrack } from '@ValenceScreens/testing/aTrack';
+import { aTrack } from '@ValenceClient/testing/aTrack';
 import { isPlayingFrom } from './isPlayingFrom';
 
 const SONG = aTrack(1);

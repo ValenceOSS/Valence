@@ -2,8 +2,8 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
-import { aTrack } from '@ValenceScreens/testing/aTrack';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
+import { aTrack } from '@ValenceClient/testing/aTrack';
 import { TrackList } from './TrackList';
 
 const favourites = vi.hoisted(() => ({
@@ -35,7 +35,7 @@ vi.mock('@ValenceClient/music/fetchPlaylists', () => ({
   createPlaylist: vi.fn(),
 }));
 
-vi.mock('@ValenceScreens/music/theMusicPlayer', () => ({
+vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => fake.player,
 }));
 

@@ -1,4 +1,4 @@
-import type { WhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import type { WhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 
 type MusicMiniPlayerProps = {
   shown: WhatIsPlaying;
