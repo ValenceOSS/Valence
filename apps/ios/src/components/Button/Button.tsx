@@ -8,7 +8,7 @@ import type { ButtonProps } from './Button.types';
 const styles = StyleSheet.create({
   bare: {},
   bright: { alignItems: 'center', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12 },
-  brightWord: { fontSize: 16, fontFamily: FONTS.sans.medium },
+  brightWord: { fontSize: 16, fontFamily: FONTS.sans.semibold },
   fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   ghost: {
     alignItems: 'center',
@@ -18,10 +18,10 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   ghostWide: { borderRadius: 12, paddingVertical: 12 },
-  ghostWord: { fontSize: 15, fontFamily: FONTS.sans.medium },
+  ghostWord: { fontSize: 15, fontFamily: FONTS.sans.semibold },
   pressed: { opacity: 0.75 },
   quiet: { alignItems: 'center', paddingVertical: 12 },
-  quietWord: { fontSize: 15, fontFamily: FONTS.sans.medium },
+  quietWord: { fontSize: 15, fontFamily: FONTS.sans.semibold },
   said: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   wide: { alignSelf: 'stretch' },
 });

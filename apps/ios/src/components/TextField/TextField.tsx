@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
   field: {
     borderRadius: 14,
     borderWidth: 1,
-    fontFamily: FONTS.sans.regular,
+    fontFamily: FONTS.sans.semibold,
     fontSize: 16,
     padding: 16,
   },

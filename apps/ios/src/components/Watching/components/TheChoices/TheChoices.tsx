@@ -17,7 +17,7 @@ const EDGE = 24;
 const styles = StyleSheet.create({
   behind: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   chosenRow: { backgroundColor: 'rgba(255, 255, 255, 0.08)' },
-  detail: { color: QUIETLY, fontFamily: FONTS.sans.regular, fontSize: 12 },
+  detail: { color: QUIETLY, fontFamily: FONTS.sans.semibold, fontSize: 12 },
   heading: {
     color: QUIETLY,
     fontSize: 12,
@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   inside: { gap: 22, paddingBottom: EDGE },
-  label: { color: OVER_THE_PICTURE, flex: 1, fontFamily: FONTS.sans.regular, fontSize: 15 },
+  label: { color: OVER_THE_PICTURE, flex: 1, fontFamily: FONTS.sans.semibold, fontSize: 15 },
   panel: {
     backgroundColor: PANEL,
     bottom: 0,

@@ -16,7 +16,7 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   place: { alignItems: 'center', left: 0, position: 'absolute', right: 0 },
-  said: { color: OVER_THE_PICTURE, flexShrink: 1, fontFamily: FONTS.sans.regular, fontSize: 15 },
+  said: { color: OVER_THE_PICTURE, flexShrink: 1, fontFamily: FONTS.sans.semibold, fontSize: 15 },
   sitting: {
     alignItems: 'center',
     backgroundColor: BEHIND_IT,
