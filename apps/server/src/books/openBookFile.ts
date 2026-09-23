@@ -2,6 +2,8 @@ import { openComicRar } from './openComicRar';
 import { openEpub } from './openEpub';
 import { openComicZip } from './openComicZip';
 import { openPortableDocument } from './openPortableDocument';
+import { openAudiobook } from './openAudiobook';
+import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import { BOOK_FILE_FORMATS } from '@ValenceContracts/constants/BOOK_FILE_FORMATS';
 import type { BookFormat } from '@ValenceContracts/schemas/Book';
 import type { OpenedBook } from './BookFile';
@@ -54,6 +56,10 @@ const openBookFile = async (
 
   if (format === 'epub') {
     return openEpub(path, addressFor);
+  }
+
+  if (format !== null && isAudiobookFormat(format)) {
+    return openAudiobook(path);
   }
 
   return null;

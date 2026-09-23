@@ -24,8 +24,8 @@ import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { useHomeRows } from '@ValenceClient/library/useHomeRows';
-import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
+import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { LibraryBrowserProps } from './LibraryBrowser.types';
 

@@ -1,10 +1,7 @@
 import { requireOptionalNativeModule } from 'expo';
 import { z } from 'zod';
-import { createMusicPlayer } from '@ValenceClient/music/createMusicPlayer';
-import { albumArtworkUrl, fetchTracks, trackStreamUrl } from '@ValenceClient/music/fetchMusic';
-import { readMusicPreferences, saveMusicPreferences } from '@ValenceClient/music/musicPreferences';
-import { reportNowPlaying, sendMusicCommand } from '@ValenceClient/music/musicDevices';
-import { thePhonesMusicAudio } from '@ValencePhone/music/thePhonesMusicAudio';
+import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 import type { NativeMusic } from './NativeMusic.types';
@@ -20,10 +17,9 @@ let made: MusicPlayer | null = null;
  * The one music player this phone has, made the first time it is asked for and kept for as long
  * as the app runs, so music carries on from screen to screen and with the app closed.
  *
- * It is the web's player, driven through the phone's own speaker. Whatever is playing is put on
+ * It is the client's player, which plays through the phone's speaker. Whatever is playing is put on
  * the lock screen and in Control Centre with its album's cover, and their buttons — and a pair of
- * headphones' — do what the same buttons in the app do. A phone cannot play Ogg, so a track kept
- * as Opus or Vorbis is played from the server's high-quality encode instead.
+ * headphones' — do what the same buttons in the app do.
  *
  * @returns The player.
  */
@@ -38,18 +34,7 @@ const thePhonesMusicPlayer = (): MusicPlayer => {
     throw new Error('This build of Valence cannot play music.');
   }
 
-  const player = createMusicPlayer({
-    audio: thePhonesMusicAudio(speaker),
-    streamUrl: trackStreamUrl,
-    canPlay: (type) => !type.startsWith('audio/ogg'),
-    fetchTracks,
-    report: (nowPlaying) => {
-      void reportNowPlaying(nowPlaying);
-    },
-    command: sendMusicCommand,
-    preferences: { read: readMusicPreferences, save: saveMusicPreferences },
-    now: () => Date.now(),
-  });
+  const player = theMusicPlayer();
   let described: string | null = null;
 
   player.subscribe(() => {

@@ -35,7 +35,7 @@ vi.mock('@ValenceClient/music/fetchPlaylists', () => ({
   createPlaylist: vi.fn(),
 }));
 
-vi.mock('@ValenceScreens/music/theMusicPlayer', () => ({
+vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => fake.player,
 }));
 

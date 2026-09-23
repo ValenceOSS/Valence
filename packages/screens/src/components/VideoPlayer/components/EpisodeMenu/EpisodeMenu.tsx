@@ -1,19 +1,11 @@
 import { Icon } from '@ValenceUI/Icon';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { ListMusic as ListMusicIcon } from '@keyline-icons/react';
 import { useState } from 'react';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { EpisodeMenuProps } from './EpisodeMenu.types';
-
-/**
- * Builds the address of an episode's still, which the menu shows beside each row so a viewer picks
- * by what they remember seeing rather than by episode number.
- *
- * @param mediaId - The episode.
- * @returns Where to fetch its picture.
- */
-const artworkUrl = (mediaId: string): string => `/api/media/${mediaId}/image/backdrop`;
 
 /**
  * Names a season for the heading above its episodes, falling back to a neutral heading for anything
@@ -88,7 +80,7 @@ const EpisodeMenu = ({
                 {...(watchedFractionFor?.(episode.id) === undefined
                   ? {}
                   : { watchedFraction: watchedFractionFor(episode.id) ?? 0 })}
-                {...(episode.hasBackdrop ? { imageUrl: artworkUrl(episode.id) } : {})}
+                {...(episode.hasBackdrop ? { imageUrl: artworkUrl(episode.id, 'backdrop') } : {})}
                 isStill
                 onSelect={() => {
                   show(false);

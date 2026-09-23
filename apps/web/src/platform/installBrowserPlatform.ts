@@ -1,5 +1,6 @@
 import { detectClientKind } from '@ValenceClient/playback/detectClientKind';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { theBrowserAudio } from '@ValenceScreens/music/theBrowserAudio';
 import { theBrowsersStore } from '@ValenceWeb/platform/browserStore';
 import { describeThisBrowser } from '@ValenceWeb/platform/describeThisBrowser';
 import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
@@ -30,6 +31,7 @@ const installBrowserPlatform = (): void => {
     buildInfo: () => null,
     notifyLocally: () => {},
     setUnreadBadge: () => {},
+    musicAudio: theBrowserAudio,
   });
 };
 

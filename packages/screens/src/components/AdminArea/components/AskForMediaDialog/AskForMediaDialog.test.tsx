@@ -135,7 +135,7 @@ describe('AskForMediaDialog', () => {
     expect(screen.queryByRole('menuitemradio', { name: 'Lossless' })).not.toBeInTheDocument();
 
     await user.click(await screen.findByRole('menuitemradio', { name: 'UHD' }));
-    await user.click(screen.getByRole('button', { name: 'Ask for it' }));
+    await user.click(screen.getByRole('button', { name: 'Request it' }));
 
     await waitFor(() => {
       expect(onAsked).toHaveBeenCalledWith(MADE);
@@ -168,7 +168,7 @@ describe('AskForMediaDialog', () => {
     expect(screen.queryByRole('menuitemradio', { name: 'UHD' })).not.toBeInTheDocument();
 
     await user.click(await screen.findByRole('menuitemradio', { name: 'Lossless' }));
-    await user.click(screen.getByRole('button', { name: 'Ask for it' }));
+    await user.click(screen.getByRole('button', { name: 'Request it' }));
 
     await waitFor(() => {
       expect(onAsked).toHaveBeenCalledWith(MADE);
@@ -195,7 +195,7 @@ describe('AskForMediaDialog', () => {
 
     expect(screen.queryByRole('list', { name: 'Which releases' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Ask for it' }));
+    await user.click(screen.getByRole('button', { name: 'Request it' }));
 
     await waitFor(() => {
       expect(askForMedia).toHaveBeenCalledWith({
@@ -217,13 +217,13 @@ describe('AskForMediaDialog', () => {
     await user.click(await screen.findByRole('button', { name: /Severance \(2022\)/ }));
     await user.click(await screen.findByRole('switch', { name: 'Every season' }));
 
-    expect(screen.getByRole('button', { name: 'Ask for it' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Request it' })).toBeDisabled();
     expect(screen.getByRole('switch', { name: 'Specials' })).not.toBeChecked();
 
     await user.click(screen.getByRole('switch', { name: 'Season 1' }));
     await user.click(screen.getByRole('switch', { name: 'Season 2' }));
 
-    await user.click(screen.getByRole('button', { name: 'Ask for it' }));
+    await user.click(screen.getByRole('button', { name: 'Request it' }));
 
     await waitFor(() => {
       expect(askForMedia).toHaveBeenCalledWith({
@@ -292,7 +292,7 @@ describe('AskForMediaDialog', () => {
     await user.type(screen.getByRole('textbox', { name: 'Search for a film' }), 'Dune');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Dune \(2021\)/ }));
-    await user.click(screen.getByRole('button', { name: 'Ask for it' }));
+    await user.click(screen.getByRole('button', { name: 'Request it' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'There is no library of films to put it in.',

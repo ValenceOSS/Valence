@@ -83,7 +83,7 @@ const RefuseRequestDialog = ({
           placeholder="Optional"
           description={
             isMany
-              ? 'Shown to everybody who asked for one of them.'
+              ? 'Shown to everybody who requested one of them.'
               : `Shown to ${request?.requestedBy.name ?? 'whoever asked'}.`
           }
         />

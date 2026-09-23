@@ -12,7 +12,7 @@ import { aTrack } from '@ValenceClient/testing/aTrack';
 import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests';
 import { DevicesPanel, iconFor } from './DevicesPanel';
 
-vi.mock('@ValenceScreens/music/theMusicPlayer', () => ({
+vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => fake.player,
 }));
 

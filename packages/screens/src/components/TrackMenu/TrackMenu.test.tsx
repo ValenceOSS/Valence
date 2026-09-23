@@ -20,7 +20,7 @@ const playlists = vi.hoisted(() => ({
   createPlaylist: vi.fn(),
 }));
 
-vi.mock('@ValenceScreens/music/theMusicPlayer', () => ({
+vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => fake.player,
 }));
 

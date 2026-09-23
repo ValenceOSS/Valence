@@ -253,11 +253,7 @@ const DownloadQueueTable = ({
                   },
                   {
                     items: libraries
-                      .filter(
-                        (library) =>
-                          library.kind === row.original.libraryKind &&
-                          (library.kind === 'movies' || library.kind === 'shows'),
-                      )
+                      .filter((library) => library.kind === row.original.libraryKind)
                       .map((library) => ({
                         id: `file-${library.id}`,
                         label: `File into ${library.name}`,

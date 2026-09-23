@@ -26,6 +26,14 @@ jest.mock('expo-network', () => ({
   addNetworkStateListener: () => ({ remove: () => undefined }),
 }));
 
+jest.mock('expo-crypto', () => ({
+  CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
+  digestStringAsync: jest.fn(() => Promise.resolve('')),
+  getRandomBytes: jest.fn((count: number) => new Uint8Array(count)),
+  getRandomValues: jest.fn(<T>(array: T) => array),
+  randomUUID: jest.fn(() => '00000000-0000-4000-8000-000000000001'),
+}));
+
 jest.mock('expo-screen-orientation', () => ({
   lockAsync: jest.fn(() => Promise.resolve()),
   OrientationLock: { ALL: 1, PORTRAIT_UP: 3, LANDSCAPE: 5, LANDSCAPE_LEFT: 6 },

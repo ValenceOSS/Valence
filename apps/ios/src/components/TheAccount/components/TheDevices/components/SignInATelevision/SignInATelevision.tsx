@@ -14,10 +14,11 @@ import type { SignInATelevisionProps } from './SignInATelevision.types';
 
 type Standing = 'asking' | 'reading' | 'waiting' | 'allowed' | 'refused' | 'wrong';
 
-type Trouble = 'notATelevision' | 'noCamera' | 'noScanner';
+type Trouble = 'notATelevision' | 'typeTheCode' | 'noCamera' | 'noScanner';
 
 const TROUBLE: Record<Trouble, string> = {
   notATelevision: 'That QR code is not one a television showed.',
+  typeTheCode: 'Type the code the television shows, so it is known you are in front of it.',
   noCamera: 'Valence may not use the camera. It can be allowed in Settings.',
   noScanner: 'This device cannot scan codes. Type the one on the television instead.',
 };
@@ -94,7 +95,7 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
     const code = theCodeInAScan(scanned.text);
 
     if (code === null) {
-      setTrouble('notATelevision');
+      setTrouble(hostOf(scanned.text.trim()) === null ? 'notATelevision' : 'typeTheCode');
 
       return;
     }

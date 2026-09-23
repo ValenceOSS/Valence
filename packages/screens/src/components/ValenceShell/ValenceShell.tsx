@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { Outlet, useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
@@ -54,7 +54,15 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.types';
 import type { Inbox } from '@ValenceClient/notifications/fetchNotifications';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { AudiobookBar } from '@ValenceScreens/components/AudiobookBar/AudiobookBar';
 import { BookDialog } from '@ValenceScreens/components/BookDialog/BookDialog';
+import { PlayOnDialog } from '@ValenceScreens/components/PlayOnDialog/PlayOnDialog';
+import { VideoRemote } from '@ValenceScreens/components/VideoRemote/VideoRemote';
+import { VideoRemoteBar } from '@ValenceScreens/components/VideoRemoteBar/VideoRemoteBar';
+import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
+import { onControlledDevice, readControlledDevice } from '@ValenceClient/video/controlledDevice';
+import { startListening } from '@ValenceScreens/listening/startListening';
+import { theAudiobookPlayer } from '@ValenceScreens/listening/theAudiobookPlayer';
 import { useSurprise } from '@ValenceScreens/library/useSurprise';
 import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
 
@@ -70,6 +78,20 @@ const ValenceShell = () => {
   const { place, go, replace } = usePlace();
   const musicLights = useMusicLights();
   const navigate = useNavigate();
+  const [sendingToTv, setSendingToTv] = useState<{ media: MediaSummary; seconds: number } | null>(
+    null,
+  );
+  const [isRemoteOpen, setIsRemoteOpen] = useState(false);
+  const hasTelevision = useVideoDevices().some((device) => device.kind === 'tv');
+  const controlled = useSyncExternalStore(
+    onControlledDevice,
+    readControlledDevice,
+    readControlledDevice,
+  );
+
+  useEffect(() => {
+    setIsRemoteOpen(controlled !== null);
+  }, [controlled]);
 
   const {
     watcher,
@@ -221,6 +243,12 @@ const ValenceShell = () => {
           <ImmersiveMusic />
           <MusicVisualiser />
           <NowPlayingBar />
+          <VideoRemoteBar
+            onOpen={() => {
+              setIsRemoteOpen(true);
+            }}
+          />
+          <AudiobookBar />
         </>
       }
       isFitted={place.section === 'music'}
@@ -410,6 +438,13 @@ const ValenceShell = () => {
         onShare={(media) => {
           setSharing({ kind: 'item', media });
         }}
+        {...(hasTelevision
+          ? {
+              onPlayOn: (media: MediaSummary, startSeconds: number) => {
+                setSendingToTv({ media, seconds: startSeconds });
+              },
+            }
+          : {})}
         onStartParty={(media) => {
           watchParty.open(media.id);
           go({ inspecting: null, playing: media.id });
@@ -423,6 +458,29 @@ const ValenceShell = () => {
         }}
       />
 
+      <PlayOnDialog
+        media={sendingToTv?.media ?? null}
+        startSeconds={sendingToTv?.seconds ?? 0}
+        onClose={() => {
+          setSendingToTv(null);
+        }}
+        onSent={() => {
+          setSendingToTv(null);
+          go({ inspecting: null });
+        }}
+      />
+
+      <VideoRemote
+        isOpen={isRemoteOpen}
+        onClose={() => {
+          setIsRemoteOpen(false);
+        }}
+        onPlayHere={(mediaId, seconds) => {
+          setStartOverride({ mediaId, seconds: Math.floor(seconds) });
+          go({ playing: mediaId });
+        }}
+      />
+
       <BookDialog
         bookId={place.book}
         isKept={place.book !== null && keptBooks.isKept(place.book)}
@@ -431,6 +489,10 @@ const ValenceShell = () => {
         }}
         onRead={(book) => {
           void navigate({ to: '/read/$bookId', params: { bookId: book.id } });
+        }}
+        onListen={(detail) => {
+          go({ book: null });
+          void startListening(detail, theAudiobookPlayer());
         }}
         onToggleKept={(book) => {
           keptBooks.toggle(book.id);

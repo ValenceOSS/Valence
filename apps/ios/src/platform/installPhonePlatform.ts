@@ -1,4 +1,5 @@
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { thePhonesMusicOut } from '@ValencePhone/music/thePhonesMusicOut';
 import { describeThisPhone } from '@ValencePhone/platform/describeThisPhone';
 import { giveThisPhoneAnOrigin } from '@ValencePhone/platform/giveThisPhoneAnOrigin';
 import { giveThisPhoneCrypto } from '@ValencePhone/platform/giveThisPhoneCrypto';
@@ -43,6 +44,7 @@ const installPhonePlatform = (held: Map<string, string>): void => {
     buildInfo: thePhonesBuild,
     notifyLocally: () => {},
     setUnreadBadge: () => {},
+    musicAudio: thePhonesMusicOut,
   });
 };
 

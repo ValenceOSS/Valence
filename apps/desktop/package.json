@@ -21,6 +21,7 @@
     "@tanstack/react-router": "^1.170.35",
     "@valence/client": "workspace:*",
     "@valence/contracts": "workspace:*",
+    "@valence/core": "workspace:*",
     "@valence/screens": "workspace:*",
     "@valence/ui": "workspace:*",
     "better-auth": "^1.7.4",

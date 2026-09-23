@@ -7,7 +7,7 @@ import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests
 import { setMusicPanel } from '@ValenceScreens/music/musicPanel';
 import { MusicPage } from './MusicPage';
 
-vi.mock('@ValenceScreens/music/theMusicPlayer', () => ({
+vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => aFakeMusicPlayer().player,
 }));
 

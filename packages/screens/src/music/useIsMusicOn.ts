@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { theMusicPlayer } from './theMusicPlayer';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 
 /**

@@ -153,7 +153,7 @@ describe('RequestsList', () => {
 
     renderInAnAddress(<RequestsList onAsk={vi.fn()} onOpen={vi.fn()} />);
 
-    expect(await screen.findByText('Nothing has been asked for yet')).toBeInTheDocument();
+    expect(await screen.findByText('Nothing has been requested yet')).toBeInTheDocument();
   });
 
   it('says what a request cost once it has arrived', async () => {

@@ -12,7 +12,7 @@ const aSession: PresenceSession = {
   profileName: 'Connie',
   guestOf: null,
   viaShare: null,
-  clientKind: 'browser' as const,
+  clientKind: null,
   deviceLabel: 'A phone',
   address: '192.168.1.40',
 };

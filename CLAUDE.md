@@ -13,9 +13,10 @@ reference, not a substitute for reading it.
 ## Non-negotiables
 
 1. **TypeScript and Rust only.** No JavaScript files, including config. The
-   phone client is React Native under Expo, TypeScript like the rest; its
-   Xcode project is generated and `.gitignore`d, and Swift appears only in a
-   native module under `apps/ios/modules/`.
+   phone and TV clients are React Native under Expo, TypeScript like the rest.
+   The one carve-out is Swift inside an Apple-platform client's native modules,
+   `apps/<client>/modules/<module>/ios/`, wrapping a system control for
+   TypeScript to use — see the standard for its limits.
 2. **No duplication across modules.** Needed twice means extracted and shared.
 3. **No `../` imports.** Use `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`,
    `@ValenceCore/*`, `@ValenceSDK/*`.

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
 import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
-import { useMusicRemote } from './useMusicRemote';
+import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
 import type { MusicDevice } from '@ValenceContracts/schemas/MusicRemote';
 
 vi.mock('@ValenceClient/music/watchMusicDevices', () => ({
@@ -21,7 +21,7 @@ describe('useMusicRemote', () => {
     const { player } = aFakeMusicPlayer();
 
     renderHookInACache(() => {
-      useMusicRemote(player, null);
+      useMusicRemote(player);
     });
 
     emitPresenceEvent({
@@ -38,7 +38,7 @@ describe('useMusicRemote', () => {
     const { player } = aFakeMusicPlayer();
 
     renderHookInACache(() => {
-      useMusicRemote(player, null);
+      useMusicRemote(player);
     });
 
     emitPresenceEvent({ kind: 'message', text: 'Tea is ready' });
@@ -50,7 +50,7 @@ describe('useMusicRemote', () => {
     const { player } = aFakeMusicPlayer();
 
     const { unmount } = renderHookInACache(() => {
-      useMusicRemote(player, null);
+      useMusicRemote(player);
     });
 
     unmount();
@@ -88,7 +88,7 @@ describe('useMusicRemote', () => {
     const { player } = aFakeMusicPlayer({ remote: { clientId: 'phone', label: 'iPhone' } });
 
     renderHookInACache(() => {
-      useMusicRemote(player, 'phone');
+      useMusicRemote(player);
     });
 
     await waitFor(() => {
@@ -100,7 +100,7 @@ describe('useMusicRemote', () => {
     const { player } = aFakeMusicPlayer();
 
     renderHookInACache(() => {
-      useMusicRemote(player, null);
+      useMusicRemote(player);
     });
 
     await new Promise((resolve) => setTimeout(resolve, 20));

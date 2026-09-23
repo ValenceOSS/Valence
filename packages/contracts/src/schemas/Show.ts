@@ -47,6 +47,7 @@ const ShowDetailSchema = ShowSummarySchema.extend({
   extras: z.array(MediaSummarySchema).optional(),
   trailerKey: z.string().nullish(),
   status: z.string().nullish(),
+  overview: z.string().nullish(),
   nextEpisode: NextEpisodeSchema.nullish(),
 });
 

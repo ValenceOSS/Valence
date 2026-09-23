@@ -9,7 +9,7 @@ import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { upcomingIn } from '@ValenceClient/music/playQueue';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 
 /**

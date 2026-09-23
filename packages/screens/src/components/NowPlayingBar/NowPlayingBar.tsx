@@ -41,14 +41,14 @@ import { setMusicImmersive, useMusicImmersive } from '@ValenceScreens/music/musi
 import { keepBarRoom } from '@ValenceScreens/music/keepBarRoom';
 import { setMusicPanel, useMusicPanel } from '@ValenceScreens/music/musicPanel';
 import { useListeningParty } from '@ValenceScreens/music/listeningParty';
-import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMusicSession } from '@ValenceScreens/music/useMusicSession';
 import { useDiscordMusicPresence } from '@ValenceScreens/playback/useDiscordMusicPresence';
 import { idleWhatIsPlaying } from '@ValenceScreens/music/idleWhatIsPlaying';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
-import { describeAudioQuality } from '@ValenceScreens/music/describeAudioQuality';
+import { describeAudioQuality } from '@ValenceClient/music/describeAudioQuality';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { MusicPanel } from '@ValenceScreens/music/musicPanel';
 import type { Variants } from 'motion/react';

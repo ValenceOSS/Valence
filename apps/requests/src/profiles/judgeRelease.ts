@@ -189,6 +189,8 @@ const judgeSize = (
  * @param runtimeMinutes - How long one film or episode runs, for judging video by size an hour.
  * @param episodesHeld - How many episodes the release holds, so a pack is judged by size an hour
  *   like anything else. Left out where nobody knows, and then a pack's size goes unjudged.
+ * @param isForABook - Whether it is for a book or an audiobook, which says nothing of a resolution
+ *   or an encoding and is judged by its words alone; a video is refused outright.
  * @returns The judgement.
  */
 const judgeRelease = (
@@ -197,9 +199,20 @@ const judgeRelease = (
   profile: QualityProfile,
   runtimeMinutes?: number,
   episodesHeld?: number,
+  isForABook = false,
 ): Judgement => {
-  const verdicts: Verdict[] =
-    profile.kind === 'video'
+  const verdicts: Verdict[] = isForABook
+    ? [
+        {
+          score: 0,
+          rejections:
+            parsed.resolution === null && parsed.codec === null
+              ? []
+              : ['It is a video, not a book'],
+          reasons: [],
+        },
+      ]
+    : profile.kind === 'video'
       ? [
           judgeChoice(
             parsed.resolution,
@@ -260,7 +273,7 @@ const judgeRelease = (
           : [],
     },
     judgeLanguage(parsed.languages, profile.preferredLanguage),
-    judgeSize(release, parsed, profile, runtimeMinutes, episodesHeld),
+    ...(isForABook ? [] : [judgeSize(release, parsed, profile, runtimeMinutes, episodesHeld)]),
   );
 
   const rejections = verdicts.flatMap((verdict) => verdict.rejections);

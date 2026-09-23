@@ -5,7 +5,7 @@ import { musicMenuFor } from './musicMenuFor';
 
 const found = vi.hoisted(() => ({ tracksFor: vi.fn() }));
 
-vi.mock('./tracksFor', () => found);
+vi.mock('@ValenceClient/music/tracksFor', () => found);
 
 const SONGS = [aTrack(1), aTrack(2)];
 

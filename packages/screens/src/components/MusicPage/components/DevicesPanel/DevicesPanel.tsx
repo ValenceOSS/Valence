@@ -10,7 +10,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 

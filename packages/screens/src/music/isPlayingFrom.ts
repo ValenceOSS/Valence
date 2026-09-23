@@ -1,5 +1,5 @@
 import type { MusicPlayerState } from '@ValenceClient/music/createMusicPlayer';
-import type { MusicView } from './musicView';
+import type { MusicView } from '@ValenceClient/music/musicView';
 
 /**
  * Whether the music playing is coming from a page of the music section, so the page can be marked

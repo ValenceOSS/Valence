@@ -90,8 +90,8 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
     return (
       <NothingHere
         of={CompassIcon}
-        title="Nothing has been asked for yet"
-        detail="Find something on Discover, or search for it, and ask for it from its page."
+        title="Nothing has been requested yet"
+        detail="Find something on Discover, or search for it, and request it from its page."
       />
     );
   }
@@ -253,7 +253,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
 
       <ConfirmDialog
         title={`Cancel ${cancelling?.title ?? 'this request'}?`}
-        detail="It will not be fetched, and whatever it had started downloading is deleted. You can ask for it again whenever you like."
+        detail="It will not be fetched, and whatever it had started downloading is deleted. You can request it again whenever you like."
         confirmLabel="Cancel request"
         isDestructive
         isOpen={cancelling !== null}

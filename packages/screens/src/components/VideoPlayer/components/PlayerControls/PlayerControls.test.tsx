@@ -227,6 +227,21 @@ describe('PlayerControls', () => {
     expect(screen.getByRole('button', { name: 'Leave the immersive view' })).toBeInTheDocument();
   });
 
+  it('offers to play on a television only where the player has one to send to', () => {
+    draw();
+
+    expect(screen.queryByRole('button', { name: 'Play on TV' })).not.toBeInTheDocument();
+  });
+
+  it('sends the film to a television from the bar', async () => {
+    const user = userEvent.setup();
+    const props = draw({ onPlayOnTv: vi.fn() });
+
+    await user.click(screen.getByRole('button', { name: 'Play on TV' }));
+
+    expect(props.onPlayOnTv).toHaveBeenCalledOnce();
+  });
+
   it('offers a jump back and a jump forward', async () => {
     const user = userEvent.setup();
     const props = draw();

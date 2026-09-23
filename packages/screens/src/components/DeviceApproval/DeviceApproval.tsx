@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useSearch } from '@tanstack/react-router';
 import { Button } from '@ValenceUI/Button';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
@@ -12,9 +11,10 @@ type Standing = 'asking' | 'reading' | 'unknown' | 'allowed' | 'refused' | 'wron
 /**
  * The other half of signing a television in: the phone says yes.
  *
- * Reached by opening the address the television shows, which carries the code, so most people never
- * type anything. Where the code did not come along — a bookmark, a typed address, a photograph of
- * the screen — there is a field for it.
+ * Reached by opening the address the television shows, or scanning its code, and then typing the code
+ * the television shows. The code is always typed, never carried in the address: typing what is on the
+ * screen is what shows that the person saying yes is in front of that television, rather than holding
+ * a link or a photograph of one.
  *
  * The code is checked against the server before anything is offered, so what somebody approves is a
  * request that exists rather than a string they typed. Turning it down is offered as plainly as
@@ -23,11 +23,8 @@ type Standing = 'asking' | 'reading' | 'unknown' | 'allowed' | 'refused' | 'wron
  * @param name - What this instance is called.
  */
 const DeviceApproval = ({ name }: DeviceApprovalProps) => {
-  const { user_code: carried } = useSearch({ strict: false });
-  const code = carried ?? '';
-
-  const [typed, setTyped] = useState(code);
-  const [standing, setStanding] = useState<Standing>(code === '' ? 'asking' : 'reading');
+  const [typed, setTyped] = useState('');
+  const [standing, setStanding] = useState<Standing>('asking');
   const [isAnswering, setIsAnswering] = useState(false);
 
   useEffect(() => {

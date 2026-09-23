@@ -1,5 +1,8 @@
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
-import type { QueueControl } from '@ValenceServer/transcoder/TranscoderClient';
+import type {
+  QueueControl,
+  TranscoderStreamedFile,
+} from '@ValenceServer/transcoder/TranscoderClient';
 import type { RunningJob } from '@ValenceServer/jobs/JobQueue';
 import type { CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import { OpenAPIHono, z } from '@hono/zod-openapi';
@@ -464,6 +467,9 @@ import type { HistoryService } from '@ValenceServer/history/HistoryService';
 import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 
 import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
+import { registerVideoDeviceRoutes } from '@ValenceServer/video/registerVideoDeviceRoutes';
+import type { VideoDevices } from '@ValenceServer/video/createVideoDevices';
+import { registerListeningRoutes } from '@ValenceServer/books/registerListeningRoutes';
 import { registerReencodeRoutes } from '@ValenceServer/reencode/registerReencodeRoutes';
 import { listeningFor } from '@ValenceServer/music/listeningFor';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
@@ -639,7 +645,9 @@ type CreateAppOptions = {
   households?: HouseholdService;
   splashscreen?: SplashscreenStore;
   books?: BookService;
+  streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;
+  videoDevices?: VideoDevices;
   reencodes?: ReencodeService;
   onReencodeQueued?: () => void;
   promoteProfile?: (request: {
@@ -734,7 +742,9 @@ const createApp = ({
   households,
   splashscreen = createMemorySplashscreenStore(),
   books,
+  streamBookFile,
   music,
+  videoDevices,
   reencodes,
   onReencodeQueued,
   promoteProfile,
@@ -2730,7 +2740,7 @@ const createApp = ({
           isGuest: entry.viaShare !== null,
           guestOf: entry.guestOf,
           deviceLabel: entry.deviceLabel,
-          clientKind: entry.clientKind,
+          clientKind: entry.clientKind ?? 'browser',
           connectedAt: entry.connectedAt,
           playback: entry.playback,
           listening: await listeningOn(entry.clientId),
@@ -4283,11 +4293,22 @@ const createApp = ({
   };
 
   /**
+   * Tells every open client that the requests have changed, so a poster, a request's page or the
+   * list of requests says where each one has got to without being reopened. Nothing is said of what
+   * changed beyond that it did, so it is safe for anybody to hear; each client reads back only what
+   * it may see.
+   */
+  const sayRequestsChanged = (): void => {
+    realtime?.publish('requests', { changed: true }, { kind: 'everyone' });
+  };
+
+  /**
    * Says a request's news to anything subscribed, where anything could be.
    *
    * @param payload - What happened.
    */
   const sayOfRequest = (payload: WebhookOccurrence): void => {
+    sayRequestsChanged();
     void events?.publish(payload);
   };
 
@@ -4869,6 +4890,10 @@ const createApp = ({
       ['requests.manage', ...ASKERS],
     );
 
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
     return answer.kind === 'answered'
       ? context.body(null, 204)
       : context.json({ error: answer.error }, answer.status);
@@ -4920,6 +4945,10 @@ const createApp = ({
       client.retryRequest(context.req.valid('param').id),
     );
 
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
       : context.json({ error: answer.error }, answer.status);
@@ -4929,6 +4958,10 @@ const createApp = ({
     const answer = await throughRequests(context.req.raw.headers, (client) =>
       client.fulfilRequest(context.req.valid('param').id),
     );
+
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
@@ -5159,10 +5192,9 @@ const createApp = ({
 
   app.openapi(sendReleaseRoute, async (context) => {
     const sending = context.req.valid('json');
-    const fileable =
-      sending.libraryKind === 'movies' || sending.libraryKind === 'shows'
-        ? (await library.list(asTheServer)).filter((entry) => entry.kind === sending.libraryKind)
-        : [];
+    const fileable = (await library.list(asTheServer)).filter(
+      (entry) => entry.kind === sending.libraryKind,
+    );
     const into =
       sending.libraryId === undefined
         ? fileable[0]
@@ -5181,15 +5213,13 @@ const createApp = ({
 
   app.openapi(fileQueuedDownloadRoute, async (context) => {
     const { libraryId } = context.req.valid('json');
-    const into = (await library.list(asTheServer)).find(
-      (entry) => entry.id === libraryId && (entry.kind === 'movies' || entry.kind === 'shows'),
-    );
+    const into = (await library.list(asTheServer)).find((entry) => entry.id === libraryId);
     const answer = await throughRequests(context.req.raw.headers, (client) =>
       into === undefined
         ? Promise.resolve({
             kind: 'refused' as const,
             status: 400 as const,
-            error: 'That is not a library of films or series.',
+            error: 'There is no such library.',
           })
         : client.fileDownload(context.req.valid('param').id, { id: into.id, path: into.path }),
     );
@@ -6483,6 +6513,10 @@ const createApp = ({
     registerMusicRoutes(app, { viewerOf, music, requires });
   }
 
+  if (videoDevices !== undefined) {
+    registerVideoDeviceRoutes(app, { viewerOf, devices: videoDevices });
+  }
+
   if (reencodes !== undefined) {
     registerReencodeRoutes(app, {
       reencodes,
@@ -6661,6 +6695,16 @@ const createApp = ({
       'cache-control': 'private, max-age=604800, immutable',
     });
   });
+
+  if (books !== undefined && streamBookFile !== undefined) {
+    registerListeningRoutes(app, {
+      books,
+      viewerOf,
+      profileOf: readProfileId,
+      isInReach: bookInReach,
+      streamFile: streamBookFile,
+    });
+  }
 
   app.openapi(saveReadingProgressRoute, async (context) => {
     const profileId = await readProfileId(context.req.raw.headers);

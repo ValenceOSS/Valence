@@ -41,6 +41,33 @@ describe('sortTorrentFiles', () => {
     });
   });
 
+  it('keeps an audiobook with its cover and cue sheet, leaving its notes and checksums', () => {
+    expect(
+      sortTorrentFiles(
+        filesOf(
+          'Dune/Dune.m4b',
+          'Dune/cover.jpg',
+          'Dune/Dune.cue',
+          'Dune/Dune.sfv',
+          'Dune/Dune.nfo',
+        ),
+        'books',
+      ),
+    ).toEqual({ unwanted: [3, 4], program: null, hasWanted: true });
+  });
+
+  it('keeps an audiobook of one track a chapter', () => {
+    expect(
+      sortTorrentFiles(filesOf('Dune/01 Dune.mp3', 'Dune/02 Dune.mp3'), 'books').hasWanted,
+    ).toBe(true);
+  });
+
+  it('finds nothing to file in a cover and a cue sheet alone', () => {
+    expect(sortTorrentFiles(filesOf('Dune/cover.jpg', 'Dune/Dune.cue'), 'books').hasWanted).toBe(
+      false,
+    );
+  });
+
   it('names the program in a torrent that passes for a film', () => {
     expect(
       sortTorrentFiles(filesOf('Dune.2021.1080p.mkv.exe', 'Codec/Install.bat'), 'movies'),

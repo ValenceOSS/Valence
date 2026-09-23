@@ -73,7 +73,7 @@ const collectConcerns = ({
       id: 'requests',
       tone: 'broken',
       title: 'The requests service is unreachable',
-      detail: `Nothing asked for will be searched for or downloaded until it is back. Looked for it at ${requests.address}.`,
+      detail: `Nothing requested will be searched for or downloaded until it is back. Looked for it at ${requests.address}.`,
       panel: 'requests',
     });
   }

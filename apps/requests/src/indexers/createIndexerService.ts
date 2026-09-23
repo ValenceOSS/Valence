@@ -92,7 +92,8 @@ const mergeSettings = (
  * An indexer that keeps failing is turned off rather than asked forever, with the reason kept beside
  * it: after a few failures in a row it counts as failing, which the server hears about, and after a
  * few more it is switched off. Any answer at all clears the count, and switching one back on by hand
- * clears the reason. A site asking for a captcha is not a failure; it is a question for whoever is
+ * clears the reason. One that answers a test after failures switched it off is switched back on;
+ * one somebody switched off themselves stays off. A site asking for a captcha is not a failure; it is a question for whoever is
  * setting it up.
  *
  * Nothing secret is ever shown back — not the API key, and not a definition's password, key or
@@ -301,7 +302,10 @@ const createIndexerService = ({
       const outcome = await tryOut(record);
 
       if (outcome.isWorking) {
-        await succeeded(record, { capabilities: outcome.capabilities });
+        await succeeded(record, {
+          capabilities: outcome.capabilities,
+          ...(record.turnedOffBecause === null ? {} : { isEnabled: true, turnedOffBecause: null }),
+        });
       } else if (outcome.captcha === null) {
         await failed(record, outcome.problem ?? UNASKABLE);
       } else {
@@ -416,7 +420,14 @@ const createIndexerService = ({
       const ranked = rankReleases(
         releases,
         releases.map((release) =>
-          judgeRelease(release, parseReleaseName(release.title), profile, search.runtimeMinutes),
+          judgeRelease(
+            release,
+            parseReleaseName(release.title),
+            profile,
+            search.runtimeMinutes,
+            undefined,
+            search.mode === 'book',
+          ),
         ),
         new Map(asking.map((record) => [record.id, record.priority])),
       );

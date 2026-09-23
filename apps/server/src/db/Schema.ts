@@ -836,6 +836,8 @@ const book = pgTable(
     rating: real('rating'),
     posterUrl: text('posterUrl'),
     externalId: text('externalId'),
+    seriesName: text('seriesName'),
+    seriesPosition: real('seriesPosition'),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   },
@@ -843,7 +845,7 @@ const book = pgTable(
     uniqueIndex('book_path_idx').on(table.libraryId, table.path),
     index('book_library_idx').on(table.libraryId),
     index('book_title_idx').on(table.title),
-    check('book_layout_known', sql`${table.layout} in ('fixed', 'reflow')`),
+    check('book_layout_known', sql`${table.layout} in ('fixed', 'reflow', 'audio')`),
     check('book_direction_known', sql`${table.direction} in ('rightToLeft', 'leftToRight')`),
   ],
 );
@@ -860,6 +862,8 @@ const bookChapter = pgTable(
     title: text('title').notNull(),
     format: text('format').notNull(),
     pageCount: integer('pageCount'),
+    durationSeconds: real('durationSeconds'),
+    marks: jsonb('marks'),
     sizeBytes: bigint('sizeBytes', { mode: 'number' }).notNull(),
     modifiedAtMs: bigint('modifiedAtMs', { mode: 'number' }).notNull(),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
@@ -867,7 +871,10 @@ const bookChapter = pgTable(
   (table) => [
     uniqueIndex('book_chapter_path_idx').on(table.bookId, table.path),
     index('book_chapter_order_idx').on(table.bookId, table.number),
-    check('book_chapter_format_known', sql`${table.format} in ('cbz', 'cbr', 'pdf', 'epub')`),
+    check(
+      'book_chapter_format_known',
+      sql`${table.format} in ('cbz', 'cbr', 'pdf', 'epub', 'm4b', 'm4a', 'mp3', 'aac', 'ogg', 'opus', 'flac')`,
+    ),
   ],
 );
 
@@ -897,6 +904,29 @@ const readingProgress = pgTable(
       'reading_progress_somewhere',
       sql`${table.pageNumber} is not null or ${table.fraction} is not null`,
     ),
+  ],
+);
+
+const listeningProgress = pgTable(
+  'listening_progress',
+  {
+    id: text('id').primaryKey(),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    bookId: text('bookId')
+      .notNull()
+      .references(() => book.id, { onDelete: 'cascade' }),
+    chapterId: text('chapterId')
+      .notNull()
+      .references(() => bookChapter.id, { onDelete: 'cascade' }),
+    positionSeconds: real('positionSeconds').notNull(),
+    isFinished: boolean('isFinished').notNull().default(false),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('listening_progress_book_idx').on(table.profileId, table.bookId),
+    index('listening_progress_recent_idx').on(table.profileId, table.updatedAt),
   ],
 );
 
@@ -1305,6 +1335,7 @@ export {
   book,
   bookChapter,
   readingProgress,
+  listeningProgress,
   musicArtist,
   musicAlbum,
   musicTrack,

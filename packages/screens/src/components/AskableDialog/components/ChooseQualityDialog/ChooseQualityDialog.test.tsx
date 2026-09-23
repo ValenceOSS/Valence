@@ -28,7 +28,7 @@ describe('ChooseQualityDialog', () => {
   it('names what is being asked for, and puts every quality in front of you', () => {
     draw();
 
-    expect(screen.getByRole('heading', { name: 'Ask for Dune' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Request Dune' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '4K' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '1080p' })).toBeInTheDocument();
   });

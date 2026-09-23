@@ -121,6 +121,7 @@ const bitrateDetail = (maxVideoBitrateKbps: number): string =>
  * @param onSubtitleOffsetChange - Called with a nudge to that.
  * @param castState - Whether there is anywhere to cast to, and whether it is in use.
  * @param onCast - Called to cast to another device.
+ * @param onPlayOnTv - Called to send the film to one of this person's televisions, where one is open.
  * @param onPopOut - Called to move the video into a floating window.
  * @param isPoppedOut - Whether it is already in one.
  * @param partyMenu - The watch party control, where this viewing can be one.
@@ -172,6 +173,7 @@ const PlayerControls = ({
   isPoppedOut = false,
   castState = 'unavailable',
   onCast,
+  onPlayOnTv,
   onToggleStats,
   subtitleOffsetSeconds = 0,
   onSubtitleOffsetChange,
@@ -504,6 +506,12 @@ const PlayerControls = ({
           },
         ]}
       />
+
+      {onPlayOnTv === undefined ? null : (
+        <Button isIconOnly variant="ghost" label="Play on TV" onClick={onPlayOnTv} size="md">
+          <Icon of={MonitorIcon} size={20} />
+        </Button>
+      )}
 
       {onCast === undefined || castState === 'unavailable' ? null : (
         <Button

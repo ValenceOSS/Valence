@@ -103,7 +103,7 @@ const RequestDetailDialog = ({
           {...(request === null
             ? {}
             : {
-                detail: `${REQUEST_KIND_NAMES[request.kind]} · asked for by ${request.requestedBy.name}`,
+                detail: `${REQUEST_KIND_NAMES[request.kind]} · requested by ${request.requestedBy.name}`,
               })}
           below={
             <TabRow

@@ -547,6 +547,27 @@
       "when": 1789996717675,
       "tag": "0077_log_context_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1790179142363,
+      "tag": "0078_books_that_are_heard",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1790179671894,
+      "tag": "0079_where_somebody_is_listening",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1790182766034,
+      "tag": "0080_books_in_a_series",
+      "breakpoints": true
     }
   ]
 }

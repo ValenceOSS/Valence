@@ -1,5 +1,5 @@
 import { QrCode } from '@ValenceUI/QrCode';
-import { whereToTypeTheCode } from '@ValenceScreens/session/whereToTypeTheCode';
+import { whereToTypeTheCode } from '@ValenceClient/session/whereToTypeTheCode';
 import { Spinner } from '@ValenceUI/Spinner';
 import type { FinishOnAnotherDeviceProps } from './FinishOnAnotherDevice.types';
 

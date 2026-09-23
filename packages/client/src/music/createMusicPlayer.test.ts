@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { gainFor } from '@ValenceCore/functions/gainFor';
-import { createMusicPlayer } from './createMusicPlayer';
-import type { AudioLike, MusicPlayerDeps } from './createMusicPlayer';
+import { createMusicPlayer } from '@ValenceClient/music/createMusicPlayer';
+import type { AudioLike, MusicPlayerDeps } from '@ValenceClient/music/createMusicPlayer';
 import type { MusicPreferences } from '@ValenceClient/music/musicPreferences';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 
@@ -318,6 +318,37 @@ describe('createMusicPlayer', () => {
       expect(deps.command).toHaveBeenLastCalledWith('phone', { kind: 'stop' });
       expect(player.read().remote).toBeNull();
       expect(audio.currentTime).toBe(64);
+    });
+  });
+
+  describe('leaving', () => {
+    it('stops playing here and forgets the queue', () => {
+      const { player, audio, deps } = build();
+
+      player.play(THREE, 0);
+      player.leave();
+
+      expect(audio.pause).toHaveBeenCalled();
+      expect(deps.report).toHaveBeenLastCalledWith(null);
+      expect(player.read()).toMatchObject({
+        queue: null,
+        current: null,
+        isPlaying: false,
+        positionSeconds: 0,
+      });
+    });
+
+    it('lets go of the device it controls without telling it to stop', () => {
+      const { player, deps } = build();
+
+      player.play(THREE, 0);
+      player.playOn({ clientId: 'phone', label: 'iPhone' });
+      vi.mocked(deps.command).mockClear();
+      player.leave();
+
+      expect(deps.command).not.toHaveBeenCalled();
+      expect(player.read().remote).toBeNull();
+      expect(player.read().queue).toBeNull();
     });
   });
 

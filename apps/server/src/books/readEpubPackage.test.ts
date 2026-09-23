@@ -52,6 +52,35 @@ describe('insideTheBook', () => {
 });
 
 describe('readEpubPackage', () => {
+  it('reads the series Calibre says a book is in, and its place', () => {
+    const packageXml = `<package><metadata>
+      <meta name="calibre:series" content="Red Rising"/>
+      <meta name="calibre:series_index" content="2.0"/>
+    </metadata><manifest></manifest><spine></spine></package>`;
+
+    expect(readEpubPackage('content.opf', packageXml).series).toEqual({
+      name: 'Red Rising',
+      position: 2,
+    });
+  });
+
+  it('reads the collection EPUB 3 says a book belongs to, with its place', () => {
+    const packageXml = `<package><metadata>
+      <meta property="belongs-to-collection" id="c01">The Expanse</meta>
+      <meta refines="#c01" property="collection-type">series</meta>
+      <meta refines="#c01" property="group-position">3</meta>
+    </metadata><manifest></manifest><spine></spine></package>`;
+
+    expect(readEpubPackage('content.opf', packageXml).series).toEqual({
+      name: 'The Expanse',
+      position: 3,
+    });
+  });
+
+  it('says a book is in no series where its package names none', () => {
+    expect(readEpubPackage('OEBPS/content.opf', A_PACKAGE).series).toBeNull();
+  });
+
   it('reads what the book is called', () => {
     expect(readEpubPackage('OEBPS/content.opf', A_PACKAGE).title).toBe('Moby-Dick');
   });

@@ -14,10 +14,13 @@ const META = /<meta\b[^>]*>/gi;
 
 const SPINE = /<spine\b[^>]*>/i;
 
+const REFINING_META = /<meta\b([^>]*)>([^<]*)<\/meta>/gi;
+
 const NCX_TYPE = 'application/x-dtbncx+xml';
 
 type EpubPackage = {
   title: string | null;
+  series: { name: string; position: number | null } | null;
   authors: string[];
   description: string | null;
   spine: { href: string; mediaType: string }[];
@@ -174,10 +177,12 @@ const readEpubPackage = (packageAt: string, packageXml: string): EpubPackage => 
   }
 
   const title = TITLE.exec(packageXml)?.[1]?.trim();
+  const series = seriesIn(packageXml);
   const description = DESCRIPTION.exec(packageXml)?.[1]?.trim();
 
   return {
     title: title === undefined || title === '' ? null : title,
+    series,
     authors,
     description: description === undefined || description === '' ? null : description,
     spine,
@@ -186,6 +191,57 @@ const readEpubPackage = (packageAt: string, packageXml: string): EpubPackage => 
     navHref,
     ncxHref,
   };
+};
+
+/**
+ * A number a package states, where it states a sensible one.
+ *
+ * @param said - What it says.
+ * @returns The number, or nothing.
+ */
+const positionOf = (said: string | null | undefined): number | null => {
+  const position = Number((said ?? '').trim());
+
+  return (said ?? '').trim() === '' || !Number.isFinite(position) ? null : position;
+};
+
+/**
+ * The series a book belongs to, as its package says: EPUB 3's collection, refined with its place
+ * in it, or failing that the series Calibre writes, which is how most shelves say it.
+ *
+ * @param packageXml - The package document.
+ * @returns The series and the book's place in it, or nothing where it names none.
+ */
+const seriesIn = (packageXml: string): { name: string; position: number | null } | null => {
+  const refining = [...packageXml.matchAll(REFINING_META)].map(
+    ([, attributes = '', text = '']) => ({
+      tag: `<meta${attributes}>`,
+      text: text.trim(),
+    }),
+  );
+  const collection = refining.find(
+    ({ tag, text }) => attribute(tag, 'property') === 'belongs-to-collection' && text !== '',
+  );
+
+  if (collection !== undefined) {
+    const id = attribute(collection.tag, 'id');
+    const place = refining.find(
+      ({ tag }) =>
+        id !== null &&
+        attribute(tag, 'refines') === `#${id}` &&
+        attribute(tag, 'property') === 'group-position',
+    );
+
+    return { name: collection.text, position: positionOf(place?.text) };
+  }
+
+  const tags = [...packageXml.matchAll(META)].map(([tag]) => tag);
+  const named = (name: string) => tags.find((tag) => attribute(tag, 'name') === name) ?? null;
+  const name = attribute(named('calibre:series') ?? '', 'content')?.trim() ?? '';
+
+  return name === ''
+    ? null
+    : { name, position: positionOf(attribute(named('calibre:series_index') ?? '', 'content')) };
 };
 
 /**

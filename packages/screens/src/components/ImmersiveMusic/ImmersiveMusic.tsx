@@ -23,9 +23,9 @@ import { LyricLines } from '@ValenceScreens/components/LyricLines/LyricLines';
 import { MusicTransport } from '@ValenceScreens/components/MusicTransport/MusicTransport';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { setMusicImmersive, useMusicImmersive } from '@ValenceScreens/music/musicImmersive';
-import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { setMusicVisualiser, useMusicVisualiser } from '@ValenceScreens/music/musicVisualiser';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import type { ImmersiveMusicProps } from './ImmersiveMusic.types';
 

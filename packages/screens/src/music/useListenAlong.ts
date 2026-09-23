@@ -3,8 +3,8 @@ import { fetchTracks } from '@ValenceClient/music/fetchMusic';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { listeningPartyFrom } from './listeningPartyFrom';
 import { readListeningParty, setListeningParty } from './listeningParty';
-import { theMusicPlayer } from './theMusicPlayer';
-import { useMusicPlayer } from './useMusicPlayer';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
 import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 

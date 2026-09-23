@@ -70,6 +70,37 @@ describe('watchPresence', () => {
     expect(fake.identities[0]?.deviceLabel).toBeDefined();
   });
 
+  it('says what kind of device this is, so a film can be sent to a television', () => {
+    installPlatform(aFakePlatform({ thisClientKind: () => 'tv' }));
+
+    const fake = createFakeClient();
+
+    watchPresence(fake.client);
+
+    expect(fake.identities[0]?.clientKind).toBe('tv');
+  });
+
+  it('passes on a film command sent from another of the same person’s devices', () => {
+    const fake = createFakeClient();
+    const listener = vi.fn();
+
+    onPresenceEvent(listener);
+    watchPresence(fake.client);
+    fake.arrive({
+      kind: 'video',
+      command: { kind: 'seek', positionSeconds: 90 },
+      fromClientId: 'phone',
+      fromLabel: 'iPhone',
+    });
+
+    expect(listener).toHaveBeenCalledWith({
+      kind: 'video',
+      command: { kind: 'seek', positionSeconds: 90 },
+      fromClientId: 'phone',
+      fromLabel: 'iPhone',
+    });
+  });
+
   it('passes a stopped event on to anyone listening', () => {
     const fake = createFakeClient();
     const listener = vi.fn();

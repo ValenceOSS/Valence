@@ -9,10 +9,10 @@ import { upcomingIn } from '@ValenceClient/music/playQueue';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { setMusicVideo } from '@ValenceScreens/music/musicVideo';
-import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { MusicFeatureProps } from './MusicFeature.types';
 
 const UP_NEXT_SHOWN = 4;

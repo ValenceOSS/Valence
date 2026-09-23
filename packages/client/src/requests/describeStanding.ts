@@ -1,6 +1,7 @@
 import type { StatusTone } from '@ValenceClient/status/StatusTone';
 import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
+import { nameTheStanding } from '@ValenceClient/requests/nameTheStanding';
 
 /**
  * Says where a title stands, as a badge: in the library already, somewhere along being fetched, or
@@ -12,34 +13,9 @@ import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 const describeStanding = (
   standing: CatalogueStanding,
 ): { label: string; tone: StatusTone } | null => {
-  if (standing.status === 'library') {
-    return { ...STATUS_LOOK.done, label: 'In your library' };
-  }
+  const named = nameTheStanding(standing);
 
-  if (standing.status === 'askable') {
-    return null;
-  }
-
-  switch (standing.requestState) {
-    case 'awaitingApproval':
-      return { ...STATUS_LOOK.attention, label: 'Waiting for approval' };
-    case 'refused':
-      return { ...STATUS_LOOK.failed, label: 'Refused' };
-    case 'downloading':
-    case 'chosen':
-      return { ...STATUS_LOOK.working, label: 'Downloading' };
-    case 'filing':
-    case 'filed':
-    case 'available':
-      return { ...STATUS_LOOK.working, label: 'Arriving' };
-    case 'failed':
-      return { ...STATUS_LOOK.failed, label: 'Stuck' };
-    case 'waiting':
-    case 'wanted':
-    case 'searching':
-    case null:
-      return { ...STATUS_LOOK.queued, label: 'Requested' };
-  }
+  return named === null ? null : { ...STATUS_LOOK[named.look], label: named.label };
 };
 
 export { describeStanding };

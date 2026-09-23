@@ -1,6 +1,7 @@
-import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
+import type { AudioLike } from '@ValenceClient/music/createMusicPlayer';
 import type { Connect } from '@ValenceClient/realtime/createRealtimeClient';
 import type { HeldFile, WhatToKeep } from '@ValenceContracts/schemas/HeldFile';
+import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 
 type DeviceStore = {
   read: (key: string) => string | null;
@@ -35,6 +36,11 @@ type LocalNotice = {
   onOpen?: () => void;
 };
 
+type MusicAudio = {
+  audio: AudioLike;
+  canPlay: (type: string) => boolean;
+};
+
 type Platform = {
   store: DeviceStore;
   serverAddress: () => string | null;
@@ -48,6 +54,16 @@ type Platform = {
   buildInfo: () => BuildInfo | null;
   notifyLocally: (notice: LocalNotice) => void;
   setUnreadBadge: (count: number) => void;
+  musicAudio: () => MusicAudio;
 };
 
-export type { BuildInfo, ClientKind, DeviceStore, HeldFiles, LocalNotice, Platform, Reachability };
+export type {
+  BuildInfo,
+  ClientKind,
+  DeviceStore,
+  HeldFiles,
+  LocalNotice,
+  MusicAudio,
+  Platform,
+  Reachability,
+};

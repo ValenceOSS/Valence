@@ -8,6 +8,7 @@ import {
   fetchReadingProgress,
   findBooks,
 } from '@ValenceClient/books/fetchBooks';
+import { fetchListening, fetchListeningProgress } from '@ValenceClient/books/fetchListening';
 
 const BOOKS = ['books'] as const;
 
@@ -107,6 +108,29 @@ const reading = () =>
     queryFn: () => fetchReading(),
   });
 
+/**
+ * The audiobooks the watching profile is partway through.
+ *
+ * @returns The query.
+ */
+const listening = () =>
+  queryOptions({
+    queryKey: [...BOOKS, 'listening'],
+    queryFn: () => fetchListening(),
+  });
+
+/**
+ * Where the watching profile has got to in one audiobook.
+ *
+ * @param bookId - The book.
+ * @returns The query.
+ */
+const listeningPlace = (bookId: string) =>
+  queryOptions({
+    queryKey: [...BOOKS, 'listeningPlace', bookId],
+    queryFn: () => fetchListeningProgress(bookId),
+  });
+
 const bookQueries = {
   inLibrary,
   one,
@@ -115,6 +139,8 @@ const bookQueries = {
   document,
   find,
   reading,
+  listening,
+  listeningPlace,
   key: BOOKS,
 };
 

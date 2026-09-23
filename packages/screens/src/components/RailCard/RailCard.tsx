@@ -1,4 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import {
   ArrowUTurnRight as ArrowUTurnRightIcon,
   EyeOff as EyeOffIcon,
@@ -206,14 +207,14 @@ const RailCard = ({
 
   useEffect(() => cancel, [cancel]);
 
-  const artworkUrl = media.hasBackdrop
-    ? `/api/media/${media.id}/image/backdrop`
+  const wideUrl = media.hasBackdrop
+    ? artworkUrl(media.id, 'backdrop')
     : media.hasPoster
-      ? `/api/media/${media.id}/image/poster`
+      ? artworkUrl(media.id, 'poster')
       : undefined;
 
   const restingUrl =
-    shape === 'poster' && media.hasPoster ? `/api/media/${media.id}/image/poster` : artworkUrl;
+    shape === 'poster' && media.hasPoster ? artworkUrl(media.id, 'poster') : wideUrl;
 
   return (
     <div
@@ -272,7 +273,7 @@ const RailCard = ({
               <div className="pointer-events-none aspect-video max-h-[42svh] w-full shrink-0 overflow-hidden rounded-md">
                 <MediaPreview
                   mediaId={media.id}
-                  backdropUrl={artworkUrl ?? null}
+                  backdropUrl={wideUrl ?? null}
                   durationSeconds={media.durationSeconds}
                   settleMilliseconds={0}
                   fills

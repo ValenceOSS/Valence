@@ -37,7 +37,7 @@ type PresenceBinding = {
     guestOf: string | null;
     viaShare: string | null;
     deviceLabel: string;
-    clientKind: ClientKind;
+    clientKind: ClientKind | null;
     address: string | null;
     send: (event: PresenceControl) => void;
   }) => void;
@@ -69,9 +69,9 @@ const asPayload = (event: PresenceControl): JsonValue => {
     return { kind: 'message', text: event.text };
   }
 
-  if (event.kind === 'music') {
+  if (event.kind === 'music' || event.kind === 'video') {
     return {
-      kind: 'music',
+      kind: event.kind,
       command: event.command,
       fromClientId: event.fromClientId,
       fromLabel: event.fromLabel,
@@ -235,7 +235,7 @@ const createRealtimeHandler = ({
           guestOf: who.guestOf ?? null,
           viaShare: who.viaShare ?? null,
           deviceLabel: deviceLabel ?? 'Unknown device',
-          clientKind: clientKind ?? 'browser',
+          clientKind: clientKind ?? null,
           address: who.address ?? null,
           send: (event) => {
             write({

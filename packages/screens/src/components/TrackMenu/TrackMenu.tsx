@@ -18,7 +18,7 @@ import { notify } from '@ValenceUI/notify';
 import { addToPlaylist, createPlaylist } from '@ValenceClient/music/fetchPlaylists';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { setMusicVideo } from '@ValenceScreens/music/musicVideo';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import type { TrackMenuProps } from './TrackMenu.types';
 

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
 import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceClient/testing/aTrack';
-import { useWhatIsPlaying } from './useWhatIsPlaying';
+import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 
 const devices = vi.hoisted(() => ({ fetchMusicDevices: vi.fn() }));
 

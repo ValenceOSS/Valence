@@ -814,11 +814,12 @@ describe('download clients and the queue, through the server', () => {
     ).toBe(404);
   });
 
-  it('files a download into a library of films or series, and no other', async () => {
+  it('files a download into any library there is, and not into one there is not', async () => {
     const libraries: Array<{ id: string; path: string }> = [];
     const { ask } = await build({
       isOn: true,
       isAdministrator: true,
+      libraries: [FILMS, MUSIC, BOOKS],
       service: (url, init) => {
         if (url.endsWith('/file')) {
           libraries.push(
@@ -839,21 +840,34 @@ describe('download clients and the queue, through the server', () => {
     });
 
     expect(filed.status).toBe(200);
-    expect(libraries).toEqual([{ id: FILMS.id, path: '/media/Films' }]);
+
+    await ask(`/api/admin/requests/downloads/${DOWNLOAD.id}/file`, 'POST', {
+      libraryId: MUSIC.id,
+    });
+    await ask(`/api/admin/requests/downloads/${DOWNLOAD.id}/file`, 'POST', {
+      libraryId: BOOKS.id,
+    });
+
+    expect(libraries).toEqual([
+      { id: FILMS.id, path: '/media/Films' },
+      { id: MUSIC.id, path: '/media/Music' },
+      { id: BOOKS.id, path: '/media/Books' },
+    ]);
     expect(
       await (
         await ask(`/api/admin/requests/downloads/${DOWNLOAD.id}/file`, 'POST', {
           libraryId: 'elsewhere',
         })
       ).json(),
-    ).toEqual({ error: 'That is not a library of films or series.' });
+    ).toEqual({ error: 'There is no such library.' });
   });
 
-  it('sends a film or series for the library it will be filed into, and anything else for none', async () => {
+  it('sends a release for the library of its kind it will be filed into, and for none where there is none', async () => {
     const libraries: Array<{ id: string; path: string } | null> = [];
     const { ask } = await build({
       isOn: true,
       isAdministrator: true,
+      libraries: [FILMS, MUSIC, BOOKS],
       service: (url, init) => {
         libraries.push(
           z
@@ -873,8 +887,15 @@ describe('download clients and the queue, through the server', () => {
       libraryKind: 'music',
       library: { id: 'x', path: '/etc' },
     });
+    await ask('/api/admin/requests/downloads', 'POST', { ...SEND, libraryKind: 'books' });
 
-    expect(libraries).toEqual([{ id: FILMS.id, path: '/media/Films' }, null, null, null]);
+    expect(libraries).toEqual([
+      { id: FILMS.id, path: '/media/Films' },
+      null,
+      null,
+      { id: MUSIC.id, path: '/media/Music' },
+      { id: BOOKS.id, path: '/media/Books' },
+    ]);
   });
 
   it('refuses a release that is not one before asking the service', async () => {

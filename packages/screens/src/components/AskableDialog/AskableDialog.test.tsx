@@ -242,7 +242,7 @@ describe('AskableDialog', () => {
 
     const prompt = await screen.findByRole('dialog', { name: 'Which quality for Dune?' });
 
-    expect(within(prompt).getByRole('heading', { name: 'Ask for Dune' })).toBeInTheDocument();
+    expect(within(prompt).getByRole('heading', { name: 'Request Dune' })).toBeInTheDocument();
 
     await userEvent.click(within(prompt).getByRole('button', { name: 'Close' }));
 

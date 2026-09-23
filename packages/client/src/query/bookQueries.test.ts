@@ -11,6 +11,8 @@ describe('bookQueries', () => {
       bookQueries.document('b', 'c', 0).queryKey,
       bookQueries.find({ search: 'austen' }).queryKey,
       bookQueries.reading().queryKey,
+      bookQueries.listening().queryKey,
+      bookQueries.listeningPlace('b').queryKey,
     ];
 
     for (const key of keys) {

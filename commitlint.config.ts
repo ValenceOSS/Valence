@@ -30,6 +30,7 @@ const config: UserConfig = {
         'transcoder',
         'requests',
         'desktop',
+        'tv',
         'ui',
         'contracts',
         'core',

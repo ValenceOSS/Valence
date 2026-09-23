@@ -16,7 +16,7 @@ const entry = (
   viaShare: null,
   address: null,
   deviceLabel,
-  clientKind: 'browser',
+  clientKind: null,
   connectedAt: 0,
   playback: null,
 });

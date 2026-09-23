@@ -36,7 +36,7 @@ import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
-import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { whereAnEntryLands } from '@ValenceClient/music/whereAnEntryLands';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { PlaylistViewProps } from './PlaylistView.types';

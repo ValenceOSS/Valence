@@ -215,6 +215,32 @@ describe('createIndexerService', () => {
     });
   });
 
+  it('switches an indexer back on when it answers a test after failures turned it off', async () => {
+    const { service, store } = aService([
+      anIndexer({
+        isEnabled: false,
+        failures: 5,
+        turnedOffBecause: 'Turned off after 5 failures in a row: The site could not be reached',
+      }),
+    ]);
+
+    await service.test(anIndexer().id);
+
+    expect(await store.find(anIndexer().id)).toMatchObject({
+      isEnabled: true,
+      turnedOffBecause: null,
+      failures: 0,
+    });
+  });
+
+  it('leaves an indexer somebody switched off switched off, even when it answers a test', async () => {
+    const { service, store } = aService([anIndexer({ isEnabled: false, turnedOffBecause: null })]);
+
+    await service.test(anIndexer().id);
+
+    expect(await store.find(anIndexer().id)).toMatchObject({ isEnabled: false });
+  });
+
   it('counts a failed test against an indexer, saying why', async () => {
     const { service, store } = aService(
       [anIndexer()],

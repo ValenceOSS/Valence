@@ -347,7 +347,7 @@ const scanLibrary = async ({
   const extras = groupExtras(found.map((file) => file.path));
   const versions = groupVersions(
     found.map((file) => file.path),
-    new Set(extras.keys()),
+    new Set([...extras.keys(), ...bareNumbered.keys()]),
   );
 
   const seen = force
@@ -574,7 +574,10 @@ const scanLibrary = async ({
   }
 
   if (!isPartial && !hasVanished) {
-    await store.forgetStaleVersions?.(libraryId, [...versions.keys()]);
+    await store.forgetStaleVersions?.(libraryId, [
+      ...versions.keys(),
+      ...stored.map((item) => item.path).filter((path) => isUnderAny(path, walked.unreadable)),
+    ]);
   }
 
   const gone = missing.length === 0 ? [] : await store.removeByPaths(libraryId, missing);

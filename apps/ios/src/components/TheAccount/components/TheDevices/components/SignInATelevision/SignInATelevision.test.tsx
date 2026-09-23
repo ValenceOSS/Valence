@@ -3,7 +3,10 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { answerDeviceRequest, readDeviceRequest } from '@ValenceClient/session/auth';
+import { scanACode } from '@ValencePhone/platform/scanACode';
 import { SignInATelevision } from './SignInATelevision';
+
+jest.mock('@ValencePhone/platform/scanACode', () => ({ scanACode: jest.fn() }));
 
 jest.mock('@ValenceClient/session/auth', () => ({
   ...jest.requireActual<object>('@ValenceClient/session/auth'),
@@ -12,6 +15,7 @@ jest.mock('@ValenceClient/session/auth', () => ({
 }));
 
 beforeEach(() => {
+  jest.clearAllMocks();
   installPlatform(aFakePlatform());
   jest.mocked(readDeviceRequest).mockResolvedValue({ userCode: 'ABCD1234', status: 'pending' });
 });
@@ -44,5 +48,26 @@ describe('SignInATelevision', () => {
     await userEvent.press(await drawn.findByText('No, I did not ask for this'));
 
     expect(answerDeviceRequest).toHaveBeenCalledWith('ABCD1234', false);
+  });
+
+  it('asks for the code to be typed where the television’s QR code carries only its address', async () => {
+    jest
+      .mocked(scanACode)
+      .mockResolvedValue({ kind: 'read', text: 'https://valence.example/device' });
+    const drawn = await render(<SignInATelevision />, { wrapper: CacheScope });
+
+    await userEvent.press(drawn.getByLabelText('Scan the QR code'));
+
+    expect(await drawn.findByText(/Type the code the television shows/u)).toBeTruthy();
+    expect(readDeviceRequest).not.toHaveBeenCalled();
+  });
+
+  it('says a QR code that is no address at all is not a television’s', async () => {
+    jest.mocked(scanACode).mockResolvedValue({ kind: 'read', text: '   ' });
+    const drawn = await render(<SignInATelevision />, { wrapper: CacheScope });
+
+    await userEvent.press(drawn.getByLabelText('Scan the QR code'));
+
+    expect(await drawn.findByText('That QR code is not one a television showed.')).toBeTruthy();
   });
 });

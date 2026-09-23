@@ -4,6 +4,7 @@ import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackM
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { MusicCommand } from '@ValenceContracts/schemas/MusicRemote';
+import type { VideoCommand } from '@ValenceContracts/schemas/VideoRemote';
 
 type PresencePlayback = {
   mediaId: string;
@@ -36,7 +37,7 @@ type PresenceSession = {
   guestOf: string | null;
   viaShare: string | null;
   deviceLabel: string;
-  clientKind: ClientKind;
+  clientKind: ClientKind | null;
   address: string | null;
 };
 
@@ -62,7 +63,8 @@ type PresenceControlEvent =
   | { kind: 'paused'; reason: string }
   | { kind: 'resumed' }
   | { kind: 'message'; text: string }
-  | { kind: 'music'; command: MusicCommand; fromClientId: string; fromLabel: string };
+  | { kind: 'music'; command: MusicCommand; fromClientId: string; fromLabel: string }
+  | { kind: 'video'; command: VideoCommand; fromClientId: string; fromLabel: string };
 
 type PresenceStartPlaybackInput = Omit<
   PresencePlayback,
@@ -85,7 +87,7 @@ type PresenceArrival = {
   guestOf?: string | null;
   viaShare?: string | null;
   deviceLabel: string;
-  clientKind?: ClientKind;
+  clientKind?: ClientKind | null;
   address?: string | null;
   send: (event: PresenceControlEvent) => void;
 };
@@ -145,7 +147,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
     profileId: entry.profileId,
     profileName: entry.profileName,
     deviceLabel: entry.deviceLabel,
-    clientKind: entry.clientKind,
+    clientKind: entry.clientKind ?? 'browser',
     mediaId: playback.mediaId,
     mode: describePlaybackMode(playback.plan),
     positionSeconds: playback.health?.positionSeconds ?? null,
@@ -182,7 +184,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
       guestOf = null,
       viaShare = null,
       deviceLabel,
-      clientKind = 'browser',
+      clientKind = null,
       address = null,
       send,
     }) => {

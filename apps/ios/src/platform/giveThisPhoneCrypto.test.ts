@@ -8,8 +8,6 @@ const withoutCrypto = () => {
 const theCrypto = (): typeof globalThis.crypto | undefined =>
   'crypto' in globalThis ? crypto : undefined;
 
-jest.mock('expo-crypto');
-
 describe('giveThisPhoneCrypto', () => {
   it('gives a phone that has none the one everything asks for', () => {
     withoutCrypto();

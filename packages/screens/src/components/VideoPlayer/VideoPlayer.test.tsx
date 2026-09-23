@@ -2147,6 +2147,51 @@ describe('when an administrator reaches into the stream', () => {
     });
   });
 
+  it('does not start a paused film again for a command meant for the music or another device', async () => {
+    const { element } = await watching();
+    const isPaused = () => (element instanceof HTMLVideoElement ? element.paused : false);
+
+    act(() => {
+      emitPresenceEvent({ kind: 'paused', reason: 'Dinner.' });
+    });
+
+    expect(isPaused()).toBe(true);
+
+    act(() => {
+      emitPresenceEvent({
+        kind: 'music',
+        command: { kind: 'resume' },
+        fromClientId: 'phone',
+        fromLabel: 'iPhone',
+      });
+      emitPresenceEvent({
+        kind: 'video',
+        command: { kind: 'resume' },
+        fromClientId: 'phone',
+        fromLabel: 'iPhone',
+      });
+    });
+
+    expect(isPaused()).toBe(true);
+  });
+
+  it('starts a paused film again once the administrator lets it go', async () => {
+    const { element } = await watching();
+    const isPaused = () => (element instanceof HTMLVideoElement ? element.paused : true);
+
+    act(() => {
+      emitPresenceEvent({ kind: 'paused', reason: 'Dinner.' });
+    });
+
+    expect(isPaused()).toBe(true);
+
+    act(() => {
+      emitPresenceEvent({ kind: 'resumed' });
+    });
+
+    expect(isPaused()).toBe(false);
+  });
+
   it('takes the note away again when the stream is let go', async () => {
     await watching();
 

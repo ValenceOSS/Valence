@@ -21,8 +21,23 @@ describe('uploadExtensionsFor', () => {
     expect(extensions).not.toContain('mkv');
   });
 
-  it('takes the formats a book comes in for books', () => {
-    expect(uploadExtensionsFor('books')).toEqual(['cbr', 'cbz', 'epub', 'pdf', 'rar', 'zip']);
+  it('takes the formats a book comes in for books, to read and to hear', () => {
+    expect(uploadExtensionsFor('books')).toEqual([
+      'aac',
+      'cbr',
+      'cbz',
+      'epub',
+      'flac',
+      'm4a',
+      'm4b',
+      'mp3',
+      'oga',
+      'ogg',
+      'opus',
+      'pdf',
+      'rar',
+      'zip',
+    ]);
   });
 
   it('lists each in order, without a dot', () => {

@@ -1,4 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { Copy as CopyIcon, X as XIcon } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
@@ -6,7 +7,7 @@ import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
-import { titleLogoUrl } from '@ValenceScreens/library/titleLogoUrl';
+import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TextField } from '@ValenceUI/TextField';
 import { Choice } from '@ValenceScreens/components/Choice/Choice';
 import { SHARE_CAPS } from '@ValenceClient/sharing/SHARE_CAPS';
@@ -77,9 +78,9 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
       : media === null
         ? null
         : media.hasBackdrop
-          ? `/api/media/${media.id}/image/backdrop`
+          ? artworkUrl(media.id, 'backdrop')
           : media.hasPoster
-            ? `/api/media/${media.id}/image/poster`
+            ? artworkUrl(media.id, 'poster')
             : null;
 
   const isLettered = media !== null && media.hasLogo && !isUnlettered;

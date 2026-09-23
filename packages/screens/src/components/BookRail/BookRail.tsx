@@ -1,16 +1,20 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Rail } from '@ValenceUI/Rail';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
+import { SeriesDialog } from '@ValenceScreens/components/SeriesDialog/SeriesDialog';
+import type { BookSeries } from '@ValenceScreens/reading/gatherSeries';
 import type { BookRailProps } from './BookRail.types';
 
 const WAITING = 6;
 
 /**
  * One library's shelf of books, drawn as a row of them once they have been read off the server, with
- * a row of empty cards while they are on their way.
+ * a row of empty cards while they are on their way. The books that are one series share a card,
+ * which opens onto the series in order.
  *
  * @param libraryId - Which shelf.
  * @param title - What to call it.
@@ -18,6 +22,7 @@ const WAITING = 6;
  */
 const BookRail = ({ libraryId, title, onOpen }: BookRailProps) => {
   const asked = useQuery(bookQueries.inLibrary(libraryId));
+  const [openSeries, setOpenSeries] = useState<BookSeries | null>(null);
 
   if (asked.isError) {
     return (
@@ -47,7 +52,22 @@ const BookRail = ({ libraryId, title, onOpen }: BookRailProps) => {
     return null;
   }
 
-  return <BookRow title={title} books={asked.data} onOpen={onOpen} />;
+  return (
+    <>
+      <BookRow title={title} books={asked.data} onOpen={onOpen} onOpenSeries={setOpenSeries} />
+
+      <SeriesDialog
+        series={openSeries}
+        onClose={() => {
+          setOpenSeries(null);
+        }}
+        onOpen={(book) => {
+          setOpenSeries(null);
+          onOpen(book);
+        }}
+      />
+    </>
+  );
 };
 
 BookRail.displayName = 'BookRail';

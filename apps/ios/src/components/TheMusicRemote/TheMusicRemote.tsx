@@ -8,9 +8,9 @@ import { useTheMusic } from '@ValencePhone/hooks/useTheMusic';
  * redraws it alone rather than everything signed in.
  */
 const TheMusicRemote = () => {
-  const { player, state } = useTheMusic();
+  const { player } = useTheMusic();
 
-  useMusicRemote(player, state.remote?.clientId ?? null);
+  useMusicRemote(player);
 
   return null;
 };
