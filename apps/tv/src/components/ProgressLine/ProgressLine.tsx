@@ -6,13 +6,23 @@ const HEIGHT = 8;
 
 /**
  * The line that says how far through a title somebody is — along the foot of its picture, or in a
- * line of words beside what resumes it.
+ * line of words beside what resumes it. It is read out as how much has been watched.
  *
  * @param fraction - How much of it has been watched, from nothing to all of it.
  * @param isInline - Whether it sits in a line of words rather than over a picture.
  */
 const ProgressLine = ({ fraction, isInline = false }: ProgressLineProps) => (
-  <View style={[styles.track, isInline && styles.inline]}>
+  <View
+    accessible
+    accessibilityRole="progressbar"
+    accessibilityLabel="Watched"
+    accessibilityValue={{
+      min: 0,
+      max: 100,
+      now: Math.round(Math.min(Math.max(fraction, 0), 1) * 100),
+    }}
+    style={[styles.track, isInline && styles.inline]}
+  >
     <View style={[styles.watched, { flex: fraction }]} />
     <View style={{ flex: 1 - fraction }} />
   </View>
