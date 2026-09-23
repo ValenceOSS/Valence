@@ -44,6 +44,7 @@ Valence does not supply content, indexers or a download client. You choose and c
 | `REQUESTS_URL`            | Yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                                                                                        |
 | `REQUESTS_SECRET`         | Yes      | At least 32 characters, the same for both services. Valence presents it on every call, and the service refuses without it.                                                       |
 | `DOWNLOADS_PATH`          | No       | Where your download client writes, on the host. `./downloads` by default.                                                                                                        |
+| `PUID`, `PGID`            | No       | The user and group the requests service runs as, and so who owns what it files. `1000` each unless set; `0` keeps root. See [Who owns what it files](#who-owns-what-it-files).   |
 | `VPN_URL`                 | No       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                                                                                       |
 | `VPN_API_KEY`             | No       | The key gluetun's control server was given.                                                                                                                                      |
 | `REQUESTS_TRANSCODER_URL` | No       | Lets the requests service ask the media service what a filed video really is. Empty by default; see [Naming a video by what it really is](#naming-a-video-by-what-it-really-is). |
@@ -57,6 +58,12 @@ The requests service shares Valence's database. It listens on port 8421, which i
 Unlike Valence, the requests service mounts `MEDIA_PATH` **writable**, because filing what it downloads into the library is its whole job. Valence itself still never writes there. One service writes to your library, and it is the one whose job that is.
 
 Libraries are filed into at the path Valence has for them, so the requests service must see each library at the same path Valence does. Both mount `MEDIA_PATH` at `/media` in the compose file, which is what makes that so. Do not change one without the other.
+
+### Who owns what it files
+
+The requests service starts as root only long enough to become the user and group in `PUID` and `PGID`, `1000` each unless you set them, and runs as that from then on. So everything it files belongs to that user, and the browser it opens on indexers' pages has no more power than it does. Set them to the owner of your media folders, which is usually the same ids your download client runs as.
+
+Before this, the service ran as root. If your media folders belong to someone else, the request waits at **Filing**, in the admin area's **Requests** page, with a message naming the user the service runs as, and its history says the same. Set `PUID` and `PGID` to match, or `0` to keep root, and it is filed once the service restarts. It is not given up on in the meantime. Folders and files it made before belong to root, so the new user cannot add to or replace them until you hand them over, for example with `sudo chown -R 1000:1000 /path/to/media` using your own ids.
 
 ## Indexers
 

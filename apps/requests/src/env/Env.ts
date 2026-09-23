@@ -15,6 +15,8 @@ const EnvSchema = z.object({
   DEFINITIONS_REPOSITORY: z.string().default('Prowlarr/Indexers'),
   DEFINITIONS_BRANCH: z.string().default('master'),
   DEFINITIONS_PATH: z.string().default('definitions/v11'),
+  PUID: z.coerce.number().int().nonnegative().default(1000),
+  PGID: z.coerce.number().int().nonnegative().default(1000),
   TRANSCODER_URL: z
     .string()
     .default('')

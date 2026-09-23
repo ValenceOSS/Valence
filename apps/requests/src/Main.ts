@@ -6,6 +6,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createApp } from '@ValenceRequests/App';
 import { createDatabase } from '@ValenceRequests/db/Database';
 import { readEnv } from '@ValenceRequests/env/Env';
+import { becomeTheUser } from '@ValenceRequests/env/becomeTheUser';
 import { createVpnWatch } from '@ValenceRequests/vpn/createVpnWatch';
 import { readGluetun } from '@ValenceRequests/vpn/readGluetun';
 import { createDatabaseIndexerStore } from '@ValenceRequests/indexers/createDatabaseIndexerStore';
@@ -48,6 +49,7 @@ const SEEDED_PROFILES = 'seededProfileNames';
 const SeededProfilesSchema = z.array(z.string());
 
 const env = readEnv(process.env);
+const becoming = becomeTheUser({ uid: env.PUID, gid: env.PGID });
 const { db, pool } = createDatabase(env.DATABASE_URL);
 
 /**
@@ -58,6 +60,14 @@ const { db, pool } = createDatabase(env.DATABASE_URL);
 const say = (line: string): void => {
   process.stdout.write(`[requests] ${line}\n`);
 };
+
+say(
+  becoming === 'became'
+    ? `Running as user ${env.PUID.toString()} and group ${env.PGID.toString()}.`
+    : becoming === 'stayedRoot'
+      ? 'Running as root, since PUID is 0.'
+      : 'Running as the user it was started as.',
+);
 
 await migrate(db, {
   migrationsFolder: MIGRATIONS_FOLDER,

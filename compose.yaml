@@ -156,6 +156,12 @@ services:
       # without one.
       REQUESTS_SECRET: ${REQUESTS_SECRET:-}
 
+      # The user and group the service runs as, and so who owns what it files
+      # into your library. Set them to the owner of your media folders — the
+      # same ids your download client runs as. 0 keeps the old root behaviour.
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+
       # Optional: gluetun's control server, so Valence can say whether the VPN
       # your download client sits behind is up, and warn you when it drops.
       # http://gluetun:8000 with the vpn profile below.

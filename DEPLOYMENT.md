@@ -125,13 +125,14 @@ To switch it on:
    in Dockge, or `docker compose --profile requests up -d`.
 2. Set these, and restart Valence:
 
-| Setting           | Required | What it is                                                                                                 |
-| ----------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
-| `REQUESTS_URL`    | yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                  |
-| `REQUESTS_SECRET` | yes      | At least 32 characters, the same for both. Valence presents it on every call; the service refuses without. |
-| `DOWNLOADS_PATH`  | no       | Where your download client writes, on the host, `./downloads` by default.                                  |
-| `VPN_URL`         | no       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                 |
-| `VPN_API_KEY`     | no       | The key gluetun's control server was given. `docker run --rm qmcgaw/gluetun genkey` makes one.             |
+| Setting           | Required | What it is                                                                                                                            |
+| ----------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `REQUESTS_URL`    | yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                                             |
+| `REQUESTS_SECRET` | yes      | At least 32 characters, the same for both. Valence presents it on every call; the service refuses without.                            |
+| `DOWNLOADS_PATH`  | no       | Where your download client writes, on the host, `./downloads` by default.                                                             |
+| `PUID`, `PGID`    | no       | The user and group the requests service runs as, `1000` each by default. Set them to the owner of your media folders; `0` keeps root. |
+| `VPN_URL`         | no       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                                            |
+| `VPN_API_KEY`     | no       | The key gluetun's control server was given. `docker run --rm qmcgaw/gluetun genkey` makes one.                                        |
 
 Setting only one of `REQUESTS_URL` and `REQUESTS_SECRET` leaves requesting off,
 and the log says which is missing.

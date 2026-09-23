@@ -10,6 +10,8 @@ describe('readEnv', () => {
     expect(env.REQUESTS_PORT).toBe(8421);
     expect(env.VPN_URL).toBe('');
     expect(env.VPN_CHECK_SECONDS).toBe(30);
+    expect(env.PUID).toBe(1000);
+    expect(env.PGID).toBe(1000);
   });
 
   it('refuses to start without a secret the server shares', () => {
@@ -30,5 +32,13 @@ describe('readEnv', () => {
     const env = readEnv({ REQUESTS_SECRET: A_SECRET, REQUESTS_PORT: '9000', PORT: '8420' });
 
     expect(env.REQUESTS_PORT).toBe(9000);
+  });
+
+  it('takes the user and group to run as, and refuses one that cannot be', () => {
+    const env = readEnv({ REQUESTS_SECRET: A_SECRET, PUID: '0', PGID: '100' });
+
+    expect(env.PUID).toBe(0);
+    expect(env.PGID).toBe(100);
+    expect(() => readEnv({ REQUESTS_SECRET: A_SECRET, PUID: '-1' })).toThrow();
   });
 });

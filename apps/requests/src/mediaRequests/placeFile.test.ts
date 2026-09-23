@@ -1,5 +1,6 @@
 import {
   copyFile,
+  link,
   mkdir,
   mkdtemp,
   readFile,
@@ -102,15 +103,43 @@ describe('placeFile across disks', () => {
 
   it('says what went wrong where it is not a matter of disks', async () => {
     const { root, source } = await aDownload();
-    const files = { copyFile, link: failing('EACCES'), mkdir, rename, stat, unlink };
+    const files = { copyFile, link: failing('EIO'), mkdir, rename, stat, unlink };
 
-    await expect(placeFile(source, join(root, 'x.mkv'), true, files)).rejects.toThrow('EACCES');
+    await expect(placeFile(source, join(root, 'x.mkv'), true, files)).rejects.toThrow('EIO');
     await expect(
       placeFile(source, join(root, 'y.mkv'), false, {
         ...files,
         link: failing('EXDEV'),
-        rename: failing('EACCES'),
+        rename: failing('EIO'),
       }),
-    ).rejects.toThrow('EACCES');
+    ).rejects.toThrow('EIO');
+  });
+});
+
+describe('placeFile where it may not write', () => {
+  it('says which user it runs as and what to set', async () => {
+    const { root, source } = await aDownload();
+    const files = { copyFile, link, mkdir: failing('EACCES'), rename, stat, unlink };
+
+    await expect(
+      placeFile(
+        source,
+        join(root, 'Films', 'Dune.mkv'),
+        true,
+        files,
+        () => 'user 1000 and group 1000',
+      ),
+    ).rejects.toThrow(
+      `The requests service, running as user 1000 and group 1000, may not write to ${join(root, 'Films')}. Set PUID and PGID on it to the owner of your media folders.`,
+    );
+  });
+
+  it('names the user this process runs as, by default', async () => {
+    const { root, source } = await aDownload();
+    const files = { copyFile, link, mkdir: failing('EACCES'), rename, stat, unlink };
+
+    await expect(placeFile(source, join(root, 'Films', 'Dune.mkv'), true, files)).rejects.toThrow(
+      /running as (user \d+ and group \d+|this user)/u,
+    );
   });
 });
