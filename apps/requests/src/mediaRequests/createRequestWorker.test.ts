@@ -13,6 +13,7 @@ import { aSentDownload } from '@ValenceRequests/testing/aSentDownload';
 import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
 import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
 import { createRequestWorker } from './createRequestWorker';
+import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type { NotSent } from '@ValenceRequests/downloads/NotSent';
 import type {
   IndexerSearchReport,
@@ -52,10 +53,12 @@ type HarnessOptions = {
   found?: (search: ReleaseSearch) => Release[];
   profiles?: QualityProfile[];
   refuseSend?: string;
+  refuseSendCode?: ProblemCode;
   filed?: typeof fileDownload;
   filedMusic?: typeof fileAlbum;
   localPath?: string;
   reports?: IndexerSearchReport[];
+  reportsInTurn?: IndexerSearchReport[][];
 };
 
 /**
@@ -70,6 +73,7 @@ const aWorker = ({
   found = () => [aRelease(WEB), aRelease(BLURAY)],
   profiles = [],
   refuseSend,
+  refuseSendCode,
   filed = vi.fn<typeof fileDownload>(() => Promise.resolve({ filed: new Map(), missing: [] })),
   filedMusic = vi.fn<typeof fileAlbum>(() => Promise.resolve({ filed: new Map(), missing: [] })),
   localPath = '',
@@ -83,6 +87,7 @@ const aWorker = ({
       problemCode: null,
     },
   ],
+  reportsInTurn,
 }: HarnessOptions = {}) => {
   const requestStore = createMemoryRecordStore(requests);
   const itemStore = createMemoryRecordStore(items);
@@ -94,7 +99,7 @@ const aWorker = ({
   let sends = 0;
   const send = vi.fn((release: ReleaseSend): Promise<QueuedDownload | NotSent> => {
     if (refuseSend !== undefined) {
-      return Promise.resolve({ refused: refuseSend, problemCode: null });
+      return Promise.resolve({ refused: refuseSend, problemCode: refuseSendCode ?? null });
     }
 
     sends += 1;
@@ -135,7 +140,7 @@ const aWorker = ({
 
         return Promise.resolve({
           releases: found(asked),
-          indexers: reports,
+          indexers: reportsInTurn?.shift() ?? reports,
           judgements: [],
           pickedId: null,
         });
@@ -403,6 +408,21 @@ describe('createRequestWorker', () => {
         state: 'wanted',
         problem: 'No torrent client is set up',
         problemCode: null,
+      });
+    });
+
+    it('keeps the kind of problem it was when the client will not take it', async () => {
+      const { worker, items } = aWorker({
+        refuseSend: 'qBittorrent could not be reached',
+        refuseSendCode: 'DownloadClientUnreachable',
+      });
+
+      await worker.tick();
+
+      expect(await theItem(items)).toMatchObject({
+        state: 'wanted',
+        problem: 'qBittorrent could not be reached',
+        problemCode: 'DownloadClientUnreachable',
       });
     });
 
@@ -1295,6 +1315,40 @@ describe('createRequestWorker', () => {
       ]);
       expect(outcome?.indexers).toMatchObject([{ found: 4 }]);
       expect(await worker.releasesFor('missing')).toBeNull();
+    });
+
+    it('keeps what an indexer said wrong beside the kind of problem it was, across searches', async () => {
+      const jackett = (problem: string | null, problemCode: ProblemCode | null) => [
+        {
+          indexerId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+          indexerName: 'Jackett',
+          found: 1,
+          tookMs: 10,
+          problem,
+          problemCode,
+        },
+      ];
+      const { worker } = aWorker({
+        requests: [SEVERANCE],
+        items: [aRequestItem({ requestId: SEVERANCE.id, season: 1, episode: 1 })],
+        reportsInTurn: [
+          jackett('Timed out getting past the site’s browser check', 'CloudflareCheckFailed'),
+          jackett(null, null),
+          jackett(
+            'The site’s Cloudflare refuses this address outright',
+            'CloudflareRefusesAddress',
+          ),
+        ],
+      });
+
+      const outcome = await worker.releasesFor(SEVERANCE.id);
+
+      expect(outcome?.indexers).toMatchObject([
+        {
+          problem: 'Timed out getting past the site’s browser check',
+          problemCode: 'CloudflareCheckFailed',
+        },
+      ]);
     });
 
     it('lists the releases for a request not yet made, keeping nothing', async () => {

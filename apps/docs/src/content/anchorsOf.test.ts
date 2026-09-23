@@ -31,6 +31,12 @@ describe('anchorsOf', () => {
     );
   });
 
+  it('counts on past an anchor another heading already has', () => {
+    expect(anchorsOf('## Troubleshooting\n## Troubleshooting-1\n## Troubleshooting')).toEqual(
+      new Set(['troubleshooting', 'troubleshooting-1', 'troubleshooting-2']),
+    );
+  });
+
   it('leaves out what only looks like a heading inside code', () => {
     expect(anchorsOf('```sh\n# not a heading\n```\n## A heading')).toEqual(new Set(['a-heading']));
   });

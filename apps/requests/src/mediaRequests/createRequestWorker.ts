@@ -552,6 +552,7 @@ const createRequestWorker = ({
       await update(item, {
         state: item.state === 'searching' ? 'wanted' : item.state,
         problem: item.state === 'searching' ? NOTHING_FOUND : item.problem,
+        problemCode: item.state === 'searching' ? null : item.problemCode,
         lastSearchedAt: at(),
       });
     }
@@ -1070,12 +1071,14 @@ const createRequestWorker = ({
 
     for (const report of outcomes.flatMap((outcome) => outcome.indexers)) {
       const kept = reports.get(report.indexerId);
+      const telling = kept !== undefined && kept.problem !== null ? kept : report;
 
       reports.set(report.indexerId, {
         ...report,
         found: (kept?.found ?? 0) + report.found,
         tookMs: Math.max(kept?.tookMs ?? 0, report.tookMs),
-        problem: kept?.problem ?? report.problem,
+        problem: telling.problem,
+        problemCode: telling.problemCode,
       });
     }
 

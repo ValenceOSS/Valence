@@ -1,7 +1,8 @@
 /**
  * The anchors a page's headings get when it is built, worked out from its source the way
  * `rehype-slug` does: lower case, punctuation dropped, spaces as hyphens, and a number after a
- * heading that repeats an earlier one. Headings inside code are not headings.
+ * heading that repeats an earlier one, counting on past any anchor already given. Headings inside
+ * code are not headings.
  *
  * @param source - The page, as MDX.
  * @returns Its anchors.
@@ -28,10 +29,17 @@ const anchorsOf = (source: string): Set<string> => {
       .toLowerCase()
       .replace(/[^\p{L}\p{N}\s_-]/gu, '')
       .replace(/\s/gu, '-');
-    const times = seen.get(slug) ?? 0;
+    let anchor = slug;
 
-    seen.set(slug, times + 1);
-    anchors.add(times === 0 ? slug : `${slug}-${times.toString()}`);
+    while (seen.has(anchor)) {
+      const times = (seen.get(slug) ?? 0) + 1;
+
+      seen.set(slug, times);
+      anchor = `${slug}-${times.toString()}`;
+    }
+
+    seen.set(anchor, 0);
+    anchors.add(anchor);
   }
 
   return anchors;

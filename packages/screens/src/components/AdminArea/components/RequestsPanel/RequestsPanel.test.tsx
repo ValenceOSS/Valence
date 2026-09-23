@@ -164,6 +164,48 @@ describe('RequestsPanel', () => {
     expect(screen.getByText('2 of 3 switched on. Jackett: Timed out')).toBeInTheDocument();
   });
 
+  it('links one failing indexer to its own fix, and several to the general one', async () => {
+    const failing = (...codes: ('CloudflareRefusesAddress' | 'DownloadClientUnreachable')[]) => ({
+      ...ANSWERING,
+      status: {
+        version: '0.4.0',
+        vpn: ANSWERING.status?.vpn ?? NOT_CHECKED_VPN,
+        indexers: {
+          total: 3,
+          enabled: 3,
+          failing: codes.map((code, at) => ({
+            id: `0f8fad5b-d9cb-469f-a165-7086772895${at.toString().padStart(2, '0')}`,
+            name: `Indexer ${at.toString()}`,
+            problem: 'It went wrong',
+            problemCode: code,
+          })),
+        },
+      },
+    });
+
+    fetchRequestsOverview.mockResolvedValue(failing('CloudflareRefusesAddress'));
+
+    const one = renderInAnAddress(<RequestsPanel />);
+
+    expect(await screen.findByText('1 failing')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'How to fix this' })).toHaveAttribute(
+      'href',
+      'https://docs.getvalence.app/install/requesting#indexers-behind-cloudflare',
+    );
+
+    one.unmount();
+    fetchRequestsOverview.mockResolvedValue(
+      failing('CloudflareRefusesAddress', 'DownloadClientUnreachable'),
+    );
+    renderInAnAddress(<RequestsPanel />);
+
+    expect(await screen.findByText('2 failing')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'How to fix this' })).toHaveAttribute(
+      'href',
+      'https://docs.getvalence.app/install/requesting#failing-indexers',
+    );
+  });
+
   it('says every indexer is working where none are failing', async () => {
     fetchRequestsOverview.mockResolvedValue({
       ...ANSWERING,
