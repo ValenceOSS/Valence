@@ -86,20 +86,20 @@ To run it from source, use `cargo run --quiet --bin valence-transcoder -- serve`
 
 These are the commands the documentation uses. Run them in the folder that holds `compose.yaml`.
 
-| Command                                                        | Purpose                                                                                                                        |
-| :------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
-| `docker compose up -d`                                         | Start the stack, creating it if needed.                                                                                        |
-| `docker compose --profile requests up -d`                      | Also start the requests service. `COMPOSE_PROFILES=requests` does the same. Profiles are `requests`, `flaresolverr` and `vpn`. |
-| `docker compose pull`                                          | Fetch newer images. Follow it with `docker compose up -d` to recreate the containers.                                          |
-| `docker compose ps`                                            | Show what is running and whether it is healthy.                                                                                |
-| `docker compose logs -f valence`                               | Follow the server's log, which includes the media service.                                                                     |
-| `docker compose logs --tail 200 db`                            | The last 200 lines from the database.                                                                                          |
-| `docker compose stop valence`                                  | Stop the server, for example before a rollback.                                                                                |
-| `docker compose exec valence node apps/server/dist/Migrate.js` | Run migrations by hand.                                                                                                        |
-| `docker compose exec valence valence-transcoder capabilities`  | Inspect hardware acceleration.                                                                                                 |
-| `docker compose exec db pg_dumpall -U valence`                 | Dump the whole database, as used when [upgrading Postgres](/reference/troubleshooting).                                        |
-| `docker compose down`                                          | Stop and remove the containers, keeping the volumes.                                                                           |
-| `docker compose down -v`                                       | Also removes the volumes. This deletes your database and settings.                                                             |
+| Command                                                        | Purpose                                                                                                        |
+| :------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| `docker compose up -d`                                         | Start the stack, creating it if needed.                                                                        |
+| `docker compose --profile requests up -d`                      | Also start the requests service. `COMPOSE_PROFILES=requests` does the same. Profiles are `requests` and `vpn`. |
+| `docker compose pull`                                          | Fetch newer images. Follow it with `docker compose up -d` to recreate the containers.                          |
+| `docker compose ps`                                            | Show what is running and whether it is healthy.                                                                |
+| `docker compose logs -f valence`                               | Follow the server's log, which includes the media service.                                                     |
+| `docker compose logs --tail 200 db`                            | The last 200 lines from the database.                                                                          |
+| `docker compose stop valence`                                  | Stop the server, for example before a rollback.                                                                |
+| `docker compose exec valence node apps/server/dist/Migrate.js` | Run migrations by hand.                                                                                        |
+| `docker compose exec valence valence-transcoder capabilities`  | Inspect hardware acceleration.                                                                                 |
+| `docker compose exec db pg_dumpall -U valence`                 | Dump the whole database, as used when [upgrading Postgres](/reference/troubleshooting).                        |
+| `docker compose down`                                          | Stop and remove the containers, keeping the volumes.                                                           |
+| `docker compose down -v`                                       | Also removes the volumes. This deletes your database and settings.                                             |
 
 <Callout title="down -v is not an upgrade step" tone="warning">
   The four volumes hold different things. `config` cannot be rebuilt, since it holds settings,

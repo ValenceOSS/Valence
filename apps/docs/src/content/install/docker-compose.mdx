@@ -27,15 +27,14 @@ Each GitHub release attaches a `compose.yaml` and an `env.example` (the reposito
 
 ## The services
 
-`compose.yaml` defines five services. Only `db` and `valence` start by default. The other three use Compose profiles and start only when you ask for them.
+`compose.yaml` defines four services. Only `db` and `valence` start by default. The other two use Compose profiles and start only when you ask for them.
 
-| Service        | Image                                           | Starts by default      | Purpose                                                  |
-| -------------- | ----------------------------------------------- | ---------------------- | -------------------------------------------------------- |
-| `db`           | `postgres:18-alpine`                            | Yes                    | The database                                             |
-| `valence`      | `ghcr.io/marquescoding/valence:latest`          | Yes                    | Server, web client and media service                     |
-| `requests`     | `ghcr.io/marquescoding/valence-requests:latest` | Profile `requests`     | Optional requesting service                              |
-| `flaresolverr` | `ghcr.io/flaresolverr/flaresolverr:latest`      | Profile `flaresolverr` | Optional, for indexers behind Cloudflare's browser check |
-| `gluetun`      | `qmcgaw/gluetun:latest`                         | Profile `vpn`          | Optional VPN for a download client                       |
+| Service    | Image                                           | Starts by default  | Purpose                              |
+| ---------- | ----------------------------------------------- | ------------------ | ------------------------------------ |
+| `db`       | `postgres:18-alpine`                            | Yes                | The database                         |
+| `valence`  | `ghcr.io/marquescoding/valence:latest`          | Yes                | Server, web client and media service |
+| `requests` | `ghcr.io/marquescoding/valence-requests:latest` | Profile `requests` | Optional requesting service          |
+| `gluetun`  | `qmcgaw/gluetun:latest`                         | Profile `vpn`      | Optional VPN for a download client   |
 
 ### db
 
@@ -133,13 +132,15 @@ group_add:
 
 This passes the GPU through. **Delete both entries if the machine has no GPU**, because a device that is not there stops the container starting and the failure does not say why. `RENDER_GROUP_ID` is the group that owns `/dev/dri/renderD128` on the host: 44 on most Debian-derived systems and 104 on some. `ls -n /dev/dri` shows it. See [Hardware transcoding](/install/hardware-transcoding).
 
-### requests, flaresolverr and gluetun
+### requests and gluetun
 
 These are covered in [Requesting](/install/requesting). They stay off unless you start the stack with their profile, for example:
 
 ```bash
 COMPOSE_PROFILES=requests docker compose up -d
 ```
+
+The `requests` service sets `shm_size: 512m`, for the browser built into its image that gets past Cloudflare's browser check. Leave it in. See [Indexers behind Cloudflare](/install/requesting#indexers-behind-cloudflare).
 
 ### Volumes
 

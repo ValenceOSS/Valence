@@ -94,7 +94,7 @@ Valence speaks plain HTTP and expects a reverse proxy to terminate TLS. That mak
 - Redirect port 80 to HTTPS, and consider sending an `HSTS` header from the proxy once you are sure HTTPS works.
 - Let the WebSocket at `/api/realtime` through, set `X-Forwarded-For`, and turn response buffering off, as described in [Reverse proxy](/install/reverse-proxy).
 - Set `PUBLIC_URL` to the address the proxy answers as, and `COOKIE_SECURE=true`.
-- Keep the database, requests service, FlareSolverr and gluetun off the internet.
+- Keep the database, requests service and gluetun off the internet.
 
 If you use a tunnel or a CDN, remember it sees your traffic, including video, and read its terms.
 
@@ -144,7 +144,7 @@ Treat them like the database. Keep them off shared storage, do not attach one to
 
 1. Serve Valence over HTTPS through a reverse proxy, with `COOKIE_SECURE=true`.
 2. Replace `BETTER_AUTH_SECRET` with a random value, and use a strong `POSTGRES_PASSWORD`.
-3. Publish only the proxy. Do not publish 5432, 8421, 8191 or 8000.
+3. Publish only the proxy. Do not publish 5432, 8421 or 8000.
 4. Keep the media mount read only unless you use re-encoding or uploads.
 5. Keep `TRUSTED_ORIGINS` to the addresses you use.
 6. Leave the authentication rate limiter on, and pass the client address through the proxy.

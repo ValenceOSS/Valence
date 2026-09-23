@@ -60,7 +60,7 @@ Before you do this, decide whether you want anything back. Take a database dump 
 If you started optional services with profiles, a plain `docker compose down` only removes the services that are active. To remove those as well, name the profiles:
 
 ```bash
-COMPOSE_PROFILES=requests,flaresolverr,vpn docker compose down
+COMPOSE_PROFILES=requests,vpn docker compose down
 ```
 
 Add the volumes flag to that command if you also want the data gone.
@@ -100,7 +100,7 @@ docker image rm ghcr.io/marquescoding/valence:latest
 docker image rm postgres:18-alpine
 ```
 
-Repeat for `ghcr.io/marquescoding/valence-requests`, `ghcr.io/flaresolverr/flaresolverr` and `qmcgaw/gluetun` if you used them. Use the tag you actually pulled, which `docker image ls` shows.
+Repeat for `ghcr.io/marquescoding/valence-requests` and `qmcgaw/gluetun` if you used them. Use the tag you actually pulled, which `docker image ls` shows. If you ran the optional Cloudflare container that earlier releases offered, nothing uses its image now, so remove that too. [Indexers behind Cloudflare](/install/requesting#indexers-behind-cloudflare) names it.
 
 ## Files on the host
 

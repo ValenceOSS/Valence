@@ -80,7 +80,7 @@ This fetches the FFmpeg build the shipped image carries (the version pinned in t
 docker compose -f compose.dev.yaml up -d db
 ```
 
-Data lives in a named volume, `db-data`, so it survives restarts. The optional services are `requests` (behind the `requests` profile, built from `apps/requests/Dockerfile`) and `flaresolverr` (behind its own profile). You normally run the requests service from source instead, as described below.
+Data lives in a named volume, `db-data`, so it survives restarts. The optional service is `requests`, behind the `requests` profile and built from `apps/requests/Dockerfile`. You normally run the requests service from source instead, as described below.
 
 ## Migrations
 
@@ -146,7 +146,13 @@ REQUESTS_URL=http://localhost:8421
 REQUESTS_SECRET=a-random-value-of-at-least-32-characters
 ```
 
-Then start `pnpm --filter @valence/requests dev`. Leave both variables empty to switch requesting off entirely, in which case Valence shows nothing about it. The optional settings (`VPN_URL`, `VPN_API_KEY`, `REQUESTS_PORT`, `FLARESOLVERR_URL` and the indexer definition repository) are commented in `.env.example`.
+Then start `pnpm --filter @valence/requests dev`. Leave both variables empty to switch requesting off entirely, in which case Valence shows nothing about it. The optional settings (`VPN_URL`, `VPN_API_KEY`, `REQUESTS_PORT` and the indexer definition repository) are commented in `.env.example`.
+
+The requests service gets past Cloudflare's browser check with a headless Camoufox browser, which the image carries but a checkout does not. Fetch it once:
+
+```bash
+pnpm --filter @valence/requests browser
+```
 
 ## First administrator
 
