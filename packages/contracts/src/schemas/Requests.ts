@@ -49,7 +49,7 @@ const NO_WORK: z.infer<typeof RequestsWorkSchema> = {
 const RequestsOverviewSchema = z.object({
   address: z.string(),
   isReachable: z.boolean(),
-  problem: z.string().nullable().catch(null),
+  problem: z.string().nullable().default(null),
   problemCode: ProblemCodeFieldSchema,
   checkedAt: z.string().datetime().nullable(),
   status: RequestsStatusSchema.nullable(),
