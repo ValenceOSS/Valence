@@ -12,6 +12,7 @@ type TopBarProps = {
   isArriving: boolean;
   onFaceAt: (at: Spot) => void;
   onMarkAt: (at: Spot) => void;
+  hasMusic: boolean;
 };
 
 export type { TopBarProps };

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Plus, X } from '@keyline-icons/react';
-import { Play } from '@keyline-icons/react/fill';
+import { Check, Plus, X } from '@keyline-icons/react-native';
+import { Play } from '@keyline-icons/react-native/fill';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { askingFor } from '@ValenceClient/requests/askingFor';

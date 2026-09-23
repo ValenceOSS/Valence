@@ -7,6 +7,7 @@ import { theTvsReach } from '@ValenceTv/platform/theTvsReach';
 import { theTvsSocket } from '@ValenceTv/platform/theTvsSocket';
 import { theTvsStore } from '@ValenceTv/platform/theTvsStore';
 import { thisTvsId } from '@ValenceTv/platform/thisTvsId';
+import { theTvsMusicAudio } from '@ValenceTv/music/theTvsMusicAudio';
 
 /**
  * Tells the application it is running on a television, which is the first thing that has to happen.
@@ -32,6 +33,7 @@ const installTvPlatform = (): void => {
     buildInfo: () => null,
     notifyLocally: () => undefined,
     setUnreadBadge: () => undefined,
+    musicAudio: theTvsMusicAudio,
   });
 };
 

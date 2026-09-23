@@ -54,6 +54,8 @@ const TEXT: Record<ButtonSize, number> = { md: 26, lg: 28, xl: 32 };
  * @param isLoading - Whether it is busy, which also stops it being pressed.
  * @param isDisabled - Whether it can be pressed.
  * @param isWide - Whether it fills its row.
+ * @param isIconOnly - Whether it shows its icon alone, as a round button, its words still read out.
+ * @param iconSize - How large its icon is, where it should not follow the size of its words.
  * @param hasPreferredFocus - Whether the remote starts here.
  * @param ref - Handed the pressable element, for something that has to send the remote to it.
  */
@@ -70,6 +72,8 @@ const Button = ({
   isLoading = false,
   isDisabled = false,
   isWide = false,
+  isIconOnly = false,
+  iconSize,
   hasPreferredFocus = false,
   ref,
 }: ButtonProps) => {
@@ -89,7 +93,7 @@ const Button = ({
       style={isWide ? styles.wide : undefined}
     >
       {(isFocused) => {
-        const corner = isPill ? tokens.radii.round : tokens.radii.lg;
+        const corner = isPill || isIconOnly ? tokens.radii.round : tokens.radii.lg;
 
         return (
           <View
@@ -106,6 +110,7 @@ const Button = ({
                 styles.face,
                 {
                   minHeight: HEIGHTS[size],
+                  ...(isIconOnly ? { width: HEIGHTS[size], paddingHorizontal: 0 } : {}),
                   borderRadius: corner,
                   backgroundColor: look.face,
                   borderColor: look.edge,
@@ -116,18 +121,20 @@ const Button = ({
               {isLoading ? <ActivityIndicator color={look.ink} /> : null}
 
               {icon === undefined || isLoading ? null : (
-                <Icon of={icon} colour={look.ink} size={Math.round(TEXT[size] * 1.1)} />
+                <Icon of={icon} colour={look.ink} size={iconSize ?? Math.round(TEXT[size] * 1.1)} />
               )}
 
-              <View style={styles.words}>
-                <Text style={[styles.label, { color: look.ink, fontSize: TEXT[size] }]}>
-                  {label}
-                </Text>
+              {isIconOnly ? null : (
+                <View style={styles.words}>
+                  <Text style={[styles.label, { color: look.ink, fontSize: TEXT[size] }]}>
+                    {label}
+                  </Text>
 
-                {detail === undefined ? null : (
-                  <Text style={[styles.detail, { color: look.ink }]}>{detail}</Text>
-                )}
-              </View>
+                  {detail === undefined ? null : (
+                    <Text style={[styles.detail, { color: look.ink }]}>{detail}</Text>
+                  )}
+                </View>
+              )}
             </View>
           </View>
         );

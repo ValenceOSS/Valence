@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { RotateCcw, RotateCw, Settings, SkipForward } from '@keyline-icons/react';
-import { Pause, Play } from '@keyline-icons/react/fill';
+import { RotateCcw, RotateCw, Settings, SkipForward } from '@keyline-icons/react-native';
+import { Pause, Play } from '@keyline-icons/react-native/fill';
 import { Badges } from '@ValenceTv/components/Badges/Badges';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { Scrubber } from '@ValenceTv/screens/Player/components/Scrubber/Scrubber';

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, useTVEventHandler, View } from 'react-native';
-import { Play } from '@keyline-icons/react/fill';
+import { Play } from '@keyline-icons/react-native/fill';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { tokens } from '@ValenceTv/theme/tokens';

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import { Clock, Plus, Server } from '@keyline-icons/react';
+import { Clock, Plus, Server } from '@keyline-icons/react-native';
 import { readServerAddress } from '@ValenceClient/session/readServerAddress';
 import { recentServerAddresses } from '@ValenceClient/session/serverAddress';
 import { Button } from '@ValenceTv/components/Button/Button';

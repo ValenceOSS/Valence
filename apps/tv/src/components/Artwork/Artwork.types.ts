@@ -7,6 +7,7 @@ type ArtworkProps = {
   onMissing?: () => void;
   anchor?: 'left' | 'center';
   isUrgent?: boolean;
+  crossfadeMs?: number;
 };
 
 export type { ArtworkProps };

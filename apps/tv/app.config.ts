@@ -44,6 +44,7 @@ const config: ExpoConfig = {
     ],
     'expo-secure-store',
     'expo-video',
+    ['expo-audio', { enableBackgroundPlayback: true }],
   ],
 };
 

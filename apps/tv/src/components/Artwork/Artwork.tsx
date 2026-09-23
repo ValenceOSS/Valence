@@ -23,6 +23,8 @@ import type { ArtworkProps } from './Artwork.types';
  * @param anchor - Which edge a picture that does not fill its space keeps to.
  * @param isUrgent - Whether it is loaded ahead of the rest, as the picture filling the screen and the
  *   first shelf's are.
+ * @param crossfadeMs - How long a new picture takes to dissolve in over the old, where it changes
+ *   in place rather than arriving.
  */
 const Artwork = ({
   path,
@@ -31,6 +33,7 @@ const Artwork = ({
   onMissing,
   anchor = 'center',
   isUrgent = false,
+  crossfadeMs,
 }: ArtworkProps) => {
   const [isMissing, setIsMissing] = useState(false);
 
@@ -44,7 +47,9 @@ const Artwork = ({
           contentPosition={anchor}
           priority={isUrgent ? 'high' : 'normal'}
           cachePolicy="memory-disk"
-          recyclingKey={path}
+          {...(crossfadeMs === undefined
+            ? { recyclingKey: path }
+            : { transition: { duration: crossfadeMs, effect: 'cross-dissolve' } })}
           onError={() => {
             setIsMissing(true);
             onMissing?.();

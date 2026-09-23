@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { nameTheStanding } from '@ValenceClient/requests/nameTheStanding';
-import { Check } from '@keyline-icons/react';
+import { Check } from '@keyline-icons/react-native';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';

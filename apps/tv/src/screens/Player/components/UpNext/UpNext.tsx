@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { SkipForward, X } from '@keyline-icons/react';
+import { SkipForward, X } from '@keyline-icons/react-native';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Button } from '@ValenceTv/components/Button/Button';

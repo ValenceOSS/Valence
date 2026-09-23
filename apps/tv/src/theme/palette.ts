@@ -23,13 +23,17 @@ const PaletteSchema = z.object({
 const ExtraSchema = z.object({ palette: PaletteSchema });
 
 /**
- * ValenceUI's dark palette, as the app's config handed it over.
+ * Reads ValenceUI's dark palette, as the app's config handed it over.
  *
  * The colours are read out of ValenceUI's own stylesheet when the app is configured, so the television
  * draws with exactly the colours the web does. A build that somehow lost them fails loudly here on
  * the way up rather than drawing in colours nobody chose.
+ *
+ * @returns The colours, by the names the stylesheet gives them.
  */
-const read = ExtraSchema.parse(Constants.expoConfig?.extra);
+const readThePalette = () => ExtraSchema.parse(Constants.expoConfig?.extra);
+
+const read = readThePalette();
 
 const palette = {
   surface: read.palette['color-surface'],

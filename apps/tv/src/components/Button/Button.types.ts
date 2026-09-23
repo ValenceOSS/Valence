@@ -21,6 +21,8 @@ type ButtonProps = {
   isLoading?: boolean;
   isDisabled?: boolean;
   isWide?: boolean;
+  isIconOnly?: boolean;
+  iconSize?: number;
   hasPreferredFocus?: boolean;
 };
 

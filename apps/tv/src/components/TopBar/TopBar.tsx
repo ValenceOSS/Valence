@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { StyleSheet, TVFocusGuideView, View } from 'react-native';
 import { Image } from 'expo-image';
-import { Search } from '@keyline-icons/react';
-import { Film, Home, Monitor } from '@keyline-icons/react/fill';
+import { Search } from '@keyline-icons/react-native';
+import { Film, Home, Monitor, MusicNote } from '@keyline-icons/react-native/fill';
 import { Face } from '@ValenceTv/components/Face/Face';
 import { Glass } from '@ValenceTv/components/Glass/Glass';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
@@ -19,6 +19,8 @@ const TABS: readonly { id: Tab; label: string; icon: typeof Home }[] = [
   { id: 'films', label: 'Films', icon: Film },
   { id: 'shows', label: 'Shows', icon: Monitor },
 ];
+
+const WITH_MUSIC: typeof TABS = [...TABS, { id: 'music', label: 'Music', icon: MusicNote }];
 
 const MARK = { width: 54, height: 40 };
 
@@ -45,6 +47,7 @@ const ROUND_SIZE = 60;
  *   drawn here.
  * @param onFaceAt - Told where the face sits, for it to fly to as somebody signs in.
  * @param onMarkAt - Told where Valence's mark sits, for it to fly to as somebody signs in.
+ * @param hasMusic - Whether there is music to listen to, which adds its part to the capsule.
  */
 const TopBar = ({
   current,
@@ -55,6 +58,7 @@ const TopBar = ({
   isArriving,
   onFaceAt,
   onMarkAt,
+  hasMusic,
 }: TopBarProps) => {
   const faceSpot = useReportSpot(onFaceAt);
   const markSpot = useReportSpot(onMarkAt);
@@ -113,7 +117,7 @@ const TopBar = ({
           </Focusable>
 
           <TabBar
-            tabs={TABS}
+            tabs={hasMusic ? WITH_MUSIC : TABS}
             current={current}
             onChoose={onChoose}
             isStartingHere

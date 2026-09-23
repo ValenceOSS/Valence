@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, Text, TVFocusGuideView } from 'react-native';
-import { Check } from '@keyline-icons/react';
+import { Check } from '@keyline-icons/react-native';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { tokens } from '@ValenceTv/theme/tokens';

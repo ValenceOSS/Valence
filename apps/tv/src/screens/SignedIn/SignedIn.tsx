@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { findNodeHandle, Linking, StyleSheet, View } from 'react-native';
+import { findNodeHandle, Linking, StyleSheet, useTVEventHandler, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
+import { watchPresence } from '@ValenceClient/presence/watchPresence';
+import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
+import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import { useSystemNowPlaying } from '@ValenceTv/music/useSystemNowPlaying';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
@@ -12,6 +17,7 @@ import { ArrivalBanner } from '@ValenceTv/components/ArrivalBanner/ArrivalBanner
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { FocusFence } from '@ValenceTv/components/FocusFence/FocusFence';
 import { MoodBackdrop } from '@ValenceTv/components/MoodBackdrop/MoodBackdrop';
+import { NowPlayingChip } from '@ValenceTv/components/NowPlayingChip/NowPlayingChip';
 import { TopBar } from '@ValenceTv/components/TopBar/TopBar';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
@@ -23,6 +29,9 @@ import { Catalogue } from '@ValenceTv/screens/Catalogue/Catalogue';
 import { AskPage } from '@ValenceTv/screens/AskPage/AskPage';
 import { FilmPage } from '@ValenceTv/screens/FilmPage/FilmPage';
 import { Home } from '@ValenceTv/screens/Home/Home';
+import { Music } from '@ValenceTv/screens/Music/Music';
+import { MusicCollection } from '@ValenceTv/screens/MusicCollection/MusicCollection';
+import { NowPlaying } from '@ValenceTv/screens/NowPlaying/NowPlaying';
 import { Player } from '@ValenceTv/screens/Player/Player';
 import { RequestsPage } from '@ValenceTv/screens/RequestsPage/RequestsPage';
 import { Search } from '@ValenceTv/screens/Search/Search';
@@ -34,18 +43,21 @@ import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
 import type { Place } from '@ValenceTv/navigation/Place';
 import type { Tab } from '@ValenceTv/navigation/Tab';
+import type { MusicItem } from '@ValenceTv/music/MusicItem';
+import type { HWEvent } from 'react-native';
 import type { SignedInProps } from './SignedIn.types';
 
 const WATCHABLE = new Set(['movies', 'shows']);
 
 const UNDER_THE_BAR = 130;
 
-const KEPT = ['films', 'shows', 'account'] as const;
+const KEPT = ['films', 'shows', 'music', 'account'] as const;
 
 type Moods = {
   home: string | null;
   films: string | null;
   shows: string | null;
+  music: string | null;
   search: string | null;
 };
 
@@ -72,7 +84,8 @@ const moodOf = (media: MediaSummary): string | null =>
  * the whole screen until it ends or Menu is pressed.
  *
  * A title found in search or on the discovery shelves that the library lacks opens a page for
- * asking for it, lit by its own picture once its details arrive.
+ * asking for it, lit by its own picture once its details arrive; one the library already has opens
+ * its own page instead.
  *
  * Pressing up from the top of a part reaches the item in the capsule it belongs under, which each part
  * is handed and asks to take the remote. The capsule sits in the middle, and the television only moves
@@ -96,7 +109,16 @@ const moodOf = (media: MediaSummary): string | null =>
  * is kept as a view of its own: React Native otherwise folds a plain wrapper into its parent, and
  * making it see-through would unfold it, moving every view in the part out and back in again.
  *
- * A title chosen on the television's top shelf opens Valence at its page.
+ * A title chosen on the television's top shelf opens Valence at its page, and a film sent from
+ * another of this person's devices — a phone, a laptop — plays straight away, over whatever was
+ * open, the device that sent it becoming its remote.
+ *
+ * Music stops altogether as somebody signs out, changes who is watching or moves to another
+ * Valence, rather than carrying on for whoever comes next.
+ *
+ * Whatever song is playing is kept in the top right corner over every page but the players, for
+ * the remote to open it from wherever somebody has got to. Opened from one of the parts, it opens
+ * over the music part, so going back from it lands there rather than where it was opened from.
  *
  * When something this viewer asked for arrives, a banner slides in to say so, and Play/Pause opens
  * it; nothing is announced over the player.
@@ -113,6 +135,18 @@ const moodOf = (media: MediaSummary): string | null =>
  */
 const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: SignedInProps) => {
   useFreshFromTheSocket(getRealtimeClient());
+  useEffect(() => watchPresence(), [user]);
+  useMusicRemote();
+  useSystemNowPlaying();
+
+  const watchingId = useQuery(profileQueries.watching()).data?.id ?? null;
+
+  useEffect(
+    () => () => {
+      theMusicPlayer().leave();
+    },
+    [user.id, watchingId],
+  );
 
   const [tab, setTab] = useState<Tab>('home');
   const [visited, setVisited] = useState<ReadonlySet<Tab>>(new Set(['home']));
@@ -121,6 +155,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     home: null,
     films: null,
     shows: null,
+    music: null,
     search: null,
   });
   const [items, setItems] = useState<ReadonlyMap<Tab, View>>(new Map());
@@ -170,6 +205,11 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     [libraries.data],
   );
 
+  const hasMusic = useMemo(
+    () => (libraries.data ?? []).some((one) => one.kind === 'music'),
+    [libraries.data],
+  );
+
   const choose = useCallback((part: Tab) => {
     setTab(part);
     setVisited((was) => (was.has(part) ? was : new Set([...was, part])));
@@ -182,6 +222,23 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   const back = useCallback(() => {
     setOpened((was) => was.slice(0, -1));
   }, []);
+
+  useEffect(
+    () =>
+      onPresenceEvent((event) => {
+        if (event.kind !== 'video' || event.command.kind !== 'play') {
+          return;
+        }
+
+        const { mediaId, startSeconds } = event.command;
+
+        setOpened((was) => [
+          ...was.filter((place) => place.kind !== 'play' && place.kind !== 'nowPlaying'),
+          { kind: 'play', mediaId, startSeconds: Math.floor(startSeconds), carriedOn: 0 },
+        ]);
+      }),
+    [],
+  );
 
   const playNext = useCallback((media: MediaSummary, carriedOn: number) => {
     setOpened((was) => [
@@ -202,15 +259,6 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           ? { kind: 'film', mediaId: media.id, mood }
           : { kind: 'show', libraryId: media.libraryId, showId, mood },
       );
-    },
-    [open],
-  );
-
-  const openAsk = useCallback(
-    (title: CatalogueTitle) => {
-      if (title.kind === 'film' || title.kind === 'series') {
-        open({ kind: 'ask', titleKind: title.kind, id: title.id, mood: null });
-      }
     },
     [open],
   );
@@ -254,6 +302,25 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
       });
     },
     [cache, openFilm, openTitle],
+  );
+
+  const openAsk = useCallback(
+    (title: CatalogueTitle) => {
+      if (title.kind !== 'film' && title.kind !== 'series') {
+        return;
+      }
+
+      const had = title.standing.status === 'library' ? title.standing.mediaId : null;
+
+      if (had !== null) {
+        openByMediaId({ kind: title.kind === 'film' ? 'film' : 'show', mediaId: had });
+
+        return;
+      }
+
+      open({ kind: 'ask', titleKind: title.kind, id: title.id, mood: null });
+    },
+    [open, openByMediaId],
   );
 
   const watchArrival = useCallback(() => {
@@ -311,11 +378,56 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     setMoods((was) => ({ ...was, search: path }));
   }, []);
 
+  const featureMusic = useCallback((path: string | null) => {
+    setMoods((was) => ({ ...was, music: path }));
+  }, []);
+
+  const openMusic = useCallback(
+    (item: MusicItem) => {
+      open({ kind: 'music', view: item.view, mood: item.art });
+    },
+    [open],
+  );
+
+  const openNowPlaying = useCallback(() => {
+    setOpened((was) =>
+      was.at(-1)?.kind === 'nowPlaying' ? was : [...was, { kind: 'nowPlaying', mood: null }],
+    );
+  }, []);
+
+  const closeNowPlaying = useCallback(() => {
+    setOpened((was) => was.filter((place) => place.kind !== 'nowPlaying'));
+  }, []);
+
   const featureShow = useCallback((media: MediaSummary) => {
     setMoods((was) => ({ ...was, shows: moodOf(media) }));
   }, []);
 
   const top = opened.at(-1);
+  const isWatching = top?.kind === 'play';
+
+  useEffect(() => {
+    if (isWatching) {
+      theMusicPlayer().pause();
+    }
+  }, [isWatching]);
+
+  const hearPlayPause = useCallback(
+    (event: HWEvent) => {
+      if (event.eventType !== 'playPause' || isWatching || arrival !== null) {
+        return;
+      }
+
+      const music = theMusicPlayer();
+
+      if (music.read().current !== null || music.read().remote !== null) {
+        music.toggle();
+      }
+    },
+    [isWatching, arrival],
+  );
+
+  useTVEventHandler(hearPlayPause);
   const faceMood =
     watching.data === undefined || watching.data === null ? null : profileAvatarUrl(watching.data);
   const pageOnTop = opened.findLast((place) => place.kind !== 'play');
@@ -358,7 +470,13 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                   style={[styles.layer, styles.underTheBar, tab !== part && styles.away]}
                 >
                   <FadeIn isShown={tab === part}>
-                    {part === 'account' ? (
+                    {part === 'music' ? (
+                      <Music
+                        onOpen={openMusic}
+                        onFeature={featureMusic}
+                        upTo={items.get('music') ?? null}
+                      />
+                    ) : part === 'account' ? (
                       <Account
                         user={user}
                         onChangeServer={onChangeServer}
@@ -389,6 +507,9 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                     onAsk={openAsk}
                     onFeature={featureSearch}
                     upTo={searchTag}
+                    hasMusic={hasMusic}
+                    onOpenMusic={openMusic}
+                    onPlayedMusic={openNowPlaying}
                   />
                 </FadeIn>
               </View>
@@ -405,6 +526,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           isArriving={isArriving}
           onFaceAt={onFaceAt}
           onMarkAt={onMarkAt}
+          hasMusic={hasMusic}
         />
       </FocusFence>
 
@@ -432,6 +554,24 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
         </View>
       ) : null}
 
+      {top?.kind === 'music' ? (
+        <View style={styles.over}>
+          <MusicCollection
+            key={`${top.view.kind}:${top.view.kind === 'liked' ? '' : top.view.id}`}
+            view={top.view}
+            onPlayed={openNowPlaying}
+            onOpen={openMusic}
+            onLight={lightTheTop}
+          />
+        </View>
+      ) : null}
+
+      {top?.kind === 'nowPlaying' ? (
+        <View style={styles.over}>
+          <NowPlaying onEmpty={closeNowPlaying} onBack={back} />
+        </View>
+      ) : null}
+
       {top?.kind === 'requests' ? (
         <View style={styles.over}>
           <RequestsPage onOpen={openRequest} onLight={lightTheTop} />
@@ -450,6 +590,20 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           />
         </View>
       ) : null}
+
+      {isWatching || top?.kind === 'nowPlaying' ? null : (
+        <View style={styles.playing}>
+          <NowPlayingChip
+            onOpen={() => {
+              if (top === undefined && hasMusic) {
+                choose('music');
+              }
+
+              openNowPlaying();
+            }}
+          />
+        </View>
+      )}
 
       {arrival === null || top?.kind === 'play' ? null : (
         <ArrivalBanner
@@ -481,6 +635,7 @@ const styles = StyleSheet.create({
     left: 0,
   },
   dark: { backgroundColor: tokens.colours.canvas },
+  playing: { position: 'absolute', top: tokens.space.md, right: tokens.space.edge },
 });
 
 export { SignedIn };

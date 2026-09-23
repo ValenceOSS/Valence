@@ -1,4 +1,4 @@
-import type { IconProps as KeylineProps } from '@keyline-icons/react';
+import type { IconProps as KeylineProps } from '@keyline-icons/react-native';
 import type { JSX } from 'react';
 
 type KeylineIcon = (props: KeylineProps) => JSX.Element;

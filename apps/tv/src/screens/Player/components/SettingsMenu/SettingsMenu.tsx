@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
-import { ChevronRight } from '@keyline-icons/react';
+import { ChevronRight } from '@keyline-icons/react-native';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';

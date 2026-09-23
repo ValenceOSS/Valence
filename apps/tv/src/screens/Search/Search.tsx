@@ -1,16 +1,24 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import { useSettled } from '@ValenceClient/timing/useSettled';
 import { CatalogueShelf } from '@ValenceTv/components/CatalogueShelf/CatalogueShelf';
 import { MediaCard } from '@ValenceTv/components/MediaCard/MediaCard';
+import { MusicShelf } from '@ValenceTv/components/MusicShelf/MusicShelf';
+import { albumItem } from '@ValenceTv/music/albumItem';
+import { artistItem } from '@ValenceTv/music/artistItem';
+import { playlistItem } from '@ValenceTv/music/playlistItem';
+import { songItem } from '@ValenceTv/music/songItem';
 import { SystemSearch } from '@ValenceTv/components/SystemSearch/SystemSearch';
 import { useMayRequest } from '@ValenceTv/requests/useMayRequest';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
+import type { MusicItem } from '@ValenceTv/music/MusicItem';
 import type { SearchProps } from './Search.types';
 
 const SETTLES_AFTER_MS = 300;
@@ -61,8 +69,21 @@ const followWhileOnTheirWay = (titles: readonly CatalogueTitle[]): number | fals
  * @param onAsk - Told which title the library lacks was chosen, to look at and ask for.
  * @param onFeature - Told which picture lights the page: the first poster on its shelves.
  * @param upTo - Where pressing up from the keyboard goes: the bar along the top.
+ * @param hasMusic - Whether there is music to search as well: songs, artists, albums and playlists
+ *   whose names match follow the films and shows, and choosing a song plays it.
+ * @param onOpenMusic - Told which artist, album or playlist was chosen.
+ * @param onPlayedMusic - Told once a chosen song has started playing, to show it.
  */
-const Search = ({ watchable, onOpen, onAsk, onFeature, upTo }: SearchProps) => {
+const Search = ({
+  watchable,
+  onOpen,
+  onAsk,
+  onFeature,
+  upTo,
+  hasMusic,
+  onOpenMusic,
+  onPlayedMusic,
+}: SearchProps) => {
   const [typed, setTyped] = useState('');
   const [room, setRoom] = useState<{ width: number; height: number } | null>(null);
   const asked = useSettled(typed.trim(), SETTLES_AFTER_MS);
@@ -91,6 +112,36 @@ const Search = ({ watchable, onOpen, onAsk, onFeature, upTo }: SearchProps) => {
     placeholderData: (previous) => previous,
     refetchInterval: (query) => followWhileOnTheirWay(query.state.data ?? []),
   });
+
+  const music = useQuery({
+    ...musicQueries.search(asked),
+    enabled: hasMusic && asked !== '',
+    placeholderData: (previous) => previous,
+  });
+
+  const songs = useMemo(() => music.data?.tracks ?? [], [music.data]);
+  const songItems = useMemo(() => songs.map(songItem), [songs]);
+  const musicShelves = useMemo(
+    () =>
+      [
+        { title: 'Artists', items: (music.data?.artists ?? []).map(artistItem) },
+        { title: 'Albums', items: (music.data?.albums ?? []).map(albumItem) },
+        { title: 'Playlists', items: (music.data?.playlists ?? []).map(playlistItem) },
+      ].filter((shelf) => shelf.items.length > 0),
+    [music.data],
+  );
+
+  const playSong = useCallback(
+    (item: MusicItem) => {
+      const at = songs.findIndex((track) => track.id === item.id);
+
+      if (at !== -1) {
+        theMusicPlayer().play(songs, at, { source: { kind: 'search', id: null, name: asked } });
+        onPlayedMusic();
+      }
+    },
+    [songs, asked, onPlayedMusic],
+  );
 
   const items = useMemo(() => collapseToShows(found.data ?? []), [found.data]);
 
@@ -129,12 +180,14 @@ const Search = ({ watchable, onOpen, onAsk, onFeature, upTo }: SearchProps) => {
       ? undefined
       : Math.floor((room.width - tokens.space.edge * 2 - tokens.space.md * (ACROSS - 1)) / ACROSS);
 
-  const isLooking = asked !== '' && found.isPending;
-  const isEmpty = asked !== '' && !isLooking && items.length === 0 && lacking.length === 0;
+  const hasMusicFound = songItems.length > 0 || musicShelves.length > 0;
+  const isLooking = asked !== '' && (found.isLoading || music.isLoading);
+  const isEmpty =
+    asked !== '' && !isLooking && items.length === 0 && lacking.length === 0 && !hasMusicFound;
 
   return (
     <SystemSearch
-      placeholder="Films and shows"
+      placeholder={hasMusic ? 'Films, shows and music' : 'Films and shows'}
       onChangeText={setTyped}
       onResultsLayout={setRoom}
       upTo={upTo}
@@ -187,6 +240,21 @@ const Search = ({ watchable, onOpen, onAsk, onFeature, upTo }: SearchProps) => {
                   ))}
                 </View>
               )}
+
+              {asked === '' || songItems.length === 0 ? null : (
+                <MusicShelf title="Songs" items={songItems} onOpen={playSong} />
+              )}
+
+              {asked === ''
+                ? null
+                : musicShelves.map((shelf) => (
+                    <MusicShelf
+                      key={shelf.title}
+                      title={shelf.title}
+                      items={shelf.items}
+                      onOpen={onOpenMusic}
+                    />
+                  ))}
 
               {asked === '' || lacking.length === 0 ? null : (
                 <CatalogueShelf title="Not in your library yet" titles={lacking} onOpen={onAsk} />

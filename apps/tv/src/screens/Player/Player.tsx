@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, useTVEventHandler, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { SkipForward } from '@keyline-icons/react';
+import { SkipForward } from '@keyline-icons/react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { playbackQueries } from '@ValenceClient/query/playbackQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -30,6 +30,7 @@ import { Button } from '@ValenceTv/components/Button/Button';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { useRemoteRing } from '@ValenceTv/remote/useRemoteRing';
 import { usePlaybackSession } from '@ValenceTv/playback/usePlaybackSession';
+import { useRemoteControlled } from '@ValenceTv/playback/useRemoteControlled';
 import { PlayerControls } from '@ValenceTv/screens/Player/components/PlayerControls/PlayerControls';
 import { SubtitleLine } from '@ValenceTv/screens/Player/components/SubtitleLine/SubtitleLine';
 import { SettingsMenu } from '@ValenceTv/screens/Player/components/SettingsMenu/SettingsMenu';
@@ -116,7 +117,8 @@ const whyItWillNotPlay = (message: string): string =>
  * The remote works as it does in the television's own player. Play/Pause always pauses or plays;
  * with the controls away, left and right go back and forward ten seconds and any other press brings
  * them up; they go away again after a few seconds of playing untouched, and Menu puts them away
- * before it leaves. As an episode's credits roll the next one is offered, and starts on its own after
+ * before it leaves. The player holds Menu itself for as long as it is open, so leaving a film goes
+ * back rather than out of the app, whatever is beneath it. As an episode's credits roll the next one is offered, and starts on its own after
  * a count unless enough have followed on untouched that it asks instead.
  *
  * Where this viewer is gets reported as they go and once more on leaving, so every screen with this
@@ -335,6 +337,25 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
     [player],
   );
 
+  useRemoteControlled({
+    mediaId,
+    title,
+    subtitle: episodeLine,
+    hasBackdrop: summary?.hasBackdrop ?? false,
+    isPlaying,
+    read: () => ({ position: at.current.position, duration: at.current.duration }),
+    onPause: () => {
+      player.pause();
+    },
+    onResume: () => {
+      player.play();
+    },
+    onSeek: (seconds) => {
+      player.currentTime = seconds;
+    },
+    onStop: onLeave,
+  });
+
   useEffect(() => {
     if (!isShowing || !isPlaying || menu !== null) {
       return;
@@ -496,8 +517,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
         ? backToSettings
         : isShowing && isPlaying
           ? putControlsAway
-          : null,
-    true,
+          : onLeave,
   );
 
   const goNext = useCallback(

@@ -1,3 +1,3 @@
-type Tab = 'home' | 'shows' | 'films' | 'search' | 'account';
+type Tab = 'home' | 'shows' | 'films' | 'music' | 'search' | 'account';
 
 export type { Tab };

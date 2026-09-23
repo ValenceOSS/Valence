@@ -60,6 +60,7 @@ const PreviewBackdrop = ({ mediaId, stillPath, isPlaying, style }: PreviewBackdr
     }
 
     let isAbandoned = false;
+    const wasAbandoned = (): boolean => isAbandoned;
     const address = onTheServer(`/api/media/${mediaId}/preview`);
 
     const timer = setTimeout(() => {
@@ -70,13 +71,13 @@ const PreviewBackdrop = ({ mediaId, stillPath, isPlaying, style }: PreviewBackdr
       }
 
       void readPreviewState(address).then(async (state) => {
-        if (isAbandoned || state !== 'ready') {
+        if (wasAbandoned() || state !== 'ready') {
           return;
         }
 
         await player.replaceAsync({ uri: address, headers: signedHeaders() });
 
-        if (!isAbandoned) {
+        if (!wasAbandoned()) {
           isLoaded.current = true;
           player.play();
         }
