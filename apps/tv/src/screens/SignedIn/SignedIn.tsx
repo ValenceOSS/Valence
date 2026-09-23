@@ -3,6 +3,7 @@ import { findNodeHandle, Linking, StyleSheet, useTVEventHandler, View } from 're
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
@@ -116,6 +117,8 @@ const moodOf = (media: MediaSummary): string | null =>
  * Music stops altogether as somebody signs out, changes who is watching or moves to another
  * Valence, rather than carrying on for whoever comes next.
  *
+ * Music is offered only where the server has a music library with something in it.
+ *
  * Whatever song is playing is kept in the top right corner over every page but the players, for
  * the remote to open it from wherever somebody has got to. Opened from one of the parts, it opens
  * over the music part, so going back from it lands there rather than where it was opened from.
@@ -205,15 +208,23 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     [libraries.data],
   );
 
-  const hasMusic = useMemo(
+  const hasMusicLibrary = useMemo(
     () => (libraries.data ?? []).some((one) => one.kind === 'music'),
     [libraries.data],
   );
+  const albums = useQuery({ ...musicQueries.albums('recent'), enabled: hasMusicLibrary });
+  const hasMusic = hasMusicLibrary && (albums.data?.length ?? 0) > 0;
 
   const choose = useCallback((part: Tab) => {
     setTab(part);
     setVisited((was) => (was.has(part) ? was : new Set([...was, part])));
   }, []);
+
+  useEffect(() => {
+    if (!hasMusic && tab === 'music') {
+      setTab('home');
+    }
+  }, [hasMusic, tab]);
 
   const open = useCallback((place: Place) => {
     setOpened((was) => [...was, place]);
