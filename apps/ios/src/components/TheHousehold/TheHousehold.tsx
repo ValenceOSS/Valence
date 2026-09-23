@@ -5,15 +5,17 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { AskForThePassword } from '@ValencePhone/components/AskForThePassword/AskForThePassword';
 import { SignedIn } from '@ValencePhone/components/SignedIn/SignedIn';
 import { TheWayIn } from '@ValencePhone/components/TheWayIn/TheWayIn';
-import { TheDownloads } from '@ValencePhone/components/TheAccount/components/TheDownloads/TheDownloads';
+import { TheDownloads } from '@ValencePhone/components/TheDownloads/TheDownloads';
 import { WatchingHeld } from '@ValencePhone/components/WatchingHeld/WatchingHeld';
-import { Words } from '@ValencePhone/components/Words/Words';
+import { AMoodBackground } from '@ValencePhone/components/AMoodBackground/AMoodBackground';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { TheServerIsAway } from '@ValencePhone/components/TheServerIsAway/TheServerIsAway';
 import { useTheServer } from '@ValencePhone/hooks/useTheServer';
+import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheHouseholdProps } from './TheHousehold.types';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
+import type { ARectOnScreen } from '@ValencePhone/hooks/useArrivingFrom.types';
 
 const styles = StyleSheet.create({
   whole: { flex: 1 },
@@ -30,12 +32,21 @@ const styles = StyleSheet.create({
  * somebody was signed in or before they could — picks everything up again once it is back, and
  * that while it is gone, what this phone keeps can still be watched.
  *
+ * The lights behind the way in are kept lit here, under the wall and the password alike, so that
+ * picking a face turns them to its colour slowly rather than cutting from one screen's lights to
+ * the next; and where the face was is kept, so it can fly to the password and back.
+ *
  * @param onElsewhere - Told that somebody wants to point this phone at a different server.
  */
 const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
   const answers = useQueryClient();
   const session = useQuery(sessionQueries.who());
-  const [picked, setPicked] = useState<ViewerProfile | null>(null);
+  const colours = useTheColours();
+  const [picked, setPicked] = useState<{
+    profile: ViewerProfile;
+    at: ARectOnScreen | null;
+  } | null>(null);
+  const [returning, setReturning] = useState<{ profileId: string; at: ARectOnScreen } | null>(null);
   const [isOffline, setIsOffline] = useState(false);
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
 
@@ -75,40 +86,50 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
 
   if (isOffline) {
     return (
-      <Screen
-        scrolls
+      <TheDownloads
+        onWatch={setWatchingHeld}
         onBack={() => {
           setIsOffline(false);
         }}
-      >
-        <Words size="title">Downloads</Words>
-        <TheDownloads onWatch={setWatchingHeld} />
-      </Screen>
+      />
     );
   }
 
-  return picked === null ? (
-    <TheWayIn
-      onPicked={setPicked}
-      onIn={() => {
-        void answers.invalidateQueries();
-      }}
-      onElsewhere={onElsewhere}
-      onDownloads={() => {
-        setIsOffline(true);
-      }}
-    />
-  ) : (
-    <AskForThePassword
-      profile={picked}
-      onIn={() => {
-        setPicked(null);
-        void answers.invalidateQueries();
-      }}
-      onBack={() => {
-        setPicked(null);
-      }}
-    />
+  return (
+    <View style={[styles.whole, { backgroundColor: colours.surface }]}>
+      <AMoodBackground lights={picked === null ? [] : [picked.profile.colour]} />
+
+      {picked === null ? (
+        <TheWayIn
+          returningFrom={returning}
+          onPicked={(profile, at) => {
+            setReturning(null);
+            setPicked({ profile, at });
+          }}
+          onIn={() => {
+            void answers.invalidateQueries();
+          }}
+          onElsewhere={onElsewhere}
+          onDownloads={() => {
+            setIsOffline(true);
+          }}
+        />
+      ) : (
+        <AskForThePassword
+          profile={picked.profile}
+          from={picked.at}
+          onIn={() => {
+            setPicked(null);
+            setReturning(null);
+            void answers.invalidateQueries();
+          }}
+          onBack={(at) => {
+            setReturning(at === null ? null : { profileId: picked.profile.id, at });
+            setPicked(null);
+          }}
+        />
+      )}
+    </View>
   );
 };
 

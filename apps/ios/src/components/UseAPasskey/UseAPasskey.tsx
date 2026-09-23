@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { KeyRound } from 'lucide-react-native';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { signInThroughTheBrowser } from '@ValencePhone/platform/signInThroughTheBrowser';
@@ -38,7 +39,8 @@ const UseAPasskey = ({ label, onIn }: UseAPasskeyProps) => {
       {hasFailed ? <Words tone="danger">That did not sign you in. Try again.</Words> : null}
 
       <Button
-        tone="quiet"
+        tone="ghost"
+        icon={KeyRound}
         isBusy={isTrying}
         onPress={() => {
           void tryIt();

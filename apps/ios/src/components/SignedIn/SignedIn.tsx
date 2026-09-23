@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
-import { CircleUser, Clapperboard, Inbox, Search } from 'lucide-react-native';
+import { CircleUser, Download, House, Search } from 'lucide-react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -24,10 +24,16 @@ import { AShow } from '@ValencePhone/components/AShow/AShow';
 import { ATitle } from '@ValencePhone/components/ATitle/ATitle';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { StillWatching } from '@ValencePhone/components/StillWatching/StillWatching';
+import { AnAlbum } from '@ValencePhone/components/AnAlbum/AnAlbum';
+import { AnArtist } from '@ValencePhone/components/AnArtist/AnArtist';
+import { APlaylist } from '@ValencePhone/components/APlaylist/APlaylist';
+import { TheLikedSongs } from '@ValencePhone/components/TheLikedSongs/TheLikedSongs';
+import { TheMusicPlayer } from '@ValencePhone/components/TheMusicPlayer/TheMusicPlayer';
+import { TheNowPlayingBar } from '@ValencePhone/components/TheNowPlayingBar/TheNowPlayingBar';
 import { TheAccount } from '@ValencePhone/components/TheAccount/TheAccount';
+import { TheDownloads } from '@ValencePhone/components/TheDownloads/TheDownloads';
 import { TheLibrary } from '@ValencePhone/components/TheLibrary/TheLibrary';
 import { TheNotifications } from '@ValencePhone/components/TheNotifications/TheNotifications';
-import { TheRequests } from '@ValencePhone/components/TheRequests/TheRequests';
 import { TheSearch } from '@ValencePhone/components/TheSearch/TheSearch';
 import { TheTabs } from '@ValencePhone/components/TheTabs/TheTabs';
 import { useTheProgrammeOf } from '@ValencePhone/components/SignedIn/useTheProgrammeOf';
@@ -87,7 +93,7 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const [carriedOn, setCarriedOn] = useState(0);
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
-  const [part, setPart] = useState('library');
+  const [part, setPart] = useState('home');
   const top = pages.at(-1) ?? null;
   const sought = useTheProgrammeOf(top?.kind === 'series' ? top.seriesId : null);
   const holding = useTheProgrammeOfEpisode(watching?.mediaId ?? null);
@@ -99,14 +105,22 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const { may } = useWhatIMayDo();
   const mayRequest = requesting.data?.isEnabled === true && may('requests.ask');
   const tabs = [
-    { id: 'library', label: 'Library', icon: Clapperboard, symbol: 'film.stack' },
+    { id: 'home', label: 'Home', icon: House, symbol: 'house' },
     { id: 'search', label: 'Search', icon: Search, symbol: 'magnifyingglass' },
-    ...(mayRequest ? [{ id: 'requests', label: 'Requests', icon: Inbox, symbol: 'tray' }] : []),
+    { id: 'downloads', label: 'Downloads', icon: Download, symbol: 'arrow.down.circle' },
     { id: 'account', label: 'Account', icon: CircleUser, symbol: 'person.crop.circle' },
   ];
 
   const open = (page: APage) => {
     setPages((was) => [...was, page]);
+  };
+
+  const toAlbum = (albumId: string) => {
+    open({ kind: 'album', albumId });
+  };
+
+  const toArtist = (artistId: string) => {
+    open({ kind: 'artist', artistId });
   };
 
   const back = () => {
@@ -278,22 +292,51 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         );
       case 'notifications':
         return <TheNotifications onOpen={open} onBack={back} />;
+      case 'album':
+        return (
+          <AnAlbum
+            key={`${pages.length.toString()}:${top.albumId}`}
+            albumId={top.albumId}
+            onAlbum={toAlbum}
+            onArtist={toArtist}
+            onBack={back}
+          />
+        );
+      case 'artist':
+        return (
+          <AnArtist
+            key={`${pages.length.toString()}:${top.artistId}`}
+            artistId={top.artistId}
+            onAlbum={toAlbum}
+            onArtist={toArtist}
+            onBack={back}
+          />
+        );
+      case 'playlist':
+        return (
+          <APlaylist
+            key={`${pages.length.toString()}:${top.playlistId}`}
+            playlistId={top.playlistId}
+            onAlbum={toAlbum}
+            onArtist={toArtist}
+            onBack={back}
+          />
+        );
+      case 'liked':
+        return <TheLikedSongs onAlbum={toAlbum} onArtist={toArtist} onBack={back} />;
+      case 'playing':
+        return <TheMusicPlayer onArtist={toArtist} onBack={back} />;
     }
   }
 
   const showing =
-    part === 'requests' && mayRequest ? (
-      <TheRequests
-        onAsk={(about, id) => {
-          open({ kind: 'asking', about, id });
-        }}
-      />
+    part === 'downloads' ? (
+      <TheDownloads onWatch={setWatchingHeld} />
     ) : part === 'account' ? (
       <TheAccount
         onOut={() => {
           void signOut().then(onOut);
         }}
-        onWatchHeld={setWatchingHeld}
       />
     ) : part === 'search' ? (
       <TheSearch
@@ -315,14 +358,29 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         onNotifications={() => {
           open({ kind: 'notifications' });
         }}
+        onAlbum={toAlbum}
+        onArtist={toArtist}
+        onPlaylist={(playlistId) => {
+          open({ kind: 'playlist', playlistId });
+        }}
+        onLiked={() => {
+          open({ kind: 'liked' });
+        }}
       />
     );
 
   return (
     <TheTabs
       tabs={tabs}
-      value={part === 'requests' && !mayRequest ? 'library' : part}
+      value={part}
       onSelect={setPart}
+      above={
+        <TheNowPlayingBar
+          onOpen={() => {
+            open({ kind: 'playing' });
+          }}
+        />
+      }
     >
       {showing}
     </TheTabs>

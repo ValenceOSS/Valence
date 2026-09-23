@@ -1,24 +1,26 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { thePictureFor } from '@ValencePhone/components/AFace/thePictureFor';
 import { APicture } from '@ValencePhone/components/APicture/APicture';
 import { Words } from '@ValencePhone/components/Words/Words';
+import { FONTS } from '@ValencePhone/theme/FONTS';
 import type { AFaceProps } from './AFace.types';
 
 const SIDE = 96;
 
+const LARGE_SIDE = 136;
+
 const styles = StyleSheet.create({
-  face: { alignItems: 'center', gap: 8, width: SIDE },
-  initial: { color: '#ffffff', fontSize: 38, fontWeight: '600' },
+  face: { alignItems: 'center', gap: 8 },
+  initial: { color: '#ffffff', fontSize: 38, fontFamily: FONTS.sans.bold },
+  largeInitial: { fontSize: 54 },
   picture: { height: '100%', width: '100%' },
   tile: {
     alignItems: 'center',
     borderRadius: 20,
-    height: SIDE,
     justifyContent: 'center',
     overflow: 'hidden',
-    width: SIDE,
   },
 });
 
@@ -35,18 +37,26 @@ const styles = StyleSheet.create({
  *
  * @param profile - Whose face to draw.
  * @param picked - A photograph chosen on this phone and not yet sent, to show in its place.
+ * @param isLarge - Whether it is the one face on the screen, drawn larger and without its name, for a
+ *   screen that names them itself.
  */
-const AFace = ({ profile, picked = null }: AFaceProps) => {
+const AFace = ({ profile, picked = null, isLarge = false }: AFaceProps) => {
   const [missing, setMissing] = useState<string | null>(null);
   const found = thePictureFor(profile, picked);
   const picture = found === null || found.uri === missing ? null : found;
+  const side = isLarge ? LARGE_SIDE : SIDE;
 
   return (
-    <View style={styles.face}>
+    <View style={[styles.face, { width: side }]}>
       <View
         style={[
           styles.tile,
-          { backgroundColor: picture?.isDrawn === false ? 'transparent' : profile.colour },
+          {
+            backgroundColor: picture?.isDrawn === false ? 'transparent' : profile.colour,
+            borderRadius: isLarge ? 28 : 20,
+            height: side,
+            width: side,
+          },
         ]}
       >
         {picture !== null ? (
@@ -57,13 +67,17 @@ const AFace = ({ profile, picked = null }: AFaceProps) => {
             }}
           />
         ) : (
-          <Words>{profileInitial(profile.name)}</Words>
+          <Text style={[styles.initial, isLarge && styles.largeInitial]}>
+            {profileInitial(profile.name)}
+          </Text>
         )}
       </View>
 
-      <Words size="small" lines={1}>
-        {profile.name}
-      </Words>
+      {isLarge ? null : (
+        <Words tone="muted" lines={1}>
+          {profile.name}
+        </Words>
+      )}
     </View>
   );
 };

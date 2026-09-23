@@ -1,10 +1,19 @@
 import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { ChevronLeft, KeyRound, Smartphone } from 'lucide-react-native';
 import { verifyBackupCode, verifyTotp } from '@ValenceClient/session/auth';
+import { ACarriedMark } from '@ValencePhone/components/ACarriedMark/ACarriedMark';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { TextField } from '@ValencePhone/components/TextField/TextField';
 import { Words } from '@ValencePhone/components/Words/Words';
 import type { AskForTheCodeProps } from './AskForTheCode.types';
+
+const MARK_HIGH = 40;
+
+const styles = StyleSheet.create({
+  mark: { alignItems: 'center', marginBottom: 12 },
+});
 
 /**
  * Asks for the second factor of an account that has one, once its password has been accepted.
@@ -59,7 +68,11 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
   };
 
   return (
-    <Screen centres>
+    <Screen centres isSeeThrough>
+      <View style={styles.mark}>
+        <ACarriedMark high={MARK_HIGH} />
+      </View>
+
       <Words size="title">One more step</Words>
 
       <Words tone="muted">
@@ -82,7 +95,9 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
       {refusal === null ? null : <Words tone="danger">{refusal}</Words>}
 
       <Button
+        tone="bold"
         isBusy={isTrying}
+        isDisabled={code.trim() === ''}
         onPress={() => {
           void tryIt();
         }}
@@ -91,7 +106,8 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
       </Button>
 
       <Button
-        tone="quiet"
+        tone="ghost"
+        icon={isTotp ? KeyRound : Smartphone}
         onPress={() => {
           setIsTotp((was) => !was);
           setCode('');
@@ -101,7 +117,7 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
         {isTotp ? 'Use a backup code instead' : 'Use my authenticator app instead'}
       </Button>
 
-      <Button tone="quiet" onPress={onBack}>
+      <Button tone="ghost" icon={ChevronLeft} onPress={onBack}>
         Somebody else
       </Button>
     </Screen>

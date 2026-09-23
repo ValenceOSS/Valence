@@ -1,11 +1,10 @@
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ARectOnScreen } from '@ValencePhone/hooks/useArrivingFrom.types';
 
-type AskForThePasswordProps = {
+type AWallFaceProps = {
   profile: ViewerProfile;
-  from?: ARectOnScreen | null;
-  onIn: () => void;
-  onBack: (at: ARectOnScreen | null) => void;
+  arrivingFrom: ARectOnScreen | null;
+  onPicked: (profile: ViewerProfile, at: ARectOnScreen | null) => void;
 };
 
-export type { AskForThePasswordProps };
+export type { AWallFaceProps };

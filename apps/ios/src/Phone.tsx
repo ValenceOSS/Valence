@@ -5,12 +5,13 @@ import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { buildQueryClient } from '@ValenceClient/query/queryClient';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
 import { installPhonePlatform } from '@ValencePhone/platform/installPhonePlatform';
 import { whatThePhoneRemembers } from '@ValencePhone/platform/whatThePhoneRemembers';
 import { holdThisPhoneUpright } from '@ValencePhone/platform/holdThisPhoneUpright';
 import { refetchWhenThePhoneWakes } from '@ValencePhone/platform/refetchWhenThePhoneWakes';
-import { THE_SERVER_ADDRESS } from '@ValencePhone/platform/THE_SERVER_ADDRESS';
 import { theColours } from '@ValencePhone/theme/theColours';
+import { TheFlyingMark } from '@ValencePhone/components/TheFlyingMark/TheFlyingMark';
 import { TheHousehold } from '@ValencePhone/components/TheHousehold/TheHousehold';
 import { WhereIsYourValence } from '@ValencePhone/components/WhereIsYourValence/WhereIsYourValence';
 
@@ -35,6 +36,8 @@ const styles = StyleSheet.create({
  *
  * Which screen follows is a question of whether this phone knows where its Valence is, not of
  * whether anybody is signed in. A phone with no server has nothing to sign in to.
+ * The server it knows is counted as one it has used, as the desktop counts it, so it is offered
+ * again when somebody goes looking for a different one.
  *
  * What it holds the screen with is drawn dark and without the theme, because the theme is a
  * preference and the preference is in the storage being read. There is nothing yet to ask.
@@ -52,7 +55,14 @@ const Phone = () => {
     refetchWhenThePhoneWakes();
     void whatThePhoneRemembers().then((held) => {
       installPhonePlatform(held);
-      setAddress(platformInUse().serverAddress());
+
+      const known = platformInUse().serverAddress();
+
+      if (known !== null) {
+        rememberServerAddress(known);
+      }
+
+      setAddress(known);
       setIsReady(true);
     });
   }, []);
@@ -72,7 +82,7 @@ const Phone = () => {
         {address === null || isAsking ? (
           <WhereIsYourValence
             onChosen={(chosen) => {
-              platformInUse().store.write(THE_SERVER_ADDRESS, chosen);
+              rememberServerAddress(chosen);
               setAddress(chosen);
               setIsAsking(false);
               void answers.invalidateQueries();
@@ -85,6 +95,7 @@ const Phone = () => {
             }}
           />
         )}
+        <TheFlyingMark />
         <StatusBar style="auto" />
       </QueryClientProvider>
     </SafeAreaProvider>
