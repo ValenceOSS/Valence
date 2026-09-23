@@ -17,6 +17,8 @@ The repository does not publish a minimum specification, so the figures below ar
 | GPU      | None                                        | An Intel, AMD or NVIDIA GPU that FFmpeg can use | Optional. See [Hardware transcoding](/install/hardware-transcoding).                                 |
 | Disk     | Local disk for `db-data`, `config`, `cache` | An SSD for `transcodes` and `db-data`           | See [Storage and volumes](/install/storage-and-volumes) for what each volume holds and how it grows. |
 
+With requesting switched on, allow for the requests service as well: about 150 MB on its own, and about 700 MB while it has a browser open to get indexers past Cloudflare's check. The browser only starts when a site shows that check and closes after about ten minutes without use, so a stack whose indexers never meet one never pays for it. See [Indexers behind Cloudflare](/install/requesting#indexers-behind-cloudflare).
+
 Two facts come from the repository and are not recommendations:
 
 - The published release image is built for **linux/amd64** only. The release workflow states that the emulated second architecture was left out on purpose because a release-mode Rust build under emulation is too slow. Nightly builds can be requested for linux/arm64 by hand, but those are for testing.
@@ -70,7 +72,6 @@ Other devices, such as televisions, sign in with a device authorisation code flo
 | 5432 | Postgres               | No                   | Reached over the stack's own network only. `compose.dev.yaml` publishes it for development.      |
 | 8421 | Requests service       | No                   | Only with the `requests` profile. Valence reaches it at `http://requests:8421` inside the stack. |
 | 8000 | gluetun control server | No                   | Only with the `vpn` profile.                                                                     |
-| 8191 | FlareSolverr           | No                   | Only with the `flaresolverr` profile.                                                            |
 
 The media service inside the Valence container listens on a Unix socket (`/run/valence-transcoder.sock`), not a network port. Nothing else needs to be open. The full list is in [Ports](/reference/ports).
 

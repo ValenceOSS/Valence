@@ -5,6 +5,7 @@ import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProf
 import { fileAlbum } from '@ValenceRequests/mediaRequests/fileAlbum';
 import { fileBook } from '@ValenceRequests/mediaRequests/fileBook';
 import { fileDownload } from '@ValenceRequests/mediaRequests/fileDownload';
+import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
 import { judgeForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest';
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { mapClientPath } from '@ValenceRequests/mediaRequests/mapClientPath';
@@ -147,7 +148,8 @@ const DEFAULT_PROFILES: Record<QualityProfile['kind'], QualityProfile> = {
 /**
  * Says why a finished download could not be filed, and whether it counts as a try. Most often this
  * service does not see the download where its client says it put it, which a folder set on the
- * client puts right — so that is not held against the download, which is filed once it can be seen.
+ * client puts right, or may not write where it belongs, which PUID and PGID put right — so neither
+ * is held against the download, which is filed once the setting is fixed.
  *
  * @param error - What was thrown, where it was an error.
  * @param path - Where the download was looked for.
@@ -158,13 +160,25 @@ const whyNotFiled = (
   error: Error | null,
   path: string,
   clientName: string,
-): { problem: string; isATry: boolean } =>
-  error !== null && 'code' in error && error.code === 'ENOENT'
+): { problem: string; isATry: boolean } => {
+  if (error instanceof NotAllowedThere) {
+    return { problem: error.message, isATry: false };
+  }
+
+  if (error !== null && 'code' in error && error.code === 'EACCES') {
+    return {
+      problem: `The requests service may not write where this belongs (${error.message}). Set PUID and PGID on it to the owner of your media folders.`,
+      isATry: false,
+    };
+  }
+
+  return error !== null && 'code' in error && error.code === 'ENOENT'
     ? {
         problem: `Valence cannot see ${path}, where ${clientName} put it. Set where ${clientName} saves downloads, as it sees them and as Valence does, on the Downloads page.`,
         isATry: false,
       }
     : { problem: `It could not be filed: ${error?.message ?? 'no reason given'}`, isATry: true };
+};
 
 /**
  * A request's films or episodes in one state, by the download each belongs to.

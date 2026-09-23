@@ -28,6 +28,13 @@ FROM node:24-bookworm-slim AS runtime
 
 ARG VALENCE_VERSION=0.0.0
 
+# What Firefox needs to run without a screen: the browser that gets indexers past Cloudflare's
+# check lives in this service rather than in a container of its own.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates libgtk-3-0 libx11-xcb1 libasound2 libdbus-glib-1-2 libxt6 libxtst6 libpci3 \
+ && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 RUN corepack enable
 
@@ -36,6 +43,14 @@ COPY packages/contracts ./packages/contracts
 COPY packages/core ./packages/core
 COPY apps/requests/package.json ./apps/requests/package.json
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @valence/requests...
+
+# The browser itself, the newest Camoufox release this version of camoufox-js supports, fetched
+# into the image so that nothing waits on a download. It always passes for Firefox on Linux, which
+# is what the traffic underneath it shows anyway, and never looks up where it is, so the fonts it
+# would need to pass for Windows or a Mac and the map of addresses to places are left out.
+ENV CAMOUFOX_INSTALL_DIR=/opt/camoufox
+RUN cd apps/requests && node node_modules/camoufox-js/dist/__main__.js fetch \
+ && rm -rf /opt/camoufox/fonts/windows /opt/camoufox/fonts/macos /opt/camoufox/GeoLite2-City.mmdb
 
 COPY apps/requests/drizzle ./apps/requests/drizzle
 COPY --from=build /build/apps/requests/dist ./apps/requests/dist

@@ -16,7 +16,6 @@ Valence does not supply content, indexers or a download client. You choose and c
 | Requests service | The `requests` service (profile) | Searches indexers, judges releases, drives the download client and files the result. |
 | Indexers         | You                              | Torznab or Newznab feeds, or sites from the built-in catalogue.                      |
 | Download client  | You                              | qBittorrent, Transmission, SABnzbd or NZBGet.                                        |
-| FlareSolverr     | Optional profile                 | Gets past Cloudflare's browser check for some indexers.                              |
 | gluetun          | Optional profile                 | A VPN that your download client sits behind.                                         |
 
 ## Switching it on
@@ -45,10 +44,10 @@ Valence does not supply content, indexers or a download client. You choose and c
 | `REQUESTS_URL`            | Yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                                                                                        |
 | `REQUESTS_SECRET`         | Yes      | At least 32 characters, the same for both services. Valence presents it on every call, and the service refuses without it.                                                       |
 | `DOWNLOADS_PATH`          | No       | Where your download client writes, on the host. `./downloads` by default.                                                                                                        |
+| `PUID`, `PGID`            | No       | The user and group the requests service runs as, and so who owns what it files. `1000` each unless set; `0` keeps root. See [Who owns what it files](#who-owns-what-it-files).   |
 | `VPN_URL`                 | No       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                                                                                       |
 | `VPN_API_KEY`             | No       | The key gluetun's control server was given.                                                                                                                                      |
 | `REQUESTS_TRANSCODER_URL` | No       | Lets the requests service ask the media service what a filed video really is. Empty by default; see [Naming a video by what it really is](#naming-a-video-by-what-it-really-is). |
-| `FLARESOLVERR_URL`        | No       | FlareSolverr, `http://flaresolverr:8191`.                                                                                                                                        |
 
 Setting only one of `REQUESTS_URL` and `REQUESTS_SECRET` leaves requesting off, and the log says which is missing. The requests service refuses to start at all without a secret.
 
@@ -59,6 +58,12 @@ The requests service shares Valence's database. It listens on port 8421, which i
 Unlike Valence, the requests service mounts `MEDIA_PATH` **writable**, because filing what it downloads into the library is its whole job. Valence itself still never writes there. One service writes to your library, and it is the one whose job that is.
 
 Libraries are filed into at the path Valence has for them, so the requests service must see each library at the same path Valence does. Both mount `MEDIA_PATH` at `/media` in the compose file, which is what makes that so. Do not change one without the other.
+
+### Who owns what it files
+
+The requests service starts as root only long enough to become the user and group in `PUID` and `PGID`, `1000` each unless you set them, and runs as that from then on. So everything it files belongs to that user, and the browser it opens on indexers' pages has no more power than it does. Set them to the owner of your media folders, which is usually the same ids your download client runs as.
+
+Before this, the service ran as root. If your media folders belong to someone else, the request waits at **Filing**, in the admin area's **Requests** page, with a message naming the user the service runs as, and its history says the same. Set `PUID` and `PGID` to match, or `0` to keep root, and it is filed once the service restarts. It is not given up on in the meantime. Folders and files it made before belong to root, so the new user cannot add to or replace them until you hand them over, for example with `sudo chown -R 1000:1000 /path/to/media` using your own ids.
 
 ## Indexers
 
@@ -79,13 +84,19 @@ The catalogue is fetched from GitHub once a day and kept in the database, so a s
 
 ### Indexers behind Cloudflare
 
-Some sites answer with Cloudflare's browser check instead of their pages. The `flaresolverr` profile starts [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr), which gets past it. Start it and set `FLARESOLVERR_URL` to `http://flaresolverr:8191`:
+Some sites answer with Cloudflare's browser check instead of their pages. The requests service gets past it itself, with a headless Firefox browser ([Camoufox](https://github.com/daijro/camoufox)) built into its image. There is nothing to set up: no extra container, no profile and no setting.
 
-```bash
-COMPOSE_PROFILES=requests,flaresolverr docker compose up -d
+The browser starts only the first time a site answers with the check. Once a site has been through it, that site's later requests are made from inside the browser. The browser closes itself when no site has used it for about ten minutes. While it is open the requests service uses about 700 MB of memory rather than about 150 MB. The compose file gives the service `shm_size: 512m` for it, and it makes the requests image about 200 MB more to download.
+
+A site whose Cloudflare refuses your address outright, with "Sorry, you have been blocked", cannot be got past by any browser. Its indexer reports that the site's Cloudflare refuses this address outright.
+
+Valence no longer needs FlareSolverr. If `COMPOSE_PROFILES` still names `flaresolverr` from an earlier release you lose nothing: Compose starts nothing for it, and you can drop the name. A FlareSolverr container an earlier release started keeps running, though, because Compose no longer knows about it. Remove it with:
+
+```sh
+docker compose up -d --remove-orphans
 ```
 
-Without it, those indexers report that Cloudflare stopped them.
+That removes any container in the project that the compose file no longer describes, which after this change is FlareSolverr's.
 
 ### Failing indexers
 
@@ -233,7 +244,7 @@ Left empty, the requests service takes a release name at its word, which is righ
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | No requesting anywhere in Valence       | `REQUESTS_URL` or `REQUESTS_SECRET` is missing or the secrets differ. The log says which.                       |
 | The requests container refuses to start | `REQUESTS_SECRET` is empty or shorter than 32 characters.                                                       |
-| Indexer says Cloudflare stopped it      | Start the `flaresolverr` profile and set `FLARESOLVERR_URL`.                                                    |
+| Indexer says Cloudflare refuses it      | The site's Cloudflare refuses your address outright. No browser can get past that.                              |
 | A finished download is not found        | The client and the requests service see the folder under different names. Fill in **Where it saves downloads**. |
 | Files are copied instead of hard linked | `MEDIA_PATH` and `DOWNLOADS_PATH` are on separate mounts. See [Hard links](#hard-links).                        |
 | The VPN status is missing               | `VPN_URL` and `VPN_API_KEY` are not set on the requests service.                                                |

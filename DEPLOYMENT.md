@@ -125,14 +125,14 @@ To switch it on:
    in Dockge, or `docker compose --profile requests up -d`.
 2. Set these, and restart Valence:
 
-| Setting            | Required | What it is                                                                                                 |
-| ------------------ | -------- | ---------------------------------------------------------------------------------------------------------- |
-| `REQUESTS_URL`     | yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                  |
-| `REQUESTS_SECRET`  | yes      | At least 32 characters, the same for both. Valence presents it on every call; the service refuses without. |
-| `DOWNLOADS_PATH`   | no       | Where your download client writes, on the host, `./downloads` by default.                                  |
-| `VPN_URL`          | no       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                 |
-| `VPN_API_KEY`      | no       | The key gluetun's control server was given. `docker run --rm qmcgaw/gluetun genkey` makes one.             |
-| `FLARESOLVERR_URL` | no       | FlareSolverr, `http://flaresolverr:8191`, for indexers whose sites sit behind Cloudflare's browser check.  |
+| Setting           | Required | What it is                                                                                                                            |
+| ----------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `REQUESTS_URL`    | yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                                             |
+| `REQUESTS_SECRET` | yes      | At least 32 characters, the same for both. Valence presents it on every call; the service refuses without.                            |
+| `DOWNLOADS_PATH`  | no       | Where your download client writes, on the host, `./downloads` by default.                                                             |
+| `PUID`, `PGID`    | no       | The user and group the requests service runs as, `1000` each by default. Set them to the owner of your media folders; `0` keeps root. |
+| `VPN_URL`         | no       | gluetun's control server, `http://gluetun:8000`, so Valence can say whether the VPN is up.                                            |
+| `VPN_API_KEY`     | no       | The key gluetun's control server was given. `docker run --rm qmcgaw/gluetun genkey` makes one.                                        |
 
 Setting only one of `REQUESTS_URL` and `REQUESTS_SECRET` leaves requesting off,
 and the log says which is missing.
@@ -179,9 +179,13 @@ set these on the requests service:
 | `DEFINITIONS_PATH`       | `definitions/v11`   |
 
 Some sites answer with Cloudflare's browser check rather than their pages. The
-`flaresolverr` profile starts [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr),
-which gets past it; set `FLARESOLVERR_URL` to `http://flaresolverr:8191` to use
-it. Without it, those indexers say that Cloudflare stopped them.
+requests service gets past it itself, with a headless Firefox built into its
+image — about 200 MB more to download — so there is nothing to set up. The
+browser starts only the first time a site answers with the check, that site's
+later requests are made from inside it, and it closes itself when no site has
+used it for about ten minutes. A site whose Cloudflare refuses your address
+outright ("Sorry, you have been blocked") cannot be got past by any browser,
+and its indexer says so.
 
 Valence raises a warning, and sends the `requests.indexerFailing` webhook, when
 an enabled indexer fails three times in a row; five turn it off.

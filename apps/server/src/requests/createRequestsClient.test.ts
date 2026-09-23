@@ -282,7 +282,7 @@ describe('createRequestsClient', () => {
         settings: [],
         standardCategories: [],
         hasCaptcha: false,
-        needsFlareSolverr: true,
+        isBehindCloudflare: true,
       };
 
       expect(await aClient(200, detail).client.definition('1337x')).toEqual({

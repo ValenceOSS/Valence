@@ -143,6 +143,9 @@ services:
     image: ghcr.io/marquescoding/valence-requests:latest
     profiles: [requests]
     restart: unless-stopped
+    # The browser it gets past Cloudflare's check with keeps its pages in shared
+    # memory, and Docker's 64 MB is not enough for a busy one.
+    shm_size: 512m
     depends_on:
       db:
         condition: service_healthy
@@ -153,15 +156,17 @@ services:
       # without one.
       REQUESTS_SECRET: ${REQUESTS_SECRET:-}
 
+      # The user and group the service runs as, and so who owns what it files
+      # into your library. Set them to the owner of your media folders — the
+      # same ids your download client runs as. 0 keeps the old root behaviour.
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+
       # Optional: gluetun's control server, so Valence can say whether the VPN
       # your download client sits behind is up, and warn you when it drops.
       # http://gluetun:8000 with the vpn profile below.
       VPN_URL: ${VPN_URL:-}
       VPN_API_KEY: ${VPN_API_KEY:-}
-
-      # Optional: FlareSolverr, for indexers whose sites sit behind a Cloudflare
-      # check. http://flaresolverr:8191 with the flaresolverr profile below.
-      FLARESOLVERR_URL: ${FLARESOLVERR_URL:-}
 
       # Optional: lets this service ask the transcoder what a file it has just
       # filed actually is, so the name it is filed under says the resolution,
@@ -192,15 +197,6 @@ services:
     volumes:
       - ${MEDIA_PATH:?set MEDIA_PATH, e.g. /mnt/tank/media}:/media
       - ${DOWNLOADS_PATH:-./downloads}:/downloads
-
-  # Optional: solves Cloudflare's browser check for indexers behind one,
-  # started with the flaresolverr profile.
-  flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
-    profiles: [flaresolverr]
-    restart: unless-stopped
-    environment:
-      TZ: ${TZ:-UTC}
 
   # Optional: a VPN for your download client, started with the vpn profile.
   # Put the download client on its network with `network_mode: service:gluetun`

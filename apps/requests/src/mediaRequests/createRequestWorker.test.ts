@@ -11,6 +11,7 @@ import { aRelease } from '@ValenceRequests/testing/aRelease';
 import { aRequestItem } from '@ValenceRequests/testing/aRequestItem';
 import { aSentDownload } from '@ValenceRequests/testing/aSentDownload';
 import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
+import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
 import { createRequestWorker } from './createRequestWorker';
 import type {
   IndexerSearchReport,
@@ -940,6 +941,64 @@ describe('createRequestWorker', () => {
         filingProblem:
           'Valence cannot see /downloads/The Matrix (1999) [1080p], where qBittorrent put it. Set where qBittorrent saves downloads, as it sees them and as Valence does, on the Downloads page.',
         filingAttempts: 0,
+      });
+    });
+
+    it('says to set PUID and PGID when it may not write into the library, without counting it', async () => {
+      const { worker, downloads } = aWorker({
+        requests: [],
+        items: [],
+        sent: [BY_HAND],
+        filed: () =>
+          Promise.reject(new NotAllowedThere('/media/Films', 'user 1000 and group 1000')),
+      });
+
+      await worker.tick();
+
+      expect(await downloads.find(BY_HAND.id)).toMatchObject({
+        filingProblem:
+          'The requests service, running as user 1000 and group 1000, may not write to /media/Films. Set PUID and PGID on it to the owner of your media folders.',
+        filingAttempts: 0,
+      });
+    });
+
+    it('says the same of a refusal from anywhere else in filing', async () => {
+      const { worker, downloads } = aWorker({
+        requests: [],
+        items: [],
+        sent: [BY_HAND],
+        filed: () =>
+          Promise.reject(
+            Object.assign(new Error("EACCES: permission denied, rename 'a' -> 'b'"), {
+              code: 'EACCES',
+            }),
+          ),
+      });
+
+      await worker.tick();
+
+      expect(await downloads.find(BY_HAND.id)).toMatchObject({
+        filingProblem:
+          "The requests service may not write where this belongs (EACCES: permission denied, rename 'a' -> 'b'). Set PUID and PGID on it to the owner of your media folders.",
+        filingAttempts: 0,
+      });
+    });
+
+    it('keeps trying to file for a request while it may not write into the library', async () => {
+      const { worker, items } = aWorker({
+        items: [aRequestItem({ state: 'filing', downloadId: aSentDownload().id, attempts: 4 })],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/Dune' })],
+        filed: () =>
+          Promise.reject(new NotAllowedThere('/media/Films', 'user 1000 and group 1000')),
+      });
+
+      await worker.tick();
+
+      expect((await items.list())[0]).toMatchObject({
+        state: 'filing',
+        attempts: 4,
+        problem:
+          'The requests service, running as user 1000 and group 1000, may not write to /media/Films. Set PUID and PGID on it to the owner of your media folders.',
       });
     });
 

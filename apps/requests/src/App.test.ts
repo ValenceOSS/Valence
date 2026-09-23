@@ -64,7 +64,7 @@ const DETAIL = {
   settings: [],
   standardCategories: [],
   hasCaptcha: false,
-  needsFlareSolverr: false,
+  isBehindCloudflare: false,
 };
 
 /**

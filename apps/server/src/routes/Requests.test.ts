@@ -107,7 +107,7 @@ const aWillingService = (url: string, init: { method?: string }): Response => {
       settings: [],
       standardCategories: [],
       hasCaptcha: false,
-      needsFlareSolverr: false,
+      isBehindCloudflare: false,
     });
   }
 

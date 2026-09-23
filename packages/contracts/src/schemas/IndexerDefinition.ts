@@ -28,7 +28,7 @@ const IndexerDefinitionDetailSchema = IndexerDefinitionSummarySchema.extend({
   settings: z.array(IndexerDefinitionSettingSchema),
   standardCategories: z.array(IndexerCategorySchema),
   hasCaptcha: z.boolean(),
-  needsFlareSolverr: z.boolean(),
+  isBehindCloudflare: z.boolean(),
 });
 
 const IndexerCatalogueSchema = z.object({
