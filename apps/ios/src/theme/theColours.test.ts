@@ -15,7 +15,10 @@ describe('theColours', () => {
     expect(theColours.light.text).not.toBe(theColours.light.surface);
   });
 
-  it('keeps one accent, since it reads on either ground', () => {
-    expect(theColours.light.accent).toBe(theColours.dark.accent);
+  it('picks things out in the ink of the page, and cuts them out of it in the ground', () => {
+    for (const theme of [theColours.light, theColours.dark]) {
+      expect(theme.accent).toBe(theme.text);
+      expect(theme.accentContrast).toBe(theme.surface);
+    }
   });
 });

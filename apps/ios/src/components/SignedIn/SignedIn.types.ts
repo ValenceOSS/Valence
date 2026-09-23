@@ -15,6 +15,11 @@ type APage =
   | { kind: 'artist'; artistId: string }
   | { kind: 'playlist'; playlistId: string }
   | { kind: 'liked' }
+  | { kind: 'albums' }
+  | { kind: 'artists' }
+  | { kind: 'television'; code: string; askedFrom: string | null }
+  | { kind: 'book'; bookId: string }
+  | { kind: 'reading'; bookId: string; chapterId: string | null; isFromTheStart: boolean }
   | { kind: 'playing' };
 
 export type { APage, SignedInProps };

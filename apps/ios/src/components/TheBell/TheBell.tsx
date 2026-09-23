@@ -1,6 +1,6 @@
+import { Bell } from '@keyline-icons/react-native';
 import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
-import { Bell } from 'lucide-react-native';
 import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { AGlass } from '@ValencePhone/components/AGlass/AGlass';
 import { Button } from '@ValencePhone/components/Button/Button';

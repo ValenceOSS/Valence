@@ -11,21 +11,18 @@ import type { SubtitleCue } from '@ValenceClient/playback/fetchSubtitleCues';
  * most tracks — a server that has never heard of the styled form answers the same way as one whose
  * track simply has no styling, so neither this nor the person reading has to know which.
  *
+ * The whole track is fetched, timed against the whole film, since the player's clock is the film's
+ * own wherever it started — as the television and the web read theirs.
+ *
  * Nothing is fetched for a track that is burned into the picture. Those arrive already drawn, and
  * asking for them again would draw every line twice.
  *
  * @param mediaId - What is playing.
  * @param trackId - The track they are reading, or off.
  * @param isBurnedIn - Whether the server is drawing it into the picture itself.
- * @param fromSeconds - Where the stream began, since a track is timed against the whole film.
  * @returns The lines to draw.
  */
-const useTheSubtitles = (
-  mediaId: string,
-  trackId: string,
-  isBurnedIn: boolean,
-  fromSeconds: number,
-): SubtitleCue[] => {
+const useTheSubtitles = (mediaId: string, trackId: string, isBurnedIn: boolean): SubtitleCue[] => {
   const [cues, setCues] = useState<SubtitleCue[]>([]);
 
   useEffect(() => {
@@ -37,13 +34,13 @@ const useTheSubtitles = (
 
     let stillWanted = true;
 
-    void fetchSubtitleCues(subtitleCuesUrl(mediaId, trackId, fromSeconds))
+    void fetchSubtitleCues(subtitleCuesUrl(mediaId, trackId))
       .then(async (styled) => {
         if (styled !== null) {
           return styled;
         }
 
-        const plain = await fetch(subtitleTrackUrl(mediaId, trackId, fromSeconds))
+        const plain = await fetch(subtitleTrackUrl(mediaId, trackId))
           .then(async (answer) => (answer.ok ? answer.text() : null))
           .catch(() => null);
 
@@ -58,7 +55,7 @@ const useTheSubtitles = (
     return () => {
       stillWanted = false;
     };
-  }, [mediaId, trackId, isBurnedIn, fromSeconds]);
+  }, [mediaId, trackId, isBurnedIn]);
 
   return cues;
 };

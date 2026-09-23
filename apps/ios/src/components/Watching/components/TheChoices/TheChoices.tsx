@@ -1,7 +1,7 @@
+import { Check, X } from '@keyline-icons/react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
-import { Check, X } from 'lucide-react-native';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { FONTS } from '@ValencePhone/theme/FONTS';
 import type { TheChoicesProps } from './TheChoices.types';

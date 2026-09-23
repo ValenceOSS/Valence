@@ -296,9 +296,9 @@ describe('SignedIn', () => {
       await userEvent.press(await drawn.findByText('Shows'));
       await userEvent.press(await drawn.findByLabelText('Severance'));
       await waitFor(() => {
-        expect(drawn.getByLabelText('Episode 1')).toBeTruthy();
+        expect(drawn.getByLabelText(/^(Play|Resume) Episode 1/)).toBeTruthy();
       });
-      await userEvent.press(drawn.getByLabelText('Episode 1'));
+      await userEvent.press(drawn.getByLabelText(/^(Play|Resume) Episode 1/));
       await waitFor(() => {
         expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
       });

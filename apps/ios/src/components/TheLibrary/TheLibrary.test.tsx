@@ -83,6 +83,10 @@ const theLibrary = (overrides: Partial<TheLibraryProps> = {}) =>
       onArtist={jest.fn()}
       onPlaylist={jest.fn()}
       onLiked={jest.fn()}
+      onAllAlbums={jest.fn()}
+      onAllArtists={jest.fn()}
+      onBook={jest.fn()}
+      onRead={jest.fn()}
       {...overrides}
     />,
     { wrapper: CacheScope },
@@ -162,7 +166,8 @@ describe('TheLibrary', () => {
 
     await userEvent.press(await drawn.findByText('Films'));
 
-    expect(await drawn.findByText('Nothing in here yet.')).toBeTruthy();
+    expect(await drawn.findByText('No films yet')).toBeTruthy();
+    expect(drawn.getByText('Ask the server admin to scan it.')).toBeTruthy();
   });
 
   it('says so where the libraries could not be read', async () => {
@@ -282,7 +287,7 @@ describe('TheLibrary', () => {
     expect(onLookAtShow).toHaveBeenCalledWith('one', 'severance');
   });
 
-  it('offers music where there is some, and leaves out books, which a phone cannot open', async () => {
+  it('offers music and books where there are some', async () => {
     jest
       .mocked(fetchLibraries)
       .mockResolvedValue([
@@ -295,6 +300,24 @@ describe('TheLibrary', () => {
     const drawn = await theLibrary();
 
     expect(await drawn.findByText('Music')).toBeTruthy();
-    expect(drawn.queryByText('Books')).toBeNull();
+    expect(drawn.getByText('Books')).toBeTruthy();
+  });
+
+  it('says there are no libraries on a server that has none, rather than a blank home', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([]);
+
+    const drawn = await theLibrary();
+
+    expect(await drawn.findByText('No libraries yet')).toBeTruthy();
+    expect(drawn.getByText('Ask the server admin to add one.')).toBeTruthy();
+  });
+
+  it('says there is nothing to watch yet where the libraries hold nothing', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
+
+    const drawn = await theLibrary();
+
+    expect(await drawn.findByText('Nothing to watch yet')).toBeTruthy();
   });
 });

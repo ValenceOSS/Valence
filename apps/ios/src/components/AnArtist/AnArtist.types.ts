@@ -2,6 +2,7 @@ type AnArtistProps = {
   artistId: string;
   onAlbum: (albumId: string) => void;
   onArtist: (artistId: string) => void;
+  onPlaylist?: (playlistId: string) => void;
   onBack: () => void;
 };
 

@@ -1,5 +1,5 @@
+import { Pause, Play } from '@keyline-icons/react-native';
 import { render } from '@testing-library/react-native';
-import { Pause, Play } from 'lucide-react-native';
 import { Icon } from './Icon';
 
 describe('Icon', () => {

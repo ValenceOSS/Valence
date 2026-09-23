@@ -1,3 +1,4 @@
+import { Film, FolderOpen } from '@keyline-icons/react-native';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
@@ -6,10 +7,13 @@ import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { howToFillIt } from '@ValenceClient/library/howToFillIt';
 import { pickFeatured } from '@ValenceClient/library/pickFeatured';
 import { useHomeRows } from '@ValenceClient/library/useHomeRows';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
+import { AnArrival } from '@ValencePhone/components/AnArrival/AnArrival';
+import { ANothingHere } from '@ValencePhone/components/ANothingHere/ANothingHere';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
 import { AShelf } from '@ValencePhone/components/AShelf/AShelf';
 import { Button } from '@ValencePhone/components/Button/Button';
@@ -28,6 +32,8 @@ const FEATURED_FROM = 200;
 
 const RESUMING = 'resume';
 
+const SCROLLED = 4;
+
 const styles = StyleSheet.create({
   header: { gap: 20 },
   whole: { flex: 1 },
@@ -44,20 +50,26 @@ type AShelfOf = { kind: 'rail'; rail: Rail } | { kind: 'comingUp' };
  *
  * @param header - What sits above it all and scrolls away with it.
  * @param watchable - The libraries holding films and programmes.
+ * @param librariesAre - Whether the libraries are still being read, the server has none at all, or
+ *   it has some — nothing is called empty until they are read, and none at all is said differently
+ *   from libraries with nothing in them yet.
  * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
  * @param onShowing - Told which title the hero is showing, so the page can take its colours.
  * @param onClip - Told the hero's clip while it plays.
+ * @param onScrolled - Told whether the page has been scrolled from its top.
  */
 const TheHome = ({
   header,
   watchable,
+  librariesAre,
   onWatch,
   onLookAt,
   onLookAtShow,
   onShowing,
   onClip,
+  onScrolled,
 }: TheHomeProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
@@ -82,63 +94,99 @@ const TheHome = ({
     upcoming.length > 0 && !home.rails.some((rail) => rail.id === RESUMING)
       ? [{ kind: 'comingUp' } satisfies AShelfOf, ...shelves]
       : shelves;
+  const isEmpty =
+    librariesAre !== 'reading' &&
+    !home.isReading &&
+    (watchable.length === 0 || !sample.isPending) &&
+    withComingUp.length === 0 &&
+    featured.length === 0;
+
+  /**
+   * Draws one shelf of the home page.
+   *
+   * @param shelf - Which shelf.
+   * @returns It.
+   */
+  const drawShelf = (shelf: AShelfOf) =>
+    shelf.kind === 'comingUp' ? (
+      <AShelf title="Coming up">
+        {upcoming.map(({ show, episode }) => (
+          <Button
+            key={show.id}
+            tone="bare"
+            label={show.title}
+            onPress={() => {
+              onLookAtShow(show.libraryId, show.id);
+            }}
+          >
+            <APoster
+              title={show.title}
+              artwork={onThisServer(`/api/media/${show.coverMediaId}/image/poster`)}
+              note={`S${episode.seasonNumber.toString()} E${episode.episodeNumber.toString()} · ${describeAirDate(episode.airDate, today)}`}
+            />
+          </Button>
+        ))}
+      </AShelf>
+    ) : (
+      <AShelf title={shelf.rail.title}>
+        {shelf.rail.items.map((media) => {
+          const known = progress.get(media.id);
+
+          return (
+            <ACard
+              key={media.id}
+              media={media}
+              asProgramme={shelf.rail.id !== RESUMING}
+              watched={known === undefined ? 0 : watchedFraction(known)}
+              onLookAt={onLookAt}
+              onLookAtShow={onLookAtShow}
+            />
+          );
+        })}
+      </AShelf>
+    );
 
   return (
     <FlatList
       data={withComingUp}
+      scrollEventThrottle={16}
+      onScroll={({ nativeEvent }) => {
+        onScrolled?.(nativeEvent.contentOffset.y > SCROLLED);
+      }}
       keyExtractor={(shelf) => (shelf.kind === 'rail' ? shelf.rail.id : 'coming-up')}
-      renderItem={({ item: shelf }) =>
-        shelf.kind === 'comingUp' ? (
-          <AShelf title="Coming up">
-            {upcoming.map(({ show, episode }) => (
-              <Button
-                key={show.id}
-                tone="bare"
-                label={show.title}
-                onPress={() => {
-                  onLookAtShow(show.libraryId, show.id);
-                }}
-              >
-                <APoster
-                  title={show.title}
-                  artwork={onThisServer(`/api/media/${show.coverMediaId}/image/poster`)}
-                  note={`S${episode.seasonNumber.toString()} E${episode.episodeNumber.toString()} · ${describeAirDate(episode.airDate, today)}`}
-                />
-              </Button>
-            ))}
-          </AShelf>
-        ) : (
-          <AShelf title={shelf.rail.title}>
-            {shelf.rail.items.map((media) => {
-              const known = progress.get(media.id);
-
-              return (
-                <ACard
-                  key={media.id}
-                  media={media}
-                  asProgramme={shelf.rail.id !== RESUMING}
-                  watched={known === undefined ? 0 : watchedFraction(known)}
-                  onLookAt={onLookAt}
-                  onLookAtShow={onLookAtShow}
-                />
-              );
-            })}
-          </AShelf>
-        )
-      }
+      renderItem={({ item: shelf }) => <AnArrival>{drawShelf(shelf)}</AnArrival>}
       ListHeaderComponent={
         <View style={styles.header}>
           {header}
-          <TheFeatured
-            items={featured}
-            onShowing={onShowing}
-            onClip={onClip}
-            onWatch={onWatch}
-            onLookAt={onLookAt}
-            onLookAtShow={onLookAtShow}
-          />
+          <AnArrival>
+            <TheFeatured
+              items={featured}
+              onShowing={onShowing}
+              onClip={onClip}
+              onWatch={onWatch}
+              onLookAt={onLookAt}
+              onLookAtShow={onLookAtShow}
+            />
+          </AnArrival>
           {home.isReading ? <ActivityIndicator color={colours.textMuted} /> : null}
         </View>
+      }
+      ListEmptyComponent={
+        isEmpty ? (
+          librariesAre === 'missing' ? (
+            <ANothingHere
+              of={FolderOpen}
+              title="No libraries yet"
+              detail={howToFillIt('no libraries', false)}
+            />
+          ) : (
+            <ANothingHere
+              of={Film}
+              title="Nothing to watch yet"
+              detail={howToFillIt('every library', false)}
+            />
+          )
+        ) : null
       }
       ListFooterComponent={
         home.isReadingMore ? <ActivityIndicator color={colours.textMuted} /> : null

@@ -1,6 +1,7 @@
+import { Shuffle } from '@keyline-icons/react-native';
+import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
-import { Play, Shuffle } from 'lucide-react-native';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Words } from '@ValencePhone/components/Words/Words';
@@ -95,7 +96,7 @@ const AMusicHead = ({
       {canPlay ? (
         <View style={styles.buttons}>
           <View style={styles.half}>
-            <Button tone="bold" icon={Play} onPress={onPlay}>
+            <Button tone="bold" icon={PlayFilled} onPress={onPlay}>
               Play
             </Button>
           </View>

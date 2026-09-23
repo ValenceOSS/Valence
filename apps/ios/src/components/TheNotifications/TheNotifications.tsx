@@ -1,3 +1,4 @@
+import { Bell } from '@keyline-icons/react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { describeWhen } from '@ValenceClient/history/describeWhen';
@@ -11,6 +12,7 @@ import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { whereANotificationLeads } from '@ValencePhone/components/TheNotifications/whereANotificationLeads';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
+import { ANothingHere } from '@ValencePhone/components/ANothingHere/ANothingHere';
 import type { TheNotificationsProps } from './TheNotifications.types';
 
 const DOT = 8;
@@ -77,7 +79,7 @@ const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
       {inbox.isError ? <Words tone="danger">Those could not be read.</Words> : null}
 
       {!inbox.isPending && notifications.length === 0 ? (
-        <Words tone="muted">Nothing new.</Words>
+        <ANothingHere of={Bell} title="Nothing new" />
       ) : null}
 
       {notifications.map((notification) => {

@@ -6,6 +6,7 @@ import { readPreviewState } from '@ValenceClient/playback/readPreviewState';
 import { hushThePlayer } from '@ValencePhone/playback/hushThePlayer';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValencePhone/platform/theCookiesThisPhoneHolds';
+import { useIsOnTop } from '@ValencePhone/hooks/useIsOnTop';
 import type { VideoSource } from 'expo-video';
 import type { APreviewProps } from './APreview.types';
 
@@ -30,7 +31,8 @@ const styles = StyleSheet.create({
  *
  * @param mediaId - The title.
  * @param hasBackdrop - Whether it has a backdrop to draw until the clip arrives.
- * @param isShowing - Whether it is in view, and so whether its clip may play.
+ * @param isShowing - Whether it is in view, and so whether its clip may play — which it may not
+ *   while another page covers the one it is on, whatever this says.
  * @param isMuted - Whether the clip is silent.
  * @param onEnded - Told when the clip has played through.
  * @param onPlaying - Told when the clip starts or stops playing.
@@ -40,12 +42,14 @@ const styles = StyleSheet.create({
 const APreview = ({
   mediaId,
   hasBackdrop,
-  isShowing,
+  isShowing: isAskedToShow,
   isMuted,
   onEnded,
   onPlaying,
   onClip,
 }: APreviewProps) => {
+  const isOnTop = useIsOnTop();
+  const isShowing = isAskedToShow && isOnTop;
   const [clip, setClip] = useState<VideoSource | null>(null);
   const [showing] = useState(() => new Animated.Value(0));
 

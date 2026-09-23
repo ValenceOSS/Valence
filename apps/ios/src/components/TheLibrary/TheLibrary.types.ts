@@ -7,6 +7,10 @@ type TheLibraryProps = {
   onArtist: (artistId: string) => void;
   onPlaylist: (playlistId: string) => void;
   onLiked: () => void;
+  onAllAlbums: () => void;
+  onAllArtists: () => void;
+  onBook: (bookId: string) => void;
+  onRead: (bookId: string) => void;
 };
 
 export type { TheLibraryProps };

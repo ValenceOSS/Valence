@@ -1,6 +1,6 @@
+import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
-import { Play } from 'lucide-react-native';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { FONTS } from '@ValencePhone/theme/FONTS';
 import type { TheLeapProps } from './TheLeap.types';
@@ -135,7 +135,7 @@ const TheLeap = ({ leap }: TheLeapProps) => {
               }),
             }}
           >
-            <Icon of={Play} size={16} colour={OVER_THE_PICTURE} isFilled />
+            <Icon of={PlayFilled} size={16} colour={OVER_THE_PICTURE} />
           </Animated.View>
         ))}
       </View>

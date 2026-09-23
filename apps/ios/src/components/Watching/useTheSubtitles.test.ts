@@ -40,14 +40,14 @@ beforeEach(() => {
 
 describe('useTheSubtitles', () => {
   it('reads nothing while subtitles are off', async () => {
-    const held = await renderHook(() => useTheSubtitles('a-film', 'off', false, 0));
+    const held = await renderHook(() => useTheSubtitles('a-film', 'off', false));
 
     expect(held.result.current).toEqual([]);
     expect(fetchSubtitleCues).not.toHaveBeenCalled();
   });
 
   it('reads nothing for a track the server is drawing into the picture itself', async () => {
-    await renderHook(() => useTheSubtitles('a-film', 'one', true, 0));
+    await renderHook(() => useTheSubtitles('a-film', 'one', true));
 
     expect(fetchSubtitleCues).not.toHaveBeenCalled();
   });
@@ -55,7 +55,7 @@ describe('useTheSubtitles', () => {
   it('asks for the styled form first, which keeps where a sign was put', async () => {
     jest.mocked(fetchSubtitleCues).mockResolvedValue([aCue('styled')]);
 
-    const held = await renderHook(() => useTheSubtitles('a-film', 'one', false, 0));
+    const held = await renderHook(() => useTheSubtitles('a-film', 'one', false));
 
     await waitFor(() => {
       expect(held.result.current[0]?.spans[0]?.text).toBe('styled');
@@ -67,7 +67,7 @@ describe('useTheSubtitles', () => {
   it('falls back to plain text, which is what most tracks are', async () => {
     asking.mockResolvedValue(new Response('WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nplain\n'));
 
-    const held = await renderHook(() => useTheSubtitles('a-film', 'one', false, 0));
+    const held = await renderHook(() => useTheSubtitles('a-film', 'one', false));
 
     await waitFor(() => {
       expect(held.result.current[0]?.spans[0]?.text).toBe('plain');
@@ -77,7 +77,7 @@ describe('useTheSubtitles', () => {
   it('reads nothing where neither form could be had', async () => {
     asking.mockResolvedValue(new Response('', { status: 404 }));
 
-    const held = await renderHook(() => useTheSubtitles('a-film', 'one', false, 0));
+    const held = await renderHook(() => useTheSubtitles('a-film', 'one', false));
 
     await waitFor(() => {
       expect(held.result.current).toEqual([]);
@@ -87,20 +87,20 @@ describe('useTheSubtitles', () => {
   it('carries on where the server could not be reached at all', async () => {
     asking.mockRejectedValue(new Error('gone'));
 
-    const held = await renderHook(() => useTheSubtitles('a-film', 'one', false, 0));
+    const held = await renderHook(() => useTheSubtitles('a-film', 'one', false));
 
     await waitFor(() => {
       expect(held.result.current).toEqual([]);
     });
   });
 
-  it('asks against where the stream began, since a track is timed against the whole film', async () => {
+  it('asks for the whole track, since the player keeps the film’s own time wherever it started', async () => {
     jest.mocked(fetchSubtitleCues).mockResolvedValue([aCue('styled')]);
 
-    await renderHook(() => useTheSubtitles('a-film', 'one', false, 600));
+    await renderHook(() => useTheSubtitles('a-film', 'one', false));
 
     await waitFor(() => {
-      expect(jest.mocked(fetchSubtitleCues).mock.calls[0]?.[0]).toContain('from=600');
+      expect(jest.mocked(fetchSubtitleCues).mock.calls[0]?.[0]).toContain('from=0');
     });
   });
 });

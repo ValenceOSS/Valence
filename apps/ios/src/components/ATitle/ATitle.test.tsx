@@ -80,7 +80,7 @@ describe('ATitle', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Arrival')).toBeTruthy();
+      expect(drawn.getAllByText('Arrival').length).toBeGreaterThan(0);
     });
   });
 
@@ -259,10 +259,10 @@ describe('ATitle', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Start again')).toBeTruthy();
+      expect(drawn.getByLabelText('Start again')).toBeTruthy();
     });
 
-    await userEvent.press(drawn.getByText('Start again'));
+    await userEvent.press(drawn.getByLabelText('Start again'));
 
     expect(onWatch).toHaveBeenCalledWith('one', 0);
   });

@@ -1,6 +1,13 @@
+import {
+  Bin,
+  Download as DownloadIcon,
+  Pause,
+  Play,
+  Smartphone,
+} from '@keyline-icons/react-native';
+import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, StyleSheet, View } from 'react-native';
-import { Pause, Play, Smartphone, Trash2 } from 'lucide-react-native';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { forgetDownload } from '@ValenceClient/downloads/fetchDownloads';
 import { dropAFile, keepAFile, pauseAFile } from '@ValenceClient/downloads/keepingFiles';
@@ -12,6 +19,7 @@ import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
+import { ANothingHere } from '@ValencePhone/components/ANothingHere/ANothingHere';
 import type { Download } from '@ValenceContracts/schemas/Download';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { TheDownloadsProps } from './TheDownloads.types';
@@ -134,7 +142,7 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
               }}
             >
               <View style={styles.act}>
-                <Icon of={Play} size={20} colour={colours.accent} isFilled />
+                <Icon of={PlayFilled} size={20} colour={colours.accent} />
               </View>
             </Button>
           ) : null}
@@ -177,7 +185,7 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
             }}
           >
             <View style={styles.act}>
-              <Icon of={Trash2} size={18} colour={colours.textMuted} />
+              <Icon of={Bin} size={18} colour={colours.textMuted} />
             </View>
           </Button>
         </View>
@@ -194,9 +202,11 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
       <Words size="title">Downloads</Words>
 
       {rows.length === 0 ? (
-        <Words tone="muted">
-          Nothing downloaded yet. Download a film from its page to watch it without the server.
-        </Words>
+        <ANothingHere
+          of={DownloadIcon}
+          title="Nothing downloaded yet"
+          detail="Download a film from its page to watch it without the server."
+        />
       ) : (
         drawn
       )}

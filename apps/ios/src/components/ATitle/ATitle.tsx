@@ -1,21 +1,24 @@
-import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 import {
+  ChevronsUpDown,
   CircleCheck,
   Download,
   EyeOff,
   Film,
   Heart,
-  Play,
+  ListVideo,
   RotateCcw,
-  Tv,
-} from 'lucide-react-native';
+  Share,
+} from '@keyline-icons/react-native';
+import { Heart as HeartFilled, Play as PlayFilled } from '@keyline-icons/react-native/fill';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
+import { theVersionsOf } from '@ValenceClient/library/theVersionsOf';
 import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useHidden } from '@ValenceClient/library/useHidden';
@@ -29,20 +32,26 @@ import { ATitleHead } from '@ValencePhone/components/ATitleHead/ATitleHead';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
-import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { TheBadges } from '@ValencePhone/components/TheBadges/TheBadges';
 import { TheCast } from '@ValencePhone/components/TheCast/TheCast';
 import { TheStars } from '@ValencePhone/components/TheStars/TheStars';
 import { Words } from '@ValencePhone/components/Words/Words';
+import { AShareSheet } from '@ValencePhone/components/AShareSheet/AShareSheet';
 import { howLongItRuns } from '@ValencePhone/components/ATitle/howLongItRuns';
+import { askWhichVersion } from '@ValencePhone/components/ATitle/askWhichVersion';
 import { useConfirmHiding } from '@ValencePhone/hooks/useConfirmHiding';
 import { askToKeepOnThisPhone } from '@ValencePhone/downloads/askToKeepOnThisPhone';
 import { useTheProgrammeOfEpisode } from '@ValencePhone/hooks/useTheProgrammeOfEpisode';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
+import { withAlpha } from '@ValencePhone/theme/withAlpha';
+import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { ATitleProps } from './ATitle.types';
 
+const PLAY_HEIGHT = 46;
+
 const styles = StyleSheet.create({
+  about: { gap: 8 },
   action: { alignItems: 'center', gap: 4, minWidth: 76 },
   actions: {
     columnGap: 4,
@@ -51,8 +60,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     rowGap: 16,
   },
+  again: { alignItems: 'center', borderRadius: 12, justifyContent: 'center' },
   detail: { gap: 2, width: '47%' },
   details: { columnGap: 12, flexDirection: 'row', flexWrap: 'wrap', rowGap: 12 },
+  facts: { gap: 8 },
+  play: { flex: 1 },
+  playing: { alignItems: 'center', flexDirection: 'row', gap: 10 },
 });
 
 /**
@@ -79,11 +92,13 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   const hiding = useHidden(watching);
   const cache = useQueryClient();
   const held = useHeldFiles().find((file) => file.mediaId === mediaId) ?? null;
+  const [sharing, setSharing] = useState<ShareSubject | null>(null);
   const preparing =
     useQuery(downloadQueries.all()).data?.find(
       (download) => download.mediaId === mediaId && download.state === 'preparing',
     ) ?? null;
   const [version, setVersion] = useState<string | null>(null);
+  const [playHeight, setPlayHeight] = useState(PLAY_HEIGHT);
   const title = asking.data;
   const seriesTitle = title?.metadata.seriesTitle ?? null;
   const programme = useTheProgrammeOfEpisode(mediaId);
@@ -127,12 +142,17 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
     metadata.rating === null || metadata.rating === undefined
       ? null
       : `★ ${metadata.rating.toFixed(1)}`,
+    (metadata.genres ?? []).length === 0 ? null : (metadata.genres ?? []).slice(0, 2).join(', '),
   ].filter((fact) => fact !== null);
   const details = describeTitleDetails(metadata);
+  const tagline = seriesTitle === null ? (metadata.tagline ?? null) : null;
+  const overview = metadata.overview ?? null;
+  const offered = theVersionsOf(mediaId, versions);
 
   return (
     <Screen
       scrolls
+      title={title.title}
       onBack={onBack}
       head={
         <ATitleHead
@@ -143,38 +163,91 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
         />
       }
     >
-      {seriesTitle === null ? null : <Words tone="muted">{seriesTitle}</Words>}
+      {seriesTitle === null ? null : <Words size="heading">{title.title}</Words>}
 
-      <Words tone="muted">{facts.join(' · ')}</Words>
+      <View style={styles.facts}>
+        <Words tone="muted">{facts.join(' · ')}</Words>
+        <TheBadges badges={qualityBadges(title)} />
+      </View>
 
-      <TheBadges badges={qualityBadges(title)} />
-
-      {(metadata.genres ?? []).length === 0 ? null : (
-        <Words size="small" tone="muted">
-          {(metadata.genres ?? []).join(', ')}
-        </Words>
+      {tagline === null && overview === null ? null : (
+        <View style={styles.about}>
+          {tagline === null ? null : <Words isProse>{tagline}</Words>}
+          {overview === null ? null : <Words tone="muted">{overview}</Words>}
+        </View>
       )}
 
-      {versions.length > 1 ? (
-        <SegmentedRow
-          label="Version"
-          items={versions.map((one) => ({ id: one.id, label: one.versionLabel ?? one.title }))}
-          value={playing}
-          onSelect={setVersion}
-        />
-      ) : null}
+      {versions.length === 0 ? null : (
+        <Button
+          tone="ghost"
+          icon={ChevronsUpDown}
+          label="Which version to play"
+          onPress={() => {
+            askWhichVersion(offered, setVersion);
+          }}
+        >
+          {offered.find((one) => one.id === playing)?.label ?? 'Original'}
+        </Button>
+      )}
 
-      <Button
-        tone="bold"
-        icon={Play}
-        onPress={() => {
-          onWatch(playing, carryOnAt ?? 0);
-        }}
-      >
-        {carryOnAt === null ? 'Play' : `Resume from ${howLongItRuns(carryOnAt)}`}
-      </Button>
+      <View style={styles.playing}>
+        <View
+          style={styles.play}
+          onLayout={({ nativeEvent }) => {
+            setPlayHeight(nativeEvent.layout.height);
+          }}
+        >
+          <Button
+            tone="bold"
+            icon={PlayFilled}
+            onPress={() => {
+              onWatch(playing, carryOnAt ?? 0);
+            }}
+          >
+            {carryOnAt === null ? 'Play' : `Resume from ${howLongItRuns(carryOnAt)}`}
+          </Button>
+        </View>
+
+        {carryOnAt === null ? null : (
+          <Button
+            tone="bare"
+            label="Start again"
+            onPress={() => {
+              onWatch(playing, 0);
+            }}
+          >
+            <View
+              style={[
+                styles.again,
+                {
+                  backgroundColor: withAlpha(colours.text, 0.1),
+                  height: playHeight,
+                  width: playHeight,
+                },
+              ]}
+            >
+              <Icon of={RotateCcw} size={20} colour={colours.text} />
+            </View>
+          </Button>
+        )}
+      </View>
 
       <View style={styles.actions}>
+        {programme === null ? null : (
+          <Button
+            tone="bare"
+            label={`All episodes of ${programme.title}`}
+            onPress={() => {
+              onLookAtShow(programme.libraryId, programme.id);
+            }}
+          >
+            <View style={styles.action}>
+              <Icon of={ListVideo} colour={colours.text} />
+              <Words size="small">Episodes</Words>
+            </View>
+          </Button>
+        )}
+
         <Button
           tone="bare"
           label="Favourite"
@@ -184,7 +257,10 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
           }}
         >
           <View style={styles.action}>
-            <Icon of={Heart} colour={isKept ? colours.danger : colours.text} isFilled={isKept} />
+            <Icon
+              of={isKept ? HeartFilled : Heart}
+              colour={isKept ? colours.danger : colours.text}
+            />
             <Words size="small">Favourite</Words>
           </View>
         </Button>
@@ -208,21 +284,6 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
             <View style={styles.action}>
               <Icon of={Film} colour={colours.text} />
               <Words size="small">Trailer</Words>
-            </View>
-          </Button>
-        )}
-
-        {carryOnAt === null ? null : (
-          <Button
-            tone="bare"
-            label="Start again"
-            onPress={() => {
-              onWatch(playing, 0);
-            }}
-          >
-            <View style={styles.action}>
-              <Icon of={RotateCcw} colour={colours.text} />
-              <Words size="small">Start again</Words>
             </View>
           </Button>
         )}
@@ -260,6 +321,27 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
 
         <Button
           tone="bare"
+          label="Share"
+          onPress={() => {
+            setSharing({
+              kind: 'item',
+              media: {
+                id: title.id,
+                title: title.title,
+                seriesId: programme?.seriesId ?? null,
+                seriesTitle,
+              },
+            });
+          }}
+        >
+          <View style={styles.action}>
+            <Icon of={Share} colour={colours.text} />
+            <Words size="small">Share</Words>
+          </View>
+        </Button>
+
+        <Button
+          tone="bare"
           label="Hide"
           onPress={() => {
             hiding.ask({
@@ -275,32 +357,16 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
             <Words size="small">Hide</Words>
           </View>
         </Button>
-
-        {programme === null ? null : (
-          <Button
-            tone="bare"
-            label={`Open ${programme.title}`}
-            onPress={() => {
-              onLookAtShow(programme.libraryId, programme.id);
-            }}
-          >
-            <View style={styles.action}>
-              <Icon of={Tv} colour={colours.text} />
-              <Words size="small">Programme</Words>
-            </View>
-          </Button>
-        )}
       </View>
 
+      <AShareSheet
+        subject={sharing}
+        onClose={() => {
+          setSharing(null);
+        }}
+      />
+
       <TheStars subject={{ mediaId }} />
-
-      {metadata.tagline === null || metadata.tagline === undefined ? null : (
-        <Words isProse>{metadata.tagline}</Words>
-      )}
-
-      {metadata.overview === null || metadata.overview === undefined ? null : (
-        <Words tone="muted">{metadata.overview}</Words>
-      )}
 
       {details.length === 0 ? null : (
         <View style={styles.details}>

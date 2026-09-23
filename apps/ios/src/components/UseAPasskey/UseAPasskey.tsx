@@ -1,5 +1,5 @@
+import { KeyRound } from '@keyline-icons/react-native';
 import { useState } from 'react';
-import { KeyRound } from 'lucide-react-native';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { signInThroughTheBrowser } from '@ValencePhone/platform/signInThroughTheBrowser';

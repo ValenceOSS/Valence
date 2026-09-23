@@ -1,5 +1,5 @@
+import { ChevronRight, Server } from '@keyline-icons/react-native';
 import { StyleSheet, View } from 'react-native';
-import { ChevronRight, Server } from 'lucide-react-native';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Words } from '@ValencePhone/components/Words/Words';

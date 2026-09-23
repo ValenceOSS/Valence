@@ -1,6 +1,6 @@
+import { ChevronLeft, KeyRound, Smartphone } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ChevronLeft, KeyRound, Smartphone } from 'lucide-react-native';
 import { verifyBackupCode, verifyTotp } from '@ValenceClient/session/auth';
 import { ACarriedMark } from '@ValencePhone/components/ACarriedMark/ACarriedMark';
 import { Button } from '@ValencePhone/components/Button/Button';

@@ -1,7 +1,7 @@
-import type { LucideIcon } from 'lucide-react-native';
+import type { AGlyph } from '@ValencePhone/components/Icon/Icon.types';
 
 type TextFieldAction = {
-  icon: LucideIcon;
+  icon: AGlyph;
   label: string;
   onPress: () => void;
 };

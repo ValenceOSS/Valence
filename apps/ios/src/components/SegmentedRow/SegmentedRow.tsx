@@ -1,19 +1,15 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { AFadedEdge } from '@ValencePhone/components/AFadedEdge/AFadedEdge';
-import { AGlass } from '@ValencePhone/components/AGlass/AGlass';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Words } from '@ValencePhone/components/Words/Words';
-import { hasLiquidGlass } from '@ValencePhone/platform/hasLiquidGlass';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
+import { ACapsuleRow } from '@ValencePhone/components/SegmentedRow/components/ACapsuleRow/ACapsuleRow';
 import type { SegmentedRowProps } from './SegmentedRow.types';
-
-const PILL_ROUNDNESS = 999;
 
 const FADE = 24;
 
 const styles = StyleSheet.create({
-  glassPill: { paddingHorizontal: 16, paddingVertical: 9 },
   pill: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   sideways: { gap: 8, paddingRight: FADE },
@@ -29,7 +25,8 @@ const styles = StyleSheet.create({
  * @param items - What there is to choose from.
  * @param value - Which one is picked, or none yet.
  * @param onSelect - Told which one they picked.
- * @param isGlass - Whether the pills sit on liquid glass, where the phone has it.
+ * @param isGlass - Whether it is drawn as one capsule, on liquid glass where the phone has it, with
+ *   a highlight that slides to the one picked, as the row across the head of the library is.
  * @param scrolls - Whether the row scrolls sideways, fading out at its edges, rather than wrapping
  *   onto more lines, for a row that can outgrow its room.
  */
@@ -42,7 +39,6 @@ const SegmentedRow = ({
   scrolls = false,
 }: SegmentedRowProps) => {
   const colours = useTheColours();
-  const isOnGlass = isGlass && hasLiquidGlass();
   const [isScrolled, setIsScrolled] = useState(false);
 
   const pills = items.map((item) => {
@@ -58,31 +54,26 @@ const SegmentedRow = ({
           onSelect(item.id);
         }}
       >
-        {isOnGlass ? (
-          <View style={styles.glassPill}>
-            <AGlass roundness={PILL_ROUNDNESS} {...(isChosen ? { tint: colours.accent } : {})} />
-            <Words size="small" tone={isChosen ? 'onArtwork' : 'plain'}>
-              {item.label}
-            </Words>
-          </View>
-        ) : (
-          <View
-            style={[
-              styles.pill,
-              {
-                backgroundColor: isChosen ? colours.accent : colours.surfaceRaised,
-                borderColor: isChosen ? colours.accent : colours.border,
-              },
-            ]}
-          >
-            <Words size="small" tone={isChosen ? 'plain' : 'muted'}>
-              {item.label}
-            </Words>
-          </View>
-        )}
+        <View
+          style={[
+            styles.pill,
+            {
+              backgroundColor: isChosen ? colours.accent : colours.surfaceRaised,
+              borderColor: isChosen ? colours.accent : colours.border,
+            },
+          ]}
+        >
+          <Words size="small" tone={isChosen ? 'onAccent' : 'muted'}>
+            {item.label}
+          </Words>
+        </View>
       </Button>
     );
   });
+
+  const row = isGlass ? (
+    <ACapsuleRow label={label} items={items} value={value} onSelect={onSelect} />
+  ) : null;
 
   if (scrolls) {
     return (
@@ -95,19 +86,20 @@ const SegmentedRow = ({
           onScroll={(event) => {
             setIsScrolled(event.nativeEvent.contentOffset.x > 1);
           }}
-          accessibilityRole="tablist"
-          accessibilityLabel={label}
+          {...(row === null ? { accessibilityRole: 'tablist', accessibilityLabel: label } : {})}
         >
-          {pills}
+          {row ?? pills}
         </ScrollView>
       </AFadedEdge>
     );
   }
 
   return (
-    <View style={styles.row} accessibilityRole="tablist" accessibilityLabel={label}>
-      {pills}
-    </View>
+    row ?? (
+      <View style={styles.row} accessibilityRole="tablist" accessibilityLabel={label}>
+        {pills}
+      </View>
+    )
   );
 };
 

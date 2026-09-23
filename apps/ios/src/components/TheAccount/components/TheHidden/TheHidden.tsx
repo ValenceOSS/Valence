@@ -1,6 +1,6 @@
+import { Eye } from '@keyline-icons/react-native';
 import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
-import { Eye } from 'lucide-react-native';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { useHidden } from '@ValenceClient/library/useHidden';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';

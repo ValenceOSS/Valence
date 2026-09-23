@@ -1,9 +1,9 @@
+import { Film, Inbox } from '@keyline-icons/react-native';
 import { render, userEvent } from '@testing-library/react-native';
-import { Clapperboard, Inbox } from 'lucide-react-native';
 import { TheTabs } from './TheTabs';
 
 const TABS = [
-  { id: 'library', label: 'Library', icon: Clapperboard, symbol: 'film.stack' },
+  { id: 'library', label: 'Library', icon: Film, symbol: 'film.stack' },
   { id: 'requests', label: 'Requests', icon: Inbox, symbol: 'tray' },
 ] as const;
 

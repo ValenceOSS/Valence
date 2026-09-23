@@ -8,6 +8,11 @@ type ATrackListProps = {
   isAnAlbum?: boolean;
   onAlbum: (albumId: string) => void;
   onArtist: (artistId: string) => void;
+  onPlaylist?: (playlistId: string) => void;
+  editing?: {
+    onRemove: (at: number) => void;
+    onMove: (from: number, to: number) => void;
+  };
 };
 
 export type { ATrackListProps };

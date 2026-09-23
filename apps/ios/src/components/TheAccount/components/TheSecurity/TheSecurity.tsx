@@ -1,7 +1,7 @@
+import { Bin, PenLine } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, Linking, StyleSheet, View } from 'react-native';
-import { Pencil, Trash2 } from 'lucide-react-native';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import {
@@ -266,7 +266,7 @@ const TheSecurity = () => {
                 }}
               >
                 <View style={styles.act}>
-                  <Icon of={Pencil} size={18} colour={colours.textMuted} />
+                  <Icon of={PenLine} size={18} colour={colours.textMuted} />
                 </View>
               </Button>
 
@@ -289,7 +289,7 @@ const TheSecurity = () => {
                 }}
               >
                 <View style={styles.act}>
-                  <Icon of={Trash2} size={18} colour={colours.textMuted} />
+                  <Icon of={Bin} size={18} colour={colours.textMuted} />
                 </View>
               </Button>
             </View>

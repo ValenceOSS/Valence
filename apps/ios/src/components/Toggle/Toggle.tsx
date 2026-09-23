@@ -20,6 +20,7 @@ const Toggle = ({ label, isOn, onToggle, isDisabled = false }: ToggleProps) => {
       onValueChange={onToggle}
       disabled={isDisabled}
       trackColor={{ true: colours.accent, false: colours.border }}
+      thumbColor={isOn ? colours.accentContrast : '#ffffff'}
     />
   );
 };

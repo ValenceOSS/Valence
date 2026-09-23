@@ -1,5 +1,6 @@
+import { MoreHorizontal } from '@keyline-icons/react-native';
+import { Heart as HeartFilled } from '@keyline-icons/react-native/fill';
 import { Image, StyleSheet, View } from 'react-native';
-import { Ellipsis, Heart } from 'lucide-react-native';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Words } from '@ValencePhone/components/Words/Words';
@@ -22,7 +23,7 @@ const styles = StyleSheet.create({
 /**
  * One track in a list, as the web lists them: its number on an album or its cover anywhere else,
  * what it is called and who it is by, whether it is liked, how long it runs, and a menu of what
- * else can be done with it. The one playing now is picked out in the accent colour.
+ * else can be done with it. The one playing now is picked out in bold.
  *
  * @param track - The track.
  * @param number - Its number on its album, where the list is an album's.
@@ -63,7 +64,7 @@ const ATrackRow = ({
             )}
 
             <View style={styles.said}>
-              <Words lines={1} {...(isCurrent ? { tone: 'accent' } : {})}>
+              <Words lines={1} isStrong={isCurrent}>
                 {track.title}
               </Words>
               <View style={styles.side}>
@@ -83,7 +84,7 @@ const ATrackRow = ({
         </Button>
       </View>
 
-      {isLiked ? <Icon of={Heart} size={14} colour={colours.danger} isFilled /> : null}
+      {isLiked ? <Icon of={HeartFilled} size={14} colour={colours.danger} /> : null}
 
       <Words size="small" tone="muted">
         {asAClock(track.durationSeconds)}
@@ -91,7 +92,7 @@ const ATrackRow = ({
 
       <Button tone="bare" label={`More for ${track.title}`} onPress={onMenu}>
         <View style={styles.menu}>
-          <Icon of={Ellipsis} size={20} colour={colours.textMuted} />
+          <Icon of={MoreHorizontal} size={20} colour={colours.textMuted} />
         </View>
       </Button>
     </View>

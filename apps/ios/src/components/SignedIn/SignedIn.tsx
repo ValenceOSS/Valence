@@ -1,7 +1,7 @@
+import { CircleUser, Download, Home, Search } from '@keyline-icons/react-native';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
-import { CircleUser, Download, House, Search } from 'lucide-react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -28,7 +28,10 @@ import { AnAlbum } from '@ValencePhone/components/AnAlbum/AnAlbum';
 import { AnArtist } from '@ValencePhone/components/AnArtist/AnArtist';
 import { APlaylist } from '@ValencePhone/components/APlaylist/APlaylist';
 import { TheLikedSongs } from '@ValencePhone/components/TheLikedSongs/TheLikedSongs';
+import { TheMusicRemote } from '@ValencePhone/components/TheMusicRemote/TheMusicRemote';
 import { TheMusicPlayer } from '@ValencePhone/components/TheMusicPlayer/TheMusicPlayer';
+import { ABook } from '@ValencePhone/components/ABook/ABook';
+import { AReader } from '@ValencePhone/components/AReader/AReader';
 import { TheNowPlayingBar } from '@ValencePhone/components/TheNowPlayingBar/TheNowPlayingBar';
 import { TheAccount } from '@ValencePhone/components/TheAccount/TheAccount';
 import { TheDownloads } from '@ValencePhone/components/TheDownloads/TheDownloads';
@@ -36,16 +39,37 @@ import { TheLibrary } from '@ValencePhone/components/TheLibrary/TheLibrary';
 import { TheNotifications } from '@ValencePhone/components/TheNotifications/TheNotifications';
 import { TheSearch } from '@ValencePhone/components/TheSearch/TheSearch';
 import { TheTabs } from '@ValencePhone/components/TheTabs/TheTabs';
-import { useTheProgrammeOf } from '@ValencePhone/components/SignedIn/useTheProgrammeOf';
+import { AProgrammeBySeries } from '@ValencePhone/components/SignedIn/components/AProgrammeBySeries/AProgrammeBySeries';
+import { APageStack } from '@ValencePhone/components/APageStack/APageStack';
 import { useTheProgrammeOfEpisode } from '@ValencePhone/hooks/useTheProgrammeOfEpisode';
 import { Watching } from '@ValencePhone/components/Watching/Watching';
 import { WatchingHeld } from '@ValencePhone/components/WatchingHeld/WatchingHeld';
 import { useFetchWhatThisPhoneAskedFor } from '@ValencePhone/downloads/useFetchWhatThisPhoneAskedFor';
 import { useTellTheServerWhatIsHeld } from '@ValenceClient/downloads/useTellTheServerWhatIsHeld';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
+import { TheAlbums } from '@ValencePhone/components/TheAlbums/TheAlbums';
+import { TheArtists } from '@ValencePhone/components/TheArtists/TheArtists';
+import { AMusicPage } from '@ValencePhone/components/AMusicPage/AMusicPage';
+import { TheFloatingPlayer } from '@ValencePhone/components/TheFloatingPlayer/TheFloatingPlayer';
+import { ATelevisionToSignIn } from '@ValencePhone/components/ATelevisionToSignIn/ATelevisionToSignIn';
+import { useLinksIntoTheApp } from '@ValencePhone/hooks/useLinksIntoTheApp';
+import type { ReactNode } from 'react';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { APage, SignedInProps } from './SignedIn.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+
+const MUSIC_PAGES: ReadonlySet<APage['kind']> = new Set([
+  'album',
+  'artist',
+  'playlist',
+  'liked',
+  'albums',
+  'artists',
+]);
+
+const styles = StyleSheet.create({
+  whole: { flex: 1 },
+});
 
 /**
  * What a phone shows once somebody is through: the library, a title or a programme out of it, or
@@ -94,8 +118,6 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
   const [part, setPart] = useState('home');
-  const top = pages.at(-1) ?? null;
-  const sought = useTheProgrammeOf(top?.kind === 'series' ? top.seriesId : null);
   const holding = useTheProgrammeOfEpisode(watching?.mediaId ?? null);
   const series = useQuery(libraryQueries.show(holding?.libraryId ?? null, holding?.id ?? null));
   const watcher = useQuery(profileQueries.watching());
@@ -105,7 +127,7 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const { may } = useWhatIMayDo();
   const mayRequest = requesting.data?.isEnabled === true && may('requests.ask');
   const tabs = [
-    { id: 'home', label: 'Home', icon: House, symbol: 'house' },
+    { id: 'home', label: 'Home', icon: Home, symbol: 'house' },
     { id: 'search', label: 'Search', icon: Search, symbol: 'magnifyingglass' },
     { id: 'downloads', label: 'Downloads', icon: Download, symbol: 'arrow.down.circle' },
     { id: 'account', label: 'Account', icon: CircleUser, symbol: 'person.crop.circle' },
@@ -122,6 +144,16 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const toArtist = (artistId: string) => {
     open({ kind: 'artist', artistId });
   };
+
+  const toPlaylist = (playlistId: string) => {
+    open({ kind: 'playlist', playlistId });
+  };
+
+  useLinksIntoTheApp((link) => {
+    if (link.kind === 'device') {
+      open({ kind: 'television', code: link.code, askedFrom: link.server });
+    }
+  });
 
   const back = () => {
     setPages((was) => was.slice(0, -1));
@@ -223,13 +255,18 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     );
   }
 
-  if (top !== null) {
-    switch (top.kind) {
+  /**
+   * Draws one page of the stack.
+   *
+   * @param page - Which page.
+   * @returns It.
+   */
+  const drawPage = (page: APage): ReactNode => {
+    switch (page.kind) {
       case 'title':
         return (
           <ATitle
-            key={`${pages.length.toString()}:${top.mediaId}`}
-            mediaId={top.mediaId}
+            mediaId={page.mediaId}
             onWatch={choose}
             onLookAtPerson={(personId) => {
               open({ kind: 'person', personId });
@@ -241,24 +278,17 @@ const SignedIn = ({ onOut }: SignedInProps) => {
       case 'show':
         return (
           <AShow
-            key={`${pages.length.toString()}:${top.showId}`}
-            libraryId={top.libraryId}
-            showId={top.showId}
+            libraryId={page.libraryId}
+            showId={page.showId}
             onWatch={choose}
             onLookAt={lookAt}
             onBack={back}
           />
         );
       case 'series':
-        return sought === null ? (
-          <Screen centres onBack={back}>
-            <ActivityIndicator />
-          </Screen>
-        ) : (
-          <AShow
-            key={`${pages.length.toString()}:${sought.showId}`}
-            libraryId={sought.libraryId}
-            showId={sought.showId}
+        return (
+          <AProgrammeBySeries
+            seriesId={page.seriesId}
             onWatch={choose}
             onLookAt={lookAt}
             onBack={back}
@@ -267,8 +297,7 @@ const SignedIn = ({ onOut }: SignedInProps) => {
       case 'person':
         return (
           <APerson
-            key={`${pages.length.toString()}:${top.personId.toString()}`}
-            personId={top.personId}
+            personId={page.personId}
             onLookAt={lookAt}
             onLookAtShow={lookAtShow}
             onBack={back}
@@ -277,9 +306,8 @@ const SignedIn = ({ onOut }: SignedInProps) => {
       case 'asking':
         return (
           <AnAskable
-            key={`${pages.length.toString()}:${top.about}:${top.id}`}
-            kind={top.about}
-            id={top.id}
+            kind={page.about}
+            id={page.id}
             onOpen={(kind, mediaId) => {
               open(
                 kind === 'film'
@@ -295,39 +323,70 @@ const SignedIn = ({ onOut }: SignedInProps) => {
       case 'album':
         return (
           <AnAlbum
-            key={`${pages.length.toString()}:${top.albumId}`}
-            albumId={top.albumId}
+            albumId={page.albumId}
             onAlbum={toAlbum}
             onArtist={toArtist}
+            onPlaylist={toPlaylist}
             onBack={back}
           />
         );
       case 'artist':
         return (
           <AnArtist
-            key={`${pages.length.toString()}:${top.artistId}`}
-            artistId={top.artistId}
+            artistId={page.artistId}
             onAlbum={toAlbum}
             onArtist={toArtist}
+            onPlaylist={toPlaylist}
             onBack={back}
           />
         );
       case 'playlist':
         return (
           <APlaylist
-            key={`${pages.length.toString()}:${top.playlistId}`}
-            playlistId={top.playlistId}
+            playlistId={page.playlistId}
             onAlbum={toAlbum}
             onArtist={toArtist}
             onBack={back}
           />
         );
+      case 'book':
+        return (
+          <ABook
+            bookId={page.bookId}
+            onRead={(bookId, chapterId, isFromTheStart) => {
+              open({ kind: 'reading', bookId, chapterId, isFromTheStart });
+            }}
+            onBack={back}
+          />
+        );
+      case 'reading':
+        return (
+          <AReader
+            bookId={page.bookId}
+            chapterId={page.chapterId}
+            isFromTheStart={page.isFromTheStart}
+            onBack={back}
+          />
+        );
+      case 'television':
+        return <ATelevisionToSignIn code={page.code} askedFrom={page.askedFrom} onBack={back} />;
+      case 'albums':
+        return <TheAlbums onAlbum={toAlbum} onBack={back} />;
+      case 'artists':
+        return <TheArtists onArtist={toArtist} onBack={back} />;
       case 'liked':
-        return <TheLikedSongs onAlbum={toAlbum} onArtist={toArtist} onBack={back} />;
+        return (
+          <TheLikedSongs
+            onAlbum={toAlbum}
+            onArtist={toArtist}
+            onPlaylist={toPlaylist}
+            onBack={back}
+          />
+        );
       case 'playing':
-        return <TheMusicPlayer onArtist={toArtist} onBack={back} />;
+        return <TheMusicPlayer onArtist={toArtist} onAlbum={toAlbum} onBack={back} />;
     }
-  }
+  };
 
   const showing =
     part === 'downloads' ? (
@@ -342,6 +401,14 @@ const SignedIn = ({ onOut }: SignedInProps) => {
       <TheSearch
         onLookAt={lookAt}
         onLookAtShow={lookAtShow}
+        onAlbum={toAlbum}
+        onArtist={toArtist}
+        onPlaylist={(playlistId) => {
+          open({ kind: 'playlist', playlistId });
+        }}
+        onBook={(bookId) => {
+          open({ kind: 'book', bookId });
+        }}
         onAsk={
           mayRequest
             ? (about, id) => {
@@ -366,10 +433,22 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         onLiked={() => {
           open({ kind: 'liked' });
         }}
+        onAllAlbums={() => {
+          open({ kind: 'albums' });
+        }}
+        onAllArtists={() => {
+          open({ kind: 'artists' });
+        }}
+        onBook={(bookId) => {
+          open({ kind: 'book', bookId });
+        }}
+        onRead={(bookId) => {
+          open({ kind: 'reading', bookId, chapterId: null, isFromTheStart: false });
+        }}
       />
     );
 
-  return (
+  const tabbed = (
     <TheTabs
       tabs={tabs}
       value={part}
@@ -384,6 +463,34 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     >
       {showing}
     </TheTabs>
+  );
+
+  return (
+    <View style={styles.whole}>
+      <APageStack
+        pages={[
+          { key: 'tabs', page: tabbed },
+          ...pages.map((page, index) => ({
+            key: `${index.toString()}:${JSON.stringify(page)}`,
+            page: MUSIC_PAGES.has(page.kind) ? (
+              <AMusicPage>{drawPage(page)}</AMusicPage>
+            ) : (
+              drawPage(page)
+            ),
+            rises: page.kind === 'playing',
+            holdsTheEdge: page.kind === 'reading',
+          })),
+        ]}
+        onBack={back}
+      />
+      <TheMusicRemote />
+      <TheFloatingPlayer
+        isShown={MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}
+        onOpen={() => {
+          open({ kind: 'playing' });
+        }}
+      />
+    </View>
   );
 };
 

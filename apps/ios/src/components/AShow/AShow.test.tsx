@@ -78,7 +78,7 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Severance')).toBeTruthy();
+      expect(drawn.getAllByText('Severance').length).toBeGreaterThan(0);
     });
   });
 
@@ -207,10 +207,10 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByLabelText('Good News About Hell')).toBeTruthy();
+      expect(drawn.getByLabelText(/^(Play|Resume) Good News About Hell/)).toBeTruthy();
     });
 
-    await userEvent.press(drawn.getByLabelText('Good News About Hell'));
+    await userEvent.press(drawn.getByLabelText(/^(Play|Resume) Good News About Hell/));
 
     expect(onWatch).toHaveBeenCalledWith(PILOT, 900);
   });
@@ -232,10 +232,10 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByLabelText('Good News About Hell')).toBeTruthy();
+      expect(drawn.getByLabelText(/^(Play|Resume) Good News About Hell/)).toBeTruthy();
     });
 
-    await userEvent.press(drawn.getByLabelText('Good News About Hell'));
+    await userEvent.press(drawn.getByLabelText(/^(Play|Resume) Good News About Hell/));
 
     expect(onWatch).toHaveBeenCalledWith(PILOT, 0);
   });

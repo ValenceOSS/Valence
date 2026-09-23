@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { Check, Monitor, ScanQrCode, X } from '@keyline-icons/react-native';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
-import { Check, ScanQrCode, Tv, X } from 'lucide-react-native';
 import { answerDeviceRequest, readDeviceRequest } from '@ValenceClient/session/auth';
 import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
 import { tidyTheCode } from '@ValenceClient/session/tidyTheCode';
@@ -9,6 +9,8 @@ import { TextField } from '@ValencePhone/components/TextField/TextField';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { scanACode } from '@ValencePhone/platform/scanACode';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import type { SignInATelevisionProps } from './SignInATelevision.types';
 
 type Standing = 'asking' | 'reading' | 'waiting' | 'allowed' | 'refused' | 'wrong';
 
@@ -20,9 +22,20 @@ const TROUBLE: Record<Trouble, string> = {
   noScanner: 'This device cannot scan codes. Type the one on the television instead.',
 };
 
+const A_HOST = /^[a-z][a-z0-9+.-]*:\/\/([^/?#]+)/iu;
+
 const styles = StyleSheet.create({
   section: { gap: 12 },
 });
+
+/**
+ * The host an address names, lower-cased, for telling whether two addresses are one server.
+ *
+ * @param address - The address.
+ * @returns Its host, or null where it names none.
+ */
+const hostOf = (address: string | null): string | null =>
+  address === null ? null : (A_HOST.exec(address)?.[1]?.toLowerCase() ?? null);
 
 /**
  * The phone's half of signing a television in, as the web's page for it has it: the code the
@@ -31,10 +44,16 @@ const styles = StyleSheet.create({
  *
  * Turning it down is offered as plainly as letting it in, because somebody who was not expecting to
  * be asked is the case this exists for.
+ *
+ * Opened from a television's QR code scanned with the camera, it starts with that code already asked
+ * about; where the code is not this server's, it says which server the television was asking.
+ *
+ * @param startsWith - A code to ask about straight away, where one came with the page.
+ * @param askedFrom - The server the television asked, where the code came from a link.
  */
-const SignInATelevision = () => {
+const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionProps) => {
   const colours = useTheColours();
-  const [typed, setTyped] = useState('');
+  const [typed, setTyped] = useState(startsWith ?? '');
   const [standing, setStanding] = useState<Standing>('asking');
   const [isAnswering, setIsAnswering] = useState(false);
   const [trouble, setTrouble] = useState<Trouble | null>(null);
@@ -47,6 +66,17 @@ const SignInATelevision = () => {
 
     setStanding(found?.status === 'pending' ? 'waiting' : 'wrong');
   };
+
+  const elsewhere =
+    askedFrom !== null && hostOf(askedFrom) !== hostOf(platformInUse().serverAddress())
+      ? hostOf(askedFrom)
+      : null;
+
+  useEffect(() => {
+    if (startsWith !== undefined && tidyTheCode(startsWith) !== '') {
+      void check(tidyTheCode(startsWith));
+    }
+  }, [startsWith]);
 
   const scan = async () => {
     const scanned = await scanACode();
@@ -167,11 +197,13 @@ const SignInATelevision = () => {
           ) : null}
           {standing === 'wrong' ? (
             <Words tone="danger">
-              That code has run out, or there is no television waiting on it.
+              {elsewhere === null
+                ? 'That code has run out, or there is no television waiting on it.'
+                : `That television is asking ${elsewhere}, and this phone uses a different server.`}
             </Words>
           ) : null}
           <Button
-            icon={Tv}
+            icon={Monitor}
             isDisabled={tidyTheCode(typed) === ''}
             onPress={() => {
               void check(tidyTheCode(typed));

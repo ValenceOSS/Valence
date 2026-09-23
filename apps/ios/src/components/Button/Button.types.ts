@@ -1,5 +1,5 @@
+import type { AGlyph } from '@ValencePhone/components/Icon/Icon.types';
 import type { ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react-native';
 
 type PressedAt = {
   x: number;
@@ -10,7 +10,7 @@ type ButtonProps = {
   children?: ReactNode;
   onPress: (at: PressedAt) => void;
   tone?: 'bold' | 'bright' | 'ghost' | 'quiet' | 'bare';
-  icon?: LucideIcon;
+  icon?: AGlyph;
   fills?: boolean;
   isWide?: boolean;
   isBusy?: boolean;

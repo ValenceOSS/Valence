@@ -1,9 +1,11 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePullToRefresh } from '@ValencePhone/hooks/usePullToRefresh';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
 import { BackArrow } from '@ValencePhone/components/BackArrow/BackArrow';
+import { TheTopBar } from '@ValencePhone/components/Screen/components/TheTopBar/TheTopBar';
 import type { ScreenProps } from './Screen.types';
 
 const CLEAR_OF_THE_ARROW = 56;
@@ -11,6 +13,10 @@ const CLEAR_OF_THE_ARROW = 56;
 const ROOM_FOR_THE_FOOT = 36;
 
 const FOOT_ABOVE_THE_EDGE = 8;
+
+const BAR_REACH = 52;
+
+const SCROLLED = 4;
 
 const styles = StyleSheet.create({
   centred: { flex: 1, gap: 16, justifyContent: 'center' },
@@ -30,29 +36,42 @@ const styles = StyleSheet.create({
  *
  * @param children - What is on it.
  * @param head - What runs edge to edge across the top of a page that scrolls, under the clock and
- *   the way back, before the rest of it.
+ *   the way back, before the rest of it. Once it has scrolled away, a bar comes in behind the clock
+ *   and the way back so nothing scrolls under them.
+ * @param title - What the page is about, named in that bar.
  * @param behind - What is drawn behind all of it, over the page's own colour — the lights behind
  *   the way in.
  * @param foot - What sits at the very bottom of it, whatever is above — the build a way in names.
  * @param isSeeThrough - Whether it leaves its own colour off, because something behind it draws the
  *   ground — the lights the way in keeps lit from one of its screens to the next.
  * @param scrolls - Whether there is more of it than fits.
+ * @param goesBackDown - Whether the way back points down, for a page that rose from below.
+ * @param onScrolled - Told whether the page has been scrolled from its top, for whatever sits over
+ *   it and changes once it has.
  * @param centres - Whether the little there is belongs in the middle, which a page that scrolls
  *   keeps until there is more of it than fits.
  */
 const Screen = ({
   children,
   head,
+  title,
   behind,
   foot,
   isSeeThrough = false,
   scrolls = false,
   centres = false,
   onBack,
+  goesBackDown = false,
+  onScrolled,
 }: ScreenProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
   const pulling = usePullToRefresh();
+  const [scrolled] = useState(() => new Animated.Value(0));
+  const [headTall, setHeadTall] = useState(0);
+  const [isPast, setIsPast] = useState(false);
+  const hasBar = scrolls && head !== undefined && onBack !== undefined;
+  const barFrom = Math.max(headTall - room.top - BAR_REACH, 0);
   const ground = {
     backgroundColor: behind === undefined && !isSeeThrough ? colours.surface : 'transparent',
   };
@@ -67,8 +86,27 @@ const Screen = ({
     );
 
   const page = scrolls ? (
-    <ScrollView
+    <Animated.ScrollView
       style={[styles.whole, ground]}
+      showsVerticalScrollIndicator={false}
+      scrollEventThrottle={16}
+      {...(hasBar
+        ? {
+            onScroll: Animated.event([{ nativeEvent: { contentOffset: { y: scrolled } } }], {
+              useNativeDriver: true,
+              listener: ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
+                setIsPast(headTall > 0 && nativeEvent.contentOffset.y > barFrom);
+                onScrolled?.(nativeEvent.contentOffset.y > SCROLLED);
+              },
+            }),
+          }
+        : onScrolled === undefined
+          ? {}
+          : {
+              onScroll: ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
+                onScrolled(nativeEvent.contentOffset.y > SCROLLED);
+              },
+            })}
       contentContainerStyle={
         head === undefined
           ? [styles.inside, spacing, centres && styles.centredScrolling]
@@ -80,12 +118,18 @@ const Screen = ({
         children
       ) : (
         <>
-          {head}
+          <View
+            onLayout={({ nativeEvent }) => {
+              setHeadTall(nativeEvent.layout.height);
+            }}
+          >
+            {head}
+          </View>
           <View style={styles.inside}>{children}</View>
         </>
       )}
       {atTheFoot}
-    </ScrollView>
+    </Animated.ScrollView>
   ) : (
     <View style={[styles.whole, ground, styles.inside, spacing, centres && styles.centred]}>
       {children}
@@ -101,7 +145,10 @@ const Screen = ({
     <View style={[styles.whole, isSeeThrough ? null : { backgroundColor: colours.surface }]}>
       {behind}
       {page}
-      {onBack === undefined ? null : <BackArrow onBack={onBack} />}
+      {hasBar ? (
+        <TheTopBar title={title} scrolled={scrolled} from={barFrom} isPast={isPast} />
+      ) : null}
+      {onBack === undefined ? null : <BackArrow onBack={onBack} pointsDown={goesBackDown} />}
     </View>
   );
 };

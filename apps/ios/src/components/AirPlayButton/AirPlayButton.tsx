@@ -3,7 +3,7 @@ import { requireNativeView } from 'expo';
 import { AGlass } from '@ValencePhone/components/AGlass/AGlass';
 import { hasLiquidGlass } from '@ValencePhone/platform/hasLiquidGlass';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
-import type { NativeAirPlayProps } from './AirPlayButton.types';
+import type { AirPlayButtonProps, NativeAirPlayProps } from './AirPlayButton.types';
 
 const ThePicker = requireNativeView<NativeAirPlayProps>('ValenceAirPlay');
 
@@ -16,17 +16,21 @@ const styles = StyleSheet.create({
 /**
  * The system's AirPlay button, and the only place it is drawn: pressed, it lists the speakers and
  * screens nearby, and what plays afterwards follows the one chosen. It sits on glass where the
- * phone has it, and bare where it does not.
+ * phone has it, and bare where it does not. While something plays over AirPlay it is filled in, the
+ * icon cut out of it, as every button that is on is drawn.
+ *
+ * @param isOverPicture - Whether it sits over a film, where it is drawn white and bare like every
+ *   other control over the picture, whatever the theme.
  */
-const AirPlayButton = () => {
+const AirPlayButton = ({ isOverPicture = false }: AirPlayButtonProps) => {
   const colours = useTheColours();
 
   return (
     <View style={styles.whole}>
-      {hasLiquidGlass() ? <AGlass roundness={ROUND / 2} /> : null}
+      {hasLiquidGlass() && !isOverPicture ? <AGlass roundness={ROUND / 2} /> : null}
       <ThePicker
-        colour={colours.text}
-        activeColour={colours.accent}
+        colour={isOverPicture ? '#ffffff' : colours.text}
+        activeColour={isOverPicture ? '#000000' : colours.accentContrast}
         style={{ height: ROUND, width: ROUND }}
         accessibilityLabel="Play on another device"
       />

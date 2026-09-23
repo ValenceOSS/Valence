@@ -1,6 +1,9 @@
+import type { AGlyph } from '@ValencePhone/components/Icon/Icon.types';
+
 type Segment = {
   id: string;
   label: string;
+  icon?: AGlyph;
 };
 
 type SegmentedRowProps = {

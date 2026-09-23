@@ -1,10 +1,10 @@
+import type { AGlyph } from '@ValencePhone/components/Icon/Icon.types';
 import type { ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react-native';
 
 type ATab = {
   id: string;
   label: string;
-  icon: LucideIcon;
+  icon: AGlyph;
   symbol: string;
 };
 

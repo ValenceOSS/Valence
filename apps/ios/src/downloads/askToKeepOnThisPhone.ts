@@ -1,7 +1,6 @@
-import { ActionSheetIOS } from 'react-native';
-import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { askForDownload, fetchDownloadOffer } from '@ValenceClient/downloads/fetchDownloads';
 import { thePhonesProfile } from '@ValencePhone/playback/thePhonesProfile';
+import { chooseADownloadQuality } from '@ValencePhone/downloads/chooseADownloadQuality';
 import { rememberAskedOnThisPhone } from '@ValencePhone/downloads/rememberAskedOnThisPhone';
 
 /**
@@ -19,30 +18,13 @@ const askToKeepOnThisPhone = async (mediaId: string, title: string): Promise<boo
     return false;
   }
 
-  const chosen = await new Promise<number>((settle) => {
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        title: `Download ${title}`,
-        options: [
-          ...offer.options.map((option) =>
-            [option.label, option.bytes === null ? null : formatBytes(option.bytes)]
-              .filter((part) => part !== null)
-              .join(' · '),
-          ),
-          'Cancel',
-        ],
-        cancelButtonIndex: offer.options.length,
-      },
-      settle,
-    );
-  });
-  const option = offer.options[chosen];
+  const quality = await chooseADownloadQuality(offer, `Download ${title}`);
 
-  if (option === undefined) {
+  if (quality === null) {
     return false;
   }
 
-  const asked = await askForDownload(mediaId, option.quality);
+  const asked = await askForDownload(mediaId, quality);
 
   if (asked === null) {
     return false;

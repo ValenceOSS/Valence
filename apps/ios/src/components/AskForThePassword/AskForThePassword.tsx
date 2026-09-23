@@ -1,6 +1,7 @@
+import { ChevronLeft } from '@keyline-icons/react-native';
+import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { ChevronLeft, Play } from 'lucide-react-native';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
 import { ACarriedMark } from '@ValencePhone/components/ACarriedMark/ACarriedMark';
 import { AFace } from '@ValencePhone/components/AFace/AFace';
@@ -123,7 +124,7 @@ const AskForThePassword = ({ profile, from = null, onIn, onBack }: AskForThePass
 
             <Button
               tone="bold"
-              icon={Play}
+              icon={PlayFilled}
               isBusy={isTrying}
               isDisabled={password === ''}
               onPress={() => {

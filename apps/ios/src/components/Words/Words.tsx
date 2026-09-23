@@ -37,6 +37,8 @@ const styles = StyleSheet.create({
  * @param isProse - Whether it is running prose — a synopsis, a tagline — which is set in the web's
  *   body face as muted words already are, rather than the face everything else is set in.
  * @param isStrong - Whether it is set bold, as a badge is, whatever else it is.
+ * @param colour - A colour of its own, where it sits on a page that is not the theme's — a book's
+ *   sepia or light page — and takes that page's ink rather than any tone.
  */
 const Words = ({
   children,
@@ -47,10 +49,12 @@ const Words = ({
   isCentred = false,
   isProse = false,
   isStrong = false,
+  colour: asked,
 }: WordsProps) => {
   const colours = useTheColours();
   const colour =
-    tone === 'muted'
+    asked ??
+    (tone === 'muted'
       ? colours.textMuted
       : tone === 'danger'
         ? colours.danger
@@ -60,7 +64,9 @@ const Words = ({
             ? ON_ARTWORK
             : tone === 'onBright'
               ? ON_BRIGHT
-              : colours.text;
+              : tone === 'onAccent'
+                ? colours.accentContrast
+                : colours.text);
 
   return (
     <Text

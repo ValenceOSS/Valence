@@ -8,6 +8,7 @@ import { Words } from '@ValencePhone/components/Words/Words';
 import { TheDevices } from '@ValencePhone/components/TheAccount/components/TheDevices/TheDevices';
 import { TheHidden } from '@ValencePhone/components/TheAccount/components/TheHidden/TheHidden';
 import { TheHistory } from '@ValencePhone/components/TheAccount/components/TheHistory/TheHistory';
+import { TheShares } from '@ValencePhone/components/TheAccount/components/TheShares/TheShares';
 import { TheSecurity } from '@ValencePhone/components/TheAccount/components/TheSecurity/TheSecurity';
 import { TheProfile } from '@ValencePhone/components/TheAccount/components/TheProfile/TheProfile';
 import type { TheAccountProps } from './TheAccount.types';
@@ -18,11 +19,12 @@ const PANELS = [
   { id: 'devices', label: 'Devices' },
   { id: 'history', label: 'History' },
   { id: 'hidden', label: 'Hidden' },
+  { id: 'shares', label: 'Shares' },
 ] as const;
 
 /**
  * Somebody's own account: how they appear, how they sign in, where they are signed in, what they
- * have watched and hidden, and the way out.
+ * have watched and hidden, the links they have handed out, and the way out.
  *
  * @param onOut - Told to sign out.
  */
@@ -54,6 +56,8 @@ const TheAccount = ({ onOut }: TheAccountProps) => {
         <TheHistory />
       ) : panel === 'hidden' ? (
         <TheHidden />
+      ) : panel === 'shares' ? (
+        <TheShares />
       ) : (
         <TheProfile />
       )}

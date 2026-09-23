@@ -1,7 +1,8 @@
+import { Info } from '@keyline-icons/react-native';
+import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
-import { Info, Play } from 'lucide-react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { APreview } from '@ValencePhone/components/APreview/APreview';
@@ -276,7 +277,7 @@ const AFeature = ({
           )}
 
           <Animated.View style={[styles.buttons, risingOf(3)]}>
-            <Button tone="bright" icon={Play} onPress={onPlay}>
+            <Button tone="bright" icon={PlayFilled} onPress={onPlay}>
               {resumeAt === null ? 'Play' : `Resume ${howLongItRuns(resumeAt)}`}
             </Button>
 

@@ -1,5 +1,5 @@
+import { Volume, VolumeX } from '@keyline-icons/react-native';
 import { StyleSheet, View } from 'react-native';
-import { Volume2, VolumeX } from 'lucide-react-native';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import type { ASoundSwitchProps } from './ASoundSwitch.types';
@@ -21,7 +21,7 @@ const ASoundSwitch = ({ isMuted, onToggle }: ASoundSwitchProps) => (
     onPress={onToggle}
   >
     <View style={styles.reach}>
-      <Icon of={isMuted ? VolumeX : Volume2} size={22} colour="#ffffff" />
+      <Icon of={isMuted ? VolumeX : Volume} size={22} colour="#ffffff" />
     </View>
   </Button>
 );

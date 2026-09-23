@@ -1,7 +1,7 @@
+import { Mic } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
-import { MicVocal } from 'lucide-react-native';
 import {
   albumArtworkUrl,
   artistImageUrl,
@@ -31,9 +31,10 @@ const POPULAR_AT_FIRST = 5;
  * @param artistId - Which artist.
  * @param onAlbum - Told to open an album.
  * @param onArtist - Told to open another artist, from a track's menu.
+ * @param onPlaylist - Told to open a playlist made from a track's menu.
  * @param onBack - Told somebody is done with them.
  */
-const AnArtist = ({ artistId, onAlbum, onArtist, onBack }: AnArtistProps) => {
+const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistProps) => {
   const colours = useTheColours();
   const cache = useQueryClient();
   const read = useQuery(musicQueries.artist(artistId));
@@ -91,7 +92,7 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onBack }: AnArtistProps) => {
         title={artist.name}
         detail={`${artist.albumCount.toString()} ${artist.albumCount === 1 ? 'album' : 'albums'}`}
         artwork={artist.hasImage ? onThisServer(artistImageUrl(artist.id)) : null}
-        standIn={MicVocal}
+        standIn={Mic}
         isRound
         canPlay={popular.length > 0}
         onPlay={() => {
@@ -116,7 +117,13 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onBack }: AnArtistProps) => {
       {popular.length === 0 ? null : (
         <>
           <Words size="heading">Popular</Words>
-          <ATrackList tracks={shown} source={source} onAlbum={onAlbum} onArtist={onArtist} />
+          <ATrackList
+            tracks={shown}
+            source={source}
+            onAlbum={onAlbum}
+            onArtist={onArtist}
+            {...(onPlaylist === undefined ? {} : { onPlaylist })}
+          />
           {popular.length > POPULAR_AT_FIRST ? (
             <Button
               tone="ghost"

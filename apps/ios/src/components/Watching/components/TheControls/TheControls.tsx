@@ -1,13 +1,22 @@
+import {
+  ListVideo,
+  Pause,
+  Play,
+  RotateCcw,
+  RotateCw,
+  Settings,
+  X,
+} from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
-import { ListVideo, Pause, Play, RotateCcw, RotateCw, Settings, X } from 'lucide-react-native';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { TheFrameAt } from '@ValencePhone/components/Watching/components/TheFrameAt/TheFrameAt';
 import { Slider } from '@ValencePhone/components/Slider/Slider';
 import { asAClock } from '@ValencePhone/components/Watching/asAClock';
 import { FONTS } from '@ValencePhone/theme/FONTS';
+import { AirPlayButton } from '@ValencePhone/components/AirPlayButton/AirPlayButton';
 import type { TheControlsProps } from './TheControls.types';
 
 const OVER_THE_PICTURE = '#ffffff';
@@ -176,6 +185,8 @@ const TheControls = ({
             <Icon of={ListVideo} size={26} colour={OVER_THE_PICTURE} />
           </Button>
         )}
+
+        <AirPlayButton isOverPicture />
 
         <Button tone="bare" label="Subtitles, audio and quality" onPress={onSettings}>
           <Icon of={Settings} size={26} colour={OVER_THE_PICTURE} />

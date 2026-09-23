@@ -1,3 +1,7 @@
+type AirPlayButtonProps = {
+  isOverPicture?: boolean;
+};
+
 type NativeAirPlayProps = {
   colour: string;
   activeColour: string;
@@ -5,4 +9,4 @@ type NativeAirPlayProps = {
   accessibilityLabel: string;
 };
 
-export type { NativeAirPlayProps };
+export type { AirPlayButtonProps, NativeAirPlayProps };

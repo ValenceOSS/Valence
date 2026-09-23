@@ -1,6 +1,6 @@
+import { Record } from '@keyline-icons/react-native';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
-import { Disc3 } from 'lucide-react-native';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AMusicHead } from '@ValencePhone/components/AMusicHead/AMusicHead';
@@ -21,9 +21,10 @@ import type { AnAlbumProps } from './AnAlbum.types';
  * @param albumId - Which album.
  * @param onAlbum - Told to open another album, from a track's menu.
  * @param onArtist - Told to open an artist.
+ * @param onPlaylist - Told to open a playlist made from a track's menu.
  * @param onBack - Told somebody is done with it.
  */
-const AnAlbum = ({ albumId, onAlbum, onArtist, onBack }: AnAlbumProps) => {
+const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProps) => {
   const colours = useTheColours();
   const read = useQuery(musicQueries.album(albumId));
   const { player } = useTheMusic();
@@ -59,7 +60,7 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onBack }: AnAlbumProps) => {
         title={album.title}
         detail={detail.join(' · ')}
         artwork={album.hasArtwork ? onThisServer(albumArtworkUrl(album.id)) : null}
-        standIn={Disc3}
+        standIn={Record}
         canPlay={tracks.length > 0}
         onPlay={() => {
           player.play(tracks, 0, { source, isOrdered: true });
@@ -78,7 +79,14 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onBack }: AnAlbumProps) => {
         </Button>
       </AMusicHead>
 
-      <ATrackList tracks={tracks} source={source} isAnAlbum onAlbum={onAlbum} onArtist={onArtist} />
+      <ATrackList
+        tracks={tracks}
+        source={source}
+        isAnAlbum
+        onAlbum={onAlbum}
+        onArtist={onArtist}
+        {...(onPlaylist === undefined ? {} : { onPlaylist })}
+      />
     </Screen>
   );
 };

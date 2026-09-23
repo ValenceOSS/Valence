@@ -1,6 +1,7 @@
+import { Star } from '@keyline-icons/react-native';
+import { Star as StarFilled } from '@keyline-icons/react-native/fill';
 import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
-import { Star } from 'lucide-react-native';
 import { useRate } from '@ValenceClient/library/useRate';
 import { useStars } from '@ValenceClient/library/useStars';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
@@ -16,7 +17,7 @@ const OUT_OF = [1, 2, 3, 4, 5] as const;
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 6 },
   star: { padding: 4 },
-  whole: { gap: 6 },
+  whole: { alignItems: 'center', gap: 6 },
 });
 
 /**
@@ -54,10 +55,9 @@ const TheStars = ({ subject }: TheStarsProps) => {
           >
             <View style={styles.star}>
               <Icon
-                of={Star}
+                of={given !== null && stars <= given ? StarFilled : Star}
                 size={26}
                 colour={given !== null && stars <= given ? colours.highlight : colours.textMuted}
-                isFilled={given !== null && stars <= given}
               />
             </View>
           </Button>

@@ -12,7 +12,7 @@ const PUBLISHED_AS_MODULES = [
   '@better-fetch',
   'nanostores',
   'jose',
-  'lucide-react-native',
+  '@keyline-icons',
 ];
 
 const TypeScriptPathsSchema = z.object({

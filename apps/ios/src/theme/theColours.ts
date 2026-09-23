@@ -12,8 +12,8 @@ type Colours = {
 
 const theColours: Record<'light' | 'dark', Colours> = {
   light: {
-    accent: '#0066ff',
-    accentContrast: '#fcfcfc',
+    accent: '#303c51',
+    accentContrast: '#f6fbf9',
     border: '#c9d8d8',
     danger: '#c13c3b',
     highlight: '#8d6800',
@@ -23,8 +23,8 @@ const theColours: Record<'light' | 'dark', Colours> = {
     textMuted: '#546271',
   },
   dark: {
-    accent: '#0066ff',
-    accentContrast: '#fcfcfc',
+    accent: '#e9f3ef',
+    accentContrast: '#0e0e0e',
     border: '#2e2e2e',
     danger: '#ea6a64',
     highlight: '#f5d589',

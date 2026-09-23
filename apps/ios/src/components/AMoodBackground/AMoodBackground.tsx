@@ -15,10 +15,6 @@ const BLOOMS = [
   { at: '82% 90%', strength: 0.22 },
 ] as const;
 
-const DRIFTS = [34_000, 46_000, 58_000, 41_000, 52_000, 38_000] as const;
-
-const DRIFTS_BY = 28;
-
 const CHANGES_OVER = 1200;
 
 const NO_LIGHTS: readonly string[] = [];
@@ -27,19 +23,13 @@ const NO_PALETTE: readonly ALight[] = [];
 
 const styles = StyleSheet.create({
   fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
-  spills: {
-    bottom: -DRIFTS_BY,
-    left: -DRIFTS_BY,
-    position: 'absolute',
-    right: -DRIFTS_BY,
-    top: -DRIFTS_BY,
-  },
 });
 
 /**
  * The lights behind the way in, as the web's mood background draws them: soft blooms of colour
- * across the screen, each drifting on a slow cycle of its own, and fading into the page towards the
- * foot.
+ * across the screen, fading into the page towards the foot. Unlike the web's they hold still, so
+ * the whole of it is drawn once and kept as one picture, and a page moving over it or beneath it
+ * costs one layer rather than a screenful of them.
  *
  * With no lights of its own it is lit in the house colours. Given some — the colour of whoever
  * was picked — the first bloom takes on the first of them and the rest go dark, as on the web, and
@@ -47,22 +37,30 @@ const styles = StyleSheet.create({
  *
  * Given a palette instead — the colours read from a picture, as the home page reads its hero — each
  * colour blooms where it was read, and a new palette fades in as the last fades out, so the page
- * changes colour with the hero rather than jumping.
+ * changes colour with the hero rather than jumping. Drawn with its palette already known — the
+ * player opening onto a cover whose colours were read ahead — it starts lit in them, without the
+ * house colours beneath or a fade, so nothing is drawn or crossed that would never be seen.
  *
  * @param lights - The colours to light it with, or none for the house colours.
  * @param palette - Colours read from a picture, each with where it belongs, which light it instead.
  */
 const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBackgroundProps) => {
   const colours = useTheColours();
-  const [drifts] = useState(() => DRIFTS.map(() => new Animated.Value(0)));
   const [lit] = useState(() => new Animated.Value(lights.length === 0 ? 0 : 1));
   const [held, setHeld] = useState(lights[0] ?? null);
   const chosen = lights[0] ?? null;
-  const [layers, setLayers] = useState<
-    { key: string; palette: readonly ALight[]; isLeaving: boolean }[]
-  >([]);
-  const [paletted] = useState(() => new Animated.Value(0));
   const paletteKey = palette.map((light) => light.colour).join('|');
+  const [layers, setLayers] = useState<
+    { key: string; palette: readonly ALight[]; isLeaving: boolean; isThereAlready?: boolean }[]
+  >(() =>
+    paletteKey === '' ? [] : [{ key: paletteKey, palette, isLeaving: false, isThereAlready: true }],
+  );
+  const [paletted] = useState(() => new Animated.Value(paletteKey === '' ? 0 : 1));
+  const [hasHouseLights, setHasHouseLights] = useState(paletteKey === '');
+
+  if (paletteKey === '' && !hasHouseLights) {
+    setHasHouseLights(true);
+  }
 
   useEffect(() => {
     Animated.timing(paletted, {
@@ -93,37 +91,6 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
   }, [palette, paletteKey, paletted]);
 
   useEffect(() => {
-    const running = drifts.map((drift, at) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(drift, {
-            toValue: 1,
-            duration: DRIFTS[at] ?? DRIFTS[0],
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-          Animated.timing(drift, {
-            toValue: 0,
-            duration: DRIFTS[at] ?? DRIFTS[0],
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-        ]),
-      ),
-    );
-
-    running.forEach((one) => {
-      one.start();
-    });
-
-    return () => {
-      running.forEach((one) => {
-        one.stop();
-      });
-    };
-  }, [drifts]);
-
-  useEffect(() => {
     if (chosen !== null) {
       setHeld(chosen);
     }
@@ -137,7 +104,7 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
   }, [chosen, lit]);
 
   /**
-   * One bloom of light, drifting on its own cycle.
+   * One bloom of light.
    *
    * @param at - Which bloom.
    * @param colour - Its colour, or nothing for a bloom left dark.
@@ -145,30 +112,14 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
    */
   const bloom = (at: number, colour: string | null) => {
     const where = BLOOMS[at] ?? BLOOMS[0];
-    const drift = drifts[at] ?? lit;
-    const way = at % 2 === 0 ? 1 : -1;
 
     return colour === null ? null : (
-      <Animated.View
+      <View
         key={at}
         style={[
-          styles.spills,
+          styles.fills,
           {
             experimental_backgroundImage: `radial-gradient(ellipse 80% 45% at ${where.at}, ${withAlpha(colour, where.strength)}, transparent 70%)`,
-            transform: [
-              {
-                translateX: drift.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, DRIFTS_BY * way],
-                }),
-              },
-              {
-                translateY: drift.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, -DRIFTS_BY * way],
-                }),
-              },
-            ],
           },
         ]}
       />
@@ -176,20 +127,22 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
   };
 
   return (
-    <View pointerEvents="none" style={styles.fills}>
-      <Animated.View
-        style={[
-          styles.fills,
-          {
-            opacity: Animated.multiply(
-              lit.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
-              paletted.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
-            ),
-          },
-        ]}
-      >
-        {BLOOMS.map((_, at) => bloom(at, HOUSE_LIGHTS[at % HOUSE_LIGHTS.length] ?? null))}
-      </Animated.View>
+    <View pointerEvents="none" style={styles.fills} shouldRasterizeIOS>
+      {hasHouseLights ? (
+        <Animated.View
+          style={[
+            styles.fills,
+            {
+              opacity: Animated.multiply(
+                lit.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+                paletted.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+              ),
+            },
+          ]}
+        >
+          {BLOOMS.map((_, at) => bloom(at, HOUSE_LIGHTS[at % HOUSE_LIGHTS.length] ?? null))}
+        </Animated.View>
+      ) : null}
 
       <Animated.View style={[styles.fills, { opacity: lit }]}>
         {BLOOMS.map((_, at) => bloom(at, at === 0 ? held : null))}
@@ -199,9 +152,8 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
         <APaletteLayer
           key={layer.key}
           palette={layer.palette}
-          drifts={drifts}
-          driftsBy={DRIFTS_BY}
           isLeaving={layer.isLeaving}
+          isThereAlready={layer.isThereAlready === true}
         />
       ))}
 

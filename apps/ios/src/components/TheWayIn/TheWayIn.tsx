@@ -1,7 +1,7 @@
+import { Download, RotateCw } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { Download, RotateCw } from 'lucide-react-native';
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
 import { describeTheBuild } from '@ValenceClient/about/describeTheBuild';
 import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';

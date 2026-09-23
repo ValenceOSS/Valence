@@ -312,7 +312,7 @@ describe('Watching', () => {
     expect(theFakePlayer.currentTime).toBe(600);
   });
 
-  it('leaves a transcode alone, since the server already started it there', async () => {
+  it('seeks a transcode to where they left it too, since its playlist lays out the whole film', async () => {
     jest
       .mocked(startPlaybackSession)
       .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8' }));
@@ -325,7 +325,7 @@ describe('Watching', () => {
       expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     });
 
-    expect(theFakePlayer.currentTime).toBe(420);
+    expect(theFakePlayer.currentTime).toBe(600);
   });
 
   it('says nothing on the way out about a film it never saw playing', async () => {

@@ -1,7 +1,8 @@
+import { Download, EyeOff, Film, ListVideo, Share } from '@keyline-icons/react-native';
+import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
-import { EyeOff, Film, Play } from 'lucide-react-native';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -11,8 +12,15 @@ import { laySeasonsOut } from '@ValenceClient/library/laySeasonsOut';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import { useHidden } from '@ValenceClient/library/useHidden';
+import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
+import { waysToDownloadAProgramme } from '@ValenceClient/downloads/waysToDownloadAProgramme';
+import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
+import { AChoiceOfEpisodes } from '@ValencePhone/components/AShow/components/AChoiceOfEpisodes/AChoiceOfEpisodes';
+import { askHowMuchToDownload } from '@ValencePhone/components/AShow/askHowMuchToDownload';
+import { askToKeepAProgrammeOnThisPhone } from '@ValencePhone/downloads/askToKeepAProgrammeOnThisPhone';
+import { AMissingEpisode } from '@ValencePhone/components/AShow/components/AMissingEpisode/AMissingEpisode';
 import { AnEpisode } from '@ValencePhone/components/AShow/components/AnEpisode/AnEpisode';
 import { ATitleHead } from '@ValencePhone/components/ATitleHead/ATitleHead';
 import { Button } from '@ValencePhone/components/Button/Button';
@@ -21,8 +29,11 @@ import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { TheStars } from '@ValencePhone/components/TheStars/TheStars';
 import { Words } from '@ValencePhone/components/Words/Words';
+import { AShareSheet } from '@ValencePhone/components/AShareSheet/AShareSheet';
 import { useConfirmHiding } from '@ValencePhone/hooks/useConfirmHiding';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
+import { ANothingHere } from '@ValencePhone/components/ANothingHere/ANothingHere';
+import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { AShowProps } from './AShow.types';
 
 const OTHER = 'other';
@@ -30,9 +41,15 @@ const OTHER = 'other';
 const styles = StyleSheet.create({
   action: { alignItems: 'center', gap: 4, minWidth: 64 },
   actions: { flexDirection: 'row', gap: 20, justifyContent: 'center' },
-  missing: { flexDirection: 'row', gap: 12, opacity: 0.55, paddingVertical: 12 },
-  missingWords: { flex: 1, gap: 3 },
-  number: { minWidth: 28 },
+  divided: { borderTopWidth: StyleSheet.hairlineWidth },
+  episodes: { gap: 8 },
+  episodesHead: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  seasons: { flexShrink: 1 },
 });
 
 /**
@@ -51,11 +68,15 @@ const styles = StyleSheet.create({
  */
 const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => {
   const asking = useQuery(libraryQueries.show(libraryId, showId));
+  const [sharing, setSharing] = useState<ShareSubject | null>(null);
   const watched = useQuery(viewingQueries.progress());
   const colours = useTheColours();
   const watching = useWatchingProfile();
   const hiding = useHidden(watching);
   const [chosen, setChosen] = useState<number | null | undefined>(undefined);
+  const [isChoosing, setIsChoosing] = useState(false);
+  const cache = useQueryClient();
+  const onThisPhone = new Set(useHeldFiles().map((file) => file.mediaId));
   const progress = byMediaId(watched.data ?? []);
 
   useConfirmHiding(hiding, onBack);
@@ -94,6 +115,47 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
     today,
   );
   const held = show.seasons.flatMap((season) => season.episodes);
+  const seriesId = show.seriesId ?? null;
+
+  /**
+   * Asks the server to prepare the episodes wanted, leaving out what this phone already has, and
+   * reads the downloads again so the rows say so.
+   *
+   * @param mediaIds - The episodes wanted.
+   */
+  const keep = async (mediaIds: readonly string[]) => {
+    if (seriesId === null) {
+      return;
+    }
+
+    const wanted = mediaIds.filter((id) => !onThisPhone.has(id));
+
+    if (await askToKeepAProgrammeOnThisPhone(seriesId, show.title, wanted)) {
+      await cache.invalidateQueries({ queryKey: downloadQueries.all().queryKey });
+    }
+  };
+
+  /**
+   * Offers the season on screen, every season or picking, and follows whichever was chosen.
+   */
+  const download = async () => {
+    const way = await askHowMuchToDownload(
+      show.title,
+      waysToDownloadAProgramme(show, laid.showing),
+    );
+
+    if (way === null) {
+      return;
+    }
+
+    if (way.kind === 'choose') {
+      setIsChoosing(true);
+
+      return;
+    }
+
+    await keep(way.mediaIds ?? held.map((episode) => episode.id));
+  };
   const isWatchedThrough = held.length > 0 && held.every((episode) => fractionOf(episode.id) >= 1);
   const trailer = (show.extras ?? []).find((extra) => extra.extraKind === 'trailer') ?? null;
   const trailerKey = show.trailerKey ?? null;
@@ -102,6 +164,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
     show.year === null || show.year === undefined ? null : show.year.toString(),
     show.seasonCount === 1 ? '1 season' : `${show.seasonCount.toString()} seasons`,
     show.rating === null || show.rating === undefined ? null : `★ ${show.rating.toFixed(1)}`,
+    (show.genres ?? []).length === 0 ? null : (show.genres ?? []).slice(0, 2).join(', '),
     show.status === null || show.status === undefined || show.status === '' ? null : show.status,
     isWatchedThrough ? 'Watched' : null,
   ].filter((fact) => fact !== null);
@@ -109,6 +172,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
   return (
     <Screen
       scrolls
+      title={show.title}
       onBack={onBack}
       head={
         <ATitleHead
@@ -121,12 +185,6 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
     >
       <Words tone="muted">{facts.join(' · ')}</Words>
 
-      {(show.genres ?? []).length === 0 ? null : (
-        <Words size="small" tone="muted">
-          {(show.genres ?? []).join(', ')}
-        </Words>
-      )}
-
       {next === null ? null : (
         <Words tone="accent">
           {`Next: S${next.seasonNumber.toString()} E${next.episodeNumber.toString()} · ${describeAirDate(next.airDate, today)}`}
@@ -136,7 +194,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
       {pickingUp === null ? null : (
         <Button
           tone="bold"
-          icon={Play}
+          icon={PlayFilled}
           onPress={() => {
             onWatch(pickingUp.episode.id, pickingUp.startSeconds);
           }}
@@ -169,6 +227,36 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
           </Button>
         )}
 
+        {seriesId === null || held.length === 0 ? null : (
+          <Button
+            tone="bare"
+            label="Download"
+            onPress={() => {
+              void download();
+            }}
+          >
+            <View style={styles.action}>
+              <Icon of={Download} colour={colours.text} />
+              <Words size="small">Download</Words>
+            </View>
+          </Button>
+        )}
+
+        {seriesId === null ? null : (
+          <Button
+            tone="bare"
+            label="Share"
+            onPress={() => {
+              setSharing({ kind: 'series', seriesId, title: show.title });
+            }}
+          >
+            <View style={styles.action}>
+              <Icon of={Share} colour={colours.text} />
+              <Words size="small">Share</Words>
+            </View>
+          </Button>
+        )}
+
         <Button
           tone="bare"
           label="Hide"
@@ -188,56 +276,93 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
         </Button>
       </View>
 
+      <AShareSheet
+        subject={sharing}
+        onClose={() => {
+          setSharing(null);
+        }}
+      />
+
       {show.seriesId === null ? null : <TheStars subject={{ seriesId: show.seriesId }} />}
 
-      {laid.choices.length > 1 ? (
-        <SegmentedRow
-          label="Season"
-          items={laid.choices.map((choice) => ({
-            id: choice.seasonNumber === null ? OTHER : choice.seasonNumber.toString(),
-            label: nameSeason(choice.seasonNumber),
-          }))}
-          value={laid.showing === null ? OTHER : laid.showing.toString()}
-          onSelect={(id) => {
-            setChosen(id === OTHER ? null : Number(id));
-          }}
-        />
-      ) : null}
+      <View style={styles.episodes}>
+        <View style={styles.episodesHead}>
+          <Words size="heading">Episodes</Words>
 
-      <View>
-        {laid.rows.map((row) =>
-          row.episode === null ? (
-            <View key={row.key} style={styles.missing}>
-              <View style={styles.number}>
-                <Words tone="muted">{row.at}</Words>
-              </View>
-              <View style={styles.missingWords}>
-                <Words lines={2}>{row.listed?.title ?? `Episode ${row.at.toString()}`}</Words>
-                <Words size="small" tone="muted">
-                  {row.airs === '' ? 'Not in the library' : `Not in the library · ${row.airs}`}
-                </Words>
-              </View>
+          {laid.choices.length > 1 ? (
+            <View style={styles.seasons}>
+              <SegmentedRow
+                label="Season"
+                scrolls
+                items={laid.choices.map((choice) => ({
+                  id: choice.seasonNumber === null ? OTHER : choice.seasonNumber.toString(),
+                  label: nameSeason(choice.seasonNumber),
+                }))}
+                value={laid.showing === null ? OTHER : laid.showing.toString()}
+                onSelect={(id) => {
+                  setChosen(id === OTHER ? null : Number(id));
+                }}
+              />
             </View>
-          ) : (
-            <AnEpisode
-              key={row.key}
-              episode={row.episode}
-              watched={fractionOf(row.episode.id)}
-              airs={row.airs}
-              onWatch={() => {
-                if (row.episode !== null) {
-                  onWatch(row.episode.id, resumeFor(progress, row.episode.id) ?? 0);
-                }
-              }}
-              onLookAt={() => {
-                if (row.episode !== null) {
-                  onLookAt(row.episode.id);
-                }
-              }}
-            />
-          ),
+          ) : null}
+        </View>
+
+        {laid.rows.length === 0 ? (
+          <ANothingHere
+            of={ListVideo}
+            title="No episodes yet"
+            detail="Episodes appear as they are scanned."
+          />
+        ) : (
+          <View>
+            {laid.rows.map((row, place) => (
+              <View
+                key={row.key}
+                style={place === 0 ? null : [styles.divided, { borderTopColor: colours.border }]}
+              >
+                {row.episode === null ? (
+                  <AMissingEpisode
+                    at={row.at}
+                    title={row.listed?.title ?? null}
+                    stillUrl={row.listed?.stillUrl ?? null}
+                    airs={row.airs}
+                  />
+                ) : (
+                  <AnEpisode
+                    episode={row.episode}
+                    watched={fractionOf(row.episode.id)}
+                    resumeSeconds={resumeFor(progress, row.episode.id)}
+                    airs={row.airs}
+                    onWatch={() => {
+                      if (row.episode !== null) {
+                        onWatch(row.episode.id, resumeFor(progress, row.episode.id) ?? 0);
+                      }
+                    }}
+                    onLookAt={() => {
+                      if (row.episode !== null) {
+                        onLookAt(row.episode.id);
+                      }
+                    }}
+                  />
+                )}
+              </View>
+            ))}
+          </View>
         )}
       </View>
+
+      <AChoiceOfEpisodes
+        isOpen={isChoosing}
+        seasons={show.seasons}
+        held={onThisPhone}
+        onClose={() => {
+          setIsChoosing(false);
+        }}
+        onChosen={(mediaIds) => {
+          setIsChoosing(false);
+          void keep(mediaIds);
+        }}
+      />
     </Screen>
   );
 };

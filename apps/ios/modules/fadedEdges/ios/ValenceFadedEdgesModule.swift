@@ -1,7 +1,8 @@
 import ExpoModulesCore
 import UIKit
 
-/// A view whose contents fade out at its leading and trailing edges.
+/// A view whose contents fade out at its leading and trailing edges, or at
+/// its top and bottom.
 ///
 /// A row that scrolls sideways fades out where it runs under whatever sits
 /// beside it, rather than being cut off square. The fade has to be of the
@@ -20,11 +21,15 @@ public class ValenceFadedEdgesModule: Module {
       Prop("trailing") { (view: ValenceFadedEdgesView, points: Double) in
         view.trailing = points
       }
+
+      Prop("isUpright") { (view: ValenceFadedEdgesView, isUpright: Bool) in
+        view.isUpright = isUpright
+      }
     }
   }
 }
 
-/// Holds whatever React Native puts inside it, masked by a sideways gradient.
+/// Holds whatever React Native puts inside it, masked by a gradient.
 ///
 /// The mask is laid on again at every layout, because React Native clears a view's mask when it
 /// updates the view, and a mask set once would be gone after the first update.
@@ -39,6 +44,14 @@ public class ValenceFadedEdgesView: ExpoView {
 
   var trailing: Double = 0 {
     didSet {
+      setNeedsLayout()
+    }
+  }
+
+  var isUpright = false {
+    didSet {
+      fade.startPoint = isUpright ? CGPoint(x: 0.5, y: 0) : CGPoint(x: 0, y: 0.5)
+      fade.endPoint = isUpright ? CGPoint(x: 0.5, y: 1) : CGPoint(x: 1, y: 0.5)
       setNeedsLayout()
     }
   }
@@ -60,9 +73,9 @@ public class ValenceFadedEdgesView: ExpoView {
   public override func layoutSubviews() {
     super.layoutSubviews()
 
-    let width = max(Double(bounds.width), 1)
-    let start = min(leading / width, 0.5)
-    let end = max(1 - trailing / width, 0.5)
+    let length = max(Double(isUpright ? bounds.height : bounds.width), 1)
+    let start = min(leading / length, 0.5)
+    let end = max(1 - trailing / length, 0.5)
 
     CATransaction.begin()
     CATransaction.setDisableActions(true)

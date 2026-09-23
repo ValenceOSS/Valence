@@ -114,9 +114,11 @@ const styles = StyleSheet.create({
  * system's own networking, which attaches them; the player builds its own requests and is not told
  * to consult the jar, so without this a film is asked for by somebody the server does not know.
  *
- * Where somebody is picking up part way, the server is asked to start there and a whole file is
- * seeked to instead: a transcode begins at the segment they asked for, while a file sent untouched
- * begins where every file does.
+ * Where somebody is picking up part way, the server is asked to start there and the player is
+ * seeked to the same moment, whatever it was sent: a transcode's playlist lays out the whole film,
+ * as a file sent untouched does, and only starts its work at the segment asked for. So the player's
+ * clock is always the film's own, which is what the subtitles and every saved position are timed
+ * against.
  *
  * Something watched to within its credits is written down as finished, which is what takes it off
  * the list of things to carry on with and counts it as seen.
@@ -198,7 +200,7 @@ const Watching = ({
   });
   const [reading, setReading] = useState(SUBTITLES_OFF);
   const beingRead = (tracks.data ?? []).find((track) => track.id === reading) ?? null;
-  const cues = useTheSubtitles(mediaId, reading, beingRead?.delivery === 'burnIn', asking.from);
+  const cues = useTheSubtitles(mediaId, reading, beingRead?.delivery === 'burnIn');
 
   useEffect(() => {
     let started: string | null = null;
@@ -229,7 +231,6 @@ const Watching = ({
         return;
       }
 
-      const whole = outcome.session.delivery.kind === 'direct';
       const uri = onThisServer(
         outcome.session.delivery.kind === 'direct'
           ? outcome.session.delivery.url
@@ -242,7 +243,7 @@ const Watching = ({
           return;
         }
 
-        setSeekTo(whole ? asking.from : 0);
+        setSeekTo(asking.from);
         setSessionId(wasStarted);
         setSource(cookie === null ? { uri } : { uri, headers: { Cookie: cookie } });
       });
