@@ -41,6 +41,7 @@ const TheArtists = ({ onArtist, onBack }: TheArtistsProps) => {
           <Words size="title">Artists</Words>
           <SegmentedRow
             label="Which artists to show"
+            isSystem
             items={WHICH}
             value={isFollowedOnly ? 'followed' : 'all'}
             onSelect={(id) => {

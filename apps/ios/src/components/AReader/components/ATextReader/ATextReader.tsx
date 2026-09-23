@@ -479,6 +479,7 @@ const ATextReader = ({
           <Words size="heading">Text size</Words>
           <SegmentedRow
             label="Text size"
+            isSystem
             items={choicesOf(TEXT_SIZES)}
             value={settings.size}
             onSelect={(id) => {
@@ -494,6 +495,7 @@ const ATextReader = ({
           <Words size="heading">Line spacing</Words>
           <SegmentedRow
             label="Line spacing"
+            isSystem
             items={choicesOf(TEXT_SPACINGS)}
             value={settings.spacing}
             onSelect={(id) => {
@@ -509,6 +511,7 @@ const ATextReader = ({
           <Words size="heading">Margins</Words>
           <SegmentedRow
             label="Margins"
+            isSystem
             items={choicesOf(TEXT_MARGINS)}
             value={settings.margins}
             onSelect={(id) => {
@@ -524,6 +527,7 @@ const ATextReader = ({
           <Words size="heading">Page</Words>
           <SegmentedRow
             label="Page colour"
+            isSystem
             items={choicesOf(TEXT_PAGES)}
             value={settings.page}
             onSelect={(id) => {

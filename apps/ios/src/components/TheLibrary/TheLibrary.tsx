@@ -269,6 +269,7 @@ const TheLibrary = ({
           {ofThisKind.length > 1 ? (
             <SegmentedRow
               label="Which library"
+              isSystem
               items={[
                 { id: EVERY, label: 'All' },
                 ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
