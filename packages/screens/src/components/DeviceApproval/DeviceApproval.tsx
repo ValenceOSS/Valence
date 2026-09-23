@@ -4,7 +4,7 @@ import { Button } from '@ValenceUI/Button';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { answerDeviceRequest, readDeviceRequest } from '@ValenceClient/session/auth';
-import { tidyTheCode } from './tidyTheCode';
+import { tidyTheCode } from '@ValenceClient/session/tidyTheCode';
 import type { DeviceApprovalProps } from './DeviceApproval.types';
 
 type Standing = 'asking' | 'reading' | 'unknown' | 'allowed' | 'refused' | 'wrong';

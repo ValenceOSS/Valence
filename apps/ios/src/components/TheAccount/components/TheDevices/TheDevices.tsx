@@ -4,6 +4,7 @@ import { endDevice, endOtherDevices, fetchDevices } from '@ValenceClient/account
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Words } from '@ValencePhone/components/Words/Words';
+import { SignInATelevision } from '@ValencePhone/components/TheAccount/components/TheDevices/components/SignInATelevision/SignInATelevision';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 
 const DEVICES = ['account', 'devices'] as const;
@@ -14,7 +15,8 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Everywhere this account is signed in, and a way to end any of it but this phone.
+ * A television to sign in from here, everywhere this account is signed in, and a way to end any of
+ * it but this phone.
  *
  * Ending one is asked about first, because the person on the other end is thrown out mid-film.
  */
@@ -62,6 +64,8 @@ const TheDevices = () => {
 
   return (
     <>
+      <SignInATelevision />
+
       {devices.data.map((device) => (
         <View key={device.id} style={styles.device}>
           <View style={styles.words}>
