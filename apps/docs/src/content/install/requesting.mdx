@@ -39,6 +39,8 @@ Valence does not supply content, indexers or a download client. You choose and c
 
 3. Run `docker compose up -d` again so the `valence` and `requests` services both pick the values up.
 
+If the admin area says the requests service is unreachable, check that it is running (`docker compose ps requests`) and that `REQUESTS_URL` is the address Valence reaches it at from inside the stack. If it says the service refused the secret, `REQUESTS_SECRET` differs between the two: set the same value on both and run `docker compose up -d` again.
+
 | Setting                   | Required | What it is                                                                                                                                                                       |
 | ------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `REQUESTS_URL`            | Yes      | Where Valence reaches the service. `http://requests:8421` with the compose file as it is.                                                                                        |
@@ -102,6 +104,8 @@ That removes any container in the project that the compose file no longer descri
 
 Valence raises a warning, and sends the `requests.indexerFailing` webhook, when an enabled indexer fails three times in a row. Five failures turn it off. `requests.indexerWorking` follows when it answers again.
 
+The admin area's **Indexers** page says why each one failed. Most often the site has moved, is down for a while, or wants a login or key that has changed; open the indexer, put that right, and press **Test**. An indexer that was turned off for failing switches back on once a test passes. A site behind Cloudflare's check has [its own section](#indexers-behind-cloudflare).
+
 ## Download clients
 
 The admin area's **Downloads** page adds them: qBittorrent or Transmission for torrents, and SABnzbd or NZBGet for usenet. Give each the address the requests service reaches it at, which inside the compose network is its container's name, such as `http://qbittorrent:8080`, plus its login, or SABnzbd's API key.
@@ -118,6 +122,8 @@ Valence sends everything under one **category** per kind of library (a label in 
 Valence only ever lists, pauses or removes what carries one of these categories, so the rest of your client is left alone. Like Sonarr's and Radarr's categories, each can be given its own download folder in the client.
 
 A search sends a release to the first client switched on that takes it, as the kind searched for. Searching for anything, it uses the kind its indexer filed it under, and asks where that does not say. The Downloads page follows each download: progress, speed, time left, and seeds and peers for torrents. The clients are asked every couple of seconds while that page is open, and every half minute otherwise, which is how Valence notices a download finishing or failing.
+
+A client marked **Unreachable** could not be reached at its address from inside the requests service's container: check the client is running, and use its container name, or `gluetun` where it sits behind the VPN, rather than `localhost`. One that refused its login wants the username and password its web interface uses, or for SABnzbd the API key from its settings. qBittorrent bans an address after too many wrong passwords; wait for the ban to lift, or restart it, once the password is right.
 
 ### Paths must line up
 
@@ -143,6 +149,8 @@ VPN_URL=http://gluetun:8000
 ```
 
 `docker run --rm qmcgaw/gluetun genkey` makes a key. With `VPN_URL` and `VPN_API_KEY` set, the admin area's **Requests** page shows whether the tunnel is up and where traffic leaves from, and Valence raises a warning and a webhook when it drops.
+
+Where it says gluetun refused the question, `VPN_API_KEY` is not the key gluetun's control server was given: the same value has to reach both. Where gluetun could not be reached, `VPN_URL` is wrong or gluetun is not running. A tunnel that is down otherwise is gluetun's to explain; `docker compose logs gluetun` says why, most often a provider setting or an expired key.
 
 An example of a download client added to the same stack, behind gluetun. This is an illustration to adapt, not a service the repository ships:
 
