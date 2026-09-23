@@ -836,6 +836,8 @@ const book = pgTable(
     rating: real('rating'),
     posterUrl: text('posterUrl'),
     externalId: text('externalId'),
+    seriesName: text('seriesName'),
+    seriesPosition: real('seriesPosition'),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   },

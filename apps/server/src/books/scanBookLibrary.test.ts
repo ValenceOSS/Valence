@@ -416,6 +416,43 @@ describe('a comic that describes itself', () => {
     });
   });
 
+  it('puts a book in the series its folders say, at its place, titled without its number', async () => {
+    vi.mocked(openAudiobook).mockResolvedValueOnce({
+      ...aTrack(600, null),
+      about: { series: null, title: null, authors: [], description: null },
+    });
+
+    await scan([join(where, 'Pierce Brown', 'Red Rising', '2 - Golden Son', 'Golden Son.m4b')]);
+
+    expect(books[0]).toMatchObject({
+      title: 'Golden Son',
+      series: { name: 'Red Rising', position: 2 },
+    });
+  });
+
+  it('takes the series a book says of itself over its folders', async () => {
+    vi.mocked(openAudiobook).mockResolvedValueOnce({
+      ...aTrack(600, null),
+      about: {
+        series: 'Golden Son',
+        title: null,
+        authors: [],
+        description: null,
+        partOf: { name: 'Red Rising Saga', position: 2 },
+      },
+    });
+
+    await scan([join(where, 'Pierce Brown', 'Red Rising', '2 - Golden Son', 'Golden Son.m4b')]);
+
+    expect(books[0]?.series).toEqual({ name: 'Red Rising Saga', position: 2 });
+  });
+
+  it('puts a book in its author’s folder in no series', async () => {
+    await scan([join(where, 'Pierce Brown', 'Golden Son', 'Golden Son.m4b')]);
+
+    expect(books[0]?.series).toBeNull();
+  });
+
   it('asks FFmpeg for the chapters where the tags find no more than one', async () => {
     vi.mocked(openAudiobook).mockResolvedValueOnce({
       ...aTrack(3600, null),

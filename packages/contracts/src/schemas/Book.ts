@@ -108,6 +108,10 @@ const BookSchema = z.object({
   chapterCount: z.number().int().nonnegative(),
   hasText: z.boolean().optional(),
   hasAudio: z.boolean().optional(),
+  series: z
+    .object({ name: z.string().min(1), position: z.number().nonnegative().nullable() })
+    .nullable()
+    .optional(),
   addedAt: z.string(),
   updatedAt: z.string(),
 });

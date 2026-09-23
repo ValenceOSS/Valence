@@ -1,6 +1,7 @@
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname, relative, sep } from 'node:path';
 import { bookFormatOf, openBookFile } from './openBookFile';
+import { seriesFromPath } from './seriesFromPath';
 import { readBookTitleFromPath } from './readBookTitleFromPath';
 import { readChapterNumberFromPath } from './readChapterNumberFromPath';
 import { directionFor, isAudiobookFormat } from '@ValenceContracts/schemas/Book';
@@ -33,6 +34,7 @@ type BookRow = {
   year: number | null;
   authors: string[];
   overview: string | null;
+  series: { name: string; position: number | null } | null;
 };
 
 type ChapterRow = {
@@ -113,6 +115,10 @@ const bookPathFor = (root: string, path: string): string => {
  * catalogue is preferred over a filename for a film, and the same way Komga and Kavita both read a
  * comic. A series named inside the file wins outright; a volume's own title is taken only where the
  * file is a book in itself, since one chapter's title is not the name of what holds it.
+ *
+ * A book can also be one of a series of books — a saga of novels, each a book of its own. Which
+ * series, and where it comes, is what the book's own package says where it says, and otherwise what
+ * its folders say: `Author/Series/1 - Title`.
  *
  * @param options - The library, where it is, what to read it with, and where to put it.
  * @returns What the scan changed.
@@ -202,9 +208,10 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
     }
 
     if (!written.has(bookPath)) {
-      const named = readBookTitleFromPath(basename(bookPath));
-      const about = opened.about ?? null;
       const standsAlone = bookPath === file.path;
+      const placed = standsAlone ? null : seriesFromPath(root, bookPath);
+      const named = readBookTitleFromPath(placed?.title ?? basename(bookPath));
+      const about = opened.about ?? null;
       const stated = about?.series ?? (standsAlone ? about?.title : null) ?? null;
 
       const bookId = await store.upsertBook({
@@ -216,6 +223,7 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
         year: named.year,
         authors: about?.authors ?? [],
         overview: about?.description ?? null,
+        series: about?.partOf ?? placed?.series ?? null,
       });
 
       written.add(bookPath);

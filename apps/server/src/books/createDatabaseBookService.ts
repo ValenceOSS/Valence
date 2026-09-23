@@ -123,6 +123,7 @@ const toBook = (row: typeof book.$inferSelect, chapterCount: number, heardCount:
   chapterCount,
   hasText: chapterCount > heardCount,
   hasAudio: heardCount > 0,
+  series: row.seriesName === null ? null : { name: row.seriesName, position: row.seriesPosition },
   addedAt: row.addedAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
 });
@@ -192,6 +193,8 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
           year: row.year,
           authors: row.authors.length === 0 ? null : row.authors,
           overview: row.overview,
+          seriesName: row.series?.name ?? null,
+          seriesPosition: row.series?.position ?? null,
         })
         .onConflictDoUpdate({
           target: [book.libraryId, book.path],
@@ -199,6 +202,8 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
             title: row.title,
             ...(row.layout === 'audio' ? {} : { layout: row.layout, direction: row.direction }),
             year: row.year,
+            seriesName: row.series?.name ?? null,
+            seriesPosition: row.series?.position ?? null,
             updatedAt: new Date(),
             ...(row.authors.length === 0 ? {} : { authors: row.authors }),
             ...(row.overview === null ? {} : { overview: row.overview }),
