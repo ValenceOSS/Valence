@@ -28,10 +28,10 @@ describe('installPhonePlatform', () => {
     expect(platformInUse().serverAddress()).toBeNull();
   });
 
-  it('does not claim to keep files, since it cannot yet', () => {
+  it('keeps files, since a phone can download a film to watch without the server', () => {
     installPhonePlatform(new Map());
 
-    expect(platformInUse().canKeepFiles()).toBe(false);
+    expect(platformInUse().canKeepFiles()).toBe(true);
   });
 
   it('names the phone as its owner named it', () => {

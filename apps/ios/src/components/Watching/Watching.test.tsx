@@ -128,10 +128,10 @@ describe('Watching', () => {
     const drawn = await render(around(<Watching mediaId="one" onDone={onDone} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Back')).toBeTruthy();
+      expect(drawn.getByLabelText('Back')).toBeTruthy();
     });
 
-    await userEvent.press(drawn.getByText('Back'));
+    await userEvent.press(drawn.getByLabelText('Back'));
 
     expect(onDone).toHaveBeenCalled();
   });

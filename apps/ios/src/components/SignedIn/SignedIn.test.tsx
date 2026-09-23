@@ -112,7 +112,7 @@ describe('SignedIn', () => {
     const drawn = await render(around(<SignedIn onOut={jest.fn()} />));
 
     await waitFor(() => {
-      expect(drawn.getByText('Library')).toBeTruthy();
+      expect(drawn.getByLabelText('What to show')).toBeTruthy();
     });
   });
 
@@ -128,11 +128,8 @@ describe('SignedIn', () => {
     const onOut = jest.fn();
     const drawn = await render(around(<SignedIn onOut={onOut} />));
 
-    await waitFor(() => {
-      expect(drawn.getByText('Sign out')).toBeTruthy();
-    });
-
-    await userEvent.press(drawn.getByText('Sign out'));
+    await userEvent.press(await drawn.findByText('Account'));
+    await userEvent.press(await drawn.findByText('Sign out'));
 
     await waitFor(() => {
       expect(signOut).toHaveBeenCalled();
@@ -145,11 +142,8 @@ describe('SignedIn', () => {
 
     const drawn = await render(around(<SignedIn onOut={jest.fn()} />));
 
-    await waitFor(() => {
-      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
-    });
-
-    await userEvent.press(drawn.getByLabelText('Arrival'));
+    await userEvent.press(await drawn.findByText('Films'));
+    await userEvent.press(await drawn.findByLabelText('Arrival'));
 
     await waitFor(() => {
       expect(drawn.getByText('Linguists meet a ship.')).toBeTruthy();
@@ -161,17 +155,10 @@ describe('SignedIn', () => {
 
     const drawn = await render(around(<SignedIn onOut={jest.fn()} />));
 
-    await waitFor(() => {
-      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
-    });
+    await userEvent.press(await drawn.findByText('Films'));
+    await userEvent.press(await drawn.findByLabelText('Arrival'));
 
-    await userEvent.press(drawn.getByLabelText('Arrival'));
-
-    await waitFor(() => {
-      expect(drawn.getByText('Watch')).toBeTruthy();
-    });
-
-    await userEvent.press(drawn.getByText('Watch'));
+    await userEvent.press(await drawn.findByText('Play'));
 
     await waitFor(() => {
       expect(startPlaybackSession).toHaveBeenCalledWith(
@@ -191,21 +178,12 @@ describe('SignedIn', () => {
 
     const drawn = await render(around(<SignedIn onOut={jest.fn()} />));
 
-    await waitFor(() => {
-      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
-    });
+    await userEvent.press(await drawn.findByText('Films'));
+    await userEvent.press(await drawn.findByLabelText('Arrival'));
 
-    await userEvent.press(drawn.getByLabelText('Arrival'));
+    await userEvent.press(await drawn.findByLabelText('Back'));
 
-    await waitFor(() => {
-      expect(drawn.getByText('Back')).toBeTruthy();
-    });
-
-    await userEvent.press(drawn.getByText('Back'));
-
-    await waitFor(() => {
-      expect(drawn.getByText('Sign out')).toBeTruthy();
-    });
+    expect(await drawn.findByLabelText('What to show')).toBeTruthy();
   });
 
   describe('when an episode plays to its end', () => {
@@ -270,6 +248,24 @@ describe('SignedIn', () => {
           seasons: [{ seasonNumber: 1, episodes: THREE }],
         }),
       );
+      jest.mocked(fetchMediaDetail).mockImplementation((mediaId) =>
+        Promise.resolve(
+          MediaDetailSchema.parse({
+            ...(THREE.find((episode) => episode.id === mediaId) ?? THREE[0]),
+            container: 'mkv',
+            bitrateKbps: 6000,
+            audioStreams: ARRIVAL_IN_FULL.audioStreams,
+            subtitleStreams: [],
+            metadata: {
+              overview: '',
+              hasPoster: false,
+              hasBackdrop: false,
+              hasLogo: false,
+              seriesTitle: 'Severance',
+            },
+          }),
+        ),
+      );
       jest.mocked(startPlaybackSession).mockResolvedValue({
         kind: 'started',
         session: {
@@ -297,10 +293,8 @@ describe('SignedIn', () => {
 
       const drawn = await render(around(<SignedIn onOut={jest.fn()} />));
 
-      await waitFor(() => {
-        expect(drawn.getByLabelText('Severance')).toBeTruthy();
-      });
-      await userEvent.press(drawn.getByLabelText('Severance'));
+      await userEvent.press(await drawn.findByText('Shows'));
+      await userEvent.press(await drawn.findByLabelText('Severance'));
       await waitFor(() => {
         expect(drawn.getByLabelText('Episode 1')).toBeTruthy();
       });

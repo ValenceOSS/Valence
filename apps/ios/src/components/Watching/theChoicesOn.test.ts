@@ -136,8 +136,10 @@ describe('theChoicesOn', () => {
     expect(quality?.choices.map((one) => one.id)).not.toContain('2160p');
   });
 
-  it('says nothing at all about a film nothing is known about yet', () => {
-    expect(theChoicesOn({ ...asking, media: null, streams: [] })).toEqual([]);
+  it('offers only the speed for a film nothing is known about yet', () => {
+    expect(theChoicesOn({ ...asking, media: null, streams: [] }).map((set) => set.heading)).toEqual(
+      ['Speed'],
+    );
   });
 
   it('says nothing about subtitles for a film that has none', () => {
@@ -197,6 +199,6 @@ describe('theChoicesOn', () => {
       streams: [aStream(1, 'jpn', true), aStream(2, 'eng')],
     });
 
-    expect(sets.map((set) => set.heading)).toEqual(['Subtitles', 'Audio', 'Quality']);
+    expect(sets.map((set) => set.heading)).toEqual(['Subtitles', 'Audio', 'Quality', 'Speed']);
   });
 });

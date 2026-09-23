@@ -72,6 +72,7 @@ const config: Config = {
   moduleNameMapper: {
     '^react$': '<rootDir>/node_modules/react',
     '^react/(.*)$': '<rootDir>/node_modules/react/$1',
+    '^@tanstack/react-query$': '<rootDir>/node_modules/@tanstack/react-query',
     ...theWorkspaceAliases(),
   },
   transformIgnorePatterns: whatNeedsCompiling(),

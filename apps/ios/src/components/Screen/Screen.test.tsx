@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { useColorScheme } from 'react-native';
 import { theColours } from '@ValencePhone/theme/theColours';
 import { Words } from '@ValencePhone/components/Words/Words';
@@ -16,6 +17,7 @@ describe('Screen', () => {
       <Screen>
         <Words>On the ground</Words>
       </Screen>,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('On the ground')).toBeTruthy();
@@ -26,6 +28,7 @@ describe('Screen', () => {
       <Screen>
         <Words>On the ground</Words>
       </Screen>,
+      { wrapper: CacheScope },
     );
 
     expect(JSON.stringify(drawn.toJSON())).toContain(theColours.dark.surface);
@@ -36,6 +39,7 @@ describe('Screen', () => {
       <Screen scrolls>
         <Words>Long</Words>
       </Screen>,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('Long')).toBeTruthy();

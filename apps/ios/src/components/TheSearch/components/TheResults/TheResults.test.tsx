@@ -139,7 +139,7 @@ describe('TheResults', () => {
     const drawn = await render(theResults());
 
     await waitFor(() => {
-      expect(drawn.getByText('Nothing called “arr”.')).toBeTruthy();
+      expect(drawn.getByText('Nothing called “arr” in the library.')).toBeTruthy();
     });
   });
 });

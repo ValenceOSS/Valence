@@ -100,7 +100,7 @@ describe('ATitle', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('1h 56m')).toBeTruthy();
+      expect(drawn.getByText(/1h 56m/)).toBeTruthy();
     });
   });
 
@@ -141,12 +141,12 @@ describe('ATitle', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Watch')).toBeTruthy();
+      expect(drawn.getByText('Play')).toBeTruthy();
     });
 
-    await userEvent.press(drawn.getByText('Watch'));
+    await userEvent.press(drawn.getByText('Play'));
 
-    expect(onWatch).toHaveBeenCalledWith('3fa85f64-5717-4562-b3fc-2c963f66afa6', 0);
+    expect(onWatch).toHaveBeenCalledWith('one', 0);
   });
 
   it('says so where the title could not be read', async () => {
@@ -186,10 +186,10 @@ describe('ATitle', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Back')).toBeTruthy();
+      expect(drawn.getByLabelText('Back')).toBeTruthy();
     });
 
-    await userEvent.press(drawn.getByText('Back'));
+    await userEvent.press(drawn.getByLabelText('Back'));
 
     expect(onBack).toHaveBeenCalled();
   });
@@ -211,7 +211,7 @@ describe('ATitle', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Carry on from 1h 10m')).toBeTruthy();
+      expect(drawn.getByText('Resume from 1h 10m')).toBeTruthy();
     });
   });
 
@@ -233,12 +233,12 @@ describe('ATitle', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Carry on from 1h 10m')).toBeTruthy();
+      expect(drawn.getByText('Resume from 1h 10m')).toBeTruthy();
     });
 
-    await userEvent.press(drawn.getByText('Carry on from 1h 10m'));
+    await userEvent.press(drawn.getByText('Resume from 1h 10m'));
 
-    expect(onWatch).toHaveBeenCalledWith('3fa85f64-5717-4562-b3fc-2c963f66afa6', 4200);
+    expect(onWatch).toHaveBeenCalledWith('one', 4200);
   });
 
   it('still lets them start again, which is a thing they have to ask for', async () => {
@@ -264,7 +264,7 @@ describe('ATitle', () => {
 
     await userEvent.press(drawn.getByText('Start again'));
 
-    expect(onWatch).toHaveBeenCalledWith('3fa85f64-5717-4562-b3fc-2c963f66afa6', 0);
+    expect(onWatch).toHaveBeenCalledWith('one', 0);
   });
 
   it('says nothing about carrying on where they barely started', async () => {
@@ -284,7 +284,7 @@ describe('ATitle', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('Watch')).toBeTruthy();
+      expect(drawn.getByText('Play')).toBeTruthy();
     });
 
     expect(drawn.queryByText('Start again')).toBeNull();

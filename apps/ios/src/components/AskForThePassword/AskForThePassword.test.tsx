@@ -1,4 +1,5 @@
 import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
@@ -31,6 +32,7 @@ describe('AskForThePassword', () => {
   it('shows whose face is being signed in as', async () => {
     const drawn = await render(
       <AskForThePassword profile={A_FACE} onIn={jest.fn()} onBack={jest.fn()} />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('Dan')).toBeTruthy();
@@ -42,10 +44,11 @@ describe('AskForThePassword', () => {
     const onIn = jest.fn();
     const drawn = await render(
       <AskForThePassword profile={A_FACE} onIn={onIn} onBack={jest.fn()} />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.type(drawn.getByLabelText('Password'), 'hunter2');
-    await userEvent.press(drawn.getByText('Sign in'));
+    await userEvent.press(drawn.getByText('Watch'));
 
     await waitFor(() => {
       expect(signInAsProfile).toHaveBeenCalledWith(A_FACE.id, 'hunter2');
@@ -60,9 +63,11 @@ describe('AskForThePassword', () => {
 
     const drawn = await render(
       <AskForThePassword profile={A_FACE} onIn={jest.fn()} onBack={jest.fn()} />,
+      { wrapper: CacheScope },
     );
 
-    await userEvent.press(drawn.getByText('Sign in'));
+    await userEvent.type(drawn.getByLabelText('Password'), 'hunter2');
+    await userEvent.press(drawn.getByText('Watch'));
 
     await waitFor(() => {
       expect(drawn.getByText('That password is not right.')).toBeTruthy();
@@ -75,9 +80,11 @@ describe('AskForThePassword', () => {
     const onIn = jest.fn();
     const drawn = await render(
       <AskForThePassword profile={A_FACE} onIn={onIn} onBack={jest.fn()} />,
+      { wrapper: CacheScope },
     );
 
-    await userEvent.press(drawn.getByText('Sign in'));
+    await userEvent.type(drawn.getByLabelText('Password'), 'hunter2');
+    await userEvent.press(drawn.getByText('Watch'));
 
     await waitFor(() => {
       expect(drawn.getByLabelText('Authenticator code')).toBeTruthy();
@@ -92,9 +99,11 @@ describe('AskForThePassword', () => {
     const onIn = jest.fn();
     const drawn = await render(
       <AskForThePassword profile={A_FACE} onIn={onIn} onBack={jest.fn()} />,
+      { wrapper: CacheScope },
     );
 
-    await userEvent.press(drawn.getByText('Sign in'));
+    await userEvent.type(drawn.getByLabelText('Password'), 'hunter2');
+    await userEvent.press(drawn.getByText('Watch'));
 
     await waitFor(() => {
       expect(drawn.getByText('No.')).toBeTruthy();
@@ -106,6 +115,7 @@ describe('AskForThePassword', () => {
     const onBack = jest.fn();
     const drawn = await render(
       <AskForThePassword profile={A_FACE} onIn={jest.fn()} onBack={onBack} />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByText('Somebody else'));
@@ -116,6 +126,7 @@ describe('AskForThePassword', () => {
   it('offers a passkey instead of the password', async () => {
     const drawn = await render(
       <AskForThePassword profile={A_FACE} onIn={jest.fn()} onBack={jest.fn()} />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByRole('button', { name: 'Use a passkey instead' })).toBeTruthy();

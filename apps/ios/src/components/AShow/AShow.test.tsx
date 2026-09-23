@@ -19,7 +19,7 @@ const around = (children: ReactNode) => (
   </QueryClientProvider>
 );
 
-const anEpisode = (id: string, title: string, episodeNumber: number) =>
+const anEpisode = (id: string, title: string, seasonNumber: number, episodeNumber: number) =>
   MediaSummarySchema.parse({
     id,
     libraryId: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
@@ -31,6 +31,7 @@ const anEpisode = (id: string, title: string, episodeNumber: number) =>
     videoCodec: 'hevc',
     videoRange: 'SDR',
     addedAt: '2026-01-01T00:00:00.000Z',
+    seasonNumber,
     episodeNumber,
   });
 
@@ -51,8 +52,8 @@ const aShow = (seasons: { seasonNumber: number; episodes: ReturnType<typeof anEp
   });
 
 const TWO_SEASONS = aShow([
-  { seasonNumber: 1, episodes: [anEpisode(PILOT, 'Good News About Hell', 1)] },
-  { seasonNumber: 2, episodes: [anEpisode(LATER, 'Hello, Ms. Cobel', 1)] },
+  { seasonNumber: 1, episodes: [anEpisode(PILOT, 'Good News About Hell', 1, 1)] },
+  { seasonNumber: 2, episodes: [anEpisode(LATER, 'Hello, Ms. Cobel', 2, 1)] },
 ]);
 
 beforeEach(() => {
@@ -105,7 +106,7 @@ describe('AShow', () => {
     jest
       .mocked(fetchShow)
       .mockResolvedValue(
-        aShow([{ seasonNumber: 1, episodes: [anEpisode(PILOT, 'Good News About Hell', 1)] }]),
+        aShow([{ seasonNumber: 1, episodes: [anEpisode(PILOT, 'Good News About Hell', 1, 1)] }]),
       );
 
     const drawn = await render(

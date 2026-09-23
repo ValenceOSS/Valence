@@ -1,16 +1,21 @@
 import { render, userEvent, waitFor } from '@testing-library/react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { fetchLibraries, fetchLibraryItems } from '@ValenceClient/library/fetchLibrary';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
-import { fetchShows } from '@ValenceClient/library/fetchShows';
+import { fetchComingUp, fetchShows } from '@ValenceClient/library/fetchShows';
+import { fetchSession } from '@ValenceClient/session/auth';
 import { TheLibrary } from './TheLibrary';
-import type { ReactNode } from 'react';
+import type { TheLibraryProps } from './TheLibrary.types';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 
 jest.mock('@ValenceClient/library/fetchLibrary');
 jest.mock('@ValenceClient/library/fetchShows');
+jest.mock('@ValenceClient/session/auth');
+jest.mock('@ValencePhone/components/ACarriedMark/ACarriedMark', () => ({
+  ACarriedMark: () => null,
+}));
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/watchProgress'),
   fetchWatchProgress: jest.fn(),
@@ -47,11 +52,41 @@ const aTitle = (title: string): MediaSummary => ({
   seriesId: null,
 });
 
-const around = (children: ReactNode) => (
-  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-    {children}
-  </QueryClientProvider>
-);
+const SEVERANCE = {
+  id: 'severance',
+  libraryId: 'one',
+  title: 'Severance',
+  seasonCount: 2,
+  episodeCount: 19,
+  latestAddedAt: '2026-01-01T00:00:00.000Z',
+  coverMediaId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+  seriesId: null,
+  year: 2022,
+};
+
+const HALF_WAY_THROUGH_ARRIVAL = {
+  mediaId: aTitle('Arrival').id,
+  positionSeconds: 3480,
+  durationSeconds: 6960,
+  isFinished: false,
+  updatedAt: '2026-01-01T00:00:00.000Z',
+};
+
+const theLibrary = (overrides: Partial<TheLibraryProps> = {}) =>
+  render(
+    <TheLibrary
+      onWatch={jest.fn()}
+      onLookAt={jest.fn()}
+      onLookAtShow={jest.fn()}
+      onNotifications={jest.fn()}
+      onAlbum={jest.fn()}
+      onArtist={jest.fn()}
+      onPlaylist={jest.fn()}
+      onLiked={jest.fn()}
+      {...overrides}
+    />,
+    { wrapper: CacheScope },
+  );
 
 beforeEach(() => {
   installPlatform(aFakePlatform({ serverAddress: () => 'http://one.local:8420' }));
@@ -59,6 +94,13 @@ beforeEach(() => {
   jest.mocked(fetchLibraryItems).mockReset();
   jest.mocked(fetchWatchProgress).mockReset().mockResolvedValue([]);
   jest.mocked(fetchShows).mockReset().mockResolvedValue([]);
+  jest.mocked(fetchComingUp).mockReset().mockResolvedValue([]);
+  jest.mocked(fetchSession).mockReset().mockResolvedValue({
+    id: 'mark',
+    name: 'Mark',
+    email: 'mark@lumon.example',
+    emailVerified: true,
+  });
 });
 
 afterEach(() => {
@@ -66,85 +108,49 @@ afterEach(() => {
 });
 
 describe('TheLibrary', () => {
-  it('shows the first library without asking somebody to choose one', async () => {
+  it('opens on home, drawing what the libraries hold without asking which', async () => {
     jest
       .mocked(fetchLibraries)
-      .mockResolvedValue([aLibrary('one', 'Films'), aLibrary('two', 'Shows')]);
+      .mockResolvedValue([
+        aLibrary('one', 'Films'),
+        { ...aLibrary('two', 'Shows'), kind: 'shows' },
+      ]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
-    await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary();
 
     await waitFor(() => {
-      expect(fetchLibraryItems).toHaveBeenCalledWith('one', expect.anything());
+      expect(drawn.getAllByLabelText('Arrival').length).toBeGreaterThan(0);
     });
+    expect(fetchLibraryItems).toHaveBeenCalledWith('one', expect.anything());
   });
 
-  it('draws what is in it', async () => {
+  it('draws the films of a household on their own part', async () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary();
+
+    await userEvent.press(await drawn.findByText('Films'));
 
     await waitFor(() => {
-      expect(drawn.getAllByText('Arrival').length).toBeGreaterThan(0);
+      expect(drawn.getAllByLabelText('Arrival').length).toBeGreaterThan(0);
     });
   });
 
-  it('shows another library when it is picked', async () => {
+  it('offers a choice of library only where a kind has more than one', async () => {
     jest
       .mocked(fetchLibraries)
-      .mockResolvedValue([aLibrary('one', 'Films'), aLibrary('two', 'Shows')]);
+      .mockResolvedValue([aLibrary('one', 'Films'), aLibrary('two', 'Classics')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary();
+
+    await userEvent.press(await drawn.findByText('Films'));
+    await userEvent.press(await drawn.findByText('Classics'));
 
     await waitFor(() => {
-      expect(drawn.getByText('Shows')).toBeTruthy();
-    });
-
-    await userEvent.press(drawn.getByText('Shows'));
-
-    await waitFor(() => {
-      expect(fetchLibraryItems).toHaveBeenCalledWith('two', expect.anything());
+      expect(fetchLibraryItems).toHaveBeenLastCalledWith('two', expect.anything());
     });
   });
 
@@ -152,48 +158,20 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary();
 
-    await waitFor(() => {
-      expect(drawn.getByText('Nothing in here yet.')).toBeTruthy();
-    });
+    await userEvent.press(await drawn.findByText('Films'));
+
+    expect(await drawn.findByText('Nothing in here yet.')).toBeTruthy();
   });
 
   it('says so where the libraries could not be read', async () => {
     jest.mocked(fetchLibraries).mockRejectedValue(new Error('refused'));
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary();
 
-    await waitFor(() => {
-      expect(drawn.getByText('Those could not be read.')).toBeTruthy();
-    });
+    expect(await drawn.findByText('Those could not be read.')).toBeTruthy();
   });
 
   it('tells whoever is listening which title somebody wants to see', async () => {
@@ -201,26 +179,10 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
     const onLookAt = jest.fn();
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={onLookAt}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary({ onLookAt });
 
-    await waitFor(() => {
-      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
-    });
-
-    await userEvent.press(drawn.getByLabelText('Arrival'));
+    await userEvent.press(await drawn.findByText('Films'));
+    await userEvent.press(await drawn.findByLabelText('Arrival'));
 
     expect(onLookAt).toHaveBeenCalledWith(aTitle('Arrival').id);
   });
@@ -228,30 +190,11 @@ describe('TheLibrary', () => {
   it('shows how far through something a viewer already is', async () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
-    jest.mocked(fetchWatchProgress).mockResolvedValue([
-      {
-        mediaId: aTitle('Arrival').id,
-        positionSeconds: 3480,
-        durationSeconds: 6960,
-        isFinished: false,
-        updatedAt: '2026-01-01T00:00:00.000Z',
-      },
-    ]);
+    jest.mocked(fetchWatchProgress).mockResolvedValue([HALF_WAY_THROUGH_ARRIVAL]);
 
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary();
+
+    await userEvent.press(await drawn.findByText('Films'));
 
     await waitFor(() => {
       expect(
@@ -264,24 +207,10 @@ describe('TheLibrary', () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary();
 
-    await waitFor(() => {
-      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
-    });
+    await userEvent.press(await drawn.findByText('Films'));
+    await drawn.findByLabelText('Arrival');
 
     expect(drawn.queryByRole('progressbar')).toBeNull();
   });
@@ -289,246 +218,83 @@ describe('TheLibrary', () => {
   it('opens on what somebody was part way through', async () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
-    jest.mocked(fetchWatchProgress).mockResolvedValue([
-      {
-        mediaId: aTitle('Arrival').id,
-        positionSeconds: 3480,
-        durationSeconds: 6960,
-        isFinished: false,
-        updatedAt: '2026-01-01T00:00:00.000Z',
-      },
-    ]);
+    jest.mocked(fetchWatchProgress).mockResolvedValue([HALF_WAY_THROUGH_ARRIVAL]);
 
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary();
 
-    await waitFor(() => {
-      expect(drawn.getByText('Continue watching')).toBeTruthy();
-    });
+    expect(await drawn.findByText('Continue watching')).toBeTruthy();
   });
 
   it('says nothing about carrying on to a household that has not started anything', async () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
 
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary();
 
     await waitFor(() => {
-      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
+      expect(drawn.getAllByLabelText('Arrival').length).toBeGreaterThan(0);
     });
-
     expect(drawn.queryByText('Continue watching')).toBeNull();
   });
 
   it('leaves out what they have finished', async () => {
     jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
-    jest.mocked(fetchWatchProgress).mockResolvedValue([
-      {
-        mediaId: aTitle('Arrival').id,
-        positionSeconds: 6960,
-        durationSeconds: 6960,
-        isFinished: true,
-        updatedAt: '2026-01-01T00:00:00.000Z',
-      },
-    ]);
+    jest
+      .mocked(fetchWatchProgress)
+      .mockResolvedValue([
+        { ...HALF_WAY_THROUGH_ARRIVAL, positionSeconds: 6960, isFinished: true },
+      ]);
 
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary();
 
     await waitFor(() => {
-      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
+      expect(drawn.getAllByLabelText('Arrival').length).toBeGreaterThan(0);
     });
-
     expect(drawn.queryByText('Continue watching')).toBeNull();
   });
 
   it('draws a programme once, rather than once for every episode of it', async () => {
     jest.mocked(fetchLibraries).mockResolvedValue([{ ...aLibrary('one', 'Shows'), kind: 'shows' }]);
-    jest.mocked(fetchShows).mockResolvedValue([
-      {
-        id: 'severance',
-        libraryId: 'one',
-        title: 'Severance',
-        seasonCount: 2,
-        episodeCount: 19,
-        latestAddedAt: '2026-01-01T00:00:00.000Z',
-        coverMediaId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-        seriesId: null,
-        year: 2022,
-      },
-    ]);
+    jest.mocked(fetchShows).mockResolvedValue([SEVERANCE]);
 
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
+    const drawn = await theLibrary();
+
+    await userEvent.press(await drawn.findByText('Shows'));
+
+    expect(await drawn.findByLabelText('Severance')).toBeTruthy();
+    expect(fetchLibraryItems).not.toHaveBeenCalledWith(
+      'one',
+      expect.objectContaining({ kind: 'shows' }),
     );
-
-    await waitFor(() => {
-      expect(drawn.getAllByText('Severance')).not.toHaveLength(0);
-    });
-
-    expect(fetchLibraryItems).not.toHaveBeenCalled();
   });
 
   it('opens the programme that was pressed', async () => {
     jest.mocked(fetchLibraries).mockResolvedValue([{ ...aLibrary('one', 'Shows'), kind: 'shows' }]);
-    jest.mocked(fetchShows).mockResolvedValue([
-      {
-        id: 'severance',
-        libraryId: 'one',
-        title: 'Severance',
-        seasonCount: 2,
-        episodeCount: 19,
-        latestAddedAt: '2026-01-01T00:00:00.000Z',
-        coverMediaId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-        seriesId: null,
-        year: 2022,
-      },
-    ]);
+    jest.mocked(fetchShows).mockResolvedValue([SEVERANCE]);
 
     const onLookAtShow = jest.fn();
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={onLookAtShow}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary({ onLookAtShow });
 
-    await waitFor(() => {
-      expect(drawn.getByLabelText('Severance')).toBeTruthy();
-    });
-
-    await userEvent.press(drawn.getByLabelText('Severance'));
+    await userEvent.press(await drawn.findByText('Shows'));
+    await userEvent.press(await drawn.findByLabelText('Severance'));
 
     expect(onLookAtShow).toHaveBeenCalledWith('one', 'severance');
   });
 
-  it('offers only what a phone can play, rather than albums that open in a film player', async () => {
+  it('offers music where there is some, and leaves out books, which a phone cannot open', async () => {
     jest
       .mocked(fetchLibraries)
       .mockResolvedValue([
         aLibrary('one', 'Films'),
-        { ...aLibrary('two', 'Music'), kind: 'music' },
+        { ...aLibrary('two', 'Albums'), kind: 'music' },
         { ...aLibrary('three', 'Books'), kind: 'books' },
       ]);
     jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
 
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
+    const drawn = await theLibrary();
 
-    await waitFor(() => {
-      expect(drawn.getByText('Films')).toBeTruthy();
-    });
-
-    expect(drawn.queryByText('Music')).toBeNull();
+    expect(await drawn.findByText('Music')).toBeTruthy();
     expect(drawn.queryByText('Books')).toBeNull();
-  });
-
-  it('shows what was searched for in place of the shelf', async () => {
-    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
-    jest
-      .mocked(fetchLibraryItems)
-      .mockImplementation((_library, options) =>
-        Promise.resolve(
-          options?.search === 'Arrival'
-            ? { items: [aTitle('Arrival')], total: 1 }
-            : { items: [aTitle('Heat')], total: 1 },
-        ),
-      );
-
-    const drawn = await render(
-      around(
-        <TheLibrary
-          onWatch={jest.fn()}
-          onLookAt={jest.fn()}
-          onLookAtShow={jest.fn()}
-          onNotifications={jest.fn()}
-          onAlbum={jest.fn()}
-          onArtist={jest.fn()}
-          onPlaylist={jest.fn()}
-          onLiked={jest.fn()}
-        />,
-      ),
-    );
-
-    await waitFor(() => {
-      expect(drawn.getByLabelText('Heat')).toBeTruthy();
-    });
-
-    await userEvent.type(drawn.getByLabelText('Search'), 'Arrival');
-
-    await waitFor(() => {
-      expect(drawn.getByLabelText('Arrival')).toBeTruthy();
-    });
-
-    expect(drawn.queryByLabelText('Heat')).toBeNull();
   });
 });

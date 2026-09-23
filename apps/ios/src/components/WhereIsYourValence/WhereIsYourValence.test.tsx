@@ -1,4 +1,5 @@
 import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { whicheverAnswers } from '@ValencePhone/platform/whicheverAnswers';
 import { WhereIsYourValence } from './WhereIsYourValence';
 
@@ -10,7 +11,9 @@ beforeEach(() => {
 
 describe('WhereIsYourValence', () => {
   it('asks the one question a phone cannot answer itself', async () => {
-    const drawn = await render(<WhereIsYourValence onChosen={jest.fn()} />);
+    const drawn = await render(<WhereIsYourValence onChosen={jest.fn()} />, {
+      wrapper: CacheScope,
+    });
 
     expect(drawn.getByText('Where is your Valence?')).toBeTruthy();
   });
@@ -19,7 +22,7 @@ describe('WhereIsYourValence', () => {
     jest.mocked(whicheverAnswers).mockResolvedValue('http://192.168.1.36:8420');
 
     const onChosen = jest.fn();
-    const drawn = await render(<WhereIsYourValence onChosen={onChosen} />);
+    const drawn = await render(<WhereIsYourValence onChosen={onChosen} />, { wrapper: CacheScope });
 
     await userEvent.type(drawn.getByLabelText('Server address'), 'http://192.168.1.36:8420');
     await userEvent.press(drawn.getByText('Connect'));
@@ -30,7 +33,9 @@ describe('WhereIsYourValence', () => {
   });
 
   it('tries what somebody meant, not only what they wrote', async () => {
-    const drawn = await render(<WhereIsYourValence onChosen={jest.fn()} />);
+    const drawn = await render(<WhereIsYourValence onChosen={jest.fn()} />, {
+      wrapper: CacheScope,
+    });
 
     await userEvent.type(drawn.getByLabelText('Server address'), 'valence.example');
     await userEvent.press(drawn.getByText('Connect'));
@@ -47,7 +52,7 @@ describe('WhereIsYourValence', () => {
     jest.mocked(whicheverAnswers).mockResolvedValue(null);
 
     const onChosen = jest.fn();
-    const drawn = await render(<WhereIsYourValence onChosen={onChosen} />);
+    const drawn = await render(<WhereIsYourValence onChosen={onChosen} />, { wrapper: CacheScope });
 
     await userEvent.type(drawn.getByLabelText('Server address'), 'valence.example');
     await userEvent.press(drawn.getByText('Connect'));
@@ -60,7 +65,9 @@ describe('WhereIsYourValence', () => {
   });
 
   it('asks nothing where nothing was typed', async () => {
-    const drawn = await render(<WhereIsYourValence onChosen={jest.fn()} />);
+    const drawn = await render(<WhereIsYourValence onChosen={jest.fn()} />, {
+      wrapper: CacheScope,
+    });
 
     await userEvent.press(drawn.getByText('Connect'));
 
@@ -69,7 +76,7 @@ describe('WhereIsYourValence', () => {
 
   it('trims what was typed, since an address pasted from a browser carries spaces', async () => {
     const onChosen = jest.fn();
-    const drawn = await render(<WhereIsYourValence onChosen={onChosen} />);
+    const drawn = await render(<WhereIsYourValence onChosen={onChosen} />, { wrapper: CacheScope });
 
     await userEvent.type(drawn.getByLabelText('Server address'), '  http://one.local:8420  ');
     await userEvent.press(drawn.getByText('Connect'));
@@ -84,13 +91,16 @@ describe('WhereIsYourValence', () => {
   it('says why the last address did not work, where it did not', async () => {
     const drawn = await render(
       <WhereIsYourValence onChosen={jest.fn()} refusal="That server did not answer." />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('That server did not answer.')).toBeTruthy();
   });
 
   it('says nothing about a refusal that has not happened', async () => {
-    const drawn = await render(<WhereIsYourValence onChosen={jest.fn()} />);
+    const drawn = await render(<WhereIsYourValence onChosen={jest.fn()} />, {
+      wrapper: CacheScope,
+    });
 
     expect(drawn.queryByText(/did not answer/)).toBeNull();
   });

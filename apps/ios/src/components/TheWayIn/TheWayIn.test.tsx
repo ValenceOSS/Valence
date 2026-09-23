@@ -89,7 +89,7 @@ describe('TheWayIn', () => {
     );
 
     await waitFor(() => {
-      expect(drawn.getByText('That server did not answer.')).toBeTruthy();
+      expect(drawn.getByText(/^Can’t reach /)).toBeTruthy();
     });
   });
 
@@ -131,7 +131,7 @@ describe('TheWayIn', () => {
 
     await userEvent.press(drawn.getByLabelText('Sign in as Dan'));
 
-    expect(onPicked).toHaveBeenCalledWith(A_FACE);
+    expect(onPicked).toHaveBeenCalledWith(A_FACE, expect.anything());
   });
 
   it('offers a passkey without picking a face first', async () => {

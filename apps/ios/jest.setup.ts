@@ -2,7 +2,7 @@ import { theFakePlayer as mockPlayer } from '@ValencePhone/testing/theFakePlayer
 import type { FakePlayer } from '@ValencePhone/testing/theFakePlayer';
 
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
-import { useEffect as mockUseEffect } from 'react';
+import { createContext as mockCreateContext, useEffect as mockUseEffect } from 'react';
 import type { ReactNode } from 'react';
 
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
@@ -13,6 +13,7 @@ jest.mock('react-native-safe-area-context', () => {
   return {
     SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
     SafeAreaView: ({ children }: { children: ReactNode }) => children,
+    SafeAreaInsetsContext: mockCreateContext(room),
     useSafeAreaInsets: () => room,
     useSafeAreaFrame: () => ({ height: 852, width: 393, x: 0, y: 0 }),
   };
@@ -32,7 +33,20 @@ jest.mock('expo-screen-orientation', () => ({
 
 jest.mock('expo', () => ({
   ...jest.requireActual<object>('expo'),
-  requireOptionalNativeModule: () => null,
+  requireOptionalNativeModule: (name: string) =>
+    name === 'ValenceMusic'
+      ? {
+          load: jest.fn(),
+          play: jest.fn(),
+          pause: jest.fn(),
+          seek: jest.fn(),
+          setVolume: jest.fn(),
+          setMuted: jest.fn(),
+          describe: jest.fn(),
+          stop: jest.fn(),
+          addListener: () => ({ remove: () => undefined }),
+        }
+      : null,
   useEventListener: (
     player: { addListener: (of: string, told: () => void) => { remove: () => void } },
     of: string,

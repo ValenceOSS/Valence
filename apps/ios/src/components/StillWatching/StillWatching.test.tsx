@@ -1,4 +1,5 @@
 import { act, render, userEvent } from '@testing-library/react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { StillWatching } from './StillWatching';
 
 afterEach(() => {
@@ -14,6 +15,7 @@ describe('StillWatching', () => {
         onCarryOn={jest.fn()}
         onStop={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('Are you still watching?')).toBeTruthy();
@@ -27,6 +29,7 @@ describe('StillWatching', () => {
         onCarryOn={jest.fn()}
         onStop={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText(/Pilot is up next/u)).toBeTruthy();
@@ -41,6 +44,7 @@ describe('StillWatching', () => {
         onCarryOn={onCarryOn}
         onStop={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByText('Still watching'));
@@ -52,6 +56,7 @@ describe('StillWatching', () => {
     const onStop = jest.fn();
     const drawn = await render(
       <StillWatching upNext="Pilot" secondsToAnswer={90} onCarryOn={jest.fn()} onStop={onStop} />,
+      { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByText('Stop'));
@@ -64,6 +69,7 @@ describe('StillWatching', () => {
 
     const drawn = await render(
       <StillWatching upNext="Pilot" secondsToAnswer={5} onCarryOn={jest.fn()} onStop={jest.fn()} />,
+      { wrapper: CacheScope },
     );
 
     await act(() => {
@@ -80,6 +86,7 @@ describe('StillWatching', () => {
 
     await render(
       <StillWatching upNext="Pilot" secondsToAnswer={3} onCarryOn={jest.fn()} onStop={onStop} />,
+      { wrapper: CacheScope },
     );
 
     await act(() => {
