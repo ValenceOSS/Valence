@@ -311,6 +311,37 @@ describe('createMusicPlayer', () => {
     });
   });
 
+  describe('leaving', () => {
+    it('stops playing here and forgets the queue', () => {
+      const { player, audio, deps } = build();
+
+      player.play(THREE, 0);
+      player.leave();
+
+      expect(audio.pause).toHaveBeenCalled();
+      expect(deps.report).toHaveBeenLastCalledWith(null);
+      expect(player.read()).toMatchObject({
+        queue: null,
+        current: null,
+        isPlaying: false,
+        positionSeconds: 0,
+      });
+    });
+
+    it('lets go of the device it controls without telling it to stop', () => {
+      const { player, deps } = build();
+
+      player.play(THREE, 0);
+      player.playOn({ clientId: 'phone', label: 'iPhone' });
+      vi.mocked(deps.command).mockClear();
+      player.leave();
+
+      expect(deps.command).not.toHaveBeenCalled();
+      expect(player.read().remote).toBeNull();
+      expect(player.read().queue).toBeNull();
+    });
+  });
+
   describe('keeping in step with the device it controls', () => {
     const reportFrom = (overrides = {}) => ({
       trackId: THREE[1]?.id ?? '',

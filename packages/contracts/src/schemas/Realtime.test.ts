@@ -109,6 +109,27 @@ describe('FromClientSchema', () => {
     expect(read.success).toBe(true);
   });
 
+  it('reads an identify that says what kind of device it comes from', () => {
+    const read = FromClientSchema.safeParse({
+      kind: 'identify',
+      profileId: null,
+      clientId: 'tv-1',
+      clientKind: 'tv',
+    });
+
+    expect(read.success).toBe(true);
+  });
+
+  it('refuses an identify from a kind of device Valence does not know', () => {
+    const read = FromClientSchema.safeParse({
+      kind: 'identify',
+      profileId: null,
+      clientKind: 'toaster',
+    });
+
+    expect(read.success).toBe(false);
+  });
+
   it('refuses an identify naming something that is not a profile id', () => {
     const read = FromClientSchema.safeParse({ kind: 'identify', profileId: 'someone-else' });
 

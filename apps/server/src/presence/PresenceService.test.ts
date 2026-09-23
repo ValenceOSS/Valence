@@ -798,6 +798,31 @@ describe('createPresenceService, telling somebody who is here', () => {
     });
   });
 
+  it('says what kind of device arrived, where it said so', () => {
+    const { presence, opened } = connecting();
+
+    presence.connect({ ...AN_ARRIVAL, clientKind: 'tv', send: vi.fn() });
+
+    expect(opened).toHaveBeenCalledWith(expect.objectContaining({ clientKind: 'tv' }));
+    expect(presence.list()[0]?.clientKind).toBe('tv');
+  });
+
+  it('passes a film command to the device it was sent to', () => {
+    const { presence } = connecting();
+    const send = vi.fn();
+    const command = {
+      kind: 'video' as const,
+      command: { kind: 'pause' as const },
+      fromClientId: 'phone',
+      fromLabel: 'iPhone',
+    };
+
+    presence.connect({ ...AN_ARRIVAL, send });
+
+    expect(presence.tell('tab-1', command)).toBe(true);
+    expect(send).toHaveBeenCalledWith(command);
+  });
+
   it('says how a guest got in, so whoever shared the link can be named', () => {
     const { presence, opened } = connecting();
 

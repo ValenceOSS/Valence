@@ -36,6 +36,12 @@ describe('MusicRemote', () => {
     });
   });
 
+  it('reads the news that a profile’s film devices changed', () => {
+    expect(PlaybackEventSchema.parse({ kind: 'videoDevicesChanged' })).toEqual({
+      kind: 'videoDevicesChanged',
+    });
+  });
+
   it('reads a report that carries what plays next and whether it is muted', () => {
     const report = MusicNowPlayingSchema.parse({
       trackId: '00000000-0000-4000-8000-000000000001',

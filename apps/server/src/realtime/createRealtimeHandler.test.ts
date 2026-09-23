@@ -8,6 +8,7 @@ import type { PresenceBinding, PresenceControl } from './createRealtimeHandler';
 import type { Schedule } from './createCoalescer';
 import type { FromServer } from '@ValenceContracts/schemas/Realtime';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
 
 const createWorld = (
@@ -45,20 +46,23 @@ const createWorld = (
     disconnected: string[];
     labels: string[];
     addresses: (string | null)[];
+    kinds: (ClientKind | null)[];
   } = {
     connected: [],
     disconnected: [],
     labels: [],
     addresses: [],
+    kinds: [],
   };
 
   let announce: ((event: PresenceControl) => void) | null = null;
 
   const presence: PresenceBinding = {
-    connect: ({ clientId, deviceLabel, address, send }) => {
+    connect: ({ clientId, deviceLabel, clientKind, address, send }) => {
       presenceCalls.connected.push(clientId);
       presenceCalls.labels.push(deviceLabel);
       presenceCalls.addresses.push(address);
+      presenceCalls.kinds.push(clientKind);
       announce = send;
 
       return true;
@@ -302,6 +306,34 @@ describe('createRealtimeHandler', () => {
     expect(world.presenceCalls.labels).toStrictEqual(['Living room']);
   });
 
+  it('takes the kind of device the tab said it is', async () => {
+    const world = createWorld();
+    const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
+
+    await session.receive(
+      JSON.stringify({
+        kind: 'identify',
+        profileId: null,
+        clientId: 'tv-one',
+        deviceLabel: 'Living room',
+        clientKind: 'tv',
+      }),
+    );
+
+    expect(world.presenceCalls.kinds).toStrictEqual(['tv']);
+  });
+
+  it('says nothing about the kind of device where the tab did not say', async () => {
+    const world = createWorld();
+    const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
+
+    await session.receive(
+      JSON.stringify({ kind: 'identify', profileId: null, clientId: 'tab-one' }),
+    );
+
+    expect(world.presenceCalls.kinds).toStrictEqual([null]);
+  });
+
   it('carries where the connection came from down to presence, which the tab cannot claim', async () => {
     const world = createWorld();
     const session = world.handler.open(
@@ -392,6 +424,30 @@ describe('createRealtimeHandler', () => {
     expect(event?.kind === 'event' ? event.payload : null).toStrictEqual({
       kind: 'music',
       command: { kind: 'seek', positionSeconds: 42 },
+      fromClientId: 'phone',
+      fromLabel: 'iPhone',
+    });
+  });
+
+  it('carries a film command from another of the same person’s devices, saying which', async () => {
+    const world = createWorld();
+    const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
+
+    await session.receive(
+      JSON.stringify({ kind: 'identify', profileId: null, clientId: 'tv-one' }),
+    );
+    world.announce({
+      kind: 'video',
+      command: { kind: 'play', mediaId: '00000000-0000-4000-8000-000000000001', startSeconds: 30 },
+      fromClientId: 'phone',
+      fromLabel: 'iPhone',
+    });
+
+    const event = world.read().find((message) => message.kind === 'event');
+
+    expect(event?.kind === 'event' ? event.payload : null).toStrictEqual({
+      kind: 'video',
+      command: { kind: 'play', mediaId: '00000000-0000-4000-8000-000000000001', startSeconds: 30 },
       fromClientId: 'phone',
       fromLabel: 'iPhone',
     });

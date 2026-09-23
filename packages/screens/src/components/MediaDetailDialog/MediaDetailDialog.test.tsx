@@ -888,3 +888,43 @@ describe('a film held as more than one cut of itself', () => {
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'version-1' }), 0);
   });
 });
+
+describe('playing it on a television', () => {
+  it('offers no television where the caller has none to send to', async () => {
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await openTheMenu();
+
+    expect(screen.queryByText('Play on TV')).not.toBeInTheDocument();
+  });
+
+  it('sends it from where this person had got to', async () => {
+    const onPlayOn = vi.fn();
+
+    renderInAnAddress(
+      <MediaDetailDialog
+        media={summary}
+        resumeSeconds={754}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+        onPlayOn={onPlayOn}
+      />,
+    );
+
+    await userEvent.setup().click(await screen.findByText('Play on TV'));
+
+    expect(onPlayOn).toHaveBeenCalledWith(summary, 754);
+  });
+
+  it('sends it from the start where this person has not begun it', async () => {
+    const onPlayOn = vi.fn();
+
+    renderInAnAddress(
+      <MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} onPlayOn={onPlayOn} />,
+    );
+
+    await userEvent.setup().click(await screen.findByText('Play on TV'));
+
+    expect(onPlayOn).toHaveBeenCalledWith(summary, 0);
+  });
+});

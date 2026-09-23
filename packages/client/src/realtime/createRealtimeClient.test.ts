@@ -374,6 +374,33 @@ describe('createRealtimeClient', () => {
     });
   });
 
+  it('tells the server what kind of device this is when it says so', () => {
+    const world = createWorld();
+
+    world.client.start();
+    world.openIt();
+    world.client.identify({ profileId: null, clientId: 'tv-1', clientKind: 'tv' });
+
+    expect(world.sent()).toContainEqual({
+      kind: 'identify',
+      profileId: null,
+      clientId: 'tv-1',
+      clientKind: 'tv',
+    });
+  });
+
+  it('leaves the kind of device out where it was not given one', () => {
+    const world = createWorld();
+
+    world.client.start();
+    world.openIt();
+    world.client.identify({ profileId: null, clientId: 'tab-1' });
+
+    expect(world.sent().find((message) => message.kind === 'identify')).not.toHaveProperty(
+      'clientKind',
+    );
+  });
+
   it('says who it is acting as again after reconnecting, not who it opened as', () => {
     const world = createWorld();
 
