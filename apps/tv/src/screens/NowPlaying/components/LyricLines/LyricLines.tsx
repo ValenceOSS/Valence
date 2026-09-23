@@ -74,7 +74,7 @@ const LyricLines = ({ lyrics, positionMs, onSeek }: LyricLinesProps) => {
   const [room, setRoom] = useState(0);
   const places = useRef(new Map<number, { top: number; height: number }>());
   const [measured, setMeasured] = useState(0);
-  const lift = useRef(new Animated.Value(0)).current;
+  const [lift] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (browsed === null) {

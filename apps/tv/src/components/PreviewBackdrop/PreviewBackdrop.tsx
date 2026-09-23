@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { readPreviewState } from '@ValenceClient/playback/readPreviewState';
@@ -31,7 +31,7 @@ const FADES_OUT_MS = 200;
  * @param style - Its size and place.
  */
 const PreviewBackdrop = ({ mediaId, stillPath, isPlaying, style }: PreviewBackdropProps) => {
-  const shown = useRef(new Animated.Value(0)).current;
+  const [shown] = useState(() => new Animated.Value(0));
   const isLoaded = useRef(false);
   const player = useVideoPlayer(null, (made) => {
     made.muted = true;

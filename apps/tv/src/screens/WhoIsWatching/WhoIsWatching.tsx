@@ -51,7 +51,7 @@ const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingPr
   const profiles = wayIn.data?.profiles ?? [];
   const isHidden = wayIn.isSuccess && profiles.length === 0;
   const faces = useRef(new Map<string, View>());
-  const markSpot = useReportSpot();
+  const { ref: holdMark, whereNow: whereMarkIs } = useReportSpot();
 
   return (
     <View style={styles.screen}>
@@ -59,7 +59,7 @@ const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingPr
 
       <FadeIn isFilling={false}>
         <View style={styles.top}>
-          <View ref={markSpot.ref} collapsable={false}>
+          <View ref={holdMark} collapsable={false}>
             <Image source={mark} style={MARK} contentFit="contain" />
           </View>
           <Text style={styles.title}>
@@ -92,7 +92,7 @@ const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingPr
 
                   void Promise.all([
                     face === undefined ? Promise.resolve(null) : whereOnScreen(face),
-                    markSpot.whereNow(),
+                    whereMarkIs(),
                   ]).then(([faceAt, markAt]) => {
                     onChoose(item, { face: faceAt, mark: markAt });
                   });

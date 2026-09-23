@@ -35,8 +35,8 @@ const EnterPassword = ({
   onFaceAt,
   onMarkAt,
 }: EnterPasswordProps) => {
-  const face = useReportSpot(onFaceAt);
-  const markSpot = useReportSpot(onMarkAt);
+  const { ref: holdFace, onLayout: faceLaidOut, whereNow: whereFaceIs } = useReportSpot(onFaceAt);
+  const { ref: holdMark, onLayout: markLaidOut, whereNow: whereMarkIs } = useReportSpot(onMarkAt);
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [needsCode, setNeedsCode] = useState(false);
@@ -52,13 +52,13 @@ const EnterPassword = ({
     }
 
     await holdTheSession();
-    const [faceAt, markAt] = await Promise.all([face.whereNow(), markSpot.whereNow()]);
+    const [faceAt, markAt] = await Promise.all([whereFaceIs(), whereMarkIs()]);
 
     onSignedIn({ face: faceAt, mark: markAt });
   };
 
   const inByPhone = () => {
-    void Promise.all([face.whereNow(), markSpot.whereNow()]).then(([faceAt, markAt]) => {
+    void Promise.all([whereFaceIs(), whereMarkIs()]).then(([faceAt, markAt]) => {
       onSignedIn({ face: faceAt, mark: markAt });
     });
   };
@@ -96,10 +96,10 @@ const EnterPassword = ({
     <View style={styles.screen}>
       <WayInBackdrop tint={profile.colour} />
       <View
-        ref={markSpot.ref}
+        ref={holdMark}
         collapsable={false}
         style={[styles.mark, isArriving && styles.hidden]}
-        onLayout={markSpot.onLayout}
+        onLayout={markLaidOut}
       >
         <Image source={mark} style={MARK} contentFit="contain" />
       </View>
@@ -107,10 +107,10 @@ const EnterPassword = ({
       <View style={styles.choices}>
         <View style={styles.side}>
           <View
-            ref={face.ref}
+            ref={holdFace}
             collapsable={false}
             style={isArriving && styles.hidden}
-            onLayout={face.onLayout}
+            onLayout={faceLaidOut}
           >
             <Face profile={profile} size={180} />
           </View>

@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -35,7 +35,7 @@ const LyricLineText = ({ text, distance, canSeek, onPress, onFocus, onLayout }: 
     distance === 0
       ? SUNG
       : Math.max((distance > 0 ? NEXT : JUST_GONE) - (Math.abs(distance) - 1) * DIMS_BY, FAINTEST);
-  const shown = useRef(new Animated.Value(target)).current;
+  const [shown] = useState(() => new Animated.Value(target));
 
   useEffect(() => {
     Animated.timing(shown, {

@@ -3,11 +3,16 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getDefaultConfig } from 'expo/metro-config.js';
 
+type Resolution =
+  | { type: 'sourceFile'; filePath: string }
+  | { type: 'assetFiles'; filePaths: readonly string[] }
+  | { type: 'empty' };
+
 type Resolve = (
   context: { resolveRequest: Resolve; originModulePath: string },
   moduleName: string,
   platform: string | null,
-) => unknown;
+) => Resolution;
 
 type Paths = { compilerOptions: { paths: Record<string, string[]> } };
 

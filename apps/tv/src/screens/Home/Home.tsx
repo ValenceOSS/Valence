@@ -121,13 +121,16 @@ const HomePage = ({
   );
 
   const arrivals = home.rails.find((rail) => rail.id === 'recent')?.items;
-  const arrivalIds = (arrivals ?? []).map((media) => media.id).join();
+  const shelved = useRef('');
 
   useEffect(() => {
-    if (arrivals !== undefined && arrivals.length > 0) {
+    const ids = (arrivals ?? []).map((media) => media.id).join();
+
+    if (arrivals !== undefined && arrivals.length > 0 && ids !== shelved.current) {
+      shelved.current = ids;
       putOnTheTopShelf(arrivals);
     }
-  }, [arrivalIds]);
+  });
 
   const featured = useMemo(() => pickFeatured(sample.data ?? [], HERO_TURNS), [sample.data]);
 

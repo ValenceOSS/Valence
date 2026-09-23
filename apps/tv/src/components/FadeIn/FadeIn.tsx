@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 import type { FadeInProps } from './FadeIn.types';
 
@@ -22,7 +22,7 @@ const STARTS_AT = 0.1;
  * @param delayMs - How long to wait before fading in, so a row of things can arrive one after another.
  */
 const FadeIn = ({ children, isFilling = true, isShown = true, delayMs = 0 }: FadeInProps) => {
-  const shown = useRef(new Animated.Value(STARTS_AT)).current;
+  const [shown] = useState(() => new Animated.Value(STARTS_AT));
 
   useEffect(() => {
     if (!isShown) {

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
 import { tokens } from '@ValenceTv/theme/tokens';
 import mark from '@ValenceTv/assets/valence-mark.png';
@@ -20,8 +20,8 @@ const LEAVES_MS = 520;
  * @param onGone - Told once it has faded away, so it can be taken off the screen.
  */
 const Splash = ({ isDone, onGone }: SplashProps) => {
-  const breath = useRef(new Animated.Value(0)).current;
-  const leaving = useRef(new Animated.Value(0)).current;
+  const [breath] = useState(() => new Animated.Value(0));
+  const [leaving] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     const breathing = Animated.loop(

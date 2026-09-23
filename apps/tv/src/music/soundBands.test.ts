@@ -13,7 +13,7 @@ describe('soundBands', () => {
   });
 
   it('hears nothing in silence', () => {
-    expect(soundBands(new Array<number>(SIZE).fill(0))).toEqual([0, 0, 0, 0]);
+    expect(soundBands(Array.from({ length: SIZE }, () => 0))).toEqual([0, 0, 0, 0]);
   });
 
   it('puts a low note in the bass and a high one in the treble', () => {
@@ -24,7 +24,7 @@ describe('soundBands', () => {
   });
 
   it('reads only the last stretch of a long block', () => {
-    const long = [...new Array<number>(SIZE).fill(1), ...aTone(4)];
+    const long = [...Array.from({ length: SIZE }, () => 1), ...aTone(4)];
 
     expect(soundBands(long)).toEqual(soundBands(aTone(4)));
   });

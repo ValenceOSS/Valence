@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, useTVEventHandler, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { moveTheVideoTo } from '@ValenceTv/playback/moveTheVideoTo';
+import { playTheVideoAt } from '@ValenceTv/playback/playTheVideoAt';
 import { SkipForward } from '@keyline-icons/react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { playbackQueries } from '@ValenceClient/query/playbackQueries';
@@ -332,7 +334,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
     (seconds: number) => {
       const length = at.current.duration > 0 ? at.current.duration : Number.MAX_SAFE_INTEGER;
 
-      player.currentTime = Math.min(Math.max(0, at.current.position + seconds), length);
+      moveTheVideoTo(player, Math.min(Math.max(0, at.current.position + seconds), length));
     },
     [player],
   );
@@ -351,7 +353,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
       player.play();
     },
     onSeek: (seconds) => {
-      player.currentTime = seconds;
+      moveTheVideoTo(player, seconds);
     },
     onStop: onLeave,
   });
@@ -464,7 +466,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
   useTVEventHandler(hearRemote);
 
   useEffect(() => {
-    player.playbackRate = speed;
+    playTheVideoAt(player, speed);
   }, [player, speed]);
 
   useEffect(() => {
@@ -601,7 +603,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
           }}
           onScrubPress={() => {
             if (scrubAt !== null) {
-              player.currentTime = scrubAt;
+              moveTheVideoTo(player, scrubAt);
               setScrubAt(null);
             }
 
@@ -635,7 +637,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
             size="md"
             hasPreferredFocus={!isShowing}
             onPress={() => {
-              player.currentTime = skippable.endSeconds;
+              moveTheVideoTo(player, skippable.endSeconds);
               touch();
             }}
           />

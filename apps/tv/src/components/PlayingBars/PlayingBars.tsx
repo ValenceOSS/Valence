@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { listenToTheSound } from '@ValenceTv/music/listenToTheSound';
 import { soundBands } from '@ValenceTv/music/soundBands';
@@ -36,7 +36,7 @@ const SILENT_AFTER_MS = 900;
  * @param size - How tall and wide the bars stand together.
  */
 const PlayingBars = ({ isPlaying, colour, size = 28 }: PlayingBarsProps) => {
-  const heights = useRef(BARS.map(() => new Animated.Value(RESTS_AT))).current;
+  const [heights] = useState(() => BARS.map(() => new Animated.Value(RESTS_AT)));
 
   const levels = useRef(BARS.map(() => RESTS_AT));
   const peaks = useRef(BARS.map(() => 0));

@@ -3,13 +3,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import { render } from '@testing-library/react-native';
 import { Television } from '@ValenceTv/Television';
 
-const mockTheWayIn = () => {
+const MockTheWayIn = () => {
   const client = useQueryClient();
 
   return <Text>{`Stale after ${String(client.getDefaultOptions().queries?.staleTime)}`}</Text>;
 };
 
-jest.mock('@ValenceTv/screens/TheWayIn/TheWayIn', () => ({ TheWayIn: () => mockTheWayIn() }));
+jest.mock('@ValenceTv/screens/TheWayIn/TheWayIn', () => ({
+  TheWayIn: function TheWayIn() {
+    return MockTheWayIn();
+  },
+}));
 
 jest.mock('@ValenceClient/session/auth', () => ({ fetchSession: () => Promise.resolve(null) }));
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Animated,
   StyleSheet,
@@ -94,8 +94,8 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
   const [touchedAt, setTouchedAt] = useState(() => Date.now());
   const [isResting, setIsResting] = useState(false);
   const [controlsHeight, setControlsHeight] = useState(0);
-  const fade = useRef(new Animated.Value(1)).current;
-  const arrival = useRef(new Animated.Value(1)).current;
+  const [fade] = useState(() => new Animated.Value(1));
+  const [arrival] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
     arrival.setValue(0);

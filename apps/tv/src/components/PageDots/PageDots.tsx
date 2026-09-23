@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, LayoutAnimation, StyleSheet, View } from 'react-native';
 import { PageDot } from '@ValenceTv/components/PageDots/components/PageDot/PageDot';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -19,7 +19,7 @@ import type { PageDotsProps } from './PageDots.types';
  * @param onTurnDone - Told when the current turn has run out.
  */
 const PageDots = ({ count, current, turnMs, isRunning, onTurnDone }: PageDotsProps) => {
-  const fill = useRef(new Animated.Value(0)).current;
+  const [fill] = useState(() => new Animated.Value(0));
   const done = useRef(onTurnDone);
 
   useEffect(() => {

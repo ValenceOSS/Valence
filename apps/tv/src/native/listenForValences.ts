@@ -1,4 +1,5 @@
-import { NativeModule, requireOptionalNativeModule } from 'expo';
+import { requireOptionalNativeModule } from 'expo';
+import type { NativeModule } from 'expo';
 import { z } from 'zod';
 import { nearbyValences } from '@ValenceClient/discovery/nearbyValences';
 import { isAValence } from '@ValenceTv/native/isAValence';

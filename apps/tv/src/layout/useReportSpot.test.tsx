@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View } from 'react-native';
 import { act, render } from '@testing-library/react-native';
 import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
@@ -5,14 +6,24 @@ import type { Spot } from '@ValenceTv/components/Flight/Flight.types';
 
 type Reported = ReturnType<typeof useReportSpot>;
 
-const drawn: { spot: Reported | null } = { spot: null };
+const drawn: { spot: Reported | null; view: View | null } = { spot: null, view: null };
 
 const ASpot = ({ onAt, isDrawn = true }: { onAt?: (at: Spot) => void; isDrawn?: boolean }) => {
   const spot = useReportSpot(onAt);
 
-  drawn.spot = spot;
+  useEffect(() => {
+    drawn.spot = spot;
+  });
 
-  return isDrawn ? <View ref={spot.ref} onLayout={spot.onLayout} /> : null;
+  return isDrawn ? (
+    <View
+      ref={(view) => {
+        spot.ref(view);
+        drawn.view = view;
+      }}
+      onLayout={spot.onLayout}
+    />
+  ) : null;
 };
 
 ASpot.displayName = 'ASpot';
@@ -26,7 +37,7 @@ const theSpot = (): Reported => {
 };
 
 const placeAt = (at: Spot): void => {
-  const view = theSpot().ref.current;
+  const { view } = drawn;
 
   if (view === null) {
     throw new Error('The view was not drawn');
@@ -39,6 +50,7 @@ const placeAt = (at: Spot): void => {
 
 beforeEach(() => {
   drawn.spot = null;
+  drawn.view = null;
 });
 
 describe('useReportSpot', () => {

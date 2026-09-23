@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Easing, Image, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -50,7 +50,7 @@ const BLOOMS = ROWS.flatMap((row, down) =>
  */
 const WayInBackdrop = ({ tint = null }: WayInBackdropProps) => {
   const screen = useWindowDimensions();
-  const drifts = useRef(BLOOMS.map(() => new Animated.Value(0))).current;
+  const [drifts] = useState(() => BLOOMS.map(() => new Animated.Value(0)));
 
   useEffect(() => {
     const going = drifts.map((drifting, at) =>

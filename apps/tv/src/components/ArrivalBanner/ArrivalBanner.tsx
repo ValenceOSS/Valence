@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, useTVEventHandler, View } from 'react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
@@ -25,7 +25,7 @@ const PICTURE = { width: 200, height: 112 };
  * @param onDismiss - Told when it has gone.
  */
 const ArrivalBanner = ({ arrival, picture, onWatch, onDismiss }: ArrivalBannerProps) => {
-  const shown = useRef(new Animated.Value(0)).current;
+  const [shown] = useState(() => new Animated.Value(0));
 
   const leave = useCallback(() => {
     Animated.timing(shown, { toValue: 0, duration: SLIDES_MS, useNativeDriver: true }).start(() => {

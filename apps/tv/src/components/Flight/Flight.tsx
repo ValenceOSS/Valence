@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
 import type { FlightProps } from './Flight.types';
 
@@ -22,7 +22,7 @@ const GIVES_UP_MS = 1500;
  * @param children - What flies, drawn at the size it starts from.
  */
 const Flight = ({ from, to, onLanded, children }: FlightProps) => {
-  const flown = useRef(new Animated.Value(0)).current;
+  const [flown] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (to === null) {

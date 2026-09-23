@@ -60,8 +60,8 @@ const TopBar = ({
   onMarkAt,
   hasMusic,
 }: TopBarProps) => {
-  const faceSpot = useReportSpot(onFaceAt);
-  const markSpot = useReportSpot(onMarkAt);
+  const { ref: holdFace, onLayout: faceLaidOut } = useReportSpot(onFaceAt);
+  const { ref: holdMark, onLayout: markLaidOut } = useReportSpot(onMarkAt);
   const searchRef = useCallback(
     (element: View | null) => {
       itemRef('search', element);
@@ -78,10 +78,10 @@ const TopBar = ({
   return (
     <View style={styles.bar} pointerEvents="box-none">
       <View
-        ref={markSpot.ref}
+        ref={holdMark}
         collapsable={false}
         style={[styles.mark, isArriving && styles.hidden]}
-        onLayout={markSpot.onLayout}
+        onLayout={markLaidOut}
       >
         <Image source={mark} style={MARK} contentFit="contain" />
       </View>
@@ -139,10 +139,10 @@ const TopBar = ({
             >
               {(isFocused) => (
                 <View
-                  ref={faceSpot.ref}
+                  ref={holdFace}
                   collapsable={false}
                   style={[styles.face, isArriving && styles.hidden]}
-                  onLayout={faceSpot.onLayout}
+                  onLayout={faceLaidOut}
                 >
                   <Face profile={profile} size={FACE_SIZE} isFocused={isFocused} isRound />
                 </View>

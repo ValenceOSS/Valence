@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { NativeModule, requireOptionalNativeModule } from 'expo';
+import { requireOptionalNativeModule } from 'expo';
+import type { NativeModule } from 'expo';
 
 type RingEvents = {
   onRingTurn: (turn: { degrees: number }) => void;
