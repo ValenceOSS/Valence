@@ -2206,6 +2206,7 @@ const sayARequestArrived = async (
   const { requestedBy } = arrived.value;
 
   log.info('requests', `${filed.title} is in the library, as ${requestedBy.name} asked`);
+  realtime.publish('requests', { changed: true }, { kind: 'everyone' });
 
   await events.publish({
     event: 'requests.available',
@@ -3024,6 +3025,8 @@ if (requestsClient !== null) {
       realtime.publish('downloads', queue, { kind: 'everyone' });
     },
     onEvent: (event) => {
+      realtime.publish('requests', { changed: true }, { kind: 'everyone' });
+
       switch (event.kind) {
         case 'started': {
           log.info('requests', `sent ${event.title} to ${event.clientName}`);

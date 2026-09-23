@@ -4275,11 +4275,22 @@ const createApp = ({
   };
 
   /**
+   * Tells every open client that the requests have changed, so a poster, a request's page or the
+   * list of requests says where each one has got to without being reopened. Nothing is said of what
+   * changed beyond that it did, so it is safe for anybody to hear; each client reads back only what
+   * it may see.
+   */
+  const sayRequestsChanged = (): void => {
+    realtime?.publish('requests', { changed: true }, { kind: 'everyone' });
+  };
+
+  /**
    * Says a request's news to anything subscribed, where anything could be.
    *
    * @param payload - What happened.
    */
   const sayOfRequest = (payload: WebhookOccurrence): void => {
+    sayRequestsChanged();
     void events?.publish(payload);
   };
 
@@ -4861,6 +4872,10 @@ const createApp = ({
       ['requests.manage', ...ASKERS],
     );
 
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
     return answer.kind === 'answered'
       ? context.body(null, 204)
       : context.json({ error: answer.error }, answer.status);
@@ -4912,6 +4927,10 @@ const createApp = ({
       client.retryRequest(context.req.valid('param').id),
     );
 
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
+
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
       : context.json({ error: answer.error }, answer.status);
@@ -4921,6 +4940,10 @@ const createApp = ({
     const answer = await throughRequests(context.req.raw.headers, (client) =>
       client.fulfilRequest(context.req.valid('param').id),
     );
+
+    if (answer.kind === 'answered') {
+      sayRequestsChanged();
+    }
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)

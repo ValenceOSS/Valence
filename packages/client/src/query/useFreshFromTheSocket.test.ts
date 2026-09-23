@@ -124,7 +124,14 @@ describe('useFreshFromTheSocket', () => {
 
     listening(socket).unmount();
 
-    expect(socket.stopped).toEqual(['media', 'notifications', 'profile', 'sessions', 'resumed']);
+    expect(socket.stopped).toEqual([
+      'media',
+      'notifications',
+      'profile',
+      'requests',
+      'sessions',
+      'resumed',
+    ]);
   });
 
   it('asks for the shared socket when it is not given one', () => {
