@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { theMusicPlayer } from './theMusicPlayer';
-import type { MusicPlayer } from './createMusicPlayer';
+import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 
 /**
  * Pauses the music playing on this device when something else is about to make sound — a film

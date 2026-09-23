@@ -10,7 +10,7 @@ import {
 import { Icon } from '@ValenceUI/Icon';
 import { tracksFor } from './tracksFor';
 import type { ActionMenuGroup } from '@ValenceUI/ActionMenu.types';
-import type { MusicPlayer } from './createMusicPlayer';
+import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 import type { MusicView } from './musicView';
 
 /**

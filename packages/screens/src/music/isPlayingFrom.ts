@@ -1,4 +1,4 @@
-import type { MusicPlayerState } from './createMusicPlayer';
+import type { MusicPlayerState } from '@ValenceClient/music/createMusicPlayer';
 import type { MusicView } from './musicView';
 
 /**

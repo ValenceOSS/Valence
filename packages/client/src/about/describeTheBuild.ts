@@ -5,7 +5,8 @@ import type { BuildInfo } from '@ValenceClient/platform/Platform.types';
  * into a bug report.
  *
  * Either half may be missing — a browser has no build of its own, and a client not yet pointed at a
- * server has nobody to ask — so the line is whatever of the two is known.
+ * server has nobody to ask — so the line is whatever of the two is known. A build that cannot say
+ * which commit it came from, as a phone cannot, leaves the commit out rather than guessing.
  *
  * @param info - This client's own build, where it has one.
  * @param serverCommit - The commit the server was started from, where one answered.
@@ -15,7 +16,7 @@ const describeTheBuild = (info: BuildInfo | null, serverCommit: string | null): 
   const parts = [
     info === null
       ? null
-      : `Valence ${info.version} (${info.commit}) · ${info.arch} · Electron ${info.electron} · Chromium ${info.chrome}`,
+      : `Valence ${info.version}${info.commit === null ? '' : ` (${info.commit})`} · ${info.runsOn}`,
     serverCommit === null ? null : `Server ${serverCommit}`,
   ].filter((part) => part !== null);
 

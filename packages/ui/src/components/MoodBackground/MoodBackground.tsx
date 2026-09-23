@@ -5,7 +5,7 @@ import { blendLights } from '@ValenceUI/blendLights';
 import { cn } from '@ValenceUI/cn';
 import type { DotFieldProps } from '@ValenceUI/DotField.types';
 import type { MoodBackgroundProps, MoodLight } from './MoodBackground.types';
-import { HOUSE_LIGHTS } from '@ValenceUI/houseLights';
+import { HOUSE_LIGHTS } from '@ValenceCore/tokens/houseLights';
 
 const BLOOM_COLUMNS = ['8%', '36%', '64%', '92%'] as const;
 

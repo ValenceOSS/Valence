@@ -4,9 +4,7 @@ import { describeTheBuild } from './describeTheBuild';
 const BUILD = {
   version: '1.2.0',
   commit: '2ae1bc1',
-  arch: 'arm64',
-  electron: '33.0.0',
-  chrome: '130.0.0',
+  runsOn: 'arm64 · Electron 33.0.0 · Chromium 130.0.0',
 };
 
 describe('describeTheBuild', () => {
@@ -19,6 +17,12 @@ describe('describeTheBuild', () => {
   it('names only the client where no server has answered', () => {
     expect(describeTheBuild(BUILD, null)).toBe(
       'Valence 1.2.0 (2ae1bc1) · arm64 · Electron 33.0.0 · Chromium 130.0.0',
+    );
+  });
+
+  it('leaves out the commit of a build that cannot say which it came from', () => {
+    expect(describeTheBuild({ ...BUILD, commit: null, runsOn: 'iOS 27.0 · iPhone' }, null)).toBe(
+      'Valence 1.2.0 · iOS 27.0 · iPhone',
     );
   });
 

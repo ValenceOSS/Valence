@@ -251,7 +251,6 @@
       "@ValenceUI/useDotFilm": ["./packages/ui/src/functions/useDotFilm.ts"],
       "@ValenceUI/useKonamiCode": ["./packages/ui/src/functions/useKonamiCode.ts"],
       "@ValenceUI/captionColours": ["./packages/ui/src/tokens/captionColours.ts"],
-      "@ValenceUI/houseLights": ["./packages/ui/src/tokens/houseLights.ts"],
       "@ValenceUI/pageCover": ["./packages/ui/src/functions/pageCover.ts"],
       "@ValenceUI/useIsPageCovered": ["./packages/ui/src/functions/useIsPageCovered.ts"],
       "@ValenceUI/usePagedScroller": ["./packages/ui/src/functions/usePagedScroller.ts"],

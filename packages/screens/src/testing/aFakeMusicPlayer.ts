@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { MusicPlayer, MusicPlayerState } from '@ValenceScreens/music/createMusicPlayer';
+import type { MusicPlayer, MusicPlayerState } from '@ValenceClient/music/createMusicPlayer';
 
 const IDLE: MusicPlayerState = {
   queue: null,

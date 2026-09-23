@@ -25,10 +25,8 @@ type Reachability = {
 
 type BuildInfo = {
   version: string;
-  commit: string;
-  arch: string;
-  electron: string;
-  chrome: string;
+  commit: string | null;
+  runsOn: string;
 };
 
 type LocalNotice = {

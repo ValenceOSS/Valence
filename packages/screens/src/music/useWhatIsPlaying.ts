@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
-import type { MusicPlayerState, RemoteDevice } from './createMusicPlayer';
+import type { MusicPlayerState, RemoteDevice } from '@ValenceClient/music/createMusicPlayer';
 
 type ShownArtist = { id: string | null; name: string };
 

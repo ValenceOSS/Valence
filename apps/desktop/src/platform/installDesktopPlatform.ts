@@ -25,7 +25,11 @@ const installDesktopPlatform = (): void => {
     held: theDesktopsHeldFiles(),
     reachability: theDesktopsReach(),
     openSocket: theDesktopsSocket,
-    buildInfo: () => window.valence.about,
+    buildInfo: () => {
+      const { version, commit, arch, electron, chrome } = window.valence.about;
+
+      return { version, commit, runsOn: `${arch} · Electron ${electron} · Chromium ${chrome}` };
+    },
     notifyLocally,
     setUnreadBadge,
   });

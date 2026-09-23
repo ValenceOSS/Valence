@@ -6,7 +6,7 @@ import { readListeningParty, setListeningParty } from './listeningParty';
 import { theMusicPlayer } from './theMusicPlayer';
 import { useMusicPlayer } from './useMusicPlayer';
 import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
-import type { MusicPlayer } from './createMusicPlayer';
+import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 
 const REPORT_EVERY_MS = 2000;
 

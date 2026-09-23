@@ -1,8 +1,8 @@
 import { fetchTracks, trackStreamUrl } from '@ValenceClient/music/fetchMusic';
 import { readMusicPreferences, saveMusicPreferences } from '@ValenceClient/music/musicPreferences';
 import { reportNowPlaying, sendMusicCommand } from '@ValenceClient/music/musicDevices';
-import { createMusicPlayer } from './createMusicPlayer';
-import type { MusicPlayer } from './createMusicPlayer';
+import { createMusicPlayer } from '@ValenceClient/music/createMusicPlayer';
+import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 
 let made: MusicPlayer | null = null;
 let element: HTMLAudioElement | null = null;
