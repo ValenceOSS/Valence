@@ -8,6 +8,7 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { theKindOfTv } from '@ValenceTv/platform/theKindOfTv';
 import type { KeylineIcon } from '@ValenceTv/components/Icon/Icon.types';
 import type { DevicesPanelProps } from './DevicesPanel.types';
 
@@ -52,7 +53,9 @@ const DevicesPanel = ({ shown, onChosen }: DevicesPanelProps) => {
 
         <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           <ActionRow
-            label={remote === null ? 'This Apple TV · playing here' : 'This Apple TV'}
+            label={
+              remote === null ? `This ${theKindOfTv()} · playing here` : `This ${theKindOfTv()}`
+            }
             icon={remote === null ? Check : Monitor}
             hasPreferredFocus={remote === null}
             onPress={() => {

@@ -11,13 +11,19 @@ const BuildSchema = z.object({ build: z.object({ version: z.string(), commit: z.
  * report. A client and the server it talks to are not always cut from the same commit.
  *
  * @param serverCommit - The commit the server says it runs, where it has said.
+ * @param system - Which system the television runs, which is its own unless a test says otherwise.
+ * @param version - That system's version, or on Android its API level.
  * @returns The line, naming only what is known.
  */
-const describeThisBuild = (serverCommit: string | null): string => {
+const describeThisBuild = (
+  serverCommit: string | null,
+  system: typeof Platform.OS = Platform.OS,
+  version: string | number = Platform.Version,
+): string => {
   const read = BuildSchema.safeParse(Constants.expoConfig?.extra);
   const parts = [
     read.success ? `Valence ${read.data.build.version} (${read.data.build.commit})` : null,
-    `tvOS ${String(Platform.Version)}`,
+    system === 'android' ? `Android API ${String(version)}` : `tvOS ${String(version)}`,
     serverCommit === null ? null : `Server ${serverCommit}`,
   ].filter((part) => part !== null);
 

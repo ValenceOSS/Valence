@@ -13,6 +13,7 @@ import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop
 import { tokens } from '@ValenceTv/theme/tokens';
 import { ServerCard } from '@ValenceTv/screens/ChooseServer/components/ServerCard/ServerCard';
 import mark from '@ValenceTv/assets/valence-mark.png';
+import { theKindOfTv } from '@ValenceTv/platform/theKindOfTv';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import type { ChooseServerProps } from './ChooseServer.types';
 
@@ -94,7 +95,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
         <View style={styles.top}>
           <Image source={mark} style={MARK} contentFit="contain" />
           <Text style={styles.title}>Which Valence is yours?</Text>
-          <Text style={styles.lead}>Choose the server this Apple TV watches from.</Text>
+          <Text style={styles.lead}>{`Choose the server this ${theKindOfTv()} watches from.`}</Text>
         </View>
       </FadeIn>
 

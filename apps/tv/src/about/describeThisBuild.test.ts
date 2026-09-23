@@ -19,6 +19,10 @@ describe('describeThisBuild', () => {
     );
   });
 
+  it('names Android by its API level', () => {
+    expect(describeThisBuild(null, 'android', 36)).toBe('Android API 36');
+  });
+
   it('leaves out what it does not know', () => {
     expect(describeThisBuild(null)).toBe(`tvOS ${String(Platform.Version)}`);
   });
