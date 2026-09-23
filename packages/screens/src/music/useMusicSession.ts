@@ -1,19 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { artworkTheSystemAccepts } from '@ValenceScreens/playback/artworkTheSystemAccepts';
+import { claimTheSystemsControls } from '@ValenceScreens/playback/claimTheSystemsControls';
+import type { Claim } from '@ValenceScreens/playback/claimTheSystemsControls';
 import type { MusicPlayer, MusicPlayerState } from './createMusicPlayer';
 
 const ARTWORK_SIZES = ['256x256', '512x512'] as const;
-
-/**
- * The system's media controls, where this browser offers them.
- *
- * @returns The media session, or nothing.
- */
-const theSystemsControls = (): MediaSession | null =>
-  typeof navigator.mediaSession === 'object' && typeof MediaMetadata === 'function'
-    ? navigator.mediaSession
-    : null;
 
 /**
  * Puts the song playing on the lock screen, the keyboard's media keys and the system's own
@@ -30,63 +22,51 @@ const useMusicSession = (state: MusicPlayerState, player: MusicPlayer): void => 
   const artists = current?.artists.map((artist) => artist.name).join(', ') ?? '';
   const albumTitle = current?.album.title ?? '';
   const albumId = current?.album.hasArtwork === true ? current.album.id : null;
+  const claimRef = useRef<Claim | null>(null);
+  const isPlayingRef = useRef(state.isPlaying);
+
+  isPlayingRef.current = state.isPlaying;
 
   useEffect(() => {
-    const session = theSystemsControls();
-
-    if (session === null || trackId === null) {
+    if (trackId === null) {
       return;
     }
 
     const artwork = albumId === null ? null : artworkTheSystemAccepts(albumArtworkUrl(albumId));
-
-    session.metadata = new MediaMetadata({
-      title,
-      artist: artists,
-      album: albumTitle,
-      artwork: artwork === null ? [] : ARTWORK_SIZES.map((sizes) => ({ src: artwork, sizes })),
+    const claim = claimTheSystemsControls({
+      metadata: {
+        title,
+        artist: artists,
+        album: albumTitle,
+        artwork: artwork === null ? [] : ARTWORK_SIZES.map((sizes) => ({ src: artwork, sizes })),
+      },
+      handlers: [
+        ['play', () => player.resume()],
+        ['pause', () => player.pause()],
+        ['previoustrack', () => player.previous()],
+        ['nexttrack', () => player.next()],
+        [
+          'seekto',
+          (details) => {
+            if (typeof details.seekTime === 'number') {
+              player.seek(details.seekTime);
+            }
+          },
+        ],
+      ],
     });
 
-    const handlers: [MediaSessionAction, MediaSessionActionHandler][] = [
-      ['play', () => player.resume()],
-      ['pause', () => player.pause()],
-      ['previoustrack', () => player.previous()],
-      ['nexttrack', () => player.next()],
-      [
-        'seekto',
-        (details) => {
-          if (typeof details.seekTime === 'number') {
-            player.seek(details.seekTime);
-          }
-        },
-      ],
-    ];
-
-    for (const [action, handler] of handlers) {
-      try {
-        session.setActionHandler(action, handler);
-      } catch {
-        continue;
-      }
-    }
+    claim.setPlaying(isPlayingRef.current);
+    claimRef.current = claim;
 
     return () => {
-      for (const [action] of handlers) {
-        try {
-          session.setActionHandler(action, null);
-        } catch {
-          continue;
-        }
-      }
+      claim.release();
+      claimRef.current = null;
     };
   }, [trackId, title, artists, albumTitle, albumId, player]);
 
   useEffect(() => {
-    const session = theSystemsControls();
-
-    if (session !== null && trackId !== null) {
-      session.playbackState = state.isPlaying ? 'playing' : 'paused';
-    }
+    claimRef.current?.setPlaying(state.isPlaying);
   }, [state.isPlaying, trackId]);
 };
 
