@@ -96,6 +96,39 @@ describe('ChooseServer', () => {
     });
   });
 
+  it('falls back to plain http for an address typed without one, as a server at home often is', async () => {
+    jest
+      .mocked(isAValence)
+      .mockImplementation((address) => Promise.resolve(address.startsWith('http:')));
+    const onChosen = jest.fn();
+    const drawn = await render(<ChooseServer onChosen={onChosen} />);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Type it in' }));
+    await userEvent.type(drawn.getByPlaceholderText('192.168.1.10:8420'), '10.0.2.2:8420');
+    await userEvent.press(drawn.getByRole('button', { name: 'Connect' }));
+
+    await waitFor(() => {
+      expect(onChosen).toHaveBeenCalledWith('http://10.0.2.2:8420');
+    });
+    expect(isAValence).toHaveBeenCalledWith('https://10.0.2.2:8420');
+  });
+
+  it('asks only the scheme typed, where one is', async () => {
+    jest.mocked(isAValence).mockResolvedValue(false);
+    const drawn = await render(<ChooseServer onChosen={jest.fn()} />);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Another address, Type it in' }));
+    await userEvent.type(drawn.getByPlaceholderText('192.168.1.10:8420'), 'https://valence.home');
+    await userEvent.press(drawn.getByRole('button', { name: 'Connect' }));
+
+    expect(
+      await drawn.findByText(
+        'Nothing answered at https://valence.home. Check the address and that Valence is running.',
+      ),
+    ).toBeTruthy();
+    expect(isAValence).toHaveBeenCalledTimes(1);
+  });
+
   it('says what is wrong with an address that cannot be one', async () => {
     const drawn = await render(<ChooseServer onChosen={jest.fn()} />);
 

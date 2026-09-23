@@ -21,6 +21,8 @@ const MARK = { width: 110, height: 80 };
 
 const STAGGER_MS = 70;
 
+const WITH_A_SCHEME = /^[a-z][a-z0-9+.-]*:\/\//iu;
+
 /**
  * An address as somebody would say it, without the part a browser adds for them.
  *
@@ -55,21 +57,23 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
 
   useEffect(() => listenForValences(setNearby), []);
 
-  const tryAddress = async (address: string) => {
+  const tryAddress = async (addresses: readonly string[]) => {
     setIsAsking(true);
     setProblem(null);
 
-    const answered = await isAValence(address);
+    for (const address of addresses) {
+      if (await isAValence(address)) {
+        setIsAsking(false);
+        onChosen(address);
 
-    setIsAsking(false);
-
-    if (!answered) {
-      setProblem(`Nothing answered at ${address}. Check the address and that Valence is running.`);
-
-      return;
+        return;
+      }
     }
 
-    onChosen(address);
+    setIsAsking(false);
+    setProblem(
+      `Nothing answered at ${addresses.join(' or ')}. Check the address and that Valence is running.`,
+    );
   };
 
   const connect = () => {
@@ -81,7 +85,11 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
       return;
     }
 
-    void tryAddress(read.address);
+    void tryAddress(
+      WITH_A_SCHEME.test(typed.trim())
+        ? [read.address]
+        : [read.address, read.address.replace(/^https:/, 'http:')],
+    );
   };
 
   const heard = new Set(nearby.map((one) => one.address));
@@ -174,7 +182,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
                   isDisabled={isAsking}
                   hasPreferredFocus={nearby.length === 0 && index === 0}
                   onPress={() => {
-                    void tryAddress(address);
+                    void tryAddress([address]);
                   }}
                 />
               </FadeIn>
