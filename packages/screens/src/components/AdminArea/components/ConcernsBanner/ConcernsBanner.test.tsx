@@ -44,7 +44,7 @@ describe('ConcernsBanner', () => {
       />,
     );
 
-    expect(screen.getAllByRole('button', { name: 'How to fix this' })).toHaveLength(1);
+    expect(screen.getAllByRole('link', { name: 'How to fix this' })).toHaveLength(1);
   });
 
   it('opens the panel that explains one', async () => {

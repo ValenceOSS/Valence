@@ -1,4 +1,4 @@
-import { Button } from '@ValenceUI/Button';
+import { Link } from '@ValenceUI/Link';
 import type { HowToFixProps } from './HowToFix.types';
 
 /**
@@ -9,17 +9,9 @@ import type { HowToFixProps } from './HowToFix.types';
  */
 const HowToFix = ({ href }: HowToFixProps) =>
   href === null || href === undefined ? null : (
-    <Button
-      variant="link"
-      size="none"
-      hasTooltip={false}
-      className="text-xs"
-      onClick={() => {
-        window.open(href, '_blank', 'noopener,noreferrer');
-      }}
-    >
+    <Link href={href} className="text-xs">
       How to fix this
-    </Button>
+    </Link>
   );
 
 HowToFix.displayName = 'HowToFix';

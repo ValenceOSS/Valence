@@ -122,7 +122,7 @@ try {
 
 ## UI components and icons
 
-Raw HTML form and interactive elements are banned outside the one ValenceUI component that owns each. That covers `<button>`, `<input>`, `<select>`, `<textarea>`, `<dialog>` and `<iframe>`, in application code and in other ValenceUI components alike.
+Raw HTML form and interactive elements are banned outside the one ValenceUI component that owns each. That covers `<a>`, `<button>`, `<input>`, `<select>`, `<textarea>`, `<dialog>` and `<iframe>`, in application code and in other ValenceUI components alike.
 
 | Primitive                     | Owned by        |
 | ----------------------------- | --------------- |
@@ -131,6 +131,7 @@ Raw HTML form and interactive elements are banned outside the one ValenceUI comp
 | `<input type="file">`         | `FilePicker`    |
 | `<dialog>` and focus trapping | `Dialog`        |
 | `<iframe>`                    | `EmbeddedVideo` |
+| `<a>`                         | `Link`          |
 
 A control that is not one of these is a shape of one of them. An icon button is `Button` with an icon and a label. There is no `IconButton`, and there should be no equivalent for any other primitive: a second component wrapping the same element is a second set of focus, disabled and keyboard behaviour that drifts from the first. When a control needs something the owner lacks, widen the owner. `Button` carries `variant="bare"` and `size="none"` for controls that supply their own shape.
 

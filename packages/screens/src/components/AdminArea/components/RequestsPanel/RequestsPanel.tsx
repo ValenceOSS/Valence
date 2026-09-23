@@ -125,7 +125,9 @@ const RequestsPanel = () => {
                 {overview.status.indexers.failing.length > 0 ? (
                   <HowToFix
                     href={docsFor(
-                      overview.status.indexers.failing[0]?.problemCode ?? 'IndexerFailing',
+                      overview.status.indexers.failing.length === 1
+                        ? (overview.status.indexers.failing[0]?.problemCode ?? 'IndexerFailing')
+                        : 'IndexerFailing',
                     )}
                   />
                 ) : null}

@@ -145,7 +145,7 @@ describe('RequestDetailDialog', () => {
     );
 
     expect(await screen.findByText('Could not be filed.')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'How to fix this' })).toHaveLength(1);
+    expect(screen.getAllByRole('link', { name: 'How to fix this' })).toHaveLength(1);
   });
 
   it('lets a release it gave up on be tried again', async () => {
