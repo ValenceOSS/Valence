@@ -11,8 +11,12 @@ import type { TheTabsProps } from './TheTabs.types';
 
 const A_GUESS_AT_THE_BAR = 62;
 
+const ABOVE_THE_BAR = 8;
+
 const styles = StyleSheet.create({
+  above: { left: 12, position: 'absolute', right: 12 },
   bar: { borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', paddingTop: 8 },
+  beforeTheBar: { paddingBottom: ABOVE_THE_BAR, paddingHorizontal: 12 },
   system: { bottom: 0, left: 0, position: 'absolute', right: 0 },
   tab: { alignItems: 'center', gap: 3, paddingVertical: 2 },
   whole: { flex: 1 },
@@ -23,24 +27,39 @@ const styles = StyleSheet.create({
  *
  * Where the phone has liquid glass the tabs are the system's own bar, floating over the screen with
  * the lens that can be held and slid between them, and the screen runs on underneath with room at
- * its foot to scroll clear. Anywhere older they are a bar of our own beneath it.
+ * its foot to scroll clear. Anywhere older they are a bar of our own beneath it. Anything kept above
+ * the tabs is given room the same way, so the screen scrolls clear of that too.
  *
  * @param tabs - The parts there are.
  * @param value - Which one is showing.
  * @param onSelect - Told which one somebody pressed.
  * @param children - The part showing.
+ * @param above - What sits just above the tabs whichever part is showing — what music is playing.
  */
-const TheTabs = ({ tabs, value, onSelect, children }: TheTabsProps) => {
+const TheTabs = ({ tabs, value, onSelect, children, above }: TheTabsProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
   const [barHeight, setBarHeight] = useState(room.bottom + A_GUESS_AT_THE_BAR);
+  const [aboveHigh, setAboveHigh] = useState(0);
+  const clearOfAbove = aboveHigh > 0 ? aboveHigh + ABOVE_THE_BAR : 0;
 
   if (hasLiquidGlass()) {
     return (
       <View style={styles.whole}>
-        <SafeAreaInsetsContext.Provider value={{ ...room, bottom: barHeight }}>
+        <SafeAreaInsetsContext.Provider value={{ ...room, bottom: barHeight + clearOfAbove }}>
           {children}
         </SafeAreaInsetsContext.Provider>
+
+        {above === undefined ? null : (
+          <View
+            style={[styles.above, { bottom: barHeight + ABOVE_THE_BAR }]}
+            onLayout={(event) => {
+              setAboveHigh(event.nativeEvent.layout.height);
+            }}
+          >
+            {above}
+          </View>
+        )}
 
         <SystemTabBar
           tabs={tabs.map((tab) => ({ id: tab.id, title: tab.label, symbol: tab.symbol }))}
@@ -59,6 +78,8 @@ const TheTabs = ({ tabs, value, onSelect, children }: TheTabsProps) => {
       <SafeAreaInsetsContext.Provider value={{ ...room, bottom: 0 }}>
         <View style={styles.whole}>{children}</View>
       </SafeAreaInsetsContext.Provider>
+
+      {above === undefined ? null : <View style={styles.beforeTheBar}>{above}</View>}
 
       <View
         style={[

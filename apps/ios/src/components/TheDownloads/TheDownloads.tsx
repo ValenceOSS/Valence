@@ -9,6 +9,7 @@ import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { HowFar } from '@ValencePhone/components/HowFar/HowFar';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
+import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { Download } from '@ValenceContracts/schemas/Download';
@@ -33,8 +34,10 @@ type ARow = { id: string; title: string; download: Download | null; held: HeldFi
  * wanted.
  *
  * @param onWatch - Told to play a film this phone keeps.
+ * @param onBack - Told somebody is done with it, where it was opened from somewhere rather than
+ *   being a tab of its own.
  */
-const TheDownloads = ({ onWatch }: TheDownloadsProps) => {
+const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
   const cache = useQueryClient();
   const colours = useTheColours();
   const downloads = useQuery(downloadQueries.all());
@@ -77,15 +80,7 @@ const TheDownloads = ({ onWatch }: TheDownloadsProps) => {
     );
   };
 
-  if (rows.length === 0) {
-    return (
-      <Words tone="muted">
-        Nothing downloaded yet. Download a film from its page to watch it without the server.
-      </Words>
-    );
-  }
-
-  return rows.map((row) => {
+  const drawn = rows.map((row) => {
     const { download, held: file } = row;
     const fraction =
       file !== null && file.state !== 'here'
@@ -193,6 +188,20 @@ const TheDownloads = ({ onWatch }: TheDownloadsProps) => {
       </View>
     );
   });
+
+  return (
+    <Screen scrolls {...(onBack === undefined ? {} : { onBack })}>
+      <Words size="title">Downloads</Words>
+
+      {rows.length === 0 ? (
+        <Words tone="muted">
+          Nothing downloaded yet. Download a film from its page to watch it without the server.
+        </Words>
+      ) : (
+        drawn
+      )}
+    </Screen>
+  );
 };
 
 TheDownloads.displayName = 'TheDownloads';

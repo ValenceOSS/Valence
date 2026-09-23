@@ -3,8 +3,8 @@ import { ActivityIndicator } from 'react-native';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { Words } from '@ValencePhone/components/Words/Words';
-import { ARequest } from '@ValencePhone/components/TheRequests/components/ARequest/ARequest';
-import { whatAPhoneAsksFor } from '@ValencePhone/components/TheRequests/whatAPhoneAsksFor';
+import { ARequest } from '@ValencePhone/components/TheSearch/components/ARequest/ARequest';
+import { whatAPhoneAsksFor } from '@ValencePhone/components/TheSearch/whatAPhoneAsksFor';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { AskedProps } from './Asked.types';
 

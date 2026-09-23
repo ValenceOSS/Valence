@@ -13,6 +13,7 @@ type TheTabsProps = {
   value: string;
   onSelect: (id: string) => void;
   children: ReactNode;
+  above?: ReactNode;
 };
 
 export type { ATab, TheTabsProps };

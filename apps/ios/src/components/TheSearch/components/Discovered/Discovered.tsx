@@ -4,7 +4,7 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { AShelf } from '@ValencePhone/components/AShelf/AShelf';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { ACatalogueCard } from '@ValencePhone/components/ACatalogueCard/ACatalogueCard';
-import { whatAPhoneAsksFor } from '@ValencePhone/components/TheRequests/whatAPhoneAsksFor';
+import { whatAPhoneAsksFor } from '@ValencePhone/components/TheSearch/whatAPhoneAsksFor';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { DiscoveredProps } from './Discovered.types';
 

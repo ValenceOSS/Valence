@@ -5,7 +5,7 @@ import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { HowFar } from '@ValencePhone/components/HowFar/HowFar';
 import { Words } from '@ValencePhone/components/Words/Words';
-import { whatAPhoneAsksFor } from '@ValencePhone/components/TheRequests/whatAPhoneAsksFor';
+import { whatAPhoneAsksFor } from '@ValencePhone/components/TheSearch/whatAPhoneAsksFor';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { ARequestProps } from './ARequest.types';
 

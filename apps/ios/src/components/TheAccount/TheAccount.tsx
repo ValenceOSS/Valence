@@ -6,7 +6,6 @@ import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { TheDevices } from '@ValencePhone/components/TheAccount/components/TheDevices/TheDevices';
-import { TheDownloads } from '@ValencePhone/components/TheAccount/components/TheDownloads/TheDownloads';
 import { TheHidden } from '@ValencePhone/components/TheAccount/components/TheHidden/TheHidden';
 import { TheHistory } from '@ValencePhone/components/TheAccount/components/TheHistory/TheHistory';
 import { TheSecurity } from '@ValencePhone/components/TheAccount/components/TheSecurity/TheSecurity';
@@ -17,19 +16,17 @@ const PANELS = [
   { id: 'profile', label: 'Profile' },
   { id: 'security', label: 'Security' },
   { id: 'devices', label: 'Devices' },
-  { id: 'downloads', label: 'Downloads' },
   { id: 'history', label: 'History' },
   { id: 'hidden', label: 'Hidden' },
 ] as const;
 
 /**
- * Somebody's own account: how they appear, how they sign in, where they are signed in, what they have downloaded,
- * watched and hidden, and the way out.
+ * Somebody's own account: how they appear, how they sign in, where they are signed in, what they
+ * have watched and hidden, and the way out.
  *
  * @param onOut - Told to sign out.
- * @param onWatchHeld - Told to play a film this phone keeps.
  */
-const TheAccount = ({ onOut, onWatchHeld }: TheAccountProps) => {
+const TheAccount = ({ onOut }: TheAccountProps) => {
   const who = useQuery(sessionQueries.who());
   const [panel, setPanel] = useState<string>('profile');
 
@@ -53,8 +50,6 @@ const TheAccount = ({ onOut, onWatchHeld }: TheAccountProps) => {
         <TheSecurity />
       ) : panel === 'devices' ? (
         <TheDevices />
-      ) : panel === 'downloads' ? (
-        <TheDownloads onWatch={onWatchHeld} />
       ) : panel === 'history' ? (
         <TheHistory />
       ) : panel === 'hidden' ? (
