@@ -17,6 +17,8 @@ vi.mock('@ValenceClient/requests/fetchRequests', () => ({
 const ANSWERING: RequestsOverview = {
   address: 'http://requests:8421',
   isReachable: true,
+  problem: null,
+  problemCode: null,
   checkedAt: '2026-09-19T12:00:00.000Z',
   status: {
     version: '0.4.0',
@@ -27,6 +29,7 @@ const ANSWERING: RequestsOverview = {
       country: 'Netherlands',
       checkedAt: '2026-09-19T12:00:00.000Z',
       problem: null,
+      problemCode: null,
     },
     indexers: { total: 0, enabled: 0, failing: [] },
   },
@@ -40,11 +43,14 @@ const NOT_CHECKED_VPN = {
   country: null,
   checkedAt: null,
   problem: null,
+  problemCode: null,
 };
 
 const NOT_CHECKED: RequestsOverview = {
   address: 'http://requests:8421',
   isReachable: false,
+  problem: null,
+  problemCode: null,
   checkedAt: null,
   status: null,
   work: NO_WORK,
@@ -141,7 +147,12 @@ describe('RequestsPanel', () => {
           total: 3,
           enabled: 2,
           failing: [
-            { id: '0f8fad5b-d9cb-469f-a165-70867728950e', name: 'Jackett', problem: 'Timed out' },
+            {
+              id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+              name: 'Jackett',
+              problem: 'Timed out',
+              problemCode: null,
+            },
           ],
         },
       },

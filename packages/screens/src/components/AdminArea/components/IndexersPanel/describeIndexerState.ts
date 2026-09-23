@@ -1,3 +1,4 @@
+import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
 
@@ -10,7 +11,12 @@ import type { StateBadge } from '@ValenceClient/status/StateBadge';
  */
 const describeIndexerState = (indexer: Indexer): StateBadge => {
   if (indexer.turnedOffBecause !== null) {
-    return { label: 'Turned off', tone: 'danger', detail: indexer.turnedOffBecause };
+    return {
+      label: 'Turned off',
+      tone: 'danger',
+      detail: indexer.turnedOffBecause,
+      help: docsFor(indexer.lastProblemCode ?? 'IndexerFailing'),
+    };
   }
 
   if (!indexer.isEnabled) {
@@ -22,6 +28,7 @@ const describeIndexerState = (indexer: Indexer): StateBadge => {
       label: indexer.failures === 1 ? 'Failed once' : `Failed ${indexer.failures.toString()} times`,
       tone: 'warning',
       detail: indexer.lastProblem,
+      help: docsFor(indexer.lastProblemCode ?? 'IndexerFailing'),
     };
   }
 

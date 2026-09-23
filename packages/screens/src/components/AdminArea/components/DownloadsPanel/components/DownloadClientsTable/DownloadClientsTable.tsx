@@ -15,6 +15,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { describeClientState } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeClientState';
 import { ReadoutLines } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/ReadoutLines/ReadoutLines';
 import { speedsOf } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/speedsOf';
+import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { DownloadClient, DownloadClientKind } from '@ValenceContracts/schemas/DownloadClient';
 import type { DownloadClientsTableProps } from './DownloadClientsTable.types';
@@ -91,6 +92,8 @@ const DownloadClientsTable = ({
               {state.detail === null ? null : (
                 <span className="text-xs text-text-muted">{state.detail}</span>
               )}
+
+              <HowToFix href={state.help} />
             </span>
           );
         },

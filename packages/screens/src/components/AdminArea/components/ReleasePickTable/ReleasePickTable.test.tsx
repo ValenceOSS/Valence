@@ -29,7 +29,14 @@ const RELEASE: Release = {
 const FOUND = {
   releases: [RELEASE],
   indexers: [
-    { indexerId: RELEASE.indexerId, indexerName: 'Jackett', found: 1, tookMs: 900, problem: null },
+    {
+      indexerId: RELEASE.indexerId,
+      indexerName: 'Jackett',
+      found: 1,
+      tookMs: 900,
+      problem: null,
+      problemCode: null,
+    },
   ],
   judgements: [],
   pickedId: null,

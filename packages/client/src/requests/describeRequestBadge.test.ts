@@ -12,6 +12,7 @@ const EPISODE: RequestItem = {
   airDate: '2026-10-02',
   state: 'waiting',
   problem: null,
+  problemCode: null,
   releaseTitle: null,
   downloadId: null,
   filePath: null,
@@ -113,9 +114,9 @@ describe('describeRequestBadge', () => {
     expect(describeRequestBadge(aMediaRequest({ isPickedByHand: true })).detail).toBe(
       'Waiting for a release to be picked by hand.',
     );
-    expect(describeRequestBadge(aMediaRequest({ problem: 'Nothing yet' })).detail).toBe(
-      'Nothing yet',
-    );
+    expect(
+      describeRequestBadge(aMediaRequest({ problem: 'Nothing yet', problemCode: null })).detail,
+    ).toBe('Nothing yet');
     expect(
       describeRequestBadge(
         aMediaRequest({
@@ -126,6 +127,31 @@ describe('describeRequestBadge', () => {
     ).toBe('Dune.2021.1080p');
     expect(describeRequestBadge(aMediaRequest({ state: 'downloading' })).detail).toBeNull();
     expect(describeRequestBadge(aMediaRequest({ state: 'failed' })).detail).toBe('It failed.');
+  });
+
+  it('points at what explains its problem, where one does', () => {
+    expect(
+      describeRequestBadge(
+        aMediaRequest({
+          state: 'filing',
+          problem: 'The requests service may not write to /media/Films.',
+          problemCode: 'MayNotWriteToLibrary',
+        }),
+      ),
+    ).toMatchObject({
+      label: 'Filing',
+      help: 'https://docs.getvalence.app/install/requesting#who-owns-what-it-files',
+    });
+    expect(
+      describeRequestBadge(
+        aMediaRequest({
+          state: 'failed',
+          problem: 'Refused',
+          problemCode: 'CloudflareRefusesAddress',
+        }),
+      ).help,
+    ).toBe('https://docs.getvalence.app/install/requesting#indexers-behind-cloudflare');
+    expect(describeRequestBadge(aMediaRequest({ state: 'wanted' })).help).toBeNull();
   });
 
   it('names every other state', () => {

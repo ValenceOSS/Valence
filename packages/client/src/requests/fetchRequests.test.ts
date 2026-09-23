@@ -9,6 +9,8 @@ import {
 const AN_OVERVIEW = {
   address: 'http://requests:8421',
   isReachable: true,
+  problem: null,
+  problemCode: null,
   checkedAt: '2026-09-19T12:00:00.000Z',
   status: {
     version: '0.4.0',
@@ -19,6 +21,7 @@ const AN_OVERVIEW = {
       country: null,
       checkedAt: null,
       problem: null,
+      problemCode: null,
     },
     indexers: { total: 0, enabled: 0, failing: [] },
   },

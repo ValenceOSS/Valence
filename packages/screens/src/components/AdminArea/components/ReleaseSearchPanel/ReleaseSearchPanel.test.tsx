@@ -159,13 +159,21 @@ const FOUND: ReleaseSearchOutcome = {
     }),
   ],
   indexers: [
-    { indexerId: JACKETT, indexerName: 'Jackett', found: 2, tookMs: 1200, problem: null },
+    {
+      indexerId: JACKETT,
+      indexerName: 'Jackett',
+      found: 2,
+      tookMs: 1200,
+      problem: null,
+      problemCode: null,
+    },
     {
       indexerId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
       indexerName: 'Flaky',
       found: 0,
       tookMs: 30000,
       problem: 'The indexer did not answer within 30 seconds',
+      problemCode: null,
     },
   ],
   judgements: [],
@@ -202,6 +210,7 @@ beforeEach(() => {
       indexerName: 'Jackett',
       state: 'queued',
       problem: null,
+      problemCode: null,
       progress: 0,
       sizeBytes: 8_000_000_000,
       doneBytes: null,
@@ -214,6 +223,7 @@ beforeEach(() => {
       finishedAt: null,
       filedInto: null,
       filingProblem: null,
+      filingProblemCode: null,
     },
     refusal: null,
   });

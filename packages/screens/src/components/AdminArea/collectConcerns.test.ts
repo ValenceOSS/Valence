@@ -1,3 +1,4 @@
+import type { RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import { describe, expect, it } from 'vitest';
 import { NO_WORK } from '@ValenceContracts/schemas/Requests';
 import { collectConcerns } from './collectConcerns';
@@ -769,18 +770,21 @@ describe('collectConcerns', () => {
   });
 
   describe('the requests service', () => {
-    const aVpn = (isUp: boolean | null, problem: string | null = null) => ({
+    const aVpn = (isUp: boolean | null, problem: string | null = null): RequestsVpn => ({
       isConfigured: isUp !== null,
       isUp,
       publicAddress: null,
       country: null,
       checkedAt: null,
       problem,
+      problemCode: problem === null ? null : 'VpnKeyRefused',
     });
 
     const answering = (vpn: ReturnType<typeof aVpn>) => ({
       address: 'http://requests:8421',
       isReachable: true,
+      problem: null,
+      problemCode: null,
       checkedAt: '2026-09-19T12:00:00.000Z',
       status: { version: '0.4.0', vpn, indexers: { total: 0, enabled: 0, failing: [] } },
       work: NO_WORK,
@@ -792,6 +796,8 @@ describe('collectConcerns', () => {
         requests: {
           address: 'http://requests:8421',
           isReachable: false,
+          problem: null,
+          problemCode: null,
           checkedAt: '2026-09-19T12:00:00.000Z',
           status: null,
           work: NO_WORK,
@@ -802,6 +808,9 @@ describe('collectConcerns', () => {
         expect.objectContaining({ id: 'requests', tone: 'broken', panel: 'requests' }),
       ]);
       expect(concerns[0]?.detail).toContain('http://requests:8421');
+      expect(concerns[0]?.help).toBe(
+        'https://docs.getvalence.app/install/requesting#switching-it-on',
+      );
     });
 
     it('says nothing before the server has checked on it', () => {
@@ -811,6 +820,8 @@ describe('collectConcerns', () => {
           requests: {
             address: 'http://requests:8421',
             isReachable: false,
+            problem: null,
+            problemCode: null,
             checkedAt: null,
             status: null,
             work: NO_WORK,
@@ -828,6 +839,9 @@ describe('collectConcerns', () => {
       expect(concerns).toEqual([
         expect.objectContaining({ id: 'requests-vpn', detail: 'The tunnel is stopped' }),
       ]);
+      expect(concerns[0]?.help).toBe(
+        'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
+      );
     });
 
     it('still says the VPN is down where gluetun gave no reason', () => {
@@ -835,6 +849,9 @@ describe('collectConcerns', () => {
 
       expect(concerns[0]?.detail).toBe(
         'The requests service cannot reach the tunnel it downloads through.',
+      );
+      expect(concerns[0]?.help).toBe(
+        'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
       );
     });
 
@@ -859,6 +876,7 @@ describe('collectConcerns', () => {
                   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
                   name: 'Jackett',
                   problem: 'Timed out',
+                  problemCode: null,
                 },
               ],
             },
@@ -873,6 +891,7 @@ describe('collectConcerns', () => {
           title: 'The indexer Jackett keeps failing',
           detail: 'Timed out',
           panel: 'indexers',
+          help: 'https://docs.getvalence.app/install/requesting#failing-indexers',
         },
       ]);
     });
@@ -893,11 +912,13 @@ describe('collectConcerns', () => {
                   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
                   name: 'Jackett',
                   problem: 'Timed out',
+                  problemCode: null,
                 },
                 {
                   id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
                   name: 'NZBgeek',
                   problem: 'Refused the key',
+                  problemCode: null,
                 },
               ],
             },
@@ -916,6 +937,8 @@ describe('collectConcerns', () => {
           requests: {
             address: 'http://requests:8421',
             isReachable: false,
+            problem: null,
+            problemCode: null,
             checkedAt: null,
             status: null,
             work: NO_WORK,

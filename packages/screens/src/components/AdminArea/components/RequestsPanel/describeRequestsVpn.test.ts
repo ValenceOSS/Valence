@@ -10,6 +10,7 @@ const A_VPN: RequestsVpn = {
   country: 'Netherlands',
   checkedAt: '2026-09-19T12:00:00.000Z',
   problem: null,
+  problemCode: null,
 };
 
 /**
@@ -18,6 +19,8 @@ const A_VPN: RequestsVpn = {
 const hearing = (vpn: RequestsVpn | null): RequestsOverview => ({
   address: 'http://requests:8421',
   isReachable: vpn !== null,
+  problem: null,
+  problemCode: null,
   checkedAt: '2026-09-19T12:00:00.000Z',
   status:
     vpn === null
@@ -43,8 +46,15 @@ describe('describeRequestsVpn', () => {
 
   it('says why the tunnel is down', () => {
     expect(
-      describeRequestsVpn(hearing({ ...A_VPN, isUp: false, problem: 'The tunnel is stopped' })),
-    ).toEqual({ label: 'Down', tone: 'danger', detail: 'The tunnel is stopped' });
+      describeRequestsVpn(
+        hearing({ ...A_VPN, isUp: false, problem: 'The tunnel is stopped', problemCode: null }),
+      ),
+    ).toEqual({
+      label: 'Down',
+      tone: 'danger',
+      detail: 'The tunnel is stopped',
+      help: 'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
+    });
   });
 
   it('still says the tunnel is down where no reason was given', () => {

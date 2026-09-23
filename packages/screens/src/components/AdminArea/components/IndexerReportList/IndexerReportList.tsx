@@ -1,3 +1,5 @@
+import { docsFor } from '@ValenceCore/functions/docsFor';
+import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { Badge } from '@ValenceUI/Badge';
 import type { IndexerReportListProps } from './IndexerReportList.types';
 
@@ -10,12 +12,14 @@ import type { IndexerReportListProps } from './IndexerReportList.types';
 const IndexerReportList = ({ reports }: IndexerReportListProps) => (
   <ul aria-label="What each indexer said" className="flex flex-wrap gap-2 px-4">
     {reports.map((report) => (
-      <li key={report.indexerId}>
+      <li key={report.indexerId} className="flex items-center gap-1.5">
         <Badge size="sm" tone={report.problem === null ? 'quiet' : 'danger'}>
           {report.problem === null
             ? `${report.indexerName}: ${report.found.toString()} in ${(report.tookMs / 1000).toFixed(1)}s`
             : `${report.indexerName}: ${report.problem}`}
         </Badge>
+
+        <HowToFix href={docsFor(report.problemCode)} />
       </li>
     ))}
   </ul>

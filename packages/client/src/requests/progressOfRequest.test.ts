@@ -34,6 +34,7 @@ const anItem = (
   airDate: null,
   state,
   problem: null,
+  problemCode: null,
   releaseTitle: null,
   downloadId,
   filePath: null,

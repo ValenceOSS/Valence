@@ -23,6 +23,7 @@ const aMediaRequest = (overrides: Partial<MediaRequest> = {}): MediaRequest => (
   isPickedByHand: false,
   state: 'wanted',
   problem: null,
+  problemCode: null,
   approval: 'approved',
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Sam' },

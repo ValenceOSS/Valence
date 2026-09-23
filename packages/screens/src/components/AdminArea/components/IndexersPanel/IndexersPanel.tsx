@@ -24,6 +24,7 @@ import { changeIndexer, removeIndexer, testIndexer } from '@ValenceClient/reques
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { IndexerDialog } from '@ValenceScreens/components/AdminArea/components/IndexerDialog/IndexerDialog';
 import { IndexerCatalogueDialog } from '@ValenceScreens/components/AdminArea/components/IndexerCatalogueDialog/IndexerCatalogueDialog';
+import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { IndexerStart } from '@ValenceScreens/components/AdminArea/IndexerStart';
 import { describeIndexerSearches } from './describeIndexerSearches';
 import { describeIndexerState } from './describeIndexerState';
@@ -149,6 +150,8 @@ const IndexersPanel = () => {
               {state.detail === null ? null : (
                 <span className="text-xs text-text-muted">{state.detail}</span>
               )}
+
+              <HowToFix href={state.help} />
             </span>
           );
         },

@@ -52,6 +52,7 @@ const KEPT: Indexer = {
   },
   failures: 0,
   lastProblem: null,
+  lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
   removesWhenDone: null,
@@ -64,6 +65,7 @@ const KEPT: Indexer = {
 const WORKING: IndexerTest = {
   isWorking: true,
   problem: null,
+  problemCode: null,
   capabilities: { categories: [], modes: [{ mode: 'movie', parameters: ['q'] }], limit: null },
   captcha: null,
 };
@@ -228,6 +230,7 @@ describe('IndexerDialog', () => {
       value: {
         isWorking: false,
         problem: 'The indexer refused the API key',
+        problemCode: null,
         capabilities: null,
         captcha: null,
       },
@@ -498,6 +501,7 @@ describe('IndexerDialog', () => {
         value: {
           isWorking: false,
           problem: 'Type the characters in the picture to log in',
+          problemCode: null,
           capabilities: null,
           captcha: { image: 'data:image/png;base64,AQID' },
         },

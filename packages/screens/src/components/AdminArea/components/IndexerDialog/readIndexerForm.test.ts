@@ -27,6 +27,7 @@ const KEPT: Indexer = {
   capabilities: null,
   failures: 0,
   lastProblem: null,
+  lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
   removesWhenDone: null,

@@ -87,7 +87,9 @@ describe('videoDevices', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/video/devices/now-watching',
-      expect.objectContaining({ body: JSON.stringify({ clientId: 'this-tab', nowWatching: null }) }),
+      expect.objectContaining({
+        body: JSON.stringify({ clientId: 'this-tab', nowWatching: null }),
+      }),
     );
   });
 

@@ -1,3 +1,5 @@
+import { docsFor } from '@ValenceCore/functions/docsFor';
+import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { notify } from '@ValenceUI/notify';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
@@ -74,9 +76,13 @@ const RequestsPanel = () => {
               description={
                 overview.checkedAt === null
                   ? `Not checked yet. Looking for it at ${overview.address}.`
-                  : `At ${overview.address}. Last checked ${saidWhen(overview.checkedAt)}.`
+                  : `At ${overview.address}. Last checked ${saidWhen(overview.checkedAt)}.${overview.problem === null ? '' : ` ${overview.problem}.`}`
               }
             >
+              {overview.checkedAt === null || overview.isReachable ? null : (
+                <HowToFix href={docsFor(overview.problemCode ?? 'RequestsUnreachable')} />
+              )}
+
               {overview.checkedAt === null ? (
                 <Badge size="sm">Not checked</Badge>
               ) : overview.isReachable ? (
@@ -100,6 +106,8 @@ const RequestsPanel = () => {
             )}
 
             <SettingRow title="VPN" description={vpn.detail}>
+              <HowToFix href={vpn.help} />
+
               <Badge size="sm" tone={vpn.tone}>
                 {vpn.label}
               </Badge>
@@ -114,6 +122,14 @@ const RequestsPanel = () => {
                     : `${overview.status.indexers.enabled.toString()} of ${overview.status.indexers.total.toString()} switched on.${overview.status.indexers.failing.map((one) => ` ${one.name}: ${one.problem}`).join('')}`
                 }
               >
+                {overview.status.indexers.failing.length > 0 ? (
+                  <HowToFix
+                    href={docsFor(
+                      overview.status.indexers.failing[0]?.problemCode ?? 'IndexerFailing',
+                    )}
+                  />
+                ) : null}
+
                 {overview.status.indexers.failing.length > 0 ? (
                   <Badge size="sm" tone="warning">
                     {`${overview.status.indexers.failing.length.toString()} failing`}

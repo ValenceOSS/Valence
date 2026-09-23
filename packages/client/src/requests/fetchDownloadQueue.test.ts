@@ -21,6 +21,7 @@ const A_DOWNLOAD = {
   indexerName: 'Jackett',
   state: 'downloading',
   problem: null,
+  problemCode: null,
   progress: 0.5,
   sizeBytes: 1000,
   doneBytes: 500,
@@ -33,6 +34,7 @@ const A_DOWNLOAD = {
   finishedAt: null,
   filedInto: null,
   filingProblem: null,
+  filingProblemCode: null,
 };
 
 const A_QUEUE = { clients: [], downloads: [A_DOWNLOAD], checkedAt: null };

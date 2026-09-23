@@ -28,6 +28,25 @@ describe('ConcernsBanner', () => {
     expect(screen.getByText('The media service is unreachable')).toBeInTheDocument();
   });
 
+  it('links to the docs about a concern that has somewhere to read, and only then', () => {
+    render(
+      <ConcernsBanner
+        concerns={[
+          concern({
+            id: 'requests-vpn',
+            title: 'The VPN is down',
+            help: 'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
+          }),
+          concern(),
+        ]}
+        onOpenPanel={vi.fn()}
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByRole('button', { name: 'How to fix this' })).toHaveLength(1);
+  });
+
   it('opens the panel that explains one', async () => {
     const onOpenPanel = vi.fn<(panel: string) => void>();
     const user = userEvent.setup();
