@@ -1,14 +1,24 @@
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { Check, Tv, X } from 'lucide-react-native';
+import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { Check, ScanQrCode, Tv, X } from 'lucide-react-native';
 import { answerDeviceRequest, readDeviceRequest } from '@ValenceClient/session/auth';
+import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
 import { tidyTheCode } from '@ValenceClient/session/tidyTheCode';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { TextField } from '@ValencePhone/components/TextField/TextField';
 import { Words } from '@ValencePhone/components/Words/Words';
+import { scanACode } from '@ValencePhone/platform/scanACode';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 
 type Standing = 'asking' | 'reading' | 'waiting' | 'allowed' | 'refused' | 'wrong';
+
+type Trouble = 'notATelevision' | 'noCamera' | 'noScanner';
+
+const TROUBLE: Record<Trouble, string> = {
+  notATelevision: 'That QR code is not one a television showed.',
+  noCamera: 'Valence may not use the camera. It can be allowed in Settings.',
+  noScanner: 'This device cannot scan codes. Type the one on the television instead.',
+};
 
 const styles = StyleSheet.create({
   section: { gap: 12 },
@@ -16,7 +26,8 @@ const styles = StyleSheet.create({
 
 /**
  * The phone's half of signing a television in, as the web's page for it has it: the code the
- * television shows, checked against the server, then a plain yes or no.
+ * television shows — typed, or read off its QR code with the camera — checked against the server,
+ * then a plain yes or no.
  *
  * Turning it down is offered as plainly as letting it in, because somebody who was not expecting to
  * be asked is the case this exists for.
@@ -26,13 +37,40 @@ const SignInATelevision = () => {
   const [typed, setTyped] = useState('');
   const [standing, setStanding] = useState<Standing>('asking');
   const [isAnswering, setIsAnswering] = useState(false);
+  const [trouble, setTrouble] = useState<Trouble | null>(null);
 
-  const check = async () => {
+  const check = async (code: string) => {
+    setTrouble(null);
     setStanding('reading');
 
-    const found = await readDeviceRequest(tidyTheCode(typed));
+    const found = await readDeviceRequest(code);
 
     setStanding(found?.status === 'pending' ? 'waiting' : 'wrong');
+  };
+
+  const scan = async () => {
+    const scanned = await scanACode();
+
+    if (scanned.kind === 'closed') {
+      return;
+    }
+
+    if (scanned.kind !== 'read') {
+      setTrouble(scanned.kind === 'refused' ? 'noCamera' : 'noScanner');
+
+      return;
+    }
+
+    const code = theCodeInAScan(scanned.text);
+
+    if (code === null) {
+      setTrouble('notATelevision');
+
+      return;
+    }
+
+    setTyped(code);
+    await check(code);
   };
 
   const answer = async (isAllowed: boolean) => {
@@ -46,6 +84,7 @@ const SignInATelevision = () => {
 
   const again = () => {
     setTyped('');
+    setTrouble(null);
     setStanding('asking');
   };
 
@@ -94,7 +133,8 @@ const SignInATelevision = () => {
       ) : (
         <>
           <Words tone="muted">
-            A television showing a code can be signed in from here, as you.
+            A television showing a code can be signed in from here, as you. Type the code, or scan
+            the QR code beside it.
           </Words>
           <TextField
             label="The code on the television"
@@ -103,10 +143,28 @@ const SignInATelevision = () => {
             placeholder="ABCD-1234"
             onSubmit={() => {
               if (tidyTheCode(typed) !== '') {
-                void check();
+                void check(tidyTheCode(typed));
               }
             }}
+            action={{
+              icon: ScanQrCode,
+              label: 'Scan the QR code',
+              onPress: () => {
+                void scan();
+              },
+            }}
           />
+          {trouble === null ? null : <Words tone="danger">{TROUBLE[trouble]}</Words>}
+          {trouble === 'noCamera' ? (
+            <Button
+              tone="quiet"
+              onPress={() => {
+                void Linking.openSettings();
+              }}
+            >
+              Open Settings
+            </Button>
+          ) : null}
           {standing === 'wrong' ? (
             <Words tone="danger">
               That code has run out, or there is no television waiting on it.
@@ -116,7 +174,7 @@ const SignInATelevision = () => {
             icon={Tv}
             isDisabled={tidyTheCode(typed) === ''}
             onPress={() => {
-              void check();
+              void check(tidyTheCode(typed));
             }}
           >
             Continue

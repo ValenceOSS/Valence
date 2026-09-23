@@ -1,9 +1,13 @@
-import { StyleSheet, TextInput } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
+import { Button } from '@ValencePhone/components/Button/Button';
+import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { FONTS } from '@ValencePhone/theme/FONTS';
 import type { TextFieldProps } from './TextField.types';
 
 const styles = StyleSheet.create({
+  action: { paddingHorizontal: 16, paddingVertical: 14 },
+  divider: { alignSelf: 'stretch', marginVertical: 12, width: StyleSheet.hairlineWidth },
   field: {
     borderRadius: 14,
     borderWidth: 1,
@@ -11,6 +15,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 16,
   },
+  holding: { alignItems: 'center', flexDirection: 'row', padding: 0 },
+  inside: { borderWidth: 0, flex: 1 },
 });
 
 /**
@@ -26,6 +32,8 @@ const styles = StyleSheet.create({
  * @param isSecret - Whether what is typed should be hidden.
  * @param keyboard - Which keyboard suits what is being typed.
  * @param onSubmit - Told they pressed the key that means done.
+ * @param action - Another way to fill it, offered at its end past a divider — a camera for a code
+ *   that is on a screen across the room.
  */
 const TextField = ({
   label,
@@ -35,10 +43,12 @@ const TextField = ({
   isSecret = false,
   keyboard = 'default',
   onSubmit,
+  action,
 }: TextFieldProps) => {
   const colours = useTheColours();
+  const ground = { backgroundColor: colours.surfaceRaised, borderColor: colours.border };
 
-  return (
+  const typing = (
     <TextInput
       accessibilityLabel={label}
       autoCapitalize="none"
@@ -50,18 +60,27 @@ const TextField = ({
       onChangeText={onValueChange}
       placeholderTextColor={colours.textMuted}
       secureTextEntry={isSecret}
-      style={[
-        styles.field,
-        {
-          backgroundColor: colours.surfaceRaised,
-          borderColor: colours.border,
-          color: colours.text,
-        },
-      ]}
+      style={[styles.field, ground, { color: colours.text }, action !== undefined && styles.inside]}
       value={value}
       {...(placeholder === undefined ? {} : { placeholder })}
       {...(onSubmit === undefined ? {} : { onSubmitEditing: onSubmit })}
     />
+  );
+
+  if (action === undefined) {
+    return typing;
+  }
+
+  return (
+    <View style={[styles.field, styles.holding, ground]}>
+      {typing}
+      <View style={[styles.divider, { backgroundColor: colours.border }]} />
+      <Button tone="bare" label={action.label} onPress={action.onPress}>
+        <View style={styles.action}>
+          <Icon of={action.icon} colour={colours.text} />
+        </View>
+      </Button>
+    </View>
   );
 };
 

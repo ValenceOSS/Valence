@@ -16,6 +16,8 @@ const config: ExpoConfig = {
       NSLocalNetworkUsageDescription:
         'Valence needs this to find and reach a server on your own network, which is where a self-hosted one usually is.',
       NSBonjourServices: ['_valence._tcp'],
+      NSCameraUsageDescription:
+        'Valence uses the camera to read the code a television shows, so it can be signed in without typing.',
     },
   },
   plugins: [

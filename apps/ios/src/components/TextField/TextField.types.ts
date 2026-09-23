@@ -1,3 +1,11 @@
+import type { LucideIcon } from 'lucide-react-native';
+
+type TextFieldAction = {
+  icon: LucideIcon;
+  label: string;
+  onPress: () => void;
+};
+
 type TextFieldProps = {
   label: string;
   value: string;
@@ -6,6 +14,7 @@ type TextFieldProps = {
   isSecret?: boolean;
   keyboard?: 'default' | 'url' | 'search' | 'code';
   onSubmit?: () => void;
+  action?: TextFieldAction;
 };
 
-export type { TextFieldProps };
+export type { TextFieldAction, TextFieldProps };
