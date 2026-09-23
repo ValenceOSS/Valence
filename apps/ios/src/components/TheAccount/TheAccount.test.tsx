@@ -5,7 +5,6 @@ import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { fetchSession } from '@ValenceClient/session/auth';
 import { aSessionUser } from '@ValencePhone/testing/aSessionUser';
 import { TheAccount } from './TheAccount';
-import { theChoicesIn } from '@ValencePhone/testing/theChoicesIn';
 
 jest.mock('@ValenceClient/session/auth', () => ({
   ...jest.requireActual<object>('@ValenceClient/session/auth'),
@@ -23,7 +22,7 @@ describe('TheAccount', () => {
     const drawn = await render(<TheAccount onOut={onOut} />, { wrapper: CacheScope });
 
     expect(await drawn.findByText('dan@example.com')).toBeTruthy();
-    expect(theChoicesIn('What to change')).toContain('Shares');
+    expect(drawn.getByText('Shares')).toBeTruthy();
 
     await userEvent.press(drawn.getByText('Sign out'));
 

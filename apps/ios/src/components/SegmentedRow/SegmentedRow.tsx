@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { AFadedEdge } from '@ValencePhone/components/AFadedEdge/AFadedEdge';
-import { ASegmentedControl } from '@ValencePhone/components/ASegmentedControl/ASegmentedControl';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
@@ -22,10 +21,6 @@ const styles = StyleSheet.create({
  * Named after the browser client's own, because a household with a phone and a laptop open should
  * find the same control in the same place under the same name.
  *
- * On iOS it is the system's own segmented control, as every other app on the phone draws a choice,
- * scrolling across its choices where they are wider than the screen. Only the glass capsule across
- * the head of the library, and Android, draw it here as pills.
- *
  * @param label - What is being chosen, for anyone who cannot see the row.
  * @param items - What there is to choose from.
  * @param value - Which one is picked, or none yet.
@@ -45,10 +40,6 @@ const SegmentedRow = ({
 }: SegmentedRowProps) => {
   const colours = useTheColours();
   const [isScrolled, setIsScrolled] = useState(false);
-
-  if (Platform.OS === 'ios' && !isGlass && items.length > 0) {
-    return <ASegmentedControl label={label} items={items} value={value} onSelect={onSelect} />;
-  }
 
   const pills = items.map((item) => {
     const isChosen = item.id === value;

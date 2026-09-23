@@ -5,8 +5,6 @@ import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
 import { ShowDetailSchema } from '@ValenceContracts/schemas/Show';
 import { AShow } from './AShow';
-import { chooseIn } from '@ValencePhone/testing/chooseIn';
-import { theChoicesIn } from '@ValencePhone/testing/theChoicesIn';
 import type { ReactNode } from 'react';
 
 jest.mock('@ValenceClient/library/fetchShows');
@@ -87,7 +85,7 @@ describe('AShow', () => {
   it('offers its seasons where there is more than one', async () => {
     jest.mocked(fetchShow).mockResolvedValue(TWO_SEASONS);
 
-    await render(
+    const drawn = await render(
       around(
         <AShow
           libraryId="l"
@@ -100,7 +98,7 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(theChoicesIn('Season')).toContain('Season 2');
+      expect(drawn.getByText('Season 2')).toBeTruthy();
     });
   });
 
@@ -175,10 +173,10 @@ describe('AShow', () => {
     );
 
     await waitFor(() => {
-      expect(theChoicesIn('Season')).toContain('Season 2');
+      expect(drawn.getByLabelText('Season 2')).toBeTruthy();
     });
 
-    await chooseIn('Season', 'Season 2');
+    await userEvent.press(drawn.getByLabelText('Season 2'));
 
     expect(drawn.getByText('Hello, Ms. Cobel')).toBeTruthy();
   });

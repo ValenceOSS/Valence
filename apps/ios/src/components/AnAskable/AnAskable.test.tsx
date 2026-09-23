@@ -14,8 +14,6 @@ import type {
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { ProfilesOnOffer } from '@ValenceContracts/schemas/QualityProfile';
 import { theAddressOf } from '@ValencePhone/testing/theAddressOf';
-import { chooseIn } from '@ValencePhone/testing/chooseIn';
-import { theChoicesIn } from '@ValencePhone/testing/theChoicesIn';
 
 jest.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   ...jest.requireActual<object>('@ValenceClient/requests/fetchMediaRequests'),
@@ -125,11 +123,11 @@ describe('AnAskable', () => {
     const drawn = await drawIt();
 
     await waitFor(() => {
-      expect(theChoicesIn('Quality')).toContain('4K');
+      expect(drawn.getByRole('button', { name: '4K' })).toBeTruthy();
     });
     expect(drawn.getByRole('button', { name: 'Request', disabled: true })).toBeTruthy();
 
-    await chooseIn('Quality', '4K');
+    await userEvent.press(drawn.getByRole('button', { name: '4K' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Request' }));
 
     expect(askForMedia).toHaveBeenCalledWith({

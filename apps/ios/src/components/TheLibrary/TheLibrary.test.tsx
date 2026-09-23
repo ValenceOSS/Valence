@@ -1,4 +1,4 @@
-import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
+import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -151,12 +151,7 @@ describe('TheLibrary', () => {
     const drawn = await theLibrary();
 
     await userEvent.press(await drawn.findByText('Films'));
-
-    const which = await drawn.findByLabelText('Which library');
-
-    expect(which).toHaveProp('labels', ['All', 'Films', 'Classics']);
-
-    await fireEvent(which, 'choose', { nativeEvent: { index: 2 } });
+    await userEvent.press(await drawn.findByText('Classics'));
 
     await waitFor(() => {
       expect(fetchLibraryItems).toHaveBeenLastCalledWith('two', expect.anything());

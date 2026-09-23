@@ -1,4 +1,4 @@
-import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { render, userEvent } from '@testing-library/react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
@@ -46,11 +46,6 @@ describe('TheSearch', () => {
 
     await userEvent.type(drawn.getByLabelText('Search'), 'dune');
 
-    await waitFor(() => {
-      expect(drawn.getByLabelText('What to look for')).toHaveProp(
-        'labels',
-        expect.arrayContaining(['Books']),
-      );
-    });
+    expect(await drawn.findByText('Books')).toBeTruthy();
   });
 });
