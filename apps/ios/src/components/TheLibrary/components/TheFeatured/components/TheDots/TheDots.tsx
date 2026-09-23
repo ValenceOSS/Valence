@@ -51,6 +51,15 @@ const TheDots = ({ count, at, filled }: TheDotsProps) => {
     return made;
   };
 
+  useEffect(
+    () => () => {
+      widths.forEach((width) => {
+        width.stopAnimation();
+      });
+    },
+    [widths],
+  );
+
   useEffect(() => {
     Array.from({ length: count }, (_, index) => index).forEach((index) => {
       const toValue = index === at ? PILL : DOT;

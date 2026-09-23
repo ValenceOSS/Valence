@@ -90,6 +90,10 @@ const TheFeatured = ({
     }
 
     fillOver(filled, 0, MOVE_ON_AFTER);
+
+    return () => {
+      filled.stopAnimation();
+    };
   }, [at, filled, isStill]);
 
   /**
