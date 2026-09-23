@@ -213,6 +213,71 @@ describe('IndexersPanel', () => {
     });
   });
 
+  it('tests all that are on or were turned off, not those somebody switched off', async () => {
+    fetchIndexers.mockResolvedValue([
+      anIndexer({ id: 'on', name: 'Jackett' }),
+      anIndexer({
+        id: 'turned-off',
+        name: 'Prowlarr',
+        isEnabled: false,
+        turnedOffBecause: 'Turned off after 5 failures in a row: Timed out',
+      }),
+      anIndexer({ id: 'switched-off', name: 'Torrents', isEnabled: false }),
+    ]);
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<IndexersPanel />);
+
+    await screen.findByText('Jackett');
+    await user.click(screen.getByRole('button', { name: /Test all/ }));
+
+    await waitFor(() => {
+      expect(fetchIndexers).toHaveBeenCalledTimes(2);
+    });
+    expect(testIndexer.mock.calls).toEqual([['on'], ['turned-off']]);
+  });
+
+  it('says which of them failed and why', async () => {
+    fetchIndexers.mockResolvedValue([
+      anIndexer({ id: 'on', name: 'Jackett' }),
+      anIndexer({ id: 'failing', name: 'Prowlarr' }),
+    ]);
+    testIndexer.mockImplementation((id) =>
+      Promise.resolve({
+        value: {
+          isWorking: id === 'on',
+          problem: id === 'on' ? null : 'Timed out',
+          problemCode: null,
+          capabilities: null,
+          captcha: null,
+        },
+        refusal: null,
+      }),
+    );
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<IndexersPanel />);
+
+    await screen.findByText('Jackett');
+    await user.click(screen.getByRole('button', { name: /Test all/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '1 of 2 answered. Prowlarr: Timed out',
+    );
+  });
+
+  it('has nothing to test where every indexer was switched off', async () => {
+    fetchIndexers.mockResolvedValue([anIndexer({ isEnabled: false })]);
+
+    renderInAnAddress(<IndexersPanel />);
+
+    await screen.findByText('Jackett');
+
+    expect(screen.getByRole('button', { name: /Test all/ })).toBeDisabled();
+  });
+
   it('says why a test failed', async () => {
     testIndexer.mockResolvedValue({
       value: {
