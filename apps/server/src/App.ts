@@ -5826,9 +5826,11 @@ const createApp = ({
         return context.json({ error: 'Nobody is signed in.' }, 401);
       }
 
+      const { deviceProfile, mediaIds } = context.req.valid('json');
       const offer = await downloads.offerSeries(
         context.req.valid('param').seriesId,
-        context.req.valid('json').deviceProfile,
+        deviceProfile,
+        mediaIds,
       );
 
       return offer === null
@@ -5843,13 +5845,14 @@ const createApp = ({
         return context.json({ error: 'Nobody is signed in.' }, 401);
       }
 
-      const { quality, audioLanguages } = context.req.valid('json');
+      const { quality, audioLanguages, mediaIds } = context.req.valid('json');
 
       const queued = await downloads.askForSeries(
         profileId,
         context.req.valid('param').seriesId,
         quality,
         audioLanguages ?? [],
+        mediaIds,
       );
 
       return context.json({ downloads: queued }, 200);

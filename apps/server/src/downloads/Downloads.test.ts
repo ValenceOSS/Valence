@@ -273,6 +273,25 @@ describe('downloads over HTTP', () => {
     expect(queued.downloads).toHaveLength(2);
   });
 
+  it('queues only the episodes chosen, where some were', async () => {
+    const { app, downloads } = build();
+    const cookie = await signedIn(app);
+
+    downloads.state.episodes[SERIES_ID] = [MEDIA_ID, OTHER_MEDIA_ID];
+
+    const queued = DownloadListSchema.parse(
+      await (
+        await app.request(`${BASE}/api/series/${SERIES_ID}/downloads`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', cookie, origin: BASE },
+          body: JSON.stringify({ quality: '1080p', mediaIds: [OTHER_MEDIA_ID] }),
+        })
+      ).json(),
+    );
+
+    expect(queued.downloads.map((one) => one.mediaId)).toEqual([OTHER_MEDIA_ID]);
+  });
+
   it('pauses one on request, so it stops without losing what it has done', async () => {
     const { app, downloads } = build();
     const cookie = await signedIn(app);

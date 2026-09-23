@@ -12,6 +12,7 @@ import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { DownloadQualitySchema, DownloadStateSchema } from '@ValenceContracts/schemas/Download';
 import { downloadHolding, preparedDownload } from '@ValenceServer/db/Schema';
+import { theEpisodesAskedFor } from './theEpisodesAskedFor';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 import type { Download, DownloadQuality, Holding } from '@ValenceContracts/schemas/Download';
@@ -211,8 +212,8 @@ const createDownloadService = ({
       return { mediaId, title: item.title, episodes: 1, options: [original, ...rungs] };
     },
 
-    offerSeries: async (seriesId, deviceProfile): Promise<DownloadOffer | null> => {
-      const episodes = await media.episodesOf(seriesId);
+    offerSeries: async (seriesId, deviceProfile, mediaIds): Promise<DownloadOffer | null> => {
+      const episodes = theEpisodesAskedFor(await media.episodesOf(seriesId), mediaIds);
       const first = episodes[0];
 
       if (first === undefined) {
@@ -322,8 +323,8 @@ const createDownloadService = ({
         : asDownload(made, asked.title, await media.seriesOf(mediaId));
     },
 
-    askForSeries: async (profileId, seriesId, quality, audioLanguages) => {
-      const episodes = await media.episodesOf(seriesId);
+    askForSeries: async (profileId, seriesId, quality, audioLanguages, mediaIds) => {
+      const episodes = theEpisodesAskedFor(await media.episodesOf(seriesId), mediaIds);
       const asked: Download[] = [];
 
       for (const episode of episodes) {

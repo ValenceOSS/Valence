@@ -76,7 +76,7 @@ const fetchDownloadOffer = async (
 };
 
 /**
- * What a whole programme would cost, added up across the episodes it holds.
+ * What a whole programme, or the episodes of it chosen, would cost, added up across them.
  *
  * Added up rather than one episode multiplied, because episodes are not the same length and the
  * one that differs most is usually the finale. The server knows every episode, so it is the thing
@@ -84,18 +84,20 @@ const fetchDownloadOffer = async (
  *
  * @param seriesId - The programme.
  * @param deviceProfile - What this device says it can play.
+ * @param mediaIds - The episodes chosen, or nothing for every one.
  * @returns What is on offer, or nothing where the server would not say.
  */
 const fetchSeriesDownloadOffer = async (
   seriesId: string,
   deviceProfile: DeviceProfile,
+  mediaIds?: readonly string[],
 ): Promise<DownloadOffer | null> => {
   const response = await askTheServer(
     `/api/series/${encodeURIComponent(seriesId)}/downloads/offer`,
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ deviceProfile }),
+      body: JSON.stringify({ deviceProfile, ...(mediaIds === undefined ? {} : { mediaIds }) }),
     },
   ).catch(() => null);
 
@@ -138,7 +140,7 @@ const askForDownload = async (
 };
 
 /**
- * Asks for every episode of a programme to be prepared.
+ * Asks for every episode of a programme, or the ones chosen, to be prepared.
  *
  * Nobody downloads one episode of a series. What comes back is the queue, in the order it will be
  * worked through — the server prepares them a few at a time rather than all at once, so asking for
@@ -147,17 +149,23 @@ const askForDownload = async (
  * @param seriesId - The programme.
  * @param quality - Which rung, or the original.
  * @param audioLanguages - Which sound to carry.
+ * @param mediaIds - The episodes chosen, or nothing for every one.
  * @returns What was queued.
  */
 const askForSeries = async (
   seriesId: string,
   quality: DownloadQuality,
   audioLanguages: string[] = [],
+  mediaIds?: readonly string[],
 ): Promise<Download[]> => {
   const response = await askTheServer(`/api/series/${encodeURIComponent(seriesId)}/downloads`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ quality, audioLanguages }),
+    body: JSON.stringify({
+      quality,
+      audioLanguages,
+      ...(mediaIds === undefined ? {} : { mediaIds }),
+    }),
   }).catch(() => null);
 
   if (response === null || !response.ok) {

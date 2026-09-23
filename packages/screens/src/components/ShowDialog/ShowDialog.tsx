@@ -22,6 +22,8 @@ import { ScrolledTitle } from '@ValenceScreens/components/ScrolledTitle/Scrolled
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { Badge } from '@ValenceUI/Badge';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
+import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
+import { waysToDownloadAProgramme } from '@ValenceClient/downloads/waysToDownloadAProgramme';
 import { DownloadDialog } from '@ValenceScreens/components/DownloadDialog/DownloadDialog';
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
@@ -39,6 +41,7 @@ import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import { SeasonPicker } from './components/SeasonPicker/SeasonPicker';
 import { EpisodeRow } from './components/EpisodeRow/EpisodeRow';
 import { MissingRow } from './components/MissingRow/MissingRow';
+import { ChooseEpisodes } from './components/ChooseEpisodes/ChooseEpisodes';
 import { laySeasonsOut } from '@ValenceClient/library/laySeasonsOut';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import type { ShowDialogProps } from './ShowDialog.types';
@@ -81,7 +84,11 @@ const ShowDialog = ({
   const [unlettered, setUnlettered] = useState<string | null>(null);
   const [lastShown, setLastShown] = useState(show);
   const [chosenSeason, setChosenSeason] = useState<number | null>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloading, setDownloading] = useState<{ mediaIds: string[]; episodes: number } | null>(
+    null,
+  );
+  const [isChoosing, setIsChoosing] = useState(false);
+  const onThisDevice = new Set(useHeldFiles().map((file) => file.mediaId));
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
   const { mark: pastTheArtwork, hasPassed: hasScrolledPast } = useHasScrolledPast();
@@ -141,6 +148,19 @@ const ShowDialog = ({
       ? { choices: [], showing: null, rows: [] }
       : laySeasonsOut(detail, chosenSeason, today);
   const chooseFrom = laidOut.choices;
+
+  /**
+   * Opens the download dialog on the episodes wanted, leaving out what this device already has.
+   *
+   * @param mediaIds - The episodes wanted.
+   */
+  const download = (mediaIds: readonly string[]) => {
+    const wanted = mediaIds.filter((id) => !onThisDevice.has(id));
+
+    if (wanted.length > 0) {
+      setDownloading({ mediaIds: wanted, episodes: wanted.length });
+    }
+  };
   const { showing } = laidOut;
   const inOrder = laidOut.rows;
 
@@ -387,16 +407,35 @@ const ShowDialog = ({
                     },
                   },
                 ]),
-            ...(!canKeepFiles() || (shown.seriesId ?? null) === null
+            ...(!canKeepFiles() || (shown.seriesId ?? null) === null || detail === null
               ? []
               : [
                   {
                     id: 'download',
-                    label: 'Download the programme',
+                    isPinned: true,
+                    label: 'Download',
                     icon: <Icon of={DownloadIcon} size={18} />,
                     onChoose: () => {
-                      setIsDownloading(true);
+                      setIsChoosing(true);
                     },
+                    choices: waysToDownloadAProgramme(detail, showing).map((way) => ({
+                      id: way.label,
+                      label: way.label,
+                      onChoose: () => {
+                        if (way.kind === 'choose') {
+                          setIsChoosing(true);
+
+                          return;
+                        }
+
+                        download(
+                          way.mediaIds ??
+                            detail.seasons.flatMap((one) =>
+                              one.episodes.map((episode) => episode.id),
+                            ),
+                        );
+                      },
+                    })),
                   },
                 ]),
             ...(onShare === undefined || (shown.seriesId ?? null) === null
@@ -418,13 +457,32 @@ const ShowDialog = ({
 
       <DownloadDialog
         series={
-          isDownloading && (shown.seriesId ?? null) !== null
-            ? { id: shown.seriesId ?? '', title: shown.title, episodes: shown.episodeCount }
+          downloading !== null && (shown.seriesId ?? null) !== null
+            ? {
+                id: shown.seriesId ?? '',
+                title: shown.title,
+                episodes: downloading.episodes,
+                mediaIds: downloading.mediaIds,
+              }
             : null
         }
         media={null}
         onClose={() => {
-          setIsDownloading(false);
+          setDownloading(null);
+        }}
+      />
+
+      <ChooseEpisodes
+        isOpen={isChoosing}
+        title={shown.title}
+        seasons={seasons}
+        held={onThisDevice}
+        onClose={() => {
+          setIsChoosing(false);
+        }}
+        onChosen={(mediaIds) => {
+          setIsChoosing(false);
+          download(mediaIds);
         }}
       />
 
