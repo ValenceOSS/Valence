@@ -1836,6 +1836,10 @@ const createDatabaseLibraryService = ({
     runScanFolder: async (libraryId, folder, jobId) => {
       const found = await findLibrary(libraryId);
 
+      if (found?.kind === 'books') {
+        return scanBooks(found, false, jobId);
+      }
+
       if (found === null || (found.kind !== 'movies' && found.kind !== 'shows')) {
         return found?.kind === 'music'
           ? scanMusic({ id: libraryId, path: folder }, false, jobId, true)
