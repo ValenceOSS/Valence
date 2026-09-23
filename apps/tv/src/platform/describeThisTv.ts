@@ -1,4 +1,4 @@
-import { say } from '@ValenceI18n/say';
+import { theKindOfTv } from '@ValenceTv/platform/theKindOfTv';
 
 /**
  * What to call this television in the sessions list an operator reads.
@@ -10,6 +10,6 @@ import { say } from '@ValenceI18n/say';
  * @returns The television as a person would describe it.
  */
 const describeThisTv = (deviceName: string | null): string =>
-  deviceName !== null && deviceName.trim() !== '' ? deviceName.trim() : say('common.appleTV');
+  deviceName !== null && deviceName.trim() !== '' ? deviceName.trim() : theKindOfTv();
 
 export { describeThisTv };

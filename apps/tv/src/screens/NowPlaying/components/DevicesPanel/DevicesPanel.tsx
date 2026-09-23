@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Laptop, Monitor, Smartphone } from '@keyline-icons/react-native';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
@@ -45,6 +45,13 @@ const DevicesPanel = ({ shown, onChosen }: DevicesPanelProps) => {
   const thisDevice = platformInUse().thisClientId();
   const others = (asked.data ?? []).filter((device) => device.clientId !== thisDevice);
   const { remote } = state;
+  const isAndroid = Platform.OS === 'android';
+  const thisTvPlayingHere = isAndroid
+    ? say('tv.nowPlaying.devicesPanel.thisAndroidTVPlayingHere')
+    : say('tv.nowPlaying.devicesPanel.thisAppleTVPlayingHere');
+  const thisTv = isAndroid
+    ? say('tv.nowPlaying.devicesPanel.thisAndroidTV')
+    : say('tv.nowPlaying.devicesPanel.thisAppleTV');
 
   return (
     <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
@@ -53,11 +60,7 @@ const DevicesPanel = ({ shown, onChosen }: DevicesPanelProps) => {
 
         <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           <ActionRow
-            label={
-              remote === null
-                ? say('tv.nowPlaying.devicesPanel.thisAppleTVPlayingHere')
-                : say('tv.nowPlaying.devicesPanel.thisAppleTV')
-            }
+            label={remote === null ? thisTvPlayingHere : thisTv}
             icon={remote === null ? Check : Monitor}
             hasPreferredFocus={remote === null}
             onPress={() => {

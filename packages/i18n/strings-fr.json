@@ -1765,6 +1765,11 @@
     "context": "The label, used in several places, among them the share lasts in the sharing and the give up rules list (from `slowWaitChoices`)."
   },
   {
+    "handler": "common.androidTV",
+    "text": "Android TV",
+    "context": "The name of the kind of television, shown in the platform of the television app (from `describeThisTv`) and in the playback of the television app (from `theTvsProfile`)."
+  },
+  {
     "handler": "common.anHour",
     "text": "An hour",
     "context": "The label, used in the give up rules list (from `metadataWaitChoices`) and in the give up rules list (from `stalledWaitChoices`)."
@@ -26766,6 +26771,11 @@
     "context": "A webhook message about a problem, followed by a link to the page that explains how to fix it. {sentence} is the message; {docs} is the link."
   },
   {
+    "handler": "tv.about.describeThisBuild.androidApiLevel",
+    "text": "Android API {level}",
+    "context": "Shown in the about of the television app on an Android TV (from `describeThisBuild`), naming the Android version by its API level. {level} is filled in by the app."
+  },
+  {
     "handler": "tv.about.describeThisBuild.valenceVersionCommit",
     "text": "Valence {version} ({commit})",
     "context": "Shown in the about of the television app (from `describeThisBuild`). {version} is filled in by the app; {commit} is filled in by the app."
@@ -26889,6 +26899,11 @@
     "handler": "tv.catalogue.thereAreNoShowsHereYet",
     "text": "No shows yet.",
     "context": "Shown in the catalogue of the television app."
+  },
+  {
+    "handler": "tv.chooseServer.chooseTheServerThisAndroidTV",
+    "text": "Choose the server this Android TV connects to.",
+    "context": "Text shown in the choose server of the television app, on an Android TV."
   },
   {
     "handler": "tv.chooseServer.chooseTheServerThisAppleTV",
@@ -27019,6 +27034,16 @@
     "handler": "tv.nowPlaying.devicesPanel.devicePlayingTitle",
     "text": "{device} · playing {title}",
     "context": "A row in the television app's list of other devices, for one playing something. {device} is the device's name and {title} what it is playing."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisAndroidTV",
+    "text": "This Android TV",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Android TV."
+  },
+  {
+    "handler": "tv.nowPlaying.devicesPanel.thisAndroidTVPlayingHere",
+    "text": "This Android TV · playing here",
+    "context": "Shown in the devices panel in the now playing of the television app, on an Android TV."
   },
   {
     "handler": "tv.nowPlaying.devicesPanel.thisAppleTV",

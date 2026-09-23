@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Clock, Plus, Server } from '@keyline-icons/react-native';
 import { readServerAddress } from '@ValenceClient/session/readServerAddress';
@@ -97,7 +97,11 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
         <View style={styles.top}>
           <Image source={mark} style={MARK} contentFit="contain" />
           <Text style={styles.title}>{say('common.whichValenceIsYours')}</Text>
-          <Text style={styles.lead}>{say('tv.chooseServer.chooseTheServerThisAppleTV')}</Text>
+          <Text style={styles.lead}>
+            {Platform.OS === 'android'
+              ? say('tv.chooseServer.chooseTheServerThisAndroidTV')
+              : say('tv.chooseServer.chooseTheServerThisAppleTV')}
+          </Text>
         </View>
       </FadeIn>
 

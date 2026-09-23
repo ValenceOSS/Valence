@@ -12,6 +12,15 @@ describe('theTvsProfile', () => {
     expect(profile.directPlayProfiles.map((each) => each.container)).toEqual(['mp4', 'mov']);
   });
 
+  it('describes an Android TV by what nearly every one plays, Matroska included', () => {
+    const profile = theTvsProfile('android');
+
+    expect(profile.name).toBe('Android TV');
+    expect(profile.supportedVideoRanges).not.toContain('DolbyVision');
+    expect(profile.directPlayProfiles.map((each) => each.container)).toEqual(['mp4', 'mkv']);
+    expect(profile.transcodingProfiles).toEqual(theTvsProfile('ios').transcodingProfiles);
+  });
+
   it('asks for HLS in H.264 and AAC for anything it cannot open whole', () => {
     expect(theTvsProfile().transcodingProfiles).toEqual([
       expect.objectContaining({
