@@ -1,6 +1,7 @@
 import { FromServerSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { FromClient, RealtimeEvent, RealtimeTopic } from '@ValenceContracts/schemas/Realtime';
+import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 
 type Handlers = {
   onOpen: () => void;
@@ -27,6 +28,7 @@ type Identity = {
   profileId?: string | null;
   clientId?: string;
   deviceLabel?: string;
+  clientKind?: ClientKind;
 };
 
 type PartyMessage = Extract<FromClient, { kind: `party${string}` }>;
@@ -101,6 +103,7 @@ const createRealtimeClient = ({
     profileId: who.profileId ?? null,
     ...(who.clientId === undefined ? {} : { clientId: who.clientId }),
     ...(who.deviceLabel === undefined ? {} : { deviceLabel: who.deviceLabel }),
+    ...(who.clientKind === undefined ? {} : { clientKind: who.clientKind }),
   });
 
   const send = (message: FromClient) => {

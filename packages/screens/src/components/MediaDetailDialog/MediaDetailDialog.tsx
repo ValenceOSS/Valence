@@ -15,6 +15,7 @@ import {
   UserCheck as UserCheckIcon,
   Users as UsersIcon,
   X as XIcon,
+  Monitor as MonitorIcon,
 } from '@keyline-icons/react';
 import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
@@ -83,6 +84,8 @@ const LOGO_BOX = 'max-h-[16svh] w-auto max-w-[min(70vw,26rem)] object-contain ob
  * @param onOpenPerson - Told which performer to open from the cast, where opening one is offered.
  * @param onShare - Told to hand out a link to it, where this account may share at all.
  * @param onStartParty - Told to open a watch party on it, where this account may hold one.
+ * @param onPlayOn - Told to play it on one of this person's televisions instead, from where they
+ *   had got to, where one is open.
  */
 const MediaDetailDialog = ({
   media,
@@ -102,6 +105,7 @@ const MediaDetailDialog = ({
   onHide,
   onDecideForSomebody,
   onStartParty,
+  onPlayOn,
 }: MediaDetailDialogProps) => {
   const asked = useQuery(libraryQueries.detail(media?.id ?? null));
   const detail = useHeldWhileLeaving(asked.data ?? null, media !== null);
@@ -553,6 +557,22 @@ const MediaDetailDialog = ({
                   },
                 ]
               : []),
+            ...(onPlayOn === undefined
+              ? []
+              : [
+                  {
+                    id: 'play-on',
+                    isPinned: true,
+                    label: 'Play on TV',
+                    icon: <Icon of={MonitorIcon} size={18} />,
+                    onChoose: () => {
+                      onPlayOn(
+                        chosenVersion ?? shown,
+                        chosenVersion === null ? (shownResume ?? 0) : 0,
+                      );
+                    },
+                  },
+                ]),
             ...(onStartParty === undefined
               ? []
               : [
