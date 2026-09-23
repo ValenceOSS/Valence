@@ -5,6 +5,8 @@ import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { createShare } from '@ValenceClient/sharing/fetchShares';
 import { aBook } from '@ValencePhone/testing/aBook';
 import { AShareSheet } from './AShareSheet';
+import { chooseIn } from '@ValencePhone/testing/chooseIn';
+import { theChoicesIn } from '@ValencePhone/testing/theChoicesIn';
 
 jest.mock('@ValenceClient/sharing/fetchShares', () => ({
   ...jest.requireActual<object>('@ValenceClient/sharing/fetchShares'),
@@ -41,7 +43,7 @@ describe('AShareSheet', () => {
 
     expect(drawn.getByText('Share Dune')).toBeTruthy();
 
-    await userEvent.press(drawn.getByText('A day'));
+    await chooseIn('How long the link lasts', 'A day');
     await userEvent.press(drawn.getByText('Make a link'));
 
     expect(createShare).toHaveBeenCalledWith(
@@ -63,7 +65,7 @@ describe('AShareSheet', () => {
   });
 
   it('asks whether to share an episode alone or its whole programme', async () => {
-    const drawn = await render(
+    await render(
       <AShareSheet
         subject={{
           kind: 'item',
@@ -74,6 +76,6 @@ describe('AShareSheet', () => {
       { wrapper: CacheScope },
     );
 
-    expect(drawn.getByText('The whole programme')).toBeTruthy();
+    expect(theChoicesIn('What to share')).toContain('The whole programme');
   });
 });

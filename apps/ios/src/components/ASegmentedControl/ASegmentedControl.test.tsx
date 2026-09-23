@@ -41,7 +41,7 @@ describe('ASegmentedControl', () => {
     expect(onSelect).toHaveBeenCalledWith('asked');
   });
 
-  it('says nothing for the one already picked, or for no choice at all', async () => {
+  it('says the one already picked again, as pressing a pill does, so a filter can be put down', async () => {
     const onSelect = jest.fn();
     const drawn = await render(
       <ASegmentedControl label="What to show" items={SIDES} value="discover" onSelect={onSelect} />,
@@ -50,6 +50,16 @@ describe('ASegmentedControl', () => {
     await fireEvent(drawn.getByTestId('ValenceSegmentedControl'), 'choose', {
       nativeEvent: { index: 0 },
     });
+
+    expect(onSelect).toHaveBeenCalledWith('discover');
+  });
+
+  it('says nothing for no choice at all', async () => {
+    const onSelect = jest.fn();
+    const drawn = await render(
+      <ASegmentedControl label="What to show" items={SIDES} value="discover" onSelect={onSelect} />,
+    );
+
     await fireEvent(drawn.getByTestId('ValenceSegmentedControl'), 'choose', {
       nativeEvent: { index: -1 },
     });

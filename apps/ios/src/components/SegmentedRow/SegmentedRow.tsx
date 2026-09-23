@@ -10,8 +10,6 @@ import type { SegmentedRowProps } from './SegmentedRow.types';
 
 const FADE = 24;
 
-const MOST_SEGMENTS = 5;
-
 const styles = StyleSheet.create({
   pill: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -24,11 +22,9 @@ const styles = StyleSheet.create({
  * Named after the browser client's own, because a household with a phone and a laptop open should
  * find the same control in the same place under the same name.
  *
- * Asked to, a choice of a few is the system's own segmented control on iOS, as every other app on
- * the phone draws its tabs and settings. Pills are kept for a row whose picked one can be pressed
- * again to put it down — a filter — which the system control cannot do, and for a longer row, one
- * that scrolls, or the glass capsule across the head of the library, since the system control
- * holds only a few.
+ * On iOS it is the system's own segmented control, as every other app on the phone draws a choice,
+ * scrolling across its choices where they are wider than the screen. Only the glass capsule across
+ * the head of the library, and Android, draw it here as pills.
  *
  * @param label - What is being chosen, for anyone who cannot see the row.
  * @param items - What there is to choose from.
@@ -38,8 +34,6 @@ const styles = StyleSheet.create({
  *   a highlight that slides to the one picked, as the row across the head of the library is.
  * @param scrolls - Whether the row scrolls sideways, fading out at its edges, rather than wrapping
  *   onto more lines, for a row that can outgrow its room.
- * @param isSystem - Whether a choice of a few is drawn as the system's own segmented control, for
- *   tabs and settings where one is always picked.
  */
 const SegmentedRow = ({
   label,
@@ -48,19 +42,11 @@ const SegmentedRow = ({
   onSelect,
   isGlass = false,
   scrolls = false,
-  isSystem = false,
 }: SegmentedRowProps) => {
   const colours = useTheColours();
   const [isScrolled, setIsScrolled] = useState(false);
 
-  if (
-    isSystem &&
-    Platform.OS === 'ios' &&
-    !isGlass &&
-    !scrolls &&
-    items.length > 0 &&
-    items.length <= MOST_SEGMENTS
-  ) {
+  if (Platform.OS === 'ios' && !isGlass && items.length > 0) {
     return <ASegmentedControl label={label} items={items} value={value} onSelect={onSelect} />;
   }
 

@@ -221,7 +221,6 @@ const TheProfile = () => {
 
         <SegmentedRow
           label="Ask if you are still watching"
-          isSystem
           items={STILL_WATCHING_CHOICES}
           value={
             draft.askStillWatchingAfter === STILL_WATCHING_OFF

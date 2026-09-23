@@ -1,5 +1,6 @@
 import { render, userEvent } from '@testing-library/react-native';
 import { TheFilters } from './TheFilters';
+import { chooseIn } from '@ValencePhone/testing/chooseIn';
 
 const GROUPS = [
   {
@@ -37,7 +38,7 @@ describe('TheFilters', () => {
     );
 
     await userEvent.press(drawn.getByText('Filters'));
-    await userEvent.press(drawn.getByText('Comedy'));
+    await chooseIn('Genre', 'Comedy');
 
     expect(onChange).toHaveBeenCalledWith(new Set(['genre:comedy']));
   });

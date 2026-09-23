@@ -14,9 +14,11 @@ const ChosenSchema = z.object({ index: z.number().int() });
 const HIGH = { height: 36 } as const;
 
 /**
- * One choice out of a few, drawn by iOS itself as it draws that choice in every other app: its
+ * One choice out of several, drawn by iOS itself as it draws that choice in every other app: its
  * segmented control, on liquid glass that slides between the choices from iOS 26, in the app's own
- * typeface and light or dark as the app is.
+ * typeface and light or dark as the app is, scrolling across the choices where they are wider than
+ * the room. Pressing the one already picked says so as well, as pressing a pill does, so whatever
+ * holds it can put a choice like a filter down again.
  *
  * @param label - What is being chosen, for anyone who cannot see it.
  * @param items - What there is to choose from.
@@ -37,7 +39,7 @@ const ASegmentedControl = ({ label, items, value, onSelect }: ASegmentedControlP
         const chosen = ChosenSchema.safeParse(event.nativeEvent);
         const item = chosen.success ? items[chosen.data.index] : undefined;
 
-        if (item !== undefined && item.id !== value) {
+        if (item !== undefined) {
           onSelect(item.id);
         }
       }}

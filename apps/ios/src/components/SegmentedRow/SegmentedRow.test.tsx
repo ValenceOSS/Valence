@@ -1,5 +1,5 @@
 import { createElement as mockCreateElement } from 'react';
-import { View as mockView } from 'react-native';
+import { Platform, View as mockView } from 'react-native';
 import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { SegmentedRow } from './SegmentedRow';
 
@@ -22,10 +22,10 @@ const MORE_THAN_FIT = [
   { id: 'anime', label: 'Anime' },
 ] as const;
 
-describe('SegmentedRow, asked to be the system control', () => {
+describe('SegmentedRow on iOS', () => {
   it('is the system control, holding every choice', async () => {
     const drawn = await render(
-      <SegmentedRow label="Library" items={TWO} value="shows" onSelect={jest.fn()} isSystem />,
+      <SegmentedRow label="Library" items={TWO} value="shows" onSelect={jest.fn()} />,
     );
 
     expect(drawn.getByTestId('ValenceSegmentedControl')).toHaveProp('labels', ['Films', 'Shows']);
@@ -35,7 +35,7 @@ describe('SegmentedRow, asked to be the system control', () => {
   it('says which one they picked there', async () => {
     const onSelect = jest.fn();
     const drawn = await render(
-      <SegmentedRow label="Library" items={TWO} value="films" onSelect={onSelect} isSystem />,
+      <SegmentedRow label="Library" items={TWO} value="films" onSelect={onSelect} />,
     );
 
     await fireEvent(drawn.getByTestId('ValenceSegmentedControl'), 'choose', {
@@ -45,25 +45,27 @@ describe('SegmentedRow, asked to be the system control', () => {
     expect(onSelect).toHaveBeenCalledWith('shows');
   });
 
-  it('is pills where it scrolls, however few it holds', async () => {
+  it('is the system control however many it holds, scrolling where they are wide', async () => {
     const drawn = await render(
       <SegmentedRow
         label="Library"
-        items={TWO}
-        value="films"
+        items={MORE_THAN_FIT}
+        value="kids"
         onSelect={jest.fn()}
         scrolls
-        isSystem
       />,
     );
 
-    expect(drawn.queryByTestId('ValenceSegmentedControl')).toBeNull();
-    expect(drawn.getByRole('button', { name: 'Films', selected: true })).toBeTruthy();
+    expect(drawn.getByTestId('ValenceSegmentedControl')).toHaveProp('picked', 4);
   });
 });
 
-describe('SegmentedRow, as pills', () => {
-  it('is pills for a few too, where it is not asked to be the system control', async () => {
+describe('SegmentedRow, as pills on Android', () => {
+  beforeEach(() => {
+    jest.replaceProperty(Platform, 'OS', 'android');
+  });
+
+  it('is pills however few it holds', async () => {
     const drawn = await render(
       <SegmentedRow label="Library" items={TWO} value="films" onSelect={jest.fn()} />,
     );

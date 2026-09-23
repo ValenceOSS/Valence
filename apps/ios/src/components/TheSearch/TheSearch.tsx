@@ -93,13 +93,7 @@ const TheSearch = ({
           <Words tone="muted">Everything in every library.</Words>
         ) : (
           <>
-            <SegmentedRow
-              label="What to show"
-              items={SIDES}
-              value={side}
-              onSelect={setSide}
-              isSystem
-            />
+            <SegmentedRow label="What to show" items={SIDES} value={side} onSelect={setSide} />
 
             {side === 'asked' ? <Asked onAsk={onAsk} /> : <Discovered onAsk={onAsk} />}
           </>
@@ -108,7 +102,6 @@ const TheSearch = ({
         <>
           <SegmentedRow
             label="What to look for"
-            isSystem
             items={[...KINDS, ...(hasMusic ? [MUSIC] : []), ...(hasBooks ? [BOOKS] : [])]}
             value={kind}
             onSelect={setKind}
