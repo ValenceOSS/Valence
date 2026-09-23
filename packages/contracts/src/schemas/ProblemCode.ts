@@ -16,8 +16,10 @@ const PROBLEM_CODES = [
 
 const ProblemCodeSchema = z.enum(PROBLEM_CODES);
 
+const ProblemCodeFieldSchema = ProblemCodeSchema.nullable().catch(null);
+
 type ProblemCode = z.infer<typeof ProblemCodeSchema>;
 
 export type { ProblemCode };
 
-export { PROBLEM_CODES, ProblemCodeSchema };
+export { PROBLEM_CODES, ProblemCodeFieldSchema, ProblemCodeSchema };

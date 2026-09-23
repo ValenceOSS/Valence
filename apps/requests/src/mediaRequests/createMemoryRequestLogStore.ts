@@ -12,8 +12,14 @@ const createMemoryRequestLogStore = (now: () => Date = () => new Date()) => {
   const said: Array<RequestLogEntry & { requestId: string }> = [];
 
   const store: RequestLogStore = {
-    add: (requestId, message) => {
-      said.push({ id: said.length + 1, requestId, message, at: now().toISOString() });
+    add: (requestId, message, problemCode = null) => {
+      said.push({
+        id: said.length + 1,
+        requestId,
+        message,
+        problemCode,
+        at: now().toISOString(),
+      });
 
       return Promise.resolve();
     },
@@ -21,7 +27,7 @@ const createMemoryRequestLogStore = (now: () => Date = () => new Date()) => {
       Promise.resolve(
         said
           .filter((line) => line.requestId === requestId)
-          .map(({ id, at, message }) => ({ id, at, message }))
+          .map(({ id, at, message, problemCode }) => ({ id, at, message, problemCode }))
           .toReversed(),
       ),
   };

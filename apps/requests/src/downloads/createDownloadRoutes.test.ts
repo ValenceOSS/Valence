@@ -2,6 +2,7 @@ import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadC
 import { describe, expect, it, vi } from 'vitest';
 import { aSentDownload } from '@ValenceRequests/testing/aSentDownload';
 import { createDownloadRoutes } from './createDownloadRoutes';
+import type { NotSent } from '@ValenceRequests/downloads/NotSent';
 import type { DownloadClient, DownloadClientTest } from '@ValenceContracts/schemas/DownloadClient';
 import type {
   DownloadQueue,
@@ -26,7 +27,12 @@ const CLIENT: DownloadClient = {
   updatedAt: '2026-09-19T00:00:00.000Z',
 };
 
-const WORKING: DownloadClientTest = { isWorking: true, problem: null, version: 'v5.0.1' };
+const WORKING: DownloadClientTest = {
+  isWorking: true,
+  problem: null,
+  problemCode: null,
+  version: 'v5.0.1',
+};
 
 const DOWNLOAD: QueuedDownload = {
   id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
@@ -38,6 +44,7 @@ const DOWNLOAD: QueuedDownload = {
   indexerName: 'Jackett',
   state: 'queued',
   problem: null,
+  problemCode: null,
   progress: 0,
   sizeBytes: null,
   doneBytes: null,
@@ -50,6 +57,7 @@ const DOWNLOAD: QueuedDownload = {
   finishedAt: null,
   filedInto: null,
   filingProblem: null,
+  filingProblemCode: null,
 };
 
 const QUEUE: DownloadQueue = { clients: [], downloads: [DOWNLOAD], checkedAt: null };
@@ -80,7 +88,7 @@ const theRoutes = () => {
   };
   const queue = {
     queue: vi.fn(() => Promise.resolve(QUEUE)),
-    send: vi.fn((): Promise<QueuedDownload | string> => Promise.resolve(DOWNLOAD)),
+    send: vi.fn((): Promise<QueuedDownload | NotSent> => Promise.resolve(DOWNLOAD)),
     pause: vi.fn((id: string): Promise<QueuedDownload | string | null> =>
       Promise.resolve(id === DOWNLOAD.id ? DOWNLOAD : null),
     ),
@@ -189,13 +197,17 @@ describe('createDownloadRoutes', () => {
     it('says why a release could not be sent', async () => {
       const { ask, queue } = theRoutes();
 
-      queue.send.mockResolvedValueOnce('No torrent client is set up and switched on');
+      queue.send.mockResolvedValueOnce({
+        refused: 'No torrent client is set up and switched on',
+        problemCode: null,
+      });
 
       const refused = await ask('/downloads', 'POST', SEND);
 
       expect(refused.status).toBe(400);
       expect(await refused.json()).toEqual({
         error: 'No torrent client is set up and switched on',
+        problemCode: null,
       });
       expect((await ask('/downloads', 'POST', { title: 'Dune' })).status).toBe(400);
     });

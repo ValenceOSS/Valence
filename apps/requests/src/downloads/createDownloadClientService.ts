@@ -79,11 +79,17 @@ const createDownloadClientService = ({
 
   const tryOut = async (adapter: DownloadClientAdapter): Promise<DownloadClientTest> => {
     try {
-      return { isWorking: true, problem: null, version: await adapter.version() };
+      return {
+        isWorking: true,
+        problem: null,
+        problemCode: null,
+        version: await adapter.version(),
+      };
     } catch (error) {
       return {
         isWorking: false,
         problem: error instanceof DownloadClientFailure ? error.message : UNASKABLE,
+        problemCode: error instanceof DownloadClientFailure ? error.problemCode : null,
         version: null,
       };
     }

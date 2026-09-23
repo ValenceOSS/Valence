@@ -23,6 +23,7 @@ import { wantsUpgrade } from '@ValenceRequests/mediaRequests/wantsUpgrade';
 import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
 import { downloadFacts } from '@ValenceRequests/mediaRequests/downloadFacts';
 import { judgeDownload } from '@ValenceRequests/downloads/judgeDownload';
+import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type {
   IndexerSearchReport,
   Release,
@@ -160,14 +161,15 @@ const whyNotFiled = (
   error: Error | null,
   path: string,
   clientName: string,
-): { problem: string; isATry: boolean } => {
+): { problem: string; problemCode: ProblemCode | null; isATry: boolean } => {
   if (error instanceof NotAllowedThere) {
-    return { problem: error.message, isATry: false };
+    return { problem: error.message, problemCode: 'MayNotWriteToLibrary', isATry: false };
   }
 
   if (error !== null && 'code' in error && error.code === 'EACCES') {
     return {
       problem: `The requests service may not write where this belongs (${error.message}). Set PUID and PGID on it to the owner of your media folders.`,
+      problemCode: 'MayNotWriteToLibrary',
       isATry: false,
     };
   }
@@ -175,9 +177,14 @@ const whyNotFiled = (
   return error !== null && 'code' in error && error.code === 'ENOENT'
     ? {
         problem: `Valence cannot see ${path}, where ${clientName} put it. Set where ${clientName} saves downloads, as it sees them and as Valence does, on the Downloads page.`,
+        problemCode: 'CannotSeeDownload',
         isATry: false,
       }
-    : { problem: `It could not be filed: ${error?.message ?? 'no reason given'}`, isATry: true };
+    : {
+        problem: `It could not be filed: ${error?.message ?? 'no reason given'}`,
+        problemCode: null,
+        isATry: true,
+      };
 };
 
 /**
@@ -296,10 +303,18 @@ const createRequestWorker = ({
   const today = () => at().slice(0, 10);
 
   const update = (item: RequestItemRecord, changes: Partial<Omit<RequestItemRecord, 'id'>>) =>
-    items.update(item.id, { ...changes, updatedAt: at() });
+    items.update(item.id, {
+      ...('problem' in changes && !('problemCode' in changes) ? { problemCode: null } : {}),
+      ...changes,
+      updatedAt: at(),
+    });
 
-  const note = async (request: MediaRequestRecord, message: string) => {
-    await log.add(request.id, message);
+  const note = async (
+    request: MediaRequestRecord,
+    message: string,
+    problemCode: ProblemCode | null = null,
+  ) => {
+    await log.add(request.id, message, problemCode);
     say(`${request.title}: ${message}`);
   };
 
@@ -373,16 +388,17 @@ const createRequestWorker = ({
       minimumRatio: release.minimumRatio,
     });
 
-    if (typeof sent === 'string') {
+    if ('refused' in sent) {
       for (const item of holding) {
         await update(item, {
           state: item.state === 'searching' || item.state === 'chosen' ? 'wanted' : item.state,
-          problem: sent,
+          problem: sent.refused,
+          problemCode: sent.problemCode,
           lastSearchedAt: at(),
         });
       }
 
-      return sent;
+      return sent.refused;
     }
 
     for (const item of holding) {
@@ -501,6 +517,7 @@ const createRequestWorker = ({
             ),
             '.',
           ].join(''),
+          unanswered.find((report) => report.problemCode !== null)?.problemCode ?? null,
         );
 
         if (fetched.isSent) {
@@ -561,8 +578,13 @@ const createRequestWorker = ({
     }
   };
 
-  const giveUp = async (request: MediaRequestRecord, item: RequestItemRecord, problem: string) => {
-    await update(item, { state: 'failed', problem });
+  const giveUp = async (
+    request: MediaRequestRecord,
+    item: RequestItemRecord,
+    problem: string,
+    problemCode: ProblemCode | null = null,
+  ) => {
+    await update(item, { state: 'failed', problem, problemCode });
     await events.add({
       kind: 'stuck',
       title: request.title,
@@ -662,17 +684,21 @@ const createRequestWorker = ({
 
       const attempts = (filing[0]?.attempts ?? 0) + 1;
 
-      const retryOrFail = async (problem: string, isATry = true) => {
+      const retryOrFail = async (
+        problem: string,
+        isATry = true,
+        problemCode: ProblemCode | null = null,
+      ) => {
         if (filing[0]?.problem !== problem) {
-          await note(request, `${download.title} could not be filed: ${problem}`);
+          await note(request, `${download.title} could not be filed: ${problem}`, problemCode);
         }
 
         for (const item of filing) {
           await (!isATry
-            ? update(item, { problem })
+            ? update(item, { problem, problemCode })
             : attempts >= MOST_FILING_ATTEMPTS
-              ? giveUp(request, item, problem)
-              : update(item, { problem, attempts }));
+              ? giveUp(request, item, problem, problemCode)
+              : update(item, { problem, problemCode, attempts }));
         }
       };
 
@@ -746,7 +772,7 @@ const createRequestWorker = ({
       } catch (error) {
         const why = whyNotFiled(error instanceof Error ? error : null, path, client.name);
 
-        await retryOrFail(why.problem, why.isATry);
+        await retryOrFail(why.problem, why.isATry, why.problemCode);
       }
     }
   };
@@ -834,9 +860,14 @@ const createRequestWorker = ({
         year: parsed.year,
       };
 
-      const couldNot = async (problem: string, isATry = true) => {
+      const couldNot = async (
+        problem: string,
+        isATry = true,
+        problemCode: ProblemCode | null = null,
+      ) => {
         await downloads.update(download.id, {
           filingProblem: problem,
+          filingProblemCode: problemCode,
           filingAttempts: download.filingAttempts + (isATry ? 1 : 0),
           updatedAt: at(),
         });
@@ -883,6 +914,7 @@ const createRequestWorker = ({
         await downloads.update(download.id, {
           filedInto: folder,
           filingProblem: null,
+          filingProblemCode: null,
           updatedAt: at(),
         });
         await events.add({
@@ -895,7 +927,7 @@ const createRequestWorker = ({
       } catch (error) {
         const why = whyNotFiled(error instanceof Error ? error : null, path, client.name);
 
-        await couldNot(why.problem, why.isATry);
+        await couldNot(why.problem, why.isATry, why.problemCode);
       }
     }
   };
@@ -1198,6 +1230,7 @@ const createRequestWorker = ({
           libraryPath: library.path,
           filedInto: null,
           filingProblem: null,
+          filingProblemCode: null,
           filingAttempts: 0,
           updatedAt: at(),
         });

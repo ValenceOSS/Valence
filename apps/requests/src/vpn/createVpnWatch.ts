@@ -13,6 +13,7 @@ const NOT_YET_ASKED: RequestsVpn = {
   country: null,
   checkedAt: null,
   problem: null,
+  problemCode: null,
 };
 
 /**

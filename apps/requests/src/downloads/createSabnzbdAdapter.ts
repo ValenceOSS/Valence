@@ -101,7 +101,10 @@ const createSabnzbdAdapter = (
 
   const read = async (response: Response) => {
     if (response.status === 401 || response.status === 403) {
-      throw new DownloadClientFailure(`${settings.name} refused the API key`);
+      throw new DownloadClientFailure(
+        `${settings.name} refused the API key`,
+        'DownloadClientLoginRefused',
+      );
     }
 
     if (!response.ok) {
@@ -118,21 +121,23 @@ const createSabnzbdAdapter = (
     }
 
     if (body === null || typeof body !== 'object') {
-      throw new DownloadClientFailure(
-        /api key/i.test(said)
-          ? `${settings.name} refused the API key`
-          : `${settings.name} answered, but not as SABnzbd`,
-      );
+      throw /api key/i.test(said)
+        ? new DownloadClientFailure(
+            `${settings.name} refused the API key`,
+            'DownloadClientLoginRefused',
+          )
+        : new DownloadClientFailure(`${settings.name} answered, but not as SABnzbd`);
     }
 
     const refusal = RefusalSchema.safeParse(body);
 
     if (refusal.success) {
-      throw new DownloadClientFailure(
-        /api key/i.test(refusal.data.error)
-          ? `${settings.name} refused the API key`
-          : `${settings.name} said: ${refusal.data.error}`,
-      );
+      throw /api key/i.test(refusal.data.error)
+        ? new DownloadClientFailure(
+            `${settings.name} refused the API key`,
+            'DownloadClientLoginRefused',
+          )
+        : new DownloadClientFailure(`${settings.name} said: ${refusal.data.error}`);
     }
 
     return body;

@@ -9,6 +9,7 @@ import {
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
+import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import {
   DEFAULT_DOWNLOAD_CATEGORIES,
   DOWNLOAD_CLIENT_KINDS,
@@ -66,6 +67,7 @@ const indexer = requestsSchema.table('indexer', {
   capabilities: jsonb('capabilities').$type<IndexerCapabilities>(),
   failures: integer('failures').notNull().default(0),
   lastProblem: text('last_problem'),
+  lastProblemCode: text('last_problem_code').$type<ProblemCode>(),
   lastFailedAt: timestamp('last_failed_at', { withTimezone: true }),
   turnedOffBecause: text('turned_off_because'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -119,6 +121,7 @@ const sentDownload = requestsSchema.table(
     indexerName: text('indexer_name'),
     state: text('state', { enum: QUEUED_DOWNLOAD_STATES }).notNull().default('queued'),
     problem: text('problem'),
+    problemCode: text('problem_code').$type<ProblemCode>(),
     progress: doublePrecision('progress').notNull().default(0),
     sizeBytes: doublePrecision('size_bytes'),
     doneBytes: doublePrecision('done_bytes'),
@@ -128,6 +131,7 @@ const sentDownload = requestsSchema.table(
     libraryPath: text('library_path'),
     filedInto: text('filed_into'),
     filingProblem: text('filing_problem'),
+    filingProblemCode: text('filing_problem_code').$type<ProblemCode>(),
     filingAttempts: integer('filing_attempts').notNull().default(0),
     filesChecked: boolean('files_checked').notNull().default(false),
     removesWhenDone: boolean('removes_when_done').notNull().default(false),
@@ -208,6 +212,7 @@ const mediaRequest = requestsSchema.table(
     isEnded: boolean('is_ended').notNull().default(false),
     mediaId: text('media_id'),
     problem: text('problem'),
+    problemCode: text('problem_code').$type<ProblemCode>(),
     catalogueCheckedAt: timestamp('catalogue_checked_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -235,6 +240,7 @@ const requestItem = requestsSchema.table(
     airDate: text('air_date'),
     state: text('state', { enum: REQUEST_ITEM_STATES }).notNull().default('waiting'),
     problem: text('problem'),
+    problemCode: text('problem_code').$type<ProblemCode>(),
     releaseTitle: text('release_title'),
     indexerId: uuid('indexer_id'),
     downloadId: uuid('download_id').references(() => sentDownload.id, { onDelete: 'set null' }),
@@ -275,6 +281,7 @@ const requestLog = requestsSchema.table('request_log', {
     .notNull()
     .references(() => mediaRequest.id, { onDelete: 'cascade' }),
   message: text('message').notNull(),
+  problemCode: text('problem_code').$type<ProblemCode>(),
   at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -338,34 +338,55 @@ describe('createDownloadQueue', () => {
     });
 
     it('says why nothing could take it', async () => {
-      expect(await aQueue({ clients: [] }).queue.send(SEND)).toBe(
-        'No torrent client is set up and switched on',
-      );
-      expect(await aQueue().queue.send({ ...SEND, protocol: 'usenet' })).toBe(
-        'No usenet client is set up and switched on',
-      );
+      expect(await aQueue({ clients: [] }).queue.send(SEND)).toEqual({
+        refused: 'No torrent client is set up and switched on',
+        problemCode: null,
+      });
+      expect(await aQueue().queue.send({ ...SEND, protocol: 'usenet' })).toEqual({
+        refused: 'No usenet client is set up and switched on',
+        problemCode: null,
+      });
       expect(
         await aQueue({ clients: [aDownloadClient({ isEnabled: false })] }).queue.send({
           ...SEND,
           clientId: QBITTORRENT.id,
         }),
-      ).toBe('That download client is not set up, or is switched off');
+      ).toEqual({
+        refused: 'That download client is not set up, or is switched off',
+        problemCode: null,
+      });
       expect(
         await aQueue().queue.send({ ...SEND, protocol: 'usenet', clientId: QBITTORRENT.id }),
-      ).toBe('qBittorrent cannot take a usenet release');
+      ).toEqual({ refused: 'qBittorrent cannot take a usenet release', problemCode: null });
     });
 
     it('says why the release could not be fetched', async () => {
       const failing = (error: Error) =>
         aQueue({ fetchRelease: () => Promise.reject(error) }).queue.send(SEND);
 
-      expect(await failing(new IndexerFailure('The site answered 410'))).toBe(
-        'The site answered 410',
-      );
-      expect(await failing(new Error('boom'))).toBe('The release could not be fetched');
-      expect(await aQueue({ fetchRelease: () => Promise.resolve(null) }).queue.send(SEND)).toBe(
-        'The indexer that found it is no longer set up',
-      );
+      expect(await failing(new IndexerFailure('The site answered 410'))).toEqual({
+        refused: 'The site answered 410',
+        problemCode: null,
+      });
+      expect(
+        await failing(
+          new IndexerFailure(
+            'The site’s Cloudflare refuses this address outright',
+            'CloudflareRefusesAddress',
+          ),
+        ),
+      ).toEqual({
+        refused: 'The site’s Cloudflare refuses this address outright',
+        problemCode: 'CloudflareRefusesAddress',
+      });
+      expect(await failing(new Error('boom'))).toEqual({
+        refused: 'The release could not be fetched',
+        problemCode: null,
+      });
+      expect(await aQueue({ fetchRelease: () => Promise.resolve(null) }).queue.send(SEND)).toEqual({
+        refused: 'The indexer that found it is no longer set up',
+        problemCode: null,
+      });
     });
 
     it('says why the client would not take it', async () => {
@@ -375,11 +396,24 @@ describe('createDownloadQueue', () => {
         new DownloadClientFailure('qBittorrent would not take the torrent'),
       );
       refusing.add.mockRejectedValueOnce(new Error('boom'));
+      refusing.add.mockRejectedValueOnce(
+        new DownloadClientFailure('qBittorrent could not be reached', 'DownloadClientUnreachable'),
+      );
 
       const { queue } = aQueue({ adapter: refusing });
 
-      expect(await queue.send(SEND)).toBe('qBittorrent would not take the torrent');
-      expect(await queue.send(SEND)).toBe('The client could not be asked');
+      expect(await queue.send(SEND)).toEqual({
+        refused: 'qBittorrent would not take the torrent',
+        problemCode: null,
+      });
+      expect(await queue.send(SEND)).toEqual({
+        refused: 'The client could not be asked',
+        problemCode: null,
+      });
+      expect(await queue.send(SEND)).toEqual({
+        refused: 'qBittorrent could not be reached',
+        problemCode: 'DownloadClientUnreachable',
+      });
     });
 
     it('keeps one download for a release sent twice', async () => {
@@ -412,6 +446,7 @@ describe('createDownloadQueue', () => {
           isEnabled: true,
           isReachable: true,
           problem: null,
+          problemCode: null,
           downloadBytesPerSecond: 900,
           uploadBytesPerSecond: 40,
           checkedAt: AT.toISOString(),

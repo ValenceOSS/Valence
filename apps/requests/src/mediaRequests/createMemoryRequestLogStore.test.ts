@@ -6,12 +6,17 @@ describe('createMemoryRequestLogStore', () => {
     const { store, said } = createMemoryRequestLogStore(() => new Date('2026-09-19T00:00:00.000Z'));
 
     await store.add('dune', 'Searched');
-    await store.add('dune', 'Chose one');
+    await store.add('dune', 'Chose one', 'CloudflareCheckFailed');
     await store.add('heat', 'Searched');
 
     expect(await store.list('dune')).toEqual([
-      { id: 2, at: '2026-09-19T00:00:00.000Z', message: 'Chose one' },
-      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched' },
+      {
+        id: 2,
+        at: '2026-09-19T00:00:00.000Z',
+        message: 'Chose one',
+        problemCode: 'CloudflareCheckFailed',
+      },
+      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched', problemCode: null },
     ]);
     expect(said).toHaveLength(3);
   });

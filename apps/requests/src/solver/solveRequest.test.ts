@@ -156,4 +156,38 @@ describe('solveRequest', () => {
       solveRequest({ page, request: A_GET, deadline: Date.now() + 60_000, wait }),
     ).rejects.toThrow('would not let the request through');
   });
+
+  it('names the kind of each failure, so the admin area can link to what explains it', async () => {
+    let clock = 0;
+
+    await expect(
+      solveRequest({
+        page: aSitePage({ standings: ['blocked'] }),
+        request: A_GET,
+        deadline: Date.now() + 60_000,
+        wait,
+      }),
+    ).rejects.toMatchObject({ problemCode: 'CloudflareRefusesAddress' });
+    await expect(
+      solveRequest({
+        page: aSitePage({ standings: Array.from({ length: 100 }, () => 'challenged' as const) }),
+        request: A_GET,
+        deadline: 5000,
+        now: () => clock,
+        wait: (ms) => {
+          clock += ms;
+
+          return Promise.resolve();
+        },
+      }),
+    ).rejects.toMatchObject({ problemCode: 'CloudflareCheckFailed' });
+    await expect(
+      solveRequest({
+        page: aSitePage({ origin: 'https://example.org', answers: [THE_CHECK, THE_CHECK] }),
+        request: A_GET,
+        deadline: Date.now() + 60_000,
+        wait,
+      }),
+    ).rejects.toMatchObject({ problemCode: 'CloudflareCheckFailed' });
+  });
 });

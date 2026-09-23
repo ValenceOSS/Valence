@@ -15,12 +15,18 @@ const A_STATUS = {
     country: 'Netherlands',
     checkedAt: '2026-09-19T00:00:00.000Z',
     problem: null,
+    problemCode: null,
   },
   indexers: {
     total: 2,
     enabled: 2,
     failing: [
-      { id: '0f8fad5b-d9cb-469f-a165-70867728950e', name: 'Jackett', problem: 'Timed out' },
+      {
+        id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+        name: 'Jackett',
+        problem: 'The site’s Cloudflare refuses this address outright',
+        problemCode: 'CloudflareRefusesAddress',
+      },
     ],
   },
 };
@@ -45,6 +51,7 @@ describe('Requests', () => {
 
     expect(RequestsStatusSchema.parse(status)).toEqual({
       ...status,
+      vpn: { ...status.vpn, problemCode: null },
       indexers: { total: 0, enabled: 0, failing: [] },
     });
   });
@@ -61,7 +68,28 @@ describe('Requests', () => {
       status: null,
     };
 
-    expect(RequestsOverviewSchema.parse(overview)).toEqual({ ...overview, work: NO_WORK });
+    expect(RequestsOverviewSchema.parse(overview)).toEqual({
+      ...overview,
+      problem: null,
+      problemCode: null,
+      work: NO_WORK,
+    });
+  });
+
+  it('reads why the service could not be reached, and what kind of problem that is', () => {
+    expect(
+      RequestsOverviewSchema.parse({
+        address: 'http://requests:8421',
+        isReachable: false,
+        problem: 'http://requests:8421 refused the secret',
+        problemCode: 'RequestsSecretRefused',
+        checkedAt: null,
+        status: null,
+      }),
+    ).toMatchObject({
+      problem: 'http://requests:8421 refused the secret',
+      problemCode: 'RequestsSecretRefused',
+    });
   });
 
   it('reads what the service is working on', () => {

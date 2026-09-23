@@ -12,6 +12,7 @@ const aVpn = (isUp: boolean): RequestsVpn => ({
   country: null,
   checkedAt: '2026-09-19T12:00:00.000Z',
   problem: isUp ? null : 'The tunnel is stopped',
+  problemCode: null,
 });
 
 beforeEach(() => {

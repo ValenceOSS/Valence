@@ -28,6 +28,7 @@ const A_VPN: RequestsVpn = {
   country: 'Netherlands',
   checkedAt: '2026-09-19T12:00:00.000Z',
   problem: null,
+  problemCode: null,
 };
 
 const CAPS: IndexerCapabilities = { categories: [], modes: [], limit: null };
@@ -242,6 +243,7 @@ describe('createApp', () => {
       expect(IndexerTestSchema.parse(await response.json())).toEqual({
         isWorking: true,
         problem: null,
+        problemCode: null,
         capabilities: CAPS,
         captcha: null,
       });

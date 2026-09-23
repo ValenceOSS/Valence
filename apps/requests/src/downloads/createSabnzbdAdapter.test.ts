@@ -120,6 +120,9 @@ describe('createSabnzbdAdapter', () => {
     await expect(createSabnzbdAdapter(SETTINGS, forbidden.fetch).version()).rejects.toThrow(
       'SABnzbd refused the API key',
     );
+    await expect(createSabnzbdAdapter(SETTINGS, forbidden.fetch).version()).rejects.toMatchObject({
+      problemCode: 'DownloadClientLoginRefused',
+    });
 
     const plain = aFakeClient({ 'GET /sabnzbd/api': () => new Response('API Key Required') });
 

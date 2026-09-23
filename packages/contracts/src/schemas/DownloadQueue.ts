@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ProblemCodeFieldSchema } from './ProblemCode';
 import { DownloadClientKindSchema } from './DownloadClient';
 import { ReleaseProtocolSchema } from './Indexer';
 import { LibraryKindSchema } from './Library';
@@ -26,6 +27,7 @@ const QueuedDownloadSchema = z.object({
   indexerName: z.string().nullable(),
   state: QueuedDownloadStateSchema,
   problem: z.string().nullable(),
+  problemCode: ProblemCodeFieldSchema,
   progress: z.number().min(0).max(1),
   sizeBytes: z.number().nonnegative().nullable(),
   doneBytes: z.number().nonnegative().nullable(),
@@ -38,6 +40,7 @@ const QueuedDownloadSchema = z.object({
   finishedAt: z.string().datetime().nullable(),
   filedInto: z.string().nullable().default(null),
   filingProblem: z.string().nullable().default(null),
+  filingProblemCode: ProblemCodeFieldSchema,
 });
 
 const DownloadClientStateSchema = z.object({
@@ -47,6 +50,7 @@ const DownloadClientStateSchema = z.object({
   isEnabled: z.boolean(),
   isReachable: z.boolean(),
   problem: z.string().nullable(),
+  problemCode: ProblemCodeFieldSchema,
   downloadBytesPerSecond: z.number().nonnegative().nullable(),
   uploadBytesPerSecond: z.number().nonnegative().nullable(),
   checkedAt: z.string().datetime().nullable(),

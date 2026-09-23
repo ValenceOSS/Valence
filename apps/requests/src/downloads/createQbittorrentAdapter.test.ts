@@ -83,6 +83,9 @@ describe('createQbittorrentAdapter', () => {
     await expect(createQbittorrentAdapter(SETTINGS, fetch).version()).rejects.toThrow(
       'qBittorrent refused the username or password',
     );
+    await expect(createQbittorrentAdapter(SETTINGS, fetch).version()).rejects.toMatchObject({
+      problemCode: 'DownloadClientLoginRefused',
+    });
   });
 
   it('says when it has banned Valence for too many wrong passwords', async () => {

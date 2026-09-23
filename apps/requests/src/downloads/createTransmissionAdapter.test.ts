@@ -109,6 +109,9 @@ describe('createTransmissionAdapter', () => {
     await expect(createTransmissionAdapter(SETTINGS, fetch).version()).rejects.toThrow(
       'Transmission refused the username or password',
     );
+    await expect(createTransmissionAdapter(SETTINGS, fetch).version()).rejects.toMatchObject({
+      problemCode: 'DownloadClientLoginRefused',
+    });
   });
 
   it('says what went wrong where Transmission says so', async () => {

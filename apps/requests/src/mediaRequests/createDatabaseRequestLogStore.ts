@@ -14,8 +14,8 @@ const KEPT = 200;
  * @returns The store.
  */
 const createDatabaseRequestLogStore = (db: RequestsDatabase): RequestLogStore => ({
-  add: async (requestId, message) => {
-    await db.insert(requestLog).values({ requestId, message });
+  add: async (requestId, message, problemCode = null) => {
+    await db.insert(requestLog).values({ requestId, message, problemCode });
 
     const [oldest] = await db
       .select({ id: requestLog.id })
@@ -39,7 +39,12 @@ const createDatabaseRequestLogStore = (db: RequestsDatabase): RequestLogStore =>
         .from(requestLog)
         .where(eq(requestLog.requestId, requestId))
         .orderBy(desc(requestLog.id))
-    ).map((row) => ({ id: row.id, at: row.at.toISOString(), message: row.message })),
+    ).map((row) => ({
+      id: row.id,
+      at: row.at.toISOString(),
+      message: row.message,
+      problemCode: row.problemCode,
+    })),
 });
 
 export { createDatabaseRequestLogStore };

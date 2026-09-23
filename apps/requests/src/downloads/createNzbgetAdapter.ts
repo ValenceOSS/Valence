@@ -106,11 +106,12 @@ const createNzbgetAdapter = (
     });
 
     if (!response.ok) {
-      throw new DownloadClientFailure(
-        response.status === 401 || response.status === 403
-          ? `${settings.name} refused the username or password`
-          : `${settings.name} answered ${response.status.toString()}`,
-      );
+      throw response.status === 401 || response.status === 403
+        ? new DownloadClientFailure(
+            `${settings.name} refused the username or password`,
+            'DownloadClientLoginRefused',
+          )
+        : new DownloadClientFailure(`${settings.name} answered ${response.status.toString()}`);
     }
 
     const answer = AnswerSchema.safeParse(await response.json().catch(() => null));
