@@ -133,19 +133,21 @@ const createSitePool = <A extends Agent>({
 
     entry.stopIdling();
     entry.stopIdling = timer(() => {
-      void entry.agent.then(async (agent) => {
-        if (agent.busy() > 0) {
-          return;
-        }
+      void entry.agent
+        .catch(() => null)
+        .then(async (agent) => {
+          if (agent !== null && agent.busy() > 0) {
+            return;
+          }
 
-        const wasTheLast = entries.size === 1 && entries.get(key) === entry;
+          const wasTheLast = entries.size === 1 && entries.get(key) === entry;
 
-        await drop(key);
+          await drop(key);
 
-        if (wasTheLast && working === 0) {
-          await retire();
-        }
-      });
+          if (wasTheLast && working === 0) {
+            await retire();
+          }
+        });
     }, idleMs);
   };
 

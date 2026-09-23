@@ -83,7 +83,13 @@ The browser starts only the first time a site answers with the check. Once a sit
 
 A site whose Cloudflare refuses your address outright, with "Sorry, you have been blocked", cannot be got past by any browser. Its indexer reports that the site's Cloudflare refuses this address outright.
 
-Valence no longer needs FlareSolverr, so if `COMPOSE_PROFILES` still names `flaresolverr` from an earlier release you lose nothing: Compose starts nothing for it, and you can drop the name.
+Valence no longer needs FlareSolverr. If `COMPOSE_PROFILES` still names `flaresolverr` from an earlier release you lose nothing: Compose starts nothing for it, and you can drop the name. A FlareSolverr container an earlier release started keeps running, though, because Compose no longer knows about it. Remove it with:
+
+```sh
+docker compose up -d --remove-orphans
+```
+
+That removes any container in the project that the compose file no longer describes, which after this change is FlareSolverr's.
 
 ### Failing indexers
 

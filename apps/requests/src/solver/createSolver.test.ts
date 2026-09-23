@@ -58,7 +58,7 @@ describe('createSolver', () => {
       aSitePage({ answers: [anAnswer({ url: 'https://example.org/search?q=a', body: 'café' })] }),
     );
 
-    const solution = await solver.fetch(A_GET, { uid: '7' });
+    const solution = await solver.fetch(A_GET, { uid: '7' }, 'one');
 
     expect(solution).toEqual({
       url: 'https://example.org/search?q=a',
@@ -83,6 +83,7 @@ describe('createSolver', () => {
         headers: { 'User-Agent': 'Other/1.0', Cookie: 'a=b', 'X-Requested-With': 'XMLHttpRequest' },
       },
       {},
+      'one',
     );
 
     expect(page.fetch).toHaveBeenCalledWith({
@@ -96,14 +97,16 @@ describe('createSolver', () => {
     });
   });
 
-  it('gives each site one agent', async () => {
+  it('gives each session its own agent on a site, and keeps it for the session', async () => {
     const { solver, pool } = aSolver();
 
-    await solver.fetch(A_GET, {});
-    await solver.fetch({ ...A_GET, url: 'https://example.org/other' }, {});
+    await solver.fetch(A_GET, {}, 'one');
+    await solver.fetch({ ...A_GET, url: 'https://example.org/other' }, {}, 'one');
+    await solver.fetch(A_GET, {}, 'two');
 
-    expect(pool.has('example.org')).toBe(true);
-    expect(pool.has('other.example')).toBe(false);
+    expect(pool.has('example.org one')).toBe(true);
+    expect(pool.has('example.org two')).toBe(true);
+    expect(pool.has('example.org')).toBe(false);
   });
 
   it('gives up on a request that runs past its time', async () => {
@@ -114,7 +117,9 @@ describe('createSolver', () => {
 
     vi.useFakeTimers();
 
-    const failing = expect(solver.fetch(A_GET, {})).rejects.toThrow('Timed out after 5 seconds');
+    const failing = expect(solver.fetch(A_GET, {}, 'one')).rejects.toThrow(
+      'Timed out after 5 seconds',
+    );
 
     await vi.advanceTimersByTimeAsync(10_000);
     vi.useRealTimers();

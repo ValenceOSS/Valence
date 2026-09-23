@@ -22,8 +22,14 @@ const createBrowserKeeper = <T extends BrowserLike>({
   let current: { browser: Promise<T>; since: number } | null = null;
 
   const get = async (): Promise<T> => {
-    if (current !== null) {
-      const browser = await current.browser.catch(() => null);
+    const seen = current;
+
+    if (seen !== null) {
+      const browser = await seen.browser.catch(() => null);
+
+      if (current !== seen) {
+        return get();
+      }
 
       if (browser?.isConnected() === true) {
         return browser;

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import iconv from 'iconv-lite';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { isCloudflareChallenge } from '@ValenceRequests/cardigann/isCloudflareChallenge';
@@ -110,6 +111,21 @@ const keepCookies = (session: SiteSession, response: Response): void => {
  */
 const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => {
   const throughTheBrowser = new Set<string>();
+  const sessionIds = new WeakMap<SiteSession, string>();
+
+  const idOf = (session: SiteSession): string => {
+    const known = sessionIds.get(session);
+
+    if (known !== undefined) {
+      return known;
+    }
+
+    const made = randomUUID();
+
+    sessionIds.set(session, made);
+
+    return made;
+  };
 
   const solve = async (
     request: SiteRequest,
@@ -126,7 +142,7 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
     let solution: Awaited<ReturnType<Solver['fetch']>>;
 
     try {
-      solution = await solver.fetch(request, { ...options.session.cookies });
+      solution = await solver.fetch(request, { ...options.session.cookies }, idOf(options.session));
     } catch (error) {
       throughTheBrowser.delete(host);
       throw error instanceof IndexerFailure

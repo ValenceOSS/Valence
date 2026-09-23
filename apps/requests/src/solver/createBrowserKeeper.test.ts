@@ -50,6 +50,25 @@ describe('createBrowserKeeper', () => {
     expect(await keeper.get()).toBe(two.browser);
   });
 
+  it('launches once more, not twice, when two ask together after the browser has gone', async () => {
+    const one = aBrowser();
+    const two = aBrowser();
+    const launch = vi
+      .fn<() => Promise<typeof one.browser>>()
+      .mockResolvedValueOnce(one.browser)
+      .mockResolvedValue(two.browser);
+    const keeper = createBrowserKeeper({ launch });
+
+    await keeper.get();
+    one.disconnect();
+
+    const [first, second] = await Promise.all([keeper.get(), keeper.get()]);
+
+    expect(first).toBe(two.browser);
+    expect(second).toBe(two.browser);
+    expect(launch).toHaveBeenCalledTimes(2);
+  });
+
   it('tries again after a launch that failed', async () => {
     const { browser } = aBrowser();
     const launch = vi

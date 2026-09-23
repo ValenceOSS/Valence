@@ -1,6 +1,7 @@
 import iconv from 'iconv-lite';
 import { describe, expect, it, vi } from 'vitest';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
+import type { Solver } from '@ValenceRequests/solver/createSolver';
 import { createSiteClient } from './createSiteClient';
 import type { SiteFetch } from './createSiteClient';
 import type { SiteSession } from './SiteSession';
@@ -223,7 +224,7 @@ describe('createSiteClient', () => {
      * @returns The solver.
      */
     const aSolver = (pages: Record<string, string>) => ({
-      fetch: vi.fn((request: { url: string }) => {
+      fetch: vi.fn<Solver['fetch']>((request) => {
         const page = pages[request.url];
 
         return page === undefined
@@ -273,7 +274,25 @@ describe('createSiteClient', () => {
       expect(solver.fetch).toHaveBeenCalledWith(
         { url: 'https://x.example/s', method: 'POST', body: 'q=dune', headers: {} },
         { uid: '1' },
+        expect.any(String),
       );
+    });
+
+    it('names each session to the browser the same way every time, and no two alike', async () => {
+      const { fetch } = aNetwork({ 'https://x.example/s': [CHALLENGE, CHALLENGE, CHALLENGE] });
+      const solver = aSolver({ 'https://x.example/s': '<p>one</p>' });
+      const client = createSiteClient({ fetch, solver });
+      const mine = aSession();
+      const theirs = aSession();
+
+      await client.send(aGet('https://x.example/s'), { ...OPTIONS, session: mine });
+      await client.send(aGet('https://x.example/s'), { ...OPTIONS, session: mine });
+      await client.send(aGet('https://x.example/s'), { ...OPTIONS, session: theirs });
+
+      const named = solver.fetch.mock.calls.map((call) => call[2]);
+
+      expect(named[0]).toBe(named[1]);
+      expect(named[2]).not.toBe(named[0]);
     });
 
     it('sends the site’s next requests straight to the browser', async () => {

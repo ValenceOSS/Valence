@@ -200,6 +200,40 @@ describe('createSitePool', () => {
     expect(await pool.use('site:a', () => Promise.resolve('yes'))).toBe('yes');
   });
 
+  it('lets an agent that never opened go quietly when its idle time comes', async () => {
+    const timers: (() => void)[] = [];
+    const retire = vi.fn(() => Promise.resolve());
+    const unhandled = vi.fn();
+    const pool = createSitePool({
+      open: () => Promise.reject(new Error('no browser')),
+      most: 2,
+      idleMs: 60_000,
+      restartMs: 3_600_000,
+      upFor: () => 0,
+      retire,
+      timer: (run) => {
+        timers.push(run);
+
+        return () => {};
+      },
+    });
+
+    process.on('unhandledRejection', unhandled);
+
+    await expect(pool.use('site:a', nothing)).rejects.toThrow('no browser');
+
+    for (const run of timers.splice(0)) {
+      run();
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    process.off('unhandledRejection', unhandled);
+
+    expect(unhandled).not.toHaveBeenCalled();
+    expect(pool.has('site:a')).toBe(false);
+    expect(retire).toHaveBeenCalled();
+  });
+
   it('lets a failed opening go, for the next request to try again', async () => {
     const open = vi
       .fn<() => Promise<AnAgent>>()

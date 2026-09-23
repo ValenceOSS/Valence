@@ -57,8 +57,9 @@ const inTime = async <T>(task: Promise<T>, ms: number): Promise<T> => {
 };
 
 /**
- * Fetches a page past its site's browser check, in a browser of the service's own: each site has
- * its own agent in it, so everything asked of one site shares what that site's check left behind.
+ * Fetches a page past its site's browser check, in a browser of the service's own. Each site has an
+ * agent for each session asking of it, so one indexer's requests share what the check left behind
+ * for it, and never another indexer's login.
  *
  * The headers the browser sets itself — who it is, its cookies, where it came from — are left to it,
  * since a request claiming to be another browser is exactly what the check looks for.
@@ -73,7 +74,11 @@ const createSolver = <A extends Agent>({
   timeoutMs = 60_000,
   now = Date.now,
 }: CreateSolverOptions<A>) => {
-  const fetch = (request: SiteRequest, cookies: Record<string, string>): Promise<Solution> => {
+  const fetch = (
+    request: SiteRequest,
+    cookies: Record<string, string>,
+    session: string,
+  ): Promise<Solution> => {
     const deadline = now() + timeoutMs;
     const { origin, hostname } = new URL(request.url);
     const headers = Object.fromEntries(
@@ -81,7 +86,7 @@ const createSolver = <A extends Agent>({
     );
 
     return inTime(
-      pool.use(hostname, (agent) =>
+      pool.use(`${hostname} ${session}`, (agent) =>
         agent.withPage(async (page) => {
           await agent.addCookies(
             Object.entries(cookies).map(([name, value]) => ({ name, value })),
