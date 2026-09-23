@@ -7,6 +7,7 @@ import type { TitleDetailsProps } from './TitleDetails.types';
  * whole thing not at all where it knew none of them, so a title it knew little about is not given a
  * row of dashes.
  *
+ * @param seriesTitle - The series it belongs to, where it is an episode.
  * @param releaseDate - The day it came out, or an episode aired, as a calendar date.
  * @param status - Where the catalogue says it stands, such as "Released".
  * @param budget - What it cost to make, in dollars.
@@ -14,13 +15,21 @@ import type { TitleDetailsProps } from './TitleDetails.types';
  * @param rottenTomatoes - Its Rotten Tomatoes score, as a percentage.
  */
 const TitleDetails = ({
+  seriesTitle,
   releaseDate,
   status,
   budget,
   revenue,
   rottenTomatoes,
 }: TitleDetailsProps) => {
-  const facts = describeTitleDetails({ releaseDate, status, budget, revenue, rottenTomatoes });
+  const facts = describeTitleDetails({
+    seriesTitle,
+    releaseDate,
+    status,
+    budget,
+    revenue,
+    rottenTomatoes,
+  });
 
   if (facts.length === 0) {
     return null;

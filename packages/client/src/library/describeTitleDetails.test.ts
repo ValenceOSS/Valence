@@ -15,4 +15,14 @@ describe('describeTitleDetails', () => {
   it('says when it came out', () => {
     expect(describeTitleDetails({ releaseDate: '2016-11-11' })[0]?.label).toBe('Released');
   });
+
+  it('says an episode aired rather than came out', () => {
+    expect(describeTitleDetails({ seriesTitle: 'ted', releaseDate: '2024-01-11' })[0]?.label).toBe(
+      'Aired',
+    );
+  });
+
+  it('says nothing of how the programme stands on one of its episodes', () => {
+    expect(describeTitleDetails({ seriesTitle: 'ted', status: 'Ended' })).toEqual([]);
+  });
 });

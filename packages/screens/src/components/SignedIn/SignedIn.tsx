@@ -31,7 +31,8 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MoodLight } from '@ValenceUI/MoodBackground.types';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import type { StartOverride } from '@ValenceClient/shell/shell.types';
-import { useMusicRemote } from '@ValenceScreens/music/useMusicRemote';
+import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
+import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import { useListenAlong } from '@ValenceScreens/music/useListenAlong';
 import type { SignedInProps } from './SignedIn.types';
 
@@ -195,7 +196,9 @@ const SignedIn = ({ title }: SignedInProps) => {
     return watchPresence();
   }, [user]);
 
-  useMusicRemote();
+  const music = useMusicPlayer();
+
+  useMusicRemote(music.player, music.state.remote?.clientId ?? null);
   useListenAlong(watchParty);
 
   useEffect(() => {

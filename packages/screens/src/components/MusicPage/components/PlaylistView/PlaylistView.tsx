@@ -37,6 +37,7 @@ import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
+import { whereAnEntryLands } from '@ValenceClient/music/whereAnEntryLands';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { PlaylistViewProps } from './PlaylistView.types';
 
@@ -255,8 +256,11 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                   },
                   onReorder: (from: number, to: number) => {
                     const entry = songs[from]?.entry;
-                    const after =
-                      to > from ? (songs[to]?.entry.id ?? null) : (songs[to - 1]?.entry.id ?? null);
+                    const after = whereAnEntryLands(
+                      songs.map((song) => song.entry.id),
+                      from,
+                      to,
+                    );
 
                     if (entry !== undefined && from !== to) {
                       void moveInPlaylist(playlist.id, entry.id, after).then(refresh);
@@ -264,10 +268,11 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                   },
                   onMove: (index: number, direction: 'up' | 'down') => {
                     const entry = songs[index]?.entry;
-                    const after =
-                      direction === 'up'
-                        ? (songs[index - 2]?.entry.id ?? null)
-                        : (songs[index + 1]?.entry.id ?? null);
+                    const after = whereAnEntryLands(
+                      songs.map((song) => song.entry.id),
+                      index,
+                      direction === 'up' ? index - 1 : index + 1,
+                    );
 
                     if (entry !== undefined) {
                       void moveInPlaylist(playlist.id, entry.id, after).then(refresh);

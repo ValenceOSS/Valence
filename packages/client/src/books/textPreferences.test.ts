@@ -1,23 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
-import { installATestClient } from '@ValenceScreens/testing/installATestClient';
+import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { readTextPreferences, writeTextPreferences } from './textPreferences';
 
 const held = new Map<string, string>();
 
 beforeEach(() => {
   held.clear();
-  installATestClient({
-    store: {
-      read: (key) => held.get(key) ?? null,
-      write: (key, value) => {
-        held.set(key, value);
+  installPlatform(
+    aFakePlatform({
+      store: {
+        read: (key) => held.get(key) ?? null,
+        write: (key, value) => {
+          held.set(key, value);
+        },
+        forget: (key) => {
+          held.delete(key);
+        },
       },
-      forget: (key) => {
-        held.delete(key);
-      },
-    },
-  });
+    }),
+  );
 });
 
 afterEach(() => {

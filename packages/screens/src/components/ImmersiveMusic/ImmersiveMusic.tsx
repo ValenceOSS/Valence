@@ -26,7 +26,7 @@ import { setMusicImmersive, useMusicImmersive } from '@ValenceScreens/music/musi
 import { theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
 import { setMusicVisualiser, useMusicVisualiser } from '@ValenceScreens/music/musicVisualiser';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
-import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import type { ImmersiveMusicProps } from './ImmersiveMusic.types';
 
 const OPENING = { duration: 0.28, ease: [0.23, 1, 0.32, 1] } as const;

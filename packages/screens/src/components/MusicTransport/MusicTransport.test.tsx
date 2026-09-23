@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { startQueue } from '@ValenceClient/music/playQueue';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
-import { aTrack } from '@ValenceScreens/testing/aTrack';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
+import { aTrack } from '@ValenceClient/testing/aTrack';
 import { setListeningParty } from '@ValenceScreens/music/listeningParty';
 import { MusicTransport } from './MusicTransport';
-import type { WhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import type { WhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 
 const TRACK = aTrack(1);
 

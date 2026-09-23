@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { aTrack } from '@ValenceScreens/testing/aTrack';
+import { aTrack } from '@ValenceClient/testing/aTrack';
 import { tracksFor } from './tracksFor';
 
 const music = vi.hoisted(() => ({

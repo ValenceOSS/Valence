@@ -48,7 +48,8 @@ import type { DownloadDialogProps } from './DownloadDialog.types';
  * is the number that decides it — "460 MB" is not, however accurate it is about the first one.
  *
  * @param media - What is being downloaded, or nothing while the dialog is shut.
- * @param series - The programme being downloaded whole, where it is one.
+ * @param series - The programme being downloaded, whole or the episodes of it chosen, where it is
+ *   one.
  * @param onClose - Told it was dismissed.
  */
 const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) => {
@@ -78,11 +79,11 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
   const isOpen = media !== null || series !== null;
 
   const asked = useQuery({
-    queryKey: ['downloads', 'offer', series?.id ?? media?.id ?? ''],
+    queryKey: ['downloads', 'offer', series?.id ?? media?.id ?? '', series?.mediaIds ?? null],
     queryFn: () =>
       series === null
         ? fetchDownloadOffer(media?.id ?? '', detectFromBrowser())
-        : fetchSeriesDownloadOffer(series.id, detectFromBrowser()),
+        : fetchSeriesDownloadOffer(series.id, detectFromBrowser(), series.mediaIds),
     enabled: isOpen,
   });
 
@@ -103,7 +104,7 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
         detail={
           series === null
             ? (media?.title ?? '')
-            : `${series.title} — ${episodes.toString()} episodes`
+            : `${series.title} — ${episodes === 1 ? '1 episode' : `${episodes.toString()} episodes`}`
         }
       />
 
@@ -181,7 +182,10 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
       <DialogFooter
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: series === null ? 'Prepare it' : `Queue ${episodes.toString()} episodes`,
+          label:
+            series === null
+              ? 'Prepare it'
+              : `Queue ${episodes === 1 ? '1 episode' : `${episodes.toString()} episodes`}`,
           isLoading: isAsking,
           isDisabled: picked === null || verdict === 'willNotFit',
           onChoose: () => {
@@ -196,7 +200,9 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
                 ? askForDownload(media?.id ?? '', picked.quality).then(
                     (started) => started !== null,
                   )
-                : askForSeries(series.id, picked.quality).then((queued) => queued.length > 0)
+                : askForSeries(series.id, picked.quality, [], series.mediaIds).then(
+                    (queued) => queued.length > 0,
+                  )
             )
               .then(async (started) => {
                 if (!started) {

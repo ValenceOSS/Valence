@@ -14,7 +14,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { revokeAnybodysShare } from '@ValenceClient/sharing/fetchShares';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
-import { standingOf } from '@ValenceScreens/sharing/standingOf';
+import { shareStanding } from '@ValenceClient/sharing/shareStanding';
 import { untilWhen } from '@ValenceClient/sharing/untilWhen';
 import { saidOpened } from '@ValenceClient/sharing/saidOpened';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
@@ -66,13 +66,13 @@ const SharesPanel = () => {
       {
         id: 'standing',
         header: 'Standing',
-        accessorFn: (share) => standingOf(share, Date.now()).label,
+        accessorFn: (share) => shareStanding(share, Date.now()).label,
         cell: ({ row }) => {
-          const standing = standingOf(row.original, Date.now());
+          const standing = shareStanding(row.original, Date.now());
 
           return (
             <span className="flex min-w-0 flex-col items-start gap-1">
-              <Badge size="sm" tone={standing.tone}>
+              <Badge size="sm" tone={standing.isLive ? 'accent' : 'quiet'}>
                 {standing.label}
               </Badge>
 

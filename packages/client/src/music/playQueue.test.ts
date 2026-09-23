@@ -4,6 +4,7 @@ import {
   currentOf,
   cycleRepeat,
   jumpTo,
+  clearUpNext,
   moveInQueue,
   nextIn,
   playNext,
@@ -187,6 +188,14 @@ describe('playQueue', () => {
 
     expect(moveInQueue(queue, 3, 3)).toBe(queue);
     expect(moveInQueue(queue, 3, 9)).toBe(queue);
+  });
+
+  it('lets go of everything still to come, keeping what played and the song playing', () => {
+    const queue = clearUpNext(startQueue(FIVE, 2));
+
+    expect(titleOf(queue)).toBe('Track 3');
+    expect(queue.order).toEqual([0, 1, 2]);
+    expect(upcomingIn(queue)).toEqual([]);
   });
 
   it('lists what is still to come, with where each sits in the order', () => {

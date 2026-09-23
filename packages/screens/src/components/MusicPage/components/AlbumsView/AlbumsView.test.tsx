@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests';
 import { AlbumsView } from './AlbumsView';
 

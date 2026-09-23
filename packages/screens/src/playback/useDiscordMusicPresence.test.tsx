@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { z } from 'zod';
 import { useDiscordMusicPresence } from './useDiscordMusicPresence';
 import type { DiscordMusicPresence } from './useDiscordMusicPresence';
-import type { WhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import type { WhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 
 const ListenedSchema = z.object({
   title: z.string(),

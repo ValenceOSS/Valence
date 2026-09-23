@@ -15,7 +15,7 @@ import { setMusicVisualiser, useMusicVisualiser } from '@ValenceScreens/music/mu
 import { theMusicAudio, theMusicPlayer } from '@ValenceScreens/music/theMusicPlayer';
 import { useAudioFrames } from '@ValenceScreens/music/useAudioFrames';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
-import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { VISUALISERS } from '@ValenceScreens/music/visualisers/VISUALISERS';
 import {
   readVisualiserChoice,

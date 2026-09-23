@@ -10,7 +10,7 @@ import { PersonDialog } from '@ValenceScreens/components/PersonDialog/PersonDial
 import { AccountDialog } from '@ValenceScreens/components/AccountDialog/AccountDialog';
 import { DownloadsDialog } from '@ValenceScreens/components/DownloadsDialog/DownloadsDialog';
 import { ShareDialog } from '@ValenceScreens/components/ShareDialog/ShareDialog';
-import type { ShareSubject } from '@ValenceScreens/components/ShareDialog/ShareDialog.types';
+import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import { StillWatchingDialog } from '@ValenceScreens/components/StillWatchingDialog/StillWatchingDialog';
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';

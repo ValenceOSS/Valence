@@ -13,6 +13,7 @@ import {
 } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
+import { howToFillIt } from '@ValenceClient/library/howToFillIt';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';
@@ -239,11 +240,7 @@ const BrowseArea = ({
             <NothingHere
               of={FolderOpenIcon}
               title="No libraries yet"
-              detail={
-                onAddLibrary === undefined
-                  ? 'Ask the server admin to add one.'
-                  : 'Add one to get started.'
-              }
+              detail={howToFillIt('no libraries', onAddLibrary !== undefined)}
               {...(onAddLibrary === undefined
                 ? {}
                 : {
@@ -260,15 +257,7 @@ const BrowseArea = ({
             <NothingHere
               of={page.of}
               title={page.empty}
-              detail={
-                page.emptyIsAbout === 'every library'
-                  ? onAddLibrary === undefined
-                    ? 'Ask the server admin to scan your libraries.'
-                    : 'Scan your libraries, or add files to them.'
-                  : onAddLibrary === undefined
-                    ? 'Ask the server admin to scan it.'
-                    : 'Scan it, or add files to its folder.'
-              }
+              detail={howToFillIt(page.emptyIsAbout, onAddLibrary !== undefined)}
               {...(onAddLibrary === undefined
                 ? {}
                 : {

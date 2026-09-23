@@ -13,7 +13,7 @@ import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { forgetReading } from '@ValenceClient/books/fetchBooks';
 import { describeWhen } from '@ValenceClient/history/describeWhen';
 import { interleaveHistory } from '@ValenceClient/history/interleaveHistory';
-import { describeReadingPlace } from '@ValenceScreens/reading/describeReadingPlace';
+import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import type { BookReading } from '@ValenceContracts/schemas/Book';
 import type { Viewing } from '@ValenceContracts/schemas/Viewing';
 import type { HistoryPanelProps } from './HistoryPanel.types';

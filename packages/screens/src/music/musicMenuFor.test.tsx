@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
-import { aTrack } from '@ValenceScreens/testing/aTrack';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
+import { aTrack } from '@ValenceClient/testing/aTrack';
 import { musicMenuFor } from './musicMenuFor';
 
 const found = vi.hoisted(() => ({ tracksFor: vi.fn() }));

@@ -274,6 +274,17 @@ const moveInQueue = (queue: PlayQueue, from: number, to: number): PlayQueue => {
 };
 
 /**
+ * Lets go of everything still to come, keeping the song playing and what has played before it.
+ *
+ * @param queue - The queue.
+ * @returns The queue with nothing after the song playing.
+ */
+const clearUpNext = (queue: PlayQueue): PlayQueue => ({
+  ...queue,
+  order: queue.order.slice(0, queue.at + 1),
+});
+
+/**
  * What is still to come after the song playing, in the order it will play.
  *
  * @param queue - The queue.
@@ -290,6 +301,7 @@ export type { PlayQueue, QueueSource, RepeatMode, StartOptions };
 
 export {
   addToQueue,
+  clearUpNext,
   currentOf,
   cycleRepeat,
   jumpTo,

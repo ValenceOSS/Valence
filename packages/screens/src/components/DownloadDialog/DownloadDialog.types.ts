@@ -4,6 +4,7 @@ type DownloadSeries = {
   id: string;
   title: string;
   episodes: number;
+  mediaIds?: readonly string[];
 };
 
 type DownloadDialogProps = {

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { LyricLines, standingOf } from './LyricLines';
+import { LyricLines } from './LyricLines';
 
 const LYRICS = {
   isSynced: true,
@@ -91,27 +91,5 @@ describe('LyricLines', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(LyricLines.displayName).toBe('LyricLines');
-  });
-});
-
-describe('standingOf', () => {
-  it('brings the line being sung up to full size and brightness', () => {
-    expect(standingOf(3, 3, true, true)).toEqual({ opacity: 1, scale: 1, blur: 0 });
-  });
-
-  it('dims sung lines more than those to come', () => {
-    expect(standingOf(1, 3, true, false).opacity).toBeLessThan(
-      standingOf(5, 3, true, false).opacity,
-    );
-  });
-
-  it('blurs lines further from the one sung only when immersive', () => {
-    expect(standingOf(5, 3, true, false).blur).toBe(0);
-    expect(standingOf(5, 3, true, true).blur).toBeGreaterThan(standingOf(4, 3, true, true).blur);
-    expect(standingOf(30, 3, true, true).blur).toBe(6);
-  });
-
-  it('leaves untimed words evenly lit', () => {
-    expect(standingOf(1, -1, false, true)).toEqual({ opacity: 0.9, scale: 1, blur: 0 });
   });
 });

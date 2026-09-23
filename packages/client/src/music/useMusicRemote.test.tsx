@@ -1,8 +1,8 @@
 import { waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
-import { renderHookInAnAddress } from '@ValenceScreens/testing/renderHookInAnAddress';
-import { aFakeMusicPlayer } from '@ValenceScreens/testing/aFakeMusicPlayer';
+import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
+import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { useMusicRemote } from './useMusicRemote';
 import type { MusicDevice } from '@ValenceContracts/schemas/MusicRemote';
 
@@ -20,8 +20,8 @@ describe('useMusicRemote', () => {
   it('does what another of this person’s devices says', () => {
     const { player } = aFakeMusicPlayer();
 
-    renderHookInAnAddress(() => {
-      useMusicRemote(player);
+    renderHookInACache(() => {
+      useMusicRemote(player, null);
     });
 
     emitPresenceEvent({
@@ -37,8 +37,8 @@ describe('useMusicRemote', () => {
   it('ignores presence news that is not about music', () => {
     const { player } = aFakeMusicPlayer();
 
-    renderHookInAnAddress(() => {
-      useMusicRemote(player);
+    renderHookInACache(() => {
+      useMusicRemote(player, null);
     });
 
     emitPresenceEvent({ kind: 'message', text: 'Tea is ready' });
@@ -49,8 +49,8 @@ describe('useMusicRemote', () => {
   it('stops listening once gone', () => {
     const { player } = aFakeMusicPlayer();
 
-    const { unmount } = renderHookInAnAddress(() => {
-      useMusicRemote(player);
+    const { unmount } = renderHookInACache(() => {
+      useMusicRemote(player, null);
     });
 
     unmount();
@@ -87,8 +87,8 @@ describe('useMusicRemote', () => {
 
     const { player } = aFakeMusicPlayer({ remote: { clientId: 'phone', label: 'iPhone' } });
 
-    renderHookInAnAddress(() => {
-      useMusicRemote(player);
+    renderHookInACache(() => {
+      useMusicRemote(player, 'phone');
     });
 
     await waitFor(() => {
@@ -99,8 +99,8 @@ describe('useMusicRemote', () => {
   it('mirrors nothing while it plays here', async () => {
     const { player } = aFakeMusicPlayer();
 
-    renderHookInAnAddress(() => {
-      useMusicRemote(player);
+    renderHookInACache(() => {
+      useMusicRemote(player, null);
     });
 
     await new Promise((resolve) => setTimeout(resolve, 20));

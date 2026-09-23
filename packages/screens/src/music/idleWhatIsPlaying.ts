@@ -1,4 +1,4 @@
-import type { WhatIsPlaying } from './useWhatIsPlaying';
+import type { WhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 
 /**
  * What the player bar shows when nothing is playing, so its controls can still be drawn — at rest,

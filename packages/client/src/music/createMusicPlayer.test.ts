@@ -107,6 +107,16 @@ describe('createMusicPlayer', () => {
     expect(player.read().queue?.order).toEqual([0, 2, 1]);
   });
 
+  it('lets go of everything still to come, keeping the song playing', () => {
+    const { player } = build();
+
+    player.play(THREE, 1);
+    player.clearUpNext();
+
+    expect(player.read().current).toBe(THREE[1]);
+    expect(player.read().queue?.order).toEqual([0, 1]);
+  });
+
   it('asks for the highest encode where this device cannot play the file', () => {
     const { player, audio } = build({ canPlay: () => false });
 

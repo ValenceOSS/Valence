@@ -1,7 +1,6 @@
-import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { Share } from '@ValenceContracts/schemas/Share';
 
-type Standing = { label: string; tone: BadgeTone };
+type ShareStanding = { label: string; isLive: boolean };
 
 /**
  * Says how a link stands, and says which of the three ways it ended rather than only that it has.
@@ -12,20 +11,18 @@ type Standing = { label: string; tone: BadgeTone };
  * @param now - What to treat as now, so the phrasing can be tested.
  * @returns What to show and how loudly.
  */
-const standingOf = (share: Share, now: number): Standing => {
+const shareStanding = (share: Share, now: number): ShareStanding => {
   if (share.isRevoked) {
-    return { label: 'Withdrawn', tone: 'quiet' };
+    return { label: 'Withdrawn', isLive: false };
   }
 
   if (share.expiresAt !== null && Date.parse(share.expiresAt) <= now) {
-    return { label: 'Ran out', tone: 'quiet' };
+    return { label: 'Ran out', isLive: false };
   }
 
-  return share.isSpent
-    ? { label: 'All used up', tone: 'quiet' }
-    : { label: 'Live', tone: 'accent' };
+  return share.isSpent ? { label: 'All used up', isLive: false } : { label: 'Live', isLive: true };
 };
 
-export type { Standing };
+export type { ShareStanding };
 
-export { standingOf };
+export { shareStanding };

@@ -11,7 +11,7 @@ import { cn } from '@ValenceUI/cn';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
-import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 
 /**

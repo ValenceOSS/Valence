@@ -9,41 +9,12 @@ import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import { titleLogoUrl } from '@ValenceScreens/library/titleLogoUrl';
 import { TextField } from '@ValenceUI/TextField';
 import { Choice } from '@ValenceScreens/components/Choice/Choice';
+import { SHARE_CAPS } from '@ValenceClient/sharing/SHARE_CAPS';
+import { SHARE_LASTS } from '@ValenceClient/sharing/SHARE_LASTS';
+import { newShareFor } from '@ValenceClient/sharing/newShareFor';
 import { createShare, shareAddress } from '@ValenceClient/sharing/fetchShares';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
-import type { NewShare } from '@ValenceContracts/schemas/Share';
 import type { ShareDialogProps } from './ShareDialog.types';
-
-const LASTS = [
-  { id: '1', label: 'A day' },
-  { id: '3', label: 'Three days' },
-  { id: '7', label: 'A week' },
-  { id: '30', label: 'A month' },
-  { id: 'forever', label: 'Until I withdraw it' },
-] as const;
-
-const CAPS = [
-  { id: 'any', label: 'Anybody with the link' },
-  { id: '1', label: 'One person' },
-  { id: '2', label: 'Two people' },
-  { id: '5', label: 'Five people' },
-] as const;
-
-const HOURS_IN_A_DAY = 24;
-
-const MILLISECONDS_IN_AN_HOUR = 3_600_000;
-
-/**
- * Works out when a link should stop working from the span somebody chose, so that the choice is
- * made in the words a person uses — "a week" — rather than as a date they have to compute.
- *
- * @param lasts - The span chosen, or the choice to keep it until withdrawn.
- * @returns When it should expire, or null where it should not.
- */
-const endsAt = (lasts: string): string | null =>
-  lasts === 'forever'
-    ? null
-    : new Date(Date.now() + Number(lasts) * HOURS_IN_A_DAY * MILLISECONDS_IN_AN_HOUR).toISOString();
 
 /**
  * Hands out a link to something, and shows it once. The token is shown here and nowhere else ever
@@ -121,20 +92,9 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
     setIsWorking(true);
     setRefusal(null);
 
-    const asked: NewShare =
-      subject.kind === 'book'
-        ? { kind: 'book', bookId: subject.book.id }
-        : subject.kind === 'series'
-          ? { kind: 'series', seriesId: subject.seriesId }
-          : kind === 'series' && subject.media.seriesId !== null
-            ? { kind: 'series', seriesId: subject.media.seriesId }
-            : { kind: 'item', mediaId: subject.media.id };
-
-    const made = await createShare({
-      ...asked,
-      expiresAt: endsAt(lasts),
-      viewCap: cap === 'any' ? null : Number(cap),
-    });
+    const made = await createShare(
+      newShareFor(subject, { lasts, cap, isWholeProgramme: kind === 'series' }, Date.now()),
+    );
 
     setIsWorking(false);
 
@@ -215,12 +175,12 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
               />
             ) : null}
 
-            <Choice label="Lasts" value={lasts} options={LASTS} onSelect={setLasts} />
+            <Choice label="Lasts" value={lasts} options={SHARE_LASTS} onSelect={setLasts} />
 
             <Choice
               label={subject?.kind === 'book' ? 'Who can read' : 'Who can watch'}
               value={cap}
-              options={CAPS}
+              options={SHARE_CAPS}
               onSelect={setCap}
             />
 

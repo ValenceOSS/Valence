@@ -47,7 +47,7 @@ import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
 import { useMusicSession } from '@ValenceScreens/music/useMusicSession';
 import { useDiscordMusicPresence } from '@ValenceScreens/playback/useDiscordMusicPresence';
 import { idleWhatIsPlaying } from '@ValenceScreens/music/idleWhatIsPlaying';
-import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { describeAudioQuality } from '@ValenceScreens/music/describeAudioQuality';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { MusicPanel } from '@ValenceScreens/music/musicPanel';

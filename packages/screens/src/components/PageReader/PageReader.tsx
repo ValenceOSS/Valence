@@ -5,13 +5,13 @@ import { SettingRow } from '@ValenceUI/SettingRow';
 import { Switch } from '@ValenceUI/Switch';
 import { Slider } from '@ValenceUI/Slider';
 import { bookPageUrl } from '@ValenceClient/books/fetchBooks';
-import { groupHolding, spreadsFor } from '@ValenceScreens/reading/spreadsFor';
+import { groupHolding, spreadsFor } from '@ValenceClient/books/spreadsFor';
 import {
   MOST_GAP,
   readReaderPreferences,
   writeReaderPreferences,
-} from '@ValenceScreens/reading/readerPreferences';
-import type { ReaderPreferences } from '@ValenceScreens/reading/readerPreferences';
+} from '@ValenceClient/books/readerPreferences';
+import type { ReaderPreferences } from '@ValenceClient/books/readerPreferences';
 import { CLOSEST, distanceBetween, heldWithin, scaleFrom } from '@ValenceScreens/reading/pinch';
 import { useChromeThatHides } from '@ValenceScreens/reading/useChromeThatHides';
 import { useTurnKeys } from '@ValenceScreens/reading/useTurnKeys';

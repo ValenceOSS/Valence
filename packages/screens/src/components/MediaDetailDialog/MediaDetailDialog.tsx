@@ -36,6 +36,7 @@ import { Skeleton } from '@ValenceUI/Skeleton';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { Rail } from '@ValenceUI/Rail';
 import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
+import { theVersionsOf } from '@ValenceClient/library/theVersionsOf';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -357,6 +358,7 @@ const MediaDetailDialog = ({
             </section>
 
             <TitleDetails
+              seriesTitle={metadata?.seriesTitle}
               releaseDate={metadata?.releaseDate}
               status={metadata?.status}
               budget={metadata?.budget}
@@ -472,13 +474,7 @@ const MediaDetailDialog = ({
                   groups={[
                     {
                       name: 'Version',
-                      options: [
-                        { id: shown.id, label: ORIGINAL_VERSION },
-                        ...versions.map((one) => ({
-                          id: one.id,
-                          label: one.versionLabel ?? 'Another version',
-                        })),
-                      ],
+                      options: theVersionsOf(shown.id, versions),
                       selectedId: chosenVersion?.id ?? shown.id,
                       onSelect: setVersion,
                     },

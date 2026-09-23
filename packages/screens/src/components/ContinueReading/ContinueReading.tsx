@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
-import { describeReadingPlace } from '@ValenceScreens/reading/describeReadingPlace';
-import { readingFractionOf } from '@ValenceScreens/reading/readingFractionOf';
+import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
+import { readingFractionOf } from '@ValenceClient/books/readingFractionOf';
 import type { ContinueReadingProps } from './ContinueReading.types';
 
 /**

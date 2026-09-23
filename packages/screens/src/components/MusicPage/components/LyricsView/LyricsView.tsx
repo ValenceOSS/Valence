@@ -10,7 +10,7 @@ import { LyricLines } from '@ValenceScreens/components/LyricLines/LyricLines';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { useMusicPlayer } from '@ValenceScreens/music/useMusicPlayer';
-import { useWhatIsPlaying } from '@ValenceScreens/music/useWhatIsPlaying';
+import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 
 /**
  * The words of the song playing, following along with it.
