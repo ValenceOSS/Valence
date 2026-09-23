@@ -520,7 +520,7 @@ const fileQueuedDownloadRoute = createRoute({
   method: 'post',
   path: '/api/admin/requests/downloads/{id}/file',
   tags: ['Admin'],
-  summary: 'File a download into a library of films or series, now or once it has finished',
+  summary: 'File a download into a library, now or once it has finished',
   request: {
     params: RecordIdParameter,
     body: { content: { 'application/json': { schema: DownloadFilingSchema } } },

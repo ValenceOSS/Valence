@@ -197,13 +197,14 @@ describe('DownloadQueueTable', () => {
     expect(DownloadQueueTable.displayName).toBe('DownloadQueueTable');
   });
 
-  it('files a film into a library of films, saying when', async () => {
+  it('files a download into a library of its own kind, saying when', async () => {
     const user = userEvent.setup();
     const { onFile } = show([
       aDownload({ state: 'done' }),
       aDownload({ id: 'filed', title: 'Heat', state: 'done', filedInto: '/media/Films/Heat' }),
       aDownload({ id: 'coming', title: 'Arrival' }),
       aDownload({ id: 'album', title: 'Kid A', libraryKind: 'music', state: 'done' }),
+      aDownload({ id: 'book', title: 'Dune Messiah', libraryKind: 'books', state: 'done' }),
     ]);
 
     await user.click(screen.getByRole('button', { name: 'Actions for Dune' }));
@@ -226,6 +227,11 @@ describe('DownloadQueueTable', () => {
     await user.keyboard('{Escape}{Escape}');
 
     await user.click(screen.getByRole('button', { name: 'Actions for Kid A' }));
+    expect(screen.queryByRole('menuitem', { name: /File into Films/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('menuitem', { name: /File into Albums/ }));
+    expect(onFile).toHaveBeenCalledWith(expect.objectContaining({ title: 'Kid A' }), 'albums');
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Dune Messiah' }));
     expect(screen.queryByRole('menuitem', { name: /File into/ })).not.toBeInTheDocument();
   });
 });

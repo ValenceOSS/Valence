@@ -5155,10 +5155,9 @@ const createApp = ({
 
   app.openapi(sendReleaseRoute, async (context) => {
     const sending = context.req.valid('json');
-    const fileable =
-      sending.libraryKind === 'movies' || sending.libraryKind === 'shows'
-        ? (await library.list(asTheServer)).filter((entry) => entry.kind === sending.libraryKind)
-        : [];
+    const fileable = (await library.list(asTheServer)).filter(
+      (entry) => entry.kind === sending.libraryKind,
+    );
     const into =
       sending.libraryId === undefined
         ? fileable[0]
@@ -5177,15 +5176,13 @@ const createApp = ({
 
   app.openapi(fileQueuedDownloadRoute, async (context) => {
     const { libraryId } = context.req.valid('json');
-    const into = (await library.list(asTheServer)).find(
-      (entry) => entry.id === libraryId && (entry.kind === 'movies' || entry.kind === 'shows'),
-    );
+    const into = (await library.list(asTheServer)).find((entry) => entry.id === libraryId);
     const answer = await throughRequests(context.req.raw.headers, (client) =>
       into === undefined
         ? Promise.resolve({
             kind: 'refused' as const,
             status: 400 as const,
-            error: 'That is not a library of films or series.',
+            error: 'There is no such library.',
           })
         : client.fileDownload(context.req.valid('param').id, { id: into.id, path: into.path }),
     );
