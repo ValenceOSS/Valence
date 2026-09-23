@@ -7,7 +7,7 @@
     "start": "EXPO_TV=1 expo start",
     "prebuild": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo prebuild --platform ios --clean",
     "tvos": "EXPO_TV=1 REACT_NATIVE_NODE_MODULES_DIR=$PWD/node_modules expo run:ios",
-    "test": "jest --passWithNoTests",
+    "test": "jest",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -34,11 +34,11 @@
   },
   "devDependencies": {
     "@testing-library/react-native": "^14.0.1",
-    "@types/jest": "29.5.14",
+    "@types/jest": "30.0.0",
     "@types/react": "~19.2.2",
     "@types/xcode": "3.0.0",
     "babel-preset-expo": "^57.0.12",
-    "jest": "~29.7.0",
+    "jest": "~30.5.2",
     "jest-expo": "~57.0.5",
     "react-test-renderer": "19.2.3",
     "typescript": "^5.9.3"
@@ -48,32 +48,6 @@
       "exclude": [
         "react-native"
       ]
-    }
-  },
-  "jest": {
-    "preset": "jest-expo/ios",
-    "transform": {
-      "\\.[jt]sx?$": [
-        "babel-jest",
-        {
-          "babelrc": false,
-          "configFile": false,
-          "presets": [
-            "babel-preset-expo"
-          ],
-          "caller": {
-            "name": "metro",
-            "bundler": "metro",
-            "platform": "ios"
-          }
-        }
-      ]
-    },
-    "moduleNameMapper": {
-      "^@ValenceTv/(.*)$": "<rootDir>/src/$1",
-      "^@ValenceClient/(.*)$": "<rootDir>/../../packages/client/src/$1",
-      "^@ValenceContracts/(.*)$": "<rootDir>/../../packages/contracts/src/$1",
-      "^@ValenceCore/(.*)$": "<rootDir>/../../packages/core/src/$1"
     }
   }
 }
