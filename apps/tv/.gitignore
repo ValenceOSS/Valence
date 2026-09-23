@@ -4,6 +4,10 @@ node_modules/
 /ios/
 /android/
 
+# Gradle builds each native module's Android side where it lives.
+/modules/*/android/build/
+/modules/*/android/.cxx/
+
 # Expo
 .expo/
 dist/
