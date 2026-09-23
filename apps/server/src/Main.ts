@@ -1,4 +1,5 @@
-import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import {
   copyFile,
@@ -3140,7 +3141,7 @@ if (requestsClient !== null) {
   });
 }
 
-const WEB_ROOT = './apps/web/dist';
+const WEB_ROOT = relative(process.cwd(), fileURLToPath(new URL('../../web/dist', import.meta.url)));
 
 const nodeWebSocket = createNodeWebSocket({ app });
 
