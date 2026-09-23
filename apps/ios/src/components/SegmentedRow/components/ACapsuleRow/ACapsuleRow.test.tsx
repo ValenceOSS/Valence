@@ -1,3 +1,4 @@
+import { LayoutAnimation } from 'react-native';
 import { render, userEvent } from '@testing-library/react-native';
 import { ACapsuleRow } from './ACapsuleRow';
 
@@ -25,5 +26,33 @@ describe('ACapsuleRow', () => {
     await userEvent.press(drawn.getByText('Home'));
 
     expect(onSelect).toHaveBeenCalledWith('home');
+  });
+});
+
+describe('ACapsuleRow, as a choice changes', () => {
+  it('asks the system to spring the row into place as another is picked', async () => {
+    const configureNext = jest.spyOn(LayoutAnimation, 'configureNext');
+    const drawn = await render(
+      <ACapsuleRow label="What to show" items={PARTS} value="films" onSelect={jest.fn()} />,
+    );
+
+    await userEvent.press(drawn.getByText('Home'));
+
+    expect(configureNext).toHaveBeenCalledWith(
+      expect.objectContaining({ update: expect.objectContaining({ type: 'spring' }) }),
+    );
+    configureNext.mockRestore();
+  });
+
+  it('does not animate pressing the one already picked', async () => {
+    const configureNext = jest.spyOn(LayoutAnimation, 'configureNext');
+    const drawn = await render(
+      <ACapsuleRow label="What to show" items={PARTS} value="films" onSelect={jest.fn()} />,
+    );
+
+    await userEvent.press(drawn.getByText('Films'));
+
+    expect(configureNext).not.toHaveBeenCalled();
+    configureNext.mockRestore();
   });
 });
