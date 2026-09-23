@@ -15,8 +15,10 @@ const SLOWS_BY_SECONDS = 5;
 const A_SECOND = 1000;
 
 /**
- * Signing in from a phone: a code to scan and the same code to type in at an address, while the
- * television waits for the phone to say yes. A code that runs out, or a phone that says no, is
+ * Signing in from a phone: a code to scan that opens the page for letting a television in, or its
+ * address to type, and the code to enter there, while the television waits for the phone to say
+ * yes. The scanned code carries only the address, never the code to enter, so whoever says yes has
+ * to be able to read this screen. A code that runs out, or a phone that says no, is
  * answered with a new code rather than a dead end. The address is put on the server this
  * television reached rather than the one the server believes it is, since a self-hosted server often
  * calls itself `localhost` — true on its own machine and useless on a phone across the room.
@@ -116,7 +118,7 @@ const PhoneSignIn = ({ onSignedIn, isStacked = false }: PhoneSignInProps) => {
   return (
     <View style={[styles.handoff, isStacked && styles.stacked]}>
       <QrCode
-        value={anAddressAPhoneCanReach(grant.verificationUriComplete, origin)}
+        value={anAddressAPhoneCanReach(grant.verificationUri, origin)}
         size={isStacked ? 300 : 360}
         label="A code to scan with your phone's camera"
       />

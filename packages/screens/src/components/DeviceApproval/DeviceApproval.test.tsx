@@ -5,35 +5,26 @@ import { DeviceApproval } from './DeviceApproval';
 
 const readDeviceRequest = vi.hoisted(() => vi.fn());
 const answerDeviceRequest = vi.hoisted(() => vi.fn());
-const useSearch = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/session/auth', () => ({ readDeviceRequest, answerDeviceRequest }));
 
-vi.mock('@tanstack/react-router', () => ({ useSearch }));
-
 beforeEach(() => {
-  useSearch.mockReset().mockReturnValue({});
   readDeviceRequest.mockReset().mockResolvedValue({ userCode: 'ABCD1234', status: 'pending' });
   answerDeviceRequest.mockReset().mockResolvedValue(true);
 });
 
+const typeTheCode = async (code = 'ABCD1234') => {
+  await userEvent.type(screen.getByLabelText('The code on the television'), code);
+  await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+};
+
 describe('saying yes to a television from a phone', () => {
-  it('asks for the code where the link did not carry one', () => {
+  it('always asks for the code the television shows, offering nothing until it is typed', () => {
     render(<DeviceApproval name="Valence" />);
 
-    expect(screen.getByLabelText('The code on the television')).toBeInTheDocument();
-  });
-
-  it('checks a code the link carried without anybody typing anything', async () => {
-    useSearch.mockReturnValue({ user_code: 'ABCD1234' });
-
-    render(<DeviceApproval name="Valence" />);
-
-    await waitFor(() => {
-      expect(readDeviceRequest).toHaveBeenCalledWith('ABCD1234');
-    });
-
-    expect(await screen.findByRole('button', { name: 'Yes, that is mine' })).toBeInTheDocument();
+    expect(screen.getByLabelText('The code on the television')).toHaveValue('');
+    expect(screen.queryByRole('button', { name: 'Yes, that is mine' })).not.toBeInTheDocument();
+    expect(readDeviceRequest).not.toHaveBeenCalled();
   });
 
   it('tidies a code somebody typed off a screen before asking about it', async () => {
@@ -65,9 +56,9 @@ describe('saying yes to a television from a phone', () => {
   it('will not offer to approve a code that has already been answered', async () => {
     readDeviceRequest.mockResolvedValue({ userCode: 'ABCD1234', status: 'approved' });
 
-    useSearch.mockReturnValue({ user_code: 'ABCD1234' });
-
     render(<DeviceApproval name="Valence" />);
+
+    await typeTheCode();
 
     expect(
       await screen.findByText('That code has run out, or there is no television waiting on it.'),
@@ -75,9 +66,9 @@ describe('saying yes to a television from a phone', () => {
   });
 
   it('lets the television in when somebody says it is theirs', async () => {
-    useSearch.mockReturnValue({ user_code: 'ABCD1234' });
-
     render(<DeviceApproval name="Valence" />);
+
+    await typeTheCode();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Yes, that is mine' }));
 
@@ -89,9 +80,9 @@ describe('saying yes to a television from a phone', () => {
   });
 
   it('offers turning it down as plainly as letting it in', async () => {
-    useSearch.mockReturnValue({ user_code: 'ABCD1234' });
-
     render(<DeviceApproval name="Valence" />);
+
+    await typeTheCode();
 
     await userEvent.click(
       await screen.findByRole('button', { name: 'No, I did not ask for this' }),

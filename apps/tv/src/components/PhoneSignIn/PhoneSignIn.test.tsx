@@ -1,3 +1,5 @@
+import { createElement as mockCreateElement } from 'react';
+import { Text as mockText } from 'react-native';
 import { render, waitFor } from '@testing-library/react-native';
 import { askWhetherTheDeviceMayIn, startDeviceGrant } from '@ValenceClient/session/auth';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
@@ -8,6 +10,11 @@ import type { DeviceGrant } from '@ValenceClient/session/auth';
 jest.mock('@ValenceClient/session/auth', () => ({
   startDeviceGrant: jest.fn(),
   askWhetherTheDeviceMayIn: jest.fn(),
+}));
+
+jest.mock('@ValenceTv/components/QrCode/QrCode', () => ({
+  QrCode: ({ value, label }: { value: string; label: string }) =>
+    mockCreateElement(mockText, { accessibilityLabel: label }, value),
 }));
 
 jest.mock('@ValenceTv/session/holdTheSession', () => ({
@@ -44,6 +51,16 @@ describe('PhoneSignIn', () => {
     expect(await drawn.findByText('WDJB-MJHT')).toBeTruthy();
     expect(drawn.getByText('192.168.1.10:8420/device')).toBeTruthy();
     expect(drawn.getByLabelText("A code to scan with your phone's camera")).toBeTruthy();
+  });
+
+  it('puts only the address in the code to scan, never the code to enter', async () => {
+    rememberServerAddress('http://192.168.1.10:8420');
+
+    const drawn = await render(<PhoneSignIn onSignedIn={jest.fn()} />);
+
+    expect(
+      await drawn.findByLabelText("A code to scan with your phone's camera"),
+    ).toHaveTextContent('http://192.168.1.10:8420/device');
   });
 
   it('lets this television in once the phone approves it', async () => {
