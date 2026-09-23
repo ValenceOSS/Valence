@@ -1,6 +1,7 @@
 import { audiobookTitleOf } from '@ValenceContracts/functions/audiobookTitleOf';
 import type { IAudioMetadata, IChapter } from 'music-metadata';
 import type { ChapterMark } from '@ValenceContracts/schemas/Book';
+import { chapterTitleOf } from './chapterTitleOf';
 import type { ListenBook } from './BookFile';
 
 /**
@@ -33,7 +34,7 @@ const marksOf = (chapters: readonly IChapter[], durationSeconds: number): Chapte
     .toSorted((one, other) => one.startSeconds - other.startSeconds);
 
   return starts.map((mark, at) => ({
-    title: mark.title === '' ? `Chapter ${(at + 1).toString()}` : mark.title,
+    title: chapterTitleOf(mark.title, at),
     startSeconds: mark.startSeconds,
     endSeconds: Math.min(
       mark.endSeconds ?? starts[at + 1]?.startSeconds ?? durationSeconds,

@@ -416,6 +416,53 @@ describe('a comic that describes itself', () => {
     });
   });
 
+  it('asks FFmpeg for the chapters where the tags find no more than one', async () => {
+    vi.mocked(openAudiobook).mockResolvedValueOnce({
+      ...aTrack(3600, null),
+      marks: [{ title: 'Chapter 1', startSeconds: 0, endSeconds: 3600 }],
+    });
+
+    const marks = [
+      { title: 'Chapter 1', startSeconds: 0, endSeconds: 1800 },
+      { title: 'Chapter 2', startSeconds: 1800, endSeconds: 3600 },
+    ];
+    const readMarks = vi.fn(() => Promise.resolve(marks));
+
+    await scanBookLibrary({
+      libraryId: 'a-library',
+      root: where,
+      files: {
+        listFiles: () =>
+          Promise.resolve({ files: listing([join(where, 'Dune', 'Dune.m4b')]), unreadable: [] }),
+      },
+      store: store(),
+      readMarks,
+    });
+
+    expect(readMarks).toHaveBeenCalledWith(join(where, 'Dune', 'Dune.m4b'), 3600);
+    expect(chapters[0]?.marks).toEqual(marks);
+  });
+
+  it('keeps the tags’ one chapter where FFmpeg finds no more, or cannot be asked', async () => {
+    vi.mocked(openAudiobook).mockResolvedValue({
+      ...aTrack(3600, null),
+      marks: [{ title: 'Book One', startSeconds: 0, endSeconds: 3600 }],
+    });
+
+    await scanBookLibrary({
+      libraryId: 'a-library',
+      root: where,
+      files: {
+        listFiles: () =>
+          Promise.resolve({ files: listing([join(where, 'Dune', 'Dune.m4b')]), unreadable: [] }),
+      },
+      store: store(),
+      readMarks: () => Promise.reject(new Error('The transcoder is down')),
+    });
+
+    expect(chapters[0]?.marks).toEqual([{ title: 'Book One', startSeconds: 0, endSeconds: 3600 }]);
+  });
+
   it('orders tracks by their track number where their names do not say', async () => {
     vi.mocked(openAudiobook).mockResolvedValueOnce(aTrack(60, 7));
 

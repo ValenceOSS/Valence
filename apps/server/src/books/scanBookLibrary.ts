@@ -76,6 +76,7 @@ type ScanBookLibraryOptions = {
   onProgress?: (processed: number, total: number) => void;
   onAdded?: (book: ArrivedBook) => void;
   isCancelled?: () => boolean;
+  readMarks?: (path: string, durationSeconds: number) => Promise<ChapterMark[]>;
 };
 
 /**
@@ -127,6 +128,7 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
     onProgress,
     onAdded,
     isCancelled,
+    readMarks,
   } = options;
 
   const walked = await files.listFiles(root);
@@ -170,7 +172,13 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
     onProgress?.(processed, changed.length);
 
     const format = bookFormatOf(file.path);
-    const opened = await openBookFile(file.path).catch(() => null);
+    const read = await openBookFile(file.path).catch(() => null);
+    const opened =
+      read?.layout === 'audio' && read.marks.length <= 1 && readMarks !== undefined
+        ? await readMarks(file.path, read.durationSeconds)
+            .catch(() => [])
+            .then((marks) => (marks.length > 1 ? { ...read, marks } : read))
+        : read;
 
     if (format === null || opened === null) {
       failed += 1;

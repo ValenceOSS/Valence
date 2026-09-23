@@ -46,6 +46,7 @@ import {
 import { previewRequestFor } from './previewRequestFor';
 import { fetchLogos } from './fetchLogos';
 import { scanLibrary } from './scanLibrary';
+import { marksFromProbe } from '@ValenceServer/books/marksFromProbe';
 import { scanBookLibrary } from '@ValenceServer/books/scanBookLibrary';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import type { BookStore } from '@ValenceServer/books/scanBookLibrary';
@@ -695,6 +696,8 @@ const createDatabaseLibraryService = ({
       files,
       store: books,
       force,
+      readMarks: async (path, durationSeconds) =>
+        marksFromProbe((await transcoder.probe(path)).chapters, durationSeconds),
       ...(onProblem === undefined ? {} : { onProblem }),
       ...(onArrived === undefined
         ? {}
