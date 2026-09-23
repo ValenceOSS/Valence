@@ -67,6 +67,18 @@ describe('defaultTrackId', () => {
     expect(defaultTrackId(tracks, 'en')).toBe('eng-forced');
   });
 
+  it('matches a three letter preference against a two letter track', () => {
+    const tracks = [track({ id: 'en-forced', language: 'en', isForced: true })];
+
+    expect(defaultTrackId(tracks, 'eng')).toBe('en-forced');
+  });
+
+  it('matches the two competing three letter spellings of a language', () => {
+    const tracks = [track({ id: 'de-forced', language: 'ger', isForced: true })];
+
+    expect(defaultTrackId(tracks, 'deu')).toBe('de-forced');
+  });
+
   it('ignores the region on a language that carries one', () => {
     const tracks = [track({ id: 'en-forced', language: 'en', isForced: true })];
 
