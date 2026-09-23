@@ -1,7 +1,9 @@
+import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import type {
   Book,
   BookChapter,
   BookContents,
+  ListeningProgress,
   ReadingProgress,
 } from '@ValenceContracts/schemas/Book';
 import type { BookService } from './createDatabaseBookService';
@@ -29,6 +31,7 @@ type MemoryBooks = {
  */
 const createMemoryBookService = (given: MemoryBooks): BookService => {
   const progress: { profileId: string; entry: ReadingProgress }[] = [];
+  const listened: { profileId: string; entry: ListeningProgress }[] = [];
   const bytes = { bytes: new Uint8Array([1, 2, 3]), contentType: 'image/png' };
   const chapterOf = (chapterId: string) =>
     given.chapters.find((chapter) => chapter.id === chapterId);
@@ -167,6 +170,97 @@ const createMemoryBookService = (given: MemoryBooks): BookService => {
 
         if (one?.profileId === profileId && (bookId === undefined || one.entry.bookId === bookId)) {
           progress.splice(at, 1);
+        }
+      }
+
+      return Promise.resolve();
+    },
+
+    readChapterFile: (chapterId) => {
+      const chapter = chapterOf(chapterId);
+
+      return Promise.resolve(
+        chapter === undefined
+          ? null
+          : { path: `/books/${chapter.id}.${chapter.format}`, format: chapter.format },
+      );
+    },
+
+    saveListening: (profileId, bookId, where) => {
+      const chapter = chapterOf(where.chapterId);
+
+      if (
+        chapter === undefined ||
+        chapter.bookId !== bookId ||
+        !isAudiobookFormat(chapter.format)
+      ) {
+        return Promise.resolve(false);
+      }
+
+      const entry = {
+        bookId,
+        chapterId: where.chapterId,
+        positionSeconds: where.positionSeconds,
+        isFinished: where.isFinished,
+        updatedAt: new Date().toISOString(),
+      };
+      const at = listened.findIndex(
+        (one) => one.profileId === profileId && one.entry.bookId === bookId,
+      );
+
+      if (at === -1) {
+        listened.push({ profileId, entry });
+      } else {
+        listened[at] = { profileId, entry };
+      }
+
+      return Promise.resolve(true);
+    },
+
+    readListening: (profileId, bookId) =>
+      Promise.resolve(
+        listened.find((one) => one.profileId === profileId && one.entry.bookId === bookId)?.entry ??
+          null,
+      ),
+
+    listListening: (viewer, profileId, limit) =>
+      Promise.resolve(
+        listened
+          .filter((one) => one.profileId === profileId)
+          .flatMap(({ entry }) => {
+            const book = given.books.find((one) => one.id === entry.bookId);
+            const tracks = given.chapters.filter(
+              (chapter) => chapter.bookId === entry.bookId && isAudiobookFormat(chapter.format),
+            );
+            const at = tracks.findIndex((chapter) => chapter.id === entry.chapterId);
+            const lengthOf = (chapter: BookChapter) => chapter.durationSeconds ?? 0;
+
+            return book === undefined || at === -1 || (given.refuses?.(viewer, book) ?? false)
+              ? []
+              : [
+                  {
+                    book,
+                    chapterId: entry.chapterId,
+                    chapterTitle: tracks[at]?.title ?? '',
+                    positionSeconds: entry.positionSeconds,
+                    heardSeconds:
+                      tracks.slice(0, at).reduce((all, chapter) => all + lengthOf(chapter), 0) +
+                      entry.positionSeconds,
+                    durationSeconds: tracks.reduce((all, chapter) => all + lengthOf(chapter), 0),
+                    isFinished: entry.isFinished,
+                    updatedAt: entry.updatedAt,
+                  },
+                ];
+          })
+          .slice(0, limit),
+      ),
+
+    forgetListening: (profileId, bookId) => {
+      for (let at = listened.length - 1; at >= 0; at -= 1) {
+        const one = listened[at];
+
+        if (one?.profileId === profileId && (bookId === undefined || one.entry.bookId === bookId)) {
+          listened.splice(at, 1);
         }
       }
 

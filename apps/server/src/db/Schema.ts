@@ -905,6 +905,29 @@ const readingProgress = pgTable(
   ],
 );
 
+const listeningProgress = pgTable(
+  'listening_progress',
+  {
+    id: text('id').primaryKey(),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    bookId: text('bookId')
+      .notNull()
+      .references(() => book.id, { onDelete: 'cascade' }),
+    chapterId: text('chapterId')
+      .notNull()
+      .references(() => bookChapter.id, { onDelete: 'cascade' }),
+    positionSeconds: real('positionSeconds').notNull(),
+    isFinished: boolean('isFinished').notNull().default(false),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('listening_progress_book_idx').on(table.profileId, table.bookId),
+    index('listening_progress_recent_idx').on(table.profileId, table.updatedAt),
+  ],
+);
+
 const musicArtist = pgTable(
   'music_artist',
   {
@@ -1310,6 +1333,7 @@ export {
   book,
   bookChapter,
   readingProgress,
+  listeningProgress,
   musicArtist,
   musicAlbum,
   musicTrack,

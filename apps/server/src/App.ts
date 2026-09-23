@@ -459,6 +459,8 @@ import type { HistoryService } from '@ValenceServer/history/HistoryService';
 import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 
 import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
+import type { TranscoderStreamedFile } from '@ValenceServer/transcoder/TranscoderClient';
+import { registerListeningRoutes } from '@ValenceServer/books/registerListeningRoutes';
 import { registerReencodeRoutes } from '@ValenceServer/reencode/registerReencodeRoutes';
 import { listeningFor } from '@ValenceServer/music/listeningFor';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
@@ -634,6 +636,7 @@ type CreateAppOptions = {
   households?: HouseholdService;
   splashscreen?: SplashscreenStore;
   books?: BookService;
+  streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;
   reencodes?: ReencodeService;
   onReencodeQueued?: () => void;
@@ -729,6 +732,7 @@ const createApp = ({
   households,
   splashscreen = createMemorySplashscreenStore(),
   books,
+  streamBookFile,
   music,
   reencodes,
   onReencodeQueued,
@@ -6630,6 +6634,16 @@ const createApp = ({
       'cache-control': 'private, max-age=604800, immutable',
     });
   });
+
+  if (books !== undefined && streamBookFile !== undefined) {
+    registerListeningRoutes(app, {
+      books,
+      viewerOf,
+      profileOf: readProfileId,
+      isInReach: bookInReach,
+      streamFile: streamBookFile,
+    });
+  }
 
   app.openapi(saveReadingProgressRoute, async (context) => {
     const profileId = await readProfileId(context.req.raw.headers);

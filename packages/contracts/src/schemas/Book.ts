@@ -151,6 +151,35 @@ const BookReadingSchema = z.object({
 
 const BookReadingListSchema = z.object({ readings: z.array(BookReadingSchema) });
 
+const ListeningProgressSchema = z.object({
+  bookId: z.string().uuid(),
+  chapterId: z.string().uuid(),
+  positionSeconds: z.number().nonnegative(),
+  isFinished: z.boolean(),
+  updatedAt: z.string(),
+});
+
+const ListeningProgressAnswerSchema = z.object({ progress: ListeningProgressSchema.nullable() });
+
+const SaveListeningProgressSchema = z.object({
+  chapterId: z.string().uuid(),
+  positionSeconds: z.number().nonnegative(),
+  isFinished: z.boolean().default(false),
+});
+
+const BookListeningSchema = z.object({
+  book: BookSchema,
+  chapterId: z.string().uuid(),
+  chapterTitle: z.string(),
+  positionSeconds: z.number().nonnegative(),
+  heardSeconds: z.number().nonnegative(),
+  durationSeconds: z.number().nonnegative(),
+  isFinished: z.boolean(),
+  updatedAt: z.string(),
+});
+
+const BookListeningListSchema = z.object({ listenings: z.array(BookListeningSchema) });
+
 const SaveReadingProgressSchema = z.object({
   pageNumber: z.number().int().nonnegative().nullable(),
   fraction: z.number().min(0).max(1).nullable(),
@@ -193,6 +222,9 @@ export type BookContents = z.infer<typeof BookContentsSchema>;
 export type ReadingProgress = z.infer<typeof ReadingProgressSchema>;
 export type BookReading = z.infer<typeof BookReadingSchema>;
 export type SaveReadingProgress = z.infer<typeof SaveReadingProgressSchema>;
+export type ListeningProgress = z.infer<typeof ListeningProgressSchema>;
+export type SaveListeningProgress = z.infer<typeof SaveListeningProgressSchema>;
+export type BookListening = z.infer<typeof BookListeningSchema>;
 
 const PLACE_LINK = /^#valence-part-(\d+)(?::(.+))?$/;
 
@@ -233,7 +265,12 @@ export {
   BookDetailSchema,
   BookFormatSchema,
   BookLayoutSchema,
+  BookListeningListSchema,
+  BookListeningSchema,
   BookReadingListSchema,
+  ListeningProgressAnswerSchema,
+  ListeningProgressSchema,
+  SaveListeningProgressSchema,
   BookReadingSchema,
   BookSchema,
   ReadingDirectionSchema,
