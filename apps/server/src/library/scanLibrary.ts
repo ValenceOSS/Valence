@@ -86,6 +86,7 @@ type MediaStore = {
   removeByPaths: (libraryId: string, paths: string[]) => Promise<ScannedItem[]>;
   listOverrides?: (libraryId: string) => Promise<MediaOverride[]>;
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
+  forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
   regroupSeries?: (libraryId: string, foldersByPath: Map<string, string>) => Promise<void>;
   forgetEmptySeries?: (libraryId: string) => Promise<void>;
   markScanned: (libraryId: string) => Promise<void>;
@@ -570,6 +571,10 @@ const scanLibrary = async ({
 
   if (links.length > 0) {
     await store.linkExtras?.(libraryId, links);
+  }
+
+  if (!isPartial && !hasVanished) {
+    await store.forgetStaleVersions?.(libraryId, [...versions.keys()]);
   }
 
   const gone = missing.length === 0 ? [] : await store.removeByPaths(libraryId, missing);
