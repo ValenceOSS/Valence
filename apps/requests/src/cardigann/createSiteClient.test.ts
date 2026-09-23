@@ -1,5 +1,6 @@
 import iconv from 'iconv-lite';
 import { describe, expect, it, vi } from 'vitest';
+import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { createSiteClient } from './createSiteClient';
 import type { SiteFetch } from './createSiteClient';
 import type { SiteSession } from './SiteSession';
@@ -213,96 +214,127 @@ describe('createSiteClient', () => {
       headers: [['server', 'cloudflare']],
     };
 
-    it('says FlareSolverr is needed where none is set up', async () => {
+    const aGet = (url: string) => ({ url, method: 'GET' as const, body: null, headers: {} });
+
+    /**
+     * A browser that answers each request with the page given, in Windows-1252.
+     *
+     * @param pages - What each address shows.
+     * @returns The solver.
+     */
+    const aSolver = (pages: Record<string, string>) => ({
+      fetch: vi.fn((request: { url: string }) => {
+        const page = pages[request.url];
+
+        return page === undefined
+          ? Promise.reject(new Error('NS_ERROR_NET_RESET'))
+          : Promise.resolve({
+              url: request.url,
+              status: 200,
+              headers: { 'content-type': 'text/html; charset=windows-1252' },
+              bytes: iconv.encode(page, 'windows-1252'),
+              cookies: { cf_clearance: 'xyz' },
+              userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Firefox/152.0',
+            });
+      }),
+    });
+
+    it('says there is nothing to get past it with where there is no browser', async () => {
       const { fetch } = aNetwork({ 'https://x.example/': CHALLENGE });
 
       await expect(
-        createSiteClient({ fetch }).send(
-          { url: 'https://x.example/', method: 'GET', body: null, headers: {} },
-          { ...OPTIONS, session: aSession() },
-        ),
-      ).rejects.toThrow('Set FLARESOLVERR_URL');
+        createSiteClient({ fetch }).send(aGet('https://x.example/'), {
+          ...OPTIONS,
+          session: aSession(),
+        }),
+      ).rejects.toThrow('this service has no browser to get past it');
     });
 
-    it('asks FlareSolverr, and keeps the cookies and browser it solved with', async () => {
-      const { fetch, asked } = aNetwork({
-        'https://x.example/s': CHALLENGE,
-        'http://flaresolverr:8191/v1': {
-          body: JSON.stringify({
-            status: 'ok',
-            solution: {
-              url: 'https://x.example/s',
-              status: 200,
-              response: '<p>results</p>',
-              cookies: [{ name: 'cf_clearance', value: 'xyz' }],
-              userAgent: 'Solver/1.0',
-            },
-          }),
-        },
-      });
+    it('asks through the browser, keeping the cookies and browser it got past with', async () => {
+      const { fetch } = aNetwork({ 'https://x.example/s': CHALLENGE });
+      const solver = aSolver({ 'https://x.example/s': '<p>café</p>' });
       const session = aSession({ uid: '1' });
-      const response = await createSiteClient({
-        fetch,
-        flareSolverrUrl: 'http://flaresolverr:8191/',
-      }).send(
+
+      const response = await createSiteClient({ fetch, solver }).send(
         { url: 'https://x.example/s', method: 'POST', body: 'q=dune', headers: {} },
         { ...OPTIONS, session },
       );
 
-      expect(response).toMatchObject({ status: 200, body: '<p>results</p>' });
+      expect(response).toMatchObject({
+        status: 200,
+        body: '<p>café</p>',
+        contentType: 'text/html; charset=windows-1252',
+        redirectedTo: null,
+      });
       expect(session).toEqual({
         cookies: { uid: '1', cf_clearance: 'xyz' },
-        userAgent: 'Solver/1.0',
+        userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Firefox/152.0',
       });
-      expect(JSON.parse(String(asked[1]?.init.body))).toMatchObject({
-        cmd: 'request.post',
-        postData: 'q=dune',
-        cookies: [{ name: 'uid', value: '1' }],
-      });
-    });
-
-    it('says why FlareSolverr could not get past it', async () => {
-      const { fetch } = aNetwork({
-        'https://x.example/': CHALLENGE,
-        'http://flaresolverr:8191/v1': {
-          body: JSON.stringify({ status: 'error', message: 'Challenge not solved' }),
-        },
-      });
-
-      await expect(
-        createSiteClient({ fetch, flareSolverrUrl: 'http://flaresolverr:8191' }).send(
-          { url: 'https://x.example/', method: 'GET', body: null, headers: {} },
-          { ...OPTIONS, session: aSession() },
-        ),
-      ).rejects.toThrow(
-        'FlareSolverr could not get past the site’s browser check: Challenge not solved',
+      expect(solver.fetch).toHaveBeenCalledWith(
+        { url: 'https://x.example/s', method: 'POST', body: 'q=dune', headers: {} },
+        { uid: '1' },
       );
     });
 
-    it('says so when FlareSolverr answers nonsense, or cannot be reached', async () => {
-      const nonsense = aNetwork({
-        'https://x.example/': CHALLENGE,
-        'http://flaresolverr:8191/v1': { body: 'nope' },
+    it('sends the site’s next requests straight to the browser', async () => {
+      const { fetch, asked } = aNetwork({ 'https://x.example/s': CHALLENGE });
+      const solver = aSolver({
+        'https://x.example/s': '<p>one</p>',
+        'https://x.example/t': '<p>two</p>',
+      });
+      const client = createSiteClient({ fetch, solver });
+
+      await client.send(aGet('https://x.example/s'), { ...OPTIONS, session: aSession() });
+      const second = await client.send(aGet('https://x.example/t'), {
+        ...OPTIONS,
+        session: aSession(),
       });
 
-      await expect(
-        createSiteClient({
-          fetch: nonsense.fetch,
-          flareSolverrUrl: 'http://flaresolverr:8191',
-        }).send(
-          { url: 'https://x.example/', method: 'GET', body: null, headers: {} },
-          { ...OPTIONS, session: aSession() },
-        ),
-      ).rejects.toThrow('FlareSolverr could not get past the site’s browser check');
+      expect(second.body).toBe('<p>two</p>');
+      expect(asked.map(({ url }) => url)).toEqual(['https://x.example/s']);
+    });
 
-      const gone = aNetwork({ 'https://x.example/': CHALLENGE });
+    it('asks the site itself for what must not be followed', async () => {
+      const { fetch } = aNetwork({
+        'https://x.example/s': CHALLENGE,
+        'https://x.example/get': { status: 302, headers: [['location', 'magnet:?xt=a']] },
+      });
+      const client = createSiteClient({
+        fetch,
+        solver: aSolver({ 'https://x.example/s': '<p>one</p>' }),
+      });
+
+      await client.send(aGet('https://x.example/s'), { ...OPTIONS, session: aSession() });
+
+      const magnet = await client.send(aGet('https://x.example/get'), {
+        ...OPTIONS,
+        followRedirects: false,
+        session: aSession(),
+      });
+
+      expect(magnet.redirectedTo).toBe('magnet:?xt=a');
+    });
+
+    it('says why the browser failed, and asks the site itself again next time', async () => {
+      const { fetch } = aNetwork({
+        'https://x.example/s': CHALLENGE,
+        'https://x.example/u': [CHALLENGE, { status: 200, body: 'fine' }],
+      });
+      const solver = aSolver({ 'https://x.example/s': '<p>one</p>' });
+      const client = createSiteClient({ fetch, solver });
+
+      await client.send(aGet('https://x.example/s'), { ...OPTIONS, session: aSession() });
+
+      solver.fetch.mockRejectedValueOnce(
+        new IndexerFailure('The site’s browser check would not let the request through'),
+      );
 
       await expect(
-        createSiteClient({ fetch: gone.fetch, flareSolverrUrl: 'http://flaresolverr:8191' }).send(
-          { url: 'https://x.example/', method: 'GET', body: null, headers: {} },
-          { ...OPTIONS, session: aSession() },
-        ),
-      ).rejects.toThrow('FlareSolverr could not be reached');
+        client.send(aGet('https://x.example/u'), { ...OPTIONS, session: aSession() }),
+      ).rejects.toThrow('would not let the request through');
+      await expect(
+        client.send(aGet('https://x.example/u'), { ...OPTIONS, session: aSession() }),
+      ).rejects.toThrow('The browser that gets past Cloudflare’s check could not be started');
     });
   });
 });

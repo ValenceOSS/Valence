@@ -15,10 +15,6 @@ const EnvSchema = z.object({
   DEFINITIONS_REPOSITORY: z.string().default('Prowlarr/Indexers'),
   DEFINITIONS_BRANCH: z.string().default('master'),
   DEFINITIONS_PATH: z.string().default('definitions/v11'),
-  FLARESOLVERR_URL: z
-    .string()
-    .default('')
-    .transform((value) => value.trim().replace(/\/+$/, '')),
   TRANSCODER_URL: z
     .string()
     .default('')

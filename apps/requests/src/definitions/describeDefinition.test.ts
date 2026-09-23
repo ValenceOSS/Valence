@@ -54,7 +54,7 @@ describe('describeDefinition', () => {
       id: 'alpha',
       links: ['https://alpha.example/', 'https://mirror.alpha.example/'],
       hasCaptcha: true,
-      needsFlareSolverr: true,
+      isBehindCloudflare: true,
       standardCategories: [
         { id: 2000, name: 'Movies', subcategories: [{ id: 2040, name: 'Movies/HD' }] },
         { id: 5000, name: 'TV', subcategories: [] },
@@ -122,7 +122,7 @@ describe('describeDefinition', () => {
       },
     ]);
     expect(detail?.settings[6]?.detail).toContain('Cookie header');
-    expect(detail?.settings[7]?.detail).toContain('FLARESOLVERR_URL');
+    expect(detail?.settings[7]?.detail).toContain('a browser of its own');
     expect(detail?.settings[8]).toEqual({
       name: 'quality',
       kind: 'text',

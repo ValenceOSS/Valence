@@ -1,9 +1,9 @@
 import iconv from 'iconv-lite';
-import { z } from 'zod';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { isCloudflareChallenge } from '@ValenceRequests/cardigann/isCloudflareChallenge';
 import type { SiteRequest } from '@ValenceRequests/cardigann/SiteRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
+import type { Solver } from '@ValenceRequests/solver/createSolver';
 
 type SiteFetch = (
   url: string,
@@ -35,7 +35,7 @@ type SendOptions = {
 
 type CreateSiteClientOptions = {
   fetch: SiteFetch;
-  flareSolverrUrl?: string;
+  solver?: Pick<Solver, 'fetch'> | null;
 };
 
 const USER_AGENT =
@@ -43,19 +43,22 @@ const USER_AGENT =
 
 const MOST_REDIRECTS = 10;
 
-const SolutionSchema = z.object({
-  status: z.string(),
-  message: z.string().default(''),
-  solution: z
-    .object({
-      url: z.string(),
-      status: z.number(),
-      response: z.string().default(''),
-      cookies: z.array(z.object({ name: z.string(), value: z.string() })).default([]),
-      userAgent: z.string().default(USER_AGENT),
-    })
-    .optional(),
-});
+/**
+ * Reads a page's bytes in the character set it declares, or else the one its definition names, or
+ * else UTF-8.
+ *
+ * @param bytes - The page.
+ * @param contentType - Its `Content-Type` header.
+ * @param encoding - The character set its definition names.
+ * @returns The page as text.
+ */
+const readText = (bytes: Uint8Array, contentType: string | null, encoding: string): string => {
+  const charset = /charset=([\w-]+)/i.exec(contentType ?? '')?.[1];
+  const chosen =
+    [charset, encoding].find((one) => one !== undefined && iconv.encodingExists(one)) ?? 'utf8';
+
+  return iconv.decode(Buffer.from(bytes), chosen);
+};
 
 /**
  * Takes the cookies a response set into the session, and drops any it expired.
@@ -95,68 +98,55 @@ const keepCookies = (session: SiteSession, response: Response): void => {
  * following redirects itself so that no cookie set along the way is lost, and reading pages in the
  * site's own character set.
  *
- * A site behind Cloudflare's browser check is asked again through FlareSolverr where one is set up,
- * and the cookies and browser it was solved with are kept for the requests after. Where none is set
- * up, it says so.
+ * A site behind Cloudflare's browser check is asked again through the service's own browser, and
+ * the cookies and browser it got past the check with are kept for the requests after. From then on
+ * that site's requests go straight to the browser, which the site now trusts, where a request from
+ * here would only be checked again — all but those that must not follow a redirect, which a
+ * browser's page cannot read, and which are asked as before.
  *
  * @param fetch - How to ask.
- * @param flareSolverrUrl - Where FlareSolverr answers, or nothing.
+ * @param solver - The browser that gets past the check, or nothing where there is none.
  * @returns The client.
  */
-const createSiteClient = ({ fetch, flareSolverrUrl = '' }: CreateSiteClientOptions) => {
-  const solve = async (request: SiteRequest, options: SendOptions): Promise<SiteResponse> => {
-    if (flareSolverrUrl === '') {
+const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => {
+  const throughTheBrowser = new Set<string>();
+
+  const solve = async (
+    request: SiteRequest,
+    options: SendOptions,
+    from: string,
+  ): Promise<SiteResponse> => {
+    if (solver === null) {
       throw new IndexerFailure(
-        'The site is behind Cloudflare’s browser check. Set FLARESOLVERR_URL on the requests service to get past it.',
+        'The site is behind Cloudflare’s browser check, and this service has no browser to get past it.',
       );
     }
 
-    let answer: Response;
+    const { host } = new URL(request.url);
+    let solution: Awaited<ReturnType<Solver['fetch']>>;
 
     try {
-      answer = await fetch(`${flareSolverrUrl.replace(/\/+$/, '')}/v1`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          cmd: request.method === 'POST' ? 'request.post' : 'request.get',
-          url: request.url,
-          maxTimeout: 60_000,
-          cookies: Object.entries(options.session.cookies).map(([name, value]) => ({
-            name,
-            value,
-          })),
-          ...(request.method === 'POST' ? { postData: request.body ?? '' } : {}),
-        }),
-        redirect: 'manual',
-        signal: AbortSignal.timeout(90_000),
-      });
-    } catch {
-      throw new IndexerFailure('FlareSolverr could not be reached');
+      solution = await solver.fetch(request, { ...options.session.cookies });
+    } catch (error) {
+      throughTheBrowser.delete(host);
+      throw error instanceof IndexerFailure
+        ? error
+        : new IndexerFailure('The browser that gets past Cloudflare’s check could not be started');
     }
 
-    const read = SolutionSchema.safeParse(await answer.json().catch(() => ({})));
-
-    if (!read.success || read.data.solution === undefined) {
-      throw new IndexerFailure(
-        `FlareSolverr could not get past the site’s browser check${read.success && read.data.message !== '' ? `: ${read.data.message}` : ''}`,
-      );
-    }
-
-    const { solution } = read.data;
-
-    for (const cookie of solution.cookies) {
-      options.session.cookies[cookie.name] = cookie.value;
-    }
-
+    Object.assign(options.session.cookies, solution.cookies);
     options.session.userAgent = solution.userAgent;
+    throughTheBrowser.add(host);
+
+    const contentType = solution.headers['content-type'] ?? null;
 
     return {
       status: solution.status,
       url: solution.url,
-      redirectedTo: null,
-      contentType: 'text/html',
-      body: solution.response,
-      bytes: Buffer.from(solution.response),
+      redirectedTo: solution.url === from ? null : solution.url,
+      contentType,
+      body: readText(solution.bytes, contentType, options.encoding),
+      bytes: solution.bytes,
     };
   };
 
@@ -164,6 +154,10 @@ const createSiteClient = ({ fetch, flareSolverrUrl = '' }: CreateSiteClientOptio
     let current = request;
 
     for (let hops = 0; hops <= MOST_REDIRECTS; hops += 1) {
+      if (options.followRedirects && throughTheBrowser.has(new URL(current.url).host)) {
+        return solve(current, options, request.url);
+      }
+
       const cookie = Object.entries(options.session.cookies)
         .map(([name, value]) => `${name}=${value}`)
         .join('; ');
@@ -224,14 +218,10 @@ const createSiteClient = ({ fetch, flareSolverrUrl = '' }: CreateSiteClientOptio
       }
 
       const bytes = new Uint8Array(await response.arrayBuffer());
-      const charset = /charset=([\w-]+)/i.exec(response.headers.get('content-type') ?? '')?.[1];
-      const encoding =
-        [charset, options.encoding].find((one) => one !== undefined && iconv.encodingExists(one)) ??
-        'utf8';
-      const body = iconv.decode(Buffer.from(bytes), encoding);
+      const body = readText(bytes, response.headers.get('content-type'), options.encoding);
 
       if (isCloudflareChallenge(response.status, response.headers.get('server'), body)) {
-        return solve(current, options);
+        return solve(current, options, request.url);
       }
 
       return {

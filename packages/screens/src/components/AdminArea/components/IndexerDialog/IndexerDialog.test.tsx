@@ -140,7 +140,7 @@ const SITE: IndexerDefinitionDetail = {
     { id: 100_001, name: 'Сериалы', subcategories: [] },
   ],
   hasCaptcha: true,
-  needsFlareSolverr: false,
+  isBehindCloudflare: false,
 };
 
 beforeEach(() => {

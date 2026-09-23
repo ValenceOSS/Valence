@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { serve } from '@hono/node-server';
+import { Camoufox } from 'camoufox-js';
 import { sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createApp } from '@ValenceRequests/App';
@@ -12,6 +13,10 @@ import { createIndexerClient } from '@ValenceRequests/indexers/createIndexerClie
 import { createIndexerService } from '@ValenceRequests/indexers/createIndexerService';
 import { createPacer } from '@ValenceRequests/indexers/createPacer';
 import { createSiteClient } from '@ValenceRequests/cardigann/createSiteClient';
+import { createBrowserKeeper } from '@ValenceRequests/solver/createBrowserKeeper';
+import { createSiteAgent } from '@ValenceRequests/solver/createSiteAgent';
+import { createSitePool } from '@ValenceRequests/solver/createSitePool';
+import { createSolver } from '@ValenceRequests/solver/createSolver';
 import { createDatabaseDefinitionStore } from '@ValenceRequests/definitions/createDatabaseDefinitionStore';
 import { createDefinitionCatalogue } from '@ValenceRequests/definitions/createDefinitionCatalogue';
 import { createAdapterFor } from '@ValenceRequests/downloads/createAdapterFor';
@@ -76,6 +81,14 @@ await vpn.start();
 
 const DEFINITIONS_EVERY_MS = 24 * 60 * 60 * 1000;
 
+const SITES_AT_ONCE = 4;
+
+const PAGES_PER_SITE = 2;
+
+const SITE_IDLE_MS = 10 * 60 * 1000;
+
+const BROWSER_RESTART_MS = 12 * 60 * 60 * 1000;
+
 const definitions = createDefinitionCatalogue({
   store: createDatabaseDefinitionStore(db),
   source: {
@@ -86,6 +99,29 @@ const definitions = createDefinitionCatalogue({
   fetch,
 });
 
+const browser = createBrowserKeeper({
+  launch: () => {
+    say('Starting the browser that gets past Cloudflare’s check.');
+
+    return Camoufox({
+      headless: true,
+      os: 'linux',
+      humanize: true,
+      disable_coop: true,
+      i_know_what_im_doing: true,
+    });
+  },
+});
+
+const sites = createSitePool({
+  open: async () => createSiteAgent(await (await browser.get()).newContext(), PAGES_PER_SITE),
+  most: SITES_AT_ONCE,
+  idleMs: SITE_IDLE_MS,
+  restartMs: BROWSER_RESTART_MS,
+  upFor: browser.upFor,
+  retire: browser.retire,
+});
+
 const indexers = createIndexerService({
   store: createDatabaseIndexerStore(db),
   definitions: definitions.definition,
@@ -93,7 +129,7 @@ const indexers = createIndexerService({
     fetch,
     pacer: createPacer(),
     definitions: definitions.definition,
-    site: createSiteClient({ fetch, flareSolverrUrl: env.FLARESOLVERR_URL }),
+    site: createSiteClient({ fetch, solver: createSolver({ pool: sites }) }),
   }),
 });
 
@@ -224,7 +260,7 @@ const leave = (): void => {
   requestWorker.stop();
   clearInterval(definitionTimer);
   server.close();
-  void pool.end().then(() => process.exit(0));
+  void Promise.all([pool.end(), sites.closeAll()]).then(() => process.exit(0));
 };
 
 process.on('SIGTERM', leave);

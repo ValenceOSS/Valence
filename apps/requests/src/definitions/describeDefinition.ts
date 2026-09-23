@@ -13,7 +13,7 @@ const GUIDANCE: Readonly<Record<string, string>> = {
   info_cookie:
     'Sign in to the site in a browser, open its developer tools, and copy the Cookie header a page request sends. Paste the whole value here.',
   info_flaresolverr:
-    'This site sits behind Cloudflare’s browser check. Set FLARESOLVERR_URL on the requests service so Valence can get past it.',
+    'This site sits behind Cloudflare’s browser check. The requests service gets past it with a browser of its own, so its first search can take a few seconds longer.',
   info_useragent:
     'Some sites tie a cookie to the browser that got it. Copy your browser’s user agent too, where the site asks for one.',
   info_category_8000:
@@ -66,7 +66,7 @@ const describeSetting = (
 /**
  * Says everything the add-indexer form needs of a definition: what it is, the addresses it answers
  * at, the settings it asks for, the kinds of thing it has, and whether logging in shows a captcha or
- * needs FlareSolverr.
+ * the site sits behind Cloudflare's browser check.
  *
  * @param definition - The definition.
  * @returns The detail.
@@ -92,7 +92,7 @@ const describeDefinition = (definition: CardigannDefinition): IndexerDefinitionD
     settings: settings.map(describeSetting),
     standardCategories: createCategoryMap(definition.caps).standard(),
     hasCaptcha: definition.login?.captcha !== undefined,
-    needsFlareSolverr: settings.some(
+    isBehindCloudflare: settings.some(
       (setting) => setting.type.toLowerCase() === 'info_flaresolverr',
     ),
   };

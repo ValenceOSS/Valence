@@ -49,7 +49,7 @@ describe('IndexerDefinition', () => {
       ],
       standardCategories: [{ id: 2000, name: 'Movies', subcategories: [] }],
       hasCaptcha: false,
-      needsFlareSolverr: true,
+      isBehindCloudflare: true,
     };
 
     expect(IndexerDefinitionDetailSchema.parse(detail)).toEqual(detail);
