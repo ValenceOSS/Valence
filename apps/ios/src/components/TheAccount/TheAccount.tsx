@@ -40,13 +40,7 @@ const TheAccount = ({ onOut }: TheAccountProps) => {
         <Words tone="muted">{who.data.email}</Words>
       )}
 
-      <SegmentedRow
-        label="What to change"
-        scrolls
-        items={PANELS}
-        value={panel}
-        onSelect={setPanel}
-      />
+      <SegmentedRow label="What to change" items={PANELS} value={panel} onSelect={setPanel} />
 
       {panel === 'security' ? (
         <TheSecurity />

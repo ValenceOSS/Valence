@@ -293,7 +293,6 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
             <View style={styles.seasons}>
               <SegmentedRow
                 label="Season"
-                scrolls
                 items={laid.choices.map((choice) => ({
                   id: choice.seasonNumber === null ? OTHER : choice.seasonNumber.toString(),
                   label: nameSeason(choice.seasonNumber),

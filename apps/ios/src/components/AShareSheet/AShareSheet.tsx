@@ -106,7 +106,6 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
               items={SHARE_LASTS}
               value={lasts}
               onSelect={setLasts}
-              scrolls
             />
           </View>
 
@@ -117,7 +116,6 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
               items={SHARE_CAPS}
               value={cap}
               onSelect={setCap}
-              scrolls
             />
             <Words size="small" tone="muted">
               Whichever runs out first ends the link.

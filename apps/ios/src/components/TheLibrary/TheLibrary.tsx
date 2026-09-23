@@ -224,8 +224,6 @@ const TheLibrary = ({
         <View style={styles.parts}>
           <SegmentedRow
             label="What to show"
-            isGlass
-            scrolls
             items={parts}
             value={part}
             onSelect={(next) => {
