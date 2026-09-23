@@ -1,3 +1,4 @@
+import { readStoredCertifications } from '@ValenceServer/library/readStoredCertifications';
 import { askForLibraryWork } from '@ValenceServer/library/askForLibraryWork';
 import { jobBehindTheKey } from '@ValenceServer/library/jobBehindTheKey';
 import { randomUUID } from 'node:crypto';
@@ -1624,6 +1625,10 @@ const createDatabaseLibraryService = ({
           revenue: row.revenue,
           status: row.catalogueStatus,
           rottenTomatoes: row.rottenTomatoes,
+          certification:
+            readStoredCertifications(JsonValueSchema.parse(row.certifications ?? null))?.[
+              (await certificationRegion()).trim().toUpperCase()
+            ] ?? null,
         },
       });
 
@@ -2124,6 +2129,7 @@ const createDatabaseLibraryService = ({
             ...whole,
             shape: shape.seasons,
             status: shape.status ?? null,
+            overview: shape.overview ?? null,
             nextEpisode: nextEpisodeOf(shape.seasons, new Date().toISOString().slice(0, 10)),
           };
     },

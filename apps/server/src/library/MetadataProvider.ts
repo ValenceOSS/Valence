@@ -99,6 +99,7 @@ type SeriesShape = {
     }[];
   }[];
   status?: string | null;
+  overview?: string | null;
 };
 
 type MetadataProvider = {

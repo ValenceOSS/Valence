@@ -1130,6 +1130,10 @@ const createCatalogueMetadataProvider = ({
         seasons,
         status:
           detail.data.status === undefined || detail.data.status === '' ? null : detail.data.status,
+        overview:
+          detail.data.overview === undefined || detail.data.overview === ''
+            ? null
+            : detail.data.overview,
       };
     },
   };
