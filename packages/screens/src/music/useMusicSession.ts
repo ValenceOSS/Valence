@@ -23,9 +23,6 @@ const useMusicSession = (state: MusicPlayerState, player: MusicPlayer): void => 
   const albumTitle = current?.album.title ?? '';
   const albumId = current?.album.hasArtwork === true ? current.album.id : null;
   const claimRef = useRef<Claim | null>(null);
-  const isPlayingRef = useRef(state.isPlaying);
-
-  isPlayingRef.current = state.isPlaying;
 
   useEffect(() => {
     if (trackId === null) {
@@ -56,7 +53,6 @@ const useMusicSession = (state: MusicPlayerState, player: MusicPlayer): void => 
       ],
     });
 
-    claim.setPlaying(isPlayingRef.current);
     claimRef.current = claim;
 
     return () => {

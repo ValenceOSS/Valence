@@ -1,5 +1,8 @@
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
-import type { QueueControl } from '@ValenceServer/transcoder/TranscoderClient';
+import type {
+  QueueControl,
+  TranscoderStreamedFile,
+} from '@ValenceServer/transcoder/TranscoderClient';
 import type { RunningJob } from '@ValenceServer/jobs/JobQueue';
 import type { CatalogueMatch } from '@ValenceServer/library/MetadataProvider';
 import { OpenAPIHono, z } from '@hono/zod-openapi';
@@ -459,7 +462,6 @@ import type { HistoryService } from '@ValenceServer/history/HistoryService';
 import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
 
 import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
-import type { TranscoderStreamedFile } from '@ValenceServer/transcoder/TranscoderClient';
 import { registerListeningRoutes } from '@ValenceServer/books/registerListeningRoutes';
 import { registerReencodeRoutes } from '@ValenceServer/reencode/registerReencodeRoutes';
 import { listeningFor } from '@ValenceServer/music/listeningFor';

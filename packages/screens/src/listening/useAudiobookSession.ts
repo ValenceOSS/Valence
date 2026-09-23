@@ -29,9 +29,6 @@ const useAudiobookSession = (state: AudiobookPlayerState, player: AudiobookPlaye
   const authors = book?.authors?.join(', ') ?? '';
   const hasCover = book?.hasCover === true;
   const claimRef = useRef<Claim | null>(null);
-  const isPlayingRef = useRef(state.isPlaying);
-
-  isPlayingRef.current = state.isPlaying;
 
   useEffect(() => {
     if (bookId === null) {
@@ -76,7 +73,6 @@ const useAudiobookSession = (state: AudiobookPlayerState, player: AudiobookPlaye
       ],
     });
 
-    claim.setPlaying(isPlayingRef.current);
     claimRef.current = claim;
 
     return () => {

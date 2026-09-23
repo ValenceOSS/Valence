@@ -102,7 +102,7 @@ const placesInSeries = (
   const order = books
     .map((book, at) => ({ at, year: book.year ?? Number.POSITIVE_INFINITY }))
     .toSorted((one, other) => one.year - other.year || one.at - other.at);
-  const places = new Array<number>(books.length).fill(0);
+  const places = Array.from({ length: books.length }, () => 0);
 
   order.forEach(({ at }, place) => {
     places[at] = place + 1;
