@@ -20,6 +20,7 @@ const aDownload = (id: string): QueuedDownload => ({
   indexerName: 'Nyaa.si',
   state: 'downloading',
   problem: null,
+  problemCode: null,
   progress: 0.4,
   sizeBytes: 1000,
   doneBytes: 400,
@@ -32,6 +33,7 @@ const aDownload = (id: string): QueuedDownload => ({
   finishedAt: null,
   filedInto: null,
   filingProblem: null,
+  filingProblemCode: null,
 });
 
 /**
@@ -46,6 +48,7 @@ const anItem = (downloadId: string | null): RequestItem => ({
   airDate: null,
   state: 'downloading',
   problem: null,
+  problemCode: null,
   releaseTitle: null,
   downloadId,
   filePath: null,

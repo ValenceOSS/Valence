@@ -92,7 +92,10 @@ describe('discordEmbedFor', () => {
     const down = embed({
       ...anEnvelope,
       event: 'requests.vpnDown',
-      data: { reason: 'The tunnel is stopped' },
+      data: {
+        reason: 'The tunnel is stopped',
+        docs: 'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
+      },
     });
     const up = embed({
       ...anEnvelope,
@@ -101,6 +104,13 @@ describe('discordEmbedFor', () => {
     });
 
     expect(down.title).toBe('a sentence');
+    expect(down.fields).toEqual([
+      {
+        name: 'How to fix it',
+        value: 'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
+        inline: false,
+      },
+    ]);
     expect(down.color).not.toBe(up.color);
     expect(up.color).toBe(embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color);
   });
@@ -109,7 +119,7 @@ describe('discordEmbedFor', () => {
     const failing = embed({
       ...anEnvelope,
       event: 'requests.indexerFailing',
-      data: { name: 'Jackett', problem: 'Timed out' },
+      data: { name: 'Jackett', problem: 'Timed out', docs: null },
     });
     const working = embed({
       ...anEnvelope,
@@ -163,7 +173,7 @@ describe('discordEmbedFor', () => {
     const quiet = embed({
       ...anEnvelope,
       event: 'requests.unreachable',
-      data: { reason: 'no answer' },
+      data: { reason: 'no answer', docs: null },
     });
     const back = embed({ ...anEnvelope, event: 'requests.reachable', data: {} });
     const transcoder = embed({

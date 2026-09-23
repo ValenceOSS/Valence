@@ -16,6 +16,7 @@ const aVpn = (isUp: boolean | null): RequestsVpn => ({
   country: isUp === true ? 'Netherlands' : null,
   checkedAt: isUp === null ? null : NOW.toISOString(),
   problem: isUp === false ? 'The tunnel is stopped' : null,
+  problemCode: isUp === false ? 'VpnDown' : null,
 });
 
 /**
@@ -30,7 +31,11 @@ const answered = (isUp: boolean | null): RequestsReading => ({
   } satisfies RequestsStatus,
 });
 
-const SILENT: RequestsReading = { kind: 'silent', reason: 'http://requests:8421 did not answer' };
+const SILENT: RequestsReading = {
+  kind: 'silent',
+  reason: 'http://requests:8421 did not answer',
+  problemCode: 'RequestsUnreachable',
+};
 
 /**
  * A monitor over a service that answers each check with the next reading given.
@@ -59,6 +64,8 @@ describe('createRequestsMonitor', () => {
     expect(monitor.overview()).toEqual({
       address: 'http://requests:8421',
       isReachable: false,
+      problem: null,
+      problemCode: null,
       checkedAt: null,
       status: null,
       work: NO_WORK,
@@ -72,6 +79,8 @@ describe('createRequestsMonitor', () => {
     expect(monitor.overview()).toEqual({
       address: 'http://requests:8421',
       isReachable: true,
+      problem: null,
+      problemCode: null,
       checkedAt: NOW.toISOString(),
       work: NO_WORK,
       status: {
@@ -90,8 +99,15 @@ describe('createRequestsMonitor', () => {
     await monitor.check();
 
     expect(onLost).toHaveBeenCalledTimes(1);
-    expect(onLost).toHaveBeenCalledWith('http://requests:8421 did not answer');
-    expect(monitor.overview().isReachable).toBe(false);
+    expect(onLost).toHaveBeenCalledWith(
+      'http://requests:8421 did not answer',
+      'RequestsUnreachable',
+    );
+    expect(monitor.overview()).toMatchObject({
+      isReachable: false,
+      problem: 'http://requests:8421 did not answer',
+      problemCode: 'RequestsUnreachable',
+    });
   });
 
   it('says so when the service answers again', async () => {
@@ -114,7 +130,7 @@ describe('createRequestsMonitor', () => {
     await monitor.check();
     await monitor.check();
 
-    expect(onVpnDown).toHaveBeenCalledWith('The tunnel is stopped');
+    expect(onVpnDown).toHaveBeenCalledWith('The tunnel is stopped', 'VpnDown');
     expect(onVpnUp).toHaveBeenCalledWith(aVpn(true));
   });
 
@@ -131,14 +147,14 @@ describe('createRequestsMonitor', () => {
       kind: 'answered',
       status: {
         version: '0.4.0',
-        vpn: { ...aVpn(false), problem: null },
+        vpn: { ...aVpn(false), problem: null, problemCode: null },
         indexers: { total: 0, enabled: 0, failing: [] },
       },
     });
 
     await monitor.check();
 
-    expect(onVpnDown).toHaveBeenCalledWith('The tunnel is down');
+    expect(onVpnDown).toHaveBeenCalledWith('The tunnel is down', 'VpnDown');
   });
 
   it('says nothing about a VPN that was never set up', async () => {
@@ -165,6 +181,7 @@ describe('createRequestsMonitor', () => {
       id: '0f8fad5b-d9cb-469f-a165-70867728950e',
       name: 'Jackett',
       problem: 'Timed out',
+      problemCode: 'CloudflareCheckFailed' as const,
     };
 
     /**
@@ -204,7 +221,11 @@ describe('createRequestsMonitor', () => {
       await monitor.check();
 
       expect(onIndexerFailing).toHaveBeenCalledTimes(1);
-      expect(onIndexerFailing).toHaveBeenCalledWith({ name: 'Jackett', problem: 'Timed out' });
+      expect(onIndexerFailing).toHaveBeenCalledWith({
+        name: 'Jackett',
+        problem: 'Timed out',
+        problemCode: 'CloudflareCheckFailed',
+      });
     });
 
     it('says once when it stops', async () => {

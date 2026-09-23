@@ -227,6 +227,18 @@ const sentenceFor = (payload: WebhookPayload): string => {
 };
 
 /**
+ * A sentence, followed by where to read how to put its problem right where there is somewhere.
+ *
+ * @param sentence - What happened.
+ * @param docs - The docs section about the problem, or nothing.
+ * @returns The sentence, with the link where there is one.
+ */
+const withHowToFix = (sentence: string, docs: string | null): string =>
+  docs === null
+    ? sentence
+    : `${sentence}${sentence.endsWith('.') ? '' : '.'} How to fix it: ${docs}`;
+
+/**
  * Writes a delivery in the shape its subscriber expects — the event itself for anything generic, and
  * the message shapes Discord and Slack require for those. The same event, said in whichever way the
  * receiver understands.
@@ -248,7 +260,10 @@ const formatWebhookBody = (preset: WebhookPreset, payload: WebhookPayload): Webh
     }
 
     case 'ntfy': {
-      return { body: sentenceFor(payload), contentType: 'text/plain' };
+      return {
+        body: withHowToFix(sentenceFor(payload), 'docs' in payload.data ? payload.data.docs : null),
+        contentType: 'text/plain',
+      };
     }
   }
 };
