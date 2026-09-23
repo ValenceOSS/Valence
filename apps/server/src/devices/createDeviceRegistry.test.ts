@@ -156,10 +156,15 @@ describe('createDeviceRegistry', () => {
   it('passes an event to another of the person’s devices, named after the one it came from', () => {
     const { presence } = presenceWith([entry('laptop', 'me'), entry('tv', 'me')]);
 
-    const sent = createDeviceRegistry<string>({ presence }).tell(ME, 'laptop', 'tv', (fromLabel) => ({
-      kind: 'message',
-      text: fromLabel,
-    }));
+    const sent = createDeviceRegistry<string>({ presence }).tell(
+      ME,
+      'laptop',
+      'tv',
+      (fromLabel) => ({
+        kind: 'message',
+        text: fromLabel,
+      }),
+    );
 
     expect(sent).toBe(true);
     expect(presence.tell).toHaveBeenCalledWith('tv', { kind: 'message', text: 'laptop label' });

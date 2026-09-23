@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { ReactNode } from 'react';
 import {
   Bin as BinIcon,
@@ -115,7 +116,12 @@ const DownloadQueueTable = ({
                 <HoverCard
                   side="bottom"
                   align="start"
-                  detail={<span className="break-words text-text-muted">{state.detail}</span>}
+                  detail={
+                    <span className="flex flex-col items-start gap-1">
+                      <span className="break-words text-text-muted">{state.detail}</span>
+                      <HowToFix href={state.help} />
+                    </span>
+                  }
                 >
                   <span className="text-text-muted hover:text-text">
                     <Icon of={InfoIcon} size={14} label={state.detail} />

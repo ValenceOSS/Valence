@@ -46,6 +46,7 @@ const inTime = async <T>(task: Promise<T>, ms: number): Promise<T> => {
           reject(
             new IndexerFailure(
               `Timed out after ${Math.round(ms / 1000).toString()} seconds getting past the site’s browser check`,
+              'CloudflareCheckFailed',
             ),
           );
         }, ms);

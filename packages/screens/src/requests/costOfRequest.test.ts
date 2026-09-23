@@ -11,6 +11,7 @@ const anItem = (downloadedBytes: number | null, downloadSeconds: number | null):
   airDate: null,
   state: 'filed',
   problem: null,
+  problemCode: null,
   releaseTitle: null,
   downloadId: null,
   filePath: null,

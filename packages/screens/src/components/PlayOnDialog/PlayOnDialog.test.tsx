@@ -48,9 +48,7 @@ const draw = (media: typeof FILM | null = FILM) => {
   const onClose = vi.fn();
   const onSent = vi.fn();
 
-  render(
-    <PlayOnDialog media={media} startSeconds={754.8} onClose={onClose} onSent={onSent} />,
-  );
+  render(<PlayOnDialog media={media} startSeconds={754.8} onClose={onClose} onSent={onSent} />);
 
   return { onClose, onSent };
 };

@@ -330,10 +330,18 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
       };
     }
 
-    case 'transcoder.unreachable':
     case 'requests.unreachable':
     case 'requests.vpnDown':
-    case 'requests.indexerFailing':
+    case 'requests.indexerFailing': {
+      return {
+        title: sentence,
+        description: '',
+        colour: COLOURS.failure,
+        fields: [field('How to fix it', payload.data.docs, false)],
+      };
+    }
+
+    case 'transcoder.unreachable':
     case 'requests.downloadFailed':
     case 'catalogue.unreachable': {
       return { title: sentence, description: '', colour: COLOURS.failure, fields: [] };

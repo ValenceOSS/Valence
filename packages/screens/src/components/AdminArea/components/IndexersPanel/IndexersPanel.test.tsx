@@ -49,6 +49,7 @@ const anIndexer = (overrides: Partial<Indexer> = {}): Indexer => ({
   capabilities: { categories: [], modes: [{ mode: 'movie', parameters: ['q'] }], limit: null },
   failures: 0,
   lastProblem: null,
+  lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
   removesWhenDone: null,
@@ -88,7 +89,7 @@ beforeEach(() => {
   changeIndexer.mockReset().mockResolvedValue({ value: anIndexer(), refusal: null });
   removeIndexer.mockReset().mockResolvedValue(null);
   testIndexer.mockReset().mockResolvedValue({
-    value: { isWorking: true, problem: null, capabilities: null, captcha: null },
+    value: { isWorking: true, problem: null, problemCode: null, capabilities: null, captcha: null },
     refusal: null,
   });
 });
@@ -217,6 +218,7 @@ describe('IndexersPanel', () => {
       value: {
         isWorking: false,
         problem: 'The indexer refused the API key',
+        problemCode: null,
         capabilities: null,
         captcha: null,
       },
@@ -236,7 +238,13 @@ describe('IndexersPanel', () => {
 
   it('still says a test failed where no reason came back', async () => {
     testIndexer.mockResolvedValue({
-      value: { isWorking: false, problem: null, capabilities: null, captcha: null },
+      value: {
+        isWorking: false,
+        problem: null,
+        problemCode: null,
+        capabilities: null,
+        captcha: null,
+      },
       refusal: null,
     });
 

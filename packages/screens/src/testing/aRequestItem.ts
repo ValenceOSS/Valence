@@ -16,6 +16,7 @@ const aRequestItem = (overrides: Partial<RequestItem> = {}): RequestItem => ({
   airDate: null,
   state: 'wanted',
   problem: null,
+  problemCode: null,
   releaseTitle: null,
   downloadId: null,
   filePath: null,

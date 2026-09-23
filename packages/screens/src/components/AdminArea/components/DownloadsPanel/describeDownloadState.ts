@@ -1,3 +1,4 @@
+import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
@@ -41,9 +42,18 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
 
       return download.filingProblem === null
         ? { ...STATUS_LOOK.done, detail: download.problem }
-        : { ...STATUS_LOOK.attention, label: 'Not filed', detail: download.filingProblem };
+        : {
+            ...STATUS_LOOK.attention,
+            label: 'Not filed',
+            detail: download.filingProblem,
+            help: docsFor(download.filingProblemCode),
+          };
     case 'failed':
-      return { ...STATUS_LOOK.failed, detail: download.problem ?? 'It failed.' };
+      return {
+        ...STATUS_LOOK.failed,
+        detail: download.problem ?? 'It failed.',
+        help: docsFor(download.problemCode),
+      };
   }
 };
 

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type { RequestsVpn } from '@ValenceContracts/schemas/Requests';
 
 const TunnelSchema = z.object({ status: z.string() });
@@ -26,6 +27,7 @@ const NOT_SET_UP: RequestsVpn = {
   country: null,
   checkedAt: null,
   problem: null,
+  problemCode: null,
 };
 
 /**
@@ -55,13 +57,14 @@ const readGluetun = async ({
 
   const headers: Record<string, string> = apiKey === '' ? {} : { 'X-API-Key': apiKey };
   const checkedAt = now().toISOString();
-  const down = (problem: string): RequestsVpn => ({
+  const down = (problem: string, problemCode: ProblemCode = 'VpnDown'): RequestsVpn => ({
     isConfigured: true,
     isUp: false,
     publicAddress: null,
     country: null,
     checkedAt,
     problem,
+    problemCode,
   });
 
   try {
@@ -71,7 +74,7 @@ const readGluetun = async ({
     });
 
     if (tunnel.status === 401 || tunnel.status === 403) {
-      return down('gluetun refused the question; check VPN_API_KEY');
+      return down('gluetun refused the question; check VPN_API_KEY', 'VpnKeyRefused');
     }
 
     if (!tunnel.ok) {
@@ -97,6 +100,7 @@ const readGluetun = async ({
       country: where === null || where.country === '' ? null : where.country,
       checkedAt,
       problem: null,
+      problemCode: null,
     };
   } catch (error) {
     return down(

@@ -37,6 +37,7 @@ const createClientCaller =
         error instanceof Error && error.name === 'TimeoutError'
           ? `${name} did not answer within ${waitSeconds.toString()} seconds`
           : `${name} could not be reached`,
+        'DownloadClientUnreachable',
       );
     }
   };

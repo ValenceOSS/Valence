@@ -13,6 +13,7 @@ import { aSentDownload } from '@ValenceRequests/testing/aSentDownload';
 import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
 import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
 import { createRequestWorker } from './createRequestWorker';
+import type { NotSent } from '@ValenceRequests/downloads/NotSent';
 import type {
   IndexerSearchReport,
   Release,
@@ -79,6 +80,7 @@ const aWorker = ({
       found: 2,
       tookMs: 10,
       problem: null,
+      problemCode: null,
     },
   ],
 }: HarnessOptions = {}) => {
@@ -90,9 +92,9 @@ const aWorker = ({
   const log = createMemoryRequestLogStore(() => AT);
   const searched: ReleaseSearch[] = [];
   let sends = 0;
-  const send = vi.fn((release: ReleaseSend): Promise<QueuedDownload | string> => {
+  const send = vi.fn((release: ReleaseSend): Promise<QueuedDownload | NotSent> => {
     if (refuseSend !== undefined) {
-      return Promise.resolve(refuseSend);
+      return Promise.resolve({ refused: refuseSend, problemCode: null });
     }
 
     sends += 1;
@@ -315,6 +317,7 @@ describe('createRequestWorker', () => {
       expect(await theItem(items)).toMatchObject({
         state: 'wanted',
         problem: 'Nothing acceptable has been found yet',
+        problemCode: null,
         lastSearchedAt: AT.toISOString(),
       });
       expect(searched).toHaveLength(1);
@@ -399,6 +402,7 @@ describe('createRequestWorker', () => {
       expect(await theItem(items)).toMatchObject({
         state: 'wanted',
         problem: 'No torrent client is set up',
+        problemCode: null,
       });
     });
 
@@ -481,7 +485,14 @@ describe('createRequestWorker', () => {
             releaseTitle: BLURAY,
           }),
         ],
-        sent: [aSentDownload({ title: BLURAY, state: 'failed', problem: 'The tracker is gone' })],
+        sent: [
+          aSentDownload({
+            title: BLURAY,
+            state: 'failed',
+            problem: 'The tracker is gone',
+            problemCode: null,
+          }),
+        ],
         found: () => [aRelease(BLURAY), aRelease(WEB)],
       });
 
@@ -588,6 +599,7 @@ describe('createRequestWorker', () => {
         state: 'filing',
         attempts: 1,
         problem: 'qBittorrent has not said where it put the download',
+        problemCode: null,
       });
 
       for (let attempt = 0; attempt < 4; attempt += 1) {
@@ -596,7 +608,10 @@ describe('createRequestWorker', () => {
 
       expect((await theItem(items))?.state).toBe('failed');
       expect(await events.pending()).toMatchObject([
-        { kind: 'stuck', problem: 'qBittorrent has not said where it put the download' },
+        {
+          kind: 'stuck',
+          problem: 'qBittorrent has not said where it put the download',
+        },
       ]);
     });
 
@@ -758,7 +773,7 @@ describe('createRequestWorker', () => {
             score: 2200,
           },
         ],
-        sent: [aSentDownload({ state: 'failed', problem: 'Gone' })],
+        sent: [aSentDownload({ state: 'failed', problem: 'Gone', problemCode: null })],
         profiles: [UPGRADING],
       });
 
@@ -940,6 +955,7 @@ describe('createRequestWorker', () => {
       expect(await downloads.find(BY_HAND.id)).toMatchObject({
         filingProblem:
           'Valence cannot see /downloads/The Matrix (1999) [1080p], where qBittorrent put it. Set where qBittorrent saves downloads, as it sees them and as Valence does, on the Downloads page.',
+        filingProblemCode: 'CannotSeeDownload',
         filingAttempts: 0,
       });
     });
@@ -958,6 +974,7 @@ describe('createRequestWorker', () => {
       expect(await downloads.find(BY_HAND.id)).toMatchObject({
         filingProblem:
           'The requests service, running as user 1000 and group 1000, may not write to /media/Films. Set PUID and PGID on it to the owner of your media folders.',
+        filingProblemCode: 'MayNotWriteToLibrary',
         filingAttempts: 0,
       });
     });
@@ -980,6 +997,7 @@ describe('createRequestWorker', () => {
       expect(await downloads.find(BY_HAND.id)).toMatchObject({
         filingProblem:
           "The requests service may not write where this belongs (EACCES: permission denied, rename 'a' -> 'b'). Set PUID and PGID on it to the owner of your media folders.",
+        filingProblemCode: 'MayNotWriteToLibrary',
         filingAttempts: 0,
       });
     });
@@ -999,6 +1017,7 @@ describe('createRequestWorker', () => {
         attempts: 4,
         problem:
           'The requests service, running as user 1000 and group 1000, may not write to /media/Films. Set PUID and PGID on it to the owner of your media folders.',
+        problemCode: 'MayNotWriteToLibrary',
       });
     });
 
@@ -1113,13 +1132,15 @@ describe('createRequestWorker', () => {
             found: 1,
             tookMs: 10,
             problem: null,
+            problemCode: null,
           },
           {
             indexerId: '0f8fad5b-d9cb-469f-a165-70867728950e',
-            indexerName: 'Nyaa',
+            indexerName: 'Slow Tracker',
             found: 0,
             tookMs: 30_000,
-            problem: 'Timed out',
+            problem: 'Timed out getting past the site’s browser check',
+            problemCode: 'CloudflareCheckFailed',
           },
         ],
       });
@@ -1127,8 +1148,12 @@ describe('createRequestWorker', () => {
       await worker.tick();
 
       expect(linesOf(said)).toEqual([
-        'Searched for it: 1 found by 2 indexers, none of the 1 found were for it. Nyaa could not answer: Timed out.',
-        `Searched for it as “Dune Part One”: 1 found by 2 indexers, 1 of them for it, and none would do — the best, ${BLURAY}, because Nobody is seeding it. Nyaa could not answer: Timed out.`,
+        'Searched for it: 1 found by 2 indexers, none of the 1 found were for it. Slow Tracker could not answer: Timed out getting past the site’s browser check.',
+        `Searched for it as “Dune Part One”: 1 found by 2 indexers, 1 of them for it, and none would do — the best, ${BLURAY}, because Nobody is seeding it. Slow Tracker could not answer: Timed out getting past the site’s browser check.`,
+      ]);
+      expect(said.map((line) => line.problemCode)).toEqual([
+        'CloudflareCheckFailed',
+        'CloudflareCheckFailed',
       ]);
     });
 
@@ -1148,7 +1173,7 @@ describe('createRequestWorker', () => {
     it('says what became of a download, and why one could not be filed, once', async () => {
       const failing = aWorker({
         items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
-        sent: [aSentDownload({ state: 'failed', problem: 'Gone' })],
+        sent: [aSentDownload({ state: 'failed', problem: 'Gone', problemCode: null })],
         found: () => [],
       });
 

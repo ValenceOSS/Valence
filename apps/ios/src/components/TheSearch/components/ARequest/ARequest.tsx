@@ -1,4 +1,4 @@
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, Linking, StyleSheet, View } from 'react-native';
 import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import { describeRequestProgress } from '@ValenceClient/requests/describeRequestProgress';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
@@ -13,10 +13,12 @@ const styles = StyleSheet.create({
   poster: { borderRadius: 8, height: 90, width: 60 },
   row: { flexDirection: 'row', gap: 14 },
   words: { flex: 1, gap: 4, justifyContent: 'center' },
+  fix: { alignSelf: 'flex-start', marginLeft: 74, marginTop: 6 },
 });
 
 /**
- * One thing somebody asked for, and how far it has got.
+ * One thing somebody asked for, and how far it has got, with a link to what explains its problem
+ * where it has one.
  *
  * @param request - What was asked for.
  * @param progress - Everything downloading, of which this may be some.
@@ -34,50 +36,70 @@ const ARequest = ({ request, progress, myId, onAsk }: ARequestProps) => {
     return null;
   }
 
+  const { help } = badge;
+
   return (
-    <Button
-      tone="bare"
-      label={request.title}
-      onPress={() => {
-        onAsk(kind, tmdbId.toString());
-      }}
-    >
-      <View style={styles.row}>
-        <Image
-          style={[styles.poster, { backgroundColor: colours.surfaceRaised }]}
-          {...(request.posterUrl === null ? {} : { source: { uri: request.posterUrl } })}
-          accessibilityIgnoresInvertColors
-        />
+    <View>
+      <Button
+        tone="bare"
+        label={request.title}
+        onPress={() => {
+          onAsk(kind, tmdbId.toString());
+        }}
+      >
+        <View style={styles.row}>
+          <Image
+            style={[styles.poster, { backgroundColor: colours.surfaceRaised }]}
+            {...(request.posterUrl === null ? {} : { source: { uri: request.posterUrl } })}
+            accessibilityIgnoresInvertColors
+          />
 
-        <View style={styles.words}>
-          <Words lines={1}>
-            {request.year === null
-              ? request.title
-              : `${request.title} (${request.year.toString()})`}
-          </Words>
-
-          <Words size="small" tone={badge.tone === 'danger' ? 'danger' : 'accent'}>
-            {badge.detail === null ? badge.label : `${badge.label} · ${badge.detail}`}
-          </Words>
-
-          {across === null ? null : (
-            <Words size="small" tone="muted">
-              {across}
+          <View style={styles.words}>
+            <Words lines={1}>
+              {request.year === null
+                ? request.title
+                : `${request.title} (${request.year.toString()})`}
             </Words>
-          )}
 
-          <Words size="small" tone="muted">
-            {request.requestedBy.id === myId
-              ? 'Asked by you'
-              : `Asked by ${request.requestedBy.name}`}
-          </Words>
+            <Words size="small" tone={badge.tone === 'danger' ? 'danger' : 'accent'}>
+              {badge.detail === null ? badge.label : `${badge.label} · ${badge.detail}`}
+            </Words>
 
-          {going === null ? null : (
-            <HowFar fraction={going.progress} label={`How far ${request.title} has downloaded`} />
-          )}
+            {across === null ? null : (
+              <Words size="small" tone="muted">
+                {across}
+              </Words>
+            )}
+
+            <Words size="small" tone="muted">
+              {request.requestedBy.id === myId
+                ? 'Asked by you'
+                : `Asked by ${request.requestedBy.name}`}
+            </Words>
+
+            {going === null ? null : (
+              <HowFar fraction={going.progress} label={`How far ${request.title} has downloaded`} />
+            )}
+          </View>
         </View>
-      </View>
-    </Button>
+      </Button>
+
+      {help === null || help === undefined ? null : (
+        <View style={styles.fix}>
+          <Button
+            tone="bare"
+            label="How to fix this"
+            onPress={() => {
+              void Linking.openURL(help);
+            }}
+          >
+            <Words size="small" tone="accent">
+              How to fix this
+            </Words>
+          </Button>
+        </View>
+      )}
+    </View>
   );
 };
 

@@ -17,6 +17,7 @@ import type {
   ReleaseSearch,
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
+import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { CardigannDefinition } from '@ValenceRequests/cardigann/CardigannDefinitionSchema';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
@@ -158,6 +159,7 @@ const createIndexerService = ({
       capabilities: record.capabilities,
       failures: record.failures,
       lastProblem: record.lastProblem,
+      lastProblemCode: record.lastProblemCode,
       lastFailedAt: record.lastFailedAt,
       turnedOffBecause: record.turnedOffBecause,
       createdAt: record.createdAt,
@@ -171,13 +173,18 @@ const createIndexerService = ({
       session: record.session,
       failures: 0,
       lastProblem: null,
+      lastProblemCode: null,
       ...(record.failures > 0 || Object.keys(changes).length > 0
         ? { updatedAt: now().toISOString() }
         : {}),
     });
   };
 
-  const failed = async (record: IndexerRecord, problem: string) => {
+  const failed = async (
+    record: IndexerRecord,
+    problem: string,
+    problemCode: ProblemCode | null,
+  ) => {
     const failures = record.failures + 1;
     const isTurningOff = record.isEnabled && failures >= turnOffAfter;
 
@@ -185,6 +192,7 @@ const createIndexerService = ({
       session: record.session,
       failures,
       lastProblem: problem,
+      lastProblemCode: problemCode,
       lastFailedAt: now().toISOString(),
       ...(isTurningOff
         ? {
@@ -200,6 +208,7 @@ const createIndexerService = ({
       return {
         isWorking: true,
         problem: null,
+        problemCode: null,
         capabilities: await client.capabilities(record),
         captcha: null,
       };
@@ -207,6 +216,7 @@ const createIndexerService = ({
       return {
         isWorking: false,
         problem: error instanceof IndexerFailure ? error.message : UNASKABLE,
+        problemCode: error instanceof IndexerFailure ? error.problemCode : null,
         capabilities: null,
         captcha: error instanceof CaptchaNeeded ? { image: error.image } : null,
       };
@@ -256,6 +266,7 @@ const createIndexerService = ({
           capabilities: null,
           failures: 0,
           lastProblem: null,
+          lastProblemCode: null,
           lastFailedAt: null,
           turnedOffBecause: null,
           createdAt: at,
@@ -281,7 +292,9 @@ const createIndexerService = ({
         ...(given === undefined
           ? {}
           : { settings: mergeSettings(current.settings, given, secrets) }),
-        ...(isSwitchedOn ? { turnedOffBecause: null, failures: 0, lastProblem: null } : {}),
+        ...(isSwitchedOn
+          ? { turnedOffBecause: null, failures: 0, lastProblem: null, lastProblemCode: null }
+          : {}),
         ...(isMoved ? { capabilities: null } : {}),
         ...(isMoved || isReconfigured ? { session: null } : {}),
         updatedAt: now().toISOString(),
@@ -307,7 +320,7 @@ const createIndexerService = ({
           ...(record.turnedOffBecause === null ? {} : { isEnabled: true, turnedOffBecause: null }),
         });
       } else if (outcome.captcha === null) {
-        await failed(record, outcome.problem ?? UNASKABLE);
+        await failed(record, outcome.problem ?? UNASKABLE, outcome.problemCode);
       } else {
         await store.update(record.id, { session: record.session });
       }
@@ -320,7 +333,13 @@ const createIndexerService = ({
       const prepared = await fromDraft(draft, kept);
 
       if ('problem' in prepared) {
-        return { isWorking: false, problem: prepared.problem, capabilities: null, captcha: null };
+        return {
+          isWorking: false,
+          problem: prepared.problem,
+          problemCode: null,
+          capabilities: null,
+          captcha: null,
+        };
       }
 
       const { read, secrets, captcha } = prepared;
@@ -339,6 +358,7 @@ const createIndexerService = ({
         capabilities: null,
         failures: 0,
         lastProblem: null,
+        lastProblemCode: null,
         lastFailedAt: null,
         turnedOffBecause: null,
         createdAt: now().toISOString(),
@@ -389,12 +409,14 @@ const createIndexerService = ({
                 found: releases.length,
                 tookMs: Date.now() - started,
                 problem: null,
+                problemCode: null,
               },
             };
           } catch (error) {
             const problem = error instanceof IndexerFailure ? error.message : UNASKABLE;
+            const problemCode = error instanceof IndexerFailure ? error.problemCode : null;
 
-            await failed(record, problem);
+            await failed(record, problem, problemCode);
 
             return {
               releases: [],
@@ -404,6 +426,7 @@ const createIndexerService = ({
                 found: 0,
                 tookMs: Date.now() - started,
                 problem,
+                problemCode,
               },
             };
           }
@@ -457,9 +480,23 @@ const createIndexerService = ({
         enabled: records.filter((record) => record.isEnabled).length,
         failing: records.flatMap((record) =>
           record.turnedOffBecause !== null
-            ? [{ id: record.id, name: record.name, problem: record.turnedOffBecause }]
+            ? [
+                {
+                  id: record.id,
+                  name: record.name,
+                  problem: record.turnedOffBecause,
+                  problemCode: record.lastProblemCode ?? 'IndexerFailing',
+                },
+              ]
             : record.isEnabled && record.failures >= failingAfter
-              ? [{ id: record.id, name: record.name, problem: record.lastProblem ?? 'Failing' }]
+              ? [
+                  {
+                    id: record.id,
+                    name: record.name,
+                    problem: record.lastProblem ?? 'Failing',
+                    problemCode: record.lastProblemCode ?? 'IndexerFailing',
+                  },
+                ]
               : [],
         ),
       };

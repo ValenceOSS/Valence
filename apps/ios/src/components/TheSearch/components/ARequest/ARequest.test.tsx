@@ -1,4 +1,5 @@
 import { render, userEvent } from '@testing-library/react-native';
+import { Linking } from 'react-native';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { ARequest } from './ARequest';
 
@@ -46,6 +47,7 @@ describe('ARequest', () => {
               airDate: null,
               state: 'downloading',
               problem: null,
+              problemCode: null,
               releaseTitle: null,
               downloadId: '6ba7b810-9dad-11d1-80b4-00c04fd430d2',
               downloadedBytes: null,
@@ -70,6 +72,36 @@ describe('ARequest', () => {
     );
 
     expect(drawn.getByLabelText('How far Dune has downloaded')).toBeTruthy();
+  });
+
+  it('opens what explains its problem, where it has one', async () => {
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const drawn = await render(
+      <ARequest
+        request={aMediaRequest({
+          state: 'filing',
+          problem: 'May not write to /media/Films',
+          problemCode: 'MayNotWriteToLibrary',
+        })}
+        progress={[]}
+        myId={null}
+        onAsk={jest.fn()}
+      />,
+    );
+
+    await userEvent.press(drawn.getByLabelText('How to fix this'));
+
+    expect(open).toHaveBeenCalledWith(
+      'https://docs.getvalence.app/install/requesting#who-owns-what-it-files',
+    );
+  });
+
+  it('offers nothing to read where its problem has nowhere', async () => {
+    const drawn = await render(
+      <ARequest request={aMediaRequest()} progress={[]} myId={null} onAsk={jest.fn()} />,
+    );
+
+    expect(drawn.queryByLabelText('How to fix this')).toBeNull();
   });
 
   it('opens its page by the catalogue id', async () => {

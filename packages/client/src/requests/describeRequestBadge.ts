@@ -1,3 +1,4 @@
+import { docsFor } from '@ValenceCore/functions/docsFor';
 import { describeCalendarDay } from '@ValenceClient/requests/describeCalendarDay';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
@@ -134,6 +135,7 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
           (request.isPickedByHand
             ? 'Waiting for a release to be picked by hand.'
             : 'Searched for again every few hours.'),
+        help: docsFor(request.problemCode),
       };
     case 'searching':
       return { ...STATUS_LOOK.working, label: 'Searching', detail: null };
@@ -146,7 +148,12 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
         detail: request.items.find((item) => item.state === 'downloading')?.releaseTitle ?? null,
       };
     case 'filing':
-      return { ...STATUS_LOOK.working, label: 'Filing', detail: request.problem };
+      return {
+        ...STATUS_LOOK.working,
+        label: 'Filing',
+        detail: request.problem,
+        help: docsFor(request.problemCode),
+      };
     case 'filed':
       return {
         ...STATUS_LOOK.working,
@@ -156,7 +163,11 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
     case 'available':
       return { ...STATUS_LOOK.done, detail: null };
     case 'failed':
-      return { ...STATUS_LOOK.failed, detail: request.problem ?? 'It failed.' };
+      return {
+        ...STATUS_LOOK.failed,
+        detail: request.problem ?? 'It failed.',
+        help: docsFor(request.problemCode),
+      };
   }
 };
 

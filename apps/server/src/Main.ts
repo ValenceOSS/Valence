@@ -1,3 +1,4 @@
+import { docsFor } from '@ValenceCore/functions/docsFor';
 import { fileURLToPath } from 'node:url';
 import { join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -1042,20 +1043,26 @@ const requests =
     ? createRequestsMonitor({
         address: requestsSetup.address,
         client: requestsClient,
-        onLost: (reason) => {
+        onLost: (reason, problemCode) => {
           log.warn('requests', `the requests service stopped answering — ${reason}`);
 
-          void events.publish({ event: 'requests.unreachable', data: { reason } });
+          void events.publish({
+            event: 'requests.unreachable',
+            data: { reason, docs: docsFor(problemCode) },
+          });
         },
         onRegained: () => {
           log.info('requests', 'the requests service is answering again');
 
           void events.publish({ event: 'requests.reachable', data: {} });
         },
-        onVpnDown: (reason) => {
+        onVpnDown: (reason, problemCode) => {
           log.warn('requests', `the VPN is down — ${reason}`);
 
-          void events.publish({ event: 'requests.vpnDown', data: { reason } });
+          void events.publish({
+            event: 'requests.vpnDown',
+            data: { reason, docs: docsFor(problemCode) },
+          });
         },
         onVpnUp: (vpn) => {
           log.info('requests', 'the VPN is up');
@@ -1065,10 +1072,13 @@ const requests =
             data: { publicAddress: vpn.publicAddress, country: vpn.country },
           });
         },
-        onIndexerFailing: ({ name, problem }) => {
+        onIndexerFailing: ({ name, problem, problemCode }) => {
           log.warn('requests', `the indexer ${name} keeps failing — ${problem}`);
 
-          void events.publish({ event: 'requests.indexerFailing', data: { name, problem } });
+          void events.publish({
+            event: 'requests.indexerFailing',
+            data: { name, problem, docs: docsFor(problemCode ?? 'IndexerFailing') },
+          });
         },
         onIndexerWorking: ({ name }) => {
           log.info('requests', `the indexer ${name} is working again`);

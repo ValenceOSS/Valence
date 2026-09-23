@@ -57,6 +57,7 @@ const SEVERANCE = aMediaRequest({
       airDate: '2022-02-18',
       state: 'downloading',
       problem: null,
+      problemCode: null,
       releaseTitle: 'Severance.S01E01.1080p.WEB-DL',
       downloadId: null,
       filePath: null,
@@ -305,7 +306,7 @@ describe('MediaRequestsPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Close' }));
 
     fetchMediaRequestLog.mockResolvedValue([
-      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.' },
+      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.', problemCode: null },
     ]);
     await choose(user, 'Dune', /See what it has done/);
     expect(await screen.findByText('Searched for it.')).toBeInTheDocument();

@@ -11,6 +11,7 @@ type SentDownloadRecord = Pick<
   | 'indexerName'
   | 'state'
   | 'problem'
+  | 'problemCode'
   | 'progress'
   | 'sizeBytes'
   | 'doneBytes'
@@ -18,6 +19,7 @@ type SentDownloadRecord = Pick<
   | 'finishedAt'
   | 'filedInto'
   | 'filingProblem'
+  | 'filingProblemCode'
 > & {
   remoteId: string;
   contentPath: string | null;

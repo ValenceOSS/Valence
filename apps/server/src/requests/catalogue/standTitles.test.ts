@@ -78,6 +78,7 @@ const aRequest = (overrides: Partial<MediaRequest>): MediaRequest => ({
   isPickedByHand: false,
   state: 'downloading',
   problem: null,
+  problemCode: null,
   approval: 'approved',
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Sam' },

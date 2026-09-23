@@ -23,6 +23,7 @@ const AN_INDEXER: IndexerRecord = {
   capabilities: { categories: [], modes: [{ mode: 'search', parameters: ['q'] }], limit: 100 },
   failures: 0,
   lastProblem: null,
+  lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
   createdAt: '2026-09-19T00:00:00.000Z',
@@ -54,6 +55,7 @@ describe('createDatabaseIndexerStore', () => {
     const failed = await store.update(AN_INDEXER.id, {
       failures: 1,
       lastProblem: 'Timed out',
+      lastProblemCode: null,
       lastFailedAt: '2026-09-19T01:00:00.000Z',
       updatedAt: '2026-09-19T01:00:00.000Z',
     });

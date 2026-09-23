@@ -371,11 +371,15 @@ describe('formatWebhookBody', () => {
     const written = formatWebhookBody('ntfy', {
       ...anEnvelope,
       event: 'requests.unreachable',
-      data: { reason: 'http://requests:8421 did not answer' },
+      data: {
+        reason: 'http://requests:8421 did not answer',
+        docs: 'https://docs.getvalence.app/install/requesting#switching-it-on',
+      },
     });
 
-    expect(written.body).toContain('requests service could not be reached');
-    expect(written.body).toContain('did not answer');
+    expect(written.body).toBe(
+      'The requests service could not be reached — http://requests:8421 did not answer. How to fix it: https://docs.getvalence.app/install/requesting#switching-it-on',
+    );
   });
 
   it('says the requests service came back', () => {
@@ -392,10 +396,12 @@ describe('formatWebhookBody', () => {
     const written = formatWebhookBody('ntfy', {
       ...anEnvelope,
       event: 'requests.vpnDown',
-      data: { reason: 'The tunnel is stopped' },
+      data: { reason: 'The tunnel is stopped', docs: null },
     });
 
-    expect(written.body).toContain('The tunnel is stopped');
+    expect(written.body).toBe(
+      'The VPN the requests service downloads through is down — The tunnel is stopped',
+    );
   });
 
   it('says where traffic leaves from once the VPN is back', () => {
@@ -422,11 +428,15 @@ describe('formatWebhookBody', () => {
     const written = formatWebhookBody('ntfy', {
       ...anEnvelope,
       event: 'requests.indexerFailing',
-      data: { name: 'Jackett', problem: 'The indexer refused the API key' },
+      data: {
+        name: 'Jackett',
+        problem: 'The indexer refused the API key.',
+        docs: 'https://docs.getvalence.app/install/requesting#failing-indexers',
+      },
     });
 
     expect(written.body).toBe(
-      'The indexer Jackett keeps failing — The indexer refused the API key',
+      'The indexer Jackett keeps failing — The indexer refused the API key. How to fix it: https://docs.getvalence.app/install/requesting#failing-indexers',
     );
   });
 

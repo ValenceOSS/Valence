@@ -21,6 +21,7 @@ const itemFromDraft = (
   requestId,
   state: 'waiting',
   problem: null,
+  problemCode: null,
   releaseTitle: null,
   indexerId: null,
   downloadId: null,

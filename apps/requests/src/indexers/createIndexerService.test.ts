@@ -40,6 +40,7 @@ const anIndexer = (overrides: Partial<IndexerRecord> = {}): IndexerRecord => ({
   capabilities: null,
   failures: 0,
   lastProblem: null,
+  lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
   createdAt: '2026-09-18T00:00:00.000Z',
@@ -205,6 +206,7 @@ describe('createIndexerService', () => {
     expect(await service.test(anIndexer().id)).toEqual({
       isWorking: true,
       problem: null,
+      problemCode: null,
       capabilities: CAPS,
       captcha: null,
     });
@@ -212,6 +214,7 @@ describe('createIndexerService', () => {
       capabilities: CAPS,
       failures: 0,
       lastProblem: null,
+      lastProblemCode: null,
     });
   });
 
@@ -250,14 +253,41 @@ describe('createIndexerService', () => {
     expect(await service.test(anIndexer().id)).toEqual({
       isWorking: false,
       problem: 'The indexer refused the API key',
+      problemCode: null,
       capabilities: null,
       captcha: null,
     });
     expect(await store.find(anIndexer().id)).toMatchObject({
       failures: 1,
       lastProblem: 'The indexer refused the API key',
+      lastProblemCode: null,
       lastFailedAt: NOW.toISOString(),
     });
+  });
+
+  it('keeps what kind of failure it was, from the test and from a search', async () => {
+    const blocked = new IndexerFailure(
+      'The site’s Cloudflare refuses this address outright',
+      'CloudflareRefusesAddress',
+    );
+    const { service, store } = aService(
+      [anIndexer()],
+      aClient({
+        capabilities: blocked,
+        search: () => {
+          throw blocked;
+        },
+      }),
+    );
+
+    expect((await service.test(anIndexer().id))?.problemCode).toBe('CloudflareRefusesAddress');
+    expect(await store.find(anIndexer().id)).toMatchObject({
+      lastProblemCode: 'CloudflareRefusesAddress',
+    });
+
+    const outcome = await service.search({ query: 'Dune', mode: 'search' }, null);
+
+    expect(outcome.indexers[0]?.problemCode).toBe('CloudflareRefusesAddress');
   });
 
   it('says something even for a failure it did not expect', async () => {
@@ -319,8 +349,18 @@ describe('createIndexerService', () => {
 
     expect(outcome.releases.map((release) => release.indexerName)).toEqual(['NZBgeek', 'Jackett']);
     expect(outcome.indexers).toEqual([
-      expect.objectContaining({ indexerName: 'NZBgeek', found: 1, problem: null }),
-      expect.objectContaining({ indexerName: 'Jackett', found: 1, problem: null }),
+      expect.objectContaining({
+        indexerName: 'NZBgeek',
+        found: 1,
+        problem: null,
+        problemCode: null,
+      }),
+      expect.objectContaining({
+        indexerName: 'Jackett',
+        found: 1,
+        problem: null,
+        problemCode: null,
+      }),
     ]);
     expect(client.search).toHaveBeenCalledTimes(2);
   });
@@ -440,7 +480,13 @@ describe('createIndexerService', () => {
   it('says how many indexers there are, and which are failing', async () => {
     const { service } = aService([
       anIndexer(),
-      anIndexer({ id: SECOND, name: 'Flaky', failures: 3, lastProblem: 'Timed out' }),
+      anIndexer({
+        id: SECOND,
+        name: 'Flaky',
+        failures: 3,
+        lastProblem: 'Timed out',
+        lastProblemCode: 'CloudflareCheckFailed',
+      }),
       anIndexer({
         id: '9b2e1f5a-8d4c-4e2a-9f6b-1c3d5e7f9a0b',
         name: 'Off',
@@ -455,13 +501,19 @@ describe('createIndexerService', () => {
       total: 4,
       enabled: 3,
       failing: [
-        { id: SECOND, name: 'Flaky', problem: 'Timed out' },
+        { id: SECOND, name: 'Flaky', problem: 'Timed out', problemCode: 'CloudflareCheckFailed' },
         {
           id: '9b2e1f5a-8d4c-4e2a-9f6b-1c3d5e7f9a0b',
           name: 'Off',
           problem: 'Turned off after 5 failures',
+          problemCode: 'IndexerFailing',
         },
-        { id: '1b4e28ba-2fa1-41d2-883f-0016d3cca427', name: 'Quiet', problem: 'Failing' },
+        {
+          id: '1b4e28ba-2fa1-41d2-883f-0016d3cca427',
+          name: 'Quiet',
+          problem: 'Failing',
+          problemCode: 'IndexerFailing',
+        },
       ],
     });
   });
@@ -609,6 +661,7 @@ search:
       expect(await service.test(kept().id)).toEqual({
         isWorking: false,
         problem: 'Type the characters in the picture to log in',
+        problemCode: null,
         capabilities: null,
         captcha: { image: 'data:image/png;base64,AQID' },
       });
@@ -636,6 +689,7 @@ search:
       expect(await service.tryDraft({ ...A_DRAFT, definitionId: 'nope' })).toEqual({
         isWorking: false,
         problem: 'There is no definition named nope in the catalogue',
+        problemCode: null,
         capabilities: null,
         captcha: null,
       });

@@ -1,3 +1,4 @@
+import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -53,6 +54,8 @@ const RequestProgressTab = ({
       {badge.detail === null ? null : (
         <p className="break-words font-body text-sm text-text-muted">{badge.detail}</p>
       )}
+
+      <HowToFix href={badge.help} />
 
       {request.refusedBecause === null ? null : (
         <p className="font-body text-sm text-text-muted">

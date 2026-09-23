@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ProblemCodeFieldSchema } from './ProblemCode';
 import { LibraryKindSchema } from './Library';
 import type { ReleaseProtocol } from './Indexer';
 import type { LibraryKind } from './Library';
@@ -103,6 +104,7 @@ const DownloadClientChangeSchema = z.object({
 const DownloadClientTestSchema = z.object({
   isWorking: z.boolean(),
   problem: z.string().nullable(),
+  problemCode: ProblemCodeFieldSchema,
   version: z.string().nullable(),
 });
 

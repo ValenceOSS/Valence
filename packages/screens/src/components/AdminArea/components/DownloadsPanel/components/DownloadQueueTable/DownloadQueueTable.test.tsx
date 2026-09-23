@@ -18,6 +18,7 @@ const aDownload = (overrides: Partial<QueuedDownload> = {}): QueuedDownload => (
   indexerName: 'Jackett',
   state: 'downloading',
   problem: null,
+  problemCode: null,
   progress: 0.456,
   sizeBytes: 4 * 1024 ** 3,
   doneBytes: 2 * 1024 ** 3,
@@ -30,6 +31,7 @@ const aDownload = (overrides: Partial<QueuedDownload> = {}): QueuedDownload => (
   finishedAt: null,
   filedInto: null,
   filingProblem: null,
+  filingProblemCode: null,
   ...overrides,
 });
 
@@ -96,6 +98,7 @@ describe('DownloadQueueTable', () => {
         seeds: null,
         peers: null,
         problem: 'NZBGet finished it with a warning (WARNING/SCRIPT)',
+        problemCode: null,
       }),
     ]);
 

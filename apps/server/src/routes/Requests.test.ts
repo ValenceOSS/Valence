@@ -43,6 +43,7 @@ const A_STATUS: RequestsStatus = {
     country: 'Netherlands',
     checkedAt: '2026-09-19T12:00:00.000Z',
     problem: null,
+    problemCode: null,
   },
   indexers: { total: 0, enabled: 0, failing: [] },
 };
@@ -65,6 +66,7 @@ const AN_INDEXER = {
   capabilities: null,
   failures: 0,
   lastProblem: null,
+  lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
   createdAt: '2026-09-19T00:00:00.000Z',
@@ -91,6 +93,7 @@ const aWillingService = (url: string, init: { method?: string }): Response => {
       updatedAt: null,
       source: 'Prowlarr/Indexers@master/definitions/v11',
       problem: null,
+      problemCode: null,
     });
   }
 
@@ -314,6 +317,8 @@ describe('GET /api/admin/requests', () => {
     expect(RequestsOverviewSchema.parse(await response.json())).toEqual({
       address: 'http://requests:8421',
       isReachable: false,
+      problem: null,
+      problemCode: null,
       checkedAt: null,
       status: null,
       work: NO_WORK,
@@ -651,6 +656,7 @@ describe('download clients and the queue, through the server', () => {
     indexerName: 'Jackett',
     state: 'downloading',
     problem: null,
+    problemCode: null,
     progress: 0.5,
     sizeBytes: 1000,
     doneBytes: 500,
@@ -663,6 +669,7 @@ describe('download clients and the queue, through the server', () => {
     finishedAt: null,
     filedInto: null,
     filingProblem: null,
+    filingProblemCode: null,
   };
 
   const DRAFT = { name: 'qBittorrent', kind: 'qbittorrent', url: 'http://qbittorrent:8080' };
@@ -1026,6 +1033,7 @@ describe('requests for films and series, through the server', () => {
     isPickedByHand: false,
     state: 'wanted',
     problem: null,
+    problemCode: null,
     approval: 'approved',
     refusedBecause: 'No room',
     requestedBy: { id: 'someone-else', name: 'Someone' },
@@ -1350,6 +1358,7 @@ describe('requests for films and series, through the server', () => {
       airDate: null,
       state,
       problem: null,
+      problemCode: null,
       releaseTitle: null,
       downloadId: null,
       filePath: null,
@@ -2188,6 +2197,7 @@ describe('requests for films and series, through the server', () => {
                   indexerName: null,
                   state: 'downloading',
                   problem: null,
+                  problemCode: null,
                   progress: 0.5,
                   sizeBytes: 100,
                   doneBytes: 50,
@@ -2215,6 +2225,7 @@ describe('requests for films and series, through the server', () => {
                     airDate: null,
                     state: 'downloading',
                     problem: null,
+                    problemCode: null,
                     releaseTitle: 'Dune',
                     downloadId: DOWNLOAD,
                     filePath: null,

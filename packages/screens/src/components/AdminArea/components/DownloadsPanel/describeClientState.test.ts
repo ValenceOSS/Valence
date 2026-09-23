@@ -9,6 +9,7 @@ const A_READING: DownloadClientState = {
   isEnabled: true,
   isReachable: true,
   problem: null,
+  problemCode: null,
   downloadBytesPerSecond: 0,
   uploadBytesPerSecond: 0,
   checkedAt: '2026-09-19T00:00:00.000Z',
@@ -37,7 +38,13 @@ describe('describeClientState', () => {
         ...A_READING,
         isReachable: false,
         problem: 'qBittorrent could not be reached',
+        problemCode: 'DownloadClientUnreachable',
       }),
-    ).toEqual({ label: 'Unreachable', tone: 'danger', detail: 'qBittorrent could not be reached' });
+    ).toEqual({
+      label: 'Unreachable',
+      tone: 'danger',
+      detail: 'qBittorrent could not be reached',
+      help: 'https://docs.getvalence.app/install/requesting#download-clients',
+    });
   });
 });

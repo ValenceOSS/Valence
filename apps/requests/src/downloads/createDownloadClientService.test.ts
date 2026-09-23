@@ -154,6 +154,7 @@ describe('createDownloadClientService', () => {
     expect(await service.test(QBITTORRENT.id)).toEqual({
       isWorking: true,
       problem: null,
+      problemCode: null,
       version: 'v5.0.1',
     });
     expect(await service.test('nothing')).toBeNull();
@@ -162,7 +163,12 @@ describe('createDownloadClientService', () => {
       [QBITTORRENT],
       vi.fn(() =>
         anAdapter(() =>
-          Promise.reject(new DownloadClientFailure('qBittorrent refused the password')),
+          Promise.reject(
+            new DownloadClientFailure(
+              'qBittorrent refused the password',
+              'DownloadClientLoginRefused',
+            ),
+          ),
         ),
       ),
     );
@@ -170,6 +176,7 @@ describe('createDownloadClientService', () => {
     expect(await refusing.service.test(QBITTORRENT.id)).toEqual({
       isWorking: false,
       problem: 'qBittorrent refused the password',
+      problemCode: 'DownloadClientLoginRefused',
       version: null,
     });
 

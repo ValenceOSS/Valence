@@ -61,6 +61,7 @@ const showMediaRequest = (
       airDate: item.airDate,
       state: item.state,
       problem: item.problem,
+      problemCode: item.problemCode,
       releaseTitle: item.releaseTitle,
       downloadId: item.downloadId,
       filePath: item.filePath,

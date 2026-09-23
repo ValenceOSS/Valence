@@ -7,6 +7,8 @@ import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
 import { hasSeededEnough } from '@ValenceRequests/downloads/hasSeededEnough';
 import { seedingRuleFor } from '@ValenceRequests/downloads/seedingRuleFor';
+import type { NotSent } from '@ValenceRequests/downloads/NotSent';
+import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type {
   DownloadQueue,
   DownloadStreamFrame,
@@ -60,6 +62,7 @@ type Live = Pick<
 type ClientReading = {
   isReachable: boolean;
   problem: string | null;
+  problemCode: ProblemCode | null;
   downloadBytesPerSecond: number | null;
   uploadBytesPerSecond: number | null;
   checkedAt: string;
@@ -162,12 +165,14 @@ const createDownloadQueue = ({
       indexerName: record.indexerName,
       state: record.state,
       problem: record.problem,
+      problemCode: record.problemCode,
       ...current,
       sizeBytes: record.sizeBytes,
       sentAt: record.sentAt,
       finishedAt: record.finishedAt,
       filedInto: record.filedInto,
       filingProblem: record.filingProblem,
+      filingProblemCode: record.filingProblemCode,
     };
   };
 
@@ -190,6 +195,7 @@ const createDownloadQueue = ({
             isEnabled: client.isEnabled,
             isReachable: reading?.isReachable ?? false,
             problem: reading?.problem ?? null,
+            problemCode: reading?.problemCode ?? null,
             downloadBytesPerSecond: reading?.downloadBytesPerSecond ?? null,
             uploadBytesPerSecond: reading?.uploadBytesPerSecond ?? null,
             checkedAt: reading?.checkedAt ?? null,
@@ -269,6 +275,7 @@ const createDownloadQueue = ({
 
     await downloads.update(record.id, {
       ...next,
+      problemCode: null,
       ...(next.state === 'done' && record.finishedAt === null ? { finishedAt: at } : {}),
       updatedAt: at,
     });
@@ -385,7 +392,13 @@ const createDownloadQueue = ({
             const [items, speeds] = await Promise.all([adapter.list(), adapter.speeds()]);
             const byId = new Map(items.map((item) => [item.remoteId.toLowerCase(), item]));
 
-            readings.set(client.id, { isReachable: true, problem: null, ...speeds, checkedAt: at });
+            readings.set(client.id, {
+              isReachable: true,
+              problem: null,
+              problemCode: null,
+              ...speeds,
+              checkedAt: at,
+            });
 
             for (const record of sent.filter((one) => one.clientId === client.id)) {
               const item = byId.get(record.remoteId.toLowerCase()) ?? null;
@@ -401,6 +414,7 @@ const createDownloadQueue = ({
             readings.set(client.id, {
               isReachable: false,
               problem: error instanceof DownloadClientFailure ? error.message : UNASKABLE,
+              problemCode: error instanceof DownloadClientFailure ? error.problemCode : null,
               downloadBytesPerSecond: null,
               uploadBytesPerSecond: null,
               checkedAt: at,
@@ -472,7 +486,7 @@ const createDownloadQueue = ({
 
     check,
 
-    send: async (release: ReleaseSend): Promise<QueuedDownload | string> => {
+    send: async (release: ReleaseSend): Promise<QueuedDownload | NotSent> => {
       const read = ReleaseSendSchema.parse(release);
       const kept = await clients.records();
       const client =
@@ -483,13 +497,20 @@ const createDownloadQueue = ({
           : kept.find((one) => one.id === read.clientId && one.isEnabled);
 
       if (client === undefined) {
-        return read.clientId === undefined
-          ? `No ${read.protocol === 'torrent' ? 'torrent' : 'usenet'} client is set up and switched on`
-          : 'That download client is not set up, or is switched off';
+        return {
+          refused:
+            read.clientId === undefined
+              ? `No ${read.protocol === 'torrent' ? 'torrent' : 'usenet'} client is set up and switched on`
+              : 'That download client is not set up, or is switched off',
+          problemCode: null,
+        };
       }
 
       if (PROTOCOL_OF_CLIENT[client.kind] !== read.protocol) {
-        return `${client.name} cannot take a ${read.protocol} release`;
+        return {
+          refused: `${client.name} cannot take a ${read.protocol} release`,
+          problemCode: null,
+        };
       }
 
       let file: ReleaseFile | null;
@@ -499,11 +520,13 @@ const createDownloadQueue = ({
           ? { kind: 'magnet', url: read.url }
           : await fetchRelease(read.indexerId, read.url);
       } catch (error) {
-        return error instanceof IndexerFailure ? error.message : 'The release could not be fetched';
+        return error instanceof IndexerFailure
+          ? { refused: error.message, problemCode: error.problemCode }
+          : { refused: 'The release could not be fetched', problemCode: null };
       }
 
       if (file === null) {
-        return 'The indexer that found it is no longer set up';
+        return { refused: 'The indexer that found it is no longer set up', problemCode: null };
       }
 
       let remoteId: string;
@@ -513,7 +536,9 @@ const createDownloadQueue = ({
           .adapterOf(client)
           .add(file, read.title, client.categories[read.libraryKind]);
       } catch (error) {
-        return error instanceof DownloadClientFailure ? error.message : UNASKABLE;
+        return error instanceof DownloadClientFailure
+          ? { refused: error.message, problemCode: error.problemCode }
+          : { refused: UNASKABLE, problemCode: null };
       }
 
       const at = now().toISOString();
@@ -527,6 +552,7 @@ const createDownloadQueue = ({
               libraryId: read.library.id,
               libraryPath: read.library.path,
               filingProblem: null,
+              filingProblemCode: null,
               filingAttempts: 0,
               updatedAt: at,
             })) ?? already);
@@ -541,6 +567,7 @@ const createDownloadQueue = ({
           libraryPath: read.library?.path ?? null,
           filedInto: null,
           filingProblem: null,
+          filingProblemCode: null,
           filingAttempts: 0,
           filesChecked: false,
           ...seedingRuleFor(
@@ -553,6 +580,7 @@ const createDownloadQueue = ({
           indexerName: read.indexerName,
           state: 'queued',
           problem: null,
+          problemCode: null,
           progress: 0,
           sizeBytes: read.sizeBytes,
           doneBytes: null,

@@ -45,7 +45,7 @@ beforeEach(() => {
   addDownloadClient.mockReset().mockResolvedValue({ value: KEPT, refusal: null });
   changeDownloadClient.mockReset().mockResolvedValue({ value: KEPT, refusal: null });
   tryDownloadClient.mockReset().mockResolvedValue({
-    value: { isWorking: true, problem: null, version: 'v5.0.1' },
+    value: { isWorking: true, problem: null, problemCode: null, version: 'v5.0.1' },
     refusal: null,
   });
 });
@@ -161,6 +161,7 @@ describe('DownloadClientDialog', () => {
       value: {
         isWorking: false,
         problem: 'qBittorrent refused the username or password',
+        problemCode: null,
         version: null,
       },
       refusal: null,
@@ -184,7 +185,7 @@ describe('DownloadClientDialog', () => {
 
   it('still says something where no reason was given', async () => {
     tryDownloadClient.mockResolvedValueOnce({
-      value: { isWorking: false, problem: null, version: null },
+      value: { isWorking: false, problem: null, problemCode: null, version: null },
       refusal: null,
     });
     tryDownloadClient.mockResolvedValueOnce({

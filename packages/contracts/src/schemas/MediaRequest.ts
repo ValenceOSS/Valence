@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ProblemCodeFieldSchema } from './ProblemCode';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { ReleaseSchema } from './Indexer';
@@ -159,6 +160,7 @@ const RequestItemSchema = z.object({
   airDate: CalendarDateSchema.nullable(),
   state: RequestItemStateSchema,
   problem: z.string().nullable(),
+  problemCode: ProblemCodeFieldSchema,
   releaseTitle: z.string().nullable(),
   downloadId: z.string().uuid().nullable(),
   filePath: z.string().nullable(),
@@ -186,6 +188,7 @@ const MediaRequestSchema = z.object({
   isPickedByHand: z.boolean(),
   state: MediaRequestStateSchema,
   problem: z.string().nullable(),
+  problemCode: ProblemCodeFieldSchema,
   approval: RequestApprovalSchema,
   refusedBecause: z.string().nullable(),
   requestedBy: RequesterSchema,
@@ -284,6 +287,7 @@ const RequestLogEntrySchema = z.object({
   id: z.number().int().positive(),
   at: z.string().datetime(),
   message: z.string(),
+  problemCode: ProblemCodeFieldSchema,
 });
 
 const MissingSearchSchema = z.object({

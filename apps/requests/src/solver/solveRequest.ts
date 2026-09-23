@@ -69,11 +69,14 @@ const solveRequest = async ({
       standing = await page.standing()
     ) {
       if (standing === 'blocked') {
-        throw new IndexerFailure(BLOCKED);
+        throw new IndexerFailure(BLOCKED, 'CloudflareRefusesAddress');
       }
 
       if (now() >= deadline) {
-        throw new IndexerFailure('Timed out getting past the site’s browser check');
+        throw new IndexerFailure(
+          'Timed out getting past the site’s browser check',
+          'CloudflareCheckFailed',
+        );
       }
 
       await wait((await page.clickTurnstile()) ? AFTER_A_CLICK_MS : BETWEEN_LOOKS_MS);
@@ -86,7 +89,7 @@ const solveRequest = async ({
     const standing = standingOf(answer.status, answer.headers.server ?? null, bytes.toString());
 
     if (standing === 'blocked') {
-      throw new IndexerFailure(BLOCKED);
+      throw new IndexerFailure(BLOCKED, 'CloudflareRefusesAddress');
     }
 
     return { answer, bytes, isChallenge: standing === 'challenged' };
@@ -103,7 +106,10 @@ const solveRequest = async ({
     asked = await ask();
 
     if (asked.isChallenge) {
-      throw new IndexerFailure('The site’s browser check would not let the request through');
+      throw new IndexerFailure(
+        'The site’s browser check would not let the request through',
+        'CloudflareCheckFailed',
+      );
     }
   }
 

@@ -14,6 +14,7 @@ const DUNE: QueuedDownload = {
   indexerName: null,
   state: 'done',
   problem: null,
+  problemCode: null,
   progress: 1,
   sizeBytes: 100,
   doneBytes: 100,
@@ -26,6 +27,7 @@ const DUNE: QueuedDownload = {
   finishedAt: '2026-09-19T01:00:00.000Z',
   filedInto: null,
   filingProblem: null,
+  filingProblemCode: null,
 };
 
 describe('RemoveDownloadDialog', () => {

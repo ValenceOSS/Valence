@@ -50,6 +50,7 @@ import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBad
 import { describeRequestFilters } from '@ValenceScreens/requests/describeRequestFilters';
 import { filterRequests } from '@ValenceScreens/requests/filterRequests';
 import { describeRequestProgress } from '@ValenceClient/requests/describeRequestProgress';
+import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { RequestDetailTab } from '@ValenceScreens/components/AdminArea/components/RequestDetailDialog/RequestDetailDialog.types';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
@@ -263,6 +264,8 @@ const MediaRequestsPanel = () => {
               {badge.detail === null ? null : (
                 <span className="break-words text-xs text-text-muted">{badge.detail}</span>
               )}
+
+              <HowToFix href={badge.help} />
             </span>
           );
         },

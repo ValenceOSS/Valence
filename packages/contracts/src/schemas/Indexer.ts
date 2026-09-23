@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ProblemCodeFieldSchema } from './ProblemCode';
 import { JudgementSchema } from './QualityProfile';
 
 const INDEXER_KINDS = ['torznab', 'newznab', 'cardigann'] as const;
@@ -51,6 +52,7 @@ const IndexerSchema = z.object({
   capabilities: IndexerCapabilitiesSchema.nullable(),
   failures: z.number().int().nonnegative(),
   lastProblem: z.string().nullable(),
+  lastProblemCode: ProblemCodeFieldSchema,
   lastFailedAt: z.string().datetime().nullable(),
   turnedOffBecause: z.string().nullable(),
   createdAt: z.string().datetime(),
@@ -93,6 +95,7 @@ const IndexerChangeSchema = z.object({
 const IndexerTestSchema = z.object({
   isWorking: z.boolean(),
   problem: z.string().nullable(),
+  problemCode: ProblemCodeFieldSchema,
   capabilities: IndexerCapabilitiesSchema.nullable(),
   captcha: z.object({ image: z.string() }).nullable().default(null),
 });
@@ -146,6 +149,7 @@ const IndexerSearchReportSchema = z.object({
   found: z.number().int().nonnegative(),
   tookMs: z.number().int().nonnegative(),
   problem: z.string().nullable(),
+  problemCode: ProblemCodeFieldSchema,
 });
 
 const ReleaseSearchOutcomeSchema = z.object({
@@ -158,7 +162,14 @@ const ReleaseSearchOutcomeSchema = z.object({
 const IndexerHealthSchema = z.object({
   total: z.number().int().nonnegative(),
   enabled: z.number().int().nonnegative(),
-  failing: z.array(z.object({ id: z.string().uuid(), name: z.string(), problem: z.string() })),
+  failing: z.array(
+    z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      problem: z.string(),
+      problemCode: ProblemCodeFieldSchema,
+    }),
+  ),
 });
 
 type IndexerKind = z.infer<typeof IndexerKindSchema>;

@@ -28,6 +28,7 @@ const AN_INDEXER: Indexer = {
   },
   failures: 0,
   lastProblem: null,
+  lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
   removesWhenDone: null,

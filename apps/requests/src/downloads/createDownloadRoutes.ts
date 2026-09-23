@@ -116,7 +116,9 @@ const createDownloadRoutes = ({
 
     const sent = await queue.send(release);
 
-    return typeof sent === 'string' ? context.json({ error: sent }, 400) : context.json(sent, 201);
+    return 'refused' in sent
+      ? context.json({ error: sent.refused, problemCode: sent.problemCode }, 400)
+      : context.json(sent, 201);
   });
 
   routes.get('/downloads/stream', (context) =>

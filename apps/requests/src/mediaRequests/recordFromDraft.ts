@@ -37,6 +37,7 @@ const recordFromDraft = (
   releaseTypes: draft.kind === 'artist' ? (draft.releaseTypes ?? ['album']) : null,
   mediaId: null,
   problem: null,
+  problemCode: null,
   catalogueCheckedAt: at,
   createdAt: at,
   updatedAt: at,

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IndexerHealthSchema } from './Indexer';
+import { ProblemCodeFieldSchema } from './ProblemCode';
 
 const RequestsVpnSchema = z.object({
   isConfigured: z.boolean(),
@@ -8,6 +9,7 @@ const RequestsVpnSchema = z.object({
   country: z.string().nullable(),
   checkedAt: z.string().datetime().nullable(),
   problem: z.string().nullable(),
+  problemCode: ProblemCodeFieldSchema,
 });
 
 const RequestsStatusSchema = z.object({
@@ -47,6 +49,8 @@ const NO_WORK: z.infer<typeof RequestsWorkSchema> = {
 const RequestsOverviewSchema = z.object({
   address: z.string(),
   isReachable: z.boolean(),
+  problem: z.string().nullable().default(null),
+  problemCode: ProblemCodeFieldSchema,
   checkedAt: z.string().datetime().nullable(),
   status: RequestsStatusSchema.nullable(),
   work: RequestsWorkSchema.default(() => NO_WORK),

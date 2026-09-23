@@ -35,9 +35,9 @@ describe('PresenceEventSchema', () => {
   });
 
   it('refuses a film command that does not say where it came from', () => {
-    expect(PresenceEventSchema.safeParse({ kind: 'video', command: { kind: 'pause' } }).success).toBe(
-      false,
-    );
+    expect(
+      PresenceEventSchema.safeParse({ kind: 'video', command: { kind: 'pause' } }).success,
+    ).toBe(false);
   });
 
   it('refuses a film command it does not know', () => {

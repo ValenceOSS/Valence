@@ -1,3 +1,5 @@
+import { docsFor } from '@ValenceCore/functions/docsFor';
+import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { useQuery } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -50,7 +52,10 @@ const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
           <time dateTime={line.at} className="shrink-0 tabular-nums text-xs text-text-muted">
             {WHEN.format(new Date(line.at))}
           </time>
-          <span className="min-w-0 break-words text-text">{line.message}</span>
+          <span className="flex min-w-0 flex-col items-start gap-0.5">
+            <span className="break-words text-text">{line.message}</span>
+            <HowToFix href={docsFor(line.problemCode)} />
+          </span>
         </li>
       ))}
     </ol>

@@ -349,7 +349,7 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
   z.object({
     ...WebhookEnvelopeSchema,
     event: z.literal('requests.unreachable'),
-    data: z.object({ reason: z.string() }),
+    data: z.object({ reason: z.string(), docs: z.string().nullable().default(null) }),
   }),
   z.object({
     ...WebhookEnvelopeSchema,
@@ -359,7 +359,7 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
   z.object({
     ...WebhookEnvelopeSchema,
     event: z.literal('requests.vpnDown'),
-    data: z.object({ reason: z.string() }),
+    data: z.object({ reason: z.string(), docs: z.string().nullable().default(null) }),
   }),
   z.object({
     ...WebhookEnvelopeSchema,
@@ -369,7 +369,11 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
   z.object({
     ...WebhookEnvelopeSchema,
     event: z.literal('requests.indexerFailing'),
-    data: z.object({ name: z.string(), problem: z.string() }),
+    data: z.object({
+      name: z.string(),
+      problem: z.string(),
+      docs: z.string().nullable().default(null),
+    }),
   }),
   z.object({
     ...WebhookEnvelopeSchema,

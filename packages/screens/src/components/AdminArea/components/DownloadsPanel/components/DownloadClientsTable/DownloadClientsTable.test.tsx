@@ -43,6 +43,7 @@ const READING: DownloadClientState = {
   isEnabled: true,
   isReachable: true,
   problem: null,
+  problemCode: null,
   downloadBytesPerSecond: 1024 ** 2,
   uploadBytesPerSecond: 1024,
   checkedAt: '2026-09-19T00:00:00.000Z',
@@ -88,7 +89,14 @@ describe('DownloadClientsTable', () => {
   });
 
   it('says why a client could not be reached, and shows no speed for it', () => {
-    show([{ ...READING, isReachable: false, problem: 'Seedbox could not be reached' }]);
+    show([
+      {
+        ...READING,
+        isReachable: false,
+        problem: 'Seedbox could not be reached',
+        problemCode: null,
+      },
+    ]);
 
     const seedbox = within(rowOf('Seedbox'));
 

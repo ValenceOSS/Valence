@@ -9,6 +9,7 @@ import {
   IndexerCatalogueSchema,
   IndexerDefinitionDetailSchema,
 } from '@ValenceContracts/schemas/IndexerDefinition';
+import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type {
   IndexerCatalogue,
   IndexerDefinitionDetail,
@@ -74,12 +75,13 @@ import {
 import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
 
 type RequestsReading =
-  { kind: 'answered'; status: RequestsStatus } | { kind: 'silent'; reason: string };
+  | { kind: 'answered'; status: RequestsStatus }
+  | { kind: 'silent'; reason: string; problemCode: ProblemCode };
 
 type RequestsAnswer<Value> =
   | { kind: 'answered'; value: Value }
   | { kind: 'refused'; status: 400 | 404; error: string }
-  | { kind: 'silent'; reason: string };
+  | { kind: 'silent'; reason: string; problemCode: ProblemCode };
 
 type ReleaseDownload =
   { kind: 'magnet'; url: string } | { kind: 'file'; bytes: Uint8Array; contentType: string };
@@ -157,6 +159,7 @@ const createRequestsClient = ({
         return {
           kind: 'silent',
           reason: `${address} refused the secret; REQUESTS_SECRET must be the same on both`,
+          problemCode: 'RequestsSecretRefused',
         };
       }
 
@@ -171,7 +174,11 @@ const createRequestsClient = ({
       }
 
       if (!response.ok) {
-        return { kind: 'silent', reason: `${address} answered ${response.status.toString()}` };
+        return {
+          kind: 'silent',
+          reason: `${address} answered ${response.status.toString()}`,
+          problemCode: 'RequestsUnreachable',
+        };
       }
 
       if (response.status === 204) {
@@ -186,6 +193,7 @@ const createRequestsClient = ({
           error instanceof z.ZodError || error instanceof SyntaxError
             ? `${address} answered, but not as the requests service`
             : `${address} did not answer`,
+        problemCode: 'RequestsUnreachable',
       };
     }
   };
@@ -212,6 +220,7 @@ const createRequestsClient = ({
             kind: 'silent',
             reason:
               answer.kind === 'silent' ? answer.reason : `${address} refused to say how it is`,
+            problemCode: answer.kind === 'silent' ? answer.problemCode : 'RequestsUnreachable',
           };
     },
 
@@ -291,9 +300,13 @@ const createRequestsClient = ({
 
         return response.status === 400 || response.status === 404
           ? { kind: 'refused', status: response.status, error }
-          : { kind: 'silent', reason: error };
+          : { kind: 'silent', reason: error, problemCode: 'RequestsUnreachable' };
       } catch {
-        return { kind: 'silent', reason: `${address} did not answer` };
+        return {
+          kind: 'silent',
+          reason: `${address} did not answer`,
+          problemCode: 'RequestsUnreachable',
+        };
       }
     },
 

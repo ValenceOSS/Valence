@@ -135,6 +135,7 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
     if (solver === null) {
       throw new IndexerFailure(
         'The site is behind Cloudflare’s browser check, and this service has no browser to get past it.',
+        'CloudflareCheckFailed',
       );
     }
 
@@ -147,7 +148,10 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
       throughTheBrowser.delete(host);
       throw error instanceof IndexerFailure
         ? error
-        : new IndexerFailure('The browser that gets past Cloudflare’s check could not be started');
+        : new IndexerFailure(
+            'The browser that gets past Cloudflare’s check could not be started',
+            'CloudflareCheckFailed',
+          );
     }
 
     Object.assign(options.session.cookies, solution.cookies);

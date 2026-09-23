@@ -65,6 +65,9 @@ describe('createNzbgetAdapter', () => {
     await expect(
       createNzbgetAdapter({ ...SETTINGS, password: 'no' }, anNzbget({}).fetch).version(),
     ).rejects.toThrow('NZBGet refused the username or password');
+    await expect(
+      createNzbgetAdapter({ ...SETTINGS, password: 'no' }, anNzbget({}).fetch).version(),
+    ).rejects.toMatchObject({ problemCode: 'DownloadClientLoginRefused' });
   });
 
   it('says what NZBGet said, or that something else answered', async () => {

@@ -1,3 +1,4 @@
+import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
 
@@ -5,6 +6,7 @@ type RequestsVpnDescription = {
   label: string;
   tone: BadgeTone;
   detail: string;
+  help?: string | null;
 };
 
 /**
@@ -34,7 +36,12 @@ const describeRequestsVpn = (overview: RequestsOverview): RequestsVpnDescription
   }
 
   if (vpn.isUp !== true) {
-    return { label: 'Down', tone: 'danger', detail: vpn.problem ?? 'The tunnel is down.' };
+    return {
+      label: 'Down',
+      tone: 'danger',
+      detail: vpn.problem ?? 'The tunnel is down.',
+      help: docsFor(vpn.problemCode ?? 'VpnDown'),
+    };
   }
 
   const where = [vpn.publicAddress, vpn.country].filter((part) => part !== null);

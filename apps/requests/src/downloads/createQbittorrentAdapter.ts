@@ -138,13 +138,17 @@ const createQbittorrentAdapter = (
     if (response.status === 403) {
       throw new DownloadClientFailure(
         `${settings.name} has banned this address after too many wrong passwords`,
+        'DownloadClientLoginRefused',
       );
     }
 
     const said = await response.text();
 
     if (!response.ok || said.trim() === 'Fails.') {
-      throw new DownloadClientFailure(`${settings.name} refused the username or password`);
+      throw new DownloadClientFailure(
+        `${settings.name} refused the username or password`,
+        'DownloadClientLoginRefused',
+      );
     }
 
     cookie =
@@ -178,7 +182,10 @@ const createQbittorrentAdapter = (
     }
 
     if (response.status === 403) {
-      throw new DownloadClientFailure(`${settings.name} refused the username or password`);
+      throw new DownloadClientFailure(
+        `${settings.name} refused the username or password`,
+        'DownloadClientLoginRefused',
+      );
     }
 
     return response;

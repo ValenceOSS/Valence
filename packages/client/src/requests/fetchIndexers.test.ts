@@ -28,6 +28,7 @@ const AN_INDEXER = {
   capabilities: null,
   failures: 0,
   lastProblem: null,
+  lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
   removesWhenDone: null,
@@ -40,6 +41,7 @@ const AN_INDEXER = {
 const A_TEST = {
   isWorking: false,
   problem: 'The indexer refused the API key',
+  problemCode: null,
   capabilities: null,
   captcha: null,
 };

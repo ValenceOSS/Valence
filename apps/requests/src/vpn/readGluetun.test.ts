@@ -26,6 +26,7 @@ describe('readGluetun', () => {
       country: null,
       checkedAt: null,
       problem: null,
+      problemCode: null,
     });
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -48,6 +49,7 @@ describe('readGluetun', () => {
       country: 'Netherlands',
       checkedAt: NOW.toISOString(),
       problem: null,
+      problemCode: null,
     });
   });
 
@@ -94,6 +96,7 @@ describe('readGluetun', () => {
 
     expect(vpn.isUp).toBe(false);
     expect(vpn.problem).toBe('The tunnel is stopped');
+    expect(vpn.problemCode).toBe('VpnDown');
   });
 
   it('names the key when gluetun refuses the question', async () => {
@@ -102,6 +105,7 @@ describe('readGluetun', () => {
     const vpn = await readGluetun({ address: 'http://gluetun:8000', apiKey: '', fetch });
 
     expect(vpn.problem).toBe('gluetun refused the question; check VPN_API_KEY');
+    expect(vpn.problemCode).toBe('VpnKeyRefused');
   });
 
   it('reads any other failed answer as down', async () => {
@@ -131,6 +135,7 @@ describe('readGluetun', () => {
       isConfigured: true,
       isUp: false,
       problem: 'gluetun could not be reached at http://gluetun:8000',
+      problemCode: 'VpnDown',
     });
   });
 });

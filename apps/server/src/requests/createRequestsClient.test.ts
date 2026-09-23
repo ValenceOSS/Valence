@@ -13,6 +13,7 @@ const A_STATUS = {
     country: null,
     checkedAt: null,
     problem: null,
+    problemCode: null,
   },
   indexers: { total: 0, enabled: 0, failing: [] },
 };
@@ -49,6 +50,8 @@ describe('createRequestsClient', () => {
     expect(await client.readStatus()).toEqual({
       kind: 'silent',
       reason: 'http://requests:8421 refused the secret; REQUESTS_SECRET must be the same on both',
+
+      problemCode: 'RequestsSecretRefused',
     });
   });
 
@@ -62,6 +65,8 @@ describe('createRequestsClient', () => {
     expect(await client.readStatus()).toEqual({
       kind: 'silent',
       reason: 'http://requests:8421 answered 502',
+
+      problemCode: 'RequestsUnreachable',
     });
   });
 
@@ -75,6 +80,8 @@ describe('createRequestsClient', () => {
     expect(await client.readStatus()).toEqual({
       kind: 'silent',
       reason: 'http://requests:8421 answered, but not as the requests service',
+
+      problemCode: 'RequestsUnreachable',
     });
   });
 
@@ -88,6 +95,8 @@ describe('createRequestsClient', () => {
     expect(await client.readStatus()).toEqual({
       kind: 'silent',
       reason: 'http://requests:8421 did not answer',
+
+      problemCode: 'RequestsUnreachable',
     });
   });
 
@@ -113,13 +122,20 @@ describe('createRequestsClient', () => {
       capabilities: null,
       failures: 0,
       lastProblem: null,
+      lastProblemCode: null,
       lastFailedAt: null,
       turnedOffBecause: null,
       createdAt: '2026-09-19T00:00:00.000Z',
       updatedAt: '2026-09-19T00:00:00.000Z',
     };
 
-    const A_TEST = { isWorking: true, problem: null, capabilities: null, captcha: null };
+    const A_TEST = {
+      isWorking: true,
+      problem: null,
+      problemCode: null,
+      capabilities: null,
+      captcha: null,
+    };
 
     const A_DRAFT = { name: 'Jackett', kind: 'torznab' as const, url: 'http://jackett:9117/' };
 
@@ -228,6 +244,8 @@ describe('createRequestsClient', () => {
       expect(await client.listIndexers()).toEqual({
         kind: 'silent',
         reason: 'http://requests:8421 answered 503',
+
+        problemCode: 'RequestsUnreachable',
       });
     });
 
@@ -237,6 +255,8 @@ describe('createRequestsClient', () => {
       expect(await client.readStatus()).toEqual({
         kind: 'silent',
         reason: 'http://requests:8421 refused to say how it is',
+
+        problemCode: 'RequestsUnreachable',
       });
     });
 
@@ -251,6 +271,8 @@ describe('createRequestsClient', () => {
       expect(await client.listIndexers()).toEqual({
         kind: 'silent',
         reason: 'http://requests:8421 answered, but not as the requests service',
+
+        problemCode: 'RequestsUnreachable',
       });
     });
 
@@ -347,10 +369,14 @@ describe('createRequestsClient', () => {
       ).toEqual({
         kind: 'silent',
         reason: 'The site answered 410',
+
+        problemCode: 'RequestsUnreachable',
       });
       expect(await aClient(500, null).client.download(AN_INDEXER.id, 'x')).toEqual({
         kind: 'silent',
         reason: 'http://requests:8421 answered 500',
+
+        problemCode: 'RequestsUnreachable',
       });
 
       const offline = createRequestsClient({
@@ -362,6 +388,8 @@ describe('createRequestsClient', () => {
       expect(await offline.download(AN_INDEXER.id, 'x')).toEqual({
         kind: 'silent',
         reason: 'http://requests:8421 did not answer',
+
+        problemCode: 'RequestsUnreachable',
       });
     });
   });
@@ -400,6 +428,7 @@ describe('createRequestsClient with download clients', () => {
     indexerName: null,
     state: 'queued' as const,
     problem: null,
+    problemCode: null,
     progress: 0,
     sizeBytes: null,
     doneBytes: null,
@@ -412,11 +441,12 @@ describe('createRequestsClient with download clients', () => {
     finishedAt: null,
     filedInto: null,
     filingProblem: null,
+    filingProblemCode: null,
   };
 
   const A_QUEUE = { clients: [], downloads: [A_DOWNLOAD], checkedAt: null };
 
-  const A_TEST = { isWorking: true, problem: null, version: 'v5.0.1' };
+  const A_TEST = { isWorking: true, problem: null, problemCode: null, version: 'v5.0.1' };
 
   const A_DRAFT = {
     name: 'qBittorrent',
@@ -709,6 +739,7 @@ describe('createRequestsClient with requests for films and series', () => {
     isPickedByHand: false,
     state: 'wanted' as const,
     problem: null,
+    problemCode: null,
     approval: 'approved' as const,
     refusedBecause: null,
     requestedBy: { id: 'someone', name: 'Someone' },

@@ -91,6 +91,7 @@ const DOWNLOAD: QueuedDownload = {
   indexerName: 'Jackett',
   state: 'downloading',
   problem: null,
+  problemCode: null,
   progress: 0.5,
   sizeBytes: 1000,
   doneBytes: 500,
@@ -103,6 +104,7 @@ const DOWNLOAD: QueuedDownload = {
   finishedAt: null,
   filedInto: null,
   filingProblem: null,
+  filingProblemCode: null,
 };
 
 const QUEUE: DownloadQueue = {
@@ -114,6 +116,7 @@ const QUEUE: DownloadQueue = {
       isEnabled: true,
       isReachable: true,
       problem: null,
+      problemCode: null,
       downloadBytesPerSecond: 2 * 1024 ** 2,
       uploadBytesPerSecond: 1024,
       checkedAt: '2026-09-19T00:00:00.000Z',
@@ -125,6 +128,7 @@ const QUEUE: DownloadQueue = {
       isEnabled: true,
       isReachable: true,
       problem: null,
+      problemCode: null,
       downloadBytesPerSecond: 1024 ** 2,
       uploadBytesPerSecond: null,
       checkedAt: '2026-09-19T00:00:00.000Z',
@@ -159,9 +163,10 @@ beforeEach(() => {
   fetchDownloadQueue.mockReset().mockResolvedValue(QUEUE);
   changeDownloadClient.mockReset().mockResolvedValue({ value: CLIENT, refusal: null });
   removeDownloadClient.mockReset().mockResolvedValue(null);
-  testDownloadClient
-    .mockReset()
-    .mockResolvedValue({ value: { isWorking: true, problem: null, version: 'v5' }, refusal: null });
+  testDownloadClient.mockReset().mockResolvedValue({
+    value: { isWorking: true, problem: null, problemCode: null, version: 'v5' },
+    refusal: null,
+  });
   pauseQueuedDownload.mockReset().mockResolvedValue({ value: DOWNLOAD, refusal: null });
   resumeQueuedDownload.mockReset().mockResolvedValue({ value: DOWNLOAD, refusal: null });
   removeQueuedDownload.mockReset().mockResolvedValue(null);
@@ -299,11 +304,16 @@ describe('DownloadsPanel', () => {
 
   it('lists the clients on their own tab, and tests one', async () => {
     testDownloadClient.mockResolvedValueOnce({
-      value: { isWorking: false, problem: null, version: null },
+      value: { isWorking: false, problem: null, problemCode: null, version: null },
       refusal: null,
     });
     testDownloadClient.mockResolvedValueOnce({
-      value: { isWorking: false, problem: 'refused the password', version: null },
+      value: {
+        isWorking: false,
+        problem: 'refused the password',
+        problemCode: null,
+        version: null,
+      },
       refusal: null,
     });
     testDownloadClient.mockResolvedValueOnce({

@@ -7,6 +7,7 @@ import {
 } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Card } from '@ValenceUI/Card';
+import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { ConcernTone } from '@ValenceScreens/components/AdminArea/collectConcerns';
 import type { ConcernsBannerProps } from './ConcernsBanner.types';
 
@@ -58,6 +59,8 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
 
               <Icon of={ChevronRightIcon} size={14} tone="muted" className="shrink-0" />
             </Button>
+
+            <HowToFix href={concern.help} />
 
             <Button
               variant="ghost"

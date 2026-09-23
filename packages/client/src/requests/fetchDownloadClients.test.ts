@@ -30,7 +30,7 @@ const A_CLIENT = {
   updatedAt: '2026-09-19T00:00:00.000Z',
 };
 
-const A_TEST = { isWorking: true, problem: null, version: 'v5.0.1' };
+const A_TEST = { isWorking: true, problem: null, problemCode: null, version: 'v5.0.1' };
 
 const A_DRAFT = {
   name: 'qBittorrent',

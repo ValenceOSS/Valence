@@ -12,6 +12,7 @@ const A_DOWNLOAD: QueuedDownload = {
   indexerName: null,
   state: 'queued',
   problem: null,
+  problemCode: null,
   progress: 0,
   sizeBytes: null,
   doneBytes: null,
@@ -24,6 +25,7 @@ const A_DOWNLOAD: QueuedDownload = {
   finishedAt: null,
   filedInto: null,
   filingProblem: null,
+  filingProblemCode: null,
 };
 
 describe('describeDownloadState', () => {
@@ -44,7 +46,12 @@ describe('describeDownloadState', () => {
       describeDownloadState({ ...A_DOWNLOAD, state: 'stalled', protocol: 'usenet' }).detail,
     ).toBe('Nothing is arriving.');
     expect(
-      describeDownloadState({ ...A_DOWNLOAD, state: 'stalled', problem: 'Tracker gone' }).detail,
+      describeDownloadState({
+        ...A_DOWNLOAD,
+        state: 'stalled',
+        problem: 'Tracker gone',
+        problemCode: null,
+      }).detail,
     ).toBe('Tracker gone');
   });
 
@@ -57,11 +64,17 @@ describe('describeDownloadState', () => {
 
   it('says why a download failed, or that it did', () => {
     expect(
-      describeDownloadState({ ...A_DOWNLOAD, state: 'failed', problem: 'Out of retention' }),
+      describeDownloadState({
+        ...A_DOWNLOAD,
+        state: 'failed',
+        problem: 'Out of retention',
+        problemCode: null,
+      }),
     ).toEqual({
       label: 'Failed',
       tone: 'danger',
       detail: 'Out of retention',
+      help: null,
     });
     expect(describeDownloadState({ ...A_DOWNLOAD, state: 'failed' }).detail).toBe('It failed.');
   });
@@ -83,11 +96,21 @@ describe('describeDownloadState', () => {
         ...A_DOWNLOAD,
         state: 'done',
         filingProblem: 'qBittorrent has not said where it put the download',
+        filingProblemCode: null,
       }),
     ).toEqual({
       label: 'Not filed',
       tone: 'warning',
       detail: 'qBittorrent has not said where it put the download',
+      help: null,
     });
+    expect(
+      describeDownloadState({
+        ...A_DOWNLOAD,
+        state: 'done',
+        filingProblem: 'The requests service may not write to /media/Films.',
+        filingProblemCode: 'MayNotWriteToLibrary',
+      }).help,
+    ).toBe('https://docs.getvalence.app/install/requesting#who-owns-what-it-files');
   });
 });

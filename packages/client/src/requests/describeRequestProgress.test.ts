@@ -15,6 +15,7 @@ const anEpisode = (episode: number, state: RequestItemState): RequestItem => ({
   airDate: null,
   state,
   problem: null,
+  problemCode: null,
   releaseTitle: null,
   downloadId: null,
   filePath: null,

@@ -186,7 +186,10 @@ const createTransmissionAdapter = (
     }
 
     if (response.status === 401) {
-      throw new DownloadClientFailure(`${settings.name} refused the username or password`);
+      throw new DownloadClientFailure(
+        `${settings.name} refused the username or password`,
+        'DownloadClientLoginRefused',
+      );
     }
 
     if (!response.ok) {

@@ -31,6 +31,9 @@ describe('createClientCaller', () => {
     await expect(createClientCaller(fetch, 'qBittorrent')('http://client')).rejects.toThrow(
       'qBittorrent could not be reached',
     );
+    await expect(createClientCaller(fetch, 'qBittorrent')('http://client')).rejects.toMatchObject({
+      problemCode: 'DownloadClientUnreachable',
+    });
   });
 
   it('says a client did not answer in time', async () => {
@@ -41,5 +44,8 @@ describe('createClientCaller', () => {
     await expect(createClientCaller(fetch, 'SABnzbd', 3)('http://client')).rejects.toThrow(
       'SABnzbd did not answer within 3 seconds',
     );
+    await expect(createClientCaller(fetch, 'SABnzbd', 3)('http://client')).rejects.toMatchObject({
+      problemCode: 'DownloadClientUnreachable',
+    });
   });
 });

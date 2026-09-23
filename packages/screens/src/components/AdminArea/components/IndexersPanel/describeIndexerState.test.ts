@@ -28,6 +28,7 @@ const AN_INDEXER: Indexer = {
   },
   failures: 0,
   lastProblem: null,
+  lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
   removesWhenDone: null,
@@ -55,7 +56,16 @@ describe('describeIndexerState', () => {
       label: 'Failed once',
       tone: 'warning',
       detail: 'Timed out',
+      help: 'https://docs.getvalence.app/install/requesting#failing-indexers',
     });
+    expect(
+      describeIndexerState({
+        ...AN_INDEXER,
+        failures: 1,
+        lastProblem: 'Refused',
+        lastProblemCode: 'CloudflareRefusesAddress',
+      }).help,
+    ).toBe('https://docs.getvalence.app/install/requesting#indexers-behind-cloudflare');
     expect(describeIndexerState({ ...AN_INDEXER, failures: 3 }).label).toBe('Failed 3 times');
   });
 
@@ -77,6 +87,7 @@ describe('describeIndexerState', () => {
       label: 'Turned off',
       tone: 'danger',
       detail: 'Turned off after 5 failures in a row',
+      help: 'https://docs.getvalence.app/install/requesting#failing-indexers',
     });
   });
 });

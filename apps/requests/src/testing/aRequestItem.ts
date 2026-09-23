@@ -17,6 +17,7 @@ const aRequestItem = (overrides: Partial<RequestItemRecord> = {}): RequestItemRe
   airDate: '2021-12-03',
   state: 'wanted',
   problem: null,
+  problemCode: null,
   releaseTitle: null,
   indexerId: null,
   downloadId: null,

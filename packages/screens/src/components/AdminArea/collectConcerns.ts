@@ -1,3 +1,4 @@
+import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { ActiveSession, AdminOverview, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
@@ -14,6 +15,7 @@ type Concern = {
   title: string;
   detail: string;
   panel: string;
+  help?: string | null;
 };
 
 type CollectConcernsOptions = {
@@ -73,8 +75,9 @@ const collectConcerns = ({
       id: 'requests',
       tone: 'broken',
       title: 'The requests service is unreachable',
-      detail: `Nothing requested will be searched for or downloaded until it is back. Looked for it at ${requests.address}.`,
+      detail: `Nothing requested will be searched for or downloaded until it is back. ${requests.problem ?? `Looked for it at ${requests.address}`}.`,
       panel: 'requests',
+      help: docsFor(requests.problemCode ?? 'RequestsUnreachable'),
     });
   }
 
@@ -96,6 +99,9 @@ const collectConcerns = ({
           ? (first?.problem ?? '')
           : failingIndexers.map((indexer) => `${indexer.name}: ${indexer.problem}`).join(' · '),
       panel: 'indexers',
+      help: docsFor(
+        failingIndexers.length === 1 ? (first?.problemCode ?? 'IndexerFailing') : 'IndexerFailing',
+      ),
     });
   }
 
@@ -108,6 +114,7 @@ const collectConcerns = ({
       title: 'The VPN is down',
       detail: vpn.problem ?? 'The requests service cannot reach the tunnel it downloads through.',
       panel: 'requests',
+      help: docsFor(vpn.problemCode ?? 'VpnDown'),
     });
   }
 

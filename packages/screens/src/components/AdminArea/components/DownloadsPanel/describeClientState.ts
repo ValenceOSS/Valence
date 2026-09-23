@@ -1,3 +1,4 @@
+import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { DownloadClientState } from '@ValenceContracts/schemas/DownloadQueue';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
 
@@ -23,7 +24,12 @@ const describeClientState = (
 
   return reading.isReachable
     ? { label: 'Answering', tone: 'success', detail: null }
-    : { label: 'Unreachable', tone: 'danger', detail: reading.problem };
+    : {
+        label: 'Unreachable',
+        tone: 'danger',
+        detail: reading.problem,
+        help: docsFor(reading.problemCode),
+      };
 };
 
 export { describeClientState };

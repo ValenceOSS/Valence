@@ -103,6 +103,7 @@ describe('ReleaseSearchOutcomeSchema', () => {
           found: 1,
           tookMs: 420,
           problem: null,
+          problemCode: null,
         },
       ],
     };

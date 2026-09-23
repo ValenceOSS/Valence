@@ -44,6 +44,7 @@ const DUNE = aMediaRequest({
       airDate: null,
       state: 'downloading',
       problem: null,
+      problemCode: null,
       releaseTitle: 'Dune.2021.2160p.WEB-DL',
       downloadId: DOWNLOAD_ID,
       filePath: null,
@@ -59,7 +60,9 @@ const DUNE = aMediaRequest({
 beforeEach(() => {
   fetchMediaRequestLog
     .mockReset()
-    .mockResolvedValue([{ id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.' }]);
+    .mockResolvedValue([
+      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.', problemCode: null },
+    ]);
   fetchRequestBlocklist.mockReset().mockResolvedValue([
     {
       id: '9f2504e0-4f89-41d3-9a0c-0305e82c3309',
@@ -84,6 +87,7 @@ beforeEach(() => {
         indexerName: 'Nyaa.si',
         state: 'downloading',
         problem: null,
+        problemCode: null,
         progress: 0.4,
         sizeBytes: 1000,
         doneBytes: 400,
@@ -96,6 +100,7 @@ beforeEach(() => {
         finishedAt: null,
         filedInto: null,
         filingProblem: null,
+        filingProblemCode: null,
       },
     ],
   });
@@ -122,6 +127,25 @@ describe('RequestDetailDialog', () => {
     await user.click(screen.getByRole('tab', { name: 'Never again' }));
 
     expect(await screen.findByText('Dune.2021.2160p.BAD')).toBeInTheDocument();
+  });
+
+  it('links a line of its history to the docs about its problem, where it has one', async () => {
+    fetchMediaRequestLog.mockResolvedValue([
+      {
+        id: 2,
+        at: '2026-09-19T00:05:00.000Z',
+        message: 'Could not be filed.',
+        problemCode: 'MayNotWriteToLibrary',
+      },
+      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.', problemCode: null },
+    ]);
+
+    renderInAnAddress(
+      <RequestDetailDialog request={DUNE} openOn="history" onClose={vi.fn()} onChanged={vi.fn()} />,
+    );
+
+    expect(await screen.findByText('Could not be filed.')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'How to fix this' })).toHaveLength(1);
   });
 
   it('lets a release it gave up on be tried again', async () => {

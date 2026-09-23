@@ -34,6 +34,7 @@ const REQUEST = {
   isPickedByHand: false,
   state: 'wanted',
   problem: null,
+  problemCode: null,
   approval: 'approved',
   refusedBecause: null,
   requestedBy: { id: 'someone', name: 'Someone' },
@@ -153,7 +154,9 @@ describe('fetchMediaRequests', () => {
   });
 
   it('reads what a request has done', async () => {
-    const said = [{ id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.' }];
+    const said = [
+      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.', problemCode: null },
+    ];
     const asked = answering(said);
 
     expect(await fetchMediaRequestLog(REQUEST.id)).toEqual(said);

@@ -9,4 +9,14 @@ describe('DownloadClientFailure', () => {
     expect(failure.name).toBe('DownloadClientFailure');
     expect(failure).toBeInstanceOf(Error);
   });
+
+  it('carries what kind of problem it is, where it is one there is help for', () => {
+    expect(
+      new DownloadClientFailure(
+        'qBittorrent refused the username or password',
+        'DownloadClientLoginRefused',
+      ).problemCode,
+    ).toBe('DownloadClientLoginRefused');
+    expect(new DownloadClientFailure('Something else').problemCode).toBeNull();
+  });
 });
