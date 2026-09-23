@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, inArray, isNull, notExists, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, notExists, sql } from 'drizzle-orm';
 import {
   library,
   mediaItem,
@@ -10,6 +10,7 @@ import {
 } from '@ValenceServer/db/Schema';
 import { nameKey } from './nameKey';
 import { sortNameFor } from './sortNameFor';
+import { isStillThere } from '@ValenceServer/music/isStillThere';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { MusicStore } from './scanMusicLibrary';
 import type { EnrichingStore } from './web/EnrichingStore';
@@ -257,6 +258,66 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
         row.artistIds.map((artistId, position) => ({ mediaItemId: saved.id, artistId, position })),
       )
       .onConflictDoNothing();
+  },
+
+  forgetMissingArtwork: async (libraryId) => {
+    const albums = await db
+      .select({ id: musicAlbum.id, artistId: musicAlbum.artistId, path: musicAlbum.artworkPath })
+      .from(musicAlbum)
+      .where(and(eq(musicAlbum.libraryId, libraryId), isNotNull(musicAlbum.artworkPath)));
+    const artists = await db
+      .select({ id: musicArtist.id, path: musicArtist.imagePath })
+      .from(musicArtist)
+      .where(and(eq(musicArtist.libraryId, libraryId), isNotNull(musicArtist.imagePath)));
+    const lostAlbums: string[] = [];
+    const lostArtists = new Set<string>();
+
+    for (const album of albums) {
+      if (!(await isStillThere(album.path ?? ''))) {
+        lostAlbums.push(album.id);
+      }
+    }
+
+    for (const artist of artists) {
+      if (!(await isStillThere(artist.path ?? ''))) {
+        lostArtists.add(artist.id);
+      }
+    }
+
+    if (lostAlbums.length > 0) {
+      await db
+        .update(musicAlbum)
+        .set({ artworkPath: null, lookedUpAt: null })
+        .where(inArray(musicAlbum.id, lostAlbums));
+    }
+
+    if (lostArtists.size > 0) {
+      await db
+        .update(musicArtist)
+        .set({ imagePath: null, lookedUpAt: null })
+        .where(inArray(musicArtist.id, [...lostArtists]));
+    }
+
+    const theirAlbums =
+      lostArtists.size === 0
+        ? []
+        : await db
+            .select({ id: musicAlbum.id })
+            .from(musicAlbum)
+            .where(inArray(musicAlbum.artistId, [...lostArtists]));
+    const wanted = [...new Set([...lostAlbums, ...theirAlbums.map((album) => album.id)])];
+
+    if (wanted.length === 0) {
+      return [];
+    }
+
+    const tracks = await db
+      .select({ path: mediaItem.path })
+      .from(musicTrack)
+      .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId))
+      .where(inArray(musicTrack.albumId, wanted));
+
+    return tracks.map((track) => track.path);
   },
 
   setAlbumArtwork: async (albumId, path) => {
