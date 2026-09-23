@@ -1,3 +1,5 @@
+import { readEpisodeFromPath } from './readEpisodeFromPath';
+
 const LABEL_EDGE = /^[\s._\-–—[\]()]+|[\s._\-–—[\]()]+$/g;
 
 type FoundVersion = {
@@ -54,6 +56,11 @@ const labelIn = (stem: string, base: string): string | null => {
  * reads the same shelf, and it is the only arrangement that says so unambiguously: files that merely
  * sit together are films that merely sit together.
  *
+ * An episode is never a cut of anything, however its folder is named: a programme kept as
+ * `ted/ted - S01E05 - …` has every file beginning with the folder's name, and is still a list of
+ * episodes rather than one of them in twenty versions. Jellyfin keeps versions to films for the
+ * same reason.
+ *
  * One of them has to be the film itself, since the others hang off a row rather than off a folder.
  * The one named exactly after the folder is taken where there is one, and otherwise the first by
  * name, so that the same shelf reads the same way on every scan.
@@ -69,7 +76,7 @@ const groupVersions = (
   const byFolder = new Map<string, string[]>();
 
   for (const path of paths) {
-    if (skip.has(path)) {
+    if (skip.has(path) || readEpisodeFromPath(path).episodeNumber !== null) {
       continue;
     }
 

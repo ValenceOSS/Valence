@@ -98,6 +98,7 @@ const harness = (options: {
   capabilitiesImpl?: () => Promise<never>;
   onAdded?: (item: ScannedItem) => void;
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
+  forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
   root?: string;
 }) => {
   const rows: MediaRow[] = [];
@@ -197,6 +198,9 @@ const harness = (options: {
         },
         listOverrides: () => Promise.resolve(options.overrides ?? []),
         ...(options.linkExtras === undefined ? {} : { linkExtras: options.linkExtras }),
+        ...(options.forgetStaleVersions === undefined
+          ? {}
+          : { forgetStaleVersions: options.forgetStaleVersions }),
         markScanned,
       },
       transcoder,
@@ -1042,6 +1046,28 @@ describe('a library holding extras', () => {
     await harness({ found: [file(FILM), file(MAKING_OF)], linkExtras }).run();
 
     expect(linkExtras).toHaveBeenCalledWith(LIBRARY_ID, [{ path: MAKING_OF, parentPath: FILM }]);
+  });
+
+  it('lets go of a version that is no longer one, keeping the ones that still are', async () => {
+    const forgetStaleVersions = vi.fn().mockResolvedValue(undefined);
+    const folder = '/media/films/Parasite (2019)';
+
+    await harness({
+      found: [file(`${folder}/Parasite (2019).mkv`), file(`${folder}/Parasite (2019) - B&W.mkv`)],
+      forgetStaleVersions,
+    }).run();
+
+    expect(forgetStaleVersions).toHaveBeenCalledWith(LIBRARY_ID, [
+      `${folder}/Parasite (2019) - B&W.mkv`,
+    ]);
+  });
+
+  it('lets go of nothing on a scan of part of the library, which cannot see every version', async () => {
+    const forgetStaleVersions = vi.fn().mockResolvedValue(undefined);
+
+    await harness({ found: [file(FILM)], isPartial: true, forgetStaleVersions }).run();
+
+    expect(forgetStaleVersions).not.toHaveBeenCalled();
   });
 
   it('does not announce an extra as something that arrived', async () => {
