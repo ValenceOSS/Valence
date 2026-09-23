@@ -40,10 +40,20 @@ const FOLDS_OVER = 600;
 
 const PARTS = 4;
 
+const ROUNDED = 20;
+
 const styles = StyleSheet.create({
   buttons: { flexDirection: 'row', gap: 10, marginTop: 8 },
   facts: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
+  fills: {
+    borderRadius: ROUNDED,
+    bottom: 0,
+    left: 0,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
   folds: { overflow: 'hidden' },
   unfolded: { left: 0, position: 'absolute', right: 0, top: 0 },
   foot: {
@@ -66,7 +76,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   sound: { position: 'absolute', right: 6, top: 6 },
-  whole: { borderRadius: 20, overflow: 'hidden' },
+  whole: { borderRadius: ROUNDED, overflow: 'hidden' },
 });
 
 /**
@@ -78,6 +88,11 @@ const styles = StyleSheet.create({
  *
  * The clip plays only while the title is the one showing, silent unless somebody turned the sound
  * on, which is remembered for the next.
+ *
+ * The backdrop and its clip are rounded and clipped by themselves as well as by the card around
+ * them: as one title gives way to the next, the card's own clipping was dropped for the length of
+ * the move and the picture showed square corners, so the picture keeps its corners whatever the
+ * card does.
  *
  * @param media - The title.
  * @param width - How wide to draw it.
@@ -188,12 +203,16 @@ const AFeature = ({
   return (
     <Button tone="bare" label={title} onPress={onMoreInfo}>
       <View
+        collapsable={false}
         style={[
           styles.whole,
           { backgroundColor: colours.surfaceRaised, height: width * TALL, width },
         ]}
       >
-        <Animated.View style={[styles.fills, { transform: [{ scale: arriving }] }]}>
+        <Animated.View
+          collapsable={false}
+          style={[styles.fills, { transform: [{ scale: arriving }] }]}
+        >
           <APreview
             mediaId={media.id}
             hasBackdrop={media.hasBackdrop}
