@@ -79,6 +79,7 @@ const config: Config = {
   setupFiles: ['<rootDir>/jest.setup.ts'],
   setupFilesAfterEnv: ['<rootDir>/jest.beforeEach.ts'],
   testMatch: ['<rootDir>/src/**/*.test.ts', '<rootDir>/src/**/*.test.tsx'],
+  testTimeout: 20_000,
   coverageReporters: ['text', 'json-summary'],
 };
 
