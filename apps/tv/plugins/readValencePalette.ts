@@ -166,7 +166,9 @@ const tokensIn = (block: string): Map<string, string> =>
  * @param stylesheet - The stylesheet, which a caller may hand over instead of it being read.
  * @returns Each colour token, named as the stylesheet names it, as React Native writes it.
  */
-const readValencePalette = (stylesheet: string = readFileSync(STYLESHEET, 'utf8')): Record<string, string> => {
+const readValencePalette = (
+  stylesheet: string = readFileSync(STYLESHEET, 'utf8'),
+): Record<string, string> => {
   const tokens = new Map([...tokensIn(stylesheet), ...tokensIn(theDarkBlock(stylesheet))]);
 
   return Object.fromEntries(

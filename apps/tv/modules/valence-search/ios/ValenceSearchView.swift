@@ -41,10 +41,9 @@ final class ValenceSearchView: ExpoView, UISearchResultsUpdating {
   private var lastText = ""
   private let upward = UIFocusGuide()
 
-  weak var upTo: UIView? {
+  var upToTag: Int? {
     didSet {
-      upward.preferredFocusEnvironments = upTo.map { [$0] } ?? []
-      upward.isEnabled = upTo != nil
+      aimUpwards()
     }
   }
 
@@ -84,11 +83,29 @@ final class ValenceSearchView: ExpoView, UISearchResultsUpdating {
     addSubview(container.view)
     container.didMove(toParent: parent)
     guideUpwards()
+    aimUpwards()
   }
 
   override func layoutSubviews() {
     super.layoutSubviews()
     container.view.frame = bounds
+  }
+
+  /// Keeps the remote out of the search screen unless somebody is pressing down into it. The screen asks for the
+  /// remote the moment it appears, which would pull it off the bar as the remote merely passes over search.
+  override func shouldUpdateFocus(in context: UIFocusUpdateContext) -> Bool {
+    guard let next = context.nextFocusedView else {
+      return super.shouldUpdateFocus(in: context)
+    }
+
+    let isComingIn =
+      next.isDescendant(of: self) && !(context.previouslyFocusedView?.isDescendant(of: self) ?? false)
+
+    if isComingIn && !context.focusHeading.contains(.down) {
+      return false
+    }
+
+    return super.shouldUpdateFocus(in: context)
   }
 
   override func mountChildComponentView(_ childComponentView: UIView, index: Int) {
@@ -108,6 +125,15 @@ final class ValenceSearchView: ExpoView, UISearchResultsUpdating {
 
     lastText = text
     onChangeText(["text": text])
+  }
+
+  /// Points the guide along the top at the view it was told to go up to, found by its React tag, since
+  /// a React element handed across whole is far too large to convert.
+  private func aimUpwards() {
+    let target = upToTag.flatMap { appContext?.findView(withTag: $0, ofType: UIView.self) }
+
+    upward.preferredFocusEnvironments = target.map { [$0] } ?? []
+    upward.isEnabled = target != nil
   }
 
   /// Lays the focus guide along the very top of the search screen, above the keyboard, where pressing up lands.

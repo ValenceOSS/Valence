@@ -67,6 +67,9 @@ importers:
       '@valence/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@valence/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@valence/screens':
         specifier: workspace:*
         version: link:../../packages/screens
@@ -568,6 +571,9 @@ importers:
       '@types/react':
         specifier: ~19.2.2
         version: 19.2.18
+      '@types/xcode':
+        specifier: 3.0.0
+        version: 3.0.0
       babel-preset-expo:
         specifier: ^57.0.12
         version: 57.0.12(@babel/core@7.29.7)(@babel/runtime@7.29.7)(expo@57.0.24)(react-refresh@0.14.2)
@@ -6767,6 +6773,12 @@ packages:
     resolution:
       {
         integrity: sha512-GnJmSr40H3RAnj0s34FNTcJi1hmWFV5KXugE0mYWnYhgTAHLJ/dJKAwDmvPJYMke0RplY2XE9LnM4hqSqKIjhQ==,
+      }
+
+  '@types/xcode@3.0.0':
+    resolution:
+      {
+        integrity: sha512-QF542gE2z7c5mVAKYPu7WnLv7TX+O/m2ZcCAsK2mstzeh8X0Q4ueC52DL8sSRFnQdTzF4WU+G/sWWx5cRO7HcQ==,
       }
 
   '@types/yargs-parser@21.0.3':
@@ -20250,6 +20262,8 @@ snapshots:
   '@types/web-push@3.6.4':
     dependencies:
       '@types/node': 22.20.2
+
+  '@types/xcode@3.0.0': {}
 
   '@types/yargs-parser@21.0.3': {}
 

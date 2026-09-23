@@ -5,7 +5,8 @@ const DECLARED = 'class AppDelegate: ExpoAppDelegate {';
 
 const PROVIDING = 'class AppDelegate: ExpoAppDelegate, ExpoReactNativeFactoryProvider {';
 
-const STARTED_BY_THE_APP = /#if os\(iOS\) \|\| os\(tvOS\)\n\s*window = UIWindow\(frame: UIScreen\.main\.bounds\)\n\s*factory\.startReactNative\([\s\S]*?\)\n#endif\n/u;
+const STARTED_BY_THE_APP =
+  /#if os\(iOS\) \|\| os\(tvOS\)\n\s*window = UIWindow\(frame: UIScreen\.main\.bounds\)\n\s*factory\.startReactNative\([\s\S]*?\)\n#endif\n/u;
 
 const SCENE_DELEGATE = 'EXExpoAppSceneDelegate';
 

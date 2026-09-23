@@ -12,8 +12,8 @@ public class ValenceSearchModule: Module {
         view.placeholder = placeholder
       }
 
-      Prop("upTo") { (view: ValenceSearchView, target: UIView?) in
-        view.upTo = target
+      Prop("upTo") { (view: ValenceSearchView, tag: Int?) in
+        view.upToTag = tag
       }
     }
   }
