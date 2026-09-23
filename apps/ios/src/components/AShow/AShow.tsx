@@ -100,9 +100,8 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
   const next = show.nextEpisode ?? null;
   const facts = [
     show.year === null || show.year === undefined ? null : show.year.toString(),
-    show.seasonCount === 1
-      ? `${show.episodeCount.toString()} episodes`
-      : `${show.seasonCount.toString()} seasons · ${show.episodeCount.toString()} episodes`,
+    show.seasonCount === 1 ? '1 season' : `${show.seasonCount.toString()} seasons`,
+    show.rating === null || show.rating === undefined ? null : `★ ${show.rating.toFixed(1)}`,
     show.status === null || show.status === undefined || show.status === '' ? null : show.status,
     isWatchedThrough ? 'Watched' : null,
   ].filter((fact) => fact !== null);

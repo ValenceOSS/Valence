@@ -122,11 +122,11 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
             ? ''
             : ` E${metadata.episodeNumber.toString()}`
         }`,
+    title.year === null || title.year === undefined ? null : title.year.toString(),
+    howLongItRuns(title.durationSeconds),
     metadata.rating === null || metadata.rating === undefined
       ? null
       : `★ ${metadata.rating.toFixed(1)}`,
-    title.year === null || title.year === undefined ? null : title.year.toString(),
-    howLongItRuns(title.durationSeconds),
   ].filter((fact) => fact !== null);
   const details = describeTitleDetails(metadata);
 

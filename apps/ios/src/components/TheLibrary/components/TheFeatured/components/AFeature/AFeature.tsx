@@ -180,7 +180,8 @@ const AFeature = ({
     media.year === null ? null : media.year.toString(),
     media.seriesTitle === null || media.seriesTitle === undefined
       ? howLongItRuns(media.durationSeconds)
-      : null,
+      : 'Series',
+    (media.genres ?? []).length === 0 ? null : (media.genres ?? []).slice(0, 2).join(', '),
   ].filter((fact) => fact !== null);
 
   return (

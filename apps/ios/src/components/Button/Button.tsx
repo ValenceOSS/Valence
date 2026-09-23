@@ -6,7 +6,6 @@ import { FONTS } from '@ValencePhone/theme/FONTS';
 import type { ButtonProps } from './Button.types';
 
 const styles = StyleSheet.create({
-  accent: { alignItems: 'center', borderRadius: 14, padding: 16 },
   bare: {},
   bright: { alignItems: 'center', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12 },
   brightWord: { fontSize: 16, fontFamily: FONTS.sans.medium },
@@ -21,7 +20,6 @@ const styles = StyleSheet.create({
   ghostWord: { fontSize: 15, fontFamily: FONTS.sans.medium },
   pressed: { opacity: 0.75 },
   quiet: { alignItems: 'center', paddingVertical: 12 },
-  word: { fontSize: 16, fontFamily: FONTS.sans.medium },
   quietWord: { fontSize: 15, fontFamily: FONTS.sans.medium },
   said: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   wide: { alignSelf: 'stretch' },
@@ -39,8 +37,8 @@ const styles = StyleSheet.create({
  *
  * @param children - What it says.
  * @param onPress - What it does, told where it was pressed for a press area that cares.
- * @param tone - Whether it is the thing to press; the thing to press on a page, drawn in the
- *   page's own ink so it is white on a dark page and dark on a light one; the thing to press over
+ * @param tone - Whether it is the thing to press on a page, drawn in the page's own ink so it is
+ *   white on a dark page and dark on a light one, as every client draws it; the thing to press over
  *   artwork, which is white whatever the page is; a soft pill for a thing somebody may want
  *   rather than the thing to press; a thing that can be; or only the press itself.
  * @param icon - What is drawn before what it says, where anything is.
@@ -56,7 +54,7 @@ const styles = StyleSheet.create({
 const Button = ({
   children,
   onPress,
-  tone = 'accent',
+  tone = 'bold',
   icon,
   fills = false,
   isWide = false,
@@ -66,7 +64,6 @@ const Button = ({
   label,
 }: ButtonProps) => {
   const colours = useTheColours();
-  const isAccent = tone === 'accent';
   const isBold = tone === 'bold';
   const isBright = tone === 'bright' || isBold;
   const isGhost = tone === 'ghost';
@@ -78,9 +75,7 @@ const Button = ({
       ? colours.surface
       : isBright
         ? '#000000'
-        : isAccent
-          ? colours.accentContrast
-          : colours.accent;
+        : colours.accent;
 
   return (
     <Pressable
@@ -95,18 +90,9 @@ const Button = ({
         onPress({ x: nativeEvent.locationX, y: nativeEvent.locationY });
       }}
       style={({ pressed }) => [
-        isBare
-          ? styles.bare
-          : isGhost
-            ? styles.ghost
-            : isBright
-              ? styles.bright
-              : isAccent
-                ? styles.accent
-                : styles.quiet,
+        isBare ? styles.bare : isGhost ? styles.ghost : isBright ? styles.bright : styles.quiet,
         fills && styles.fills,
         isWide && styles.wide,
-        isAccent && { backgroundColor: colours.accent },
         isBright && { backgroundColor: filled },
         isGhost && { backgroundColor: withAlpha(colours.text, 0.1) },
         pressed && styles.pressed,
@@ -115,7 +101,7 @@ const Button = ({
       {...(label === undefined ? {} : { accessibilityLabel: label })}
     >
       {isBusy ? (
-        <ActivityIndicator color={isAccent || isBright || isGhost ? said : colours.accent} />
+        <ActivityIndicator color={isBright || isGhost ? said : colours.accent} />
       ) : isBare ? (
         children
       ) : (
@@ -126,13 +112,7 @@ const Button = ({
 
           <Text
             style={[
-              isBright
-                ? styles.brightWord
-                : isGhost
-                  ? styles.ghostWord
-                  : isAccent
-                    ? styles.word
-                    : styles.quietWord,
+              isBright ? styles.brightWord : isGhost ? styles.ghostWord : styles.quietWord,
               { color: said },
             ]}
           >

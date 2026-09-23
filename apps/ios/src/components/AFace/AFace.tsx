@@ -11,6 +11,8 @@ const SIDE = 96;
 
 const LARGE_SIDE = 136;
 
+const ROUNDNESS = 0.06;
+
 const styles = StyleSheet.create({
   face: { alignItems: 'center', gap: 8 },
   initial: { color: '#ffffff', fontSize: 38, fontFamily: FONTS.sans.bold },
@@ -18,7 +20,6 @@ const styles = StyleSheet.create({
   picture: { height: '100%', width: '100%' },
   tile: {
     alignItems: 'center',
-    borderRadius: 20,
     justifyContent: 'center',
     overflow: 'hidden',
   },
@@ -53,7 +54,7 @@ const AFace = ({ profile, picked = null, isLarge = false }: AFaceProps) => {
           styles.tile,
           {
             backgroundColor: picture?.isDrawn === false ? 'transparent' : profile.colour,
-            borderRadius: isLarge ? 28 : 20,
+            borderRadius: Math.round(side * ROUNDNESS),
             height: side,
             width: side,
           },

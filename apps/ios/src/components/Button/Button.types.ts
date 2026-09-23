@@ -9,7 +9,7 @@ type PressedAt = {
 type ButtonProps = {
   children?: ReactNode;
   onPress: (at: PressedAt) => void;
-  tone?: 'accent' | 'bold' | 'bright' | 'ghost' | 'quiet' | 'bare';
+  tone?: 'bold' | 'bright' | 'ghost' | 'quiet' | 'bare';
   icon?: LucideIcon;
   fills?: boolean;
   isWide?: boolean;
