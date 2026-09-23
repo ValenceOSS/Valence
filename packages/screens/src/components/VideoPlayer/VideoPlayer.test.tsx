@@ -11,7 +11,7 @@ import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 import type * as SegmentsModule from '@ValenceClient/playback/fetchSegments';
 import type * as SubtitlesModule from '@ValenceClient/playback/fetchSubtitles';
-import type * as TrickplayModule from '@ValenceScreens/playback/fetchTrickplay';
+import type * as TrickplayModule from '@ValenceClient/playback/fetchTrickplay';
 import type * as CastSenderModule from '@ValenceScreens/playback/castSender';
 import type * as CastPlaybackModule from '@ValenceScreens/playback/castPlayback';
 
@@ -107,9 +107,9 @@ vi.mock('@ValenceClient/playback/fetchSubtitles', async () => {
   return { ...actual, fetchSubtitleTracks: subtitlesMock };
 });
 
-vi.mock('@ValenceScreens/playback/fetchTrickplay', async () => {
+vi.mock('@ValenceClient/playback/fetchTrickplay', async () => {
   const actual = await vi.importActual<typeof TrickplayModule>(
-    '@ValenceScreens/playback/fetchTrickplay',
+    '@ValenceClient/playback/fetchTrickplay',
   );
 
   return {

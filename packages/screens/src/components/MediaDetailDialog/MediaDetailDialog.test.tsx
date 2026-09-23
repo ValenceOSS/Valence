@@ -8,7 +8,7 @@ import type { MediaDetail, MediaSummary } from '@ValenceContracts/schemas/Librar
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import type * as MotionReact from 'motion/react';
-import type * as FetchTrickplay from '@ValenceScreens/playback/fetchTrickplay';
+import type * as FetchTrickplay from '@ValenceClient/playback/fetchTrickplay';
 
 const motion = vi.hoisted(() => ({ isReduced: false }));
 
@@ -42,7 +42,7 @@ vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
 
 const scrubs = vi.hoisted(() => ({ areBuilt: true }));
 
-vi.mock('@ValenceScreens/playback/fetchTrickplay', async (importOriginal) => ({
+vi.mock('@ValenceClient/playback/fetchTrickplay', async (importOriginal) => ({
   ...(await importOriginal<typeof FetchTrickplay>()),
   fetchTrickplay: vi.fn(() =>
     Promise.resolve(scrubs.areBuilt ? { thumbnails: [], width: 320, height: 180 } : null),

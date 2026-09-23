@@ -2,8 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PreviewMomentPicker } from './PreviewMomentPicker';
-import type * as FetchTrickplay from '@ValenceScreens/playback/fetchTrickplay';
-import type { Trickplay } from '@ValenceScreens/playback/fetchTrickplay';
+import type * as FetchTrickplay from '@ValenceClient/playback/fetchTrickplay';
+import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 
 const asked = vi.hoisted(() => ({
   setPreviewMoment: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   clearPreviewMoment: asked.clearPreviewMoment,
 }));
 
-vi.mock('@ValenceScreens/playback/fetchTrickplay', async (importOriginal) => ({
+vi.mock('@ValenceClient/playback/fetchTrickplay', async (importOriginal) => ({
   ...(await importOriginal<typeof FetchTrickplay>()),
   fetchTrickplay: asked.fetchTrickplay,
 }));

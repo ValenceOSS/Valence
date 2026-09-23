@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchTrickplay } from '@ValenceScreens/playback/fetchTrickplay';
+import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
 
 const ASKED_AGAIN_AFTER_MS = 30_000;
 

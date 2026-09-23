@@ -22,7 +22,7 @@ import { describeRequestProgress } from '@ValenceScreens/components/AdminArea/co
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
-import { progressOfRequest } from '@ValenceScreens/requests/progressOfRequest';
+import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { describeRequestFilters } from '@ValenceScreens/requests/describeRequestFilters';
 import { filterRequests } from '@ValenceScreens/requests/filterRequests';
 import { costOfRequest } from '@ValenceScreens/requests/costOfRequest';

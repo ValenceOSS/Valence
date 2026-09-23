@@ -1,6 +1,6 @@
 import { useElementWidth } from './useElementWidth';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
-import { thumbnailAt } from '@ValenceScreens/playback/fetchTrickplay';
+import { thumbnailAt } from '@ValenceClient/playback/fetchTrickplay';
 import type { TrickplayFrameProps } from './TrickplayFrame.types';
 
 const PLACEHOLDER = { width: 320, height: 180 };
