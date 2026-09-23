@@ -14,7 +14,6 @@ import { Flight } from '@ValenceTv/components/Flight/Flight';
 import { Splash } from '@ValenceTv/components/Splash/Splash';
 import { ChooseServer } from '@ValenceTv/screens/ChooseServer/ChooseServer';
 import { EnterPassword } from '@ValenceTv/screens/EnterPassword/EnterPassword';
-import { PhoneHandoff } from '@ValenceTv/screens/PhoneHandoff/PhoneHandoff';
 import { WhoIsWatching } from '@ValenceTv/screens/WhoIsWatching/WhoIsWatching';
 import { SignedIn } from '@ValenceTv/screens/SignedIn/SignedIn';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -28,10 +27,10 @@ type Leg = { from: Spot; to: Spot | null };
 
 type Flights = { profile: ViewerProfile; face: Leg | null; mark: Leg | null };
 
-type Step = { kind: 'faces' } | { kind: 'password'; profile: ViewerProfile } | { kind: 'phone' };
+type Step = { kind: 'faces' } | { kind: 'password'; profile: ViewerProfile };
 
 /**
- * The way in to Valence on a television: which server, who is watching, and their PIN or their
+ * The way in to Valence on a television: which server, who is watching, and their password or their
  * phone — and then everything else, once somebody is in.
  *
  * The face somebody picks, and Valence's mark with it, fly into place on the PIN screen, and on from
@@ -193,19 +192,13 @@ const TheWayIn = () => {
       );
     }
 
-    if (step.kind === 'phone') {
-      return <PhoneHandoff onSignedIn={signedIn} onBack={toFaces} />;
-    }
-
     return (
       <WhoIsWatching
         onChoose={(profile, from) => {
           takeOff(profile, from);
           setStep({ kind: 'password', profile });
         }}
-        onUsePhone={() => {
-          setStep({ kind: 'phone' });
-        }}
+        onSignedIn={signedIn}
         onChangeServer={changeServer}
       />
     );

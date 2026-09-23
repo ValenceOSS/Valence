@@ -1,8 +1,8 @@
-import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { render, waitFor } from '@testing-library/react-native';
 import { askWhetherTheDeviceMayIn, startDeviceGrant } from '@ValenceClient/session/auth';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
 import { holdTheSession } from '@ValenceTv/session/holdTheSession';
-import { PhoneHandoff } from '@ValenceTv/screens/PhoneHandoff/PhoneHandoff';
+import { PhoneSignIn } from '@ValenceTv/components/PhoneSignIn/PhoneSignIn';
 import type { DeviceGrant } from '@ValenceClient/session/auth';
 
 jest.mock('@ValenceClient/session/auth', () => ({
@@ -35,13 +35,12 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-describe('PhoneHandoff', () => {
+describe('PhoneSignIn', () => {
   it('shows a code to scan and where to type it, on the server this television reached', async () => {
     rememberServerAddress('http://192.168.1.10:8420');
 
-    const drawn = await render(<PhoneHandoff onSignedIn={jest.fn()} onBack={jest.fn()} />);
+    const drawn = await render(<PhoneSignIn onSignedIn={jest.fn()} />);
 
-    expect(drawn.getByText('Sign in with your phone')).toBeTruthy();
     expect(await drawn.findByText('WDJB-MJHT')).toBeTruthy();
     expect(drawn.getByText('192.168.1.10:8420/device')).toBeTruthy();
     expect(drawn.getByLabelText("A code to scan with your phone's camera")).toBeTruthy();
@@ -54,7 +53,7 @@ describe('PhoneHandoff', () => {
       .mockResolvedValueOnce({ kind: 'signedIn', token: 'the-token' });
     const onSignedIn = jest.fn();
 
-    await render(<PhoneHandoff onSignedIn={onSignedIn} onBack={jest.fn()} />);
+    await render(<PhoneSignIn onSignedIn={onSignedIn} />);
 
     await waitFor(() => {
       expect(onSignedIn).toHaveBeenCalledTimes(1);
@@ -66,7 +65,7 @@ describe('PhoneHandoff', () => {
   it('says the phone said no and starts again with a new code', async () => {
     jest.mocked(askWhetherTheDeviceMayIn).mockResolvedValueOnce({ kind: 'refused' });
 
-    const drawn = await render(<PhoneHandoff onSignedIn={jest.fn()} onBack={jest.fn()} />);
+    const drawn = await render(<PhoneSignIn onSignedIn={jest.fn()} />);
 
     expect(await drawn.findByText('That phone said no.')).toBeTruthy();
     await waitFor(() => {
@@ -77,7 +76,7 @@ describe('PhoneHandoff', () => {
   it('says a code that ran out has been replaced', async () => {
     jest.mocked(askWhetherTheDeviceMayIn).mockResolvedValueOnce({ kind: 'expired' });
 
-    const drawn = await render(<PhoneHandoff onSignedIn={jest.fn()} onBack={jest.fn()} />);
+    const drawn = await render(<PhoneSignIn onSignedIn={jest.fn()} />);
 
     expect(await drawn.findByText('That code ran out. Here is a new one.')).toBeTruthy();
   });
@@ -87,7 +86,7 @@ describe('PhoneHandoff', () => {
       .mocked(askWhetherTheDeviceMayIn)
       .mockResolvedValueOnce({ kind: 'failed', reason: 'Valence could not be reached.' });
 
-    const drawn = await render(<PhoneHandoff onSignedIn={jest.fn()} onBack={jest.fn()} />);
+    const drawn = await render(<PhoneSignIn onSignedIn={jest.fn()} />);
 
     expect(await drawn.findByText('Valence could not be reached.')).toBeTruthy();
   });
@@ -95,7 +94,7 @@ describe('PhoneHandoff', () => {
   it('says so when the server will not start a sign-in', async () => {
     jest.mocked(startDeviceGrant).mockResolvedValue(null);
 
-    const drawn = await render(<PhoneHandoff onSignedIn={jest.fn()} onBack={jest.fn()} />);
+    const drawn = await render(<PhoneSignIn onSignedIn={jest.fn()} />);
 
     expect(await drawn.findByText('This Valence would not start a sign-in.')).toBeTruthy();
     expect(askWhetherTheDeviceMayIn).not.toHaveBeenCalled();
@@ -106,7 +105,7 @@ describe('PhoneHandoff', () => {
     jest.mocked(startDeviceGrant).mockResolvedValue({ ...GRANT, intervalSeconds: 1 });
     jest.mocked(askWhetherTheDeviceMayIn).mockResolvedValue({ kind: 'slowDown' });
 
-    await render(<PhoneHandoff onSignedIn={jest.fn()} onBack={jest.fn()} />);
+    await render(<PhoneSignIn onSignedIn={jest.fn()} />);
 
     await jest.advanceTimersByTimeAsync(1000);
 
@@ -119,14 +118,5 @@ describe('PhoneHandoff', () => {
     await jest.advanceTimersByTimeAsync(1000);
 
     expect(askWhetherTheDeviceMayIn).toHaveBeenCalledTimes(2);
-  });
-
-  it('goes back to picking a face', async () => {
-    const onBack = jest.fn();
-    const drawn = await render(<PhoneHandoff onSignedIn={jest.fn()} onBack={onBack} />);
-
-    await userEvent.press(drawn.getByRole('button', { name: 'Pick a face instead' }));
-
-    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });

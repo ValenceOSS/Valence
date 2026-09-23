@@ -3,7 +3,7 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
 type WhoIsWatchingProps = {
   onChoose: (profile: ViewerProfile, from: Leaving) => void;
-  onUsePhone: () => void;
+  onSignedIn: () => void;
   onChangeServer: () => void;
 };
 

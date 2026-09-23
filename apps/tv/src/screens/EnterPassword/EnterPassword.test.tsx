@@ -5,7 +5,20 @@ import { holdTheSession } from '@ValenceTv/session/holdTheSession';
 import { EnterPassword } from '@ValenceTv/screens/EnterPassword/EnterPassword';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
-jest.mock('@ValenceClient/session/auth', () => ({ verifyTotp: jest.fn() }));
+jest.mock('@ValenceClient/session/auth', () => ({
+  verifyTotp: jest.fn(),
+  startDeviceGrant: jest.fn(() =>
+    Promise.resolve({
+      deviceCode: 'device-code',
+      userCode: 'WDJB-MJHT',
+      verificationUri: 'http://localhost:8420/device',
+      verificationUriComplete: 'http://localhost:8420/device?user_code=WDJB-MJHT',
+      intervalSeconds: 5,
+      expiresInSeconds: 600,
+    }),
+  ),
+  askWhetherTheDeviceMayIn: jest.fn(() => new Promise(() => undefined)),
+}));
 
 jest.mock('@ValenceClient/profiles/fetchEveryone', () => ({ signInAsProfile: jest.fn() }));
 
@@ -146,6 +159,14 @@ describe('EnterPassword', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Watch' }));
 
     expect(await drawn.findByText('That code is not right.')).toBeTruthy();
+  });
+
+  it('offers signing in from a phone beside the password', async () => {
+    const drawn = await drawEnterPassword();
+
+    expect(drawn.getByText('Use your phone')).toBeTruthy();
+    expect(await drawn.findByText('WDJB-MJHT')).toBeTruthy();
+    expect(drawn.getAllByLabelText('Password').length).toBeGreaterThan(0);
   });
 
   it('goes back to pick someone else', async () => {

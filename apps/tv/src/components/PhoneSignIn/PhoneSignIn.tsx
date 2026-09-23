@@ -1,36 +1,39 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { askWhetherTheDeviceMayIn, startDeviceGrant } from '@ValenceClient/session/auth';
 import { anAddressAPhoneCanReach } from '@ValenceClient/session/anAddressAPhoneCanReach';
 import { whereToTypeTheCode } from '@ValenceClient/session/whereToTypeTheCode';
 import { QrCode } from '@ValenceTv/components/QrCode/QrCode';
-import { Button } from '@ValenceTv/components/Button/Button';
 import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { holdTheSession } from '@ValenceTv/session/holdTheSession';
-import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { DeviceGrant } from '@ValenceClient/session/auth';
-import type { PhoneHandoffProps } from './PhoneHandoff.types';
+import type { PhoneSignInProps } from './PhoneSignIn.types';
 
 const SLOWS_BY_SECONDS = 5;
 
 const A_SECOND = 1000;
 
 /**
- * Signs this television in from a phone: a code to scan or type, and a wait while somebody approves
- * it on a device that already has a keyboard and a session.
+ * Signing in from a phone: a code to scan and the same code to type in at an address, while the
+ * television waits for the phone to say yes. A code that runs out, or a phone that says no, is
+ * answered with a new code rather than a dead end. The address is put on the server this
+ * television reached rather than the one the server believes it is, since a self-hosted server often
+ * calls itself `localhost` — true on its own machine and useless on a phone across the room.
  *
- * The address is put on the server this television reached rather than the one the server believes
- * it is, since a self-hosted server often calls itself `localhost` — true on its own machine and
- * useless on a phone across the room.
- *
- * @param onSignedIn - Told once the phone has let this television in.
- * @param onBack - Told when somebody would rather pick a face and type a PIN.
+ * @param onSignedIn - Told once the phone has let the television in.
+ * @param isStacked - Whether the words sit beneath the code to scan, for a narrow column, rather
+ *   than beside it.
  */
-const PhoneHandoff = ({ onSignedIn, onBack }: PhoneHandoffProps) => {
+const PhoneSignIn = ({ onSignedIn, isStacked = false }: PhoneSignInProps) => {
   const [grant, setGrant] = useState<DeviceGrant | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const toldIn = useRef(onSignedIn);
+
+  useEffect(() => {
+    toldIn.current = onSignedIn;
+  });
 
   useEffect(() => {
     let isAbandoned = false;
@@ -45,7 +48,7 @@ const PhoneHandoff = ({ onSignedIn, onBack }: PhoneHandoffProps) => {
 
       if (outcome.kind === 'signedIn') {
         await holdTheSession(outcome.token);
-        onSignedIn();
+        toldIn.current();
 
         return;
       }
@@ -94,56 +97,51 @@ const PhoneHandoff = ({ onSignedIn, onBack }: PhoneHandoffProps) => {
         clearTimeout(timer);
       }
     };
-  }, [attempt, onSignedIn]);
+  }, [attempt]);
 
   const origin = theServersOrigin() ?? '';
 
+  if (grant === null) {
+    return (
+      <View style={styles.waiting}>
+        {problem === null ? (
+          <ActivityIndicator size="large" color={tokens.colours.text} />
+        ) : (
+          <Text style={styles.problem}>{problem}</Text>
+        )}
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.screen}>
-      <WayInBackdrop />
-      <Text style={styles.title}>Sign in with your phone</Text>
+    <View style={[styles.handoff, isStacked && styles.stacked]}>
+      <QrCode
+        value={anAddressAPhoneCanReach(grant.verificationUriComplete, origin)}
+        size={isStacked ? 300 : 360}
+        label="A code to scan with your phone's camera"
+      />
 
-      {grant === null ? (
-        <ActivityIndicator size="large" color={tokens.colours.text} />
-      ) : (
-        <View style={styles.handoff}>
-          <QrCode
-            value={anAddressAPhoneCanReach(grant.verificationUriComplete, origin)}
-            size={360}
-            label="A code to scan with your phone's camera"
-          />
-
-          <View style={styles.steps}>
-            <Text style={styles.step}>Scan the code with your phone, or go to</Text>
-            <Text style={styles.address}>
-              {whereToTypeTheCode(anAddressAPhoneCanReach(grant.verificationUri, origin))}
-            </Text>
-            <Text style={styles.step}>and enter</Text>
-            <Text style={styles.code}>{grant.userCode}</Text>
-          </View>
-        </View>
-      )}
-
-      {problem === null ? null : <Text style={styles.problem}>{problem}</Text>}
-
-      <Button label="Pick a face instead" variant="secondary" onPress={onBack} hasPreferredFocus />
+      <View style={[styles.steps, isStacked && styles.stackedSteps]}>
+        <Text style={styles.step}>Scan the code with your phone, or go to</Text>
+        <Text style={styles.address}>
+          {whereToTypeTheCode(anAddressAPhoneCanReach(grant.verificationUri, origin))}
+        </Text>
+        <Text style={styles.step}>and enter</Text>
+        <Text style={[styles.code, isStacked && styles.stackedCode]}>{grant.userCode}</Text>
+        {problem === null ? null : <Text style={styles.problem}>{problem}</Text>}
+      </View>
     </View>
   );
 };
 
-PhoneHandoff.displayName = 'PhoneHandoff';
+PhoneSignIn.displayName = 'PhoneSignIn';
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: tokens.colours.canvas,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: tokens.space.lg,
-  },
-  title: { color: tokens.colours.text, fontSize: tokens.type.title, fontWeight: '700' },
+  waiting: { minHeight: 300, alignItems: 'center', justifyContent: 'center' },
   handoff: { flexDirection: 'row', alignItems: 'center', gap: tokens.space.xl },
+  stacked: { flexDirection: 'column', gap: tokens.space.lg },
   steps: { gap: tokens.space.sm, maxWidth: 720 },
+  stackedSteps: { alignItems: 'center' },
   step: { color: tokens.colours.muted, fontSize: tokens.type.body },
   address: { color: tokens.colours.text, fontSize: tokens.type.heading, fontWeight: '600' },
   code: {
@@ -153,7 +151,8 @@ const styles = StyleSheet.create({
     letterSpacing: 12,
     fontFamily: 'Menlo',
   },
+  stackedCode: { fontSize: tokens.type.title },
   problem: { color: tokens.colours.danger, fontSize: tokens.type.small },
 });
 
-export { PhoneHandoff };
+export { PhoneSignIn };

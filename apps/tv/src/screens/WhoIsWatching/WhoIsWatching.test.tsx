@@ -7,6 +7,16 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
 jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () => new Promise(() => undefined),
+  startDeviceGrant: () =>
+    Promise.resolve({
+      deviceCode: 'device-code',
+      userCode: 'WDJB-MJHT',
+      verificationUri: 'http://localhost:8420/device',
+      verificationUriComplete: 'http://localhost:8420/device?user_code=WDJB-MJHT',
+      intervalSeconds: 5,
+      expiresInSeconds: 600,
+    }),
+  askWhetherTheDeviceMayIn: () => new Promise(() => undefined),
 }));
 
 jest.mock('@ValenceTv/layout/whereOnScreen', () => ({
@@ -42,7 +52,7 @@ const aCacheHolding = (profiles: ViewerProfile[] | null): QueryClient => {
 
 type Told = {
   onChoose?: (profile: ViewerProfile, from: object) => void;
-  onUsePhone?: () => void;
+  onSignedIn?: () => void;
   onChangeServer?: () => void;
 };
 
@@ -51,7 +61,7 @@ const drawWhoIsWatching = (cache: QueryClient, told: Told = {}) =>
     <QueryClientProvider client={cache}>
       <WhoIsWatching
         onChoose={told.onChoose ?? jest.fn()}
-        onUsePhone={told.onUsePhone ?? jest.fn()}
+        onSignedIn={told.onSignedIn ?? jest.fn()}
         onChangeServer={told.onChangeServer ?? jest.fn()}
       />
     </QueryClientProvider>,
@@ -103,16 +113,23 @@ describe('WhoIsWatching', () => {
     });
   });
 
-  it('offers signing in with a phone or using another server', async () => {
-    const onUsePhone = jest.fn();
+  it('offers another server, and no phone while there are faces to pick', async () => {
     const onChangeServer = jest.fn();
-    const drawn = await drawWhoIsWatching(aCacheHolding([JO]), { onUsePhone, onChangeServer });
+    const drawn = await drawWhoIsWatching(aCacheHolding([JO]), { onChangeServer });
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Sign in with your phone' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Use a different server' }));
 
-    expect(onUsePhone).toHaveBeenCalledTimes(1);
     expect(onChangeServer).toHaveBeenCalledTimes(1);
+    expect(drawn.queryByText('Sign in with your phone')).toBeNull();
+    expect(drawn.queryByText('WDJB-MJHT')).toBeNull();
+  });
+
+  it('asks for a phone straight away where the household is kept hidden', async () => {
+    const drawn = await drawWhoIsWatching(aCacheHolding([]));
+
+    expect(drawn.getByText('Sign in with your phone')).toBeTruthy();
+    expect(drawn.queryByText('Who is watching?')).toBeNull();
+    expect(await drawn.findByText('WDJB-MJHT')).toBeTruthy();
   });
 
   it('names the server at the foot of the screen', async () => {

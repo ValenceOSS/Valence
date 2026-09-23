@@ -20,6 +20,7 @@ import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { tokens } from '@ValenceTv/theme/tokens';
 import mark from '@ValenceTv/assets/valence-mark.png';
+import { PhoneSignIn } from '@ValenceTv/components/PhoneSignIn/PhoneSignIn';
 import type { WhoIsWatchingProps } from './WhoIsWatching.types';
 
 const FACE_SIZE = 200;
@@ -36,17 +37,19 @@ const STAGGERED = 8;
  * rising into place one after another, and the server named at the foot of the screen. The buttons
  * beneath catch the remote across the whole width, so pressing down from any face reaches them.
  *
- * Picking a face asks for its PIN. A household that would rather not type anything with a remote
- * signs in with a phone instead, which is offered beneath the faces rather than instead of them.
+ * Picking a face asks for its password, with signing in from a phone offered beside it. Where the
+ * server keeps its household to itself there are no faces to pick, and the screen asks for a phone
+ * straight away instead.
  *
  * @param onChoose - Told which face was picked, and where it and Valence's mark were on the screen,
  *   for them to fly from.
- * @param onUsePhone - Told when somebody would rather sign in with their phone.
+ * @param onSignedIn - Told once somebody has signed in from a phone, where there are no faces.
  * @param onChangeServer - Told when somebody wants a different Valence.
  */
-const WhoIsWatching = ({ onChoose, onUsePhone, onChangeServer }: WhoIsWatchingProps) => {
+const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingProps) => {
   const wayIn = useQuery(sessionQueries.wayIn());
   const profiles = wayIn.data?.profiles ?? [];
+  const isHidden = wayIn.isSuccess && profiles.length === 0;
   const faces = useRef(new Map<string, View>());
   const markSpot = useReportSpot();
 
@@ -59,7 +62,9 @@ const WhoIsWatching = ({ onChoose, onUsePhone, onChangeServer }: WhoIsWatchingPr
           <View ref={markSpot.ref} collapsable={false}>
             <Image source={mark} style={MARK} contentFit="contain" />
           </View>
-          <Text style={styles.title}>Who is watching?</Text>
+          <Text style={styles.title}>
+            {isHidden ? 'Sign in with your phone' : 'Who is watching?'}
+          </Text>
         </View>
       </FadeIn>
 
@@ -67,6 +72,8 @@ const WhoIsWatching = ({ onChoose, onUsePhone, onChangeServer }: WhoIsWatchingPr
         <ActivityIndicator size="large" color={tokens.colours.text} />
       ) : wayIn.isError ? (
         <Text style={styles.problem}>This Valence could not be reached.</Text>
+      ) : isHidden ? (
+        <PhoneSignIn onSignedIn={onSignedIn} />
       ) : (
         <FlatList
           horizontal
@@ -116,7 +123,6 @@ const WhoIsWatching = ({ onChoose, onUsePhone, onChangeServer }: WhoIsWatchingPr
 
       <FadeIn isFilling={false} delayMs={STAGGER_MS * STAGGERED}>
         <TVFocusGuideView autoFocus style={styles.actions}>
-          <Button label="Sign in with your phone" variant="secondary" onPress={onUsePhone} />
           <Button label="Use a different server" variant="ghost" onPress={onChangeServer} />
         </TVFocusGuideView>
       </FadeIn>

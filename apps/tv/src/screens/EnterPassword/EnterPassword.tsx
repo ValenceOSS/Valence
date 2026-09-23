@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
 import { verifyTotp } from '@ValenceClient/session/auth';
 import { Face } from '@ValenceTv/components/Face/Face';
+import { PhoneSignIn } from '@ValenceTv/components/PhoneSignIn/PhoneSignIn';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { holdTheSession } from '@ValenceTv/session/holdTheSession';
@@ -14,8 +15,9 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { EnterPasswordProps } from './EnterPassword.types';
 
 /**
- * Asks the face that was picked for its PIN, and then for the code from its authenticator where the
- * account asks for one too.
+ * Signs in the face that was picked, two ways side by side: its password on the left — and then the
+ * code from its authenticator where the account asks for one too — or, on the right, a code to scan
+ * with a phone that is already signed in.
  *
  * @param profile - Who is signing in.
  * @param onSignedIn - Told once they are in, with where their face and Valence's mark are, for them
@@ -53,6 +55,12 @@ const EnterPassword = ({
     const [faceAt, markAt] = await Promise.all([face.whereNow(), markSpot.whereNow()]);
 
     onSignedIn({ face: faceAt, mark: markAt });
+  };
+
+  const inByPhone = () => {
+    void Promise.all([face.whereNow(), markSpot.whereNow()]).then(([faceAt, markAt]) => {
+      onSignedIn({ face: faceAt, mark: markAt });
+    });
   };
 
   const signIn = async () => {
@@ -96,58 +104,73 @@ const EnterPassword = ({
         <Image source={mark} style={MARK} contentFit="contain" />
       </View>
 
-      <View
-        ref={face.ref}
-        collapsable={false}
-        style={isArriving && styles.hidden}
-        onLayout={face.onLayout}
-      >
-        <Face profile={profile} size={200} />
+      <View style={styles.choices}>
+        <View style={styles.side}>
+          <View
+            ref={face.ref}
+            collapsable={false}
+            style={isArriving && styles.hidden}
+            onLayout={face.onLayout}
+          >
+            <Face profile={profile} size={180} />
+          </View>
+
+          <Text style={styles.name}>{profile.name}</Text>
+
+          <View style={styles.form}>
+            {needsCode ? (
+              <TextField
+                key="code"
+                label="The code from your authenticator"
+                value={code}
+                onChange={setCode}
+                onSubmit={() => {
+                  void confirmCode();
+                }}
+                keyboardType="number-pad"
+                hasPreferredFocus
+              />
+            ) : (
+              <TextField
+                key="password"
+                label="Password"
+                value={password}
+                onChange={setPassword}
+                onSubmit={() => {
+                  void signIn();
+                }}
+                isSecret
+                hasPreferredFocus
+              />
+            )}
+
+            {problem === null ? null : <Text style={styles.problem}>{problem}</Text>}
+
+            <Button
+              label={isAsking ? 'Signing in…' : 'Watch'}
+              variant="secondary"
+              isWide
+              isDisabled={isAsking || (needsCode ? code === '' : password === '')}
+              onPress={() => {
+                void (needsCode ? confirmCode() : signIn());
+              }}
+            />
+          </View>
+        </View>
+
+        <View style={styles.between}>
+          <View style={styles.rule} />
+          <Text style={styles.or}>or</Text>
+          <View style={styles.rule} />
+        </View>
+
+        <View style={styles.side}>
+          <Text style={styles.heading}>Use your phone</Text>
+          <PhoneSignIn onSignedIn={inByPhone} isStacked />
+        </View>
       </View>
 
-      <Text style={styles.name}>{profile.name}</Text>
-
-      <View style={styles.form}>
-        {needsCode ? (
-          <TextField
-            key="code"
-            label="The code from your authenticator"
-            value={code}
-            onChange={setCode}
-            onSubmit={() => {
-              void confirmCode();
-            }}
-            keyboardType="number-pad"
-            hasPreferredFocus
-          />
-        ) : (
-          <TextField
-            key="password"
-            label="Password"
-            value={password}
-            onChange={setPassword}
-            onSubmit={() => {
-              void signIn();
-            }}
-            isSecret
-            hasPreferredFocus
-          />
-        )}
-
-        {problem === null ? null : <Text style={styles.problem}>{problem}</Text>}
-
-        <Button
-          label={isAsking ? 'Signing in…' : 'Watch'}
-          variant="secondary"
-          isWide
-          isDisabled={isAsking || (needsCode ? code === '' : password === '')}
-          onPress={() => {
-            void (needsCode ? confirmCode() : signIn());
-          }}
-        />
-
-        <Button label="Someone else" variant="ghost" onPress={onBack} />
-      </View>
+      <Button label="Someone else" variant="ghost" onPress={onBack} />
     </View>
   );
 };
@@ -166,8 +189,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: tokens.space.md,
   },
+  choices: { flexDirection: 'row', alignItems: 'center', gap: tokens.space.xl },
+  side: { width: 700, alignItems: 'center', gap: tokens.space.md },
+  between: { alignSelf: 'stretch', alignItems: 'center', gap: tokens.space.sm },
+  rule: { flex: 1, width: 2, backgroundColor: 'rgba(255,255,255,0.15)' },
+  or: { color: tokens.colours.muted, fontSize: tokens.type.body },
+  heading: { color: tokens.colours.text, fontSize: tokens.type.heading, fontWeight: '700' },
   name: { color: tokens.colours.text, fontSize: tokens.type.title, fontWeight: '700' },
-  form: { width: 760, gap: tokens.space.md, alignItems: 'center' },
+  form: { alignSelf: 'stretch', gap: tokens.space.md, alignItems: 'center' },
   problem: { color: tokens.colours.danger, fontSize: tokens.type.small },
 });
 

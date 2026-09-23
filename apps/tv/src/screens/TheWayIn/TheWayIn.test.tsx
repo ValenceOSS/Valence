@@ -73,18 +73,18 @@ jest.mock('@ValenceTv/screens/ChooseServer/ChooseServer', () => ({
 jest.mock('@ValenceTv/screens/WhoIsWatching/WhoIsWatching', () => ({
   WhoIsWatching: ({
     onChoose,
-    onUsePhone,
+    onSignedIn,
     onChangeServer,
   }: {
     onChoose: (profile: ViewerProfile, from: Leaving) => void;
-    onUsePhone: () => void;
+    onSignedIn: () => void;
     onChangeServer: () => void;
   }) =>
     mockStandIn('Who is watching', {
       'Pick Jo': () => {
         onChoose(mockJo, { face: mockSpot, mark: mockSpot });
       },
-      'Use a phone': onUsePhone,
+      'Phone approved': onSignedIn,
       'Use another server': onChangeServer,
     }),
 }));
@@ -113,11 +113,6 @@ jest.mock('@ValenceTv/screens/EnterPassword/EnterPassword', () => ({
         onMarkAt(mockSpot);
       },
     }),
-}));
-
-jest.mock('@ValenceTv/screens/PhoneHandoff/PhoneHandoff', () => ({
-  PhoneHandoff: ({ onSignedIn, onBack }: { onSignedIn: () => void; onBack: () => void }) =>
-    mockStandIn('Phone', { 'Phone approved': onSignedIn, 'Pick a face': onBack }),
 }));
 
 jest.mock('@ValenceTv/screens/SignedIn/SignedIn', () => ({
@@ -242,30 +237,15 @@ describe('TheWayIn', () => {
     expect(await drawn.findByText('Signed in as Marques, arriving')).toBeTruthy();
   });
 
-  it('signs in with a phone instead', async () => {
+  it('signs in with a phone where there are no faces to pick', async () => {
     rememberServerAddress('http://valence.local:8420');
 
     const drawn = await drawTheWayIn();
-
-    await userEvent.press(await drawn.findByRole('button', { name: 'Use a phone' }));
-
-    expect(drawn.getByText('Phone')).toBeTruthy();
 
     jest.mocked(fetchSession).mockResolvedValue(MARQUES);
-    await userEvent.press(drawn.getByRole('button', { name: 'Phone approved' }));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Phone approved' }));
 
     expect(await drawn.findByText('Signed in as Marques')).toBeTruthy();
-  });
-
-  it('goes back to the faces from the phone', async () => {
-    rememberServerAddress('http://valence.local:8420');
-
-    const drawn = await drawTheWayIn();
-
-    await userEvent.press(await drawn.findByRole('button', { name: 'Use a phone' }));
-    await userEvent.press(drawn.getByRole('button', { name: 'Pick a face' }));
-
-    expect(drawn.getByText('Who is watching')).toBeTruthy();
   });
 
   it('asks for another server when the one it had stops answering', async () => {
