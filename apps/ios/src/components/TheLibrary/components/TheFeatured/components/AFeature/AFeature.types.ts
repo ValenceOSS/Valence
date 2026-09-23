@@ -1,4 +1,5 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { VideoPlayer } from 'expo-video';
 
 type AFeatureProps = {
   media: MediaSummary;
@@ -8,6 +9,7 @@ type AFeatureProps = {
   onEnded: () => void;
   onPlay: () => void;
   onMoreInfo: () => void;
+  onClip?: (player: VideoPlayer | null) => void;
 };
 
 export type { AFeatureProps };

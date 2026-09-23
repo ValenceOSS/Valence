@@ -47,8 +47,18 @@ type AShelfOf = { kind: 'rail'; rail: Rail } | { kind: 'comingUp' };
  * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
+ * @param onShowing - Told which title the hero is showing, so the page can take its colours.
+ * @param onClip - Told the hero's clip while it plays.
  */
-const TheHome = ({ header, watchable, onWatch, onLookAt, onLookAtShow }: TheHomeProps) => {
+const TheHome = ({
+  header,
+  watchable,
+  onWatch,
+  onLookAt,
+  onLookAtShow,
+  onShowing,
+  onClip,
+}: TheHomeProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
   const pulling = usePullToRefresh();
@@ -121,6 +131,8 @@ const TheHome = ({ header, watchable, onWatch, onLookAt, onLookAtShow }: TheHome
           {header}
           <TheFeatured
             items={featured}
+            onShowing={onShowing}
+            onClip={onClip}
             onWatch={onWatch}
             onLookAt={onLookAt}
             onLookAtShow={onLookAtShow}
@@ -143,7 +155,7 @@ const TheHome = ({ header, watchable, onWatch, onLookAt, onLookAtShow }: TheHome
         paddingHorizontal: SCREEN_EDGE,
         paddingTop: room.top + SCREEN_EDGE,
       }}
-      style={[styles.whole, { backgroundColor: colours.surface }]}
+      style={styles.whole}
       keyboardShouldPersistTaps="handled"
       refreshControl={pulling}
     />

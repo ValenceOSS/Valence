@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Image, Linking, StyleSheet, View } from 'react-native';
-import { CircleCheck, Download, EyeOff, Film, Heart } from 'lucide-react-native';
+import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import {
+  CircleCheck,
+  Download,
+  EyeOff,
+  Film,
+  Heart,
+  Play,
+  RotateCcw,
+  Tv,
+} from 'lucide-react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -16,6 +25,7 @@ import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { EXTRA_KIND_LABELS } from '@ValenceContracts/schemas/Library';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
 import { AShelf } from '@ValencePhone/components/AShelf/AShelf';
+import { ATitleHead } from '@ValencePhone/components/ATitleHead/ATitleHead';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
@@ -33,12 +43,16 @@ import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { ATitleProps } from './ATitle.types';
 
 const styles = StyleSheet.create({
-  action: { alignItems: 'center', gap: 4, minWidth: 64 },
-  actions: { flexDirection: 'row', gap: 20, justifyContent: 'center' },
-  backdrop: { aspectRatio: 16 / 9, borderRadius: 14, width: '100%' },
+  action: { alignItems: 'center', gap: 4, minWidth: 76 },
+  actions: {
+    columnGap: 4,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    rowGap: 16,
+  },
   detail: { gap: 2, width: '47%' },
   details: { columnGap: 12, flexDirection: 'row', flexWrap: 'wrap', rowGap: 12 },
-  logo: { height: 64, width: '75%' },
 });
 
 /**
@@ -117,26 +131,18 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   const details = describeTitleDetails(metadata);
 
   return (
-    <Screen scrolls onBack={onBack}>
-      {metadata.hasBackdrop ? (
-        <Image
-          style={[styles.backdrop, { backgroundColor: colours.surfaceRaised }]}
-          source={{ uri: onThisServer(`/api/media/${title.id}/image/backdrop`) }}
-          accessibilityIgnoresInvertColors
+    <Screen
+      scrolls
+      onBack={onBack}
+      head={
+        <ATitleHead
+          mediaId={title.id}
+          hasBackdrop={metadata.hasBackdrop}
+          letteredBy={metadata.hasLogo ? title.id : null}
+          title={title.title}
         />
-      ) : null}
-
-      {metadata.hasLogo ? (
-        <Image
-          style={styles.logo}
-          resizeMode="contain"
-          source={{ uri: onThisServer(`/api/media/${title.id}/image/logo?at=full`) }}
-          accessibilityLabel={title.title}
-        />
-      ) : (
-        <Words size="title">{title.title}</Words>
-      )}
-
+      }
+    >
       {seriesTitle === null ? null : <Words tone="muted">{seriesTitle}</Words>}
 
       <Words tone="muted">{facts.join(' · ')}</Words>
@@ -158,34 +164,15 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
         />
       ) : null}
 
-      {carryOnAt === null ? (
-        <Button
-          onPress={() => {
-            onWatch(playing, 0);
-          }}
-        >
-          Watch
-        </Button>
-      ) : (
-        <>
-          <Button
-            onPress={() => {
-              onWatch(playing, carryOnAt);
-            }}
-          >
-            {`Carry on from ${howLongItRuns(carryOnAt)}`}
-          </Button>
-
-          <Button
-            tone="quiet"
-            onPress={() => {
-              onWatch(playing, 0);
-            }}
-          >
-            Start again
-          </Button>
-        </>
-      )}
+      <Button
+        tone="bold"
+        icon={Play}
+        onPress={() => {
+          onWatch(playing, carryOnAt ?? 0);
+        }}
+      >
+        {carryOnAt === null ? 'Play' : `Resume from ${howLongItRuns(carryOnAt)}`}
+      </Button>
 
       <View style={styles.actions}>
         <Button
@@ -221,6 +208,21 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
             <View style={styles.action}>
               <Icon of={Film} colour={colours.text} />
               <Words size="small">Trailer</Words>
+            </View>
+          </Button>
+        )}
+
+        {carryOnAt === null ? null : (
+          <Button
+            tone="bare"
+            label="Start again"
+            onPress={() => {
+              onWatch(playing, 0);
+            }}
+          >
+            <View style={styles.action}>
+              <Icon of={RotateCcw} colour={colours.text} />
+              <Words size="small">Start again</Words>
             </View>
           </Button>
         )}
@@ -273,23 +275,27 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
             <Words size="small">Hide</Words>
           </View>
         </Button>
-      </View>
 
-      {programme === null ? null : (
-        <Button
-          tone="quiet"
-          onPress={() => {
-            onLookAtShow(programme.libraryId, programme.id);
-          }}
-        >
-          {`Open ${programme.title}`}
-        </Button>
-      )}
+        {programme === null ? null : (
+          <Button
+            tone="bare"
+            label={`Open ${programme.title}`}
+            onPress={() => {
+              onLookAtShow(programme.libraryId, programme.id);
+            }}
+          >
+            <View style={styles.action}>
+              <Icon of={Tv} colour={colours.text} />
+              <Words size="small">Programme</Words>
+            </View>
+          </Button>
+        )}
+      </View>
 
       <TheStars subject={{ mediaId }} />
 
       {metadata.tagline === null || metadata.tagline === undefined ? null : (
-        <Words>{metadata.tagline}</Words>
+        <Words isProse>{metadata.tagline}</Words>
       )}
 
       {metadata.overview === null || metadata.overview === undefined ? null : (

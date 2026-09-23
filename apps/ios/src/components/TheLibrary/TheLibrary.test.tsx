@@ -79,6 +79,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -99,6 +103,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -121,6 +129,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -147,6 +159,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -167,6 +183,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -188,6 +208,10 @@ describe('TheLibrary', () => {
           onLookAt={onLookAt}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -221,6 +245,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -243,6 +271,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -274,6 +306,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -294,6 +330,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -325,6 +365,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -359,6 +403,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -394,6 +442,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={onLookAtShow}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -424,6 +476,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );
@@ -455,6 +511,10 @@ describe('TheLibrary', () => {
           onLookAt={jest.fn()}
           onLookAtShow={jest.fn()}
           onNotifications={jest.fn()}
+          onAlbum={jest.fn()}
+          onArtist={jest.fn()}
+          onPlaylist={jest.fn()}
+          onLiked={jest.fn()}
         />,
       ),
     );

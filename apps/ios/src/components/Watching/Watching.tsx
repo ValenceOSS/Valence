@@ -28,7 +28,6 @@ import { thePhonesProfile } from '@ValencePhone/playback/thePhonesProfile';
 import { spatialiseEvenStereo } from '@ValencePhone/playback/spatialiseEvenStereo';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValencePhone/platform/theCookiesThisPhoneHolds';
-import { holdThisPhoneUpright } from '@ValencePhone/platform/holdThisPhoneUpright';
 import { turnThisPhoneSideways } from '@ValencePhone/platform/turnThisPhoneSideways';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
@@ -36,6 +35,8 @@ import { Words } from '@ValencePhone/components/Words/Words';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { TheControls } from '@ValencePhone/components/Watching/components/TheControls/TheControls';
+import { TheLeap } from '@ValencePhone/components/Watching/components/TheLeap/TheLeap';
+import { useTapsOnThePicture } from '@ValencePhone/components/Watching/useTapsOnThePicture';
 import { TheChoices } from '@ValencePhone/components/Watching/components/TheChoices/TheChoices';
 import { TheNotice } from '@ValencePhone/components/Watching/components/TheNotice/TheNotice';
 import { TheSkip } from '@ValencePhone/components/Watching/components/TheSkip/TheSkip';
@@ -130,6 +131,9 @@ const styles = StyleSheet.create({
  *
  * Thumbnails for the scrubber are asked for again every few seconds until they exist, since the
  * first time a film is asked about the server only starts making them.
+ *
+ * Two quick taps on either half of the picture move ten seconds that way, as YouTube does, and one
+ * tap shows or hides the controls.
  *
  * Whoever runs the server is obeyed as on the web: stopped, the film stops and says why; paused, it
  * pauses and holds the reason over the picture; a message of theirs is held there too until it is
@@ -285,6 +289,19 @@ const Watching = ({
     setLastTouched(Date.now());
   }, []);
 
+  const toggleTheControls = useCallback(() => {
+    setAreControlsUp((up) => !up);
+  }, []);
+
+  const leapBy = useCallback(
+    (by: number) => {
+      player.seekBy(by);
+    },
+    [player],
+  );
+
+  const { tapped, leap } = useTapsOnThePicture(screen.width, toggleTheControls, leapBy);
+
   const readInstead = useCallback(
     (trackId: string) => {
       const wanted = (tracks.data ?? []).find((track) => track.id === trackId) ?? null;
@@ -330,13 +347,7 @@ const Watching = ({
     };
   }, [sessionId, clientId, player]);
 
-  useEffect(() => {
-    void turnThisPhoneSideways();
-
-    return () => {
-      void holdThisPhoneUpright();
-    };
-  }, []);
+  useEffect(() => turnThisPhoneSideways(), []);
 
   useEffect(() => {
     spatialiseEvenStereo(player);
@@ -505,9 +516,7 @@ const Watching = ({
         tone="bare"
         fills
         label={areControlsUp ? 'Hide the controls' : 'Show the controls'}
-        onPress={() => {
-          setAreControlsUp((up) => !up);
-        }}
+        onPress={tapped}
       />
 
       {skippable === null ? null : (
@@ -575,6 +584,8 @@ const Watching = ({
           }
         />
       ) : null}
+
+      {leap === null ? null : <TheLeap leap={leap} />}
 
       {isPickingAnEpisode && onChooseEpisode !== undefined ? (
         <TheChoices

@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
+import { FONTS } from '@ValencePhone/theme/FONTS';
 import type { TheSkipProps } from './TheSkip.types';
 
 const OVER_THE_PICTURE = '#ffffff';
@@ -10,7 +11,7 @@ const BEHIND_IT = 'rgba(20, 20, 20, 0.82)';
 const EDGE = 24;
 
 const styles = StyleSheet.create({
-  said: { color: OVER_THE_PICTURE, fontSize: 14, fontWeight: '600' },
+  said: { color: OVER_THE_PICTURE, fontSize: 14, fontFamily: FONTS.sans.semibold },
   sitting: {
     backgroundColor: BEHIND_IT,
     borderColor: 'rgba(255, 255, 255, 0.25)',

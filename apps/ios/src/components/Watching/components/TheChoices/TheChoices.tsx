@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Check, X } from 'lucide-react-native';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
+import { FONTS } from '@ValencePhone/theme/FONTS';
 import type { TheChoicesProps } from './TheChoices.types';
 
 const OVER_THE_PICTURE = '#ffffff';
@@ -16,17 +17,17 @@ const EDGE = 24;
 const styles = StyleSheet.create({
   behind: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   chosenRow: { backgroundColor: 'rgba(255, 255, 255, 0.08)' },
-  detail: { color: QUIETLY, fontSize: 12 },
+  detail: { color: QUIETLY, fontFamily: FONTS.sans.regular, fontSize: 12 },
   heading: {
     color: QUIETLY,
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: FONTS.sans.bold,
     letterSpacing: 0.8,
     paddingBottom: 6,
     textTransform: 'uppercase',
   },
   inside: { gap: 22, paddingBottom: EDGE },
-  label: { color: OVER_THE_PICTURE, flex: 1, fontSize: 15 },
+  label: { color: OVER_THE_PICTURE, flex: 1, fontFamily: FONTS.sans.regular, fontSize: 15 },
   panel: {
     backgroundColor: PANEL,
     bottom: 0,
@@ -44,7 +45,7 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   top: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-  topWord: { color: OVER_THE_PICTURE, fontSize: 17, fontWeight: '600' },
+  topWord: { color: OVER_THE_PICTURE, fontSize: 17, fontFamily: FONTS.sans.semibold },
 });
 
 /**

@@ -7,6 +7,7 @@ import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { TheFrameAt } from '@ValencePhone/components/Watching/components/TheFrameAt/TheFrameAt';
 import { Slider } from '@ValencePhone/components/Slider/Slider';
 import { asAClock } from '@ValencePhone/components/Watching/asAClock';
+import { FONTS } from '@ValencePhone/theme/FONTS';
 import type { TheControlsProps } from './TheControls.types';
 
 const OVER_THE_PICTURE = '#ffffff';
@@ -23,13 +24,23 @@ const A_STEP = 10;
 
 const EDGE = 24;
 
-const FRAME_WIDE = 168;
+const FRAME_WIDE = 224;
 
 const styles = StyleSheet.create({
-  clock: { color: OVER_THE_PICTURE, fontSize: 13, fontVariant: ['tabular-nums'] },
+  clock: {
+    color: OVER_THE_PICTURE,
+    fontFamily: FONTS.sans.regular,
+    fontSize: 13,
+    fontVariant: ['tabular-nums'],
+  },
   foot: { gap: 2, paddingHorizontal: EDGE },
   frameAt: { alignItems: 'center', bottom: '100%', gap: 4, marginBottom: 8, position: 'absolute' },
-  frameClock: { color: '#ffffff', fontSize: 13, fontVariant: ['tabular-nums'], fontWeight: '600' },
+  frameClock: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontVariant: ['tabular-nums'],
+    fontFamily: FONTS.sans.semibold,
+  },
   head: { alignItems: 'center', flexDirection: 'row', gap: 14 },
   middle: {
     alignItems: 'center',
@@ -47,13 +58,13 @@ const styles = StyleSheet.create({
   stepHowFar: {
     color: OVER_THE_PICTURE,
     fontSize: 9,
-    fontWeight: '700',
+    fontFamily: FONTS.sans.bold,
     position: 'absolute',
   },
   times: { flexDirection: 'row', justifyContent: 'space-between' },
   said: { alignItems: 'baseline', flex: 1, flexDirection: 'row', gap: 7 },
-  title: { color: OVER_THE_PICTURE, fontSize: 15, fontWeight: '600' },
-  year: { color: QUIETLY, fontSize: 13 },
+  title: { color: OVER_THE_PICTURE, fontSize: 15, fontFamily: FONTS.sans.semibold },
+  year: { color: QUIETLY, fontFamily: FONTS.sans.regular, fontSize: 13 },
   whole: {
     backgroundColor: SCRIM,
     bottom: 0,

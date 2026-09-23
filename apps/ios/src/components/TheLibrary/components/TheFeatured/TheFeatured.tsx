@@ -29,8 +29,17 @@ const styles = StyleSheet.create({
  * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
+ * @param onShowing - Told which title is showing, whenever that changes.
+ * @param onClip - Told the showing title's clip while it plays.
  */
-const TheFeatured = ({ items, onWatch, onLookAt, onLookAtShow }: TheFeaturedProps) => {
+const TheFeatured = ({
+  items,
+  onWatch,
+  onLookAt,
+  onLookAtShow,
+  onShowing,
+  onClip,
+}: TheFeaturedProps) => {
   const colours = useTheColours();
   const { width } = useWindowDimensions();
   const watched = useQuery(viewingQueries.progress());
@@ -39,6 +48,11 @@ const TheFeatured = ({ items, onWatch, onLookAt, onLookAtShow }: TheFeaturedProp
   const pager = useRef<ScrollView>(null);
   const across = width - SCREEN_EDGE * 2;
   const step = across + GAP;
+  const showing = items[at] ?? null;
+
+  useEffect(() => {
+    onShowing?.(showing);
+  }, [showing, onShowing]);
 
   const showNext = () => {
     const next = items.length === 0 ? 0 : (at + 1) % items.length;
@@ -92,6 +106,7 @@ const TheFeatured = ({ items, onWatch, onLookAt, onLookAtShow }: TheFeaturedProp
               isShowing={index === at}
               resumeAt={resumeFor(progress, media.id)}
               onEnded={showNext}
+              {...(index === at && onClip !== undefined ? { onClip } : {})}
               onPlay={() => {
                 onWatch(media.id, resumeFor(progress, media.id) ?? 0);
               }}

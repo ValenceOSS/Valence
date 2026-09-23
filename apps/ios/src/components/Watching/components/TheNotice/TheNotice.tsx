@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
+import { FONTS } from '@ValencePhone/theme/FONTS';
 import type { TheNoticeProps } from './TheNotice.types';
 
 const OVER_THE_PICTURE = '#ffffff';
@@ -8,9 +9,14 @@ const OVER_THE_PICTURE = '#ffffff';
 const BEHIND_IT = 'rgba(20, 20, 20, 0.88)';
 
 const styles = StyleSheet.create({
-  dismiss: { color: OVER_THE_PICTURE, fontSize: 14, fontWeight: '600', opacity: 0.75 },
+  dismiss: {
+    color: OVER_THE_PICTURE,
+    fontSize: 14,
+    fontFamily: FONTS.sans.semibold,
+    opacity: 0.75,
+  },
   place: { alignItems: 'center', left: 0, position: 'absolute', right: 0 },
-  said: { color: OVER_THE_PICTURE, flexShrink: 1, fontSize: 15 },
+  said: { color: OVER_THE_PICTURE, flexShrink: 1, fontFamily: FONTS.sans.regular, fontSize: 15 },
   sitting: {
     alignItems: 'center',
     backgroundColor: BEHIND_IT,

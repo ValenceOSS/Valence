@@ -1,4 +1,5 @@
 import { lockAsync, OrientationLock } from 'expo-screen-orientation';
+import { settleTheOrientation } from './settleTheOrientation';
 import { turnThisPhoneSideways } from './turnThisPhoneSideways';
 
 beforeEach(() => {
@@ -7,20 +8,41 @@ beforeEach(() => {
 
 describe('turnThisPhoneSideways', () => {
   it('turns the phone, rather than waiting to be asked', async () => {
-    await turnThisPhoneSideways();
+    const letGo = turnThisPhoneSideways();
 
-    expect(lockAsync).toHaveBeenCalledWith(OrientationLock.LANDSCAPE);
+    await settleTheOrientation(0);
+
+    expect(lockAsync).toHaveBeenLastCalledWith(OrientationLock.LANDSCAPE);
+
+    letGo();
   });
 
   it('allows either way round, so nobody has to hold it the one way', async () => {
-    await turnThisPhoneSideways();
+    const letGo = turnThisPhoneSideways();
+
+    await settleTheOrientation(0);
 
     expect(lockAsync).not.toHaveBeenCalledWith(OrientationLock.LANDSCAPE_LEFT);
+
+    letGo();
   });
 
-  it('carries on where the phone would not be told', async () => {
-    jest.mocked(lockAsync).mockRejectedValue(new Error('no'));
+  it('turns it back upright once it is let go', async () => {
+    turnThisPhoneSideways()();
 
-    await expect(turnThisPhoneSideways()).resolves.toBeUndefined();
+    await settleTheOrientation(0);
+
+    expect(lockAsync).toHaveBeenLastCalledWith(OrientationLock.PORTRAIT_UP);
+  });
+
+  it('stays sideways when let go and taken again at once, as a refreshed screen does', async () => {
+    turnThisPhoneSideways()();
+    const letGo = turnThisPhoneSideways();
+
+    await settleTheOrientation(0);
+
+    expect(lockAsync).toHaveBeenLastCalledWith(OrientationLock.LANDSCAPE);
+
+    letGo();
   });
 });

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Image, Linking, StyleSheet, View } from 'react-native';
-import { EyeOff, Film } from 'lucide-react-native';
+import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { EyeOff, Film, Play } from 'lucide-react-native';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -14,6 +14,7 @@ import { useHidden } from '@ValenceClient/library/useHidden';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { AnEpisode } from '@ValencePhone/components/AShow/components/AnEpisode/AnEpisode';
+import { ATitleHead } from '@ValencePhone/components/ATitleHead/ATitleHead';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
@@ -21,7 +22,6 @@ import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow
 import { TheStars } from '@ValencePhone/components/TheStars/TheStars';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useConfirmHiding } from '@ValencePhone/hooks/useConfirmHiding';
-import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { AShowProps } from './AShow.types';
 
@@ -30,7 +30,6 @@ const OTHER = 'other';
 const styles = StyleSheet.create({
   action: { alignItems: 'center', gap: 4, minWidth: 64 },
   actions: { flexDirection: 'row', gap: 20, justifyContent: 'center' },
-  backdrop: { aspectRatio: 16 / 9, borderRadius: 14, width: '100%' },
   missing: { flexDirection: 'row', gap: 12, opacity: 0.55, paddingVertical: 12 },
   missingWords: { flex: 1, gap: 3 },
   number: { minWidth: 28 },
@@ -109,15 +108,18 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
   ].filter((fact) => fact !== null);
 
   return (
-    <Screen scrolls onBack={onBack}>
-      <Image
-        style={[styles.backdrop, { backgroundColor: colours.surfaceRaised }]}
-        source={{ uri: onThisServer(`/api/media/${show.coverMediaId}/image/backdrop`) }}
-        accessibilityIgnoresInvertColors
-      />
-
-      <Words size="title">{show.title}</Words>
-
+    <Screen
+      scrolls
+      onBack={onBack}
+      head={
+        <ATitleHead
+          mediaId={show.coverMediaId}
+          hasBackdrop
+          letteredBy={held.find((episode) => episode.hasLogo)?.id ?? null}
+          title={show.title}
+        />
+      }
+    >
       <Words tone="muted">{facts.join(' · ')}</Words>
 
       {(show.genres ?? []).length === 0 ? null : (
@@ -134,6 +136,8 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
 
       {pickingUp === null ? null : (
         <Button
+          tone="bold"
+          icon={Play}
           onPress={() => {
             onWatch(pickingUp.episode.id, pickingUp.startSeconds);
           }}

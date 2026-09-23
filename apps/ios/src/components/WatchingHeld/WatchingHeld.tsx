@@ -4,7 +4,6 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { sourceForAFile } from '@ValenceClient/downloads/keepingFiles';
 import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { BackArrow } from '@ValencePhone/components/BackArrow/BackArrow';
-import { holdThisPhoneUpright } from '@ValencePhone/platform/holdThisPhoneUpright';
 import { turnThisPhoneSideways } from '@ValencePhone/platform/turnThisPhoneSideways';
 import type { WatchingHeldProps } from './WatchingHeld.types';
 
@@ -34,8 +33,7 @@ const WatchingHeld = ({ file, onDone }: WatchingHeldProps) => {
   });
 
   useEffect(() => {
-    void turnThisPhoneSideways();
-
+    const letGo = turnThisPhoneSideways();
     const remembering = setInterval(() => {
       if (player.duration > 0) {
         rememberWatchedOffline(file.mediaId, player.currentTime, player.duration);
@@ -49,7 +47,7 @@ const WatchingHeld = ({ file, onDone }: WatchingHeldProps) => {
         rememberWatchedOffline(file.mediaId, player.currentTime, player.duration);
       }
 
-      void holdThisPhoneUpright();
+      letGo();
     };
   }, [player, file.mediaId]);
 

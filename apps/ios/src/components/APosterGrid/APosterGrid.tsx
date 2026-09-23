@@ -3,7 +3,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { POSTER_WIDTH } from '@ValencePhone/components/APoster/POSTER_WIDTH';
 import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
 import { usePullToRefresh } from '@ValencePhone/hooks/usePullToRefresh';
-import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { APosterGridProps } from './APosterGrid.types';
 
 const GAP = 18;
@@ -27,7 +26,6 @@ const styles = StyleSheet.create({
  * @param drawn - Draws one.
  */
 const APosterGrid = <Item,>({ header, items, keyOf, drawn }: APosterGridProps<Item>) => {
-  const colours = useTheColours();
   const room = useSafeAreaInsets();
   const pulling = usePullToRefresh();
   const { width } = useWindowDimensions();
@@ -48,7 +46,7 @@ const APosterGrid = <Item,>({ header, items, keyOf, drawn }: APosterGridProps<It
         paddingHorizontal: SCREEN_EDGE,
         paddingTop: room.top + SCREEN_EDGE,
       }}
-      style={[styles.whole, { backgroundColor: colours.surface }]}
+      style={styles.whole}
       keyboardShouldPersistTaps="handled"
       refreshControl={pulling}
     />

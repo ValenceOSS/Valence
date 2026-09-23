@@ -1,27 +1,21 @@
 import { useEffect, useState } from 'react';
-import { useEvent, useEventListener } from 'expo';
 import { useQuery } from '@tanstack/react-query';
-import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
-import { useVideoPlayer, VideoView } from 'expo-video';
-import { Info, Play, Volume2, VolumeX } from 'lucide-react-native';
+import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Info, Play } from 'lucide-react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { readPreviewState } from '@ValenceClient/playback/readPreviewState';
-import { readSoundPreference, saveSoundPreference } from '@ValenceClient/playback/soundPreference';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
+import { APreview } from '@ValencePhone/components/APreview/APreview';
+import { ASoundSwitch } from '@ValencePhone/components/ASoundSwitch/ASoundSwitch';
 import { AScrim } from '@ValencePhone/components/AScrim/AScrim';
+import { ATitleLogo } from '@ValencePhone/components/ATitleLogo/ATitleLogo';
 import { TheBadges } from '@ValencePhone/components/TheBadges/TheBadges';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { howLongItRuns } from '@ValencePhone/components/ATitle/howLongItRuns';
-import { hushThePlayer } from '@ValencePhone/playback/hushThePlayer';
-import { onThisServer } from '@ValencePhone/platform/onThisServer';
-import { theCookiesThisPhoneHolds } from '@ValencePhone/platform/theCookiesThisPhoneHolds';
+import { useSoundPreference } from '@ValencePhone/hooks/useSoundPreference';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
-import type { VideoSource } from 'expo-video';
 import type { AFeatureProps } from './AFeature.types';
-
-const SETTLE_FOR = 2500;
 
 const TELL_FOR = 8000;
 
@@ -34,8 +28,6 @@ const LOGO_AT_MOST = 0.7;
 const ARRIVES_FROM = 1.06;
 
 const ARRIVES_OVER = 1100;
-
-const FADES_IN_OVER = 700;
 
 const RISES_BY = 14;
 
@@ -67,20 +59,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.22)',
     borderRadius: 12,
     flexDirection: 'row',
+    flexGrow: 1,
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  play: {
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-  },
-  sound: { padding: 14, position: 'absolute', right: 6, top: 6 },
+  sound: { position: 'absolute', right: 6, top: 6 },
   whole: { borderRadius: 20, overflow: 'hidden' },
 });
 
@@ -101,6 +85,7 @@ const styles = StyleSheet.create({
  * @param onEnded - Told when its clip has played through.
  * @param onPlay - Told to play it.
  * @param onMoreInfo - Told to open its page.
+ * @param onClip - Told its clip's player while it plays, so the page can draw it behind itself.
  */
 const AFeature = ({
   media,
@@ -110,16 +95,14 @@ const AFeature = ({
   onEnded,
   onPlay,
   onMoreInfo,
+  onClip,
 }: AFeatureProps) => {
   const colours = useTheColours();
   const detail = useQuery(libraryQueries.detail(media.id));
-  const [clip, setClip] = useState<VideoSource | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isTelling, setIsTelling] = useState(true);
-  const [isMuted, setIsMuted] = useState(() => readSoundPreference() === 'muted');
-  const [logoWide, setLogoWide] = useState<number | null>(null);
-  const [hasNoLogo, setHasNoLogo] = useState(false);
+  const { isMuted, toggle } = useSoundPreference();
   const [arriving] = useState(() => new Animated.Value(ARRIVES_FROM));
-  const [showing] = useState(() => new Animated.Value(0));
   const [rising] = useState(() => Array.from({ length: PARTS }, () => new Animated.Value(0)));
   const [telling] = useState(() => new Animated.Value(1));
   const [toldHigh, setToldHigh] = useState<number | null>(null);
@@ -128,7 +111,6 @@ const AFeature = ({
 
   useEffect(() => {
     if (!isShowing) {
-      setClip(null);
       arriving.setValue(ARRIVES_FROM);
       rising.forEach((part) => {
         part.setValue(0);
@@ -158,22 +140,6 @@ const AFeature = ({
       ),
     ]).start();
 
-    const moved = new AbortController();
-    const hasMoved = () => moved.signal.aborted;
-    const uri = onThisServer(`/api/media/${media.id}/preview`);
-    const settling = setTimeout(() => {
-      void readPreviewState(uri).then(async (state) => {
-        if (state !== 'ready' || hasMoved()) {
-          return;
-        }
-
-        const cookie = await theCookiesThisPhoneHolds(uri);
-
-        if (!hasMoved()) {
-          setClip(cookie === null ? { uri } : { uri, headers: { Cookie: cookie } });
-        }
-      });
-    }, SETTLE_FOR);
     telling.setValue(1);
 
     const folding = setTimeout(() => {
@@ -188,34 +154,9 @@ const AFeature = ({
     }, TELL_FOR);
 
     return () => {
-      moved.abort();
-      clearTimeout(settling);
       clearTimeout(folding);
     };
   }, [isShowing, media.id, arriving, rising, telling]);
-
-  const player = useVideoPlayer(clip, (ready) => {
-    ready.muted = isMuted;
-    ready.loop = false;
-    ready.play();
-  });
-  const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
-  const isPlaying = clip !== null && moving.isPlaying;
-
-  useEventListener(player, 'playToEnd', onEnded);
-
-  useEffect(() => {
-    hushThePlayer(player, isMuted);
-  }, [player, isMuted]);
-
-  useEffect(() => {
-    Animated.timing(showing, {
-      toValue: isPlaying ? 1 : 0,
-      duration: FADES_IN_OVER,
-      easing: Easing.inOut(Easing.quad),
-      useNativeDriver: true,
-    }).start();
-  }, [isPlaying, showing]);
 
   /**
    * How one part of the foot rises into view, in its turn.
@@ -224,7 +165,7 @@ const AFeature = ({
    * @returns Its fade and rise.
    */
   const risingOf = (part: number) => {
-    const value = rising[part] ?? showing;
+    const value = rising[part] ?? telling;
 
     return {
       opacity: value,
@@ -241,7 +182,6 @@ const AFeature = ({
       ? howLongItRuns(media.durationSeconds)
       : null,
   ].filter((fact) => fact !== null);
-  const logoLimit = width * LOGO_AT_MOST;
 
   return (
     <Button tone="bare" label={title} onPress={onMoreInfo}>
@@ -252,73 +192,34 @@ const AFeature = ({
         ]}
       >
         <Animated.View style={[styles.fills, { transform: [{ scale: arriving }] }]}>
-          {media.hasBackdrop ? (
-            <Image
-              style={styles.fills}
-              source={{ uri: onThisServer(`/api/media/${media.id}/image/backdrop`) }}
-              accessibilityIgnoresInvertColors
-            />
-          ) : null}
-
-          {clip === null ? null : (
-            <Animated.View style={[styles.fills, { opacity: showing }]}>
-              <VideoView
-                style={styles.fills}
-                player={player}
-                nativeControls={false}
-                contentFit="cover"
-              />
-            </Animated.View>
-          )}
+          <APreview
+            mediaId={media.id}
+            hasBackdrop={media.hasBackdrop}
+            isShowing={isShowing}
+            isMuted={isMuted}
+            onEnded={onEnded}
+            onPlaying={setIsPlaying}
+            {...(onClip === undefined ? {} : { onClip })}
+          />
         </Animated.View>
 
         <AScrim />
 
         {isPlaying ? (
           <View style={styles.sound}>
-            <Button
-              tone="bare"
-              label={isMuted ? 'Turn the sound on' : 'Turn the sound off'}
-              onPress={() => {
-                setIsMuted((was) => {
-                  saveSoundPreference(was ? 'audible' : 'muted');
-
-                  return !was;
-                });
-              }}
-            >
-              <Icon of={isMuted ? VolumeX : Volume2} size={22} colour="#ffffff" />
-            </Button>
+            <ASoundSwitch isMuted={isMuted} onToggle={toggle} />
           </View>
         ) : null}
 
         <View style={styles.foot}>
           <Animated.View style={risingOf(0)}>
-            {media.hasLogo && !hasNoLogo ? (
-              <Image
-                style={{
-                  height: LOGO_HIGH,
-                  width: Math.min(logoWide ?? logoLimit, logoLimit),
-                }}
-                resizeMode="contain"
-                source={{ uri: onThisServer(`/api/media/${media.id}/image/logo?at=full`) }}
-                accessibilityLabel={title}
-                onLoad={(event) => {
-                  const { width: wide, height: high } = event.nativeEvent.source;
-
-                  if (high > 0) {
-                    setLogoWide((wide / high) * LOGO_HIGH);
-                  }
-                }}
-                onError={() => {
-                  setHasNoLogo(true);
-                }}
-              />
-            ) : (
-              <Words size="title" tone="onArtwork" lines={2}>
-                {title}
-              </Words>
-            )}
+            <ATitleLogo
+              mediaId={media.hasLogo ? media.id : null}
+              title={title}
+              high={LOGO_HIGH}
+              widest={width * LOGO_AT_MOST}
+              isOnArtwork
+            />
           </Animated.View>
 
           <Animated.View style={[styles.facts, risingOf(1)]}>
@@ -365,7 +266,7 @@ const AFeature = ({
                 }}
               >
                 <Animated.View style={risingOf(2)}>
-                  <Words tone="onArtwork" lines={3}>
+                  <Words tone="onArtwork" lines={3} isProse>
                     {overview}
                   </Words>
                 </Animated.View>
@@ -374,13 +275,8 @@ const AFeature = ({
           )}
 
           <Animated.View style={[styles.buttons, risingOf(3)]}>
-            <Button tone="bare" label={resumeAt === null ? 'Play' : 'Resume'} onPress={onPlay}>
-              <View style={styles.play}>
-                <Icon of={Play} size={18} colour="#000000" isFilled />
-                <Words tone="onBright">
-                  {resumeAt === null ? 'Play' : `Resume from ${howLongItRuns(resumeAt)}`}
-                </Words>
-              </View>
+            <Button tone="bright" icon={Play} onPress={onPlay}>
+              {resumeAt === null ? 'Play' : `Resume ${howLongItRuns(resumeAt)}`}
             </Button>
 
             <Button tone="bare" label="More info" onPress={onMoreInfo}>

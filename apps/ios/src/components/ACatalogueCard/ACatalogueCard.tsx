@@ -1,7 +1,7 @@
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
 import { Button } from '@ValencePhone/components/Button/Button';
-import { whatAPhoneAsksFor } from '@ValencePhone/components/TheRequests/whatAPhoneAsksFor';
+import { whatAPhoneAsksFor } from '@ValencePhone/components/TheSearch/whatAPhoneAsksFor';
 import type { ACatalogueCardProps } from './ACatalogueCard.types';
 
 /**
