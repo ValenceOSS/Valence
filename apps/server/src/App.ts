@@ -93,10 +93,19 @@ import {
 } from './routes/LibraryRoute';
 import { createFolderRoute, listFoldersRoute } from '@ValenceServer/routes/FolderRoute';
 import { createFolder } from '@ValenceServer/folders/createFolder';
-import { uploadMediaRoute } from '@ValenceServer/routes/UploadRoute';
+import {
+  cancelUploadRoute,
+  finishUploadRoute,
+  startUploadRoute,
+  uploadMediaRoute,
+  uploadPieceRoute,
+  uploadStatusRoute,
+} from '@ValenceServer/routes/UploadRoute';
+import { createUploadSessions } from '@ValenceServer/uploads/createUploadSessions';
+import type { UploadSessions } from '@ValenceServer/uploads/UploadSession';
 import { planUpload } from '@ValenceServer/uploads/planUpload';
 import { createUploadDisk } from '@ValenceServer/uploads/createUploadDisk';
-import type { UploadDisk } from '@ValenceServer/uploads/UploadDisk';
+import type { UploadDisk, UploadRefusal } from '@ValenceServer/uploads/UploadDisk';
 import { listFolders } from '@ValenceServer/folders/listFolders';
 import { createFolderDisk } from '@ValenceServer/folders/createFolderDisk';
 import type { FolderDisk } from '@ValenceServer/folders/FolderDisk';
@@ -684,6 +693,7 @@ type CreateAppOptions = {
   readImage?: (url: string) => Promise<{ body: ArrayBuffer; contentType: string } | null>;
   folderDisk?: FolderDisk;
   uploadDisk?: UploadDisk;
+  uploadSessions?: UploadSessions;
   isTranscoderReachable?: () => Promise<boolean>;
   transcoderAddress?: string;
   listRunningJobs?: () => RunningJob[];
@@ -760,6 +770,7 @@ const createApp = ({
   isTranscoderReachable = () => Promise.resolve(false),
   folderDisk = createFolderDisk(),
   uploadDisk = createUploadDisk(),
+  uploadSessions = createUploadSessions(),
   transcoderAddress = '',
   listRunningJobs = () => [],
   jobDefinitions = JOB_DEFINITIONS,
@@ -1261,27 +1272,73 @@ const createApp = ({
     return context.json(item, 200);
   });
 
+  /**
+   * The library an upload is for, where the one asking may edit libraries and can see it.
+   *
+   * @param headers - The request's headers, for who is asking.
+   * @param libraryId - The library.
+   * @returns The library, or why not.
+   */
+  const libraryToUploadInto = async (headers: Headers, libraryId: string) => {
+    if (!(await requires(headers, 'library.edit'))) {
+      return { kind: 'forbidden' } as const;
+    }
+
+    const viewer = await viewerOf(headers);
+
+    if (viewer === null) {
+      return { kind: 'signedOut' } as const;
+    }
+
+    const target = (await library.list(viewer)).find((entry) => entry.id === libraryId);
+
+    return target === undefined
+      ? ({ kind: 'missing' } as const)
+      : ({ kind: 'found', target } as const);
+  };
+
+  /**
+   * What to say where the disk would not take an upload, and with which status.
+   *
+   * @param refusal - What the disk refused.
+   * @returns The words and the status.
+   */
+  const sayRefused = (refusal: UploadRefusal) =>
+    refusal.kind === 'readOnly'
+      ? ({
+          error:
+            'That disk is read-only to Valence. Give it read-write access to upload media there.',
+          status: 403,
+        } as const)
+      : refusal.kind === 'denied'
+        ? ({ error: 'Valence is not allowed to write there.', status: 403 } as const)
+        : ({ error: 'The file could not be written.', status: 500 } as const);
+
+  /**
+   * Throws away the staging files of uploads left untouched for long enough to count as abandoned,
+   * whenever somebody is uploading, so nothing keeps a timer for them.
+   */
+  const sweepAbandonedUploads = async () => {
+    await Promise.all(uploadSessions.stale().map((session) => uploadDisk.discard(session.staging)));
+  };
+
   app.openapi(uploadMediaRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+    const found = await libraryToUploadInto(context.req.raw.headers, context.req.valid('param').id);
+
+    if (found.kind === 'forbidden') {
       return context.json({ error: 'That is for administrators.' }, 403);
     }
 
-    const viewer = await viewerOf(context.req.raw.headers);
-
-    if (viewer === null) {
+    if (found.kind === 'signedOut') {
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    const target = (await library.list(viewer)).find(
-      (entry) => entry.id === context.req.valid('param').id,
-    );
-
-    if (target === undefined) {
+    if (found.kind === 'missing') {
       return context.json({ error: 'No such library.' }, 404);
     }
 
     const relativePath = context.req.valid('query').path;
-    const plan = planUpload(target.path, relativePath, target.kind);
+    const plan = planUpload(found.target.path, relativePath, found.target.kind);
 
     if (plan.kind === 'badPath') {
       return context.json(
@@ -1302,24 +1359,219 @@ const createApp = ({
 
     const written = await uploadDisk.write(plan.destination, body);
 
-    switch (written.kind) {
-      case 'written':
-        return context.json({ path: relativePath, bytes: written.bytes }, 201);
-      case 'exists':
-        return context.json({ error: 'There is already a file called that.' }, 409);
-      case 'readOnly':
-        return context.json(
-          {
-            error:
-              'That disk is read-only to Valence. Give it read-write access to upload media there.',
-          },
-          403,
-        );
-      case 'denied':
-        return context.json({ error: 'Valence is not allowed to write there.' }, 403);
-      case 'failed':
-        return context.json({ error: 'The file could not be written.' }, 500);
+    if (written.kind === 'written') {
+      return context.json({ path: relativePath, bytes: written.bytes }, 201);
     }
+
+    if (written.kind === 'exists') {
+      return context.json({ error: 'There is already a file called that.' }, 409);
+    }
+
+    const said = sayRefused(written);
+
+    return context.json({ error: said.error }, said.status);
+  });
+
+  app.openapi(startUploadRoute, async (context) => {
+    await sweepAbandonedUploads();
+
+    const found = await libraryToUploadInto(context.req.raw.headers, context.req.valid('param').id);
+
+    if (found.kind === 'forbidden') {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    if (found.kind === 'signedOut') {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    if (found.kind === 'missing') {
+      return context.json({ error: 'No such library.' }, 404);
+    }
+
+    const { path: relativePath, bytes } = context.req.valid('query');
+    const plan = planUpload(found.target.path, relativePath, found.target.kind);
+
+    if (plan.kind === 'badPath') {
+      return context.json(
+        { error: 'A file goes at a plain path inside the library, with no dots or empty names.' },
+        400,
+      );
+    }
+
+    if (plan.kind === 'refused') {
+      return context.json({ error: 'That is not something this library reads.' }, 415);
+    }
+
+    const session = uploadSessions.open({
+      libraryId: found.target.id,
+      path: relativePath,
+      destination: plan.destination,
+      bytes,
+    });
+    const begun = await uploadDisk.begin(plan.destination, session.staging);
+
+    if (begun.kind === 'begun') {
+      return context.json(
+        { uploadId: session.uploadId, pieceBytes: session.pieceBytes, pieces: session.pieces },
+        201,
+      );
+    }
+
+    uploadSessions.close(session.uploadId);
+
+    if (begun.kind === 'exists') {
+      return context.json({ error: 'There is already a file called that.' }, 409);
+    }
+
+    const said = sayRefused(begun);
+
+    return context.json({ error: said.error }, said.status);
+  });
+
+  app.openapi(uploadPieceRoute, async (context) => {
+    const { id, uploadId, index } = context.req.valid('param');
+    const found = await libraryToUploadInto(context.req.raw.headers, id);
+
+    if (found.kind === 'forbidden') {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    if (found.kind === 'signedOut') {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const session = found.kind === 'found' ? uploadSessions.find(uploadId, id) : null;
+
+    if (session === null) {
+      return context.json({ error: 'No such upload.' }, 404);
+    }
+
+    const body = context.req.raw.body;
+
+    if (index >= session.pieces || body === null) {
+      return context.json({ error: 'That is not a piece of this upload.' }, 400);
+    }
+
+    const offset = index * session.pieceBytes;
+    const expected = Math.min(session.pieceBytes, session.bytes - offset);
+    const written = await uploadDisk.writeAt(session.staging, offset, body);
+
+    if (written.kind !== 'written') {
+      const said = sayRefused(written);
+
+      return context.json({ error: said.error }, said.status);
+    }
+
+    if (written.bytes !== expected) {
+      session.received.delete(index);
+
+      return context.json(
+        {
+          error: `That piece was ${written.bytes.toString()} bytes, where ${expected.toString()} were expected.`,
+        },
+        400,
+      );
+    }
+
+    session.received.add(index);
+
+    return context.json(
+      { received: [...session.received].sort((one, other) => one - other), pieces: session.pieces },
+      200,
+    );
+  });
+
+  app.openapi(uploadStatusRoute, async (context) => {
+    const { id, uploadId } = context.req.valid('param');
+    const found = await libraryToUploadInto(context.req.raw.headers, id);
+
+    if (found.kind === 'forbidden') {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    if (found.kind === 'signedOut') {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const session = found.kind === 'found' ? uploadSessions.find(uploadId, id) : null;
+
+    if (session === null) {
+      return context.json({ error: 'No such upload.' }, 404);
+    }
+
+    return context.json(
+      { received: [...session.received].sort((one, other) => one - other), pieces: session.pieces },
+      200,
+    );
+  });
+
+  app.openapi(finishUploadRoute, async (context) => {
+    const { id, uploadId } = context.req.valid('param');
+    const found = await libraryToUploadInto(context.req.raw.headers, id);
+
+    if (found.kind === 'forbidden') {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    if (found.kind === 'signedOut') {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const session = found.kind === 'found' ? uploadSessions.find(uploadId, id) : null;
+
+    if (session === null) {
+      return context.json({ error: 'No such upload.' }, 404);
+    }
+
+    if (session.received.size < session.pieces) {
+      return context.json(
+        {
+          error: `${(session.pieces - session.received.size).toString()} of its pieces have not arrived yet.`,
+        },
+        400,
+      );
+    }
+
+    const finished = await uploadDisk.finish(session.staging, session.destination, session.bytes);
+
+    uploadSessions.close(uploadId);
+
+    if (finished.kind === 'written') {
+      return context.json({ path: session.path, bytes: finished.bytes }, 201);
+    }
+
+    await uploadDisk.discard(session.staging);
+
+    if (finished.kind === 'exists') {
+      return context.json({ error: 'There is already a file called that.' }, 409);
+    }
+
+    const said = sayRefused(finished);
+
+    return context.json({ error: said.error }, said.status);
+  });
+
+  app.openapi(cancelUploadRoute, async (context) => {
+    const { id, uploadId } = context.req.valid('param');
+    const found = await libraryToUploadInto(context.req.raw.headers, id);
+
+    if (found.kind === 'forbidden') {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    if (found.kind === 'signedOut') {
+      return context.json({ error: 'Nobody is signed in.' }, 401);
+    }
+
+    const session = found.kind === 'found' ? uploadSessions.find(uploadId, id) : null;
+
+    if (session !== null) {
+      uploadSessions.close(uploadId);
+      await uploadDisk.discard(session.staging);
+    }
+
+    return context.body(null, 204);
   });
 
   app.openapi(scanLibraryRoute, async (context) => {
