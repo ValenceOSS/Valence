@@ -21,7 +21,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { changeIndexer, removeIndexer, testIndexer } from '@ValenceClient/requests/fetchIndexers';
+import { changeIndexer, removeIndexer } from '@ValenceClient/requests/fetchIndexers';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { IndexerDialog } from '@ValenceScreens/components/AdminArea/components/IndexerDialog/IndexerDialog';
 import { IndexerCatalogueDialog } from '@ValenceScreens/components/AdminArea/components/IndexerCatalogueDialog/IndexerCatalogueDialog';
@@ -30,7 +30,7 @@ import type { IndexerStart } from '@ValenceScreens/components/AdminArea/IndexerS
 import { describeIndexerSearches } from './describeIndexerSearches';
 import { describeIndexerState } from './describeIndexerState';
 import { describeTestRound } from './describeTestRound';
-import { failureOfTest } from './failureOfTest';
+import { testAndSayWhy } from './testAndSayWhy';
 import { whichToTest } from './whichToTest';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
@@ -83,12 +83,12 @@ const IndexersPanel = () => {
     setIsTestingAll(true);
     setProblem(null);
 
-    void mapWithLimit(toTest, TESTED_AT_ONCE, async ({ id, name }) => {
-      const failure = failureOfTest(name, await testIndexer(id));
+    void mapWithLimit(toTest, TESTED_AT_ONCE, async (indexer) => {
+      const failure = await testAndSayWhy(indexer);
 
-      setTesting((before) => new Set([...before].filter((one) => one !== id)));
+      setTesting((before) => new Set([...before].filter((one) => one !== indexer.id)));
 
-      return { name, failure };
+      return { name: indexer.name, failure };
     })
       .then((outcomes) => {
         const { done, failure } = describeTestRound(outcomes);
@@ -108,10 +108,8 @@ const IndexersPanel = () => {
       setTesting(new Set([indexer.id]));
       setProblem(null);
 
-      void testIndexer(indexer.id)
-        .then((sent) => {
-          const failure = failureOfTest(indexer.name, sent);
-
+      void testAndSayWhy(indexer)
+        .then((failure) => {
           tellOutcome(`${indexer.name} answered.`, failure);
           setProblem(failure);
         })
@@ -214,7 +212,7 @@ const IndexersPanel = () => {
                       label: 'Test',
                       detail: 'Asks it what it can search, and clears its failures if it answers.',
                       icon: <Icon of={PlugIcon} size={15} />,
-                      isDisabled: testing.size > 0,
+                      isDisabled: testing.size > 0 || isTestingAll,
                       onChoose: () => {
                         test(row.original);
                       },
@@ -253,7 +251,7 @@ const IndexersPanel = () => {
         ),
       },
     ];
-  }, [reread, testing]);
+  }, [isTestingAll, reread, testing]);
 
   return (
     <PanelCard

@@ -268,6 +268,39 @@ describe('IndexersPanel', () => {
     );
   });
 
+  it('still sums up the rest where one answer could not be read', async () => {
+    fetchIndexers.mockResolvedValue([
+      anIndexer({ id: 'on', name: 'Jackett' }),
+      anIndexer({ id: 'broken', name: 'Prowlarr' }),
+    ]);
+    testIndexer.mockImplementation((id) =>
+      id === 'broken'
+        ? Promise.reject(new Error('Unexpected token'))
+        : Promise.resolve({
+            value: {
+              isWorking: true,
+              problem: null,
+              problemCode: null,
+              capabilities: null,
+              captcha: null,
+            },
+            refusal: null,
+          }),
+    );
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<IndexersPanel />);
+
+    await screen.findByText('Jackett');
+    await user.click(screen.getByRole('button', { name: /Test all/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '1 of 2 answered. Prowlarr: its answer could not be read',
+    );
+    expect(screen.queryByLabelText(/^Testing /)).not.toBeInTheDocument();
+  });
+
   it('has nothing to test where every indexer was switched off', async () => {
     fetchIndexers.mockResolvedValue([anIndexer({ isEnabled: false })]);
 
@@ -331,7 +364,7 @@ describe('IndexersPanel', () => {
 
     await choose(user, 'Test');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Requesting is off.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Jackett: Requesting is off.');
   });
 
   it('switches one off, and back on', async () => {

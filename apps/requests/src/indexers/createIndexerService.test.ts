@@ -244,6 +244,20 @@ describe('createIndexerService', () => {
     expect(await store.find(anIndexer().id)).toMatchObject({ isEnabled: false });
   });
 
+  it('keeps why Valence turned an indexer off when it is saved still off', async () => {
+    const reason = 'Turned off after 5 failures in a row: The site could not be reached';
+    const { service, store } = aService([
+      anIndexer({ isEnabled: false, failures: 5, turnedOffBecause: reason }),
+    ]);
+
+    await service.change(anIndexer().id, { isEnabled: false, priority: 10 });
+
+    expect(await store.find(anIndexer().id)).toMatchObject({
+      isEnabled: false,
+      turnedOffBecause: reason,
+    });
+  });
+
   it('counts a failed test against an indexer, saying why', async () => {
     const { service, store } = aService(
       [anIndexer()],

@@ -25,9 +25,9 @@ describe('failureOfTest', () => {
     ).toBe('Jackett: did not answer');
   });
 
-  it('gives the refusal where the server would not test it', () => {
+  it('gives the refusal, naming the indexer, where the server would not test it', () => {
     expect(
       failureOfTest('Jackett', { value: null, refusal: { message: 'Requesting is off.' } }),
-    ).toBe('Requesting is off.');
+    ).toBe('Jackett: Requesting is off.');
   });
 });
