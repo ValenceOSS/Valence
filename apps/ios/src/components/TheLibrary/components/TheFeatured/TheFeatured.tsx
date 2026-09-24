@@ -162,6 +162,14 @@ const TheFeaturedTitles = ({
 
   latest.current = { turn, count, lead, step, isStill, onClip, isInView };
 
+  const findThePlace = useCallback(() => {
+    const { turn: now, lead: before, step: apart } = latest.current;
+    const x = (before + now) * apart;
+
+    scrolled.setValue(x);
+    pager.current?.scrollTo({ x, animated: false });
+  }, [scrolled]);
+
   const settle = useCallback((reached: number) => {
     const { count: many, lead: before, step: apart } = latest.current;
     const real = roundTo(reached, many);
@@ -302,7 +310,12 @@ const TheFeaturedTitles = ({
         snapToInterval={step}
         decelerationRate="fast"
         disableIntervalMomentum
-        contentOffset={{ x: lead * step, y: 0 }}
+        contentOffset={{ x: (lead + turn) * step, y: 0 }}
+        onLayout={(event) => {
+          if (event.nativeEvent.layout.width > 0) {
+            findThePlace();
+          }
+        }}
         showsHorizontalScrollIndicator={false}
         style={styles.pager}
         contentContainerStyle={styles.cards}

@@ -67,6 +67,7 @@ const keyOfShelf = (shelf: AShelfOf): string =>
  * @param onShowing - Told which title the hero is showing, so the page can take its colours.
  * @param onClip - Told the hero's clip while it plays.
  * @param onScrolled - Told whether the page has been scrolled from its top.
+ * @param isOnScreen - Whether home is the part showing, rather than kept hidden behind another.
  */
 const TheHomePage = ({
   header,
@@ -78,6 +79,7 @@ const TheHomePage = ({
   onShowing,
   onClip,
   onScrolled,
+  isOnScreen = true,
 }: TheHomeProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
@@ -174,7 +176,7 @@ const TheHomePage = ({
           <AnArrival>
             <TheFeatured
               items={featured}
-              isInView={isHeroInView}
+              isInView={isHeroInView && isOnScreen}
               onShowing={onShowing}
               onClip={onClip}
               onWatch={onWatch}
@@ -197,6 +199,7 @@ const TheHomePage = ({
       home.isReading,
       colours.textMuted,
       isHeroInView,
+      isOnScreen,
     ],
   );
 

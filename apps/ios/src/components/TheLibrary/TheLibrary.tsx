@@ -445,6 +445,7 @@ const TheLibrary = ({
       <IS_ON_TOP.Provider value={isOnTop && part === 'home'}>
         <TheHome
           header={header}
+          isOnScreen={part === 'home'}
           watchable={watchable}
           librariesAre={
             libraries.data === undefined
