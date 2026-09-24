@@ -35,9 +35,10 @@ type Presence = {
  * @param temporary - Where this machine keeps this user's temporary files, which is where Discord
  *   listens on a Mac. Passed in rather than read from the environment, which does not always carry
  *   it.
+ * @param openedAt - When Valence opened, which browsing counts from however often it is said again.
  * @returns How to say what is playing, and how to stop.
  */
-const tellDiscord = (temporary: string): Presence => {
+const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
   let socket: Socket | null = null;
   let ready = false;
   let waiting: WhatIsPlaying | null = null;
@@ -51,7 +52,7 @@ const tellDiscord = (temporary: string): Presence => {
     send(FRAME, {
       cmd: 'SET_ACTIVITY',
       nonce: `${Date.now().toString()}`,
-      args: { pid: process.pid, activity: aDiscordActivity(playing) },
+      args: { pid: process.pid, activity: aDiscordActivity(playing, openedAt) },
     });
   };
 
