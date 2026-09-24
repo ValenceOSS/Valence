@@ -2,6 +2,7 @@ import type { CatalogueBrowseKind } from '@ValenceContracts/schemas/CatalogueTit
 
 type SignedInProps = {
   onOut: () => void;
+  onElsewhere: () => void;
 };
 
 type APage =

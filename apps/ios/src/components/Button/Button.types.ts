@@ -16,6 +16,7 @@ type ButtonProps = {
   isBusy?: boolean;
   isDisabled?: boolean;
   isChosen?: boolean;
+  isDestructive?: boolean;
   label?: string;
 };
 

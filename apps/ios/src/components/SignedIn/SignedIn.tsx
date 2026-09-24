@@ -5,6 +5,8 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
+import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
+import { thePictureFor } from '@ValencePhone/components/AFace/thePictureFor';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
 import { nextEpisode } from '@ValenceClient/library/pickFeatured';
 import {
@@ -100,9 +102,10 @@ const styles = StyleSheet.create({
  * Waits for the session before drawing any of it, because every request they make depends on being
  * signed in and a library drawn first would ask a question it cannot have the answer to.
  *
+ * @param onElsewhere - Told that somebody wants to point this phone at a different server.
  * @param onOut - Told once they have signed out.
  */
-const SignedIn = ({ onOut }: SignedInProps) => {
+const SignedIn = ({ onOut, onElsewhere }: SignedInProps) => {
   const session = useQuery(sessionQueries.who());
 
   useEffect(() => watchPresence(), []);
@@ -130,7 +133,21 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     { id: 'home', label: 'Home', icon: Home, symbol: 'house' },
     { id: 'search', label: 'Search', icon: Search, symbol: 'magnifyingglass' },
     { id: 'downloads', label: 'Downloads', icon: Download, symbol: 'arrow.down.circle' },
-    { id: 'account', label: 'Account', icon: CircleUser, symbol: 'person.crop.circle' },
+    {
+      id: 'account',
+      label: 'Account',
+      icon: CircleUser,
+      symbol: 'person.crop.circle',
+      ...(watcher.data === null || watcher.data === undefined
+        ? {}
+        : {
+            face: {
+              picture: thePictureFor(watcher.data),
+              backdrop: watcher.data.colour,
+              initial: profileInitial(watcher.data.name),
+            },
+          }),
+    },
   ];
 
   const open = (page: APage) => {
@@ -396,6 +413,7 @@ const SignedIn = ({ onOut }: SignedInProps) => {
         onOut={() => {
           void signOut().then(onOut);
         }}
+        onElsewhere={onElsewhere}
       />
     ) : part === 'search' ? (
       <TheSearch

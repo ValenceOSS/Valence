@@ -4,6 +4,9 @@ type ASystemTab = {
   id: string;
   title: string;
   symbol: string;
+  picture?: string | null;
+  backdrop?: string;
+  initial?: string;
 };
 
 type SystemTabBarProps = {

@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
+import { ATabFace } from '@ValencePhone/components/TheTabs/components/ATabFace/ATabFace';
 import { SystemTabBar } from '@ValencePhone/components/SystemTabBar/SystemTabBar';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { hasLiquidGlass } from '@ValencePhone/platform/hasLiquidGlass';
@@ -62,7 +63,18 @@ const TheTabs = ({ tabs, value, onSelect, children, above }: TheTabsProps) => {
         )}
 
         <SystemTabBar
-          tabs={tabs.map((tab) => ({ id: tab.id, title: tab.label, symbol: tab.symbol }))}
+          tabs={tabs.map((tab) => ({
+            id: tab.id,
+            title: tab.label,
+            symbol: tab.symbol,
+            ...(tab.face === undefined
+              ? {}
+              : {
+                  picture: tab.face.picture?.uri ?? null,
+                  backdrop: tab.face.backdrop,
+                  initial: tab.face.initial,
+                }),
+          }))}
           selected={value}
           accent={colours.accent}
           onSelect={onSelect}
@@ -105,11 +117,15 @@ const TheTabs = ({ tabs, value, onSelect, children, above }: TheTabsProps) => {
                 }}
               >
                 <View style={styles.tab}>
-                  <Icon
-                    of={tab.icon}
-                    size={24}
-                    colour={isShowing ? colours.accent : colours.textMuted}
-                  />
+                  {tab.face === undefined ? (
+                    <Icon
+                      of={tab.icon}
+                      size={24}
+                      colour={isShowing ? colours.accent : colours.textMuted}
+                    />
+                  ) : (
+                    <ATabFace face={tab.face} isShowing={isShowing} />
+                  )}
                   <Words size="small" tone={isShowing ? 'accent' : 'muted'}>
                     {tab.label}
                   </Words>

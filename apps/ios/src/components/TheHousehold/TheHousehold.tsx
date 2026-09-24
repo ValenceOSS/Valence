@@ -67,6 +67,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
           onOut={() => {
             void answers.invalidateQueries();
           }}
+          onElsewhere={onElsewhere}
         />
         <TheServerIsAway />
       </View>

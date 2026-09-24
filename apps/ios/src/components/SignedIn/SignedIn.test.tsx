@@ -109,7 +109,7 @@ afterEach(() => {
 
 describe('SignedIn', () => {
   it('shows the library once there is a session to read it with', async () => {
-    const drawn = await render(around(<SignedIn onOut={jest.fn()} />));
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
 
     await waitFor(() => {
       expect(drawn.getByLabelText('What to show')).toBeTruthy();
@@ -119,14 +119,14 @@ describe('SignedIn', () => {
   it('asks nothing of the library before the session has answered', async () => {
     jest.mocked(fetchSession).mockReturnValue(new Promise(() => undefined));
 
-    await render(around(<SignedIn onOut={jest.fn()} />));
+    await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
 
     expect(fetchLibraries).not.toHaveBeenCalled();
   });
 
   it('signs out and says so', async () => {
     const onOut = jest.fn();
-    const drawn = await render(around(<SignedIn onOut={onOut} />));
+    const drawn = await render(around(<SignedIn onOut={onOut} onElsewhere={jest.fn()} />));
 
     await userEvent.press(await drawn.findByText('Account'));
     await userEvent.press(await drawn.findByText('Sign out'));
@@ -140,7 +140,7 @@ describe('SignedIn', () => {
   it('opens a title when somebody presses its poster', async () => {
     withOneTitle();
 
-    const drawn = await render(around(<SignedIn onOut={jest.fn()} />));
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
 
     await userEvent.press(await drawn.findByText('Films'));
     await userEvent.press(await drawn.findByLabelText('Arrival'));
@@ -153,7 +153,7 @@ describe('SignedIn', () => {
   it('plays the title they were looking at, not some other one', async () => {
     withOneTitle();
 
-    const drawn = await render(around(<SignedIn onOut={jest.fn()} />));
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
 
     await userEvent.press(await drawn.findByText('Films'));
     await userEvent.press(await drawn.findByLabelText('Arrival'));
@@ -176,7 +176,7 @@ describe('SignedIn', () => {
   it('goes back to the library from a title', async () => {
     withOneTitle();
 
-    const drawn = await render(around(<SignedIn onOut={jest.fn()} />));
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
 
     await userEvent.press(await drawn.findByText('Films'));
     await userEvent.press(await drawn.findByLabelText('Arrival'));
@@ -291,7 +291,7 @@ describe('SignedIn', () => {
         },
       });
 
-      const drawn = await render(around(<SignedIn onOut={jest.fn()} />));
+      const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
 
       await userEvent.press(await drawn.findByText('Shows'));
       await userEvent.press(await drawn.findByLabelText('Severance'));

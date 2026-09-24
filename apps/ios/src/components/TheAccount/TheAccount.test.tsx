@@ -19,7 +19,7 @@ beforeEach(() => {
 describe('TheAccount', () => {
   it('says whose account it is, offers each part of it, and signs out', async () => {
     const onOut = jest.fn();
-    const drawn = await render(<TheAccount onOut={onOut} />, { wrapper: CacheScope });
+    const drawn = await render(<TheAccount onOut={onOut} onElsewhere={jest.fn()} />, { wrapper: CacheScope });
 
     expect(await drawn.findByText('dan@example.com')).toBeTruthy();
     expect(drawn.getByText('Shares')).toBeTruthy();
