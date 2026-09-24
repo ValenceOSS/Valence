@@ -41,7 +41,7 @@ reference, not a substitute for reading it.
 9. **No raw SVG anywhere.** Icons come from `@keyline-icons/react` and are
    drawn by `@ValenceUI/Icon`, never by the renderer directly.
 10. **Every function and component has a co-located Vitest test** — except
-    `apps/ios`, which uses `jest-expo` for the same reason it exists.
+    `apps/mobile`, which uses `jest-expo` for the same reason it exists.
 11. **Conventional Commits.**
 
 ## File layout
@@ -90,7 +90,7 @@ that runs it.
 | `packages/client`  | What Valence is: readers, queries, realtime, session, sharing   |
 | `packages/screens` | What Valence looks like: every screen, and the routes onto them |
 | `apps/web`         | What a browser is: entry, platform, socket, service worker      |
-| `apps/ios`         | What a phone is: entry, platform, and the screens it draws      |
+| `apps/mobile`      | What a phone is: entry, platform, and the screens it draws      |
 
 - **Neither package may import `@ValenceWeb/*`.** ESLint says so. Neither reaches
   into a client. `packages/client` may not import `@ValenceUI/*` either — it does

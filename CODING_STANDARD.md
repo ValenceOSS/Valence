@@ -23,7 +23,7 @@ No `.js`, `.jsx`, `.mjs`, or `.cjs` files are committed to the repository.
 
 ### The phone client is TypeScript too
 
-`apps/ios` is React Native, under Expo, and written in TypeScript like
+`apps/mobile` is React Native, under Expo, and written in TypeScript like
 everything else. It is a native application rather than the web client in a
 web view, because audio that keeps playing when the phone locks, downloads
 that survive the app closing, picture-in-picture, AirPlay and the lock screen
@@ -41,13 +41,13 @@ stay there. The screens are a second implementation because React Native draws
 with native views rather than the DOM, and there is no way around that.
 
 The phone client does not carry the admin area. A server is administered from
-a browser, and `apps/ios` is smaller for it.
+a browser, and `apps/mobile` is smaller for it.
 
 ### Swift, for Apple's own controls and nothing else
 
 **Swift is permitted inside the local native modules of an Apple-platform
 client — `apps/<client>/modules/<module>/ios/` — and nowhere else.** Today that
-means `apps/tv` and `apps/ios`. Some of what makes an app on those platforms
+means `apps/tv` and `apps/mobile`. Some of what makes an app on those platforms
 feel like it belongs there is only reachable from Swift: tvOS's inline search
 keyboard with its dictation and suggestions is `UISearchContainerViewController`,
 and an iOS control drawn by SwiftUI is a SwiftUI view. A module that wraps one
@@ -572,7 +572,7 @@ functions/formatDuration.test.ts
   usually an accessibility defect in the component, not a testing problem.
 - Coverage thresholds are enforced in CI and are not lowered to make a build
   pass. Raising them is a PR of its own.
-- `apps/ios` and `apps/tv` are tested with `jest-expo` rather than Vitest, co-located the same
+- `apps/mobile` and `apps/tv` are tested with `jest-expo` rather than Vitest, co-located the same
   way. Vitest cannot read the Flow syntax React Native ships and a Babel
   transform in front of it does not take; `jest-expo` carries the React Native
   preset, the native mocks and the transform already. It emits the same

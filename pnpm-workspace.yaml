@@ -1,6 +1,6 @@
 packages:
   - 'apps/desktop'
-  - 'apps/ios'
+  - 'apps/mobile'
   - 'apps/docs'
   - 'apps/landing'
   - 'apps/web'
