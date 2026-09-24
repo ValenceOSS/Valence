@@ -1,16 +1,15 @@
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
+import { Info as InfoIcon, MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import {
-  Bin as BinIcon,
-  FileArrowUp as FileArrowUpIcon,
-  Images as ImagesIcon,
-  Info as InfoIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  Plus as PlusIcon,
-  RefreshCw as RefreshCwIcon,
-  RotateCw as RotateCwIcon,
-  Settings as SettingsIcon,
-} from '@keyline-icons/react';
+  Bin as BinFilledIcon,
+  FileArrowUp as FileArrowUpFilledIcon,
+  Images as ImagesFilledIcon,
+  Plus as PlusFilledIcon,
+  RefreshCw as RefreshCwFilledIcon,
+  RotateCw as RotateCwFilledIcon,
+  Settings as SettingsFilledIcon,
+} from '@keyline-icons/react/fill';
 import { useMemo, useState } from 'react';
 import { UploadMediaDialog } from '@ValenceScreens/components/AdminArea/components/UploadMediaDialog/UploadMediaDialog';
 import { AdminSetupGuide } from '@ValenceScreens/components/AdminArea/components/AdminSetupGuide/AdminSetupGuide';
@@ -205,7 +204,7 @@ const LibrariesPanel = ({
                     {
                       id: 'scan',
                       label: 'Scan for changes',
-                      icon: <Icon of={RefreshCwIcon} size={15} />,
+                      icon: <Icon of={RefreshCwFilledIcon} size={15} />,
                       isDisabled: readingOf(progress, row.original.id) !== undefined,
                       onChoose: () => {
                         onScan(row.original.id);
@@ -214,7 +213,7 @@ const LibrariesPanel = ({
                     {
                       id: 'upload',
                       label: 'Upload media',
-                      icon: <Icon of={FileArrowUpIcon} size={15} />,
+                      icon: <Icon of={FileArrowUpFilledIcon} size={15} />,
                       onChoose: () => {
                         setUploadingTo(row.original);
                       },
@@ -222,7 +221,7 @@ const LibrariesPanel = ({
                     {
                       id: 'reread',
                       label: 'Read every file again',
-                      icon: <Icon of={RotateCwIcon} size={15} />,
+                      icon: <Icon of={RotateCwFilledIcon} size={15} />,
                       isDisabled: readingOf(progress, row.original.id) !== undefined,
                       onChoose: () => {
                         setRereading(row.original);
@@ -233,7 +232,7 @@ const LibrariesPanel = ({
                           {
                             id: 'previews',
                             label: 'Generate missing previews',
-                            icon: <Icon of={ImagesIcon} size={15} />,
+                            icon: <Icon of={ImagesFilledIcon} size={15} />,
                             isDisabled: readingOf(progress, row.original.id) !== undefined,
                             onChoose: () => {
                               onRegeneratePreviews(row.original.id);
@@ -248,7 +247,7 @@ const LibrariesPanel = ({
                     {
                       id: 'settings',
                       label: 'Library settings',
-                      icon: <Icon of={SettingsIcon} size={15} />,
+                      icon: <Icon of={SettingsFilledIcon} size={15} />,
                       onChoose: () => {
                         setSettingsLibraryId(row.original.id);
                       },
@@ -260,7 +259,7 @@ const LibrariesPanel = ({
                     {
                       id: 'delete',
                       label: 'Delete library',
-                      icon: <Icon of={BinIcon} size={15} />,
+                      icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         setDeleting(row.original);
@@ -291,14 +290,14 @@ const LibrariesPanel = ({
                 {
                   id: 'scanAll',
                   label: isScanningAll ? 'Scanning all libraries…' : 'Scan all libraries',
-                  icon: <Icon of={RotateCwIcon} size={15} />,
+                  icon: <Icon of={RotateCwFilledIcon} size={15} />,
                   isDisabled: isBusy || isScanningAll,
                   onChoose: onScanAll,
                 },
                 {
                   id: 'resetAll',
                   label: isResettingAll ? 'Resetting and rebuilding…' : 'Reset and rebuild',
-                  icon: <Icon of={BinIcon} size={15} />,
+                  icon: <Icon of={BinFilledIcon} size={15} />,
                   isDestructive: true,
                   isDisabled: isBusy || isResettingAll,
                   onChoose: () => {
@@ -312,7 +311,7 @@ const LibrariesPanel = ({
                 {
                   id: 'add',
                   label: 'Add library',
-                  icon: <Icon of={PlusIcon} size={15} />,
+                  icon: <Icon of={PlusFilledIcon} size={15} />,
                   onChoose: () => {
                     setIsAdding(true);
                   },

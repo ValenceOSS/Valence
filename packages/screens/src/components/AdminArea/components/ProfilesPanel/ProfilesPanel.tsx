@@ -3,12 +3,8 @@ import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Bin as BinIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  Pen as PenIcon,
-  Plus as PlusIcon,
-} from '@keyline-icons/react';
+import { MoreHorizontal as MoreHorizontalIcon, Plus as PlusIcon } from '@keyline-icons/react';
+import { Bin as BinFilledIcon, Pen as PenFilledIcon } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -131,7 +127,7 @@ const ProfilesPanel = () => {
                     {
                       id: 'change',
                       label: 'Change',
-                      icon: <Icon of={PenIcon} size={15} />,
+                      icon: <Icon of={PenFilledIcon} size={15} />,
                       onChoose: () => {
                         setEditing(row.original);
                       },
@@ -143,7 +139,7 @@ const ProfilesPanel = () => {
                     {
                       id: 'remove',
                       label: 'Remove',
-                      icon: <Icon of={BinIcon} size={15} />,
+                      icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         setRemoving(row.original);

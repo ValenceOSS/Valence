@@ -4,14 +4,16 @@ import { AccountFace } from '@ValenceScreens/components/AdminArea/components/Acc
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Bin as BinIcon,
   ChevronsUpDown as ChevronsUpDownIcon,
-  CircleX as CircleXIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Plus as PlusIcon,
   TriangleAlert as TriangleAlertIcon,
-  UserCheck as UserCheckIcon,
 } from '@keyline-icons/react';
+import {
+  Bin as BinFilledIcon,
+  CircleX as CircleXFilledIcon,
+  UserCheck as UserCheckFilledIcon,
+} from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -441,7 +443,7 @@ const AccountsPanel = () => {
                     {
                       id: 'edit',
                       label: 'Edit account',
-                      icon: <Icon of={UserCheckIcon} size={15} />,
+                      icon: <Icon of={UserCheckFilledIcon} size={15} />,
                       onChoose: () => {
                         setAccountId(row.original.id);
                         setEditTab('display');
@@ -451,7 +453,7 @@ const AccountsPanel = () => {
                     {
                       id: 'ban',
                       label: row.original.isBanned ? 'Let back in' : 'Ban',
-                      icon: <Icon of={CircleXIcon} size={15} />,
+                      icon: <Icon of={CircleXFilledIcon} size={15} />,
                       onChoose: () => {
                         if (row.original.isBanned) {
                           void act(() => unbanAccount(row.original.id), 'Account unbanned.');
@@ -469,7 +471,7 @@ const AccountsPanel = () => {
                     {
                       id: 'remove',
                       label: 'Delete account',
-                      icon: <Icon of={BinIcon} size={15} />,
+                      icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         setAsking({ kind: 'remove', account: row.original });

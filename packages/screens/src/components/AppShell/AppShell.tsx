@@ -1,12 +1,9 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Bell as BellIcon,
   BookOpen as BookOpenIcon,
   CircleUser as CircleUserIcon,
   Compass as CompassIcon,
   Dice5 as Dice5Icon,
-  DoorOpen as DoorOpenIcon,
-  Download as DownloadIcon,
   Film as FilmIcon,
   Flame as FlameIcon,
   Heart as HeartIcon,
@@ -15,16 +12,18 @@ import {
   Moon as MoonIcon,
   MusicNote as MusicNoteIcon,
   Search as SearchIcon,
-  Settings as SettingsIcon,
   Sun as SunIcon,
   X as XIcon,
   Zap as ZapIcon,
   ZapOff as ZapOffIcon,
 } from '@keyline-icons/react';
 import {
+  Bell as BellFilledIcon,
   BookOpen as BookOpenFilledIcon,
   CircleUser as CircleUserFilledIcon,
   Compass as CompassFilledIcon,
+  Dice5 as Dice5FilledIcon,
+  DoorOpen as DoorOpenFilledIcon,
   Download as DownloadFilledIcon,
   Film as FilmFilledIcon,
   Flame as FlameFilledIcon,
@@ -33,6 +32,7 @@ import {
   Monitor as MonitorFilledIcon,
   MusicNote as MusicNoteFilledIcon,
   Search as SearchFilledIcon,
+  Settings as SettingsFilledIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -359,7 +359,7 @@ const AppShell = ({
           {
             id: 'downloads',
             label: 'Downloads',
-            icon: <Icon of={DownloadIcon} size={20} />,
+            icon: <Icon of={DownloadFilledIcon} size={20} />,
             activeIcon: <Icon of={DownloadFilledIcon} size={20} />,
             gesture: 'settle' as const,
             isCurrent: isDownloadsOpen,
@@ -370,7 +370,7 @@ const AppShell = ({
     {
       id: 'search',
       label: 'Search',
-      icon: <Icon of={SearchIcon} size={20} />,
+      icon: <Icon of={SearchFilledIcon} size={20} />,
       activeIcon: <Icon of={SearchIcon} size={20} />,
       gesture: 'settle' as const,
       isCurrent: isSearchOpen,
@@ -382,7 +382,7 @@ const AppShell = ({
           {
             id: 'surprise',
             label: 'Randomiser',
-            icon: <Icon of={Dice5Icon} size={20} />,
+            icon: <Icon of={Dice5FilledIcon} size={20} />,
             gesture: 'tumble' as const,
             ...(kinds.length > 1
               ? {
@@ -428,7 +428,7 @@ const AppShell = ({
           {
             id: 'notifications',
             label: 'Notifications',
-            icon: <Icon of={BellIcon} size={20} />,
+            icon: <Icon of={BellFilledIcon} size={20} />,
             control: notifications,
           },
         ]),
@@ -450,7 +450,7 @@ const AppShell = ({
                 {
                   id: 'account',
                   label: 'Account',
-                  icon: <Icon of={CircleUserIcon} size={16} />,
+                  icon: <Icon of={CircleUserFilledIcon} size={16} />,
                   onChoose: onOpenAccount,
                 },
                 ...(onOpenFavourites === undefined
@@ -459,7 +459,7 @@ const AppShell = ({
                       {
                         id: 'favourites',
                         label: 'Favourites',
-                        icon: <Icon of={HeartIcon} size={16} />,
+                        icon: <Icon of={HeartFilledIcon} size={16} />,
                         onChoose: onOpenFavourites,
                       },
                     ]),
@@ -468,7 +468,7 @@ const AppShell = ({
                       {
                         id: 'my-requests',
                         label: 'My requests',
-                        icon: <Icon of={CompassIcon} size={16} />,
+                        icon: <Icon of={CompassFilledIcon} size={16} />,
                         onChoose: onOpenMyRequests,
                       },
                     ]
@@ -478,7 +478,7 @@ const AppShell = ({
                       {
                         id: 'admin',
                         label: 'Admin',
-                        icon: <Icon of={SettingsIcon} size={16} />,
+                        icon: <Icon of={SettingsFilledIcon} size={16} />,
                         onChoose: onOpenAdmin,
                       },
                     ]
@@ -519,7 +519,7 @@ const AppShell = ({
                       {
                         id: 'sign-out',
                         label: 'Sign out',
-                        icon: <Icon of={DoorOpenIcon} size={16} />,
+                        icon: <Icon of={DoorOpenFilledIcon} size={16} />,
                         isDestructive: true,
                         onChoose: onSignOut,
                       },

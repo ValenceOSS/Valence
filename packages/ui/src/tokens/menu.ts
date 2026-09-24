@@ -11,11 +11,11 @@ const MENU = {
     'text-xs uppercase tracking-[0.14em] text-text-muted',
   ].join(' '),
   item: [
-    'flex cursor-default items-center gap-3 rounded-sm px-3 py-2.5 outline-none',
+    'flex cursor-default items-center gap-3 rounded-sm px-3 py-2.5 font-semibold outline-none',
     'coarse:gap-4 coarse:px-4 coarse:py-3.5',
     'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40',
   ].join(' '),
-  itemDestructive: 'bg-danger text-destructive-foreground hover:brightness-110',
+  itemDestructive: 'text-danger',
   itemPlain: 'text-text',
   icon: 'flex size-4 shrink-0 items-center justify-center coarse:size-5',
   itemLabel: 'flex-1 truncate text-left',

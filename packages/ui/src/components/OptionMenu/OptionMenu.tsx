@@ -80,7 +80,7 @@ const OptionMenu = ({
         'disabled:cursor-not-allowed disabled:opacity-50',
         triggerShape === 'field'
           ? cn(
-              'h-8 w-full justify-between gap-2 rounded-md px-3 text-[0.8125rem] font-medium',
+              'h-8 w-full justify-between gap-2 rounded-md px-3 text-[0.8125rem] font-semibold',
               'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
               'hover:bg-[var(--surface-active)]',
             )

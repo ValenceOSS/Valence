@@ -1,12 +1,12 @@
 import { Icon } from '@ValenceUI/Icon';
+import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import {
-  Bin as BinIcon,
-  Film as FilmIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  RefreshCw as RefreshCwIcon,
-  Search as SearchIcon,
-  Tape as TapeIcon,
-} from '@keyline-icons/react';
+  Bin as BinFilledIcon,
+  Film as FilmFilledIcon,
+  RefreshCw as RefreshCwFilledIcon,
+  Search as SearchFilledIcon,
+  Tape as TapeFilledIcon,
+} from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -178,7 +178,7 @@ const MediaPanel = ({
                           : rebuilt.has(row.original.id)
                             ? 'Will rebuild'
                             : 'Rebuild previews',
-                      icon: <Icon of={RefreshCwIcon} size={15} />,
+                      icon: <Icon of={RefreshCwFilledIcon} size={15} />,
                       isDisabled: rebuilding === row.original.id,
                       onChoose: () => {
                         ask(row.original);
@@ -187,7 +187,7 @@ const MediaPanel = ({
                     {
                       id: 'wrong-match',
                       label: 'Wrong match?',
-                      icon: <Icon of={SearchIcon} size={15} />,
+                      icon: <Icon of={SearchFilledIcon} size={15} />,
                       onChoose: () => {
                         onCorrect(row.original);
                       },
@@ -195,7 +195,7 @@ const MediaPanel = ({
                     {
                       id: 'preview-moment',
                       label: 'Choose the preview moment',
-                      icon: <Icon of={FilmIcon} size={15} />,
+                      icon: <Icon of={FilmFilledIcon} size={15} />,
                       onChoose: () => {
                         onChooseMoment(row.original);
                       },
@@ -206,7 +206,7 @@ const MediaPanel = ({
                           {
                             id: 'reencode',
                             label: 'Re-encode\u2026',
-                            icon: <Icon of={TapeIcon} size={15} />,
+                            icon: <Icon of={TapeFilledIcon} size={15} />,
                             onChoose: () => {
                               onReencode(row.original);
                             },
@@ -224,7 +224,7 @@ const MediaPanel = ({
                             label: isSeries(row.original)
                               ? 'Delete series\u2026'
                               : 'Delete file\u2026',
-                            icon: <Icon of={BinIcon} size={15} />,
+                            icon: <Icon of={BinFilledIcon} size={15} />,
                             isDestructive: true,
                             onChoose: () => {
                               setCondemned(row.original);

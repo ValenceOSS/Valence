@@ -275,7 +275,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       {
                         id: 'lyrics',
                         label: 'Lyrics',
-                        icon: <Icon of={MicIcon} size={16} />,
+                        icon: <Icon of={MicFilledIcon} size={16} />,
                         isDisabled: isIdle,
                         onChoose: () => {
                           open(
@@ -288,7 +288,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       {
                         id: 'queue',
                         label: 'Queue',
-                        icon: <Icon of={ListOrderedIcon} size={16} />,
+                        icon: <Icon of={ListOrderedFilledIcon} size={16} />,
                         onChoose: () => {
                           togglePanel('queue');
                         },
@@ -296,7 +296,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       {
                         id: 'party',
                         label: 'Listening party',
-                        icon: <Icon of={UsersIcon} size={16} />,
+                        icon: <Icon of={UsersFilledIcon} size={16} />,
                         onChoose: () => {
                           togglePanel('party');
                         },
@@ -304,7 +304,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       {
                         id: 'devices',
                         label: 'Play on another device',
-                        icon: <Icon of={LaptopIcon} size={16} />,
+                        icon: <Icon of={LaptopFilledIcon} size={16} />,
                         onChoose: () => {
                           togglePanel('devices');
                         },

@@ -1,8 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
-import {
-  DoorOpen as DoorOpenIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-} from '@keyline-icons/react';
+import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
+import { DoorOpen as DoorOpenFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -76,7 +74,7 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
                     {
                       id: 'end',
                       label: 'Sign this out',
-                      icon: <Icon of={DoorOpenIcon} size={15} />,
+                      icon: <Icon of={DoorOpenFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         setEnding(row.original);

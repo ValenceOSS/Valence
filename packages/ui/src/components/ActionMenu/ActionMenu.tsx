@@ -1,5 +1,5 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
-import { Info as InfoIcon } from '@keyline-icons/react';
+import { Info as InfoIcon } from '@keyline-icons/react/fill';
 import { cn } from '@ValenceUI/cn';
 import { Icon } from '@ValenceUI/Icon';
 import { Tooltip } from '@ValenceUI/Tooltip';

@@ -1,17 +1,17 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import {
-  Bin as BinIcon,
-  ChevronDown as ChevronDownIcon,
-  ChevronUp as ChevronUpIcon,
-  ListMusic as ListMusicIcon,
-  ListOrdered as ListOrderedIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  Plus as PlusIcon,
-  Record as RecordIcon,
-  User as UserIcon,
-  Video as VideoIcon,
-} from '@keyline-icons/react';
-import { SkipForward as SkipForwardFilledIcon } from '@keyline-icons/react/fill';
+  Bin as BinFilledIcon,
+  ChevronDown as ChevronDownFilledIcon,
+  ChevronUp as ChevronUpFilledIcon,
+  ListMusic as ListMusicFilledIcon,
+  ListOrdered as ListOrderedFilledIcon,
+  Plus as PlusFilledIcon,
+  Record as RecordFilledIcon,
+  SkipForward as SkipForwardFilledIcon,
+  User as UserFilledIcon,
+  Video as VideoFilledIcon,
+} from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Icon } from '@ValenceUI/Icon';
 import { notify } from '@ValenceUI/notify';
@@ -69,7 +69,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
             {
               id: 'queue',
               label: 'Add to queue',
-              icon: <Icon of={ListOrderedIcon} size={16} />,
+              icon: <Icon of={ListOrderedFilledIcon} size={16} />,
               onChoose: () => {
                 player.addToQueue([track]);
                 notify.say(`Added ${track.title} to the queue`);
@@ -83,7 +83,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
             {
               id: 'new',
               label: 'New playlist',
-              icon: <Icon of={PlusIcon} size={16} />,
+              icon: <Icon of={PlusFilledIcon} size={16} />,
               onChoose: () => {
                 void createPlaylist({ name: track.title, mediaItemIds: [track.id] }).then(
                   (made) => {
@@ -103,7 +103,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
             ...mine.map((playlist) => ({
               id: `playlist-${playlist.id}`,
               label: playlist.name,
-              icon: <Icon of={ListMusicIcon} size={16} />,
+              icon: <Icon of={ListMusicFilledIcon} size={16} />,
               onChoose: () => {
                 void addToPlaylist(playlist.id, [track.id]).then((added) => {
                   refresh();
@@ -126,7 +126,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
                   {
                     id: 'video',
                     label: 'Watch the video',
-                    icon: <Icon of={VideoIcon} size={16} />,
+                    icon: <Icon of={VideoFilledIcon} size={16} />,
                     onChoose: () => {
                       if (track.videoKey !== null) {
                         player.pause();
@@ -138,7 +138,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
             {
               id: 'album',
               label: 'Go to album',
-              icon: <Icon of={RecordIcon} size={16} />,
+              icon: <Icon of={RecordFilledIcon} size={16} />,
               onChoose: () => {
                 open({ kind: 'album', id: track.album.id });
               },
@@ -149,7 +149,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
                   {
                     id: 'artist',
                     label: 'Go to artist',
-                    icon: <Icon of={UserIcon} size={16} />,
+                    icon: <Icon of={UserFilledIcon} size={16} />,
                     onChoose: () => {
                       open({ kind: 'artist', id: artist.id });
                     },
@@ -161,7 +161,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
                   {
                     id: 'up',
                     label: 'Move up',
-                    icon: <Icon of={ChevronUpIcon} size={16} />,
+                    icon: <Icon of={ChevronUpFilledIcon} size={16} />,
                     onChoose: onMoveUp,
                   },
                 ]),
@@ -171,7 +171,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
                   {
                     id: 'down',
                     label: 'Move down',
-                    icon: <Icon of={ChevronDownIcon} size={16} />,
+                    icon: <Icon of={ChevronDownFilledIcon} size={16} />,
                     onChoose: onMoveDown,
                   },
                 ]),
@@ -181,7 +181,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
                   {
                     id: 'remove',
                     label: 'Remove from this playlist',
-                    icon: <Icon of={BinIcon} size={16} />,
+                    icon: <Icon of={BinFilledIcon} size={16} />,
                     isDestructive: true,
                     onChoose: onRemove,
                   },

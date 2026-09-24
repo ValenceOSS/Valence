@@ -1,11 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
+import { Info as InfoIcon, MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import {
-  Calendar as CalendarIcon,
-  Info as InfoIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  Stop as StopIcon,
-} from '@keyline-icons/react';
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+  Calendar as CalendarFilledIcon,
+  Play as PlayFilledIcon,
+  Stop as StopFilledIcon,
+} from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -204,7 +203,7 @@ const JobRunner = ({
                           {
                             id: 'stop',
                             label: 'Stop it',
-                            icon: <Icon of={StopIcon} size={15} />,
+                            icon: <Icon of={StopFilledIcon} size={15} />,
                             isDestructive: true,
                             onChoose: () => {
                               ask(row.original);
@@ -217,7 +216,7 @@ const JobRunner = ({
                           {
                             id: 'schedule',
                             label: 'Edit schedule',
-                            icon: <Icon of={CalendarIcon} size={15} />,
+                            icon: <Icon of={CalendarFilledIcon} size={15} />,
                             onChoose: () => {
                               onOpenSchedule(row.original.kind);
                             },
