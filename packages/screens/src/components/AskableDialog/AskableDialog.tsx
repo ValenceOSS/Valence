@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Stop as StopFilledIcon } from '@keyline-icons/react/fill';
+import { useSample } from '@ValenceScreens/requests/useSample';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MusicNote as MusicNoteIcon, Tape as TapeIcon, X as XIcon } from '@keyline-icons/react';
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
@@ -64,6 +66,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [askedAlbums, setAskedAlbums] = useState<ReadonlySet<string>>(new Set());
   const [problem, setProblem] = useState<string | null>(null);
   const title = found.data ?? null;
+  const sample = useSample();
   const requestId = title?.standing.requestId ?? null;
   const requests = useQuery({ ...requestsQueries.mediaRequests(), enabled: requestId !== null });
   const request = requests.data?.find((one) => one.id === requestId) ?? null;
@@ -261,7 +264,28 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                         key={album.id}
                         className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[var(--surface-hover)]"
                       >
-                        <Icon of={MusicNoteIcon} size={16} tone="muted" className="shrink-0" />
+                        <Button
+                          isIconOnly
+                          variant="ghost"
+                          size="xs"
+                          label={
+                            sample.heard === album.id
+                              ? `Stop the sample of ${album.title}`
+                              : `Play a sample of ${album.title}`
+                          }
+                          isActive={sample.heard === album.id}
+                          isLoading={sample.finding === album.id}
+                          onClick={() => {
+                            void sample.toggle(album.id, title.title, album.title);
+                          }}
+                          className="shrink-0"
+                        >
+                          <Icon
+                            of={sample.heard === album.id ? StopFilledIcon : MusicNoteIcon}
+                            size={16}
+                            tone={sample.heard === album.id ? 'inherit' : 'muted'}
+                          />
+                        </Button>
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="truncate text-sm text-text">{album.title}</span>
                           <span className="text-xs text-text-muted">

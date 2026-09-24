@@ -19,6 +19,7 @@ import { serveRole } from '@ValenceServer/api/serveRole';
 import { serveLibraryAccess } from '@ValenceServer/api/serveLibraryAccess';
 import { serveAccount } from '@ValenceServer/api/serveAccount';
 import { serveRequests } from '@ValenceServer/api/serveRequests';
+import { serveSamples } from '@ValenceServer/api/serveSamples';
 import { servePermission } from '@ValenceServer/api/servePermission';
 import { serveDevice } from '@ValenceServer/api/serveDevice';
 import { serveProgress } from '@ValenceServer/api/serveProgress';
@@ -67,6 +68,7 @@ const createApp = (options: CreateAppOptions) => {
   serveLibraryAccess(app, context);
   serveAccount(app, context);
   serveRequests(app, context);
+  serveSamples(app, context);
   servePermission(app, context);
   serveDevice(app, context);
   serveProgress(app, context);
