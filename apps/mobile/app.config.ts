@@ -51,7 +51,12 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'app.valence.android',
-    permissions: ['CAMERA', 'ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE', 'FOREGROUND_SERVICE'],
+    icon: './assets/icon/android-icon.png',
+    adaptiveIcon: {
+      foregroundImage: './assets/icon/android-icon-foreground.png',
+      backgroundColor: '#0088FF',
+    },
+    permissions: ['ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE'],
   },
   extra: { eas: { projectId: '11620f0a-1d3a-449d-9812-2afe80b14ecc' } },
   plugins: [
