@@ -4,10 +4,14 @@ import { fetchShow } from '@ValenceClient/library/fetchShows';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
 import { ShowDetailSchema } from '@ValenceContracts/schemas/Show';
+import { markWatched } from '@ValenceClient/playback/markWatched';
 import { AShow } from './AShow';
 import type { ReactNode } from 'react';
 
 jest.mock('@ValenceClient/library/fetchShows');
+jest.mock('@ValenceClient/playback/markWatched', () => ({
+  markWatched: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/watchProgress'),
   fetchWatchProgress: jest.fn(),
@@ -258,5 +262,65 @@ describe('AShow', () => {
     await waitFor(() => {
       expect(drawn.getByText('That programme could not be read.')).toBeTruthy();
     });
+  });
+
+  it('marks an episode watched, and the season shown all at once', async () => {
+    jest.mocked(fetchShow).mockResolvedValue(TWO_SEASONS);
+
+    const drawn = await render(
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    await userEvent.press(await drawn.findByLabelText('Mark Good News About Hell as watched'));
+
+    expect(markWatched).toHaveBeenCalledWith(
+      [expect.objectContaining({ title: 'Good News About Hell' })],
+      true,
+    );
+
+    await userEvent.press(drawn.getByLabelText('Mark season watched'));
+
+    expect(markWatched).toHaveBeenLastCalledWith(
+      [expect.objectContaining({ title: 'Good News About Hell' })],
+      true,
+    );
+  });
+
+  it('offers to take the season back once every episode in it is watched', async () => {
+    jest.mocked(fetchShow).mockResolvedValue(TWO_SEASONS);
+    jest.mocked(fetchWatchProgress).mockResolvedValue(
+      TWO_SEASONS.seasons
+        .flatMap((season) => season.episodes)
+        .map((one) => ({
+          mediaId: one.id,
+          positionSeconds: 60,
+          durationSeconds: 60,
+          isFinished: true,
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        })),
+    );
+
+    const drawn = await render(
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(await drawn.findByLabelText('Mark season unwatched')).toBeTruthy();
+    expect(drawn.getByLabelText('Mark Good News About Hell as unwatched')).toBeTruthy();
   });
 });

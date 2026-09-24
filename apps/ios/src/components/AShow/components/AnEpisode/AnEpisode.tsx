@@ -1,4 +1,5 @@
-import { Check, Info } from '@keyline-icons/react-native';
+import { Check, CircleCheck, Info } from '@keyline-icons/react-native';
+import { CircleCheck as CircleCheckFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -45,6 +46,7 @@ const styles = StyleSheet.create({
  * @param airs - When it aired, where the catalogue says.
  * @param onWatch - Told to play it.
  * @param onLookAt - Told to open its page.
+ * @param onMarkWatched - Told to mark it watched, or unwatched again where it already is.
  */
 const AnEpisode = ({
   episode,
@@ -53,6 +55,7 @@ const AnEpisode = ({
   airs,
   onWatch,
   onLookAt,
+  onMarkWatched,
 }: AnEpisodeProps) => {
   const colours = useTheColours();
   const [isMissing, setIsMissing] = useState(false);
@@ -127,6 +130,24 @@ const AnEpisode = ({
           </View>
         </Button>
       </View>
+
+      {onMarkWatched === undefined ? null : (
+        <Button
+          tone="bare"
+          label={
+            isThrough ? `Mark ${episode.title} as unwatched` : `Mark ${episode.title} as watched`
+          }
+          onPress={onMarkWatched}
+        >
+          <View style={styles.about}>
+            <Icon
+              of={isThrough ? CircleCheckFilled : CircleCheck}
+              size={20}
+              colour={isThrough ? colours.text : colours.textMuted}
+            />
+          </View>
+        </Button>
+      )}
 
       <Button tone="bare" label={`About ${episode.title}`} onPress={onLookAt}>
         <View style={styles.about}>

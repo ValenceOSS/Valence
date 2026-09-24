@@ -6,6 +6,7 @@ type EpisodeCardProps = {
   watchedFraction?: number;
   isWatched?: boolean;
   onPress: (episode: MediaSummary) => void;
+  onHold?: (episode: MediaSummary) => void;
 };
 
 export type { EpisodeCardProps };
