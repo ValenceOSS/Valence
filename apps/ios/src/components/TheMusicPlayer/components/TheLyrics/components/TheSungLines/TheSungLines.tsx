@@ -56,14 +56,7 @@ const TheLines = ({ lines, isSynced, sung, onSeek }: TheSungLinesProps) => {
     >
       {lines.map((line, at) => {
         const said = (
-          <View
-            style={styles.line}
-            onLayout={({ nativeEvent }) => {
-              const { y } = nativeEvent.layout;
-
-              setPlaces((was) => (was.get(at) === y ? was : new Map(was).set(at, y)));
-            }}
-          >
+          <View style={styles.line}>
             <ALyricLine
               words={line.text === '' ? '♪' : line.text}
               standing={lyricStanding(at, sung, isSynced, true)}
@@ -73,20 +66,30 @@ const TheLines = ({ lines, isSynced, sung, onSeek }: TheSungLinesProps) => {
         );
         const { atMs } = line;
 
-        return isSynced && atMs !== null ? (
-          <Button
+        return (
+          <View
             key={`${at.toString()}:${line.text}`}
-            tone="bare"
-            label={`Play from “${line.text}”`}
-            onPress={() => {
-              setLastTouchedAt(0);
-              onSeek(atMs / 1000);
+            onLayout={({ nativeEvent }) => {
+              const { y } = nativeEvent.layout;
+
+              setPlaces((was) => (was.get(at) === y ? was : new Map(was).set(at, y)));
             }}
           >
-            {said}
-          </Button>
-        ) : (
-          <View key={`${at.toString()}:${line.text}`}>{said}</View>
+            {isSynced && atMs !== null ? (
+              <Button
+                tone="bare"
+                label={`Play from “${line.text}”`}
+                onPress={() => {
+                  setLastTouchedAt(0);
+                  onSeek(atMs / 1000);
+                }}
+              >
+                {said}
+              </Button>
+            ) : (
+              said
+            )}
+          </View>
         );
       })}
     </ScrollView>
