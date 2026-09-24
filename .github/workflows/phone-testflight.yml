@@ -1,0 +1,103 @@
+name: Phone app to TestFlight
+
+# Builds the phone app on one of GitHub's macOS runners and uploads it to TestFlight.
+#
+# Started by hand only, for now: a macOS runner bills at roughly ten times a Linux one, and a
+# TestFlight build is something somebody decides to send rather than something every push wants.
+#
+# The build runs here rather than on Expo's cloud, so it never waits in their queue. EAS is still
+# asked for two things, both in a few seconds: the signing certificate and provisioning profile it
+# keeps for the app, and the next build number, which it counts so that a build from here and one
+# from anywhere else never share one. The upload goes straight to Apple with Xcode's own tool and
+# an App Store Connect API key, so it never waits for one of Expo's submitters either.
+#
+# Secrets it needs, under Settings → Secrets and variables → Actions:
+#   EXPO_TOKEN         an Expo robot access token for the valence-oss organisation
+#   ASC_KEY_ID         the App Store Connect API key's Key ID
+#   ASC_ISSUER_ID      the Issuer ID shown above the list of API keys
+#   ASC_API_KEY_P8     the whole contents of the key's AuthKey_<Key ID>.p8 file
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch or commit to build, where it should not be the one this is started from
+        required: false
+        default: ''
+      profile:
+        description: Which EAS build profile to build with
+        type: choice
+        options:
+          - production
+          - preview
+        default: production
+
+concurrency:
+  group: phone-testflight
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  testflight:
+    name: Build and send to TestFlight
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # The app draws liquid glass where the phone has it, which needs the newest SDK, and a runner
+      # does not always default to its newest Xcode.
+      - name: Use the newest Xcode on the runner
+        run: |
+          newest="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$newest"
+          xcodebuild -version
+
+      - run: pnpm install --frozen-lockfile
+
+      # Where Xcode's upload tool looks for an API key by its id. The runner is thrown away with
+      # the job, and the key with it.
+      - name: Put the App Store Connect key where Xcode looks for it
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s' "$ASC_API_KEY_P8" > ~/.appstoreconnect/private_keys/AuthKey_"$ASC_KEY_ID".p8
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+
+      - name: Build
+        working-directory: apps/ios
+        run: >
+          npx eas-cli@latest build --local --platform ios --profile "$PROFILE" --non-interactive
+          --output "$RUNNER_TEMP/valence.ipa"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          PROFILE: ${{ inputs.profile }}
+
+      - name: Send to TestFlight
+        run: >
+          xcrun altool --upload-app --type ios --file "$RUNNER_TEMP/valence.ipa"
+          --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+
+      # Kept for a few days, so a build that Apple turns down can be looked at, or sent again by hand
+      # without building it twice.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: valence-ios-${{ inputs.profile }}
+          path: ${{ runner.temp }}/valence.ipa
+          if-no-files-found: error
+          retention-days: 7
