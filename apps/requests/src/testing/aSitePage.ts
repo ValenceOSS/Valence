@@ -45,6 +45,7 @@ const aSitePage = ({
     userAgent: vi.fn(() =>
       Promise.resolve('Mozilla/5.0 (Windows NT 10.0; rv:152.0) Firefox/152.0'),
     ),
+    isClosed: vi.fn(() => false),
     close: vi.fn(() => Promise.resolve()),
   } satisfies SitePage;
 };

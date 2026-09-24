@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { aFakeTab } from '@ValenceRequests/testing/aFakeTab';
+import { createGate } from '@ValenceRequests/solver/createGate';
 import { createSiteAgent } from './createSiteAgent';
 import type { Cookie } from './createSiteAgent';
 
@@ -46,7 +47,7 @@ const aContext = () => {
 describe('createSiteAgent', () => {
   it('keeps a tab for the next request rather than opening another', async () => {
     const { context } = aContext();
-    const agent = createSiteAgent(context, 2);
+    const agent = createSiteAgent(context, 2, createGate(1));
 
     const first = await agent.withPage((page) => Promise.resolve(page));
     const second = await agent.withPage((page) => Promise.resolve(page));
@@ -57,7 +58,7 @@ describe('createSiteAgent', () => {
 
   it('closes a tab that failed rather than keeping it', async () => {
     const { context } = aContext();
-    const agent = createSiteAgent(context, 1);
+    const agent = createSiteAgent(context, 1, createGate(1));
 
     await expect(agent.withPage(() => Promise.reject(new Error('gone')))).rejects.toThrow('gone');
     await agent.withPage(() => Promise.resolve());
@@ -65,9 +66,45 @@ describe('createSiteAgent', () => {
     expect(context.newPage).toHaveBeenCalledTimes(2);
   });
 
+  it('passes over a kept tab that has been closed since, and opens another', async () => {
+    const { context } = aContext();
+    const agent = createSiteAgent(context, 1, createGate(1));
+
+    const first = await agent.withPage((page) => Promise.resolve(page));
+
+    await first.close();
+
+    const second = await agent.withPage((page) => Promise.resolve(page));
+
+    expect(second).not.toBe(first);
+    expect(context.newPage).toHaveBeenCalledTimes(2);
+  });
+
+  it('opens a tab only when the browser’s turn for opening comes round', async () => {
+    const { context } = aContext();
+    const order: string[] = [];
+    const agent = createSiteAgent(context, 1, {
+      run: async (task) => {
+        order.push('turn');
+
+        return task();
+      },
+    });
+
+    context.newPage.mockImplementationOnce(() => {
+      order.push('open');
+
+      return Promise.resolve(aFakeTab().tab);
+    });
+
+    await agent.withPage(() => Promise.resolve());
+
+    expect(order).toEqual(['turn', 'open']);
+  });
+
   it('sets the cookies it is given for the site, and none where there are none', async () => {
     const { context } = aContext();
-    const agent = createSiteAgent(context, 1);
+    const agent = createSiteAgent(context, 1, createGate(1));
 
     await agent.addCookies([], 'https://example.org');
     expect(context.addCookies).not.toHaveBeenCalled();
@@ -80,7 +117,7 @@ describe('createSiteAgent', () => {
   });
 
   it('reads the user agent once', async () => {
-    const agent = createSiteAgent(aContext().context, 1);
+    const agent = createSiteAgent(aContext().context, 1, createGate(1));
     const page = await agent.withPage((one) => Promise.resolve(one));
 
     await agent.userAgent(page);
@@ -89,18 +126,20 @@ describe('createSiteAgent', () => {
 
   it('says how busy it is, and knows when its context has gone', async () => {
     const { context, crash } = aContext();
-    const agent = createSiteAgent(context, 1);
-    let finish = (): void => {};
+    const agent = createSiteAgent(context, 1, createGate(1));
+    const held: { finish?: () => void } = {};
     const working = agent.withPage(
       () =>
         new Promise<void>((resolve) => {
-          finish = resolve;
+          held.finish = resolve;
         }),
     );
 
-    await Promise.resolve();
+    await vi.waitFor(() => {
+      expect(held.finish).toBeDefined();
+    });
     expect(agent.busy()).toBe(1);
-    finish();
+    held.finish?.();
     await working;
     expect(agent.busy()).toBe(0);
 
@@ -111,7 +150,7 @@ describe('createSiteAgent', () => {
 
   it('closes its context, even one that will not close cleanly', async () => {
     const { context } = aContext();
-    const agent = createSiteAgent(context, 1);
+    const agent = createSiteAgent(context, 1, createGate(1));
 
     context.close.mockRejectedValueOnce(new Error('already closed'));
     await agent.close();
