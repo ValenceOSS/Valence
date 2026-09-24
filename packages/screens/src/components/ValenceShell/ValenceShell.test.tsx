@@ -399,6 +399,26 @@ const A_FILM_LIBRARY = {
   kind: 'movies',
 };
 
+describe('choosing a library from the bar', () => {
+  it('goes to that library from any page, not only from the place it belongs to', async () => {
+    const actor = userEvent.setup();
+    const anime = { ...A_LIBRARY, id: '6f2504e0-4f89-41d3-9a0c-0305e82c3304', name: 'Anime' };
+
+    serveLibraries([A_LIBRARY, anime]);
+    renderTheApp();
+
+    const bar = await screen.findByRole('navigation', { name: 'Sections' });
+
+    await actor.click(await within(bar).findByRole('button', { name: 'Programme library' }));
+    await actor.click(await screen.findByRole('menuitemradio', { name: /Anime/ }));
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/shows');
+    });
+    expect(new URLSearchParams(window.location.search).get('library')).toBe(anime.id);
+  });
+});
+
 describe('the places a server with little in it offers', () => {
   it('offers programmes once a library of them holds something', async () => {
     serveLibraries([A_LIBRARY]);

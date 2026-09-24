@@ -42,7 +42,7 @@ describe('libraryChoicesFor', () => {
     expect(libraryChoicesFor(libraries, 'elsewhere', vi.fn()).films?.selectedId).toBe('all');
   });
 
-  it('reports all of them as null, and one library by its id', () => {
+  it('reports all of them as null, and one library by its id, with the place it was chosen for', () => {
     const onSelect = vi.fn();
     const choices = libraryChoicesFor(
       [library('a', 'shows'), library('b', 'shows')],
@@ -53,8 +53,8 @@ describe('libraryChoicesFor', () => {
     choices.shows?.onSelect('b');
     choices.shows?.onSelect('all');
 
-    expect(onSelect).toHaveBeenNthCalledWith(1, 'b');
-    expect(onSelect).toHaveBeenNthCalledWith(2, null);
+    expect(onSelect).toHaveBeenNthCalledWith(1, 'b', 'shows');
+    expect(onSelect).toHaveBeenNthCalledWith(2, null, 'shows');
   });
 
   it('offers a choice for books once there are several book libraries, under the reading place', () => {

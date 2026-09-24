@@ -160,8 +160,8 @@ const ValenceShell = () => {
 
   const libraryChoices = useMemo(
     () =>
-      libraryChoicesFor(libraries.data ?? [], place.library, (library) => {
-        go({ library });
+      libraryChoicesFor(libraries.data ?? [], place.library, (library, section) => {
+        go({ section, library });
       }),
     [libraries.data, place.library, go],
   );
