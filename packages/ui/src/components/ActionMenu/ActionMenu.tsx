@@ -24,7 +24,8 @@ const LOOKS = {
 
 /**
  * A menu of things to do — rename, rescan, delete — rather than a value to pick, which is what an
- * option menu is for. Items can be grouped, marked destructive so they read as dangerous before
+ * option menu is for. A group can hold a control of its own in place of items — a row of tabs for a
+ * choice between a few, say — and items can be grouped, marked destructive so they read as dangerous before
  * they are pressed, and disabled with the reason still visible.
  *
  * An item that needs explaining carries a hint, drawn as an information mark that says it on hover,
@@ -114,6 +115,10 @@ const ActionMenu = ({
               >
                 {group.name === undefined ? null : (
                   <RadixMenu.Label className={MENU.label}>{group.name}</RadixMenu.Label>
+                )}
+
+                {group.control === undefined ? null : (
+                  <div className="relative z-10 px-2 py-1.5">{group.control}</div>
                 )}
 
                 {group.items.map((item) => (

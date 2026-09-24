@@ -9,13 +9,9 @@ import {
   Heart as HeartIcon,
   Home as HomeIcon,
   Monitor as MonitorIcon,
-  Moon as MoonIcon,
   MusicNote as MusicNoteIcon,
   Search as SearchIcon,
-  Sun as SunIcon,
   X as XIcon,
-  Zap as ZapIcon,
-  ZapOff as ZapOffIcon,
 } from '@keyline-icons/react';
 import {
   Bell as BellFilledIcon,
@@ -46,6 +42,7 @@ import {
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { NavBar } from '@ValenceUI/NavBar';
 import { Logo } from '@ValenceUI/Logo';
 import { MoodBackground } from '@ValenceUI/MoodBackground';
@@ -63,13 +60,11 @@ import { useTheme } from '@ValenceClient/shell/useTheme';
 import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { useMotion } from '@ValenceClient/shell/useMotion';
 import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
-import type { Motion } from '@ValenceClient/shell/motion';
 import { BROWSE_SECTIONS } from './AppShell.types';
 import type { ReactNode } from 'react';
 import type { IconGesture } from '@ValenceUI/AnimatedIcon.types';
 import type { NavBarAction, NavBarItem } from '@ValenceUI/NavBar.types';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
-import type { Theme } from '@ValenceClient/shell/theme';
 import type { AppShellProps, ShellSection } from './AppShell.types';
 
 const FADING = 1.2;
@@ -104,18 +99,6 @@ const howSolid = (travelled: number): number => {
       : Math.max(meets.getBoundingClientRect().top + travelled - bar, SOLID_WITHIN);
 
   return Math.min(Math.max(travelled / reach, 0), 1);
-};
-
-const THEME_ICONS: Record<Theme, ReactNode> = {
-  system: <Icon of={MonitorIcon} size={16} />,
-  light: <Icon of={SunIcon} size={16} />,
-  dark: <Icon of={MoonIcon} size={16} />,
-};
-
-const MOTION_ICONS: Record<Motion, ReactNode> = {
-  system: <Icon of={MonitorIcon} size={16} />,
-  full: <Icon of={ZapIcon} size={16} />,
-  reduced: <Icon of={ZapOffIcon} size={16} />,
 };
 
 const STOCKED_ONLY: ReadonlySet<ShellSection> = new Set(['shows', 'films', 'read', 'music']);
@@ -491,29 +474,43 @@ const AppShell = ({
               .map((items) => ({ items })),
             {
               name: 'Theme',
-              items: THEME_CHOICES.map((choice) => ({
-                id: `theme-${choice.id}`,
-                label: choice.label,
-                icon: THEME_ICONS[choice.id],
-                keepsOpen: true,
-                ...(theme === choice.id ? { detail: '✓' } : {}),
-                onChoose: () => {
-                  choose(choice.id);
-                },
-              })),
+              items: [],
+              control: (
+                <SegmentedRow
+                  label="Theme"
+                  size="sm"
+                  items={THEME_CHOICES.map((choice) => ({ id: choice.id, label: choice.label }))}
+                  value={theme}
+                  onSelect={(id) => {
+                    const chosen = THEME_CHOICES.find((choice) => choice.id === id);
+
+                    if (chosen !== undefined) {
+                      choose(chosen.id);
+                    }
+                  }}
+                  className="w-full"
+                />
+              ),
             },
             {
               name: 'Movement',
-              items: MOTION_CHOICES.map((choice) => ({
-                id: `motion-${choice.id}`,
-                label: choice.label,
-                icon: MOTION_ICONS[choice.id],
-                keepsOpen: true,
-                ...(movement === choice.id ? { detail: '✓' } : {}),
-                onChoose: () => {
-                  chooseMovement(choice.id);
-                },
-              })),
+              items: [],
+              control: (
+                <SegmentedRow
+                  label="Movement"
+                  size="sm"
+                  items={MOTION_CHOICES.map((choice) => ({ id: choice.id, label: choice.label }))}
+                  value={movement}
+                  onSelect={(id) => {
+                    const chosen = MOTION_CHOICES.find((choice) => choice.id === id);
+
+                    if (chosen !== undefined) {
+                      chooseMovement(chosen.id);
+                    }
+                  }}
+                  className="w-full"
+                />
+              ),
             },
             ...(onSignOut === undefined
               ? []

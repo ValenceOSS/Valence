@@ -202,4 +202,18 @@ describe('ActionMenu', () => {
     expect(menu).toHaveClass('valence-float');
     expect(menu).not.toHaveClass('valence-surface');
   });
+
+  it('draws a group that holds a control of its own, under its name', async () => {
+    render(
+      <ActionMenu
+        {...props}
+        groups={[{ name: 'Theme', items: [], control: <span>the tabs</span> }]}
+      />,
+    );
+
+    await open();
+
+    expect(await screen.findByText('the tabs')).toBeInTheDocument();
+    expect(screen.getByText('Theme')).toBeInTheDocument();
+  });
 });
