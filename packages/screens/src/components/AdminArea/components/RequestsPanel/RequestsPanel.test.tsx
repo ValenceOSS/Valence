@@ -190,7 +190,7 @@ describe('RequestsPanel', () => {
     expect(await screen.findByText('1 failing')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'How to fix this' })).toHaveAttribute(
       'href',
-      'https://docs.getvalence.app/install/requesting#indexers-behind-cloudflare',
+      'https://docs.getvalence.app/install/requesting#a-sites-cloudflare-refuses-your-address',
     );
 
     one.unmount();
@@ -200,10 +200,7 @@ describe('RequestsPanel', () => {
     renderInAnAddress(<RequestsPanel />);
 
     expect(await screen.findByText('2 failing')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'How to fix this' })).toHaveAttribute(
-      'href',
-      'https://docs.getvalence.app/install/requesting#failing-indexers',
-    );
+    expect(screen.queryByRole('link', { name: 'How to fix this' })).not.toBeInTheDocument();
   });
 
   it('says every indexer is working where none are failing', async () => {

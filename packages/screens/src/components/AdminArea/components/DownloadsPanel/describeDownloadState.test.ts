@@ -111,6 +111,6 @@ describe('describeDownloadState', () => {
         filingProblem: 'The requests service may not write to /media/Films.',
         filingProblemCode: 'MayNotWriteToLibrary',
       }).help,
-    ).toBe('https://docs.getvalence.app/install/requesting#who-owns-what-it-files');
+    ).toBe('https://docs.getvalence.app/install/requesting#it-may-not-write-to-a-folder');
   });
 });

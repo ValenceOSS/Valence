@@ -53,7 +53,7 @@ describe('describeRequestsVpn', () => {
       label: 'Down',
       tone: 'danger',
       detail: 'The tunnel is stopped',
-      help: 'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
+      help: 'https://docs.getvalence.app/install/requesting#the-vpn-is-down',
     });
   });
 

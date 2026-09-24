@@ -15,7 +15,7 @@ const describeIndexerState = (indexer: Indexer): StateBadge => {
       label: 'Turned off',
       tone: 'danger',
       detail: indexer.turnedOffBecause,
-      help: docsFor(indexer.lastProblemCode ?? 'IndexerFailing'),
+      help: docsFor(indexer.lastProblemCode),
     };
   }
 
@@ -28,7 +28,7 @@ const describeIndexerState = (indexer: Indexer): StateBadge => {
       label: indexer.failures === 1 ? 'Failed once' : `Failed ${indexer.failures.toString()} times`,
       tone: 'warning',
       detail: indexer.lastProblem,
-      help: docsFor(indexer.lastProblemCode ?? 'IndexerFailing'),
+      help: docsFor(indexer.lastProblemCode),
     };
   }
 

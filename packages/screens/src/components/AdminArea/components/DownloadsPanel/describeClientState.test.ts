@@ -44,7 +44,7 @@ describe('describeClientState', () => {
       label: 'Unreachable',
       tone: 'danger',
       detail: 'qBittorrent could not be reached',
-      help: 'https://docs.getvalence.app/install/requesting#download-clients',
+      help: 'https://docs.getvalence.app/install/requesting#a-download-client-cannot-be-reached',
     });
   });
 });

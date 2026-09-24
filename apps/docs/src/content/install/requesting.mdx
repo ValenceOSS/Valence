@@ -39,7 +39,7 @@ Valence does not supply content, indexers or a download client. You choose and c
 
 3. Run `docker compose up -d` again so the `valence` and `requests` services both pick the values up.
 
-If the admin area says the requests service is unreachable, check that it is running (`docker compose ps requests`) and that `REQUESTS_URL` is the address Valence reaches it at from inside the stack. If it says the service refused the secret, `REQUESTS_SECRET` differs between the two: set the same value on both and run `docker compose up -d` again.
+If the admin area says the service [cannot be reached](#the-requests-service-cannot-be-reached) or [refuses the secret](#the-requests-service-refuses-the-secret), those sections give the steps.
 
 | Setting                   | Required | What it is                                                                                                                                                                       |
 | ------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -65,7 +65,7 @@ Libraries are filed into at the path Valence has for them, so the requests servi
 
 The requests service starts as root only long enough to become the user and group in `PUID` and `PGID`, `1000` each unless you set them, and runs as that from then on. So everything it files belongs to that user, and the browser it opens on indexers' pages has no more power than it does. Set them to the owner of your media folders, which is usually the same ids your download client runs as.
 
-Before this, the service ran as root. If your media folders belong to someone else, the request waits at **Filing**, in the admin area's **Requests** page, with a message naming the user the service runs as, and its history says the same. Set `PUID` and `PGID` to match, or `0` to keep root, and it is filed once the service restarts. It is not given up on in the meantime. Folders and files it made before belong to root, so the new user cannot add to or replace them until you hand them over, for example with `sudo chown -R 1000:1000 /path/to/media` using your own ids.
+Before this, the service ran as root, so folders and files it made before belong to root. If a request waits at **Filing** because the service [may not write to a folder](#it-may-not-write-to-a-folder), that section gives the steps.
 
 ## Indexers
 
@@ -90,7 +90,7 @@ Some sites answer with Cloudflare's browser check instead of their pages. The re
 
 The browser starts only the first time a site answers with the check. Once a site has been through it, that site's later requests are made from inside the browser. The browser closes itself when no site has used it for about ten minutes. While it is open the requests service uses about 700 MB of memory rather than about 150 MB. The compose file gives the service `shm_size: 512m` for it, and it makes the requests image about 200 MB more to download.
 
-A site whose Cloudflare refuses your address outright, with "Sorry, you have been blocked", cannot be got past by any browser. Its indexer reports that the site's Cloudflare refuses this address outright.
+A site whose Cloudflare refuses your address outright, with "Sorry, you have been blocked", cannot be got past by any browser. Its indexer reports that the site's Cloudflare refuses this address outright; see [what to do](#a-sites-cloudflare-refuses-your-address).
 
 Valence no longer needs FlareSolverr. If `COMPOSE_PROFILES` still names `flaresolverr` from an earlier release you lose nothing: Compose starts nothing for it, and you can drop the name. A FlareSolverr container an earlier release started keeps running, though, because Compose no longer knows about it. Remove it with:
 
@@ -123,7 +123,7 @@ Valence only ever lists, pauses or removes what carries one of these categories,
 
 A search sends a release to the first client switched on that takes it, as the kind searched for. Searching for anything, it uses the kind its indexer filed it under, and asks where that does not say. The Downloads page follows each download: progress, speed, time left, and seeds and peers for torrents. The clients are asked every couple of seconds while that page is open, and every half minute otherwise, which is how Valence notices a download finishing or failing.
 
-A client marked **Unreachable** could not be reached at its address from inside the requests service's container: check the client is running, and use its container name, or `gluetun` where it sits behind the VPN, rather than `localhost`. One that refused its login wants the username and password its web interface uses, or for SABnzbd the API key from its settings. qBittorrent bans an address after too many wrong passwords; wait for the ban to lift, or restart it, once the password is right.
+A client the admin area says [cannot be reached](#a-download-client-cannot-be-reached) or [refuses its login](#a-download-client-refuses-its-login) has its steps under Troubleshooting.
 
 ### Paths must line up
 
@@ -150,7 +150,7 @@ VPN_URL=http://gluetun:8000
 
 `docker run --rm qmcgaw/gluetun genkey` makes a key. With `VPN_URL` and `VPN_API_KEY` set, the admin area's **Requests** page shows whether the tunnel is up and where traffic leaves from, and Valence raises a warning and a webhook when it drops.
 
-Where it says gluetun refused the question, `VPN_API_KEY` is not the key gluetun's control server was given: the same value has to reach both. Where gluetun could not be reached, `VPN_URL` is wrong or gluetun is not running. A tunnel that is down otherwise is gluetun's to explain; `docker compose logs gluetun` says why, most often a provider setting or an expired key.
+Where the admin area says [the VPN is down](#the-vpn-is-down) or [gluetun refuses the key](#gluetun-refuses-the-key), those sections give the steps.
 
 An example of a download client added to the same stack, behind gluetun. This is an illustration to adapt, not a service the repository ships:
 
@@ -252,9 +252,70 @@ Left empty, the requests service takes a release name at its word, which is righ
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | No requesting anywhere in Valence       | `REQUESTS_URL` or `REQUESTS_SECRET` is missing or the secrets differ. The log says which.                       |
 | The requests container refuses to start | `REQUESTS_SECRET` is empty or shorter than 32 characters.                                                       |
-| Indexer says Cloudflare refuses it      | The site's Cloudflare refuses your address outright. No browser can get past that.                              |
-| A finished download is not found        | The client and the requests service see the folder under different names. Fill in **Where it saves downloads**. |
 | Files are copied instead of hard linked | `MEDIA_PATH` and `DOWNLOADS_PATH` are on separate mounts. See [Hard links](#hard-links).                        |
 | The VPN status is missing               | `VPN_URL` and `VPN_API_KEY` are not set on the requests service.                                                |
 
 See [Troubleshooting](/reference/troubleshooting) for more.
+
+The steps below run `docker compose up -d` with the profiles in `COMPOSE_PROFILES` in your `.env`, as [Switching it on](#switching-it-on) sets out. If you give the profiles on the command line instead, give them each time, for example `COMPOSE_PROFILES=requests,vpn docker compose up -d`, or a service outside them is left as it was.
+
+### The requests service cannot be reached
+
+1. Check it is running: `docker compose ps requests`. If it is not, `docker compose logs requests` says why. Most often `REQUESTS_SECRET` is missing or shorter than 32 characters.
+2. Check `REQUESTS_URL` is the address Valence reaches it at from inside the stack: `http://requests:8421` with the compose file as it is, never `localhost`.
+3. Run `docker compose up -d` so both services pick up any change.
+
+### The requests service refuses the secret
+
+`REQUESTS_SECRET` differs between Valence and the requests service.
+
+1. Set the same `REQUESTS_SECRET` for both, in `.env` or Dockge's environment editor.
+2. Run `docker compose up -d` so both restart with it.
+
+### It may not write to a folder
+
+The requests service runs as the user and group in `PUID` and `PGID`, and that user may not write to the library folder named in the message. The request waits at **Filing** and is filed once this is put right.
+
+1. Find who owns your media folder: `ls -ldn /path/to/media` shows its owner's user and group ids.
+2. Set `PUID` and `PGID` to those ids, or to `0` to run as root, and run `docker compose up -d`.
+3. Folders the service filed into as root before this belong to root. Hand them over with `sudo chown -R 1000:1000 /path/to/media`, using your own ids.
+
+### A finished download cannot be found
+
+The download client and the requests service see the download folder under different names.
+
+1. Open the client on the admin area's **Downloads** page.
+2. Under **Where it saves downloads**, give the folder as the client sees it, such as `/downloads`, and as the requests service sees it.
+3. Check the client's category folders sit under `DOWNLOADS_PATH`.
+
+### A download client cannot be reached
+
+1. Check the client is running.
+2. Use its container name as the address, such as `http://qbittorrent:8080`, or `http://gluetun:8080` where it sits behind the VPN. `localhost` is the requests service's own container, not the client's.
+3. Press **Test** on the client in the admin area's **Downloads** page.
+
+### A download client refuses its login
+
+1. Give the username and password its web interface uses, or for SABnzbd the API key from its settings.
+2. qBittorrent bans an address after too many wrong passwords. Once the password is right, wait for the ban to lift, or restart qBittorrent.
+
+### A site's Cloudflare refuses your address
+
+The site's Cloudflare has refused the address your requests leave from. No browser gets past that, so the only fix is another address.
+
+1. Open the site in a browser on the same network. If it refuses you there too, the site refuses your address, or your country.
+2. Where the machine running Valence goes out through a VPN, pick an exit in another country and test the indexer again. The [VPN for the download client](#a-vpn-for-the-download-client) does not help here: the requests service does not go through it.
+3. Where it still refuses, switch the indexer off, or use another site.
+
+### The VPN is down
+
+1. Read `docker compose logs gluetun`. It says why the tunnel is down, most often a provider setting or an expired key.
+2. Put that right in `.env` and run `docker compose up -d gluetun`.
+3. Where the admin area says gluetun could not be reached, check `VPN_URL` is `http://gluetun:8000` and gluetun is running.
+
+### gluetun refuses the key
+
+`VPN_API_KEY` is not the key gluetun's control server was given.
+
+1. Set the same `VPN_API_KEY` for gluetun and the requests service.
+2. Run `docker compose up -d`.

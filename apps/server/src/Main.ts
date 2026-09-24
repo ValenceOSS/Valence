@@ -1077,7 +1077,7 @@ const requests =
 
           void events.publish({
             event: 'requests.indexerFailing',
-            data: { name, problem, docs: docsFor(problemCode ?? 'IndexerFailing') },
+            data: { name, problem, docs: docsFor(problemCode) },
           });
         },
         onIndexerWorking: ({ name }) => {
