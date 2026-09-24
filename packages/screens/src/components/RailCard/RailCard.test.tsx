@@ -138,6 +138,20 @@ describe('RailCard', () => {
     expect(screen.getByText('Parasite')).toBeInTheDocument();
   });
 
+  it('says how many episodes of a programme are left to watch, and nothing for none', () => {
+    const { rerender } = renderInAnAddress(
+      <RailCard media={MEDIA} isSeries unwatchedCount={4} onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    expect(screen.getByRole('img', { name: '4 episodes left' })).toBeInTheDocument();
+
+    rerender(
+      <RailCard media={MEDIA} isSeries unwatchedCount={0} onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    expect(screen.queryByRole('img', { name: /left/ })).not.toBeInTheDocument();
+  });
+
   it('reads nothing aloud in writing over the clip, since a preview carries no subtitles', async () => {
     const { container } = renderInAnAddress(
       <RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />,

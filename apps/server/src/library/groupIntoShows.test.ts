@@ -39,6 +39,21 @@ describe('groupIntoShows', () => {
     expect(shows[0]?.episodeCount).toBe(3);
   });
 
+  it('counts what is left to watch for whoever is looking, and nothing where nobody is', () => {
+    const episodes = [
+      episode({ id: identified(1), episodeNumber: 1 }),
+      episode({ id: identified(2), episodeNumber: 2 }),
+      episode({ id: identified(3), episodeNumber: 3 }),
+    ];
+
+    expect(groupIntoShows(episodes, new Set([identified(1)]))[0]?.unwatchedCount).toBe(2);
+    expect(groupIntoShows(episodes, new Set())[0]?.unwatchedCount).toBe(3);
+    expect(groupIntoShows(episodes)[0]?.unwatchedCount).toBeNull();
+    expect(
+      buildShowDetail(episodes, 'a-sign-of-affection', new Set([identified(2)]))?.unwatchedCount,
+    ).toBe(2);
+  });
+
   it('counts the seasons it holds', () => {
     const shows = groupIntoShows([
       episode({ id: identified(1), seasonNumber: 1 }),

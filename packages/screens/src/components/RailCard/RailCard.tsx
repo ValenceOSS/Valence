@@ -74,6 +74,8 @@ const fitInside = (top: number, height: number): number => {
  *
  * @param media - The item to draw.
  * @param watchedFraction - How far through it this viewer is.
+ * @param unwatchedCount - For a card that stands for a programme, how many of its episodes this
+ *   viewer has still to watch.
  * @param onPlay - Told to start it, and where from.
  * @param onInspect - Told to open the page about it.
  * @param resumeSeconds - Where they left it.
@@ -92,6 +94,7 @@ const fitInside = (top: number, height: number): number => {
 const RailCard = ({
   media,
   watchedFraction,
+  unwatchedCount,
   onPlay,
   onInspect,
   resumeSeconds,
@@ -239,6 +242,12 @@ const RailCard = ({
         subtitle={<MediaFacts media={media} hasEpisode={!isSeries} />}
         shape={shape}
         {...(watchedFraction === undefined ? {} : { watchedFraction })}
+        {...(unwatchedCount === undefined
+          ? {}
+          : {
+              count: unwatchedCount,
+              countLabel: `${unwatchedCount.toString()} ${unwatchedCount === 1 ? 'episode' : 'episodes'} left`,
+            })}
         {...(restingUrl === undefined ? {} : { imageUrl: restingUrl })}
         onSelect={inspect}
         className="w-full"
@@ -286,9 +295,19 @@ const RailCard = ({
                     {isSeries
                       ? show === null
                         ? null
-                        : show.seasonCount === 1
-                          ? `${show.episodeCount.toString()} episodes`
-                          : `${show.seasonCount.toString()} seasons · ${show.episodeCount.toString()} episodes`
+                        : [
+                            show.seasonCount === 1
+                              ? null
+                              : `${show.seasonCount.toString()} seasons`,
+                            `${show.episodeCount.toString()} episodes`,
+                            unwatchedCount === undefined
+                              ? null
+                              : unwatchedCount === 0
+                                ? 'All watched'
+                                : `${unwatchedCount.toString()} left`,
+                          ]
+                            .filter((part) => part !== null)
+                            .join(' · ')
                       : media.seriesTitle === null || media.seriesTitle === undefined
                         ? null
                         : media.title}

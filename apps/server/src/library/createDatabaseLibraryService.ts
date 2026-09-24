@@ -27,6 +27,7 @@ import {
   library,
   libraryBlock,
   mediaItem,
+  watchProgress,
   mediaPreviewOverride,
   rating,
   series,
@@ -597,6 +598,28 @@ const createDatabaseLibraryService = ({
     const rows = await db.select().from(library).where(eq(library.id, id)).limit(1);
 
     return rows[0] ?? null;
+  };
+
+  /**
+   * What the profile looking has watched to the end, for how many episodes of each programme they
+   * have left — nothing where nobody in particular is looking, since then there is no count to give.
+   *
+   * @param viewer - Who is looking.
+   * @returns The items finished, or nothing.
+   */
+  const finishedBy = async (viewer: Viewer): Promise<ReadonlySet<string> | undefined> => {
+    if (viewer.kind !== 'account' || viewer.profileId === null) {
+      return undefined;
+    }
+
+    const rows = await db
+      .select({ mediaItemId: watchProgress.mediaItemId })
+      .from(watchProgress)
+      .where(
+        and(eq(watchProgress.profileId, viewer.profileId), eq(watchProgress.isFinished, true)),
+      );
+
+    return new Set(rows.map((row) => row.mediaItemId));
   };
 
   /**
@@ -2132,7 +2155,7 @@ const createDatabaseLibraryService = ({
           service.listItems(viewer, libraryId, { kind: 'shows', limit, offset }),
       });
 
-      return episodes === null ? null : groupIntoShows(episodes);
+      return episodes === null ? null : groupIntoShows(episodes, await finishedBy(viewer));
     },
 
     comingUp: async (viewer) => {
@@ -2208,7 +2231,8 @@ const createDatabaseLibraryService = ({
       const ofTheSeries = await readShow(true);
       const episodes =
         ofTheSeries !== null && ofTheSeries.length > 0 ? ofTheSeries : await readShow(false);
-      const detail = episodes === null ? null : buildShowDetail(episodes, showId);
+      const detail =
+        episodes === null ? null : buildShowDetail(episodes, showId, await finishedBy(viewer));
 
       if (detail === null) {
         return null;
