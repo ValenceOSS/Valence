@@ -25,6 +25,7 @@ type PageLike = {
   mouse: { click(x: number, y: number): Promise<void> };
   evaluate(run: (request: PageRequest) => Promise<string>, request: PageRequest): Promise<string>;
   evaluate(run: () => string): Promise<string>;
+  isClosed(): boolean;
   close(): Promise<void>;
 };
 
@@ -35,6 +36,7 @@ type SitePage = {
   clickTurnstile: () => Promise<boolean>;
   fetch: (request: PageRequest) => Promise<PageAnswer>;
   userAgent: () => Promise<string>;
+  isClosed: () => boolean;
   close: () => Promise<void>;
 };
 
@@ -127,6 +129,8 @@ const toSitePage = (page: PageLike): SitePage => {
       PageAnswerSchema.parse(JSON.parse(await page.evaluate(fetchHere, request))),
 
     userAgent: () => page.evaluate(() => navigator.userAgent),
+
+    isClosed: () => page.isClosed(),
 
     close: () => page.close(),
   };

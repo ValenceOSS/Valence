@@ -33,6 +33,7 @@ const aFakeTab = ({
   const listeners: ((response: ResponseLike) => void)[] = [];
   const main = {};
   let at = url;
+  let isClosed = false;
 
   const evaluate = (
     _run: ((request: PageRequest) => Promise<string>) | (() => string),
@@ -67,7 +68,12 @@ const aFakeTab = ({
       })),
     mouse: { click: vi.fn(() => Promise.resolve()) },
     evaluate: vi.fn(evaluate),
-    close: vi.fn(() => Promise.resolve()),
+    isClosed: () => isClosed,
+    close: vi.fn(() => {
+      isClosed = true;
+
+      return Promise.resolve();
+    }),
   } satisfies PageLike;
 
   const hear = (
