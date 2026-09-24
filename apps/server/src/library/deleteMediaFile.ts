@@ -2,6 +2,7 @@ import { readdir, rm, rmdir } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
 import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
+import { diskRefusalOf } from '@ValenceServer/files/diskRefusalOf';
 
 const SIDECAR_EXTENSIONS: ReadonlySet<string> = new Set([
   ...TEXT_SUBTITLE_EXTENSIONS,
@@ -21,15 +22,6 @@ type MediaFileDeletion =
   | { kind: 'readOnly' }
   | { kind: 'denied' }
   | { kind: 'failed' };
-
-/**
- * Reads the code a filesystem error carries, such as `EROFS`, where it carries one.
- *
- * @param error - What the filesystem threw.
- * @returns The code, or nothing.
- */
-const codeOf = (error: Error): string | null =>
-  'code' in error && typeof error.code === 'string' ? error.code : null;
 
 /**
  * Whether a file beside a film belongs to it alone: named for it, as `Arrival.en.srt` or
@@ -78,13 +70,9 @@ const deleteMediaFile = async (root: string, path: string): Promise<MediaFileDel
         .map((name) => rm(join(folder, name), { force: true })),
     );
   } catch (error) {
-    const code = error instanceof Error ? codeOf(error) : null;
+    const refusal = diskRefusalOf(error instanceof Error ? error : null);
 
-    if (code === 'EROFS') {
-      return { kind: 'readOnly' };
-    }
-
-    return code === 'EACCES' || code === 'EPERM' ? { kind: 'denied' } : { kind: 'failed' };
+    return refusal.kind === 'missing' ? { kind: 'failed' } : refusal;
   }
 
   for (let emptied = folder; emptied !== root && isUnderAny(emptied, [root]);) {

@@ -1,12 +1,7 @@
-import { isAbsolute, join, resolve } from 'node:path';
-import type { Folder, FolderSearch } from '@ValenceContracts/schemas/Folder';
+import { isAbsolute, resolve } from 'node:path';
+import { findByName } from '@ValenceServer/folders/findByName';
+import type { FolderSearch } from '@ValenceContracts/schemas/Folder';
 import type { FolderDisk } from '@ValenceServer/folders/FolderDisk';
-
-const DEEPEST = 4;
-
-const MOST_FOUND = 200;
-
-const MOST_READ = 5000;
 
 type FolderSearchAnswer = { kind: 'found'; search: FolderSearch } | { kind: 'relative' };
 
@@ -17,9 +12,7 @@ type FolderSearchAnswer = { kind: 'found'; search: FolderSearch } | { kind: 'rel
  *
  * The nearest are looked at first and listed first, a few levels down at most, and it stops once it
  * has found enough or read enough folders, saying so, since a disk of media can hold more folders
- * than anybody should wait for. A folder whose name starts with a dot is neither looked in nor
- * found, and a link is not followed, so a link that leads back up can never send it round in a
- * circle. A folder it may not read is passed over rather than ending the search.
+ * than anybody should wait for. See `findByName`.
  *
  * @param disk - How to read the disk, which a test replaces.
  * @param words - What the names should hold, in any case.
@@ -35,54 +28,16 @@ const searchFolders = async (
     return { kind: 'relative' };
   }
 
-  const wanted = words.trim().toLowerCase();
   const starts =
     within === undefined || within.trim() === ''
       ? (await disk.roots()).filter((root) => resolve(root) !== resolve('/'))
       : [resolve(within)];
 
-  const found: Folder[] = [];
-  let level = starts;
-  let read = 0;
-  let isTruncated = false;
-
-  for (let depth = 1; depth <= DEEPEST && level.length > 0 && !isTruncated; depth += 1) {
-    const next: string[] = [];
-
-    for (const folder of level) {
-      if (read >= MOST_READ || found.length >= MOST_FOUND) {
-        isTruncated = true;
-        break;
-      }
-
-      read += 1;
-
-      const listed = await disk.readDirectory(folder);
-
-      if (listed.kind !== 'read') {
-        continue;
-      }
-
-      const inside = listed.entries
-        .filter((entry) => entry.isDirectory && !entry.name.startsWith('.'))
-        .map((entry) => ({ name: entry.name, path: join(folder, entry.name) }))
-        .sort((left, right) =>
-          left.name.localeCompare(right.name, undefined, { numeric: true, sensitivity: 'base' }),
-        );
-
-      found.push(...inside.filter((entry) => entry.name.toLowerCase().includes(wanted)));
-      next.push(...inside.map((entry) => entry.path));
-    }
-
-    level = next;
-  }
+  const { found, isTruncated } = await findByName(disk, words, starts, false);
 
   return {
     kind: 'found',
-    search: {
-      folders: found.slice(0, MOST_FOUND),
-      isTruncated: isTruncated || found.length > MOST_FOUND,
-    },
+    search: { folders: found.map(({ name, path }) => ({ name, path })), isTruncated },
   };
 };
 

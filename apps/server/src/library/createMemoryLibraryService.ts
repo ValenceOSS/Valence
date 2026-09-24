@@ -756,6 +756,8 @@ const createMemoryLibraryService = (
     return Promise.resolve({ kind: 'deleted', files });
   },
 
+  mediaIdsAt: () => Promise.resolve({}),
+
   rebuildArtefacts: (mediaId) =>
     Promise.resolve(
       state.media.some((one) => one.id === mediaId) ? { preview: true, trickplay: true } : null,

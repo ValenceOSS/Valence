@@ -126,6 +126,7 @@ type LibraryService = ShowService & {
   remove: (libraryId: string) => Promise<boolean>;
   deleteMedia: (mediaId: string) => Promise<MediaDeletion>;
   deleteSeries: (seriesId: string) => Promise<SeriesDeletion>;
+  mediaIdsAt: (paths: string[]) => Promise<Record<string, string>>;
   correctMatch: (
     mediaId: string,
     reference: { externalId: string; externalKind: 'tv' | 'movie' },

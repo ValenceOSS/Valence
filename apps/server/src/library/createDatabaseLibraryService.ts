@@ -1793,6 +1793,19 @@ const createDatabaseLibraryService = ({
 
     deleteSeries: (seriesId) => deleteFilesWhere(eq(mediaItem.seriesId, seriesId)),
 
+    mediaIdsAt: async (paths) => {
+      if (paths.length === 0) {
+        return {};
+      }
+
+      const rows = await db
+        .select({ id: mediaItem.id, path: mediaItem.path })
+        .from(mediaItem)
+        .where(inArray(mediaItem.path, paths));
+
+      return Object.fromEntries(rows.map((row) => [row.path, row.id]));
+    },
+
     regeneratePreviews: async (libraryId) => {
       const found = await findLibrary(libraryId);
 

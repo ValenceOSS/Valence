@@ -99,6 +99,18 @@ import {
   searchFoldersRoute,
 } from '@ValenceServer/routes/FolderRoute';
 import { searchFolders } from '@ValenceServer/folders/searchFolders';
+import {
+  deleteLibraryFileRoute,
+  listLibraryFilesRoute,
+  moveLibraryFileRoute,
+  renameLibraryFileRoute,
+  searchLibraryFilesRoute,
+} from '@ValenceServer/routes/FilesRoute';
+import { listLibraryFolder } from '@ValenceServer/files/listLibraryFolder';
+import { searchLibraryFiles } from '@ValenceServer/files/searchLibraryFiles';
+import { deleteLibraryEntry } from '@ValenceServer/files/deleteLibraryEntry';
+import { moveLibraryEntry } from '@ValenceServer/files/moveLibraryEntry';
+import type { LibraryEntryChange } from '@ValenceServer/files/LibraryEntryChange';
 import { createFolder } from '@ValenceServer/folders/createFolder';
 import {
   cancelUploadRoute,
@@ -1100,6 +1112,162 @@ const createApp = ({
     }
 
     return context.json(created, 201);
+  });
+
+  /**
+   * What to say about a change to a library's files that did not happen, and with which status.
+   *
+   * @param change - Why it did not.
+   * @returns The words and the status.
+   */
+  const sayWhyUnchanged = (change: Exclude<LibraryEntryChange, { kind: 'changed' }>) => {
+    switch (change.kind) {
+      case 'outside':
+        return { error: 'That is not inside a library.', status: 403 } as const;
+      case 'root':
+        return {
+          error: 'That is a library’s own folder. Change the library itself instead.',
+          status: 400,
+        } as const;
+      case 'exists':
+        return { error: 'Something of that name is already there.', status: 409 } as const;
+      case 'badName':
+        return {
+          error: 'A name is one plain name, with no slashes and no space at either end.',
+          status: 400,
+        } as const;
+      case 'intoItself':
+        return { error: 'A folder cannot be moved into itself.', status: 400 } as const;
+      case 'otherDisk':
+        return {
+          error:
+            'That would move it onto another disk, which Valence does not do. Copy it across on the machine instead.',
+          status: 400,
+        } as const;
+      case 'missing':
+        return { error: 'There is nothing there.', status: 404 } as const;
+      case 'readOnly':
+        return {
+          error:
+            'That disk is read-only to Valence. Give it read-write access to change files there.',
+          status: 403,
+        } as const;
+      case 'denied':
+        return { error: 'Valence is not allowed to change files there.', status: 403 } as const;
+      case 'failed':
+        return { error: 'That could not be done.', status: 500 } as const;
+    }
+  };
+
+  /**
+   * Settles a change to a library's files: where it worked, each library it touched is asked to
+   * scan so the catalogue follows what is now on the disk; where it did not, what to say.
+   *
+   * @param change - What happened.
+   * @returns Where it is now, or the words and status to refuse with.
+   */
+  const settleChange = async (
+    change: LibraryEntryChange,
+  ): Promise<{ path: string } | { error: string; status: 400 | 403 | 404 | 409 | 500 }> => {
+    if (change.kind !== 'changed') {
+      return sayWhyUnchanged(change);
+    }
+
+    await Promise.all(change.libraryIds.map((libraryId) => library.scan(libraryId)));
+
+    return { path: change.path };
+  };
+
+  app.openapi(listLibraryFilesRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const listed = await listLibraryFolder(
+      await library.list(asTheServer),
+      context.req.valid('query').path,
+      library.mediaIdsAt,
+    );
+
+    switch (listed.kind) {
+      case 'listed':
+        return context.json(listed.folder, 200);
+      case 'missing':
+        return context.json({ error: 'There is no such folder.' }, 404);
+      case 'outside':
+        return context.json({ error: 'That is not inside a library.' }, 403);
+      default:
+        return context.json({ error: 'Valence is not allowed to read that folder.' }, 403);
+    }
+  });
+
+  app.openapi(searchLibraryFilesRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { words, within } = context.req.valid('query');
+    const found = await searchLibraryFiles(
+      folderDisk,
+      await library.list(asTheServer),
+      words,
+      within,
+      library.mediaIdsAt,
+    );
+
+    return found.kind === 'found'
+      ? context.json(found.search, 200)
+      : context.json({ error: 'That is not inside a library.' }, 403);
+  });
+
+  app.openapi(deleteLibraryFileRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.delete'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const settled = await settleChange(
+      await deleteLibraryEntry(await library.list(asTheServer), context.req.valid('query').path),
+    );
+
+    if ('path' in settled) {
+      return context.json({ path: settled.path }, 200);
+    }
+
+    return settled.status === 409
+      ? context.json({ error: settled.error }, 500)
+      : context.json({ error: settled.error }, settled.status);
+  });
+
+  app.openapi(renameLibraryFileRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { path, name } = context.req.valid('json');
+
+    const settled = await settleChange(
+      await moveLibraryEntry(await library.list(asTheServer), path, { name }),
+    );
+
+    return 'path' in settled
+      ? context.json({ path: settled.path }, 200)
+      : context.json({ error: settled.error }, settled.status);
+  });
+
+  app.openapi(moveLibraryFileRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { path, into } = context.req.valid('json');
+
+    const settled = await settleChange(
+      await moveLibraryEntry(await library.list(asTheServer), path, { into }),
+    );
+
+    return 'path' in settled
+      ? context.json({ path: settled.path }, 200)
+      : context.json({ error: settled.error }, settled.status);
   });
 
   app.openapi(searchFoldersRoute, async (context) => {
