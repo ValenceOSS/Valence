@@ -61,7 +61,13 @@ const build = (answer: UploadResult = { kind: 'written', bytes: 6 }) => {
     ratings: createMemoryRatingService(),
     profiles: createMemoryProfileService(),
     presence: createPresenceService(),
-    uploadDisk: { write },
+    uploadDisk: {
+      write,
+      begin: vi.fn<UploadDisk['begin']>(() => Promise.resolve({ kind: 'begun' })),
+      writeAt: vi.fn<UploadDisk['writeAt']>(() => Promise.resolve({ kind: 'failed' })),
+      finish: vi.fn<UploadDisk['finish']>(() => Promise.resolve({ kind: 'failed' })),
+      discard: vi.fn<UploadDisk['discard']>(() => Promise.resolve()),
+    },
   });
 
   return { app, store, permissions, write };

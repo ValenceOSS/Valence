@@ -1,5 +1,5 @@
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { FileArrowUp as FileArrowUpIcon, Folder as FolderIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -30,7 +30,9 @@ const STATUS_WORDS: Record<UploadStatus, { label: string; tone: BadgeTone }> = {
  * Only what the library would read is queued, and what was left out is said, so nothing is uploaded
  * to a place no scan would look. Each file shows how it got on, with the server's own words where it
  * would not take one — a disk that is read-only, a file already there — and when the whole run is
- * finished the library is told to scan, so what arrived turns up without a second gesture.
+ * finished the library is told to scan, so what arrived turns up without a second gesture. A large
+ * file says how much of it has arrived as it goes, and the run can be stopped part of the way, which
+ * throws away whatever of the file being sent had arrived.
  *
  * @param library - The library to upload into, or nothing while the dialog is shut.
  * @param onClose - Called when it is dismissed.
@@ -41,14 +43,18 @@ const UploadMediaDialog = ({ library, onClose, onUploaded }: UploadMediaDialogPr
   const [skipped, setSkipped] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [hasFinished, setHasFinished] = useState(false);
+  const [arrived, setArrived] = useState<Record<string, number>>({});
+  const stopping = useRef<AbortController | null>(null);
 
   const reset = () => {
     setItems([]);
     setSkipped([]);
     setHasFinished(false);
+    setArrived({});
   };
 
   const close = () => {
+    stopping.current?.abort();
     reset();
     onClose();
   };
@@ -76,30 +82,50 @@ const UploadMediaDialog = ({ library, onClose, onUploaded }: UploadMediaDialogPr
       return;
     }
 
+    const stop = new AbortController();
+
+    stopping.current = stop;
+
+    const isStopped = () => stop.signal.aborted;
+
     setIsUploading(true);
 
     let uploaded = 0;
 
     for (const item of items.filter((one) => one.status !== 'done')) {
+      if (isStopped()) {
+        break;
+      }
+
       change(item.id, 'uploading');
 
       try {
-        await uploadMedia(library.id, item.path, item.file);
+        await uploadMedia(library.id, item.path, item.file, {
+          signal: stop.signal,
+          onProgress: (fraction) => {
+            setArrived((current) => ({ ...current, [item.id]: fraction }));
+          },
+        });
         change(item.id, 'done');
         uploaded += 1;
       } catch (error) {
-        change(
-          item.id,
-          'failed',
-          error instanceof Error ? error.message : 'The file could not be uploaded.',
-        );
+        if (isStopped()) {
+          change(item.id, 'waiting');
+        } else {
+          change(
+            item.id,
+            'failed',
+            error instanceof Error ? error.message : 'The file could not be uploaded.',
+          );
+        }
       }
     }
 
+    stopping.current = null;
     setIsUploading(false);
     setHasFinished(true);
 
-    const failed = items.filter((one) => one.status !== 'done').length - uploaded;
+    const failed = isStopped() ? 0 : items.filter((one) => one.status !== 'done').length - uploaded;
 
     tellOutcome(
       `Uploaded ${uploaded.toString()} ${uploaded === 1 ? 'file' : 'files'} to ${library.name}.`,
@@ -185,7 +211,9 @@ const UploadMediaDialog = ({ library, onClose, onUploaded }: UploadMediaDialogPr
                     <span className="min-w-0 truncate text-text">{item.path}</span>
 
                     <Badge size="sm" tone={STATUS_WORDS[item.status].tone}>
-                      {STATUS_WORDS[item.status].label}
+                      {item.status === 'uploading' && (arrived[item.id] ?? 0) > 0
+                        ? `${STATUS_WORDS[item.status].label} ${Math.round((arrived[item.id] ?? 0) * 100).toString()}%`
+                        : STATUS_WORDS[item.status].label}
                     </Badge>
                   </span>
 
@@ -209,11 +237,16 @@ const UploadMediaDialog = ({ library, onClose, onUploaded }: UploadMediaDialogPr
       </DialogContent>
 
       <DialogFooter
-        dismiss={{
-          label: hasFinished ? 'Close' : 'Cancel',
-          onChoose: close,
-          isDisabled: isUploading,
-        }}
+        dismiss={
+          isUploading
+            ? {
+                label: 'Stop',
+                onChoose: () => {
+                  stopping.current?.abort();
+                },
+              }
+            : { label: hasFinished ? 'Close' : 'Cancel', onChoose: close }
+        }
         confirm={{
           label: 'Upload',
           onChoose: () => {
