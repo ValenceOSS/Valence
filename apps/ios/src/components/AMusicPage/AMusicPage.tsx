@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PLAYER_ROOM } from '@ValencePhone/components/TheFloatingPlayer/PLAYER_ROOM';
 import { useTheMusic } from '@ValencePhone/hooks/useTheMusic';
@@ -11,14 +12,14 @@ import type { AMusicPageProps } from './AMusicPage.types';
  */
 const AMusicPage = ({ children }: AMusicPageProps) => {
   const room = useSafeAreaInsets();
-  const { state } = useTheMusic();
+  const isPlayerUp = useTheMusic().state.current !== null;
+  const roomLeft = useMemo(
+    () => ({ ...room, bottom: room.bottom + (isPlayerUp ? PLAYER_ROOM : 0) }),
+    [room, isPlayerUp],
+  );
 
   return (
-    <SafeAreaInsetsContext.Provider
-      value={{ ...room, bottom: room.bottom + (state.current === null ? 0 : PLAYER_ROOM) }}
-    >
-      {children}
-    </SafeAreaInsetsContext.Provider>
+    <SafeAreaInsetsContext.Provider value={roomLeft}>{children}</SafeAreaInsetsContext.Provider>
   );
 };
 

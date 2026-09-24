@@ -24,7 +24,7 @@ describe('TheLyrics', () => {
       ],
     });
     const onSeek = jest.fn();
-    const drawn = await render(<TheLyrics trackId="one" atSeconds={2} onSeek={onSeek} />, {
+    const drawn = await render(<TheLyrics trackId="one" onSeek={onSeek} />, {
       wrapper: CacheScope,
     });
 
@@ -37,7 +37,7 @@ describe('TheLyrics', () => {
 
   it('says so where a song has no words', async () => {
     jest.mocked(fetchLyrics).mockResolvedValue({ isSynced: false, lines: [] });
-    const drawn = await render(<TheLyrics trackId="one" atSeconds={0} onSeek={jest.fn()} />, {
+    const drawn = await render(<TheLyrics trackId="one" onSeek={jest.fn()} />, {
       wrapper: CacheScope,
     });
 

@@ -3,20 +3,23 @@ import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { AMoodBackground } from '@ValencePhone/components/AMoodBackground/AMoodBackground';
 import { AMusicHead } from '@ValencePhone/components/AMusicHead/AMusicHead';
 import { ATrackList } from '@ValencePhone/components/ATrackList/ATrackList';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { howLongItRuns } from '@ValencePhone/components/ATitle/howLongItRuns';
-import { useTheMusic } from '@ValencePhone/hooks/useTheMusic';
+import { usePictureLights } from '@ValencePhone/hooks/usePictureLights';
+import { thePhonesMusicPlayer } from '@ValencePhone/music/thePhonesMusicPlayer';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { AnAlbumProps } from './AnAlbum.types';
 
 /**
  * One album, as the web's album page draws it: its cover, who it is by, when it came out and how
- * long it runs, a way to play it in order or shuffled, and its tracks by number.
+ * long it runs, a way to play it in order or shuffled, and its tracks by number, lit from behind in
+ * the colours of its cover as the player is.
  *
  * @param albumId - Which album.
  * @param onAlbum - Told to open another album, from a track's menu.
@@ -27,7 +30,10 @@ import type { AnAlbumProps } from './AnAlbum.types';
 const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProps) => {
   const colours = useTheColours();
   const read = useQuery(musicQueries.album(albumId));
-  const { player } = useTheMusic();
+  const player = thePhonesMusicPlayer();
+  const lights = usePictureLights(
+    read.data?.album.hasArtwork === true ? onThisServer(albumArtworkUrl(read.data.album.id)) : null,
+  );
 
   if (read.isPending) {
     return (
@@ -54,7 +60,7 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
   ].filter((part) => part !== null);
 
   return (
-    <Screen scrolls onBack={onBack}>
+    <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
       <AMusicHead
         kind={album.isCompilation ? 'Compilation' : 'Album'}
         title={album.title}

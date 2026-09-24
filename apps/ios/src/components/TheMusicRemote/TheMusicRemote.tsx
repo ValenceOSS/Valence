@@ -1,5 +1,5 @@
 import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
-import { useTheMusic } from '@ValencePhone/hooks/useTheMusic';
+import { thePhonesMusicPlayer } from '@ValencePhone/music/thePhonesMusicPlayer';
 
 /**
  * Lets this person's other devices play music on this phone and drive it — "Play on Dan's iPhone"
@@ -8,7 +8,7 @@ import { useTheMusic } from '@ValencePhone/hooks/useTheMusic';
  * redraws it alone rather than everything signed in.
  */
 const TheMusicRemote = () => {
-  const { player } = useTheMusic();
+  const player = thePhonesMusicPlayer();
 
   useMusicRemote(player);
 

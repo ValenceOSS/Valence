@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
@@ -44,6 +44,14 @@ const TheFloatingPlayer = ({ isShown, onOpen }: TheFloatingPlayerProps) => {
   );
   const isUp = isShown && state.current !== null;
   const [shown] = useState(() => new Animated.Value(isUp ? 1 : 0));
+  const rising = useMemo(
+    () =>
+      shown.interpolate({
+        inputRange: [0, 1],
+        outputRange: [room.bottom + BELOW_THE_EDGE, 0],
+      }),
+    [shown, room.bottom],
+  );
 
   useEffect(() => {
     if (isStill) {
@@ -62,14 +70,7 @@ const TheFloatingPlayer = ({ isShown, onOpen }: TheFloatingPlayerProps) => {
         styles.place,
         {
           bottom: room.bottom + ABOVE_THE_EDGE,
-          transform: [
-            {
-              translateY: shown.interpolate({
-                inputRange: [0, 1],
-                outputRange: [room.bottom + BELOW_THE_EDGE, 0],
-              }),
-            },
-          ],
+          transform: [{ translateY: rising }],
         },
       ]}
     >

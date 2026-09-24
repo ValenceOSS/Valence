@@ -5,7 +5,7 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AMusicHead } from '@ValencePhone/components/AMusicHead/AMusicHead';
 import { ATrackList } from '@ValencePhone/components/ATrackList/ATrackList';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
-import { useTheMusic } from '@ValencePhone/hooks/useTheMusic';
+import { thePhonesMusicPlayer } from '@ValencePhone/music/thePhonesMusicPlayer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { ANothingHere } from '@ValencePhone/components/ANothingHere/ANothingHere';
 import type { TheLikedSongsProps } from './TheLikedSongs.types';
@@ -24,7 +24,7 @@ const SOURCE = { kind: 'liked' as const, id: null, name: 'Liked songs' };
 const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsProps) => {
   const colours = useTheColours();
   const read = useQuery(musicQueries.liked());
-  const { player } = useTheMusic();
+  const player = thePhonesMusicPlayer();
   const tracks = read.data ?? [];
 
   if (read.isPending) {
