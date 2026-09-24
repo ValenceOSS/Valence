@@ -2,6 +2,7 @@ import { ChevronLeft } from '@keyline-icons/react-native';
 import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
 import { ACarriedMark } from '@ValencePhone/components/ACarriedMark/ACarriedMark';
 import { AFace } from '@ValencePhone/components/AFace/AFace';
@@ -9,6 +10,7 @@ import { ARising } from '@ValencePhone/components/ARising/ARising';
 import { AskForTheCode } from '@ValencePhone/components/AskForTheCode/AskForTheCode';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
+import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
 import { TextField } from '@ValencePhone/components/TextField/TextField';
 import { UseAPasskey } from '@ValencePhone/components/UseAPasskey/UseAPasskey';
 import { Words } from '@ValencePhone/components/Words/Words';
@@ -21,6 +23,9 @@ const MARK_HIGH = 40;
 
 const styles = StyleSheet.create({
   asking: { alignSelf: 'stretch', gap: 14 },
+  gone: { opacity: 0 },
+  markAtTheTop: { alignItems: 'center', left: 0, position: 'absolute', right: 0 },
+  page: { flex: 1 },
   whole: { alignItems: 'center', gap: 28 },
 });
 
@@ -36,10 +41,18 @@ const styles = StyleSheet.create({
  *
  * @param profile - Whose face was picked.
  * @param from - Where the face was on the wall, and how big.
- * @param onIn - Told once they are through.
+ * @param onIn - Told once they are through, with where their face is, for it to fly on from.
+ * @param isGoing - Whether their face has taken off for the library, and so is no longer drawn here.
  * @param onBack - Told they want a different face, and where this one is.
  */
-const AskForThePassword = ({ profile, from = null, onIn, onBack }: AskForThePasswordProps) => {
+const AskForThePassword = ({
+  profile,
+  from = null,
+  onIn,
+  onBack,
+  isGoing = false,
+}: AskForThePasswordProps) => {
+  const room = useSafeAreaInsets();
   const { placed, onPlaced, flying } = useArrivingFrom(() => from, from !== null, true);
   const [password, setPassword] = useState('');
   const [refusal, setRefusal] = useState<string | null>(null);
@@ -55,7 +68,7 @@ const AskForThePassword = ({ profile, from = null, onIn, onBack }: AskForThePass
     setIsTrying(false);
 
     if (outcome.kind === 'signedIn') {
-      onIn();
+      goIn();
 
       return;
     }
@@ -67,6 +80,18 @@ const AskForThePassword = ({ profile, from = null, onIn, onBack }: AskForThePass
     }
 
     setRefusal(outcome.reason);
+  };
+
+  const goIn = () => {
+    if (placed.current === null) {
+      onIn(null);
+
+      return;
+    }
+
+    placed.current.measureInWindow((x, y, width, height) => {
+      onIn({ x, y, width, height });
+    });
   };
 
   const leave = () => {
@@ -84,7 +109,9 @@ const AskForThePassword = ({ profile, from = null, onIn, onBack }: AskForThePass
   if (wantsCode) {
     return (
       <AskForTheCode
-        onIn={onIn}
+        onIn={() => {
+          onIn(null);
+        }}
         onBack={() => {
           onBack(null);
         }}
@@ -93,56 +120,60 @@ const AskForThePassword = ({ profile, from = null, onIn, onBack }: AskForThePass
   }
 
   return (
-    <Screen scrolls centres isSeeThrough>
-      <View style={styles.whole}>
-        <ACarriedMark high={MARK_HIGH} />
-
-        <View ref={placed} collapsable={false} onLayout={onPlaced}>
-          <Animated.View style={flying}>
-            <AFace profile={profile} isLarge />
-          </Animated.View>
-        </View>
-
-        <ARising after={NAMED_AFTER}>
-          <Words size="title">{profile.name}</Words>
-        </ARising>
-
-        <ARising after={NAMED_AFTER} turn={1} stretches>
-          <View style={styles.asking}>
-            <TextField
-              label="Password"
-              value={password}
-              onValueChange={setPassword}
-              placeholder="Password"
-              isSecret
-              onSubmit={() => {
-                void tryIt();
-              }}
-            />
-
-            {refusal === null ? null : <Words tone="danger">{refusal}</Words>}
-
-            <Button
-              tone="bold"
-              icon={PlayFilled}
-              isBusy={isTrying}
-              isDisabled={password === ''}
-              onPress={() => {
-                void tryIt();
-              }}
-            >
-              Watch
-            </Button>
-
-            <UseAPasskey label="Use a passkey instead" onIn={onIn} />
-
-            <Button tone="ghost" icon={ChevronLeft} onPress={leave}>
-              Somebody else
-            </Button>
+    <View style={styles.page}>
+      <Screen scrolls centres isSeeThrough>
+        <View style={styles.whole}>
+          <View ref={placed} collapsable={false} onLayout={onPlaced} style={isGoing && styles.gone}>
+            <Animated.View style={flying}>
+              <AFace profile={profile} isLarge />
+            </Animated.View>
           </View>
-        </ARising>
+
+          <ARising after={NAMED_AFTER}>
+            <Words size="title">{profile.name}</Words>
+          </ARising>
+
+          <ARising after={NAMED_AFTER} turn={1} stretches>
+            <View style={styles.asking}>
+              <TextField
+                label="Password"
+                value={password}
+                onValueChange={setPassword}
+                placeholder="Password"
+                isSecret
+                onSubmit={() => {
+                  void tryIt();
+                }}
+              />
+
+              {refusal === null ? null : <Words tone="danger">{refusal}</Words>}
+
+              <Button
+                tone="bold"
+                icon={PlayFilled}
+                isBusy={isTrying}
+                isDisabled={password === ''}
+                onPress={() => {
+                  void tryIt();
+                }}
+              >
+                Watch
+              </Button>
+
+              <UseAPasskey label="Use a passkey instead" onIn={goIn} />
+
+              <Button tone="ghost" icon={ChevronLeft} onPress={leave}>
+                Somebody else
+              </Button>
+            </View>
+          </ARising>
+        </View>
+      </Screen>
+
+      <View style={[styles.markAtTheTop, { top: room.top + SCREEN_EDGE }]} pointerEvents="none">
+        <ACarriedMark high={MARK_HIGH} />
       </View>
-    </Screen>
+    </View>
   );
 };
 

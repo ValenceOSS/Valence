@@ -36,8 +36,9 @@ const styles = StyleSheet.create({
  * @param onSelect - Told which one somebody pressed.
  * @param children - The part showing.
  * @param above - What sits just above the tabs whichever part is showing — what music is playing.
+ * @param onFaceAt - Told where on screen the tab drawn as a face shows it, for a face to fly to.
  */
-const TheTabs = ({ tabs, value, onSelect, children, above }: TheTabsProps) => {
+const TheTabs = ({ tabs, value, onSelect, children, above, onFaceAt }: TheTabsProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
   const [barHeight, setBarHeight] = useState(room.bottom + A_GUESS_AT_THE_BAR);
@@ -79,6 +80,7 @@ const TheTabs = ({ tabs, value, onSelect, children, above }: TheTabsProps) => {
           accent={colours.accent}
           onSelect={onSelect}
           onMeasure={setBarHeight}
+          {...(onFaceAt === undefined ? {} : { onFaceAt })}
           style={[styles.system, { height: barHeight }]}
         />
       </View>
@@ -124,7 +126,16 @@ const TheTabs = ({ tabs, value, onSelect, children, above }: TheTabsProps) => {
                       colour={isShowing ? colours.accent : colours.textMuted}
                     />
                   ) : (
-                    <ATabFace face={tab.face} isShowing={isShowing} />
+                    <View
+                      collapsable={false}
+                      onLayout={(event) => {
+                        event.currentTarget.measureInWindow((x, y, width, height) => {
+                          onFaceAt?.({ x, y, width, height });
+                        });
+                      }}
+                    >
+                      <ATabFace face={tab.face} isShowing={isShowing} />
+                    </View>
                   )}
                   <Words size="small" tone={isShowing ? 'accent' : 'muted'}>
                     {tab.label}

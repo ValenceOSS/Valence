@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -8,6 +8,9 @@ import { TheWayIn } from '@ValencePhone/components/TheWayIn/TheWayIn';
 import { TheDownloads } from '@ValencePhone/components/TheDownloads/TheDownloads';
 import { WatchingHeld } from '@ValencePhone/components/WatchingHeld/WatchingHeld';
 import { AMoodBackground } from '@ValencePhone/components/AMoodBackground/AMoodBackground';
+import { thePictureFor } from '@ValencePhone/components/AFace/thePictureFor';
+import { AFaceFlight } from '@ValencePhone/components/TheHousehold/components/AFaceFlight/AFaceFlight';
+import { usePictureLights } from '@ValencePhone/hooks/usePictureLights';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { TheServerIsAway } from '@ValencePhone/components/TheServerIsAway/TheServerIsAway';
 import { useTheServer } from '@ValencePhone/hooks/useTheServer';
@@ -53,6 +56,14 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
   const [returning, setReturning] = useState<{ profileId: string; at: ARectOnScreen } | null>(null);
   const [isOffline, setIsOffline] = useState(false);
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
+  const [flight, setFlight] = useState<{
+    profile: ViewerProfile;
+    from: ARectOnScreen;
+    to: ARectOnScreen | null;
+  } | null>(null);
+  const lights = usePictureLights(
+    picked === null ? null : (thePictureFor(picked.profile)?.uri ?? null),
+  );
   const isSignedIn = session.data !== null && session.data !== undefined;
   const wasSignedIn = useRef(isSignedIn);
 
@@ -63,8 +74,31 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
       answers.removeQueries({ type: 'inactive' });
     }
 
+    if (!wasSignedIn.current && isSignedIn) {
+      setPicked(null);
+      setReturning(null);
+    }
+
     wasSignedIn.current = isSignedIn;
   }, [isSignedIn, answers]);
+
+  const faceLandsAt = useCallback((at: ARectOnScreen) => {
+    setFlight((was) => (was === null ? null : { ...was, to: at }));
+  }, []);
+
+  const faceLanded = useCallback(() => {
+    setFlight(null);
+  }, []);
+
+  const flying =
+    flight === null ? null : (
+      <AFaceFlight
+        profile={flight.profile}
+        from={flight.from}
+        to={flight.to}
+        onLanded={faceLanded}
+      />
+    );
 
   if (session.isPending) {
     return (
@@ -82,8 +116,10 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
             answers.setQueryData(sessionQueries.who().queryKey, null);
           }}
           onElsewhere={onElsewhere}
+          onFaceAt={faceLandsAt}
         />
         <TheServerIsAway />
+        {flying}
       </View>
     );
   }
@@ -112,7 +148,11 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
 
   return (
     <View style={[styles.whole, { backgroundColor: colours.surface }]}>
-      <AMoodBackground lights={picked === null ? [] : [picked.profile.colour]} />
+      {lights.length > 0 ? (
+        <AMoodBackground palette={lights} />
+      ) : (
+        <AMoodBackground lights={picked === null ? [] : [picked.profile.colour]} />
+      )}
 
       {picked === null ? (
         <TheWayIn
@@ -133,9 +173,12 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
         <AskForThePassword
           profile={picked.profile}
           from={picked.at}
-          onIn={() => {
-            setPicked(null);
-            setReturning(null);
+          isGoing={flight !== null}
+          onIn={(at) => {
+            if (at !== null) {
+              setFlight({ profile: picked.profile, from: at, to: null });
+            }
+
             void answers.invalidateQueries();
           }}
           onBack={(at) => {
@@ -144,6 +187,8 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
           }}
         />
       )}
+
+      {flying}
     </View>
   );
 };

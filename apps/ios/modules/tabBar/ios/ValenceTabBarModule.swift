@@ -25,7 +25,7 @@ public class ValenceTabBarModule: Module {
     }
 
     View(ValenceTabBarView.self) {
-      Events("onSelect", "onMeasure")
+      Events("onSelect", "onMeasure", "onFaceAt")
 
       Prop("tabs") { (view: ValenceTabBarView, tabs: [ATab]) in
         view.tabs = tabs
@@ -58,9 +58,11 @@ struct ATab: Record {
 public class ValenceTabBarView: ExpoView, UITabBarDelegate {
   let onSelect = EventDispatcher()
   let onMeasure = EventDispatcher()
+  let onFaceAt = EventDispatcher()
 
   private let bar = UITabBar()
   private var lastMeasured: CGFloat = 0
+  private var lastFaceAt: CGRect = .null
   private var pictures: [String: UIImage] = [:]
   private var fetching: Set<String> = []
   private var drawing: [SvgSnapshot] = []
@@ -124,6 +126,67 @@ public class ValenceTabBarView: ExpoView, UITabBarDelegate {
       lastMeasured = wanted.height
       onMeasure(["height": wanted.height])
     }
+
+    DispatchQueue.main.async { [weak self] in
+      self?.sayWhereTheFaceIs()
+    }
+  }
+
+  /// Says where on screen the tab drawn as a face shows it, so a face can fly there.
+  private func sayWhereTheFaceIs() {
+    guard let index = tabs.firstIndex(where: { $0.picture != nil || $0.initial != nil }),
+          let item = bar.items?.first(where: { $0.tag == index }),
+          window != nil else {
+      return
+    }
+
+    let at = whereTheImageIs(item) ?? guessWhereTheImageIs(index)
+
+    guard at != lastFaceAt, at.width > 0 else {
+      return
+    }
+
+    lastFaceAt = at
+    onFaceAt(["x": at.minX, "y": at.minY, "width": at.width, "height": at.height])
+  }
+
+  private func whereTheImageIs(_ item: UITabBarItem) -> CGRect? {
+    let asked = NSSelectorFromString("view")
+
+    guard item.responds(to: asked),
+          let button = item.perform(asked)?.takeUnretainedValue() as? UIView,
+          let image = firstImage(in: button) else {
+      return nil
+    }
+
+    return image.convert(image.bounds, to: nil)
+  }
+
+  private func firstImage(in view: UIView) -> UIImageView? {
+    for inside in view.subviews {
+      if let image = inside as? UIImageView, image.image != nil, !image.isHidden {
+        return image
+      }
+
+      if let found = firstImage(in: inside) {
+        return found
+      }
+    }
+
+    return nil
+  }
+
+  private func guessWhereTheImageIs(_ index: Int) -> CGRect {
+    let whole = bar.convert(bar.bounds, to: nil)
+    let across = whole.width / CGFloat(max(tabs.count, 1))
+    let side = TabFace.side
+
+    return CGRect(
+      x: whole.minX + across * (CGFloat(index) + 0.5) - side / 2,
+      y: whole.minY + 10,
+      width: side,
+      height: side
+    )
   }
 
   public func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {

@@ -1,5 +1,6 @@
 import type { AGlyph } from '@ValencePhone/components/Icon/Icon.types';
 import type { ReactNode } from 'react';
+import type { ARectOnScreen } from '@ValencePhone/hooks/useArrivingFrom.types';
 import type { ThePicture } from '@ValencePhone/components/APicture/APicture.types';
 
 type ATabFace = {
@@ -22,6 +23,7 @@ type TheTabsProps = {
   onSelect: (id: string) => void;
   children: ReactNode;
   above?: ReactNode;
+  onFaceAt?: (at: ARectOnScreen) => void;
 };
 
 export type { ATab, ATabFace, TheTabsProps };

@@ -11,6 +11,7 @@ const TheBar = requireNativeView<NativeTabBarProps>('ValenceTabBar');
  * @param accent - The colour of the one showing.
  * @param onSelect - Told which one somebody chose.
  * @param onMeasure - Told how tall the bar is, safe area and all.
+ * @param onFaceAt - Told where on screen the tab drawn as a face shows it.
  * @param style - Where it sits.
  */
 const SystemTabBar = ({
@@ -19,6 +20,7 @@ const SystemTabBar = ({
   accent,
   onSelect,
   onMeasure,
+  onFaceAt,
   style,
 }: SystemTabBarProps) => (
   <TheBar
@@ -31,6 +33,9 @@ const SystemTabBar = ({
     }}
     onMeasure={(event) => {
       onMeasure(event.nativeEvent.height);
+    }}
+    onFaceAt={(event) => {
+      onFaceAt?.(event.nativeEvent);
     }}
   />
 );

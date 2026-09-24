@@ -1,8 +1,10 @@
+import type { ARectOnScreen } from '@ValencePhone/hooks/useArrivingFrom.types';
 import type { CatalogueBrowseKind } from '@ValenceContracts/schemas/CatalogueTitle';
 
 type SignedInProps = {
   onOut: () => void;
   onElsewhere: () => void;
+  onFaceAt?: (at: ARectOnScreen) => void;
 };
 
 type APage =

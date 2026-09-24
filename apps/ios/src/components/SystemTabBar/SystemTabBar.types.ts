@@ -1,4 +1,5 @@
 import type { StyleProp, ViewStyle } from 'react-native';
+import type { ARectOnScreen } from '@ValencePhone/hooks/useArrivingFrom.types';
 
 type ASystemTab = {
   id: string;
@@ -15,12 +16,14 @@ type SystemTabBarProps = {
   accent: string;
   onSelect: (id: string) => void;
   onMeasure: (height: number) => void;
+  onFaceAt?: (at: ARectOnScreen) => void;
   style: StyleProp<ViewStyle>;
 };
 
-type NativeTabBarProps = Omit<SystemTabBarProps, 'onSelect' | 'onMeasure'> & {
+type NativeTabBarProps = Omit<SystemTabBarProps, 'onSelect' | 'onMeasure' | 'onFaceAt'> & {
   onSelect: (event: { nativeEvent: { id: string } }) => void;
   onMeasure: (event: { nativeEvent: { height: number } }) => void;
+  onFaceAt: (event: { nativeEvent: ARectOnScreen }) => void;
 };
 
 export type { ASystemTab, NativeTabBarProps, SystemTabBarProps };
