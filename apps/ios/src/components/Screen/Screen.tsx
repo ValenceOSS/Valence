@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePullToRefresh } from '@ValencePhone/hooks/usePullToRefresh';
@@ -87,36 +87,44 @@ const Screen = ({
     latest.current = { barFrom, headTall, onScrolled };
   });
 
-  const scrolling = useMemo(() => {
-    /**
-     * Tells whoever asked whether the page has left its top, only when that changes.
-     *
-     * @param y - How far down the page is scrolled.
-     */
-    const tellScrolled = (y: number) => {
-      const isScrolled = y > SCROLLED;
+  const tellScrolled = useCallback((y: number) => {
+    const isScrolled = y > SCROLLED;
 
-      if (isScrolled !== wasScrolled.current) {
-        wasScrolled.current = isScrolled;
-        latest.current.onScrolled?.(isScrolled);
-      }
-    };
+    if (isScrolled !== wasScrolled.current) {
+      wasScrolled.current = isScrolled;
+      latest.current.onScrolled?.(isScrolled);
+    }
+  }, []);
 
-    return {
-      withBar: Animated.event([{ nativeEvent: { contentOffset: { y: scrolled } } }], {
+  const followAlone = useCallback(
+    ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
+      tellScrolled(nativeEvent.contentOffset.y);
+    },
+    [tellScrolled],
+  );
+
+  const withBar = useMemo(
+    () =>
+      Animated.event([{ nativeEvent: { contentOffset: { y: scrolled } } }], {
         useNativeDriver: true,
-        listener: ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
-          const { y } = nativeEvent.contentOffset;
-
-          setIsPast(latest.current.headTall > 0 && y > latest.current.barFrom);
-          tellScrolled(y);
-        },
       }),
-      alone: ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
-        tellScrolled(nativeEvent.contentOffset.y);
-      },
+    [scrolled],
+  );
+
+  useEffect(() => {
+    if (!hasBar) {
+      return undefined;
+    }
+
+    const following = scrolled.addListener(({ value }) => {
+      setIsPast(latest.current.headTall > 0 && value > latest.current.barFrom);
+      tellScrolled(value);
+    });
+
+    return () => {
+      scrolled.removeListener(following);
     };
-  }, [scrolled]);
+  }, [hasBar, scrolled, tellScrolled]);
 
   const atTheFoot =
     foot === undefined ? null : (
@@ -129,10 +137,10 @@ const Screen = ({
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}
       {...(hasBar
-        ? { onScroll: scrolling.withBar }
+        ? { onScroll: withBar }
         : onScrolled === undefined
           ? {}
-          : { onScroll: scrolling.alone })}
+          : { onScroll: followAlone })}
       contentContainerStyle={
         head === undefined
           ? [styles.inside, spacing, centres && styles.centredScrolling]

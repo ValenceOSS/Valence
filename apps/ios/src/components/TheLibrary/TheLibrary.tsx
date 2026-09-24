@@ -222,7 +222,9 @@ const TheLibrary = ({
   const isAway = isBarAway && !isSearching;
   const searching = useRef(isSearching);
 
-  searching.current = isSearching;
+  useLayoutEffect(() => {
+    searching.current = isSearching;
+  }, [isSearching]);
 
   useEffect(() => {
     Animated.timing(barAway, {
@@ -306,7 +308,10 @@ const TheLibrary = ({
     };
   }, [libraries.data]);
   const drawsItsOwn = part === 'home' || part === 'music' || part === 'books';
-  const ofThisKind = part === 'films' ? films : part === 'shows' ? programmes : [];
+  const ofThisKind = useMemo(
+    () => (part === 'films' ? films : part === 'shows' ? programmes : NO_LIBRARIES),
+    [part, films, programmes],
+  );
   const reading = chosen === EVERY ? ofThisKind.map((library) => library.id) : [chosen];
   const isFiltered = filters.selected.size > 0;
   const parts = [

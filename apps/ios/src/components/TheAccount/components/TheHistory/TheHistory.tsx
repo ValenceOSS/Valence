@@ -35,11 +35,7 @@ const TheHistory = () => {
   const reading = useQuery(bookQueries.reading());
   const entries = useMemo(
     () =>
-      interleaveHistory(
-        history.data?.pages.flat() ?? [],
-        reading.data ?? [],
-        history.hasNextPage,
-      ),
+      interleaveHistory(history.data?.pages.flat() ?? [], reading.data ?? [], history.hasNextPage),
     [history.data, reading.data, history.hasNextPage],
   );
   const now = new Date();

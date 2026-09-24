@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { usePrefersStillness } from '@ValencePhone/hooks/usePrefersStillness';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
@@ -32,25 +32,22 @@ const TheDots = ({ count, at, filled }: TheDotsProps) => {
   const isStill = usePrefersStillness();
   const [widths] = useState(() => new Map<number, Animated.Value>());
 
-  /**
-   * How wide one dot is drawn, which grows into the pill as its title shows.
-   *
-   * @param index - Which dot.
-   * @returns Its width.
-   */
-  const widthOf = (index: number) => {
-    const known = widths.get(index);
+  const widthOf = useCallback(
+    (index: number) => {
+      const known = widths.get(index);
 
-    if (known !== undefined) {
-      return known;
-    }
+      if (known !== undefined) {
+        return known;
+      }
 
-    const made = new Animated.Value(index === at ? PILL : DOT);
+      const made = new Animated.Value(index === at ? PILL : DOT);
 
-    widths.set(index, made);
+      widths.set(index, made);
 
-    return made;
-  };
+      return made;
+    },
+    [widths, at],
+  );
 
   useEffect(
     () => () => {
@@ -79,7 +76,7 @@ const TheDots = ({ count, at, filled }: TheDotsProps) => {
         useNativeDriver: false,
       }).start();
     });
-  }, [at, count, isStill]);
+  }, [at, count, isStill, widthOf]);
 
   if (count <= 1) {
     return null;

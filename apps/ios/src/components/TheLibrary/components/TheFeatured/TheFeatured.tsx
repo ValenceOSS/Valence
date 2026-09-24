@@ -160,7 +160,9 @@ const TheFeaturedTitles = ({
   const heard = useRef<Parameters<NonNullable<typeof onClip>>[0]>(null);
   const latest = useRef({ turn, count, lead, step, isStill, onClip, isInView });
 
-  latest.current = { turn, count, lead, step, isStill, onClip, isInView };
+  useLayoutEffect(() => {
+    latest.current = { turn, count, lead, step, isStill, onClip, isInView };
+  });
 
   const findThePlace = useCallback(() => {
     const { turn: now, lead: before, step: apart } = latest.current;
