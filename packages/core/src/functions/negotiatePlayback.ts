@@ -14,17 +14,44 @@ import { selectForcedSubtitle } from './selectForcedSubtitle';
 import { encodeBitrateFor } from './encodeBitrateFor';
 /**
  * Decides what the file should be delivered in: the container it is already in where the device
- * says it can play it, and the fallback the device asked for otherwise. Every decision carries the
- * reason for it, so a session can afterwards say why it did what it did.
+ * says it can play that container holding this file's codecs, and the fallback the device asked for
+ * otherwise. Every decision carries the reason for it, so a session can afterwards say why it did
+ * what it did.
+ *
+ * A container is only ever claimed together with the codecs inside it, and it is the pair that has
+ * to match. Firefox plays Matroska holding H.264 and was asked about nothing else in it, while its
+ * MP4 entry lists HEVC; reading the two separately handed it an HEVC Matroska file whole, which it
+ * never said it could play and did not. A picture or a sound track that is being re-encoded anyway
+ * does not count against the container, since what goes out is no longer that stream.
  *
  * @param media - The file, as the catalogue holds it.
  * @param profile - What the device says it can play.
+ * @param preferredLanguage - The language they would rather hear, which picks the track to weigh.
  * @returns The container decision and its reason.
  */
-const decideContainer = (media: MediaItem, profile: DeviceProfile): ContainerDecision => {
-  const supported = profile.directPlayProfiles.some((entry) => entry.container === media.container);
+const decideContainer = (
+  media: MediaItem,
+  profile: DeviceProfile,
+  preferredLanguage?: string | null,
+): ContainerDecision => {
+  const sound = selectAudioStream(media.audioStreams, preferredLanguage);
+  const isSoundKept =
+    sound !== undefined &&
+    profile.directPlayProfiles.some((entry) => entry.audioCodecs.includes(sound.codec));
 
-  if (supported) {
+  const isPictureKept = profile.directPlayProfiles.some((entry) =>
+    entry.videoCodecs.includes(media.videoCodec),
+  );
+
+  const entries = profile.directPlayProfiles.filter((entry) => entry.container === media.container);
+
+  const holdsThisFile = entries.some(
+    (entry) =>
+      (!isPictureKept || entry.videoCodecs.includes(media.videoCodec)) &&
+      (!isSoundKept || entry.audioCodecs.includes(sound.codec)),
+  );
+
+  if (holdsThisFile) {
     return {
       kind: 'passthrough',
       reason: {
@@ -41,7 +68,10 @@ const decideContainer = (media: MediaItem, profile: DeviceProfile): ContainerDec
     target: target === undefined ? 'mp4' : target.container,
     reason: {
       code: 'ContainerNotSupported',
-      detail: `Client does not support the ${media.container} container`,
+      detail:
+        entries.length === 0
+          ? `Client does not support the ${media.container} container`
+          : `Client does not play ${media.videoCodec} with this sound in the ${media.container} container`,
     },
   };
 };
@@ -515,7 +545,7 @@ const negotiatePlayback = (
   chosenSubtitleStreamIndex?: number | null,
 ): PlaybackPlan => ({
   mediaId: media.id,
-  container: decideContainer(media, profile),
+  container: decideContainer(media, profile, preferredAudioLanguage),
   video: decideVideo(media, profile, qualityClamp),
   audio: decideAudio(media, profile, qualityClamp, preferredAudioLanguage),
   subtitles: decideSubtitles(

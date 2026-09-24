@@ -65,6 +65,61 @@ describe('negotiatePlayback', () => {
     expect(plan.audio.kind).toBe('passthrough');
   });
 
+  it('remuxes a container the client plays, holding a codec it plays only in another', () => {
+    const firefox: DeviceProfile = {
+      ...profile,
+      directPlayProfiles: [
+        { container: 'mp4', videoCodecs: ['h264', 'hevc'], audioCodecs: ['aac'] },
+        { container: 'mkv', videoCodecs: ['h264', 'vp9'], audioCodecs: ['aac', 'opus'] },
+      ],
+    };
+    const episode: MediaItem = {
+      ...media,
+      videoRange: 'SDR',
+      audioStreams: [
+        { index: 1, codec: 'aac', channels: 2, language: 'jpn', isDefault: true, isAtmos: false },
+      ],
+    };
+
+    const plan = negotiatePlayback(episode, firefox);
+
+    expect(plan.container).toMatchObject({ kind: 'remux', target: 'ts' });
+    expect(plan.container.reason.detail).toBe(
+      'Client does not play hevc with this sound in the mkv container',
+    );
+    expect(plan.video.kind).toBe('passthrough');
+    expect(plan.audio.kind).toBe('passthrough');
+  });
+
+  it('remuxes a container the client plays, holding sound it plays only in another', () => {
+    const narrow: DeviceProfile = {
+      ...profile,
+      directPlayProfiles: [
+        { container: 'mp4', videoCodecs: ['hevc'], audioCodecs: ['truehd'] },
+        { container: 'mkv', videoCodecs: ['hevc'], audioCodecs: ['aac'] },
+      ],
+    };
+
+    expect(negotiatePlayback(media, narrow).container.kind).toBe('remux');
+  });
+
+  it('keeps the container where the stream it does not hold is being re-encoded anyway', () => {
+    const plan = negotiatePlayback(
+      {
+        ...media,
+        videoCodec: 'av1',
+        audioStreams: [
+          { index: 1, codec: 'dts', channels: 6, language: 'eng', isDefault: true, isAtmos: false },
+        ],
+      },
+      profile,
+    );
+
+    expect(plan.container.kind).toBe('passthrough');
+    expect(plan.video.kind).toBe('transcode');
+    expect(plan.audio.kind).toBe('transcode');
+  });
+
   it('transcodes video when the codec is unsupported', () => {
     const plan = negotiatePlayback({ ...media, videoCodec: 'av1' }, profile);
 
