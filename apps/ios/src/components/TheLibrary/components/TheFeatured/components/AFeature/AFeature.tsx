@@ -28,6 +28,8 @@ const LOGO_AT_MOST = 0.7;
 
 const ARRIVES_FROM = 1.06;
 
+const LEAVES_OVER = 700;
+
 const ARRIVES_OVER = 1100;
 
 const RISES_BY = 14;
@@ -136,10 +138,22 @@ const AFeature = ({
 
   useEffect(() => {
     if (!isShowing) {
-      arriving.setValue(ARRIVES_FROM);
-      rising.forEach((part) => {
-        part.setValue(0);
-      });
+      Animated.parallel([
+        Animated.timing(arriving, {
+          toValue: ARRIVES_FROM,
+          duration: LEAVES_OVER,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        ...rising.map((part) =>
+          Animated.timing(part, {
+            toValue: 0,
+            duration: LEAVES_OVER,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver: true,
+          }),
+        ),
+      ]).start();
 
       return;
     }
