@@ -1,5 +1,5 @@
 import { Film, FolderOpen } from '@keyline-icons/react-native';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,7 @@ import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { AnArrival } from '@ValencePhone/components/AnArrival/AnArrival';
 import { ANothingHere } from '@ValencePhone/components/ANothingHere/ANothingHere';
 import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
+import { THE_FIRST_SCREEN_IS_READY } from '@ValencePhone/components/ASplash/THE_FIRST_SCREEN_IS_READY';
 import { TheFeatured } from '@ValencePhone/components/TheLibrary/components/TheFeatured/TheFeatured';
 import { AHomeShelf } from '@ValencePhone/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf';
 import { usePullToRefresh } from '@ValencePhone/hooks/usePullToRefresh';
@@ -91,6 +92,7 @@ const TheHomePage = ({
   const comingUp = useQuery(libraryQueries.comingUp());
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = comingUp.data ?? NOTHING_COMING;
+  const sayReady = useContext(THE_FIRST_SCREEN_IS_READY);
   const wasScrolled = useRef<boolean | null>(null);
   const heroEnds = useRef<number | null>(null);
   const [isHeroInView, setIsHeroInView] = useState(true);
@@ -144,6 +146,12 @@ const TheHomePage = ({
     },
     [onScrolled],
   );
+
+  useEffect(() => {
+    if (!home.isReading) {
+      sayReady();
+    }
+  }, [home.isReading, sayReady]);
 
   const { hasMore, isReadingMore, showMore } = home;
   const onEndReached = useCallback(() => {
