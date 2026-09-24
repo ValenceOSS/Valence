@@ -1507,7 +1507,9 @@ const createApp = ({
    * whenever somebody is uploading, so nothing keeps a timer for them.
    */
   const sweepAbandonedUploads = async () => {
-    await Promise.all(uploadSessions.stale().map((session) => uploadDisk.discard(session.staging)));
+    await Promise.all(
+      (await uploadSessions.stale()).map((session) => uploadDisk.discard(session.staging)),
+    );
   };
 
   app.openapi(uploadMediaRoute, async (context) => {
@@ -1591,7 +1593,7 @@ const createApp = ({
       return context.json({ error: 'That is not something this library reads.' }, 415);
     }
 
-    const session = uploadSessions.open({
+    const session = await uploadSessions.open({
       libraryId: found.target.id,
       path: relativePath,
       destination: plan.destination,
@@ -1606,7 +1608,7 @@ const createApp = ({
       );
     }
 
-    uploadSessions.close(session.uploadId);
+    await uploadSessions.close(session.uploadId);
 
     if (begun.kind === 'exists') {
       return context.json({ error: 'There is already a file called that.' }, 409);
@@ -1629,7 +1631,7 @@ const createApp = ({
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    const session = found.kind === 'found' ? uploadSessions.find(uploadId, id) : null;
+    const session = found.kind === 'found' ? await uploadSessions.find(uploadId, id) : null;
 
     if (session === null) {
       return context.json({ error: 'No such upload.' }, 404);
@@ -1652,7 +1654,7 @@ const createApp = ({
     }
 
     if (written.bytes !== expected) {
-      session.received.delete(index);
+      await uploadSessions.receive(uploadId, index, false);
 
       return context.json(
         {
@@ -1662,12 +1664,9 @@ const createApp = ({
       );
     }
 
-    session.received.add(index);
+    const received = await uploadSessions.receive(uploadId, index, true);
 
-    return context.json(
-      { received: [...session.received].sort((one, other) => one - other), pieces: session.pieces },
-      200,
-    );
+    return context.json({ received: [...received], pieces: session.pieces }, 200);
   });
 
   app.openapi(uploadStatusRoute, async (context) => {
@@ -1682,16 +1681,13 @@ const createApp = ({
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    const session = found.kind === 'found' ? uploadSessions.find(uploadId, id) : null;
+    const session = found.kind === 'found' ? await uploadSessions.find(uploadId, id) : null;
 
     if (session === null) {
       return context.json({ error: 'No such upload.' }, 404);
     }
 
-    return context.json(
-      { received: [...session.received].sort((one, other) => one - other), pieces: session.pieces },
-      200,
-    );
+    return context.json({ received: [...session.received], pieces: session.pieces }, 200);
   });
 
   app.openapi(finishUploadRoute, async (context) => {
@@ -1706,16 +1702,16 @@ const createApp = ({
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    const session = found.kind === 'found' ? uploadSessions.find(uploadId, id) : null;
+    const session = found.kind === 'found' ? await uploadSessions.find(uploadId, id) : null;
 
     if (session === null) {
       return context.json({ error: 'No such upload.' }, 404);
     }
 
-    if (session.received.size < session.pieces) {
+    if (session.received.length < session.pieces) {
       return context.json(
         {
-          error: `${(session.pieces - session.received.size).toString()} of its pieces have not arrived yet.`,
+          error: `${(session.pieces - session.received.length).toString()} of its pieces have not arrived yet.`,
         },
         400,
       );
@@ -1723,7 +1719,7 @@ const createApp = ({
 
     const finished = await uploadDisk.finish(session.staging, session.destination, session.bytes);
 
-    uploadSessions.close(uploadId);
+    await uploadSessions.close(uploadId);
 
     if (finished.kind === 'written') {
       return context.json({ path: session.path, bytes: finished.bytes }, 201);
@@ -1752,10 +1748,10 @@ const createApp = ({
       return context.json({ error: 'Nobody is signed in.' }, 401);
     }
 
-    const session = found.kind === 'found' ? uploadSessions.find(uploadId, id) : null;
+    const session = found.kind === 'found' ? await uploadSessions.find(uploadId, id) : null;
 
     if (session !== null) {
-      uploadSessions.close(uploadId);
+      await uploadSessions.close(uploadId);
       await uploadDisk.discard(session.staging);
     }
 

@@ -51,6 +51,7 @@ import { trustedOriginsFor } from '@ValenceServer/auth/trustedOriginsFor';
 import type { RealtimeSession } from '@ValenceServer/realtime/createRealtimeHandler';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { createDatabaseHiddenService } from '@ValenceServer/hiding/createDatabaseHiddenService';
+import { createDatabaseUploadSessions } from '@ValenceServer/uploads/createDatabaseUploadSessions';
 import { createDatabase } from '@ValenceServer/db/Database';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createSnapshotBeforeMigrating } from '@ValenceServer/db/createSnapshotBeforeMigrating';
@@ -2529,6 +2530,7 @@ const reencodeService = createDatabaseReencodeService({
 const app = createApp({
   auth,
   settings,
+  uploadSessions: createDatabaseUploadSessions(db),
   version: env.VALENCE_VERSION,
   trustedOrigins: trustedOriginsFor({
     configured: env.TRUSTED_ORIGINS,

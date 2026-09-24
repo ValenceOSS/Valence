@@ -4,6 +4,12 @@ import {
   UploadPiecesSchema,
   UploadStartedSchema,
 } from '@ValenceContracts/schemas/UploadPieces';
+import {
+  forgetUnfinishedUpload,
+  keyOfUpload,
+  readUnfinishedUploads,
+  rememberUnfinishedUpload,
+} from '@ValenceClient/library/unfinishedUploads';
 
 const UploadedSchema = z.object({ path: z.string(), bytes: z.number().int().nonnegative() });
 
@@ -48,8 +54,12 @@ const pause = (milliseconds: number): Promise<void> =>
  * A file no larger than a piece goes as the body of a single request. A larger one goes in pieces,
  * each its own request, so that a proxy capping what one request may carry — Cloudflare's is 100 MB
  * — lets it through: each piece is tried again where the connection drops or the server stumbles,
- * after asking which pieces already arrived so none is sent twice, and the upload is thrown away on
- * the server if it is cancelled or cannot be finished.
+ * after asking which pieces already arrived so none is sent twice.
+ *
+ * An upload that stops part of the way — the page closed, the connection gave out, the server
+ * restarted — is remembered on this device, and the same file sent again carries on from the pieces
+ * the server already has. Only one that is stopped on purpose, or that the server refused outright,
+ * is thrown away on both ends.
  *
  * @param libraryId - The library to put it in.
  * @param path - Where in the library it goes, with `/` between folders.
@@ -83,18 +93,56 @@ const uploadMedia = async (
     return UploadedSchema.parse(await response.json());
   }
 
-  const begun = await fetch(
-    `${uploads}/start?${new URLSearchParams({ path, bytes: file.size.toString() }).toString()}`,
-    { method: 'POST', signal: signal ?? null },
-  );
+  const key = keyOfUpload(libraryId, path, file);
+  const held = readUnfinishedUploads(libraryId).find((one) => one.key === key) ?? null;
+  const carriedOn =
+    held === null
+      ? null
+      : await fetch(`${uploads}/${held.uploadId}`, { signal: signal ?? null }).catch(() => null);
+  const carried =
+    held !== null && carriedOn?.ok === true
+      ? {
+          ...UploadPiecesSchema.parse(await carriedOn.json()),
+          uploadId: held.uploadId,
+          pieceBytes: held.pieceBytes,
+        }
+      : null;
 
-  if (!begun.ok) {
+  if (held !== null && carried === null && carriedOn !== null) {
+    forgetUnfinishedUpload(key);
+  }
+
+  const begun =
+    carried === null
+      ? await fetch(
+          `${uploads}/start?${new URLSearchParams({ path, bytes: file.size.toString() }).toString()}`,
+          { method: 'POST', signal: signal ?? null },
+        )
+      : null;
+
+  if (begun !== null && !begun.ok) {
     throw await refusalFrom(begun);
   }
 
-  const { uploadId, pieceBytes, pieces } = UploadStartedSchema.parse(await begun.json());
+  const { uploadId, pieceBytes, pieces } =
+    carried ?? UploadStartedSchema.parse(await begun?.json());
   const upload = `${uploads}/${uploadId}`;
-  let received = new Set<number>();
+  let received = new Set<number>(carried?.received ?? []);
+  let isForGood = false;
+
+  if (carried === null) {
+    rememberUnfinishedUpload({
+      key,
+      libraryId,
+      path,
+      bytes: file.size,
+      uploadId,
+      pieceBytes,
+      startedAt: new Date().toISOString(),
+    });
+  } else {
+    onProgress?.(received.size / pieces);
+  }
 
   try {
     for (let index = 0; index < pieces; index += 1) {
@@ -115,6 +163,8 @@ const uploadMedia = async (
         if (sent?.ok === true) {
           received = new Set(UploadPiecesSchema.parse(await sent.json()).received);
         } else if (sent !== null && (sent.status < 500 || tried >= TRIES)) {
+          isForGood = sent.status < 500;
+
           throw await refusalFrom(sent);
         } else {
           await pauseFor(tried * 1000);
@@ -133,12 +183,19 @@ const uploadMedia = async (
     const finished = await fetch(`${upload}/finish`, { method: 'POST', signal: signal ?? null });
 
     if (!finished.ok) {
+      isForGood = finished.status < 500;
+
       throw await refusalFrom(finished);
     }
 
+    forgetUnfinishedUpload(key);
+
     return UploadedSchema.parse(await finished.json());
   } catch (error) {
-    await fetch(upload, { method: 'DELETE' }).catch(() => null);
+    if (isForGood || signal?.aborted === true) {
+      forgetUnfinishedUpload(key);
+      await fetch(upload, { method: 'DELETE' }).catch(() => null);
+    }
 
     throw error;
   }

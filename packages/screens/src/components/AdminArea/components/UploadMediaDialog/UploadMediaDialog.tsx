@@ -1,7 +1,8 @@
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { FileArrowUp as FileArrowUpIcon, Folder as FolderIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
+import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -10,6 +11,9 @@ import { FilePicker } from '@ValenceUI/FilePicker';
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { uploadMedia } from '@ValenceClient/library/uploadMedia';
+import { giveUpUpload } from '@ValenceClient/library/giveUpUpload';
+import { keyOfUpload, readUnfinishedUploads } from '@ValenceClient/library/unfinishedUploads';
+import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { uploadExtensionsFor } from '@ValenceContracts/functions/uploadExtensionsFor';
 import { queueUploads } from './queueUploads';
 import type { BadgeTone } from '@ValenceUI/Badge.types';
@@ -34,6 +38,10 @@ const STATUS_WORDS: Record<UploadStatus, { label: string; tone: BadgeTone }> = {
  * file says how much of it has arrived as it goes, and the run can be stopped part of the way, which
  * throws away whatever of the file being sent had arrived.
  *
+ * A large upload that stops for any other reason — the page closed, the connection gave out — is
+ * remembered on this device, listed here the next time, and carries on from where it stopped when
+ * the same file is chosen again; one that is not wanted any more can be forgotten.
+ *
  * @param library - The library to upload into, or nothing while the dialog is shut.
  * @param folder - The folder inside the library to put them in, with `/` between folders, where
  *   it is not the library's own.
@@ -54,6 +62,12 @@ const UploadMediaDialog = ({
   const [hasFinished, setHasFinished] = useState(false);
   const [arrived, setArrived] = useState<Record<string, number>>({});
   const stopping = useRef<AbortController | null>(null);
+  const [unfinishedSeen, setUnfinishedSeen] = useState(0);
+  const unfinished = useMemo(
+    () => (library === null || unfinishedSeen < 0 ? [] : readUnfinishedUploads(library.id)),
+    [library, unfinishedSeen],
+  );
+  const targetOf = (path: string) => (into === '' ? path : `${into}/${path}`);
 
   const reset = () => {
     setItems([]);
@@ -109,7 +123,7 @@ const UploadMediaDialog = ({
       change(item.id, 'uploading');
 
       try {
-        await uploadMedia(library.id, into === '' ? item.path : `${into}/${item.path}`, item.file, {
+        await uploadMedia(library.id, targetOf(item.path), item.file, {
           signal: stop.signal,
           onProgress: (fraction) => {
             setArrived((current) => ({ ...current, [item.id]: fraction }));
@@ -118,19 +132,25 @@ const UploadMediaDialog = ({
         change(item.id, 'done');
         uploaded += 1;
       } catch (error) {
+        const canCarryOn = readUnfinishedUploads(library.id).some(
+          (one) => one.key === keyOfUpload(library.id, targetOf(item.path), item.file),
+        );
+        const said = error instanceof Error ? error.message : 'The file could not be uploaded.';
+
         if (isStopped()) {
           change(item.id, 'waiting');
         } else {
           change(
             item.id,
             'failed',
-            error instanceof Error ? error.message : 'The file could not be uploaded.',
+            canCarryOn ? `${said} Press Upload to carry on from where it stopped.` : said,
           );
         }
       }
     }
 
     stopping.current = null;
+    setUnfinishedSeen((seen) => seen + 1);
     setIsUploading(false);
     setHasFinished(true);
 
@@ -196,6 +216,46 @@ const UploadMediaDialog = ({
             Choose a folder
           </FilePicker>
         </div>
+
+        {unfinished.length === 0 || isUploading ? null : (
+          <section aria-label="Unfinished uploads" className="flex flex-col gap-1.5">
+            <p className="text-xs text-text-muted">
+              {unfinished.length === 1
+                ? 'One upload was left unfinished. Choose the same file again to carry on from where it stopped.'
+                : `${unfinished.length.toString()} uploads were left unfinished. Choose the same files again to carry on from where they stopped.`}
+            </p>
+
+            <ul className="flex flex-col gap-1">
+              {unfinished.map((upload) => (
+                <li
+                  key={upload.key}
+                  className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-sm"
+                >
+                  <span className="min-w-0 truncate text-text">{upload.path}</span>
+
+                  <span className="flex shrink-0 items-center gap-2">
+                    <span className="tabular-nums text-xs text-text-muted">
+                      {formatBytes(upload.bytes)}
+                    </span>
+
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      label={`Forget ${upload.path}`}
+                      onClick={() => {
+                        void giveUpUpload(upload).then(() => {
+                          setUnfinishedSeen((seen) => seen + 1);
+                        });
+                      }}
+                    >
+                      Forget
+                    </Button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {skipped.length === 0 ? null : (
           <p className="text-xs text-text-muted">

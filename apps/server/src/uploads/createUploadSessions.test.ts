@@ -9,46 +9,47 @@ const UPLOAD = {
 };
 
 describe('createUploadSessions', () => {
-  it('counts the pieces, and stages the file hidden beside where it goes', () => {
-    const session = createUploadSessions(Date.now, 100, 10).open(UPLOAD);
+  it('finds an upload only through the library it is for', async () => {
+    const sessions = createUploadSessions(Date.now, 100, 10);
+    const session = await sessions.open(UPLOAD);
 
-    expect(session.pieces).toBe(3);
-    expect(session.staging).toBe(`/media/films/.Arrival.mkv.${session.uploadId}.part`);
+    expect((await sessions.find(session.uploadId, 'films'))?.uploadId).toBe(session.uploadId);
+    await expect(sessions.find(session.uploadId, 'shows')).resolves.toBeNull();
   });
 
-  it('counts an empty file as one piece', () => {
-    expect(createUploadSessions(Date.now, 100, 10).open({ ...UPLOAD, bytes: 0 }).pieces).toBe(1);
+  it('keeps the pieces that arrived whole, each once, in order, and drops one that did not', async () => {
+    const sessions = createUploadSessions(Date.now, 100, 10);
+    const { uploadId } = await sessions.open(UPLOAD);
+
+    await sessions.receive(uploadId, 2, true);
+    await sessions.receive(uploadId, 0, true);
+    await expect(sessions.receive(uploadId, 2, true)).resolves.toEqual([0, 2]);
+    await expect(sessions.receive(uploadId, 0, false)).resolves.toEqual([2]);
+    expect((await sessions.find(uploadId, 'films'))?.received).toEqual([2]);
   });
 
-  it('finds an upload only through the library it is for', () => {
-    const sessions = createUploadSessions();
-    const session = sessions.open(UPLOAD);
+  it('forgets an upload once it is closed', async () => {
+    const sessions = createUploadSessions(Date.now, 100, 10);
+    const { uploadId } = await sessions.open(UPLOAD);
 
-    expect(sessions.find(session.uploadId, 'films')).toBe(session);
-    expect(sessions.find(session.uploadId, 'shows')).toBeNull();
+    await sessions.close(uploadId);
+
+    await expect(sessions.find(uploadId, 'films')).resolves.toBeNull();
+    await expect(sessions.receive(uploadId, 0, true)).resolves.toEqual([]);
   });
 
-  it('forgets an upload once it is closed', () => {
-    const sessions = createUploadSessions();
-    const session = sessions.open(UPLOAD);
-
-    sessions.close(session.uploadId);
-
-    expect(sessions.find(session.uploadId, 'films')).toBeNull();
-  });
-
-  it('gives up the uploads left alone too long, and keeps those still being sent', () => {
+  it('gives up the uploads left alone too long, and keeps those still being sent', async () => {
     let time = 0;
     const sessions = createUploadSessions(() => time, 100, 10);
-    const left = sessions.open(UPLOAD);
-    const kept = sessions.open(UPLOAD);
+    const left = await sessions.open(UPLOAD);
+    const kept = await sessions.open(UPLOAD);
 
     time = 90;
-    sessions.find(kept.uploadId, 'films');
+    await sessions.receive(kept.uploadId, 0, true);
     time = 150;
 
-    expect(sessions.stale()).toEqual([left]);
-    expect(sessions.find(left.uploadId, 'films')).toBeNull();
-    expect(sessions.find(kept.uploadId, 'films')).toBe(kept);
+    expect((await sessions.stale()).map((one) => one.uploadId)).toEqual([left.uploadId]);
+    await expect(sessions.find(left.uploadId, 'films')).resolves.toBeNull();
+    expect(await sessions.find(kept.uploadId, 'films')).not.toBeNull();
   });
 });
