@@ -147,7 +147,7 @@ describe('AppShell', () => {
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
 
-    expect(await screen.findByRole('menuitem', { name: 'Account' })).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'My Account' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Admin' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Admin' })).not.toBeInTheDocument();
   });
@@ -160,6 +160,22 @@ describe('AppShell', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Admin' }));
 
     expect(props.onOpenAdmin).toHaveBeenCalledOnce();
+  });
+
+  it('keeps My Account and Admin together, apart from the rest of the menu', async () => {
+    const user = userEvent.setup();
+
+    draw({ isAdministrator: true });
+
+    await user.click(screen.getByRole('button', { name: 'Account' }));
+
+    const mine = (await screen.findByRole('menuitem', { name: 'My Account' })).closest(
+      '[role="group"]',
+    );
+
+    expect(mine).not.toBeNull();
+    expect(mine?.textContent).toContain('Admin');
+    expect(mine?.textContent).not.toContain('Favourites');
   });
 
   it('keeps administration off the bar itself, since it lives behind the face', () => {
@@ -193,7 +209,7 @@ describe('AppShell', () => {
     const { props } = draw();
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Account' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'My Account' }));
 
     expect(props.onOpenAccount).toHaveBeenCalledOnce();
     expect(props.onSectionChange).not.toHaveBeenCalled();
@@ -270,7 +286,7 @@ describe('AppShell', () => {
     draw();
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
-    await screen.findByRole('menuitem', { name: 'Account' });
+    await screen.findByRole('menuitem', { name: 'My Account' });
 
     expect(screen.queryByRole('menuitem', { name: 'Sign out' })).not.toBeInTheDocument();
   });

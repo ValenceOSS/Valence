@@ -195,7 +195,7 @@ describe('ValenceShell', () => {
 
     await actor.click(within(bar).getByRole('button', { name: 'Account' }));
 
-    expect(await screen.findByRole('menuitem', { name: 'Account' })).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'My Account' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Admin' })).not.toBeInTheDocument();
   });
 

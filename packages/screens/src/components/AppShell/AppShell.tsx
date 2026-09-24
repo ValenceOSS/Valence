@@ -445,14 +445,8 @@ const AppShell = ({
           look="face"
           trigger={face}
           groups={[
-            {
-              items: [
-                {
-                  id: 'account',
-                  label: 'Account',
-                  icon: <Icon of={CircleUserFilledIcon} size={16} />,
-                  onChoose: onOpenAccount,
-                },
+            ...[
+              [
                 ...(onOpenFavourites === undefined
                   ? []
                   : [
@@ -473,6 +467,14 @@ const AppShell = ({
                       },
                     ]
                   : []),
+              ],
+              [
+                {
+                  id: 'account',
+                  label: 'My Account',
+                  icon: <Icon of={CircleUserFilledIcon} size={16} />,
+                  onChoose: onOpenAccount,
+                },
                 ...(isAdministrator
                   ? [
                       {
@@ -484,7 +486,9 @@ const AppShell = ({
                     ]
                   : []),
               ],
-            },
+            ]
+              .filter((items) => items.length > 0)
+              .map((items) => ({ items })),
             {
               name: 'Theme',
               items: THEME_CHOICES.map((choice) => ({
