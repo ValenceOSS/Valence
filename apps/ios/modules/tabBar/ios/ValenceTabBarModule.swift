@@ -83,6 +83,7 @@ public class ValenceTabBarView: ExpoView, UITabBarDelegate {
         return item
       }
       showTheSelected()
+      sayWhereTheFaceIsSoon()
     }
   }
 
@@ -127,7 +128,17 @@ public class ValenceTabBarView: ExpoView, UITabBarDelegate {
       onMeasure(["height": wanted.height])
     }
 
+    sayWhereTheFaceIsSoon()
+  }
+
+  public override func didMoveToWindow() {
+    super.didMoveToWindow()
+    sayWhereTheFaceIsSoon()
+  }
+
+  private func sayWhereTheFaceIsSoon() {
     DispatchQueue.main.async { [weak self] in
+      self?.bar.layoutIfNeeded()
       self?.sayWhereTheFaceIs()
     }
   }
