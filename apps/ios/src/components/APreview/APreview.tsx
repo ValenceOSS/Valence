@@ -26,9 +26,10 @@ const styles = StyleSheet.create({
  * it, as the web draws the head of a title: filling whatever holds it, cropped to cover it.
  *
  * The clip is only asked for once the title has been on screen for a moment and only where the
- * server has made one, so scrolling past a title fetches nothing, and it stops the moment the title
- * is no longer showing. It is let go a moment after that rather than at once, holding its last
- * frame, since the page may be drawing the same clip behind itself and fading it out. On mobile data
+ * server has made one, so scrolling past a title fetches nothing. Once the title is no longer
+ * showing the clip keeps playing while it fades into the backdrop, and only then stops, so it never
+ * freezes on a frame and vanishes; it stops at once where a page or the player covers it. It is let
+ * go a moment after, since the page may be drawing the same clip behind itself and fading it out. On mobile data
  * there is no clip at all, only the backdrop.
  *
  * @param mediaId - The title.
@@ -99,10 +100,10 @@ const APreview = ({
   const isPlaying = clip !== null && moving.isPlaying;
 
   useEffect(() => {
-    if (!isShowing) {
+    if (!isOnTop) {
       player.pause();
     }
-  }, [isShowing, player]);
+  }, [isOnTop, player]);
 
   useEventListener(player, 'playToEnd', () => {
     onEnded?.();
@@ -115,12 +116,16 @@ const APreview = ({
   useEffect(() => {
     onPlaying?.(isPlaying);
     Animated.timing(showing, {
-      toValue: isPlaying ? 1 : 0,
+      toValue: isPlaying && isShowing ? 1 : 0,
       duration: FADES_IN_OVER,
       easing: Easing.inOut(Easing.quad),
       useNativeDriver: true,
-    }).start();
-  }, [isPlaying, showing, onPlaying]);
+    }).start(({ finished }) => {
+      if (finished && !isShowing) {
+        player.pause();
+      }
+    });
+  }, [isPlaying, isShowing, showing, onPlaying, player]);
 
   useEffect(() => {
     if (onClip === undefined || !isPlaying) {
