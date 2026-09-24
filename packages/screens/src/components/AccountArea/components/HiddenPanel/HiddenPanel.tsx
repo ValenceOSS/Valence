@@ -13,6 +13,7 @@ import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { ConfirmHiding } from '@ValenceScreens/components/ConfirmHiding/ConfirmHiding';
 import { useHidden } from '@ValenceClient/library/useHidden';
+import { librariesToHide } from '@ValenceClient/library/librariesToHide';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Hidden } from '@ValenceContracts/schemas/Hidden';
@@ -41,7 +42,7 @@ const HiddenPanel = () => {
   const profileId = watcher?.id ?? null;
   const asked = useQuery(viewingQueries.hidden(profileId));
   const hiding = useHidden(profileId);
-  const shelves = useQuery(libraryQueries.all()).data ?? [];
+  const shelves = librariesToHide(useQuery(libraryQueries.all()).data ?? [], hiding.entries);
 
   const columns = useMemo<DataTableColumn<Hidden>[]>(
     () => [
