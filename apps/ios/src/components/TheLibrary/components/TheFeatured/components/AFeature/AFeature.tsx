@@ -43,7 +43,8 @@ const PARTS = 4;
 const ROUNDED = 20;
 
 const styles = StyleSheet.create({
-  buttons: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  buttons: { flexDirection: 'row', gap: 10, justifyContent: 'space-between', marginTop: 8 },
+  half: { flex: 1 },
   facts: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   fills: {
     borderRadius: ROUNDED,
@@ -72,6 +73,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexGrow: 1,
     gap: 8,
+    justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -286,16 +288,20 @@ const AFeature = ({
           )}
 
           <Animated.View style={[styles.buttons, risings[3]]}>
-            <Button tone="bright" icon={PlayFilled} onPress={onPlay}>
-              {resumeAt === null ? 'Play' : `Resume ${howLongItRuns(resumeAt)}`}
-            </Button>
+            <View style={styles.half}>
+              <Button tone="bright" icon={PlayFilled} isWide onPress={onPlay}>
+                {resumeAt === null ? 'Play' : `Resume ${howLongItRuns(resumeAt)}`}
+              </Button>
+            </View>
 
-            <Button tone="bare" label="More info" onPress={onMoreInfo}>
-              <View style={styles.moreInfo}>
-                <Icon of={Info} size={18} colour="#ffffff" />
-                <Words tone="onArtwork">More info</Words>
-              </View>
-            </Button>
+            <View style={styles.half}>
+              <Button tone="bare" label="More info" onPress={onMoreInfo}>
+                <View style={styles.moreInfo}>
+                  <Icon of={Info} size={18} colour="#ffffff" />
+                  <Words tone="onArtwork">More info</Words>
+                </View>
+              </Button>
+            </View>
           </Animated.View>
         </View>
       </View>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { usePrefersStillness } from '@ValencePhone/hooks/usePrefersStillness';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
+import { withAlpha } from '@ValencePhone/theme/withAlpha';
 import type { TheDotsProps } from './TheDots.types';
 
 const DOT = 6;
@@ -90,7 +91,10 @@ const TheDots = ({ count, at, filled }: TheDotsProps) => {
         <Animated.View
           key={index}
           testID="dot"
-          style={[styles.dot, { backgroundColor: colours.border, width: widthOf(index) }]}
+          style={[
+            styles.dot,
+            { backgroundColor: withAlpha(colours.text, 0.22), width: widthOf(index) },
+          ]}
         >
           {index === at ? (
             <Animated.View

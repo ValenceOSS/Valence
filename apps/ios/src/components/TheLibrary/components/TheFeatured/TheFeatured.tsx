@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Animated, Easing, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, StyleSheet, View, useWindowDimensions } from 'react-native';
+import type { ScrollView } from 'react-native';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -13,28 +14,47 @@ import type { TheFeaturedProps } from './TheFeatured.types';
 
 const GAP = 12;
 
+const PEEK = 20;
+
+const ASIDE = 0.9;
+
+const CLONES = 2;
+
+const SETTLES_AFTER = 600;
+
 const MOVE_ON_AFTER = 28_000;
 
 const styles = StyleSheet.create({
+  cards: { gap: GAP, paddingHorizontal: PEEK + GAP },
+  pager: { marginHorizontal: -SCREEN_EDGE },
   whole: { gap: 10 },
 });
 
 /**
- * Runs a dot's fill on from wherever it has reached to full, evenly, on the native side, so a
- * change of pace never sends it backwards.
+ * Which of some number of things a position counts as, going round again past either end.
+ *
+ * @param position - Where, counting from the first.
+ * @param count - How many there are.
+ * @returns Which one.
+ */
+const roundTo = (position: number, count: number): number =>
+  count === 0 ? 0 : ((position % count) + count) % count;
+
+/**
+ * Runs a dot's fill on from where it has reached to full, evenly, on the native side.
  *
  * @param filled - The fill.
- * @param overMs - How long until it is full, given how far it has reached.
+ * @param from - Where it has reached, from nothing to the whole of it.
+ * @param overMs - How long until it is full.
  */
-const fillOn = (filled: Animated.Value, overMs: (from: number) => number): void => {
-  filled.stopAnimation((from) => {
-    Animated.timing(filled, {
-      toValue: 1,
-      duration: Math.max(overMs(from), 0),
-      easing: Easing.linear,
-      useNativeDriver: true,
-    }).start();
-  });
+const fillOn = (filled: Animated.Value, from: number, overMs: number): void => {
+  filled.setValue(from);
+  Animated.timing(filled, {
+    toValue: 1,
+    duration: Math.max(overMs, 0),
+    easing: Easing.linear,
+    useNativeDriver: true,
+  }).start();
 };
 
 /**
@@ -65,10 +85,56 @@ const TheFeaturedTitles = ({
   const [filled] = useState(() => new Animated.Value(0));
   const watched = useQuery(viewingQueries.progress());
   const progress = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
-  const [at, setAt] = useState(0);
+  const count = items.length;
+  const lead = count > 1 ? CLONES : 0;
+  const [turn, setTurn] = useState(0);
+  const at = roundTo(turn, count);
+  const cards = useMemo(
+    () =>
+      Array.from({ length: count + lead * 2 }, (_, place) => place).flatMap((place) => {
+        const media = items[roundTo(place - lead, count)];
+
+        return media === undefined ? [] : [media];
+      }),
+    [items, count, lead],
+  );
   const pager = useRef<ScrollView>(null);
-  const across = width - SCREEN_EDGE * 2;
+  const across = width - (PEEK + GAP) * 2;
   const step = across + GAP;
+  const [scrolled] = useState(() => new Animated.Value(0));
+  const followScrolling = useMemo(
+    () =>
+      Animated.event([{ nativeEvent: { contentOffset: { x: scrolled } } }], {
+        useNativeDriver: true,
+      }),
+    [scrolled],
+  );
+  const leaning = useMemo(() => {
+    const inward = (across * (1 - ASIDE)) / 2;
+
+    return cards.map((_, index) => {
+      const inputRange = [(index - 1) * step, index * step, (index + 1) * step];
+
+      return {
+        transform: [
+          {
+            translateX: scrolled.interpolate({
+              inputRange,
+              outputRange: [-inward, 0, inward],
+              extrapolate: 'clamp',
+            }),
+          },
+          {
+            scale: scrolled.interpolate({
+              inputRange,
+              outputRange: [ASIDE, 1, ASIDE],
+              extrapolate: 'clamp',
+            }),
+          },
+        ],
+      };
+    });
+  }, [cards, across, step, scrolled]);
   const showing = items[at] ?? null;
 
   useEffect(() => {
@@ -77,34 +143,71 @@ const TheFeaturedTitles = ({
 
   const moving = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heard = useRef<Parameters<NonNullable<typeof onClip>>[0]>(null);
-  const latest = useRef({ at, count: items.length, step, isStill, onClip });
+  const latest = useRef({ turn, count, lead, step, isStill, onClip });
 
-  latest.current = { at, count: items.length, step, isStill, onClip };
+  latest.current = { turn, count, lead, step, isStill, onClip };
 
-  const showNext = useCallback(() => {
-    const { at: was, count, step: apart } = latest.current;
-    const next = count === 0 ? 0 : (was + 1) % count;
+  const settle = useCallback((reached: number) => {
+    const { count: many, lead: before, step: apart } = latest.current;
+    const real = roundTo(reached, many);
 
-    pager.current?.scrollTo({ x: next * apart, animated: true });
-    setAt(next);
+    if (real !== reached) {
+      pager.current?.scrollTo({ x: (before + real) * apart, animated: false });
+    }
+
+    setTurn(real);
   }, []);
 
+  const showNext = useCallback(() => {
+    const { turn: was, count: many, lead: before, step: apart } = latest.current;
+
+    if (many < 2) {
+      return;
+    }
+
+    const next = was + 1;
+
+    pager.current?.scrollTo({ x: (before + next) * apart, animated: true });
+    setTurn(next);
+
+    if (next >= many) {
+      setTimeout(() => {
+        if (latest.current.turn >= latest.current.count) {
+          settle(latest.current.turn);
+        }
+      }, SETTLES_AFTER);
+    }
+  }, [settle]);
+
+  useEffect(() => {
+    pager.current?.scrollTo({ x: (lead + latest.current.turn) * step, animated: false });
+  }, [lead, step]);
+
   const runOut = useCallback(
-    (overMs: (from: number) => number, movesOnItself: boolean) => {
+    (overMs: (from: number) => number, movesOnItself: boolean, reached?: number) => {
       if (moving.current !== null) {
         clearTimeout(moving.current);
         moving.current = null;
       }
 
-      filled.stopAnimation((from) => {
+      const runFrom = (from: number) => {
         if (movesOnItself && latest.current.count > 1) {
           moving.current = setTimeout(showNext, Math.max(overMs(from), 0));
         }
 
         if (!latest.current.isStill) {
-          fillOn(filled, () => overMs(from));
+          fillOn(filled, from, overMs(from));
         }
-      });
+      };
+
+      if (reached === undefined) {
+        filled.stopAnimation(runFrom);
+
+        return;
+      }
+
+      filled.stopAnimation();
+      runFrom(reached);
     },
     [filled, showNext],
   );
@@ -112,7 +215,7 @@ const TheFeaturedTitles = ({
   useLayoutEffect(() => {
     heard.current = null;
     filled.setValue(0);
-    runOut(() => MOVE_ON_AFTER, true);
+    runOut(() => MOVE_ON_AFTER, true, 0);
 
     return () => {
       if (moving.current !== null) {
@@ -145,51 +248,58 @@ const TheFeaturedTitles = ({
     [runOut],
   );
 
-  if (items.length === 0) {
+  if (count === 0) {
     return null;
   }
 
   return (
     <View style={styles.whole}>
-      <ScrollView
+      <Animated.ScrollView
         ref={pager}
         horizontal
         snapToInterval={step}
         decelerationRate="fast"
+        disableIntervalMomentum
+        contentOffset={{ x: lead * step, y: 0 }}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: GAP }}
+        style={styles.pager}
+        contentContainerStyle={styles.cards}
+        scrollEventThrottle={16}
+        onScroll={followScrolling}
         onMomentumScrollEnd={(event) => {
-          setAt(Math.round(event.nativeEvent.contentOffset.x / step));
+          settle(Math.round(event.nativeEvent.contentOffset.x / step) - lead);
         }}
       >
-        {items.map((media, index) => {
+        {cards.map((media, index) => {
           const showId = showIdOf(media);
+          const isShowing = index === lead + turn;
 
           return (
-            <AFeature
-              key={media.id}
-              media={media}
-              width={across}
-              isShowing={index === at}
-              resumeAt={resumeFor(progress, media.id)}
-              onEnded={showNext}
-              {...(index === at ? { onClip: heardClip } : {})}
-              onPlay={() => {
-                onWatch(media.id, resumeFor(progress, media.id) ?? 0);
-              }}
-              onMoreInfo={() => {
-                if (showId === null) {
-                  onLookAt(media.id);
-                } else {
-                  onLookAtShow(media.libraryId, showId);
-                }
-              }}
-            />
+            <Animated.View key={`${media.id}:${index.toString()}`} style={leaning[index]}>
+              <AFeature
+                media={media}
+                width={across}
+                isShowing={isShowing}
+                resumeAt={resumeFor(progress, media.id)}
+                onEnded={showNext}
+                {...(isShowing ? { onClip: heardClip } : {})}
+                onPlay={() => {
+                  onWatch(media.id, resumeFor(progress, media.id) ?? 0);
+                }}
+                onMoreInfo={() => {
+                  if (showId === null) {
+                    onLookAt(media.id);
+                  } else {
+                    onLookAtShow(media.libraryId, showId);
+                  }
+                }}
+              />
+            </Animated.View>
           );
         })}
-      </ScrollView>
+      </Animated.ScrollView>
 
-      <TheDots count={items.length} at={at} filled={filled} />
+      <TheDots count={count} at={at} filled={filled} />
     </View>
   );
 };
