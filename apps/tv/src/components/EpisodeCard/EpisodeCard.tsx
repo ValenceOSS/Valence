@@ -21,6 +21,7 @@ const STILL_HEIGHT = 236;
  * @param watchedFraction - How far through it this viewer is, where they have started it.
  * @param isWatched - Whether they have finished it.
  * @param onPress - Told when it is chosen.
+ * @param onHold - Told when select is held on it, which marks it watched or unwatched.
  */
 const EpisodeCard = ({
   episode,
@@ -28,6 +29,7 @@ const EpisodeCard = ({
   watchedFraction,
   isWatched = false,
   onPress,
+  onHold,
 }: EpisodeCardProps) => (
   <Focusable
     label={episode.title}
@@ -35,6 +37,13 @@ const EpisodeCard = ({
     onPress={() => {
       onPress(episode);
     }}
+    {...(onHold === undefined
+      ? {}
+      : {
+          onHold: () => {
+            onHold(episode);
+          },
+        })}
   >
     {(isFocused) => (
       <View style={styles.card}>

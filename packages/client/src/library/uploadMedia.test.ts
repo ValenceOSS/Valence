@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UPLOAD_PIECE_BYTES } from '@ValenceContracts/schemas/UploadPieces';
+import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { readUnfinishedUploads } from './unfinishedUploads';
 import { uploadMedia } from './uploadMedia';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
@@ -83,6 +86,7 @@ const pieceSends = (): string[] =>
 const pauseFor = () => Promise.resolve();
 
 beforeEach(() => {
+  installPlatform(aFakePlatform());
   fetchMock.mockReset();
   fetchMock.mockResolvedValue(answer(201, { path: 'Arrival/Arrival.mkv', bytes: 6 }));
   vi.stubGlobal('fetch', fetchMock);
@@ -176,14 +180,17 @@ describe('uploadMedia, for a file larger than a piece', () => {
     expect(fetchMock).toHaveBeenCalledWith(UPLOAD, { method: 'DELETE' });
   });
 
-  it('gives up after trying a piece a few times', async () => {
+  it('gives up after trying a piece a few times, keeping the upload to carry on later', async () => {
     answerInPieces({ 2: ['drop', 'drop', 'drop', 'drop'] });
 
     await expect(uploadMedia('lib-1', 'Arrival.mkv', largeFile(), { pauseFor })).rejects.toThrow(
       'the connection dropped',
     );
     expect(pieceSends().filter((input) => input.endsWith('/2'))).toHaveLength(4);
-    expect(fetchMock).toHaveBeenCalledWith(UPLOAD, { method: 'DELETE' });
+    expect(fetchMock).not.toHaveBeenCalledWith(UPLOAD, { method: 'DELETE' });
+    expect(readUnfinishedUploads('lib-1')).toEqual([
+      expect.objectContaining({ path: 'Arrival.mkv', uploadId: UPLOAD_ID }),
+    ]);
   });
 
   it('stops at once and throws the upload away when it is cancelled', async () => {
@@ -197,6 +204,45 @@ describe('uploadMedia, for a file larger than a piece', () => {
     ).rejects.toThrow('the connection dropped');
     expect(pieceSends()).toHaveLength(1);
     expect(fetchMock).toHaveBeenCalledWith(UPLOAD, { method: 'DELETE' });
+  });
+
+  it('carries the same file on from the pieces the server has, and forgets it once finished', async () => {
+    const file = largeFile();
+
+    answerInPieces({ 2: ['drop', 'drop', 'drop', 'drop'] });
+    await uploadMedia('lib-1', 'Arrival.mkv', file, { pauseFor }).catch(() => null);
+    fetchMock.mockClear();
+    answerInPieces();
+
+    const onProgress = vi.fn();
+
+    await uploadMedia('lib-1', 'Arrival.mkv', file, { onProgress, pauseFor });
+
+    expect(fetchMock.mock.calls.some(([input]) => input.includes('/start'))).toBe(false);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(UPLOAD);
+    expect(onProgress.mock.calls[0]?.[0]).toBe(0);
+    expect(readUnfinishedUploads('lib-1')).toEqual([]);
+  });
+
+  it('begins again where the server no longer has the upload it was carrying on', async () => {
+    const file = largeFile();
+
+    answerInPieces({ 2: ['drop', 'drop', 'drop', 'drop'] });
+    await uploadMedia('lib-1', 'Arrival.mkv', file, { pauseFor }).catch(() => null);
+    fetchMock.mockClear();
+    answerInPieces();
+
+    const answered = fetchMock.getMockImplementation();
+
+    fetchMock.mockImplementation((input, init) =>
+      input === UPLOAD && init?.method === undefined
+        ? Promise.resolve(answer(404, { error: 'No such upload.' }))
+        : (answered?.(input, init) ?? Promise.reject(new Error('unanswered'))),
+    );
+
+    await uploadMedia('lib-1', 'Arrival.mkv', file, { pauseFor });
+
+    expect(fetchMock.mock.calls.some(([input]) => input.includes('/start'))).toBe(true);
   });
 
   it('says what the server said where it would not begin', async () => {

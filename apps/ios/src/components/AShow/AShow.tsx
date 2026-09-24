@@ -1,5 +1,9 @@
-import { Download, EyeOff, Film, ListVideo, Share } from '@keyline-icons/react-native';
-import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
+import { CircleCheck, Download, EyeOff, Film, ListVideo, Share } from '@keyline-icons/react-native';
+import {
+  CircleCheck as CircleCheckFilled,
+  Play as PlayFilled,
+} from '@keyline-icons/react-native/fill';
+import { markWatched } from '@ValenceClient/playback/markWatched';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
@@ -34,6 +38,7 @@ import { useConfirmHiding } from '@ValencePhone/hooks/useConfirmHiding';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { ANothingHere } from '@ValencePhone/components/ANothingHere/ANothingHere';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { AShowProps } from './AShow.types';
 
 const OTHER = 'other';
@@ -50,6 +55,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   seasons: { flexShrink: 1 },
+  markSeason: { alignItems: 'center', flexDirection: 'row', gap: 6, paddingVertical: 6 },
 });
 
 /**
@@ -116,6 +122,26 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
   );
   const held = show.seasons.flatMap((season) => season.episodes);
   const seriesId = show.seriesId ?? null;
+  const shown = laid.rows.flatMap((row) => (row.episode === null ? [] : [row.episode]));
+  const isSeasonWatched = shown.length > 0 && shown.every((episode) => fractionOf(episode.id) >= 1);
+
+  /**
+   * Marks episodes watched, or unwatched again, and reads progress and the shelves again so the
+   * ticks and the count of what is left follow.
+   *
+   * @param episodes - The episodes.
+   * @param isWatched - Whether they are now watched.
+   */
+  const mark = (episodes: readonly MediaSummary[], isWatched: boolean) => {
+    void markWatched(episodes, isWatched)
+      .then(async () =>
+        Promise.all([
+          cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
+          cache.invalidateQueries({ queryKey: libraryQueries.key }),
+        ]),
+      )
+      .catch(() => null);
+  };
 
   /**
    * Asks the server to prepare the episodes wanted, leaving out what this phone already has, and
@@ -306,6 +332,27 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
           ) : null}
         </View>
 
+        {shown.length === 0 ? null : (
+          <Button
+            tone="bare"
+            label={isSeasonWatched ? 'Mark season unwatched' : 'Mark season watched'}
+            onPress={() => {
+              mark(shown, !isSeasonWatched);
+            }}
+          >
+            <View style={styles.markSeason}>
+              <Icon
+                of={isSeasonWatched ? CircleCheckFilled : CircleCheck}
+                size={16}
+                colour={colours.textMuted}
+              />
+              <Words size="small" tone="muted">
+                {isSeasonWatched ? 'Mark season unwatched' : 'Mark season watched'}
+              </Words>
+            </View>
+          </Button>
+        )}
+
         {laid.rows.length === 0 ? (
           <ANothingHere
             of={ListVideo}
@@ -340,6 +387,11 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
                     onLookAt={() => {
                       if (row.episode !== null) {
                         onLookAt(row.episode.id);
+                      }
+                    }}
+                    onMarkWatched={() => {
+                      if (row.episode !== null) {
+                        mark([row.episode], fractionOf(row.episode.id) < 1);
                       }
                     }}
                   />

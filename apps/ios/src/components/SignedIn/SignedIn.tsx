@@ -205,6 +205,10 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     setPages((was) => [...was, page]);
   };
 
+  const swap = (page: APage) => {
+    setPages((was) => [...was.slice(0, -1), page]);
+  };
+
   const toAlbum = (albumId: string) => {
     open({ kind: 'album', albumId });
   };
@@ -377,7 +381,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             kind={page.about}
             id={page.id}
             onOpen={(kind, mediaId) => {
-              open(
+              swap(
                 kind === 'film'
                   ? { kind: 'title', mediaId }
                   : { kind: 'series', seriesId: mediaId },

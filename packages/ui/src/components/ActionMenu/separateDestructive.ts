@@ -18,7 +18,7 @@ const separateDestructive = (groups: readonly ActionMenuGroup[]): ActionMenuGrou
       ...group,
       items: group.items.filter((item) => item.isDestructive !== true),
     }))
-    .filter((group) => group.items.length > 0);
+    .filter((group) => group.items.length > 0 || group.control !== undefined);
 
   return destructive.length === 0 ? kept : [...kept, { items: destructive }];
 };

@@ -706,6 +706,10 @@ body[data-scroll-locked] .valence-navbar {
   box-shadow: none;
 }
 
+.valence-surface--right-edge {
+  border-width: 0 1px 0 0;
+}
+
 .valence-surface--lifted {
   box-shadow: var(--shadow-lifted);
 }

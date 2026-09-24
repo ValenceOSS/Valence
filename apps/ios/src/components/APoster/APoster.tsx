@@ -1,7 +1,10 @@
+import { Check } from '@keyline-icons/react-native';
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { POSTER_WIDTH } from '@ValencePhone/components/APoster/POSTER_WIDTH';
 import { HowFar } from '@ValencePhone/components/HowFar/HowFar';
+import { Icon } from '@ValencePhone/components/Icon/Icon';
+import { withAlpha } from '@ValencePhone/theme/withAlpha';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { APosterProps } from './APoster.types';
@@ -10,6 +13,28 @@ const RATIO = 3 / 2;
 
 const styles = StyleSheet.create({
   howFar: { bottom: 0, left: 0, position: 'absolute', right: 0 },
+  count: {
+    alignItems: 'center',
+    borderRadius: 12,
+    height: 24,
+    justifyContent: 'center',
+    minWidth: 24,
+    paddingHorizontal: 7,
+    position: 'absolute',
+    right: 8,
+    top: 8,
+  },
+  countWords: { fontSize: 12, fontVariant: ['tabular-nums'], fontWeight: '700' },
+  seen: {
+    alignItems: 'center',
+    borderRadius: 12,
+    height: 24,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 8,
+    top: 8,
+    width: 24,
+  },
   poster: { height: '100%', width: '100%' },
   standIn: { alignItems: 'center', justifyContent: 'center', padding: 8 },
   tile: { borderRadius: 12, overflow: 'hidden' },
@@ -29,7 +54,9 @@ const styles = StyleSheet.create({
  * @param title - What it is called.
  * @param year - When it came out, where that is known.
  * @param artwork - Where its picture is, or nothing where it has none.
- * @param watched - How much of it has been seen, as a fraction, where any of it has.
+ * @param watched - How much of it has been seen, as a fraction — a line while part way, a tick once
+ *   through — where any of it has.
+ * @param count - How many episodes are left to watch, shown in the corner; nothing for none.
  * @param note - A word about where it stands, such as whether it is already here.
  * @param wide - How wide to draw it, where it fills a cell rather than sitting on a shelf.
  */
@@ -39,6 +66,7 @@ const APoster = ({
   artwork,
   watched = 0,
   note = null,
+  count = 0,
   wide = POSTER_WIDTH,
 }: APosterProps) => {
   const [isMissing, setIsMissing] = useState(false);
@@ -65,7 +93,31 @@ const APoster = ({
           />
         )}
 
-        {watched > 0 ? (
+        {count > 0 && watched < 1 ? (
+          <View
+            style={[styles.count, { backgroundColor: colours.accent }]}
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={`${count.toString()} ${count === 1 ? 'episode' : 'episodes'} left`}
+          >
+            <Text style={[styles.countWords, { color: colours.accentContrast }]}>
+              {count > 99 ? '99+' : count.toString()}
+            </Text>
+          </View>
+        ) : null}
+
+        {watched >= 1 ? (
+          <View
+            style={[styles.seen, { backgroundColor: withAlpha('#000000', 0.6) }]}
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel="Watched"
+          >
+            <Icon of={Check} size={14} colour="#ffffff" />
+          </View>
+        ) : null}
+
+        {watched > 0 && watched < 1 ? (
           <View style={styles.howFar}>
             <HowFar fraction={watched} label={`How far through ${title}`} />
           </View>

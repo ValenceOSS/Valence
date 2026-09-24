@@ -4,6 +4,7 @@ import type { StyleProp, View, ViewStyle } from 'react-native';
 type FocusableProps = {
   children: ReactNode | ((isFocused: boolean) => ReactNode);
   onPress?: () => void;
+  onHold?: () => void;
   onFocus?: () => void;
   onBlur?: () => void;
   shadow?: { height: number; cornerRadius: number } | null;

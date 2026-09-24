@@ -122,6 +122,7 @@ const BAR_LIFTS_BY = 24;
 const PARTS_BELOW_BY = 12;
 
 const styles = StyleSheet.create({
+  brand: { alignItems: 'center', flexDirection: 'row', gap: 10 },
   dimmed: { backgroundColor: 'rgba(0, 0, 0, 0.28)' },
   arriving: { gap: 20 },
   hidden: { opacity: 0 },
@@ -414,7 +415,10 @@ const TheLibrary = ({
         }}
       >
         <View style={styles.topRow}>
-          <ACarriedMark isHandedOn={false} />
+          <View style={styles.brand}>
+            <ACarriedMark isHandedOn={false} />
+            <Words size="heading">Valence</Words>
+          </View>
           <View style={styles.aside}>
             <AGlassCircle of={ScanQrCode} label="Sign in a television" onPress={onScan} />
             <TheBell onPress={onNotifications} />
@@ -578,6 +582,7 @@ const TheLibrary = ({
               title={cell.programme.title}
               year={cell.programme.year ?? null}
               artwork={onThisServer(`/api/media/${cell.programme.coverMediaId}/image/poster`)}
+              count={cell.programme.unwatchedCount ?? 0}
               wide={wide}
             />
           </Button>

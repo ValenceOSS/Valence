@@ -99,4 +99,23 @@ describe('ABook', () => {
 
     expect(onRead).toHaveBeenCalledWith(aBook().id, aChapter(2).id, false);
   });
+
+  it('numbers each chapter and says how many pages it runs to, with how far into it', async () => {
+    jest.mocked(fetchBook).mockResolvedValue({
+      book: aBook({ chapterCount: 2 }),
+      chapters: [aChapter(1, { pageCount: 20 }), aChapter(2, { pageCount: 1 })],
+    });
+    jest.mocked(fetchReading).mockResolvedValue([]);
+
+    const drawn = await render(
+      <ABook bookId={aBook().id} onRead={jest.fn()} onBack={jest.fn()} />,
+      {
+        wrapper: CacheScope,
+      },
+    );
+
+    expect(await drawn.findByText('1. Chapter 1')).toBeTruthy();
+    expect(drawn.getByText('20 pages')).toBeTruthy();
+    expect(drawn.getByText('1 page')).toBeTruthy();
+  });
 });

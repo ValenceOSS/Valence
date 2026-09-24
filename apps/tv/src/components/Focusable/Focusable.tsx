@@ -20,6 +20,7 @@ import type { FocusableProps } from './Focusable.types';
  *
  * @param children - What is drawn, or a function told whether this is focused.
  * @param onPress - Told when it is pressed.
+ * @param onHold - Told when select is held down on it, for a second thing to do with it.
  * @param onFocus - Told when the remote lands on it.
  * @param onBlur - Told when the remote leaves it.
  * @param shadow - The picture that casts a shadow while lifted, as a card's does: how tall it is from
@@ -36,6 +37,7 @@ const Focusable = ({
   children,
   ref,
   onPress,
+  onHold,
   onFocus,
   onBlur,
   shadow = null,
@@ -66,6 +68,7 @@ const Focusable = ({
         disabled={isDisabled}
         focusable={!isDisabled}
         onPress={onPress}
+        {...(onHold === undefined ? {} : { onLongPress: onHold })}
         onFocus={() => {
           if (isDrawnByFocus) {
             setIsFocused(true);

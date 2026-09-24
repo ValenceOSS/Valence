@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
@@ -6,6 +6,8 @@ import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { BookDialog } from './BookDialog';
 import type {
+  BookChapter,
+  ReadingProgress,
   Book,
   BookDetail,
   BookReading,
@@ -38,12 +40,15 @@ const serve = (
   readings: BookReading[] = [],
   book: Book = A_BOOK,
   heard: ListeningProgress | null = null,
+  chapters: BookChapter[] = [],
+  progress: ReadingProgress[] = [],
 ) => {
   vi.stubGlobal(
     'fetch',
     vi.fn((input: string) => {
       const answers: Record<string, object> = {
-        [`/api/books/${BOOK_ID}`]: { book, chapters: [] },
+        [`/api/books/${BOOK_ID}`]: { book, chapters },
+        [`/api/books/${BOOK_ID}/progress`]: { progress },
         '/api/reading': { readings },
         [`/api/books/${BOOK_ID}/listening`]: { progress: heard },
         '/api/ratings': { ratings: [] },
@@ -67,6 +72,7 @@ const open = (overrides: Partial<Parameters<typeof BookDialog>[0]> = {}) => {
   const handlers = {
     onClose: vi.fn(),
     onRead: vi.fn(),
+    onReadChapter: vi.fn(),
     onToggleKept: vi.fn(),
     onRate: vi.fn(),
     onShare: vi.fn(),
@@ -215,5 +221,47 @@ describe('BookDialog', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(BookDialog.displayName).toBe('BookDialog');
+  });
+
+  it('lists the chapters, how many pages each runs to and how much is read, and opens the one chosen', async () => {
+    const chapter = (id: string, number: number, title: string): BookChapter => ({
+      id,
+      bookId: BOOK_ID,
+      number,
+      title,
+      format: 'cbz',
+      pageCount: 10,
+      addedAt: '2026-09-18T00:00:00.000Z',
+    });
+
+    serve(
+      [],
+      A_BOOK,
+      null,
+      [
+        chapter(`${BOOK_ID.slice(0, -2)}11`, 1, 'One'),
+        chapter(`${BOOK_ID.slice(0, -2)}12`, 2, 'Two'),
+      ],
+      [
+        {
+          bookId: BOOK_ID,
+          chapterId: `${BOOK_ID.slice(0, -2)}11`,
+          pageNumber: null,
+          fraction: null,
+          isFinished: true,
+          updatedAt: '2026-09-18T00:00:00.000Z',
+        },
+      ],
+    );
+
+    const { onReadChapter } = open();
+    const list = await screen.findByRole('list', { name: 'Chapters' });
+
+    expect(within(list).getAllByText('10 pages')).toHaveLength(2);
+    expect(await within(list).findByRole('img', { name: 'Read' })).toBeInTheDocument();
+
+    await userEvent.click(within(list).getByRole('button', { name: 'Read Two' }));
+
+    expect(onReadChapter).toHaveBeenCalledWith(A_BOOK, `${BOOK_ID.slice(0, -2)}12`);
   });
 });

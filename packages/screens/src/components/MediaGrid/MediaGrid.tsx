@@ -21,6 +21,7 @@ const UNDER_A_CARD = 64;
  * @param onPlay - Told to start something, and where from.
  * @param onInspect - Told to open the page about something.
  * @param watchedFractionFor - How far through each item this viewer is.
+ * @param unwatchedFor - For a card standing for a programme, how many of its episodes are left.
  * @param resumeFor - Where they left each item.
  * @param isKept - Whether each item is kept.
  * @param onToggleKept - Told to keep something, or stop.
@@ -33,6 +34,7 @@ const MediaGrid = ({
   onPlay,
   onInspect,
   watchedFractionFor,
+  unwatchedFor,
   resumeFor,
   isKept,
   onToggleKept,
@@ -63,6 +65,9 @@ const MediaGrid = ({
         <RailCard
           key={media.id}
           media={media}
+          {...(unwatchedFor?.(media) === undefined
+            ? {}
+            : { unwatchedCount: unwatchedFor(media) ?? 0 })}
           {...(watchedFractionFor?.(media.id) === undefined
             ? {}
             : { watchedFraction: watchedFractionFor(media.id) ?? 0 })}

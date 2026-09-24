@@ -16,6 +16,8 @@ type MediaCardProps = {
   subtitle: ReactNode;
   badges?: string[];
   corner?: MediaCardCorner;
+  count?: number;
+  countLabel?: string;
   imageUrl?: string;
   shape?: MediaCardShape;
   emphasis?: MediaCardEmphasis;

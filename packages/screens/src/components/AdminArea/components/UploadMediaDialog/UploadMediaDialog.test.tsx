@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { keyOfUpload, rememberUnfinishedUpload } from '@ValenceClient/library/unfinishedUploads';
 import { UploadMediaDialog } from './UploadMediaDialog';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { uploadMedia } from '@ValenceClient/library/uploadMedia';
@@ -9,7 +12,10 @@ type UploadOptions = NonNullable<Parameters<typeof uploadMedia>[3]>;
 
 const uploadMediaMock = vi.hoisted(() => vi.fn());
 
+const giveUpUploadMock = vi.hoisted(() => vi.fn());
+
 vi.mock('@ValenceClient/library/uploadMedia', () => ({ uploadMedia: uploadMediaMock }));
+vi.mock('@ValenceClient/library/giveUpUpload', () => ({ giveUpUpload: giveUpUploadMock }));
 
 const FILMS: Library = {
   id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -41,6 +47,9 @@ const fileAt = (name: string, relativePath = ''): File => {
 };
 
 beforeEach(() => {
+  installPlatform(aFakePlatform());
+  giveUpUploadMock.mockReset();
+  giveUpUploadMock.mockResolvedValue(undefined);
   uploadMediaMock.mockReset();
   uploadMediaMock.mockResolvedValue({ path: '', bytes: 1 });
 });
@@ -321,6 +330,86 @@ describe('UploadMediaDialog', () => {
     expect(screen.queryByText('stopped')).not.toBeInTheDocument();
     expect(screen.getAllByText('Waiting')).toHaveLength(2);
     expect(onUploaded).not.toHaveBeenCalled();
+  });
+
+  it('puts what it uploads into the folder it was opened on', async () => {
+    const actor = userEvent.setup();
+
+    render(
+      <UploadMediaDialog
+        library={FILMS}
+        folder="Anime/Frieren/"
+        onClose={vi.fn()}
+        onUploaded={vi.fn()}
+      />,
+    );
+
+    await actor.upload(screen.getByLabelText(/Choose files to upload/), [fileAt('S01E01.mkv')]);
+    await actor.click(screen.getByRole('button', { name: 'Upload' }));
+
+    await waitFor(() => {
+      expect(uploadMediaMock).toHaveBeenCalledWith(
+        FILMS.id,
+        'Anime/Frieren/S01E01.mkv',
+        expect.any(File),
+        expect.anything(),
+      );
+    });
+    expect(screen.getByText('In Films, at Anime/Frieren')).toBeInTheDocument();
+  });
+
+  it('lists what was left unfinished, and forgets one when asked', async () => {
+    const actor = userEvent.setup();
+    const unfinished = {
+      key: 'k',
+      libraryId: FILMS.id,
+      path: 'Dune (2021).mkv',
+      bytes: 4 * 1024 ** 3,
+      uploadId: 'upload-1',
+      pieceBytes: 50 * 1024 ** 2,
+      startedAt: '2026-09-24T00:00:00.000Z',
+    };
+
+    rememberUnfinishedUpload(unfinished);
+    draw();
+
+    const section = screen.getByRole('region', { name: 'Unfinished uploads' });
+
+    expect(within(section).getByText('Dune (2021).mkv')).toBeInTheDocument();
+    expect(within(section).getByText(/Choose the same file again/)).toBeInTheDocument();
+
+    await actor.click(within(section).getByRole('button', { name: 'Forget Dune (2021).mkv' }));
+
+    expect(giveUpUploadMock).toHaveBeenCalledWith(unfinished);
+  });
+
+  it('says a failed file can carry on where it stopped, where it can', async () => {
+    const actor = userEvent.setup();
+    const file = fileAt('Arrival.mkv');
+
+    uploadMediaMock.mockImplementationOnce(() => {
+      rememberUnfinishedUpload({
+        key: keyOfUpload(FILMS.id, 'Arrival.mkv', file),
+        libraryId: FILMS.id,
+        path: 'Arrival.mkv',
+        bytes: file.size,
+        uploadId: 'upload-2',
+        pieceBytes: 5,
+        startedAt: '2026-09-24T00:00:00.000Z',
+      });
+
+      return Promise.reject(new Error('The connection dropped.'));
+    });
+    draw();
+
+    await actor.upload(screen.getByLabelText(/Choose files to upload/), [file]);
+    await actor.click(screen.getByRole('button', { name: 'Upload' }));
+
+    expect(
+      await screen.findByText(
+        'The connection dropped. Press Upload to carry on from where it stopped.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('closes and forgets what was chosen', async () => {

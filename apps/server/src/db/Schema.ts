@@ -1073,6 +1073,28 @@ const playlistEntry = pgTable(
   (table) => [index('playlist_entry_order_idx').on(table.playlistId, table.position)],
 );
 
+const uploadSession = pgTable(
+  'upload_session',
+  {
+    id: text('id').primaryKey(),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    path: text('path').notNull(),
+    destination: text('destination').notNull(),
+    staging: text('staging').notNull(),
+    bytes: bigint('bytes', { mode: 'number' }).notNull(),
+    pieceBytes: integer('pieceBytes').notNull(),
+    pieces: integer('pieces').notNull(),
+    received: integer('received')
+      .array()
+      .notNull()
+      .default(sql`'{}'::integer[]`),
+    touchedAt: timestamp('touchedAt').notNull().defaultNow(),
+  },
+  (table) => [index('upload_session_touched_idx').on(table.touchedAt)],
+);
+
 const serverSetting = pgTable('server_setting', {
   key: text('key').primaryKey(),
   value: jsonb('value').notNull(),
@@ -1325,6 +1347,7 @@ export {
   deviceCode,
   jwks,
   serverSetting,
+  uploadSession,
   apikey,
   userProfile,
   viewerProfile,

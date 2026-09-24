@@ -76,8 +76,8 @@ const answering = ({
   );
 };
 
-const drawIt = async () =>
-  render(around(<AnAskable kind="film" id="438631" onOpen={jest.fn()} onBack={jest.fn()} />));
+const drawIt = async (onOpen = jest.fn()) =>
+  render(around(<AnAskable kind="film" id="438631" onOpen={onOpen} onBack={jest.fn()} />));
 
 beforeEach(() => {
   jest.mocked(askForMedia).mockReset().mockResolvedValue({ value: null, refusal: null });
@@ -150,14 +150,18 @@ describe('AnAskable', () => {
     expect(await drawn.findByText('You have asked for enough.')).toBeTruthy();
   });
 
-  it('offers to open it once it is in the library', async () => {
+  it('opens it in the library at once, rather than asking about it', async () => {
     answering({
       standing: { status: 'library', mediaId: 'm-1', requestId: null, requestState: null },
     });
 
-    const drawn = await drawIt();
+    const onOpen = jest.fn();
+    const drawn = await drawIt(onOpen);
 
-    expect(await drawn.findByRole('button', { name: 'Open' })).toBeTruthy();
+    await waitFor(() => {
+      expect(onOpen).toHaveBeenCalledWith('film', 'm-1');
+    });
+    expect(drawn.queryByRole('button', { name: 'Open' })).toBeNull();
     expect(drawn.queryByRole('button', { name: 'Request' })).toBeNull();
   });
 

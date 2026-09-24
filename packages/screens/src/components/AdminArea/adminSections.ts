@@ -3,6 +3,7 @@ import {
   Coupon as CouponIcon,
   Database as DatabaseIcon,
   Download as DownloadIcon,
+  FolderOpen as FolderOpenIcon,
   Folders as FoldersIcon,
   Inbox as InboxIcon,
   LayoutDashboard as LayoutDashboardIcon,
@@ -22,6 +23,7 @@ import {
   Coupon as CouponFilledIcon,
   Database as DatabaseFilledIcon,
   Download as DownloadFilledIcon,
+  FolderOpen as FolderOpenFilledIcon,
   Folders as FoldersFilledIcon,
   Inbox as InboxFilledIcon,
   LayoutDashboard as LayoutDashboardFilledIcon,
@@ -63,6 +65,7 @@ const ADMIN_SECTIONS = [
     items: [
       { id: 'libraries', label: 'Libraries', icon: FoldersIcon, activeIcon: FoldersFilledIcon },
       { id: 'media', label: 'Media', icon: VideoIcon, activeIcon: VideoFilledIcon },
+      { id: 'files', label: 'Files', icon: FolderOpenIcon, activeIcon: FolderOpenFilledIcon },
       { id: 'encoding', label: 'Encoding', icon: TapeIcon, activeIcon: TapeFilledIcon },
     ],
   },

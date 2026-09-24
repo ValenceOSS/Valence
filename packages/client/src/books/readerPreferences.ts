@@ -37,36 +37,50 @@ type ReaderPreferences = z.infer<typeof PreferencesSchema>;
  * Whether turning a page is animated, and how much room to leave between the two pages of a
  * spread, are remembered the same way: animated, and none, until somebody says otherwise.
  *
- * The book's own direction is the starting point where nothing has been saved — manga right to left,
- * everything else the other way — and whatever somebody chooses after that is theirs.
+ * Each book keeps its own, so a manga read right to left in two pages does not change how the next
+ * novel opens. A book opened for the first time starts from however the last one was left, but in
+ * its own direction — manga right to left, everything else the other way — since that is a fact
+ * about the book rather than a taste; whatever somebody chooses after that is theirs.
  *
  * @param direction - Which way this book is read, where nobody has said otherwise.
+ * @param bookId - The book being read, where there is one.
  * @returns How to read, saved or defaulted.
  */
-const readReaderPreferences = (direction: ReadingDirection): ReaderPreferences => {
-  const held = platformInUse().store.read(STORAGE_KEY);
+const readReaderPreferences = (direction: ReadingDirection, bookId?: string): ReaderPreferences => {
+  const store = platformInUse().store;
+  const own = bookId === undefined ? null : store.read(`${STORAGE_KEY}.${bookId}`);
+  const held = own ?? store.read(STORAGE_KEY);
   const read = PreferencesSchema.safeParse(held === null ? null : JSON.parse(held));
 
-  return read.success
-    ? read.data
-    : {
-        isDouble: false,
-        isOffset: true,
-        fit: 'both',
-        direction,
-        isScrolling: false,
-        isAnimated: true,
-        gap: 0,
-      };
+  if (!read.success) {
+    return {
+      isDouble: false,
+      isOffset: true,
+      fit: 'both',
+      direction,
+      isScrolling: false,
+      isAnimated: true,
+      gap: 0,
+    };
+  }
+
+  return bookId !== undefined && own === null ? { ...read.data, direction } : read.data;
 };
 
 /**
- * Remembers how somebody likes to read.
+ * Remembers how somebody likes to read, for this book and as where the next new one starts.
  *
  * @param preferences - How they left it.
+ * @param bookId - The book being read, where there is one.
  */
-const writeReaderPreferences = (preferences: ReaderPreferences): void => {
-  platformInUse().store.write(STORAGE_KEY, JSON.stringify(preferences));
+const writeReaderPreferences = (preferences: ReaderPreferences, bookId?: string): void => {
+  const store = platformInUse().store;
+
+  store.write(STORAGE_KEY, JSON.stringify(preferences));
+
+  if (bookId !== undefined) {
+    store.write(`${STORAGE_KEY}.${bookId}`, JSON.stringify(preferences));
+  }
 };
 
 export type { ReaderFit, ReaderPreferences };

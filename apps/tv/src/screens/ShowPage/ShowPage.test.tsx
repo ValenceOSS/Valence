@@ -2,10 +2,15 @@ import { render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { markWatched } from '@ValenceClient/playback/markWatched';
 import { ShowPage } from '@ValenceTv/screens/ShowPage/ShowPage';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
+
+jest.mock('@ValenceClient/playback/markWatched', () => ({
+  markWatched: jest.fn().mockResolvedValue(undefined),
+}));
 
 const LIBRARY = '00000000-0000-4000-8000-0000000000aa';
 
@@ -186,5 +191,38 @@ describe('ShowPage', () => {
     expect(drawn.getByText('Episodes')).toBeTruthy();
     expect(drawn.getByText(/1 season/)).toBeTruthy();
     expect(drawn.queryByRole('button', { name: 'Season 1' })).toBeNull();
+  });
+
+  it('marks the season shown watched, and offers to take it back once it is', async () => {
+    const drawn = await drawShow(aCacheHolding(SEVERANCE));
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Mark this season watched' }));
+
+    expect(markWatched).toHaveBeenLastCalledWith([PILOT, HALF_LOOP], true);
+
+    const seen = await drawShow(
+      aCacheHolding(
+        SEVERANCE,
+        [PILOT, HALF_LOOP, HELLO].map((one) => ({
+          mediaId: one.id,
+          positionSeconds: one.durationSeconds,
+          durationSeconds: one.durationSeconds,
+          isFinished: true,
+          updatedAt: '2026-09-19T00:00:00.000Z',
+        })),
+      ),
+    );
+
+    expect(
+      seen.getAllByRole('button', { name: 'Mark this season unwatched' }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('marks one episode watched when select is held on it', async () => {
+    const drawn = await drawShow(aCacheHolding(SEVERANCE));
+
+    await userEvent.longPress(drawn.getByRole('button', { name: 'Half Loop' }));
+
+    expect(markWatched).toHaveBeenLastCalledWith([HALF_LOOP], true);
   });
 });

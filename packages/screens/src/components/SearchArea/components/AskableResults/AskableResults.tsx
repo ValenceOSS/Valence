@@ -10,6 +10,7 @@ import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { AskableResultsProps } from './AskableResults.types';
+import { useIsTitleWatched } from '@ValenceScreens/requests/useIsTitleWatched';
 import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
 
 /**
@@ -24,6 +25,7 @@ import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/
  * @param onAsk - Called with the title to open, as its address names it.
  */
 const AskableResults = ({ query, kind, onAsk }: AskableResultsProps) => {
+  const isWatched = useIsTitleWatched();
   const { may } = useWhatIMayDo();
   const requesting = useQuery(requestsQueries.availability());
   const isOn = requesting.data?.isEnabled === true;
@@ -72,7 +74,7 @@ const AskableResults = ({ query, kind, onAsk }: AskableResultsProps) => {
                 <MediaCard
                   title={title.title}
                   subtitle={title.year?.toString() ?? ''}
-                  {...describeCatalogueCard(title)}
+                  {...describeCatalogueCard(title, isWatched(title))}
                   {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
                   onSelect={() => {
                     onAsk(askingOf(title));

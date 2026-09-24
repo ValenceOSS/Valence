@@ -76,8 +76,9 @@ const howFarInto = (read: ReadingProgress | undefined, pageCount: number | null)
  * One book, as the web's book dialog shows it: its cover, who wrote it and when, how far this
  * profile has read, its stars, what it is about, and a way in — carrying on from where they stopped,
  * starting where nobody has, or starting again from the first page once it is finished. A book
- * of several chapters, as a series of comics is, lists them, each saying how far into it somebody
- * has read, and any can be opened from its start.
+ * of several chapters, as a series of comics is, lists them in order, each with its number, how
+ * many pages it runs to and how far into it somebody has read, and any can be opened from its
+ * start.
  *
  * A book there is to hear has a way to listen to it too, carrying on from where this profile left
  * off, and saying where that was; it leads where the book has nothing to read.
@@ -213,7 +214,14 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
         <View style={styles.chapters}>
           <Words size="heading">Chapters</Words>
           {ordered.map((chapter) => {
-            const note = howFarInto(held.get(chapter.id), chapter.pageCount);
+            const note = [
+              chapter.pageCount === null
+                ? null
+                : `${chapter.pageCount.toString()} ${chapter.pageCount === 1 ? 'page' : 'pages'}`,
+              howFarInto(held.get(chapter.id), chapter.pageCount),
+            ]
+              .filter((part) => part !== null)
+              .join(' · ');
 
             return (
               <Button
@@ -226,8 +234,8 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
               >
                 <View style={styles.chapter}>
                   <View style={styles.title}>
-                    <Words lines={1}>{chapter.title}</Words>
-                    {note === null ? null : (
+                    <Words lines={1}>{`${chapter.number.toString()}. ${chapter.title}`}</Words>
+                    {note === '' ? null : (
                       <Words size="small" tone="muted">
                         {note}
                       </Words>

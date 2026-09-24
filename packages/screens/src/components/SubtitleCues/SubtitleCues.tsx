@@ -5,6 +5,7 @@ import { linesAt } from '@ValenceScreens/playback/linesAt';
 import { toCuePlacement } from '@ValenceScreens/playback/toCuePlacement';
 import { toSpanStyle } from '@ValenceScreens/playback/toSpanStyle';
 import { toCueDeclarations } from '@ValenceScreens/playback/captionStyle';
+import { dialogueFontSize } from '@ValenceScreens/playback/dialogueFontSize';
 import type { SubtitleCue } from '@ValenceClient/playback/fetchSubtitleCues';
 import type { SubtitleCuesProps } from './SubtitleCues.types';
 
@@ -32,7 +33,8 @@ const NEAR_THE_BOTTOM = '8%';
  * note in the corner of the frame, drawn where and how the script asked so that it reads as part of
  * the picture. Dialogue is the viewer's, and takes the caption preferences they set — those exist so
  * that somebody who needs large lettering on a solid ground can read at all, and a file is not
- * entitled to overrule that.
+ * entitled to overrule that. Dialogue is sized by the picture's height, so it grows with the player
+ * on a large or dense screen rather than staying the size of the page's text.
  *
  * @param src - The subtitle file to read as WebVTT.
  * @param cuesSrc - Where to ask for the same track as styled lines, for a track that has them.
@@ -100,7 +102,7 @@ const SubtitleCues = ({ src, cuesSrc, atSeconds, style, isLifted = false }: Subt
               style={
                 cue.isSign
                   ? { textAlign: 'center', textShadow: viewer.textShadow }
-                  : { ...viewer, textAlign: 'center', fontSize: viewer.fontSize }
+                  : { ...viewer, textAlign: 'center', fontSize: dialogueFontSize(style.fontScale) }
               }
             >
               {cue.isSign

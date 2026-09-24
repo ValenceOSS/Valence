@@ -113,7 +113,7 @@ describe('ActionMenu', () => {
     expect(document.querySelector('[data-slot="menu-hint"]')).toBeInTheDocument();
   });
 
-  it('colours a destructive action rather than merely listing it last', async () => {
+  it('writes a destructive action in red rather than merely listing it last', async () => {
     render(
       <ActionMenu
         {...props}
@@ -125,10 +125,7 @@ describe('ActionMenu', () => {
 
     await open();
 
-    expect(await screen.findByRole('menuitem', { name: 'Disconnect' })).toHaveClass(
-      'bg-danger',
-      'text-destructive-foreground',
-    );
+    expect(await screen.findByRole('menuitem', { name: 'Disconnect' })).toHaveClass('text-danger');
   });
 
   it('refuses an action that cannot be taken', async () => {
@@ -204,5 +201,19 @@ describe('ActionMenu', () => {
 
     expect(menu).toHaveClass('valence-float');
     expect(menu).not.toHaveClass('valence-surface');
+  });
+
+  it('draws a group that holds a control of its own, under its name', async () => {
+    render(
+      <ActionMenu
+        {...props}
+        groups={[{ name: 'Theme', items: [], control: <span>the tabs</span> }]}
+      />,
+    );
+
+    await open();
+
+    expect(await screen.findByText('the tabs')).toBeInTheDocument();
+    expect(screen.getByText('Theme')).toBeInTheDocument();
   });
 });

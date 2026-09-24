@@ -61,6 +61,7 @@ const whereItFalls = (media: MediaSummary): string => {
  * @param onPress - Told when it is chosen.
  * @param shape - Wide for backdrops, tall for posters.
  * @param watchedFraction - How far through it this viewer is, where they have started it.
+ * @param unwatchedCount - For a programme, how many of its episodes are left to watch.
  * @param isEpisode - Whether it stands for the episode itself rather than its programme.
  * @param hasPreferredFocus - Whether the remote starts here.
  * @param isUrgent - Whether its pictures are fetched ahead of others, as the first shelf's are.
@@ -73,6 +74,7 @@ const MediaCard = ({
   onPress,
   shape = 'wide',
   watchedFraction,
+  unwatchedCount,
   isEpisode = false,
   hasPreferredFocus = false,
   isUrgent = false,
@@ -121,9 +123,21 @@ const MediaCard = ({
         ) : null}
 
         {watchedFraction === undefined ? null : <ProgressLine fraction={watchedFraction} />}
+
+        {unwatchedCount === undefined || unwatchedCount <= 0 ? null : (
+          <View
+            style={styles.count}
+            accessible
+            accessibilityLabel={`${unwatchedCount.toString()} ${unwatchedCount === 1 ? 'episode' : 'episodes'} left`}
+          >
+            <Text style={styles.countWords}>
+              {unwatchedCount > 99 ? '99+' : unwatchedCount.toString()}
+            </Text>
+          </View>
+        )}
       </View>
     ),
-    [media, shape, size, isLettered, isUrgent, watchedFraction],
+    [media, shape, size, isLettered, isUrgent, watchedFraction, unwatchedCount],
   );
 
   return (
@@ -167,6 +181,24 @@ const MediaCard = ({
 MediaCard.displayName = 'MediaCard';
 
 const styles = StyleSheet.create({
+  count: {
+    position: 'absolute',
+    top: tokens.space.sm,
+    right: tokens.space.sm,
+    minWidth: 36,
+    height: 36,
+    paddingHorizontal: tokens.space.sm,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: tokens.colours.text,
+  },
+  countWords: {
+    color: tokens.colours.onWhite,
+    fontSize: tokens.type.small,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
   picture: {
     borderRadius: tokens.radii.xl,
     overflow: 'hidden',

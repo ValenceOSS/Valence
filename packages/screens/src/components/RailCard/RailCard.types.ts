@@ -5,6 +5,7 @@ import type { MediaCard } from '@ValenceUI/MediaCard';
 type RailCardProps = {
   media: MediaSummary;
   watchedFraction?: number;
+  unwatchedCount?: number;
   onPlay: (media: MediaSummary, startSeconds: number) => void;
   onInspect: (media: MediaSummary) => void;
   resumeSeconds?: number;

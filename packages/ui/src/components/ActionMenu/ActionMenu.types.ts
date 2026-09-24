@@ -15,6 +15,7 @@ type ActionMenuItem = {
 type ActionMenuGroup = {
   name?: string;
   items: ActionMenuItem[];
+  control?: ReactNode;
 };
 
 type ActionMenuSize = 'sm' | 'md';

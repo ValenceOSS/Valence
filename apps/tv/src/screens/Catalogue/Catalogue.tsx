@@ -10,6 +10,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { unwatchedByShow } from '@ValenceClient/library/unwatchedByShow';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { MediaCard } from '@ValenceTv/components/MediaCard/MediaCard';
 import { useProgress } from '@ValenceTv/library/useProgress';
@@ -80,6 +81,16 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
     () => (kind === 'shows' ? collapseToShows(everything.data ?? []) : (everything.data ?? [])),
     [everything.data, kind],
   );
+  const unwatched = useMemo(
+    () =>
+      kind === 'shows'
+        ? unwatchedByShow(
+            everything.data ?? [],
+            (mediaId) => progress.get(mediaId)?.isFinished === true,
+          )
+        : null,
+    [everything.data, kind, progress],
+  );
 
   const first = items[0];
   const hasLit = useRef(false);
@@ -127,6 +138,11 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
             return (
               <MediaCard
                 media={item}
+                {...(unwatched === null
+                  ? {}
+                  : {
+                      unwatchedCount: unwatched.get(item.seriesId ?? item.seriesTitle ?? '') ?? 0,
+                    })}
                 shape="poster"
                 width={cardWidth}
                 onPress={onOpen}

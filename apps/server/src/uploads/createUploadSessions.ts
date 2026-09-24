@@ -1,17 +1,14 @@
-import { randomUUID } from 'node:crypto';
-import { basename, dirname, join } from 'node:path';
 import { UPLOAD_PIECE_BYTES } from '@ValenceContracts/schemas/UploadPieces';
+import { beginUploadSession } from '@ValenceServer/uploads/beginUploadSession';
 import type { UploadSession, UploadSessions } from '@ValenceServer/uploads/UploadSession';
 
 const LEFT_FOR = 6 * 60 * 60 * 1000;
 
 /**
- * The uploads coming in piece by piece, each kept until it is finished, cancelled or left alone for
- * long enough to count as abandoned.
- *
- * They are held in memory, since a piece is only ever a few seconds from the last. A server that
- * restarts mid-upload forgets it, so the upload is begun again; the staging file left behind is
- * hidden, so a scan never takes it for media.
+ * The uploads coming in piece by piece, held in memory — for tests, and anywhere there is no
+ * database. Each is kept until it is finished, cancelled or left alone long enough to count as
+ * abandoned. The server's own keeps them in the database instead, so that a restart part of the way
+ * through forgets nothing; see `createDatabaseUploadSessions`.
  *
  * @param now - The time, in milliseconds, for telling how long an upload has been left.
  * @param leftFor - How long an upload may go untouched before it counts as abandoned.
@@ -26,40 +23,47 @@ const createUploadSessions = (
   const open = new Map<string, UploadSession>();
 
   return {
-    open: ({ libraryId, path, destination, bytes }) => {
-      const uploadId = randomUUID();
-      const session: UploadSession = {
-        uploadId,
-        libraryId,
-        path,
-        destination,
-        staging: join(dirname(destination), `.${basename(destination)}.${uploadId}.part`),
-        bytes,
-        pieceBytes,
-        pieces: Math.max(Math.ceil(bytes / pieceBytes), 1),
-        received: new Set(),
-        touchedAt: now(),
-      };
+    open: (upload) => {
+      const session = beginUploadSession(upload, pieceBytes, now());
 
-      open.set(uploadId, session);
+      open.set(session.uploadId, session);
 
-      return session;
+      return Promise.resolve(session);
     },
 
     find: (uploadId, libraryId) => {
       const session = open.get(uploadId);
 
       if (session === undefined || session.libraryId !== libraryId) {
-        return null;
+        return Promise.resolve(null);
       }
 
-      session.touchedAt = now();
+      const touched = { ...session, touchedAt: now() };
 
-      return session;
+      open.set(uploadId, touched);
+
+      return Promise.resolve(touched);
+    },
+
+    receive: (uploadId, index, isWhole) => {
+      const session = open.get(uploadId);
+
+      if (session === undefined) {
+        return Promise.resolve([]);
+      }
+
+      const others = session.received.filter((one) => one !== index);
+      const received = (isWhole ? [...others, index] : others).sort((one, other) => one - other);
+
+      open.set(uploadId, { ...session, received, touchedAt: now() });
+
+      return Promise.resolve(received);
     },
 
     close: (uploadId) => {
       open.delete(uploadId);
+
+      return Promise.resolve();
     },
 
     stale: () => {
@@ -68,7 +72,7 @@ const createUploadSessions = (
 
       left.forEach((session) => open.delete(session.uploadId));
 
-      return left;
+      return Promise.resolve(left);
     },
   };
 };

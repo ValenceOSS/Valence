@@ -3,12 +3,11 @@ import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Bin as BinIcon,
   MoreHorizontal as MoreHorizontalIcon,
-  PenLine as PenLineIcon,
   Plus as PlusIcon,
   TriangleAlert as TriangleAlertIcon,
 } from '@keyline-icons/react';
+import { Bin as BinFilledIcon, PenLine as PenLineFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -299,7 +298,7 @@ const RolesPanel = () => {
                     {
                       id: 'edit',
                       label: 'Edit role',
-                      icon: <Icon of={PenLineIcon} size={15} />,
+                      icon: <Icon of={PenLineFilledIcon} size={15} />,
                       onChoose: () => {
                         live.current.onEdit(row.original.id);
                       },
@@ -311,7 +310,7 @@ const RolesPanel = () => {
                     {
                       id: 'delete',
                       label: 'Delete role',
-                      icon: <Icon of={BinIcon} size={15} />,
+                      icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         live.current.onAskDelete(row.original);

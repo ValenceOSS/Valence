@@ -26,6 +26,10 @@ import {
 } from '@ValenceScreens/notifications/subscribeToPush';
 import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { failureOfThrown } from '@ValenceScreens/admin/failureOf';
+import { notify } from '@ValenceUI/notify';
+import { markWatched } from '@ValenceClient/playback/markWatched';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useHidden } from '@ValenceClient/library/useHidden';
@@ -98,6 +102,7 @@ const ValenceShell = () => {
     known,
     rememberItems,
     progress,
+    forgetReported,
     moodLights,
     setStartOverride,
     askingAbout,
@@ -160,8 +165,8 @@ const ValenceShell = () => {
 
   const libraryChoices = useMemo(
     () =>
-      libraryChoicesFor(libraries.data ?? [], place.library, (library) => {
-        go({ library });
+      libraryChoicesFor(libraries.data ?? [], place.library, (library, section) => {
+        go({ section, library });
       }),
     [libraries.data, place.library, go],
   );
@@ -376,6 +381,22 @@ const ValenceShell = () => {
             rate({ seriesId: show.seriesId ?? '' }, stars);
           }
         }}
+        onMarkWatched={(episodes, isWatched) => {
+          void failureOfThrown(() => markWatched(episodes, isWatched)).then(async (failure) => {
+            if (failure !== null) {
+              notify.failed(failure);
+
+              return;
+            }
+
+            forgetReported(episodes.map((episode) => episode.id));
+
+            await Promise.all([
+              cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
+              cache.invalidateQueries({ queryKey: libraryQueries.key }),
+            ]);
+          });
+        }}
       />
 
       <DecideForSomebody
@@ -490,6 +511,13 @@ const ValenceShell = () => {
         onRead={(book) => {
           void navigate({ to: '/read/$bookId', params: { bookId: book.id } });
         }}
+        onReadChapter={(book, chapterId) => {
+          void navigate({
+            to: '/read/$bookId',
+            params: { bookId: book.id },
+            search: { chapter: chapterId },
+          });
+        }}
         onListen={(detail) => {
           go({ book: null });
           void startListening(detail, theAudiobookPlayer());
@@ -529,7 +557,7 @@ const ValenceShell = () => {
             go({ asking: null });
           }}
           onOpen={(kind, mediaId) => {
-            go(placeOfArrival(kind, mediaId));
+            replace(placeOfArrival(kind, mediaId));
           }}
         />
       ) : null}

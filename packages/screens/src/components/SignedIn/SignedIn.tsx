@@ -177,6 +177,16 @@ const SignedIn = ({ title }: SignedInProps) => {
     setReported((current) => new Map(current).set(entry.mediaId, entry));
   }, []);
 
+  const forgetReported = useCallback((mediaIds: readonly string[]) => {
+    setReported((current) => {
+      const next = new Map(current);
+
+      mediaIds.forEach((mediaId) => next.delete(mediaId));
+
+      return next.size === current.size ? current : next;
+    });
+  }, []);
+
   const readProgress = useCallback(
     async () => cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
     [cache],
@@ -295,6 +305,7 @@ const SignedIn = ({ title }: SignedInProps) => {
             isProgressReady: !watched.isPending,
             reportProgress,
             readProgress,
+            forgetReported,
             startOverride,
             setStartOverride,
             moodLights,
@@ -317,6 +328,7 @@ const SignedIn = ({ title }: SignedInProps) => {
       watched.isPending,
       reportProgress,
       readProgress,
+      forgetReported,
       startOverride,
       moodLights,
       askingAbout,

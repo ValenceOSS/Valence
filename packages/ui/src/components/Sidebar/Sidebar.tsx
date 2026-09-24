@@ -95,7 +95,7 @@ const Sidebar = ({
           ? 'm-0 w-0'
           : isFloating
             ? 'my-6 ml-6 w-64 rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
-            : 'w-64 border-r border-[var(--surface-line)]',
+            : 'valence-surface--right-edge w-64',
         className,
       )}
     >

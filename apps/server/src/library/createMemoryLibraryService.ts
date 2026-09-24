@@ -734,6 +734,30 @@ const createMemoryLibraryService = (
       state.media.some((one) => one.id === mediaId) ? { corrected: 1, jobId: null } : null,
     ),
 
+  deleteMedia: (mediaId) => {
+    if (!state.media.some((one) => one.id === mediaId)) {
+      return Promise.resolve({ kind: 'absent' });
+    }
+
+    state.media = state.media.filter((one) => one.id !== mediaId);
+
+    return Promise.resolve({ kind: 'deleted' });
+  },
+
+  deleteSeries: (seriesId) => {
+    const files = state.media.filter((one) => seriesIdOf(state, one) === seriesId).length;
+
+    if (files === 0) {
+      return Promise.resolve({ kind: 'absent' });
+    }
+
+    state.media = state.media.filter((one) => seriesIdOf(state, one) !== seriesId);
+
+    return Promise.resolve({ kind: 'deleted', files });
+  },
+
+  mediaIdsAt: () => Promise.resolve({}),
+
   rebuildArtefacts: (mediaId) =>
     Promise.resolve(
       state.media.some((one) => one.id === mediaId) ? { preview: true, trickplay: true } : null,

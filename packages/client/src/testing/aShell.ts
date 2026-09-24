@@ -27,6 +27,7 @@ const aShell = (instead: Partial<Shell> = {}): Shell => ({
   isProgressReady: true,
   reportProgress: () => undefined,
   readProgress: () => Promise.resolve(),
+  forgetReported: () => {},
   startOverride: null,
   setStartOverride: () => undefined,
   moodLights: [],

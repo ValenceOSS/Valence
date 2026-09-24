@@ -23,6 +23,7 @@ import { drawBookCover } from './drawBookCover';
 import { readFolderArt } from './readFolderArt';
 import { openBookFile } from './openBookFile';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ChapterShelf, ComicChapters } from './createChapterNamer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type {
   Book,
@@ -52,37 +53,38 @@ type BookQuery = {
   limit?: number;
 };
 
-type BookService = BookStore & {
-  find: (viewer: Viewer, query: BookQuery) => Promise<Book[]>;
-  canReach: (viewer: Viewer | null, bookId: string, chapterId?: string) => Promise<boolean>;
-  read: (bookId: string) => Promise<BookDetail | null>;
-  readPage: (chapterId: string, page: number, width?: number) => Promise<BookPageBytes | null>;
-  readContents: (chapterId: string) => Promise<BookContents | null>;
-  readDocument: (
-    chapterId: string,
-    part: number,
-    addressFor: (href: string) => string,
-  ) => Promise<string | null>;
-  readResource: (chapterId: string, href: string) => Promise<BookPageBytes | null>;
-  readCover: (bookId: string) => Promise<BookPageBytes | null>;
-  saveProgress: (
-    profileId: string,
-    chapterId: string,
-    where: SaveReadingProgress,
-  ) => Promise<boolean>;
-  readProgress: (profileId: string, bookId: string) => Promise<ReadingProgress[]>;
-  listReading: (viewer: Viewer, profileId: string, limit: number) => Promise<BookReading[]>;
-  forgetReading: (profileId: string, bookId?: string) => Promise<void>;
-  readChapterFile: (chapterId: string) => Promise<{ path: string; format: BookFormat } | null>;
-  saveListening: (
-    profileId: string,
-    bookId: string,
-    where: SaveListeningProgress,
-  ) => Promise<boolean>;
-  readListening: (profileId: string, bookId: string) => Promise<ListeningProgress | null>;
-  listListening: (viewer: Viewer, profileId: string, limit: number) => Promise<BookListening[]>;
-  forgetListening: (profileId: string, bookId?: string) => Promise<void>;
-};
+type BookService = BookStore &
+  ChapterShelf & {
+    find: (viewer: Viewer, query: BookQuery) => Promise<Book[]>;
+    canReach: (viewer: Viewer | null, bookId: string, chapterId?: string) => Promise<boolean>;
+    read: (bookId: string) => Promise<BookDetail | null>;
+    readPage: (chapterId: string, page: number, width?: number) => Promise<BookPageBytes | null>;
+    readContents: (chapterId: string) => Promise<BookContents | null>;
+    readDocument: (
+      chapterId: string,
+      part: number,
+      addressFor: (href: string) => string,
+    ) => Promise<string | null>;
+    readResource: (chapterId: string, href: string) => Promise<BookPageBytes | null>;
+    readCover: (bookId: string) => Promise<BookPageBytes | null>;
+    saveProgress: (
+      profileId: string,
+      chapterId: string,
+      where: SaveReadingProgress,
+    ) => Promise<boolean>;
+    readProgress: (profileId: string, bookId: string) => Promise<ReadingProgress[]>;
+    listReading: (viewer: Viewer, profileId: string, limit: number) => Promise<BookReading[]>;
+    forgetReading: (profileId: string, bookId?: string) => Promise<void>;
+    readChapterFile: (chapterId: string) => Promise<{ path: string; format: BookFormat } | null>;
+    saveListening: (
+      profileId: string,
+      bookId: string,
+      where: SaveListeningProgress,
+    ) => Promise<boolean>;
+    readListening: (profileId: string, bookId: string) => Promise<ListeningProgress | null>;
+    listListening: (viewer: Viewer, profileId: string, limit: number) => Promise<BookListening[]>;
+    forgetListening: (profileId: string, bookId?: string) => Promise<void>;
+  };
 
 const NamesSchema = z.array(z.string()).nullable().catch(null);
 
@@ -295,6 +297,40 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
           ),
         );
       await db.update(library).set({ lastScannedAt: new Date() }).where(eq(library.id, libraryId));
+    },
+
+    listComicChapters: async (libraryId) => {
+      const rows = await db
+        .select({
+          bookId: book.id,
+          bookTitle: book.title,
+          seriesName: book.seriesName,
+          id: bookChapter.id,
+          number: bookChapter.number,
+          title: bookChapter.title,
+        })
+        .from(bookChapter)
+        .innerJoin(book, eq(book.id, bookChapter.bookId))
+        .where(and(eq(book.libraryId, libraryId), eq(book.layout, 'fixed')))
+        .orderBy(asc(book.id), asc(bookChapter.number));
+      const byBook = new Map<string, ComicChapters>();
+
+      for (const row of rows) {
+        const held = byBook.get(row.bookId) ?? {
+          title: row.bookTitle,
+          seriesName: row.seriesName,
+          chapters: [],
+        };
+
+        held.chapters.push({ id: row.id, number: row.number, title: row.title });
+        byBook.set(row.bookId, held);
+      }
+
+      return [...byBook.values()];
+    },
+
+    renameChapter: async (chapterId, title) => {
+      await db.update(bookChapter).set({ title }).where(eq(bookChapter.id, chapterId));
     },
 
     find: async (viewer, { libraryId, ids, search, limit = FIND_LIMIT }) => {

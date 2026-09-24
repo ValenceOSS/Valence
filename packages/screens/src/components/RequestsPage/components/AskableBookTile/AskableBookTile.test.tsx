@@ -44,7 +44,7 @@ describe('AskableBookTile', () => {
       />,
     );
 
-    expect(screen.getByLabelText('In your library')).toBeInTheDocument();
+    expect(screen.getByText('In library')).toBeInTheDocument();
   });
 
   it('copes with a book that has no author, year or cover', () => {

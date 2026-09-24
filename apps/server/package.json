@@ -44,6 +44,7 @@
   },
   "devDependencies": {
     "@better-auth/utils": "0.4.2",
+    "@electric-sql/pglite": "^0.5.8",
     "@types/pg": "^8.23.1",
     "@types/sanitize-html": "^2.16.1",
     "@types/web-push": "^3.6.4",

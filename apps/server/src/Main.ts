@@ -51,6 +51,7 @@ import { trustedOriginsFor } from '@ValenceServer/auth/trustedOriginsFor';
 import type { RealtimeSession } from '@ValenceServer/realtime/createRealtimeHandler';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { createDatabaseHiddenService } from '@ValenceServer/hiding/createDatabaseHiddenService';
+import { createDatabaseUploadSessions } from '@ValenceServer/uploads/createDatabaseUploadSessions';
 import { createDatabase } from '@ValenceServer/db/Database';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createSnapshotBeforeMigrating } from '@ValenceServer/db/createSnapshotBeforeMigrating';
@@ -146,6 +147,8 @@ import { createSidecarSubtitleService } from '@ValenceServer/subtitles/createSid
 import { createDatabaseProfileService } from '@ValenceServer/profiles/createDatabaseProfileService';
 import { createDatabaseHouseholdService } from '@ValenceServer/household/createDatabaseHouseholdService';
 import { createFileSplashscreenStore } from '@ValenceServer/splashscreen/createFileSplashscreenStore';
+import { createChapterNamer } from '@ValenceServer/books/createChapterNamer';
+import { findChapterNames } from '@ValenceServer/books/findChapterNames';
 import { createDatabaseBookService } from '@ValenceServer/books/createDatabaseBookService';
 import { ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { createEmbeddedSubtitleService } from '@ValenceServer/subtitles/createEmbeddedSubtitleService';
@@ -1991,6 +1994,16 @@ const libraryService = createDatabaseLibraryService({
     createFilenameMetadataProvider(),
   ],
   books: bookService,
+  nameChapters: createChapterNamer(bookService, (series) =>
+    findChapterNames(
+      (address) =>
+        fetch(address, {
+          headers: { 'User-Agent': 'Valence' },
+          signal: AbortSignal.timeout(10_000),
+        }),
+      series,
+    ),
+  ),
   images: { forget: (url) => images.forget(url) },
   music: {
     store: musicStore,
@@ -2529,6 +2542,7 @@ const reencodeService = createDatabaseReencodeService({
 const app = createApp({
   auth,
   settings,
+  uploadSessions: createDatabaseUploadSessions(db),
   version: env.VALENCE_VERSION,
   trustedOrigins: trustedOriginsFor({
     configured: env.TRUSTED_ORIGINS,

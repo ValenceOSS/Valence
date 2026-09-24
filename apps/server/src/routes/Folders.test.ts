@@ -201,6 +201,56 @@ const make = (
     }),
   );
 
+describe('finding a folder over HTTP', () => {
+  /**
+   * Asks the server to find folders by name, as a signed-in account.
+   *
+   * @param built - The app.
+   * @param cookie - Whose session to ask with.
+   * @param query - The words, and where to look below.
+   * @returns The answer.
+   */
+  const find = (
+    built: ReturnType<typeof build>,
+    cookie: string,
+    query: Record<string, string>,
+  ): Promise<Response> =>
+    Promise.resolve(
+      built.app.request(
+        `${BASE}/api/admin/folders/search?${new URLSearchParams(query).toString()}`,
+        { headers: { cookie, origin: BASE } },
+      ),
+    );
+
+  it('finds nothing for somebody who could not add a library', async () => {
+    const built = build();
+    const cookie = await signIn(built, false);
+
+    expect((await find(built, cookie, { words: 'films', within: '/media' })).status).toBe(403);
+  });
+
+  it('finds the folders whose names hold the words, leaving out the hidden ones', async () => {
+    const built = build();
+    const cookie = await signIn(built, true);
+
+    const response = await find(built, cookie, { words: 'fil', within: '/media' });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      folders: [{ name: 'films', path: '/media/films' }],
+      isTruncated: false,
+    });
+  });
+
+  it('refuses a folder to look below that does not start from the root, or no words', async () => {
+    const built = build();
+    const cookie = await signIn(built, true);
+
+    expect((await find(built, cookie, { words: 'films', within: 'media' })).status).toBe(400);
+    expect((await find(built, cookie, { words: '' })).status).toBe(400);
+  });
+});
+
 describe('making a folder over HTTP', () => {
   it('lets nobody make one who could not add a library', async () => {
     const built = build();

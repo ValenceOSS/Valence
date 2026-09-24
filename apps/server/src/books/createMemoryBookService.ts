@@ -42,6 +42,8 @@ const createMemoryBookService = (given: MemoryBooks): BookService => {
     upsertChapter: () => Promise.resolve(),
     removeByPaths: () => Promise.resolve(0),
     markScanned: () => Promise.resolve(),
+    listComicChapters: () => Promise.resolve([]),
+    renameChapter: () => Promise.resolve(),
 
     find: (viewer, { libraryId, ids, search, limit }) => {
       const wanted = search?.trim().toLowerCase() ?? '';

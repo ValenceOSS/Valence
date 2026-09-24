@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { BrowseArea } from '@ValenceScreens/components/BrowseArea/BrowseArea';
 import { showSlug } from '@ValenceCore/functions/showSlug';
@@ -36,6 +37,10 @@ const BrowsePage = () => {
   const keptBooks = useFavourites(watching, 'books');
   const hiding = useHidden(watching);
   const { mayAdminister } = useWhatIMayDo();
+  const isFinished = useCallback(
+    (mediaId: string) => progress.get(mediaId)?.isFinished === true,
+    [progress],
+  );
 
   return (
     <>
@@ -71,6 +76,7 @@ const BrowsePage = () => {
           }
         }}
         onItemsLoaded={rememberItems}
+        isFinished={isFinished}
         watchedFractionFor={(mediaId) => {
           const found = progress.get(mediaId);
 

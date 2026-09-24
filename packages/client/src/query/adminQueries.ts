@@ -17,6 +17,9 @@ import { fetchLogs } from '@ValenceClient/admin/fetchLogs';
 import { fetchAccounts } from '@ValenceClient/admin/fetchAccounts';
 import { fetchAccountSessions } from '@ValenceClient/admin/fetchAccountSessions';
 import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
+import { searchFolders } from '@ValenceClient/admin/searchFolders';
+import { fetchLibraryFolder } from '@ValenceClient/admin/fetchLibraryFolder';
+import { searchLibraryFiles } from '@ValenceClient/admin/searchLibraryFiles';
 import { fetchResourceHistory } from '@ValenceClient/admin/fetchResourceHistory';
 import {
   fetchRoles,
@@ -386,6 +389,49 @@ const folders = (path: string | null) =>
   });
 
 /**
+ * The folders whose names hold some words, below one on the machine running Valence. Not retried,
+ * for the reason the listing is not: a search that found nothing has answered.
+ *
+ * @param words - What the names should hold.
+ * @param within - The folder to look below, or nothing for the places to start from.
+ * @returns The query.
+ */
+const folderSearch = (words: string, within: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'folders', within, 'search', words],
+    queryFn: () => searchFolders(words, within),
+    retry: false,
+  });
+
+/**
+ * What is in a folder inside a library, for the file manager. Not retried: a folder that is not
+ * there, or not inside a library, is an answer.
+ *
+ * @param path - The folder, or nothing for the libraries.
+ * @returns The query.
+ */
+const libraryFolder = (path: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'files', path],
+    queryFn: () => fetchLibraryFolder(path),
+    retry: false,
+  });
+
+/**
+ * What inside the libraries is named with some words, below a folder, for the file manager.
+ *
+ * @param words - What the names should hold.
+ * @param within - The folder to look below, or nothing for every library.
+ * @returns The query.
+ */
+const libraryFileSearch = (words: string, within: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'files', within, 'search', words],
+    queryFn: () => searchLibraryFiles(words, within),
+    retry: false,
+  });
+
+/**
  * Everywhere one account is signed in, for the admin dialog's Devices tab.
  *
  * @param accountId - The account being looked at, or null where none is open.
@@ -451,6 +497,9 @@ const adminQueries = {
   exceptionsOn,
   libraryAccess,
   folders,
+  folderSearch,
+  libraryFolder,
+  libraryFileSearch,
   overview,
   scans,
   monitor,

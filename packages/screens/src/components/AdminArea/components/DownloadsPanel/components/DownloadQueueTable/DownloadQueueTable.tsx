@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { ReactNode } from 'react';
+import { Info as InfoIcon, MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import {
-  Bin as BinIcon,
-  Folders as FoldersIcon,
-  Info as InfoIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-} from '@keyline-icons/react';
-import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+  Bin as BinFilledIcon,
+  Folders as FoldersFilledIcon,
+  Pause as PauseFilledIcon,
+  Play as PlayFilledIcon,
+} from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
@@ -249,7 +249,7 @@ const DownloadQueueTable = ({
                       {
                         id: 'remove',
                         label: 'Remove',
-                        icon: <Icon of={BinIcon} size={15} />,
+                        icon: <Icon of={BinFilledIcon} size={15} />,
                         isDestructive: true,
                         onChoose: () => {
                           onRemove(row.original);
@@ -269,7 +269,7 @@ const DownloadQueueTable = ({
                             : row.original.filedInto === null
                               ? 'Now, named from the release.'
                               : 'Again, beside what was filed before.',
-                        icon: <Icon of={FoldersIcon} size={15} />,
+                        icon: <Icon of={FoldersFilledIcon} size={15} />,
                         onChoose: () => {
                           onFile(row.original, library.id);
                         },

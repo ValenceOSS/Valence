@@ -1,7 +1,24 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionBar } from './ActionBar';
+
+/**
+ * One of the bar's arrangements, where every arrangement is drawn and CSS shows one of them.
+ *
+ * @param container - What was drawn.
+ * @param slot - Which arrangement.
+ * @returns It.
+ */
+const arrangement = (container: HTMLElement, slot: 'whole' | 'pinned'): HTMLElement => {
+  const found = container.querySelector(`[data-slot="action-bar-${slot}"]`);
+
+  if (!(found instanceof HTMLElement)) {
+    throw new Error(`No ${slot} arrangement`);
+  }
+
+  return found;
+};
 
 const ACTIONS = [
   { id: 'share', label: 'Share', isPinned: true, onChoose: vi.fn() },
@@ -15,11 +32,41 @@ describe('ActionBar', () => {
     expect(screen.getByText('Play')).toBeInTheDocument();
   });
 
-  it('lays only the pinned ones out beside it, where there is room', () => {
-    render(<ActionBar label="More" primary={<span>Play</span>} actions={ACTIONS} />);
+  it('lays only the pinned ones out beside it, where there is room for no more', () => {
+    const { container } = render(
+      <ActionBar label="More" primary={<span>Play</span>} actions={ACTIONS} />,
+    );
+    const pinned = arrangement(container, 'pinned');
 
-    expect(screen.getByRole('button', { name: 'Share' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Watch together' })).not.toBeInTheDocument();
+    expect(within(pinned).getByRole('button', { name: 'Share' })).toBeInTheDocument();
+    expect(
+      within(pinned).queryByRole('button', { name: 'Watch together' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('lays every one out where there are few enough, for a bar wide enough to hold them', () => {
+    const { container } = render(
+      <ActionBar label="More" primary={<span>Play</span>} actions={ACTIONS} />,
+    );
+    const whole = arrangement(container, 'whole');
+
+    expect(within(whole).getByRole('button', { name: 'Share' })).toBeInTheDocument();
+    expect(within(whole).getByRole('button', { name: 'Watch together' })).toBeInTheDocument();
+    expect(within(whole).queryByRole('button', { name: 'More' })).not.toBeInTheDocument();
+    expect(whole).toHaveClass('@4xl:flex');
+    expect(arrangement(container, 'pinned')).toHaveClass('@4xl:hidden');
+  });
+
+  it('never lays out more than four, however wide the bar', () => {
+    const { container } = render(
+      <ActionBar
+        label="More"
+        primary={<span>Play</span>}
+        actions={['a', 'b', 'c', 'd', 'e'].map((id) => ({ id, label: id, onChoose: vi.fn() }))}
+      />,
+    );
+
+    expect(container.querySelector('[data-slot="action-bar-whole"]')).toBeNull();
   });
 
   it('keeps everything that is not pinned one press away in a menu', async () => {
@@ -56,9 +103,13 @@ describe('ActionBar', () => {
   });
 
   it('draws the rest as the default gray button, the same as every other', () => {
-    render(<ActionBar label="More" primary={<span>Play</span>} actions={ACTIONS} />);
+    const { container } = render(
+      <ActionBar label="More" primary={<span>Play</span>} actions={ACTIONS} />,
+    );
 
-    expect(screen.getByRole('button', { name: 'Share' })).toHaveClass('bg-[var(--surface-hover)]');
+    expect(
+      within(arrangement(container, 'pinned')).getByRole('button', { name: 'Share' }),
+    ).toHaveClass('bg-[var(--surface-hover)]');
   });
 
   it('folds them into a menu for a phone, named for anybody who cannot see the dots', () => {
@@ -178,7 +229,7 @@ describe('ActionBar', () => {
     }
 
     expect(await screen.findByRole('menuitem', { name: /Every season/ })).toBeInTheDocument();
-    expect(screen.getByText('Download')).toBeInTheDocument();
+    expect(screen.getAllByText('Download').length).toBeGreaterThan(0);
     expect(screen.getByRole('menuitem', { name: /Watch together/ })).toBeInTheDocument();
   });
 });

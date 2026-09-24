@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '@ValenceUI/Spinner';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -31,7 +31,8 @@ const ReadPage = () => {
 
   const asked = useQuery(bookQueries.one(id));
   const read = useQuery(bookQueries.progress(id));
-  const [chosen, setChosen] = useState<string | null>(null);
+  const { chapter: fromTheAddress } = useSearch({ strict: false });
+  const [chosen, setChosen] = useState<string | null>(fromTheAddress ?? null);
 
   const chapters = useMemo(
     () => (asked.data?.chapters ?? []).filter((chapter) => !isAudiobookFormat(chapter.format)),

@@ -77,4 +77,26 @@ describe('readerPreferences', () => {
 
     expect(readReaderPreferences('leftToRight').fit).toBe('both');
   });
+
+  it('keeps each book its own, and starts a new one from the last in its own direction', () => {
+    const manga = {
+      isDouble: true,
+      isOffset: false,
+      fit: 'height' as const,
+      direction: 'rightToLeft' as const,
+      isScrolling: false,
+      isAnimated: true,
+      gap: 8,
+    };
+
+    writeReaderPreferences(manga, 'manga');
+    writeReaderPreferences({ ...manga, isDouble: false, direction: 'leftToRight' }, 'comic');
+
+    expect(readReaderPreferences('leftToRight', 'manga')).toEqual(manga);
+    expect(readReaderPreferences('rightToLeft', 'new-book')).toEqual({
+      ...manga,
+      isDouble: false,
+      direction: 'rightToLeft',
+    });
+  });
 });

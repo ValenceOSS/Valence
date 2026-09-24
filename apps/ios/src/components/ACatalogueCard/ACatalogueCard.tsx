@@ -1,3 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
+import { byMediaId } from '@ValenceClient/playback/watchProgress';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { isTitleWatched } from '@ValenceClient/requests/isTitleWatched';
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
 import { Button } from '@ValencePhone/components/Button/Button';
@@ -13,6 +17,8 @@ import type { ACatalogueCardProps } from './ACatalogueCard.types';
  */
 const ACatalogueCard = ({ title, onAsk, wide }: ACatalogueCardProps) => {
   const { kind } = title;
+  const watched = useQuery(viewingQueries.progress());
+  const isWatched = isTitleWatched(title, byMediaId(watched.data ?? []));
 
   if (!whatAPhoneAsksFor(kind)) {
     return null;
@@ -31,6 +37,7 @@ const ACatalogueCard = ({ title, onAsk, wide }: ACatalogueCardProps) => {
         year={title.year}
         artwork={title.posterUrl}
         note={describeStanding(title.standing)?.label ?? null}
+        watched={isWatched ? 1 : 0}
         {...(wide === undefined ? {} : { wide })}
       />
     </Button>
