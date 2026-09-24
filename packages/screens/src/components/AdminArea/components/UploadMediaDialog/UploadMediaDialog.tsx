@@ -35,10 +35,19 @@ const STATUS_WORDS: Record<UploadStatus, { label: string; tone: BadgeTone }> = {
  * throws away whatever of the file being sent had arrived.
  *
  * @param library - The library to upload into, or nothing while the dialog is shut.
+ * @param folder - The folder inside the library to put them in, with `/` between folders, where
+ *   it is not the library's own.
  * @param onClose - Called when it is dismissed.
  * @param onUploaded - Called with the library once something has been uploaded into it.
  */
-const UploadMediaDialog = ({ library, onClose, onUploaded }: UploadMediaDialogProps) => {
+const UploadMediaDialog = ({
+  library,
+  folder = '',
+  onClose,
+  onUploaded,
+}: UploadMediaDialogProps) => {
+  const into = folder.replace(/^\/+|\/+$/g, '');
+
   const [items, setItems] = useState<QueuedUpload[]>([]);
   const [skipped, setSkipped] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -100,7 +109,7 @@ const UploadMediaDialog = ({ library, onClose, onUploaded }: UploadMediaDialogPr
       change(item.id, 'uploading');
 
       try {
-        await uploadMedia(library.id, item.path, item.file, {
+        await uploadMedia(library.id, into === '' ? item.path : `${into}/${item.path}`, item.file, {
           signal: stop.signal,
           onProgress: (fraction) => {
             setArrived((current) => ({ ...current, [item.id]: fraction }));
@@ -145,7 +154,11 @@ const UploadMediaDialog = ({ library, onClose, onUploaded }: UploadMediaDialogPr
 
   return (
     <DialogCompanion label="Upload media" isOpen={library !== null} onClose={close}>
-      <DialogTitle size="compact" title={`Upload to ${library?.name ?? 'a library'}`} />
+      <DialogTitle
+        size="compact"
+        title={`Upload to ${into === '' ? (library?.name ?? 'a library') : (into.split('/').at(-1) ?? into)}`}
+        {...(into === '' ? {} : { detail: `In ${library?.name ?? 'the library'}, at ${into}` })}
+      />
 
       <DialogContent className="flex flex-col gap-5">
         <FilePicker

@@ -18,6 +18,8 @@ import { fetchAccounts } from '@ValenceClient/admin/fetchAccounts';
 import { fetchAccountSessions } from '@ValenceClient/admin/fetchAccountSessions';
 import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
 import { searchFolders } from '@ValenceClient/admin/searchFolders';
+import { fetchLibraryFolder } from '@ValenceClient/admin/fetchLibraryFolder';
+import { searchLibraryFiles } from '@ValenceClient/admin/searchLibraryFiles';
 import { fetchResourceHistory } from '@ValenceClient/admin/fetchResourceHistory';
 import {
   fetchRoles,
@@ -402,6 +404,34 @@ const folderSearch = (words: string, within: string | null) =>
   });
 
 /**
+ * What is in a folder inside a library, for the file manager. Not retried: a folder that is not
+ * there, or not inside a library, is an answer.
+ *
+ * @param path - The folder, or nothing for the libraries.
+ * @returns The query.
+ */
+const libraryFolder = (path: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'files', path],
+    queryFn: () => fetchLibraryFolder(path),
+    retry: false,
+  });
+
+/**
+ * What inside the libraries is named with some words, below a folder, for the file manager.
+ *
+ * @param words - What the names should hold.
+ * @param within - The folder to look below, or nothing for every library.
+ * @returns The query.
+ */
+const libraryFileSearch = (words: string, within: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'files', within, 'search', words],
+    queryFn: () => searchLibraryFiles(words, within),
+    retry: false,
+  });
+
+/**
  * Everywhere one account is signed in, for the admin dialog's Devices tab.
  *
  * @param accountId - The account being looked at, or null where none is open.
@@ -468,6 +498,8 @@ const adminQueries = {
   libraryAccess,
   folders,
   folderSearch,
+  libraryFolder,
+  libraryFileSearch,
   overview,
   scans,
   monitor,

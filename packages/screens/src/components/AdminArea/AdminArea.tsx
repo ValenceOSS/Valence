@@ -9,6 +9,7 @@ import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
 import { ObservabilityPage } from '@ValenceScreens/components/ObservabilityPage/ObservabilityPage';
 import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
 import { EncodingPanel } from './components/EncodingPanel/EncodingPanel';
+import { FilesPanel } from '@ValenceScreens/components/AdminArea/components/FilesPanel/FilesPanel';
 import { MediaPanel } from './components/MediaPanel/MediaPanel';
 import { ReencodeDialog } from '@ValenceScreens/components/ReencodeDialog/ReencodeDialog';
 import { ReencodeReview } from '@ValenceScreens/components/ReencodeReview/ReencodeReview';
@@ -999,6 +1000,20 @@ const AdminArea = ({
                   videoCodec: 'hevc',
                   audio: 'keep',
                 });
+              }}
+            />
+          </TabPanel>
+
+          <TabPanel value="files" travel={travel}>
+            <FilesPanel
+              libraries={libraries}
+              mayDelete={mayDeleteMedia}
+              onChanged={() => {
+                void cache.invalidateQueries({ queryKey: libraryQueries.key });
+                void cache.invalidateQueries({ queryKey: adminQueries.key });
+              }}
+              onScan={(libraryId) => {
+                void rescan(libraryId);
               }}
             />
           </TabPanel>

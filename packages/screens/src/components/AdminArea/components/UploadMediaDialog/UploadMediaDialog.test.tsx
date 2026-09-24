@@ -323,6 +323,32 @@ describe('UploadMediaDialog', () => {
     expect(onUploaded).not.toHaveBeenCalled();
   });
 
+  it('puts what it uploads into the folder it was opened on', async () => {
+    const actor = userEvent.setup();
+
+    render(
+      <UploadMediaDialog
+        library={FILMS}
+        folder="Anime/Frieren/"
+        onClose={vi.fn()}
+        onUploaded={vi.fn()}
+      />,
+    );
+
+    await actor.upload(screen.getByLabelText(/Choose files to upload/), [fileAt('S01E01.mkv')]);
+    await actor.click(screen.getByRole('button', { name: 'Upload' }));
+
+    await waitFor(() => {
+      expect(uploadMediaMock).toHaveBeenCalledWith(
+        FILMS.id,
+        'Anime/Frieren/S01E01.mkv',
+        expect.any(File),
+        expect.anything(),
+      );
+    });
+    expect(screen.getByText('In Films, at Anime/Frieren')).toBeInTheDocument();
+  });
+
   it('closes and forgets what was chosen', async () => {
     const actor = userEvent.setup();
     const { onClose } = draw();
