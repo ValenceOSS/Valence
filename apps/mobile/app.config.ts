@@ -60,6 +60,7 @@ const config: ExpoConfig = {
   },
   extra: { eas: { projectId: '11620f0a-1d3a-449d-9812-2afe80b14ecc' } },
   plugins: [
+    ['expo-video', { supportsBackgroundPlayback: true, supportsPictureInPicture: true }],
     [
       'expo-build-properties',
       { ios: { deploymentTarget: '18.0' }, android: { usesCleartextTraffic: true } },
