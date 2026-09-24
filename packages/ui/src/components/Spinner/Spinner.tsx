@@ -31,7 +31,10 @@ const Spinner = ({ size = 'md', label, isCentered = false, className }: SpinnerP
     <motion.span
       role="status"
       aria-label={label}
-      className={cn('inline-flex text-current', className)}
+      className={cn(
+        'inline-flex shrink-0 items-center justify-center self-center leading-none text-current',
+        className,
+      )}
       variants={spinVariants}
       initial="idle"
       animate={prefersReducedMotion === true ? 'idle' : 'spinning'}
