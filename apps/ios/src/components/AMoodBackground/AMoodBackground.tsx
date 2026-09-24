@@ -28,8 +28,10 @@ const styles = StyleSheet.create({
 /**
  * The lights behind the way in, as the web's mood background draws them: soft blooms of colour
  * across the screen, fading into the page towards the foot. Unlike the web's they hold still, so
- * the whole of it is drawn once and kept as one picture, and a page moving over it or beneath it
- * costs one layer rather than a screenful of them.
+ * while nothing in it is changing the whole of it is kept as one picture, and a page moving over it
+ * or beneath it costs one layer rather than a screenful of them. While its colours crossfade it is
+ * drawn as it is rather than kept, since a picture of something fading has to be taken again on
+ * every frame of the fade.
  *
  * With no lights of its own it is lit in the house colours. Given some — the colour of whoever
  * was picked — the first bloom takes on the first of them and the rest go dark, as on the web, and
@@ -58,9 +60,22 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
   const [paletted] = useState(() => new Animated.Value(paletteKey === '' ? 0 : 1));
   const [hasHouseLights, setHasHouseLights] = useState(paletteKey === '');
 
+  const lookingAt = `${paletteKey}/${chosen ?? ''}`;
+  const [settledOn, setSettledOn] = useState(lookingAt);
+
   if (paletteKey === '' && !hasHouseLights) {
     setHasHouseLights(true);
   }
+
+  useEffect(() => {
+    const settling = setTimeout(() => {
+      setSettledOn(lookingAt);
+    }, CHANGES_OVER + 100);
+
+    return () => {
+      clearTimeout(settling);
+    };
+  }, [lookingAt]);
 
   useEffect(() => {
     Animated.timing(paletted, {
@@ -127,7 +142,7 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
   };
 
   return (
-    <View pointerEvents="none" style={styles.fills} shouldRasterizeIOS>
+    <View pointerEvents="none" style={styles.fills} shouldRasterizeIOS={settledOn === lookingAt}>
       {hasHouseLights ? (
         <Animated.View
           style={[

@@ -1,6 +1,6 @@
 import { Info } from '@keyline-icons/react-native';
 import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -174,22 +174,27 @@ const AFeature = ({
     };
   }, [isShowing, media.id, arriving, rising, telling]);
 
-  /**
-   * How one part of the foot rises into view, in its turn.
-   *
-   * @param part - Which part, counting up from the logo.
-   * @returns Its fade and rise.
-   */
-  const risingOf = (part: number) => {
-    const value = rising[part] ?? telling;
+  const risings = useMemo(
+    () =>
+      rising.map((value) => ({
+        opacity: value,
+        transform: [
+          { translateY: value.interpolate({ inputRange: [0, 1], outputRange: [RISES_BY, 0] }) },
+        ],
+      })),
+    [rising],
+  );
 
-    return {
-      opacity: value,
-      transform: [
-        { translateY: value.interpolate({ inputRange: [0, 1], outputRange: [RISES_BY, 0] }) },
-      ],
-    };
-  };
+  const folds = useMemo(
+    () =>
+      toldHigh === null
+        ? { opacity: telling }
+        : {
+            opacity: telling,
+            height: telling.interpolate({ inputRange: [0, 1], outputRange: [0, toldHigh] }),
+          },
+    [telling, toldHigh],
+  );
 
   const facts = [
     media.rating === null || media.rating === undefined ? null : `★ ${media.rating.toFixed(1)}`,
@@ -233,7 +238,7 @@ const AFeature = ({
         ) : null}
 
         <View style={styles.foot}>
-          <Animated.View style={risingOf(0)}>
+          <Animated.View style={risings[0]}>
             <ATitleLogo
               mediaId={media.hasLogo ? media.id : null}
               title={title}
@@ -243,7 +248,7 @@ const AFeature = ({
             />
           </Animated.View>
 
-          <Animated.View style={[styles.facts, risingOf(1)]}>
+          <Animated.View style={[styles.facts, risings[1]]}>
             <Words size="small" tone="onArtwork">
               {facts.join(' · ')}
             </Words>
@@ -260,22 +265,7 @@ const AFeature = ({
           </Animated.View>
 
           {overview === null || overview === '' || !isTelling ? null : (
-            <Animated.View
-              style={[
-                styles.folds,
-                {
-                  opacity: telling,
-                  ...(toldHigh === null
-                    ? {}
-                    : {
-                        height: telling.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, toldHigh],
-                        }),
-                      }),
-                },
-              ]}
-            >
+            <Animated.View style={[styles.folds, folds]}>
               <View
                 style={styles.unfolded}
                 onLayout={(event) => {
@@ -286,7 +276,7 @@ const AFeature = ({
                   }
                 }}
               >
-                <Animated.View style={risingOf(2)}>
+                <Animated.View style={risings[2]}>
                   <Words tone="onArtwork" lines={3} isProse>
                     {overview}
                   </Words>
@@ -295,7 +285,7 @@ const AFeature = ({
             </Animated.View>
           )}
 
-          <Animated.View style={[styles.buttons, risingOf(3)]}>
+          <Animated.View style={[styles.buttons, risings[3]]}>
             <Button tone="bright" icon={PlayFilled} onPress={onPlay}>
               {resumeAt === null ? 'Play' : `Resume ${howLongItRuns(resumeAt)}`}
             </Button>

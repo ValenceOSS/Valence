@@ -156,6 +156,29 @@ describe('useHomeRows', () => {
     });
   });
 
+  it('hands back the same rows when drawn again with nothing changed, so a page can skip them', async () => {
+    const watchable = [LIBRARY];
+    const progress = new Map<string, WatchProgress>();
+
+    facetsMock.mockResolvedValue({ genres: ['Comedy'], decades: [], maxRating: 10 });
+    aLibrary({ recent: films('new', 5, 'Comedy'), byGenre: { Comedy: films('comedy', 5) } });
+
+    const { result, rerender } = renderHook(
+      () => useHomeRows(VIEWER, watchable, progress, true, true),
+      { wrapper: inACache },
+    );
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toEqual(['recent', 'genre:Comedy']);
+    });
+
+    const before = result.current.rails;
+
+    rerender();
+
+    expect(result.current.rails).toBe(before);
+  });
+
   it('asks the genres somebody leans towards for first', async () => {
     facetsMock.mockResolvedValue({ genres: ['Comedy', 'Drama'], decades: [], maxRating: 10 });
     favouritesMock.mockResolvedValue(['kept']);

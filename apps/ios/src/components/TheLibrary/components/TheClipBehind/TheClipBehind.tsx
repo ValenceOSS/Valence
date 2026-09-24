@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { VideoView } from 'expo-video';
 import { ABlur } from '@ValencePhone/components/ABlur/ABlur';
@@ -10,8 +10,21 @@ import type { TheClipBehindProps } from './TheClipBehind.types';
 
 const FADES_OVER = 900;
 
+const SHRUNK_BY = 8;
+
+const SHRUNK_TO = '12.5%';
+
 const styles = StyleSheet.create({
   fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
+  shrunk: {
+    height: SHRUNK_TO,
+    left: 0,
+    position: 'absolute',
+    top: 0,
+    transform: [{ scale: SHRUNK_BY }],
+    transformOrigin: 'top left',
+    width: SHRUNK_TO,
+  },
 });
 
 /**
@@ -19,7 +32,8 @@ const styles = StyleSheet.create({
  * the page is lit by whatever the clip is showing as it plays.
  *
  * It is the same player as the hero's, drawn twice rather than played twice, so nothing more is
- * fetched or decoded. The clip sits underneath, blurred all the time it is there, and the lights —
+ * fetched or decoded, and drawn small and stretched over the page, since the blur leaves nothing of
+ * it a full-size picture would show and the small one costs a fraction to draw. The clip sits underneath, blurred all the time it is there, and the lights —
  * on the page's own colour, so nothing shows through them — sit on top: when a clip starts, the
  * lights fade away to show it, and when it stops they fade back over it before it is let go. The
  * blur itself never fades, since a blur that is faded draws wrongly until it is fully there, and
@@ -36,6 +50,10 @@ const TheClipBehind = ({ player, children }: TheClipBehindProps) => {
   const isDark = colours.surface === theColours.dark.surface;
   const [shown] = useState(() => new Animated.Value(0));
   const [held, setHeld] = useState<VideoPlayer | null>(player);
+  const lightsShown = useMemo(
+    () => shown.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+    [shown],
+  );
 
   useEffect(() => {
     if (player !== null) {
@@ -90,7 +108,7 @@ const TheClipBehind = ({ player, children }: TheClipBehindProps) => {
             nativeControls={false}
             contentFit="cover"
             allowsPictureInPicture={false}
-            style={styles.fills}
+            style={styles.shrunk}
           />
           <ABlur isDark={isDark} changesOver={0} />
           <View
@@ -109,7 +127,7 @@ const TheClipBehind = ({ player, children }: TheClipBehindProps) => {
           styles.fills,
           {
             backgroundColor: colours.surface,
-            opacity: shown.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+            opacity: lightsShown,
           },
         ]}
       >

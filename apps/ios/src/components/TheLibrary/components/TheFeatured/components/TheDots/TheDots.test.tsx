@@ -9,6 +9,22 @@ describe('TheDots', () => {
     expect(drawn.getAllByTestId('dot-fill')).toHaveLength(1);
   });
 
+  it('grows and shrinks the dots when the one showing changes, and not on every draw', async () => {
+    const timing = jest.spyOn(Animated, 'timing');
+    const filled = new Animated.Value(0);
+    const drawn = await render(<TheDots count={3} at={0} filled={filled} />);
+    const before = timing.mock.calls.length;
+
+    await drawn.rerender(<TheDots count={3} at={0} filled={filled} />);
+
+    expect(timing.mock.calls.length).toBe(before);
+
+    await drawn.rerender(<TheDots count={3} at={1} filled={filled} />);
+
+    expect(timing.mock.calls.length).toBeGreaterThan(before);
+    timing.mockRestore();
+  });
+
   it('draws nothing for a single title', async () => {
     const drawn = await render(<TheDots count={1} at={0} filled={new Animated.Value(0)} />);
 

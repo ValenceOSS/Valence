@@ -1,9 +1,8 @@
 import { Film, FolderOpen } from '@keyline-icons/react-native';
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -11,19 +10,16 @@ import { howToFillIt } from '@ValenceClient/library/howToFillIt';
 import { pickFeatured } from '@ValenceClient/library/pickFeatured';
 import { useHomeRows } from '@ValenceClient/library/useHomeRows';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
-import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { AnArrival } from '@ValencePhone/components/AnArrival/AnArrival';
 import { ANothingHere } from '@ValencePhone/components/ANothingHere/ANothingHere';
-import { APoster } from '@ValencePhone/components/APoster/APoster';
-import { AShelf } from '@ValencePhone/components/AShelf/AShelf';
-import { Button } from '@ValencePhone/components/Button/Button';
 import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
-import { ACard } from '@ValencePhone/components/ACard/ACard';
 import { TheFeatured } from '@ValencePhone/components/TheLibrary/components/TheFeatured/TheFeatured';
-import { onThisServer } from '@ValencePhone/platform/onThisServer';
+import { AHomeShelf } from '@ValencePhone/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf';
 import { usePullToRefresh } from '@ValencePhone/hooks/usePullToRefresh';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
-import type { Rail } from '@ValenceClient/library/groupIntoRails';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import type { ComingUp } from '@ValenceContracts/schemas/Show';
+import type { AShelfOf } from '@ValencePhone/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf.types';
 import type { TheHomeProps } from './TheHome.types';
 
 const FEATURED = 5;
@@ -34,12 +30,21 @@ const RESUMING = 'resume';
 
 const SCROLLED = 4;
 
+const NOTHING_COMING: ComingUp['shows'] = [];
+
 const styles = StyleSheet.create({
   header: { gap: 20 },
   whole: { flex: 1 },
 });
 
-type AShelfOf = { kind: 'rail'; rail: Rail } | { kind: 'comingUp' };
+/**
+ * What a shelf is known by in the list.
+ *
+ * @param shelf - The shelf.
+ * @returns Its key.
+ */
+const keyOfShelf = (shelf: AShelfOf): string =>
+  shelf.kind === 'rail' ? shelf.rail.id : 'coming-up';
 
 /**
  * The library's front page, as the web's: a few things featured, then shelves — what somebody is
@@ -60,7 +65,7 @@ type AShelfOf = { kind: 'rail'; rail: Rail } | { kind: 'comingUp' };
  * @param onClip - Told the hero's clip while it plays.
  * @param onScrolled - Told whether the page has been scrolled from its top.
  */
-const TheHome = ({
+const TheHomePage = ({
   header,
   watchable,
   librariesAre,
@@ -83,17 +88,20 @@ const TheHome = ({
   const featured = useMemo(() => pickFeatured(sample.data ?? [], FEATURED), [sample.data]);
   const comingUp = useQuery(libraryQueries.comingUp());
   const today = new Date().toISOString().slice(0, 10);
-  const upcoming = comingUp.data ?? [];
+  const upcoming = comingUp.data ?? NOTHING_COMING;
+  const wasScrolled = useRef<boolean | null>(null);
 
-  const shelves: AShelfOf[] = home.rails.flatMap((rail): AShelfOf[] =>
-    rail.id === RESUMING && upcoming.length > 0
-      ? [{ kind: 'rail', rail }, { kind: 'comingUp' }]
-      : [{ kind: 'rail', rail }],
-  );
-  const withComingUp =
-    upcoming.length > 0 && !home.rails.some((rail) => rail.id === RESUMING)
+  const withComingUp = useMemo(() => {
+    const shelves = home.rails.flatMap((rail): AShelfOf[] =>
+      rail.id === RESUMING && upcoming.length > 0
+        ? [{ kind: 'rail', rail }, { kind: 'comingUp' }]
+        : [{ kind: 'rail', rail }],
+    );
+
+    return upcoming.length > 0 && !home.rails.some((rail) => rail.id === RESUMING)
       ? [{ kind: 'comingUp' } satisfies AShelfOf, ...shelves]
       : shelves;
+  }, [home.rails, upcoming]);
   const isEmpty =
     librariesAre !== 'reading' &&
     !home.isReading &&
@@ -101,76 +109,92 @@ const TheHome = ({
     withComingUp.length === 0 &&
     featured.length === 0;
 
-  /**
-   * Draws one shelf of the home page.
-   *
-   * @param shelf - Which shelf.
-   * @returns It.
-   */
-  const drawShelf = (shelf: AShelfOf) =>
-    shelf.kind === 'comingUp' ? (
-      <AShelf title="Coming up">
-        {upcoming.map(({ show, episode }) => (
-          <Button
-            key={show.id}
-            tone="bare"
-            label={show.title}
-            onPress={() => {
-              onLookAtShow(show.libraryId, show.id);
-            }}
-          >
-            <APoster
-              title={show.title}
-              artwork={onThisServer(`/api/media/${show.coverMediaId}/image/poster`)}
-              note={`S${episode.seasonNumber.toString()} E${episode.episodeNumber.toString()} · ${describeAirDate(episode.airDate, today)}`}
-            />
-          </Button>
-        ))}
-      </AShelf>
-    ) : (
-      <AShelf title={shelf.rail.title}>
-        {shelf.rail.items.map((media) => {
-          const known = progress.get(media.id);
+  const renderShelf = useCallback(
+    ({ item: shelf }: { item: AShelfOf }) => (
+      <AnArrival>
+        <AHomeShelf
+          shelf={shelf}
+          upcoming={upcoming}
+          progress={progress}
+          today={today}
+          onLookAt={onLookAt}
+          onLookAtShow={onLookAtShow}
+        />
+      </AnArrival>
+    ),
+    [upcoming, progress, today, onLookAt, onLookAtShow],
+  );
 
-          return (
-            <ACard
-              key={media.id}
-              media={media}
-              asProgramme={shelf.rail.id !== RESUMING}
-              watched={known === undefined ? 0 : watchedFraction(known)}
-              onLookAt={onLookAt}
-              onLookAtShow={onLookAtShow}
-            />
-          );
-        })}
-      </AShelf>
-    );
+  const onScroll = useCallback(
+    ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const isScrolled = nativeEvent.contentOffset.y > SCROLLED;
+
+      if (isScrolled !== wasScrolled.current) {
+        wasScrolled.current = isScrolled;
+        onScrolled?.(isScrolled);
+      }
+    },
+    [onScrolled],
+  );
+
+  const { hasMore, isReadingMore, showMore } = home;
+  const onEndReached = useCallback(() => {
+    if (hasMore && !isReadingMore) {
+      showMore();
+    }
+  }, [hasMore, isReadingMore, showMore]);
+
+  const head = useMemo(
+    () => (
+      <View style={styles.header}>
+        {header}
+        <AnArrival>
+          <TheFeatured
+            items={featured}
+            onShowing={onShowing}
+            onClip={onClip}
+            onWatch={onWatch}
+            onLookAt={onLookAt}
+            onLookAtShow={onLookAtShow}
+          />
+        </AnArrival>
+        {home.isReading ? <ActivityIndicator color={colours.textMuted} /> : null}
+      </View>
+    ),
+    [
+      header,
+      featured,
+      onShowing,
+      onClip,
+      onWatch,
+      onLookAt,
+      onLookAtShow,
+      home.isReading,
+      colours.textMuted,
+    ],
+  );
+
+  const spacing = useMemo(
+    () => ({
+      gap: 26,
+      paddingBottom: room.bottom + SCREEN_EDGE,
+      paddingHorizontal: SCREEN_EDGE,
+      paddingTop: room.top + SCREEN_EDGE,
+    }),
+    [room.bottom, room.top],
+  );
 
   return (
     <FlatList
       data={withComingUp}
       scrollEventThrottle={16}
-      onScroll={({ nativeEvent }) => {
-        onScrolled?.(nativeEvent.contentOffset.y > SCROLLED);
-      }}
-      keyExtractor={(shelf) => (shelf.kind === 'rail' ? shelf.rail.id : 'coming-up')}
-      renderItem={({ item: shelf }) => <AnArrival>{drawShelf(shelf)}</AnArrival>}
-      ListHeaderComponent={
-        <View style={styles.header}>
-          {header}
-          <AnArrival>
-            <TheFeatured
-              items={featured}
-              onShowing={onShowing}
-              onClip={onClip}
-              onWatch={onWatch}
-              onLookAt={onLookAt}
-              onLookAtShow={onLookAtShow}
-            />
-          </AnArrival>
-          {home.isReading ? <ActivityIndicator color={colours.textMuted} /> : null}
-        </View>
-      }
+      onScroll={onScroll}
+      keyExtractor={keyOfShelf}
+      renderItem={renderShelf}
+      initialNumToRender={3}
+      maxToRenderPerBatch={2}
+      windowSize={5}
+      ListHeaderComponent={head}
       ListEmptyComponent={
         isEmpty ? (
           librariesAre === 'missing' ? (
@@ -188,27 +212,18 @@ const TheHome = ({
           )
         ) : null
       }
-      ListFooterComponent={
-        home.isReadingMore ? <ActivityIndicator color={colours.textMuted} /> : null
-      }
-      onEndReached={() => {
-        if (home.hasMore && !home.isReadingMore) {
-          home.showMore();
-        }
-      }}
+      ListFooterComponent={isReadingMore ? <ActivityIndicator color={colours.textMuted} /> : null}
+      onEndReached={onEndReached}
       onEndReachedThreshold={1.5}
-      contentContainerStyle={{
-        gap: 26,
-        paddingBottom: room.bottom + SCREEN_EDGE,
-        paddingHorizontal: SCREEN_EDGE,
-        paddingTop: room.top + SCREEN_EDGE,
-      }}
+      contentContainerStyle={spacing}
       style={styles.whole}
       keyboardShouldPersistTaps="handled"
       refreshControl={pulling}
     />
   );
 };
+
+const TheHome = memo(TheHomePage);
 
 TheHome.displayName = 'TheHome';
 

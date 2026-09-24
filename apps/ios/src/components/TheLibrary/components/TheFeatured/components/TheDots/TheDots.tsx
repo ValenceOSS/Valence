@@ -78,7 +78,7 @@ const TheDots = ({ count, at, filled }: TheDotsProps) => {
         useNativeDriver: false,
       }).start();
     });
-  });
+  }, [at, count, isStill]);
 
   if (count <= 1) {
     return null;

@@ -1,5 +1,5 @@
 import { Text } from 'react-native';
-import { render, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { APosterGrid } from './APosterGrid';
 
@@ -36,5 +36,26 @@ describe('APosterGrid', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Back' }));
 
     expect(onBack).toHaveBeenCalled();
+  });
+
+  it('tells whoever asked only when it leaves its top or comes back to it', async () => {
+    const onScrolled = jest.fn();
+    const drawn = await render(
+      <APosterGrid
+        header={<Text>Films</Text>}
+        items={['Arrival']}
+        keyOf={(item) => item}
+        drawn={(item) => <Text>{item}</Text>}
+        onScrolled={onScrolled}
+      />,
+      { wrapper: CacheScope },
+    );
+    const scrolledTo = (y: number) => ({ nativeEvent: { contentOffset: { y } } });
+
+    await fireEvent.scroll(drawn.getByText('Films'), scrolledTo(10));
+    await fireEvent.scroll(drawn.getByText('Films'), scrolledTo(40));
+    await fireEvent.scroll(drawn.getByText('Films'), scrolledTo(0));
+
+    expect(onScrolled.mock.calls).toEqual([[true], [false]]);
   });
 });

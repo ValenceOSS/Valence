@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePullToRefresh } from '@ValencePhone/hooks/usePullToRefresh';
@@ -80,6 +80,44 @@ const Screen = ({
     paddingTop: room.top + (onBack === undefined ? SCREEN_EDGE : CLEAR_OF_THE_ARROW),
   };
 
+  const latest = useRef({ barFrom, headTall, onScrolled });
+  const wasScrolled = useRef<boolean | null>(null);
+
+  useLayoutEffect(() => {
+    latest.current = { barFrom, headTall, onScrolled };
+  });
+
+  const scrolling = useMemo(() => {
+    /**
+     * Tells whoever asked whether the page has left its top, only when that changes.
+     *
+     * @param y - How far down the page is scrolled.
+     */
+    const tellScrolled = (y: number) => {
+      const isScrolled = y > SCROLLED;
+
+      if (isScrolled !== wasScrolled.current) {
+        wasScrolled.current = isScrolled;
+        latest.current.onScrolled?.(isScrolled);
+      }
+    };
+
+    return {
+      withBar: Animated.event([{ nativeEvent: { contentOffset: { y: scrolled } } }], {
+        useNativeDriver: true,
+        listener: ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
+          const { y } = nativeEvent.contentOffset;
+
+          setIsPast(latest.current.headTall > 0 && y > latest.current.barFrom);
+          tellScrolled(y);
+        },
+      }),
+      alone: ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
+        tellScrolled(nativeEvent.contentOffset.y);
+      },
+    };
+  }, [scrolled]);
+
   const atTheFoot =
     foot === undefined ? null : (
       <View style={[styles.foot, { bottom: room.bottom + FOOT_ABOVE_THE_EDGE }]}>{foot}</View>
@@ -91,22 +129,10 @@ const Screen = ({
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}
       {...(hasBar
-        ? {
-            onScroll: Animated.event([{ nativeEvent: { contentOffset: { y: scrolled } } }], {
-              useNativeDriver: true,
-              listener: ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
-                setIsPast(headTall > 0 && nativeEvent.contentOffset.y > barFrom);
-                onScrolled?.(nativeEvent.contentOffset.y > SCROLLED);
-              },
-            }),
-          }
+        ? { onScroll: scrolling.withBar }
         : onScrolled === undefined
           ? {}
-          : {
-              onScroll: ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
-                onScrolled(nativeEvent.contentOffset.y > SCROLLED);
-              },
-            })}
+          : { onScroll: scrolling.alone })}
       contentContainerStyle={
         head === undefined
           ? [styles.inside, spacing, centres && styles.centredScrolling]

@@ -6,7 +6,7 @@ import {
   BookOpen as BookOpenFilled,
   MusicNote as MusicNoteFilled,
 } from '@keyline-icons/react-native/fill';
-import { useCallback, useLayoutEffect, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, Animated, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -46,7 +46,7 @@ import { theColours } from '@ValencePhone/theme/theColours';
 import type { ReactNode } from 'react';
 import type { VideoPlayer } from 'expo-video';
 import type { ALight } from '@ValencePhone/components/AMoodBackground/AMoodBackground.types';
-import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { TheLibraryProps } from './TheLibrary.types';
 
@@ -61,6 +61,46 @@ const BAR_TALL = 50;
 const UNDER_THE_BAR = 10;
 
 const ARRIVES = { ...SPRINGS.rise, overshootClamping: true, useNativeDriver: true } as const;
+
+const NO_LIBRARIES: readonly Library[] = [];
+
+/**
+ * Keeps only what the grid reads from the programme lists — each list, and whether any is still
+ * being read — so it stays the same object until one of those changes.
+ *
+ * @param results - The lists, as asked for.
+ * @returns Each list, and whether any is still being read.
+ */
+const programmesOf = (
+  results: readonly { data: ShowSummary[] | undefined; isPending: boolean }[],
+): { lists: (ShowSummary[] | undefined)[]; isPending: boolean } => ({
+  lists: results.map(({ data }) => data),
+  isPending: results.some(({ isPending }) => isPending),
+});
+
+/**
+ * Notes whether a part has been scrolled from its top, which is what brings the bar's blur in.
+ *
+ * @param was - What was noted of every part.
+ * @param which - The part.
+ * @param isScrolled - Whether it has been scrolled from its top.
+ * @returns What is noted now, the same record where nothing changed.
+ */
+const noteScrolled = (
+  was: Readonly<Record<string, boolean>>,
+  which: string,
+  isScrolled: boolean,
+): Readonly<Record<string, boolean>> =>
+  was[which] === isScrolled ? was : { ...was, [which]: isScrolled };
+
+/**
+ * What a cell of the grid is known by.
+ *
+ * @param cell - The cell.
+ * @returns Its key.
+ */
+const keyOfCell = (cell: Cell): string =>
+  cell.kind === 'media' ? cell.media.id : cell.programme.id;
 
 const styles = StyleSheet.create({
   arriving: { gap: 20 },
@@ -120,6 +160,7 @@ const TheLibrary = ({
   onRead,
 }: TheLibraryProps) => {
   const colours = useTheColours();
+  const told = useRef({ onWatch, onLookAt, onLookAtShow });
   const libraries = useQuery(libraryQueries.all());
   const watched = useQuery(viewingQueries.progress());
   const filters = useLibraryFilters();
@@ -132,8 +173,22 @@ const TheLibrary = ({
   const isOnTop = useIsOnTop();
 
   useLayoutEffect(() => {
+    told.current = { onWatch, onLookAt, onLookAtShow };
+  });
+
+  useLayoutEffect(() => {
     Animated.spring(arriving, { ...ARRIVES, toValue: 0 }).start();
   }, [part, arriving]);
+
+  const watch = useCallback((mediaId: string, startSeconds: number) => {
+    told.current.onWatch(mediaId, startSeconds);
+  }, []);
+  const lookAt = useCallback((mediaId: string) => {
+    told.current.onLookAt(mediaId);
+  }, []);
+  const lookAtShow = useCallback((libraryId: string, showId: string) => {
+    told.current.onLookAtShow(libraryId, showId);
+  }, []);
   const [chosen, setChosen] = useState(EVERY);
   const [heroic, setHeroic] = useState<string | null>(null);
   const [clip, setClip] = useState<VideoPlayer | null>(null);
@@ -142,15 +197,23 @@ const TheLibrary = ({
   const onShowing = useCallback((media: MediaSummary | null) => {
     setHeroic(media !== null && media.hasBackdrop ? media.id : null);
   }, []);
-  const howFar = byMediaId(watched.data ?? []);
-  const films = (libraries.data ?? []).filter((library) => library.kind === 'movies');
-  const programmes = (libraries.data ?? []).filter((library) => library.kind === 'shows');
-  const hasMusic = (libraries.data ?? []).some((library) => library.kind === 'music');
-  const bookLibraries = (libraries.data ?? [])
-    .filter((library) => library.kind === 'books')
-    .map((library) => library.id);
+  const howFar = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
+  const { films, programmes, hasMusic, bookLibraries, watchable } = useMemo(() => {
+    const every = libraries.data ?? NO_LIBRARIES;
+    const filmLibraries = every.filter((library) => library.kind === 'movies');
+    const programmeLibraries = every.filter((library) => library.kind === 'shows');
+
+    return {
+      films: filmLibraries,
+      programmes: programmeLibraries,
+      hasMusic: every.some((library) => library.kind === 'music'),
+      bookLibraries: every
+        .filter((library) => library.kind === 'books')
+        .map((library) => library.id),
+      watchable: [...filmLibraries, ...programmeLibraries].map((library) => library.id),
+    };
+  }, [libraries.data]);
   const drawsItsOwn = part === 'home' || part === 'music' || part === 'books';
-  const watchable = [...films, ...programmes].map((library) => library.id);
   const ofThisKind = part === 'films' ? films : part === 'shows' ? programmes : [];
   const reading = chosen === EVERY ? ofThisKind.map((library) => library.id) : [chosen];
   const isFiltered = filters.selected.size > 0;
@@ -174,22 +237,27 @@ const TheLibrary = ({
       ...libraryQueries.shows(libraryId),
       enabled: part === 'shows' && !isFiltered,
     })),
+    combine: programmesOf,
   });
 
-  const cells: readonly Cell[] =
-    part === 'home'
-      ? []
-      : part === 'shows' && !isFiltered
-        ? programmeLists
-            .flatMap((list) => list.data ?? [])
-            .sort((left, right) => left.title.localeCompare(right.title))
-            .map((programme) => ({ kind: 'programme', programme }))
-        : (part === 'shows' ? collapseToShows(everything.data ?? []) : (everything.data ?? [])).map(
-            (media) => ({ kind: 'media', media }),
-          );
+  const cells = useMemo(
+    (): readonly Cell[] =>
+      part === 'home'
+        ? []
+        : part === 'shows' && !isFiltered
+          ? programmeLists.lists
+              .flatMap((list) => list ?? [])
+              .sort((left, right) => left.title.localeCompare(right.title))
+              .map((programme) => ({ kind: 'programme', programme }))
+          : (part === 'shows'
+              ? collapseToShows(everything.data ?? [])
+              : (everything.data ?? [])
+            ).map((media) => ({ kind: 'media', media })),
+    [part, isFiltered, programmeLists.lists, everything.data],
+  );
   const isWaiting =
     part === 'shows' && !isFiltered
-      ? programmeLists.some((list) => list.isPending)
+      ? programmeLists.isPending
       : everything.isPending && everything.fetchStatus !== 'idle';
 
   /**
@@ -246,68 +314,121 @@ const TheLibrary = ({
     </View>
   );
 
-  /**
-   * Notes whether a part has been scrolled from its top, which is what brings the bar's blur in.
-   *
-   * @param which - The part.
-   * @returns What to tell the part to call as it scrolls.
-   */
-  const noteScrolling = (which: string) => (isScrolled: boolean) => {
-    setScrolled((was) => (was[which] === isScrolled ? was : { ...was, [which]: isScrolled }));
-  };
+  const homeScrolled = useCallback((isScrolled: boolean) => {
+    setScrolled((was) => noteScrolled(was, 'home', isScrolled));
+  }, []);
+  const partScrolled = useCallback(
+    (isScrolled: boolean) => {
+      setScrolled((was) => noteScrolled(was, part, isScrolled));
+    },
+    [part],
+  );
 
-  const header = (
-    <>
-      <View style={{ height: barTall - UNDER_THE_BAR }} />
+  const header = useMemo(
+    () => (
+      <>
+        <View style={{ height: barTall - UNDER_THE_BAR }} />
 
-      {!libraries.isError && !isWaiting && drawsItsOwn ? null : (
-        <AnArrival style={styles.arriving}>
-          {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
+        {!libraries.isError && !isWaiting && drawsItsOwn ? null : (
+          <AnArrival style={styles.arriving}>
+            {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
 
-          {ofThisKind.length > 1 ? (
-            <SegmentedRow
-              label="Which library"
-              items={[
-                { id: EVERY, label: 'All' },
-                ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
-              ]}
-              value={chosen}
-              onSelect={setChosen}
-            />
-          ) : null}
-
-          {drawsItsOwn ? null : (
-            <TheFilters
-              groups={filters.groups}
-              selected={filters.selected}
-              onChange={filters.change}
-              onClear={filters.clear}
-            />
-          )}
-
-          {isWaiting ? <ActivityIndicator color={colours.textMuted} /> : null}
-
-          {!drawsItsOwn && !isWaiting && cells.length === 0 ? (
-            isFiltered ? (
-              <ANothingHere
-                of={SearchX}
-                title="Nothing matches those"
-                detail="Try fewer filters, or clear them."
+            {ofThisKind.length > 1 ? (
+              <SegmentedRow
+                label="Which library"
+                items={[
+                  { id: EVERY, label: 'All' },
+                  ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
+                ]}
+                value={chosen}
+                onSelect={setChosen}
               />
-            ) : (
-              <ANothingHere
-                of={part === 'films' ? Film : Monitor}
-                title={part === 'films' ? 'No films yet' : 'No shows yet'}
-                detail={howToFillIt(
-                  chosen === EVERY && ofThisKind.length > 1 ? 'every library' : 'one library',
-                  false,
-                )}
+            ) : null}
+
+            {drawsItsOwn ? null : (
+              <TheFilters
+                groups={filters.groups}
+                selected={filters.selected}
+                onChange={filters.change}
+                onClear={filters.clear}
               />
-            )
-          ) : null}
-        </AnArrival>
-      )}
-    </>
+            )}
+
+            {isWaiting ? <ActivityIndicator color={colours.textMuted} /> : null}
+
+            {!drawsItsOwn && !isWaiting && cells.length === 0 ? (
+              isFiltered ? (
+                <ANothingHere
+                  of={SearchX}
+                  title="Nothing matches those"
+                  detail="Try fewer filters, or clear them."
+                />
+              ) : (
+                <ANothingHere
+                  of={part === 'films' ? Film : Monitor}
+                  title={part === 'films' ? 'No films yet' : 'No shows yet'}
+                  detail={howToFillIt(
+                    chosen === EVERY && ofThisKind.length > 1 ? 'every library' : 'one library',
+                    false,
+                  )}
+                />
+              )
+            ) : null}
+          </AnArrival>
+        )}
+      </>
+    ),
+    [
+      barTall,
+      libraries.isError,
+      isWaiting,
+      drawsItsOwn,
+      ofThisKind,
+      chosen,
+      filters.groups,
+      filters.selected,
+      filters.change,
+      filters.clear,
+      colours.textMuted,
+      cells.length,
+      isFiltered,
+      part,
+    ],
+  );
+
+  const drawn = useCallback(
+    (cell: Cell) => {
+      if (cell.kind === 'programme') {
+        return (
+          <Button
+            tone="bare"
+            label={cell.programme.title}
+            onPress={() => {
+              lookAtShow(cell.programme.libraryId, cell.programme.id);
+            }}
+          >
+            <APoster
+              title={cell.programme.title}
+              year={cell.programme.year ?? null}
+              artwork={onThisServer(`/api/media/${cell.programme.coverMediaId}/image/poster`)}
+            />
+          </Button>
+        );
+      }
+
+      const known = howFar.get(cell.media.id);
+
+      return (
+        <ACard
+          media={cell.media}
+          asProgramme={part === 'shows'}
+          watched={known === undefined ? 0 : watchedFraction(known)}
+          onLookAt={lookAt}
+          onLookAtShow={lookAtShow}
+        />
+      );
+    },
+    [howFar, part, lookAt, lookAtShow],
   );
 
   const home = (
@@ -328,12 +449,12 @@ const TheLibrary = ({
                 ? 'missing'
                 : 'there'
           }
-          onWatch={onWatch}
-          onLookAt={onLookAt}
-          onLookAtShow={onLookAtShow}
+          onWatch={watch}
+          onLookAt={lookAt}
+          onLookAtShow={lookAtShow}
           onShowing={onShowing}
           onClip={setClip}
-          onScrolled={noteScrolling('home')}
+          onScrolled={homeScrolled}
         />
       </IS_ON_TOP.Provider>
     </View>
@@ -348,7 +469,7 @@ const TheLibrary = ({
           libraryIds={bookLibraries}
           onBook={onBook}
           onRead={onRead}
-          onScrolled={noteScrolling('books')}
+          onScrolled={partScrolled}
         />
       ) : part === 'music' ? (
         <TheMusic
@@ -359,45 +480,15 @@ const TheLibrary = ({
           onLiked={onLiked}
           onAllAlbums={onAllAlbums}
           onAllArtists={onAllArtists}
-          onScrolled={noteScrolling('music')}
+          onScrolled={partScrolled}
         />
       ) : (
         <APosterGrid
           header={header}
           items={cells}
-          onScrolled={noteScrolling(part)}
-          keyOf={(cell) => (cell.kind === 'media' ? cell.media.id : cell.programme.id)}
-          drawn={(cell) => {
-            if (cell.kind === 'programme') {
-              return (
-                <Button
-                  tone="bare"
-                  label={cell.programme.title}
-                  onPress={() => {
-                    onLookAtShow(cell.programme.libraryId, cell.programme.id);
-                  }}
-                >
-                  <APoster
-                    title={cell.programme.title}
-                    year={cell.programme.year ?? null}
-                    artwork={onThisServer(`/api/media/${cell.programme.coverMediaId}/image/poster`)}
-                  />
-                </Button>
-              );
-            }
-
-            const known = howFar.get(cell.media.id);
-
-            return (
-              <ACard
-                media={cell.media}
-                asProgramme={part === 'shows'}
-                watched={known === undefined ? 0 : watchedFraction(known)}
-                onLookAt={onLookAt}
-                onLookAtShow={onLookAtShow}
-              />
-            );
-          }}
+          onScrolled={partScrolled}
+          keyOf={keyOfCell}
+          drawn={drawn}
         />
       )}
     </>,

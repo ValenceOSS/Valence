@@ -1,3 +1,4 @@
+import { useCallback, useMemo, useRef } from 'react';
 import { FlatList, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { POSTER_WIDTH } from '@ValencePhone/components/APoster/POSTER_WIDTH';
@@ -6,6 +7,7 @@ import { usePullToRefresh } from '@ValencePhone/hooks/usePullToRefresh';
 import { AnArrival } from '@ValencePhone/components/AnArrival/AnArrival';
 import { BackArrow } from '@ValencePhone/components/BackArrow/BackArrow';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import type { APosterGridProps } from './APosterGrid.types';
 
 const GAP = 18;
@@ -53,6 +55,36 @@ const APosterGrid = <Item,>({
   const across =
     asked ?? Math.max(1, Math.floor((width - SCREEN_EDGE * 2 + GAP) / (POSTER_WIDTH + GAP)));
   const cell = (width - SCREEN_EDGE * 2 - GAP * (across - 1)) / across;
+  const wasScrolled = useRef<boolean | null>(null);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Item }) => <AnArrival>{drawn(item, cell)}</AnArrival>,
+    [drawn, cell],
+  );
+
+  const head = useMemo(() => <View style={styles.header}>{header}</View>, [header]);
+
+  const spacing = useMemo(
+    () => ({
+      gap: GAP,
+      paddingBottom: room.bottom + SCREEN_EDGE,
+      paddingHorizontal: SCREEN_EDGE,
+      paddingTop: room.top + (onBack === undefined ? SCREEN_EDGE : CLEAR_OF_THE_ARROW),
+    }),
+    [room.bottom, room.top, onBack],
+  );
+
+  const onScroll = useCallback(
+    ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const isScrolled = nativeEvent.contentOffset.y > SCROLLED;
+
+      if (isScrolled !== wasScrolled.current) {
+        wasScrolled.current = isScrolled;
+        onScrolled?.(isScrolled);
+      }
+    },
+    [onScrolled],
+  );
 
   const grid = (
     <FlatList
@@ -60,22 +92,15 @@ const APosterGrid = <Item,>({
       data={items}
       numColumns={across}
       keyExtractor={keyOf}
-      renderItem={({ item }) => <AnArrival>{drawn(item, cell)}</AnArrival>}
-      ListHeaderComponent={<View style={styles.header}>{header}</View>}
+      renderItem={renderItem}
+      ListHeaderComponent={head}
       {...(across > 1 ? { columnWrapperStyle: styles.row } : {})}
-      contentContainerStyle={{
-        gap: GAP,
-        paddingBottom: room.bottom + SCREEN_EDGE,
-        paddingHorizontal: SCREEN_EDGE,
-        paddingTop: room.top + (onBack === undefined ? SCREEN_EDGE : CLEAR_OF_THE_ARROW),
-      }}
+      contentContainerStyle={spacing}
       style={styles.whole}
       keyboardShouldPersistTaps="handled"
       refreshControl={pulling}
       scrollEventThrottle={16}
-      onScroll={({ nativeEvent }) => {
-        onScrolled?.(nativeEvent.contentOffset.y > SCROLLED);
-      }}
+      onScroll={onScroll}
     />
   );
 

@@ -31,6 +31,20 @@ const LIKED_READ = 60;
 
 const ACCLAIMED_FROM = 7.5;
 
+const NOTHING: readonly MediaSummary[] = [];
+
+/**
+ * Keeps only what the rows read from a set of questions — each one's answer and whether it is still
+ * being asked — so the set stays the same object until one of those changes.
+ *
+ * @param results - The questions, as asked.
+ * @returns Each one's answer and whether it is still being read.
+ */
+const answersOf = (
+  results: readonly { data: MediaSummary[] | undefined; isLoading: boolean }[],
+): { data: MediaSummary[] | undefined; isLoading: boolean }[] =>
+  results.map(({ data, isLoading }) => ({ data, isLoading }));
+
 /**
  * What to call a shelf in the endless tail, which is a genre seen from a particular angle: the newest
  * of it, the whole of it by name, or the part of it belonging to one decade.
@@ -199,6 +213,7 @@ const useHomeRows = (
       ...libraryQueries.across(watchable, { genre, limit: ROW_LIMIT }),
       enabled: canAsk,
     })),
+    combine: answersOf,
   });
 
   const everyDecade = useMemo(
@@ -218,40 +233,55 @@ const useHomeRows = (
       }),
       enabled: canAsk,
     })),
+    combine: answersOf,
   });
 
   const areGenresSettled = byGenre.every((one) => !one.isLoading);
 
-  const shownGenres = areGenresSettled
-    ? genres.filter((_, at) => (byGenre[at]?.data ?? []).length >= MIN_ROW)
-    : [];
+  const shownGenres = useMemo(
+    () =>
+      areGenresSettled
+        ? genres.filter((_, at) => (byGenre[at]?.data ?? NOTHING).length >= MIN_ROW)
+        : [],
+    [areGenresSettled, genres, byGenre],
+  );
 
-  const encores = Array.from({ length: encoreLimit }, (_, at) => {
-    const step = Math.floor(at / 2);
+  const encores = useMemo(
+    () =>
+      Array.from({ length: encoreLimit }, (_, at) => {
+        const step = Math.floor(at / 2);
 
-    if (at % 2 === 0) {
-      const wide = Math.max(1, shownGenres.length);
-      const genre = shownGenres[step % wide];
-      const order = ENCORE_ORDERS[Math.floor(step / wide) % ENCORE_ORDERS.length];
+        if (at % 2 === 0) {
+          const wide = Math.max(1, shownGenres.length);
+          const genre = shownGenres[step % wide];
+          const order = ENCORE_ORDERS[Math.floor(step / wide) % ENCORE_ORDERS.length];
 
-      return genre === undefined || order === undefined ? null : { at, genre, order, decade: null };
-    }
+          return genre === undefined || order === undefined
+            ? null
+            : { at, genre, order, decade: null };
+        }
 
-    const across = Math.max(1, everyGenre.length);
-    const deep = Math.max(1, everyDecade.length);
-    const genre = everyGenre[step % across];
-    const decade = everyDecade[Math.floor(step / across) % deep];
+        const across = Math.max(1, everyGenre.length);
+        const deep = Math.max(1, everyDecade.length);
+        const genre = everyGenre[step % across];
+        const decade = everyDecade[Math.floor(step / across) % deep];
 
-    return genre === undefined || decade === undefined ? null : { at, genre, order: null, decade };
-  })
-    .filter((one) => one !== null)
-    .filter(
-      (one, index, all) =>
-        all.findIndex(
-          (other) =>
-            other.genre === one.genre && other.order === one.order && other.decade === one.decade,
-        ) === index,
-    );
+        return genre === undefined || decade === undefined
+          ? null
+          : { at, genre, order: null, decade };
+      })
+        .filter((one) => one !== null)
+        .filter(
+          (one, index, all) =>
+            all.findIndex(
+              (other) =>
+                other.genre === one.genre &&
+                other.order === one.order &&
+                other.decade === one.decade,
+            ) === index,
+        ),
+    [encoreLimit, shownGenres, everyGenre, everyDecade],
+  );
 
   const encoreRoom =
     2 *
@@ -271,33 +301,48 @@ const useHomeRows = (
       }),
       enabled: canAsk,
     })),
+    combine: answersOf,
   });
 
-  const leanings = new Set(taste.slice(0, TASTE_DEPTH));
+  const rails = useMemo(() => {
+    const leanings = new Set(taste.slice(0, TASTE_DEPTH));
+    const candidates = genres.flatMap((genre, at) =>
+      leanings.has(genre) ? (byGenre[at]?.data ?? NOTHING) : NOTHING,
+    );
 
-  const candidates = genres.flatMap((genre, at) =>
-    leanings.has(genre) ? (byGenre[at]?.data ?? []) : [],
-  );
-
-  const rails = homeRows({
-    resuming: [...(resuming.data ?? [])].sort(byLastWatched(progress)),
-    picked: pickForYou(candidates, taste, new Set(likedIds), ROW_LIMIT),
-    recent: [...(recent.data ?? [])].sort(byNewest),
-    acclaimed: [...(acclaimed.data ?? [])].sort(byRating),
-    genres: genres.map((genre, at) => ({
-      genre,
-      items: [...(byGenre[at]?.data ?? [])].sort(byRating),
-    })),
-    decades: decades.map((decade, at) => ({
-      decade,
-      items: [...(byDecade[at]?.data ?? [])].sort(byRating),
-    })),
-    more: encores.map(({ at, genre, order, decade }, index) => ({
-      id: `more:${at.toString()}`,
-      title: encoreTitle(genre, order, decade),
-      items: [...(byEncore[index]?.data ?? [])],
-    })),
-  });
+    return homeRows({
+      resuming: [...(resuming.data ?? NOTHING)].sort(byLastWatched(progress)),
+      picked: pickForYou(candidates, taste, new Set(likedIds), ROW_LIMIT),
+      recent: [...(recent.data ?? NOTHING)].sort(byNewest),
+      acclaimed: [...(acclaimed.data ?? NOTHING)].sort(byRating),
+      genres: genres.map((genre, at) => ({
+        genre,
+        items: [...(byGenre[at]?.data ?? NOTHING)].sort(byRating),
+      })),
+      decades: decades.map((decade, at) => ({
+        decade,
+        items: [...(byDecade[at]?.data ?? NOTHING)].sort(byRating),
+      })),
+      more: encores.map(({ at, genre, order, decade }, index) => ({
+        id: `more:${at.toString()}`,
+        title: encoreTitle(genre, order, decade),
+        items: [...(byEncore[index]?.data ?? NOTHING)],
+      })),
+    });
+  }, [
+    taste,
+    genres,
+    byGenre,
+    resuming.data,
+    progress,
+    likedIds,
+    recent.data,
+    acclaimed.data,
+    decades,
+    byDecade,
+    encores,
+    byEncore,
+  ]);
 
   const isReading =
     canAsk &&

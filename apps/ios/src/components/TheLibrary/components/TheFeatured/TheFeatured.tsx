@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Animated, Easing, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
@@ -52,7 +52,7 @@ const fillOver = (filled: Animated.Value, from: number, overMs: number): void =>
  * Beneath them, the dots say which is showing and how long is left of it: through its clip while
  * one plays, and otherwise until it moves on by itself.
  */
-const TheFeatured = ({
+const TheFeaturedTitles = ({
   items,
   onWatch,
   onLookAt,
@@ -64,7 +64,7 @@ const TheFeatured = ({
   const isStill = usePrefersStillness();
   const [filled] = useState(() => new Animated.Value(0));
   const watched = useQuery(viewingQueries.progress());
-  const progress = byMediaId(watched.data ?? []);
+  const progress = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
   const [at, setAt] = useState(0);
   const pager = useRef<ScrollView>(null);
   const across = width - SCREEN_EDGE * 2;
@@ -180,6 +180,8 @@ const TheFeatured = ({
     </View>
   );
 };
+
+const TheFeatured = memo(TheFeaturedTitles);
 
 TheFeatured.displayName = 'TheFeatured';
 
