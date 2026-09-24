@@ -3,6 +3,7 @@ import { solveRequest } from '@ValenceRequests/solver/solveRequest';
 import type { SiteRequest } from '@ValenceRequests/cardigann/SiteRequest';
 import type { SiteAgent } from '@ValenceRequests/solver/createSiteAgent';
 import type { SitePool } from '@ValenceRequests/solver/createSitePool';
+import type { SitePage } from '@ValenceRequests/solver/toSitePage';
 
 type Agent = Pick<
   SiteAgent,
@@ -29,13 +30,14 @@ const A_FORM = 'application/x-www-form-urlencoded';
 const THE_BROWSERS_OWN = new Set(['cookie', 'host', 'referer', 'user-agent']);
 
 /**
- * Gives up on a task that runs past its time.
+ * Gives up on a task that runs past its time, and says so to whatever it was using.
  *
  * @param task - The task.
  * @param ms - How long it has.
+ * @param onLate - Called when its time runs out, to stop it where it stands.
  * @returns What it gave, if it gave it in time.
  */
-const inTime = async <T>(task: Promise<T>, ms: number): Promise<T> => {
+const inTime = async <T>(task: Promise<T>, ms: number, onLate: () => void): Promise<T> => {
   let handle: NodeJS.Timeout | undefined;
 
   try {
@@ -43,6 +45,7 @@ const inTime = async <T>(task: Promise<T>, ms: number): Promise<T> => {
       task,
       new Promise<never>((_, reject) => {
         handle = setTimeout(() => {
+          onLate();
           reject(
             new IndexerFailure(
               `Timed out after ${Math.round(ms / 1000).toString()} seconds getting past the site’s browser check`,
@@ -65,6 +68,9 @@ const inTime = async <T>(task: Promise<T>, ms: number): Promise<T> => {
  * The headers the browser sets itself — who it is, its cookies, where it came from — are left to it,
  * since a request claiming to be another browser is exactly what the check looks for.
  *
+ * A request that runs out of time has its tab closed, so that a tab stuck at the check never holds
+ * up the ones after it.
+ *
  * @param pool - The agents, one to a site.
  * @param timeoutMs - How long a request may take, check and all.
  * @param now - The clock.
@@ -85,10 +91,12 @@ const createSolver = <A extends Agent>({
     const headers = Object.fromEntries(
       Object.entries(request.headers).filter(([name]) => !THE_BROWSERS_OWN.has(name.toLowerCase())),
     );
+    let using: SitePage | null = null;
 
     return inTime(
       pool.use(`${hostname} ${session}`, (agent) =>
         agent.withPage(async (page) => {
+          using = page;
           await agent.addCookies(
             Object.entries(cookies).map(([name, value]) => ({ name, value })),
             origin,
@@ -121,6 +129,9 @@ const createSolver = <A extends Agent>({
         }),
       ),
       timeoutMs,
+      () => {
+        void using?.close().catch(() => {});
+      },
     );
   };
 

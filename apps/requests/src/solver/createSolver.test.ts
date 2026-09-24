@@ -125,4 +125,23 @@ describe('createSolver', () => {
     vi.useRealTimers();
     await failing;
   });
+
+  it('closes the tab of a request that runs past its time, so it holds nothing up', async () => {
+    const page = aSitePage();
+
+    page.visit.mockImplementation(() => new Promise(() => undefined));
+
+    const { pool } = aSolver(page);
+    const solver = createSolver({ pool, timeoutMs: 5000 });
+
+    vi.useFakeTimers();
+
+    const failing = expect(solver.fetch(A_GET, {}, 'one')).rejects.toThrow('Timed out');
+
+    await vi.advanceTimersByTimeAsync(5000);
+    vi.useRealTimers();
+    await failing;
+
+    expect(page.close).toHaveBeenCalled();
+  });
 });

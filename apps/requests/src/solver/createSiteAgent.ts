@@ -1,4 +1,5 @@
 import { createGate } from '@ValenceRequests/solver/createGate';
+import type { Gate } from '@ValenceRequests/solver/createGate';
 import { toSitePage } from '@ValenceRequests/solver/toSitePage';
 import type { PageLike, SitePage } from '@ValenceRequests/solver/toSitePage';
 
@@ -23,13 +24,21 @@ type ContextLike<P extends PageLike> = {
 
 /**
  * One site's corner of the browser: its own cookies and tabs, kept between requests so that a
- * check it has passed stays passed, and only so many tabs at once.
+ * check it has passed stays passed, and only so many tabs at once. A kept tab that has been closed
+ * since, as one that ran out of time is, is passed over for a new one. A new tab is opened only when
+ * the browser's turn for opening comes round, since Firefox opening several at the same moment
+ * leaves Cloudflare's check unable to finish in any of them.
  *
  * @param context - The browser context it lives in.
  * @param pagesAtOnce - How many tabs it may have working together.
+ * @param opening - The turns for opening a tab, shared by the whole browser.
  * @returns The agent.
  */
-const createSiteAgent = <P extends PageLike>(context: ContextLike<P>, pagesAtOnce: number) => {
+const createSiteAgent = <P extends PageLike>(
+  context: ContextLike<P>,
+  pagesAtOnce: number,
+  opening: Pick<Gate, 'run'>,
+) => {
   const gate = createGate(pagesAtOnce);
   const idle: SitePage[] = [];
   let isOpen = true;
@@ -41,7 +50,10 @@ const createSiteAgent = <P extends PageLike>(context: ContextLike<P>, pagesAtOnc
 
   const withPage = <T>(task: (page: SitePage) => Promise<T>): Promise<T> =>
     gate.run(async () => {
-      const page = idle.pop() ?? toSitePage(await context.newPage());
+      const kept = idle.splice(0).filter((one) => !one.isClosed());
+      const page = kept.pop() ?? toSitePage(await opening.run(() => context.newPage()));
+
+      idle.push(...kept);
 
       try {
         const result = await task(page);
