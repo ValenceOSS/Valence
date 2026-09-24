@@ -38,6 +38,10 @@ public class ValenceTabBarModule: Module {
       Prop("accent") { (view: ValenceTabBarView, accent: UIColor) in
         view.accent = accent
       }
+
+      Prop("isFaceHidden") { (view: ValenceTabBarView, isFaceHidden: Bool) in
+        view.isFaceHidden = isFaceHidden
+      }
     }
   }
 }
@@ -96,10 +100,21 @@ public class ValenceTabBarView: ExpoView, UITabBarDelegate {
   var accent: UIColor = .systemBlue {
     didSet {
       bar.tintColor = accent
-      bar.items?.forEach { item in
-        if tabs.indices.contains(item.tag) {
-          dressAsAFace(item, tabs[item.tag])
-        }
+      redressTheFaces()
+    }
+  }
+
+  /// Whether the face is left out for now, while one is flying in to take its place.
+  var isFaceHidden = false {
+    didSet {
+      redressTheFaces()
+    }
+  }
+
+  private func redressTheFaces() {
+    bar.items?.forEach { item in
+      if tabs.indices.contains(item.tag) {
+        dressAsAFace(item, tabs[item.tag])
       }
     }
   }
@@ -216,12 +231,21 @@ public class ValenceTabBarView: ExpoView, UITabBarDelegate {
 
     let picture = tab.picture.flatMap { pictures[$0] }
 
-    item.image = TabFace.draw(picture, initial: tab.initial, backdrop: tab.backdrop, ring: nil)
-    item.selectedImage = TabFace.draw(picture, initial: tab.initial, backdrop: tab.backdrop, ring: accent)
-
     if let address = tab.picture, picture == nil {
       fetch(address)
     }
+
+    if isFaceHidden {
+      let nothing = TabFace.nothing()
+
+      item.image = nothing
+      item.selectedImage = nothing
+
+      return
+    }
+
+    item.image = TabFace.draw(picture, initial: tab.initial, backdrop: tab.backdrop, ring: nil)
+    item.selectedImage = TabFace.draw(picture, initial: tab.initial, backdrop: tab.backdrop, ring: accent)
   }
 
   /// Reads a picture from the server, drawing a vector face through WebKit since UIKit cannot.
@@ -280,6 +304,12 @@ public class ValenceTabBarView: ExpoView, UITabBarDelegate {
 /// a ring round it when the tab is showing.
 enum TabFace {
   static let side: CGFloat = 28
+
+  /// A clear image the size of a face, holding its place while it is left out.
+  static func nothing() -> UIImage {
+    UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { _ in }
+      .withRenderingMode(.alwaysOriginal)
+  }
 
   static func draw(_ picture: UIImage?, initial: String?, backdrop: UIColor?, ring: UIColor?) -> UIImage {
     let whole = CGRect(x: 0, y: 0, width: side, height: side)

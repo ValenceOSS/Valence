@@ -17,6 +17,7 @@ type SystemTabBarProps = {
   onSelect: (id: string) => void;
   onMeasure: (height: number) => void;
   onFaceAt?: (at: ARectOnScreen) => void;
+  isFaceHidden?: boolean;
   style: StyleProp<ViewStyle>;
 };
 

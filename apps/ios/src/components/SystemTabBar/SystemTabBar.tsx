@@ -12,6 +12,7 @@ const TheBar = requireNativeView<NativeTabBarProps>('ValenceTabBar');
  * @param onSelect - Told which one somebody chose.
  * @param onMeasure - Told how tall the bar is, safe area and all.
  * @param onFaceAt - Told where on screen the tab drawn as a face shows it.
+ * @param isFaceHidden - Whether that face is left out for now, while one flies in to take its place.
  * @param style - Where it sits.
  */
 const SystemTabBar = ({
@@ -21,12 +22,14 @@ const SystemTabBar = ({
   onSelect,
   onMeasure,
   onFaceAt,
+  isFaceHidden = false,
   style,
 }: SystemTabBarProps) => (
   <TheBar
     tabs={tabs}
     selected={selected}
     accent={accent}
+    isFaceHidden={isFaceHidden}
     style={style}
     onSelect={(event) => {
       onSelect(event.nativeEvent.id);

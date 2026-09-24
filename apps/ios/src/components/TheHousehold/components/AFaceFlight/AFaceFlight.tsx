@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
 /**
  * Somebody's face on its way from the password to the account tab once they are in: lifted off
  * the screen, rounded into the circle the tab draws, and then sprung down into the tab's place,
- * where it gives way to the tab's own face. It waits in the air until the tab says where it is, and
+ * where the tab's own face takes over from it in the same moment. It waits in the air until the tab says where it is, and
  * gives up and fades if it never does.
  *
  * @param profile - Whose face.
@@ -117,7 +117,7 @@ const AFaceFlight = ({ profile, from, to, onLanded }: AFaceFlightProps) => {
       }),
     ]).start(({ finished }) => {
       if (finished) {
-        fadeAway();
+        onLanded();
       }
     });
 

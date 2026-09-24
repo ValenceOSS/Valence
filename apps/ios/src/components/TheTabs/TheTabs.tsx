@@ -20,6 +20,7 @@ const styles = StyleSheet.create({
   beforeTheBar: { paddingBottom: ABOVE_THE_BAR, paddingHorizontal: 12 },
   system: { bottom: 0, left: 0, position: 'absolute', right: 0 },
   tab: { alignItems: 'center', gap: 3, paddingVertical: 2 },
+  leftOut: { opacity: 0 },
   whole: { flex: 1 },
 });
 
@@ -37,8 +38,17 @@ const styles = StyleSheet.create({
  * @param children - The part showing.
  * @param above - What sits just above the tabs whichever part is showing — what music is playing.
  * @param onFaceAt - Told where on screen the tab drawn as a face shows it, for a face to fly to.
+ * @param isFaceArriving - Whether a face is flying in to that tab, which leaves its place empty till then.
  */
-const TheTabs = ({ tabs, value, onSelect, children, above, onFaceAt }: TheTabsProps) => {
+const TheTabs = ({
+  tabs,
+  value,
+  onSelect,
+  children,
+  above,
+  onFaceAt,
+  isFaceArriving = false,
+}: TheTabsProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
   const [barHeight, setBarHeight] = useState(room.bottom + A_GUESS_AT_THE_BAR);
@@ -80,6 +90,7 @@ const TheTabs = ({ tabs, value, onSelect, children, above, onFaceAt }: TheTabsPr
           accent={colours.accent}
           onSelect={onSelect}
           onMeasure={setBarHeight}
+          isFaceHidden={isFaceArriving}
           {...(onFaceAt === undefined ? {} : { onFaceAt })}
           style={[styles.system, { height: barHeight }]}
         />
@@ -128,6 +139,7 @@ const TheTabs = ({ tabs, value, onSelect, children, above, onFaceAt }: TheTabsPr
                   ) : (
                     <View
                       collapsable={false}
+                      style={isFaceArriving ? styles.leftOut : null}
                       onLayout={(event) => {
                         event.currentTarget.measureInWindow((x, y, width, height) => {
                           onFaceAt?.({ x, y, width, height });

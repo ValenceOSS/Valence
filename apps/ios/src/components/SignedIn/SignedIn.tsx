@@ -115,8 +115,9 @@ const styles = StyleSheet.create({
  * @param onElsewhere - Told that somebody wants to point this phone at a different server.
  * @param onOut - Told once they have signed out.
  * @param onFaceAt - Told where the account tab shows their face, for it to fly to on the way in.
+ * @param isFaceArriving - Whether their face is still flying in, so the tab leaves its place empty.
  */
-const SignedIn = ({ onOut, onElsewhere, onFaceAt }: SignedInProps) => {
+const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: SignedInProps) => {
   const session = useQuery(sessionQueries.who());
 
   useEffect(() => {
@@ -485,6 +486,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt }: SignedInProps) => {
       value={part}
       onSelect={setPart}
       {...(onFaceAt === undefined ? {} : { onFaceAt })}
+      isFaceArriving={isFaceArriving}
       above={
         <TheNowPlayingBar
           onOpen={() => {

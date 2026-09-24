@@ -5,6 +5,7 @@ type SignedInProps = {
   onOut: () => void;
   onElsewhere: () => void;
   onFaceAt?: (at: ARectOnScreen) => void;
+  isFaceArriving?: boolean;
 };
 
 type APage =

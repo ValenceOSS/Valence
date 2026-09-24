@@ -117,6 +117,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
           }}
           onElsewhere={onElsewhere}
           onFaceAt={faceLandsAt}
+          isFaceArriving={flight !== null}
         />
         <TheServerIsAway />
         {flying}

@@ -24,6 +24,7 @@ type TheTabsProps = {
   children: ReactNode;
   above?: ReactNode;
   onFaceAt?: (at: ARectOnScreen) => void;
+  isFaceArriving?: boolean;
 };
 
 export type { ATab, ATabFace, TheTabsProps };
