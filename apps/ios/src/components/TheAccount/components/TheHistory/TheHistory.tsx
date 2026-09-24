@@ -1,4 +1,5 @@
 import { Bin } from '@keyline-icons/react-native';
+import { useMemo } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -32,8 +33,15 @@ const TheHistory = () => {
   const colours = useTheColours();
   const history = useInfiniteQuery(viewingQueries.history());
   const reading = useQuery(bookQueries.reading());
-  const viewings = history.data?.pages.flat() ?? [];
-  const entries = interleaveHistory(viewings, reading.data ?? [], history.hasNextPage);
+  const entries = useMemo(
+    () =>
+      interleaveHistory(
+        history.data?.pages.flat() ?? [],
+        reading.data ?? [],
+        history.hasNextPage,
+      ),
+    [history.data, reading.data, history.hasNextPage],
+  );
   const now = new Date();
 
   const reread = async () => {

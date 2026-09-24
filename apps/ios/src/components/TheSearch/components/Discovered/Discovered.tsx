@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
@@ -13,7 +14,7 @@ import type { DiscoveredProps } from './Discovered.types';
  *
  * @param onAsk - Told which title somebody wants to see.
  */
-const Discovered = ({ onAsk }: DiscoveredProps) => {
+const DiscoveredSection = ({ onAsk }: DiscoveredProps) => {
   const discovered = useQuery(requestsQueries.discover());
   const colours = useTheColours();
 
@@ -36,6 +37,8 @@ const Discovered = ({ onAsk }: DiscoveredProps) => {
       </AShelf>
     ));
 };
+
+const Discovered = memo(DiscoveredSection);
 
 Discovered.displayName = 'Discovered';
 

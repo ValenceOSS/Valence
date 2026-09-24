@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Animated, StyleSheet, View } from 'react-native';
 import { useEvent, useEventListener } from 'expo';
 import { useQuery } from '@tanstack/react-query';
@@ -6,7 +6,7 @@ import { FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
-import { describeSkip, fetchSegments, skippableAt } from '@ValenceClient/playback/fetchSegments';
+import { fetchSegments } from '@ValenceClient/playback/fetchSegments';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
@@ -34,13 +34,11 @@ import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
-import { TheControls } from '@ValencePhone/components/Watching/components/TheControls/TheControls';
 import { TheLeap } from '@ValencePhone/components/Watching/components/TheLeap/TheLeap';
 import { useTapsOnThePicture } from '@ValencePhone/components/Watching/useTapsOnThePicture';
 import { TheChoices } from '@ValencePhone/components/Watching/components/TheChoices/TheChoices';
 import { TheNotice } from '@ValencePhone/components/Watching/components/TheNotice/TheNotice';
-import { TheSkip } from '@ValencePhone/components/Watching/components/TheSkip/TheSkip';
-import { TheSubtitles } from '@ValencePhone/components/Watching/components/TheSubtitles/TheSubtitles';
+import { TheMovingParts } from '@ValencePhone/components/Watching/components/TheMovingParts/TheMovingParts';
 import { useTheSubtitles } from '@ValencePhone/components/Watching/useTheSubtitles';
 import { howBigToDrawIt } from '@ValencePhone/components/Watching/howBigToDrawIt';
 import { usePinchToFill } from '@ValencePhone/components/Watching/usePinchToFill';
@@ -48,6 +46,7 @@ import { theChoicesOn } from '@ValencePhone/components/Watching/theChoicesOn';
 import type { WatchingProps } from './Watching.types';
 import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
+import type { MediaSegment } from '@ValenceClient/playback/fetchSegments';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
@@ -64,6 +63,10 @@ const FADING_OUT = 240;
 const ZOOMING = 220;
 
 const HOW_OFTEN_IT_SAYS_WHERE_IT_IS = 0.25;
+
+const NO_SEASONS: NonNullable<WatchingProps['seasons']> = [];
+
+const NO_SEGMENTS: MediaSegment[] = [];
 
 const styles = StyleSheet.create({
   picture: { backgroundColor: '#000000', flex: 1 },
@@ -153,7 +156,7 @@ const Watching = ({
   startSeconds = 0,
   onDone,
   onEnded,
-  seasons = [],
+  seasons = NO_SEASONS,
   onChooseEpisode,
 }: WatchingProps) => {
   const colours = useTheColours();
@@ -277,12 +280,6 @@ const Watching = ({
 
   useEventListener(player, 'playToEnd', () => {
     onEnded?.();
-  });
-  const ticking = useEvent(player, 'timeUpdate', {
-    currentTime: player.currentTime,
-    bufferedPosition: player.bufferedPosition,
-    currentLiveTimestamp: null,
-    currentOffsetFromLive: null,
   });
 
   const keepThemUp = useCallback(() => {
@@ -476,7 +473,74 @@ const Watching = ({
     [player, onDone],
   );
 
-  const skippable = skippableAt(marked.data ?? [], ticking.currentTime);
+  const stopPickingAnEpisode = useCallback(() => {
+    setIsPickingAnEpisode(false);
+  }, []);
+
+  const episodes = useMemo(
+    () =>
+      onChooseEpisode === undefined
+        ? []
+        : seasons.map((season) => ({
+            heading: nameSeason(season.seasonNumber),
+            chosen: mediaId,
+            choices: season.episodes.map((episode) => ({
+              id: episode.id,
+              label:
+                episode.episodeNumber === null || episode.episodeNumber === undefined
+                  ? episode.title
+                  : `${episode.episodeNumber.toString()}. ${episode.title}`,
+              detail: howLongItRuns(episode.durationSeconds),
+            })),
+            onChoose: (id: string) => {
+              setIsPickingAnEpisode(false);
+
+              if (id !== mediaId) {
+                onChooseEpisode(id);
+              }
+            },
+          })),
+    [seasons, mediaId, onChooseEpisode],
+  );
+
+  const settings = useMemo(
+    () =>
+      theChoicesOn({
+        streams: title.data?.audioStreams ?? [],
+        subtitles: tracks.data ?? [],
+        chosenSubtitle: reading,
+        onSubtitle: readInstead,
+        media: title.data ?? null,
+        chosenAudio: asking.audioStreamIndex ?? null,
+        chosenQuality: asking.requestedQuality ?? 'original',
+        onAudio: (audioStreamIndex) => {
+          askAgain({ audioStreamIndex });
+        },
+        onQuality: (requestedQuality) => {
+          askAgain({ requestedQuality });
+        },
+        rate,
+        onRate: setRate,
+        subtitleOffset,
+        onSubtitleOffset: setSubtitleOffset,
+      }),
+    [
+      title.data,
+      tracks.data,
+      reading,
+      readInstead,
+      asking.audioStreamIndex,
+      asking.requestedQuality,
+      askAgain,
+      rate,
+      subtitleOffset,
+    ],
+  );
+
+  const stopChoosing = useCallback(() => {
+    setIsChoosing(false);
+    keepThemUp();
+  }, [keepThemUp]);
 
   if (refusal !== null) {
     return (
@@ -520,15 +584,6 @@ const Watching = ({
         onPress={tapped}
       />
 
-      {skippable === null ? null : (
-        <TheSkip
-          says={describeSkip(skippable)}
-          onSkip={() => {
-            player.seekBy(skippable.endSeconds - ticking.currentTime);
-          }}
-        />
-      )}
-
       {notice === null ? null : (
         <TheNotice
           says={notice}
@@ -538,23 +593,19 @@ const Watching = ({
         />
       )}
 
-      <TheSubtitles
+      <TheMovingParts
+        player={player}
+        segments={marked.data ?? NO_SEGMENTS}
         cues={cues}
-        atSeconds={ticking.currentTime - subtitleOffset}
-        isClearOfTheControls={areControlsDrawn}
-      />
-
-      {areControlsDrawn ? (
-        <TheControls
-          fade={fade}
-          title={title.data?.title ?? ''}
-          year={title.data?.year ?? null}
-          isPlaying={moving.isPlaying}
-          at={ticking.currentTime}
-          runsFor={player.duration}
-          buffered={ticking.bufferedPosition}
-          trickplay={frames.data ?? null}
-          onPlayPause={() => {
+        subtitleOffset={subtitleOffset}
+        areControlsDrawn={areControlsDrawn}
+        controls={{
+          fade,
+          title: title.data?.title ?? '',
+          year: title.data?.year ?? null,
+          isPlaying: moving.isPlaying,
+          trickplay: frames.data ?? null,
+          onPlayPause: () => {
             keepThemUp();
 
             if (moving.isPlaying) {
@@ -562,86 +613,32 @@ const Watching = ({
             } else {
               player.play();
             }
-          }}
-          onSkip={(by) => {
+          },
+          onSkip: (by) => {
             keepThemUp();
             player.seekBy(by);
-          }}
-          onSeek={(to) => {
-            keepThemUp();
-            player.seekBy(to - ticking.currentTime);
-          }}
-          onTouched={keepThemUp}
-          onClose={onDone}
-          onSettings={() => {
+          },
+          onTouched: keepThemUp,
+          onClose: onDone,
+          onSettings: () => {
             setIsChoosing(true);
-          }}
-          onEpisodes={
+          },
+          onEpisodes:
             onChooseEpisode === undefined || seasons.length === 0
               ? undefined
               : () => {
                   setIsPickingAnEpisode(true);
-                }
-          }
-        />
-      ) : null}
+                },
+        }}
+      />
 
       {leap === null ? null : <TheLeap leap={leap} />}
 
       {isPickingAnEpisode && onChooseEpisode !== undefined ? (
-        <TheChoices
-          sets={seasons.map((season) => ({
-            heading: nameSeason(season.seasonNumber),
-            chosen: mediaId,
-            choices: season.episodes.map((episode) => ({
-              id: episode.id,
-              label:
-                episode.episodeNumber === null || episode.episodeNumber === undefined
-                  ? episode.title
-                  : `${episode.episodeNumber.toString()}. ${episode.title}`,
-              detail: howLongItRuns(episode.durationSeconds),
-            })),
-            onChoose: (id) => {
-              setIsPickingAnEpisode(false);
-
-              if (id !== mediaId) {
-                onChooseEpisode(id);
-              }
-            },
-          }))}
-          onClose={() => {
-            setIsPickingAnEpisode(false);
-          }}
-        />
+        <TheChoices sets={episodes} onClose={stopPickingAnEpisode} />
       ) : null}
 
-      {isChoosing ? (
-        <TheChoices
-          sets={theChoicesOn({
-            streams: title.data?.audioStreams ?? [],
-            subtitles: tracks.data ?? [],
-            chosenSubtitle: reading,
-            onSubtitle: readInstead,
-            media: title.data ?? null,
-            chosenAudio: asking.audioStreamIndex ?? null,
-            chosenQuality: asking.requestedQuality ?? 'original',
-            onAudio: (audioStreamIndex) => {
-              askAgain({ audioStreamIndex });
-            },
-            onQuality: (requestedQuality) => {
-              askAgain({ requestedQuality });
-            },
-            rate,
-            onRate: setRate,
-            subtitleOffset,
-            onSubtitleOffset: setSubtitleOffset,
-          })}
-          onClose={() => {
-            setIsChoosing(false);
-            keepThemUp();
-          }}
-        />
-      ) : null}
+      {isChoosing ? <TheChoices sets={settings} onClose={stopChoosing} /> : null}
     </View>
   );
 };

@@ -1,4 +1,5 @@
 import { SearchX } from '@keyline-icons/react-native';
+import { memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { albumArtworkUrl, artistImageUrl } from '@ValenceClient/music/fetchMusic';
@@ -32,7 +33,7 @@ const styles = StyleSheet.create({
  * @param onArtist - Told which artist to open.
  * @param onPlaylist - Told which playlist to open.
  */
-const TheMusicResults = ({
+const TheMusicResultsSection = ({
   asked,
   isOnItsOwn,
   onAlbum,
@@ -124,6 +125,8 @@ const TheMusicResults = ({
     </View>
   );
 };
+
+const TheMusicResults = memo(TheMusicResultsSection);
 
 TheMusicResults.displayName = 'TheMusicResults';
 

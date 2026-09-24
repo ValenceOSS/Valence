@@ -1,4 +1,5 @@
 import { Check, X } from '@keyline-icons/react-native/fill';
+import { memo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
@@ -61,7 +62,7 @@ const styles = StyleSheet.create({
  * @param sets - What there is to choose, in the order it should be read.
  * @param onClose - Told they are done choosing.
  */
-const TheChoices = ({ sets, onClose }: TheChoicesProps) => {
+const TheChoicesPanel = ({ sets, onClose }: TheChoicesProps) => {
   const room = useSafeAreaInsets();
 
   return (
@@ -118,6 +119,8 @@ const TheChoices = ({ sets, onClose }: TheChoicesProps) => {
     </View>
   );
 };
+
+const TheChoices = memo(TheChoicesPanel);
 
 TheChoices.displayName = 'TheChoices';
 

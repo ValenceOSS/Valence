@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { memo, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { ABookPicture } from '@ValencePhone/components/AReader/components/ATextReader/components/TheBookText/components/ABookPicture/ABookPicture';
@@ -124,7 +124,7 @@ const isABlock = (node: BookNode) => node.kind === 'element' && BLOCKS.has(node.
  * @param onLink - Told a link was followed.
  * @param onAnchors - Told where the named places are.
  */
-const TheBookText = ({ nodes, size, leading, ink, onLink, onAnchors }: TheBookTextProps) => {
+const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheBookTextProps) => {
   const anchors = useRef(new Map<string, number>());
 
   /**
@@ -318,6 +318,8 @@ const TheBookText = ({ nodes, size, leading, ink, onLink, onAnchors }: TheBookTe
     </View>
   );
 };
+
+const TheBookText = memo(TheBookTextDrawn);
 
 TheBookText.displayName = 'TheBookText';
 

@@ -1,4 +1,5 @@
 import { SearchX } from '@keyline-icons/react-native';
+import { memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
@@ -20,7 +21,7 @@ import type { TheBookResultsProps } from './TheBookResults.types';
  * @param isOnItsOwn - Whether books are all that is being looked for.
  * @param onBook - Told to open a book.
  */
-const TheBookResults = ({ asked, isOnItsOwn, onBook }: TheBookResultsProps) => {
+const TheBookResultsSection = ({ asked, isOnItsOwn, onBook }: TheBookResultsProps) => {
   const colours = useTheColours();
   const found = useQuery(bookQueries.find({ search: asked }));
   const books = found.data ?? [];
@@ -57,6 +58,8 @@ const TheBookResults = ({ asked, isOnItsOwn, onBook }: TheBookResultsProps) => {
     </AShelf>
   );
 };
+
+const TheBookResults = memo(TheBookResultsSection);
 
 TheBookResults.displayName = 'TheBookResults';
 

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -29,7 +30,7 @@ const styles = StyleSheet.create({
  * @param onLookAtShow - Told to open a programme.
  * @param onAsk - Told to open something to ask for, or null for somebody who may not.
  */
-const TheResults = ({
+const TheResultsSection = ({
   asked,
   kind,
   libraryIds,
@@ -92,6 +93,8 @@ const TheResults = ({
     </>
   );
 };
+
+const TheResults = memo(TheResultsSection);
 
 TheResults.displayName = 'TheResults';
 
